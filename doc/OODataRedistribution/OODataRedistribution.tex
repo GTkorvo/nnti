@@ -1,166 +1,108 @@
-%
-% This is an example LaTeX file which uses the SANDreport class file.
-% It shows how a SAND report should be formatted, what sections and
-% elements it should contain, and how to use the SANDreport class.
-%
-% Build it using
-%     latex SANDExample
-%     bibtex SANDExample
-%     latex SANDExample
-%     latex SANDExample
-%     dvips -o SANDExample.ps SANDExample.dvi
-%     ps2pdf SANDExample.ps SANDExample.pdf
-%
-% This file and the SANDreport.cls file are based on information
-% contained in "Guide to Preparing {SAND} Reports", Sand98-0730, edited
-% by Tamara K. Locke.
-% Please send corrections and suggestions for improvements to
-% Rolf Riesen, Org. 9223, MS 1110, rolf@cs.sandia.gov
-%
-\documentclass[12pt,relax]{SANDreport}
-
-% If you want to relax some of the SAND98-0730 requirements, use the "relax"
-% option. It adds spaces and boldface in the table of contents, and does not
-% force the page layout sizes.
-% e.g. \documentclass[relax,12pt]{SANDreport}
-%
-% You can also use the "strict" option, which applies even more of the
-% SAND98-0730 guidelines. It gets rid of section numbers which are often
-% useful; e.g. \documentclass[strict]{SANDreport}
-
-
-
+\documentclass[12pt,relax]{TrilinosDoc}
 % ---------------------------------------------------------------------------- %
 %
 % Set the title, author, and date
 %
-    \title{An Object-Oriented Model for Distributed Memory Parallel Data Distribution}
+\title{An Object-Oriented Model for Parallel Data Redistribution}
+\SANDsubtitle{}
 
-    \author{Michael A.~Heroux\\
-       Numerical and Applied Mathematics Department \\
-	  Sandia National Laboratories\\
-	  P.O. Box 5800\\
-	  Albuquerque, NM 87185-1110 \\
-	  maherou@sandia.gov \\
+\author{Michael A.~Heroux\\
+        Numerical and Applied Mathematics Department \\
+	   Sandia National Laboratories\\
+	   P.O. Box 5800\\
+	   Albuquerque, NM 87185-1110 \\
+	   maherou@sandia.gov \\
 	 }
 
-    % There is a "Printed" date on the title page of a SAND report, so
-    % the generic \date should generally be empty.
-    \date{}
+% There is a "Printed" date on the title page of a SAND report, so
+% the generic \date should generally be empty.
+\date{}
 
 
-% ---------------------------------------------------------------------------- %
-% Set some things we need for SAND reports. These are mandatory
-%
-\SANDnum{SAND2002-xxxx}
-\SANDprintDate{November 2002}
+\SANDnum{SAND2003-xxxx}
+\SANDprintDate{February 2003}
 \SANDauthor{Michael A.~Heroux, Sandia National Laboratories}
 
 
-% ---------------------------------------------------------------------------- %
-% The following definitions are optional. The values shown are the default
-% ones provided by SANDreport.cls
-%
 \SANDreleaseType{Unlimited Release}
 
 
-% ---------------------------------------------------------------------------- %
-% The following definitions do not have a default value and will not
-% print anything, if not defined
-%
-%\SANDsupersed{SAND00-0000}{January 0000}
 \SANDdistcategory{UC-999}	% DOE mandates it, but many reports don't have it
 
 
 % ---------------------------------------------------------------------------- %
 %
-% Start the document
+% Header style
 %
-\begin{document}
-    \maketitle
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
+\lhead[\fancyplain{}{OO Parallel Data Redistribution}]%
+{\fancyplain{}{\rightmark}}
+\rhead[\fancyplain{}{\leftmark}]
+{\fancyplain{}{OO Parallel Data Redistribution}}
 
-    % ------------------------------------------------------------------------ %
-    % An Abstract is required for SAND reports
-    %
-    \begin{abstract}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
 This paper presents an object-oriented model for parallel data distribution on
 distributed memory parallel computers.
-    \end{abstract}
+\end{abstract}
 
 
-    % ------------------------------------------------------------------------ %
-    % An Acknowledgement section is optional but important, if someone made
-    % contributions or helped beyond the normal part of a work assignment.
-    % Use \section* since we don't want it in the table of context
-    %
-    \clearpage
-    \section*{Acknowledgement}
+\clearpage
+\section*{Acknowledgement}
 The author would like to acknowledge the support of the ASCI and LDRD programs
 that funded development of Trilinos.
 
 
-    % ------------------------------------------------------------------------ %
-    % The table of contents and list of figures and tables
-    % Comment out \listoffigures and \listoftables if there are no
-    % figures or tables. Make sure this starts on an odd numbered page
-    %
-    \clearpage
-    \tableofcontents
-    \listoffigures
-    \listoftables
-
-
-    % ---------------------------------------------------------------------- %
-    % An optional preface or Foreword
-%    \clearpage
-%    \section{Preface}
-%	Although muggles usually have only limited experience with
-%	magic, and many even dispute its existence, it is worthwhile
-%	to be open minded and explore the possibilities.
-
-
-    % ---------------------------------------------------------------------- %
-    % An optional executive summary
-    \clearpage
-    \section{Summary}
-
-
-    % ---------------------------------------------------------------------- %
-    % An optional glossary. We don't want it to be numbered
-%   \clearpage
-%   \section*{Nomenclature}
-%   \addcontentsline{toc}{section}{Nomenclature}
-%   \begin{itemize}
-%\item[Package]
-%    a collection of software focused on one primary class of numerical methods
-%\item[Trilinos]
-%    A Greek term that loosely translated means ``a string of pearls,'' meant
-%        to evoke an image that each Trilinos package is a pearl in its own right,
-%        but is even more valuable when combined with other packages.
-%\item[Petra]
-%    A Greek term meaning ``foundation.''  Trilinos has three Petra libraries: Epetra, 
-%    Tpetra and Jpetra (discussed in Section~\ref{subsect:PetraObjectModel}) that
-%    provide basic classes for constructing and manipulating matrix, graph and vector 
-%    objects.
-%   \end{itemize}
-
-
-    % ---------------------------------------------------------------------- %
-    % This is where the body of the report begins; usually with an Introduction
-    %
-    \SANDmain		% Start the main part of the report
+\tableofcontents
 
 \section{Introduction}
 
-
-\section{Basic Concepts}
-\label{sect:concepts}
 For our purposes, parallel data redistribution concerns the redistribution of 
 data on a parallel distributed memory computer, where all processors on the 
 machine are participating in the operation, even though some processor may send
 or receive no data..  The data is assumed to be 
 partitioned across the machine in some form already, including the case where one
 processor owns all of the data.
+
+
+\section{Basic Parallel Data Redistribution Operations}
+
+An essential design issue in the development of distributed memory parallel programs is the
+distribution of data across the memory of the computer.  Optimal distribution of data and work
+is an often a multiply-constrained optimization problem with the goal of balancing the work and
+data distribution across all nodes of the parallel machine and minimizing the cost of
+communicating remote data to processors as needed as the computation proceeds.
+Except for embarrassingly parallel programs, access to remote data is required even if
+the initial distribution of work and data is optimal.  In the single program multiple data
+(SPMD) model, accessing remote data typically involves all processors, even if some processors
+are not sending or receiving data.  We use the term {it parallel data
+redistribution (PDR)} to refer to the simultaneous exchange of distributed data as it occurs during
+the execution of an SPMD program.  The focus of the paper is to develop an object-oriented
+model for PDR.
+
+Two of the most common classes of PDR operations are :
+\begin{enumerate}
+\item Collective operations, such as the dot
+product of two distributed vectors, and 
+\item Sparse all-to-all operations, where each processor will
+communicate with some, but typically not all, other processors.
+\end{enumerate}
+
+
+\subsection{Regular pattern and collective operations}
+
+\subsection{Sparse Matrix Vector Multiplication}
+
+\section{PDR Terms and Concepts}
+\label{sect:concepts}
+
+\subsection{Distributed Objects}
+
+\subsection{Element Spaces and Global IDs}
 
 Given an existing distribution of data, we want a formal mechanism for describing
 how the data should be redistributed.  To accomplish this, we define an 
@@ -177,26 +119,47 @@ An element space is itself a distributed object.  An Espace is constructed by
 having each processor call the espace constructor, passing in the number of
 elements that should be assigned to the processor and a list of related GIDs.
 
+\subsection{Import and Export Operations}
+
+\section{Important PDR Classes}
+
+\subsection{Parallel Machine Class}
+
+\subsection{Element Space Class}
+
+\subsection{Distributed Object Base Class}
+
+\subsection{User Oriented Distributed Object Classes}
+
+\subsection{Import and Export Classes}
+
+
+\section{Using Imports and Exports for Common PDR Operations}
+
+\subsection{Sparse Matrix Vector Multiplication}
+
+\subsection{Optimal Data Distributions}
+
 \section{Conclusions}
 
 
-    % ---------------------------------------------------------------------- %
-    % References
-    %
+% ---------------------------------------------------------------------- %
+% References
+%
     \clearpage
     \bibliographystyle{plain}
     \bibliography{OODataRedistribution}
     \addcontentsline{toc}{section}{References}
 
 
-    % ---------------------------------------------------------------------- %
-    % Appendices should be stand-alone for SAND reports. If there is only
-    % one appendix, put \setcounter{secnumdepth}{0} after \appendix
-    %
+% ---------------------------------------------------------------------- %
+% Appendices should be stand-alone for SAND reports. If there is only
+% one appendix, put \setcounter{secnumdepth}{0} after \appendix
+%
 %    \appendix
 %\section{}
 
-    % \printindex
+% \printindex
 
     \begin{SANDdistribution}
 	\SANDdistExternal{1}{An Address\\ 99 $99^{th}$ street NW\\City, State}
