@@ -146,7 +146,8 @@ needed for parallel vectors and matrices.  Each of the object
 classes represents a family of classes with one base class and 
 specializations of the base class.
 
-\paragraph{Comm Class:  Parallel Machine Description}
+\paragraph{Comm, Distributor and Directory Classes:  Parallel Machine
+ Description}
 
 We begin with the Comm class that describes parallel machines.  
 This class is an attribute in most other classes since it provides 
@@ -154,40 +155,57 @@ essential information and services needed for operations across the
 parallel machine.  The Comm class provides information about the number 
 of  logical processors on the parallel machine and processor identification.
 It also provides basic services such as global synchronization and collective 
-communications.
+communications. The Distributor and Directory classes encapsulate information
+necessary for performing gather/scatter operations and referencing of non-local
+data.
 
-\paragraph{Map Class: Object Distribution Specification}
+\paragraph{Platform: Factory for Parallel Machine Description classes}
 
-The second class we present is the Map class.  This class is a 
-specification of the distribution of a collection of global identifiers 
-(GIDs).  GIDs are integer values and need not be uniquely owned by a 
+The Platform interface defines a factory for creating instances of the Comm,
+Distributor and Directory classes. Separate implementations of the Platform
+interface are required for different machines and environments (serial versus
+distributed-memory, etc.).
+
+\paragraph{ElementSpace, BlockElementSpace Classes: Object Distribution Specification}
+
+Next we present the ElementSpace and BlockElementSpace classes.  These classes
+are a specification of the distribution of a collection of elements, represented
+by global identifiers (GIDs). BlockElementSpace is a generalization of
+ElementSpace, allowing for elements with more than 1 associated scalar point.
+ GIDs are integer values and need not be uniquely owned by a 
 processor or cover a contiguous range of integer values.  An object is 
 distributed across the parallel machine by associating subsets of the 
 object data with the GIDs.  Each processor of the parallel machine will be 
 assigned zero or more GIDs.  Example 1 illustrates this concept for the 
-simple case of a distributed vector.   Each map object requires a Comm 
-object to be passed in at construction.
+simple case of a distributed vector.   Each ElementSpace object requires a
+Platform object to be passed in at construction.
 
-\paragraph{Vector Class:  Vector Object}
+\paragraph{VectorSpace Class: Mathematical Vector-Space Object}
+
+A VectorSpace object provides a set of indices for addressing and manipulating
+Vector objects. A VectorSpace can be initialized from either an ElementSpace or
+a BlockElementSpace.
+
+\paragraph{Vector Class:  Mathematical Vector Object}
 
 This class allows construction and manipulation of vectors, and supports 
 operations involving vectors.  Basic vector 
 operations include norms, dot products, vector updates, etc.  The interface 
 to the vector constructors and vector methods is independent of the specifics 
 of the parallel machine and the vector distribution since this information is 
-encapsulated in the map object passed in during construction.
+encapsulated in the VectorSpace object passed in during construction.
 
 \paragraph{Multivector Class:  Generalization of a Dense Matrix}
 
 This class allows the construction and manipulation of a collection of 
-vectors that have the same size and distribution, i.e., the same map.  
+vectors that have the same size and distribution, i.e., the same VectorSpace.  
 A multivector is a generalization of a dense matrix.  There are methods 
 in the class that provide results for each vector in the multivector and 
 methods that view the multivector as a matrix.  In a practical implementation, 
 one should note that the vector class can usually be implemented as a 
 specialization of the multivector class (a multivector with one vector).
 
-\paragraph{Row-biased Graph Class:  Connectivity Graph Object}
+\paragraph{Compressed-Index Graph Class:  Connectivity Graph Object}
 
 A graph object specifies a set of vertices and the connecting edge pairs.
 The graph is then constructed across a parallel machine by associating each
@@ -206,12 +224,14 @@ details. The Operator interface is inherited and implemented by all of our
 abstract Operators rather than specific matrix class types may make use of
 any matrix type that implements the Operator interface.
 
-\paragraph{Row-biased Matrix Class: Sparse Matrix Object}
+\paragraph{Compressed-Index Matrix Class: Sparse Matrix Object}
 
-A row-biased matrix is very similar to a row-biased graph.  Additionally it 
+A compressed-index matrix is very similar to a compressed-index graph. 
+Additionally it 
 contains matrix values and has methods to compute matrix-vector and
 matrix-multivector multiplications.  It also has methods to provide certain
-matrix norms and scalings.  It can also be queried row-wise for matrix entries.
+matrix norms and scalings.  It can also be queried for matrix entries, which
+are usually returned a row at a time or a column at a time.
 As will be discussed in a later section, Petra implementations include both
 point-entry and block-entry matrix classes.
 
@@ -219,17 +239,23 @@ point-entry and block-entry matrix classes.
 \paragraph{Import and Export Classes:  Parallel Data Redistribution}
 
 Given a vector, multivector, graph or matrix distributed across processors
-via a map (call it a source map), it is possible to redistribute any of these
-objects by creating a new map (a target map) and then creating an import or
+via an ElementSpace (call it a source ElementSpace), it is possible to
+redistribute any of these
+objects by creating a new ElementSpace (a target ElementSpace) and then
+creating an import or
 an export object to redistribute the object to the layout specified by the
-target map.
+target ElementSpace.
 
-An import object is used in the situation where a target map is constructed
-using GIDs that the calling processor wants to obtain from the source map
-layout.  An export object is used when the target map is constructed so that
-each GID in the source map is uniquely owned by one processor in the target
-map, effectively asserting that each calling processor wants to export anything
-that is in its source map but not in its target map.  Import and export
+An import object is used in the situation where a target ElementSpace is
+ constructed
+using GIDs that the calling processor wants to obtain from the source
+ ElementSpace
+layout.  An export object is used when the target ElementSpace is constructed
+so that each GID in the source ElementSpace is uniquely owned by one processor
+ in the target ElementSpace, effectively asserting that each calling processor
+ wants to export anything
+that is in its source ElementSpace but not in its target ElementSpace.
+  Import and export
 objects form the basis for all data communication on the parallel machine.
 
 \paragraph{Serial Dense Matrix and Vector Classes:  Serial Dense Linear Algebra Objects}
@@ -248,8 +274,8 @@ One of the most common uses for matrix and vector classes is solving a linear
 system of equations, $AX = B$, where $A$ is a known (sparse) matrix, $B$ is a
 known set of one or more right hand side vectors and $X$ is the corresponding
 set of initial solution guesses (if any).  To facilitate this process, we
-define a composite linear problem class that contains an abstract row-biased
-matrix object (the base class of our row-biased and block row-biased matrix
+define a composite linear problem class that contains an abstract matrix object
+(the base class of our compressed-index and block compressed-index matrix
 classes), a multivector (which could be a vector since multivector is the base
 class for vectors) containing the right hand side and another multivector
 containing the initial guess.
@@ -257,8 +283,8 @@ containing the initial guess.
 \subsection{UML Depiction of Petra Object Model}
 
 The static structure diagrams in figures~\ref{matvecmap} and \ref{distobj}
-show inheritance (solid lines) and collaborations (dotted lines) in the
-Petra object model.
+show inheritance (solid lines) and dependencies or collaborations (dotted
+lines) in the Petra object model.
 \begin{figure}[ht]
 \begin{center}
 \epsfig{file=PetraMVM.eps, scale=1.0}
@@ -267,11 +293,10 @@ Petra object model.
 \end{center}
 \end{figure}
 Figure~\ref{matvecmap} shows relationships among the primary classes that users
-interact with directly. Note that the diagram doesn't show complete lists of
-operations for any of the classes, but simply shows a couple for each. This
+interact with directly.  This
 diagram shows base classes in the Petra object model. In an implementation of
-this model, such as the Epetra package, there are also concrete matrix classes
-that implement RowMatrix, etc.  
+this model, such as the Epetra package, there are also concrete matrix classes,
+etc.
 
 Figure~\ref{distobj} shows those aspects of the object model that enable
 \begin{figure}[ht]
@@ -327,12 +352,14 @@ distributed index spaces.
 
 \subsection{Defining Index Spaces}
 In the Petra object model, index spaces are defined and described using the
-Map class. The Map class describes not only global properties such as total
+ElementSpace class. The ElementSpace class describes not only global properties
+such as total
 number of elements, but also distribution and partitioning properties such as
 number of local elements (local to a particular processor), etc.
  
-There are a number of ways to define a distributed index space using Petra
-Maps. Depending on how the indices are assigned to processors, the distribution
+There are a number of ways to define a distributed index space using the Petra
+ElementSpace. Depending on how the indices are assigned to processors, the
+distribution
 may be described as uniform or non-uniform, and linear or general.
 
 \subsubsection{Uniform vs Non-Uniform Index Space Distributions}
@@ -353,21 +380,24 @@ a general distribution has indices in arbitrary order, as defined by the user.
 \subsection{Block Index Spaces}
 In cases where the corresponding vector or matrix has block-elements (elements
 which consist of more than one point-entry) we describe the index space as a
-block index space, and the corresponding Petra class is called a BlockMap. The
-BlockMap class is a generalization of the Map class (a Map is equivalent to a
-BlockMap with all element-sizes equal to 1). A BlockMap allows the user to
+block index space, and the corresponding Petra class is called a
+BlockElementSpace. The BlockElementSpace class is a generalization of the
+ElementSpace class (an ElementSpace is equivalent to a
+BlockElementSpace with all element-sizes equal to 1). A BlockElementSpace
+ allows the user to
 specify the element-sizes at construction, and provides query methods for
 obtaining element-sizes corresponding to given elements referred to using
 global identifiers (GIDs).
 
 \section{Vectors and MultiVectors}
 In the Petra object model, the Vector class is defined to have dense,
-real-valued entries or elements. Each Vector object has a Map or BlockMap as
-an attribute.  Vector objects are distributed across the 
-parallel machine at construction by passing the map into the constructor.  
-The number of GIDs in the map determines the global length of the vector 
-(although a more general map class will allow multiple vector entries to 
-be associated with a single GID), and the list of GIDs on each processor 
+real-valued entries or elements. Each Vector object has a VectorSpace object
+as an attribute, and VectorSpaces can be initialized from either an
+ElementSpace or a BlockElementSpace.  Vector objects are distributed across the 
+parallel machine at construction by passing the VectorSpace into the
+ constructor.
+The ElementSpace determines the global length of the vector 
+and the list of GIDs on each processor 
 determines the segment of the vector stored on the processor.
 
 \subsection{MultiVectors as Distributed Dense Matrices}
@@ -391,11 +421,11 @@ Once a graph is constructed and filled, it can be used to determine
 communication patterns and perform any setup procedures that would improve
 the performance of basic sparse matrix operations for matrices that become
 associated with the graph.  As part of this setup, the graph will construct
-an import map and an import object (described below), that allows for
+an import ElementSpace and an import object (described below), that allows for
 efficient communication during a sparse matrix vector multiplication.
 
-A graph requires a map to be passed in at construction time.
-In addition to passing in a map, one may provide
+A graph requires an ElementSpace to be passed in at construction time.
+In addition to passing in an ElementSpace, one may provide
 information about how many nonzero entries will be inserted into each row 
 of the graph on each processor.  This information can be helpful for
 performance, but is not required, nor is it a fatal error if the estimate
@@ -415,7 +445,8 @@ whereas a column-oriented graph is queried a column at a time.
 \subsection{Shared and Implicitly Constructed Graphs}
 All Petra matrix objects have an attribute which is the Graph object that
 describes the nonzero structure of the matrix. Matrix objects may be constructed
-without a Graph (construction arguments must still include a Map to define the
+without a Graph (construction arguments must still include an ElementSpace to
+define the
 distribution of the matrix), in which case the matrix will internally create
 and define the graph as the user inserts matrix entries. Alternatively, a
 predefined graph
@@ -426,8 +457,8 @@ structure may share a single graph object.
 \section{Compressed Index Sparse and Block-Sparse Matrices}
 Petra matrix implementations include CRS (compressed row sparse) and
 VBR (variable block row) matrix classes. Both of these matrix implementations
-make use of the above-described graph objects to define structure (placement
-of nonzero entries). In the case of the VBR matrix, the entries of the sparse
+make use of the above-described graph objects to define structure.
+In the case of the VBR matrix, the entries of the sparse
 matrix are matrices also, and in particular dense.  We provide this class
 to address numerous situations where vertices can be grouped such that
 vertices within one group are fully interconnected, or nearly so.  In this
