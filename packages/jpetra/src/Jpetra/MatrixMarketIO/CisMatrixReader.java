@@ -57,6 +57,10 @@ public class CisMatrixReader extends JpetraObject {
      * @throws IOException Any IO errors that occur while reading from the url will be thrown.
      */    
     public static CisMatrix readUrl(String urlString, boolean rowOriented, Comm comm) throws java.io.IOException {
+        if (comm.getVnodeId() != 0) {
+            return null;
+        }
+        
         URL url = new URL(urlString);
         return doRead(urlString, url.openStream(), rowOriented, comm);
     }
@@ -72,6 +76,10 @@ public class CisMatrixReader extends JpetraObject {
      * @throws IOException Any IO errors that occur while reading from the file will be thrown.
      */    
     public static CisMatrix read(String fileName, boolean rowOriented, Comm comm) throws java.io.IOException {
+        if (comm.getVnodeId() != 0) {
+            return null;
+        }
+        
         FileInputStream fis = new FileInputStream(fileName);
         return doRead(fileName, fis, rowOriented, comm);
     }
@@ -102,7 +110,7 @@ public class CisMatrixReader extends JpetraObject {
         String[] comments = mvr.readComments();
         MatrixSize size = mvr.readMatrixSize(info);
         
-        ElementSpace myElementSpace = new ElementSpace(size.numRows(), comm);
+        ElementSpace myElementSpace = new ElementSpace(size.numRows(), 0, comm);
         VectorSpace myVectorSpace = new VectorSpace(myElementSpace);
         CisMatrix result = new CisMatrix(myVectorSpace, rowOriented);
         
@@ -171,12 +179,12 @@ public class CisMatrixReader extends JpetraObject {
     private static void buildCisMatrixFromSparse(int[] row, int[] col, double[] data, CisMatrix cisMatrix) {
         if (cisMatrix.isRowOriented()) {
             for(int i=0; i < row.length; i++) {
-                cisMatrix.insertEntry(row[i], col[i]-1, data[i]);
+                cisMatrix.insertEntry(row[i], col[i]-1, data[i], DistObject.REPLACE);
             }
         }
         else {
             for(int i=0; i < col.length; i++) {
-                cisMatrix.insertEntry(col[i], row[i]-1, data[i]);
+                cisMatrix.insertEntry(col[i], row[i]-1, data[i], DistObject.REPLACE);
             }
         }
         cisMatrix.fillComplete();
@@ -197,7 +205,7 @@ public class CisMatrixReader extends JpetraObject {
             for (int i=0; i < numCols; i++) {
                 for(int j=0; j < numRows; j++) {
                     if (data[entryIndex] != 0) {
-                        cisMatrix.insertEntry(j, i, data[entryIndex++]);
+                        cisMatrix.insertEntry(j, i, data[entryIndex++], DistObject.REPLACE);
                     }
                 }
             }
@@ -206,7 +214,7 @@ public class CisMatrixReader extends JpetraObject {
             for (int i=0; i < numCols; i++) {
                 for(int j=0; j < numRows; j++) {
                     if (data[entryIndex] != 0) {
-                        cisMatrix.insertEntry(i, j, data[entryIndex++]);
+                        cisMatrix.insertEntry(i, j, data[entryIndex++], DistObject.REPLACE);
                     }
                 }
             }

@@ -49,11 +49,13 @@ public class CisMatrixWriter {
      * @param cisMatrix The <code>CisMatri</code> to send to Matvis.
      *
      * @throws IOException Any errors that occur while trying to connect to or send the <code>CisMatrix></code> to Matvis are thrown.
-     */    
-    public static void sendToMatvis(String server, int port, CisMatrix cisMatrix) throws java.io.IOException {
-        Socket socket = new Socket(server, port);
-        write(new PrintWriter(socket.getOutputStream()), cisMatrix);
-        socket.close();
+     */
+    public static void sendToMatvis(String server, int port, CisMatrix cisMatrix, Comm comm) throws java.io.IOException {
+        if (comm.getVnodeId() == 0) {
+            Socket socket = new Socket(server, port);
+            write(new PrintWriter(socket.getOutputStream()), cisMatrix);
+            socket.close();
+        }
     }
     
     /**
@@ -63,9 +65,11 @@ public class CisMatrixWriter {
      * @param cisMatrix the <code>CisMatrix<code> to write to the file
      *
      * @throws IOException Any errors that occur while trying to open or read form the file are thrown.
-     */    
-    public static void write(String fileName, CisMatrix cisMatrix) throws java.io.IOException {
-        write(new PrintWriter(new FileOutputStream(fileName)), cisMatrix);
+     */
+    public static void write(String fileName, CisMatrix cisMatrix, Comm comm) throws java.io.IOException {
+        if (comm.getVnodeId() == 0) {
+            write(new PrintWriter(new FileOutputStream(fileName)), cisMatrix);
+        }
     }
     
     /**
@@ -75,7 +79,7 @@ public class CisMatrixWriter {
      * @param cisMatrix the <code>CisMatrix</code> to print out
      *
      * @throws IOException Any IO errors that occur while tring to print to the <code>PrintStream</code> are thrown.
-     */    
+     */
     private static void write(PrintWriter out, CisMatrix cisMatrix) throws java.io.IOException {
         out.println("%%MatrixMarket matrix coordinate real general");
         out.println(cisMatrix.getNumRows() + " " + cisMatrix.getNumColumns() + " " + cisMatrix.getNumNonZeros());

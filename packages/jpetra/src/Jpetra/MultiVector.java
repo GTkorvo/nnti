@@ -225,12 +225,22 @@ public class MultiVector extends DistObject {
         }
     }
     
+    public void printOutAllVnodes(String iostream) {
+        this.printOut(iostream, true);
+    }
+    
     public void printOut(String iostream) {
-        for(int i=0; i < values.length; i++) {
-            for (int j=0; j < values[i].length; j++) {
-                this.println(iostream, "col: " + i + " row: " + j + " value: " + values[i][j]);
+        this.printOut(iostream, false);
+    }
+    
+    public void printOut(String iostream, boolean all) {
+        if (all || (vectorSpace.getComm().getVnodeId() == 0)) {
+            for(int i=0; i < values.length; i++) {
+                for (int j=0; j < values[i].length; j++) {
+                    this.println(iostream, "col: " + i + " row: " + j + " value: " + values[i][j]);
+                }
+                System.out.println("");
             }
-            System.out.println("");
         }
     }
     

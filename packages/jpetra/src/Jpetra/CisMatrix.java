@@ -31,6 +31,8 @@ package Jpetra;
 import java.util.Set;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.io.Serializable;
 
 /**
@@ -38,28 +40,44 @@ import java.io.Serializable;
  * @author  Jason Cross
  */
 public class CisMatrix extends DistObject {
+    /**
+     * Pass to the CisMatrix constructor to make the CisMatrix row oriented.
+     */
     public static final boolean ROW_ORIENTED = true;
+    /**
+     * Pass to the CisMatrix constructor to make the CisMatrix col oriented.
+     */
     public static final boolean COL_ORIENTED = false;
-    private Graph graph;
+    private Graph graph;  // nonzero pattern of the matrix;  secondary indices for doubleValues
     private VectorSpace primaryVectorSpace;
-    private boolean rowOriented;
-    private boolean filled;
-    private double[] doubleValues;
+    private VectorSpace secondaryVectorSpace;
+    private boolean rowOriented;  // == either ROW_ORIENTED or COL_ORIENTED
+    private boolean filled;  // true if fillComplete() has been called an no methods modifying the matrix have been called
+    private double[] doubleValues;  // the actual values of the matrix
     private int[] numEntries;  // number of entries per row/col
     private int[] startIndex;   // number of entries before the current row/col
-    private JpetraTreeMap OuterTree;
-    private int numTotalEntries;
-    private int maxSecondaryId;
+    private TreeMap OuterTree;  // map of maps used to construct the matrix in its unoptimized form
+    private TreeSet secondaryTree; // map of nonzero vectors which is used to construct the secondaryVectorSpace
+    private int numTotalEntries;  // total number of values in the matrix
+    /*private int maxSecondaryId;  // used to build the secondaryVectorSpace automatically, may not be needed!!!*/
     
     // for reverse op
-    private boolean doneForward;
+    private boolean doneForward;  // true if the forward import/export have been performed on this CisMatrix
     
+    /**
+     * Construct an empty <code>CisMatrix</code>.  The <code>secondaryVectorSpace</code> will be generated automatically
+     * once <code>fillComplete</code> is called.
+     *
+     * @param primaryVectorSpace describes what global elemenets this <code>CisMatrix</code> owns
+     * @param rowOriented determines whether the <code>CisMatrix</code> is row or column oriented
+     */
     public CisMatrix(VectorSpace primaryVectorSpace, boolean rowOriented) {
         this.filled = false;
-        this.maxSecondaryId = 0;
+        /*this.maxSecondaryId = 0;*/
         this.primaryVectorSpace=primaryVectorSpace;
         this.rowOriented = rowOriented;
-        this.OuterTree = new JpetraTreeMap();
+        this.OuterTree = new TreeMap();
+        this.secondaryTree = new TreeSet();
     }
     
     public void insertEntries(int localRowColId, int[] indices, double[] entries, int combineMode) {
@@ -70,16 +88,16 @@ public class CisMatrix extends DistObject {
         
         // !! need to check if I own the globalRowColId
         
-        // need to see if the JpetraTreeMap exists for the specified row/col
-        JpetraTreeMap rowColTreeMap;
+        // need to see if the TreeMap exists for the specified row/col
+        TreeMap rowColTreeMap;
         if (!this.OuterTree.containsKey(new Integer(localRowColId))) {
-            rowColTreeMap = new JpetraTreeMap();
+            rowColTreeMap = new TreeMap();
             //this.println("STD", "globalRowCol does not exist, creating...");
             this.OuterTree.put(new Integer(localRowColId), rowColTreeMap);
         }
         else {
-            //this.println("STD", "localRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
-            rowColTreeMap = (JpetraTreeMap) OuterTree.get(new Integer(localRowColId));
+            //this.println("STD", "localRowCol exists, setting rowColTreeMap to existing TreeMap...");
+            rowColTreeMap = (TreeMap) OuterTree.get(new Integer(localRowColId));
         }
         
         // now that we know the row/col exists, insert entries into the row/col
@@ -87,17 +105,25 @@ public class CisMatrix extends DistObject {
         //this.println("STD", "CisMatrix is internally inserting entries...");
         Object temp;
         int toInsert;
-        for(int i=0; i < indices.length; i++) {
-            //this.println("STD", "Inserting index " + indices[i]);
-            temp = rowColTreeMap.get(new Integer(indices[i]));
-            if (temp == null) {
-                //this.println("STD", "Index " + indices[i] + " does not exist, creating...");
+        if (combineMode == DistObject.ADD) {
+            for(int i=0; i < indices.length; i++) {
+                //this.println("STD", "Inserting index " + indices[i]);
+                temp = rowColTreeMap.get(new Integer(indices[i]));
+                if (temp == null) {
+                    //this.println("STD", "Index " + indices[i] + " does not exist, creating...");
+                    this.numTotalEntries++;
+                    rowColTreeMap.put(new Integer(indices[i]), new Double(entries[i]));
+                }
+                else {
+                    //this.println("STD", "Index " + indices[i] + " does exists, adding to prevous value...");
+                    rowColTreeMap.put(new Integer(indices[i]), new Double(entries[i] + ((Double) temp).doubleValue()));
+                }
+            }
+        }
+        else if (combineMode == DistObject.REPLACE) {
+            for(int i=0; i < indices.length; i++) {
                 this.numTotalEntries++;
                 rowColTreeMap.put(new Integer(indices[i]), new Double(entries[i]));
-            }
-            else {
-                //this.println("STD", "Index " + indices[i] + " does exists, adding to prevous value...");
-                rowColTreeMap.put(new Integer(indices[i]), new Double(entries[i] + ((Double) temp).doubleValue()));
             }
         }
     }
@@ -110,16 +136,16 @@ public class CisMatrix extends DistObject {
         
         // !! need to check if I own the globalRowColId
         
-        // need to see if the JpetraTreeMap exists for the specified row/col
-        JpetraTreeMap rowColTreeMap;
+        // need to see if the TreeMap exists for the specified row/col
+        TreeMap rowColTreeMap;
         if (!this.OuterTree.containsKey(new Integer(localRowColId))) {
-            rowColTreeMap = new JpetraTreeMap();
+            rowColTreeMap = new TreeMap();
             //this.println("STD", "globalRowCol does not exist, creating...");
             this.OuterTree.put(new Integer(localRowColId), rowColTreeMap);
         }
         else {
-            //this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
-            rowColTreeMap = (JpetraTreeMap) OuterTree.get(new Integer(localRowColId));
+            //this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing TreeMap...");
+            rowColTreeMap = (TreeMap) OuterTree.get(new Integer(localRowColId));
         }
         
         // now that we know the row/col exists, insert entries into the row/col
@@ -128,15 +154,20 @@ public class CisMatrix extends DistObject {
         Object temp;
         int toInsert;
         //this.println("STD", "Inserting index " + index);
-        temp = rowColTreeMap.get(new Integer(index));
-        if (temp == null) {
-            //this.println("STD", "Index " + index + " does not exist, creating...");
+        if (combineMode == DistObject.ADD) {
+            temp = rowColTreeMap.get(new Integer(index));
+            if (temp == null) {
+                //this.println("STD", "Index " + index + " does not exist, creating...");
+                this.numTotalEntries++;
+                rowColTreeMap.put(new Integer(index), new Double(entry));
+            }
+            else {
+                //this.println("STD", "Index " + index + " does exists, adding to prevous value...");
+                rowColTreeMap.put(new Integer(index), new Double(entry + ((Double) temp).doubleValue()));
+            }
+        } else if (combineMode == DistObject.REPLACE) {
             this.numTotalEntries++;
             rowColTreeMap.put(new Integer(index), new Double(entry));
-        }
-        else {
-            //this.println("STD", "Index " + index + " does exists, adding to prevous value...");
-            rowColTreeMap.put(new Integer(index), new Double(entry + ((Double) temp).doubleValue()));
         }
     }
     
@@ -153,7 +184,7 @@ public class CisMatrix extends DistObject {
         Iterator outerIterator = outerKeysValues.iterator();
         Map.Entry outerMapEntry;
         
-        JpetraTreeMap innerTree;
+        TreeMap innerTree;
         Set innerKeysValues;
         Iterator innerIterator;
         Map.Entry innerMapEntry;
@@ -163,10 +194,11 @@ public class CisMatrix extends DistObject {
         int[] tempGraph = new int[this.numTotalEntries];
         int i=0;
         int intStartIndex = 0;
+        Integer secondaryIntegerId;
         while(outerIterator.hasNext()) {
             //this.println("STD", "Doing an outer loop...");
             outerMapEntry = (Map.Entry) outerIterator.next();
-            innerTree = (JpetraTreeMap) outerMapEntry.getValue();
+            innerTree = (TreeMap) outerMapEntry.getValue();
             innerKeysValues = innerTree.entrySet();
             innerIterator = innerKeysValues.iterator();
             numEntriesColRow = 0;
@@ -174,22 +206,36 @@ public class CisMatrix extends DistObject {
                 //this.println("STD", "Doing an inner loop...");
                 innerMapEntry = (Map.Entry) innerIterator.next();
                 this.doubleValues[nextEntryIndex] = ((Double) innerMapEntry.getValue()).doubleValue();
-                tempGraph[nextEntryIndex++] = ((Integer) innerMapEntry.getKey()).intValue();
+                secondaryIntegerId = (Integer) innerMapEntry.getKey();
+                if (!this.secondaryTree.contains(secondaryIntegerId)) {
+                    this.secondaryTree.add(secondaryIntegerId);
+                }
+                tempGraph[nextEntryIndex++] = secondaryIntegerId.intValue();
                 numEntriesColRow++;
             }
-            if (this.maxSecondaryId < tempGraph[nextEntryIndex-1]) {
+            /*if (this.maxSecondaryId < tempGraph[nextEntryIndex-1]) {
                 this.maxSecondaryId = tempGraph[nextEntryIndex-1];
-            }
+            }*/
             this.startIndex[i] = intStartIndex;
             intStartIndex += numEntriesColRow;
             this.numEntries[i++] = numEntriesColRow;
         }
         this.graph = new Graph(primaryVectorSpace, tempGraph, this.numEntries);
         
+        // now build the secondaryVectorSpace from secondaryTree
+        Iterator secondaryIterator = secondaryTree.iterator();
+        int[] secondaryGids = new int[secondaryTree.size()];
+        i=0;
+        while (secondaryIterator.hasNext()) {
+            secondaryGids[i] = ((Integer) secondaryIterator.next()).intValue();
+        }
+        this.secondaryVectorSpace = new VectorSpace(new ElementSpace(secondaryGids, this.primaryVectorSpace.getComm()));
+        
         // if we wanted to do away with the TreeMaps at this point to save memory
         // then OuterTree map would need to be set to null so the java garbage collector
         // would know to pick it up
-        // OuterTree = null
+        // OuterTree = null;
+        // secondaryTree = null;
     }
     
     public void scale(double scaler) {
@@ -203,41 +249,52 @@ public class CisMatrix extends DistObject {
         }
     }
     
+    public void printOutAllVnodes(String iostream) {
+        this.printOut(iostream, true);
+    }
+    
     public void printOut(String iostream) {
-        this.println("STD", "CisMatrix.printout() is starting...");
-        if (!filled) {
-            this.print("ERR", "You must call fillComplete() before calling printOut(String iostream)");
-            return;
-        }
-        
-        int i=0;
-        //this.println("STD", "this.numEntries.length=" + numEntries.length);
-        for(int row=0; row < this.numEntries.length; row++) {
-            //this.println("STD", "Doing a row loop...");
-            for(int entry=0; entry < numEntries[row]; entry++) {
-                //this.println("STD", "\nDoing an entry loop...");
-                this.println(iostream, row + " " + graph.getIndex(i) + " " + doubleValues[i++]);
+        this.printOut(iostream, false);
+    }
+    
+    public void printOut(String iostream, boolean all) {
+        if (all || (primaryVectorSpace.getComm().getVnodeId() == 0)) {
+            this.println("STD", "CisMatrix.printOut() is starting...");
+            if (!filled) {
+                this.print("ERR", "You must call fillComplete() before calling printOut(String iostream)");
+                return;
             }
+            
+            int i=0;
+            //this.println("STD", "this.numEntries.length=" + numEntries.length);
+            for(int row=0; row < this.numEntries.length; row++) {
+                //this.println("STD", "Doing a row loop...");
+                for(int entry=0; entry < numEntries[row]; entry++) {
+                    //this.println("STD", "\nDoing an entry loop...");
+                    this.println(iostream, row + " " + graph.getIndex(i) + " " + doubleValues[i++]);
+                }
+            }
+            this.println("STD", "CisMatrix.printOut() has ended...");
         }
-        this.println("STD", "CisMatrix.printout() has ended...");
     }
     
     public int getNumNonZeros() {
         return this.doubleValues.length;
     }
     
+    
     public int getNumRows() {
         if (this.rowOriented) {
             return this.primaryVectorSpace.getNumMyGlobalEntries();
         }
         else {
-            return this.maxSecondaryId+1;
+            return this.secondaryVectorSpace.getNumMyGlobalEntries();
         }
     }
     
     public int getNumColumns() {
         if (this.rowOriented) {
-            return this.maxSecondaryId+1;
+            return this.secondaryVectorSpace.getNumMyGlobalEntries();
         }
         else {
             return this.primaryVectorSpace.getNumMyGlobalEntries();

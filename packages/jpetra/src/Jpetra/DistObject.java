@@ -52,6 +52,10 @@ public abstract class DistObject extends JpetraObject {
      * This combine mode replaces values with the maximum absolute value of either the imported value or the existing corresponding local value.
      */
     public static final int ABSMAX = 3;
+    /**
+     * This combine mode replaces existing values with the imported ones.
+     */
+    public static final int REPLACE = 4;
     
     private Distributor distributor;
     

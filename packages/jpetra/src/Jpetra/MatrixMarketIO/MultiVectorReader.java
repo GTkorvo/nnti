@@ -30,27 +30,47 @@ package Jpetra.MatrixMarketIO;
 
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.zip.GZIPInputStream;
+import java.net.URL;
 
 import Jpetra.*;
 
 public class MultiVectorReader extends JpetraObject {
     
     public MultiVectorReader() {
+        // empty
     }
     
     public static MultiVector read(String fileName, Comm comm) throws java.io.IOException {
+        if (comm.getVnodeId() != 0) {
+            return null;
+        }
+        
+        FileInputStream fis = new FileInputStream(fileName);
+        return doRead(fileName, fis, comm);
+    }
+    
+    public static MultiVector readUrl(String urlString, Comm comm) throws java.io.IOException {
+        if (comm.getVnodeId() != 0) {
+            return null;
+        }
+        
+        URL url = new URL(urlString);
+        return doRead(urlString, url.openStream(), comm);
+    }
+    
+    private static MultiVector doRead(String fileName, InputStream is, Comm comm) throws java.io.IOException {
         // Open file for reading. If it's compressed, use on the fly
         // decompression
-        FileInputStream fis = new FileInputStream(fileName);
         InputStreamReader isr = null;
         if (fileName.endsWith("gz"))
-            isr = new InputStreamReader(new GZIPInputStream(fis));
+            isr = new InputStreamReader(new GZIPInputStream(is));
         else
-            isr = new InputStreamReader(fis);
+            isr = new InputStreamReader(is);
         MatrixVectorReader mvr = new MatrixVectorReader(isr);
         
         // Read header
@@ -58,7 +78,7 @@ public class MultiVectorReader extends JpetraObject {
         String[] comments = mvr.readComments();
         MatrixSize size = mvr.readMatrixSize(info);
         
-        ElementSpace myElementSpace = new ElementSpace(size.numRows(), comm);
+        ElementSpace myElementSpace = new ElementSpace(size.numRows(), 0, comm);
         VectorSpace myVectorSpace = new VectorSpace(myElementSpace);
         MultiVector result = null;
         
@@ -111,12 +131,12 @@ public class MultiVectorReader extends JpetraObject {
         }
         
         mvr.close();
-        fis.close();
+        is.close();
         
         return result;
     }
     
-    public static MultiVector buildMultiVectorFromSparse(int[] row, int[] col, MatrixSize size, double[] data, VectorSpace myVectorSpace) {
+    private static MultiVector buildMultiVectorFromSparse(int[] row, int[] col, MatrixSize size, double[] data, VectorSpace myVectorSpace) {
         int numRows = size.numRows();
         int numCols = size.numColumns();
         double[][] values = new double[numCols][numRows];
@@ -127,7 +147,7 @@ public class MultiVectorReader extends JpetraObject {
         return new MultiVector(myVectorSpace, values);
     }
     
-    public static MultiVector buildMultiVectorFromDense(MatrixSize size, double[] data, VectorSpace myVectorSpace) {
+    private static MultiVector buildMultiVectorFromDense(MatrixSize size, double[] data, VectorSpace myVectorSpace) {
         int numRows = size.numRows();
         int numCols = size.numColumns();
         int entryIndex = 0;

@@ -42,7 +42,11 @@ public class GraphWriter {
     public GraphWriter() {
     }
     
-    public static void write(String fileName, Graph graph, CisMatrix cisMatrix) throws java.io.IOException {
+    public static void write(String fileName, Graph graph, CisMatrix cisMatrix, Comm comm) throws java.io.IOException {
+        if (comm.getVnodeId() != 0) {
+            return;
+        }
+        
         PrintWriter out = new PrintWriter(new FileOutputStream(fileName));
         
         out.println("%%MatrixMarket matrix coordinate pattern general");

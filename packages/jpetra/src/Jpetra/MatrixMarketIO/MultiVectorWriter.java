@@ -40,9 +40,13 @@ import Jpetra.*;
 public class MultiVectorWriter {
     
     public MultiVectorWriter() {
+        // empty
     }
     
-    public static void write(String fileName, MultiVector multiVector) throws java.io.IOException {
+    public static void write(String fileName, MultiVector multiVector, Comm comm) throws java.io.IOException {
+        if (comm.getVnodeId() != 0) {
+            return;
+        }
         PrintWriter out = new PrintWriter(new FileOutputStream(fileName));
         
         out.println("%%MatrixMarket matrix array real general");

@@ -28,6 +28,8 @@
 
 package Jpetra;
 
+import java.util.TreeMap;
+
 /**
  *
  * @author  Jason Cross
@@ -36,19 +38,19 @@ public class Graph {
     private int[] nonZeroEntries;  // contigous 2-d array of non-zero ID entries
     private int[] numEntries;  // number of entries per array
     VectorSpace dVectorSpace; // the domain vector space
-    private boolean filled;
+    /*private boolean filled;*/
     //boolean rowOriented;
-    private JpetraTreeMap OuterMap;
+    /*private TreeMap OuterMap;*/
     
     public Graph(VectorSpace vectorSpace, boolean rowOriented) {
         //this.rowOriented = rowOriented;
-        this.filled = false;
+        //this.filled = false;
         this.dVectorSpace = vectorSpace;
     }
     
     public Graph(VectorSpace vectorSpace, int[] nonZeroEntries, int[] numEntries) {
         //this.rowOriented = rowOriented;
-        this.filled = true;
+        //this.filled = true;
         this.dVectorSpace = vectorSpace;
         this.nonZeroEntries = nonZeroEntries;
         this.numEntries = numEntries;

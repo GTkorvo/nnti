@@ -30,14 +30,17 @@ package Jpetra.MatrixMarketIO;
 
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.zip.GZIPInputStream;
+import java.net.URL;
 
 import java.util.Set;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 import Jpetra.*;
 
@@ -46,16 +49,33 @@ public class GraphReader extends JpetraObject {
     public GraphReader() {
     }
     
+        public static Graph read(String fileName, boolean rowOriented, Comm comm) throws java.io.IOException {
+        if (comm.getVnodeId() != 0) {
+            return null;
+        }
+        
+        FileInputStream fis = new FileInputStream(fileName);
+        return doRead(fileName, fis, rowOriented, comm);
+    }
+    
+    public static Graph readUrl(String urlString, boolean rowOriented, Comm comm) throws java.io.IOException {
+        if (comm.getVnodeId() != 0) {
+            return null;
+        }
+        
+        URL url = new URL(urlString);
+        return doRead(urlString, url.openStream(), rowOriented, comm);
+    }
+    
     // need to make it generate its own vector space
-    public static Graph read(String fileName, boolean rowOriented, Comm comm) throws java.io.IOException {
+    private static Graph doRead(String fileName, InputStream is, boolean rowOriented, Comm comm) throws java.io.IOException {
         // Open file for reading. If it's compressed, use on the fly
         // decompression
-        FileInputStream fis = new FileInputStream(fileName);
         InputStreamReader isr = null;
         if (fileName.endsWith("gz"))
-            isr = new InputStreamReader(new GZIPInputStream(fis));
+            isr = new InputStreamReader(new GZIPInputStream(is));
         else
-            isr = new InputStreamReader(fis);
+            isr = new InputStreamReader(is);
         MatrixVectorReader mvr = new MatrixVectorReader(isr);
         
         // Read header
@@ -108,10 +128,10 @@ public class GraphReader extends JpetraObject {
                 mvr.readPattern(row, col);
                 ElementSpace myElementSpace;
                 if (rowOriented) {
-                    myElementSpace = new ElementSpace(size.numRows(), comm);
+                    myElementSpace = new ElementSpace(size.numRows(), 0, comm);
                 }
                 else {
-                    myElementSpace = new ElementSpace(size.numColumns(), comm);
+                    myElementSpace = new ElementSpace(size.numColumns(), 0, comm);
                 }
                 VectorSpace myVectorSpace = new VectorSpace(myElementSpace);
                 result = buildGraphFromSparse(row, col, myVectorSpace, rowOriented);
@@ -122,13 +142,13 @@ public class GraphReader extends JpetraObject {
         }
         
         mvr.close();
-        fis.close();
+        is.close();
         
         return result;
     }
     
     public static Graph buildGraphFromSparse(int[] row, int[] col, VectorSpace vectorSpace, boolean rowOriented) {
-        JpetraTreeMap OuterTree = new JpetraTreeMap();
+        TreeMap OuterTree = new TreeMap();
         int[] rowColMajor;
         int[] rowColMinor;
         if (rowOriented) {
@@ -142,18 +162,18 @@ public class GraphReader extends JpetraObject {
         
         int numElements = 0;
         int numTotalEntries = 0;
-        // need to see if the JpetraTreeMap exists for the specified row/col
+        // need to see if the TreeMap exists for the specified row/col
         for(int i=0; i < rowColMajor.length; i++) {
-            JpetraTreeMap rowColTreeMap;
+            TreeMap rowColTreeMap;
             if (!OuterTree.containsKey(new Integer(rowColMajor[i]))) {
-                rowColTreeMap = new JpetraTreeMap();
+                rowColTreeMap = new TreeMap();
                 //this.println("STD", "globalRowCol does not exist, creating...");
                 OuterTree.put(new Integer(rowColMajor[i]), rowColTreeMap);
                 numElements++;
             }
             else {
-                //this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
-                rowColTreeMap = (JpetraTreeMap) OuterTree.get(new Integer(rowColMajor[i]));
+                //this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing TreeMap...");
+                rowColTreeMap = (TreeMap) OuterTree.get(new Integer(rowColMajor[i]));
             }
             
             // now that we know the row/col exists, insert entries into the row/col
@@ -182,7 +202,7 @@ public class GraphReader extends JpetraObject {
         Iterator outerIterator = outerKeysValues.iterator();
         Map.Entry outerMapEntry;
         
-        JpetraTreeMap innerTree;
+        TreeMap innerTree;
         Set innerKeysValues;
         Iterator innerIterator;
         Map.Entry innerMapEntry;
@@ -195,7 +215,7 @@ public class GraphReader extends JpetraObject {
         while(outerIterator.hasNext()) {
             //this.println("STD", "Doing an outer loop...");
             outerMapEntry = (Map.Entry) outerIterator.next();
-            innerTree = (JpetraTreeMap) outerMapEntry.getValue();
+            innerTree = (TreeMap) outerMapEntry.getValue();
             innerKeysValues = innerTree.entrySet();
             innerIterator = innerKeysValues.iterator();
             numEntriesColRow = 0;
@@ -213,6 +233,7 @@ public class GraphReader extends JpetraObject {
             //startIndex += numEntriesColRow;
             numEntries[i++] = numEntriesColRow;
         }
+        
         return new Graph(vectorSpace, tempGraph, numEntries);
     }
 }
