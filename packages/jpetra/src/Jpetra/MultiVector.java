@@ -141,11 +141,14 @@ public class MultiVector extends DistObject implements Externalizable {
     }
     
     public double[] dot(MultiVector otherMultiVector) {
+        Time timer = new Time(this.vectorSpace.getComm());
+        timer.resetStartTime();
         if (!vectorSpace.isCompatible(otherMultiVector.getVectorSpace())) {
             this.println("FATALERR", "The MultiVectors to be dotted are not compatible.");
             System.exit(-1);
         }
-        
+        double compatCheckTime = timer.getElapsedTime();
+        timer.resetStartTime();
         if (this.blas == null) {
             this.blas = new JpetraBlas();
         }
@@ -155,9 +158,18 @@ public class MultiVector extends DistObject implements Externalizable {
         for(int i=0; i < this.getNumCols(); i++) {
             result[i] = this.blas.dot(this.values[i], y[i]);
         }
-        updateFlops(2 * this.values.length * this.values[0].length);
+        double doDotTime = timer.getElapsedTime();
         
+        updateFlops(2 * this.values.length * this.values[0].length);
+        timer.resetStartTime();
         result = vectorSpace.getComm().sumAll(result);
+        double resultSumAllTime = timer.getElapsedTime();
+        if (this.vectorSpace.getComm().getNumVnodes() == 1) {
+            this.println("STD", "compatCheckTime\t" + compatCheckTime + "\ndoDotTime\t" + doDotTime + "\nresultSumAllTime\t" + resultSumAllTime);
+        }
+        else {
+            this.println("STD", compatCheckTime + "\n" + doDotTime + "\n" + resultSumAllTime);
+        }
         return result;
     }
     
