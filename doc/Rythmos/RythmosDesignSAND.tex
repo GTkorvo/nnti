@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage{latexsym}
 \input{rab_commands}
+\newtheorem{theorem}{Theorem}
 
 % If you want to relax some of the SAND98-0730 requirements, use the "relax"
 % option. It adds spaces and boldface in the table of contents, and does not
@@ -302,28 +303,28 @@ $u,v\in\mathcal{X}$) which should be considered and used when designing the
 numerical algorithms.
 
 The above general DAE can be specialized to more specific types of problems
-based on the nature of Jacobian matrices ${}\partial f / {}\partial
-{}\dot{x}\in\mathcal{F}|\mathcal{X}$ and ${}\partial f / {}\partial
-{}\dot{x}\in\mathcal{F}|\mathcal{X}$.  Here we use the notation
+based on the nature of Jacobian matrices
+$\jac{f}{\dot{x}}\in\mathcal{F}|\mathcal{X}$ and
+$\jac{f}{x}\in\mathcal{F}|\mathcal{X}$.  Here we use the notation
 $\mathcal{F}|\mathcal{X}$ to define a linear operator space that maps vectors
-from the space $\mathcal{X}$ to the space $\mathcal{F}$.  Note that the
-adjoint of such linear operators are defined in terms of these vector spaces
-(i.e.\ $<A u,v>_{\mathcal{F}} = <A^H v,u>_{\mathcal{X}}$ where
+from the vector space $\mathcal{X}$ to the vector space $\mathcal{F}$.  Note
+that the adjoint of such linear operators are defined in terms of these vector
+spaces (i.e.\ $<A u,v>_{\mathcal{F}} = <A^H v,u>_{\mathcal{X}}$ where
 $A\in\mathcal{F}|\mathcal{X}$ and $A^H$ denotes the adjoint operator for $A$).
 Here we assume that these first derivatives exist for the specific intervals
-of  $t\in[t_0,t_f]$ of which such an time integrator algorithm will be
-directly applied the the problem.
+of $t\in[t_0,t_f]$ of which such an time integrator algorithm will be directly
+applied the the problem.
 
 The precise class of the problem is primarily determined by the nature of the
-Jacobian ${}\partial f / {}\partial {}\dot{x}$:
+Jacobian $\jac{f}{\dot{x}}$:
 %
 \begin{itemize}
 %
-{}\item ${}\partial f / {}\partial {}\dot{x} = I {}\in {}\mathcal{F}|\mathcal{X}$ yields an explicit ODE
+{}\item $\jac{f}{\dot{x}} = I {}\in {}\mathcal{F}|\mathcal{X}$ yields an explicit ODE
 %
-{}\item ${}\partial f / {}\partial {}\dot{x}$ full rank yields an implicit ODE
+{}\item $\jac{f}{\dot{x}}$ full rank yields an implicit ODE
 %
-{}\item ${}\partial f / {}\partial {}\dot{x}$ rank deficient yields a general
+{}\item $\jac{f}{\dot{x}}$ rank deficient yields a general
 DAE.
 \end{itemize}
 %
@@ -362,14 +363,14 @@ We first consider explicit methods followed by implicit methods.
 
 \subsection{Formulation for Explicit Time Steppers for ODEs}
 
-Explicit integration methods are primarily only attractive for non-stiff explicit and
-implicit ODEs but some classes of DAEs can be considered as well (i.e.\ by
-nonlinearly eliminating the algebraic variables from the semi-explicit DAE formulation 
-(\ref{rythmos:eqn:dae:semiexplicit}) \cite{BCP}).  For this discussion, we will also assume
-that the DAE has been written in the explicit ODE form (i.e.\ ${}\partial f /
-{}\partial {}\dot{x} = I$).  Note that implicit ODEs can always be written as
-explicit ODEs by multiplying the implicit ODE from the left with $({}\partial
-f / {}\partial {}\dot{x})^{-1}$ as:
+Explicit integration methods are primarily only attractive for non-stiff
+explicit and implicit ODEs but some classes of DAEs can be considered as well
+(i.e.\ by nonlinearly eliminating the algebraic variables from the
+semi-explicit DAE formulation (\ref{rythmos:eqn:dae:semiexplicit})
+\cite{BCP}).  For this discussion, we will also assume that the DAE has been
+written in the explicit ODE form (i.e.\ $\jac{f}{\dot{x}} = I$).  Note that
+implicit ODEs can always be written as explicit ODEs by multiplying the
+implicit ODE from the left with $(\jac{f}{\dot{x}})^{-1}$ as:
 %
 \begin{eqnarray*}
 f(\dot{x},x,t) & = & 0 \\
@@ -386,12 +387,8 @@ f(\dot{x},x,t) & = & 0 \\
 where ${}\dot{x} = \bar{f}(x,t)$ is the new explicit form of the ODE that is
 considered by the explicit time integration strategies below.
 
-The above transformation of course requires that the matrix $({}\partial f /
-{}\partial {}\dot{x})^{-1}$ be fairly easily invertible.
-
-{}\textbf{Ross: See if redefining the scalar product in terms of the mass
-matrix allow us to avoid an explicit solve with the mass matrix to form an
-explicit ODE.}
+The above transformation of course requires that the matrix
+$(\jac{f}{\dot{x}})^{-1}$ be fairly easy to invert.
 
 Below, we describe some popular explicit integration methods for ODEs.
 
@@ -442,15 +439,15 @@ Newton system
 \end{equation}
 %
 where $z_l$ is the current candidate solution of the nonlinear equations
-(which also defines the point where $\partial r / {}\partial z$ is evaluated)
-and $\Delta z = r_{l+1} - r_l$ is the update direction.  Line-search Newton
-methods then define an update to the solution along the direction $\Delta z$.
-The essential functionality needed to perform a Newton-like method are the the
+(which also defines the point where $\jac{r}{z}$ is evaluated) and $\Delta z =
+r_{l+1} - r_l$ is the update direction.  Line-search Newton methods then
+define an update to the solution along the direction $\Delta z$.  The
+essential functionality needed to perform a Newton-like method are the the
 abilities to evaluate the nonlinear residual $z {}\rightarrow r$ and to
-(approximately) solve linear systems involving the Jacobian matrix ${}\partial
-r / {}\partial z$.  For each type of implicit time integration method, we will
-show, if possible, how to perform solves with ${}\partial r / {}\partial z$ by
-performing solves with the matrix
+(approximately) solve linear systems involving the Jacobian matrix
+$\jac{r}{z}$.  For each type of implicit time integration method, we will
+show, if possible, how to perform solves with $\jac{r}{z}$ by performing
+solves with the matrix
 %
 \begin{equation}
 M = \alpha \Jac{f}{\dot{x}} + \beta \Jac{f}{x},
@@ -460,9 +457,9 @@ M = \alpha \Jac{f}{\dot{x}} + \beta \Jac{f}{x},
 evaluated at points $(\dot{x},x,t)$ selected by the time integration method
 and where $\alpha\in\RE$ and $\beta\in\RE$ is some constants also defined by
 the time integration method.  Note that the matrix $M$ above in
-(\ref{rythmos:eqn:M_bdf}) may not necessarily exactly represent ${}\partial r
-/ {}\partial z$ and $z$ and $r$ may not simply lie in the vector spaces
-$\mathcal{X}$ and $\mathcal{F}$ respectively; but in many cases, they will.
+(\ref{rythmos:eqn:M_bdf}) may not necessarily exactly represent $\jac{r}{z}$
+and $z$ and $r$ may not simply lie in the vector spaces $\mathcal{X}$ and
+$\mathcal{F}$ respectively; but in many cases, they will.
 
 \subsubsection{Implicit multi-step BDF methods}
 
@@ -661,9 +658,8 @@ vary greatly based on the structure and properties of the Butcher matrix $A$.
 Fully implicit IRK methods present somewhat of a problem for developing
 general software since they involve the need to solve a fully coupled system
 of $p$ sets of equations of the form (\ref{rythmos:eqn:irk_dae_ne}).  Each
-block ${}\partial r_i / {}\partial z_j = {}\partial r_i / {}\partial
-{}\dot{x}_j$ of the full Jacobian ${}\partial r / {}\partial z$ is represented
-as
+block $\jac{r_i}{z_j} = {}\jac{r_i}{\dot{x}_j}$ of the full Jacobian
+$\jac{r}{z}$ is represented as
 %
 \begin{equation}
 \Jac{r_i}{\dot{x}_j}
@@ -675,31 +671,31 @@ as
 %
 which is evaluated at the points $(\dot{x},x,t) = ( {}\dot{x}_i, x_k +
 {}\Delta t {}\sum_{j=1}^{p} a_{ij} {}\dot{x}_j, t_k + c_i {}\Delta t )$.  Note
-that ${}\partial r_i / {}\partial z_j = {}\partial r_i / {}\partial
-{}\dot{x}_j$ in (\ref{rythmos:eqn:dridzi_trap}) is of the same form as
-(\ref{rythmos:eqn:M}) where $\alpha = 1$ and $\beta = \Delta t a_{ij}$.
+that $\jac{r_i}{z_j} = {}\jac{r_i}{\dot{x}_j}$ in
+(\ref{rythmos:eqn:dridzi_trap}) is of the same form as (\ref{rythmos:eqn:M})
+where $\alpha = 1$ and $\beta = \Delta t a_{ij}$.
 
 When considering a iterative method for solving systems with the block
-operator matrix ${}\partial r / {}\partial z$, it is easy to see how to use
-the general matrix $M$ in (\ref{rythmos:eqn:M}) to implement a matrix-vector
-product, but it is not obvious how to precondition such a system.  Clearly a
-block diagonal preconditioner could be used but the effectiveness of such a
-preconditioning strategy is open to question.  Other preconditioning strategies
-are also possible just given the basic block operators and this is an open
-area of research.
+operator matrix $\jac{r}{z}$, it is easy to see how to use the general matrix
+$M$ in (\ref{rythmos:eqn:M}) to implement a matrix-vector product, but it is
+not obvious how to precondition such a system.  Clearly a block diagonal
+preconditioner could be used but the effectiveness of such a preconditioning
+strategy is open to question.  Other preconditioning strategies are also
+possible just given the basic block operators and this is an open area of
+research.
 
 In some cases, however, it may be possible to form a full matrix object for
-${}\partial r / {}\partial z$ but this is not something that can be expected
-for most applications.
+$\jac{r}{z}$ but this is not something that can be expected for most
+applications.
 
 \subsubsection*{Semi-explicit IRK methods}
 
 Semi-explicit IRK methods are those IRK methods where the Butcher matrix $A$
 is lower diagonal and therefore gives rise to a block lower triangular
-Jacobian matrix ${}\partial r / {}\partial z$.  For these types of methods,
-the nonlinear equations in (\ref{rythmos:eqn:dridzi_trap}) can be solved one
-at a time for $i = 1 {}\ldots p$ which is easily accommodated using a
-Newton-type method where the Newton Jacobian for each $i$ is given by
+Jacobian matrix $\jac{r}{z}$.  For these types of methods, the nonlinear
+equations in (\ref{rythmos:eqn:dridzi_trap}) can be solved one at a time for
+$i = 1 {}\ldots p$ which is easily accommodated using a Newton-type method
+where the Newton Jacobian for each $i$ is given by
 (\ref{rythmos:eqn:dridzi_trap}), which is of our basic general form
 (\ref{rythmos:eqn:M}).
 
@@ -707,16 +703,16 @@ Newton-type method where the Newton Jacobian for each $i$ is given by
 
 The next specialized class of IRK methods that we consider are
 diagonally-implicit IRK methods where the Butcher coefficients in $A$ and $c$
-give rise to a lower triangular Jacobian ${}\partial r / {}\partial z$ (and
-hence are also semi-explicit IRK methods) that has the same nonsingular matrix
-block of the form in (\ref{rythmos:eqn:dridzi_trap}) along the diagonal.
-This, of course, requires that $a_{11} = a_{22} = {}\ldots = a_{pp}$ and
-$c_{1} = c_{2} = {}\ldots = c_{p}$.  In this class of IRK methods, significant
-savings may be achieved since a single set of linear solver objects (i.e.\
-operators and preconditioners) can be utilized for the solution of the fully
-coupled system.  In fact, it may even be possible to utilize multi-vector
-applications of the operator and preconditioner for matrices of the form
-(\ref{rythmos:eqn:M}) which can be supported by many applications.
+give rise to a lower triangular Jacobian $\jac{r}{z}$ (and hence are also
+semi-explicit IRK methods) that has the same nonsingular matrix block of the
+form in (\ref{rythmos:eqn:dridzi_trap}) along the diagonal.  This, of course,
+requires that $a_{11} = a_{22} = {}\ldots = a_{pp}$ and $c_{1} = c_{2} =
+{}\ldots = c_{p}$.  In this class of IRK methods, significant savings may be
+achieved since a single set of linear solver objects (i.e.\ operators and
+preconditioners) can be utilized for the solution of the fully coupled system.
+In fact, it may even be possible to utilize multi-vector applications of the
+operator and preconditioner for matrices of the form (\ref{rythmos:eqn:M})
+which can be supported by many applications.
 
 {}\textbf{ToDo: I need to write up some more ideas here to see how to take
 advantage of multi-vector operations when possible and if it makes since to do
@@ -828,13 +824,13 @@ method would require solves with the composite matrix
 This block matrix is lower block triangular with nonsingular blocks along the
 diagonal which are the customary matrices for each individual DAE.  The first
 potential problem with the above block matrix is the lower left block $\beta
-({}\partial c_2 / {}\partial x_1)$ which is not required by any of the
-individual DAE solvers (but is required by a direct sensitivity solver, see
-Section ???).  Therefore, an exact Newton method requires a type of derivative
-computation that is not required when the DAEs are solved individually.
-However, in an iterative method, only the action of $({}\partial c_2 /
-{}\partial x_1) V$ are to arbitrary multivectors $V\in\mathcal{C}_2|\RE^m$ are
-needed which can be approximated using directional finite differences.
+(\jac{c_2}{x_1})$ which is not required by any of the individual DAE solvers
+(but is required by a direct sensitivity solver, see Section ???).  Therefore,
+an exact Newton method requires a type of derivative computation that is not
+required when the DAEs are solved individually.  However, in an iterative
+method, only the action of $(\jac{c_2}{x_1}) V$ are to arbitrary multivectors
+$V\in\mathcal{C}_2|\RE^m$ are needed which can be approximated using
+directional finite differences.
 
 There are many different issues to consider when comparing and contrasting
 these two basic approaches for solving staggered DAEs:
@@ -886,8 +882,8 @@ solving the DAEs as one large combined DAE.
 %
 {}\item {}\textbf{State derivatives}: As mentioned above, the combined DAE
 approach using a single Newton method requires derivative computations
-involving $({}\partial c_2 / {}\partial x_1)$ which are not required when
-solving the DAEs separately.
+involving $(\jac{c_2}{x_1})$ which are not required when solving the DAEs
+separately.
 %
 \end{itemize}
 %
@@ -999,7 +995,7 @@ discretized dimension of $v(t_i:t_f)$.
 \label{rythmos:sec:direct-sens}
 
 The direct sensitivity method for computing the first derivative object
-$\partial {}\hat{d} / {}\partial p$, as derived in
+$\jac{\hat{d}}{p}$, as derived in
 Appendix~\ref{rythmos:app:direct-sens-derivation}, involves first solving the
 $n_p$ independent direct sensitivity equations
 %
@@ -1023,7 +1019,7 @@ followed by the computation of the reduced derivatives
 \hspace{4ex}where\hspace{1ex}\= \\
 \> $S = \Jac{y}{p} {}\in {}\mathcal{Y}|\mathcal{P}$ is the
 direct sensitivity of the state at $t\in[t_0,t_f]$, \\
-\> $\dot{S} = \left(\frac{\partial}{t} \Jac{y(t)}{p}\right)
+\> $\dot{S} = \left(\frac{d}{dt} \Jac{y(t)}{p}\right)
 {}\in {}\mathcal{Y}|\mathcal{P}$ is the time derivative of $S$ at $t\in[t_0,t_f]$, \\
 \> $\Jac{c}{{}\dot{y}} {}\in {}\mathcal{C}|\mathcal{Y}$ is defined on
 $t\in[t_0,t_f]$, \\
@@ -1225,20 +1221,19 @@ Appendix~\ref{rythmos:app:adj-equ-derivation}, is
 where $\Lambda\in\mathcal{C}|\mathcal{G}$ is the multi-vector of Lagrange
 multipliers at $t\in[t_0,t_f]$.  Here we consider index-0 and index-1 DAEs.
 Note that for index-0 DAEs (which includes implicit and explicit ODEs) that
-the mass matrix $\partial c / {}\partial {}\dot{y}$ is non-singular and
-therefore the final condition (\ref{rythmos:app:eqn:sens:adj:fc}) becomes
-trivially easy to solve as it just requires an inversion of $\partial c /
-{}\partial {}\dot{y}$ (assuming that the mass matrix is easy to invert).  For
-index-1 DAEs, the computation of the final condition
-(\ref{rythmos:app:eqn:sens:adj:fc}) is more involved.
+the mass matrix $\jac{c}{\dot{y}}$ is non-singular and therefore the final
+condition (\ref{rythmos:app:eqn:sens:adj:fc}) becomes trivially easy to solve
+as it just requires an inversion of $\jac{c}{\dot{y}}$ (assuming that the mass
+matrix is easy to invert).  For index-1 DAEs, the computation of the final
+condition (\ref{rythmos:app:eqn:sens:adj:fc}) is more involved.
 
 The approaches used to solve the adjoint equations differ depending on whether
-$\partial c / {}\partial {}\dot{y}$ is constant or non-constant and both cases
-are discussed in the next two subsections.
+$\jac{c}{\dot{y}}$ is constant or non-constant and both cases are discussed in
+the next two subsections.
 
 \subsubsection{Non-augmented adjoint equations for constant mass matrices}
 
-When the mass matrix $\partial c / {}\partial {}\dot{y}$ is constant, then
+When the mass matrix $\jac{c}{\dot{y}}$ is constant, then
 (\ref{rythmos:app:eqn:sens:adj}) reduces to
 %
 \begin{eqnarray}
@@ -1307,12 +1302,11 @@ which is a block diagonal matrix with the same block along the diagonal and
 all quantities are evaluated at the same trial point $(\dot{y},y,p,v,t)$ as
 defined by the time integration algorithm.  An important property of this
 block matrix is that each block along the diagonal is the adjoint of the
-matrix ${}\alpha (\partial c / {}\partial {}\dot{y}) + {}\beta (\partial c /
-{}\partial y)$ which is needed by the implicit forward and direct direct
-sensitivity solvers.  In general, the adjoint time stepper can be implemented
-using the same sensitivity objects as required by forward and direct
-sensitivity solves with the added requirement that adjoint operations with
-these object also need to be supported (see
+matrix ${}\alpha (\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$ which is needed by
+the implicit forward and direct direct sensitivity solvers.  In general, the
+adjoint time stepper can be implemented using the same sensitivity objects as
+required by forward and direct sensitivity solves with the added requirement
+that adjoint operations with these object also need to be supported (see
 Section~\ref{rythmos:sec:general-dae-requirements}).
 
 Also note that the block diagonal form of
@@ -1323,8 +1317,8 @@ such as is the case in CVODES and IDAS (see ??? in [???] for example).
 
 \subsubsection{Augmented adjoint equations for non-constant mass matrices}
 
-When the mass matrix $\partial c / {}\partial {}\dot{y}$ is a function of $t$
-and/or $y$ then the adjoint equations in
+When the mass matrix $\jac{c}{\dot{y}}$ is a function of $t$ and/or $y$ then
+the adjoint equations in
 (\ref{rythmos:app:eqn:sens:adj})--(\ref{rythmos:app:eqn:sens:adj:fc}) are
 transformed into the {}\textit{augmented adjoint equations} which take the
 form
@@ -1694,40 +1688,37 @@ $u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), and $t\in\RE$ evaluate
 
 \begin{itemize}
 %
-{}\item Formation of $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) +
-{}\beta ({}\partial c / {}\partial y)$: Given selections for
-$\dot{y}\in\mathcal{Y}$, $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for
-$l=1\ldots{}N_u$), $t\in\RE$, $\alpha\in\RE$, and $\beta\in\RE$ evaluate an
-abstract (nonsingular) object
+{}\item Formation of $M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$:
+Given selections for $\dot{y}\in\mathcal{Y}$, $y\in\mathcal{Y}$,
+$u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$, $\alpha\in\RE$, and
+$\beta\in\RE$ evaluate an abstract (nonsingular) object
 \[
 (\dot{y},y,\{u_l\},t) {}\rightarrow M
 = {}\alpha \Jac{c}{{}\dot{y}} + \beta \Jac{c}{y}
 {}\in {}\mathcal{C}|\mathcal{Y}.
 \]
 Note the special cases of $(\alpha,\beta)=(1,0)$ and $(\alpha,\beta)=(0,1)$
-allow a client to access the operators $({}\partial c / {}\partial {}\dot{y})$
-and $({}\partial c / {}\partial y)$ separately.  Of course the operator
-returned for $M = ({}\partial c / {}\partial {}\dot{y})$ for the case of
-$(\alpha,\beta)=(1,0)$ is not guaranteed to be nonsingular.  Only operators
-$M$ for reasonable finite nonzero values of $\alpha$ and $\beta$ are
+allow a client to access the operators $(\jac{c}{\dot{y}})$ and $(\jac{c}{y})$
+separately.  Of course the operator returned for $M = \jac{c}{dot{y}}$ for the
+case of $(\alpha,\beta)=(1,0)$ is not guaranteed to be nonsingular.  Only
+operators $M$ for reasonable finite nonzero values of $\alpha$ and $\beta$ are
 guaranteed to be nonsingular.
 %
 {}\item Allow reuse of factorizations, preconditioners, and other such objects
 form some previously created operator $M_{\mbox{old}}$ in the reformation of
-$M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) + {}\beta ({}\partial c /
-{}\partial y)$: Given a previously computed nonsingular operator
-$M_{\mbox{old}}$, create a new operator $M$ at a new point
-$(\dot{y},y,\{u_l\},t)$ that reuses any factorizations or preconditioners from
-$M_{\mbox{old}}$ but represents the correct analytic operator.  This
-capability is needed to allow a time stepper algorithm to have some control
-over when preconditioners or factorizations are updated.  However, the newly
-computed operator $M$ must still provide a sufficient analytic approximation
-to the true matrix which is needed for sensitivity computations.
+$M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$: Given a previously
+computed nonsingular operator $M_{\mbox{old}}$, create a new operator $M$ at a
+new point $(\dot{y},y,\{u_l\},t)$ that reuses any factorizations or
+preconditioners from $M_{\mbox{old}}$ but represents the correct analytic
+operator.  This capability is needed to allow a time stepper algorithm to have
+some control over when preconditioners or factorizations are updated.
+However, the newly computed operator $M$ must still provide a sufficient
+analytic approximation to the true matrix which is needed for sensitivity
+computations.
 %
-{}\item Application of $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) +
-{}\beta ({}\partial c / {}\partial y)$: Given a pre-formed object for $M =
-{}\alpha ({}\partial c / {}\partial {}\dot{y}) + {}\beta ({}\partial c /
-{}\partial y)$, provide the ability to apply the operator as
+{}\item Application of $M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta
+(\jac{c}{y})$: Given a pre-formed object for $M = {}\alpha (\jac{c}{\dot{y}})
++ {}\beta (\jac{c}{y})$, provide the ability to apply the operator as
 \[
 Y = M X
 \]
@@ -1737,10 +1728,9 @@ the multi-vector form is to encourage the development of block methods that
 are useful for other types of more advanced algorithms.  However, a single
 vector version is sufficient to satisfy this requirement.
 %
-{}\item Solve with $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) +
-{}\beta ({}\partial c / {}\partial y)$: Given a pre-formed object for $M =
-{}\alpha ({}\partial c / {}\partial {}\dot{y}) + {}\beta ({}\partial c /
-{}\partial y)$, then provide the ability to (approximately) solve for systems
+{}\item Solve with $M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$:
+Given a pre-formed object for $M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta
+(\jac{c}{y})$, then provide the ability to (approximately) solve for systems
 of the form
 \[
 X = M^{-1} B
@@ -1761,10 +1751,9 @@ test that will work for composite and block linear solvers is needed which is
 different than for a straightforward iterative or direct linear solver.
 %
 {}\item{} [Optional] Formation and maintenance of multiple $M = {}\alpha
-({}\partial c / {}\partial {}\dot{y}) + {}\beta ({}\partial c / {}\partial y)$
-objects: Some types of numerical algorithms can be implemented much more
-efficiently if more than one instance of $M = {}\alpha ({}\partial c /
-{}\partial {}\dot{y}) + {}\beta ({}\partial c / {}\partial y)$ can be computed
+(\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$ objects: Some types of numerical
+algorithms can be implemented much more efficiently if more than one instance
+of $M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$ can be computed
 and maintained simultaneously.  This may be needed, for instance, in an
 implicit RK method as described in Section~\ref{rythmos:sec:implicit-rk}.
 %
@@ -1831,9 +1820,8 @@ methods that only require forward sensitivities as described above can always
 use directional finite differences and therefore require really no extra
 functionality beyond what is needed for the forward solve.  Some numerical
 methods, such as sensitivity computations, do require some degree of exactness
-from derivative computations used for $M = {}\alpha ({}\partial c / {}\partial
-{}\dot{y}) + {}\beta ({}\partial c / {}\partial y)$ and the other derivative
-objects described above.
+from derivative computations used for $M = {}\alpha (\jac{c}{\dot{y}}) +
+{}\beta (\jac{c}{y})$ and the other derivative objects described above.
 
 \subsection{Requirements for first-order adjoint sensitivities}
 
@@ -1856,10 +1844,9 @@ or alternatively evaluate the sensitivity themselves as a multi-vector
 \; \mbox{for} \; l = 1 {}\ldots N_u.
 \]
 %
-{}\item Application of adjoint operator $M^H = {}\alpha ({}\partial c /
-{}\partial {}\dot{y}) + {}\beta ({}\partial c / {}\partial y)^H$: Given a
-pre-formed object for $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) +
-{}\beta ({}\partial c / {}\partial y)$, provide the ability to apply the
+{}\item Application of adjoint operator $M^H = ({}\alpha (\jac{c}{\dot{y}}) +
+{}\beta (\jac{c}{y}))^H$: Given a pre-formed object for $M = {}\alpha
+(\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$, provide the ability to apply the
 operator as
 \[
 Y = M^H X
@@ -1871,11 +1858,10 @@ are useful for other types of more advanced algorithms.  However, the ability
 to apply the operator to single multi-vectors automatically satisfies this
 requirement.
 %
-{}\item Solve with adjoint operator $M^H = {}\alpha ({}\partial c / {}\partial
-{}\dot{y}) + {}\beta ({}\partial c / {}\partial y)^H$: Given a pre-formed
-object for $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) + {}\beta
-({}\partial c / {}\partial y)$, provide the ability to (approximately) solve
-for systems of the form
+{}\item Solve with adjoint operator $M^H = ({}\alpha (\jac{c}{\dot{y}}) +
+{}\beta (\jac{c}{y}))^H$: Given a pre-formed object for $M = {}\alpha
+(\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$, provide the ability to
+(approximately) solve for systems of the form
 \[
 X = M^{-H} B
 \]
@@ -2238,11 +2224,12 @@ function is being represented.  Cases of possible ambiguity will be addressed.
 The implicit state solution for the DAEs in
 (\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) at time
 $t$ is signified as $y(p,v,t)\in\mathcal{Y}$, where $v$ in this case is the
-selection of transient parameters in the range $t\in[t_0,t]$ (selections for
-$v$ in the range $(t:t_f]$ have no influence on the state solution $y$ up to
-the time $t$).  The infinite-dimensional implicit state solution for $y$ in
-$t\in[t_0,t_f]$ is signified as $y(p,v)$ where in this case $v$ represents the
-entire selection for the transient parameters in $[t_0,t_f]$.
+selection of transient parameters in the range $t\in[t_0,t]$.  Note that
+selections for $v$ in the range $(t:t_f]$ have no influence on the implicit
+state solution $y$ up to the time $t$.  The full infinite-dimensional implicit
+state solution for $y$ in $t\in[t_0,t_f]$ is signified as $y(p,v)$ where in
+this case $v$ represents the entire selection for the transient parameters in
+$[t_0,t_f]$.
 
 Given the implicit state function $y(p,v)$, a reduced set of auxiliary response
 functions are defined as
@@ -2290,31 +2277,29 @@ The direct sensitivity problem is easily stated by differentiating
 \>	$\jac{\hat{d}}{p} \in \mathcal{G}|\mathcal{P}$ is defined independent of time.
 \end{tabbing}
 
-The direct sensitivity $\partial y / {}\partial p$ is computed by solving a
-set of $n_p$ independent direct sensitivity equations which are obtained by
-differentiating
+The direct sensitivity $\jac{y}{p}$ is computed by solving a set of $n_p$
+independent direct sensitivity equations which are obtained by differentiating
 (\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) with
 respect to $p$ to give
 %
 \begin{eqnarray}
 %
-\Jac{c}{\dot{y}} \left(\frac{\partial}{t} \Jac{y(t)}{p} \right)
-+ \Jac{c}{y} \left(\Jac{y(t)}{p}\right)
+\Jac{c}{\dot{y}} \left(\frac{d}{dt} \Jac{y(t)}{p} \right) + \Jac{c}{y} \left(\Jac{y(t)}{p}\right)
 + \Jac{c}{p} & = & 0, \; t \in \left[ t_0, t_f \right], \label{rythmos:apdx:eqn:sens:direct-c} \\
 \Jac{y(t_0)}{p} & = & \Jac{y_0}{p}. \label{rythmos:apdx:eqn:sens:direct-c:ic}
 \end{eqnarray}
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
-\>	$\Jac{c}{\dot{y}} \in \mathcal{C}|\mathcal{Y}$ is defined on $t\in[t_0,t_f]$, \\
-\>	$\Jac{c}{y} \in \mathcal{C}|\mathcal{Y}$ is defined on $t\in[t_0,t_f]$, \\
-\>	$\Jac{c}{p} \in \mathcal{C}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, and \\
-\>	$\Jac{y_0}{p} \in \mathcal{Y}|\mathcal{P}$ is defined only at $t=t_0$.
+\>	$\jac{c}{\dot{y}} \in \mathcal{C}|\mathcal{Y}$ is defined on $t\in[t_0,t_f]$, \\
+\>	$\jac{c}{y} \in \mathcal{C}|\mathcal{Y}$ is defined on $t\in[t_0,t_f]$, \\
+\>	$\jac{c}{p} \in \mathcal{C}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, and \\
+\>	$\jac{y_0}{p} \in \mathcal{Y}|\mathcal{P}$ is defined only at $t=t_0$.
 \end{tabbing}
 
-These $n_p$ independent sensitivity equations are solved for ${}\partial y /
-{}\partial p {}\in\mathcal{Y}|\mathcal{P}$ forward in time from $t=t_0$.  The
-integral in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) can be evaluated along
-with the integration of
+These $n_p$ independent sensitivity equations are solved for $\jac{y}{p}
+{}\in\mathcal{Y}|\mathcal{P}$ forward in time from $t=t_0$.  The integral in
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) can be evaluated along with the
+integration of
 (\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) and
 (\ref{rythmos:apdx:eqn:sens:direct-c})--(\ref{rythmos:apdx:eqn:sens:direct-c:ic}).
 Note that (\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic})
@@ -2328,48 +2313,45 @@ first followed by
 \subsection{Derivation of adjoint sensitivities using direct sensitivity weak form}
 
 Here we describe a derivation for the adjoint equation and the gradient
-expressions that is based on basic principles that have a simple and strong
-foundation.
+expressions that are based on straightforward principles that have a simple
+and strong foundation.
 
 \subsubsection{Derivation of adjoint equation and sensitivities for steady-state parameters}
 \label{rythmos:app:adj-equ-derivation}
 
 In this section we begin with the same basic expressions of the reduced
-derivative ${}\partial {}\hat{d} / {}\partial p$ in
-(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) and the direct sensitivity equations
-for ${}\partial y / {}\partial p$ in
+derivative $\jac{\hat{d}}{p}$ in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) and
+the direct sensitivity equations for $\jac{y}{p}$ in
 (\ref{rythmos:apdx:eqn:sens:direct-c})--(\ref{rythmos:apdx:eqn:sens:direct-c:ic})
 and then perform basic manipulations in order to arrive at the adjoint
-equations and the adjoint sensitivities for ${}\partial {}\hat{d} /
-{}\partial p$.
+equations and the adjoint sensitivities for $\jac{\hat{d}}{p}$.
 
 We begin our derivation of the adjoint equation and sensitivities for
 steady-state parameters by writing the weak form of the direct sensitivity
-equations (\ref{rythmos:apdx:eqn:sens:direct-c}) which is
+equation (\ref{rythmos:apdx:eqn:sens:direct-c}) which is
 %
 \begin{equation}
 \int_{t_0}^{t_f} \Lambda^H \left(
-\Jac{c}{\dot{y}} \left(\frac{\partial}{t} \Jac{y(t)}{p} \right)
-+ \Jac{c}{y} \left(\Jac{y(t)}{p}\right)
+\Jac{c}{\dot{y}} \left(\frac{d}{dt} \Jac{y}{p} \right)
++ \Jac{c}{y} \left(\Jac{y}{p}\right)
 + \Jac{c}{p}
 \right) dt = 0,
 \label{rythmos:apdx:eqn:sens:weak-direct-c}
 \end{equation}
 %
-where at this point $\Lambda(t)\in\mathcal{C}|\mathcal{G}$ is any
-appropriate weighting function\footnote{The admissible class of
-wieghting functions $\Lambda(t)\in\mathcal{C}|\mathcal{G}$ are those
-functions that are sufficiently smooth such that the integrals of the
-weak form (and the modified weak form after integration by parts) are
-finite and well defined.  Other requirements may also need to be
-satisfied in some cases [???].}.  Later, $\Lambda$ will be chosen to
-be the adjoint variables but for now it is nothing more than an
-arbitrary weighting function for the purpose of stating the weak form.
-The solution to the weak form of
-(\ref{rythmos:apdx:eqn:sens:weak-direct-c}) is every bit as valid and
-is indeed more general than the strong form in
-(\ref{rythmos:apdx:eqn:sens:direct-c}) and we lose nothing by
-considering the weak form [???].
+where at this point $\Lambda(t)\in\mathcal{C}|\mathcal{G}$, for
+$t\in[t_0,t_f]$, is any appropriate weighting function\footnote{The admissible
+class of wieghting functions $\Lambda(t)\in\mathcal{C}|\mathcal{G}$ are those
+functions that are sufficiently smooth such that the integrals of the weak
+form (and the modified weak form after integration by parts) are finite and
+well defined.  Other requirements may also need to be satisfied in some cases
+[???].}.  Later, $\Lambda$ will be chosen to be the adjoint variables but for
+now $\Lambda$ is nothing more than an arbitrary weighting function for the
+purpose of stating the weak form.  The solution to the weak form of
+(\ref{rythmos:apdx:eqn:sens:weak-direct-c}) is every bit as valid and is
+indeed more general than the strong form in
+(\ref{rythmos:apdx:eqn:sens:direct-c}) and we lose nothing by considering the
+weak form [???].
 
 Next, we substitute the integration by parts
 %
@@ -2388,7 +2370,7 @@ into (\ref{rythmos:apdx:eqn:sens:weak-direct-c}) and rearrange which yields
     + \Lambda^H \Jac{c}{y}
   \right] \Jac{y}{p} dt
 + \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t_0}^{t_f}
-= 0
+= 0.
 \label{rythmos:apdx:eqn:sens:weak-direct-c-2}
 \end{equation}
 %
@@ -2404,80 +2386,142 @@ equation
 %
 All that we have done in (\ref{rythmos:apdx:eqn:sens:adj-trans}) is to make
 what appears to be an arbitrary choice to help narrow the weighting function
-$\Lambda(t)$ from the infinite set of possible choices.  It will be clear
-below why this chose is a convenient one.  Note that the choice in
+$\Lambda$ from the infinite set of possible choices.  It will be clear below
+why this chose is a convenient one.  Note that the choice in
 (\ref{rythmos:apdx:eqn:sens:adj-trans}) does not in and of itself uniquely
-determine $\Lambda(t)$ as no boundary conditions have yet be specified.  When
-we move toward the end of the derivation, a natural choice for a boundary
-condition that uniquely specifies $\Lambda(t)$ will fall out.
+determine $\Lambda$ as no boundary conditions have yet be specified.  It will
+be shown latter that the choice of boundary condition is arbitrary but when we
+move toward the end of the derivation, a natural choice for a boundary
+condition that uniquely specifies $\Lambda$ will fall out.
 
-The next step in the derivation is somewhat non-direct but is based on simple
-principles that have simple and clear mathematical foundations.  Here we
-substitute (\ref{rythmos:apdx:eqn:sens:adj-trans}) into
-(\ref{rythmos:apdx:eqn:sens:weak-direct-c-2}), add
-%
-\[
-\left. \left( \Jac{h}{y} \Jac{y}{p} \right) \right|_{t=t_f}
-\]
-%
-to both side of the equation, and then rearrange to yield
+The derivation continues by substituting
+(\ref{rythmos:apdx:eqn:sens:adj-trans}) into
+(\ref{rythmos:apdx:eqn:sens:weak-direct-c-2}) and rearranging which yields
 %
 \begin{eqnarray}
 \int_{t_0}^{t_f} \left( \Jac{g}{y} \Jac{y}{p} \right) dt
-+ \left. \left( \Jac{h}{y} \Jac{y}{p} \right) \right|_{t=t_f}
 & = &  \int_{t_0}^{t_f} \left( \Lambda^H \Jac{c}{p} \right) dt
-- \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t=t_0}
-\nonumber \\
-& & - \left. \left[ \left(
-    \Lambda^H \Jac{c}{\dot{y}}
-    +  \Jac{h}{y}
-  \right)  \Jac{y}{p} \right] \right|_{t=t_f}.
++ \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|^{t_f}_{t_0}.
 \label{rythmos:apdx:eqn:sens:weak-direct-c-3}
 \end{eqnarray}
-%
-By rearranging (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) to
-%
-\begin{equation}
-\Jac{\hat{d}}{p} 
-= \left[
-    \int_{t_0}^{t_f} \left(
-      \Jac{g}{y} \Jac{y}{p} \right) dt
-      + \left. \left( \Jac{h}{y} \Jac{y}{p} \right) \right|_{t=t_f}
-  \right]
-+ \left[
-    \int_{t_0}^{t_f} \Jac{g}{p} dt
-    + \left. \left( \Jac{h}{p} \right) \right|_{t=t_f}
-  \right]
-\label{rythmos:apdx:eqn:sens:d_d_hat_d_p-2}
-\end{equation}
-%
-and substituting in (\ref{rythmos:apdx:eqn:sens:weak-direct-c-3}) gives
+
+Finally, substituting (\ref{rythmos:apdx:eqn:sens:weak-direct-c-3}) into
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) and rearranging gives
 %
 \begin{eqnarray}
 \Jac{\hat{d}}{p} 
-& = & \int_{t_0}^{t_f} \left( \Lambda^H \Jac{c}{p} \right) dt
-- \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t=t_0}
+& = & \int_{t_0}^{t_f} \left( \Lambda^H \Jac{c}{p} + \Jac{g}{p} \right) dt
+  + \left. \left( \Jac{h}{p} \right) \right|_{t=t_f}
+  - \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t=t_0}
 \nonumber \\
-& & + \int_{t_0}^{t_f} \Jac{g}{p} dt
-    + \left. \left( \Jac{h}{p} \right) \right|_{t=t_f}
-\nonumber \\
-& & - \left. \left[ \left(
+& & + \left. \left[ \left(
     \Lambda^H \Jac{c}{\dot{y}}
     +  \Jac{h}{y}
   \right)  \Jac{y}{p} \right] \right|_{t=t_f}
 \label{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}
 \end{eqnarray}
 %
-We are not finished yet since as we stated earlier, the choice for the
-weighting functions $\Lambda(t)$ have not yet been uniquely specified.
-The first thing to consider is that, in general, the adjoint DAE in
-(\ref{rythmos:apdx:eqn:sens:adj-trans}) is only stable if integrated
-backwards in time from $t_f$ to $t_0$ [???].  However, we are free to
-pick almost any consistent initial condition (e.g.\ $\Lambda(t_f)=0$)
-and then evaluate the terms in
-(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}) involving the adjoint
-solution.  Although, rather than picking just any final condition,
-selecting the final condition
+We are not finished yet since, as we stated earlier, the choice for the
+weighting functions $\Lambda$ have not yet been uniquely specified.  The first
+thing to consider is that, in general, the adjoint DAE in
+(\ref{rythmos:apdx:eqn:sens:adj-trans}) is only stable if integrated backwards
+in time from $t_f$ to $t_0$ [???].  However, as described in the following
+theorem, we are free to pick almost any final condition for $\Lambda(t_f)$
+that is consistent with the adjoint equation at $t_f$ and then evaluate the
+terms in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}) involving the resulting
+adjoint solution.
+
+\begin{theorem}
+If $\Lambda_1$ and $\Lambda_2$ are any two particular bounded solutions to the
+adjoint equation (\ref{rythmos:apdx:eqn:sens:adj-trans}) (each associated with
+a different bounded consistent final condition on $\Lambda(t_f)$) then
+%
+\begin{equation}
+\left.\Jac{\hat{d}}{p}\right|_{\Lambda=\Lambda_1} = \left.\Jac{\hat{d}}{p}\right|_{\Lambda=\Lambda_2}
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_p-same}
+\end{equation}
+%
+where $\left.(\jac{\hat{d}}{p})\right|_{\Lambda=\Lambda_1}$ and
+$\left.(\jac{\hat{d}}{p})\right|_{\Lambda=\Lambda_1}$ represent the reduced
+derivative in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}) evaluated using the
+adjoint solutions $\Lambda_1$ and $\Lambda_2$ respectively.
+\end{theorem}
+
+\textbf{Proof}
+
+Here we prove (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-same}) by proving that
+%
+\begin{eqnarray}
+D_2 - D_1
+& = &
+\left.\Jac{\hat{d}}{p}\right|_{\Lambda=\Lambda_2} - \left.\Jac{\hat{d}}{p}\right|_{\Lambda=\Lambda_1}
+\nonumber \\
+& = &
+\int_{t_0}^{t_f} \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{p} dt
++ \left.\left[ \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{\dot{y}} \Jac{y}{p} \right]\right|_{t_0}^{t_f}
+= 0
+\label{rythmos:apdx:eqn:sens:ta:d_hat_d_d_p-diff-zero}
+\end{eqnarray}
+%
+for any two particular solutions $\Lambda_1$ and $\Lambda_2$ to the adjoint
+equation (\ref{rythmos:apdx:eqn:sens:adj-trans}).
+
+We start the proof by substituting (\ref{rythmos:apdx:eqn:sens:direct-c}) into
+(\ref{rythmos:apdx:eqn:sens:ta:d_hat_d_d_p-diff-zero}) which yields
+%
+\begin{equation}
+D_2 - D_1 = 
+\int_{t_0}^{t_f} \left( \Lambda_2 - \Lambda_1 \right)^H \left[
+  - \Jac{c}{\dot{y}} \left(\frac{d}{dt} \Jac{y}{p} \right) - \Jac{c}{y} \left(\Jac{y}{p}\right) \right] dt
++ \left.\left[ \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{\dot{y}} \Jac{y}{p} \right]\right|_{t_0}^{t_f}.
+\label{rythmos:apdx:eqn:sens:ta:d_hat_d_d_p-diff-zero-2}
+\end{equation}
+%
+Substituting the integration by parts
+%
+\[
+- \int_{t_0}^{t_f} \left[ \left( \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{\dot{y}} \right) \frac{d}{dt}\left( \Jac{y}{p} \right) \right] dt
+= - \left. \left( \left( \Lambda_2 - \Lambda_1 \right)^H  \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t_0}^{t_f}
++ \int_{t_0}^{t_f} \left[ \frac{d}{dt}\left( \left( \Lambda_2 - \Lambda_1 \right)^H  \Jac{c}{\dot{y}} \right) \Jac{y}{p} \right] dt
+\]
+%
+into (\ref{rythmos:apdx:eqn:sens:ta:d_hat_d_d_p-diff-zero-2}), canceling
+terms, and rearranging yields
+%
+\begin{equation}
+D_2 - D_1 = 
+\int_{t_0}^{t_f} \left[ \frac{d}{dt} \left( \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{\dot{y}} \right)
+- \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{y} \right] \left(\Jac{y}{p}\right) dt.
+\label{rythmos:apdx:eqn:sens:ta:d_hat_d_d_p-diff-zero-3}
+\end{equation}
+%
+Next, substituting the solutions $\Lambda_1$ and $\Lambda_2$ into
+(\ref{rythmos:apdx:eqn:sens:adj-trans}) and substracting these two adjoint
+equations yields
+%
+\begin{equation}
+\frac{d}{dt} \left( \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{\dot{y}} \right)
+- \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{y} = 0, \; t \in [t_0,t_f].
+\label{rythmos:apdx:eqn:sens:ta:adj-trans-diff}
+\end{equation}
+%
+Finally, substituting (\ref{rythmos:apdx:eqn:sens:ta:adj-trans-diff}) into
+(\ref{rythmos:apdx:eqn:sens:ta:d_hat_d_d_p-diff-zero-3}) yeilds
+%
+\begin{equation}
+D_2 - D_1 = 0
+\label{rythmos:apdx:eqn:sens:ta:d_hat_d_d_p-diff-zero-final}
+\end{equation}
+%
+which completes the proof. $\;\Box$
+
+The above theorem establishes that there are an infinite number of choices for
+the final condition for the adjoint solution that all yeild the same reduced
+derivative $\jac{\hat{d}}{p}$.
+
+While the above theorem establishes that a wide variety of final conditions
+for $\Lambda(t_f)$ can be chosen to close the adjoint equation, rather than
+picking just any final condition, selecting the final condition
 %
 \begin{equation}
 \left. \left(
@@ -2498,11 +2542,9 @@ DAE but for the purposes of this derivation we assume that such a
 condition is always statisfied.}.
 
 Finally, substituting (\ref{rythmos:apdx:eqn:sens:adj-trans:fc}) and
-$\partial y_0 / {}\partial p$ for $\partial y / {}\partial p$ in the
-second expression at $t=t_0$ in
-(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}) we arrive the final
-expression for reduced derivative
-%
+$\jac{y_0}{p}$ for $\jac{y}{p}$ at $t=t_0$ in
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}) we arrive the final expression for
+reduced derivative
 %
 \begin{equation}
 \Jac{\hat{d}}{p} =
@@ -2517,10 +2559,10 @@ expression for reduced derivative
 
 In conclusion, (\ref{rythmos:apdx:eqn:sens:adj-trans}) and
 (\ref{rythmos:apdx:eqn:sens:adj-trans:fc}) define the set of adjoint DAE
-equations that solve for $\Lambda(t)$ that are integrated backwards in time
-and (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) gives the expression for
-the computation of $\partial {}\hat{d} / {}\partial p$ in terms of the
-computed adjoint $\Lambda(t)$.
+equations that solve for a unique adjoint solution $\Lambda$ which are
+integrated backwards in time and
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) gives the expression for the
+computation of $\jac{\hat{d}}{p}$ in terms of the computed adjoint $\Lambda$.
 
 \subsubsection{Derivation of adjoint sensitivities for transient parameters}
 
@@ -2632,12 +2674,12 @@ every time.
 
 \subsection{Sensitivities for steady-state parameters and the adjoint equation}
 
-In this section we will derive the expressions for $\partial {}\hat{d} /
-{}\partial p$ and in the process will derive the adjoint equation and boundary
-conditions that solves for $\Lambda(t)$.  We start by taking the variation of
+In this section we will derive the expressions for $\jac{\hat{d}}{p}$ and in
+the process will derive the adjoint equation and boundary conditions that
+solves for $\Lambda$.  We start by taking the variation of
 (\ref{rythmos:apdx:eqn:sens:L}) (through the implicit function $y(p,v,t)$)
-with respect to $p$ and we claim that this will be equal to $\partial
-{}\hat{d} / {}\partial p$.  This variation is
+with respect to $p$ and we claim that this will be equal to
+$\jac{\hat{d}}{p}$.  This variation is
 %
 \begin{eqnarray}
 \Jac{\hat{d}}{p}
@@ -2707,8 +2749,7 @@ index-1 DAEs, we can simply specify the endpoint condition
 %
 which drops out the last term in (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_p_2})
 and, together with (\ref{rythmos:apdx:eqn:sens:adj-trans-2}) and substituting
-$\partial y_0 / {}\partial p$ for $\partial y / {}\partial p$ in the second
-expression at $t=t_0$, leaves
+$\jac{y_0}{p}$ for $\jac{y}{p}$ in the second expression at $t=t_0$, leaves
 %
 \begin{equation}
 \Jac{\hat{d}}{p} =
@@ -2732,18 +2773,16 @@ Here we consider the derivation of the sensitivity
 \Jac{\hat{d}}{v(t)} \in \mathcal{G}|\mathcal{V}, \; \mbox{for} \; t\in[t_0,t_f].
 \end{equation}
 %
-Our derivation for these sensitivities for the transient parameters
-$v(t)$ will be a little different than for the steady-state parameters
-$p$.  The primary reason for using a different derivation is that the
-infinite-dimensional transient parameters $v$ are
-fundamentally different than finite-dimensional steady-state parameters
-$p$.  Because of the infinite-dimensional nature of $v(t_0,t_f)$, we
-use a different tool of functional analysis.  The tool we use is the
-application of the infinite-dimensional operator $\partial \hat{L} /
-{}\partial v$ to the infinite-dimensional perturbation
-$\delta v$ where we will then identify $\partial {}\hat{d} /
-{}\partial v(t) = {}\partial {}\hat{L} / {}\partial v(t)$ in the
-integrand of
+Our derivation for these sensitivities for the transient parameters $v(t)$
+will be a little different than for the steady-state parameters $p$.  The
+primary reason for using a different derivation is that the
+infinite-dimensional transient parameters $v$ are fundamentally different than
+finite-dimensional steady-state parameters $p$.  Because of the
+infinite-dimensional nature of $v(t_0,t_f)$, we use a different tool of
+functional analysis.  The tool we use is the application of the
+infinite-dimensional operator $\jac{\hat{L}}{v}$ to the infinite-dimensional
+perturbation $\delta v$ where we will then identify $\jac{\hat{d}}{v(t)} =
+{}\jac{\hat{L}}{v(t)}$ in the integrand of
 %
 \begin{equation}
 \left( \Jac{\hat{d}}{v} \right) \delta v
@@ -2757,9 +2796,8 @@ The integral in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v}) is the
 definition of the inner product of two functions in an
 infinite-dimensional space.
    
-We begin our derivation of $\partial {}\hat{d} / {}\partial v(t)$ by
-linearizing $\hat{L}(p,v)$ with respect to $\delta
-v$ as
+We begin our derivation of $\jac{\hat{d}}{v(t)}$ by linearizing $\hat{L}(p,v)$
+with respect to $\delta v$ as
 %
 \begin{eqnarray}
 \left( \Jac{\hat{d}}{v} \right) \delta v
@@ -2806,10 +2844,10 @@ yields
 %
 By applying our choice for the adjoint
 (\ref{rythmos:apdx:eqn:sens:adj-trans-2}) and its final condition
-(\ref{rythmos:apdx:eqn:sens:adj-trans:fc-2}) and noting that $y(t_0) =
-y_0(p)$ is not a function so that of $v$ and therefore $\partial y /
-{}\partial v(t) = 0$ at $t=t_0$, then what is left of
-(\ref{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_2}) becomes
+(\ref{rythmos:apdx:eqn:sens:adj-trans:fc-2}) and noting that $y(t_0) = y_0(p)$
+is not a function so that of $v$ and therefore $\jac{y}{v(t)} = 0$ at $t=t_0$,
+then what is left of (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_2})
+becomes
 %
 \begin{eqnarray}
 \left( \Jac{\hat{d}}{v} \right) \delta v
