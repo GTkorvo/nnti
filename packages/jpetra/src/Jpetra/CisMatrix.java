@@ -316,7 +316,7 @@ public class CisMatrix extends DistObject implements Externalizable {
         }
     }
     
-    public int getNumNonZeros() {
+    public int getNumMyNonZeros() {
         return this.doubleValues.length;
     }
     
@@ -597,7 +597,7 @@ public class CisMatrix extends DistObject implements Externalizable {
         // compatibility checks
         //if (useTransposeA == CisMatrix.USE_A) {
         if (useTransposeA == CisMatrix.USE_A) {
-            this.println("CISMATRIX", "Doing compatibility checks for A.");
+            //this.println("CISMATRIX", "Doing compatibility checks for A.");
             if (this.getColumnVectorSpace().getNumGlobalEntries() > x.getVectorSpace().getNumGlobalEntries()) {
                 this.println("FATALERR", "In CisMatrix.muliptly: The number of columns in CisMatrix A (" + this.getColumnVectorSpace().getNumGlobalEntries() + ") > the number of rows (" + x.getVectorSpace().getNumGlobalEntries() + ") in MultiVector x.");
                 System.exit(1);
@@ -638,8 +638,8 @@ public class CisMatrix extends DistObject implements Externalizable {
                 MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumGlobalColumns()]);
                 Import importer = new Import(x.getVectorSpace(), importMultiVector.getVectorSpace());
                 importMultiVector.importValues(x, importer, DistObject.REPLACE);
-                this.println("CISMATRIX", "printing importMultiVector...");
-                importMultiVector.printOutAllVnodes("STD");
+                //this.println("CISMATRIX", "printing importMultiVector...");
+                //importMultiVector.printOutAllVnodes("STD");
                 double[][] importValues = importMultiVector.getValues();
                 
                 exportValues = new double[importValues.length][this.getNumMyRows()];
@@ -741,6 +741,7 @@ public class CisMatrix extends DistObject implements Externalizable {
             }
         }
         
+        this.updateFlops(x.getNumCols() * this.getNumMyNonZeros() * 2.0);
     }
     
     public void writeExternal(ObjectOutput out) throws java.io.IOException {
@@ -805,6 +806,7 @@ public class CisMatrix extends DistObject implements Externalizable {
         CisMatrix cloneCisMatrix = new CisMatrix(this.primaryVectorSpace, this.rowOriented);
         cloneCisMatrix.outerTree = (TreeMap) this.outerTree.clone();
         cloneCisMatrix.numTotalEntries = this.numTotalEntries;
+        cloneCisMatrix.setFlopCounter(this.getFlopCounter());
         
         return cloneCisMatrix;
     }

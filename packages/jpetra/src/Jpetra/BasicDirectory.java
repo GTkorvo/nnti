@@ -46,7 +46,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
     private int[] numGidsOnVnodes; // for linear nonuniform distributions
     
     public BasicDirectory(VectorSpace vectorSpace) {
-        this.outputStreams.put("DIRECTORY", new Output("BasicDirector: ", true, System.out, false, System.out));
+        //this.outputStreams.put("DIRECTORY", new Output("BasicDirectory: ", true, System.out, false, System.out));
         
         this.vectorSpace = vectorSpace;
         
@@ -60,14 +60,14 @@ public class BasicDirectory extends JpetraObject implements Directory {
         
         if (vectorSpace.isDistributedLinearly()) {
             int[] tmp = new int[]{vectorSpace.getMyMinGlobalIndex(), vectorSpace.getNumMyGlobalEntries()};
-            this.println("DIRECTORY", "Submitting min gid: " + tmp[0] + "to the gatherAll()");
+            //this.println("DIRECTORY", "Submitting min gid: " + tmp[0] + "to the gatherAll()");
             tmp = vectorSpace.getComm().gatherAll(tmp);
             this.allMinGids = new int[tmp.length + 1];
             System.arraycopy(tmp, 0, this.allMinGids, 0, tmp.length);
             this.allMinGids[allMinGids.length - 1] = vectorSpace.getMaxGlobalEntryId(); // set max cap for GID searching algorithm below in getDirectoryEntries
-            this.println("DIRECTORY", "vectorSpace.getMyMinGlobalIndex(): " + vectorSpace.getMyMinGlobalIndex());
+            //this.println("DIRECTORY", "vectorSpace.getMyMinGlobalIndex(): " + vectorSpace.getMyMinGlobalIndex());
             for(int i=0; i < this.allMinGids.length-1; i+=2) {
-                this.println("DIRECTORY", "vnode: " + i/2 + " minGid: " + this.allMinGids[i] + " numGids: " + this.allMinGids[i+1]);
+                //this.println("DIRECTORY", "vnode: " + i/2 + " minGid: " + this.allMinGids[i] + " numGids: " + this.allMinGids[i+1]);
             }
             
             return; // nothing else left to do
@@ -84,11 +84,11 @@ public class BasicDirectory extends JpetraObject implements Directory {
         this.directoryVectorSpace = new VectorSpace(new ElementSpace(numDirectoryGlobalEntries, minGlobalGid, vectorSpace.getComm()));
         
         // debug stuff
-        this.println("DIRECTORY", "numGlobalEntries: " + directoryVectorSpace.getNumGlobalEntries() + " myMin: " + this.directoryVectorSpace.getMyMinGlobalIndex() + " myMax: " + this.directoryVectorSpace.getMyMaxGlobalIndex());
-        this.println("DIRECTORY", "minGlobalEntryId: " + directoryVectorSpace.getMinGlobalEntryId() + " maxGlobalEntryId: " + directoryVectorSpace.getMaxGlobalEntryId());
+        //this.println("DIRECTORY", "numGlobalEntries: " + directoryVectorSpace.getNumGlobalEntries() + " myMin: " + this.directoryVectorSpace.getMyMinGlobalIndex() + " myMax: " + this.directoryVectorSpace.getMyMaxGlobalIndex());
+        //this.println("DIRECTORY", "minGlobalEntryId: " + directoryVectorSpace.getMinGlobalEntryId() + " maxGlobalEntryId: " + directoryVectorSpace.getMaxGlobalEntryId());
         int[] myGidsTemp = directoryVectorSpace.getMyGlobalEntryIds();
         for(int i=0; i < myGidsTemp.length; i++) {
-            this.println("DIRECTORY", "Gid: " + myGidsTemp[i]);
+            //this.println("DIRECTORY", "Gid: " + myGidsTemp[i]);
         }
         //end debug stuff
         
@@ -105,7 +105,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
         // now pack up the gids/lids that we have to send to the owner gid directory vnodes
         Serializable[] toSendData = new Serializable[sendGidsToVnodes.length];
         for(int i=0; i < myGids.length; i++) {
-            this.println("DIRECTORY", "packing my gid: " + myGids[i]);
+            //this.println("DIRECTORY", "packing my gid: " + myGids[i]);
             toSendData[i] = new int[]{myGids[i], vectorSpace.getLocalIndex(myGids[i])};
         }
         // data is packed, so send it off
@@ -126,7 +126,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
                     if (directoryLid == -1) {
                         this.println("ERR", "I don't keep track of gid " + gidLid[0] + " in my directory.");
                     } else {
-                        this.println("DIRECTORY", "Adding gid location " + gidLid[0] + " to my directory.");
+                        //this.println("DIRECTORY", "Adding gid location " + gidLid[0] + " to my directory.");
                         this.directoryVnodeIds[directoryLid] = i;
                         this.directoryLids[directoryLid] = gidLid[1];
                     }
@@ -138,9 +138,9 @@ public class BasicDirectory extends JpetraObject implements Directory {
         //debug code
         int currentGid = directoryVectorSpace.getMyMinGlobalIndex();
         for(int i=0; i < directoryVectorSpace.getNumMyGlobalEntries(); i++) {
-            this.println("DIRECTORY", "LID: " + i + " GID: " + currentGid++ + " Owner: " + directoryVnodeIds[i] + " OwnerLid: " + directoryLids[i]);
+            //this.println("DIRECTORY", "LID: " + i + " GID: " + currentGid++ + " Owner: " + directoryVnodeIds[i] + " OwnerLid: " + directoryLids[i]);
         }
-        this.println("DIRECTORY", "BasicDirectory.generate has finished.");
+        //this.println("DIRECTORY", "BasicDirectory.generate has finished.");
     }
     
     /**
@@ -186,7 +186,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
         }
         
         if (vectorSpace.isDistributedLinearly()) {
-            this.println("DIRECTORY", "trying to find Gids using Linear Distribution...");
+            //this.println("DIRECTORY", "trying to find Gids using Linear Distribution...");
             int minAllGids = this.vectorSpace.getMinGlobalEntryId();
             int maxAllGids = this.vectorSpace.getMaxGlobalEntryId();
             int numVnodes = this.vectorSpace.getComm().getNumVnodes();
@@ -200,13 +200,13 @@ public class BasicDirectory extends JpetraObject implements Directory {
                 boolean wrap;
                 boolean doneWrap;
                 int Proc1;
-                this.println("DIRECTORY", "Checking for gid: " + GID);
+                //this.println("DIRECTORY", "Checking for gid: " + GID);
                 if (GID < minAllGids) {
-                    this.println("DIRECTORY", "gid: " + GID + " is less than minAllGids: " + minAllGids);
+                    //this.println("DIRECTORY", "gid: " + GID + " is less than minAllGids: " + minAllGids);
                     // error
                 }
                 else if (GID > maxAllGids) {
-                    this.println("DIRECTORY", "gid: " + GID + " is greater than maxAllGids: " + maxAllGids);
+                    //this.println("DIRECTORY", "gid: " + GID + " is greater than maxAllGids: " + maxAllGids);
                     // error
                 }
                 else {
@@ -218,7 +218,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
                     doneWrap = false;
                     while(wrap) {
                         while (Proc1 >= 0 && Proc1 < numVnodes*2) {
-                            //this.println("DIRECTORY", "Proc1: " + Proc1/2 + " GID: " + GID);
+                            ////this.println("DIRECTORY", "Proc1: " + Proc1/2 + " GID: " + GID);
                             if (allMinGids[Proc1] <= GID) {
                                 //if (GID < allMinGids[Proc1+2]) {
                                 if ((allMinGids[Proc1 + 1] + allMinGids[Proc1]) > GID) { // allMinGids[Proc1] is the minGid of that vnode, allMinGids[Proc1 + 1] is the number of Gids on that vnode
@@ -249,7 +249,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
                     if (found) {
                         Proc = Proc1;
                         LID = GID - allMinGids[Proc];
-                        this.println("DIRECTORY", "gid: " + GID + "found on Proc: " + Proc);
+                        //this.println("DIRECTORY", "gid: " + GID + "found on Proc: " + Proc);
                     }
                 }
                 vnodeIdsLids[0][i] = Proc;
@@ -259,9 +259,9 @@ public class BasicDirectory extends JpetraObject implements Directory {
             return vnodeIdsLids;
         }
         
-        /*this.println("STD", "global elements this vnode needs:");
+        /*//this.println("STD", "global elements this vnode needs:");
         for(int i=0; i < globalElements.length; i++) {
-            this.println("STD", globalElements[i] + "");
+            //this.println("STD", globalElements[i] + "");
         }*/
         
         // for arbitrary distribution
@@ -271,7 +271,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
         Serializable[] packedGidsToSend = new Serializable[gidsToSend.length];
         int directoryLid;
         for(int i=0; i < gidsToSend.length; i++) {
-            this.println("DIRECTORY", "I need to send gid owner vnode/lid: " + gidsToSend[i]);
+            //this.println("DIRECTORY", "I need to send gid owner vnode/lid: " + gidsToSend[i]);
             directoryLid = directoryVectorSpace.getLocalIndex(gidsToSend[i]);
             packedGidsToSend[i] = new int[]{this.directoryVnodeIds[directoryLid], gidsToSend[i], this.directoryLids[directoryLid]};
         }
@@ -284,7 +284,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
                 tmp2 = (Serializable[]) receives[i];
                 for(int j=0; j < tmp2.length; j++) {
                     tmp1 = (int[]) tmp2[j];
-                    this.println("DIRECTORY", "dirVnode: " + i + " ownwerVnode: " + tmp1[0] + " gid: " + tmp1[1] + " lid: " + tmp1[2]);
+                    //this.println("DIRECTORY", "dirVnode: " + i + " ownwerVnode: " + tmp1[0] + " gid: " + tmp1[1] + " lid: " + tmp1[2]);
                 }
             }
         }

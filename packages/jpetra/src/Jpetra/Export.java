@@ -53,7 +53,7 @@ public class Export extends JpetraObject {
     private Distributor distributor;
     
     public Export(VectorSpace sourceVectorSpace, VectorSpace targetVectorSpace) {
-        this.outputStreams.put("EXPORT", new Output("Export: ", true, System.out, false, System.out));
+        //this.outputStreams.put("EXPORT", new Output("Export: ", true, System.out, false, System.out));
         
         this.sourceVectorSpace = sourceVectorSpace;
         this.targetVectorSpace = targetVectorSpace;
@@ -81,20 +81,20 @@ public class Export extends JpetraObject {
         int temp = sourceGids.length;
         temp = targetGids.length;
         int minNumIds = Util.min(sourceGids.length, targetGids.length);
-        this.println("EXPORT", "sourceGids.length: " + sourceGids.length + " targetGids.length: " + targetGids.length);
+        //this.println("EXPORT", "sourceGids.length: " + sourceGids.length + " targetGids.length: " + targetGids.length);
         for (numSameGids = 0; numSameGids < minNumIds; this.numSameGids++) {
             if (sourceGids[this.numSameGids] != targetGids[this.numSameGids]) {
                 break;
             }
         }
-        this.println("EXPORT", "numSameGids: " + this.numSameGids);
+        //this.println("EXPORT", "numSameGids: " + this.numSameGids);
         
         // next figure out how many global ids are in both the target VectorSpace and in the source VectorSpace
         int numPermuteGids = 0;
         int numExportGids = 0;
         for (int i=this.numSameGids; i < sourceGids.length; i++) {
             if (targetVectorSpace.isMyGlobalIndex(sourceGids[i])) {
-                this.println("EXPORT", "Going to permute gid: " + targetGids[i]);
+                //this.println("EXPORT", "Going to permute gid: " + targetGids[i]);
                 numPermuteGids++;
             }
             else {
@@ -127,7 +127,7 @@ public class Export extends JpetraObject {
         // i is my local id
         for (int i=this.numSameGids; i < sourceGids.length; i++) {
             if (targetVectorSpace.isMyGlobalIndex(sourceGids[i])) {
-                this.println("EXPORT", "sourceGids[" + i + "]" + sourceGids[i]);
+                //this.println("EXPORT", "sourceGids[" + i + "]" + sourceGids[i]);
                 permuteFromLids[numPermuteGids] = i;
                 permuteToLids[numPermuteGids++] = targetVectorSpace.getLocalIndex(sourceGids[i]);
             }
@@ -141,8 +141,8 @@ public class Export extends JpetraObject {
             this.println("WRN", "In Export: A non-distributed globally vector space has remote elements.");
         }
         
-        this.println("EXPORT", "targetGids.length: " + targetGids.length);
-        this.println("EXPORT", "permuteToLids.length: " + permuteToLids.length);
+        //this.println("EXPORT", "targetGids.length: " + targetGids.length);
+        //this.println("EXPORT", "permuteToLids.length: " + permuteToLids.length);
         
         // if the sourceVectorSpace is distributed globally then we need to figure out which vnodes to send out exportGids to
         int[] exportVnodeIds;
@@ -156,7 +156,7 @@ public class Export extends JpetraObject {
                 for(int i = 0; i < exportGids.length; i++) {
                     // exportVnodeIds are set to -1 if no vnode owns the corresponding Gid
                     if(exportVnodeIds[i] == -1) {
-                        this.println("EXPORT", "Gid " + exportGids[i] + " not found.");
+                        //this.println("EXPORT", "Gid " + exportGids[i] + " not found.");
                         count++;
                     }
                 }

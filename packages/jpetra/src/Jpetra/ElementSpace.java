@@ -242,6 +242,17 @@ public class ElementSpace extends JpetraObject implements Externalizable {
             return;
         }
         
+        // a serial ElementSpace that acts like its global, can be used for multiplication, etc
+        if (numGlobalElements == numMyGlobalElements) {
+            this.distributedGlobally = true;
+            this.numGlobalElements = this.numMyGlobalElements;
+            this.minMyGlobalElementId = this.minGlobalElementId;
+            //this.minGlobalElementId = this.minMyGlobalElementId;
+            this.maxMyGlobalElementId = this.numMyGlobalElements + indexBase - 1;
+            this.maxGlobalElementId = this.maxMyGlobalElementId;
+            return;
+        }
+        
         this.distributedGlobally = true;
         // find the number of global elements by finding the sum of all local elements
         int[] sum = comm.sumAll(new int[]{this.numMyGlobalElements});

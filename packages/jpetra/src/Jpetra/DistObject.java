@@ -73,6 +73,9 @@ public abstract class DistObject extends JpetraObject {
     private int[] exportGids;
     private int[] exportVnodeIds;
     
+    // for flops
+    private FlopCounter flops;
+    
     /**
      * Does nothing.
      */
@@ -250,4 +253,33 @@ public abstract class DistObject extends JpetraObject {
     public abstract void copyAndPermute(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids, int combineMode);
 
     public abstract VectorSpace getVectorSpace();
+    
+    public void setFlopCounter(FlopCounter flops) {
+        this.flops = flops;
+    }
+    
+    public void updateFlops(double numFlops) {
+        if (this.flops != null) {
+            this.flops.updateFlops(numFlops);
+        }
+    }
+    
+    public void resetFlops() {
+        if (this.flops != null) {
+            this.flops.resetFlops();
+        }
+    }
+    
+    public double getFlops() {
+        if (this.flops != null) {
+            return this.flops.getFlops();
+        }
+        
+        return 0;
+    }
+    
+    public FlopCounter getFlopCounter() {
+        return this.flops;
+    }
+    
 }
