@@ -9,12 +9,14 @@ import java.io.PrintWriter;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.security.SecureClassLoader;
+import java.io.Serializable;
+
 /**
  *
  * @author  Jason Cross
  */
 public class JpetraApplicationServer extends JpetraObject {
-    Comm comm;
+    CcjComm comm;
     ServerSocket serverSocket;
     
     /** Creates a new instance of JpetraApplicationServer */
@@ -75,7 +77,7 @@ public class JpetraApplicationServer extends JpetraObject {
         catch (java.io.IOException e) {
             System.err.println(e.toString());
         }
-        int[] myIpAndPort = new int[5];
+        /*int[] myIpAndPort = new int[5];
         //byte[] myRawIp = this.serverSocket.getInetAddress().getAddress();
         byte[] myRawIp = null;
         try {
@@ -97,17 +99,27 @@ public class JpetraApplicationServer extends JpetraObject {
         myIpAndPort[3] = myRawIp[3];
         System.out.println(myRawIp[3]);
         myIpAndPort[4] = this.serverSocket.getLocalPort();
-        int[][] nodes = this.comm.gather(myIpAndPort);
+        int[][] nodes = this.comm.gather(myIpAndPort);*/
+        Serializable[] toGather = new Serializable[2];
+        toGather[0] = this.comm.getMyHostName();
+        toGather[1] = new Integer(this.serverSocket.getLocalPort());
+        Serializable[][] nodes = this.comm.gather(toGather);
         
         if (this.comm.getVnodeId() == 0) {
             try {
                 PrintWriter outFile = new PrintWriter(new FileOutputStream(fileName));
                 outFile.println(this.comm.getNumVnodes());
+                String hostName;
+                int port;
                 for(int i=0; i < nodes.length; i++) {
-                    for(int j=0; j < nodes[i].length; j++) {
+                    /*for(int j=0; j < nodes[i].length; j++) {
                         System.out.println(nodes[i][j] + "");
                         outFile.println(nodes[i][j] + "");
-                    }
+                    }*/
+                    hostName = (String) nodes[i][0];
+                    port = ((Integer) nodes[i][1]).intValue();
+                    outFile.println(hostName);
+                    outFile.println(port);
                 }
                 outFile.close();
             }

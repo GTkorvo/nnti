@@ -63,19 +63,19 @@ public class JpetraApplicationServerApplicationLoader extends JpetraObject {
             BufferedReader nodesFile = new BufferedReader(new FileReader(args[0]));
             String line = nodesFile.readLine();
             int numNodes = 0;
-            byte[] temp = new byte[4];
+            //byte[] temp = new byte[4];
             if (line != null) {
                 numNodes = Integer.parseInt(line);
             }
             InetAddress[] nodes = new InetAddress[numNodes];
             int[] ports = new int[numNodes];
             for(int i=0; i < nodes.length; i++) {
-                temp[0] = Byte.parseByte(nodesFile.readLine());
+                /*temp[0] = Byte.parseByte(nodesFile.readLine());
                 temp[1] = Byte.parseByte(nodesFile.readLine());
                 temp[2] = Byte.parseByte(nodesFile.readLine());
-                temp[3] = Byte.parseByte(nodesFile.readLine());
+                temp[3] = Byte.parseByte(nodesFile.readLine());*/
+                nodes[i] = InetAddress.getByName(nodesFile.readLine());
                 ports[i] = Integer.parseInt(nodesFile.readLine());
-                nodes[i] = InetAddress.getByAddress(temp);
             }
             nodesFile.close();
             

@@ -61,6 +61,8 @@ public class CcjLink extends ColMember {
      */
     private int rank;
     
+    private String hostName;
+    
     /**
      * Contacts the root vnode and joins the vnode
      * <code>group</code> unless <code>this</code> is the root vnode, then it
@@ -71,6 +73,7 @@ public class CcjLink extends ColMember {
         this.groupMaster = groupMaster;
         
         this.numVnodes = groupMaster.getNumberOfCpus();
+        this.hostName = groupMaster.getMyHostName();
         
         // notice that the group name is a string
         this.groupMaster.addMember("myGroup", this);
@@ -82,6 +85,10 @@ public class CcjLink extends ColMember {
         // calls the run method
         // not used by CcjLink
         // begin();
+    }
+    
+    public String getMyHostName() {
+        return this.hostName;
     }
     
     /**
@@ -427,6 +434,22 @@ public class CcjLink extends ColMember {
         
         try {
             rec = (CcjGatherIntArray) gather(group, rec, in, 0);
+            
+            if (group.getRank(this) == 0) {
+                return rec.getAllElements2dArray();
+            }
+        }
+        catch (CCJException e) {
+            JpetraObject.println("ERR", "In CCJ gather: " + e);
+        }
+        return null;
+    }
+    
+    public Serializable[][] gather(Serializable[] in) {
+        CcjGatherSerializableArray rec = new CcjGatherSerializableArray(group.size());
+        
+        try {
+            rec = (CcjGatherSerializableArray) gather(group, rec, in, 0);
             
             if (group.getRank(this) == 0) {
                 return rec.getAllElements2dArray();

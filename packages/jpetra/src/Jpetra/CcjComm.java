@@ -361,8 +361,16 @@ public class CcjComm extends JpetraObject implements Comm {
         return this.myCcjLink.gather(in);
     }
     
+    public Serializable[][] gather(Serializable[] in) {
+        return this.myCcjLink.gather(in);
+    }
+    
     public Serializable maxAll(Serializable in) {
         return this.myCcjLink.maxAll(in);
+    }
+    
+    public String getMyHostName() {
+        return this.myCcjLink.getMyHostName();
     }
     
 }

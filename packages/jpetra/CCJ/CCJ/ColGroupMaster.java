@@ -111,6 +111,10 @@ final public class ColGroupMaster {
         return (String)host_names.get(id);
     }
     
+    public static String getMyHostName() {
+        return hostName;
+    }
+    
     public void addMember(String groupName, ColMember member)
     throws CCJException, GroupAlreadyActiveException {
         try {

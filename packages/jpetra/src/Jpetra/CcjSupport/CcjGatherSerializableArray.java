@@ -114,4 +114,8 @@ public class CcjGatherSerializableArray implements Partitionable {
         
         return returnResults;
     }
+    
+    public Serializable[][] getAllElements2dArray() {
+        return this.allElements;
+    }
 }
