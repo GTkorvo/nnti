@@ -95,8 +95,7 @@ easy integration with other solver packages and we deliver our software to
 the outside community via the Gnu Lesser General Public License
 (LGPL)~\cite{gnu-license-site}.
 This report provides an overview of Trilinos, discussing the objectives, history,
-current development and
-future plans of the project.
+current development and future plans of the project.
     \end{abstract}
 
 
@@ -142,7 +141,9 @@ Barth.
 The Trilinos Project grew out of a group of established numerical algorithms
 efforts at Sandia, motivated by  a recognition that a modest degree of 
 coordination among these efforts could have a large positive impact on the quality and
-usability of the software we produce.  This document describes the Trilinos project,
+usability of the software we produce and therefore enhance the
+research, development and integration of new solver algorithms into
+applications.  This document describes the Trilinos project,
 focusing on the project philosophy and description, and
 providing the reader with an overview of the project in its current state.  It also
 includes brief developer and user guides.
@@ -170,14 +171,40 @@ includes brief developer and user guides.
 
 \section{Introduction}
 
-Trilinos is.
+Research efforts in advanced solution algorithms and parallel solver
+libraries have historically had a large impact on engineering and
+scientific computing.  Algorithmic advances increase the range
+of tractable problems and reduce the cost of solving existing
+problems.  Well-designed solver libraries provide a mechanism for
+leveraging solver development across a broad set of applications and
+minimize the cost of solver integration.  Emphasis is
+required in both new algorithms and new solver frame
+works to achieve the maximum impact of efforts.
 
-\section{A Brief Overview of Some Object-Oriented Concepts}
+The Trilinos project encompasses a variety of efforts that are to some
+extent self-contained but at the same time inter-related.  The
+Trilinos design allows individual packages to grow and mature
+autonomously to the extent the algorithms and package developers
+dictate. 
 
-Object-oriented.
+Integration of a package into Trilinos, and what Trilinos can provide
+to a package, have multiple possibilities
+that will be discussed in Section~\ref{sect:TrilinosDesign}.
+Section~\ref{sect:EpetraAndTSF} discusses two special Trilinos
+packages: Epetra and TSF.  The general definition of a Trilinos
+package is presented in Section~\ref{sect:PackageDefinition}
+
+An overview of current algorithmic and software research and
+development is given in Sections~\ref{sect:Algorithms}
+and~\ref{sect:Software}, respectively.  Finally this document contain
+three appendices.  Appendix~\ref{sect:OOTutorial} gives a brief
+tutorial on object-oriented concepts for readers who are unfamiliar
+with the area.  Appendix~\ref{sect:UserGuide} provides a brief User Guide
+for Trilinos and finally Appendix~\ref{sect:DeveloperGuide} provides a
+set of policies and procedures for Trilinos developers.
 
 \section{Trilinos Design Philosophy}
-
+\label{sect:TrilinosDesign}
 Each Trilinos package is a self-contained, independent piece
 of software with its own set of requirememts, its own development team
 and a group of users.  Because of this,
@@ -196,9 +223,10 @@ integrate a package into Trilinos.  In particular, the following are
 provided:
 \begin{itemize}
 \item Configuration management:
-Autoconf~\cite{AutoconfManual},  Automake~\cite{Automake} and
+Autoconf~\cite{Autoconf},  Automake~\cite{Automake} and
 Libtool~\cite{Libtool} provide a robust, full-featured set of tools for
-building software across a broad set of platforms.  Although these
+building software across a broad set of platforms (see also the ``Goat
+Book''~\cite{GoatBook}).  Although these
 tools are not official standards, they are commonly used in many
 packages.  Many existing
 Trilinos packages use Autoconf and Automake (and will soon use
@@ -241,7 +269,7 @@ Trilinos website~\cite{Trilinos-home-page}.
 \end{itemize}
 
 \section{Epetra and TSF: Two Special Trilinos Packages}
-
+\label{sect:EpetraAndTSF}
 In order to understand what Trilinos provides beyond the
 contributions of each Trilinos package, we briefly discuss two special
 Trilinos packages: Epetra and TSF.  These two packages are complimentary,
@@ -283,11 +311,11 @@ solvers and can bring multiple solvers to bear on a single problem.
 
 
 \section{Trilinos Package Interoperability Mechanisms}
-
+\label{sect:PackageDefinition}
 As mentioned above, what a package {\it must} do to be called a Trilinos
 package is minimal, and varies with each package.  In this section we
 list the primary mechanisms for a package to become part of Trilinos.
-Note that each mechanism is an extension to or augmentation of package
+Note that each mechanism is an extension or augmentation of package
 capabilities that creates connections between packages.  
 
 \subsection{Package Accepts User Data as Epetra Objects}
@@ -300,27 +328,140 @@ application that has built its data using Epetra.  We expect every
 Trilinos package to implement this mechanism in some way.  Since
 Epetra provides a variety of ways to extract data from an Epetra
 object, minimally we expect that a package can at least copy data from
-the user objects.
+the user objects that were built using Epetra.
 
 \subsection{Package Callable via TSF Interfaces}
+TSF provides a powerful set of abstract interfaces that can be used to
+interface to a variety of solver packages.  TSF can accept
+pre-constructed solver objects, e.g., preconditioners, iterative
+solvers, etc., by simple encapsulation or it can
+construct solver objects using one of a variety of factories.  (See
+Appendix~\ref{sect:OOTutorial} for the definition of a factory.)  Once
+constructed, a solver object can be further modified by passing it a
+parameter list containing a list of key-value pairs that can control
+solver behavior when it is trying to solve a problem.  For example,
+the parameter list could specify a residual for an iterative solver.
+
+A package is callable via TSF if it implements one or more of the TSF
+abstract class interface, making it available to TSF users as one of a
+suite of possible solver options.
+
+\subsection{Package Builds Under Trilinos {\tt configure} Scripts}
+Trilinos uses Autoconf~\cite{Autoconf} and Automake~\cite{Automake} to
+build libraries and test suites.  The Trilinos directory structure
+keeps each Trilinos package completely self-contained.  As such, each
+package is free to use its own configuration and build process.  At
+the same time, Trilinos has a top-level configure script that searches
+the directory structure for the existence of other configure scripts,
+executing one if it is found, passing on any parameter definitions
+from the top level.  Similarly, the make process is also recursive.
+
+A package may easily be automatically built from the top-level
+Trilinos configuration and make process by copying and modifying the
+Autoconf and Automake scripts from another package.  The benefit for
+doing this is that Autoconf and Automake improve the portability of a
+package across a broad set of platforms.  Also, Automake provides a
+rich set of targets for building libraries, software distributions,
+test suites and installation processes.  If a package adopts the
+Trilinos configuration and build process, it will be built
+automatically along with a large number of other Trilinos packages.
 
 \subsection{Package Can Use Epetra Internally}
-\subsection{Package Builds Under Trilinos {\tt configure} Scripts}
 
-\section{Overview of Current Algorithms Research}
-
-\subsection{Robust Incomplete Factorizations}
-\subsection{Block Krylov Methods}
-\subsection{Complex Valued Linear Systems}
-\subsection{Tensor Methods for Nonlinear Systems}
+The final interoperability mechanism available to a package is that of
+using Epetra objects as the
+internal objects for storing vector, matrices, etc. that are seldom or
+never seen by the user.  In many instances, this mechanism has no
+practical advantages.  However, in some instances, there can be a
+saving in storage requirements.  Furthermore, by using Epetra objects
+internally, a package can in turn use other Trilinos packages to
+manipulate its own internal objects.
 
 \section{Overview of Current Package Development}
 
 \subsection{The Petra Object Model}
 \label{subsect:PetraObjectModel}
-\subsection{Epetra}
-\subsection{Tpetra}
-\subsection{Jpetra}
+The Petra class libraries provide a
+foundation for all Trilinos solver development.  Petra provides object classes for
+constructing and using parallel, distributed memory matrices and vectors.  Petra exists in
+multiple forms.  Its most basic form is as an object model~\cite{HeroHoekWill2002}.
+As such, it is an abstract 
+description of a variety of vector, matrix and supporting classes, along with a description of
+how these classes interact.  There are presently three implementations
+of the Petra Object Model: Epetra, Tpetra and Jpetra.
+
+\subsection{Epetra: Essential Implementation of Petra Object Model}
+
+Epetra~\cite{Epetra-User-Guide}, the current production version of Petra,
+ is written for real double precision scalar field data only, and
+restricts itself to a stable core
+of the C++ language standard.  As such, Epetra is very portable and stable, and  
+is accessible to Fortran and C users.  
+Epetra is unique in that it combines in a single package (i) support for generic parallel
+machine descriptions, (ii) extensive use of standard numerical libraries, (iii) use of best
+practices in object-oriented C++ programming and (iv) parallel data redistribution.
+Other basic linear algebra packages, e.~.g.~ the Template Numerical Toolkit~\cite{TNT-site},
+PETSc~\cite{petsc-manual} and the Matrix Template Library~\cite{SiekLums98}, feature one
+or two of these aspects only.  The availability of Epetra has facilitated rapid development
+of numerous applications and solvers at Sandia because many of the complicated issues of
+working on a parallel distributed memory machine are handled by Epetra.
+
+Application developers can use Epetra to construct and manipulate matrices
+and vectors, and then pass these objects to most Trilinos solver components.  Furthermore,
+solver developers can develop many new algorithms relying solely on Epetra classes to
+handle the intricacies of parallel execution.  Epetra also has extensive parallel data  
+redistribution capabilities, including an interface to the Zoltan load-balancing
+library~\cite{zoltan-ug}.
+
+\subsection{Tpetra: Templated C++ Implementation of Petra Object Model}
+
+In addition to Epetra, we have started development of a templated version of Petra,
+called Tpetra, that implements the scalar field as a template type.  When fully developed,
+this version would allow
+matrices and vectors to be composed of real or complex, and single or double precision scalar
+values.  Furthermore, in principle, any data type could be used as the scalar field type as long
+as it supported basic mathematical operations such as addition and multiplication and
+inversion. Specifically, we could compute using an interval scalar field, matrices, integers,
+etc., without any additional code development in Tpetra.  Additionally, Tpetra would also
+use the C++ language standard more fully.  In particular, it would utilize the Standard
+Template Library (STL)~\cite{Stroustrup}, to provide maximal
+algorithmic efficiency with minimal code
+development.
+
+We will fully develop Tpetra as a peer library to Epetra. By using partial
+specialization of templates, we will base Tpetra on established libraries such as the
+BLAS~\cite{BLAS1,BLAS2,BLAS3} and LAPACK~\cite{lapack} and therefore acquire the
+performance and robustness of these libraries.
+Like Epetra, Tpetra will be written for generic parallel distributed
+memory computers whose nodes are
+potentially shared memory multiprocessors.
+
+\subsection{Jpetra: Java Implementation of Petra Object Model}
+
+In addition to Tpetra, we have started a Java implementation of Petra.  The primary design
+goals of this project are to produce a library that is a high performance, pure Java
+implementation of Petra.  By restricting ourselves to Java and avoiding the use of the Java
+Native Interface (JNI)~\cite{JNI-site} to link to other libraries, we
+get the true portability that Java
+promises.  The fundamental implication of these goals is that we cannot rely on
+BLAS~\cite{BLAS1,BLAS2,BLAS3}, LAPACK~\cite{lapack} or MPI~\cite{MPI}
+since they are not written in Java, and we do not use the JNI.
+As such, we must track the development of pure Java equivalents of these libraries.  Several
+efforts, including Ninja~\cite{MoreMidkGuptArtiWuAlma2001} and
+MPJ~\cite{CarpGetoJuddSkjeFox2000}, provide equivalent functionality to the BLAS, LAPACK and
+MPI, but are completely written in Java.
+
+We will fully implement Jpetra as a peer library to Epetra.  By making extensive use of Java
+interfaces, we can create loose dependencies on emerging BLAS, LAPACK and MPI replacements as
+they become mature and stable.  Recently, several research
+efforts~\cite{MoreMidkGuptArtiWuAlma2001,SCIMARK-site}
+have shown that there is no fundamental performance bottleneck using Java.  Instead, Java
+compilers and user practices have been the issue.  As a result, Java holds much promise as a
+high performance computing language.  Jpetra will facilitate adoption of Java in scientific and
+engineering applications.   Java also has native graphical user interfaces (GUI) support.  A
+significant part of Jpetra will be the development of GUI tools for visualization and
+manipulation of Jpetra objects.
+
 
 \subsection{TSF}
 
@@ -372,45 +513,10 @@ the user objects.
 	    alive actually lived back then.
 
 
-    \section{Some Other Appendix}
-	Just to show what a second Appendix would look like. It contains
-	a table. Each appendix is supposed to be self-contained, so
-	tables and figures are not supposed to show up in the main
-	table of contents. There can be a separate table of contents
-	for each appendix.
-
-	\begin{table}[ht]
-	    \centering
-	    \caption{A small table}
-	    \bigskip
-
-	    \begin{tabular}{|c|c|}
-		\hline
-		    A & B  \\ \hline
-		    C & D  \\ \hline
-	    \end{tabular}
-	    \label{tab3}
-	\end{table}
-
-	\begin{figure}[ht]
-	    \centering
-	    \begin{picture}(50,50)(0,0)
-		\put(25,25){\circle{1}}
-		\put(25,25){\circle{5}}
-		\put(25,25){\circle{10}}
-		\put(25,25){\circle{15}}
-		\put(25,25){\circle{20}}
-		\put(25,25){\circle{25}}
-		\put(25,25){\circle{30}}
-		\put(25,25){\circle{35}}
-		\put(25,25){\circle{40}}
-		\put(25,25){\circle{45}}
-		\put(25,25){\circle{50}}
-	    \end{picture}
-	    \caption{Dizzy yet?}
-	    \label{fig4}
-	\end{figure}
-
+\section{A Brief Overview of Some Object-Oriented Concepts}
+\label{sect:OOTutorial}
+Object-oriented.
+Define ``factory''.
     % \printindex
 
     \begin{SANDdistribution}
