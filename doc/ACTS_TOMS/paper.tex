@@ -2,7 +2,7 @@
 \usepackage{graphicx}
 \newcommand{\bsinglespace}{\renewcommand{\baselinestretch}{1.2}\small\normalsize}
 \newcommand{\esinglespace}{}
-\markboth{Michael Heroux et al.}{An Overview of Trilinos}
+\markboth{Michael A. Heroux et al.}{An Overview of Trilinos}
 
 \title{An Overview of the Trilinos Project}
 
@@ -23,8 +23,8 @@ JAMES M. WILLENBRING \\
 ALAN WILLIAMS \\
 Sandia National Laboratories \\
 and \\
-Kendall S. Stanley \\
-500 Software}
+KENDALL S. STANLEY \\
+Oberlin College}
 
 \begin{abstract}
 The Trilinos Project is an effort to facilitate the design, development, 
@@ -131,7 +131,7 @@ packages: Petra and TSF.  The general definition of a Trilinos
 package is presented in Section~\ref{sect:PackageDefinition}
 An overview of current software research and
 development is given in Section~\ref{sect:Software}. 
-Section~\cite{sect:meros} presents the Meros package in greater detail
+Section~\ref{sect:meros} presents the Meros package in greater detail
 because it illustrates how multiple Trilinos packages can be combined to quickly provide
 production implementations of state-of-the-art algorithms.
 Finally, Section~\ref{sect:SQA} discusses the role of Trilinos to improve software quality
@@ -219,7 +219,7 @@ maintained in a CVS~\cite{CVS} repository that is accessible via a
 secure connection from anywhere on the internet.  It is also browsable
 via a web-based interface package called Bonsai~\cite{Bonsai}.  Features 
 and bug reports are tracked using Bugzilla~\cite{Bugzilla}, and email 
-lists are
+lists~\cite{Mailman} are\
 maintained for Trilinos as a whole and for each package.  Support for new
 packages can easily be added.  All tools are accessible from the main
 Trilinos website~\cite{Trilinos-home-page}.
@@ -1030,8 +1030,184 @@ Trilinos website~\cite{Trilinos-home-page}.
 \section{An Illustration of Trilinos Interoperability}
 \label{sect:meros}
 
+The Meros package in Trilinos is designed to provide scalable
+preconditioners for the incompressible Navier-Stokes and similarly
+structured problems~\cite{ElmaHowlShadTumi2003}.  
+It is based on and extends the work of Kay,
+Loghin and Wathen~\cite{KayLoghWath2002} and Silvester, Elman, Kay and
+Wathen~\cite{SilvElmaKayWath2001}.  
+The discrete problem can be written in the form
+\begin{equation}
+\label{eq:NSmatrix}
+\left(\begin{array}{cc}
+	F & B^T \\
+	B & 0 \\
+\end{array}\right)
+\left(\begin{array}{l}
+	{\bf u} \\
+	p \\
+\end{array}\right)
+=
+\left(\begin{array}{l}
+	{\bf f} \\
+	0 \\
+	\end{array}\right)
+\end{equation}
+
+The first step in realizing the preconditioner is to formally define
+the block factorization:
+\begin{equation}
+\label{eq:blockfactor}
+\left(\begin{array}{cc}
+	F & B^T \\
+	B & 0 \\
+\end{array}\right)
+=
+\left(\begin{array}{cc}
+	I & 0  \\
+	BF^{-1} & I \\
+\end{array}\right)
+\left(\begin{array}{cc}
+	F & B^T \\
+	0 & -S \\
+\end{array}\right)
+\end{equation}
+where $S = BF^{-1}B^T$ is the Shur complement.  Applying the inverse
+of the third term in Equation~\ref{eq:blockfactor} to the equation
+itself we get
+\begin{equation}
+\label{eq:blockfactor1}
+\left(\begin{array}{cc}
+	F & B^T \\
+	B & 0 \\
+\end{array}
+\right)
+\left(\begin{array}{cc}
+	F & B^T \\
+	0 & -S \\
+\end{array}\right)^{-1}
+=
+\left(\begin{array}{cc}
+	I & 0  \\
+	BF^{-1} & I \\
+\end{array}\right)
+\end{equation}
+If we could use the matrix
+\begin{equation}
+\label{eq:exactprecon}
+\left(\begin{array}{cc}
+	F & B^T \\
+	0 & -S \\
+\end{array}\right)^{-1}
+\end{equation}
+as a right preconditioner for a Krylov method applied to our 
+original problem (Equation~\ref{eq:NSmatrix}) then our 
+preconditioned operator would be the right-hand-side of
+Equation~\ref{eq:blockfactor} and at most 2 iterations of GMRES would
+be needed for convergence.  Since this is not practical, we instead
+observe that we can write
+\begin{equation}
+\label{eq:blockfactor2}
+\left(\begin{array}{cc}
+	F & B^T \\
+	0  &-S \\
+\end{array}\right)^{-1}
+=
+\left(\begin{array}{cc}
+F^{-1} & 0 \\
+0      & I \\
+\end{array}\right)
+\left(\begin{array}{cc}
+I & -B^T \\
+0  & I \\
+\end{array}\right)
+\left(\begin{array}{cc}
+I & 0 \\
+0  & -S^{-1} \\
+\end{array}\right)
+\end{equation}
+In this form it is clear that, to apply the above
+preconditioner, we need to in turn apply two nontrivial operators:
+$S^{-1}$ to a vector in the discrete pressure space, and $F^{-1}$ to a
+vector in the discrete velocity space.  Since these tasks are too
+expensive, we instead use approximations to $S^{-1}$ and
+$F^{-1}$.
+
+A variety of approximations to $S^{-1}$ and $F^{-1}$ have been
+developed~\cite{ElmaHowlShadTumi2003}.  In general,
+the strength of this preconditioning approach is that
+well-established preconditioning methods can be applied on the
+subblock operators, in turn building up a preconditioner for
+fully-coupled problem.  In particular, because the subblocks are
+simpler than the global problem, robust multi-level preconditioners
+can be defined that provide near-mesh independent convergence
+properties for the global problem.
+
+The Meros package utilizes many features of Trilinos in order to
+provide a scalable, parallel distributed memory implementation of the
+preconditioners described above.  It takes advantage of the abstract
+interfaces in TSF, both to access other Trilinos packages and to
+implicitly construct approximations of $S^{-1}$ and $F^{-1}$.  In
+addition, it uses
+the ML package for implementing multi-level preconditioners, AztecOO
+for smoothers, Ifpack for algebraic preconditioners, NOX for nonlinear
+iterations and Epetra for
+interfacing to the application and for basic parallel linear algebra.
+Figure~\ref{Figure:MerosBlockDiagram} 
+\begin{figure}
+\begin{center}
+\includegraphics[height=3.5in]{../CommonFiles/MerosBlockDiagram}
+\end{center}
+\caption{\label{Figure:MerosBlockDiagram}Meros Interaction Diagram}
+\end{figure}
+illustrates the collaboration and use of Trilinos packages by Meros
+in the context of MPSalsa~\cite{MPSalsa-User-Guide}, a reacting flow modeling
+application. It is also worth noting that Meros was integrated into
+the Trilinos framework using the ``new\_package'' package.  Integration
+took less that one day.
+
+
 \section{Software Engineering Issues}
 \label{sect:SQA}
+As computer modeling and simulation play an increasingly important
+role in engineering and science, a critical issue is software
+quality.  Multiple issues are important, but they can be summed up as
+follows: {\it If computer modeling and simulation is to be on the critical path 
+of engineering and scientific processes, those who rely on our software must
+ have confidence in our computational
+results.}  It is worth noting that, although much of the work we do to
+improve software quality is technical in nature, ultimately it is our
+ability to instill trust in our clients that determines whether or not
+our software will be used in a production environment.
+
+Much of Trilinos was developed under funding from the Advanced
+Scientific Computing Initiative (ASCI).  A major focus of ASCI is
+Software Quality Engineering (SQE), which is the set of practices for
+ensuring that
+high-quality, relevant software is produced, and that software
+processes are well-defined, documented and followed.  The present ASCI
+SQE practices for Sandia National Laboratories are defined
+in~\cite{ASCISQE2003}.  This document describe 47 practices that must
+be adopted by each major software project receiving ASCI funding.
+These practices cover areas such as software requirements, design,
+implementation and maintenance, project management, tracking and
+oversight, verification and validation, training, risk management,
+etc.  
+
+One of the most important goals of Trilinos is to minimize the work
+of SQE on the individual package development teams.  Given
+that each package is typically written by five or fewer people,
+implementation of the ASCI SQE process by each package team would be
+almost impossible.  Fortunately, the Trilinos infrastructure
+can address the majority of the ASCI SQE practice, fully or
+partially.  In fact, of the 47 practices listed in~\cite{ASCISQE2003},
+32 of them are the sole responsibility of the Trilinos framework, and
+the framework provides significant support for the remaining
+15~\cite{Trilinos-Dev-Guide-II}.   Only those practices that are truly
+unique to a package are primarily package responsibilities.  This gives
+package developers the ability to focus on the core issues of
+algorithm design and implementation, and package level documentation
+and testing.
 
 \section{Conclusions}
 
