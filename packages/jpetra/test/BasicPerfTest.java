@@ -6,19 +6,69 @@ import Jpetra.*;
  * Modified BasicPerTest from epetra/test.
  * @author  Jason Cross
  */
-public class BasicPerfTest extends JpetraObject {
+public class BasicPerfTest extends JpetraObject implements JpetraServerApplication {
     public static final boolean DO_TRANSPOSE = false;
-    public BasicPerfTest(boolean verbose, boolean summary, int numNodesX, int numNodesY, int numProcsX, int numProcsY, int numPoints, String ccjHostsFile) {
+    Comm comm;
+    
+    public BasicPerfTest() {
+        // empty
+    }
+    
+    public void runApplication(String[] args) {
+        boolean verbose = false;
+        boolean summary = false;
+        
+        // Check if we should print verbose results to standard out
+        if ((args.length > 5) && (args[5].charAt(0) == '-' ) && (args[5].charAt(1) == 'v')) {
+            verbose = true;
+        }
+        
+        // Check if we should print verbose results to standard out
+        if ((args.length > 5) && (args[5].charAt(0) == '-') && (args[5].charAt(1) == 's')) {
+            summary = true;
+        }
+        
+        if(args.length < 5) {
+            System.err.println("Usage: ");
+            System.err.println(" NumNodesX NumNodesY NumProcX NumProcY NumPoints [-v|-s]");
+            System.err.println("where:");
+            System.err.println("NumNodesX         - Number of mesh nodes in X direction per processor");
+            System.err.println("NumNodesY         - Number of mesh nodes in Y direction per processor");
+            System.err.println("NumProcX          - Number of processors to use in X direction");
+            System.err.println("NumProcY          - Number of processors to use in Y direction");
+            System.err.println("NumPoints         - Number of points to use in stencil (5 or 9 only)");
+            System.err.println("NumPoints         - CcjComm hosts file name");
+            System.err.println("-v|-s             - (Optional) Run in verbose mode if -v present or summary mode if -s present");
+            System.err.println(" NOTES: NumProcX*NumProcY must equal the number of processors used to run the problem. Example:");
+            System.err.println("mpirun -np 32  << argv[0] <<  10 12 4 8 -v");
+            System.err.println(" Run this program on 32 processors putting a 10 X 12 subgrid on each processor using 4 processors ");
+            System.err.println(" in the X direction and 8 in the Y direction.  Total grid size is 40 points in X and 96 in Y.");
+            System.exit(-1);
+        }
+        
+        int numNodesX = Integer.parseInt(args[0]);
+        int numNodesY = Integer.parseInt(args[1]);
+        int numProcsX = Integer.parseInt(args[2]);
+        int numProcsY = Integer.parseInt(args[3]);
+        int numPoints = Integer.parseInt(args[4]);
+        
+        this.doBasicPerfTest(verbose, summary, numNodesX, numNodesY, numProcsX, numProcsY, numPoints);
+    }
+    
+    public void doBasicPerfTest(boolean verbose, boolean summary, int numNodesX, int numNodesY, int numProcsX, int numProcsY, int numPoints) {
         int j;
         double elapsed_time;
         double total_flops;
         double MFLOPs;
         
-        initializeOutput();
         this.outputStreams.put("SUMMARY", new Output("", summary, System.out, false, System.out));
         this.setRootPrint("VERBOSE", verbose);
         
-        Comm comm = new CcjComm(ccjHostsFile);
+                
+        // since java loads things when needed, there is a good chance we need to warm up to get proper results
+        // so we will make some small matrices and vectors, do some global ops, then set them to null
+        // before moving onto the test, this should make java load all necessary files
+        this.warmup(comm);
         
         if (verbose || (summary && comm.getNumVnodes()==1)) {
             System.out.println(" Number of local nodes in X direction  = " + numNodesX);
@@ -202,8 +252,6 @@ public class BasicPerfTest extends JpetraObject {
             this.print("SUMMARY", "Update\t");
         }
         this.println("SUMMARY", MFLOPs + "");
-        
-        System.exit(0);
     }
     
     // Constructs a 2D PDE finite difference matrix using the list of x and y offsets.
@@ -278,7 +326,10 @@ public class BasicPerfTest extends JpetraObject {
         double dnumPoints = numPoints;
         int nx = numNodesX*numProcsX;
         
-        RandomNumberGenerator random = new RngPackRandom(RngPackRandom.MT, 0.0, 10.0);
+        //RandomNumberGenerator random = new RngPackRandom(RngPackRandom.MT, 0.0, 10.0);
+        RandomNumberGenerator random = new JavaRandom();
+        random.setRange(0.0, 10.0);
+        
         for (int i=0; i<numMyEquations; i++) {
             
             int rowID = map.getGlobalIndex(i);
@@ -352,6 +403,39 @@ public class BasicPerfTest extends JpetraObject {
     }
     
     
+    void warmup(Comm comm) {
+        VectorSpace warmVS = new VectorSpace (new ElementSpace(10*comm.getNumVnodes(), 0, comm));
+        CisMatrix warmA = new CisMatrix(warmVS, CisMatrix.ROW_ORIENTED);
+        int numMyEntries = warmVS.getNumMyGlobalEntries();
+        int[] indices = new int[numMyEntries];
+        double[] values = new double[numMyEntries];
+        for(int i=0; i < indices.length; i++) {
+            indices[i] = i;
+            values[i] = i;
+        }
+        for(int i=0; i < numMyEntries; i++) {
+            warmA.insertEntries(i, indices, values, DistObject.REPLACE);
+        }
+        warmA.fillComplete();
+        Vector warmX = new Vector(warmVS, values);
+        Vector warmB = new Vector(warmVS, new double[values.length]);
+        warmA.multiply(CisMatrix.USE_A, warmX, warmB);
+        warmX.dot(warmB);
+        warmX.norm2();
+        warmX.update(1.0, warmB, 1.0, warmB, 0.0);
+        // warmup complete, set all warmup objects to null to make sure they die
+        warmVS = null;
+        warmA = null;
+        warmX = null;
+        warmB = null;
+        indices = null;
+        values = null;
+    }
+    
+    public void setComm (Comm comm) {
+        this.comm = comm;
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -394,6 +478,11 @@ public class BasicPerfTest extends JpetraObject {
         int numPoints = Integer.parseInt(args[4]);
         String ccjHostsFile = args[5];
         
-        new BasicPerfTest(verbose, summary, numNodesX, numNodesY, numProcsX, numProcsY, numPoints, ccjHostsFile);
+        BasicPerfTest test = new BasicPerfTest();
+        test.initializeOutput();
+        test.setComm(new CcjComm(ccjHostsFile));
+        test.doBasicPerfTest(verbose, summary, numNodesX, numNodesY, numProcsX, numProcsY, numPoints);
+                
+        System.exit(0);  // CCJ causes the JVM not to exit unless System.exit(0) is explicitly called
     }
 }
