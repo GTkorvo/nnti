@@ -139,7 +139,7 @@ in~\cite{Sand98-0730}.
 
 \section{Introduction}
 
-Here we describe to design of a set of C++ interfaces and concrete
+Here we design and describe a set of C++ interfaces and concrete
 implementations for the solution of a broad class of transient ordinary
 differential equations (ODEs) and differential algebraic equations (DAEs) in a
 consistent manner.
@@ -152,15 +152,19 @@ consistent manner.
 for the development of many different types of popular explicit and implicit
 initial-value ODE and DAE solvers.
 
-{}\item Exploit as much a possible a common set of software interfaces and
-utilities to combine support for ODEs and DAEs together.  Minimize specialized
-code and algorithms that apply only to special classes of ODEs and DAEs.
-
 {}\item Provide a single interface where an application can seamlessly select
 from one of a number of available time integration methods.
 
+{}\item Exploit as much as possible a common set of software interfaces and
+utilities to combine support for ODEs and DAEs together.  Minimize specialized
+code and algorithms that apply only to special classes of ODEs and DAEs.
+
 {}\item Provide an automated support framework for direct and adjoint
 sensitivity methods for ODEs and DAEs.
+
+{}\item Present an DAE/ODE interface for applications to implement that
+upwardly supports the computation of direct and adjoint sensitivities and
+other types of information.
 
 {}\item Provide support for general checkpointing of a time integration method
 and a uniform way to deal with different time integration methods.
@@ -169,27 +173,71 @@ and a uniform way to deal with different time integration methods.
 continue a computation exactly as if the method would have continued on as
 usual.
 
-{}\item As much as possible, build step-size adaptivity strategies independent
-from specific time integration methods.
-
-{}\item Present an DAE/ODE interface for applications to implement that
-upwardly supports the computation of direct and adjoint sensitivities and
-other types of information.
-
 {}\item Use the basic checkpointing capability to implement checkpointing
 methods for nonlinear adjoint sensitivity computations in a way that is
 independent of specific applications.
 
+{}\item As much as possible, build step-size and order adaptivity strategies independent
+from specific time integration methods.
+
 {}\item Allow applications detailed control over the time stepping algorithms
-to support breakpoints (i.e.\ discontinuities) and other such capabilities.
+to support breakpoints (e.g.\ for discontinuities) and pauses (e.g.\ for code coupling). 
 
 {}\item Allow basic time stepping algorithm building blocks to be composed
 together to build various types of operator splitting methods for complex
 physics and multi-physics coupling.
 
+{}\item Provide numerical algorithms to solve non-stiff and stiff ODEs (and implicit ODEs)
+
+{}\item Provide numerical algorithms to solve fully-implicit and semi-explicit index 1 DAEs
+
+{}\item Support both application provided and general methods for preconditioning.
+
+{}\item Provide concrete implementations for the following transient integration methods:
+  \begin{enumerate}
+  {}\item implicit/explicit BDF (multi-step) \\
+        including variable-order variable-step as per CVODE/IDA \cite{CVODE,IDA}.
+  {}\item generalized-alpha \cite{GeneralizedAlpha}.
+  {}\item explicit Runge Kutta (one-step) \cite{ERKMethods}.
+  {}\item Trapezoid \cite{Trapezoid}.
+  {}\item Pseudo-Transient Continuation \cite{PTC,PTCDAE}.
+  \end{enumerate}
+
+{}\item Operate efficiently on massively parallel distributed memory computers such as ``Red Storm".
+
+{}\item Document transient integration algorithms with references.
+
+{}\item Document and allow access to internal algorithm coefficients (so-called ``magic-numbers").
+
+{}\item Provide a well defined and documented way to add and modify existing transient integration algorithms.
+
+{}\item Provide an interface to estimating (local/global) accuracy/error in the solution.
+
+{}\item Be compatible with automatic differentiation (AD).
+
 \end{enumerate}
 
 ToDo: Spell out more requirements!
+
+
+
+\subsection{Wants for Rythmos}
+
+\begin{enumerate}
+
+{}\item Support the following transient integration methods:
+  \begin{enumerate}
+  {}\item implicit Runge Kutta (one-step) \cite{IRKMethods}.
+  {}\item general predictor-corrector methods.
+  {}\item discontinuous-Galerkin in time \cite{DGTime}.
+  {}\item finite-element in time \cite{FETime}
+  \end{enumerate}
+{}\item Be compatible with space/time discretizations.
+
+\end{enumerate}
+
+
+
 
 \section{Mathematical formulation for DAE/ODE solvers}
 \label{rythmos:scn:mathformulation}
