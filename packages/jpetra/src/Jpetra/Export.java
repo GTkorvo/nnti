@@ -28,6 +28,8 @@
 
 package Jpetra;
 
+import java.util.TreeSet;
+
 /**
  *
  * @author  Jason Cross
@@ -35,6 +37,14 @@ package Jpetra;
 public class Export extends JpetraObject {
     VectorSpace sourceVectorSpace;
     VectorSpace targetVectorSpace;
+    int numSameGids;
+    int numImports;
+    int[] exportLids;
+    int[] exportGids;
+    int[] permuteToLids;
+    int[] permuteFromLids;
+    int[] exportVnodeIds;
+    Distributor distributor;
     
     public Export(VectorSpace sourceVectorSpace, VectorSpace targetVectorSpace) {
         this.sourceVectorSpace = sourceVectorSpace;
@@ -56,7 +66,7 @@ public class Export extends JpetraObject {
             targetGids = new int[0];
         }
         
-        int numSameGids;
+        //int numSameGids;
         int minNumIds = Util.min(sourceGids.length, targetGids.length);
         this.println("STD", "sourceGids.length: " + sourceGids.length + " targetGids.length: " + targetGids.length);
         for (numSameGids = 0; numSameGids < minNumIds; numSameGids++) {
@@ -68,7 +78,7 @@ public class Export extends JpetraObject {
         
         int numPermuteGids = 0;
         int numExportGids = 0;
-        for (int i=numSameGids; i< sourceGids.length; i++) {
+        for (int i=numSameGids; i < sourceGids.length; i++) {
             if (targetVectorSpace.isMyGlobalIndex(sourceGids[i])) {
                 numPermuteGids++;
             }
@@ -77,10 +87,10 @@ public class Export extends JpetraObject {
             }
         }
         
-        int[] exportLids;
-        int[] exportGids;
-        int[] permuteToLids;
-        int[] permuteFromLids;
+        //int[] exportLids;
+        //int[] exportGids;
+        //int[] permuteToLids;
+        //int[] permuteFromLids;
         if (numExportGids > 0) {
             exportLids = new int[numExportGids];
             exportGids = new int[numExportGids];
@@ -102,6 +112,7 @@ public class Export extends JpetraObject {
         numExportGids = 0;
         for (int i=numSameGids; i < sourceGids.length; i++) {
             if (targetVectorSpace.isMyGlobalIndex(sourceGids[i])) {
+                this.println("STD", "sourceGids[i]" + sourceGids[i]);
                 permuteFromLids[numPermuteGids] = i;
                 permuteToLids[numPermuteGids++] = targetVectorSpace.getLocalIndex(sourceGids[i]);
             }
@@ -113,6 +124,89 @@ public class Export extends JpetraObject {
             }
         }
         
+        //TreeSet importVnodeIds = new TreeSet();
+        this.println("STD", "targetGids.length: " + targetGids.length);
+	this.println("STD", "permuteToLids.length: " + permuteToLids.length);
+        numImports = targetGids.length - numSameGids - permuteToLids.length;
+        /*for (int i=numSameGids; i < targetGids.length; i++) {
+            if (!sourceVectorSpace.isMyGlobalIndex(targetGids[i])) {
+                numImports++;
+            }
+        }*/
+        
+        int[] importGids = new int[numImports];
+        int importGidsIndex = 0;
+        this.println("STD", "importGids.length: " + importGids.length);
+        for (int i=numSameGids; i < targetGids.length; i++) {
+            if (!sourceVectorSpace.isMyGlobalIndex(targetGids[i])) {
+                importGids[importGidsIndex++] = targetGids[i];
+            }
+        }
+        
+        //int[] exportVnodeIds;
+        int[] importVnodeIds;
+        if (sourceVectorSpace.isDistributedGlobally()) {
+            exportVnodeIds = new int[exportGids.length];
+            importVnodeIds = new int[importGids.length];
+            int[][] tmp = targetVectorSpace.getRemoteVnodeIdList(exportGids);  // finds vnodeIds for exportGids
+            exportVnodeIds = tmp[0];
+            tmp = sourceVectorSpace.getRemoteVnodeIdList(importGids);  // finds vnodeIds for importGids
+            importVnodeIds = tmp[0];
+        }
+        else {
+            exportVnodeIds = new int[0];
+            importVnodeIds = new int[0];
+        }
+        
+        //Get rid of IDs not in Target Map
+        if(exportVnodeIds.length > 0) {
+            int count = 0;
+            for(int i = 0; i < exportVnodeIds.length; i++ ) {
+                if( exportVnodeIds[i] == -1 ) {
+                    count++;
+                }
+            }
+            if (count > 0) {
+                int[] newExportGids = null;
+                int[] newExportVnodeIds = null;
+                int count1 = exportVnodeIds.length - count;
+                if (count1 > 0) {
+                    newExportGids = new int[count1];
+                    newExportVnodeIds = new int[count1];
+                }
+                count = 0;
+                for(int i = 0; i < exportVnodeIds.length; i++)
+                    if(exportVnodeIds[i] != -1) {
+                        newExportGids[count] = exportGids[i];
+                        newExportVnodeIds[count] = exportVnodeIds[i];
+                        count++;
+                    }
+                exportGids = newExportGids;
+                exportVnodeIds = newExportVnodeIds;
+                this.println("STD", "Warning in Export: Source IDs not found in Target Map (Do you want to export from subset of Source Map?");
+            }
+        }
+        
+        int[][] tmp = new int[2][];
+        tmp[0] = exportLids;
+        tmp[1] = exportGids;
+        Util.sort(true, exportVnodeIds, new double[0][0], tmp);
+        
+        tmp[0] = new int[0];
+        tmp[1] = new int[0];
+        Util.sort(true, importVnodeIds, new double[0][0], tmp);
+        
+        
+        this.println("STD", "numImports: " + numImports);
+        
+        distributor = sourceVectorSpace.getComm().createDistributor();
+        distributor.createFromReceives(importVnodeIds);
+        
+        // need to do distributor.do
+        
+        //for (i=0; i< remoteGids.length; i++) {
+        //    remoteLids[i] = targetVectorSpace.getLocalIndex(remoteGids[i]);
+        //}
         
         this.println("STD", "LIDS  GIDS");
         this.println("STD", "----------");
@@ -128,4 +222,19 @@ public class Export extends JpetraObject {
         
     }
     
+    public Distributor getDistributor() {
+        return this.distributor;
+    }
+    
+    public int[] getExportLids() {
+        return this.exportLids;
+    }
+    
+    public int[] getExportGids() {
+        return this.exportGids;
+    }
+    
+    public int[] getExportVnodeIds() {
+        return this.exportVnodeIds;
+    }
 }

@@ -28,6 +28,8 @@
 
 package Jpetra;
 
+import java.io.Serializable;
+
 /**
  *
  * @author  Jason Cross
@@ -55,8 +57,9 @@ public abstract class DistObject extends JpetraObject {
         
     }
     
-    public void exportValues(DistObject distObjectSrc, Export exporter, int combineMode) {
-        
+    public void exportValues(DistObject distObjectSrc, Export exporter, Comm comm, int combineMode) {
+        Distributor distributor = exporter.getDistributor();
+        distributor.distribute(comm, exporter.getExportVnodeIds(), exporter.getExportGids(), exporter.getExportLids(), new Serializable[0]);
     }
     
     //public Comm getComm() {

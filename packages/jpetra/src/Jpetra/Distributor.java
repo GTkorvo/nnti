@@ -28,6 +28,8 @@
 
 package Jpetra;
 
+import java.io.Serializable;
+
 /**
  *
  * @author  Jason Cross
@@ -39,11 +41,14 @@ public interface Distributor {
      * @param remoteGlobalVnodeIds Array of vnode IDs that correspond to the vnodes that own the global elements specified by <code>remoteGlobalElementIds</code>.
      * @return Number of global elements this vnode will receive.
      */    
-    public int[] createFromRecieves(int[] remoteGlobalElementIds, int[] remoteGlobalVnodeIds);
+    //public int[] createFromRecieves(int[] remoteGlobalElementIds, int[] remoteGlobalVnodeIds, int[] exportElementIds, int[] exportVnodeIds);
+    public void createFromReceives(int[] importVnodeIds);
     
     /**
      *
      * @param exportVnodeIds The vnodes to export my global elements to.
      */    
     public int createFromSends(int[] exportVnodeIds);
+    
+      public void distribute(Comm comm, int[] exportVnodeIds, int[] exportGids, int[] exportLids, Serializable[] exportObjects);
 }

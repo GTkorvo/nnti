@@ -28,21 +28,62 @@
 
 package Jpetra;
 
+import java.io.Serializable;
+//import java.util.TreeSet;
+
 /**
  *
  * @author  Jason Cross
  */
 public class CcjDistributor extends JpetraObject implements Distributor {
-    
-public CcjDistributor() {
+    int numReceives;
+    public CcjDistributor() {
     }
     
-    public int[] createFromRecieves(int[] remoteGlobalElementIds, int[] remoteGlobalVnodeIds) {
+    /*public int[] createFromRecieves(int[] remoteGlobalElementIds, int[] remoteGlobalVnodeIds, int[] exportElementIds, int[] exportVnodeIds) {
         return null;  // !! not implemented
+    }*/
+    public void createFromReceives(int[] importVnodeIds) {
+        //TreeSet treeSet = new TreeSet();
+        this.numReceives = 0;
+        int current = -1;
+        for(int i=0; i < importVnodeIds.length; i++) {
+            if (current != importVnodeIds[i]) {
+                current = importVnodeIds[i];
+                this.numReceives++;
+                //treeSet.add(new Integer(importVnodeIds[i]));
+            }
+        }
+        
     }
     
     public int createFromSends(int[] exportVnodeIds) {
-        return 0; // !! not implemented
+        return 0;  // should change to public void
     }
     
+    public void distribute(Comm comm, int[] exportVnodeIds, int[] exportGids, int[] exportLids, Serializable[] exportObjects) {
+        Serializable[] importObjects = new Serializable[this.numReceives];
+        
+        // do async sends
+        int current = exportVnodeIds[0];
+        int start = 0;
+        int numSend = 0;
+        for(int i=0; i < exportVnodeIds.length; i++) {
+            if (current != exportVnodeIds[i]) {
+                // copy gids and objects from start to start+numSend
+                // do async_send to vnode current
+                this.println("STD", "sending to " + current);
+                // setup next array slice
+                start = i;
+                numSend = 1;
+                current = exportVnodeIds[i];
+            }
+            numSend++;
+        }
+        // do blocking receives
+        for(int i=0; i < this.numReceives; i++) {
+            // do receive
+            this.println("STD", "Waiting to receive... " + 1);
+        }
+    }
 }

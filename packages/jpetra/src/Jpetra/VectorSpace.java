@@ -34,6 +34,7 @@ package Jpetra;
  */
 public class VectorSpace extends JpetraObject {
     ElementSpace elementSpace;
+    Directory directory;
     
     public VectorSpace(ElementSpace elementSpace) {
         this.elementSpace = elementSpace;
@@ -82,8 +83,12 @@ public class VectorSpace extends JpetraObject {
         return this.elementSpace.getMyGlobalElementIds();
     }
     
-    public int[] getRemoteVnodeIdList(int[] remoteGlobalIndices) {
-        return this.elementSpace.getRemoteVnodeIdList(remoteGlobalIndices);
+    public int[][] getRemoteVnodeIdList(int[] remoteGlobalIndicies) {
+        if (this.directory == null) {
+            this.directory = new BasicDirectory(this);
+        }
+        
+        return directory.getDirectoryEntries(remoteGlobalIndicies);
     }
     
     public boolean isDistributedGlobally() {
@@ -100,10 +105,18 @@ public class VectorSpace extends JpetraObject {
     
     public int getMaxGlobalEntryId() {
         return this.elementSpace.getMaxGlobalElementId();
-    }    
+    }
     
     public Comm getComm() {
         return this.elementSpace.getComm();
+    }
+    
+    public int getNumRemainderIndices() {
+        return this.elementSpace.getNumRemainderIndices();
+    }
+    
+    public int getNumIndicesPerVnode() {
+        return this.elementSpace.getNumIndicesPerVnode();
     }
     
     // !! not yet implemented

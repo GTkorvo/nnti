@@ -125,6 +125,8 @@ public interface Comm {
      */
     public int[] gatherAll(int [] myElements);
     
+    public int[][] gatherAll2dArray(int[] myElements);
+    
     /**
      * Takes a value from all vnodes in the communicator and
      * creates an ordered contiguous list of those values in each vnode.
@@ -282,6 +284,45 @@ public interface Comm {
     public void setMyVnodeID(int newVnodeID);
     
     /**
+     * Sends an int arry to a single specified vnode.
+     * <b>Note<b>: this is NOT a blocking operation.
+     *
+     * @param exportObject the int arrray to be sent
+     * @param destinationVnode the vnode ID of the receiving vnode
+     */
+    public void send(int[] exportObject, int destinationVnode);
+    
+    /**
+     * Sends a double arry to a single specified vnode.
+     * <b>Note<b>: this is NOT a blocking operation.
+     *
+     * @param exportObject the double arrray to be sent
+     * @param destinationVnode the vnode ID of the receiving vnode
+     */
+    public void send(double[] exportObject, int destinationVnode);
+    
+    /**
+     * Tells <code>Comm</code> how many messages to expect to receive.
+     *
+     * @param numReceives the number of messages that are expected to be received
+     */
+    public void setupReceives(int numReceives);
+    
+    /**
+     * <code>getReceives</code> does all the work receiving all expected messages at once and then returns them.
+     * <b>Note<b>: this IS a blocking operation.
+     *
+     * return the objects received
+     */
+    public Serializable receive(int senderId);
+    
+    public int[] scatter2dArray(int[][] in);
+    
+    public int[] scatterIntArray(int[] in);
+    
+    public int[][] gather(int[] in);
+    
+    /**
      * Accessor to see if the communicator is on a serial or parallel machine.
      *
      * @return <code>true</code> in serial mode, otherwise <code>false</code>
@@ -290,6 +331,6 @@ public interface Comm {
     
     public Directory createDirectory(ElementSpace elementSpace);
     
-    //public Distributor createDistributor();
+    public Distributor createDistributor();
 }
 

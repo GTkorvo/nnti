@@ -286,4 +286,31 @@ public class SerialComm extends JpetraObject implements Comm {
         return new SerialDirectory(elementSpace);
     }
     
+    public Distributor createDistributor() {
+    }
+    
+    public int[][] gatherAll2dArray(int[] myElements) {
+    }
+    
+    public void send(double[] exportObject, int destinationVnode) {
+    }
+    
+    public void send(int[] exportObject, int destinationVnode) {
+    }
+    
+    public void setupReceives(int numReceives) {
+    }
+    
+    public Serializable receive(int senderId) {
+    }
+    
+    public int[] scatterIntArray(int[] in) {
+    }
+    
+    public int[] scatter2dArray(int[][] in) {
+    }
+    
+    public int[][] gather(int[] in) {
+    }
+    
 }
