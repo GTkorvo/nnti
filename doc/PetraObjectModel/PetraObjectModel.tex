@@ -133,7 +133,7 @@ algorithm development.
 In this paper we present a detailed object model for vectors 
 and matrices that are intended for use in a parallel, distributed 
 memory computing environment.  We present a brief overview of 
-each class in the next section followed by a detailed UML object 
+the classes in the next section followed by a detailed UML object 
 model in the next section.  In subsequent sections we will present 
 a collection of pure virtual classes, two C++ implementations of 
 this model and a Java implementation.
@@ -142,14 +142,14 @@ this model and a Java implementation.
 \section{Overview of Primary Petra Classes}
 
 In this section we present in logical order the basic object classes 
-we need for our parallel vectors and matrices.  Each of the objects 
+needed for parallel vectors and matrices.  Each of the object
 classes represents a family of classes with one base class and 
 specialization of the base class.
 
 \paragraph{Comm Class:  Parallel Machine Description}
 
-We begin with the Comm class that describes our parallel machines.  
-This class is an attribute in most of the other classes since it provides 
+We begin with the Comm class that describes parallel machines.  
+This class is an attribute in most other classes since it provides 
 essential information and services needed for operations across the 
 parallel machine.  The Comm class provides information about the number 
 of  logical nodes on the parallel machine and node identification.  It 
@@ -171,12 +171,7 @@ object to be passed in at construction.
 \paragraph{Vector Class:  Vector Object}
 
 This class allows construction and manipulation of vectors, and supports 
-operations involving vectors.  Vector objects are distributed across the 
-parallel machine at construction by passing a map into the constructor.  
-The number of GIDs in the map determines the global length of the vector 
-(although a more general map class will allow multiple vector entries to 
-be associated with a single GID), and the list of GIDs on each processor 
-determines the segment of the vector stored on the processor.  Basic vector 
+operations involving vectors.  Basic vector 
 operations include norms, dot products, vector updates, etc.  The interface 
 to the vector constructors and vector methods is independent of the specifics 
 of the parallel machine and the vector distribution since this information is 
@@ -194,50 +189,41 @@ specialization of the multivector class (a multivector with one vector).
 
 \paragraph{Row-biased Graph Class:  Connectivity Graph Object}
 
-A graph object specifies a set of vertices and the connecting edge pairs.   
-In general, our graphs are directed acyclic graphs (DAGs), so that one must 
-specify the direction of the connectivity between two vertices.  A graph is often 
-used to describe the connectivity of a sparse matrix, independent of the values 
-of the matrix, such that the connectivity graph of the matrix has an directed 
-edge from vertex $i$ to vertex $j$ if matrix $a_ij$ is nonzero.  A row-biased 
-graph requires a map to be passed in at construction of a graph. The graph is 
-then constructed across a parallel machine by associating each row of graph 
-with a GID and assigning the entire row of the graph to the node(s) that owns the GID.  
+A graph object specifies a set of vertices and the connecting edge pairs.
+The graph is then constructed across a parallel machine by associating each
+row of the graph with a GID and assigning the entire row of the graph to the
+node(s) that owns the GID. In the Petra object model, graph objects are held
+as attributes by matrix classes, and are used to define and describe the
+structure of the matrix (location of nonzero entries).
 
-In addition to passing in a map to the graph constructor, one may provide information 
-about how many nonzero entries will be inserted into each row of the graph on each 
-processor.  This information can be helpful for performance, but is not required, 
-nor is it a fatal error if the estimate is incorrect.  One should note that a row 
-may be owned by more than one node.
+\paragraph{Operator Class: Linear Operator Object}
 
-Once a graph is constructed and filled, it can be used to determine communication 
-patterns and perform any set up procedures that would improve the performance of 
-basic sparse matrix operations for matrices that become associated with the graph.  
-As part of this set up, the graph will construct an import map and an import object 
-(described below), that allows for efficient communication during a sparse matrix 
-vector multiplication. A row-biased graph can also be queried for graph entries in a 
-row-oriented fashion.
+The Operator interface is the highest-level abstraction for matrix objects,
+representing only mathematical operations performed with matrices and
+specifically avoiding issues relating to storage formats and implementation
+details. The Operator interface is inherited and implemented by all of our
+'concrete' matrix classes.  Algorithms which are written to use these
+abstract Operators rather than specific matrix class types may make use of
+any matrix type that implements the Operator interface.
 
 \paragraph{Row-biased Matrix Class: Sparse Matrix Object}
 
-A row-biased matrix is very similar to a row-biased graph.   Additionally it 
-contains matrix values and has methods to compute matrix-vector and matrix-multivector 
-multiplications.  It also has methods to provide certain matrix norms and scalings.  
-It can also be queried row-wise for matrix entries.
+A row-biased matrix is very similar to a row-biased graph.  Additionally it 
+contains matrix values and has methods to compute matrix-vector and
+matrix-multivector multiplications.  It also has methods to provide certain
+matrix norms and scalings.  It can also be queried row-wise for matrix entries.
+As will be discussed in a later section, Petra implementations include both
+point-entry and block-entry matrix classes.
 
-\paragraph{Block Row-biased Matrix Class:  Sparse-Dense Matrix Object}
-
-An additional type of sparse matrix is one where the entries of the sparse matrix are 
-matrices also, and in particular dense.  We provide this class to address numerous 
-situations where vertices can be grouped such that vertices within one group are fully 
-interconnected, or nearly so.  In this case, it is beneficial to use a smaller graph 
-that merges these fully interconnected vertices into a single vertex, creating a sparse 
-matrix of dense matrices.  All methods in the block matrix class mirror the methods 
-in the previous matrix class.  
-
-It is worth mentioning that both of the above matrix classes are derived from a common 
-abstract row-biased matrix class.  This allows us to use the abstract base class for 
-instances where the details of the matrix entries are not of interest.
+Figure~\ref{matvecmap} shows inheritance (solid lines) and collaborations
+(dotted lines) among the Matrix, Vector and Map classes.
+\begin{figure}[ht]
+\begin{center}
+\epsfig{file=mvmcollab.eps, scale=1.0}
+\caption{Matrix, Vector and Map inheritance and collaborations.}
+\label{matvecmap}
+\end{center}
+\end{figure}
 
 \paragraph{Import and Export Classes:  Parallel Data Redistribution}
 
@@ -259,7 +245,7 @@ Because there are many good implementations of serial dense linear algebra opera
 e.g. optimized BLAS on many computers, we provide an abstract class hierarchy to define 
 dense matrix and vector objects.  The default implementation of these classes uses the 
 standard Fortran BLAS and LAPACK interfaces~\cite{BLAS1,BLAS2,BLAS3,LAPACK}, 
-but any other similar libraries could be 
+but other similar libraries could be 
 used, including shared memory parallel implementations of the same libraries.
 
 \paragraph{Linear Problem Class:  Composite Class for Defining a Linear Problem}
@@ -290,22 +276,131 @@ and another multivector containing the initial guess.
 
 
 \section{Index Spaces}
+We define a vector to be a list of elements, with each element being a
+dense block of one or more real-valued numbers. The set of indices used to
+address the elements in a vector is referred to as an index space. Matrices
+in general have two index spaces, one for the domain and another for the
+range. Matrices and vectors may be used together in operations (such as
+matrix-vector products) if they share compatible index spaces. Matrices
+and vectors which are distributed across multiple processors must have
+distributed index spaces.
+
 \subsection{Defining Index Spaces}
-\subsubsection{Uniform Linear Index Space}
-\subsubsection{Non-uniform Linear Index Space}
-\subsubsection{Non-uniform General Index Space}
+In the Petra object model, index spaces are defined and described using the
+Map class. The Map class describes not only global properties such as total
+number of elements, but also distribution and partitioning properties such as
+number of local elements (local to a particular processor), etc.
+ 
+There are a number of ways to define a distributed index space using Petra
+Maps. Depending on how the indices are assigned to processors, the distribution
+may be described as uniform or non-uniform, and linear or general.
+
+\subsubsection{Uniform vs Non-Uniform Index Space Distributions}
+A uniformly distributed index space has an equal number of indices assigned
+to each processor. (In cases where the number of indices is not an integer
+multiple of the number of processors, then some processors may have 1 fewer
+indices than other processors.) A non-uniformly distributed index space has
+have arbitrarily varying numbers of indices assigned to each processor at
+the discretion of the user.
+
+\subsubsection{Linear vs General Index Space Distributions}
+An index space has a linear distribution if indices are distributed across
+processors in contiguous ordered groups. In this case, the first global index
+on processor with rank $p$ is one greater than the last global index on
+processor $p-1$. An index space with
+a general distribution has indices in arbitrary order, as defined by the user.
+
 \subsection{Block Index Spaces}
+In cases where the corresponding vector or matrix has block-elements (elements
+which consist of more than one point-entry) we describe the index space as a
+block index space, and the appropriate Petra class is called a BlockMap. The
+BlockMap class is a generalization of the Map class (a Map is equivalent to a
+BlockMap with all element-sizes equal to 1). A BlockMap allows the user to
+specify the element-sizes at construction, and provides query methods for
+obtaining element-sizes corresponding to given elements referred to using
+global identifiers (GIDs).
 
 \section{Vectors and MultiVectors}
+In the Petra object model, the Vector class is defined to have dense,
+real-valued entries or elements. Each Vector object has a Map or BlockMap as
+an attribute.  Vector objects are distributed across the 
+parallel machine at construction by passing the map into the constructor.  
+The number of GIDs in the map determines the global length of the vector 
+(although a more general map class will allow multiple vector entries to 
+be associated with a single GID), and the list of GIDs on each processor 
+determines the segment of the vector stored on the processor.
+
 \subsection{MultiVectors as Distributed Dense Matrices}
+A Petra MultiVector is a collection of Vectors. A MultiVector is a
+generalization of the Vector class and supports the
+same operations as a Vector, such as norms, dot-products etc. A MultiVector
+allocates memory for its collection of vectors using a contiguous array which
+is identical to a two-dimensional Fortran array. This provides significant
+advantages in providing access to selected dense BLAS and LAPACK operations.
 
 \section{Compressed Index Sparse Graphs}
+A Petra Graph is used to define the nonzero structure of Petra matrices. The
+matrix classes each hold a Graph object as an attribute.
+In general, our graphs are directed acyclic graphs (DAGs), so that one must
+specify the direction of the connectivity between two vertices.  A graph is
+often used to describe the connectivity of a sparse matrix, independent of
+the values of the matrix, such that the connectivity graph of the matrix has
+a directed edge from vertex $i$ to vertex $j$ if matrix $a_{ij}$ is nonzero.
+
+Once a graph is constructed and filled, it can be used to determine
+communication patterns and perform any setup procedures that would improve
+the performance of basic sparse matrix operations for matrices that become
+associated with the graph.  As part of this setup, the graph will construct
+an import map and an import object (described below), that allows for
+efficient communication during a sparse matrix vector multiplication.
+
+A graph requires a map to be passed in at construction time.
+In addition to passing in a map, one may provide
+information about how many nonzero entries will be inserted into each row 
+of the graph on each processor.  This information can be helpful for
+performance, but is not required, nor is it a fatal error if the estimate
+is incorrect.  One should note that a row may be owned by more than one node.
+
 \subsection{Row vs Column Orientation}
+A row-oriented graph can be thought of as a collection of rows, where each row
+contains a list of column-indices. Each row is wholly owned by the local
+processor. A row-oriented graph is distributed across processors by assigning
+sets of complete rows to the various processors. Correspondingly, a
+column-oriented graph is a collection of columns which are lists of row-indices,
+and the distribution across processors is accomplished by assigning sets of
+columns to the various processors.
+A row-oriented graph can also be queried for graph entries a row at a time,
+whereas a column-oriented graph is queried a column at a time.
+
 \subsection{Shared and Implicitly Constructed Graphs}
+All Petra matrix objects have an attribute which is the Graph object that
+describes the nonzero structure of the matrix. Matrix objects may be constructed
+without a Graph (construction arguments must still include a Map to define the
+distribution of the matrix), in which case the matrix will internally create
+and define the graph as the user inserts matrix entries. Alternatively, a
+predefined graph
+may be given to the matrix at construction time, and that will set the
+structure to be used for the matrix. In this way matrices with the same
+structure may share a single graph object.
 
-\section{Compressed Index Sparse Matrices}
+\section{Compressed Index Sparse and Block-Sparse Matrices}
+Petra matrix implementations include CRS (compressed row sparse) and
+VBR (variable block row) matrix classes. Both of these matrix implementations
+make use of the above-described graph objects to define structure (placement
+of nonzero entries). In the case of the VBR matrix, the entries of the sparse
+matrix are matrices also, and in particular dense.  We provide this class
+to address numerous situations where vertices can be grouped such that
+vertices within one group are fully interconnected, or nearly so.  In this
+case, it is beneficial to use a smaller graph that merges these fully
+interconnected vertices into a single vertex, creating a sparse matrix of
+dense matrices.  All methods in the block-entry matrix class mirror the methods 
+in the point-entry matrix class.
 
-\section{Compressed Index Block Sparse Matrices}
+It is worth mentioning that both of the above matrix classes inherit 
+a common abstract row-biased matrix interface.  This allows us to use the
+abstract base class for operations where the details of the matrix entries
+are not of interest, such as matrix-vector multiplication.
+
 
 
 \section{Parallel Data Redistribution}
@@ -327,7 +422,7 @@ communicating remote data to processors as needed as the computation proceeds.
 Except for embarrassingly parallel programs, access to remote data is required even if
 the initial distribution of work and data is optimal.  In the single program multiple data
 (SPMD) model, accessing remote data typically involves all processors, even if some processors
-are not sending or receiving data.  We use the term {it parallel data
+are not sending or receiving data.  We use the term {\it parallel data
 redistribution (PDR)} to refer to the simultaneous exchange of distributed data as it occurs during
 the execution of an SPMD program.  The focus of the paper is to develop an object-oriented
 model for PDR.  These ideas have been used in the Epetra~\cite{Epetra-User-Guide} and
@@ -350,7 +445,7 @@ One of the most common pattern-dependent distributed memory
 kernels is sparse matrix vector multiplication.
 This type of kernel appears in many types of applications but 
 is often implemented assuming a
-one-dimensional partitioning of the row (or columns) of the 
+one-dimensional partitioning of the rows (or columns) of the 
 matrix such that each row is uniquely and
 completely assigned to one processor.  Also, in the square 
 matrix case, the vectors are usually distributed
