@@ -309,8 +309,8 @@ $\jac{f}{x}\in\mathcal{F}|\mathcal{X}$.  Here we use the notation
 $\mathcal{F}|\mathcal{X}$ to define a linear operator space that maps vectors
 from the vector space $\mathcal{X}$ to the vector space $\mathcal{F}$.  Note
 that the adjoint of such linear operators are defined in terms of these vector
-spaces (i.e.\ $<A u,v>_{\mathcal{F}} = <A^H v,u>_{\mathcal{X}}$ where
-$A\in\mathcal{F}|\mathcal{X}$ and $A^H$ denotes the adjoint operator for $A$).
+spaces (i.e.\ $<A u,v>_{\mathcal{F}} = <A^T v,u>_{\mathcal{X}}$ where
+$A\in\mathcal{F}|\mathcal{X}$ and $A^T$ denotes the adjoint operator for $A$).
 Here we assume that these first derivatives exist for the specific intervals
 of $t\in[t_0,t_f]$ of which such an time integrator algorithm will be directly
 applied the the problem.
@@ -591,8 +591,7 @@ and $\beta = 1$.  The Jacobian in (\ref{rythmos:eqn:trap_M}) is not an exact
 Jacobian for the equations in (\ref{rythmos:eqn:trap_dae_ne}) but can produce
 good Newton steps in many cases.  However, an inexact Jacobian such as this
 can cause a problem when sensitivity computations are being performed (see
-Section
-\ref{rythmos:scn:transientsensitivity}).
+Section {}\ref{rythmos:sec:adj-sens}).
 
 \subsubsection{Generalized Alpha methods}
 
@@ -1019,16 +1018,16 @@ followed by the computation of the reduced derivatives
 \hspace{4ex}where\hspace{1ex}\= \\
 \> $S = \Jac{y}{p} {}\in {}\mathcal{Y}|\mathcal{P}$ is the
 direct sensitivity of the state at $t\in[t_0,t_f]$, \\
-\> $\dot{S} = \left(\frac{d}{dt} \Jac{y(t)}{p}\right)
+\> $\dot{S} = \left(\frac{d}{dt} \Jac{y}{p}\right)
 {}\in {}\mathcal{Y}|\mathcal{P}$ is the time derivative of $S$ at $t\in[t_0,t_f]$, \\
 \> $\Jac{c}{{}\dot{y}} {}\in {}\mathcal{C}|\mathcal{Y}$ is defined on
 $t\in[t_0,t_f]$, \\
-\> $\Jac{c}{y} {}\in {}\mathcal{C}|\mathcal{Y}$ is defined on $t\in[t_0,t_f]$, \\
-\> $\Jac{c}{p} {}\in {}\mathcal{C}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, \\
-\> $\Jac{y_0}{p} {}\in {}\mathcal{Y}|\mathcal{P}$ is defined only at $t=t_0$, \\
-\> $\Jac{{}\hat{g}}{p} {}\in {}\mathcal{G}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, \\
-\> $\Jac{{}\hat{h}}{p} {}\in {}\mathcal{G}|\mathcal{P}$ is defined only at $t=t_f$, and \\
-\> $\Jac{{}\hat{d}}{p} {}\in {}\mathcal{G}|\mathcal{P}$ is defined independent of time.
+\> $\jac{c}{y} {}\in {}\mathcal{C}|\mathcal{Y}$ is defined on $t\in[t_0,t_f]$, \\
+\> $\jac{c}{p} {}\in {}\mathcal{C}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, \\
+\> $\jac{y_0}{p} {}\in {}\mathcal{Y}|\mathcal{P}$ is defined only at $t=t_0$, \\
+\> $\jac{{}\hat{g}}{p} {}\in {}\mathcal{G}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, \\
+\> $\jac{{}\hat{h}}{p} {}\in {}\mathcal{G}|\mathcal{P}$ is defined only at $t=t_f$, and \\
+\> $\jac{{}\hat{d}}{p} {}\in {}\mathcal{G}|\mathcal{P}$ is defined independent of time.
 \end{tabbing}
 
 This computation is performed by integrating the state
@@ -1039,11 +1038,12 @@ the integral in (\ref{rythmos:eqn:sens:d_d_hat_d_p_2}) is computed while the
 DAEs are being integrated.
 
 There are a variety of approaches for integrating the state and direct
-sensitivity equations (see [???]) but arguably the the more efficient approach
-is to solve for the (nonlinear) time step for the state equations
-(\ref{rythmos:eqn:sens:c}) first, followed by computing the linear time step
-for the direct sensitivities (\ref{rythmos:eqn:sens:direct-c}), and then
-finally evaluating the integral in (\ref{rythmos:eqn:sens:d_d_hat_d_p_2}).
+sensitivity equations (see {}\cite{cvodes}) but arguably the the more
+efficient approach is to solve for the (nonlinear) time step for the state
+equations (\ref{rythmos:eqn:sens:c}) first, followed by computing the linear
+time step for the direct sensitivities (\ref{rythmos:eqn:sens:direct-c}), and
+then finally evaluating the integral in
+(\ref{rythmos:eqn:sens:d_d_hat_d_p_2}).
 
 A few important properties of the direct sensitivity equations are worth
 noting: they are linear, and the sensitivity DAE for each sensitivity
@@ -1202,6 +1202,7 @@ flop rates due to reductions in cache efficiency and global communication
 overhead).
 
 \subsection{Transient adjoint sensitivity computations}
+\label{rythmos:sec:adj-sens}
 
 The most general statement of the adjoint equations associated with the state
 equations in (\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) and the
@@ -1209,12 +1210,12 @@ response functions in (\ref{rythmos:eqn:sens:d}), as derived in
 Appendix~\ref{rythmos:app:adj-equ-derivation}, is
 %
 \begin{eqnarray}
-- \frac{d}{dt}\left( \Jac{c}{\dot{y}}^H \Lambda \right)
-+  \Jac{c}{y}^H \Lambda + \Jac{g}{y}^H
+- \frac{d}{dt}\left( \Jac{c}{\dot{y}}^T \Lambda \right)
++  \Jac{c}{y}^T \Lambda + \Jac{g}{y}^T
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{rythmos:app:eqn:sens:adj} \\
-\left.\left( \Jac{c}{\dot{y}}^H \Lambda \right)\right|_{t=t_f}
-& = & - \left. \Jac{h}{y}^H \right|_{y=y(t_f)},
+\left.\left( \Jac{c}{\dot{y}}^T \Lambda \right)\right|_{t=t_f}
+& = & - \left. \Jac{h}{y}^T \right|_{y=y(t_f)},
 \label{rythmos:app:eqn:sens:adj:fc}
 \end{eqnarray}
 %
@@ -1237,13 +1238,13 @@ When the mass matrix $\jac{c}{\dot{y}}$ is constant, then
 (\ref{rythmos:app:eqn:sens:adj}) reduces to
 %
 \begin{eqnarray}
-- \Jac{c}{\dot{y}}^H \dot{\Lambda}
-+  \Jac{c}{y}^H \Lambda + \Jac{g}{y}^H
+- \Jac{c}{\dot{y}}^T \dot{\Lambda}
++  \Jac{c}{y}^T \Lambda + \Jac{g}{y}^T
 & = & 0, \; t \in \left[ t_0, t_f \right],
-\label{rythmos:app:eqn:sens:adj} \\
-\left.\left( \Jac{c}{\dot{y}}^H \Lambda \right)\right|_{t=t_f}
-& = & - \left. \Jac{h}{y}^H \right|_{y=y(t_f)},
-\label{rythmos:app:eqn:sens:adj:fc}
+\label{rythmos:app:eqn:sens:adj-const-mass} \\
+\left.\left( \Jac{c}{\dot{y}}^T \Lambda \right)\right|_{t=t_f}
+& = & - \left. \Jac{h}{y}^T \right|_{y=y(t_f)},
+\label{rythmos:app:eqn:sens:adj-const-mass:fc}
 \end{eqnarray}
 %
 where $\dot{\Lambda}=d(\Lambda)/d(t)\in\mathcal{C}|\mathcal{G}$.
@@ -1266,13 +1267,13 @@ associated composite DAE function
 f(\dot{x},x,t) =
 {\bmat{c}
 %
-- \Jac{c}{\dot{y}}^H \dot{\Lambda}_{(:,1)}
-+  \Jac{c}{y}^H \Lambda_{(:,1)} + \Jac{g_{(1)}}{y}^H
+- \Jac{c}{\dot{y}}^T \dot{\Lambda}_{(:,1)}
++  \Jac{c}{y}^T \Lambda_{(:,1)} + \Jac{g_{(1)}}{y}^T
 %
 \\ \vdots \\
 %
-- \Jac{c}{\dot{y}}^H \dot{\Lambda}_{(:,n_g)}
-+  \Jac{c}{y}^H \Lambda_{(:,n_g)} + \Jac{g_{(n_g)}}{y}^H
+- \Jac{c}{\dot{y}}^T \dot{\Lambda}_{(:,n_g)}
++  \Jac{c}{y}^T \Lambda_{(:,n_g)} + \Jac{g_{(n_g)}}{y}^T
 %
 \emat}
 \in \mathcal{C}^{n_p} \rightarrow \mathcal{Y}^{n_p}.
@@ -1290,9 +1291,9 @@ The matrix $M$ in (\ref{rythmos:eqn:M}) for
 \alpha \Jac{f}{\dot{x}} + \beta \Jac{f}{x}
 = 
 {\bmat{ccc}
-\alpha \Jac{c}{\dot{y}}^H + \beta \Jac{c}{y}^H \\
+\alpha \Jac{c}{\dot{y}}^T + \beta \Jac{c}{y}^T \\
 & \ddots \\
-& & \alpha \Jac{c}{\dot{y}}^H + \beta \Jac{c}{y}^H
+& & \alpha \Jac{c}{\dot{y}}^T + \beta \Jac{c}{y}^T
 \emat}
 \in \mathcal{Y}^{n_p}|\mathcal{C}^{n_p}
 \label{rythmos:eqn:adj-sens-daes-jac}
@@ -1325,14 +1326,14 @@ form
 %
 \begin{eqnarray}
 \frac{d}{dt}\left( \bar{\Lambda} \right)
-+  \Jac{c}{y}^H \Lambda + \Jac{g}{y}^H
++  \Jac{c}{y}^T \Lambda + \Jac{g}{y}^T
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{rythmos:app:eqn:sens:aug-adj-de} \\
-\bar{\Lambda} + \Jac{c}{\dot{y}}^H
+\bar{\Lambda} + \Jac{c}{\dot{y}}^T
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{rythmos:app:eqn:sens:aug-adj-ae} \\
 \left. \bar{\Lambda} \right|_{t=t_f}
-& = & \left. \Jac{h}{y}^H \right|_{y=y(t_f)}.
+& = & \left. \Jac{h}{y}^T \right|_{y=y(t_f)}.
 \label{rythmos:eqn:sens:aug-adj:fc}
 \end{eqnarray}
 
@@ -1359,18 +1360,18 @@ f(\dot{x},x,t) =
 %
 {\bmat{c}
 \frac{d}{dt}\left( \bar{\Lambda}_{(:,1)} \right)
-+ \Jac{c}{y}^H \Lambda_{(:,1)} + \Jac{g_{(1)}}{y}^H
++ \Jac{c}{y}^T \Lambda_{(:,1)} + \Jac{g_{(1)}}{y}^T
 \\
-\bar{\Lambda}_{(:,1)} + \Jac{c}{\dot{y}}^H \Lambda_{(:,1)}
+\bar{\Lambda}_{(:,1)} + \Jac{c}{\dot{y}}^T \Lambda_{(:,1)}
 \emat} \\
 %
 \vdots \\
 %
 {\bmat{c}
 \frac{d}{dt}\left( \bar{\Lambda}_{(:,n_g)} \right)
-+ \Jac{c}{y}^H \Lambda_{(:,n_g)} + \Jac{g_{(n_g)}}{y}^H
++ \Jac{c}{y}^T \Lambda_{(:,n_g)} + \Jac{g_{(n_g)}}{y}^T
 \\
-\bar{\Lambda}_{(:,n_g)} + \Jac{c}{\dot{y}}^H \Lambda_{(:,n_g)}
+\bar{\Lambda}_{(:,n_g)} + \Jac{c}{\dot{y}}^T \Lambda_{(:,n_g)}
 \emat} \\
 %
 \emat}
@@ -1391,15 +1392,15 @@ The matrix $M$ in (\ref{rythmos:eqn:M}) for
 {\bmat{ccc}
 %
 {\bmat{cc}
-\alpha I & \beta \Jac{c}{y}^H \\
-\beta I &  \beta \Jac{c}{\dot{y}}^H
+\alpha I & \beta \Jac{c}{y}^T \\
+\beta I &  \beta \Jac{c}{\dot{y}}^T
 \emat} \\
 %
 & \ddots \\
 %
 & & {\bmat{cc}
-\alpha I & \beta \Jac{c}{y}^H \\
-\beta I &  \beta \Jac{c}{\dot{y}}^H
+\alpha I & \beta \Jac{c}{y}^T \\
+\beta I &  \beta \Jac{c}{\dot{y}}^T
 \emat}
 %
 \emat}
@@ -1414,8 +1415,8 @@ the diagonal
 %
 \begin{equation}
 {\bmat{cc}
-\alpha I & \beta \Jac{c}{y}^H \\
-\beta I &  \beta \Jac{c}{\dot{y}}^H
+\alpha I & \beta \Jac{c}{y}^T \\
+\beta I &  \beta \Jac{c}{\dot{y}}^T
 \emat} \in \mathcal{Y}^{2}|\mathcal{C}^{2}
 \label{rythmos:eqn:aug-adj-sens-jac}
 \end{equation}
@@ -1427,8 +1428,8 @@ consider the solution of any arbitrary system of the form
 %
 \begin{equation}
 {\bmat{cc}
-\alpha I & \beta \Jac{c}{y}^H \\
-\beta I &  \beta \Jac{c}{\dot{y}}^H
+\alpha I & \beta \Jac{c}{y}^T \\
+\beta I &  \beta \Jac{c}{\dot{y}}^T
 \emat}
 {\bmat{c} v_1 \\ v_2 \emat}
 =
@@ -1446,8 +1447,8 @@ for arbitrary vectors $v_1, v_2 {}\in\mathcal{C}$ and $b_1, b_2
 \emat}
 \left[
 {\bmat{cc}
-\alpha I & \beta \Jac{c}{y}^H \\
-\beta I &  \beta \Jac{c}{\dot{y}}^H
+\alpha I & \beta \Jac{c}{y}^T \\
+\beta I &  \beta \Jac{c}{\dot{y}}^T
 \emat}
 {\bmat{c} v_1 \\ v_2 \emat}
 =
@@ -1459,8 +1460,8 @@ yields the transformed system
 %
 \begin{equation}
 {\bmat{cc}
- & \bar{\alpha} \Jac{c}{\dot{y}}^H + \bar{\beta} \Jac{c}{y}^H \\
-\beta I &  \beta \Jac{c}{\dot{y}}^H
+ & \bar{\alpha} \Jac{c}{\dot{y}}^T + \bar{\beta} \Jac{c}{y}^T \\
+\beta I &  \beta \Jac{c}{\dot{y}}^T
 \emat}
 {\bmat{c} v_1 \\ v_2 \emat}
 =
@@ -1472,20 +1473,20 @@ where $\bar{\alpha}=\beta$, $\bar{\beta}=\beta^2/\alpha$, and
 $\bar{\gamma}=\beta/\alpha$.  This system can then be solved as
 %
 \[
-v_2 = \left( \bar{\alpha} \Jac{c}{\dot{y}}^H + \bar{\beta} \Jac{c}{y}^H \right)^{-1}
+v_2 = \left( \bar{\alpha} \Jac{c}{\dot{y}}^T + \bar{\beta} \Jac{c}{y}^T \right)^{-1}
 \left(  b_2 - \bar{\gamma} b_1 \right)
 \]
 %
 followed by
 %
 \[
-v_1 = \frac{1}{\beta} \left( b_2 - \beta \Jac{c}{\dot{y}}^H v_2 \right).
+v_1 = \frac{1}{\beta} \left( b_2 - \beta \Jac{c}{\dot{y}}^T v_2 \right).
 \]
 %
 The matrix
 %
 \[
-\bar{\alpha} \Jac{c}{\dot{y}}^H + \bar{\beta} \Jac{c}{y}^H
+\bar{\alpha} \Jac{c}{\dot{y}}^T + \bar{\beta} \Jac{c}{y}^T
 \]
 %
 is known as the Schur complement and in this case is of the same general form
@@ -1505,13 +1506,13 @@ single vector RHS version such as in CVODES and IDAS.
 As the adjoint is being computed, the integral
 %
 \begin{equation}
-\Jac{\hat{d}}{p}^H =
+\Jac{\hat{d}}{p}^T =
 \int_{t_0}^{t_f} \left(
-    \Jac{g}{p}^H
-    + \Jac{c}{p}^H \Lambda
+    \Jac{g}{p}^T
+    + \Jac{c}{p}^T \Lambda
   \right) dt
-  + \left. \Jac{h}{p}^H \right|_{t=t_f}
-  - \left. \left( \Jac{y_0}{p}^H \Jac{c}{\dot{y}}^H \Lambda \right) \right|_{t=t_0}
+  + \left. \Jac{h}{p}^T \right|_{t=t_f}
+  - \left. \left( \Jac{y_0}{p}^T \Jac{c}{\dot{y}}^T \Lambda \right) \right|_{t=t_0}
 \label{rythmos:eqn:sens:d_d_hat_d_p}
 \end{equation}
 %
@@ -1519,8 +1520,8 @@ and the point-wise gradient
 %
 %
 \begin{equation}
-\Jac{\hat{d}}{v(t)}^H
-= \Jac{g}{v(t)}^H + \Jac{c}{v(t)}^H \Lambda(t),
+\Jac{\hat{d}}{v(t)}^T
+= \Jac{g}{v(t)}^T + \Jac{c}{v(t)}^T \Lambda(t),
 t\in[t_0,t_f]
 \label{rythmos:eqn:sens:d_d_hat_d_v_t}
 \end{equation}
@@ -1835,7 +1836,7 @@ adjoints.
 {}\item Initial condition adjoint sensitivity: Given $u_l\in\mathcal{U}_l$ (for
 $l=1\ldots{}N_u$) and some $V\in\mathcal{C}|\RE^m$ compute the action of
 \[
-(\{u_l\},U_l) {}\rightarrow \Jac{y_0}{u_l}^H V \in \mathcal{U}_l|\RE^m
+(\{u_l\},U_l) {}\rightarrow \Jac{y_0}{u_l}^T V \in \mathcal{U}_l|\RE^m
 \; \mbox{for} \; l = 1 {}\ldots N_u,
 \]
 or alternatively evaluate the sensitivity themselves as a multi-vector
@@ -1844,12 +1845,12 @@ or alternatively evaluate the sensitivity themselves as a multi-vector
 \; \mbox{for} \; l = 1 {}\ldots N_u.
 \]
 %
-{}\item Application of adjoint operator $M^H = ({}\alpha (\jac{c}{\dot{y}}) +
-{}\beta (\jac{c}{y}))^H$: Given a pre-formed object for $M = {}\alpha
+{}\item Application of adjoint operator $M^T = ({}\alpha (\jac{c}{\dot{y}}) +
+{}\beta (\jac{c}{y}))^T$: Given a pre-formed object for $M = {}\alpha
 (\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$, provide the ability to apply the
 operator as
 \[
-Y = M^H X
+Y = M^T X
 \]
 where $X\in\mathcal{C}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
 and $Y\in\mathcal{Y}|\RE^m$ is the LHS multi-vector.  The purpose of stating
@@ -1858,8 +1859,8 @@ are useful for other types of more advanced algorithms.  However, the ability
 to apply the operator to single multi-vectors automatically satisfies this
 requirement.
 %
-{}\item Solve with adjoint operator $M^H = ({}\alpha (\jac{c}{\dot{y}}) +
-{}\beta (\jac{c}{y}))^H$: Given a pre-formed object for $M = {}\alpha
+{}\item Solve with adjoint operator $M^T = ({}\alpha (\jac{c}{\dot{y}}) +
+{}\beta (\jac{c}{y}))^T$: Given a pre-formed object for $M = {}\alpha
 (\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$, provide the ability to
 (approximately) solve for systems of the form
 \[
@@ -1885,7 +1886,7 @@ $\dot{y}\in\mathcal{Y}$, $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for
 $l=1\ldots{}N_u$), $t\in\RE$, and some $V\in\mathcal{C}|\RE^m$ compute
 the action of
 \[
-(\dot{y},y,\{u_l\},t,V) {}\rightarrow \Jac{c}{u_l}^H V \in \mathcal{U}_l|\RE^m,
+(\dot{y},y,\{u_l\},t,V) {}\rightarrow \Jac{c}{u_l}^T V \in \mathcal{U}_l|\RE^m,
 \; \mbox{for} \; l = 1 {}\ldots N_u,
 \]
 or alternatively compute the sensitivities themselves as a multi-vector
@@ -1898,7 +1899,7 @@ or alternatively compute the sensitivities themselves as a multi-vector
 $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ ,
 and some $V\in\mathcal{G}_j|\RE^m$ compute the action of
 \[
-(y,\{u_l\},U_l) {}\rightarrow \Jac{g_j}{u_l}^H V \in \mathcal{U}_l|\RE^m,
+(y,\{u_l\},U_l) {}\rightarrow \Jac{g_j}{u_l}^T V \in \mathcal{U}_l|\RE^m,
 \; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g
 \]
 or alternatively compute the sensitivities themselves as a multi-vector
@@ -2205,24 +2206,24 @@ v(t){}\:\in\:\mathcal{V}$ for $t\in[t_0,t_f]$, $c(\dot{y}, y, p, v, t)
 {}\rightarrow{}\mathcal{C}$,
 $y_0(p){}\:\in\:\mathcal{P}{}\rightarrow{}\mathcal{Y}$, $g(y,p,v,t) :{}\:
 {}\mathcal{Y}{}\times{}\mathcal{P}{}\times{}\mathcal{V}{}\times{}\RE
-{}\rightarrow{}\mathcal{G}$, $h(y(t_f),p) :{}\:
-{}\mathcal{Y}{}\times{}\mathcal{P} {}\rightarrow{}\mathcal{G}$,
-$\mathcal{G}{}\:\subseteq\:\RE^{n_g}$, $\mathcal{Y}{}\:\subseteq\:\RE^{n_y}$,
-$\mathcal{P}{}\:\subseteq\:\RE^{n_p}$, $\mathcal{V}{}\:\subseteq\:\RE^{n_v}$,
-and $\mathcal{C}{}\:\subseteq\:\RE^{n_y}$.
+{}\rightarrow{}\mathcal{G}$, $h(y,p) :{}\: {}\mathcal{Y}{}\times{}\mathcal{P}
+{}\rightarrow{}\mathcal{G}$, $\mathcal{G}{}\:\subseteq\:\RE^{n_g}$,
+$\mathcal{Y}{}\:\subseteq\:\RE^{n_y}$, $\mathcal{P}{}\:\subseteq\:\RE^{n_p}$,
+$\mathcal{V}{}\:\subseteq\:\RE^{n_v}$, and
+$\mathcal{C}{}\:\subseteq\:\RE^{n_y}$.
 
 {}\textit{Remarks on notation}: We use the commonly accepted convention where
-the unadorned indentifier $y$ of a function such as $t {}\rightarrow y(t)$ for
-$t\in[t_0,t_f]$ is used to represent the function of the the entire domain
+the unadorned indentifier $y$ for a function such as $t {}\rightarrow y(t)$,
+$t\in[t_0,t_f]$, is used to represent the function over the entire domain
 $t\in[t_0,t_f]$.  When appropriate, the notation $y(t)$ will be used to
-represent a particualar evaluation of the function at some time $t$ in the
-domain $[t_0,t_f]$.  However, in some situations, the argument $t$ of $y(t)$
-will be omitted and instead $y$ is used and it should be clear from the
-context (i.e.\ inside of an integral) that really a single value of the
-function is being represented.  Cases of possible ambiguity will be addressed.
+represent a particualar evaluation of the function at points $t$ in the domain
+$[t_0,t_f]$.  However, in some situations, the argument $t$ of $y(t)$ will be
+omitted and instead $y$ is used and it should be clear from the context (i.e.\
+inside of an integral) that really a single value of the function is being
+represented.  Cases of possible ambiguity will be addressed in the sequel.
 
 The implicit state solution for the DAEs in
-(\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) at time
+(\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) at points
 $t$ is signified as $y(p,v,t)\in\mathcal{Y}$, where $v$ in this case is the
 selection of transient parameters in the range $t\in[t_0,t]$.  Note that
 selections for $v$ in the range $(t:t_f]$ have no influence on the implicit
@@ -2263,7 +2264,7 @@ The direct sensitivity problem is easily stated by differentiating
 (\ref{rythmos:apdx:eqn:sens:d_hat}) with respect to $p$ to obtain
 %
 \begin{equation}
-\Jac{\hat d}{p}
+\Jac{\hat{d}}{p}
 = \int_{t_0}^{t_f} \left( \Jac{g}{y} \Jac{y}{p} +  \Jac{g}{p} \right) dt
 + \left. \left(  \Jac{h}{y} \Jac{y}{p} + \Jac{h}{p} \right) \right|_{t=t_f},
 \label{rythmos:apdx:eqn:sens:d_d_hat_d_p}
@@ -2272,21 +2273,22 @@ The direct sensitivity problem is easily stated by differentiating
 \hspace{4ex}where\hspace{1ex}\= \\
 \>	$\jac{\hat{g}}{p} \in \mathcal{G}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, \\
 \>	$\jac{\hat{h}}{p} \in \mathcal{G}|\mathcal{P}$ is defined only at $t=t_f$, \\
-\>	$\jac{y}{p} \in \mathcal{Y}|\mathcal{P}$ is the direct sensitivity of the state
-    at $t\in[t_0,t_f]$, and \\
+\>	$\jac{y}{p} \in \mathcal{Y}|\mathcal{P}$ is the direct sensitivity of the state defined on $t\in[t_0,t_f]$, and \\
 \>	$\jac{\hat{d}}{p} \in \mathcal{G}|\mathcal{P}$ is defined independent of time.
 \end{tabbing}
 
-The direct sensitivity $\jac{y}{p}$ is computed by solving a set of $n_p$
-independent direct sensitivity equations which are obtained by differentiating
+The direct sensitivity $\jac{y}{p}$ in
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) is computed by solving a set of
+$n_p$ independent direct sensitivity equations which are obtained by
+differentiating
 (\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) with
 respect to $p$ to give
 %
 \begin{eqnarray}
 %
-\Jac{c}{\dot{y}} \left(\frac{d}{dt} \Jac{y(t)}{p} \right) + \Jac{c}{y} \left(\Jac{y(t)}{p}\right)
+\Jac{c}{\dot{y}} \left(\frac{d}{dt} \Jac{y}{p} \right) + \Jac{c}{y} \left(\Jac{y}{p}\right)
 + \Jac{c}{p} & = & 0, \; t \in \left[ t_0, t_f \right], \label{rythmos:apdx:eqn:sens:direct-c} \\
-\Jac{y(t_0)}{p} & = & \Jac{y_0}{p}. \label{rythmos:apdx:eqn:sens:direct-c:ic}
+\Jac{y(t_0)}{p} & = & \Jac{y_0}{p}, \label{rythmos:apdx:eqn:sens:direct-c:ic}
 \end{eqnarray}
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
@@ -2297,9 +2299,9 @@ respect to $p$ to give
 \end{tabbing}
 
 These $n_p$ independent sensitivity equations are solved for $\jac{y}{p}
-{}\in\mathcal{Y}|\mathcal{P}$ forward in time from $t=t_0$.  The integral in
-(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) can be evaluated along with the
-integration of
+{}\in\mathcal{Y}|\mathcal{P}$ forward in time from $t_0$ to $t_f$.  The
+integral in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) can be evaluated along
+with the integration of
 (\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) and
 (\ref{rythmos:apdx:eqn:sens:direct-c})--(\ref{rythmos:apdx:eqn:sens:direct-c:ic}).
 Note that (\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic})
@@ -2310,16 +2312,15 @@ are a staggered set of DAE equations in that
 first followed by
 (\ref{rythmos:apdx:eqn:sens:direct-c})--(\ref{rythmos:apdx:eqn:sens:direct-c:ic}).
 
-\subsection{Derivation of adjoint sensitivities using direct sensitivity weak form}
+\subsection{Derivation of adjoint sensitivities}
 
 Here we describe a derivation for the adjoint equation and the gradient
-expressions that are based on straightforward principles that have a simple
-and strong foundation.
+expressions that are based on simple and straightforward principles.
 
 \subsubsection{Derivation of adjoint equation and sensitivities for steady-state parameters}
 \label{rythmos:app:adj-equ-derivation}
 
-In this section we begin with the same basic expressions of the reduced
+In this section we begin with the same basic expressions for the reduced
 derivative $\jac{\hat{d}}{p}$ in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) and
 the direct sensitivity equations for $\jac{y}{p}$ in
 (\ref{rythmos:apdx:eqn:sens:direct-c})--(\ref{rythmos:apdx:eqn:sens:direct-c:ic})
@@ -2331,7 +2332,7 @@ steady-state parameters by writing the weak form of the direct sensitivity
 equation (\ref{rythmos:apdx:eqn:sens:direct-c}) which is
 %
 \begin{equation}
-\int_{t_0}^{t_f} \Lambda^H \left(
+\int_{t_0}^{t_f} \Lambda^T \left(
 \Jac{c}{\dot{y}} \left(\frac{d}{dt} \Jac{y}{p} \right)
 + \Jac{c}{y} \left(\Jac{y}{p}\right)
 + \Jac{c}{p}
@@ -2339,48 +2340,48 @@ equation (\ref{rythmos:apdx:eqn:sens:direct-c}) which is
 \label{rythmos:apdx:eqn:sens:weak-direct-c}
 \end{equation}
 %
-where at this point $\Lambda(t)\in\mathcal{C}|\mathcal{G}$, for
-$t\in[t_0,t_f]$, is any appropriate weighting function\footnote{The admissible
-class of wieghting functions $\Lambda(t)\in\mathcal{C}|\mathcal{G}$ are those
-functions that are sufficiently smooth such that the integrals of the weak
-form (and the modified weak form after integration by parts) are finite and
-well defined.  Other requirements may also need to be satisfied in some cases
-[???].}.  Later, $\Lambda$ will be chosen to be the adjoint variables but for
-now $\Lambda$ is nothing more than an arbitrary weighting function for the
-purpose of stating the weak form.  The solution to the weak form of
-(\ref{rythmos:apdx:eqn:sens:weak-direct-c}) is every bit as valid and is
-indeed more general than the strong form in
+where at this point the function $\Lambda$, for
+$t\rightarrow\Lambda(t)\in\mathcal{C}|\mathcal{G}$ in $t\in[t_0,t_f]$, is any
+appropriate weighting function\footnote{The admissible class of wieghting
+functions $\Lambda$ are those functions that are sufficiently smooth such that
+the integrals of the weak form (and the modified weak form after integration
+by parts) are finite and well defined.  Other requirements may also need to be
+satisfied in some cases [???].}.  Later, $\Lambda$ will be chosen to be the
+adjoint variables but for now $\Lambda$ is nothing more than an arbitrary
+weighting function for the purpose of stating the weak form.  The solution to
+the weak form of (\ref{rythmos:apdx:eqn:sens:weak-direct-c}) is every bit as
+valid and is indeed more general than the strong form in
 (\ref{rythmos:apdx:eqn:sens:direct-c}) and we lose nothing by considering the
-weak form [???].
+weak form {}\cite{BeckerCareyOden-FE}.
 
 Next, we substitute the integration by parts
 %
 \begin{equation}
-\int_{t_0}^{t_f} \left[ \left( \Lambda^H \Jac{c}{\dot{y}} \right) \frac{d}{dt}\left( \Jac{y}{p} \right) \right] dt
-= \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t_0}^{t_f}
-- \int_{t_0}^{t_f} \left[ \frac{d}{dt}\left( \Lambda^H \Jac{c}{\dot{y}} \right) \Jac{y}{p} \right] dt
+\int_{t_0}^{t_f} \left[ \left( \Lambda^T \Jac{c}{\dot{y}} \right) \frac{d}{dt}\left( \Jac{y}{p} \right) \right] dt
+= \left. \left( \Lambda^T \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t_0}^{t_f}
+- \int_{t_0}^{t_f} \left[ \frac{d}{dt}\left( \Lambda^T \Jac{c}{\dot{y}} \right) \Jac{y}{p} \right] dt
 \end{equation}
 %
 into (\ref{rythmos:apdx:eqn:sens:weak-direct-c}) and rearrange which yields
 %
 \begin{equation}
-\int_{t_0}^{t_f} \left( \Lambda^H \Jac{c}{p} \right) dt
+\int_{t_0}^{t_f} \left( \Lambda^T \Jac{c}{p} \right) dt
 + \int_{t_0}^{t_f} \left[
-    - \frac{d}{dt}\left( \Lambda^H \Jac{c}{\dot{y}} \right)
-    + \Lambda^H \Jac{c}{y}
+    - \frac{d}{dt}\left( \Lambda^T \Jac{c}{\dot{y}} \right)
+    + \Lambda^T \Jac{c}{y}
   \right] \Jac{y}{p} dt
-+ \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t_0}^{t_f}
++ \left. \left( \Lambda^T \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t_0}^{t_f}
 = 0.
 \label{rythmos:apdx:eqn:sens:weak-direct-c-2}
 \end{equation}
 %
 At this point in the derivation we decide to restrict the possible set of
-functions for $\Lambda(t)$ by forcing $\Lambda(t)$ to satisfy the differential
+functions for $\Lambda$ by forcing $\Lambda$ to satisfy the differential
 equation
 %
 \begin{equation}
-- \frac{d}{dt}\left( \Lambda^H \Jac{c}{\dot{y}} \right)
-+  \Lambda^H \Jac{c}{y} = - \Jac{g}{y}, \; t \in \left[ t_0, t_f \right].
+- \frac{d}{dt}\left( \Lambda^T \Jac{c}{\dot{y}} \right)
++  \Lambda^T \Jac{c}{y} = - \Jac{g}{y}, \; t \in \left[ t_0, t_f \right].
 \label{rythmos:apdx:eqn:sens:adj-trans}
 \end{equation}
 %
@@ -2389,7 +2390,7 @@ what appears to be an arbitrary choice to help narrow the weighting function
 $\Lambda$ from the infinite set of possible choices.  It will be clear below
 why this chose is a convenient one.  Note that the choice in
 (\ref{rythmos:apdx:eqn:sens:adj-trans}) does not in and of itself uniquely
-determine $\Lambda$ as no boundary conditions have yet be specified.  It will
+determine $\Lambda$ as boundary conditions have yet to be specified.  It will
 be shown latter that the choice of boundary condition is arbitrary but when we
 move toward the end of the derivation, a natural choice for a boundary
 condition that uniquely specifies $\Lambda$ will fall out.
@@ -2400,8 +2401,8 @@ The derivation continues by substituting
 %
 \begin{eqnarray}
 \int_{t_0}^{t_f} \left( \Jac{g}{y} \Jac{y}{p} \right) dt
-& = &  \int_{t_0}^{t_f} \left( \Lambda^H \Jac{c}{p} \right) dt
-+ \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|^{t_f}_{t_0}.
+& = &  \int_{t_0}^{t_f} \left( \Lambda^T \Jac{c}{p} \right) dt
++ \left. \left( \Lambda^T \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|^{t_f}_{t_0}.
 \label{rythmos:apdx:eqn:sens:weak-direct-c-3}
 \end{eqnarray}
 
@@ -2410,14 +2411,14 @@ Finally, substituting (\ref{rythmos:apdx:eqn:sens:weak-direct-c-3}) into
 %
 \begin{eqnarray}
 \Jac{\hat{d}}{p} 
-& = & \int_{t_0}^{t_f} \left( \Lambda^H \Jac{c}{p} + \Jac{g}{p} \right) dt
+& = & \int_{t_0}^{t_f} \left( \Lambda^T \Jac{c}{p} + \Jac{g}{p} \right) dt
   + \left. \left( \Jac{h}{p} \right) \right|_{t=t_f}
-  - \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t=t_0}
+  - \left. \left( \Lambda^T \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t=t_0}
 \nonumber \\
 & & + \left. \left[ \left(
-    \Lambda^H \Jac{c}{\dot{y}}
+    \Lambda^T \Jac{c}{\dot{y}}
     +  \Jac{h}{y}
-  \right)  \Jac{y}{p} \right] \right|_{t=t_f}
+  \right)  \Jac{y}{p} \right] \right|_{t=t_f}.
 \label{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}
 \end{eqnarray}
 %
@@ -2425,11 +2426,11 @@ We are not finished yet since, as we stated earlier, the choice for the
 weighting functions $\Lambda$ have not yet been uniquely specified.  The first
 thing to consider is that, in general, the adjoint DAE in
 (\ref{rythmos:apdx:eqn:sens:adj-trans}) is only stable if integrated backwards
-in time from $t_f$ to $t_0$ [???].  However, as described in the following
-theorem, we are free to pick almost any final condition for $\Lambda(t_f)$
-that is consistent with the adjoint equation at $t_f$ and then evaluate the
-terms in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}) involving the resulting
-adjoint solution.
+in time from $t_f$ to $t_0$ {}\cite{adjoint-sens-2003}.  However, as described
+in the following theorem, we are free to pick almost any final condition for
+$\Lambda(t_f)$ that is consistent with the adjoint equation at $t_f$ and then
+evaluate the terms in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}) involving
+the resulting adjoint solution.
 
 \begin{theorem}
 If $\Lambda_1$ and $\Lambda_2$ are any two particular bounded solutions to the
@@ -2457,8 +2458,8 @@ D_2 - D_1
 \left.\Jac{\hat{d}}{p}\right|_{\Lambda=\Lambda_2} - \left.\Jac{\hat{d}}{p}\right|_{\Lambda=\Lambda_1}
 \nonumber \\
 & = &
-\int_{t_0}^{t_f} \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{p} dt
-+ \left.\left[ \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{\dot{y}} \Jac{y}{p} \right]\right|_{t_0}^{t_f}
+\int_{t_0}^{t_f} \left( \Lambda_2 - \Lambda_1 \right)^T \Jac{c}{p} dt
++ \left.\left[ \left( \Lambda_2 - \Lambda_1 \right)^T \Jac{c}{\dot{y}} \Jac{y}{p} \right]\right|_{t_0}^{t_f}
 = 0
 \label{rythmos:apdx:eqn:sens:ta:d_hat_d_d_p-diff-zero}
 \end{eqnarray}
@@ -2471,18 +2472,18 @@ We start the proof by substituting (\ref{rythmos:apdx:eqn:sens:direct-c}) into
 %
 \begin{equation}
 D_2 - D_1 = 
-\int_{t_0}^{t_f} \left( \Lambda_2 - \Lambda_1 \right)^H \left[
+\int_{t_0}^{t_f} \left( \Lambda_2 - \Lambda_1 \right)^T \left[
   - \Jac{c}{\dot{y}} \left(\frac{d}{dt} \Jac{y}{p} \right) - \Jac{c}{y} \left(\Jac{y}{p}\right) \right] dt
-+ \left.\left[ \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{\dot{y}} \Jac{y}{p} \right]\right|_{t_0}^{t_f}.
++ \left.\left[ \left( \Lambda_2 - \Lambda_1 \right)^T \Jac{c}{\dot{y}} \Jac{y}{p} \right]\right|_{t_0}^{t_f}.
 \label{rythmos:apdx:eqn:sens:ta:d_hat_d_d_p-diff-zero-2}
 \end{equation}
 %
 Substituting the integration by parts
 %
 \[
-- \int_{t_0}^{t_f} \left[ \left( \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{\dot{y}} \right) \frac{d}{dt}\left( \Jac{y}{p} \right) \right] dt
-= - \left. \left( \left( \Lambda_2 - \Lambda_1 \right)^H  \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t_0}^{t_f}
-+ \int_{t_0}^{t_f} \left[ \frac{d}{dt}\left( \left( \Lambda_2 - \Lambda_1 \right)^H  \Jac{c}{\dot{y}} \right) \Jac{y}{p} \right] dt
+- \int_{t_0}^{t_f} \left[ \left( \left( \Lambda_2 - \Lambda_1 \right)^T \Jac{c}{\dot{y}} \right) \frac{d}{dt}\left( \Jac{y}{p} \right) \right] dt
+= \int_{t_0}^{t_f} \left[ \frac{d}{dt}\left( \left( \Lambda_2 - \Lambda_1 \right)^T  \Jac{c}{\dot{y}} \right) \Jac{y}{p} \right] dt
+- \left. \left[ \left( \Lambda_2 - \Lambda_1 \right)^T  \Jac{c}{\dot{y}} \Jac{y}{p} \right] \right|_{t_0}^{t_f}
 \]
 %
 into (\ref{rythmos:apdx:eqn:sens:ta:d_hat_d_d_p-diff-zero-2}), canceling
@@ -2490,8 +2491,8 @@ terms, and rearranging yields
 %
 \begin{equation}
 D_2 - D_1 = 
-\int_{t_0}^{t_f} \left[ \frac{d}{dt} \left( \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{\dot{y}} \right)
-- \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{y} \right] \left(\Jac{y}{p}\right) dt.
+\int_{t_0}^{t_f} \left[ \frac{d}{dt} \left( \left( \Lambda_2 - \Lambda_1 \right)^T \Jac{c}{\dot{y}} \right)
+- \left( \Lambda_2 - \Lambda_1 \right)^T \Jac{c}{y} \right] \left(\Jac{y}{p}\right) dt.
 \label{rythmos:apdx:eqn:sens:ta:d_hat_d_d_p-diff-zero-3}
 \end{equation}
 %
@@ -2500,8 +2501,8 @@ Next, substituting the solutions $\Lambda_1$ and $\Lambda_2$ into
 equations yields
 %
 \begin{equation}
-\frac{d}{dt} \left( \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{\dot{y}} \right)
-- \left( \Lambda_2 - \Lambda_1 \right)^H \Jac{c}{y} = 0, \; t \in [t_0,t_f].
+- \frac{d}{dt} \left( \left( \Lambda_2 - \Lambda_1 \right)^T \Jac{c}{\dot{y}} \right)
++ \left( \Lambda_2 - \Lambda_1 \right)^T \Jac{c}{y} = 0, \; t \in [t_0,t_f].
 \label{rythmos:apdx:eqn:sens:ta:adj-trans-diff}
 \end{equation}
 %
@@ -2517,15 +2518,13 @@ which completes the proof. $\;\Box$
 
 The above theorem establishes that there are an infinite number of choices for
 the final condition for the adjoint solution that all yeild the same reduced
-derivative $\jac{\hat{d}}{p}$.
-
-While the above theorem establishes that a wide variety of final conditions
-for $\Lambda(t_f)$ can be chosen to close the adjoint equation, rather than
+derivative $\jac{\hat{d}}{p}$.  While a wide variety of final conditions for
+$\Lambda(t_f)$ can be chosen to close the adjoint equation, rather than
 picking just any final condition, selecting the final condition
 %
 \begin{equation}
 \left. \left(
-  \Lambda^H \Jac{c}{\dot{y}}
+  \Lambda^T \Jac{c}{\dot{y}}
   +  \Jac{h}{y}
 \right) \right|_{t=t_f}
  = 0,
@@ -2533,13 +2532,13 @@ picking just any final condition, selecting the final condition
 \end{equation}
 %
 is rather convenient since it zeros out the last term in
-(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}).  This specification of
-the final condition closes the adjoint equation and uniquely defines
-the adjoint $\Lambda(t)$ in all of the cases of state DAEs what we
-will condider here\footnote{A uniquely defined adjoint $\Lambda(t)$
-requires that certain regularity conditions are satisfied by the state
-DAE but for the purposes of this derivation we assume that such a
-condition is always statisfied.}.
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}).  This specification of the final
+condition closes the adjoint equation and uniquely defines the adjoint
+$\Lambda$ in all of the cases of state DAEs what we will condider
+here\footnote{A uniquely defined adjoint $\Lambda$ requires that certain
+regularity conditions are satisfied by the state DAE (see [???]) but for the
+purposes of this derivation we assume that such a condition is always
+statisfied.}.
 
 Finally, substituting (\ref{rythmos:apdx:eqn:sens:adj-trans:fc}) and
 $\jac{y_0}{p}$ for $\jac{y}{p}$ at $t=t_0$ in
@@ -2550,10 +2549,10 @@ reduced derivative
 \Jac{\hat{d}}{p} =
 \int_{t_0}^{t_f} \left(
     \Jac{g}{p}
-    + \Lambda^H \Jac{c}{p}
+    + \Lambda^T \Jac{c}{p}
   \right) dt
   + \left. \left( \Jac{h}{p} \right) \right|_{t=t_f}
-  - \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y_0}{p} \right) \right|_{t=t_0}.
+  - \left. \left( \Lambda^T \Jac{c}{\dot{y}} \Jac{y_0}{p} \right) \right|_{t=t_0}.
 \label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}
 \end{equation}
 
@@ -2566,315 +2565,198 @@ computation of $\jac{\hat{d}}{p}$ in terms of the computed adjoint $\Lambda$.
 
 \subsubsection{Derivation of adjoint sensitivities for transient parameters}
 
-\subsection{The adjoint, the reduced gradient and the augmented adjoint}
-
-We now restate the adjoint in (\ref{rythmos:apdx:eqn:sens:adj-trans}) and
-(\ref{rythmos:apdx:eqn:sens:adj-trans:fc}), and the reduced sensitivities in
-(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) in standard column-wise form
-for $\Lambda$ which yields the adjoint DAE equations
-%
-\begin{eqnarray}
-- \frac{d}{dt}\left( \Jac{c}{\dot{y}}^H \Lambda \right)
-+  \Jac{c}{y}^H \Lambda + \Jac{g}{y}^H
-& = & 0, \; t \in \left[ t_0, t_f \right],
-\label{rythmos:apdx:eqn:sens:adj} \\
-\left.\left( \Jac{c}{\dot{y}}^H \Lambda \right)\right|_{t=t_f}
-& = & - \left. \Jac{h}{y}^H \right|_{y=y(t_f)},
-\label{rythmos:apdx:eqn:sens:adj:fc}
-\end{eqnarray}
-%
-and the reduced gradient expression
-%
-\begin{equation}
-\Jac{\hat{d}}{p}^H =
-\int_{t_0}^{t_f} \left(
-    \Jac{g}{p}^H
-    + \Jac{c}{p}^H \Lambda
-  \right) dt
-  + \left. \Jac{h}{p}^H \right|_{t=t_f}
-  - \left. \left( \Jac{y_0}{p}^H \Jac{c}{\dot{y}}^H \Lambda \right) \right|_{t=t_0}.
-\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final-2}
-\end{equation}
-%
-
-As described in [???], for some classes of up to index-2 DAEs, the form of the
-adjoint in
-(\ref{rythmos:apdx:eqn:sens:adj})--(\ref{rythmos:apdx:eqn:sens:adj:fc}) may be
-unstable while the {}\textit{augmented adjoint system}
-%
-\begin{eqnarray}
-\frac{d}{dt}\left( \bar{\Lambda} \right)
-+  \Jac{c}{y}^H \Lambda + \Jac{g}{y}^H \Lambda
-& = & 0, \; t \in \left[ t_0, t_f \right],
-\label{rythmos:apdx:eqn:sens:aug-adj-de} \\
-\bar{\Lambda} + \Jac{c}{\dot{y}}^H
-& = & 0, \; t \in \left[ t_0, t_f \right],
-\label{rythmos:apdx:eqn:sens:aug-adj-ae} \\
-\left. \bar{\Lambda} \right|_{t=t_f}
-& = & \left. \Jac{h}{y}^H \right|_{y=y(t_f)},
-\label{rythmos:apdx:eqn:sens:aug-adj:fc}
-\end{eqnarray}
-%
-generally is stable when the forward DAE is stable.
-
-\section{Derivation of adjoint sensitivities using the reduced Lagrangian}
-
-In this section we consider the derivation of adjoint approaches for computing
-sensitivities of the reduced response function $\hat{d}(p,v(t_0,t_f))$ with
-respect to $p$ and $v(t)$ for $t\in[t_0,t_f]$ using a Lagrangian approach.  The
-primary devise that that we use here is the Lagrangian which is a special
-function which is the weighted composition of the response function and the
-DAE constraints.  This derivation follows in a similar manner from the one in
-[???].  The advantage of the Lagrangian approach is that the algebraic
-manipulations are more straightforward but the disadvantage is that it lacks
-the more comfortable approaches used in the above direct sensitivity weak-form
-derivations for the adjoint.
-
-The Lagrangian is
-%
-\begin{eqnarray}
-L(y,p,v,\Lambda)
-& = & \int_{t_0}^{t_f} g(y(t),p,v(t),t) dt + h(y(t_f),p) \nonumber \\
-& & + \int_{t_0}^{t_f} \Lambda(t)^H c(\dot{y}(t),y(t),p,v(t),t) dt,
-\label{rythmos:apdx:eqn:sens:L}
-\end{eqnarray}
-\begin{tabbing}
-\hspace{4ex}where\hspace{1ex}\= \\
-\>	$\Lambda(t) \in \mathcal{C}|\mathcal{G}$ are the Lagrange multipliers defined on $t\in[t_0,t_f]$,
-\end{tabbing}
-%
-and $\Lambda(t)^H\in\mathcal{G}|\mathcal{C}$ is the adjoint operator
-of $\Lambda(t)$.
-
-A few remarks about the Lagrangian function in (\ref{rythmos:apdx:eqn:sens:L})
-are in order before we get into the detailed derivations.  While the
-Lagrangian function can have a significant theoretical interpretation in a
-variety of contexts, it is usually primarily just a convenient means to derive
-sensitivities of constrained problems.  For instance, it is well known that
-the variations of the Lagrangian set to zero represent the first-order
-optimality conditions for the constrained optimization problem of minimizing
-(or maximizing) (\ref{rythmos:apdx:eqn:sens:d}) (with $n_g=1$ of course)
-subject to
-(\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}).
-
-In the following derivations, we will plug the implicit state function
-$y(p,v,t)$ into (\ref{rythmos:apdx:eqn:sens:L}), forming a reduced
-Lagrangian $\hat{L}(p,v)$ and then take variations with
-respect to $p$ and $v$.  From these variations, followed by
-some other manipulations, the adjoint equation will fall out as well
-as the other derivative computations.
-
-Note: I am a little very uncomfortable with this approach of plugging
-$y(p,v,t)$ into the Lagrangian and then taking variations.  However,
-this approach works correctly for steady-state problems and therefore should
-also work for transient problems.  Therefore, for now, I am just going to
-accept that I don't fully appreciate the foundation for this general approach
-but I will just accept that it is bullet proof and gives the right result
-every time.
-
-\subsection{Sensitivities for steady-state parameters and the adjoint equation}
-
-In this section we will derive the expressions for $\jac{\hat{d}}{p}$ and in
-the process will derive the adjoint equation and boundary conditions that
-solves for $\Lambda$.  We start by taking the variation of
-(\ref{rythmos:apdx:eqn:sens:L}) (through the implicit function $y(p,v,t)$)
-with respect to $p$ and we claim that this will be equal to
-$\jac{\hat{d}}{p}$.  This variation is
-%
-\begin{eqnarray}
-\Jac{\hat{d}}{p}
-& = & \Jac{\hat{L}}{p}
-\nonumber \\
-& = & \int_{t_0}^{t_f} \left( \Jac{g}{y} \Jac{y}{p} +  \Jac{g}{p} \right) dt
-+ \left. \left(  \Jac{h}{y} \Jac{y}{p} + \Jac{h}{p} \right) \right|_{t=t_f}
-\nonumber \\
-& & + \int_{t_0}^{t_f} \Lambda^H \left( \Jac{c}{\dot{y}} \frac{d}{dt}\left( \Jac{y}{p} \right)
-   + \Jac{c}{y} \Jac{y}{p} +  \Jac{c}{p} \right) dt.
-\label{rythmos:apdx:eqn:sens:d_L_hat_d_p}
-\end{eqnarray}
-%
-Substituting the integration by parts
-%
-\begin{equation}
-\int_{t_0}^{t_f} \left[ \left( \Lambda^H \Jac{c}{\dot{y}} \right) \frac{d}{dt}\left( \Jac{y}{p} \right) \right] dt
-= \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t_0}^{t_f}
-- \int_{t_0}^{t_f} \left[ \frac{d}{dt}\left( \Lambda^H \Jac{c}{\dot{y}} \right) \Jac{y}{p} \right] dt
-\end{equation}
-%
-into (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_p}) and rearranging yields
-%
-\begin{eqnarray}
-\Jac{\hat{d}}{p}
-& = & \int_{t_0}^{t_f} \left(
-    \Jac{g}{p}
-    + \Lambda^H \Jac{c}{p}
-  \right) dt
-  + \left. \left( \Jac{h}{p} \right) \right|_{t=t_f}
-  - \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{p} \right) \right|_{t=t_0}
-\nonumber \\
-& & + \int_{t_0}^{t_f} \left(
-    - \frac{d}{dt}\left( \Lambda^H \Jac{c}{\dot{y}} \right)
-    +  \Lambda^H \Jac{c}{y} +  \Jac{g}{y}
-  \right) \Jac{y}{p} dt
-\nonumber \\
-& & + \left. \left[ \left(
-    \Lambda^H \Jac{c}{\dot{y}}
-    +  \Jac{h}{y}
-  \right)  \Jac{y}{p} \right] \right|_{t=t_f}
-\label{rythmos:apdx:eqn:sens:d_L_hat_d_p_2}.
-\end{eqnarray}
-%
-We will now identify the integrand in the second integral in
-(\ref{rythmos:apdx:eqn:sens:d_L_hat_d_p_2}) as the adjoint equation and we
-will force it to be satisfied as
-%
-\begin{equation}
-- \frac{d}{dt}\left( \Lambda^H \Jac{c}{\dot{y}} \right)
-+  \Lambda^H \Jac{c}{y} +  \Jac{g}{y} = 0, \; t \in \left[ t_0, t_f \right].
-\label{rythmos:apdx:eqn:sens:adj-trans-2}
-\end{equation}
-%
-We must also specify boundary conditions for the adjoint equation in
-(\ref{rythmos:apdx:eqn:sens:adj-trans-2}).  As stated in [???] for index-0 and
-index-1 DAEs, we can simply specify the endpoint condition
-%
-\begin{equation}
-\left. \left(
-  \Lambda^H \Jac{c}{\dot{y}}
-  +  \Jac{h}{y}
-\right) \right|_{t=t_f}
- = 0,
-\label{rythmos:apdx:eqn:sens:adj-trans:fc-2}
-\end{equation}
-%
-which drops out the last term in (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_p_2})
-and, together with (\ref{rythmos:apdx:eqn:sens:adj-trans-2}) and substituting
-$\jac{y_0}{p}$ for $\jac{y}{p}$ in the second expression at $t=t_0$, leaves
-%
-\begin{equation}
-\Jac{\hat{d}}{p} =
-\int_{t_0}^{t_f} \left(
-    \Jac{g}{p}
-    + \Lambda^H \Jac{c}{p}
-  \right) dt
-  + \left. \left( \Jac{h}{p} \right) \right|_{t=t_f}
-  - \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y_0}{p} \right) \right|_{t=t_0}
-\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final-2}
-\end{equation}
-%
-which is the same as (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) derived
-in another way.
-
-\subsection{Adjoint sensitivities for transient parameters}
-
-Here we consider the derivation of the sensitivity
+Here we consider the derivation of the reduced sensitivity with respect to
+transient parameters
 %
 \begin{equation}
 \Jac{\hat{d}}{v(t)} \in \mathcal{G}|\mathcal{V}, \; \mbox{for} \; t\in[t_0,t_f].
 \end{equation}
 %
-Our derivation for these sensitivities for the transient parameters $v(t)$
-will be a little different than for the steady-state parameters $p$.  The
-primary reason for using a different derivation is that the
-infinite-dimensional transient parameters $v$ are fundamentally different than
-finite-dimensional steady-state parameters $p$.  Because of the
-infinite-dimensional nature of $v(t_0,t_f)$, we use a different tool of
-functional analysis.  The tool we use is the application of the
-infinite-dimensional operator $\jac{\hat{L}}{v}$ to the infinite-dimensional
-perturbation $\delta v$ where we will then identify $\jac{\hat{d}}{v(t)} =
-{}\jac{\hat{L}}{v(t)}$ in the integrand of
+Our derivation for these sensitivities for the transient parameters $v$ will
+be a little different than for the steady-state parameters $p$.  The primary
+reason for using a different derivation is that the infinite-dimensional
+transient parameters $v$ are fundamentally different than finite-dimensional
+steady-state parameters $p$.  Because of the infinite-dimensional nature of
+$v$, we use a different tool of functional analysis.  The tool we use is the
+application of the infinite-dimensional operator $\jac{\hat{d}}{v}$ to the
+infinite-dimensional perturbation $\delta v$ where we will then use identify
+$\jac{\hat{d}}{v(t)}$ in the integrand of
 %
 \begin{equation}
-\left( \Jac{\hat{d}}{v} \right) \delta v
-= \left( \Jac{\hat{L}}{v} \right) \delta v
-= \int_{t_0}^{t_f} \Jac{\hat{L}}{v(t)} \delta v(t) dt
-= \int_{t_0}^{t_f} \Jac{\hat{d}}{v(t)} \delta v(t) dt.
+\Jac{\hat{d}}{v} \delta v = \int_{t_0}^{t_f} \Jac{\hat{d}}{v(t)} \delta v(t) dt.
 \label{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v}
 \end{equation}
 %
 The integral in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v}) is the
-definition of the inner product of two functions in an
-infinite-dimensional space.
-   
-We begin our derivation of $\jac{\hat{d}}{v(t)}$ by linearizing $\hat{L}(p,v)$
-with respect to $\delta v$ as
+definition the infinite-dimensional operator application
+$(\jac{\hat{d}}{v(t)}) {}\delta v$ [???].
+
+We begin the derivation with the directional derivative of $\hat{d}(v)$ with
+respect to $v$ along the direction $\delta v$ which is simply
 %
-\begin{eqnarray}
-\left( \Jac{\hat{d}}{v} \right) \delta v
-& = & \left( \Jac{\hat{L}}{v} \right) \delta v
-\nonumber \\
-& = & \int_{t_0}^{t_f} \left( \Jac{g}{y} \Jac{y}{v} \delta v +  \Jac{g}{v} \delta v \right) dt
-+ \left. \left(  \Jac{h}{y} \Jac{y}{v} \delta v \right) \right|_{t=t_f}
-\nonumber \\
-& & + \int_{t_0}^{t_f} \Lambda^H \left( \Jac{c}{\dot{y}} \frac{d}{dt}\left( \Jac{y}{v} \right) \delta v
-   + \Jac{c}{y} \Jac{y}{v} \delta v +  \Jac{c}{v} \delta v \right) dt.
-\label{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v}
-\end{eqnarray}
+\begin{equation}
+\Jac{\hat{d}}{v} \delta v
+= \int_{t_0}^{t_f} \left( \Jac{g}{y} \Jac{y}{v} \delta v +  \Jac{g}{v} \delta v \right) dt
++ \left. \left(  \Jac{h}{y} \Jac{y}{v} \delta_v \right) \right|_{t=t_f}.
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v-2}
+\end{equation}
 %
+Next, we write the weak form of the linearization of the state equation (about
+a solution for $c(\dot{y},y,p,v,t)=0$) with respect to $v$ along the direction
+$\delta v$ which is
+%
+\begin{equation}
+%
+\int_{t_0}^{t_f} \Lambda^T \left[
+\Jac{c}{\dot{y}} \left(\frac{d}{dt} \Jac{y}{v} \right) \delta v + \Jac{c}{y} \Jac{y}{v} \delta v
++ \Jac{c}{v} \delta_v \right] dt = 0
+\label{rythmos:apdx:eqn:sens:weak-direct-c-v}
+\end{equation}
+%
+and has initial condition $\left.(\jac{y}{v})\delta v\right|_{t=t_0} = 0$.
+The sensitivity equation that is used in the weak form in
+(\ref{rythmos:apdx:eqn:sens:weak-direct-c-v}) can be derived using a simple
+Taylor expansion of the state equation about a solution $c(\dot{y},y,p,v,t)=0$
+in the direction $\delta v$ and then dropping off the $O(||\delta v||^2)$ and
+higher terms.
+
+From here the derivation proceeds almost identically to the case for the
+steady-state parameters $p$ described in the previous section.
+
 Substituting the integration by parts
 %
 \begin{equation}
-\int_{t_0}^{t_f} \left[ \left( \Lambda^H \Jac{c}{\dot{y}} \right) \frac{d}{dt}\left( \Jac{y}{v} \right) \delta v \right] dt
-= \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{v} \delta v \right) \right|_{t_0}^{t_f}
-- \int_{t_0}^{t_f} \left[ \frac{d}{dt}\left( \Lambda^H \Jac{c}{\dot{y}} \right) \Jac{y}{v} \delta v \right] dt
+\int_{t_0}^{t_f} \left[ \left( \Lambda^T \Jac{c}{\dot{y}} \right) \frac{d}{dt}\left( \Jac{y}{v} \delta v \right) \right] dt
+= \left. \left( \Lambda^T \Jac{c}{\dot{y}} \Jac{y}{v} \delta v \right) \right|_{t_0}^{t_f}
+- \int_{t_0}^{t_f} \left[ \frac{d}{dt}\left( \Lambda^T \Jac{c}{\dot{y}} \right) \Jac{y}{v} \delta v \right] dt
 \end{equation}
 %
-into (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v}) and rearranging
-yields
-%
-\begin{eqnarray}
-\left( \Jac{\hat{d}}{v} \right) \delta v
-& = & \int_{t_0}^{t_f} \left[ \left(
-    \Jac{g}{v}
-    + \Lambda^H \Jac{c}{v}
-  \right) \delta v \right] dt
-  - \left. \left( \Lambda^H \Jac{c}{\dot{y}} \Jac{y}{v} \delta v \right) \right|_{t=t_0}
-\nonumber \\
-& & + \int_{t_0}^{t_f} \left[ \left(
-    - \frac{d}{dt}\left( \Lambda^H \Jac{c}{\dot{y}} \right)
-    +  \Lambda^H \Jac{c}{y} +  \Jac{g}{y}
-  \right) \Jac{y}{v} \delta v \right] dt
-\nonumber \\
-& & + \left. \left[ \left(
-    \Lambda^H \Jac{c}{\dot{y}}
-    +  \Jac{h}{y}
-  \right)  \Jac{y}{v} \delta v \right] \right|_{t=t_f}
-\label{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_2}.
-\end{eqnarray}
-%
-By applying our choice for the adjoint
-(\ref{rythmos:apdx:eqn:sens:adj-trans-2}) and its final condition
-(\ref{rythmos:apdx:eqn:sens:adj-trans:fc-2}) and noting that $y(t_0) = y_0(p)$
-is not a function so that of $v$ and therefore $\jac{y}{v(t)} = 0$ at $t=t_0$,
-then what is left of (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_2})
-becomes
-%
-\begin{eqnarray}
-\left( \Jac{\hat{d}}{v} \right) \delta v
-& = & \int_{t_0}^{t_f} \left[ \left(
-    \Jac{g}{v}
-    + \Lambda^H \Jac{c}{v}
-  \right) \delta v \right] dt
-\label{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_3}.
-\end{eqnarray}
-
-By comparing (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_3}) to
-(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v}) it is clear that
+into (\ref{rythmos:apdx:eqn:sens:weak-direct-c-v}) and rearranging yeilds
 %
 \begin{equation}
-\Jac{\hat{d}}{v(t)}^H
-= \Jac{g}{v(t)}^H + \Jac{c}{v(t)}^H \Lambda(t)
-\label{rythmos:apdx:eqn:sens:d_d_hat_d_v_t}
+\int_{t_0}^{t_f} \left( \Lambda^T \Jac{c}{v} \delta v \right) dt
++ \int_{t_0}^{t_f} \left[
+    - \frac{d}{dt}\left( \Lambda^T \Jac{c}{\dot{y}} \right)
+    + \Lambda^T \Jac{c}{y}
+  \right] \Jac{y}{v} \delta v dt
++ \left. \left( \Lambda^T \Jac{c}{\dot{y}} \Jac{y}{v} \delta v \right) \right|_{t_0}^{t_f}
+= 0.
+\label{rythmos:apdx:eqn:sens:weak-direct-c-v-2}
 \end{equation}
 %
-is the reduced gradient that we are seeking.
+Substituting the choice for the adjoint equation
+(\ref{rythmos:apdx:eqn:sens:adj-trans}) into
+(\ref{rythmos:apdx:eqn:sens:weak-direct-c-v-2}) and rearranging yeilds
+%
+\begin{eqnarray}
+\int_{t_0}^{t_f} \left( \Jac{g}{y} \Jac{y}{v} \delta v \right) dt
+& = &  \int_{t_0}^{t_f} \left( \Lambda^T \Jac{c}{v} \delta v \right) dt
++ \left. \left( \Lambda^T \Jac{c}{\dot{y}} \Jac{y}{v} \delta v \right) \right|^{t_f}_{t_0}.
+\label{rythmos:apdx:eqn:sens:weak-direct-c-v-3}
+\end{eqnarray}
+%
+Substituting (\ref{rythmos:apdx:eqn:sens:weak-direct-c-v-3}) into
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v-2}) and rearranging
+yeilds
+%
+\begin{eqnarray}
+\Jac{\hat{d}}{v} \delta v 
+& = & \int_{t_0}^{t_f} \left( \Lambda^T \Jac{c}{v} + \Jac{g}{v} \right) \delta v dt
+  - \left. \left( \Lambda^T \Jac{c}{\dot{y}} \Jac{y}{v} \delta v \right) \right|_{t=t_0}
+\nonumber \\
+& & + \left. \left[ \left(
+    \Lambda^T \Jac{c}{\dot{y}} +  \Jac{h}{y}
+  \right)  \Jac{y}{v} \delta v \right] \right|_{t=t_f}.
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v-3}
+\end{eqnarray}
+%
+Using the choice for the final condition in
+(\ref{rythmos:apdx:eqn:sens:adj-trans:fc}) and noting that
+$\left.(\jac{y}{v})\delta v\right|_{t=t_0} = 0$, then
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v-3}) reduces to
+%
+\begin{equation}
+\Jac{\hat{d}}{v} \delta v 
+ = \int_{t_0}^{t_f} \left( \Lambda^T \Jac{c}{v} + \Jac{g}{v} \right) \delta v dt.
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v-final}
+\end{equation}
+
+Finally, by comparing (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v-final})
+with (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v}) it is clear that
+%
+\begin{equation}
+\Jac{\hat{d}}{v(t)} = \Lambda(t) \Jac{c}{v(t)} + \Jac{g}{v(t)}, \; t\in[t_0,t_f]
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_v_t-final}
+\end{equation}
+%
+is the reduced derivative object that we are seeking.
+
+\subsection{The adjoint, the reduced gradient and the augmented adjoint}
+
+We now restate the adjoint in (\ref{rythmos:apdx:eqn:sens:adj-trans}) and
+(\ref{rythmos:apdx:eqn:sens:adj-trans:fc}), and the reduced sensitivities in
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) and
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_t-final}) in standard column-wise form
+for $\Lambda$ which yields the adjoint DAE equations
+%
+\begin{eqnarray}
+- \frac{d}{dt}\left( \Jac{c}{\dot{y}}^T \Lambda \right)
++  \Jac{c}{y}^T \Lambda + \Jac{g}{y}^T
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:adj} \\
+\left.\left( \Jac{c}{\dot{y}}^T \Lambda \right)\right|_{t=t_f}
+& = & - \left. \Jac{h}{y}^T \right|_{y=y(t_f)},
+\label{rythmos:apdx:eqn:sens:adj:fc}
+\end{eqnarray}
+%
+and the reduced gradient expressions
+%
+\begin{equation}
+\Jac{\hat{d}}{p}^T =
+\int_{t_0}^{t_f} \left(
+    \Jac{g}{p}^T
+    + \Jac{c}{p}^T \Lambda
+  \right) dt
+  + \left. \Jac{h}{p}^T \right|_{t=t_f}
+  - \left. \left( \Jac{y_0}{p}^T \Jac{c}{\dot{y}}^T \Lambda \right) \right|_{t=t_0}.
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final-2}
+\end{equation}
+%
+and
+%
+\begin{equation}
+\Jac{\hat{d}}{v(t)}^T =  \Jac{g}{v(t)}^T + \Jac{c}{v(t)}^T \Lambda(t), \; t\in[t_0,t_f]
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_v_t-final-2}
+\end{equation}
+%
+
+As described in {}\cite{adjoint-sens-2003}, for some classes of up to index-2
+DAEs (including implicit ODES), the form of the adjoint in
+(\ref{rythmos:apdx:eqn:sens:adj})--(\ref{rythmos:apdx:eqn:sens:adj:fc}) may be
+unstable while the {}\textit{augmented adjoint system}
+%
+\begin{eqnarray}
+\frac{d}{dt}\left( \bar{\Lambda} \right)
++  \Jac{c}{y}^T \Lambda + \Jac{g}{y}^T \Lambda
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:aug-adj-de} \\
+\bar{\Lambda} + \Jac{c}{\dot{y}}^T
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:aug-adj-ae} \\
+\left. \bar{\Lambda} \right|_{t=t_f}
+& = & \left. \Jac{h}{y}^T \right|_{y=y(t_f)},
+\label{rythmos:apdx:eqn:sens:aug-adj:fc}
+\end{eqnarray}
+%
+generally is stable when the forward DAE is stable.  In addition, when
+considering timestepping algorithms for state and adjoint equations, only the
+augmented adjoint DAE is guaranteed to be stable for the same timestep used by
+the forward DAE {}\cite{adjoint-sens-2003}.  Therefore, the augmented adjoint
+DAE system is to be preferred in a software implementation.
 
 \section{ToDo}
 
 \begin{itemize}
-%
-{}\item Ross: Rederive sensitivities for transient parameters using weak form
-of direct sensitivity equations.
 %
 {}\item Ross: Derive reduced Hessian-vector products for sensitivity
 computations and expand the list of requirements to include second derivative
