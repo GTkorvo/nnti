@@ -52,8 +52,8 @@
 % ---------------------------------------------------------------------------- %
 % Set some things we need for SAND reports. These are mandatory
 %
-\SANDnum{SAND2002-xxxx}
-\SANDprintDate{August 2002}
+\SANDnum{SAND2003-xxxx}
+\SANDprintDate{February 2003}
 \SANDauthor{Michael A.~Heroux, Sandia National Laboratories}
 
 
@@ -107,9 +107,10 @@ current development and future plans of the project.
     %
     \clearpage
     \section*{Acknowledgement}
-The author would like to acknowledge the support of the ASCI and LDRD programs
-that funded development of Trilinos and the talented group of Trilinos contributors: 
-Teri Barth, David Day, Bob Heaphy, Robert Hoekstra, Jonathan Hu, Tammy Kolda, Rich Lehoucq,
+The authors would like to acknowledge the support of the ASCI and LDRD programs
+that funded development of Trilinos and recognize all Trilinos contributors: 
+Teri Barth, David Day, Bob Heaphy, Mike Heroux, Robert Hoekstra, Jonathan Hu, 
+Tammy Kolda, Rich Lehoucq,
 Kevin Long, Roger Pawlowski, Andrew Rothfuss, Andrew Salinger, Ken Stanley, Ray Tuminaro,
 Jim Willenbring and Alan Williams.
 
@@ -192,7 +193,7 @@ providing the reader with an summary of the project in its current state.
     \addcontentsline{toc}{section}{Nomenclature}
     \begin{itemize}
 	\item[Package]
-	    a collection of software focused on one primary class of numerical methods
+	    A collection of software focused on one primary class of numerical methods
 	\item[Trilinos]
 	    A Greek term that loosely translated means ``a string of pearls,'' meant
          to evoke an image that each Trilinos package is a pearl in its own right,
@@ -202,6 +203,16 @@ providing the reader with an summary of the project in its current state.
 	    Tpetra and Jpetra (discussed in Section~\ref{subsect:PetraObjectModel}) that
 	    provide basic classes for constructing and manipulating matrix, graph and vector 
 	    objects.
+        \item[AztecOO] Linear solver package based on preconditioned Krylov methods.  A
+	  follow-on to the Aztec solver package.  Supports all Aztec interfaces and
+	  functionality, but also provides significant new functionality.
+	\item[TSF]
+	\item[NOX]
+	\item[ML]
+	\item[Komplex] Complex linear equation solver using equivalent real formulations,
+	  built on top of Aztec.
+	\item[Ifpack] Object-oriented algebraic preconditioner, compatible with Epetra and
+	  AztecOO.
     \end{itemize}
 
 
@@ -873,8 +884,46 @@ very quickly.  Over time we replace the Aztec code with implementations that off
 flexibility and features.  However, the overall design of many of the Petra classes has
 remained fundamentally the same.
 
-Define ``factory''.  Implementation, interface, derived, specialization. 
-The {\it this} object. Pure virtual classes.
+\subsubsection{Some Key OOP Terms}
+Throughout this paper we have used a number of terms repeatedly, and sometimes interchangeably.
+In this section, we define these terms.
+
+\paragraph{Abstract Class, Pure Virtual Class, Interface, Virtual Class}  
+These four terms are used to describe
+classes that are not fully functional.  The first term is used to describe any class that has
+methods that are not implemented within the class, and require another class to provide an
+implementation.  The second two terms describe classes that have 
+{\it no} executable code.  These classes contain method prototypes only and cannot be constructed
+explicitly.  The term pure virtual class tends to be associated with C++ programming
+while interface is formally defined in Java.  We tend to use these two terms interchangeably.  A
+virtual class is one which has some virtual methods (prototypes without code), but has some methods
+that have a default implementation in terms of these virtual methods.  These classes cannot be
+constructed explicitly either.  All four of these class types become useable when a concrete class
+is developed that implements the virtual methods, therefore implementing the interface.
+
+\paragraph{Concrete Class, Implementation}  In order for an 
+abstract class to be
+used, a class must provide an implementation of the undeveloped methods of the abstract class.
+This helper class, often called a concrete class, provides an implementation of the abstract 
+class interface.  
+
+\paragraph{Base Class, Derived Class, Specialization} 
+A concrete class that implements an abstract class is said to be a derived class while the
+abstract class is called a base class.  Unrelated to abstract and concrete classes, we also
+mention another form of derived class called specialization.  One class is a specialization of
+another (base) class if it is a subset of the base class.  For example, given an existing
+matrix class, a vector class can be derived by constructing a matrix object with one column.
+
+\paragraph{Base Class, Polymorphism, Factory}
+An abstract class can be implemented by multiple concrete classes.  In this situation each
+concrete class can be used interchangeably to behave as an abstract class object.  The abstract
+class is a base class for both concrete classes and the interchangeability of the concrete
+classes is referred to as polymorphism.  For convenience, and to hide the details of concrete
+class construction, we often develop a function called a factory
+that can construct one of a number of concrete class objects that have a common base class.  Once
+one of the concrete object is constructed, the object is returned as an object of the base 
+class type.
+
     % \printindex
 
     \begin{SANDdistribution}
