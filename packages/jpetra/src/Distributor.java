@@ -28,23 +28,22 @@
 
 package Jpetra;
 
-import java.util.TreeMap;
-
 /**
  *
  * @author  Jason Cross
  */
-public class JpetraTreeMap extends TreeMap {
-    
-    public JpetraTreeMap() {
-        super();
-    }
+public interface Distributor {
+    /**
+     *
+     * @param remoteGlobalElementIds Array of GlobalElementIds that this vnode wants.
+     * @param remoteGlobalVnodeIds Array of vnode IDs that correspond to the vnodes that own the global elements specified by <code>remoteGlobalElementIds</code>.
+     * @return Number of global elements this vnode will receive.
+     */    
+    public int[] createFromRecieves(int[] remoteGlobalElementIds, int[] remoteGlobalVnodeIds);
     
     /**
-     * Wrapper to <code>java.util.TreeMap</code> to make getting indexed ints out of
-     * the <code>TreeMap</code> easier.
-     */
-    public int getInt(int value) {
-        return ((Integer) super.get(new Integer(value))).intValue();
-    }
+     *
+     * @param exportVnodeIds The vnodes to export my global elements to.
+     */    
+    public int createFromSends(int[] exportVnodeIds);
 }

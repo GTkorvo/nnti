@@ -28,23 +28,24 @@
 
 package Jpetra;
 
-import java.util.TreeMap;
-
 /**
  *
  * @author  Jason Cross
  */
-public class JpetraTreeMap extends TreeMap {
+public class SerialDirectory extends JpetraObject implements Directory {
+    private ElementSpace elementSpace;
     
-    public JpetraTreeMap() {
-        super();
+    public SerialDirectory(ElementSpace elementSpace) {
+        this.elementSpace = elementSpace;
     }
     
-    /**
-     * Wrapper to <code>java.util.TreeMap</code> to make getting indexed ints out of
-     * the <code>TreeMap</code> easier.
-     */
-    public int getInt(int value) {
-        return ((Integer) super.get(new Integer(value))).intValue();
+    public int[][] getDirectoryEntries(int[] globalElements) {
+        int[][] vnodeIdsLocalElementSpaceIds = new int[globalElements.length][];
+        
+        for (int i=0; i < globalElements.length; i++) {
+            vnodeIdsLocalElementSpaceIds[i] = new int[]{0, globalElements[i]};
+        }
+        return vnodeIdsLocalElementSpaceIds; 
     }
+    
 }

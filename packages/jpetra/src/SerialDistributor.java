@@ -28,23 +28,21 @@
 
 package Jpetra;
 
-import java.util.TreeMap;
-
 /**
  *
  * @author  Jason Cross
  */
-public class JpetraTreeMap extends TreeMap {
+public class SerialDistributor extends JpetraObject implements Distributor {
     
-    public JpetraTreeMap() {
-        super();
+    public SerialDistributor() {
     }
     
-    /**
-     * Wrapper to <code>java.util.TreeMap</code> to make getting indexed ints out of
-     * the <code>TreeMap</code> easier.
-     */
-    public int getInt(int value) {
-        return ((Integer) super.get(new Integer(value))).intValue();
+    public int[] createFromRecieves(int[] remoteGlobalElementIds, int[] remoteGlobalVnodeIds) {
+        return null;  // !! not implemented
     }
+    
+    public int createFromSends(int[] exportVnodeIds) {
+        return 0; // !! not implemented
+    }
+    
 }

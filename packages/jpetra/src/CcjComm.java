@@ -374,4 +374,7 @@ public class CcjComm extends JpetraObject implements Comm {
         return "";
     }
     
+    public Directory createDirectory(ElementSpace elementSpace) {
+    }
+    
 }

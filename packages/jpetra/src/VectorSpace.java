@@ -28,23 +28,52 @@
 
 package Jpetra;
 
-import java.util.TreeMap;
-
 /**
  *
  * @author  Jason Cross
  */
-public class JpetraTreeMap extends TreeMap {
+public class VectorSpace extends JpetraObject {
+    ElementSpace elementSpace;
     
-    public JpetraTreeMap() {
-        super();
+    public VectorSpace(ElementSpace elementSpace) {
+        this.elementSpace = elementSpace;
     }
     
-    /**
-     * Wrapper to <code>java.util.TreeMap</code> to make getting indexed ints out of
-     * the <code>TreeMap</code> easier.
-     */
-    public int getInt(int value) {
-        return ((Integer) super.get(new Integer(value))).intValue();
+    public int getNumGlobalEntries() {
+        return this.elementSpace.getNumGlobalElements();
+    }
+    
+    public int getNumMyGlobalEntries() {
+        return this.elementSpace.getNumMyGlobalElements();
+    }
+    
+    public int getMinLocalIndex() {
+        return this.elementSpace.getMinLocalElementId();
+    }
+    
+    public int getLocalIndex(int globalIndex) {
+        return this.elementSpace.getLocalElementId(globalIndex);
+    }
+    
+    public int getGlobalIndex(int localIndex) {
+        return this.elementSpace.getGlobalElementId(localIndex);
+    }
+    
+    public boolean isMyLocalIndex(int localIndex) {
+        return this.elementSpace.isMyLocalElementId(localIndex);
+    }
+    
+    public boolean isMyGlobalIndex(int globalIndex) {
+        return this.elementSpace.isMyGlobalElementId(globalIndex);
+    }
+    
+    // !! not yet implemented
+    public boolean equals(VectorSpace vectorSpace) {
+        return false;
+    }
+    
+    // !! not yet implemented
+    public boolean isCompatible (VectorSpace vectorSpace) {
+        return false;
     }
 }

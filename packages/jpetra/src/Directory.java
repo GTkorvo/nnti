@@ -28,23 +28,10 @@
 
 package Jpetra;
 
-import java.util.TreeMap;
-
 /**
  *
  * @author  Jason Cross
  */
-public class JpetraTreeMap extends TreeMap {
-    
-    public JpetraTreeMap() {
-        super();
-    }
-    
-    /**
-     * Wrapper to <code>java.util.TreeMap</code> to make getting indexed ints out of
-     * the <code>TreeMap</code> easier.
-     */
-    public int getInt(int value) {
-        return ((Integer) super.get(new Integer(value))).intValue();
-    }
+public interface Directory {
+    public int[][] getDirectoryEntries(int[] globalElements);
 }

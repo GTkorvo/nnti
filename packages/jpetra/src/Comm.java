@@ -1,28 +1,28 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //               Java Implementation of the Petra Library
 //                 Copyright (2004) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // This library is free software; you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as
 // published by the Free Software Foundation; either version 2.1 of the
 // License, or (at your option) any later version.
-//  
+//
 // This library is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-//  
+//
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ***********************************************************************
 // @HEADER
 
@@ -48,29 +48,29 @@ import java.io.Serializable;
  * @author  Mike Heroux
  * @author  Michael William Boldt
  * @author  Jason Cross
- * @version 
+ * @version
  */
 public interface Comm {
     
     /**
      * Causes each vnode in the communicator to wait until all
      * vnodes have arrived.
-     * No-op for a serial communicator. 
+     * No-op for a serial communicator.
      */
     public void barrier();
-
+    
     /**
      * Causes each thread in a given vnode on each machine
      * to wait until all threads in that vnode have arrived.
      * No-op for a serial communicator.
-     */        
+     */
     public void threadBarrier();
     
     /**
      * Broadcasts any Serializable object from the <code>root</code>
      * vnode to all other vnodes.  Requires the return object to
      * be cast into a more useful object.
-     * 
+     *
      * @param value object that is broadcast by the root vnode
      * @param root root vnode ID, most likely 0
      * @return all vnodes recieve this object
@@ -80,17 +80,17 @@ public interface Comm {
     /**
      * Broadcasts an int from the <code>root</code>
      * vnode to all other vnodes.
-     * 
+     *
      * @param value int that is broadcast by the root vnode
      * @param root root vnode ID, most likely 0
      * @return all vnodes recieve this int
      */
     public int broadcast(int value, int root);
-   
-   /**
+    
+    /**
      * Broadcasts an double from the <code>root</code>
      * vnode to all other vnodes.
-     * 
+     *
      * @param value double that is broadcast by the root vnode
      * @param root root vnode ID, most likely 0
      * @return all vnodes recieve this int
@@ -106,7 +106,7 @@ public interface Comm {
      * @return allElements   out on exit; the list of values from all vnodes
      */
     public Serializable[] gatherAll(Serializable [] myElements);
-
+    
     /**
      * Takes a list of values from all vnodes in the communicator and
      * creates an ordered contiguous list of those values in each vnode.
@@ -225,7 +225,7 @@ public interface Comm {
      *                      across vnodes 0 through i
      */
     public int[] scanSums(int [] myElements);
-
+    
     /**
      * Accessor for the number of threads in this vnode.
      *
@@ -246,7 +246,7 @@ public interface Comm {
      * @return number of vnodes
      */
     public int getNumVnodes();
-
+    
     /**
      * Accessor for the rank of the calling vnode.
      *
@@ -276,7 +276,7 @@ public interface Comm {
      * application by associating several MPI vnodes with a single
      * vnode. By default, each MPI vnode is associated with a single
      * vnode wit the same ID.
-     * 
+     *
      * @param newVnodeID new vnode ID
      */
     public void setMyVnodeID(int newVnodeID);
@@ -288,7 +288,8 @@ public interface Comm {
      */
     public boolean getIsSerial();
     
+    public Directory createDirectory(ElementSpace elementSpace);
     
-    //public Distributor createDistributor(); now created by Platform 
+    //public Distributor createDistributor();
 }
 

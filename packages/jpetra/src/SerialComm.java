@@ -35,7 +35,7 @@ package Jpetra;
  *
  * @author  Jason Cross
  */
-public class SerialComm implements Comm {
+public class SerialComm extends JpetraObject implements Comm {
     
     /** Creates a new instance of SerialComm */
     public SerialComm() {
@@ -277,6 +277,13 @@ public class SerialComm implements Comm {
      */
     public void threadBarrier() {
         // empty
+    }
+    
+    //public Distributor createDistributor() {
+    //}
+    
+    public Directory createDirectory(ElementSpace elementSpace) {
+        return new SerialDirectory(elementSpace);
     }
     
 }

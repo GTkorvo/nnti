@@ -28,23 +28,31 @@
 
 package Jpetra;
 
-import java.util.TreeMap;
-
 /**
  *
  * @author  Jason Cross
  */
-public class JpetraTreeMap extends TreeMap {
+public class Graph extends JpetraObject {
+    private int[] nonZeroEntries;  // contigous 2-d array of non-zero ID entries
+    private int[] numEntries;  // number of entries per array
+    VectorSpace dVectorSpace; // the domain vector space
+    private boolean filled;
+    private JpetraTreeMap OuterMap;
     
-    public JpetraTreeMap() {
-        super();
+    public Graph(VectorSpace vectorSpace) {
+        this.filled = false;
+        this.dVectorSpace = vectorSpace;
     }
     
-    /**
-     * Wrapper to <code>java.util.TreeMap</code> to make getting indexed ints out of
-     * the <code>TreeMap</code> easier.
-     */
-    public int getInt(int value) {
-        return ((Integer) super.get(new Integer(value))).intValue();
+    public Graph(VectorSpace vectorSpace, int[] nonZeroEntries, int[] numEntries) {
+        this.filled = true;
+        this.dVectorSpace = vectorSpace;
+        this.nonZeroEntries = nonZeroEntries;
+        this.numEntries = numEntries;
+        
+    }
+    
+    public int getIndex(int entryId) {
+        return nonZeroEntries[entryId];
     }
 }
