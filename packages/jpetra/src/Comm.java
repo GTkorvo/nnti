@@ -1,4 +1,6 @@
 package Jpetra;
+
+import java.io.Serializable;
 /*
  * Comm.java
  *
@@ -10,182 +12,216 @@ package Jpetra;
  * Comm is the interface for the all the Jpetra communication
  * classes.
  *
+ * NOTE:  A vnode is considered to be a memory image and not a physical machine.
+ *
  * @author  Mike Heroux
  * @author  Michael William Boldt
+ * @author  Jason Cross
  * @version 
  */
 public interface Comm {
     
     /**
-     * Causes each processor in the communicator to wait until all
-     * processors have arrived.
+     * Causes each vnode in the communicator to wait until all
+     * vnodes have arrived.
      * No-op for a serial communicator. 
      */
     public void barrier();
-    
-    /**
-     * Causes each process on a given node in the communicator
-     * to wait until all processes on that node have arrived.
-     * No-op for a serial communicator.
-     */
-    public void nodeBarrier();
-    
-    /**
-     * Takes a list of input values from the root processor
-     * and sends them to all other processors.
-     * No-op for a serial communicator.
-     *
-     * @param numElements   in on entry; the number of elements in the elements array
-     * @param elements      in on entry; the array of elements to process
-     * @param root          in on entry; the processor from which all processors 
-     *                      will receive a copy of the elements
-     */
-    public int broadcast(int numElements, double [] elements, int root);
-    
-    /**
-     * Takes a list of input values from the root processor
-     * and sends them to all other processors.
-     * No-op for a serial communicator.
-     *
-     * @param numElements   in on entry; the number of elements in the elements array
-     * @param elements      in on entry; the array of elements to process
-     * @param root          in on entry; the processor from which all 
-     *                      processors will receive a copy of the elements
-     */
-    public int broadcast(int numElements, int [] elements, int root);
-    
-    /**
-     * Takes a list of values from all porcessors in the communicator and
-     * creates an ordered contiguous list of those values on each processor.
-     *
-     * @param numElements   in on entry; the number of elements in myElements
-     * @param myElements    in on entry; the list of values to be sent to all processors
-     * @param allElements   out on exit; the list of values from all processors
-     */
-    public int gatherAll(int numElements, double [] myElements, double [] allElements);
-    
-    /**
-     * Takes a list of values from all porcessors in the communicator and
-     * creates an ordered contiguous list of those values on each processor.
-     *
-     * @param numElements   in on entry; the number of elements in myElements
-     * @param myElements    in on entry; the list of values to be sent to all processors
-     * @param allElements   out on exit; the list of values from all processors
-     */
-    public int gatherAll(int numElements, int [] myElements, int [] allElements);
-    
-    /**
-     * Takes a list of values from all processors in the communicator, computes
-     * the sum, and returns the sum to all processors.
-     *
-     * @param numElements   in on entry; the length of partialSums
-     * @param partialSums   in on entry; the list of values, usually computed
-     *                      locally, to be summed across all processors
-     * @param globalSums    out on exit; the list of values summed across all processors
-     */
-    public int sumAll(int numElements, double [] partialSums, double [] globalSums);
-    
-    /**
-     * Takes a list of values from all processors in the communicator, computes
-     * the sum, and returns the sum to all processors.
-     *
-     * @param numElements   in on entry; the length of partialSums
-     * @param partialSums   in on entry; the list of values, usually computed
-     *                      locally, to be summed across all processors
-     * @param globalSums    out on exit; the list of values summed
-     *                      across all processors
-     */
-    public int sumAll(int numElements, int [] partialSums, int [] globalSums);
-    
-    /**
-     * Takes a list of values form all processors in the communicator, computes
-     * the max, and returns the max to all processors.
-     *
-     * @param numElements   in on entry; the length of partialMaxs
-     * @param partialMaxs   in on entry; the list of values, usually computed
-     *                      locally, to be summed across all processors
-     * @param globalMaxs    out on exit; the list of values summed across all processors
-     */
-    public int maxAll(int numElements, double [] partialMaxs, double [] globalMaxs);
-    
-    /**
-     * Takes a list of values form all processors in the communicator, computes
-     * the max, and returns the max to all processors.
-     *
-     * @param numElements   in on entry; the length of partialMaxs
-     * @param partialMaxs   in on entry; the list of values, usually computed
-     *                      locally, to be summed across all processors
-     * @param globalMaxs    out on exit; the list of values summed across all processors
-     */
-    public int maxAll(int numElements, int [] partialMaxs, int [] globalMaxs);
-    
-    /**
-     * Takes a list of values form all processors in the communicator, computes
-     * the min, and returns the min to all processors.
-     *
-     * @param numElements   in on entry; the length of partialMins
-     * @param partialMins   in on entry; the list of values, usually computed
-     *                      locally, to be summed across all processors
-     * @param globalMaxs    out on exit; the list of values summed across all processors
-     */
-    public int minAll(int numElements, double [] partialMins, double [] globalMins);
-    
-    /**
-     * Takes a list of values form all processors in the communicator, computes
-     * the min, and returns the min to all processors.
-     *
-     * @param numElements   in on entry; the length of partialMins
-     * @param partialMins   in on entry; the list of values, usually computed
-     *                      locally, to be summed across all processors
-     * @param globalMaxs    out on exit; the list of values summed across all processors
-     */
-    public int minAll(int numElements, int [] partialMins, int [] globalMins);
-    
-    /**
-     * Takes a list of values from all processors in the communicator, computes
-     * the scan sum, and returns it to all processors such that processor i contains
-     * the sum of values from processors up to and including processor i.
-     *
-     * @param numElements   in on entry; the length of myElememtns
-     * @param myElements    in on entry; the values to be summed across all processors
-     * @param sums          out on exit; the list of values summed
-     *                      across processors 0 through i
-     */
-    public int scanSums(int numElements, double [] myElements, double [] sums);
-    
-    /**
-     * Takes a list of values from all processors in the communicator, computes
-     * the scan sum, and returns it to all processors such that processor i contains
-     * the sum of values from processors up to and including processor i.
-     *
-     * @param numElements   in on entry; the length of myElememtns
-     * @param myElements    in on entry; the values to be summed across all processors
-     * @param sums          out on exit; the list of values summed
-     *                      across processors 0 through i
-     */
-    public int scanSums(int numElements, int [] myElements, int [] sums);
-    
-    /**
-     * Ask about this one.
-     */
-    public int getMyNode();
 
     /**
-     * Accessor for the number of nodes in the commmunicator.
-     */
-    public int getNumNodes();
+     * Causes each thread in a given vnode on each machine
+     * to wait until all threads in that vnode have arrived.
+     * No-op for a serial communicator.
+     */        
+    public void threadBarrier();
     
     /**
-     * Accessor for the number of processors in the communicator.
+     * Broadcasts any Serializable object from the <code>root</code>
+     * vnode to all other vnodes.  Requires the return object to
+     * be cast into a more useful object.
+     * 
+     * @param value object that is broadcast by the root vnode
+     * @param root root vnode ID, most likely 0
+     * @return all vnodes recieve this object
      */
-    public int getNumProc();
+    public Serializable broadcast(Serializable value, int root);
     
     /**
-     * Accessor for the rank of the calling process.
+     * Broadcasts an int from the <code>root</code>
+     * vnode to all other vnodes.
+     * 
+     * @param value int that is broadcast by the root vnode
+     * @param root root vnode ID, most likely 0
+     * @return all vnodes recieve this int
+     */
+    public int broadcast(int value, int root);
+   
+   /**
+     * Broadcasts an double from the <code>root</code>
+     * vnode to all other vnodes.
+     * 
+     * @param value double that is broadcast by the root vnode
+     * @param root root vnode ID, most likely 0
+     * @return all vnodes recieve this int
+     */
+    public double broadcast(double value, int root);
+    
+    /**
+     * Takes a list of Serilizable objects from all vnodes in the communicator and
+     * creates an ordered contiguous list of those objects in each vnode.
+     * Requires the return object to be cast into a more useful object.
      *
-     * @return the rank of the calling process in MPI; 0 in serial mode
+     * @param myElements     in on entry; the list of values to be sent to all vnodes
+     * @return allElements   out on exit; the list of values from all vnodes
      */
-    public int getPID();
+    public Serializable[] gatherAll(Serializable [] myElements);
+
+    /**
+     * Takes a list of values from all vnodes in the communicator and
+     * creates an ordered contiguous list of those values in each vnode.
+     *
+     * @param myElements     in on entry; the list of values to be sent to all vnodes
+     * @return allElements   out on exit; the list of values from all vnodes
+     */
+    public double[] gatherAll(double [] myElements);
+    
+    /**
+     * Takes a list of values from all vnodes in the communicator and
+     * creates an ordered contiguous list of those values in each vnode.
+     *
+     * @param myElements    in on entry; the list of values to be sent to all vnodes
+     * @return              out on exit; the list of values from all vnodes
+     */
+    public int[] gatherAll(int [] myElements);
+    
+    /**
+     * Takes a value from all vnodes in the communicator and
+     * creates an ordered contiguous list of those values in each vnode.
+     *
+     * @param myInt     in on entry; the list of values to be sent to all vnodes
+     * @return          out on exit; the list of values from all vnodes
+     */
+    public int[] gatherAll(int myInt);
+    
+    /**
+     * Takes a value from all vnodes in the communicator and
+     * creates an ordered contiguous list of those values in each vnode.
+     *
+     * @param myDouble     in on entry; the list of values to be sent to all vnodes
+     * @return          out on exit; the list of values from all vnodes
+     */
+    public double[] gatherAll(double myDouble);
+    
+    /**
+     * Takes a list of values from all vnodes in the communicator, computes
+     * the sum, and returns the sum to all vnodes.
+     *
+     * @param partialSums   in on entry; the list of values, usually computed
+     *                      locally, to be summed across all vnodes
+     * @return              out on exit; the list of values summed across all vnodes
+     */
+    public double[] sumAll(double [] partialSums);
+    
+    /**
+     * Takes a list of values from all vnodes in the communicator, computes
+     * the sum, and returns the sum to all vnodes.
+     *
+     * @param partialSums   in on entry; the list of values, usually computed
+     *                      locally, to be summed across all vnodes
+     * @return              out on exit; the list of values summed
+     *                      across all vnodes
+     */
+    public int[] sumAll(int [] partialSums);
+    
+    /**
+     * Takes a list of values form all vnodes in the communicator, computes
+     * the max, and returns the max to all vnodes.
+     *
+     * @param partialMaxs   in on entry; the list of values, usually computed
+     *                      locally, to be summed across all vnodes
+     * @return              out on exit; the list of values summed across all vnodes
+     */
+    public double[] maxAll(double [] partialMaxs);
+    
+    /**
+     * Takes a list of values form all vnodes in the communicator, computes
+     * the max, and returns the max to all vnodes.
+     *
+     * @param partialMaxs   in on entry; the list of values, usually computed
+     *                      locally, to be summed across all vnodes
+     * @return              out on exit; the list of values summed across all vnodes
+     */
+    public int[] maxAll(int [] partialMaxs);
+    
+    /**
+     * Takes a list of values form all vnodes in the communicator, computes
+     * the min, and returns the min to all vnodes.
+     *
+     * @param partialMins   in on entry; the list of values, usually computed
+     *                      locally, to be summed across all vnodes
+     * @return              out on exit; the list of values summed across all vnodes
+     */
+    public double[] minAll(double [] partialMins);
+    
+    /**
+     * Takes a list of values form all vnodes in the communicator, computes
+     * the min, and returns the min to all vnodes.
+     *
+     * @param partialMins   in on entry; the list of values, usually computed
+     *                      locally, to be summed across all vnodes
+     * @return              out on exit; the list of values summed across all vnodes
+     */
+    public int[] minAll(int [] partialMins);
+    
+    /**
+     * Takes a list of values from all vnodes in the communicator, computes
+     * the scan sum, and returns it to all vnodes such that vnodeor i contains
+     * the sum of values from vnodes up to and including vnodeor i.
+     *
+     * @param myElements    in on entry; the values to be summed across all vnodes
+     * @return              out on exit; the list of values summed
+     *                      across vnodes 0 through i
+     */
+    public double[] scanSums(double [] myElements);
+    
+    /**
+     * Takes a list of values from all vnodes in the communicator, computes
+     * the scan sum, and returns it to all vnodes such that vnodeor i contains
+     * the sum of values from vnodes up to and including vnodeor i.
+     *
+     * @param myElements    in on entry; the values to be summed across all vnodes
+     * @return              out on exit; the list of values summed
+     *                      across vnodes 0 through i
+     */
+    public int[] scanSums(int [] myElements);
+
+    /**
+     * Accessor for the number of threads in this vnode.
+     *
+     * @return number of threads in this vnode
+     */
+    public int getNumMyThreads();
+    
+    /**
+     * Accessors for the number of threads in all proccesses.
+     *
+     * @return number of threads in all proccesses
+     */
+    public int getNumThreads();
+    
+    /**
+     * Accessor for the number of vnodes in the commmunicator.
+     *
+     * @return number of vnodes
+     */
+    public int getNumVnodes();
+
+    /**
+     * Accessor for the rank of the calling vnode.
+     *
+     * @return the rank of the calling vnode in MPI (CCJ); 0 in serial mode
+     */
+    public int getVnodeID();
     
     /**
      * Ask about this one.
@@ -193,22 +229,26 @@ public interface Comm {
     public int getThreadID();
     
     /**
-     * Sets the thread ID for the calling process.
+     * Sets the thread ID for the calling vnode.
      * Can be used to facilitate threaded programming across an MPI
-     * application by allowing multiple MPI processes to be considered
-     * threads of a virtual shared memory process. Threads and nodes
+     * application by allowing multiple MPI vnodes to be considered
+     * threads of a virtual shared memory vnode. Threads and vnodes
      * should be used together.
+     *
+     * @param newThreadID new thread ID
      */
     public int setThreadID(int newThreadID);
     
     /**
-     * Sets the node ID for the calling process.
+     * Sets the vnode ID for the calling vnode.
      * Can be used to facilitate threaded programming acroass an MPI
-     * application by associating several MPI processes with a single
-     * node. By default, each MPI process is associated with a single
-     * node wit the same ID.
+     * application by associating several MPI vnodes with a single
+     * vnode. By default, each MPI vnode is associated with a single
+     * vnode wit the same ID.
+     * 
+     * @param newVnodeID new vnode ID
      */
-    public int setMyNodeID(int newNodeID);
+    public int setMyVnodeID(int newVnodeID);
     
     /**
      * Accessor to see if the communicator is on a serial or parallel machine.

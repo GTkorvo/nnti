@@ -21,8 +21,8 @@ public class CGDriver_play implements Runnable {
 	int rank = 0;
 	boolean verbose = true;
 	Jpetra.SerialComm comm = new Jpetra.SerialComm();
-	int pid = comm.getPID();
-	int numProc = comm.getNumProc();
+	int pid = comm.getVnodeID();
+	int numProc = comm.getNumVnodes();
 
 	if(verbose) System.out.println("Processor "+pid+" of "+numProc+" is alive.");
 

@@ -1,5 +1,6 @@
 package Jpetra;
 
+import java.io.Serializable;
 /*
  * SerialComm.java
  *
@@ -9,7 +10,7 @@ package Jpetra;
 
 /**
  * SerialComm is the implementatin of the Comm interface
- * for machines with a single processor.
+ * for machines with a single vnode.
  *
  * @author  Mike Heroux
  * @author  Michael William Boldt
@@ -18,15 +19,15 @@ package Jpetra;
 public class SerialComm extends JpetraObject implements Comm {
 
     private int myRank;
-    private int myNode;
+    private int myVnode;
     private int myThread;
-    private int numNodes;
+    private int numVnodes;
     private boolean isSerial;
     
     /** Creates new <code>SerialComm</code> */
     public SerialComm() {
-        myNode = 0;
-        numNodes = 1;
+        myVnode = 0;
+        numVnodes = 1;
     }
     
     /**
@@ -36,9 +37,9 @@ public class SerialComm extends JpetraObject implements Comm {
      */
     public SerialComm(SerialComm comm) {
         myRank = comm.myRank;
-        myNode = comm.myNode;
+        myVnode = comm.myVnode;
         myThread = comm.myThread;
-        numNodes = comm.numNodes;
+        numVnodes = comm.numVnodes;
         isSerial = comm.isSerial;
     }
 
@@ -51,81 +52,83 @@ public class SerialComm extends JpetraObject implements Comm {
         return super.clone();
     }  
     
-    public boolean getIsSerial() {
-        return isSerial;
-    }      
-    
-    public int getMyNode() {
-        return myNode;
-    }
-    
-    public int getNumNodes() {
-        return numNodes;
-    }
-    
     public void barrier() {}
     
-    public void nodeBarrier() {}
-        
-    public int broadcast(int numElements,double[] elements,int root) {
-        return 0;
+    public void threadBarrier() {}
+    
+    public Serializable broadcast(Serializable value, int root) {
+        return value;
     }
     
-    public int broadcast(int numElements,int[] elements,int root) {
-        return 0;
+    public double[] broadcast(double[] elements,int root) {
+        return elements;
     }
     
-    public int gatherAll(int numElements,double[] myElements,double[] allElements) {
-        for (int i=0; i<numElements; i++) allElements[i] = myElements[i];
-        return 0;
+    public int[] broadcast(int[] elements,int root) {
+        return elements;
     }
     
-    public int gatherAll(int numElements,int[] myElements,int[] allElements) {
-        for (int i=0; i<numElements; i++) allElements[i] = myElements[i];
-        return 0;
+    public int broadcast(int value, int root) {
+        return value;
     }
     
-    public int sumAll(int numElements, double [] partialSums, double [] finalSums) {
-        System.arraycopy(partialSums, 0, finalSums, 0, numElements);
-        return 0;
+    public double broadcast(double value, int root) {
+        return value;
     }
     
-    public int sumAll(int numElements,int[] partialSums,int[] finalSums) {
-        System.arraycopy(partialSums, 0, finalSums, 0, numElements);
-        return 0;
+    public double[] gatherAll(double[] myElements) {
+        return myElements;
     }
     
-    public int maxAll(int numElements,double[] partialMaxs,double[] globalMaxs) {
-        for (int i=0; i<numElements; i++) globalMaxs[i] = partialMaxs[i];
-        return 0;
+    public int[] gatherAll(int[] myElements) {
+        return myElements;
     }
     
-    public int maxAll(int numElements,int[] partialMaxs,int[] globalMaxs) {
-        for (int i=0; i<numElements; i++) globalMaxs[i] = partialMaxs[i];
-        return 0;
+    public int[] gatherAll(int myInt) {
+        return new int[]{myInt};   
     }
     
-    public int minAll(int numElements,double[] partialMins,double[] globalMins) {
-        for (int i=0; i<numElements; i++) globalMins[i] = partialMins[i];
-        return 0;
+    public double[] gatherAll(double myDouble) {
+        return new double[]{myDouble};   
+    }
+
+    public Serializable[] gatherAll(Serializable [] myElements) {
+        return myElements;
     }
     
-    public int minAll(int numElements,int[] partialMins,int[] globalMins) {
-        for (int i=0; i<numElements; i++) globalMins[i] = partialMins[i];
-        return 0;
+    public double[] sumAll( double [] partialSums) {
+        return partialSums;
     }
     
-    public int scanSums(int numElements,double[] myElements,double[] sums) {
-        for (int i=0; i<numElements; i++) sums[i] = myElements[i];
-        return 0;
+    public int[] sumAll(int[] partialSums) {
+        return partialSums;
     }
     
-    public int scanSums(int numElements,int[] myElements,int[] sums) {
-        for (int i=0; i<numElements; i++) sums[i] = myElements[i];
-        return 0;
+    public double[] maxAll(double[] partialMaxs) {
+        return partialMaxs;
     }
     
-    public int getPID() {
+    public int[] maxAll(int[] partialMaxs) {
+        return partialMaxs;
+    }
+    
+    public double[] minAll(double[] partialMins) {
+        return partialMins;
+    }
+    
+    public int[] minAll(int[] partialMins) {
+        return partialMins;
+    }
+    
+    public double[] scanSums(double[] myElements) {
+        return myElements;
+    }
+    
+    public int[] scanSums(int[] myElements) {
+        return myElements;
+    }
+    
+    public int getVnodeID() {
         return 0;
     }
     
@@ -138,15 +141,31 @@ public class SerialComm extends JpetraObject implements Comm {
         return 0;
     }
     
-    public int setMyNodeID(int newNodeID) {
-        myNode = newNodeID;
+    public int getNumThreads() {
+        return 1;
+    }
+    
+    public int getNumMyThreads() {
+        return 1;
+    }    
+    
+    public int setMyVnodeID(int newVnodeID) {
+        myVnode = newVnodeID;
         return 0;
     }
     
+        public boolean getIsSerial() {
+        return isSerial;
+    }      
+    
+    public int getMyVnode() {
+        return myVnode;
+    }
+    
     /**
-     * Accessor for the number of processors in the communicator.
+     * Accessor for the number of vnodes in the communicator.
      */
-    public int getNumProc() {
+    public int getNumVnodes() {
         return 1;
     }
     

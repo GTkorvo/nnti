@@ -11,8 +11,8 @@ class BlockMapTest {
 	if(args.length > 0 && args[0].equals("-v")) verbose = true;
 
 	Jpetra.SerialComm comm = new Jpetra.SerialComm();
-	int pid = comm.getPID();
-	int numProc = comm.getNumProc();
+	int pid = comm.getVnodeID();
+	int numProc = comm.getNumVnodes();
 
 	if(verbose) System.out.println("Processor "+pid+" of "+numProc+" is alive.");
 
@@ -55,7 +55,7 @@ class BlockMapTest {
 	// Test user defined arbitrary distribution constructor
 	// Generate global element list.
 	int [] globalElements = new int [numNodeElements];
-	int maxGid = (comm.getPID()+1)*numNodeElements-1+indexBase;
+	int maxGid = (comm.getVnodeID()+1)*numNodeElements-1+indexBase;
 	for(i=0; i<numNodeElements; i++) globalElements[i] = maxGid-i;
 
 	map = new Jpetra.BlockMap(numGlobalElements, numNodeElements, globalElements, elementSize, indexBase, comm);
@@ -78,12 +78,12 @@ class BlockMapTest {
 	    numNodeEquations += elementSizeList[i];
 	}
 	elementSize = 7; // Set to maximum for use in checkmap
-	numGlobalEquations = comm.getNumProc()*numNodeEquations;
+	numGlobalEquations = comm.getNumVnodes()*numNodeEquations;
 
 	// Adjust numGlobalEquations based on processor ID
-	if(comm.getNumProc() > 3) {
-	    if(comm.getPID() > 2) numGlobalEquations += 3*((numNodeElements)%6+2);
-	    else numGlobalEquations -= (comm.getNumProc()-3)*((numNodeElements-1)%6+2);
+	if(comm.getNumVnodes() > 3) {
+	    if(comm.getVnodeID() > 2) numGlobalEquations += 3*((numNodeElements)%6+2);
+	    else numGlobalEquations -= (comm.getNumVnodes()-3)*((numNodeElements-1)%6+2);
 	}
 
 	for(int k=0; k<elementSizeList.length; k++) if(elementSizeList[k] <= 0) System.out.println(k+" "+elementSizeList[k]);
@@ -156,8 +156,8 @@ class BlockMapTest {
 
 	Jpetra.SerialComm comm1 = (Jpetra.SerialComm)map.getComm();
 
-	if(comm1.getNumProc() != comm.getNumProc()) return -6;
-	if(comm1.getPID() != comm.getPID()) return -7;
+	if(comm1.getNumVnodes() != comm.getNumVnodes()) return -6;
+	if(comm1.getVnodeID() != comm.getVnodeID()) return -7;
 	if(map.getIndexBase() != indexBase) return -8;
 	if(!map.isLinearMap() && globalElements == null) return -9;
 	if(map.isLinearMap() && globalElements != null) return -9;
@@ -165,8 +165,8 @@ class BlockMapTest {
 	if(map.getMaxElementSize() != elementSize) return -11;
 	if(map.getMaxLID() != numNodeElements-1+indexBase) return -12;
 
-	int maxGid = (comm.getPID()+1)*numNodeElements-1+indexBase;
-	if(comm.getPID() > 2) maxGid += 3;
+	int maxGid = (comm.getVnodeID()+1)*numNodeElements-1+indexBase;
+	if(comm.getVnodeID() > 2) maxGid += 3;
 	if(!isDistributedGlobal) maxGid = numNodeElements-1+indexBase;
 	if(map.getMaxNodeGID() != maxGid) return -13;
 
@@ -179,8 +179,8 @@ class BlockMapTest {
 
 	if(map.getMinLID() != indexBase) return -16;
 
-	int minGid = comm.getPID()*numNodeElements+indexBase;
-	if(comm.getPID() > 2) minGid += 3;
+	int minGid = comm.getVnodeID()*numNodeElements+indexBase;
+	if(comm.getVnodeID() > 2) minGid += 3;
 	if(!isDistributedGlobal) minGid = 0;
 	if(map.getMinNodeGID() != minGid) return -17;
 
@@ -206,7 +206,7 @@ class BlockMapTest {
 	    int [] gidList = new int [3];
 	    int [] pidList = new int [3];
 	    int [] lidList = new int [3];
-	    int pid = map.getComm().getPID();
+	    int pid = map.getComm().getVnodeID();
 
 	    int numIDs = 0;
 	    //gidList[numIDs++] = map.maxAllGID()+1; // Should return -1 for both pid and lid

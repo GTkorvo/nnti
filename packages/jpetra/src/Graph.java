@@ -41,10 +41,10 @@ public class Graph extends JpetraObject {
     private int numGlobalBlockRows;
     private int numGlobalBlockCols;
     private int numGlobalBlockDiagonals = 0;
-    private int numNodeEntries = 0;
-    private int numNodeBlockRows;
-    private int numNodeBlockCols;
-    private int numNodeBlockDiagonals = 0;
+    private int numProcessEntries = 0;
+    private int numProcessBlockRows;
+    private int numProcessBlockCols;
+    private int numProcessBlockDiagonals = 0;
     
     private int maxRowDim;
     private int maxColDim;
@@ -57,10 +57,10 @@ public class Graph extends JpetraObject {
     private int numGlobalRows;
     private int numGlobalCols;
     private int numGlobalDiagonals = 0;
-    private int numNodeNonzeros = 0;
-    private int numNodeRows;
-    private int numNodeCols;
-    private int numNodeDiagonals = 0;
+    private int numProcessNonzeros = 0;
+    private int numProcessRows;
+    private int numProcessCols;
+    private int numProcessDiagonals = 0;
     
     private int [][] indices = null;
     private int [] numAllocatedIndicesPerRow = null;
@@ -145,10 +145,10 @@ public class Graph extends JpetraObject {
         numGlobalBlockRows = graph.numGlobalBlockRows;
         numGlobalBlockCols = graph.numGlobalBlockCols;
         numGlobalBlockDiagonals = graph.numGlobalBlockDiagonals;
-        numNodeEntries = graph.numNodeEntries;
-        numNodeBlockRows = graph.numNodeBlockRows;
-        numNodeBlockCols = graph.numNodeBlockCols;
-        numNodeBlockCols = graph.numNodeBlockDiagonals;
+        numProcessEntries = graph.numProcessEntries;
+        numProcessBlockRows = graph.numProcessBlockRows;
+        numProcessBlockCols = graph.numProcessBlockCols;
+        numProcessBlockCols = graph.numProcessBlockDiagonals;
         maxRowDim = graph.maxRowDim;
         maxColDim = graph.maxColDim;
         globalMaxRowDim = graph.globalMaxRowDim;
@@ -159,10 +159,10 @@ public class Graph extends JpetraObject {
         numGlobalRows = graph.numGlobalRows;
         numGlobalCols = graph.numGlobalCols;
         numGlobalDiagonals = graph.numGlobalDiagonals;
-        numNodeNonzeros = graph.numNodeNonzeros;
-        numNodeRows = graph.numNodeRows;
-        numNodeCols = graph.numNodeCols;
-        numNodeDiagonals = graph.numNodeDiagonals;
+        numProcessNonzeros = graph.numProcessNonzeros;
+        numProcessRows = graph.numProcessRows;
+        numProcessCols = graph.numProcessCols;
+        numProcessDiagonals = graph.numProcessDiagonals;
         copyView = "Copy";
         
         //if(allocate(graph.numIndicesPerRow, 1) != 0)
@@ -171,7 +171,7 @@ public class Graph extends JpetraObject {
             System.out.println("allocate returned non-zero value");
             System.exit(1);
         }
-        for(int i=0; i<numNodeBlockRows; i++) {
+        for(int i=0; i<numProcessBlockRows; i++) {
             numIndicesPerRow[i] = numAllocatedIndicesPerRow[i];
 	    indices[i] = new int [numIndicesPerRow[i]];
             System.arraycopy(graph.indices[i], 0, indices[i], 0, numIndicesPerRow[i]);
@@ -187,13 +187,13 @@ public class Graph extends JpetraObject {
     private void initializeDefaults() {
         numGlobalBlockRows = rowMap.getNumGlobalElements();
         numGlobalBlockCols = colMap.getNumGlobalElements();
-        numNodeBlockRows = rowMap.getNumNodeElements();
-        numNodeBlockCols = colMap.getNumNodeElements();
+        numProcessBlockRows = rowMap.getNumProcessElements();
+        numProcessBlockCols = colMap.getNumProcessElements();
         
         numGlobalRows = rowMap.getNumGlobalEquations();
         numGlobalCols = colMap.getNumGlobalEquations();
-        numNodeRows = rowMap.getNumNodeEquations();
-        numNodeCols = colMap.getNumNodeEquations();
+        numProcessRows = rowMap.getNumProcessEquations();
+        numProcessCols = colMap.getNumProcessEquations();
         
         globalMaxRowDim = rowMap.getMaxElementSize();
         maxRowDim = rowMap.getMaxElementSize();
@@ -205,12 +205,12 @@ public class Graph extends JpetraObject {
     private int allocate(int [] numIndicesPerRow, int inc) {
         int i, j;
         
-        indices = new int [numNodeBlockRows] [];
-        this.numIndicesPerRow = new int [numNodeBlockRows];
-        numAllocatedIndicesPerRow = new int [numNodeBlockRows];
+        indices = new int [numProcessBlockRows] [];
+        this.numIndicesPerRow = new int [numProcessBlockRows];
+        numAllocatedIndicesPerRow = new int [numProcessBlockRows];
         
         if(copyView == "Copy")
-            for(i=0; i<numNodeBlockRows; i++) {
+            for(i=0; i<numProcessBlockRows; i++) {
                 final int numIndices = numIndicesPerRow[i*inc];
                 if(numIndices > 0) indices[i] = new int [numIndices];
                 else indices[i] = null;
@@ -220,7 +220,7 @@ public class Graph extends JpetraObject {
                 for(j=0; j<numIndices; j++) indices[i][j] = indexBase - 1;
             }
         else
-            for(i=0; i<numNodeBlockRows; i++) {
+            for(i=0; i<numProcessBlockRows; i++) {
                 indices[i] = null;
                 numAllocatedIndicesPerRow[i] = 0;
                 this.numIndicesPerRow[i] = 0;
@@ -232,9 +232,9 @@ public class Graph extends JpetraObject {
     }
     
     private int reAllocate() {
-        numAllocatedIndicesPerRow = new int [numNodeBlockRows];
+        numAllocatedIndicesPerRow = new int [numProcessBlockRows];
         
-        for(int i=0; i<numNodeBlockRows; i++) numAllocatedIndicesPerRow[i] = numIndicesPerRow[i];
+        for(int i=0; i<numProcessBlockRows; i++) numAllocatedIndicesPerRow[i] = numIndicesPerRow[i];
         storageOptimized = false;
         return 0;
     }
@@ -248,7 +248,7 @@ public class Graph extends JpetraObject {
         return(insertIndices(row, numIndices, indices));
     }
     
-    public int insertNodeIndices(int row, int numIndices, int [] indices) {
+    public int insertProcessIndices(int row, int numIndices, int [] indices) {
         if(indicesAreGlobal) return -2;
         if(indicesAreContiguous) return -3;
         indicesAreLocal = true;
@@ -262,7 +262,7 @@ public class Graph extends JpetraObject {
         int [] tmpIndices;
         int ierr = 0;
         
-        if(row < 0 || row >= numNodeBlockRows) return -1;
+        if(row < 0 || row >= numProcessBlockRows) return -1;
         if(copyView == "View") {
             if(this.indices[row] != null) ierr = 2;
             this.indices[row] = indices;
@@ -300,7 +300,7 @@ public class Graph extends JpetraObject {
 	if(copyView == "View") return -3;
 
 	row = LRID(row);
-	if(row < 0 || row >= numNodeBlockRows) return -1;
+	if(row < 0 || row >= numProcessBlockRows) return -1;
 
 	int numCurrentIndices = numIndicesPerRow[row];
 	
@@ -315,7 +315,7 @@ public class Graph extends JpetraObject {
 	return ierr;
     }
 
-    public int removeNodeIndices(int row, int numIndices, int [] indices) {
+    public int removeProcessIndices(int row, int numIndices, int [] indices) {
 	if(indicesAreGlobal) return -2;
 
 	int j, k;
@@ -324,12 +324,12 @@ public class Graph extends JpetraObject {
 
 	if(copyView == "View") return -3;
 
-	if(row < 0 || row >= numNodeBlockRows) return -1;
+	if(row < 0 || row >= numProcessBlockRows) return -1;
 
 	int numCurrentIndices = numIndicesPerRow[row];
 	for(j=0; j<numIndices; j++) {
 	    int index = indices[j];
-	    if(findNodeIndexLoc(row, index, j, loc)) {
+	    if(findProcessIndexLoc(row, index, j, loc)) {
 		for(k=loc[0]+1; k<numCurrentIndices; k++) this.indices[row][k-1] = this.indices[row][k];
 		numCurrentIndices--;
 		numIndicesPerRow[row]--;
@@ -347,7 +347,7 @@ public class Graph extends JpetraObject {
 
 	row = LRID(row);
 
-	if(row < 0 || row >= numNodeBlockRows) return -1;
+	if(row < 0 || row >= numProcessBlockRows) return -1;
 
 	int numIndices = numIndicesPerRow[row];
 	numIndicesPerRow[row] = 0;
@@ -357,7 +357,7 @@ public class Graph extends JpetraObject {
 	return ierr;
     }
 
-    public int removeNodeIndices(int row) {
+    public int removeProcessIndices(int row) {
 	int j;
 	int ierr = 0;
        
@@ -391,7 +391,7 @@ public class Graph extends JpetraObject {
 	return false;
     }
 
-    protected boolean findNodeIndexLoc(int localRow, int index, int start, int [] loc) {
+    protected boolean findProcessIndexLoc(int localRow, int index, int start, int [] loc) {
 	int j;
 	int numIndices = numIndicesPerRow[localRow];
 
@@ -436,10 +436,10 @@ public class Graph extends JpetraObject {
 	int [] tempRes = new int [3];
 	int [] tempMaxNumI = new int [1];
 
-	numNodeEntries = 0;
+	numProcessEntries = 0;
 	maxNumIndices = 0;
-	for(i=0; i<numNodeBlockRows; i++) {
-	    numNodeEntries += numIndicesPerRow[i];
+	for(i=0; i<numProcessBlockRows; i++) {
+	    numProcessEntries += numIndicesPerRow[i];
 	    maxNumIndices = Math.max(maxNumIndices, numIndicesPerRow[i]);
 
 
@@ -447,8 +447,8 @@ public class Graph extends JpetraObject {
 
 	// Case 1: Constant block size (including blocksize = 1)
 	if(rowMap.hasConstantElementSize() && colMap.hasConstantElementSize()) {
-	    tempVec[0] = numNodeEntries;
-	    tempVec[1] = numNodeBlockDiagonals;
+	    tempVec[0] = numProcessEntries;
+	    tempVec[1] = numProcessBlockDiagonals;
 	    tempMaxNumI[0] = maxNumIndices;
 
 	    getComm().sumAll(2, tempVec, tempRes);
@@ -459,19 +459,19 @@ public class Graph extends JpetraObject {
 
 	    int rowElementSize = rowMap.getMaxElementSize();
 	    int colElementSize = colMap.getMaxElementSize();
-	    numNodeNonzeros = numNodeEntries * rowElementSize * colElementSize;
+	    numProcessNonzeros = numProcessEntries * rowElementSize * colElementSize;
 	    numGlobalNonzeros = numGlobalEntries * rowElementSize * colElementSize;
 	    maxNumNonzeros = numGlobalEntries * rowElementSize * colElementSize;
 	    globalMaxNumNonzeros = globalMaxNumIndices * rowElementSize * colElementSize;
 	}
 	// Case 2: Variable block size (more work)
 	else {
-	    numNodeNonzeros = 0;
+	    numProcessNonzeros = 0;
 	    maxNumNonzeros = 0;
 	    int [] rowElementSizeList = rowMap.getElementSizeList();
 	    int [] colElementSizeList = rowElementSizeList;
 	    if(importer != null) colElementSizeList = importMap.getElementSizeList();
-	    for(i=0; i<numNodeBlockRows; i++) {
+	    for(i=0; i<numProcessBlockRows; i++) {
 		int numEntries = numIndicesPerRow[i];
 		int [] indices = this.indices[i];
 		if(numEntries > 0) {
@@ -483,15 +483,15 @@ public class Graph extends JpetraObject {
 			maxColDim = Math.max(maxColDim, colDim);
 		    }
 		    maxNumNonzeros = Math.max(maxNumNonzeros, curNumNonzeros);
-		    numNodeNonzeros += curNumNonzeros;
+		    numProcessNonzeros += curNumNonzeros;
 		}
 	    }
 
 	    // Sum up all nonzeros
 	    
-	    tempVec[0] = numNodeEntries;
-	    tempVec[1] = numNodeBlockDiagonals;
-	    tempVec[2] = numNodeNonzeros;
+	    tempVec[0] = numProcessEntries;
+	    tempVec[1] = numProcessBlockDiagonals;
+	    tempVec[2] = numProcessNonzeros;
 	    
 	    getComm().sumAll(3, tempVec, tempRes);
 
@@ -519,7 +519,7 @@ public class Graph extends JpetraObject {
 	// For each row, sort column entries from smallest to largest.
 	// Use shell sort, which is fast if indices are already sorted.
 
-	for(int i=0; i<numNodeBlockRows; i++) {
+	for(int i=0; i<numProcessBlockRows; i++) {
 	    int n = numIndicesPerRow[i];
 	    final int [] list = indices[i];
 	    int m = n / 2;
@@ -552,9 +552,9 @@ public class Graph extends JpetraObject {
 	// Also, determine if graph is upper or lower triangular or has no diagonal.
 	// Note: This function assums that sortIndices was already called.
 
-	this.numNodeDiagonals = 0;
-	this.numNodeBlockDiagonals = 0;
-	for(i=0; i<this.numNodeBlockRows; i++) {
+	this.numProcessDiagonals = 0;
+	this.numProcessBlockDiagonals = 0;
+	for(i=0; i<this.numProcessBlockRows; i++) {
 	    boolean diagFound = false;
 	    int numIndices = this.numIndicesPerRow[i];
 	    if(numIndices > 0) {
@@ -571,19 +571,19 @@ public class Graph extends JpetraObject {
 		    if(jj ==i) diagFound = true;
 		    if(jj == indices[j0]) { // Check if index is repeated
 			this.numIndicesPerRow[i]--;
-			this.numNodeNonzeros--;
+			this.numProcessNonzeros--;
 			for(k=j; k<numIndices-1; k++) indices[k] = indices[k+1];
 			numIndices--;
 		    }
 		    else j0=j;
 		}
 		if(diagFound) {
-		    this.numNodeBlockDiagonals++;
-		    this.numNodeDiagonals += rowMap.getElementSize(i);
+		    this.numProcessBlockDiagonals++;
+		    this.numProcessDiagonals += rowMap.getElementSize(i);
 		}
 	    }
 	}
-	this.noDiagonal = (numNodeBlockDiagonals == 0);
+	this.noDiagonal = (numProcessBlockDiagonals == 0);
 	this.noRedundancies = true;
 	return 0;
     }
@@ -599,50 +599,50 @@ public class Graph extends JpetraObject {
 	    // If owned, transform global index to local index.
 	    // If not owned, add to importMap for later use.
 
-	    numNodeBlockCols = domainMap.getNumNodeElements();
+	    numProcessBlockCols = domainMap.getNumProcessElements();
 
-	    int incBlockCols = Math.max(Math.min(numNodeBlockCols/4, 100), 10);
+	    int incBlockCols = Math.max(Math.min(numProcessBlockCols/4, 100), 10);
 	    int maxBlockCols = 0;
 	    int [] colIndices = null;
 	    if(domainMap.isDistributedGlobal()) {
-		maxBlockCols = numNodeBlockCols;
+		maxBlockCols = numProcessBlockCols;
 		colIndices = new int [maxBlockCols];
 	    }
 	    int [] newColIndices = null;
 
-	    int newNumNodeBlockCols = numNodeBlockCols;
-	    for(i=0; i<numNodeBlockRows; i++) {
+	    int newNumProcessBlockCols = numProcessBlockCols;
+	    for(i=0; i<numProcessBlockRows; i++) {
 		final int numIndices = numIndicesPerRow[i];
 		for(j=0; j<numIndices; j++) {
 		    int GID = indices[i][j];
 		    int LID = LCID(GID);
 		    if(LID == -1) {
 			boolean extNew = true;
-			for(k=numNodeBlockCols; k<newNumNodeBlockCols; k++)
+			for(k=numProcessBlockCols; k<newNumProcessBlockCols; k++)
 			    if(colIndices[k] == GID) {
 				extNew = false;
 				break;
 			    }
 			if(extNew) {
-			    if(newNumNodeBlockCols >= maxBlockCols) { // Need to expand...
-				maxBlockCols = Math.max(numNodeBlockCols+incBlockCols, maxBlockCols+incBlockCols);
+			    if(newNumProcessBlockCols >= maxBlockCols) { // Need to expand...
+				maxBlockCols = Math.max(numProcessBlockCols+incBlockCols, maxBlockCols+incBlockCols);
 				newColIndices = new int [maxBlockCols];
-				System.arraycopy(colIndices, numNodeBlockCols, newColIndices, numNodeBlockCols, newNumNodeBlockCols-numNodeBlockCols);
+				System.arraycopy(colIndices, numProcessBlockCols, newColIndices, numProcessBlockCols, newNumProcessBlockCols-numProcessBlockCols);
 				colIndices = newColIndices;
 			    }
-			    colIndices[newNumNodeBlockCols] = GID;
-			    newNumNodeBlockCols++;
+			    colIndices[newNumProcessBlockCols] = GID;
+			    newNumProcessBlockCols++;
 			}
 		    }
 		}
 	    }
 	    // Create importMap.  This map will be used to facilitate communication in matrix classes.
 	    if(domainMap.isDistributedGlobal()) {
-		// Find processors that own the off-procssor GIDs
-		int numRemote = newNumNodeBlockCols - numNodeBlockCols;
-		// int [] remoteColIndices = colIndices + numNodeBlockCols;
-		int [] remoteColIndices = new int [colIndices.length-numNodeBlockCols];
-		System.arraycopy(colIndices, numNodeBlockCols, remoteColIndices, 0, colIndices.length-numNodeBlockCols);
+		// Find processes that own the off-procssor GIDs
+		int numRemote = newNumProcessBlockCols - numProcessBlockCols;
+		// int [] remoteColIndices = colIndices + numProcessBlockCols;
+		int [] remoteColIndices = new int [colIndices.length-numProcessBlockCols];
+		System.arraycopy(colIndices, numProcessBlockCols, remoteColIndices, 0, colIndices.length-numProcessBlockCols);
 		int nLists = 1;
 		int [] PIDList = null;
 		int [] sizeList = null;
@@ -652,36 +652,36 @@ public class Graph extends JpetraObject {
 		if(numRemote > 0) PIDList = new int [numRemote];
 
 		if(doSizes) {
-		    if(newNumNodeBlockCols > 0) sizeList = new int [newNumNodeBlockCols];
-		    // remoteSizeList = sizeList + numNodeBlockCols;
-		    remoteSizeList = new int [sizeList.length-numNodeBlockCols];
-		    System.arraycopy(sizeList, numNodeBlockCols, remoteSizeList, 0, remoteSizeList.length);
+		    if(newNumProcessBlockCols > 0) sizeList = new int [newNumProcessBlockCols];
+		    // remoteSizeList = sizeList + numProcessBlockCols;
+		    remoteSizeList = new int [sizeList.length-numProcessBlockCols];
+		    System.arraycopy(sizeList, numProcessBlockCols, remoteSizeList, 0, remoteSizeList.length);
 		    nLists++;
 		}
 		domainMap.getRemoteIDList(numRemote, remoteColIndices, PIDList, null, remoteSizeList);
-		System.arraycopy(remoteSizeList, 0, sizeList, numNodeBlockCols, remoteSizeList.length);
+		System.arraycopy(remoteSizeList, 0, sizeList, numProcessBlockCols, remoteSizeList.length);
 
-		// Sort external column indices so that all columns coming from a given remote processor are contiguous
+		// Sort external column indices so that all columns coming from a given remote process are contiguous
 
 		Util util = new Util();
 		int [][] sortLists = new int [2][];
 		sortLists[0] = remoteColIndices;
 		sortLists[1] = remoteSizeList;
 		util.sort(true, numRemote, PIDList, 0, null, nLists, sortLists);
-		System.arraycopy(remoteSizeList, 0, sizeList, numNodeBlockCols, remoteSizeList.length);
+		System.arraycopy(remoteSizeList, 0, sizeList, numProcessBlockCols, remoteSizeList.length);
 
 		domainMap.getGlobalElements(colIndices);
 		if(doSizes) domainMap.getElementSizeList(sizeList);
 
-		numNodeBlockCols = newNumNodeBlockCols;
+		numProcessBlockCols = newNumProcessBlockCols;
 
 		// Make import map with same element sizes as domain map
 		if(domainMap.hasConstantElementSize())
-		    importMap = new BlockMap(-1, newNumNodeBlockCols, colIndices,
+		    importMap = new BlockMap(-1, newNumProcessBlockCols, colIndices,
 		    domainMap.getMaxElementSize(), domainMap.getIndexBase(), domainMap.getComm());
 
 		else // Most general case where block size is variable
-		    importMap = new BlockMap(-1, newNumNodeBlockCols, colIndices, sizeList, 
+		    importMap = new BlockMap(-1, newNumProcessBlockCols, colIndices, sizeList, 
                     domainMap.getIndexBase(), domainMap.getComm());
 
 		// Define an export map only if rowMap and rangeMap are different
@@ -696,7 +696,7 @@ public class Graph extends JpetraObject {
 
 		// Transform indices to local index space
 
-		for(i=0; i<numNodeBlockRows; i++) {
+		for(i=0; i<numProcessBlockRows; i++) {
 		    final int numIndices = numIndicesPerRow[i];
 		    for(j=0; j<numIndices; j++) {
 			int GID = indices[i][j];
@@ -713,28 +713,28 @@ public class Graph extends JpetraObject {
 
 	    // Easy to do if constant element size
 	    if(rangeMap.hasConstantElementSize())
-		numNodeCols = numNodeBlockCols * rangeMap.getMaxNodeElementSize();
+		numProcessCols = numProcessBlockCols * rangeMap.getMaxProcessElementSize();
 	    else {
-		numNodeCols = 0;
-		for(i=0; i<numNodeBlockRows; i++) {
+		numProcessCols = 0;
+		for(i=0; i<numProcessBlockRows; i++) {
 		    final int numIndices = numIndicesPerRow[i];
 		    for(j=0; j<numIndices; j++) {
 			int elementSize = rangeMap.getElementSize(indices[i][j]);
-			numNodeCols += elementSize;
+			numProcessCols += elementSize;
 		    }
 		}
 	    }
 	}
 	else {
-	    // Do a sanity check on column indices.  They must all be in the range 0 to numNodeBlockCols.
+	    // Do a sanity check on column indices.  They must all be in the range 0 to numProcessBlockCols.
 	    // Indices will be sorted so we only need to check the last onw.
 
 	    if(!sorted) sortIndices();
 
-	    for(i=0; i<numNodeBlockRows; i++) {
+	    for(i=0; i<numProcessBlockRows; i++) {
 		int numIndices = numIndicesPerRow[i];
 		if(numIndices > 0)
-		    if(indices[i][numIndices-1] >= numNodeBlockCols) return -1;
+		    if(indices[i][numIndices-1] >= numProcessBlockCols) return -1;
 	    }
 	}
 	return 0;
@@ -746,7 +746,7 @@ public class Graph extends JpetraObject {
 	int j;
 
 	row = LRID(row);
-	if(row < 0 || row >= numNodeBlockRows) return -1;
+	if(row < 0 || row >= numProcessBlockRows) return -1;
 
 	numIndices[0] = numIndicesPerRow[row];
 	if(lenOfIndices < numIndices[0]) return -2;
@@ -757,10 +757,10 @@ public class Graph extends JpetraObject {
 	return 0;
     }
 
-    public int extractNodeRowCopy(int row, int lenOfIndices, int [] numIndices, int [] indices) {
+    public int extractProcessRowCopy(int row, int lenOfIndices, int [] numIndices, int [] indices) {
 	int j;
 
-	if(row < 0 || row >= numNodeBlockRows) return -1;
+	if(row < 0 || row >= numProcessBlockRows) return -1;
 
 	numIndices[0] = numIndicesPerRow[row];
 	if(lenOfIndices < numIndices[0]) return -2;
@@ -775,7 +775,7 @@ public class Graph extends JpetraObject {
     public int extractGlobalRowView(int row, int [] numIndices, int [] view) {
 	row = LRID(row);
 
-	if(row < 0 || row >= numNodeBlockRows) return -1;
+	if(row < 0 || row >= numProcessBlockRows) return -1;
 	if(indicesAreLocal) return -2;
 
 	numIndices[0] = numIndicesPerRow[row];
@@ -785,8 +785,8 @@ public class Graph extends JpetraObject {
 	return 0;
     }
 
-    public int extractNodeRowView(int row, int [] numIndices, int [] view) {
-	if(row < 0 || row >= numNodeBlockRows) return -1;
+    public int extractProcessRowView(int row, int [] numIndices, int [] view) {
+	if(row < 0 || row >= numProcessBlockRows) return -1;
 	if(indicesAreGlobal) return -2;
 
 	numIndices[0]= numIndicesPerRow[row];
@@ -812,13 +812,13 @@ public class Graph extends JpetraObject {
 
     public boolean hasNoDiagonal() { return noDiagonal; }
 
-    public boolean isNodeGlobalRow(int GID) { return rowMap.isMyGID(GID); }
+    public boolean isProcessGlobalRow(int GID) { return rowMap.isMyGID(GID); }
 
-    public int getNumNodeRows() { return numNodeRows; }
+    public int getNumProcessRows() { return numProcessRows; }
     
     public int getNumGlobalRows() { return numGlobalRows; }
 
-    public int getNumNodeCols() { return numNodeCols; }
+    public int getNumProcessCols() { return numProcessCols; }
 
     public int getNumGlobalCols() { return numGlobalCols; }
 
@@ -826,21 +826,21 @@ public class Graph extends JpetraObject {
 
     public int getNumGlobalDiagonals() { return numGlobalDiagonals; }
 
-    public int getNumNodeDiagonals() { return numNodeDiagonals; }
+    public int getNumProcessDiagonals() { return numProcessDiagonals; }
 
-    public int getNumNodeBlockRows() { return numNodeBlockRows; }
+    public int getNumProcessBlockRows() { return numProcessBlockRows; }
 
     public int getNumGlobalBlockRows() { return numGlobalBlockRows; }
 
-    public int getNumNodeBlockCols() { return numNodeBlockCols; }
+    public int getNumProcessBlockCols() { return numProcessBlockCols; }
 
-    public int getNumNodeBlockDiagonals() { return numNodeBlockDiagonals; }
+    public int getNumProcessBlockDiagonals() { return numProcessBlockDiagonals; }
 
     public int getNumGlobalBlockDiagonals() { return numGlobalBlockDiagonals; }
 
     public int getNumGlobalEntries() { return numGlobalEntries; }
 
-    public int getNumNodeEntries() { return numNodeEntries; }
+    public int getNumProcessEntries() { return numProcessEntries; }
 
     public int getMaxRowDim() { return maxRowDim; }
 
@@ -885,30 +885,30 @@ public class Graph extends JpetraObject {
     }
 
     /**
-     * Returns true if given GRID belongs to the calling processor in this map,
+     * Returns true if given GRID belongs to the calling process in this map,
      * otherwise returns false.
      */
     public boolean isMyGRID(int GRID) { return (LRID(GRID) != -1); }
 
     /**
-     * Returns true if given LRID belongs to the calling processor in this map,
+     * Returns true if given LRID belongs to the calling process in this map,
      * otherwise returns false.
      */
     public boolean isMyLRID(int LRID) { return (GRID(LRID) != indexBase-1); }
 
     /**
-     * Returns true if given GCID belongs to the calling processor in this map,
+     * Returns true if given GCID belongs to the calling process in this map,
      * otherwise returns false.
      */
     public boolean isMyGCID(int GCID) { return (LCID(GCID) != -1); }
 
     /**
-     * Returns true if given LCID belongs to the calling processor in this map,
+     * Returns true if given LCID belongs to the calling process in this map,
      * otherwise returns false.
      */
     public boolean isMyLCID(int LCID) { return (GCID(LCID) != indexBase-1); }
 
-    public int getNumNodeNonzeros() { return numNodeNonzeros; }
+    public int getNumProcessNonzeros() { return numProcessNonzeros; }
 
     public int getNumGlobalIndices(int row) {
 	row = LRID(row);
@@ -932,9 +932,9 @@ public class Graph extends JpetraObject {
 
     public int getGlobalMaxNumNonzeros() { return globalMaxNumNonzeros; }
 
-    public int getNumNodeIndices(int row) { return numIndicesPerRow[row]; }
+    public int getNumProcessIndices(int row) { return numIndicesPerRow[row]; }
 
-    public int getNumAllocatedNodeIndices(int row) { return numAllocatedIndicesPerRow[row]; }
+    public int getNumAllocatedProcessIndices(int row) { return numAllocatedIndicesPerRow[row]; }
 
     public int getIndexBase() { return indexBase; }
 

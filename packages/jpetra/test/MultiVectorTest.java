@@ -14,8 +14,8 @@ class MultiVectorTest {
 	if(args.length > 0 && args[0].equals("-v")) verbose = true;
 
 	Jpetra.SerialComm comm = new Jpetra.SerialComm();
-	int pid = comm.getPID();
-	int numProc = comm.getNumProc();
+	int pid = comm.getVnodeID();
+	int numProc = comm.getNumVnodes();
 
 	if(verbose) System.out.println("Processor "+pid+" of "+numProc+" is alive.");
 
@@ -65,7 +65,7 @@ class MultiVectorTest {
 	Jpetra.Comm comm = map.getComm();
 	int ierr = 0;
 	double [] residual = new double [numVectors];
-	int pid = comm.getPID();
+	int pid = comm.getVnodeID();
 	Jpetra.MultiVector a = new Jpetra.MultiVector(map, numVectors);
 	Jpetra.MultiVector sqrtA = new Jpetra.MultiVector(map, numVectors);
 	Jpetra.MultiVector b = new Jpetra.MultiVector(map, numVectors);
@@ -316,7 +316,7 @@ class MultiVectorTest {
 	int indexBase = 0;
 	int i;
 	double [] residual = new double [numVectors];
-	int pid = comm.getPID();
+	int pid = comm.getVnodeID();
 	
 	Jpetra.MultiVector a = new Jpetra.MultiVector(localMap, numVectors);
 	Jpetra.MultiVector b = new Jpetra.MultiVector(localMap, numVectors);

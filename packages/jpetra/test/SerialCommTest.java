@@ -11,9 +11,9 @@ class SerialCommTest {
 	if(args.length > 0 && args[0].equals("-v")) verbose = true;
 
 	Jpetra.SerialComm comm = new Jpetra.SerialComm();
-	int myPid = comm.getPID();
-	int numProce = comm.getNumProc();
-	if(verbose) System.out.println("Processor "+comm.getPID()+" of "+comm.getNumProc());
+	int myPid = comm.getVnodeID();
+	int numProce = comm.getNumVnodes();
+	if(verbose) System.out.println("Processor "+comm.getVnodeID()+" of "+comm.getNumVnodes());
 
 	System.exit(0);
     }

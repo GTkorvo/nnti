@@ -15,7 +15,7 @@ public class CrsMatrix extends JpetraObject {
     protected double normInf = -1;
     protected double normOne = -1;
     
-    protected int numNodeRows = 0;
+    protected int numProcessRows = 0;
     protected int [] numEntriesPerRow = null;
     protected int [] numAllocatedEntriesPerRow = null;
     protected int [][] indices = null;
@@ -39,7 +39,7 @@ public class CrsMatrix extends JpetraObject {
      * @param numEntriesPerRow The ith entry indicates the approximate number of entries in the ith row
      */
     public CrsMatrix(String cv, final Jpetra.Map rowMap, int [] numEntriesPerRow) {
-	this.numNodeRows = rowMap.getNumNodeEquations();
+	this.numProcessRows = rowMap.getNumProcessEquations();
 	this.cv = cv;
 	this.graph = new Jpetra.Graph(cv, rowMap, numEntriesPerRow);
 	int ierr = allocate();
@@ -55,7 +55,7 @@ public class CrsMatrix extends JpetraObject {
      * @param numEntriesPerRow Approximate number of entries in each row, 0 will result in fill during the insertion phase
      */
     public CrsMatrix(String cv, final Jpetra.Map rowMap, int numEntriesPerRow) {
-	this.numNodeRows = rowMap.getNumNodeEquations();
+	this.numProcessRows = rowMap.getNumProcessEquations();
 	this.cv = cv;
        // This constructor is not in Graph!!!	this.graph = new Jpetra.Graph(cv, rowMap, numEntriesPerRow);
 	int ierr = allocate();
@@ -73,7 +73,7 @@ public class CrsMatrix extends JpetraObject {
      * @param numEntriesPerRow The ith entry indicates the approximate number of entries in the ith row
      */
     public CrsMatrix(String cv, final Jpetra.Map rowMap, final Jpetra.Map colMap, int [] numEntriesPerRow) {
-	this.numNodeRows = rowMap.getNumNodeEquations();
+	this.numProcessRows = rowMap.getNumProcessEquations();
 	this.cv = cv;
 	this.graph = new Jpetra.Graph(cv, rowMap, colMap, numEntriesPerRow);
 	int ierr = allocate();
@@ -91,7 +91,7 @@ public class CrsMatrix extends JpetraObject {
      * @param numEntriesPerRow Approximate number of entries in each row
      */
     public CrsMatrix(String cv, final Jpetra.Map rowMap, final Jpetra.Map colMap, int numEntriesPerRow) {
-	this.numNodeRows = rowMap.getNumNodeEquations();
+	this.numProcessRows = rowMap.getNumProcessEquations();
 	this.cv = cv;
 	int [] tmp = { numEntriesPerRow };
 	this.graph = new Jpetra.Graph(cv, rowMap, colMap, tmp);
@@ -106,7 +106,7 @@ public class CrsMatrix extends JpetraObject {
      * @param graph
      */
     public CrsMatrix(String cv, final Jpetra.Graph graph) {
-	this.numNodeRows = graph.getNumNodeRows();
+	this.numProcessRows = graph.getNumProcessRows();
 	this.cv = cv;
 	int ierr = allocate();
     }
@@ -118,11 +118,11 @@ public class CrsMatrix extends JpetraObject {
      */
     public CrsMatrix(CrsMatrix matrix) {
 	this.isAllocated = matrix.isAllocated;
-	this.numNodeRows = matrix.numNodeRows;
+	this.numProcessRows = matrix.numProcessRows;
 	this.cv = "Copy";
 	this.graph = new Jpetra.Graph(matrix.graph);
 	int ierr = allocate();
-	for(int i=0; i<numNodeRows; i++) {
+	for(int i=0; i<numProcessRows; i++) {
 	    int numEntries = this.numEntriesPerRow[i];
 	    for(int j=0; j<numEntries; j++) this.values[i][j] = matrix.values[i][j];
 	}
@@ -138,10 +138,10 @@ public class CrsMatrix extends JpetraObject {
 	this.indices = graph.getIndices();
 
 	// Allocate values array
-	this.values = new double [this.numNodeRows][];
+	this.values = new double [this.numProcessRows][];
 
 	if(this.cv.equals("Copy")) {
-	    for(i=0; i<this.numNodeRows; i++) {
+	    for(i=0; i<this.numProcessRows; i++) {
 		int numAllocatedEntries = this.numAllocatedEntriesPerRow[i];
 		
 		if(numAllocatedEntries > 0) this.values[i] = new double[numAllocatedEntries];
@@ -151,7 +151,7 @@ public class CrsMatrix extends JpetraObject {
 	    }
 	}
 	else {
-	    for(i=0; i<this.numNodeRows; i++) this.values[i] = null;
+	    for(i=0; i<this.numProcessRows; i++) this.values[i] = null;
 	}
 
 	setAllocated(true);
@@ -162,7 +162,7 @@ public class CrsMatrix extends JpetraObject {
      * Initialize all values in the graph of the matrix with <code>scalar</code>.
      */
     public int putScalar(double scalar) {
-	for(int i=0; i<numNodeRows; i++) {
+	for(int i=0; i<numProcessRows; i++) {
 	    int numEntries = numEntriesPerRow[i];
 	    for(int j=0; j<numEntries; j++) values[i][j] = scalar;
 	}
@@ -177,7 +177,7 @@ public class CrsMatrix extends JpetraObject {
 	return insertValues(row, numEntries, values, indices);
     }
 
-    public int insertNodeValues(int row, int numEntries, double [] values, int [] indices) {
+    public int insertProcessValues(int row, int numEntries, double [] values, int [] indices) {
 	if(indicesAreGlobal()) return -2;
 	graph.setIndicesAreLocal(true);
 
@@ -191,7 +191,7 @@ public class CrsMatrix extends JpetraObject {
 	double [] tmpValues;
 	int ierr = 0;
 
-	if(row < 0 || row >= this.numNodeRows) return -1; // Not in row range
+	if(row < 0 || row >= this.numProcessRows) return -1; // Not in row range
 	
 	if(this.cv.equals("View")) {
 	    if(this.values[row] != null) ierr = 2; // This row has already been defined.  Issue warning.
@@ -245,25 +245,25 @@ public class CrsMatrix extends JpetraObject {
      */
     public int extractGlobalRowCopy(int row, int length, int [] numEntries, double [] values) {
 	int row0 = graph.getRowMap().getLID(row); // Normalize row range
-	return extractNodeRowCopy(row0, length, numEntries, values);
+	return extractProcessRowCopy(row0, length, numEntries, values);
     }
 
     /**
      * Returns a copy of the specified local row in user-provided arrays.
      */
-    public int extractNodeRowCopy(int row, int length, int [] numEntries, double [] values, int [] indices) {
-	int ierr = graph.extractNodeRowCopy(row, length, numEntries, indices);
+    public int extractProcessRowCopy(int row, int length, int [] numEntries, double [] values, int [] indices) {
+	int ierr = graph.extractProcessRowCopy(row, length, numEntries, indices);
 	if(ierr != 0) return ierr;
-	return extractNodeRowCopy(row, length, numEntries, values);
+	return extractProcessRowCopy(row, length, numEntries, values);
     }
 
     /**
      * Returns a copy of the specified local row values in user-provided array.
      */
-    public int extractNodeRowCopy(int row, int length, int [] numEntries, double [] values) {
+    public int extractProcessRowCopy(int row, int length, int [] numEntries, double [] values) {
 	int j;
 
-	if(row < 0 || row >= this.numNodeRows) return -1;
+	if(row < 0 || row >= this.numProcessRows) return -1;
 	
 	numEntries[0] = this.numEntriesPerRow[row];
 	if(length < numEntries[0]) return -2; // Not enough space for copy. Needed size is passed back in numEntries
@@ -280,7 +280,7 @@ public class CrsMatrix extends JpetraObject {
 	// For each row, sort column entries from smallest to largest
 	// Use shell sort. Stable sort so it is fast if indices are already sorted.
 
-	for(int i=0; i<numNodeRows; i++) {
+	for(int i=0; i<numProcessRows; i++) {
 	    double [] values = this.values[i];
 	    int numEntries = this.numEntriesPerRow[i];
 	    int [] indices = this.indices[i];
@@ -318,7 +318,7 @@ public class CrsMatrix extends JpetraObject {
 	// Also determine if matrix is upper or lower triangular or has no diagonal.
 	// Note: Assumes that sortEntries was already called.
 
-	for(i=0; i<numNodeRows; i++) {
+	for(i=0; i<numProcessRows; i++) {
 	    int numEntries = this.numEntriesPerRow[i];
 	    if(numEntries > 0) {
 		final double [] values = this.values[i];
@@ -350,7 +350,7 @@ public class CrsMatrix extends JpetraObject {
 	double [] y = rangeVector.extractView()[0];
 	//double [] y = ymv[0];
 	// should check if x.getNumVectors()==numVectors
-	for(int i=0; i<numNodeRows; i++) {
+	for(int i=0; i<numProcessRows; i++) {
 	    int numEntries = numEntriesPerRow[i];
 	    double sum = 0.0;
 	    if(numEntries > 0) {
@@ -396,37 +396,37 @@ public class CrsMatrix extends JpetraObject {
     public int getNumGlobalDiagonals() { return graph.getNumGlobalDiagonals(); }
 
     /**
-     * Returns the number of nonzero entries in the calling processor's portion of the matrix.
+     * Returns the number of nonzero entries in the calling process's portion of the matrix.
      */
-    public int getNumNodeNonzeros() { return graph.getNumNodeNonzeros(); }
+    public int getNumProcessNonzeros() { return graph.getNumProcessNonzeros(); }
 
     /**
-     * Returns the number of matrix rows owned by the calling processor.
+     * Returns the number of matrix rows owned by the calling process.
      */
-    public int getNumNodeRows() { return graph.getNumNodeRows(); }
+    public int getNumProcessRows() { return graph.getNumProcessRows(); }
 
     /**
-     * Returns the number of matrix columns owned by the calling processor.
+     * Returns the number of matrix columns owned by the calling process.
      */
-    public int getNumNodeCols() { return graph.getNumNodeCols(); }
+    public int getNumProcessCols() { return graph.getNumProcessCols(); }
 
     /**
      * Returns the number of local nonzero diagonal entries.
      */
-    public int getNumNodeDiagonals() { return getNumNodeDiagonals(); }
+    public int getNumProcessDiagonals() { return getNumProcessDiagonals(); }
 
     /**
-     * Returns the current number of nonzero entries in specified global row on this processor.
+     * Returns the current number of nonzero entries in specified global row on this process.
      */
     public int getNumGloalEntries(int row) { return graph.getNumGlobalIndices(row); }
 
     /**
-     * Returns the allocated number of nonzero entries in specified global row on this processor.
+     * Returns the allocated number of nonzero entries in specified global row on this process.
      */
     public int getNumAllocatedGlobalEntries(int row) { return graph.getNumAllocatedGlobalIndices(row); }
 
     /**
-     * Returns the maximum number of nonzero entries across all rows on this processor.
+     * Returns the maximum number of nonzero entries across all rows on this process.
      */
     public int getMaxNumEntries() { return graph.getMaxNumIndices(); }
     
@@ -483,12 +483,12 @@ public class CrsMatrix extends JpetraObject {
      StringBuffer buffer  = new StringBuffer(0);
 	buffer.append(getNumGlobalRows() + " " +getNumGlobalCols() + " "+ getNumGlobalNonzeros() + "\n");
 
-	int numNodeRows = getNumNodeRows();
+	int numProcessRows = getNumProcessRows();
 	int maxNumIndices = getMaxNumEntries();
 	int [] indices = new int [maxNumIndices];
 	double [] values = new double [maxNumIndices];
 	int []numIndices = new int [1];
-	for(int i = 0; i<numNodeRows; i++) {
+	for(int i = 0; i<numProcessRows; i++) {
 	    int row = GRID(i);
 	    extractGlobalRowCopy(row, maxNumIndices, numIndices, values, indices);
 	    
@@ -507,14 +507,14 @@ public class CrsMatrix extends JpetraObject {
 	if(isUpperTriangular()) System.out.println(" ** Matrix is Upper Triangular **");
 	if(hasNoDiagonal())     System.out.println(" ** Matrix has No Diagonal     **");
 
-	int numNodeRows = getNumNodeRows();
+	int numProcessRows = getNumProcessRows();
 	int maxNumIndices = getMaxNumEntries();
 	int [] indices = new int [maxNumIndices];
 	double [] values = new double [maxNumIndices];
 	int []numIndices = new int [1];
 
-	System.out.println("   Processor    Row Index    Col Index    Value");
-	for(int i = 0; i<numNodeRows; i++) {
+	System.out.println("   Process    Row Index    Col Index    Value");
+	for(int i = 0; i<numProcessRows; i++) {
 	    int row = GRID(i);
 	    extractGlobalRowCopy(row, maxNumIndices, numIndices, values, indices);
 	    

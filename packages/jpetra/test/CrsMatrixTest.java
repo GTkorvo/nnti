@@ -27,8 +27,8 @@ public class CrsMatrixTest {
 
 	// #endif
 
-	int pid = comm.getPID();
-	int numProc = comm.getNumProc();
+	int pid = comm.getVnodeID();
+	int numProc = comm.getNumVnodes();
 	if(verbose) System.out.println("Processor "+pid+" of "+numProc+" is alive.");
 
 	boolean verbose1 = verbose;

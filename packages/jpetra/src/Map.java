@@ -20,17 +20,17 @@ public class Map extends BlockMap {
         super(numGlobalElements, 1, indexBase, comm);
     }
     
-    public Map(int numGlobalElements, int numNodeElements, int indexBase, Comm comm) 
+    public Map(int numGlobalElements, int numProcessElements, int indexBase, Comm comm) 
     //throws JpetraException 
     {
-        super(numGlobalElements, numNodeElements, 1, indexBase, comm);
+        super(numGlobalElements, numProcessElements, 1, indexBase, comm);
     }
     
-    public Map(int numGlobalElements, int numNodeElements, int [] globalElements,
+    public Map(int numGlobalElements, int numProcessElements, int [] globalElements,
     int indexBase, Comm comm) 
     //throws JpetraException 
     {
-        super(numGlobalElements, numNodeElements, globalElements, 1, indexBase, comm);
+        super(numGlobalElements, numProcessElements, globalElements, 1, indexBase, comm);
     }
     
     public Map(Map map) 

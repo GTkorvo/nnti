@@ -14,8 +14,8 @@ package Jpetra;
 public class LocalMap extends Jpetra.Map {
 
     /** Creates new LocalMap */
-    public LocalMap(int numNodeElements, int indexBase, Comm comm) {
-	super(numNodeElements, numNodeElements, indexBase, comm);
+    public LocalMap(int numProcessElements, int indexBase, Comm comm) {
+	super(numProcessElements, numProcessElements, indexBase, comm);
 	if(checkInput() != 0) {
 	    System.out.println("Replicated Local Map not the same size onf all PEs");
 	    System.exit(1);
@@ -35,8 +35,8 @@ public class LocalMap extends Jpetra.Map {
 	isDistributedGlobal = false;
 	int [] tmp = new int [2];
 	int [] res = new int [2];
-	tmp[0] = numNodeElements;
-	tmp[1] = - numNodeElements;
+	tmp[0] = numProcessElements;
+	tmp[1] = - numProcessElements;
 	comm.maxAll(2, tmp, res);
 
 	int tmp1 = res[0];

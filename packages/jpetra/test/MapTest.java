@@ -8,8 +8,8 @@ class MapTest {
 	if(args.length > 0 && args[0].equals("-v")) verbose = true;
 	
 	Jpetra.SerialComm comm = new Jpetra.SerialComm();
-	int pid = comm.getPID();
-	int numProc = comm.getNumProc();
+	int pid = comm.getVnodeID();
+	int numProc = comm.getNumVnodes();
 	if(verbose) System.out.println("Processor "+pid+" of "+numProc+" is alive.");
 	boolean verbose1 = verbose;
 	verbose = (pid == 0);
@@ -47,8 +47,8 @@ class MapTest {
 	// Test user defined arbitrary distribution constructor
 	// Generate global element list.
 	int [] myGlobalElements = new int [numNodeElements];
-	int maxGid = (comm.getPID()+1)*numNodeElements-1+indexBase;
-	if(comm.getPID() > 2) maxGid += 3;
+	int maxGid = (comm.getVnodeID()+1)*numNodeElements-1+indexBase;
+	if(comm.getVnodeID() > 2) maxGid += 3;
 	for(int i=0; i<numNodeElements; i++) myGlobalElements[i] = maxGid-i;
 
 	map = new Jpetra.Map(numGlobalElements, numNodeElements, myGlobalElements,
@@ -95,8 +95,8 @@ class MapTest {
 
 	Jpetra.SerialComm comm1 = (Jpetra.SerialComm)map.getComm();
 
-	if(comm1.getNumProc() != comm.getNumProc()) return -6;
-	if(comm1.getPID() != comm.getPID()) return -7;
+	if(comm1.getNumVnodes() != comm.getNumVnodes()) return -6;
+	if(comm1.getVnodeID() != comm.getVnodeID()) return -7;
 	if(map.getIndexBase() != indexBase) return -8;
 	if(!map.isLinearMap() && globalElements == null) return -9;
 	if(map.isLinearMap() && globalElements != null) return -9;
@@ -104,16 +104,16 @@ class MapTest {
 	if(map.getMaxElementSize() != 1) return -11;
 	if(map.getMaxLID() != numNodeElements-1+indexBase) return -12;
 
-	int maxGid = (comm.getPID()+1)*numNodeElements-1+indexBase;
-	if(comm.getPID() > 2) maxGid += 3;
+	int maxGid = (comm.getVnodeID()+1)*numNodeElements-1+indexBase;
+	if(comm.getVnodeID() > 2) maxGid += 3;
 	if(!isDistributedGlobal) maxGid = numNodeElements-1+indexBase;
 	if(map.getMaxNodeGID() != maxGid) return -13;
 	if(map.getMinAllGID() != indexBase) return -14;
 	if(map.getMinElementSize() != 1) return -15;
 	if(map.getMinLID() != indexBase) return -16;
 
-	int minGid = comm.getPID()*numNodeElements+indexBase;
-	if(comm.getPID() > 2) minGid += 3;
+	int minGid = comm.getVnodeID()*numNodeElements+indexBase;
+	if(comm.getVnodeID() > 2) minGid += 3;
 	if(!isDistributedGlobal) minGid = 0;
 	if(map.getMinNodeGID() != minGid) return -17;
 

@@ -39,8 +39,8 @@ public class Exporter extends JpetraObject {
         
         int i;
         
-        int numSourceIDs = sourceMap.getNumNodeElements();
-        int numTargetIDs = targetMap.getNumNodeElements();
+        int numSourceIDs = sourceMap.getNumProcessElements();
+        int numTargetIDs = targetMap.getNumProcessElements();
         
         int [] targetGIDs = null;
         if(numTargetIDs > 0) {

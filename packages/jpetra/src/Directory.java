@@ -27,20 +27,20 @@ public class Directory extends JpetraObject {
         
         // Test for simple cases
         
-        // Uniprocessor and local map cases (nothing to set up)
+        // Uniprocess and local map cases (nothing to set up)
         if(!map.isDistributedGlobal()) return;
         
         // Linear map case
         else if(map.isLinearMap()) {
-            // Build a list of the Minimum global ids for all processors on each processor.
-            // Since the map is linear, we know that all GIDs are contiguous on each processor
+            // Build a list of the Minimum global ids for all processes on each process.
+            // Since the map is linear, we know that all GIDs are contiguous on each process
             // and can be found using the MinGIDs.
             
             int numProc = map.getComm().getNumProc();
             allMinGIDs = new int [numProc+1];
-            int [] minNodeGID = new int [1];
-            minNodeGID[0] = map.getMinNodeGID();
-            map.getComm().gatherAll(1, minNodeGID, allMinGIDs);
+            int [] minProcessGID = new int [1];
+            minProcessGID[0] = map.getMinProcessGID();
+            map.getComm().gatherAll(1, minProcessGID, allMinGIDs);
             allMinGIDs[numProc] = 1 + map.getMaxAllGID(); // Set max cap
         }
             
@@ -64,16 +64,16 @@ public class Directory extends JpetraObject {
 	if(directory.directoryMap != null) directoryMap = new Map(directory.directoryMap);
 
         
-        int dirNumNodeElements = directoryMap.getNumNodeElements();
+        int dirNumProcessElements = directoryMap.getNumProcessElements();
         
         if(directory.procList != null) {
-            procList = new int [dirNumNodeElements];
-            for(i=0; i<dirNumNodeElements; i++) 
+            procList = new int [dirNumProcessElements];
+            for(i=0; i<dirNumProcessElements; i++) 
                 procList[i] = directory.procList[i];
         }
         if(directory.localIndexList != null) {
-            localIndexList = new int [dirNumNodeElements];
-            for(i=0; i<dirNumNodeElements; i++) 
+            localIndexList = new int [dirNumProcessElements];
+            for(i=0; i<dirNumProcessElements; i++) 
                 localIndexList[i] = directory.localIndexList[i];
         }
     }
@@ -272,7 +272,7 @@ public class Directory extends JpetraObject {
          *             break;
          *         }
          *         // if (!found) cout << "Internal error:  Petra_Directory::GetDirectoryEntries: Global Index " << curr_LID
-         *         //	     << " not on processor " << MyPID << endl; abort();
+         *         //	     << " not on process " << MyPID << endl; abort();
          *
          *         return (commFlag?1:0);
          */
