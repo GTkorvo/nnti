@@ -848,30 +848,30 @@ to combine many solvers and bring them to bear on a single problem.
 \section{A Brief Overview of Some Object-Oriented Concepts}
 \label{sect:OOTutorial}
 
-Much of the discussion in this document assumes some familiarity with object-oriented
-concepts and terminology. We realize that some readers may not be very familiar with these 
-topics. Therefore, we provide this appendix to cover some of the basic topics, as we 
-understand them and use them.
+Much of the discussion in this document assumes some familiarity with
+object-oriented	concepts and terminology. We realize that some readers may not
+be very familiar with these topics. Therefore, we provide this appendix to
+cover some of the basic topics, as we understand them and use them.
 
 \subsection{Object-oriented Programming}
 We use the term object-oriented programming (OOP) to refer to a philosophy of 
-software engineering where 
-procedures (called methods) and data that are logically related are kept together in a single
-logical unit called a class.  
-Although it is not always clear which data and methods should belong in a given class, we
-can generally agree on basic associations.  As an example, one obvious class for a solver
-framework is a Vector.  For our purposes, we consider a vector object to have finite dimension
-and a basis.  Therefore, it contains data that can be indexed.  Some obvious vector operations
-are norms, dot products and vector updates.  Vector can also be multiplied by a linear operator,
+software engineering where procedures (called methods or functions) and data
+that are logically related are kept together in a single logical unit called a
+class.  Although it is not always clear which data and methods belong in a
+given class, we can generally agree on basic associations.  As an example, one
+obvious class for a solver framework is a Vector.  For our purposes, we
+consider a vector object to have finite dimension and a basis.  Therefore, it
+contains data that can be indexed.  Some obvious vector operations are norms,
+dot products and vector updates.  Vectors can also be multiplied by a linear operator,
 or more specifically a matrix.  However, we commonly put this kind of method in the matrix
 class because matrices tend to be more complicated objects and writing the method in the matrix
 class is easier.
 
 Some of the strengths of OOP are a strong emphasis on the interaction of objects with each
 other, that is, on interfaces between classes.  By focusing on interfaces we get a variety of
-benefits.  First, a well-designed interface prescribe {\it what} should be done by a piece of
+benefits.  First, a well-designed interface prescribes {\it what} should be done by a piece of
 software, not {\it how} it should be done.  This fact, combined with the fact that a class
-owns it data, allows great flexibility in how methods are implemented.  Even more importantly,
+owns its data, allows great flexibility in how methods are implemented.  Even more importantly,
 once software is in use, OOP techniques give us great flexibility to change the implementation
 of a class without changing the interface.  Since a user only works with the interface 
 (methods) of a class, we can change the implementation of a class without requiring any major
@@ -884,44 +884,78 @@ flexibility and features.  However, the overall design of many of the Petra clas
 remained fundamentally the same.
 
 \subsubsection{Some Key OOP Terms}
-Throughout this paper we have used a number of terms repeatedly, and sometimes interchangeably.
-In this section, we define these terms.
+Throughout this paper we have used a number of terms repeatedly, and sometimes
+interchangeably. In this section, we define these terms. Note that most of
+these terms (and many more) are treated in great detail in ~\cite{Stroustrup}.
+
+\paragraph{Virtual Function, Pure Virtual Function}
+Virtual functions (also called virtual methods) are functions defined on a
+base class that can be redefined in any derived class. When a derived class
+redefines a method from its base class, it is said to override that method.
+A pure virtual function is a virtual function that is declared but not
+implemented in the base class. Pure virtual functions {\it must} be overridden
+by derived classes, but ``non-pure'' virtual functions need not be overridden.
 
 \paragraph{Abstract Class, Pure Virtual Class, Interface, Virtual Class}  
-These four terms are used to describe
-classes that are not fully functional.  The first term is used to describe any class that has
-methods that are not implemented within the class, and require another class to provide an
-implementation.  The second two terms describe classes that have 
-{\it no} executable code.  These classes contain method prototypes only and cannot be constructed
-explicitly.  The term pure virtual class tends to be associated with C++ programming
-while interface is formally defined in Java.  We tend to use these two terms interchangeably.  A
-virtual class is one which has some virtual methods (prototypes without code), but has some methods
-that have a default implementation in terms of these virtual methods.  These classes cannot be
-constructed explicitly either.  All four of these class types become usable when a concrete class
-is developed that implements the virtual methods, therefore implementing the interface.
+These four terms are used to describe classes that are incomplete, and can not
+be constructed directly.  The first term is used to describe any class that has
+one or more pure virtual methods.  The second two terms describe classes that
+have {\it no} executable code.  These classes contain method prototypes only
+and cannot be constructed explicitly.  The term pure virtual class tends to be
+associated with C++ programming while interface is formally defined in Java.
+We tend to use these two terms interchangeably.  A virtual class, like an
+abstract class, is one which has some pure virtual methods (prototypes without
+code), but has some methods that have a default implementation (sometimes these
+implementations are written in terms of other virtual methods).  These
+classes cannot be constructed explicitly either.  All four of these class types
+must be inherited by a concrete class that implements the virtual
+methods, therefore implementing the interface.
 
-\paragraph{Concrete Class, Implementation}  In order for an 
-abstract class to be
-used, a class must provide an implementation of the undeveloped methods of the abstract class.
-This helper class, often called a concrete class, provides an implementation of the abstract 
-class interface.  
+\paragraph{Concrete Class, Implementation}  In order for an abstract class to
+be used, some other class must provide an implementation of the undeveloped
+methods of the abstract class. This implementation class, often called a
+concrete class, provides an implementation of the abstract class interface.
+Generally the term concrete class can be used to describe any class that can
+be constructed, i.e., any class which contains no pure virtual methods.
 
 \paragraph{Base Class, Derived Class, Specialization} 
-A concrete class that implements an abstract class is said to be a derived class while the
-abstract class is called a base class.  Unrelated to abstract and concrete classes, we also
-mention another form of derived class called specialization.  One class is a specialization of
-another (base) class if it is a subset of the base class.  For example, given an existing
-matrix class, a vector class can be derived by constructing a matrix object with one column.
+A concrete class that implements an abstract class is said to be a derived
+class while the abstract class is called a base class.  Unrelated to abstract
+and concrete classes, we also mention another form of derived class called
+specialization.  One class is a specialization of another (base) class if it
+is a subset (or special case) of the base class.  For example, given an
+existing matrix class, a vector class can be derived by constructing a matrix
+object with one column.
 
 \paragraph{Base Class, Polymorphism, Factory}
-An abstract class can be implemented by multiple concrete classes.  In this situation each
-concrete class can be used interchangeably to behave as an abstract class object.  The abstract
-class is a base class for both concrete classes and the interchangeability of the concrete
-classes is referred to as polymorphism.  For convenience, and to hide the details of concrete
-class construction, we often develop a function called a factory
-that can construct one of a number of concrete class objects that have a common base class.  Once
-one of the concrete object is constructed, the object is returned as an object of the base 
-class type.
+An abstract class, and in fact any class containing virtual methods, can be
+implemented by multiple concrete classes.  In this situation each concrete
+class can be used interchangeably to behave as an instance of the base class.
+This interchangeability of the concrete classes that implement a common base
+is referred to as polymorphism.  For convenience, and to hide the details of
+concrete class construction, we often develop a function or class called a
+factory that can construct one of a number of concrete classes that have a
+common base class.  Once an instance of the concrete class is constructed, the
+object is returned as an object of the base class type. In this way, the
+calling code (the scope in which the object is to be used) need not know what
+the concrete type of the object actually is.
+
+\paragraph{Templates, Traits}
+C++ classes (and stand-alone functions) may be written in terms of one or more
+generic type parameters. Such classes are called templates. An example could be
+a matrix class that may be instantiated with any type of coefficient data --
+double-precision floating-point numbers, integers, etc. In a templated class,
+the implementation code doesn't know the type of the template parameter. In
+many cases this is a severe limitation, for instance if a templated vector
+class is to call through to BLAS functions it is necessary to distinguish
+between calling 'dnrm2', 'snrm2' or 'dznrm2'. Another example is the need to
+associate different MPI data-types with template parameters. This limitation
+can be addressed using a template technique called traits ~\cite{MyersTraits}.
+Traits are essentially a way of associating a set of types and methods with
+the specific type used to instantiate the template. This is accomplished by
+using a secondary template which has a specialization for each possible type
+that is to be supported. This secondary template is only used internally, and
+is not exposed to the end user.
 
     % \printindex
 
