@@ -32,6 +32,7 @@ import java.util.TreeMap;
 import java.io.Externalizable;
 import java.io.ObjectOutput;
 import java.io.ObjectInput;
+import java.io.Serializable;
 
 /**
  *
@@ -59,6 +60,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
     
     private boolean distributedGlobally;
     private boolean distributedLinearly;
+    private boolean distributedUniformly;
     
     public ElementSpace() {
         //empty
@@ -82,6 +84,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
             this.maxGlobalElementId = this.maxMyGlobalElementId;
             this.distributedGlobally = false;
             this.distributedLinearly = true;
+             this.distributedUniformly = true;
             return;
         }
         
@@ -89,6 +92,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         // !! right now this is for linear uniform distributions!
         this.distributedGlobally = true;
         this.distributedLinearly = true;
+        this.distributedUniformly = true;
         numIndicesPerVnode = numGlobalElements / comm.getNumVnodes();
         numRemainderIndices = numGlobalElements % comm.getNumVnodes();
         this.numMyGlobalElements = numIndicesPerVnode;
@@ -103,7 +107,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         else {
             numRemainderIndicesToAdd = numRemainderIndices;
         }
-        this.minMyGlobalElementId = (comm.getVnodeId() * this.numIndicesPerVnode) + this.numRemainderIndices + indexBase;
+        this.minMyGlobalElementId = (comm.getVnodeId() * this.numIndicesPerVnode) + numRemainderIndicesToAdd + indexBase;
         this.maxMyGlobalElementId = this.minMyGlobalElementId + this.numMyGlobalElements-1;
         this.minGlobalElementId = indexBase;
         this.maxGlobalElementId = this.minGlobalElementId + this.numGlobalElements-1;
@@ -128,6 +132,20 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         }
         
         
+        Object firstKey = null;
+        try {
+            firstKey = this.gidsToLids.firstKey();
+        }
+        catch (java.util.NoSuchElementException e) {
+            // empty
+        }
+        
+        if (firstKey != null) {
+            this.minMyGlobalElementId = ((Integer) firstKey).intValue();
+            this.maxMyGlobalElementId = ((Integer) this.gidsToLids.lastKey()).intValue();
+        }
+        
+        /*
         // should be able to use TreeMap form above to do this!!!!!!!!!!
         // so fix it!!!!
         // find my min and max global elements
@@ -143,6 +161,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         }
         this.minMyGlobalElementId = min;
         this.maxMyGlobalElementId = max;
+         */
         this.comm = comm;
         
         // serial only
@@ -164,6 +183,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         this.numGlobalElements = tmp[0];
          */
         
+        /*
         // find global min and max for global elements
         int[] tmp = new int[]{this.minMyGlobalElementId};
         tmp = comm.minAll(tmp);
@@ -173,6 +193,21 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         this.maxGlobalElementId = tmp[0];
         // find the number of global elements
         this.println("STD", "ElementSpace: maxGid: " + this.maxGlobalElementId + " minGid: " + this.minGlobalElementId);
+        this.numGlobalElements = this.maxGlobalElementId - this.minGlobalElementId + 1;*/
+        
+        // find global min and max for global elements
+        Integer minInteger = null;
+        Integer maxInteger = null;
+        if (this.numMyGlobalElements != 0) {
+            minInteger = new Integer(this.minMyGlobalElementId);
+            maxInteger = new Integer(this.maxMyGlobalElementId);
+        }
+        Serializable tmp = comm.minAll((Serializable) minInteger);
+        this.minGlobalElementId = ((Integer) tmp).intValue();
+        tmp = comm.maxAll((Serializable) maxInteger);
+        this.maxGlobalElementId = ((Integer) tmp).intValue();
+        // find the number of global elements
+        this.println("STD", "ElementSpace: maxGid: " + this.maxGlobalElementId + " minGid: " + this.minGlobalElementId);
         this.numGlobalElements = this.maxGlobalElementId - this.minGlobalElementId + 1;
     }
     
@@ -180,38 +215,48 @@ public class ElementSpace extends JpetraObject implements Externalizable {
      * Constructs an <code>ElementSpace</code> automatically based on the user defined
      * linear distribution of global elements given to each vnode.
      *
-     * @param numGlobalElements -1 for globaly distributed or numMyGlobalElements for local/serial
+     * @param numGlobalElements -1 to have the Comm determine, actually this parameter does nothing right now...
+     *//*
+     *                          if numGlobalElements == numMyGlobalElements then 
+     *                          the ElementSpace will be serial
      */
     public ElementSpace(int numGlobalElements, int numMyGlobalElements, int indexBase, Comm comm) {
         this.numMyGlobalElements = numMyGlobalElements;
+        this.minGlobalElementId = indexBase;
         this.comm = comm;
         this.distributedLinearly = true;
-        
-        if (comm.isSerial() || (numGlobalElements == numMyGlobalElements)) {
+        this.distributedUniformly = false;
+         
+        //if (comm.isSerial() || (numGlobalElements == numMyGlobalElements)) {
+        if (comm.isSerial()) {
             this.distributedGlobally = false;
             this.numGlobalElements = numGlobalElements;
             this.numMyGlobalElements = numMyGlobalElements;
             this.minMyGlobalElementId = indexBase;
-            this.minGlobalElementId = this.minMyGlobalElementId;
+            //this.minGlobalElementId = this.minMyGlobalElementId;
             this.maxMyGlobalElementId = numGlobalElements + indexBase;
             this.maxGlobalElementId = this.maxMyGlobalElementId;
             return;
         }
         
+        this.distributedGlobally = true;
         // find the number of global elements by finding the sum of all local elements
         int[] sum = comm.sumAll(new int[]{numMyGlobalElements});
         this.numGlobalElements = sum[0];
         int[] scanSum = comm.scanSums(new int[]{numMyGlobalElements});
-        int myMaxGlobalElementId = scanSum[0] + indexBase;
-        this.minMyGlobalElementId = myMaxGlobalElementId - numMyGlobalElements + indexBase;
-        
+        this.maxMyGlobalElementId = scanSum[0] + indexBase-1;  // -1 to make indexing start at 0
+        this.minMyGlobalElementId = this.maxMyGlobalElementId - this.numMyGlobalElements + indexBase;
+        if (comm.getVnodeId() == 0) {
+            this.minMyGlobalElementId = indexBase;
+        }
+        this.println("STD", "In ElementSpace: myMaxGlobalElementId: " + this.maxMyGlobalElementId + " minMyGlobalElementId: " + this.minMyGlobalElementId + " numMyGids: " + this.numMyGlobalElements + " numGids: " + this.numGlobalElements);
     }
     
     
     public int getLocalElementId(int globalElementId) {
         // for both serial and parallel
         if ((globalElementId < this.minMyGlobalElementId) || (globalElementId > this.maxMyGlobalElementId)) {
-            this.println("STD", "GlobalId " + globalElementId + " failed min/max test.");
+            this.println("STD", "GlobalId " + globalElementId + " failed min/max (" + this.minMyGlobalElementId + "/" + this.maxMyGlobalElementId + ") test. getNumMyGlobalElements(): " + this.getNumMyGlobalElements());
             return -1;
         }
         
@@ -308,7 +353,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         }
         
         int[] generatedGlobalElementIds = null;
-        if (distributedLinearly) {
+        if (this.distributedLinearly) {
             generatedGlobalElementIds = new int[this.numMyGlobalElements];
             for (int i=0; i < this.numMyGlobalElements; i++) {
                 generatedGlobalElementIds[i] = i + this.minMyGlobalElementId;
@@ -320,6 +365,10 @@ public class ElementSpace extends JpetraObject implements Externalizable {
     
     public boolean isDistributedGlobally() {
         return this.distributedGlobally;
+    }
+    
+    public boolean isDistributedUniformly() {
+        return  this.distributedUniformly;
     }
     
     public boolean isDistributedLinearly() {

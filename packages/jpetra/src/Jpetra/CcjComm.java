@@ -264,7 +264,14 @@ public class CcjComm extends JpetraObject implements Comm {
     /**
      * Wrapper to <code>CcjLink</code> <code>minAll</code>.
      */
-    public double[] minAll(double [] partialMins) {
+    public Serializable minAll(Serializable partialMins) {
+        return this.myCcjLink.minAll(partialMins);
+    }
+    
+    /**
+     * Wrapper to <code>CcjLink</code> <code>minAll</code>.
+     */
+    public double[] minAll(double[] partialMins) {
         return this.myCcjLink.minAll(partialMins);
     }
     
@@ -407,6 +414,10 @@ public class CcjComm extends JpetraObject implements Comm {
     
     public int[][] gather(int[] in) {
         return this.myCcjLink.gather(in);
+    }
+    
+    public Serializable maxAll(Serializable in) {
+        return this.myCcjLink.maxAll(in);
     }
     
 }

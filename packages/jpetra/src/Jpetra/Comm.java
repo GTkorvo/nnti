@@ -178,6 +178,8 @@ public interface Comm {
      */
     public int[] maxAll(int [] partialMaxs);
     
+    public Serializable maxAll(Serializable partialMaxs);
+    
     /**
      * Takes a list of values form all vnodes in the communicator, computes
      * the min, and returns the min to all vnodes.
@@ -187,6 +189,8 @@ public interface Comm {
      * @return              out on exit; the list of values summed across all vnodes
      */
     public double[] minAll(double [] partialMins);
+    
+    public Serializable minAll(Serializable partialMins);
     
     /**
      * Takes a list of values form all vnodes in the communicator, computes

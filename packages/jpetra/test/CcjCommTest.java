@@ -26,6 +26,8 @@
 // ***********************************************************************
 // @HEADER
 
+package test;
+
 import Jpetra.*;
 
 public class CcjCommTest extends JpetraObject {
@@ -36,7 +38,7 @@ public class CcjCommTest extends JpetraObject {
         int size = 1;
         int rank = 0;
         
-        Jpetra.CcjComm comm = new Jpetra.CcjComm("ccjhosts.txt");
+        Jpetra.CcjComm comm = new Jpetra.CcjComm("test/ccjhosts.txt");
         
         int myPid = comm.getVnodeID();
         int numProc = comm.getNumVnodes();

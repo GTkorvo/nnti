@@ -274,6 +274,24 @@ public class CcjLink extends ColMember {
     /**
      * Wrapper to CCJ <code>allReduce</code>.
      */
+    public Serializable maxAll(Serializable partialMaxs) {
+        CcjReduceMaxSerializable maxSerializable = new CcjReduceMaxSerializable();
+        
+        Serializable toReturn=null;
+        try {
+            toReturn = allReduce(group, partialMaxs, maxSerializable);
+        }
+        catch (CCJException e) {
+            JpetraObject.println("ERR", "In CCJ serializableMaxAll: " + e);
+        }
+        
+        return toReturn;
+    }
+    
+    
+    /**
+     * Wrapper to CCJ <code>allReduce</code>.
+     */
     public double[] minAll(double [] partialMins) {
         CcjReduceDoubleMinArray minDoubles = new CcjReduceDoubleMinArray();
         
@@ -283,6 +301,23 @@ public class CcjLink extends ColMember {
         }
         catch (CCJException e) {
             JpetraObject.println("ERR", "In CCJ doubleMinAll: " + e);
+        }
+        
+        return toReturn;
+    }
+    
+    /**
+     * Wrapper to CCJ <code>allReduce</code>.
+     */
+    public Serializable minAll(Serializable partialMins) {
+        CcjReduceMinSerializable minSerializable = new CcjReduceMinSerializable();
+        
+        Serializable toReturn=null;
+        try {
+            toReturn = allReduce(group, partialMins, minSerializable);
+        }
+        catch (CCJException e) {
+            JpetraObject.println("ERR", "In CCJ serializableMinAll: " + e);
         }
         
         return toReturn;

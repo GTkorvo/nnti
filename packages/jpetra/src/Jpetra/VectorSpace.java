@@ -115,6 +115,10 @@ public class VectorSpace extends JpetraObject implements Externalizable {
         return this.elementSpace.isDistributedLinearly();
     }
     
+    public boolean isDistributedUniformly() {
+        return this.elementSpace.isDistributedUniformly();
+    }
+    
     public int getMinGlobalEntryId() {
         return this.elementSpace.getMinGlobalElementId();
     }

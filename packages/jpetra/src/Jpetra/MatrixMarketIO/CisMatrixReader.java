@@ -77,7 +77,10 @@ public class CisMatrixReader extends JpetraObject {
      */    
     public static CisMatrix read(String fileName, boolean rowOriented, Comm comm) throws java.io.IOException {
         if (comm.getVnodeId() != 0) {
-            return null;
+            VectorSpace vectorSpace = new VectorSpace(new ElementSpace(-1, 0, 0, comm));
+            CisMatrix cisMatrix = new CisMatrix(vectorSpace, rowOriented);
+            cisMatrix.fillComplete();
+            return cisMatrix;
         }
         
         FileInputStream fis = new FileInputStream(fileName);
@@ -112,10 +115,10 @@ public class CisMatrixReader extends JpetraObject {
         
         ElementSpace myElementSpace;
         if (rowOriented) {
-           myElementSpace = new ElementSpace(size.numRows(), 0, comm);
+           myElementSpace = new ElementSpace(-1, size.numRows(), 0, comm);
         }
         else {
-            myElementSpace = new ElementSpace(size.numColumns(), 0, comm);
+            myElementSpace = new ElementSpace(-1, size.numColumns(), 0, comm);
         }
         VectorSpace myVectorSpace = new VectorSpace(myElementSpace);
         CisMatrix result = new CisMatrix(myVectorSpace, rowOriented);
@@ -245,10 +248,10 @@ public class CisMatrixReader extends JpetraObject {
         int numCols = size.numColumns();
         int entryIndex = 0;
         if (cisMatrix.isRowOriented()) {
-            for (int i=0; i < numCols; i++) {
-                for(int j=0; j < numRows; j++) {
+            for (int i=0; i < numRows; i++) {
+                for(int j=0; j < numCols; j++) {
                     if (data[entryIndex] != 0) {
-                        cisMatrix.insertEntry(j, i, data[entryIndex++], DistObject.REPLACE);
+                        cisMatrix.insertEntry(i, j, data[entryIndex++], DistObject.REPLACE);
                     }
                 }
             }
@@ -278,10 +281,10 @@ public class CisMatrixReader extends JpetraObject {
         int numCols = size.numColumns();
         int entryIndex = 0;
         if (cisMatrix.isRowOriented()) {
-            for (int i=0; i < numCols; i++) {
-                for(int j=0; j < numRows; j++) {
+            for (int i=0; i < numRows; i++) {
+                for(int j=0; j < numCols; j++) {
                     if (data[entryIndex] != 0) {
-                        cisMatrix.insertEntry(j, i, data[entryIndex++], DistObject.REPLACE);
+                        cisMatrix.insertEntry(i, j, data[entryIndex++], DistObject.REPLACE);
                     }
                 }
             }

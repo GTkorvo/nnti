@@ -1,3 +1,4 @@
 #!/bin/sh
 
-javadoc -d html -sourcepath ../src/*.java -linksource -author -private Jpetra
+cd ../src
+javadoc -d ../doc/html -linksource -author -private Jpetra Jpetra.MatrixMarketIO Jpetra.CcjSupport

@@ -26,6 +26,8 @@
 // ***********************************************************************
 // @HEADER
 
+package test;
+
 import Jpetra.*;
 
 class SerialCommTest {
@@ -39,9 +41,9 @@ class SerialCommTest {
 	if(args.length > 0 && args[0].equals("-v")) verbose = true;
 
 	Jpetra.SerialComm comm = new Jpetra.SerialComm();
-	int myPid = comm.getVnodeID();
+	int myPid = comm.getVnodeId();
 	int numProce = comm.getNumVnodes();
-	if(verbose) System.out.println("Processor "+comm.getVnodeID()+" of "+comm.getNumVnodes());
+	if(verbose) System.out.println("Processor "+comm.getVnodeId()+" of "+comm.getNumVnodes());
 
 	System.exit(0);
     }

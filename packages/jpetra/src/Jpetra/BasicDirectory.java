@@ -42,6 +42,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
     private VectorSpace directoryVectorSpace;
     private int[] directoryVnodeIds;
     private int[] directoryLids;
+    private int[] allMinGids;  // for linear nonuniform distributions
     
     public BasicDirectory(VectorSpace vectorSpace) {
         this.outputStreams.put("DIRECTORY", new Output("BasicDirector: ", true, System.out, false, System.out));
@@ -52,8 +53,13 @@ public class BasicDirectory extends JpetraObject implements Directory {
             return;  // nothing to setup
         }
         
-        if (vectorSpace.isDistributedLinearly()) {
+        if (vectorSpace.isDistributedUniformly()) {
             return; // nothing to setup
+        }
+        
+        if (vectorSpace.isDistributedLinearly()) {
+            allMinGids = vectorSpace.getComm().gatherAll(vectorSpace.getMyMinGlobalIndex());
+            return; // nothing else left to do
         }
         
         // setup arbitrary distribution
@@ -144,7 +150,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
         
         // for parallel
         // for linear continous distribution
-        if (vectorSpace.isDistributedLinearly()) {
+        if (vectorSpace.isDistributedUniformly()) {
             int numRemainderIndicies = vectorSpace.getNumRemainderIndices();
             int numIndiciesPerVnode = vectorSpace.getNumIndicesPerVnode();
             int minGlobalElementId = vectorSpace.getMinGlobalEntryId();
@@ -163,6 +169,49 @@ public class BasicDirectory extends JpetraObject implements Directory {
                     vnodeIdsLids[1][i] = gid % (numIndiciesPerVnode + 1);
                     
                 }
+            }
+            
+            return vnodeIdsLids;
+        }
+        
+        if (vectorSpace.isDistributedLinearly()) {
+            this.println("DIRECTORY", "trying to find Gids using Linear Distribution...");
+            int minAllGids = this.vectorSpace.getMinGlobalEntryId();
+            int maxAllGids = this.vectorSpace.getMaxGlobalEntryId();
+            int numVnodes = this.vectorSpace.getComm().getNumVnodes();
+            int n_over_p = numVnodes / this.vectorSpace.getNumGlobalEntries();
+            
+            for (int i=0; i < globalElements.length; i++) {
+                int LID = -1; // Assume not found
+                int Proc = -1;
+                int GID = globalElements[i];
+                if (GID < minAllGids) {
+                    // error
+                }
+                else if (GID > maxAllGids) {
+                    // error
+                }
+                else {
+                    // Guess uniform distribution and start a little above it
+                    int Proc1 = Util.min(GID/Util.max(n_over_p,1) + 2, numVnodes-1);
+                    boolean found = false;
+                    while (Proc1 >= 0 && Proc1 < numVnodes) {
+                        if (allMinGids[Proc1]<=GID) {
+                            if (GID <allMinGids[Proc1+1]) {
+                                found = true;
+                                break;
+                            }
+                            else Proc1++;
+                        }
+                        else Proc1--;
+                    }
+                    if (found) {
+                        Proc = Proc1;
+                        LID = GID - allMinGids[Proc];
+                    }
+                }
+                vnodeIdsLids[0][i] = Proc;
+                vnodeIdsLids[1][i] = LID;
             }
             
             return vnodeIdsLids;

@@ -78,6 +78,8 @@ public class Export extends JpetraObject {
         }
         
         // now figure out how many global ids are the same between the source and target VectorSpaces
+        int temp = sourceGids.length;
+        temp = targetGids.length;
         int minNumIds = Util.min(sourceGids.length, targetGids.length);
         this.println("EXPORT", "sourceGids.length: " + sourceGids.length + " targetGids.length: " + targetGids.length);
         for (numSameGids = 0; numSameGids < minNumIds; this.numSameGids++) {

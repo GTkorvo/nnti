@@ -17,7 +17,7 @@ import java.io.Serializable;
 public abstract class ColMember implements ColMemberInterface, Runnable {
 
     private static final boolean DEBUG = false;
-    private static final boolean ASSERT = false;
+    private static final boolean ASSERT = true;
     private static final boolean DEBUG2 = false; // Debug level 2
     private static final boolean DO_TIMINGS = false; // Also update ThreadPool.DO_TIMINGS
     private boolean USE_THREADPOOL = false;

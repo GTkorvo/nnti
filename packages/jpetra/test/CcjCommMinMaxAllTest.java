@@ -26,6 +26,8 @@
 // ***********************************************************************
 // @HEADER
 
+package test;
+
 import Jpetra.*;
 import java.util.Arrays;
 
@@ -37,8 +39,13 @@ public class CcjCommMinMaxAllTest {
      }
      
      public CcjCommMinMaxAllTest(String[] args) {
-         Jpetra.CcjComm comm = new Jpetra.CcjComm("ccjhosts.txt");
+         JpetraObject output = new JpetraObject();
+         output.initializeOutput();
          
+         Jpetra.CcjComm comm = new Jpetra.CcjComm("test/ccjhosts.txt");
+         if (comm.getNumVnodes() !=3 ) {
+             System.out.println("Fatal Error: This test must be run with 3 virutal nodes!");
+         }
          if(args.length > 0 && args[0].equals("-v")) verbose = true;
       
          if(verbose) System.out.println("Processor "+comm.getVnodeID()+" of "+comm.getNumVnodes());
@@ -118,6 +125,6 @@ public class CcjCommMinMaxAllTest {
              }
          }        
          
-         System.exit(1);        
+         System.exit(0);        
      }  
 }

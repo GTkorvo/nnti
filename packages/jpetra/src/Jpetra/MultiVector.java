@@ -260,6 +260,9 @@ public class MultiVector extends DistObject implements Externalizable {
     }
     
     public int getNumRows() {
+        if (values.length == 0) {
+            return 0;
+        }
         return this.values[0].length;
     }
     
@@ -350,6 +353,13 @@ public class MultiVector extends DistObject implements Externalizable {
                     entryData = (Serializable[]) entry[j];
                     gid = ((Integer) entryData[0]).intValue();
                     lid = vectorSpace.getLocalIndex(gid);
+                    
+                    // debugging code!!!
+                    if (lid == -1) {
+                        this.println("ERR", "In MultiVector: Got a bad gid: " + gid);
+                        continue;
+                    }
+                    
                     if (!this.doneForward) {
                         reverseExportVnodeIdsGidsLids[0][i]++;
                         reverseExportVnodeIdsGidsLids[1][revCount] = i;
@@ -411,8 +421,11 @@ public class MultiVector extends DistObject implements Externalizable {
     }
     
     public static void writeToFile(String fileName, MultiVector multiVector) {
-        if (multiVector.getVectorSpace().isDistributedGlobally()) {
-            JpetraObject.println("FATALERR", "Only a serial MultiVector can be written to a serialized object file.");
+        if (multiVector.getVectorSpace().getComm().getVnodeId() != 0) {
+            return;  // only vnode 0 will write the object to afile
+        }
+        if (multiVector.getVectorSpace().getNumMyGlobalEntries() != multiVector.getVectorSpace().getNumGlobalEntries()) {
+            JpetraObject.println("FATALERR", "Only a MultiVector with all Gids present on the root vnode (vnode 0) can be written to a serialized object file.");
             System.exit(1);
         }
         

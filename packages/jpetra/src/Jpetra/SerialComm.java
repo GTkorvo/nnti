@@ -202,7 +202,7 @@ public class SerialComm extends JpetraObject implements Comm {
      * @param partialMins the partial minimums
      * @return <code>partialMins</code>
      */
-    public double[] minAll(double[] partialMins) {
+    public Serializable minAll(Serializable partialMins) {
         return partialMins;
     }
     
@@ -313,4 +313,8 @@ public class SerialComm extends JpetraObject implements Comm {
     public Directory createDirectory(VectorSpace vectorSpace) {
         return new BasicDirectory(vectorSpace);
     }
+    
+    public Serializable maxAll(Serializable partialMaxs) {
+    }
+    
 }

@@ -39,6 +39,10 @@ public class Util extends JpetraObject {
     public Util(Util util) {
     }
     
+    public static int max(int x, int y) {
+        return (( (x) > (y) ) ? x : y);
+    }
+    
     public static double max(double x, double y) {
         return (( (x) > (y) ) ? x : y);
     }

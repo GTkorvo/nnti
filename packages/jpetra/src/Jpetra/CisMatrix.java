@@ -541,6 +541,22 @@ public class CisMatrix extends DistObject implements Externalizable {
         return null;  // will never get here, but java complains if this is not present
     }
     
+    public VectorSpace getPrimaryVectorSpace() {
+        return this.primaryVectorSpace;
+    }
+    
+    public VectorSpace getSecondaryVectorSpace() {
+        if (this.filled) {
+            return this.secondaryVectorSpace;
+        }
+        else {
+            this.println("FATALERR", "You cannot retrive the secondaryVectorSpace before you call fillComplete().");
+            System.exit(1);
+        }
+        
+        return null;  // will never get here, but java complains if this is not present
+    }
+    
     public void multiply(boolean useTransposeA, MultiVector x, MultiVector y) {
         // setup temporary MultiVectors
         

@@ -1,14 +1,37 @@
+// @HEADER
+// ***********************************************************************
+//
+//               Java Implementation of the Petra Library
+//                 Copyright (2004) Sandia Corporation
+//
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
+//
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
+// ***********************************************************************
+// @HEADER
+
 package CCJ;
 
 import java.util.Vector;
 import java.io.*;
 import java.net.*;
 import java.rmi.registry.Registry;
-/*
- * CcjHosts.java
- *
- * Created on Mon June 23 22:05:00 CDT 2003
- */
 
 /**
  * Reads a file from the file name path passed to it, and then reads in a host per line in the format:<br>
@@ -29,7 +52,7 @@ import java.rmi.registry.Registry;
  * to an interface will be used.  This will prevent multiple processes on the same
  * physical node from using multiple IP addresses.
  *
- * @author  Jason Cross 
+ * @author  Jason Cross
  */
 
 public class CcjHosts {
@@ -82,11 +105,11 @@ public class CcjHosts {
      * @param host_names static reference passed from ColGroupMaster
      * @param host_ports static reference passed from ColGroupMaster
      */
-    public CcjHosts (String filePath, Vector host_names, Vector host_ports) throws CCJException {
+    public CcjHosts(String filePath, Vector host_names, Vector host_ports) throws CCJException {
         this.host_names = host_names;
         this.host_ports = host_ports;
         
-        //try to open and read one line from the given ccjhosts file        
+        //try to open and read one line from the given ccjhosts file
         BufferedReader in = null;
         String line = null;
         try {
@@ -99,7 +122,7 @@ public class CcjHosts {
         catch (Exception e) {
             throw new CCJException("An error occurred while reading from the CcjHosts file: " + e);
         }
-       
+        
         //keeps track of number of while loops excuted; used to determine host
         int i = 0;
         NetworkInterface activeInterface = null;
@@ -109,7 +132,7 @@ public class CcjHosts {
         //goes through each line of the ccjhosts file, parses it, and then addes the vnode
         //IP and port to host_names and host_ports
         while (line != null) {
-        
+            
             //checks for comments begining with / or #
             if (('/' != line.charAt(0)) && ('#' != line.charAt(0))) {
                 //seperate the IP and the port
@@ -124,37 +147,37 @@ public class CcjHosts {
                         //find the a vnode's IP or valid the IP
                         address = InetAddress.getByName(lineSplit[0]);
                         String name = address.getHostAddress();
-                
-                        host_names.add(name);                
-                    
-                    //make sure that the port was specified
-                    if (lineSplit.length == 2) {
-                        //add the port number to the default port
-                        hostPort += new Integer(lineSplit[1]).intValue();
-                    }
-    
-                    host_ports.add(""+hostPort);
-                    
-                    
-                    //sees if this vnode's IP has been found
-                    if (activeInterface == null) {
-                        try {
-                            activeInterface = NetworkInterface.getByInetAddress(address);
-                        }
-                        //exception is useless information
-                        catch (Exception e) {
-                            //empty
+                        
+                        host_names.add(name);
+                        
+                        //make sure that the port was specified
+                        if (lineSplit.length == 2) {
+                            //add the port number to the default port
+                            hostPort += new Integer(lineSplit[1]).intValue();
                         }
                         
-                        //sets the hostName, host, and port if this IP is for this vnode
-                        if (activeInterface != null) {
-                            hostName = name;
-                            host=i;
-                            port=hostPort;
+                        host_ports.add(""+hostPort);
+                        
+                        
+                        //sees if this vnode's IP has been found
+                        if (activeInterface == null) {
+                            try {
+                                activeInterface = NetworkInterface.getByInetAddress(address);
+                            }
+                            //exception is useless information
+                            catch (Exception e) {
+                                //empty
+                            }
+                            
+                            //sets the hostName, host, and port if this IP is for this vnode
+                            if (activeInterface != null) {
+                                hostName = name;
+                                host=i;
+                                port=hostPort;
+                            }
                         }
-                    }
-                    numberOfCPUs++;
-                    i++;
+                        numberOfCPUs++;
+                        i++;
                     }
                     catch (java.net.UnknownHostException e) {
                         throw new CCJException("Could not find host name " + lineSplit[0] + " " + e);
@@ -177,7 +200,7 @@ public class CcjHosts {
         }
         catch (Exception e) {
             throw new CCJException("An error occurred while trying to close the CcjHosts file: " + e);
-        }    
+        }
     }
     
     /**
@@ -185,7 +208,7 @@ public class CcjHosts {
      *
      * @return this vnode's IP
      */
-    public String getMyHost () {
+    public String getMyHost() {
         return hostName;
     }
     
@@ -194,25 +217,25 @@ public class CcjHosts {
      *
      * @return this vnode's port
      */
-    public int getMyPort () {
+    public int getMyPort() {
         return port;
     }
-
+    
     /**
      * accessor for host
      *
      * @return this vnode's rank
-     */    
-    public int getMyHostNum () {
+     */
+    public int getMyHostNum() {
         return host;
     }
-
+    
     /**
      * accessor for numberOfCPUs
      *
      * @return the number of vnode's in the group
-     */    
-    public int getNumCpus () {
+     */
+    public int getNumCpus() {
         return numberOfCPUs;
     }
     
@@ -222,8 +245,8 @@ public class CcjHosts {
      * then finds the next IP and port combination, and trys to bind to that port.
      *
      * @return port to try to bind to or 0 if is there is no new port to try to bind to
-     */    
-    public int findNextHostPort () {
+     */
+    public int findNextHostPort() {
         boolean isNext = false;
         for(int i=0; i < host_names.size(); i++) {
             //sets isNext to true if the next port found to match this vnode's ip address should be used to bind to

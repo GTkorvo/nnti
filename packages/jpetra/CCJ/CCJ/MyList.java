@@ -12,7 +12,7 @@ import java.io.Serializable;
 final class MyList extends UnicastRemoteObject implements MyListInterface {
     // Message list with a node queue with at least 1 Entry ready to be used
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final boolean ASSERT = false;
     protected static int BUCKETS = 2; // Must be a power of 2
     protected static int STARTING_POOLSIZE = 1;
