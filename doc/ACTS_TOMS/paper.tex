@@ -101,7 +101,7 @@ in the development of another solver becomes very difficult.
 
 The Trilinos Project grew out of this group of established numerical algorithms
 efforts at Sandia, motivated by  a recognition that a modest degree of 
-coordination among these efforts could have a large positive impact on 
+coordination across these efforts could have a large positive impact on 
 the quality and usability of the software we produce and therefore enhance the
 research, development and integration of new solver algorithms into
 applications.  With the advent of Trilinos, the degree of effort required 
@@ -110,13 +110,13 @@ substantially reduced, because our common infrastructure provides an good
 starting point for new development.  Furthermore, many applications 
 are standardizing on the 
 Trilinos matrix and vector classes.  As a result, these applications
-have access to all Trilinos solver packages without  
+have access to all Trilinos capabilities without  
 interface modifications. 
 
-The fundamental building block in Trilinos is the {\it package}. Trilinos
-uses a two-level software architecture designed around collections of
-packages.  Each package is a numerical library (or collection of
-libraries) that is:
+Trilinos has a two-level design where the fundamental building block
+is a {\it package}.  Although package is a common term, we define it
+rigorously within Trilinos.  Specifically, each package is a numerical
+library (or collection of libraries) that is:
 \begin{itemize}
 \item Focused on important, state-of-the-art algorithms in its problem
 regime.  For example: algebraic preconditioners, nonlinear solvers, 
@@ -172,7 +172,7 @@ while still leveraging the investment in
 established libraries such as those just mentioned.  These two goals
 are accomplished by active research and development of new libraries
 and by use of the Trilinos package architecture.  Although
-Trilinos is unique in purpose, a number of other projects have some 
+Trilinos is unique in design, a number of other projects have some 
 similarities.  In particular, PETSc, the Common Component Architecture
 (CCA)~\cite{CCA-home-page}, the Matrix
 Template Library (MTL)~\cite{MTL-home-page} and POOMA~\cite{POOMA}
@@ -198,7 +198,8 @@ the Trilinos
 package architecture supports interoperability of independent
 pieces of software.  However, the CCA uses an advanced runtime
 environment to manage the coupling of components, whereas Trilinos
-uses the polymorphism that is inherent in the C++ language.  Both
+uses configure-enabled conditional compilation and the polymorphism
+that is inherent in the C++ language.  Both
 approaches are essential and very compatible.  In fact, the modularity
 and independence of Trilinos
 packages make them easy to wrap as CCA components.
@@ -213,7 +214,7 @@ MTL is a major issue since a number of C++ compilers do not
 support some of
 the features used by MTL.  Another difference is that MTL provides its
 own functionality that is similar to the BLAS, whereas Epetra and
-Tpetra rely on optimal BLAS libraries for performance.  A final
+Tpetra rely on BLAS libraries for performance.  A final
 major difference is that MTL executes on serial machines only.  
 Epetra and Tpetra support distributed
 memory objects and provide parallel data repartitioning
@@ -251,11 +252,11 @@ Trilinos will never become a large monolithic piece of software,
 something that is very important as the volume of solver software
 continues to grow.
 
-\section{Services Provided by Trilinos}
+\section{Trilinos Package Architecture and Services}
 \label{sect:TrilinosServices}
 
 In our experience mathematical libraries tend to be written by small
-teams of domain experts.  As an example, approximately 25 staff
+teams of domain experts.  For example, approximately 25 staff
 members (not including students) contribute to Trilinos development 
 across approximately 25
 different packages, but most individual Trilinos packages
@@ -269,13 +270,82 @@ developers who do not have much, if any, experience with formal
 software tools and processes.  Both of these observations have
 motivated the Trilinos design and implementation.  The Trilinos
 package architecture naturally supports small inter-related team
-development efforts.  The following set of services, provided on a
+development efforts and Trilinos services, provided on a
 package-by-package basis, directly addresses the second observation.
 
+\subsection{Modularity via Packages}
+Each Trilinos package is fully self-sufficient and self-contained,
+unless there are explicit dependencies designed into a package.
+Package source code and revision history is contained within a single directory
+structure.  Mail lists, software faults, documentation, websites and
+interoperability are all organized via packages.  
 
-Trilinos provides a variety of services to mathematical library
-developers.  In particular, the following are provided:
+Package
+interoperability is accomplished via configure-time enabling of
+package-to-package coupling.  For example, IFPACK has many parameters
+to control how preconditioners are constructed and used, e.~.g~.,
+level of fill in an incomplete factorization.  Teuchos provides a
+parameter list class that can be used to specify parameter values.
+If the argument {\tt
+--enable-teuchos} is specified when IFPACK is configured, Teuchos
+ParameterList support will be compiled in IFPACK, otherwise this code
+will not be enabled and only IFPACK's internal parameter setting
+method is available.  Configure-time enabling of package
+interoperability is commonly used for any optional package coupling
+that makes sense.  In this way packages retain autonomy but easily
+support any combination of external package use that conceptually makes sense. 
+ 
+\subsection{Package Services Provided by Trilinos}
+Trilinos provides a variety of services to package
+developers.  When a new package is introduced into Trilinos, each of
+these services is established, immediately providing the new package
+with necessary tools to address important software quality engineering
+practices (see Section~\ref{sect:SQA} for details).  All tools are 
+accessible from the main Trilinos website~\cite{Trilinos-home-page}.
+Specifically the services we establish are: 
+
 \begin{itemize}
+\item {\bf Source code repository:}
+Trilinos source code is
+maintained in a CVS~\cite{CVS} repository that is accessible via a
+secure connection from anywhere on the internet.  For most new
+packages, use of a supported CVS repository is the most important
+service Trilinos provides, since development is typically in the early
+stages and there are few if any users.
+
+\item {\bf Mail lists:}
+Trilinos uses the Mailman~\cite{Mailman} list manager to provide the
+following mail lists for each package:
+\begin{itemize}
+\item package-announce: All news related to this package is sent to
+this list, such as release announcements, etc.
+\item package-developers: Package developer discussions occur on this list,
+including design and policy discussions.  Key development decisions are posted
+here for archival purposes.
+\item package-users: List for package users. General discussions about
+use of the package are conducted here, typically monitored by the
+package development team.
+\item package-checkins: All log messages that are submitted with
+source code changes to the CVS repository are sent to this list.
+Anyone wishing to see the moment-to-moment activity in package
+development can subscribe to this list.
+\item package-regression: All output from the regression test suite
+for the package is sent to this list.
+\end{itemize}
+
+\item {\bf Issue tracking:}
+Bugzilla~\cite{Bugzilla} is a web-based issue tracking
+application that supports submission and tracking of software issues,
+including enhancements and faults.  Each package has its own Bugzilla
+product.
+
+\item {\bf Fault identification:}
+Bonsai~\cite{Bonsai} is a web-based application that supports a
+variety CVS repository browsing capabilities, and links changes in the
+repository to Bugzilla issues. Bonsai is most useful as a way to
+quickly identify changes in source code that have cause a software
+fault.
+
 \item {\bf Configuration management:}
 Autoconf~\cite{Autoconf},  Automake~\cite{Automake} and
 Libtool~\cite{Libtool} provide a robust, full-featured set of tools for
@@ -284,10 +354,6 @@ Book''~\cite{GoatBook}).  Although these
 tools are not official standards, they are widely used.  All existing
 Trilinos packages use Autoconf and Automake.  Libtool support will be
 added in future releases. 
-
-New package developers who are not currently using autotools, but would like
-to, can get a jump start by using a Trilinos package called
-``new\_package'' (see below). 
 
 Trilinos provides a library of M4~\cite{M4} macros that can be used by any other
 package that wants to use Autoconf and Automake for configuring and
@@ -310,33 +376,15 @@ will also run daily on any platform that has the Epetra serial test harness
 installed, as part of the automated regression test harness.  On a nightly 
 basis, the test harness builds the most recent versions of Trilinos libraries 
 and runs any tests that are present in one of these special directories.  
+\end{itemize}
 
-\item {\bf Portable interface to BLAS and LAPACK:} The Basic Linear Algebra
-Subprograms (BLAS)~\cite{BLAS1,BLAS2,BLAS3} and LAPACK~\cite{lapack}
-provide a large repository of robust, high-performance mathematical
-software for serial and shared memory parallel dense linear algebra
-computations.  However, the BLAS and LAPACK interfaces are Fortran
-specifications, and the mechanism for calling Fortran interfaces from
-C and C++ varies across computing platforms.  Epetra and Teuchos
-provide a set of simple, portable interfaces to the BLAS and LAPACK
-that provide uniform access to the BLAS and LAPACK across a broad
-set of platforms.  These interfaces are accessible to
-other packages.
+\subsection{The new\_package Package} 
 
-\item {\bf Source code repository and other software process tools:}
-Trilinos source code is
-maintained in a CVS~\cite{CVS} repository that is accessible via a
-secure connection from anywhere on the internet.  It is also browsable
-via a web-based interface package called Bonsai~\cite{Bonsai}.  Features 
-and bug reports are tracked using Bugzilla~\cite{Bugzilla}, and email 
-lists~\cite{Mailman} are\
-maintained for Trilinos as a whole and for each package.  Support for new
-packages can easily be added.  All tools are accessible from the main
-Trilinos website~\cite{Trilinos-home-page}.
-
-\item {\bf Quick-start package infrastructure:} Via the new\_package package in
-Trilinos, a new or existing software project can quickly adopt a
-variety of useful software processes and tools.  new\_package provides a
+In order to reduce the start up time for a new Trilinos package,
+whether it is the importing of existing software or development of new
+source, the new\_package package provides a good starting point for
+accessing the services that Trilinos provides.
+new\_package provides a
 starting point for:
 \begin{itemize}
 \item Project organization:  Illustrates one way of
@@ -361,8 +409,28 @@ built independently from the rest of Trilinos.  Similarly, the
 new\_package website is self-contained and essentially independent
 from the rest of the Trilinos website.  Both new\_package and its
 website have been used by other projects that have nothing to do with Trilinos.
-\end{itemize}
 
+\subsection{Package Maturation Process}
+Typically in the early development
+stages of a new package, many of the services mentioned above are not
+heavily used. In fact, the new package is often isolated from other
+packages and use of the CVS repository is of primary importance, and the new
+package may be omitted from releases until it is of general use.
+As the package
+matures and the user base grows, package use of the other services
+also grows, as does the need for interoperability with other
+packages.  Gradually, over the span of several years, a package
+matures to the point where it is fully using all services provided by
+Trilinos and is fully interoperable with other packages.
+
+One strength of the Trilinos package architecture is its natural
+support of gradual package maturation.  At any given point in time,
+each Trilinos package can be in any state of development.  As a
+Trilinos release date approaches, we categorize packages for public,
+limited or no release.  For each package that will be released, the
+package development team certifies the package and provides us with a
+repository tag for the tested version of the package.  In this way,
+even the release process is distributed and scalable.
 
 \section{Overview of Current Package Development}
 \label{sect:Software}
