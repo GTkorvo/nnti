@@ -140,8 +140,13 @@ public class VectorSpace extends JpetraObject implements Externalizable {
     }
     
     // !! not yet implemented
-    public boolean equals(VectorSpace vectorSpace) {
-        return false;
+    public boolean equals(VectorSpace otherVectorSpace) {
+        // check to see if they have the same reference address
+        if (this == otherVectorSpace) {
+            return true;
+        }
+        
+        return otherVectorSpace.elementSpace.equals(this.elementSpace);
     }
     
     public void readExternal(ObjectInput in) throws java.io.IOException, ClassNotFoundException {

@@ -46,11 +46,8 @@ class CcjReduceDoubleMaxArray implements Reducible {
         double [] partialMaxsB = (double []) partialMaxs2;
     
         for(int i=0; i < partialMaxsA.length; i++) {
-            //the order here is very important!
-            //if partialMaxsA is modified so will be the array passed
-            //which may break things if the programmer is not aware of
-            //that consequene
-            //therefore for saftey, do not modify partialMaxsA
+            // modifying paritalMaxsA will modify the array passed in by the user
+            // therefore for saftey reasons do not modify partialMaxsA
             if (partialMaxsB[i] < partialMaxsA[i]) {
                 partialMaxsB[i] = partialMaxsA[i];
             }

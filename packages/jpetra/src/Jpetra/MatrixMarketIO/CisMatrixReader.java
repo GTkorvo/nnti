@@ -110,7 +110,13 @@ public class CisMatrixReader extends JpetraObject {
         String[] comments = mvr.readComments();
         MatrixSize size = mvr.readMatrixSize(info);
         
-        ElementSpace myElementSpace = new ElementSpace(size.numRows(), 0, comm);
+        ElementSpace myElementSpace;
+        if (rowOriented) {
+           myElementSpace = new ElementSpace(size.numRows(), 0, comm);
+        }
+        else {
+            myElementSpace = new ElementSpace(size.numColumns(), 0, comm);
+        }
         VectorSpace myVectorSpace = new VectorSpace(myElementSpace);
         CisMatrix result = new CisMatrix(myVectorSpace, rowOriented);
         
@@ -120,46 +126,40 @@ public class CisMatrixReader extends JpetraObject {
         // Call appropriate parser
         if (info.isDense()) {
             if (info.isInteger()) {
-                //data = new int[size.numEntries()];
-                //mvr.readArray((int[]) data);
-                // !! need to change type ?
+                data = new int[size.numEntries()];
+                mvr.readArray((int[]) data);
+                // strip out zeros and add values to the CisMatrix
+                buildCisMatrixFromIntDense((int[]) data, size, result);
             } else if (info.isReal()) {
                 data = new double[size.numEntries()];
                 mvr.readArray((double[]) data);
                 // strip out zeros and add values to the CisMatrix
                 buildCisMatrixFromDense((double[]) data, size, result);
             } else if (info.isComplex()) {
-                //dataR = new double[size.numEntries()];
-                //dataI = new double[size.numEntries()];
-                //mvr.readArray((double[]) dataR, (double[]) dataI);
-                JpetraObject.println("ERR", "Complex data type not supported by CisMatrix.");
+                JpetraObject.println("FATALERR", "In CisMatrixReader: Complex data type not supported by CisMatrix.");
+                System.exit(1);
             } else
-                throw new IOException("Parser error");
+                throw new IOException("CisMatrixReader does not understand the type of dense matrix being read.  Supported types are interger and real.");
         } else {
             row = new int[size.numEntries()];
             col = new int[size.numEntries()];
             if (info.isInteger()) {
-                //data = new int[size.numEntries()];
-                //mvr.readCoordinate(row, col, (int[]) data);
-                // !! need to do something here
+                data = new int[size.numEntries()];
+                mvr.readCoordinate(row, col, (int[]) data);
+                buildCisMatrixFromIntSparse(row, col, (int[]) data, result);
             } else if (info.isReal()) {
                 data = new double[size.numEntries()];
                 mvr.readCoordinate(row, col, (double[]) data);
                 buildCisMatrixFromSparse(row, col, (double[]) data, result);
             } else if (info.isComplex()) {
-                /*dataR = new double[size.numEntries()];
-                dataI = new double[size.numEntries()];
-                mvr.readCoordinate(
-                row,
-                col,
-                (double[]) dataR,
-                (double[]) dataI);
-                 shouldn't end up here.*/
-            } else if (info.isPattern())
+                JpetraObject.println("FATALERR", "In CisMatrixReader: Complex data type not supported by CisMatrix.");
+                System.exit(1);
+            } else if (info.isPattern()) {
                 mvr.readPattern(row, col);
-            // !! need to add some support for this one!
+                buildCisMatrixFromPatternSparse(row, col, result);
+            }
             else
-                throw new IOException("Parser error");
+                throw new IOException("CisMatrixReader does not understand the type of sparse matrix being read.  Supported types are interger and real.");
         }
         
         mvr.close();
@@ -191,6 +191,49 @@ public class CisMatrixReader extends JpetraObject {
     }
     
     /**
+     * Inserts 1's into the <code>CisMatrix</code>.
+     *
+     * @param row for int i, row[i] is the row index for entry data[i]
+     * @param col for int i, col[i] is the row index for entry data[i]
+     * @param cisMatrix the <code>CisMatrix</code> to insert values into
+     */    
+    private static void buildCisMatrixFromPatternSparse(int[] row, int[] col, CisMatrix cisMatrix) {
+        if (cisMatrix.isRowOriented()) {
+            for(int i=0; i < row.length; i++) {
+                cisMatrix.insertEntry(row[i], col[i]-1, 1, DistObject.REPLACE);
+            }
+        }
+        else {
+            for(int i=0; i < col.length; i++) {
+                cisMatrix.insertEntry(col[i], row[i]-1, 1, DistObject.REPLACE);
+            }
+        }
+        cisMatrix.fillComplete();
+    }
+    
+    /**
+     * Inserts values from an int array into the <code>CisMatrix</code>.
+     *
+     * @param row for int i, row[i] is the row index for entry data[i]
+     * @param col for int i, col[i] is the row index for entry data[i]
+     * @param data the entry values of the matrix that was read in
+     * @param cisMatrix the <code>CisMatrix</code> to insert values into
+     */    
+    private static void buildCisMatrixFromIntSparse(int[] row, int[] col, int[] data, CisMatrix cisMatrix) {
+        if (cisMatrix.isRowOriented()) {
+            for(int i=0; i < row.length; i++) {
+                cisMatrix.insertEntry(row[i], col[i]-1, data[i], DistObject.REPLACE);
+            }
+        }
+        else {
+            for(int i=0; i < col.length; i++) {
+                cisMatrix.insertEntry(col[i], row[i]-1, data[i], DistObject.REPLACE);
+            }
+        }
+        cisMatrix.fillComplete();
+    }
+    
+    /**
      * Inserts values from a double array into the <code>CisMatrix</code>.
      *
      * @param data the entry values of the matrix that was read in
@@ -198,6 +241,39 @@ public class CisMatrixReader extends JpetraObject {
      * @param cisMatrix the <code>CisMatrix</code> to insert values into
      */    
     private static void buildCisMatrixFromDense(double[] data, MatrixSize size, CisMatrix cisMatrix) {
+        int numRows = size.numRows();
+        int numCols = size.numColumns();
+        int entryIndex = 0;
+        if (cisMatrix.isRowOriented()) {
+            for (int i=0; i < numCols; i++) {
+                for(int j=0; j < numRows; j++) {
+                    if (data[entryIndex] != 0) {
+                        cisMatrix.insertEntry(j, i, data[entryIndex++], DistObject.REPLACE);
+                    }
+                }
+            }
+        }
+        else {
+            for (int i=0; i < numCols; i++) {
+                for(int j=0; j < numRows; j++) {
+                    if (data[entryIndex] != 0) {
+                        cisMatrix.insertEntry(i, j, data[entryIndex++], DistObject.REPLACE);
+                    }
+                }
+            }
+        }
+        
+        cisMatrix.fillComplete();
+    }
+    
+    /**
+     * Inserts values from an int array into the <code>CisMatrix</code>.
+     *
+     * @param data the entry values of the matrix that was read in
+     * @param size contains the number of rows and columns associated with the matrix that was read in
+     * @param cisMatrix the <code>CisMatrix</code> to insert values into
+     */    
+    private static void buildCisMatrixFromIntDense(int[] data, MatrixSize size, CisMatrix cisMatrix) {
         int numRows = size.numRows();
         int numCols = size.numColumns();
         int entryIndex = 0;

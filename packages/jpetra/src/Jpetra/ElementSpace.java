@@ -156,17 +156,24 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         
         // parallel only
         this.distributedGlobally = true;
+        
+        /* this probably isn't the way to do it, use global min and max to compute total number of elements
         // need to get the number of global elements by doing a gather of the number
         // of elements on each vnode
         int[] tmp = comm.sumAll(new int[]{this.numMyGlobalElements});
         this.numGlobalElements = tmp[0];
+         */
+        
         // find global min and max for global elements
-        tmp = new int[]{this.minMyGlobalElementId};
+        int[] tmp = new int[]{this.minMyGlobalElementId};
         tmp = comm.minAll(tmp);
         this.minGlobalElementId = tmp[0];
         tmp = new int[]{this.maxMyGlobalElementId};
         tmp = comm.maxAll(tmp);
         this.maxGlobalElementId = tmp[0];
+        // find the number of global elements
+        this.println("STD", "ElementSpace: maxGid: " + this.maxGlobalElementId + " minGid: " + this.minGlobalElementId);
+        this.numGlobalElements = this.maxGlobalElementId - this.minGlobalElementId + 1;
     }
     
     /**
@@ -365,4 +372,30 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         out.writeObject(this.gidsToLids);
     }
     
+    public boolean equals(ElementSpace otherElementSpace) {
+        // see if they have the same reference address
+        if (otherElementSpace == this) {
+            return true;
+        }
+        
+        // values that describe the distribution of Global and Local Elements
+        if (otherElementSpace.numGlobalElements != this.numGlobalElements ||
+            otherElementSpace.minGlobalElementId != this.minGlobalElementId ||
+            otherElementSpace.maxGlobalElementId != this.maxGlobalElementId ||
+            otherElementSpace.distributedGlobally != this.distributedGlobally ||
+            otherElementSpace.distributedLinearly != this.distributedLinearly ||
+            otherElementSpace.numMyGlobalElements != this.numMyGlobalElements ||
+            otherElementSpace.minMyGlobalElementId != this.minMyGlobalElementId ||
+            otherElementSpace.maxMyGlobalElementId != this.maxMyGlobalElementId ||
+            otherElementSpace.minLocalElementId != this.minLocalElementId ||
+            otherElementSpace.maxLocalElementId != this.maxLocalElementId) {
+            return false;
+        }
+        
+        if (!otherElementSpace.gidsToLids.equals(this.gidsToLids)) {
+            return false;
+        }
+        
+        return true;
+    }
 }

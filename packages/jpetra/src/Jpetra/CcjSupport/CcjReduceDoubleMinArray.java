@@ -45,11 +45,8 @@ class CcjReduceDoubleMinArray implements Reducible {
         double [] partialMinsA = (double []) partialMins1;
         double [] partialMinsB = (double []) partialMins2;
 
-        //the order here is very important!
-        //if partialMinsA is modified so will be the array passed
-        //which may break things if the programmer is not aware of
-        //that consequene
-        //therefore for saftey, do not modify partialMinsA    
+        // modifying paritalMaxsA will modify the array passed in by the user
+        // therefore for saftey reasons do not modify partialMaxsA 
         for(int i=0; i < partialMinsA.length; i++) {
             if (partialMinsB[i] > partialMinsA[i]) {
                 partialMinsB[i] = partialMinsA[i];

@@ -26,12 +26,6 @@
 // ***********************************************************************
 // @HEADER
 
-/*
- * CcjGatherDoubleArray.java
- *
- * Created on June 20, 2003, 7:58 AM
- */
-
 package Jpetra.CcjSupport;
 
 import CCJ.*;

@@ -26,12 +26,6 @@
 // ***********************************************************************
 // @HEADER
 
-/*
- * CcjGatherIntArray.java
- *
- * Created on June 20, 2003, 5:17 AM
- */
-
 package Jpetra.CcjSupport;
 
 import java.io.Serializable;

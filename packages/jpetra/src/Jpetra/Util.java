@@ -27,15 +27,10 @@
 // @HEADER
 
 package Jpetra;
-/*
- * Util.java
- *
- * Created on May 29, 2001, 2:21 PM
- */
 
 /**
  * @author  Michael William Boldt
- * @version
+ * @author Jason Cross
  */
 public class Util extends JpetraObject {
     public Util() {

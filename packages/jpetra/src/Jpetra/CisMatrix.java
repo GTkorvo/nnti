@@ -67,7 +67,7 @@ public class CisMatrix extends DistObject implements Externalizable {
     private double[] doubleValues;  // the actual values of the matrix
     private int[] numEntries;  // number of entries per row/col
     private int[] startIndex;   // number of entries before the current row/col
-    private TreeMap OuterTree;  // map of maps used to construct the matrix in its unoptimized form
+    private TreeMap outerTree;  // map of maps used to construct the matrix in its unoptimized form
     private TreeSet secondaryTree; // map of nonzero vectors which is used to construct the secondaryVectorSpace
     private int numTotalEntries;  // total number of values in the matrix
     /*private int maxSecondaryId;  // used to build the secondaryVectorSpace automatically, may not be needed!!!*/
@@ -93,7 +93,7 @@ public class CisMatrix extends DistObject implements Externalizable {
         /*this.maxSecondaryId = 0;*/
         this.primaryVectorSpace=primaryVectorSpace;
         this.rowOriented = rowOriented;
-        this.OuterTree = new TreeMap();
+        this.outerTree = new TreeMap();
         this.secondaryTree = new TreeSet();
     }
     
@@ -107,14 +107,14 @@ public class CisMatrix extends DistObject implements Externalizable {
         
         // need to see if the TreeMap exists for the specified row/col
         TreeMap rowColTreeMap;
-        if (!this.OuterTree.containsKey(new Integer(localRowColId))) {
+        if (!this.outerTree.containsKey(new Integer(localRowColId))) {
             rowColTreeMap = new TreeMap();
             //this.println("STD", "globalRowCol does not exist, creating...");
-            this.OuterTree.put(new Integer(localRowColId), rowColTreeMap);
+            this.outerTree.put(new Integer(localRowColId), rowColTreeMap);
         }
         else {
             //this.println("STD", "localRowCol exists, setting rowColTreeMap to existing TreeMap...");
-            rowColTreeMap = (TreeMap) OuterTree.get(new Integer(localRowColId));
+            rowColTreeMap = (TreeMap) outerTree.get(new Integer(localRowColId));
         }
         
         // now that we know the row/col exists, insert entries into the row/col
@@ -159,14 +159,14 @@ public class CisMatrix extends DistObject implements Externalizable {
         
         // need to see if the TreeMap exists for the specified row/col
         TreeMap rowColTreeMap;
-        if (!this.OuterTree.containsKey(new Integer(localRowColId))) {
+        if (!this.outerTree.containsKey(new Integer(localRowColId))) {
             rowColTreeMap = new TreeMap();
             //this.println("STD", "globalRowCol does not exist, creating...");
-            this.OuterTree.put(new Integer(localRowColId), rowColTreeMap);
+            this.outerTree.put(new Integer(localRowColId), rowColTreeMap);
         }
         else {
             //this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing TreeMap...");
-            rowColTreeMap = (TreeMap) OuterTree.get(new Integer(localRowColId));
+            rowColTreeMap = (TreeMap) outerTree.get(new Integer(localRowColId));
         }
         
         // now that we know the row/col exists, insert entries into the row/col
@@ -205,7 +205,7 @@ public class CisMatrix extends DistObject implements Externalizable {
         this.numEntries = new int[primaryVectorSpace.getNumMyGlobalEntries()];
         this.startIndex = new int[primaryVectorSpace.getNumMyGlobalEntries()];
         
-        Set outerKeysValues = this.OuterTree.entrySet();
+        Set outerKeysValues = this.outerTree.entrySet();
         Iterator outerIterator = outerKeysValues.iterator();
         Map.Entry outerMapEntry;
         
@@ -258,9 +258,9 @@ public class CisMatrix extends DistObject implements Externalizable {
         this.secondaryVectorSpace = new VectorSpace(new ElementSpace(secondaryGids, this.primaryVectorSpace.getComm()));
         
         // if we wanted to do away with the TreeMaps at this point to save memory
-        // then OuterTree map would need to be set to null so the java garbage collector
+        // then outerTree map would need to be set to null so the java garbage collector
         // would know to pick it up
-        // OuterTree = null;
+        // outerTree = null;
         // secondaryTree = null;
     }
     
@@ -292,13 +292,25 @@ public class CisMatrix extends DistObject implements Externalizable {
             }
             
             int i=0;
-            //this.println("STD", "this.numEntries.length=" + numEntries.length);
-            for(int row=0; row < this.numEntries.length; row++) {
-                //this.println("STD", "Doing a row loop...");
-                for(int entry=0; entry < numEntries[row]; entry++) {
-                    //this.println("STD", "\nDoing an entry loop...");
-                    this.println(iostream, row + " " + graph.getIndex(i) + " " + doubleValues[i++]);
+            if (this.rowOriented) {
+                //this.println("STD", "this.numEntries.length=" + numEntries.length);
+                for(int row=0; row < this.numEntries.length; row++) {
+                    //this.println("STD", "Doing a row loop...");
+                    for(int entry=0; entry < numEntries[row]; entry++) {
+                        //this.println("STD", "\nDoing an entry loop...");
+                        this.println(iostream, row + " " + graph.getIndex(i) + " " + doubleValues[i++]);
+                    }
                 }
+            }
+            else {
+                for(int col=0; col < this.numEntries.length; col++) {
+                    //this.println("STD", "Doing a row loop...");
+                    for(int entry=0; entry < numEntries[col]; entry++) {
+                        //this.println("STD", "\nDoing an entry loop...");
+                        this.println(iostream, graph.getIndex(i) + " " + col + " " + doubleValues[i++]);
+                    }
+                }
+                
             }
             this.println("STD", "CisMatrix.printOut() has ended...");
         }
@@ -545,6 +557,39 @@ public class CisMatrix extends DistObject implements Externalizable {
         
         // import any values needed for x from other vnodes
         
+        // compatibility checks
+        //if (useTransposeA == CisMatrix.USE_A) {
+        if (useTransposeA == CisMatrix.USE_A) {
+            this.println("CISMATRIX", "Doing compatibility checks for A.");
+            if (this.getColumnVectorSpace().getNumGlobalEntries() != x.getVectorSpace().getNumGlobalEntries()) {
+                this.println("FATALERR", "In CisMatrix.muliptly: The number of columns in CisMatrix A (" + this.getColumnVectorSpace().getNumGlobalEntries() + ") != the number of rows (" + x.getVectorSpace().getNumGlobalEntries() + ") in MultiVector x.");
+                System.exit(1);
+            }
+            if (this.getRowVectorSpace().getNumGlobalEntries() != y.getVectorSpace().getNumGlobalEntries()) {
+                this.println("FATALERR", "In CisMatrix.muliptly: The number of rows in CisMatrix A (" + this.getRowVectorSpace().getNumGlobalEntries() + ") != the number of rows (" + y.getVectorSpace().getNumGlobalEntries() + ") in MultiVector y.");
+                System.exit(1);
+            }
+            if (x.getNumCols() != y.getNumCols()) {
+                this.println("FATALERR", "In CisMatrix.muliptly: The number of columns in MultiVector x (" + x.getNumCols() + ") != the number of columns (" + y.getNumCols() + ") in MultiVector y.");
+                System.exit(1);
+            }
+        }
+        else {
+            this.println("CISMATRIX", "Doing compatibility checks for the transpose of A.");
+            if (this.getRowVectorSpace().getNumGlobalEntries() != x.getVectorSpace().getNumGlobalEntries()) {
+                this.println("FATALERR", "In CisMatrix.multiply: The number of columns in CisMatrix A' (" + this.getRowVectorSpace().getNumGlobalEntries() + ") != the number of rows (" + x.getVectorSpace().getNumGlobalEntries() + ") in MultiVector x.");
+                System.exit(1);
+            }
+            if (this.getColumnVectorSpace().getNumGlobalEntries() != y.getVectorSpace().getNumGlobalEntries()) {
+                this.println("FATALERR", "In CisMatrix.multiply: The number of rows in CisMatrix A' (" + this.getColumnVectorSpace().getNumGlobalEntries() + ") != the number of rows (" + y.getVectorSpace().getNumGlobalEntries() + ") in MultiVector y.");
+                System.exit(1);
+            }
+            if (x.getNumCols() != y.getNumCols()) {
+                this.println("FATALERR", "In CisMatrix.multiply: The number of columns in MultiVector x (" + x.getNumCols() + ") != the number of columns (" + y.getNumCols() + ") in MultiVector y.");
+                System.exit(1);
+            }
+        }
+        
         double[][] exportValues;
         MultiVector exportMultiVector;
         
@@ -574,8 +619,27 @@ public class CisMatrix extends DistObject implements Externalizable {
                 y.exportValues(exportMultiVector, exporter, DistObject.ADD);
             }
             else {
-                exportValues = null;
-                exportMultiVector = null;
+                // possibly generate a new VectorSpace for the importMultiVector from the nonzero vectors of the ColumnVectorSpace
+                // would be less communication if there are 0 vectors
+                // for now this works though
+                MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumColumns()]);
+                Import importer = new Import(x.getVectorSpace(), importMultiVector.getVectorSpace());
+                importMultiVector.importValues(x, importer, DistObject.REPLACE);
+                double[][] importValues = importMultiVector.getValues();
+                exportValues = new double[importValues.length][this.getNumRows()];
+                exportMultiVector = new MultiVector(this.getRowVectorSpace(), exportValues);
+                this.println("CISMATRIX", "y.getVectorSpace().getNumGlobalEntries(): " + y.getVectorSpace().getNumGlobalEntries());
+                this.println("CISMATRIX", "exportMultiVector.getVectorSpace().getNumGlobalEntries(): " + exportMultiVector.getVectorSpace().getNumGlobalEntries());
+                for(int col=0; col < this.getNumColumns(); col++) {
+                    for(int vector=0; vector < importMultiVector.getNumCols(); vector++){
+                        index = this.startIndex[col];
+                        for(int row=0; row < this.numEntries[col]; row++) {
+                            exportValues[vector][row] += this.doubleValues[index++] * importValues[vector][col];
+                        }
+                    }
+                }
+                Import import2 = new Import(y.getVectorSpace(), exportMultiVector.getVectorSpace());
+                y.exportValues(exportMultiVector, import2, DistObject.ADD);
             }
         }
         else {
@@ -584,7 +648,7 @@ public class CisMatrix extends DistObject implements Externalizable {
                 exportMultiVector = new MultiVector(this.getColumnVectorSpace(), exportValues);
                 Import importer = new Import(x.getVectorSpace(), this.getColumnVectorSpace());
                 exportMultiVector.importValues(x, importer, DistObject.REPLACE);
-                
+                // need to check this....
                 MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumColumns()]);
                 
                 double[][] importValues = importMultiVector.getValues();
@@ -602,8 +666,27 @@ public class CisMatrix extends DistObject implements Externalizable {
                 y.exportValues(importMultiVector, import2, DistObject.ADD);
             }
             else {
-                exportValues = null;
-                exportMultiVector = null;
+                MultiVector importMultiVector = new MultiVector(this.getRowVectorSpace(), new double[x.getNumCols()][this.getNumRows()]);
+                Import importer = new Import(x.getVectorSpace(), importMultiVector.getVectorSpace());
+                importMultiVector.importValues(x, importer, DistObject.REPLACE);
+                double[][] importValues = importMultiVector.getValues();
+                
+                exportValues = new double[importValues.length][this.getNumColumns()];
+                exportMultiVector = new MultiVector(this.getColumnVectorSpace(), exportValues);
+                for(int col=0; col < this.getNumColumns(); col++) {
+                    for(int vector=0; vector < importMultiVector.getNumCols(); vector++){
+                        sum = 0;
+                        index = this.startIndex[col];
+                        for(int row=0; row < this.numEntries[col]; row++) {
+                            sum += this.doubleValues[index] * importValues[vector][indices[index++]];
+                        }
+                        exportValues[vector][col] = sum;
+                    }
+                }
+                Export exporter = new Export(exportMultiVector.getVectorSpace(), y.getVectorSpace());
+                y.exportValues(exportMultiVector, exporter, DistObject.ADD);
+                //Import import2 = new Import(y.getVectorSpace(), exportMultiVector.getVectorSpace());
+                //y.exportValues(exportMultiVector, import2, DistObject.ADD);
             }
         }
         
@@ -615,7 +698,7 @@ public class CisMatrix extends DistObject implements Externalizable {
         out.writeObject(this.doubleValues);
         out.writeObject(this.numEntries);
         out.writeObject(this.startIndex);
-        out.writeObject(this.OuterTree);
+        out.writeObject(this.outerTree);
         out.writeInt(this.numTotalEntries);
     }
     
@@ -625,42 +708,71 @@ public class CisMatrix extends DistObject implements Externalizable {
         this.doubleValues = (double[]) in.readObject();
         this.numEntries = (int[]) in.readObject();
         this.startIndex = (int[]) in.readObject();
-        this.OuterTree = (TreeMap) in.readObject();
+        this.outerTree = (TreeMap) in.readObject();
         this.numTotalEntries = in.readInt();
     }
     
     public static CisMatrix readFromFile(String fileName, Comm comm) {
-        try {
-            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileName));
-            CisMatrix cisMatrix = (CisMatrix) ois.readObject();
-            ois.close();
-            cisMatrix.getVectorSpace().setComm(comm);
-            return cisMatrix;
-        } catch (java.io.IOException e) {
-            JpetraObject.println("FATALERR", e.toString());
-            System.exit(1);
-        } catch (java.lang.ClassNotFoundException e) {
-            JpetraObject.println("FATALERR", e.toString());
-            System.exit(1);
+        if (comm.getVnodeId() == 0) {
+            try {
+                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileName));
+                CisMatrix cisMatrix = (CisMatrix) ois.readObject();
+                ois.close();
+                cisMatrix.getVectorSpace().setComm(comm);
+                return cisMatrix;
+            } catch (java.io.IOException e) {
+                JpetraObject.println("FATALERR", e.toString());
+                System.exit(1);
+            } catch (java.lang.ClassNotFoundException e) {
+                JpetraObject.println("FATALERR", e.toString());
+                System.exit(1);
+            }
         }
         
-        return null; // should never get here
+        return null;
     }
     
     public static void writeToFile(String fileName, CisMatrix cisMatrix) {
-        if (cisMatrix.getVectorSpace().isDistributedGlobally()) {
-            JpetraObject.println("FATALERR", "Only a serial MultiVector can be written to a serialized object file.");
-            System.exit(1);
-        }
-        
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileName));
-            oos.writeObject(cisMatrix);
-            oos.close();
-        } catch (java.io.IOException e) {
-            JpetraObject.println("FATALERR", e.toString());
-            System.exit(1);
+        if (cisMatrix.primaryVectorSpace.getComm().getVnodeId() == 0) {
+            if (cisMatrix.getVectorSpace().isDistributedGlobally()) {
+                JpetraObject.println("FATALERR", "Only a serial MultiVector can be written to a serialized object file.");
+                System.exit(1);
+            }
+            
+            try {
+                ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileName));
+                oos.writeObject(cisMatrix);
+                oos.close();
+            } catch (java.io.IOException e) {
+                JpetraObject.println("FATALERR", e.toString());
+                System.exit(1);
+            }
         }
     }
     
+    public Object clone() {
+        CisMatrix cloneCisMatrix = new CisMatrix(this.primaryVectorSpace, this.rowOriented);
+        cloneCisMatrix.outerTree = (TreeMap) this.outerTree.clone();
+        cloneCisMatrix.numTotalEntries = this.numTotalEntries;
+        
+        return cloneCisMatrix;
+    }
+    
+    public boolean equals(Object obj) {
+        // check to see if the reference addresses are the same
+        if (this == obj) {
+            return true;
+        }
+        
+        CisMatrix otherCisMatrix = (CisMatrix) obj;
+        if (!otherCisMatrix.primaryVectorSpace.equals(this.primaryVectorSpace)) {
+            return false;
+        }
+        
+        if (!otherCisMatrix.outerTree.equals(this.outerTree)) {
+            return false;
+        }
+        
+        return true;
+    }
 }

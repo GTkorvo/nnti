@@ -88,52 +88,57 @@ public class MultiVectorReader extends JpetraObject {
         // Call appropriate parser
         if (info.isDense()) {
             if (info.isInteger()) {
-                //data = new int[size.numEntries()];
-                //mvr.readArray((int[]) data);
-                // !! need to change type ?
+                data = new int[size.numEntries()];
+                mvr.readArray((int[]) data);
+                // strip out zeros and add values to the CisMatrix
+                result = buildMultiVectorFromIntDense(size, (int[]) data, myVectorSpace);
             } else if (info.isReal()) {
                 data = new double[size.numEntries()];
                 mvr.readArray((double[]) data);
                 // strip out zeros and add values to the CisMatrix
                 result = buildMultiVectorFromDense(size, (double[]) data, myVectorSpace);
             } else if (info.isComplex()) {
-                //dataR = new double[size.numEntries()];
-                //dataI = new double[size.numEntries()];
-                //mvr.readArray((double[]) dataR, (double[]) dataI);
-                JpetraObject.println("ERR", "Complex data type not supported by CisMatrix.");
+                JpetraObject.println("FATALERR", "In MultiVectorReader: Complex data type not supported by MutliVector.");
+                System.exit(1);
             } else
-                throw new IOException("Parser error");
+                throw new IOException("MultiVectorReader does not support the vector format of the dense vector being read in.  Supported types are integer, pattern, and real.");
         } else {
             row = new int[size.numEntries()];
             col = new int[size.numEntries()];
             if (info.isInteger()) {
-                //data = new int[size.numEntries()];
-                //mvr.readCoordinate(row, col, (int[]) data);
-                // !! need to do something here
+                data = new int[size.numEntries()];
+                mvr.readCoordinate(row, col, (int[]) data);
+                result = buildMultiVectorFromIntSparse(row, col, size, (int[]) data, myVectorSpace);
             } else if (info.isReal()) {
                 data = new double[size.numEntries()];
                 mvr.readCoordinate(row, col, (double[]) data);
                 result = buildMultiVectorFromSparse(row, col, size, (double[]) data, myVectorSpace);
             } else if (info.isComplex()) {
-                /*dataR = new double[size.numEntries()];
-                dataI = new double[size.numEntries()];
-                mvr.readCoordinate(
-                row,
-                col,
-                (double[]) dataR,
-                (double[]) dataI);
-                 shouldn't end up here.*/
-            } else if (info.isPattern())
+                JpetraObject.println("FATALERR", "In MultiVectorReader: Complex data type not supported by MutliVector.");
+                System.exit(1);
+            } else if (info.isPattern()) {
                 mvr.readPattern(row, col);
-            // !! need to add some support for this one!
+                result = buildMultiVectorFromPatternSparse(row, col, size, myVectorSpace);
+            }
             else
-                throw new IOException("Parser error");
+                throw new IOException("MultiVectorReader does not support the vector format of the sparse vector being read in.  Supported types are integer, pattern, and real.");
         }
         
         mvr.close();
         is.close();
         
         return result;
+    }
+    
+    private static MultiVector buildMultiVectorFromPatternSparse(int[] row, int[] col, MatrixSize size, VectorSpace myVectorSpace) {
+        int numRows = size.numRows();
+        int numCols = size.numColumns();
+        double[][] values = new double[numCols][numRows];
+        for(int i=0; i < size.numEntries(); i++) {
+            values[col[i]-1][row[i]-1] = 1;
+        }
+        
+        return new MultiVector(myVectorSpace, values);
     }
     
     private static MultiVector buildMultiVectorFromSparse(int[] row, int[] col, MatrixSize size, double[] data, VectorSpace myVectorSpace) {
@@ -147,7 +152,32 @@ public class MultiVectorReader extends JpetraObject {
         return new MultiVector(myVectorSpace, values);
     }
     
+    private static MultiVector buildMultiVectorFromIntSparse(int[] row, int[] col, MatrixSize size, int[] data, VectorSpace myVectorSpace) {
+        int numRows = size.numRows();
+        int numCols = size.numColumns();
+        double[][] values = new double[numCols][numRows];
+        for(int i=0; i < size.numEntries(); i++) {
+            values[col[i]-1][row[i]-1] = data[i];
+        }
+        
+        return new MultiVector(myVectorSpace, values);
+    }
+    
     private static MultiVector buildMultiVectorFromDense(MatrixSize size, double[] data, VectorSpace myVectorSpace) {
+        int numRows = size.numRows();
+        int numCols = size.numColumns();
+        int entryIndex = 0;
+        double[][] values = new double[numCols][numRows];
+        for(int col=0; col < numCols; col++) {
+            for(int row=0; row < numRows; row++) {
+                values[col][row] = data[entryIndex++];
+            }
+        }
+        
+        return new MultiVector(myVectorSpace, values);
+    }
+    
+    private static MultiVector buildMultiVectorFromIntDense(MatrixSize size, int[] data, VectorSpace myVectorSpace) {
         int numRows = size.numRows();
         int numCols = size.numColumns();
         int entryIndex = 0;

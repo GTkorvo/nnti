@@ -425,4 +425,46 @@ public class MultiVector extends DistObject implements Externalizable {
             System.exit(1);
         }
     }
+    
+    public Object clone() {
+        double[][] cloneValues = new double[this.values.length][];
+        for(int i=0; i < this.values.length; i++) {
+            cloneValues[i] = new double[this.values[i].length];
+            System.arraycopy(this.values[i], 0, cloneValues, 0, this.values[i].length);
+        }
+        MultiVector cloneMultiVector = new MultiVector(this.vectorSpace, cloneValues);
+        cloneMultiVector.doneForward = this.doneForward;
+        
+        return cloneMultiVector;
+    }
+    
+    public boolean equals(Object obj) {
+        // do a direct reference comparison
+        if (obj == this) {
+            return true;
+        }
+        MultiVector otherMultiVector = (MultiVector) obj;
+        // do a quick length check on the values 2d array
+        if (otherMultiVector.getValues().length != this.values.length) {
+            return false;
+        }
+        // check to see if the vectorSpaces are equal
+        if (!otherMultiVector.getVectorSpace().equals(this.vectorSpace)) {
+            return false;
+        }
+        // check to see if the values 2d arrays are the same
+        double[][] otherValues = otherMultiVector.getValues();
+        for(int i=0; i < this.values.length; i++) {
+            if (this.values[i].length != otherValues[i].length) {
+                return false;
+            }
+            for(int j=0; j < this.values[i].length; j++) {
+                if (this.values[i][j] != otherValues[i][j]) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
 }

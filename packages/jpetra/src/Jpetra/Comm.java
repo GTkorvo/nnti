@@ -41,7 +41,6 @@ import java.io.Serializable;
  * @author  Mike Heroux
  * @author  Michael William Boldt
  * @author  Jason Cross
- * @version
  */
 public interface Comm {
     
@@ -300,4 +299,3 @@ public interface Comm {
     
     public Distributor createDistributor();
 }
-
