@@ -482,6 +482,10 @@ public class BasicPerfTest extends JpetraObject implements JpetraServerApplicati
         test.initializeOutput();
         test.setComm(new CcjComm(ccjHostsFile));
         test.doBasicPerfTest(verbose, summary, numNodesX, numNodesY, numProcsX, numProcsY, numPoints);
+        System.out.println("\n\n-------\n\n");
+	test.doBasicPerfTest(verbose, summary, numNodesX, numNodesY, numProcsX, numProcsY, numPoints);
+        System.out.println("\n\n-------\n\n");
+        test.doBasicPerfTest(verbose, summary, numNodesX, numNodesY, numProcsX, numProcsY, numPoints);
                 
         System.exit(0);  // CCJ causes the JVM not to exit unless System.exit(0) is explicitly called
     }
