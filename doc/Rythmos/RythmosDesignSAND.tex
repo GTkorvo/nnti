@@ -214,7 +214,7 @@ preconditioning.
   \begin{enumerate}
   {}\item implicit/explicit BDF (multi-step) \\
         including variable-order variable-step as per CVODE/IDA \cite{CVODE,IDA}.
-  {}\item generalized-alpha \cite{GeneralizedAlpha}.
+  {}\item generalized-alpha \cite{ChungHulbert}.
   {}\item explicit Runge Kutta (one-step) \cite{ERKMethods}.
   {}\item Trapezoid \cite{Trapezoid}.
   {}\item Pseudo-Transient Continuation \cite{PTC,PTCDAE}.
@@ -393,6 +393,8 @@ $(\jac{f}{\dot{x}})^{-1}$ be fairly easy to invert.
 Below, we describe some popular explicit integration methods for ODEs.
 
 \subsubsection{Explicit Runge-Kutta methods}
+
+Strong Stability Preserving (SSP) Methods \cite{GottliebShuTadmor,GottliebGottlieb}
 
 \subsubsection{Explicit multi-step methods}
 
@@ -595,8 +597,65 @@ Section {}\ref{rythmos:sec:adj-sens}).
 
 \subsubsection{Generalized Alpha methods}
 
-\cite{GeneralizedAlpha}
-{}\textbf{Todd: Can you fill this in?}
+  The Generalized-$\alpha$ methods can be roughly described as follows \cite{ChungHulbert,JansenWhitingHulbert,BonelliBursiErlicherVulcan}.
+
+  We consider the implicitly defined ODE:
+\begin{eqnarray} \label{rythmos:eqn:ODE}
+M\dot{x} & = & F(x,t) \\
+x(t_0) & = & x_0,
+\end{eqnarray}
+where, $M$ is called a mass matrix and is generally non-singular, but we would
+like to also consider the singular case.  The main parameters of interest in
+this class of methods, 
+\begin{tabbing}
+\hspace{4ex}are\hspace{5ex}\= \\
+\>	$\alpha_f$, which determines where $x$ is solved \\
+\>	$\alpha_m$, which determines where $\dot{x}$ is solved \\
+\>	$\gamma$, which determines the relationship between $x$ and $\dot{x}$. 
+\end{tabbing}
+
+If the method is to be second order, there is only once choice for $\gamma =
+\frac{1}{2}+\alpha_m - \alpha_f$.  To maintain stability, $\alpha_f$ and $\alpha_m$ must satisfy
+\begin{equation}\label{rythmos:eqn:genalpha:stab}
+\alpha_m \ge \alpha_t \ge \frac{1}{2}.
+\end{equation}
+It should be noted here, that $\alpha_f$ and $\alpha_m$ can be chosen such that
+$t^{n+\alpha_f}$ and $t^{n+\alpha_m}$ lie outside the interval $[t^n,t^{n+1}]$.
+
+Given these three coefficients, $\Delta t^n$, and initial data for $x^n=(t_n)$ and
+$\dot{x}^n=\dot{x}(t_n)$, the procedure is as follows.
+Form a predictor for $x^{n+1}$:
+\begin{equation} \label{rythmos:eqn:genalpha:predictor1}
+x^{n+1}_{(0)} = x^n + \Delta t^n\dot{x}^n.
+\end{equation}
+Higher order predictors are computed from Adams-Bashforth predictors \cite{AdamsBashforth}, in particular the second order predictor in this context is:
+\begin{equation} \label{rythmos:eqn:genalpha:predictor2}
+x^{n+1}_{(0)} = x^n + \frac{\Delta t^n}{2}\left(2+\frac{\Delta t^n}{\Delta t^{n+1}}\right)\dot{x}^n - \frac{(\Delta t^n)^2}{2\Delta t^{n-1}}\dot{x}^{n-1}.
+\end{equation}
+Then we interpolate between $x^n$ and $x^{n+1}$ to obtain $x^{n+\alpha_f}$:
+\begin{equation}\label{rythmos:eqn:genalpha:xalphaf}
+x^{n+\alpha_f} = (1-\alpha_f)x^n + \alpha_f x^{n+1}_{(0)}.
+\end{equation}
+Now we compute an approximation to $\dot{x}^{n+\alpha_m}$:
+\begin{equation}\label{rythmos:eqn:genalpha:xdotalpham}
+\dot{x}^{n+\alpha_m}_{(0)} = \left(1-\frac{\alpha_m}{\gamma}\right)\dot{x}^n
++ \left(\frac{\alpha_m}{\alpha_f\Delta t^n\gamma}\right)
+\left(x^{n+\alpha_f}_{(0)} - (1-\alpha_f)x^n\right).
+\end{equation}
+Given this approximation, we can solve the nonlinear problem:
+\begin{equation}\label{rythmos:eqn:genalpha:nonlinear}
+M\dot{x}^{n+\alpha_m}_{(0)} - F(x^{n+\alpha_f}_{(0)},t^{n+\alpha_f}) = 0.
+\end{equation}
+for $x^{n+\alpha_f}_{(0)}$ and then compute $\dot{x}^{n+\alpha_m}_{(0)}$ using equation (\ref{rythmos:eqn:genalpha:xdotalpham}).  Finally, we interpolate back to the desired output time:
+\begin{eqnarray}\label{rythmos:eqn:genalpha:interp}
+x^{n+1} & = & \left(1-\frac{1}{\alpha_f}\right)x^n + \frac{1}{\alpha_f}x^{n+\alpha_f} \\
+\dot{x}^{n+1} & = & \left(1-\frac{1}{\alpha_m}\right)\dot{x}^n + \frac{1}{\alpha_m}\dot{x}^{n+\alpha_f}.
+\end{eqnarray}
+
+The theory for this family of methods comes from the existing methods that fall
+out of this general formulation for specific choices of $\alpha_f$, $\alpha_m$,
+and $\gamma$.  Also, no estimates of the local truncation error exist, so no
+adaptive time stepping strategies are available.  
 
 \subsubsection{Implicit Runge-Kutta methods}
 \label{rythmos:sec:implicit-rk}
