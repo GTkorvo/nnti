@@ -54,7 +54,7 @@
 %
 \SANDnum{SAND2002-xxxx}
 \SANDprintDate{August 2002}
-\SANDauthor{Michael A.~Heroux, Sandia}
+\SANDauthor{Michael A.~Heroux, Sandia National Laboratories}
 
 
 % ---------------------------------------------------------------------------- %
@@ -83,20 +83,16 @@
     % An Abstract is required for SAND reports
     %
     \begin{abstract}
-The Trilinos Project is an effort to develop parallel solution algorithms within 
+The Trilinos Project is an effort to develop parallel solver algorithms within 
 an object-oriented software framework for the solution of large-scale, complex
-multi-physics 
-engineering and scientific applications.   Our emphasis is on developing robust,
-scalable algorithms in a
-software framework, using abstract interfaces for flexible interoperability of
-components and providing
-a full-featured set of concrete classes that implement all 
-abstract interfaces. Trilinos components are primarily written in C++, but provide
-essential C and Fortran user 
-interface support.  We provide an open architecture that allows easy integration with
-other solver
-packages and we deliver our software to the outside community via the Gnu Lesser
-General Public License
+multi-physics engineering and scientific applications.   Our emphasis is on 
+developing robust, scalable algorithms in a software framework, using abstract 
+interfaces for flexible interoperability of components and providing a 
+full-featured set of concrete classes that implement all abstract interfaces. 
+Trilinos components are primarily written in C++, but provide essential C and 
+Fortran user interface support.  We provide an open architecture that allows 
+easy integration with other solver packages and we deliver our software to 
+the outside community via the Gnu Lesser General Public License
 (LGPL)~\cite{gnu-license-site}.
 This report provides an overview of Trilinos, discussing the objectives, history,
 current development and
@@ -143,11 +139,11 @@ Barth.
     % An optional executive summary
     \clearpage
     \section{Summary}
-The Trilinos Project grew out of a set of established efforts at Sandia combined with
-a recognition that a modest degree of coordination among the numerical algorithms
-efforts at Sandia and elsewhere could have a large positive impact on the quality and
+The Trilinos Project grew out of a group of established numerical algorithms
+efforts at Sandia, motivated by  a recognition that a modest degree of 
+coordination among these efforts could have a large positive impact on the quality and
 usability of the software we produce.  This document describes the Trilinos project,
-focusing on the project philosophy and definitions and
+focusing on the project philosophy and description, and
 providing the reader with an overview of the project in its current state.  It also
 includes brief developer and user guides.
 
@@ -158,7 +154,7 @@ includes brief developer and user guides.
     \section*{Nomenclature}
     \addcontentsline{toc}{section}{Nomenclature}
     \begin{itemize}
-	\item[package]
+	\item[Package]
 	    a collection of software focused on one primary class of numerical methods
 	\item[Trilinos]
 	    A Greek term that loosely translated means ``a string of pearls,'' meant
@@ -174,62 +170,170 @@ includes brief developer and user guides.
 
 \section{Introduction}
 
-\section{Package Design Philosophy}
+Trilinos is.
+
+\section{A Brief Overview of Some Object-Oriented Concepts}
+
+Object-oriented.
+
+\section{Trilinos Design Philosophy}
+
+Each Trilinos package is a self-contained, independent piece
+of software with its own set of requirememts, its own development team
+and a group of users.  Because of this,
+Trilinos itself is designed to respect the autonomy of packages.
+Trilinos offers a variety of ways for a package to interact with other
+Trilinos components.  Trilinos also offers a set of tools that can
+assist a package with builds across muliple platforms, generating
+documentation and regression testing across a set of target platforms.
+At the same time, what a package {\it must} do to be called a Trilinos
+package is minimal, and varies with each package.
+
+\subsection{Services Provided by Trilinos}
+
+Trilinos provides a variety of services to a developer wanting to
+integrate a package into Trilinos.  In particular, the following are
+provided:
+\begin{itemize}
+\item Configuration management:
+Autoconf~\cite{AutoconfManual},  Automake~\cite{Automake} and
+Libtool~\cite{Libtool} provide a robust, full-featured set of tools for
+building software across a broad set of platforms.  Although these
+tools are not official standards, they are commonly used in many
+packages.  Many existing
+Trilinos packages use Autoconf and Automake (and will soon use
+Libtool). In order to
+minimize the amount of redudant effort, Trilinos provides a set of
+M4~\cite{M4} macros that can be used as a starting point for any other
+package that wants to use Autoconf and Automake for configuring and
+building libraries.  However, use of these tools is not required.
+
+\item Regression testing: Trilinos provides a variety of regression
+testing capabilities.  Within a number of Trilinos packages, we employ
+``white box'' testing where detailed information about the software is
+used and probed.  In addition, Trilinos performs ``black box'' testing
+of packages via the Trilinos Solver Framework (TSF) virtual class
+interfaces.  Any package that implements the TSF interfaces (see
+Section~\cite{Interop_TSF} below), can be tested via this black box
+test environment.  ({\bf NOTE: Black box testing via TSF is not in
+place at this time}
+
+
+\item Portable interface to BLAS and LAPACK: The Basic Linear Algebra
+Subprograms (BLAS)~\cite{BLAS1,BLAS2,BLAS3} and LAPACK~\cite{lapack}
+provide a large repository of robust, high-performance mathematical
+software for serial and shared memory parallel dense linear algebra
+computations.  However, the BLAS and LAPACK interfaces are Fortran
+specifications, and the mechanism for calling Fortran interfaces from
+C and C++ varies across computing systems.  Epetra (and Tpetra)
+provide a set of simple, portable interfaces to the BLAS and LAPACK
+that hide these interface variations.  These interfaces are accessible to
+other packages.
+
+\item Source code repository and build tools: Trilinos source code is
+maintained in a CVS~\cite{CVS} repository that is accessible via a
+web-based interface package called Bonsai~\cite{Bonsai}.  Features and bug reports
+are tracked using Bugzilla~\cite{Bugzilla}, and email lists are
+maintained for Trilinos as a whole and each package.  Support for new
+packages can easily be added.  All tools are accessible from the main
+Trilinos website~\cite{Trilinos-home-page}.
+
+\end{itemize}
 
 \section{Epetra and TSF: Two Special Trilinos Packages}
 
-\section{Trilinos Compatibility}
+In order to understand what Trilinos provides beyond the
+contributions of each Trilinos package, we briefly discuss two special
+Trilinos packages: Epetra and TSF.  These two packages are complimentary,
+with TSF providing a common abstract application
+programmer interface (API) for other Trilinos packages and Epetra
+providing a common concrete implementation of basic classes used by most
+Trilinos packages.
+
+\subsection{Epetra}
+Matrices, vectors and graphs are basic objects used in most solver
+algorithms. Most Trilinos
+packages interact with these objects via abstract interfaces that
+allow a package to define what services and behavior are expected,
+without enforcing a specific implementation.  However, in order to use
+these packages, some concrete
+implementation must be select.  Epetra (and in the future other packages described
+in Section~\ref{subsect:PetraObjectModel}) is a collection of concrete
+classes that supports the construction and use of vectors, sparse
+graphs and dense and sparse matrices.  It provides serial, parallel and distributed memory
+capabilities.  It uses the BLAS and LAPACK where possible, and as a
+result has good performance characteristics.
+
+\subsection{TSF}
+Many different algorithms are available to solve any given numerical
+problems.  For example, there are many algorithms for solving a system
+of linear equations, and many solver packages are available to solve
+linear systems.  Which package is appropriate is a function of
+many details about the problem being solved. However, even though
+there are many different solvers, conceptually, from an abstract view,
+these solvers are providing a similar capability, and it is
+advantageous to utilize this abstract view.
+TSF is a collection of abstract classes that provides an application
+programmer interface (API) to perform the most common solver
+operations.  It can provide a single interface to many different
+solvers and has powerful compositional mechanisms that support the
+light-weight construction of composite objects from a set of
+existing objects.  As a result, TSF users gain easy access to many
+solvers and can bring multiple solvers to bear on a single problem.
+
+
+\section{Trilinos Package Interoperability Mechanisms}
+
+As mentioned above, what a package {\it must} do to be called a Trilinos
+package is minimal, and varies with each package.  In this section we
+list the primary mechanisms for a package to become part of Trilinos.
+Note that each mechanism is an extension to or augmentation of package
+capabilities that creates connections between packages.  
 
 \subsection{Package Accepts User Data as Epetra Objects}
+All solver packages require some user data, usually in the form of
+vectors and matrices, or require the user to supply the action of an
+operator on a vector.  Accepting this data in the form of Epetra
+objects is the first Trilinos interoperability mechanism.  Any package
+that accept user data this way immediately becomes accessible to an
+application that has built its data using Epetra.  We expect every
+Trilinos package to implement this mechanism in some way.  Since
+Epetra provides a variety of ways to extract data from an Epetra
+object, minimally we expect that a package can at least copy data from
+the user objects.
+
 \subsection{Package Callable via TSF Interfaces}
-\subsection{Package Uses Epetra Internally}
 
-	\label{Intro}
-	    \begin{table}[ht]
-		\centering
-		\caption[Magical shapes]{This superb table lists a few
-		    of the more important magical shapes and some of
-		    their properties. Be aware that this condensed list
-		    can by no means describe all the properties or
-		    shapes in use by modern magic.}
-		\bigskip
+\subsection{Package Can Use Epetra Internally}
+\subsection{Package Builds Under Trilinos {\tt configure} Scripts}
 
-		\begin{tabular}{|l|c|l|c|}
-		    \hline \hline
-		    Name  & Number of & Importance & Shape \\
-		          & corners   &            &       \\
-		    \hline
-		    circle & 0        & high       & $\bigcirc$ \\
-		    square & 4        & medium     & $\diamond$ \\
-		    triangle & 3      & low        & $\triangle$ \\
-		    \hline
-		\end{tabular}
-		\label{tab1}
-	    \end{table}
+\section{Overview of Current Algorithms Research}
 
-	    \begin{table}[ht]
-		\centering
-		\caption{A magic square}
-		\bigskip
+\subsection{Robust Incomplete Factorizations}
+\subsection{Block Krylov Methods}
+\subsection{Complex Valued Linear Systems}
+\subsection{Tensor Methods for Nonlinear Systems}
 
-		\begin{tabular}{|c|c|c|c|}
-		    \hline
-			1 & 15 & 14 & 4 \\ \hline
-			12 & 6 & 7 & 9 \\ \hline
-			8 & 10 & 11 & 5 \\ \hline
-			13 & 3 & 2 & 16 \\ \hline
-		\end{tabular}
-		\label{tab2}
-	    \end{table}
+\section{Overview of Current Package Development}
 
+\subsection{The Petra Object Model}
+\label{subsect:PetraObjectModel}
+\subsection{Epetra}
+\subsection{Tpetra}
+\subsection{Jpetra}
 
-    \section{A Long Section}
+\subsection{TSF}
 
-	\newcommand{\myblaA}{bla bla bla bla bla bla bla bla bla bla }
+\subsection{AztecOO}
+
+\subsection{Ifpack}
+
+\subsection{Komplex}
+
+\subsection{NOX}
+	
 
     \section{Conclusion}
-	Of course, no report would be complete without some conclusions.
-	This section is where they would go, if we had some.
 
 
     % ---------------------------------------------------------------------- %
