@@ -262,6 +262,22 @@ public class CcjComm extends JpetraObject implements Comm {
         return this.myCcjLink.scanSums(myElements);
     }
     
+    /*public send(int[] exportObj, int destinationVnode) {
+        this.myCcjLink.send(exportObj, int destinationVnode);
+    }
+    
+    public send(int[] exportOb, int destinationVnode) {
+        this.myCcjLink.send(exportObj, int destinationVnode);
+    }
+    
+    public int[] recieve(int sourceVnode) {
+        return this.myCcjLink.send(int sourceVnode);
+    }
+    
+    public double[] recieve(int sourceVnode) {
+        return this.myCcjLink.send(int sourceVnode);
+    }*/
+    
     /**
      * Accessor for <code>myVnode</code>.
      *
@@ -324,5 +340,12 @@ public class CcjComm extends JpetraObject implements Comm {
         return new CcjDistributor(this);
     }
     
+    public CcjLink getCcjLink() {
+        return this.myCcjLink;
+    }
+    
+    public String getGroupName() {
+        return "";
+    }
     
 }

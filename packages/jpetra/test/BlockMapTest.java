@@ -195,7 +195,7 @@ class BlockMapTest {
         }
     
         Jpetra.SerialComm comm1 = (Jpetra.SerialComm)map.getComm();
-    
+        
         if(comm1.getNumVnodes() != comm.getNumVnodes()) return -6;
         if(comm1.getVnodeID() != comm.getVnodeID()) return -7;
         if(map.getIndexBase() != indexBase) return -8;
@@ -208,7 +208,7 @@ class BlockMapTest {
         int maxGid = (comm.getVnodeID()+1)*numVnodeElements-1+indexBase;
         if(comm.getVnodeID() > 2) maxGid += 3;
         if(!isDistributedGlobal) maxGid = numVnodeElements-1+indexBase;
-        if(map.getMaxVnodeGID() != maxGid) return -13;
+        if(map.getMaxMyGID() != maxGid) return -13;
     
         if(map.getMinAllGID() != indexBase) return -14;
     
@@ -222,10 +222,10 @@ class BlockMapTest {
         int minGid = comm.getVnodeID()*numVnodeElements+indexBase;
         if(comm.getVnodeID() > 2) minGid += 3;
         if(!isDistributedGlobal) minGid = 0;
-        if(map.getMinVnodeGID() != minGid) return -17;
+        if(map.getMinMyGID() != minGid) return -17;
     
         int [] globalElements1 = new int[numVnodeElements];
-        globalElements1 = map.getGlobalElements();
+        globalElements1 = map.getMyGlobalElements();
         if(globalElements == null) {
             for(i=0; i<numVnodeElements; i++) {
             if(globalElements1[i] != minGid+i) return -18;
@@ -239,8 +239,8 @@ class BlockMapTest {
     
         if(map.getNumGlobalElements() != numGlobalElements) return -19;
         if(map.getNumGlobalEquations() != numGlobalEquations) return -20;
-        if(map.getNumVnodeElements() != numVnodeElements) return -21;
-        if(map.getNumVnodeEquations() != numVnodeEquations) return -22;
+        if(map.getNumMyElements() != numVnodeElements) return -21;
+        if(map.getNumMyEquations() != numVnodeEquations) return -22;
     
         if(map.isLinearMap()) {
             int [] gidList = new int [3];
@@ -250,24 +250,24 @@ class BlockMapTest {
     
             int numIDs = 0;
             //gidList[numIDs++] = map.maxAllGID()+1; // Should return -1 for both pid and lid
-            if(map.getMinVnodeGID()-1 >= map.getMinAllGID()) gidList[numIDs++] = map.getMinVnodeGID()-1;
-            if(map.getMaxVnodeGID()+1 <= map.getMaxAllGID()) gidList[numIDs++] = map.getMaxVnodeGID()+1;
+            if(map.getMinMyGID()-1 >= map.getMinAllGID()) gidList[numIDs++] = map.getMinMyGID()-1;
+            if(map.getMaxMyGID()+1 <= map.getMaxAllGID()) gidList[numIDs++] = map.getMaxMyGID()+1;
     
             map.getRemoteIDList(numIDs, gidList, pidList, lidList);
     
             numIDs = 0;
     
-            if(map.getMinVnodeGID()-1 >= map.getMinAllGID()) {
+            if(map.getMinMyGID()-1 >= map.getMinAllGID()) {
             if(pidList[numIDs++] != pid-1) {
                 return -23;
             }
             }
-            if(map.getMaxVnodeGID()+1 <= map.getMaxAllGID()) {
+            if(map.getMaxMyGID()+1 <= map.getMaxAllGID()) {
             if(pidList[numIDs] != pid-1) {
                 return -24;
             }
             }
-            if(map.getMaxVnodeGID()+1 <= map.getMaxAllGID()) {
+            if(map.getMaxMyGID()+1 <= map.getMaxAllGID()) {
             if(lidList[numIDs++] != 0) {
                 return -25;
             }

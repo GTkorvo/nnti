@@ -4,34 +4,35 @@ package Jpetra;
 import java.lang.Math;
 // For matrix multiplication
 import org.netlib.blas.Dgemm;
+import org.netlib.blas.Dsymm;
 
 /**
- * The <code>IntSerialDenseMatrix</code> class is intended to provide very basic support for dense rectangular matrices.
+ * The <code>SerialDenseMatrix</code> class is intended to provide very basic support for dense rectangular matrices.
  * <p>
- * <b>Constructing <code>IntSerialDenseMatrix</code> Objects</b>
+ * <b>Constructing <code>SerialDenseMatrix</code> Objects</b>
  * <p>
- * There are four <code>IntSerialDenseMatrix</code> constructors.  The first constructs a zero-sized object which should be made
+ * There are four <code>SerialDenseMatrix</code> constructors.  The first constructs a zero-sized object which should be made
  * to appropriate length using the <code>shape()</code> or <code>reshape()</code> methods and then filled with <code>setElement()</code>. 
  * The second constructs an object sized to the dimensions specified, which should be filled with <code>setElement()</code>.
  * The third is a constructor that accepts user data as a 2D array (<code>int[][]</code>), and the fourth is a copy constructor.
  * <p>
- * <b>Extracting Data from <code>IntSerialDenseMatrix</code> Objects</b>
+ * <b>Extracting Data from <code>SerialDenseMatrix</code> Objects</b>
  * <p>
- * Once an <code>IntSerialDenseMatrix</code> is constructed, it is possible to view the data via access functions.
+ * Once an <code>SerialDenseMatrix</code> is constructed, it is possible to view the data via access functions.
  * <p>
  * <b>Vector and Utility Functions</b>
  * <p>
- * Once an IntSerialDenseMatrix is constructed, several mathematical functions can be applied to
+ * Once an SerialDenseMatrix is constructed, several mathematical functions can be applied to
  * the object.  Specifically:
  * <ul>
- *   <li> Multiplication. (currently not implemented)
+ *   <li> Multiplication.
  *   <li> Norms.
  * </ul>
  *
- * The IntSerialDenseMatrix code originated as C++ code in ePetra and was ported to Java.
+ * The SerialDenseMatrix code originated as C++ code in ePetra and was ported to Java.
  * @author Jason Cross
  */ 
- public class IntSerialDenseMatrix extends JpetraObject {
+ public class SerialDenseMatrix extends JpetraObject {
     /**
      * number of rows in matrixA
      */
@@ -57,15 +58,15 @@ import org.netlib.blas.Dgemm;
      * the data object of the dense matrix,<br>
      * it is 1-dimensional but access is 2-dimensinal
      */    
-    int[] matrixA;
+    double[] matrixA;
     
     
     /**
-     * construct a <code>null</code> <code>IntSerialDenseMatrix</code><br>
+     * construct a <code>null</code> <code>SerialDenseMatrix</code><br>
      * needs to be shaped with <code>shape()</code> and<br>
      * needs to be filled with <code>setElement()</code>
      */
-    public IntSerialDenseMatrix() {
+    public SerialDenseMatrix() {
         this.numRows = 0;
         this.numCols = 0;
         this.lda = 0;
@@ -74,13 +75,13 @@ import org.netlib.blas.Dgemm;
     }
     
     /**
-     * construct a zero filled <code>numRows</code> X <code>numCols</code> <code>IntSerialDenseMatrix</code><br>
+     * construct a zero filled <code>numRows</code> X <code>numCols</code> <code>SerialDenseMatrix</code><br>
      * needs to be filled with <code>setElement()</code>
      *
-     * @param numRows number of rows in <code>this</code> <code>IntSerialDenseMatrix</code>
-     * @param numCols number of columns in <code>this</code> <code>IntSerialDenseMatrix</code>
+     * @param numRows number of rows in <code>this</code> <code>SerialDenseMatrix</code>
+     * @param numCols number of columns in <code>this</code> <code>SerialDenseMatrix</code>
      */    
-    public IntSerialDenseMatrix(int numRows, int numCols) {
+    public SerialDenseMatrix(int numRows, int numCols) {
         this.numRows = 0;
         this.numCols = 0;
         this.lda = 0;
@@ -96,21 +97,21 @@ import org.netlib.blas.Dgemm;
     
 
     /**
-     * construct a <code>numRows</code> X <code>numCols</code> <code>IntSerialDenseMatrix</code>
+     * construct a <code>numRows</code> X <code>numCols</code> <code>SerialDenseMatrix</code>
      * filled with the elements of a 2-dimensional array<br>
      *
      * @param source 2-dimensional array of ints to be copied for the elements of <code>matrixA</code>
-     * @param numRows number of rows in <code>this</code> <code>IntSerialDenseMatrix</code>
-     * @param numCols number of columns in <code>this</code> <code>IntSerialDenseMatrix</code>
+     * @param numRows number of rows in <code>this</code> <code>SerialDenseMatrix</code>
+     * @param numCols number of columns in <code>this</code> <code>SerialDenseMatrix</code>
      */      
-    public IntSerialDenseMatrix(int[][] source, int numRows, int numCols) {
+    public SerialDenseMatrix(double[][] source, int numRows, int numCols) {
         this.numRows = numRows;
         this.numCols = numCols;
         this.lda = numRows;
         this.copied = true;
         
         // setup matrixA
-        matrixA = new int[this.lda * this.numCols];
+        matrixA = new double[this.lda * this.numCols];
         // do copy
         int i,j;
         int offSet;
@@ -127,11 +128,11 @@ import org.netlib.blas.Dgemm;
     
     
     /**
-     * construct a copy of the <code>source</code> <code>IntSerialDenseMatrix</code>
+     * construct a copy of the <code>source</code> <code>SerialDenseMatrix</code>
      *
-     * @param source <code>IntSerialDenseMatrix</code> to be copied
+     * @param source <code>SerialDenseMatrix</code> to be copied
      */
-    public IntSerialDenseMatrix(IntSerialDenseMatrix source) {
+    public SerialDenseMatrix(SerialDenseMatrix source) {
         /*this.numRows = source.getNumRows();
         this.numCols = source.getNumCols();
         this.lda = source.getLda();
@@ -145,9 +146,9 @@ import org.netlib.blas.Dgemm;
     }
     
     /**
-     * Set dimensions of a <code>IntSerialDenseMatrix</code> object; initilalize values to zero.
+     * Set dimensions of a <code>SerialDenseMatrix</code> object; initilalize values to zero.
      * <p>
-     * Allows user to define the dimensions of a <code>IntSerialDenseMatrix</code> at any point. This method can
+     * Allows user to define the dimensions of a <code>SerialDenseMatrix</code> at any point. This method can
      * be called at any point after construction.  Any values that were previously in this object are
      * destroyed and the resized matrix starts off with all zero values.
      * 
@@ -160,16 +161,16 @@ import org.netlib.blas.Dgemm;
         this.lda = numRows;
         this.copied = true;
         
-        this.matrixA = new int[this.lda * this.numCols];
+        this.matrixA = new double[this.lda * this.numCols];
         // in C++ matrixA is then filled with 0s, Java does this by default
         
         return 0;
     }
     
     /**
-     * Reshape a <code>IntSerialDenseMatrix</code> object.
+     * Reshape a <code>SerialDenseMatrix</code> object.
      *
-     * Allows user to define the dimensions of a <code>IntSerialDenseMatrix</code> at any point. This method can
+     * Allows user to define the dimensions of a <code>SerialDenseMatrix</code> at any point. This method can
      * be called at any point after construction.  Any values that were previously in this object are
      * copied into the new shape.  If the new shape is smaller than the original, the upper left portion
      * of the original matrix (the principal submatrix) is copied to the new matrix.
@@ -179,7 +180,7 @@ import org.netlib.blas.Dgemm;
      */
     public int reshape(int numRows, int numCols) {
         // Allocate space for new matrix
-        int[] tmpMatrixA = new int[numRows*numCols];
+        double[] tmpMatrixA = new double[numRows*numCols];
         // values 0 by defualt
         int tmpRow = Math.min(this.numRows, numRows);
         int tmpCol = Math.min(this.numCols, numCols);
@@ -207,7 +208,7 @@ import org.netlib.blas.Dgemm;
      * @param myMatrixB the destination matrix
      * @param myLdaB the LDA of myMatrixB
      */
-    void copyMatrix(int[] myMatrixA, int myLdaA, int myNumRows, int myNumCols, int[] myMatrixB, int myLdaB) {
+    void copyMatrix(double[] myMatrixA, int myLdaA, int myNumRows, int myNumCols, double[] myMatrixB, int myLdaB) {
         int i, j;
         int offSetA, offSetB;
         for(j=0; j < myNumCols; j++) {
@@ -225,11 +226,12 @@ import org.netlib.blas.Dgemm;
      *
      * @return 1-Norm of the <code>this</code> matrix
      */
-    public int getOneNorm() { 
-        int normA = 0;
+    public double getOneNorm() { 
+        double normA = 0;
         
         int i,j;
-        int sum, offSet;
+        double sum;
+        int offSet;
         for (j=0; j < numCols; j++) {
             sum = 0;
             offSet = j*lda;
@@ -249,15 +251,16 @@ import org.netlib.blas.Dgemm;
      *
      * @return Infinity-Norm of the <code>this</code> matrix
      */
-    public int getInfNorm() {
+    public double getInfNorm() {
     
-        int normA = 0;
+        double normA = 0;
 
         // Comment is from C++ ePetra:
         // Loop across columns in inner loop.  Most expensive memory access, but 
         // requires no extra storage.
         int i, j;
-        int sum, index;
+        double sum;
+        int index;
         for (i=0; i < numRows; i++) {
             sum = 0;
             index = i;
@@ -295,7 +298,7 @@ import org.netlib.blas.Dgemm;
      *
      * @return <code>matrixA</code>
      */  
-    public int[] getMatrixA() {
+    public double[] getMatrixA() {
         return matrixA;
     }
     
@@ -315,7 +318,7 @@ import org.netlib.blas.Dgemm;
      * @param colIndex column index for the element
      * @return element at <code>rowIndex</code>, <code>colIndex</code>
      */
-    public int getElement(int rowIndex, int colIndex) {
+    public double getElement(int rowIndex, int colIndex) {
     
         if (rowIndex >= numRows) {
             System.err.println("Row index = " + rowIndex + " Out of Range 0 - " + (numRows-1));
@@ -334,7 +337,7 @@ import org.netlib.blas.Dgemm;
      * @param rowIndex row index for the element
      * @param colIndex column index for the element
      */
-    public void setElement(int rowIndex, int colIndex, int value) {
+    public void setElement(int rowIndex, int colIndex, double value) {
         
         if (rowIndex >= numRows) {
             System.err.println("Row index = " + rowIndex + " Out of Range 0 - " + (numRows-1));
@@ -347,29 +350,28 @@ import org.netlib.blas.Dgemm;
         matrixA[colIndex*lda + rowIndex] = value;
     }
     
-    /*
-    there's no call for int[] in blas, so this is not functional for now
-    public int  multiply (char transA, char transB, int scalarAB, IntSerialDenseMatrix myA, IntSerialDenseMatrix myB, int scalarThis ) {
+    public int  multiply (String transA, String transB, double scalarAB, SerialDenseMatrix myA, SerialDenseMatrix myB, double scalarThis ) {
         // Check for compatible dimensions
-        if (transA!='T' && transA!='N') System.out.println("-2"); // Return erro
-        if (transB!='T' && transB!='N') System.out.println("-3");
+        if (transA.charAt(0) != 'T' && transA.charAt(0) != 'N') System.err.println("-2"); // Return erro
+        if (transB.charAt(0) != 'T' && transB.charAt(0) != 'N') System.err.println("-3");
         
-        int nrowsMyA = (transA=='T') ? myA.getNumCols() : myA.getNumRows();
-        int ncolsmyA = (transA=='T') ? myA.getNumRows() : myA.getNumCols();
-        int nrowsMyB = (transB=='T') ? myB.getNumCols() : myB.getNumRows();
-        int ncolsMyB = (transB=='T') ? myB.getNumRows() : myB.getNumCols();
+        int nrowsMyA = (transA.charAt(0) == 'T') ? myA.getNumCols() : myA.getNumRows();
+        int ncolsmyA = (transA.charAt(0) == 'T') ? myA.getNumRows() : myA.getNumCols();
+        int nrowsMyB = (transB.charAt(0) == 'T') ? myB.getNumCols() : myB.getNumRows();
+        int ncolsMyB = (transB.charAt(0) == 'T') ? myB.getNumRows() : myB.getNumCols();
         
         if (this.numRows        != myA.getNumRows()  ||
             myA.getNumCols()   != myB.getNumRows()   ||
-            this.numCols        != myB.getNumCols()    ) System.out.println("-1"); // Return error
+            this.numCols        != myB.getNumCols()    ) System.err.println("-1"); // Return error
         
         
-        // Call GEMM function
+        // Call BLAS GEMM function
         //GEMM(transA, transB, M_, N_, A_ncols, ScalarAB, A.A(), A.LDA(), 
         //   B.A(), B.LDA(), ScalarThis, A_, LDA_);
         
-        Dgemm.dgemm(transA, transB, this.numRows, this.numCols, myA.getNumCols(), scalarAB, myA.getMatrixA(), myA.getLda(), 
-           myB.getMatrixA(), myB.getLda(), scalarThis, this.matrixA, this.lda);
+        // offSets are set to 0... don't think we need them
+        Dgemm.dgemm(transA, transB, this.numRows, this.numCols, myA.getNumCols(), scalarAB, myA.getMatrixA(), myA.getLda(), 0,
+           myB.getMatrixA(), myB.getLda(), 0, scalarThis, this.matrixA, this.lda, 0);
         
         /*
          * C++ from ePetra, need to ask about it
@@ -380,11 +382,44 @@ import org.netlib.blas.Dgemm;
          * if (ScalarAB != 1.0) nflops += M_*N_;
          * if (ScalarThis != 0.0) nflops += M_*N_;
          * UpdateFlops(nflops);
-        
+         */
         
         return(0);
     }
-    */
+    
+    public int multiply (String sideA, double scalarAB, SerialSymDenseMatrix myA, SerialDenseMatrix myB, double scalarThis ) {
+        // Check for compatible dimensions
+        if (sideA.charAt(0) == 'R') {
+            if (this.numRows != myB.getNumRows() || 
+                this.numCols != myA.getNumCols() ||
+                myB.getNumCols() != myA.getNumRows() ) {System.err.println("-1");} // Return error
+        }
+        else if (sideA.charAt(0) == 'L') {
+            if (this.numRows != myA.getNumRows() || 
+                numCols != myB.getNumCols() ||
+                myA.getNumCols() != myB.getNumRows() ) {System.err.println("-1");}// Return error
+        }
+        else {
+            System.err.println("-2"); // Return error, incorrect value for SideA
+        }
+        
+        // Call BLAS SYMM function, offsets are set to 0
+        Dsymm.dsymm(sideA, myA.getUpLo(), this.numRows, this.numCols, scalarAB, myA.getMatrixA(), 0, myA.getLda(), 
+           myB.getMatrixA(), 0, myB.getLda(), scalarThis, this.matrixA, 0, this.lda);
+        
+        /*
+         * C++ from ePetra, need to ask about it
+         *
+         * long int nflops = 2*M_;
+         * nflops *= N_;
+         * nflops *= A.N();
+         * if (ScalarAB != 1.0) nflops += M_*N_;
+         * if (ScalarThis != 0.0) nflops += M_*N_;
+         * UpdateFlops(nflops);
+         */
+         
+        return(0);
+    }
     
     /**
      * Prints out the matrix.  For developer debugging purposes only.

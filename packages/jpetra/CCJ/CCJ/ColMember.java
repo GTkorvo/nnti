@@ -46,6 +46,10 @@ public abstract class ColMember implements ColMemberInterface, Runnable {
     private String myId;
     private String myPort;
     
+    boolean record = false;
+    int[] records;
+    int numRecords;
+    
     public ColMember() throws CCJException {
 	this(false, DEFAULT_POOLSIZE, DEFAULT_NUMBEROFHASHBUCKETS,
 	     DEFAULT_NUMBEROFPREALLOCATEDMESSAGES);
@@ -250,7 +254,11 @@ System.err.println("bind throws " + e);
 	    System.out.println(cachedRank + ": Got message from "+
 			       source + ", tag= "+ tag + " data = "+ data);
 	}
-
+    
+    if (this.record) {
+        this.records[numRecords++] = source;
+    }
+    
 	return data;
     }
 
@@ -1412,7 +1420,21 @@ System.err.println("bind throws " + e);
 	threadPool.waitForThreads();
     }
 
-
+    
+    public void setupRecords(int nrecvs) {
+        this.record = true;
+        this.numRecords = 0;
+        this.records = new int[nrecvs];
+    }
+    
+    public void endRecords() {
+        this.record = false;
+    }
+    
+    public int[] getRecords() {
+        return this.records;
+    }
+    
     public int getMyRank(ColGroup group) throws NoSuchMemberException {
 	return group.getRank(this);
     }

@@ -79,6 +79,10 @@ public class CcjLink extends ColMember {
         return this.rank;
     }
     
+    public ColGroup getGroup() {
+        return this.group;
+    }
+    
     /**
      * Wrapper to CCJ <code>barrier</code>.  Causes each vnode in <code>group</group> to wait
      * until all vnodees are ready.
@@ -297,11 +301,19 @@ public class CcjLink extends ColMember {
         
         return globalSums.scanSums(rank);
     }
-        
-        /**
-         * not used but required to extend CCJ <code>ColMember</code>
-         */
-        public void run() {
-	        //empty
-	    }
+
+    /*public send(int[] exportObj, int destinationVnode) {
+        send_async(group, exportObj, destinationVnode);
     }
+    
+    public send(double[] exportObj, int destinationVnode) {
+        send_async(group, exportObj, destinationVnode);
+    }*/
+        
+    /**
+     * not used but required to extend CCJ <code>ColMember</code>
+     */
+    public void run() {
+        //empty
+    }
+}
