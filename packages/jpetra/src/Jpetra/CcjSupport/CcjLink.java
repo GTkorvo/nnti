@@ -400,7 +400,7 @@ public class CcjLink extends ColMember {
     /**
      * Wrapper to CCJ <code>getRecords</code>, <code>receive</code>, and <code>endRecords</code>.
      * <code>setupRecords</code> must be called before <code>getReceives</code>.  <code>getReceives</code>
-     * does all the work receiving all expected messages at once and then returns them.  <b>Note<b>: this
+     * does all the work receiving all expected messages at once and then returns them.  <b>Note</b>: this
      * IS a blocking operation.
      *
      * return the objects that CCJ received
@@ -435,7 +435,7 @@ public class CcjLink extends ColMember {
     
     /**
      * Sends an int arry to a single specified vnode.  Wrapper to CCJ <code>send_async</code>
-     * <b>Note<b>: this is NOT a blocking operation.
+     * <b>Note</b>: this is NOT a blocking operation.
      *
      * @param exportObject the int arrray to be sent
      * @param destinationVnode the vnode ID of the receiving vnode
@@ -451,7 +451,7 @@ public class CcjLink extends ColMember {
     
     /**
      * Sends a double arry to a single specified vnode.  Wrapper to CCJ <code>send_async</code>
-     * <b>Note<b>: this is NOT a blocking operation.
+     * <b>Note</b>: this is NOT a blocking operation.
      *
      * @param exportObject the double arrray to be sent
      * @param destinationVnode the vnode ID of the receiving vnode

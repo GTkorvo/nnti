@@ -48,7 +48,7 @@ public interface Distributor {
      *
      * @param exportVnodeIds The vnodes to export my global elements to.
      */    
-    public int createFromSends(int[] exportVnodeIds);
+    public void createFromSends(int[] exportVnodeIds, Comm comm);
     
       public void distribute(Comm comm, int[] exportVnodeIds, int[] exportGids, int[] exportLids, Serializable[] exportObjects);
 }

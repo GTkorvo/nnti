@@ -60,7 +60,7 @@ public class ElementSpace {
      * Constructs an <code>ElementSpace</code> automatically based on the contigous
      * even distribution of global elements to each vnode.
      */
-    public ElementSpace(int numGlobalElements, Comm comm) {
+    public ElementSpace(int numGlobalElements, int indexBase, Comm comm) {
         // for both Serial and Parallel
         this.comm = comm;
         this.numGlobalElements = numGlobalElements;
@@ -68,7 +68,7 @@ public class ElementSpace {
         // for serial only
         if (comm.isSerial()) {
             // do nothing
-            this.minMyGlobalElementId = 0;
+            this.minMyGlobalElementId = indexBase;
             this.numMyGlobalElements = this.numGlobalElements;
             this.distributedGlobally = false;
             this.distributedLinearly = true;
@@ -93,7 +93,7 @@ public class ElementSpace {
         else {
             numRemainderIndicesToAdd = numRemainderIndices;
         }
-        this.minMyGlobalElementId = (comm.getVnodeId() * this.numIndicesPerVnode) + this.numRemainderIndices;
+        this.minMyGlobalElementId = (comm.getVnodeId() * this.numIndicesPerVnode) + this.numRemainderIndices + indexBase;
     }
     
     /**
@@ -159,7 +159,7 @@ public class ElementSpace {
      *
      * @param numGlobalElements -1 for globaly distributed or numMyGlobalElements for local/serial
      */
-    public ElementSpace(int numGlobalElements, int numMyGlobalElements, Comm comm) {
+    public ElementSpace(int numGlobalElements, int numMyGlobalElements, int indexBase, Comm comm) {
         this.numMyGlobalElements = numMyGlobalElements;
         this.comm = comm;
         this.distributedLinearly = true;
@@ -168,6 +168,10 @@ public class ElementSpace {
             this.distributedGlobally = false;
             this.numGlobalElements = numGlobalElements;
             this.numMyGlobalElements = numMyGlobalElements;
+            this.minMyGlobalElementId = indexBase;
+            this.minGlobalElementId = this.minMyGlobalElementId;
+            this.maxMyGlobalElementId = numGlobalElements + indexBase;
+            this.maxGlobalElementId = this.maxMyGlobalElementId;
             return;
         }
         
@@ -175,8 +179,8 @@ public class ElementSpace {
         int[] sum = comm.sumAll(new int[]{numMyGlobalElements});
         this.numGlobalElements = sum[0];
         int[] scanSum = comm.scanSums(new int[]{numMyGlobalElements});
-        int myMaxGlobalElementId = scanSum[0];
-        this.minMyGlobalElementId = myMaxGlobalElementId - numMyGlobalElements;
+        int myMaxGlobalElementId = scanSum[0] + indexBase;
+        this.minMyGlobalElementId = myMaxGlobalElementId - numMyGlobalElements + indexBase;
         
     }
     

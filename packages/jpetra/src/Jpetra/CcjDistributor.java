@@ -29,7 +29,7 @@
 package Jpetra;
 
 import java.io.Serializable;
-//import java.util.TreeSet;
+import java.util.LinkedHashSet;
 
 /**
  *
@@ -57,8 +57,47 @@ public class CcjDistributor extends JpetraObject implements Distributor {
         
     }
     
-    public int createFromSends(int[] exportVnodeIds) {
-        return 0;  // should change to public void
+    public void createFromSends(int[] exportVnodeIds, Comm comm) {
+        // figure out if the exportVnodeIds are linearly blocked together by vnodeId or if the vnodeIds are out of order
+        boolean vnodesInOrder = true;
+        int[] startIndices = new int[comm.getNumVnodes()];
+        int[] numSends = new int[comm.getNumVnodes()];
+        for(int i=0; i < exportVnodeIds.length-1; i++) {
+            if (vnodesInOrder && (exportVnodeIds[i] > exportVnodeIds[i+1])) {
+                vnodesInOrder = false;
+            }
+            numSends[exportVnodeIds[i]]++;  // count up how many elements to send to the vnode
+        }
+        
+        if (vnodesInOrder) {
+            // easy setup since the exportVnodeIds are in linear order...
+            for(int i=0; i < numSends.length-1; i++) {
+                startIndices[i+1] = numSends[i] + startIndices[i];
+            }
+        }
+        else {
+            // vnodes are out of order
+            int[] nextIndex = new int[exportVnodeIds.length];
+            int[] previousIndex = new int[comm.getNumVnodes()];
+            int[] count = new int[comm.getNumVnodes()];
+            for(int i=0; i < startIndices.length; i++) {
+                startIndices[i] = -1;
+                previousIndex[i] = -1;
+            }
+            
+            int lastIndex;
+            for(int i=0; i < exportVnodeIds.length; i++) {
+                lastIndex = previousIndex[exportVnodeIds[i]];
+                if (lastIndex == -1) {
+                    startIndices[exportVnodeIds[i]] = i;
+                }
+                else {
+                    nextIndex[lastIndex] = i;
+                }
+                previousIndex[exportVnodeIds[i]] = i;
+                count[i]++;
+            }
+        }
     }
     
     public void distribute(Comm comm, int[] exportVnodeIds, int[] exportGids, int[] exportLids, Serializable[] exportObjects) {

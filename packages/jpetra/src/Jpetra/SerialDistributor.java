@@ -41,7 +41,7 @@ public class SerialDistributor extends JpetraObject implements Distributor {
         return null;  // !! not implemented
     }
     
-    public int createFromSends(int[] exportVnodeIds) {
+    public void createFromSends(int[] exportVnodeIds, Comm comm) {
         return 0; // !! not implemented
     }
     

@@ -60,9 +60,27 @@ public class BasicDirectory extends JpetraObject implements Directory {
         }
         
         // setup arbitrary distribution
-        return; //nothign to setup
-        //this.println("ERR", "The vector space is neither distributed globally or linearly, thus it is not supported.");
+        generateDirectoryTable();
     }
+    
+    private void generateDirectoryTable() {
+        int minGlobalGid = vectorSpace.getMinGlobalEntryId();
+        int maxGlobalGid = vectorSpace.getMaxGlobalEntryId();
+        int numDirectoryGlobalEntries = maxGlobalGid - minGlobalGid + 1;
+        VectorSpace directoryVectorSpace = new VectorSpace(new ElementSpace(numDirectoryGlobalEntries, minGlobalGid, vectorSpace.getComm()));
+        
+        int numMyGlobalDirectoryEntries = directoryVectorSpace.getNumMyGlobalEntries();
+        
+        // Get list of processors owning the directory entries for the Map GIDs
+        int[][] tmp = directoryVectorSpace.getRemoteVnodeIdList(vectorSpace.getMyGlobalEntryIds());  // get remote vnodeIds
+        int[] sendGidsToVnodes = tmp[0];
+        
+        // use distributor to send out my Gids to those vnodes who own them in the directory
+        Distributor distributor = vectorSpace.getComm().createDistributor();
+        distributor.createFromSends(sendGidsToVnodes, vectorSpace.getComm());
+        
+    }
+    
     /**
      *
      * @return vnodeIds are in int[0] and Lids in int[1]
@@ -70,6 +88,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
     public int[][] getDirectoryEntries(int[] globalElements) {
         int[][] vnodeIdsLids = new int[2][globalElements.length];
         
+        // for serial
         if (!vectorSpace.isDistributedGlobally()) {
             // since Java initializes all elements to zero, and the vnodeId=0, we can leave vnodeIdsLids[0] alone
             for(int i=0; i < vnodeIdsLids[1].length; i++) {
@@ -78,6 +97,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
             return vnodeIdsLids;
         }
         
+        // for parallel
         // for linear continous distribution
         if (vectorSpace.isDistributedLinearly()) {
             int numRemainderIndicies = vectorSpace.getNumRemainderIndices();
