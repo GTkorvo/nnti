@@ -254,16 +254,35 @@ public class MultiVector extends DistObject {
     
     public void copyAndPermute(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids, int combineMode) {
         double[][] srcValues = ((MultiVector) distObjectSource).getValues();
-        for(int i=0; i < numSameGids; i++) {
-            for(int cols=0; cols < srcValues.length; cols++) {
-                this.values[cols][i] += srcValues[cols][i];
+        if (combineMode == DistObject.ADD) {
+            for(int i=0; i < numSameGids; i++) {
+                for(int cols=0; cols < srcValues.length; cols++) {
+                    this.values[cols][i] += srcValues[cols][i];
+                }
+            }
+            
+            for(int i=0; i < permuteToLids.length; i++) {
+                for(int cols=0; cols < srcValues.length; cols++) {
+                    this.values[cols][permuteToLids[i]] += srcValues[cols][permuteFromLids[i]];
+                }
             }
         }
-        
-        for(int i=0; i < permuteToLids.length; i++) {
-            for(int cols=0; cols < srcValues.length; cols++) {
-                this.values[cols][permuteToLids[i]] += srcValues[cols][permuteFromLids[i]];
+        else if (combineMode == DistObject.REPLACE) {
+            for(int i=0; i < numSameGids; i++) {
+                for(int cols=0; cols < srcValues.length; cols++) {
+                    this.values[cols][i] = srcValues[cols][i];
+                }
             }
+            
+            for(int i=0; i < permuteToLids.length; i++) {
+                for(int cols=0; cols < srcValues.length; cols++) {
+                    this.values[cols][permuteToLids[i]] = srcValues[cols][permuteFromLids[i]];
+                }
+            }
+        }
+        else {
+            this.println("ERR", "The specified combine mode is not supported by MultiVector import/export.");
+            System.exit(1);
         }
     }
     
@@ -334,9 +353,14 @@ public class MultiVector extends DistObject {
                             this.values[k][lid] += importValues[k];
                         }
                     }
+                    else if (combineMode == DistObject.REPLACE) {
+                        for(int k=0; k < this.values.length; k++) {
+                            this.values[k][lid] = importValues[k];
+                        }
+                    }
                     else {
-                        this.println("ERR", "The combine mode you specified is not support yet!");
-                        System.exit(0);
+                        this.println("ERR", "The combine mode you specified is not supported by MultiVector import/export.");
+                        System.exit(1);
                     }
                 }
             }
@@ -346,4 +370,5 @@ public class MultiVector extends DistObject {
         
         return reverseExportVnodeIdsGidsLids;
     }
+    
 }

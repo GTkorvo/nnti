@@ -119,6 +119,9 @@ public class ElementSpace extends JpetraObject {
             gidsToLids.put(new Integer(myGlobalElements[i]), new Integer(i));
         }
         
+        
+        // should be able to use TreeMap form above to do this!!!!!!!!!!
+        // so fix it!!!!
         // find my min and max global elements
         int max = myGlobalElements[0];
         int min = myGlobalElements[0];

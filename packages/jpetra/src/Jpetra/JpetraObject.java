@@ -45,7 +45,7 @@ import java.util.HashMap;
  * @version
  */
 public class JpetraObject extends java.lang.Object implements Serializable, Cloneable {
-    private static HashMap outputStreams = new HashMap(4);
+    public static HashMap outputStreams = new HashMap(4);
     /**
      * Creates a new JpetraObject
      */

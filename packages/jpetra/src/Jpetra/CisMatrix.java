@@ -48,6 +48,10 @@ public class CisMatrix extends DistObject {
      * Pass to the CisMatrix constructor to make the CisMatrix col oriented.
      */
     public static final boolean COL_ORIENTED = false;
+    
+    public static final boolean USE_TRANSPOSE_A = true;
+    public static final boolean USE_A = false;
+    
     private Graph graph;  // nonzero pattern of the matrix;  secondary indices for doubleValues
     private VectorSpace primaryVectorSpace;
     private VectorSpace secondaryVectorSpace;
@@ -72,6 +76,8 @@ public class CisMatrix extends DistObject {
      * @param rowOriented determines whether the <code>CisMatrix</code> is row or column oriented
      */
     public CisMatrix(VectorSpace primaryVectorSpace, boolean rowOriented) {
+        this.outputStreams.put("CISMATRIX", new Output("CisMatrix: ", true, System.out, false, System.out));
+        
         this.filled = false;
         /*this.maxSecondaryId = 0;*/
         this.primaryVectorSpace=primaryVectorSpace;
@@ -126,6 +132,10 @@ public class CisMatrix extends DistObject {
                 rowColTreeMap.put(new Integer(indices[i]), new Double(entries[i]));
             }
         }
+        else {
+            this.println("ERR", "The specified combine mode is not supported by CisMatrix insertEntries.");
+            System.exit(1);
+        }
     }
     
     public void insertEntry(int localRowColId, int index, double entry, int combineMode) {
@@ -168,6 +178,10 @@ public class CisMatrix extends DistObject {
         } else if (combineMode == DistObject.REPLACE) {
             this.numTotalEntries++;
             rowColTreeMap.put(new Integer(index), new Double(entry));
+        }
+        else {
+            this.println("ERR", "The specified combine mode is not supported by CisMatrix insertEntry.");
+            System.exit(1);
         }
     }
     
@@ -226,8 +240,9 @@ public class CisMatrix extends DistObject {
         Iterator secondaryIterator = secondaryTree.iterator();
         int[] secondaryGids = new int[secondaryTree.size()];
         i=0;
+        int tmp;
         while (secondaryIterator.hasNext()) {
-            secondaryGids[i] = ((Integer) secondaryIterator.next()).intValue();
+            secondaryGids[i++] = ((Integer) secondaryIterator.next()).intValue();
         }
         this.secondaryVectorSpace = new VectorSpace(new ElementSpace(secondaryGids, this.primaryVectorSpace.getComm()));
         
@@ -404,34 +419,29 @@ public class CisMatrix extends DistObject {
             reverseExportVnodeIdsGidsLids[3] = new int[sumEntries];
         }
         int revCount = 0;
-        if (combineMode == DistObject.ADD) {
-            for(int i=0; i < importData.length; i++) {
-                if (importData[i] != null) {
-                    elementArray = (Serializable[]) importData[i];
-                    for(int j=0; j < elementArray.length; j++) {
-                        element = (Serializable[]) elementArray[j];
-                        gid = ((Integer) element[0]).intValue();
-                        this.println("STD", "Checking gid " + gid + " from vnode " + i);
-                        lid = primaryVectorSpace.getLocalIndex(gid);
-                        // gid == -1 means that the sending vnode didn't have a nonzero value for the entire
-                        // row/col of that gid so we can just ignore it
-                        if (!this.doneForward) {
-                            reverseExportVnodeIdsGidsLids[0][i]++;
-                            reverseExportVnodeIdsGidsLids[1][revCount] = i;
-                            reverseExportVnodeIdsGidsLids[2][revCount] = gid;
-                            reverseExportVnodeIdsGidsLids[3][revCount++] = lid;
-                        }
-                        if (gid != -1 && lid != -1) {
-                            this.println("STD", "adding " + ((int[]) element[1]).length + " elements to gid " + gid + " from vnode " + i);
-                            this.insertEntries(lid, (int[]) element[1], (double[]) element[2], combineMode);
-                        }
-                    } // end for j
-                } // end if (importData[i] != null)
-            }  // end for i
-        }
-        else {
-            this.println("ERR", "The specified combine mode is not supported by CisMatrix unpackAndCombine.");
-        }
+        for(int i=0; i < importData.length; i++) {
+            if (importData[i] != null) {
+                elementArray = (Serializable[]) importData[i];
+                for(int j=0; j < elementArray.length; j++) {
+                    element = (Serializable[]) elementArray[j];
+                    gid = ((Integer) element[0]).intValue();
+                    this.println("CISMATRIX", "Checking gid " + gid + " from vnode " + i);
+                    lid = primaryVectorSpace.getLocalIndex(gid);
+                    // gid == -1 means that the sending vnode didn't have a nonzero value for the entire
+                    // row/col of that gid so we can just ignore it
+                    if (!this.doneForward) {
+                        reverseExportVnodeIdsGidsLids[0][i]++;
+                        reverseExportVnodeIdsGidsLids[1][revCount] = i;
+                        reverseExportVnodeIdsGidsLids[2][revCount] = gid;
+                        reverseExportVnodeIdsGidsLids[3][revCount++] = lid;
+                    }
+                    if (gid != -1 && lid != -1) {
+                        this.println("CISMATRIX", "adding " + ((int[]) element[1]).length + " elements to gid " + gid + " from vnode " + i);
+                        this.insertEntries(lid, (int[]) element[1], (double[]) element[2], combineMode);
+                    }
+                } // end for j
+            } // end if (importData[i] != null)
+        }  // end for i
         
         if (!this.doneForward) {
             this.doneForward = true;
@@ -476,6 +486,116 @@ public class CisMatrix extends DistObject {
                 this.insertEntries(permuteToLids[i], tmpIndices, tmpEntries, combineMode);
             }
         }
+    }
+    
+    public VectorSpace getColumnVectorSpace() {
+        if (this.rowOriented) {
+            if (this.filled) {
+                return this.secondaryVectorSpace;
+            }
+            else {
+                this.println("FATALERR", "You cannot retrive the secondaryVectorSpace (in this case the columnVectorSpace) before you call fillComplete().");
+                System.exit(1);
+            }
+        }
+        
+        return this.primaryVectorSpace;
+    }
+    
+    public VectorSpace getRowVectorSpace() {
+        if (this.rowOriented) {
+            return this.primaryVectorSpace;
+        }
+        
+        if (this.filled) {
+            return this.secondaryVectorSpace;
+        }
+        else {
+            this.println("FATALERR", "You cannot retrive the secondaryVectorSpace (in this case the rowVectorSpace) before you call fillComplete().");
+            System.exit(1);
+        }
+        
+        return null;  // will never get here, but java complains if this is not present
+    }
+    
+    public void multiply(boolean useTransposeA, MultiVector x, MultiVector y) {
+        // setup temporary MultiVectors
+        
+        /*
+        int[] tmp = x.getVectorSpace().getMyGlobalEntryIds();
+        for(int i=0; i < tmp.length; i++) {
+            this.println("CISMATRIX", "my x Gid: " + tmp[i]);
+        }
+        tmp = importMultiVector.getVectorSpace().getMyGlobalEntryIds();
+        for(int i=0; i < tmp.length; i++) {
+            this.println("CISMATRIX", "my importMultiVector Gid: " + tmp[i]);
+        }
+         */
+        
+        // import any values needed for x from other vnodes
+        
+        double[][] exportValues;
+        MultiVector exportMultiVector;
+        
+        int[] indices = this.graph.getNonZeroEntriesArray();
+        double sum;
+        int index;
+        if(useTransposeA == CisMatrix.USE_A) {
+            if(this.rowOriented) {
+                MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumColumns()]);
+                Import importer = new Import(x.getVectorSpace(), importMultiVector.getVectorSpace());
+                importMultiVector.importValues(x, importer, DistObject.REPLACE);
+                double[][] importValues = importMultiVector.getValues();
+                
+                exportValues = new double[importValues.length][this.getNumRows()];
+                exportMultiVector = new MultiVector(this.getRowVectorSpace(), exportValues);
+                for(int row=0; row < this.getNumRows(); row++) {
+                    for(int vector=0; vector < importMultiVector.getNumCols(); vector++){
+                        sum = 0;
+                        index = this.startIndex[row];
+                        for(int col=0; col < this.numEntries[row]; col++) {
+                            sum += this.doubleValues[index] * importValues[vector][indices[index++]];
+                        }
+                        exportValues[vector][row] = sum;
+                    }
+                }
+                Export exporter = new Export(exportMultiVector.getVectorSpace(), y.getVectorSpace());
+                y.exportValues(exportMultiVector, exporter, DistObject.ADD);
+            }
+            else {
+                exportValues = null;
+                exportMultiVector = null;
+            }
+        }
+        else {
+            if(this.rowOriented) {
+                exportValues = new double[x.getNumCols()][this.getNumColumns()];
+                exportMultiVector = new MultiVector(this.getColumnVectorSpace(), exportValues);
+                Import importer = new Import(x.getVectorSpace(), this.getColumnVectorSpace());
+                exportMultiVector.importValues(x, importer, DistObject.REPLACE);
+
+                MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumColumns()]);
+                
+                double[][] importValues = importMultiVector.getValues();
+                
+                for(int row=0; row < this.getNumRows(); row++) {
+                    for(int vector=0; vector < exportMultiVector.getNumCols(); vector++){
+                        index = this.startIndex[row];
+                        for(int col=0; col < this.numEntries[row]; col++) {
+                            importValues[vector][indices[index]] += this.doubleValues[index++] * exportValues[vector][row];
+                        }
+                    }
+                }
+
+                Import import2 = new Import(y.getVectorSpace(), importMultiVector.getVectorSpace());
+                y.exportValues(importMultiVector, import2, DistObject.ADD);
+            }
+            else {
+                exportValues = null;
+                exportMultiVector = null;
+            }
+        }
+        
     }
     
 }

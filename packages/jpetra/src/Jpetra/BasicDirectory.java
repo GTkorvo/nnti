@@ -44,6 +44,8 @@ public class BasicDirectory extends JpetraObject implements Directory {
     private int[] directoryLids;
     
     public BasicDirectory(VectorSpace vectorSpace) {
+        this.outputStreams.put("DIRECTORY", new Output("BasicDirector: ", true, System.out, false, System.out));
+        
         this.vectorSpace = vectorSpace;
         
         if (!vectorSpace.isDistributedGlobally()) {
@@ -65,11 +67,11 @@ public class BasicDirectory extends JpetraObject implements Directory {
         this.directoryVectorSpace = new VectorSpace(new ElementSpace(numDirectoryGlobalEntries, minGlobalGid, vectorSpace.getComm()));
         
         // debug stuff
-        this.println("STD", "numGlobalEntries: " + directoryVectorSpace.getNumGlobalEntries() + " myMin: " + this.directoryVectorSpace.getMyMinGlobalIndex() + " myMax: " + this.directoryVectorSpace.getMyMaxGlobalIndex());
-        this.println("STD", "minGlobalEntryId: " + directoryVectorSpace.getMinGlobalEntryId() + " maxGlobalEntryId: " + directoryVectorSpace.getMaxGlobalEntryId());
+        this.println("DIRECTORY", "numGlobalEntries: " + directoryVectorSpace.getNumGlobalEntries() + " myMin: " + this.directoryVectorSpace.getMyMinGlobalIndex() + " myMax: " + this.directoryVectorSpace.getMyMaxGlobalIndex());
+        this.println("DIRECTORY", "minGlobalEntryId: " + directoryVectorSpace.getMinGlobalEntryId() + " maxGlobalEntryId: " + directoryVectorSpace.getMaxGlobalEntryId());
         int[] myGidsTemp = directoryVectorSpace.getMyGlobalEntryIds();
         for(int i=0; i < myGidsTemp.length; i++) {
-            this.println("STD", "Gid: " + myGidsTemp[i]);
+            this.println("DIRECTORY", "Gid: " + myGidsTemp[i]);
         }
         //end debug stuff
         
@@ -86,7 +88,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
         // now pack up the gids/lids that we have to send to the owner gid directory vnodes
         Serializable[] toSendData = new Serializable[sendGidsToVnodes.length];
         for(int i=0; i < myGids.length; i++) {
-            this.println("STD", "packing my gid: " + myGids[i]);
+            this.println("DIRECTORY", "packing my gid: " + myGids[i]);
             toSendData[i] = new int[]{myGids[i], vectorSpace.getLocalIndex(myGids[i])};
         }
         // data is packed, so send it off
@@ -107,7 +109,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
                     if (directoryLid == -1) {
                         this.println("ERR", "I don't keep track of gid " + gidLid[0] + " in my directory.");
                     } else {
-                        this.println("STD", "Adding gid location " + gidLid[0] + " to my directory.");
+                        this.println("DIRECTORY", "Adding gid location " + gidLid[0] + " to my directory.");
                         this.directoryVnodeIds[directoryLid] = i;
                         this.directoryLids[directoryLid] = gidLid[1];
                     }
@@ -119,9 +121,9 @@ public class BasicDirectory extends JpetraObject implements Directory {
         //debug code
         int currentGid = directoryVectorSpace.getMyMinGlobalIndex();
         for(int i=0; i < directoryVectorSpace.getNumMyGlobalEntries(); i++) {
-            this.println("STD", "LID: " + i + " GID: " + currentGid++ + " Owner: " + directoryVnodeIds[i] + " OwnerLid: " + directoryLids[i]);
+            this.println("DIRECTORY", "LID: " + i + " GID: " + currentGid++ + " Owner: " + directoryVnodeIds[i] + " OwnerLid: " + directoryLids[i]);
         }
-        this.println("STD", "BasicDirectory.generate has finished.");
+        this.println("DIRECTORY", "BasicDirectory.generate has finished.");
     }
     
     /**
@@ -178,7 +180,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
         Serializable[] packedGidsToSend = new Serializable[gidsToSend.length];
         int directoryLid;
         for(int i=0; i < gidsToSend.length; i++) {
-            this.println("STD", "I need to send gid owner vnode/lid: " + gidsToSend[i]);
+            this.println("DIRECTORY", "I need to send gid owner vnode/lid: " + gidsToSend[i]);
             directoryLid = directoryVectorSpace.getLocalIndex(gidsToSend[i]);
             packedGidsToSend[i] = new int[]{this.directoryVnodeIds[directoryLid], gidsToSend[i], this.directoryLids[directoryLid]};
         }
@@ -191,7 +193,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
                 tmp2 = (Serializable[]) receives[i];
                 for(int j=0; j < tmp2.length; j++) {
                     tmp1 = (int[]) tmp2[j];
-                    this.println("STD", "dirVnode: " + i + " ownwerVnode: " + tmp1[0] + " gid: " + tmp1[1] + " lid: " + tmp1[2]);
+                    this.println("DIRECTORY", "dirVnode: " + i + " ownwerVnode: " + tmp1[0] + " gid: " + tmp1[1] + " lid: " + tmp1[2]);
                 }
             }
         }

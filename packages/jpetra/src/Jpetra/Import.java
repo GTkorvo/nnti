@@ -51,6 +51,8 @@ public class Import extends JpetraObject {
     private Distributor distributor;
     
     public Import(VectorSpace sourceVectorSpace, VectorSpace targetVectorSpace) {
+        this.outputStreams.put("IMPORT", new Output("Import: ", true, System.out, false, System.out));
+        
         this.sourceVectorSpace = sourceVectorSpace;
         this.targetVectorSpace = targetVectorSpace;
         
@@ -74,20 +76,20 @@ public class Import extends JpetraObject {
         
         // now figure out how many global ids are the same between the source and target VectorSpaces
         int minNumIds = Util.min(sourceGids.length, targetGids.length);
-        this.println("STD", "sourceGids.length: " + sourceGids.length + " targetGids.length: " + targetGids.length);
+        this.println("IMPORT", "sourceGids.length: " + sourceGids.length + " targetGids.length: " + targetGids.length);
         for (numSameGids = 0; numSameGids < minNumIds; this.numSameGids++) {
             if (sourceGids[this.numSameGids] != targetGids[this.numSameGids]) {
                 break;
             }
         }
-        this.println("STD", "numSameGids: " + this.numSameGids);
+        this.println("IMPORT", "numSameGids: " + this.numSameGids);
         
         // next figure out how many global ids are in both the target VectorSpace and in the source VectorSpace
         int numPermuteGids = 0;
         int numRemoteGids = 0;
         for (int i=this.numSameGids; i < targetGids.length; i++) {
             if (sourceVectorSpace.isMyGlobalIndex(targetGids[i])) {
-                this.println("STD", "Going to permute gid: " + targetGids[i]);
+                this.println("IMPORT", "Going to permute gid: " + targetGids[i]);
                 numPermuteGids++;
             }
             else {
@@ -120,7 +122,7 @@ public class Import extends JpetraObject {
         // i is my local id
         for (int i=this.numSameGids; i < targetGids.length; i++) {
             if (sourceVectorSpace.isMyGlobalIndex(targetGids[i])) {
-                this.println("STD", "targetGids[i]" + targetGids[i]);
+                this.println("IMPORT", "need remote gid: " + targetGids[i]);
                 permuteToLids[numPermuteGids] = i;
                 permuteFromLids[numPermuteGids++] = sourceVectorSpace.getLocalIndex(targetGids[i]);
             }
@@ -134,8 +136,8 @@ public class Import extends JpetraObject {
             this.println("WRN", "A non-distributed globally vector space has remote elements.");
         }
         
-        this.println("STD", "targetGids.length: " + targetGids.length);
-        this.println("STD", "permuteToLids.length: " + permuteToLids.length);
+        this.println("IMPORT", "targetGids.length: " + targetGids.length);
+        this.println("IMPORT", "permuteToLids.length: " + permuteToLids.length);
         
         // if the sourceVectorSpace is distributed globally then we have to figure out which remote vnodes own the global ids we need
         int[] remoteVnodeIds;
@@ -192,7 +194,7 @@ public class Import extends JpetraObject {
             // find the export local ids for all the corresponding export global ids
             for(int i=0; i < exportLids.length; i++) {
                 this.exportLids[i] = sourceVectorSpace.getLocalIndex(this.exportGids[i]);
-                this.println("STD", "sending gid: " + this.exportGids[i] +" to vnode: " + this.exportVnodeIds[i] + " with myLid: " + this.exportLids[i]);
+                this.println("IMPORT", "sending gid: " + this.exportGids[i] +" to vnode: " + this.exportVnodeIds[i] + " with myLid: " + this.exportLids[i]);
             }
         }  // end if (sourceVectorSpace.isDistributedGlobally())
     }
