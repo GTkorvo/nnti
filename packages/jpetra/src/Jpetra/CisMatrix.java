@@ -650,7 +650,7 @@ public class CisMatrix extends DistObject implements Externalizable {
                         sum = 0;
                         index = this.startIndex[row];
                         for(int col=0; col < this.numEntries[row]; col++) {
-                            this.println("STD", "this.doubleValues[index] * importValues[vector][indices[index++]]" + this.doubleValues[index] +" * " + importValues[vector][importMultiVectorVectorSpace.getLocalIndex(indices[index])]); //importValues[vector][indices[index]]);
+                            //this.println("STD", "this.doubleValues[index] * importValues[vector][indices[index++]]" + this.doubleValues[index] +" * " + importValues[vector][importMultiVectorVectorSpace.getLocalIndex(indices[index])]); //importValues[vector][indices[index]]);
                             //sum += this.doubleValues[index] * importValues[vector][importMultiVectorVectorSpace.getLocalIndex(indices[index++])];
 			    
 			    // NOTE!! i think importValues[vector][col] is incorrect and should be importValues[vector][importMultiVectorVectorSpace.getLocalIndex(indices[index++])]

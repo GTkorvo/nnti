@@ -150,7 +150,7 @@ public class MatrixVectorReader extends BufferedReader {
 				throw new IOException("Not in Matrix Market exchange format");
 
 		// This will always be "matrix"
-		if (!component[1].equalsIgnoreCase("matrix"))
+		if (!(component[1].equalsIgnoreCase("matrix") || component[1].equalsIgnoreCase("mtx")))
 				throw new IOException("Expected \"matrix\", got "
 						+ component[1]);
 

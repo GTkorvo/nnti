@@ -47,7 +47,9 @@ public class MultiVectorReader extends JpetraObject {
     
     public static MultiVector read(String fileName, Comm comm) throws java.io.IOException {
         if (comm.getVnodeId() != 0) {
-            return null;
+            VectorSpace vectorSpace = new VectorSpace(new ElementSpace(-1, 0, 0, comm));
+            MultiVector multiVector = new MultiVector(vectorSpace);
+            return multiVector;
         }
         
         FileInputStream fis = new FileInputStream(fileName);
@@ -56,7 +58,9 @@ public class MultiVectorReader extends JpetraObject {
     
     public static MultiVector readUrl(String urlString, Comm comm) throws java.io.IOException {
         if (comm.getVnodeId() != 0) {
-            return null;
+            VectorSpace vectorSpace = new VectorSpace(new ElementSpace(-1, 0, 0, comm));
+            MultiVector multiVector = new MultiVector(vectorSpace);
+            return multiVector;
         }
         
         URL url = new URL(urlString);
@@ -78,7 +82,7 @@ public class MultiVectorReader extends JpetraObject {
         String[] comments = mvr.readComments();
         MatrixSize size = mvr.readMatrixSize(info);
         
-        ElementSpace myElementSpace = new ElementSpace(size.numRows(), 0, comm);
+        ElementSpace myElementSpace = new ElementSpace(-1, size.numRows(), 0, comm);
         VectorSpace myVectorSpace = new VectorSpace(myElementSpace);
         MultiVector result = null;
         

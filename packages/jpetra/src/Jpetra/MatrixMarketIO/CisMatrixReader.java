@@ -45,7 +45,7 @@ import Jpetra.*;
  * by Java such as HTTP and FTP.  In order for the gzip decompression to work properly
  * the file or url name must end in gz.
  */
-public class CisMatrixReader extends JpetraObject { 
+public class CisMatrixReader extends JpetraObject {
     /**
      * Reads a MatrixMarket formatted plain text or gzipped file from a url.
      *
@@ -55,10 +55,13 @@ public class CisMatrixReader extends JpetraObject {
      *
      * @return A CisMatrix that has had fillComplete called on it.
      * @throws IOException Any IO errors that occur while reading from the url will be thrown.
-     */    
+     */
     public static CisMatrix readUrl(String urlString, boolean rowOriented, Comm comm) throws java.io.IOException {
         if (comm.getVnodeId() != 0) {
-            return null;
+            VectorSpace vectorSpace = new VectorSpace(new ElementSpace(-1, 0, 0, comm));
+            CisMatrix cisMatrix = new CisMatrix(vectorSpace, rowOriented);
+            cisMatrix.fillComplete();
+            return cisMatrix;
         }
         
         URL url = new URL(urlString);
@@ -74,7 +77,7 @@ public class CisMatrixReader extends JpetraObject {
      *
      * @return A CisMatrix that has had fillComplete called on it.
      * @throws IOException Any IO errors that occur while reading from the file will be thrown.
-     */    
+     */
     public static CisMatrix read(String fileName, boolean rowOriented, Comm comm) throws java.io.IOException {
         if (comm.getVnodeId() != 0) {
             VectorSpace vectorSpace = new VectorSpace(new ElementSpace(-1, 0, 0, comm));
@@ -97,7 +100,7 @@ public class CisMatrixReader extends JpetraObject {
      *
      * @return A CisMatrix that has had fillComplete called on it.
      * @throws IOException Any IO errors that occur while reading from the <code>InputStream</code> will be thrown.
-     */    
+     */
     private static CisMatrix doRead(String fileName, InputStream is, boolean rowOriented, Comm comm) throws java.io.IOException {
         // Open file for reading. If it's compressed, use on the fly
         // decompression
@@ -115,7 +118,7 @@ public class CisMatrixReader extends JpetraObject {
         
         ElementSpace myElementSpace;
         if (rowOriented) {
-           myElementSpace = new ElementSpace(-1, size.numRows(), 0, comm);
+            myElementSpace = new ElementSpace(-1, size.numRows(), 0, comm);
         }
         else {
             myElementSpace = new ElementSpace(-1, size.numColumns(), 0, comm);
@@ -178,7 +181,7 @@ public class CisMatrixReader extends JpetraObject {
      * @param col for int i, col[i] is the row index for entry data[i]
      * @param data the entry values of the matrix that was read in
      * @param cisMatrix the <code>CisMatrix</code> to insert values into
-     */    
+     */
     private static void buildCisMatrixFromSparse(int[] row, int[] col, double[] data, CisMatrix cisMatrix) {
         if (cisMatrix.isRowOriented()) {
             for(int i=0; i < row.length; i++) {
@@ -199,7 +202,7 @@ public class CisMatrixReader extends JpetraObject {
      * @param row for int i, row[i] is the row index for entry data[i]
      * @param col for int i, col[i] is the row index for entry data[i]
      * @param cisMatrix the <code>CisMatrix</code> to insert values into
-     */    
+     */
     private static void buildCisMatrixFromPatternSparse(int[] row, int[] col, CisMatrix cisMatrix) {
         if (cisMatrix.isRowOriented()) {
             for(int i=0; i < row.length; i++) {
@@ -221,7 +224,7 @@ public class CisMatrixReader extends JpetraObject {
      * @param col for int i, col[i] is the row index for entry data[i]
      * @param data the entry values of the matrix that was read in
      * @param cisMatrix the <code>CisMatrix</code> to insert values into
-     */    
+     */
     private static void buildCisMatrixFromIntSparse(int[] row, int[] col, int[] data, CisMatrix cisMatrix) {
         if (cisMatrix.isRowOriented()) {
             for(int i=0; i < row.length; i++) {
@@ -242,25 +245,25 @@ public class CisMatrixReader extends JpetraObject {
      * @param data the entry values of the matrix that was read in
      * @param size contains the number of rows and columns associated with the matrix that was read in
      * @param cisMatrix the <code>CisMatrix</code> to insert values into
-     */    
+     */
     private static void buildCisMatrixFromDense(double[] data, MatrixSize size, CisMatrix cisMatrix) {
         int numRows = size.numRows();
         int numCols = size.numColumns();
         int entryIndex = 0;
         if (cisMatrix.isRowOriented()) {
-            for (int i=0; i < numRows; i++) {
-                for(int j=0; j < numCols; j++) {
+            for(int col=0; col < numCols; col++) {
+                for (int row=0; row < numRows; row++) {
                     if (data[entryIndex] != 0) {
-                        cisMatrix.insertEntry(i, j, data[entryIndex++], DistObject.REPLACE);
+                        cisMatrix.insertEntry(row, col, data[entryIndex++], DistObject.REPLACE);
                     }
                 }
             }
         }
         else {
-            for (int i=0; i < numCols; i++) {
-                for(int j=0; j < numRows; j++) {
+            for(int col=0; col < numCols; col++) {
+                for (int row=0; row < numRows; row++) {
                     if (data[entryIndex] != 0) {
-                        cisMatrix.insertEntry(i, j, data[entryIndex++], DistObject.REPLACE);
+                        cisMatrix.insertEntry(col, row, data[entryIndex++], DistObject.REPLACE);
                     }
                 }
             }
@@ -275,25 +278,25 @@ public class CisMatrixReader extends JpetraObject {
      * @param data the entry values of the matrix that was read in
      * @param size contains the number of rows and columns associated with the matrix that was read in
      * @param cisMatrix the <code>CisMatrix</code> to insert values into
-     */    
+     */
     private static void buildCisMatrixFromIntDense(int[] data, MatrixSize size, CisMatrix cisMatrix) {
         int numRows = size.numRows();
         int numCols = size.numColumns();
         int entryIndex = 0;
         if (cisMatrix.isRowOriented()) {
-            for (int i=0; i < numRows; i++) {
-                for(int j=0; j < numCols; j++) {
+            for(int col=0; col < numCols; col++) {
+                for (int row=0; row < numRows; row++) {
                     if (data[entryIndex] != 0) {
-                        cisMatrix.insertEntry(i, j, data[entryIndex++], DistObject.REPLACE);
+                        cisMatrix.insertEntry(row, col, data[entryIndex++], DistObject.REPLACE);
                     }
                 }
             }
         }
         else {
-            for (int i=0; i < numCols; i++) {
-                for(int j=0; j < numRows; j++) {
+            for(int col=0; col < numCols; col++) {
+                for (int row=0; row < numRows; row++) {
                     if (data[entryIndex] != 0) {
-                        cisMatrix.insertEntry(i, j, data[entryIndex++], DistObject.REPLACE);
+                        cisMatrix.insertEntry(col, row, data[entryIndex++], DistObject.REPLACE);
                     }
                 }
             }

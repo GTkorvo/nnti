@@ -84,7 +84,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
             this.maxGlobalElementId = this.maxMyGlobalElementId;
             this.distributedGlobally = false;
             this.distributedLinearly = true;
-             this.distributedUniformly = true;
+            this.distributedUniformly = true;
             return;
         }
         
@@ -234,11 +234,10 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         //if (comm.isSerial() || (numGlobalElements == numMyGlobalElements)) {
         if (comm.isSerial()) {
             this.distributedGlobally = false;
-            this.numGlobalElements = numGlobalElements;
-            this.numMyGlobalElements = numMyGlobalElements;
-            this.minMyGlobalElementId = indexBase;
+            this.numGlobalElements = this.numMyGlobalElements;
+            this.minMyGlobalElementId = this.minGlobalElementId;
             //this.minGlobalElementId = this.minMyGlobalElementId;
-            this.maxMyGlobalElementId = numGlobalElements + indexBase;
+            this.maxMyGlobalElementId = this.numMyGlobalElements + indexBase - 1;
             this.maxGlobalElementId = this.maxMyGlobalElementId;
             return;
         }
@@ -247,15 +246,15 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         // find the number of global elements by finding the sum of all local elements
         int[] sum = comm.sumAll(new int[]{this.numMyGlobalElements});
         this.numGlobalElements = sum[0];
-        this.maxGlobalElementId = this.numGlobalElements -1;
+        this.maxGlobalElementId = this.numGlobalElements - 1;
         int[] scanSum = comm.scanSums(new int[]{this.numMyGlobalElements});
-        this.println("STD", "ElementSpace: there are " + scanSum[0] + " gids before mine. I have " + this.numMyGlobalElements + " gids.");
-        this.maxMyGlobalElementId = scanSum[0] + indexBase-1;  // -1 to make indexing start at 0
+        //this.println("STD", "ElementSpace: there are " + scanSum[0] + " gids before mine. I have " + this.numMyGlobalElements + " gids.");
+        this.maxMyGlobalElementId = scanSum[0] + indexBase - 1;  // -1 to make indexing start at 0
         this.minMyGlobalElementId = this.maxMyGlobalElementId - this.numMyGlobalElements + indexBase;
         if (comm.getVnodeId() == 0) {
             this.minMyGlobalElementId = indexBase;
         }
-        this.println("STD", "In ElementSpace: myMaxGlobalElementId: " + this.maxMyGlobalElementId + " minMyGlobalElementId: " + this.minMyGlobalElementId + " numMyGids: " + this.numMyGlobalElements + " numGids: " + this.numGlobalElements);
+        //this.println("STD", "In ElementSpace: myMaxGlobalElementId: " + this.maxMyGlobalElementId + " minMyGlobalElementId: " + this.minMyGlobalElementId + " numMyGids: " + this.numMyGlobalElements + " numGids: " + this.numGlobalElements);
     }
     
     
@@ -448,10 +447,23 @@ public class ElementSpace extends JpetraObject implements Externalizable {
             otherElementSpace.maxMyGlobalElementId != this.maxMyGlobalElementId ||
             otherElementSpace.minLocalElementId != this.minLocalElementId ||
             otherElementSpace.maxLocalElementId != this.maxLocalElementId) {
+                
+            this.println("STD", "numGlobalElements: " + otherElementSpace.numGlobalElements + " " + this.numGlobalElements);
+            this.println("STD", "minGlobalElementId: " + otherElementSpace.minGlobalElementId + " " + this.minGlobalElementId);
+            this.println("STD", "maxGlobalElementId: " + otherElementSpace.maxGlobalElementId + " " + this.maxGlobalElementId);
+            this.println("STD", "distributedGlobally: " + otherElementSpace.distributedGlobally + " " + this.distributedGlobally);
+            this.println("STD", "distributedLinearly: " + otherElementSpace.distributedLinearly + " " + this.distributedLinearly);
+            this.println("STD", "numMyGlobalElements: " + otherElementSpace.numMyGlobalElements + " " + this.numMyGlobalElements);
+            this.println("STD", "minMyGlobalElementId: " + otherElementSpace.minMyGlobalElementId + " " + this.minMyGlobalElementId);
+            this.println("STD", "maxMyGlobalElementId: " + otherElementSpace.maxMyGlobalElementId + " " + this.maxMyGlobalElementId);
+            this.println("STD", "minLocalElementId: " + otherElementSpace.minLocalElementId + " " + this.minLocalElementId);
+            this.println("STD", "maxLocalElementId: " + otherElementSpace.maxLocalElementId + " " + this.maxLocalElementId);
+            this.println("STD", "In ElementSpace.equals: one of the attributes of the two ElementSpaces did not match.");
             return false;
         }
         
-        if (!otherElementSpace.gidsToLids.equals(this.gidsToLids)) {
+        if (!this.distributedLinearly && !this.distributedUniformly && !otherElementSpace.gidsToLids.equals(this.gidsToLids)) {
+            this.println("STD", "In ElementSpace.equals: !otherElementSpace.gidsToLids.equals(this.gidsToLids)");
             return false;
         }
         

@@ -268,6 +268,17 @@ public class MultiVector extends DistObject implements Externalizable {
     
     public void copyAndPermute(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids, int combineMode) {
         double[][] srcValues = ((MultiVector) distObjectSource).getValues();
+        
+        // if srcValues is null, we don't need to do anything
+        if (srcValues == null) {
+            return;
+        }
+        
+        // if this.values does not exist yet, create it
+        if (this.values == null) {
+            this.values = new double[srcValues.length][this.vectorSpace.getNumMyGlobalEntries()];
+        }
+        
         if (combineMode == DistObject.ADD) {
             for(int i=0; i < numSameGids; i++) {
                 for(int cols=0; cols < srcValues.length; cols++) {
@@ -327,6 +338,28 @@ public class MultiVector extends DistObject implements Externalizable {
         int gid;
         int lid;
         double[] importValues;
+        
+        // if this.values doesn't exist yet, create it
+        if (this.values == null) {
+            for(int i=0; i < importData.length; i++) {
+                // if a vnode didn't send us any data, then importData[vnodeId] == null
+                if (importData[i] != null) {
+                    entry = (Serializable[]) importData[i];
+                    entryData = (Serializable[]) entry[0];
+                    importValues = (double[]) entryData[1];
+                    int numCols = importValues.length;
+                    this.values = new double[numCols][this.vectorSpace.getNumMyGlobalEntries()];
+                    break;
+                }
+            }
+            
+            // if this.values is still null, then we probably don't have any Gids, or somethin went wrong
+            // so assume we don't have any gids
+            if (this.values == null) {
+                this.values = new double[0][0];
+            }
+        }
+        
         // for reverse op
         int[][] reverseExportVnodeIdsGidsLids = null;
         if (!this.doneForward) {
@@ -347,13 +380,14 @@ public class MultiVector extends DistObject implements Externalizable {
         for(int i=0; i < importData.length; i++) {
             // if a vnode didn't send us any data, then importData[vnodeId] == null
             if (importData[i] != null) {
-                entry = (Serializable[]) importData[i];  // get the array of elements send to us by the vnode i
+                entry = (Serializable[]) importData[i];  // get the array of elements sent to us by the vnode i
                 // unpack each element
                 for(int j=0; j < entry.length; j++) {
                     entryData = (Serializable[]) entry[j];
                     gid = ((Integer) entryData[0]).intValue();
                     lid = vectorSpace.getLocalIndex(gid);
-                    this.println("STD", "MultiVector: Combining Gid: " + gid + " lid: " + lid);
+                    
+                    //this.println("STD", "MultiVector: Combining Gid: " + gid + " lid: " + lid);
                     // debugging code!!!
                     if (lid == -1) {
                         this.println("ERR", "In MultiVector: Got a bad gid: " + gid);
@@ -459,10 +493,12 @@ public class MultiVector extends DistObject implements Externalizable {
         MultiVector otherMultiVector = (MultiVector) obj;
         // do a quick length check on the values 2d array
         if (otherMultiVector.getValues().length != this.values.length) {
+            this.println("STD", "In MultiVector.equals: otherMultiVector.getValues().length != this.values.length");
             return false;
         }
         // check to see if the vectorSpaces are equal
         if (!otherMultiVector.getVectorSpace().equals(this.vectorSpace)) {
+            this.println("STD", "In MultiVector.equals: !otherMultiVector.getVectorSpace().equals(this.vectorSpace)");
             return false;
         }
         // check to see if the values 2d arrays are the same
@@ -482,6 +518,7 @@ public class MultiVector extends DistObject implements Externalizable {
         double[][] otherValues = otherMultiVector.getValues();
         for(int i=0; i < this.values.length; i++) {
             if (!java.util.Arrays.equals(this.values[i], otherValues[i])) {
+                this.println("STD", "In MultiVector.equals: !java.util.Arrays.equals(this.values[i], otherValues[i])");
                 return false;
             }
         }
