@@ -1,0 +1,179 @@
+% mail pc03_org@nersc.gov <= July 15th with
+\documentclass[10pt,fleqn]{article}
+\setlength{\mathindent}{0.25in}
+\usepackage{graphicx}
+\usepackage{latexsym}
+
+%*** Column setup
+%\setlength{\columnsep}{0.5in}
+%\setlength{\columnseprule}{0.01in}
+
+\pagestyle{plain}
+
+%*** Page numbering
+%\pagenumbering{arabic}
+%\setcounter{page}{1}
+
+%*** Paragraph setup
+
+\setlength{\parindent}{0ex}
+\setlength{\parskip}{01.5ex plus 0.3ex minus 0.3ex}
+%\renewcommand{\baselinestretch}{1.2}
+\renewcommand{\baselinestretch}{1.0}
+%\renewcommand{\baselinestretch}{1.5}
+
+%*** Floats
+\renewcommand{\textfraction}{0.01}
+\setlength{\floatsep}{0.0in}
+%\setlength{\textfloatsep}{0.0in}
+
+%*** Page formating
+
+\setlength{\topmargin}{0.0in}
+\setlength{\headheight}{0.3in}
+\setlength{\headsep}{0.2in}
+%\setlength{\textheight}{8.0in}
+%\setlength{\footskip}{1in}
+\setlength{\textheight}{8.5in}
+\setlength{\footskip}{0.5in}
+
+\setlength{\oddsidemargin}{-0.5in}
+\setlength{\evensidemargin}{-0.5in}
+\setlength{\textwidth}{7in}
+
+%
+% Body of document
+%
+\begin{document}
+
+%
+% Title page
+%
+\title{Preconditioning Techniques in Circuit Simulation}
+
+\author{David M. Day, Michael A. Heroux, Robert J. Hoekstra \\
+Sandia National Laboratories\footnote{
+Sandia is a multiprogram laboratory operated by Sandia Corporation, a
+Lockheed-Martin Company, for the United States Department of Energy
+under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA}
+
+\date{\today}
+
+\maketitle
+
+\paragraph{Summary}
+This article contains a discussion of
+preconditioners for linear systems arising in the 
+distributed memory circuit simulation application called
+Xyce~\cite{Xyce}. Xyce is under development at Sandia National Laboratories to
+meet Sandia's current and future circuit simulation needs.
+The computational bottleneck in circuit simulation is the
+solution of a sequence of sparse indefinite unsymmetric linear systems.
+Iterative linear solvers and distributed memory platforms
+are needed to meet the demand to simulate circuits with increasing
+numbers of devices.  
+
+In this article we present our approaches to
+preconditioning these problems.  We organize the discussion to match
+our evolutionary approach to developing preconditioners.
+Specifically, we first discuss our early efforts to sove circuit problems
+using well-established methods from PDE applications and then proceed
+to how we specialized these methods for circuits, and explored
+new algorithms that address key subproblems in circuit simulation.
+
+The assumptions regarding preconditioning,
+overlap, and load balance differ significantly from discretized
+partial differential equations.
+
+The problem is defined and standard approaches are reviewed.  The
+limitations of well known preconditioners for circuit problems are
+outlined.  Next an adaptive preconditioning algorithm is presented.
+
+Circuit simulation refers to nonlinear transient analyses by implicit
+differential-algebraic equation solvers using Newton's method.
+There is an initial direct current (DC) operating point calculation.
+
+DC operating point problem is notoriously difficult, but accounts for
+little of the overall computation time.  DC operating point calculations 
+involving 1000 Newton iterations are routine.  We present linear solvers
+that exploit the structure of the DC operating point problem.
+
+\paragraph{Background}
+The circuit simulation community relies on sparse direct linear solvers
+(~\cite{Ksparse86}) and special Homotopy methods for each device model
+(~\cite{MTFW93}).  We do not discuss algorithms that involve modifying the
+devices models.  Recently Schur complement preconditioners~\cite{SaadSosonkina00}
+ for circuit simulation have appeared~\cite{BCGJH03}.
+
+Domain decomposition preconditioners with partition inherited from a
+graph partitioner (e.g. Metis).  A domain decomposition preconditioner
+depends on the partition.  Though the dependence is in general complex, 
+successful partitioning is a necessary condition for the preconditioning
+problems to be tractable.  It is noteworthy that circuit networks 
+are not well partitioned by contemporary graph partitioners.
+
+Some of the linear systems are singular for several reasons.  The
+nonlinear function is not convex, and has local minima.  Furthermore,
+in finite precision arithmetic evaluating device models far from
+equilibria is challenging.
+
+\paragraph{Experiments with Standard Preconditioners}
+In our initial experiments with circuit simulation, preconditioner
+existence, not to mention effectiveness, was often not achievable.
+We were forced to rely on the high dimensional Krylov subspaces available
+on distributed memory platforms.  Overlapping Schwarz preconditioners
+do not apply to matrices with a dense row or column; one subdomain
+overlaps the entire matrix.  Also we observed that incomplete
+factorizations did not exist due to zero diagonals.  Allowing more
+fill-in through thresholds was not an efficient solution.  Using the
+Duff-Koster permutation to maximize product of absolute values of the
+diagonal entries, we were first able to reliably compute preconditioners. 
+We found that a mechanism to regularize the problem is also needed.
+
+\paragraph{Adaptive Preconditioners}
+Using permutations and a dual parameter regularization technique, we
+significantly increased the range of problems we were able to solve.
+However, the regularization technique we used was ad hoc.  Selection
+of threshold parameters was by trial-and-error.  On approach to
+improve the situation is to introduce an adaptive procedure.
+C. diagonal perturbation: 
+1. threshold on diagonal entries, (relative and absolute tolerances)
+2. Usually will regularize the problem 
+
+D. Seek ILUT parameters adaptively based on information from 
+1. condest of preconditioner,
+2. projection of preconditioned matrix along Krylov subspace,
+3. information from previous linear solves (residuals, stagnation)
+
+\paragraph{Eliminate singleton rows and columns (recursively)}
+first suggested by  Basermann
+
+\paragraph{DC Operating Point Calculations}
+Determining the DC operating point is a steady-state problem that
+produces structured Jacobians.  The Jacobians admit a permutation to
+block triangular form with small diagonal blocks.  The Dulmage-Mendelsohn
+permutation (linear time and memory costs) finds the permutation.
+
+For example, a digital component comprised mainly of MOSFET transistors
+is reducible due to the MOSFET's asymmetry.  A MOSFET 'gate' terminal
+controls the currents and conductivity for the 'drain', 'source', 
+and 'base'.  In steady-state problems through the 'gate' terminal
+no current flows and conductivity is zero.  The stencil for the MOSFET
+contains a zero row corresponding to the gate.  After permuting the
+Jacobian  to lower triangular form, the diagonal blocks are connected
+through columns that correspond to the 'gate' terminals.  Transient
+problems involve capacitances that generate currents and conductivities
+associated with the 'gate', and the Jacobians are irreducible.
+
+The DC operating point Jacobians are often singular.  Analyses using
+the singular value decompositions of the diagonal blocks in combination
+with condition number estimates for the block triangular system show
+that the the diagonal blocks usually support the gravest singular vectors.
+Management of rank deficient systems through least squares methods
+enhances the convergence of both the linear and the nonlinear solver.
+\bibliographystyle{plain}
+\nopagebreak
+\scriptsize
+\bibliography{circuits}
+\end{document}
+
