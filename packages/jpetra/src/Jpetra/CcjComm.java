@@ -373,8 +373,8 @@ public class CcjComm extends JpetraObject implements Comm {
         return "";
     }
     
-    public Directory createDirectory(ElementSpace elementSpace) {
-        return null;
+    public Directory createDirectory(VectorSpace vectorSpace) {
+        return new BasicDirectory(vectorSpace);
     }
     
     public void send(double[] exportObject, int destinationVnode) {

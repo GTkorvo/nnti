@@ -55,7 +55,9 @@ public class JpetraObject extends java.lang.Object implements Serializable, Clon
     public void initializeOutput() {
         if (outputStreams.isEmpty()) {
             outputStreams.put("STD", new Output("", true, System.out, false, System.out));
+            outputStreams.put("WRN", new Output("WARNING: ", true, System.out, false, System.out));
             outputStreams.put("ERR", new Output("Error: ", true, System.out, false, System.out));
+            outputStreams.put("FATALERR", new Output("Fatal Error: ", true, System.out, false, System.out));
             outputStreams.put("DEBUG", new Output("Debug: ", false, System.out, false, System.out));
             outputStreams.put("VERBOSE", new Output("", false, System.out, false, System.out));
         }

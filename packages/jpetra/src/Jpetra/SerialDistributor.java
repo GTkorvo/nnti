@@ -28,6 +28,8 @@
 
 package Jpetra;
 
+import java.io.Serializable;
+
 /**
  *
  * @author  Jason Cross
@@ -35,29 +37,33 @@ package Jpetra;
 public class SerialDistributor extends JpetraObject implements Distributor {
     
     public SerialDistributor() {
+        // empty
     }
     
     public int[] createFromReceives(int[] remoteGids, int[] remoteVnodeIds, Comm comm) {
-        return null;  // !! not implemented
+        return null;
     }
     
+    /**
+     *
+     * @param exportVnodeIds The vnodes to export my global elements to.
+     */
     public void createFromSends(int[] exportVnodeIds, Comm comm) {
-        return 0; // !! not implemented
+        // empty
     }
     
-    public void distribute(Comm comm, int[] exportVnodeIds, int[] exportGids, int[] exportLids, Serializable[] exportObjects) {
+    public Serializable[] distribute(Serializable[] exportObjects) {
+        return null;
     }
-    
-    public Serializable[] distribute(java.io.Serializable[] exportObjects) {
+    public int[][] distribute(int[] toSendData) {
+        return null;
     }
     
     public int[] getSenders() {
+        return null;
     }
-    
-    public int[][] distribute(int[] toSendData) {
-    }
-    
     public int[] getExportVnodeIds() {
+        return null;
     }
     
 }

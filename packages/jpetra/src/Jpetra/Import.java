@@ -132,7 +132,7 @@ public class Import extends JpetraObject {
         }
         
         if ((numRemoteGids > 0) && !sourceVectorSpace.isDistributedGlobally()) {
-            this.println("ERR", "A non-distributed globally vector space has remote elements.");
+            this.println("WRN", "A non-distributed globally vector space has remote elements.");
         }
         
         this.println("STD", "targetGids.length: " + targetGids.length);
@@ -173,7 +173,7 @@ public class Import extends JpetraObject {
                         remoteGids = new int[0];
                         remoteVnodeIds = new int[0];
                     }
-                    this.println("ERR", "Warning in Import: Target IDs not found in Source VectorSpace (Do you want to import to subset of Target VectorSpace?)");
+                    this.println("WRN", "In Import: Target IDs not found in Source VectorSpace (Do you want to import to subset of Target VectorSpace?)");
                 }
             }
             
@@ -195,12 +195,7 @@ public class Import extends JpetraObject {
                 this.exportLids[i] = sourceVectorSpace.getLocalIndex(this.exportGids[i]);
                 this.println("STD", "sending gid: " + this.exportGids[i] +" to vnode: " + this.exportVnodeIds[i] + " with myLid: " + this.exportLids[i]);
             }
-        }  // end if (sourceVectorSpace.isDistributedGlobally())
-        else {
-            // since the source VectorSpace isn't distributed globally there aren't any vnodes that need to send us Gids
-            remoteVnodeIds = new int[0];
-        }
-        
+        }  // end if (sourceVectorSpace.isDistributedGlobally())  
     }
     
     

@@ -29,12 +29,6 @@
 package Jpetra;
 
 import java.io.Serializable;
-/*
- * Comm.java
- *
- * Created on May 29, 2001, 1:25 PM
- */
-
 
 /**
  * Comm is the interface for the all the Jpetra communication
@@ -43,7 +37,6 @@ import java.io.Serializable;
  * Terminology:  A vnode is considered to be a virtual node (a memory image) and not a physical machine.
  * A physical node is considered to be a physical machine, and may have many vnodes on it.
  * The term node has no meaning, and should be qualified by virtual or physical.
- * A thread is a sub process of a vnode.  Every vnode has 1 or more threads.
  *
  * @author  Mike Heroux
  * @author  Michael William Boldt
@@ -58,13 +51,6 @@ public interface Comm {
      * No-op for a serial communicator.
      */
     public void barrier();
-    
-    /**
-     * Causes each thread in a given vnode on each machine
-     * to wait until all threads in that vnode have arrived.
-     * No-op for a serial communicator.
-     */
-    public void threadBarrier();
     
     /**
      * Broadcasts any Serializable object from the <code>root</code>
@@ -83,6 +69,7 @@ public interface Comm {
      *
      * @param value int that is broadcast by the root vnode
      * @param root root vnode ID, most likely 0
+     *
      * @return all vnodes recieve this int
      */
     public int broadcast(int value, int root);
@@ -93,6 +80,7 @@ public interface Comm {
      *
      * @param value double that is broadcast by the root vnode
      * @param root root vnode ID, most likely 0
+     *
      * @return all vnodes recieve this int
      */
     public double broadcast(double value, int root);
@@ -103,6 +91,7 @@ public interface Comm {
      * Requires the return object to be cast into a more useful object.
      *
      * @param myElements     in on entry; the list of values to be sent to all vnodes
+     *
      * @return allElements   out on exit; the list of values from all vnodes
      */
     public Serializable[] gatherAll(Serializable [] myElements);
@@ -112,6 +101,7 @@ public interface Comm {
      * creates an ordered contiguous list of those values in each vnode.
      *
      * @param myElements     in on entry; the list of values to be sent to all vnodes
+     *
      * @return allElements   out on exit; the list of values from all vnodes
      */
     public double[] gatherAll(double [] myElements);
@@ -121,6 +111,7 @@ public interface Comm {
      * creates an ordered contiguous list of those values in each vnode.
      *
      * @param myElements    in on entry; the list of values to be sent to all vnodes
+     *
      * @return              out on exit; the list of values from all vnodes
      */
     public int[] gatherAll(int [] myElements);
@@ -132,6 +123,7 @@ public interface Comm {
      * creates an ordered contiguous list of those values in each vnode.
      *
      * @param myInt     in on entry; the list of values to be sent to all vnodes
+     *
      * @return          out on exit; the list of values from all vnodes
      */
     public int[] gatherAll(int myInt);
@@ -141,6 +133,7 @@ public interface Comm {
      * creates an ordered contiguous list of those values in each vnode.
      *
      * @param myDouble     in on entry; the list of values to be sent to all vnodes
+     *
      * @return          out on exit; the list of values from all vnodes
      */
     public double[] gatherAll(double myDouble);
@@ -212,6 +205,7 @@ public interface Comm {
      * the sum of values from vnodes up to and including vnode i.
      *
      * @param myElements    in on entry; the values to be summed across all vnodes
+     *
      * @return              out on exit; the list of values summed
      *                      across vnodes 0 through i
      */
@@ -223,24 +217,11 @@ public interface Comm {
      * the sum of values from vnodes up to and including vnode i.
      *
      * @param myElements    in on entry; the values to be summed across all vnodes
+     *
      * @return              out on exit; the list of values summed
      *                      across vnodes 0 through i
      */
     public int[] scanSums(int [] myElements);
-    
-    /**
-     * Accessor for the number of threads in this vnode.
-     *
-     * @return number of threads in this vnode
-     */
-    public int getNumMyThreads();
-    
-    /**
-     * Accessors for the number of threads in all proccesses.
-     *
-     * @return number of threads in all proccesses
-     */
-    public int getNumThreads();
     
     /**
      * Accessor for the number of vnodes in the commmunicator.
@@ -255,22 +236,6 @@ public interface Comm {
      * @return the rank of the calling vnode in MPI (CCJ); 0 in serial mode
      */
     public int getVnodeId();
-    
-    /**
-     * Ask about this one.
-     */
-    public int getThreadId();
-    
-    /**
-     * Sets the thread ID for the calling vnode.
-     * Can be used to facilitate threaded programming across an MPI
-     * application by allowing multiple MPI vnodes to be considered
-     * threads of a virtual shared memory vnode. Threads and vnodes
-     * should be used together.
-     *
-     * @param newThreadID new thread ID
-     */
-    public void setThreadID(int newThreadID);
     
     /**
      * Sets the vnode ID for the calling vnode.
@@ -311,13 +276,6 @@ public interface Comm {
     public void send(Serializable exportObject, int destinationVnode);
     
     /**
-     * Tells <code>Comm</code> how many messages to expect to receive.
-     *
-     * @param numReceives the number of messages that are expected to be received
-     */
-    public void setupReceives(int numReceives);
-    
-    /**
      * <code>getReceives</code> does all the work receiving all expected messages at once and then returns them.
      * <b>Note<b>: this IS a blocking operation.
      *
@@ -338,7 +296,7 @@ public interface Comm {
      */
     public boolean isSerial();
     
-    public Directory createDirectory(ElementSpace elementSpace);
+    public Directory createDirectory(VectorSpace vectorSpace);
     
     public Distributor createDistributor();
 }

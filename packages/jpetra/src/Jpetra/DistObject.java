@@ -31,26 +31,26 @@ package Jpetra;
 import java.io.Serializable;
 
 /**
- * All objects which can be constructed and distributed globally among the vnodes should extend this class.  <code>DistObject</code> presents a common interface to the user to use for all objects that can be distributed globally.  Thus, some methods must be overriden by classes extending <code>DistObject</code> while others must not be overridden.  <code>DistObject</code> also defines constants that correspond to the different avaliable combine modes.
+ * Objects that extend <code>DistObject</code> can be constructed and distributed globally among the vnodes.  <code>DistObject</code> presents a common interface to the user to use for all objects that can be distributed globally.  Thus, some methods must be overriden by classes extending <code>DistObject</code> while others must not be overridden.  <code>DistObject</code> also defines constants that correspond to the different avaliable combine modes.
  *
  * @author Jason Cross
  */
 public abstract class DistObject extends JpetraObject {
     /**
      * This combine mode will cause all imported values to be added to existing values.
-     */    
+     */
     public static final int ADD = 0;
     /**
      * This combine mode will only copy and permute local values.
-     */    
+     */
     public static final int ZERO = 1;
     /**
      * This combine mode will cause all imported values to be averaged with existing values.
-     */    
+     */
     public static final int AVERAGE = 2;
     /**
      * This combine mode replaces values with the maximum absolute value of either the imported value or the existing corresponding local value.
-     */    
+     */
     public static final int ABSMAX = 3;
     
     private Distributor distributor;
@@ -71,18 +71,18 @@ public abstract class DistObject extends JpetraObject {
     
     /**
      * Does nothing.
-     */    
+     */
     public DistObject() {
     }
     
     /**
-     * Imports values from the source <code>DistObject</code> to this <code>DistObject<code> using the specified importer and combine mode.
+     * Imports values from the source <code>DistObject</code> to this <code>DistObject</code> using the specified importer and combine mode.
      * This method should not be overriden by classes extending <code>DistObject</code>.
      *
      * @param distObjectSource The <code>DistObject</code> to import values from.
      * @param importer The <code>Import</code> object built from the source <code>VectorSpace</code> and the target <code>VectorSpace</code>.
      * @param combineMode One of the declared combine mode constants in <code>DistObject</code>.
-     */    
+     */
     public void importValues(DistObject distObjectSource, Import importer, int combineMode) {
         this.numSameGids = importer.getNumSameGids();
         this.remoteLids = importer.getRemoteLids();
@@ -108,8 +108,21 @@ public abstract class DistObject extends JpetraObject {
         
     }
     
-    public void exportValues(DistObject distObjectSource, Export exporter, Comm comm, int combineMode) {
+    public void exportValues(DistObject distObjectSource, Export exporter, int combineMode) {
+        this.numSameGids = exporter.getNumSameGids();
+        this.remoteLids = exporter.getRemoteLids();
+        this.remoteGids = exporter.getRemoteGids();
+        this.permuteToLids = exporter.getPermuteToLids();
+        this.permuteFromLids = exporter.getPermuteFromLids();
+        this.exportLids = exporter.getExportLids();
+        this.exportGids = exporter.getExportGids();
+        this.exportVnodeIds = exporter.getExportVnodeIds();
+        this.distributor = exporter.getDistributor();
         
+        this.combineMode = combineMode;
+        this.distObjectSource = distObjectSource;
+        
+        doTransfer();
     }
     
     /**
@@ -119,7 +132,7 @@ public abstract class DistObject extends JpetraObject {
      * overridden by the calling child class.  <code>doTransfer</code> also calls <code>Distributor.distribute</code> in
      * order to send all exports to the corresponding vnodes and receive all imports from other vnodes.
      * This method should not be overriden by classes extending <code>DistObject</code>.
-     */    
+     */
     public void doTransfer() {
         copyAndPermute(this.distObjectSource, this.numSameGids, this.permuteToLids, this.permuteFromLids, this.combineMode);
         if (this.combineMode == DistObject.ZERO) {
@@ -141,12 +154,8 @@ public abstract class DistObject extends JpetraObject {
      * @param exportLids The local IDs of elements to be exported.
      *
      * @return The packed data that <code>Distributor.distribute</code> will export to other vnodes.
-     */    
-    public Serializable[] packAndPrepare(DistObject distObjectSource, int[] exportGids, int[] exportLids) {
-        JpetraObject.println("ERR", "A fatal error has occurred.  packAndPrepare was not overridden, please contact the developer.");
-        System.exit(1);
-        return null;
-    }
+     */
+    public abstract Serializable[] packAndPrepare(DistObject distObjectSource, int[] exportGids, int[] exportLids);
     
     /**
      * Should not be called directly by the user.
@@ -155,11 +164,8 @@ public abstract class DistObject extends JpetraObject {
      *
      * @param importData The data object returned from <code>Distributor.distribute</code> which contains all elements sent to this vnode.
      * @param combineMode One of the declared combine mode constants in <code>DistObject</code>.
-     */    
-    public void unpackAndCombine(Serializable[] importData, int combineMode) {
-        this.println("ERR", "A fatal error has occurred.  unpackAndCombine was not overridden, please contact the developer.");
-        System.exit(1);
-    }
+     */
+    public abstract void unpackAndCombine(Serializable[] importData, int combineMode);
     
     /**
      * Should not be called directly by the user.
@@ -171,9 +177,6 @@ public abstract class DistObject extends JpetraObject {
      * @param permuteToLids The local IDs of this <code>DistObject</code> that will permute elements from <code>distObjectSource</code> according to the corresponding local IDs in <code>permuteFromLids</code>.
      * @param permuteFromLids The local IDs from <code>distObjectSource</code> that will be permuted to the local IDs in <code>permuteToLids</code> correspndong to this <code>DistObject</code>.
      * @param combineMode One of the declared combine mode constants in <code>DistObject</code>.
-     */    
-    public void copyAndPermute(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids, int combineMode) {
-        this.println("ERR", "A fatal error has occurred.  copyAndPermute was not overridden, please contact the developer.");
-        System.exit(1);
-    }
+     */
+    public abstract void copyAndPermute(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids, int combineMode);
 }

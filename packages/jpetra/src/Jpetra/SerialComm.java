@@ -1,28 +1,28 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //               Java Implementation of the Petra Library
 //                 Copyright (2004) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // This library is free software; you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as
 // published by the Free Software Foundation; either version 2.1 of the
 // License, or (at your option) any later version.
-//  
+//
 // This library is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-//  
+//
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ***********************************************************************
 // @HEADER
 
@@ -39,7 +39,7 @@ import java.io.Serializable;
  */
 public class SerialComm extends JpetraObject implements Comm {
     
-    /** 
+    /**
      * Creates a new instance of SerialComm.
      */
     public SerialComm() {
@@ -47,7 +47,7 @@ public class SerialComm extends JpetraObject implements Comm {
     }
     
     /**
-     * Does nothing.
+     * No-op for a serial communicator.
      */
     public void barrier() {
         // empty
@@ -58,6 +58,7 @@ public class SerialComm extends JpetraObject implements Comm {
      *
      * @param value The int to broadcast to all nodes.
      * @param root The root vnode to gather the ints onto.  This is not used for serial communication and is ignored.
+     *
      * @return <code>value</code> that was passed in
      */
     public int broadcast(int value, int root) {
@@ -69,6 +70,7 @@ public class SerialComm extends JpetraObject implements Comm {
      *
      * @param value The double to broadcast to all nodes.
      * @param root The root vnode to gather the doubles onto.  This is not used for serial communication and is ignored.
+     *
      * @return <code>value</code> that was passed in
      */
     public double broadcast(double value, int root) {
@@ -80,9 +82,10 @@ public class SerialComm extends JpetraObject implements Comm {
      *
      * @param value The Serializable object to broadcast to all nodes.
      * @param root The root vnode to gather the Serializable objects onto.  This is not used for serial communication and is ignored.
+     *
      * @return <code>value</code> that was passed in
      */
-    public java.io.Serializable broadcast(java.io.Serializable value, int root) {
+    public Serializable broadcast(java.io.Serializable value, int root) {
         return value;
     }
     
@@ -90,6 +93,7 @@ public class SerialComm extends JpetraObject implements Comm {
      * Simply returns an array of size one of <code>myDouble</code>.
      *
      * @param myDouble the double to gather
+     *
      * @return <code>myDouble</code>
      */
     public double[] gatherAll(double myDouble) {
@@ -101,6 +105,7 @@ public class SerialComm extends JpetraObject implements Comm {
      * Simply returns <code>myElements</code>.
      *
      * @param myElements the double array to gather
+     *
      * @return <code>myElements</code>
      */
     public double[] gatherAll(double[] myElements) {
@@ -111,6 +116,7 @@ public class SerialComm extends JpetraObject implements Comm {
      * Simply returns <code>myElements</code>.
      *
      * @param myElements the serialized object array to gather
+     *
      * @return <code>myElements</code>
      */
     public java.io.Serializable[] gatherAll(java.io.Serializable[] myElements) {
@@ -121,6 +127,7 @@ public class SerialComm extends JpetraObject implements Comm {
      * Simply returns <code>myElements</code>.
      *
      * @param myElements the int array to gather
+     *
      * @return <code>myElements</code>
      */
     public int[] gatherAll(int[] myElements) {
@@ -131,6 +138,7 @@ public class SerialComm extends JpetraObject implements Comm {
      * Simply returns an array of size one of <code>myInt</code>.
      *
      * @param myInt the int to gather
+     *
      * @return <code>myInt</code>
      */
     public int[] gatherAll(int myInt) {
@@ -147,35 +155,11 @@ public class SerialComm extends JpetraObject implements Comm {
     }
     
     /**
-     * Threads are not supported yet and thus this value returned will always be 1.
-     * @return 1
-     */
-    public int getNumMyThreads() {
-        return 1;
-    }
-    
-    /**
-     * Since threads are not supported this value will always be one.
-     * @return 1
-     */
-    public int getNumThreads() {
-        return 1;
-    }
-    
-    /**
      * Since this is a serial implementation of <code>comm</code> the value returned will always be 1.
      * @return 1
      */
     public int getNumVnodes() {
         return 1;
-    }
-    
-    /**
-     * Always returns 0 since threads are not yet implemented.
-     * @return 0
-     */
-    public int getThreadId() {
-        return 0;
     }
     
     /**
@@ -241,18 +225,11 @@ public class SerialComm extends JpetraObject implements Comm {
     }
     
     /**
-     * Not implemeted.
+     * No-op for a serial communicator.
+     *
      * @param newVnodeID new vnode ID for <code>this</code vnode
      */
     public void setMyVnodeID(int newVnodeID) {
-        // empty
-    }
-    
-    /**
-     * Not implemented.
-     * @param newThreadID new thread ID for <code>this</code thread
-     */
-    public void setThreadID(int newThreadID) {
         // empty
     }
     
@@ -276,31 +253,29 @@ public class SerialComm extends JpetraObject implements Comm {
         return partialSums;
     }
     
-    /**
-     * Not yet implemented.
-     */
-    public void threadBarrier() {
-        // empty
-    }
-
-    public Directory createDirectory(VectorSpace vectorSpace) {
-        return new BasicDirectory(vectorSpace);
-    }
-    
     public int[][] gatherAll2dArray(int[] myElements) {
+        int[][] out = new int[1][];
+        out[0] = myElements;
+        return out;
     }
     
+    /*
+     * No-op for a serial communicator.
+     */
     public void send(Serializable[] exportObject, int destinationVnode) {
         // empty
     }
     
+    /**
+     * No-op for a serial communicator.
+     */
     public void send(int[] exportObject, int destinationVnode) {
         // empty
     }
     
-    public void setupReceives(int numReceives) {
-    }
-    
+    /**
+     * No-op for a serial communicator.
+     */
     public Serializable receive(int senderId) {
         return null;
     }
@@ -319,7 +294,23 @@ public class SerialComm extends JpetraObject implements Comm {
         return out;
     }
     
+    /**
+     * No-op for a serial communicator.
+     */
     public void send(Serializable exportObject, int destinationVnode) {
     }
     
+    /**
+     * No-op for a serial communicator.
+     */
+    public void send(double[] exportObject, int destinationVnode) {
+    }
+    
+    public Distributor createDistributor() {
+        return new SerialDistributor();
+    }
+    
+    public Directory createDirectory(VectorSpace vectorSpace) {
+        return new BasicDirectory(vectorSpace);
+    }
 }

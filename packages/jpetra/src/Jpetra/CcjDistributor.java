@@ -239,4 +239,8 @@ public class CcjDistributor extends JpetraObject implements Distributor {
     public int[] getExportVnodeIds() {
         return this.exportVnodeIds;
     }
+    
+    class plan {
+                
+    }
 }

@@ -55,7 +55,6 @@ public class CisMatrix extends DistObject {
         this.filled = false;
         this.maxSecondaryId = 0;
         this.primaryVectorSpace=primaryVectorSpace;
-        //this.graph = new Graph(this.primaryVectorSpace);
         this.rowOriented = rowOriented;
         this.OuterTree = new JpetraTreeMap();
     }
@@ -191,6 +190,11 @@ public class CisMatrix extends DistObject {
     }
     
     public void scale(double scaler) {
+        if (!this.filled) {
+            this.println("FATALERR", "You must call fillComplete() before calling scale(double scaler).");
+            System.exit(0);
+        }
+        
         for(int i=0; i < this.doubleValues.length; i++) {
             this.doubleValues[i] *= scaler;
         }
@@ -200,7 +204,9 @@ public class CisMatrix extends DistObject {
         this.println("STD", "CisMatrix.printout() is starting...");
         if (!filled) {
             this.print("ERR", "You must call fillComplete() before calling printOut(String iostream)");
+            return;
         }
+        
         int i=0;
         //this.println("STD", "this.numEntries.length=" + numEntries.length);
         for(int row=0; row < this.numEntries.length; row++) {
