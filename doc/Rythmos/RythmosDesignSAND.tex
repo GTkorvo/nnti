@@ -261,7 +261,7 @@ considered optional.
   {}\item implicit Runge Kutta (one-step) \cite{IRKMethods}.
   {}\item general predictor-corrector methods.
   {}\item discontinuous-Galerkin in time \cite{DGTime}.
-  {}\item finite-element in time \cite{FETime}
+  {}\item continuous-Gelerkin in time \cite{CGTime}
   \end{enumerate}
 
 {}\item Be compatible with space/time discretizations.
@@ -273,7 +273,7 @@ independent from specific time integration methods.
 
 \end{enumerate}
 
-\section{Mathematical Formulation of DAE/ODE for DAE/ODE Solvers}
+\section{Mathematical Formulation of DAEs/ODEs for Basic Time Steppers}
 \label{rythmos:scn:mathformulation}
 
 Here we describe the basic mathematical form of a general nonlinear DAE (or
@@ -398,9 +398,8 @@ Strong Stability Preserving (SSP) Methods \cite{GottliebShuTadmor,GottliebGottli
 
 \subsubsection{Explicit multi-step methods}
 
-\subsubsection{Explicit ??? methods}
-
 \subsection{Formulation for Implicit Time Steppers for ODEs and DAEs}
+\label{rythmos:sec:implicit-time-steppers}
 
 Here we consider several different classes of implicit time stepping methods.
 For each class of method we show the set of general nonlinear equations that
@@ -430,7 +429,7 @@ $x^*(t_{k+1})\in\mathcal{X}$ is the exact state solution at $t_{k+1}$, and
 $\eta$ is the maximum allowable local truncation error defined by the user.
 
 Even through the time step equation can be solved by a variety of means, a
-large class of DAEs/ODEs can also potentially provide support for a general
+large class of DAEs can also potentially provide support for a general
 Newton-type method for solving these equations and can therefore leverage
 general software for solving such problems (e.g.\ NOX).  The foundation of
 Newton-like methods is the ability to solve linear systems similar to the
@@ -520,11 +519,11 @@ methods.
 \subsubsection{Generalized Theta methods}
 
 The next fairly straightforward class of methods are the so called $\theta$
-(Theta) methods \cite{HairerWanner}.  Theta methods define a time step equation by requiring
-enforcement of the DAE equation at an intermediate time in the range
-$t_{\theta} {}\in [t_k,t_{k+1}]$ where $t_{\theta} = t_k + \theta ( t_{k+1} -
-t_k )$ and $\theta {}\in [0,1]$.  Then, Theta-averaged values for $x$ and $t$
-are then used to form the implicit time step equation
+(Theta) methods \cite{HairerWanner}.  Theta methods define a time step
+equation by requiring enforcement of the DAE equation at an intermediate time
+in the range $t_{\theta} {}\in [t_k,t_{k+1}]$ where $t_{\theta} = t_k + \theta
+( t_{k+1} - t_k )$ and $\theta {}\in [0,1]$.  Then, $\theta$-averaged values
+for $x$ and $t$ are then used to form the implicit time step equation
 %
 \begin{equation}
 f\left( \frac{x_{k+1} - x_{k}}{\Delta t},x_k + \theta ( x_{k+1} - x_{k} ), t_k + \theta \Delta t \right) = 0
@@ -535,9 +534,17 @@ which is then solved for the unknown state $x_{k+1}$.  The values of $\theta =
 0$, $\myonehalf$ and $1$ give the well known forward Euler, midpoint
 rule, and backward Euler methods \cite{HairerWanner}.
 
-{}\textbf{ToDo: Todd, is this correct?  I could not find a specific reference
-for a general DAE but this seems not to be consistent with the midpoint rule
-for ODEs and described in [Burden].}
+The Jacobian for the nonlinear system in (\ref{rythmos:eqn:theta_dae_ne}), with
+$z = x_{k+1}$, is
+%
+\begin{equation}
+\Jac{r}{z}
+= \frac{1}{\Delta t} \Jac{f}{\dot{x}} + \theta \Jac{f}{x},
+\label{rythmos:eqn:M_theta}
+\end{equation}
+%
+which is of general form of the matrix $M$ in (\ref{rythmos:eqn:M}) where
+$\alpha = 1 / \Delta t$ and $\beta = \theta$.
 
 \subsubsection{Trapezoidal Methods}
 
@@ -782,112 +789,111 @@ so.}
 {}\textbf{Todd: Scott Collis mentioned this a something that can be important
 from a variety of standpoints but I don't have any references for this yet.}
 
-\subsubsection{Finite-elements in time }
+\subsubsection{Continuous Gelerkin in time }
 
-\cite{FETime}
+\cite{CGTime}
 {}\textbf{Todd: Scott Collis mentioned this a something that can be important
 from a variety of standpoints but I don't have any references for this yet.}
 
-\subsubsection{Implicit ??? methods}
-
-{}\textbf{Todd: Are there any other implicit methods here?}
-
 %\subsection{General Solution Strategies for Implicit Nonlinear Time Step Equations}
 
-\section{Staggered DAEs/ODEs}
+\section{Staggered DAEs}
 \label{rythmos:sec:staggered-daes}
 
-A typical situation that occurs is when a set of two or more DAEs/ODEs are
-solved in which the solutions are propagated from one to the other.  Here we
-define this type of DAE and show how these can be effectively dealt with.  In
-this section we focus on just two staggered DAEs/ODEs for simplicity but the
-same principles apply to more than two staggered DAEs/ODEs.
+A typical situation that occurs is when a set of two or more DAEs are solved
+in which the solutions are propagated from one to the other.  Here we define
+this type of DAE and show how these can be effectively dealt with.  In this
+section we focus on just two staggered DAEs for simplicity but the same
+principles apply to more than two staggered DAEs.
 
-The model that we will use here is of two DAEs/ODEs where the first DAE
+The model that we will use here is of two DAEs where the first DAE
 %
 \begin{eqnarray}
 %
-c_1(\dot{y}_1(t),y_1(t),t) & = & 0,
-\; t \in \left[ t_0, t_f \right], \label{rythmos:eqn:stag:c1} \\
-y_1(0) & = & y_{0,1}, \label{rythmos:eqn:stag:c1:ic} \\
+f_1(\dot{y}_1(t),x_1(t),t) & = & 0,
+\; t \in \left[ t_0, t_f \right], \label{rythmos:eqn:stag:f1} \\
+x_1(0) & = & x_{0,1}, \label{rythmos:eqn:stag:f1:ic} \\
 %
 \end{eqnarray}
 %
-is solved and who's solution $y_1(t)$is used to define a second set of DAEs of
+is solved and who's solution $x_1(t)$is used to define a second set of DAEs of
 the form
 %
 \begin{eqnarray}
 %
-c_2(\dot{y}_2(t),y_2(t),y_1(t),t) & = & 0,
-\; t \in \left[ t_0, t_f \right], \label{rythmos:eqn:stag:c2} \\
-y_2(0) & = & y_{0,2}(y_1(t_0)), \label{rythmos:eqn:stag:c2:ic}
+f_2(\dot{x}_2(t),x_2(t),x_1(t),t) & = & 0,
+\; t \in \left[ t_0, t_f \right], \label{rythmos:eqn:stag:f2} \\
+x_2(0) & = & x_{0,2}, \label{rythmos:eqn:stag:f2:ic}
 %
 \end{eqnarray}
 %
-which are solved for $y_2(t)$, where $y_1\in\mathcal{Y}_1$,
-$\dot{y}_1\in\mathcal{Y}_1$, $y_2\in\mathcal{Y}_2$,
-$\dot{y}_2\in\mathcal{Y}_2$, $c_1(\dot{y}_1(t),y_1(t),t) {}\in
-{}\mathcal{Y}_1^2 {}\times {}\RE {}\rightarrow {}\mathcal{C}_1$,
-$c_2(\dot{y}_2(t),y_2(t),t) {}\in {}\mathcal{Y}_2^2 {}\times {}\mathcal{Y}_1
-{}\times {}\RE {}\rightarrow {}\mathcal{C}_1$, $y_{0,1}\in\mathcal{Y}_1$, and
-$y_{0,2}(y_1(t)) {}\in {}\mathcal{Y}_1 {}\rightarrow {}\mathcal{Y}_2$.
+which are solved for $x_2(t)$, where $x_1\in\mathcal{X}_1$,
+$\dot{x}_1\in\mathcal{X}_1$, $x_2\in\mathcal{X}_2$,
+$\dot{x}_2\in\mathcal{X}_2$, $f_1(\dot{x}_1,x_1,t) {}\in {}\mathcal{X}_1^2
+{}\times {}\RE {}\rightarrow {}\mathcal{F}_1$, $f_2(\dot{x}_2,x_2,t) {}\in
+{}\mathcal{X}_2^2 {}\times {}\mathcal{X}_1 {}\times {}\RE {}\rightarrow
+{}\mathcal{F}_1$, $x_{0,1}\in\mathcal{X}_1$, $\mathcal{X}_1 {}\in
+{}\RE^{n_{x,1}}$, $\mathcal{X}_2 {}\in {}\RE^{n_{x,2}}$, $\mathcal{F}_1 {}\in
+{}\RE^{n_{x,1}}$, and $\mathcal{F}_1 {}\in {}\RE^{n_{x,2}}$.
 
-These types of two-level staggered DAEs comes up over and over again in the
-following discussion.  Staggered DAEs are used extensively in sensitivity
+These types of two-level staggered DAEs come up over and over again in
+different situations.  Staggered DAEs are used extensively in sensitivity
 computations and show up in other contexts as well such as multi-physics
 solutions.  Note that staggered DAEs, as shown above, are much simpler to
 consider than fully coupled sets of DAEs (i.e.\ where each DAE is dependent on
 the state of the other).  Issues related to fully coupled DAEs are a whole
-other matter entirely.
+other matter entirely and are beyond the scope of this discussion.
 
 The staggered DAEs shown above can be solved in a number of ways.  The first
 way to solve these staggered DAEs is to integrate them more-or-less together
 but to solve for the time-step for
-(\ref{rythmos:eqn:stag:c1})--(\ref{rythmos:eqn:stag:c1:ic}) first and then
+(\ref{rythmos:eqn:stag:f1})--(\ref{rythmos:eqn:stag:f1:ic}) first and then
 solve for the time-step for
-(\ref{rythmos:eqn:stag:c2})--(\ref{rythmos:eqn:stag:c2:ic}) second.  This
-approach requires minimally that the solution for $y_1(t)$ be communicated in
+(\ref{rythmos:eqn:stag:f2})--(\ref{rythmos:eqn:stag:f2:ic}) second.  This
+approach requires minimally that the solution for $x_1(t)$ be communicated in
 some way to the second DAE
-(\ref{rythmos:eqn:stag:c2})--(\ref{rythmos:eqn:stag:c2:ic}).  Just this
+(\ref{rythmos:eqn:stag:f2})--(\ref{rythmos:eqn:stag:f2:ic}).  Just this
 requirement in itself has a number of difficult issues associated with it.  We
 discuss these and other issues in more detail latter, after we discuss the
 second approach.
 
 The second approach for solving the two staggered DAEs is to combine them into
-one implicit DAE of the form in (???) where
+one implicit DAE of the form in
+(\ref{rythmos:eqn:dae})--(\ref{rythmos:eqn:dae:ic}) where
 %
 \begin{eqnarray*}
-x(t) & = & {\bmat{c} y_1(t) \\ y_2(t) \emat} \\
-f(\dot{x}(t),x(t),t) & = & {\bmat{c} c_1(\dot{y}_1(t),y_1(t),t) \\  c_2(\dot{y}_2(t),y_2(t),y_1(t),t) \emat} \\
-x_0 & = & {\bmat{c} y_{0,1} \\ y_{0,2}(y_{0,1}) \emat}
+x & = & {\bmat{c} x_1 \\ x_2 \emat}, \\
+f(\dot{x},x,t) & = & {\bmat{c} f_1(\dot{x}_1,x_1,t) \\  f_2(\dot{x}_2,x_2,x_1,t) \emat}, \\
+x_0 & = & {\bmat{c} x_{0,1} \\ x_{0,2} \emat},
 \end{eqnarray*}
 %
-where $\mathcal{X}=\mathcal{Y}_1\times\mathcal{Y}_2$ is a product vector
-space, and then solve them with a single time stepper algorithm.  Many of the
-implicit time stepper methods described in Section ??? would then need to
-solve the implicit nonlinear system $r(z)=0$ that arises and a Newton-like
-method would require solves with the composite matrix
+and $\mathcal{X}=\mathcal{X}_1\times\mathcal{X}_2$ is a product vector space.
+The combined DAE is then solved using a single time stepper algorithm.  Many
+of the implicit time stepper methods described in
+Section~\ref{rythmos:sec:implicit-time-steppers} would then need to solve the
+implicit nonlinear system $r(z)=0$ that arises and a Newton-like method would
+require solves with the composite matrix
 %
 \begin{equation}
 \alpha \Jac{f}{\dot{x}} + \beta \Jac{f}{x}
 =
 {\bmat{cc}
-\alpha \Jac{c_1}{\dot{y}_1} + \beta \Jac{c_1}{x_1}
+\alpha \Jac{f_1}{\dot{x}_1} + \beta \Jac{f_1}{x_1}
 & 0 \\
-\beta \Jac{c_2}{x_1}
-& \alpha \Jac{c_2}{\dot{y}_2} + \beta \Jac{c_2}{x_2} \\
+\beta \Jac{f_2}{x_1}
+& \alpha \Jac{f_2}{\dot{x}_2} + \beta \Jac{f_2}{x_2} \\
 \emat}.
 \end{equation}
 %
 This block matrix is lower block triangular with nonsingular blocks along the
 diagonal which are the customary matrices for each individual DAE.  The first
 potential problem with the above block matrix is the lower left block $\beta
-(\jac{c_2}{x_1})$ which is not required by any of the individual DAE solvers
+(\jac{f_2}{x_1})$ which is not required by any of the individual DAE solvers
 (but is required by a direct sensitivity solver, see Section ???).  Therefore,
 an exact Newton method requires a type of derivative computation that is not
 required when the DAEs are solved individually.  However, in an iterative
-method, only the action of $(\jac{c_2}{x_1}) V$ are to arbitrary multivectors
-$V\in\mathcal{C}_2|\RE^m$ are needed which can be approximated using
+method, only the action of $(\jac{f_2}{x_1}) V$ to arbitrary multivectors
+$V\in\mathcal{X}_2|\RE^m$ are needed which can be approximated using
 directional finite differences.
 
 There are many different issues to consider when comparing and contrasting
@@ -898,12 +904,12 @@ these two basic approaches for solving staggered DAEs:
 {}\item {}\textbf{Communication of state information}: The one big advantage
 of the combined DAE approach using a single time stepper algorithm is that the
 time stepper itself can easily and transparently handle the communication of
-$y_1$ from the first DAE to the second DAE.  For example, consider a
-higher-level RK method where stage derivatives must be computed a Gauss
-points.  In a single time stepper method, this is a simple matter, but is more
+$x_1$ from the first DAE to the second DAE.  For example, consider a
+higher-level RK method where stage derivatives must be computed at Gauss
+points.  In a single time stepper method this is a simple matter, but is more
 difficult to handle when using two different time stepping algorithms (which
 may have some data encapsulation).  This issue can be resolved if a general
-interpolation mechanism where exposed by a time stepper where $y_1(t)$ at any
+interpolation mechanism where exposed by a time stepper where $x_1(t)$ at any
 time in the time-step interval where easily accessible.
 %
 {}\item {}\textbf{Step-size and error control}: When the combined DAE is
@@ -913,7 +919,7 @@ desirable.  However, when the two DAEs are integrated separately using two
 different time stepping methods, these two methods may not make the same
 decisions as to the step sizes to take and this can cause a problem for a
 variety of standpoints.  However, if the first time stepper where driven by
-the interpolation interface for extracting $y_1(t)$ as called by the second
+the interpolation interface for extracting $x_1(t)$ as called by the second
 time integrator, then steps-size control would not be an issue.  In addition,
 handling the errors separately may be an advantage since the these two DAEs
 may have different solution error requirements.
@@ -935,16 +941,15 @@ first DAE is nonlinear and small, but the second DAE is linear but much larger
 and more expensive to solve than the first, then a combined Newton approach
 will result in much more expense than if the two DAE time steps are computed
 independently.  However, if the first DAE is inexpensive and well-conditioned
-compared to the second DAE, then there is little to no extra expense in
-solving the DAEs as one large combined DAE.
+compared to the nonlinear second DAE, then there is little to no extra expense
+in solving the DAEs as one large combined DAE.
 %
 {}\item {}\textbf{State derivatives}: As mentioned above, the combined DAE
 approach using a single Newton method requires derivative computations
-involving $(\jac{c_2}{x_1})$ which are not required when solving the DAEs
-separately.
+involving $(\jac{f_2}{x_1})$ which are not required when solving the DAEs
+separately.  However, sensitivity methods do require access to this operator.
 %
 \end{itemize}
-%
 
 \section{Transient Sensitivity Computations}
 \label{rythmos:sec:trans-sens}
@@ -1401,7 +1406,7 @@ form
 +  \Jac{c}{y}^T \Lambda + \Jac{g}{y}^T
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{rythmos:app:eqn:sens:aug-adj-de} \\
-\bar{\Lambda} + \Jac{c}{\dot{y}}^T
+\bar{\Lambda} + \Jac{c}{\dot{y}}^T \Lambda
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{rythmos:app:eqn:sens:aug-adj-ae} \\
 \left. \bar{\Lambda} \right|_{t=t_f}
@@ -1668,8 +1673,8 @@ p$ in (\ref{rythmos:eqn:sens:c}))
 {}\item Transient parameters for sensitivity computations (i.e.\ $u_2 = v(t)$
 in (\ref{rythmos:eqn:sens:c}))
 %
-{}\item Coupling variables between different DAEs (e.g.\ $u_1 = y_1$ in
-(\ref{rythmos:eqn:stag:c2}))
+{}\item Coupling variables between different DAEs (e.g.\ $u_1 = x_1$ in
+(\ref{rythmos:eqn:stag:f2}))
 %
 {}\item Continuation parameters (i.e.\ to aid in the solution of the implicit
 nonlinear time step equations $r(z)=0$ in (\ref{rythmos:eqn:r}) or in the
@@ -1772,10 +1777,10 @@ $\beta\in\RE$ evaluate an abstract (nonsingular) object
 \]
 Note the special cases of $(\alpha,\beta)=(1,0)$ and $(\alpha,\beta)=(0,1)$
 allow a client to access the operators $(\jac{c}{\dot{y}})$ and $(\jac{c}{y})$
-separately.  Of course the operator returned for $M = \jac{c}{dot{y}}$ for the
-case of $(\alpha,\beta)=(1,0)$ is not guaranteed to be nonsingular.  Only
-operators $M$ for reasonable finite nonzero values of $\alpha$ and $\beta$ are
-guaranteed to be nonsingular.
+separately.  Of course the operator returned for $M = \jac{c}{\dot{y}}$ for
+the case of $(\alpha,\beta)=(1,0)$ is only guaranteed to be nonsingular for an
+ODE.  For general DAEs, only operators $M$ for reasonable finite nonzero
+values of $\alpha$ and $\beta$ are guaranteed to be nonsingular.
 %
 {}\item Allow reuse of factorizations, preconditioners, and other such objects
 form some previously created operator $M_{\mbox{old}}$ in the reformation of
@@ -1850,7 +1855,7 @@ $l=1\ldots{}N_u$) and some $U_l\in\mathcal{U}_l|\RE^m$ compute the action of
 (\{u_l\},U_l) {}\rightarrow \Jac{y_0}{u_l} U_l \in \mathcal{Y}|\RE^m,
 \; \mbox{for} \; l = 1 {}\ldots N_u,
 \]
-or alternatively evaluate the sensitivity themselves as a multi-vector
+or alternatively evaluate the sensitivities themselves as a multi-vector
 \[
 \{u_l\} {}\rightarrow \Jac{y_0}{u_l} \in \mathcal{Y}|\mathcal{U}_l,
 \; \mbox{for} \; l = 1 {}\ldots N_u.
@@ -1870,9 +1875,24 @@ or alternatively compute the sensitivities themselves as a multi-vector
 \; \mbox{for} \; l = 1 {}\ldots N_u.
 \]
 
-{}\item Auxiliary response function direct sensitivities: Given selections for
-$y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ ,
-and some $U_l\in\mathcal{U}_l|\RE^m$ compute the action of
+{}\item Auxiliary response function state direct sensitivities: Given
+selections for $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for
+$l=1\ldots{}N_u$), $t\in\RE$ , and some $V\in\mathcal{Y}|\RE^m$
+compute the action of
+\[
+(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{y} V \in \mathcal{G}|\RE^m,
+\; \mbox{for} \; j = 1 \ldots N_g
+\]
+or alternatively compute the sensitivities themselves as a multi-vector
+\[
+(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{y} \in \mathcal{G}|\mathcal{Y},
+\; \mbox{for} \; j = 1 \ldots N_g.
+\]
+
+{}\item Auxiliary response function auxiliary parameter direct
+sensitivities: Given selections for $y\in\mathcal{Y}$,
+$u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ , and some
+$U_l\in\mathcal{U}_l|\RE^m$ compute the action of
 \[
 (y,\{u_l\},U_l) {}\rightarrow \Jac{g_j}{u_l} U_l \in \mathcal{G}|\RE^m,
 \; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g
@@ -1967,16 +1987,30 @@ or alternatively compute the sensitivities themselves as a multi-vector
 \; \mbox{for} \; l = 1 {}\ldots N_u.
 \]
 
-{}\item Auxiliary response function adjoint sensitivities: Given selections for
+{}\item Auxiliary response function state adjoint sensitivities: Given selections for
 $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ ,
 and some $V\in\mathcal{G}_j|\RE^m$ compute the action of
 \[
-(y,\{u_l\},U_l) {}\rightarrow \Jac{g_j}{u_l}^T V \in \mathcal{U}_l|\RE^m,
+(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{y}^T V \in \mathcal{Y}|\RE^m,
+\; \mbox{for} \; j = 1 \ldots N_g
+\]
+or alternatively compute the sensitivities themselves as a multi-vector
+\[
+(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{y} \in \mathcal{G}|\mathcal{Y},
+\; \mbox{for} \; j = 1 \ldots N_g.
+\]
+
+{}\item Auxiliary response function auxiliary parameter adjoint
+sensitivities: Given selections for $y\in\mathcal{Y}$,
+$u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ , and some
+$V\in\mathcal{G}_j|\RE^m$ compute the action of
+\[
+(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{u_l}^T V \in \mathcal{U}_l|\RE^m,
 \; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g
 \]
 or alternatively compute the sensitivities themselves as a multi-vector
 \[
-(y,\{u_l\},U_l) {}\rightarrow \Jac{g_j}{u_l} \in \mathcal{G}|\mathcal{U}_l,
+(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{u_l} \in \mathcal{G}|\mathcal{U}_l,
 \; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g.
 \]
 
@@ -2096,8 +2130,8 @@ for the first and second DAEs.  This allows different time stepping algorithms
 tailored to each set of DAEs and result in an overall better time integration
 scheme.  This however, requires that the second DAE be able to read the state
 from the first DAE in a general way.  If the first time stepper algorithm can
-provide an interpolation buffer that can be queried for $y_1(t)$ and/or
-$\dot{y}_1(t)$ by the second DAE, then the two time stepper algorithms can be
+provide an interpolation buffer that can be queried for $x_1(t)$ and/or
+$\dot{x}_1(t)$ by the second DAE, then the two time stepper algorithms can be
 completely decoupled.  Note that the interpolation buffer needed in this use
 case is likely much shorter than would be needed for an interpolation of the
 state solution as required by an adjoint time integrator.
@@ -2279,7 +2313,250 @@ varying behavior of circuit equations.
 %
 \appendix
 
-\section{Derivation of transient sensitivity computations}
+\section{Notation}
+
+Here the basic notational convetions that are used throught this
+document are defined and explained.
+
+\subsection{Basic Vector and Linear Operator Notation}
+
+Here we define the basic notational constructs that are used in this document.
+First, all vectors, multi-vectors and linear operators have associated vector
+spaces that must be considered.  Suppose we have the vector spaces
+$\mathcal{X}$ and $\mathcal{Y}$.  The vectors $x\in\mathcal{X}$ and
+$y\in\mathcal{Y}$ are said to be members of these vector spaces.  A linear
+operator $A$ that maps vectors from the {}\textit{domain} vector space
+$\mathcal{X}$ to the {}\textit{range} vector space $\mathcal{Y}$ is denoted
+$A\in\mathcal{Y}|\mathcal{X}$.  In some contexts, vectors themselves can be
+used as linear operators.  For example, the vector $x\in\mathcal{X}$ can be
+thought of as the linear operator $x\in\mathcal{X}|\RE$ an it's adjoint can be
+applied to another vector $v\in\mathcal{X}$ as $x^T v {}\in\RE$ which is
+exaclty equivalent to the definition of the space $\mathcal{X}$'s scalar
+product
+%
+\[
+x^T v \equiv \left< x, v \right>_{\mathcal{X}}.
+\]
+%
+The convension of interpreting $x^T$ as a linear operator that performs the
+operation of scalar product greatly simplifies many different formulations.
+
+Note that in general that the adjoint operator $A^T\in\mathcal{Y}|\mathcal{X}$
+must agree with its non-transposed operator $A\in\mathcal{Y}|\mathcal{X}$ by
+the relation
+%
+\[
+v^T ( A u ) = \left< v, A u \right>_{\mathcal{F}} = \left< A^T v, u \right>_{\mathcal{X}} = u^T (A^T v)
+\]
+%
+where $u\in\mathcal{X}$, $v\in\mathcal{Y}$, and $<.,.>_{\mathcal{X}}$ and
+$<.,.>_{\mathcal{Y}}$ are the scalar products associated with the vector
+spaces $\mathcal{X}$ and $\mathcal{Y}$ respectively.
+
+A multivector $V\in\mathcal{X}|\RE^{m}$ is a special kind of linear operator
+in that its domain space is simply the $m$-dimensional Euclidean space and its
+columns are generally considered to be dense vectors.  In some contexts,
+multivectors appear as arguments of a linear operator
+$Y\in\mathcal{Y}|\mathcal{X}$ such as
+%
+\[
+Y = A X
+\]
+%
+where $X\in\mathcal{X}|\RE^m$ and $Y\in\mathcal{Y}|\RE^m$.  This dual nature
+of a multivector (i.e.\ both as a set of concatonated vectors for arguments to
+other linear operators and as linear operators) greatly simplifies the
+notation of various formulations.
+
+\subsection{Partial Derivative Operator Notation}
+
+The purpose of this section is to carefully define various partial derivative
+operators that arise in the context of sensitivity an other computations.
+These objects primarily will be defined based on what they can do when
+combined with other vector and multi-vector objects.  Note that a
+multi-vector, in addition to being input and output data from these linear
+operations, is itself a linear operator and therefore all of the same
+principles apply.
+
+In this section we will deal with various partial derivative operator objects
+for the vector function
+%
+\begin{equation}
+(x,y) \rightarrow f(x,y) \in \mathcal{X} \times \mathcal{Y} \rightarrow \mathcal{F}
+\end{equation}
+%
+where $x\in\mathcal{X}$, $y\in\mathcal{Y}$, $\mathcal{X}\subseteq\RE^{n_x}$,
+$\mathcal{Y}\subseteq\RE^{n_y}$, and $\mathcal{F}\subseteq\RE^{n_f}$.  Some of
+the second derivative computations will only be defined for the case of
+$n_f=1$ (i.e.\ $\mathcal{F}=\RE$).
+
+{}\textit{Remarks on notation:} The $i^{\mbox{th}}$ component of a vector $x$
+is denoted $x_{(i)}$ and the $j^{\mbox{th}}$ component vector function of
+$f(x,y)$ is denoted $f_{(j)}(x,y)$ or simply $f_{(j)}$.
+
+For the purpose of defining various multi-vector operations we define another
+vector space $\mathcal{S}\subset\RE^{n_s}$.
+
+Each of these linear operations are defined in component-wise form consistent
+with Euclidean vector spaces.  The extention to arbitary vector spaces (with
+arbitrary scalar products) should be strightforward.
+
+\subsubsection{First-Order (Jacobian) Operators}
+
+We represent the first derivative operator of $f(x,y)$ evaluated at some point
+$(x,y)$ as
+%
+\begin{equation}
+\Jac{f}{x}\in\mathcal{F}|\mathcal{X},
+\end{equation}
+%
+which defines a linear operator.  An object of this type if often refered to
+as a matrix and in componentwise form is
+%
+\begin{equation}
+\left(\Jac{f}{x}\right)_{(i,j)} = \Jac{f_{(i)}}{x_{(j)}} \in\RE, \; i = 1 \ldots n_f, \; j = 1 \ldots n_x.
+\end{equation}
+
+Note that here $\partial x$ can represent $\partial x$ or $\partial y$ in
+which case $n_x$ and $\mathcal{X}$ is replaced with $n_y$ and $\mathcal{Y}$
+respectively.
+
+The object $\jac{f}{x}$ defines the following linear operations:
+%
+\begin{itemize}
+%
+{}\item \textbf{Jacobian forward operator-vector product}
+%
+\begin{eqnarray*}
+u & = & \Jac{f}{x} v : \mathcal{X} \rightarrow \mathcal{F} \\
+& \Rightarrow & \\
+u_{(i)} & = & \sum_{j=1}^{n_x} \Jac{f_{(i)}}{x_{(j)}} v_{(j)}, \; i = 1 \ldots n_f,
+\end{eqnarray*}
+%
+where $v\in\mathcal{X}$, and $u\in\mathcal{F}$.
+%
+{}\item \textbf{Jacobian forward operator-mutivector product}
+%
+\begin{eqnarray*}
+U & = & \Jac{f}{x} V : \mathcal{X}|\mathcal{S} \rightarrow \mathcal{F}|\mathcal{S} \\
+& \Rightarrow & \\
+U_{(i,j)} & = & \sum_{k=1}^{n_x} \Jac{f_{(i)}}{x_{(k)}} V_{(k,j)}, \; i = 1 \ldots n_f, \; j = 1 \ldots n_s,
+\end{eqnarray*}
+%
+where $V\in\mathcal{X}|\mathcal{S}$, and $V\in\mathcal{F}|\mathcal{S}$.
+%
+{}\item\textbf{Jacobian adjoint operator-vector product}
+%
+\begin{eqnarray*}
+u & = & \Jac{f}{x}^T v : \mathcal{F} \rightarrow \mathcal{X} \\
+& \Rightarrow & \\
+u_{(i)} & = & \sum_{j=1}^{n_f} \Jac{f_{(j)}}{x_{(i)}} v_{(j)}, \; i = 1 \ldots n_x,
+\end{eqnarray*}
+%
+where $v\in\mathcal{F}$, and $u\in\mathcal{X}$.
+%
+{}\item\textbf{Jacobian adjoint operator-multivector product}
+%
+\begin{eqnarray*}
+U & = & \Jac{f}{x}^T V : \mathcal{F}|\mathcal{S} \rightarrow \mathcal{X}|\mathcal{S} \\
+& \Rightarrow & \\
+u_{(i,j)} & = & \sum_{k=1}^{n_x} \Jac{f_{(k)}}{x_{(i)}} v_{(k,j)}, \; i = 1 \ldots n_s, \; j = 1 \ldots n_f,
+\end{eqnarray*}
+%
+where $V\in\mathcal{F}|\mathcal{S}$, and $U\in\mathcal{X}|\mathcal{S}$.
+%
+\end{itemize}
+
+\subsubsection{Second-Order (Hessian) Operators}
+
+We represent the second derivative operator of $f(x,y)$ evaluated at
+some point $(x,y)$ as
+%
+\begin{equation}
+\HessTwo{f}{x}{y}\in\mathcal{F}|\mathcal{X}|\mathcal{Y},
+\end{equation}
+%
+which defines a three-dimensional linear object and in componentwise form is
+%
+\begin{equation}
+\left(\Jac{f}{x}\right)_{(i,j,k)} = \Jac{f_{(i)}}{x_{(j)}}{y_{(k)}} \in\RE,
+  \; i = 1 \ldots n_f, \; j = 1 \ldots n_y, \; , \; k = 1 \ldots n_x.
+\end{equation}
+
+In these second derivative computations, the partials $(\partial x {}\partial
+y)$ may represent $(\partial x {}\partial x)$, $(\partial y {}\partial x)$,
+$(\partial x {}\partial y)$ or $(\partial y {}\partial y)$.
+
+For the general case $n_f\ge{}1$, this object defines the following
+kinds of linear operations:
+%
+\begin{itemize}
+%
+{}\item \textbf{Adjoined Hessian forward operator-vector product}
+%
+\begin{eqnarray*}
+u & = & w^T \HessTwo{f}{x}{y} v : \mathcal{Y} \rightarrow \mathcal{X} \\
+& \Rightarrow & \\
+u_{(i)} & = & \sum_{j=1}^{n_y} \sum_{k=1}^{n_f} w_{(k)}\HessTwo{f_{(k)}}{x_{(i)}}{y_{(j)}} v_{(j)},
+   \; i = 1 \ldots n_x,
+\end{eqnarray*}
+%
+where $v\in\mathcal{Y}$, $w\in\mathcal{F}$, and $u\in\mathcal{X}$.
+%
+{}\item \textbf{Adjoined Hessian forward operator-multivector product}
+%
+\begin{eqnarray*}
+U & = & w^T \HessTwo{f}{x}{y} V : \mathcal{Y}|\mathcal{S} \rightarrow \mathcal{X}|\mathcal{S} \\
+& \Rightarrow & \\
+U_{(i,j)} & = & \sum_{k=1}^{n_y} \sum_{l=1}^{n_f} w_{(l)}\HessTwo{f_{(l)}}{x_{(i)}}{y_{(k)}} V_{(k,j)},
+   \; i = 1 \ldots n_x,
+\end{eqnarray*}
+%
+where $V\in\mathcal{Y}|\mathcal{S}$, $w\in\mathcal{F}$, and $U\in\mathcal{X}|\mathcal{S}$.
+%
+\end{itemize}
+
+When $n_f=1$ then
+%
+\begin{equation}
+\HessTwo{f}{x}{y}\in\mathcal{X}|\mathcal{Y},
+\end{equation}
+%
+and the following linear operations are defined:
+%
+\begin{itemize}
+%
+{}\item \textbf{Hessian forward operator-vector product ($n_f=1$ only)}
+%
+\begin{eqnarray*}
+u & = & \HessTwo{f}{x}{y} v : \mathcal{Y} \rightarrow \mathcal{X} \\
+& \Rightarrow & \\
+u_{(i)} & = & \sum_{j=1}^{n_y} \HessTwo{f}{x_{(i)}}{y_{(j)}} v_{(j)}, \; i = 1 \ldots n_x,
+\end{eqnarray*}
+%
+where $v\in\mathcal{Y}$, and $u\in\mathcal{X}$.
+%
+{}\item \textbf{Hessian forward operator-multivector product ($n_f=1$ only)}
+%
+\begin{eqnarray*}
+U & = & \HessTwo{f}{x}{y} V : \mathcal{Y}|\mathcal{S} \rightarrow \mathcal{X}|\mathcal{S} \\
+& \Rightarrow & \\
+U_{(i,j)} & = & \sum_{k=1}^{n_y} \HessTwo{f}{x_{(i)}}{y_{(k)}} V_{(k,j)}, \; i = 1 \ldots n_x,
+\end{eqnarray*}
+%
+where $V\in\mathcal{Y}|\mathcal{S}$, and $U\in\mathcal{X}|\mathcal{S}$.
+%
+\end{itemize}
+
+Note that for the $n_f=1$ case the adjoint object is defined as
+%
+\begin{equation}
+\HessTwo{f}{x}{y}^T = \HessTwo{f}{y}{x}
+\end{equation}
+%
+and the associated linear operations defined above directly follow.
+
+\section{Derivation of Transient Sensitivity Computations}
 \label{rythmos:app:sens-derivations}
 
 Here we derive direct and adjoint sensitivity methods for general DAEs as
@@ -2787,7 +3064,7 @@ Finally, by comparing (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v-final})
 with (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v}) it is clear that
 %
 \begin{equation}
-\Jac{\hat{d}}{v(t)} = \Lambda(t) \Jac{c}{v(t)} + \Jac{g}{v(t)}, \; t\in[t_0,t_f]
+\Jac{\hat{d}}{v(t)} = \Lambda(t)^T \Jac{c}{v(t)} + \Jac{g}{v(t)}, \; t\in[t_0,t_f]
 \label{rythmos:apdx:eqn:sens:d_d_hat_d_v_t-final}
 \end{equation}
 %
@@ -2839,10 +3116,10 @@ unstable while the {}\textit{augmented adjoint system}
 %
 \begin{eqnarray}
 \frac{d}{dt}\left( \bar{\Lambda} \right)
-+  \Jac{c}{y}^T \Lambda + \Jac{g}{y}^T \Lambda
++  \Jac{c}{y}^T \Lambda + \Jac{g}{y}^T
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{rythmos:apdx:eqn:sens:aug-adj-de} \\
-\bar{\Lambda} + \Jac{c}{\dot{y}}^T
+\bar{\Lambda} + \Jac{c}{\dot{y}}^T \Lambda
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{rythmos:apdx:eqn:sens:aug-adj-ae} \\
 \left. \bar{\Lambda} \right|_{t=t_f}
@@ -2868,8 +3145,8 @@ discretizations).
 {}\item Ross: Include requirements for explicit time integrators for direct
 and adjoint sensitivitity systems.  Describe how AD can easily be used to
 provide such evaluations.  Just because an application can not use an implicit
-time integration method is not excuse for not supporting direct and adjoint
-sensitivity methods, especially if continuous sensitivities are to be<
+time integration method is no excuse for not supporting direct and adjoint
+sensitivity methods, especially if continuous sensitivities are to be
 considered.
 %
 {}\item Ross: Derive reduced Hessian-vector products for sensitivity
@@ -2879,11 +3156,14 @@ computations.  This is needed for the time domain decomposition work.
 {}\item Ross: Get formulations for stability and eigen problems and make sure
 requirements are covered.
 %
-{}\item Ross: Write out adjoint formulations for the basic forward time
-integration methods (do this once we start actually implementing adjoint
-solvers) such that result in discrete adjoints in time.  Idea, record time
-steps of forward calculation to reuse in adjoint calculation if discrete
-adjoints in time are really needed.
+{}\item Ross: Write out adjoint formulations for the basic forward
+time integration methods (do this once we start actually implementing
+adjoint solvers) such that result in discrete adjoints in time.  Idea,
+record time steps of forward calculation to reuse in adjoint
+calculation if discrete adjoints in time are really needed.
+%
+{}\item Ross: Work out more carefully what the component forms of the
+linear operators in Appendix A are.
 %
 %{}\item Ross: Look into issue of the use of scalar products and implicit ODEs that
 %avoids explicit inverses of the mass matrix... RAB, I asked Scott Collis about this
@@ -2895,9 +3175,9 @@ adjoints in time are really needed.
 {}\item Ross or Todd: Add formulation for some popular explicit time stepping
 methods.
 %
-{}\item Todd: Add formulation for implicit ``generalized alpha'' methods.
+% {}\item Todd: Add formulation for implicit ``generalized alpha'' methods. Done, 2/23/2005
 %
-{}\item Todd: Add formulation for implicit ``theta'' methods.
+% {}\item Todd: Add formulation for implicit ``theta'' methods. Done, 2/24/2004
 %
 {}\item Ross or Todd: Add the ODE formulation for Premo and what transient (or
 pseudo-transient) calculations that Premo performs.
@@ -2906,6 +3186,17 @@ pseudo-transient) calculations that Premo performs.
 requirements just by specifying the weak form of the state equation and by
 specifying distributed and terminal response functions.  Sundance should be
 able to produce all of the discretized derivative objects automatically.
+%
+{}\item Ross: Add a discussion of parareal and how it can speed up the
+computation and how it can be supported by general time integrators.
+%
+{}\item Ross: Add sections on linearized state, adjoint and gradient
+computations and describe how to use them to compute Hessian-vector products.
+Also, show the relationship between the linearized state equation and the
+adjoint equation and how to test one against the other.
+%
+{}\item Ross: Add a section on a general formulations for state, linearized
+state and adjoint DAEs that are amiable to direct software implementations.
 %
 \end{itemize}
 
