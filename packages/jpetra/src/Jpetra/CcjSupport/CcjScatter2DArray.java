@@ -1,5 +1,4 @@
-/*
- * Copyright 2001 Vrije Universiteit, The Netherlands.
+/* based on IntArray.java which is Copyright 2001 Vrije Universiteit, The Netherlands.
  * For full copyright and restrictions on use see the file COPYRIGHT in the
  * top level of the CCJ distribution.
  */
@@ -110,7 +109,7 @@ class CcjScatter2DArray implements Partitionable {
 
     public String toString() {
 
-	return "IntArray([" + array.length + "])";
+	return "IntArray([" + array.length + "][])";
 
     }
 

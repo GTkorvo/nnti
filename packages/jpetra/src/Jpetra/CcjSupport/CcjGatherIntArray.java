@@ -121,6 +121,10 @@ public class CcjGatherIntArray implements Partitionable {
         return returnResults;
     }
     
+    public int[][] getAllElements2dArray() {
+        return this.allElements;
+    }
+    
     /**
      * Starts at <code>allElements[index]</code> and decraments down allElements adding all second degree values of
      * <code>allElements</code> to the second degree values of <code>allElements[index]</code>.
