@@ -16,7 +16,7 @@ RICHARD B. LEHOUCQ \\
 KEVIN R. LONG \\
 ROGER P. PAWLOWSKI \\
 ERIC T. PHIPPS \\
-ANDREW J. SALINGER \\
+ANDREW G. SALINGER \\
 HEIDI K. THORNQUIST \\
 RAY S. TUMINARO \\
 JAMES M. WILLENBRING \\
@@ -25,6 +25,7 @@ Sandia National Laboratories \\
 and \\
 KENDALL S. STANLEY \\
 Oberlin College}
+
 
 \begin{abstract}
 The Trilinos Project is an effort to facilitate the design, development, 
@@ -44,20 +45,26 @@ Packages exist underneath
 the Trilinos top level, which provides a common look-and-feel,
 including configuration, documentation, licensing, and bug-tracking.
 
-Here we present the overall Trilinos design.  We describe how our use of 
-abstract interfaces with default concrete implementations of these interfaces 
-provides us with full functionality and flexibility.  Finally, we discuss the 
+Here we present the overall Trilinos design, describing our use of 
+abstract interfaces and default concrete implementations.  We discuss the 
 services that Trilinos provides to a prospective package and how these services 
-are used by various packages.
+are used by various packages. We also illustrate how packages can be
+combined to rapidly develop new algorithms.  Finally, we discuss how
+Trilinos facilitates high-quality software engineering practices that
+are increasingly required from simulation software.
 \end{abstract}
 
-\category{...}{...}{...}
+\begin{document}
+
+\category{G.1.3}{Numerical Analsys}{Numerical Linear Algebra--sparse
+and very large systems}
+\category{G.4}{Mathematics of Computing}{Mathematical Software}
+\category{D.1.5}{Programming Techniqes}{Object-Oriented Programming}
 
 \terms{Algorithms, Design, Performance}
 
-\keywords{Object-Orientation, Vectors, Interfaces, ...}
+\keywords{Software Engineering, Interfaces}
 
-\begin{document}
 
 \begin{bottomstuff}
 Sandia is a multiprogram laboratory operated by Sandia Corporation, a
@@ -113,7 +120,7 @@ to develop new parallel solvers has been
 substantially reduced, because our common infrastructure provides an good 
 starting point.  Furthermore, many applications are standardizing on the 
 Trilinos matrix and vector classes.  As a result, these applications
-have access to all Trilinos solver components without  
+have access to all Trilinos solver packages without  
 interface modifications. 
 
 The Trilinos project encompasses a variety of efforts that are to some
@@ -244,7 +251,7 @@ copy and modify the new\_package web source for use with a new
 Trilinos package.
 \end{itemize}
 
-{\bf Note:}It is worth mentioning that the Trilinos new\_package package can be
+{\bf Note:} It is worth mentioning that the Trilinos new\_package package can be
 useful independent of Trilinos itself.  Like all Trilinos packages,
 new\_package is self-contained, and can be configured and
 built independently from the rest of Trilinos.  Similarly, the
@@ -308,7 +315,7 @@ solvers and can bring multiple solvers to bear on a single problem.
 \section{Common Tools Package: Teuchos}
 
 As the number of Trilinos packages grows, we have developed the need
-for a common collection of tools that can be leverages across all
+for a collection of tools that can be leverages across all
 packages.  The Teuchos package is a relatively recent addition to
 Trilinos to facilitate collection of the common tools.  In order to
 retain the autonomy of other Trilinos packages, no package is required
@@ -323,7 +330,7 @@ provides a set of interfaces that
 have a single templated parameter for the scalar field.  In cases
 where the template is of type single, double, complex single or
 complex double, the user will be linked to standard BLAS and LAPACK
-functions.  For other data types, we provided generic loops sets for a
+functions.  For other data types, we provide generic loops sets for a
 limited set of key kernels.  For example, if the user specifies a
 dense matrix-matrix multiply operation, the standard GEMM BLAS kernel
 will be called for the four primary scalar types.  For other data
@@ -382,10 +389,11 @@ calculations in many situations, but proper definitions may not be
 obvious or essential for non-standard scalar types.
 \end{itemize}
 
-OrdinalTraits provide information for data types such as int.  Again
+OrdinalTraits provides information for data types such as int.  Again
 zero and one are defined, as is a descriptive label.  Other ordinal traits are
-not needed at this point.  PacketTraits is used to define the ``size'' of a packet type.  This
-trait allows generic use of data transfer algorithms such as
+not needed at this point.  PacketTraits is used to define the ``size''
+of a packet type.  This
+allows generic use of data transfer algorithms such as
 distributed data communications via MPI.
 
 \item Operation Counts: This class provides mechanisms for tracking
@@ -518,9 +526,9 @@ complicated issues of
 working on a parallel distributed memory machine are handled by Epetra.
 
 Application developers can use Epetra to construct and manipulate matrices
-and vectors, and then pass these objects to most Trilinos solver components.
-Furthermore, solver developers can develop many new algorithms relying 
-solely on Epetra classes to handle the intricacies of parallel execution.  
+and vectors, and then pass these objects to most Trilinos solver packages.
+Furthermore, solver developers can develop new algorithms using 
+Epetra classes to handle the intricacies of parallel execution.  
 Epetra also has extensive parallel data  redistribution capabilities, 
 including an interface to the Zoltan load-balancing
 library~\cite{zoltan-ug}.  Epetra is split into two packages:  a core
@@ -1031,7 +1039,7 @@ Trilinos website~\cite{Trilinos-home-page}.
 \label{sect:meros}
 
 The Meros package in Trilinos is designed to provide scalable
-preconditioners for the incompressible Navier-Stokes and similarly
+preconditioners for the incompressible Navier-Stokes equations and similarly
 structured problems~\cite{ElmaHowlShadTumi2003}.  
 It is based on and extends the work of Kay,
 Loghin and Wathen~\cite{KayLoghWath2002} and Silvester, Elman, Kay and
@@ -1039,7 +1047,7 @@ Wathen~\cite{SilvElmaKayWath2001}.
 The discrete problem can be written in the form
 \begin{equation}
 \label{eq:NSmatrix}
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 	F & B^T \\
 	B & 0 \\
 \end{array}\right)
@@ -1058,16 +1066,16 @@ The first step in realizing the preconditioner is to formally define
 the block factorization:
 \begin{equation}
 \label{eq:blockfactor}
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 	F & B^T \\
 	B & 0 \\
 \end{array}\right)
 =
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 	I & 0  \\
 	BF^{-1} & I \\
 \end{array}\right)
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 	F & B^T \\
 	0 & -S \\
 \end{array}\right)
@@ -1077,17 +1085,17 @@ of the third term in Equation~\ref{eq:blockfactor} to the equation
 itself we get
 \begin{equation}
 \label{eq:blockfactor1}
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 	F & B^T \\
 	B & 0 \\
 \end{array}
 \right)
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 	F & B^T \\
 	0 & -S \\
 \end{array}\right)^{-1}
 =
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 	I & 0  \\
 	BF^{-1} & I \\
 \end{array}\right)
@@ -1095,7 +1103,7 @@ itself we get
 If we could use the matrix
 \begin{equation}
 \label{eq:exactprecon}
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 	F & B^T \\
 	0 & -S \\
 \end{array}\right)^{-1}
@@ -1108,20 +1116,20 @@ be needed for convergence.  Since this is not practical, we instead
 observe that we can write
 \begin{equation}
 \label{eq:blockfactor2}
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 	F & B^T \\
 	0  &-S \\
 \end{array}\right)^{-1}
 =
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 F^{-1} & 0 \\
 0      & I \\
 \end{array}\right)
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 I & -B^T \\
 0  & I \\
 \end{array}\right)
-\left(\begin{array}{cc}
+\left(\begin{array}{ll}
 I & 0 \\
 0  & -S^{-1} \\
 \end{array}\right)
@@ -1211,7 +1219,12 @@ and testing.
 
 \section{Conclusions}
 
-The Trilinos project provides a framework for integrating independent 
+In this article we have presented an overview of Trilinos, a two-level
+framework for the development and ongoing support of mathematical
+software libraries.  By clearly defining a package concept, Trilinos can
+provide a ready-made infrastructure that substantially reduces the overhead of
+mathematical software development and support.
+Trilinos provides a framework for integrating independent 
 solver packages, making packages inter-operable and providing a 
 common ``look-and-feel'' 
 for Trilinos users.  Furthermore, Trilinos provides a collection 
