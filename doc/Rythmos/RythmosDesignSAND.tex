@@ -146,6 +146,14 @@ consistent manner.
 
 \section{Requirements}
 
+Here we describe requirements in two general categories: strong and weak
+(i.e.\ wants).
+
+\subsection{Strong requirements}
+
+Here we list requirements that are strongly needed or desired in the time
+integrator software.
+
 \begin{enumerate}
 
 {}\item Provide a single interface that applications can implement that allows
@@ -163,8 +171,16 @@ code and algorithms that apply only to special classes of ODEs and DAEs.
 sensitivity methods for ODEs and DAEs.
 
 {}\item Present an DAE/ODE interface for applications to implement that
-upwardly supports the computation of direct and adjoint sensitivities and
-other types of information.
+upwardly supports the computation of (discrete) direct and adjoint
+sensitivities and other types of information.
+
+{}\item For direct sensitivity computations for spatially discritized PDEs,
+allow the use of a continous sensitivity equation insteady of a discrete
+approximation if desired.
+
+{}\item For adjoint sensitivity computations for spatially discretized PDEs,
+allow the use of a continous adjoint instead of the discrete adjoint if
+desired.
 
 {}\item Provide support for general checkpointing of a time integration method
 and a uniform way to deal with different time integration methods.
@@ -177,9 +193,6 @@ usual.
 methods for nonlinear adjoint sensitivity computations in a way that is
 independent of specific applications.
 
-{}\item As much as possible, build step-size and order adaptivity strategies independent
-from specific time integration methods.
-
 {}\item Allow applications detailed control over the time stepping algorithms
 to support breakpoints (e.g.\ for discontinuities) and pauses (e.g.\ for code coupling). 
 
@@ -187,11 +200,14 @@ to support breakpoints (e.g.\ for discontinuities) and pauses (e.g.\ for code co
 together to build various types of operator splitting methods for complex
 physics and multi-physics coupling.
 
-{}\item Provide numerical algorithms to solve non-stiff and stiff ODEs (and implicit ODEs)
+{}\item Provide numerical algorithms to solve non-stiff and stiff ODEs (and
+implicit ODEs)
 
-{}\item Provide numerical algorithms to solve fully-implicit and semi-explicit index-1 DAEs
+{}\item Provide numerical algorithms to solve fully-implicit and semi-explicit
+index-1 DAEs
 
-{}\item Support both application provided and general methods for preconditioning.
+{}\item Support both application provided and general methods for
+preconditioning.
 
 {}\item Provide concrete implementations for the following transient integration methods:
   \begin{enumerate}
@@ -211,21 +227,27 @@ computers such as ``Red Storm".
 {}\item Document and allow access to internal algorithm coefficients
 (so-called ``magic-numbers").
 
-{}\item Provide a well-defined and well-documented way to add and
-modify existing transient integration algorithms.
+{}\item Provide a well-defined and well-documented way to add and modify
+existing transient integration algorithms without requiring modification of
+existing source code (this is critical for maintainability).
 
 {}\item Provide an interface to estimating (local/global)
 accuracy/error in the solution.
 
+{}\item Allow users to give an upper bound for (local/global) accuracy/error
+in the solution that time integrators must satisfy.  This is needed for
+certain types of error-controlling optimization algorithms.
+
 {}\item Be compatible with automatic differentiation (AD).
+
+{}\item ???
 
 \end{enumerate}
 
-ToDo: Spell out more requirements!
+\subsection{Weaker requirements (wants)}
 
-
-
-\subsection{Wants for Rythmos}
+Here we list requirements that have a much lower priority and may be
+considered optional.
 
 \begin{enumerate}
 
@@ -236,14 +258,17 @@ ToDo: Spell out more requirements!
   {}\item discontinuous-Galerkin in time \cite{DGTime}.
   {}\item finite-element in time \cite{FETime}
   \end{enumerate}
+
 {}\item Be compatible with space/time discretizations.
+
+{}\item As much as possible, build step-size and order adaptivity strategies
+independent from specific time integration methods.
+
+{}\item Allow for use of CVODE, CVODES, IDA and IDAS at some level [???].
 
 \end{enumerate}
 
-
-
-
-\section{Mathematical formulation for DAE/ODE solvers}
+\section{Mathematical formulation of DAE/ODE for DAE/ODE solvers}
 \label{rythmos:scn:mathformulation}
 
 Here we describe the basic mathematical form of a general nonlinear DAE (or
@@ -252,14 +277,14 @@ most general level of abstraction, we will consider the solution of fully
 implicit DAEs of the form
 %
 \begin{eqnarray}
-f(\dot{x},x,t) & = & 0, \; \mbox{for} \; t \in [t_i, t_f], \label{rythmos:eqn:dae} \\
-x(t_i) & = & x_0 \label{rythmos:eqn:dae:ic}
+f(\dot{x},x,t) & = & 0, \; \mbox{for} \; t \in [t_0, t_f], \label{rythmos:eqn:dae} \\
+x(t_0) & = & x_0 \label{rythmos:eqn:dae:ic}
 \end{eqnarray}
 \begin{tabbing}
 \hspace{4ex}where\hspace{5ex}\= \\
 \>	$x\:\in\:\mathcal{X}$ is the vector of differential state variables, \\
 \>	$\dot{x} = d(x)/d(t)\:\in\:\mathcal{X}$ is the vector of temporal derivatives of $x$, \\
-\>	$t, t_i, t_f\:\in\:\RE$ are the current, initial, and the final times respectively, \\
+\>	$t, t_0, t_f\:\in\:\RE$ are the current, initial, and the final times respectively, \\
 \>	$f(\dot{x},x,t)\:\in\:\mathcal{X}^2\times\RE\rightarrow\mathcal{F}$ defines the DAE vector function, \\
 \>	$\mathcal{X} \:\subseteq\:\RE^{n_x}$ is the vector space of the state variables $x$, and \\
 \>	$\mathcal{F} \:\subseteq\:\RE^{n_x}$ is the vector space of the output of the DAE function $f(\ldots)$.
@@ -279,10 +304,10 @@ based on the nature of Jacobian matrices ${}\partial f / {}\partial
 $\mathcal{F}|\mathcal{X}$ to define a linear operator space that maps vectors
 from the space $\mathcal{X}$ to the space $\mathcal{F}$.  Note that the
 adjoint of such linear operators are defined in terms of these vector spaces
-(i.e.\ $<A u,v>_{\mathcal{F}} = <A^* v,u>_{\mathcal{X}}$ where
-$A\in\mathcal{F}|\mathcal{X}$ and $A^*$ denotes the adjoint operator for $A$).
+(i.e.\ $<A u,v>_{\mathcal{F}} = <A^H v,u>_{\mathcal{X}}$ where
+$A\in\mathcal{F}|\mathcal{X}$ and $A^H$ denotes the adjoint operator for $A$).
 Here we assume that these first derivatives exist for the specific intervals
-of time $t\in[t_i,t_f]$ of which such an time integrator algorithm will be
+of  $t\in[t_0,t_f]$ of which such an time integrator algorithm will be
 directly applied the the problem.
 
 The precise class of the problem is primarily determined by the nature of the
@@ -290,7 +315,7 @@ Jacobian ${}\partial f / {}\partial {}\dot{x}$:
 %
 \begin{itemize}
 %
-{}\item ${}\partial f / {}\partial {}\dot{x} {}\in {}\mathcal{F}|\mathcal{X}$ yields an explicit ODE
+{}\item ${}\partial f / {}\partial {}\dot{x} = I {}\in {}\mathcal{F}|\mathcal{X}$ yields an explicit ODE
 %
 {}\item ${}\partial f / {}\partial {}\dot{x}$ full rank yields an implicit ODE
 %
@@ -299,20 +324,21 @@ DAE.
 \end{itemize}
 %
 In addition, the ODE/DAE may be linear or nonlinear and DAEs are classified by
-their index \cite{BCP}.  It is expected that a DAE will be able to tell a time
+their index \cite{BCP}.  It is expected that a DAE will be able to tell a 
 integrator what type of problem it is (i.e.\ explicit ODE, implicit ODE,
 general DAE) and which, if any, of the variables are linear in the problem.
 This type of information can be exploited in a time integration algorithm.
 
-{}\textbf{Ross: We need notation for taking advantage of which ``variables are linear in the problem."}
+{}\textbf{Ross: We need notation for taking advantage of which ``variables are
+linear in the problem."}
 
 Another formulation we will consider is the semi-explicit DAE formulation:
 \begin{equation}
 \label{rythmos:eqn:dae:semiexplicit} 
 \begin{array}{rcl}
-\dot{y} & = & f(y,z,t) \; \mbox{for} \; t \in [t_i, t_f], \\
+\dot{y} & = & f(y,z,t) \; \mbox{for} \; t \in [t_0, t_f], \\
 0       & = & g(y,z,t) \; \mbox{where} \; x = [y, z], \\
-x(t_i)  & = & x_0.
+x(t_0)  & = & x_0.
 \end{array}
 \end{equation}
 
@@ -359,6 +385,10 @@ considered by the explicit time integration strategies below.
 The above transformation of course requires that the matrix $({}\partial f /
 {}\partial {}\dot{x})^{-1}$ be fairly easily invertible.
 
+{}\textbf{Ross: See if redefining the scalar product in terms of the mass
+matrix allow us to avoid an explicit solve with the mass matrix to form an
+explicit ODE.}
+
 Below, we describe some popular explicit integration methods for ODEs.
 
 \subsubsection{Explicit Runge-Kutta methods}
@@ -390,7 +420,11 @@ $(\dot{x},x,t) {}\rightarrow f$ to define the nonlinear time step equation
 (\ref{rythmos:eqn:r}).  At the highest level, the time step method only
 requires very general convergence criteria for the time step equation
 (\ref{rythmos:eqn:r}) and therefore great flexibility is allowed in how the
-time step equation is solved.
+time step equation is solved.  In general, the system in (\ref{rythmos:eqn:r})
+must be solved such that $||x_{k+1} - x^*(t_{k+1})|| < \eta$, where
+$x_{k+1}\in\mathcal{X}$ is the computed step for the state,
+$x^*(t_{k+1})\in\mathcal{X}$ is the exact state soltuion at $t_{k+1}$, and
+$\eta$ is the maximum allowable local truncation error defined by the user.
 
 Even through the time step equation can be solved by a variety of means, a
 large class of DAEs/ODEs can also potentially provide support for a general
@@ -415,16 +449,16 @@ show, if possible, how to perform solves with ${}\partial r / {}\partial z$ by
 performing solves with the matrix
 %
 \begin{equation}
-M = \alpha \frac{\partial f}{\partial \dot{x}} + \frac{\partial f}{\partial x},
+M = \alpha \frac{\partial f}{\partial \dot{x}} + \beta \frac{\partial f}{\partial x},
 \label{rythmos:eqn:M}
 \end{equation}
 %
 evaluated at points $(\dot{x},x,t)$ selected by the time integration method
-and where $\alpha$ is some constant also defined by the time integration
-method.  Note that the matrix $M$ above in (\ref{rythmos:eqn:M_bdf}) may not
-necessarily exactly represent ${}\partial r / {}\partial z$ and $z$ and $r$
-may not simply lie in the vector spaces $\mathcal{X}$ and $\mathcal{F}$
-respectively; but in many cases, they will.
+and where $\alpha\in\RE$ and $\beta\in\RE$ is some constants also defined by
+the time integration method.  Note that the matrix $M$ above in
+(\ref{rythmos:eqn:M_bdf}) may not necessarily exactly represent ${}\partial r
+/ {}\partial z$ and $z$ and $r$ may not simply lie in the vector spaces
+$\mathcal{X}$ and $\mathcal{F}$ respectively; but in many cases, they will.
 
 \subsubsection{Implicit multi-step BDF methods}
 
@@ -436,11 +470,11 @@ for next, current and previous time values $t_{k+1-j}$, for $j = 0 {}\ldots p$
 and the form of the approximation is
 %
 \begin{equation}
-\dot{x}_{k+1} = \frac{1}{\Delta t} \sum_{j=0}^{p} \beta_j \: x_{k+1-j}
+\dot{x}_{k+1} = \frac{1}{\Delta t} \sum_{j=0}^{p} \gamma_j \: x_{k+1-j}
 \label{rythmos:eqn:bdf_x_dot}
 \end{equation}
 %
-where $\Delta t = t_{k+1} - t_k$ and $\beta_j$, for $j=0 {}\ldots p$, are the
+where $\Delta t = t_{k+1} - t_k$ and $\gamma_j$, for $j=0 {}\ldots p$, are the
 BDF method coefficients \cite{AscherPetzold}.
 
 The nonlinear time step equation to advance the solution from $t_k$ to
@@ -449,7 +483,7 @@ $t_{k+1}$ is then formed by substituting $\dot{x} = \dot{x}_{k+1}$ in
 (\ref{rythmos:eqn:dae}) to obtain
 %
 \begin{equation}
-f\left( \frac{1}{\Delta t} \left[ \beta_0 x_{k+1} + \sum_{j=1}^{p} \beta_j \: x_{k+1-j} \right],x_{k+1},t_{k+1}\right) = 0.
+f\left( \frac{1}{\Delta t} \left[ \gamma_0 x_{k+1} + \sum_{j=1}^{p} \gamma_j \: x_{k+1-j} \right],x_{k+1},t_{k+1}\right) = 0.
 \label{rythmos:eqn:bdf_dae_ne}
 \end{equation}
 %
@@ -459,7 +493,7 @@ equations (\ref{rythmos:eqn:r}) and with unknown solution variables $z =
 x_{k+1}$.  All of the other state variables $x_{k+1-j}$, for $j = 1 {}\ldots
 p$, are given.
 
-Note that the first-order BDF method with $p=1$, $\beta_0 = 1$ and $\beta_1 =
+Note that the first-order BDF method with $p=1$, $\gamma_0 = 1$ and $\gamma_1 =
 -1$ is simply the standard backward Euler time integration method \cite{AscherPetzold}.
 
 When considering a general Newton-like method for solving
@@ -468,16 +502,17 @@ equations is
 %
 \begin{equation}
 \frac{\partial r}{\partial z}
-= \frac{\beta_0}{\Delta t} \frac{\partial f}{\partial \dot{x}} + \frac{\partial f}{\partial x},
+= \frac{\gamma_0}{\Delta t} \frac{\partial f}{\partial \dot{x}} + \frac{\partial f}{\partial x},
 \label{rythmos:eqn:M_bdf}
 \end{equation}
 %
 which is evaluated at the point $\dot{x}$ in (\ref{rythmos:eqn:bdf_x_dot}), $x
 = x_{k+1}$ and $t = t_{k+1}$.  One can immediately identify
 (\ref{rythmos:eqn:M_bdf}) with the general form of the matrix $M$ in
-(\ref{rythmos:eqn:M}) where $\alpha = \beta_0 / \Delta t$.  Note that the
-Jacobian (\ref{rythmos:eqn:M_bdf}) is the exact Jacobian for the nonlinear
-time step equations; this will not be true for some of the other methods.
+(\ref{rythmos:eqn:M}) where $\alpha = {}\gamma_0 / \Delta t$ and $\beta = 1$.
+Note that the Jacobian (\ref{rythmos:eqn:M_bdf}) is the exact Jacobian for the
+nonlinear time step equations; this will not be true for some of the other
+methods.
 
 \subsubsection{Generalized Theta methods}
 
@@ -550,11 +585,13 @@ M
 %
 where now all of these terms are evaluated at the point $(\dot{x},x,t) =
 ((x_{k+1}-x_k)/\Delta t, x_k, t_k)$.  It is easy to see that this is the same
-form as the Jacobian in (\ref{rythmos:eqn:M}) where $\alpha = 2/\Delta t$.
-The Jacobian in (\ref{rythmos:eqn:trap_M}) is not an exact Jacobian for the
-equations in (\ref{rythmos:eqn:trap_dae_ne}) but can produce good Newton steps
-in many cases.  However, an inexact Jacobian such as this can cause a problem
-when sensitivity computations are being performed (see Section \ref{rythmos:scn:transientsensitivity}).
+form as the Jacobian in (\ref{rythmos:eqn:M}) where $\alpha = 2/\Delta t$ and
+and $\beta = 1$.  The Jacobian in (\ref{rythmos:eqn:trap_M}) is not an exact
+Jacobian for the equations in (\ref{rythmos:eqn:trap_dae_ne}) but can produce
+good Newton steps in many cases.  However, an inexact Jacobian such as this
+can cause a problem when sensitivity computations are being performed (see
+Section
+\ref{rythmos:scn:transientsensitivity}).
 
 \subsubsection{Generalized Alpha methods}
 
@@ -635,8 +672,7 @@ which is evaluated at the points $(\dot{x},x,t) = ( {}\dot{x}_i, x_k +
 {}\Delta t {}\sum_{j=1}^{p} a_{ij} {}\dot{x}_j, t_k + c_i {}\Delta t )$.  Note
 that ${}\partial r_i / {}\partial z_j = {}\partial r_i / {}\partial
 {}\dot{x}_j$ in (\ref{rythmos:eqn:dridzi_trap}) is of the same form as
-(\ref{rythmos:eqn:M}) where $\alpha = 1 / (\Delta t a_{ij})$ when scaling by
-$1 / (\Delta t a_{ij})$.
+(\ref{rythmos:eqn:M}) where $\alpha = 1$ and $\beta = \Delta t a_{ij}$.
 
 When considering a iterative method for solving systems with the block
 operator matrix ${}\partial r / {}\partial z$, it is easy to see how to use
@@ -654,12 +690,12 @@ for most applications.
 \subsubsection*{Semi-explicit IRK methods}
 
 Semi-explicit IRK methods are those IRK methods where the Butcher matrix $A$
-is lower diagonal and therefore gives rise to a block lower diagonal Jacobian
-matrix ${}\partial r / {}\partial z$.  For these types of methods, the
-nonlinear equations in (\ref{rythmos:eqn:dridzi_trap}) can be solved one at a
-time for $i = 1 {}\ldots p$ which is easily accommodated using a Newton-type
-method where the Newton Jacobian for each $i$ is given by
-(\ref{rythmos:eqn:dridzi_trap}) which is of our basic general form
+is lower diagonal and therefore gives rise to a block lower triangular
+Jacobian matrix ${}\partial r / {}\partial z$.  For these types of methods,
+the nonlinear equations in (\ref{rythmos:eqn:dridzi_trap}) can be solved one
+at a time for $i = 1 {}\ldots p$ which is easily accommodated using a
+Newton-type method where the Newton Jacobian for each $i$ is given by
+(\ref{rythmos:eqn:dridzi_trap}), which is of our basic general form
 (\ref{rythmos:eqn:M}).
 
 \subsubsection*{Diagonally-implicit IRK methods}
@@ -699,495 +735,908 @@ from a variety of standpoints but I don't have any references for this yet.}
 
 %\subsection{General Solution Stragegies for Implicit Nonlinear Time Step Equations}
 
-\section{Mathematical Formation for ODEs/DAEs for Applications}
+\section{Staggered DAEs/ODEs}
 
-The form of the DAE described in Section \ref{rythmos:scn:mathformulation} relates directly to what is
-needed for the implementation of explicit and implicit time integration
-methods.  In this section, we will present a form of the the DAE that is most
-directly related to what applications must provide, especially as it relates
-to higher-level computations like transient direct and adjoint sensitivity
-computations.  Here we will consider application DAE formulations that are
-required for sensitivity computations but are also related to other types of
-problems such as coupling multiple physics using operator split methods.
+A typical situation that occurs is when a set of two or more DAEs/ODEs are
+solved in which the solutions are propogated from one to the other.  Here we
+define this type of DAE and show how these can be effectively dealt with.  In
+this section we focus on just two staggered DAEs/ODEs for simpliciity but the
+same principles apply to more than two staggered DAEs/ODEs.
 
-The basic application model that we consider here takes the form
+The model that we will use here is of two DAEs/ODEs where the first DAE
+%
+\begin{eqnarray}
+%
+c_1(\dot{y}_1(t),y_1(t),t) & = & 0,
+\; t \in \left[ t_0, t_f \right], \label{rythmos:eqn:stag:c1} \\
+y_1(0) & = & y_{0,1}, \label{rythmos:eqn:stag:c1:ic} \\
+%
+\end{eqnarray}
+%
+is solved and who's solution $y_1(t)$is used to define a second set of DAEs of
+the form
+%
+\begin{eqnarray}
+%
+c_2(\dot{y}_2(t),y_2(t),y_1(t),t) & = & 0,
+\; t \in \left[ t_0, t_f \right], \label{rythmos:eqn:stag:c2} \\
+y_2(0) & = & y_{0,2}(y_1(t_0)), \label{rythmos:eqn:stag:c2:ic}
+%
+\end{eqnarray}
+%
+which are solved for $y_2(t)$, where $y_1\in\mathcal{Y}_1$,
+$\dot{y}_1\in\mathcal{Y}_1$, $y_2\in\mathcal{Y}_2$,
+$\dot{y}_2\in\mathcal{Y}_2$, $c_1(\dot{y}_1(t),y_1(t),t) {}\in
+{}\mathcal{Y}_1^2 {}\times {}\RE {}\rightarrow {}\mathcal{C}_1$,
+$c_2(\dot{y}_2(t),y_2(t),t) {}\in {}\mathcal{Y}_2^2 {}\times {}\mathcal{Y}_1
+{}\times {}\RE {}\rightarrow {}\mathcal{C}_1$, $y_{0,1}\in\mathcal{Y}_1$, and
+$y_{0,2}(y_1(t)) {}\in {}\mathcal{Y}_1 {}\rightarrow {}\mathcal{Y}_2$.
+
+These types of two-level staggered DAEs comes up over and over again in the
+following discussion.  Staggered DAEs are used extensively in sensitivity
+computations and show up in other contexts as well such as multi-physics
+solutions.  Note that staggered DAEs, as shown above, are much simpiler to
+consider than fully coupled sets of DAEs (i.e.\ where each DAE is dependent on
+the state of the other).  Issues related to fully coupled DAEs are a whole
+other matter entirely.
+
+The staggered DAEs shown above can be solved in a number of ways.  The first
+way to solve these staggered DAEs is to integrate them more-or-less together
+but to solve for the timestep for
+(\ref{rythmos:eqn:stag:c1})--(\ref{rythmos:eqn:stag:c1:ic}) first and then
+solve for the timestep for
+(\ref{rythmos:eqn:stag:c2})--(\ref{rythmos:eqn:stag:c2:ic}) second.  This
+approach requires minimally that the solution for $y_1(t)$ be communicated in
+some way to the second DAE
+(\ref{rythmos:eqn:stag:c2})--(\ref{rythmos:eqn:stag:c2:ic}).  Just this
+requirement in itself has a number of difficult issues associated with it.  We
+discuss these and other issues in more detail latter, after we discuss the
+second approach.
+
+The second approach for solving the two staggered DAEs is to combine them into
+one implicit DAE of the form in (???) where
+%
+\begin{eqnarray*}
+x(t) & = & {\bmat{c} y_1(t) \\ y_2(t) \emat} \\
+f(\dot{x}(t),x(t),t) & = & {\bmat{c} c_1(\dot{y}_1(t),y_1(t),t) \\  c_2(\dot{y}_2(t),y_2(t),y_1(t),t) \emat} \\
+x_0 & = & {\bmat{c} y_{0,1} \\ y_{0,2}(y_{0,1}) \emat}
+\end{eqnarray*}
+%
+where $\mathcal{X}=\mathcal{Y}_1\times\mathcal{Y}_2$ is a product vector
+space, and then solve them with a single time stepper algorithm.  Many of the
+implicit time stepper methods described in Section ??? would then need to
+solve the implicit nonlinear system $r(z)=0$ that arises and a Newton-like
+method would require solves with the composite matrix
+%
+\begin{equation}
+\alpha \frac{\partial f}{\partial \dot{x}} + \beta \frac{\partial f}{\partial x}
+=
+{\bmat{cc}
+\alpha \frac{\partial c_1}{\partial \dot{y}_1} + \beta \frac{\partial c_1}{\partial x_1}
+& 0 \\
+\beta \frac{\partial c_2}{\partial x_1}
+& \alpha \frac{\partial c_2}{\partial \dot{y}_2} + \beta \frac{\partial c_2}{\partial x_2} \\
+\emat}.
+\end{equation}
+%
+This block matrix is lower block triangular with nonsingualar blocks along the
+diagonal which are the customary matrices for each individual DAE.  The first
+potential problem with the above block matrix is the lower left block $\beta
+({}\partial c_2 / {}\partial x_1)$ which is not required by any of the
+individual DAE solvers (but is required by a direct sensitivity solver, see
+Section ???).  Therefore, an exact Newton method requires a type of derivative
+computation that is not required when the DAEs are solved individually.
+However, in an iterative method, only the action of $({}\partial c_2 /
+{}\partial x_1) V$ are to arbitrary multivectors $V\in\mathcal{C}_2|\RE^m$ are
+needed which can be approximated using directional finite differences.
+
+There are many different issues to consider when comparing and contrasting
+these two basic approaches for solving staggered DAEs:
+%
+\begin{itemize}
+%
+{}\item {}\textbf{Communication of state information}: The one big advantage
+of the combined DAE approach using a single time stepper algorithm is that the
+time stepper itself can easily and transparently handle the communication of
+$y_1$ from the first DAE to the second DAE.  For example, consider a
+higher-level RK method where stage derivatives must be computed a Gauss
+points.  In a single time stepper method, this is a simple matter, but is more
+difficult to handle when using two different time stepping algorithms (which
+may have some data encapsulation).  This issue can be resolved if a general
+interpolation mechanism where exposed by a time stepper where $y_1(t)$ at any
+time in the time-step interval where easily accessible.
+%
+{}\item {}\textbf{Step-size and error control}: When the combined DAE is
+integrated by a single time stepping method, step-size and error control is
+automatically handled for both of the DAE soltutions.  This may or may not be
+desirable.  However, when the two DAEs are integrated separately using two
+different time stepping methods, these two methods may not make the same
+decisions as to the step sizes to take and this can cause a problem for a
+variety of standpoints.  However, if the first time stepper where driven by
+the interpolation interface for extracting $y_1(t)$ as called by the second
+time integrator, then steps-size control would not be an issue.  In addition,
+handling the errors separately may be an advantage since the these two DAEs
+may have different solution error requirements.
+%
+{}\item {}\textbf{Linearity, nonlinearity and relative cost}: One of the
+biggest advantages of solving the staggered DAEs using separate time stepping
+algorithms (or at least using a specialized nonlinear solver within a time
+step) is that one of the DAEs may be linear while the other nonlinear and one
+DAE may be much more expensive than the other to solve.  For example, if the
+first DAE is nonlinear and small, but the second DAE is linear but much larger
+and more expensive to solve than the first, then a combined Newton approach
+will result in much more expense than if the two DAE time steps are computed
+independently.  However, if the first DAE is inexpensive and well-conditioned
+compared to the second DAE, then there is little to no extra expense in
+solving the DAEs as one large combined DAE.
+%
+{}\item {}\textbf{State derivatives}: As mentioned above, the combined DAE
+approach using a single Newton method requires derivative computations
+involving $({}\partial c_2 / {}\partial x_1)$ which are not required when
+solving the DAEs separately.
+%
+\end{itemize}
+%
+
+\section{Transient Sensitivity Computations}
+\label{rythmos:sec:trans-sens}
+
+In this section we describe the nuts and bolts assoicated with direct and
+adjoint sensitivity methods that are derived in
+Appendix~\ref{rythmos:app:sens-derivations}.
+
+The general DAE model for sensitivity computations that we consider here takes
+the form
 %
 \begin{eqnarray}
 c\left( \dot{y}(t), y(t), p, v(t), t \right) & = & 0,
-\; t \in \left[ t_i, t_f \right] \label{rythmos:eqn:app:c} \\
-y(0) & = & y_0(p) \label{rythmos:eqn:app:c:ic}
+\; t \in \left[ t_0, t_f \right] \label{rythmos:eqn:sens:c} \\
+y(0) & = & y_0(p) \label{rythmos:eqn:sens:c:ic}
 \end{eqnarray}
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
-\>	$y(t) \:\in\:\mathcal{Y}$ are the transient state variables, \\
-\>	$\dot{y}(t) = d(y)/d(t)\:\in\:\mathcal{Y}$ is the vector of temporal derivatives of differential state variables $y(t)$, \\
+\>	$y(t) \:\in\:\mathcal{Y}$ are the transient state variables defined on $t\in[t_0,t_f]$, \\
+\>	$\dot{y}(t) = d(y)/d(t)\:\in\:\mathcal{Y}$ is the vector of temporal derivatives of $y(t)$ defined on $t\in[t_0,t_f]$, \\
 \>	$p \:\in\:\mathcal{P}$ are steady-state auxiliary variables, \\
-\>	$v(t) \:\in\:\mathcal{V}$ are transient auxiliary variables, \\
+\>	$v(t) \:\in\:\mathcal{V}$ are transient auxiliary variables defined on $t\in[t_0,t_f]$, \\
 \>	$c(\dot{y}(t), y(t), p, v(t), t) :
 		\mathcal{Y}^2 \times \mathcal{P} \times \mathcal{V} \times \RE
 		\rightarrow \mathcal{C}$ are the state DAEs, \\
-\>	$y_0(p) \:\in\:\mathcal{P} \rightarrow \mathcal{Y}$ define the initial conditions for $y(0)$ as a function of $p$, \\
+\>	$y_0(p) \:\in\:\mathcal{P} \rightarrow \mathcal{Y}$ define the initial conditions for $y(t_0)$ as a function of $p$, \\
 \>	$\mathcal{Y} \:\subseteq\:\RE^{n_y}$ is the vector space of the state variables $y(t)$, \\
 \>	$\mathcal{P} \:\subseteq\:\RE^{n_p}$ is the vector space of the steady-state auxiliary variables $p$, \\
 \>	$\mathcal{V} \:\subseteq\:\RE^{n_v}$ is the vector space of the transient auxiliary variables $v(t)$, and \\
 \>	$\mathcal{C} \:\subseteq\:\RE^{n_y}$ is the vector space of the output of the DAE function $c(\ldots)$.
 \end{tabbing}
 
-The auxiliary variables $p$ and $v(t)$ in (\ref{rythmos:eqn:app:c}) represent
+The auxiliary variables $p$ and $v(t)$ in (\ref{rythmos:eqn:sens:c}) represent
 adjustable variables that can be manipulated for some purpose and, once
 selected, determine a fully specified set of DAEs that can be solved forward
 in time for the state variables $y(t)$.  The form of the DAE in
-(\ref{rythmos:eqn:app:c}), which has auxiliary variables, arises in a number
-of contexts such as direct sensitivity computations (see Section \ref{rythmos:scn:transientsensitivity:direct}) and in
-multi-disciplinary (i.e.\ multi-physics) coupling.
+(\ref{rythmos:eqn:sens:c}), which has auxiliary variables, arises in a number
+of contexts other than the sensitivity computations being considered here.
 
-In many situations, quantities of interest or response functions are important
-in various types of analyzes such a sensitivity computations for uncertainty
-quantification, optimization and error estimation.  For transient problems of
-this type, auxiliary response functions can be formulated by adding a set of
-auxiliary differential variables and DAEs
-%
-\begin{eqnarray}
-h\left( \frac{\partial w(t)}{\partial t}, w(t), y(t), p, v(t), t \right) & = & 0,
-\; t \in \left[ t_i, t_f \right] \label{rythmos:eqn:app:h} \\
-w(0) & = & w_0(p) \label{rythmos:eqn:app:h:ic}
-\end{eqnarray}
-\begin{tabbing}
-\hspace{4ex}where\hspace{1ex}\= \\
-\>	$w(t) \:\in\:\mathcal{W}$ are auxiliary differential differential variables, \\
-\>	$\dot{w}(t) = d(w)/d(t)\:\in\:\mathcal{W}$ is the vector of temporal derivatives of $w(t)$, \\
-\>	$h(\dot{w}(t), w(t), y(t), u, v(t), t) : \:
- 		\mathcal{W} \times \mathcal{W} \times \mathcal{Y} \times \mathcal{P} \times \mathcal{V} \times \RE
-		\rightarrow \mathcal{H}$ are the auxiliary DAEs, \\
-\>	$w_0(p) \:\in\:\mathcal{P} \rightarrow \mathcal{W}$ define the initial conditions for $w(0)$ as a function of $p$, \\
-\>	$\mathcal{W} \:\subseteq\:\RE^{n_w}$ is the vector space of the transient auxiliary differential state variables $w(t)$, and \\
-\>	$\mathcal{H} \:\subseteq\:\RE^{n_w}$ is the vector space of the output of the DAE function $h(\ldots)$.
-\end{tabbing}
-%
-and a set of auxiliary response, or observable, functions
+Note that the input $v(t_0:t_f)$ is really an infinite dimensional
+input in general but in practice will be a finite-dimensional
+discretization.
+
+We now define a composite set of auxiliary response functions for which
+sensitivities will be computed
 %
 \begin{equation}
-g(y(t_f),w(t_f),p)
-\label{rythmos:eqn:app:g}
+d(y(t_0:t_f),p,v(t_0:t_f))
+= \int_{t_0}^{t_f} g(y(t),p,v(t),t) dt + h(y(t_f),p),
+\label{rythmos:eqn:sens:d}
 \end{equation}
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
-\>	$g(y(t_f),w(t_f),p) : \:
-		\mathcal{Y} \times \mathcal{W} \times \mathcal{P}
-		\rightarrow \mathcal{G}$ are the auxiliary response functions, and \\ 
-\>	$\mathcal{G} \:\subseteq\:\RE^{n_g}$ is the vector space of the auxiliary response functions $g(\ldots)$.
+\>	$g(y(t),p,v(t),t) : \:
+		\mathcal{Y} \times \mathcal{P} \times \mathcal{V} \times \RE
+		\rightarrow \mathcal{G}$ are distributed response functions defined on $t\in[t_0,t_f]$, \\
+\>	$h(y(t_f),p) : \: \mathcal{Y} \times \mathcal{P}
+		\rightarrow \mathcal{G}$ are terminal response functions defined only at $t=t_f$, and \\
+\>	$\mathcal{G} \:\subseteq\:\RE^{n_g}$ is the vector space of the auxiliary response functions.
 \end{tabbing}
 
-The purpose of the auxiliary DAEs in
-(\ref{rythmos:eqn:app:h})--(\ref{rythmos:eqn:app:h:ic}) are typical and the
-allow the accumulation of some set of integrated quantities needed to evaluate
-the auxiliary response functions in (\ref{rythmos:eqn:app:g}).  The
-formulation of these equations is very general and covers many different types
-of applications.
+Note that the domain space for the overall response
+$d(y(t_0:t_f),p,v(t_0:t_f)$ is infinite since $y(t_0:t_f)$ and
+$v(t_0:t_f)$ are infinite in the continuous formulation.
 
-\subsection{Implicit state functions and reduced auxiliary response functions}
+The state DAEs in
+(\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) may be used
+to define the implicit state function $y(p,v(t_0:t),t)$, where
+$v(t_0:t)$ is short hand for the selection of $v(t)$ (or a discrete
+approximation in a practical implementation) in the range
+$t\in[t_0,t]$.  The full implicit state solution for $y(t)$ in
+$t\in[t_0,t_f]$ is signified as $y(p,v(t_0:t_f),t_0:t_f)$.
 
-The state DAEs in (\ref{rythmos:eqn:app:c})--(\ref{rythmos:eqn:app:c:ic}) and
-(\ref{rythmos:eqn:app:h})--(\ref{rythmos:eqn:app:h:ic}) may be used to define
-the implicit state functions $y(p,v(t_i:t_f))$ and $w(p,v(t_i:t_f))$,
-respectively, where $v(t_i:t_f)$ is short hand for the selection of $v(t)$ (or
-a discrete approximation in a practical implementation) in the range
-$t\in[t_i,t_f]$.  Given these implicit state functions, a reduced set of
-auxiliary response functions is defined as
+The implicit state solution $y(p,v(t_0:t),t)\in\mathcal{Y}$ substituted into
+(\ref{rythmos:eqn:sens:d}) gives the reduced auxiliary response functions
 %
 \begin{equation}
-\hat{g}(p,v(t_i:t_f)) = g(y(p,v(t_i:t_f)),w(p,v(t_i:t_f)),p).
-\label{rythmos:eqn:app:g_hat}
-\end{equation}
-
-Note that the input $v(t_i:t_f)$ is really an infinite dimensional
-input in general but in practice will be a finite-dimensional discretization.
-
-\subsection{Combined abstract state and auxiliary response functions}
-
-Note that the state equations and differential variables in
-(\ref{rythmos:eqn:app:c})--(\ref{rythmos:eqn:app:c:ic}) and
-(\ref{rythmos:eqn:app:h})--(\ref{rythmos:eqn:app:h:ic}) and can be combined
-into a single set of equations and differential variables and thereby give
-the more abstract problem
-%
-\begin{eqnarray}
-\tilde{c}\left( \dot{\tilde{y}}(t), \tilde{y}(t), p, v(t), t \right) & = & 0,
-\; t \in \left[ t_t, t_f \right] \label{rythmos:eqn:app:c_tilde} \\
-\tilde{y}(0) & = & \tilde{y}_0(u) \label{rythmos:eqn:app:c_tilde:ic}
-\end{eqnarray}
-\begin{tabbing}
-\hspace{4ex}where\hspace{1ex}\= \\
-\>	$\tilde{y}(t) = {\bmat{c} y(t) \\ w(t) \emat} \:\in\:\tilde{\mathcal{Y}}$ are the combined (product) transient state variables, \\
-\>	$\dot{\tilde{y}}(t) = d(\tilde{y})/d(t)\:\in\:\mathcal{X}$ is the vector of temporal derivatives of $\tilde{y}(t)$, \\
-\>	$\tilde{c}\left( \dot{\tilde{y}}(t), \tilde{y}(t), p, v(t), t \right) =
-		{\bmat{c} c(\dot{y}(t),y(t),u,v(t),t) \\ h(\dot{w}(t),w(t),y(t),u,v(t),t) \emat}
-		: \tilde{\mathcal{Y}}^2 \times \mathcal{P} \times \mathcal{V} \times \RE \rightarrow \tilde{C}$ \\
-\>	\hspace{4ex} are the combined (product) state DAE function, \\
-\>	$\tilde{\mathcal{Y}} = \mathcal{Y} \times \mathcal{W}$ is the combined (product) vector space of the combined state variables $\tilde{y}(t)$, and \\
-\>	$\tilde{\mathcal{C}} = \mathcal{C} \times \mathcal{H}$ is the combined (product) vector space of the combined DAE $\tilde{c}(\ldots)$.
-\end{tabbing}
-%
-with the auxiliary response functions
-%
-%
-\begin{equation}
-\tilde{g}(\tilde{y}(t_f),p)
-\label{rythmos:eqn:app:g_tilde}
+\hat{d}(p,v(t_0:t_f))
+= \int_{t_0}^{t_f} \hat{g}(p,v(t),t) dt + \hat{h}(p),
+\label{rythmos:eqn:sens:d_hat}
 \end{equation}
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
-\>	$\tilde{g}(\tilde{y}(t_f),p) = g(y(t_f),w(t_f),p) : \:
-		\tilde{\mathcal{Y}} \times \mathcal{P}
-		\rightarrow \mathcal{G}$.
+\>	$\hat{g}(p,v(t)) = g(y(p,v(t_0:t),t),p,v(t),t) : \:
+		\mathcal{P} \times \mathcal{V} \times \RE	\rightarrow \mathcal{G}$, and \\
+\>	$\hat{h}(p) = h(y(p,v(t_0:t),t),p) : \: \mathcal{P}	\rightarrow \mathcal{G}$.
 \end{tabbing}
-
-Note that (\ref{rythmos:eqn:app:c_tilde})--(\ref{rythmos:eqn:app:g_tilde})
-defines an implicit state solution $\tilde{y}(p,v(t_i:t_f))$ and the reduced auxiliary
-response function
-%
-\begin{equation}
-\hat{g}(p,v(t_i:t_f)) = \tilde{g}(\tilde{y}(u,v(t_i:t_f)),p).
-\label{rythmos:eqn:app:g_hat_combined}
-\end{equation}
-%
-Note that when considering the reduced auxiliary response function that
-$\hat{g}(u,v(t_i:t_f))$ in (\ref{rythmos:eqn:app:g_hat_combined}) is exactly
-the same function as $\hat{g}(u,v(t_i:t_f))$ in (\ref{rythmos:eqn:app:g_hat}).
-
-In some cases, it will be the most convenient to work with the combined DAE
-and auxiliary response functions in
-(\ref{rythmos:eqn:app:c_tilde})--(\ref{rythmos:eqn:app:g_tilde}) while in in
-other situations it will be most clear to work with the original state and
-auxiliary DAEs in (\ref{rythmos:eqn:app:c})--(\ref{rythmos:eqn:app:h:ic}) and
-response functions (\ref{rythmos:eqn:app:g}).  For example, mathematical
-derivations for various sensitivity computations are most readily followed
-using the more abstract form in
-(\ref{rythmos:eqn:app:c_tilde})--(\ref{rythmos:eqn:app:g_tilde}) while
-describing requirements from applications is most straightforward using the
-lower-level formulation in
-(\ref{rythmos:eqn:app:c})--(\ref{rythmos:eqn:app:g}).
-
-When the auxiliary variables $p$ and $v(t_i,t_f)$ are given, the combined DAE
-in (\ref{rythmos:eqn:app:c_tilde})--(\ref{rythmos:eqn:app:c_tilde:ic}) takes
-exactly the same form as (\ref{rythmos:eqn:dae}) with $x = \tilde{y}$ and
-$f(\ldots) = \tilde{c}(\ldots)$ so that it can be presented to a general time
-integration algorithm.  The form of the Jacobian $M$ in (\ref{rythmos:eqn:M})
-for this problem is
-%
-\begin{eqnarray}
-\alpha \frac{\partial f}{\partial \dot{x}} + \frac{\partial f}{\partial x}
-& = & \alpha \frac{\partial \tilde{c}}{\partial \dot{\tilde{y}}} + \frac{\partial \tilde{c}}{\partial \tilde{y}} \nonumber \\
-& = & \alpha {\bmat{cc}
-          \frac{\partial c}{\partial \dot{y}} & 0 \\
-          \frac{\partial h}{\partial \dot{y}} & \frac{\partial h}{\partial \dot{w}}
-       \emat}
-       + {\bmat{cc}
-          \frac{\partial c}{\partial y} & 0 \\
-          \frac{\partial h}{\partial y} & \frac{\partial h}{\partial  w}
-       \emat} \nonumber \\
-& = & {\bmat{cc}
-      \alpha \frac{\partial c}{\partial \dot{y}} + \frac{\partial c}{\partial y}
-      & 0 \\
-      \alpha \frac{\partial h}{\partial \dot{y}} + \frac{\partial h}{\partial y}
-      & \alpha \frac{\partial h}{\partial \dot{w}} + \frac{\partial h}{\partial w}
-       \emat} \label{rythmos:eqn:c_tilde_jac}
-\end{eqnarray}
-
-The matrix (\ref{rythmos:eqn:c_tilde_jac}) is block lower triangular and is
-easily used to solve linear systems by exploiting solves with the individual
-blocks along the diagonal.  In other words, the functionality from each set of
-DAEs can be used when solving the combined system.  This should not be
-surprising given the nature of these DAEs (i.e.\ the original DAEs are
-independent of the auxiliary DAEs).
-
-\section{Transient Sensitivity Computations}
-\label{rythmos:scn:transientsensitivity}
-
-In this section we describe the basics of direct and adjoint sensitivity
-computations.  The results from these computations are useful in a variety of
-advanced analysis algorithms.  The goal of this section is to state the
-relevant equations and expressions and to show what applications need to
-provide in order to support such computations.
 
 Below, we will consider direct and adjoint approaches to the computation of
 the first derivative object
 %
 \begin{equation}
-\frac{\partial \hat{g}}{\partial p} \in \mathcal{G} \times \mathcal{P}
-\label{rythmos:eqn:d_g_hat_d_p}
+\frac{\partial \hat{d}}{\partial p} \in \mathcal{G}|\mathcal{P}
+\label{rythmos:eqn:d_d_hat_d_p}
 \end{equation}
 %
 and adjoint approaches for the computation of
 %
 \begin{equation}
-\frac{\partial \hat{g}}{\partial v(t)} \in \mathcal{G} \times \mathcal{V}, \; t \in [t_i,t_f].
-\label{rythmos:eqn:d_g_hat_d_v}
+\frac{\partial \hat{d}}{\partial v(t)} \in \mathcal{G}|\mathcal{V}, \; t \in [t_i,t_f].
+\label{rythmos:eqn:d_d_hat_d_v}
 \end{equation}
 %
-Note that it is generally not computationally tractable to compute even a
-course discrete approximation to the first derivative object
-(\ref{rythmos:eqn:d_g_hat_d_v}) involving the transient auxiliary variables
-$v(t)$ because of the large discretized dimension of $v(t_i:t_f)$.
+Note that it is generally not computationally tractable to compute a discrete
+approximation to the first derivative object (\ref{rythmos:eqn:d_d_hat_d_v})
+involving the transient auxiliary variables $v(t)$ because of the large
+discretized dimension of $v(t_i:t_f)$.
 
-\subsection{Transient Direct Sensitivity Solvers}
-\label{rythmos:scn:transientsensitivity:direct}
+\subsection{Transient direct sensitivity computations}
 
-In this section we consider the solution of direct sensitivity equations to
-compute the first derivative object ${}\partial {}\hat{g} / {}\partial p$ in
-(\ref{rythmos:eqn:d_g_hat_d_p}).  In this section, we will ignore the presence
-of transient auxiliary variables $v(t)$ and will work with the combined DAE
-model in (\ref{rythmos:eqn:app:c_tilde})--(\ref{rythmos:eqn:app:g_tilde}).
-From (\ref{rythmos:eqn:app:g_hat_combined}) it is easy to see that
-%
-\begin{equation}
-\frac{\partial \hat{g}}{\partial p}
-= \frac{\partial \tilde{g}}{\partial \tilde{y}(t_f)} \frac{\partial \tilde{y}(t_f)}{\partial p} 
-+ \frac{\partial \tilde{g}}{\partial p}
-\label{rythmos:eqn:app:g_hat_direct}
-\end{equation}
-%
-where $\tilde{y}(t_f)$ is shorthand for the implicit state function for the
-solution of
-(\ref{rythmos:eqn:app:c_tilde})--(\ref{rythmos:eqn:app:c_tilde:ic}) at the
-final time $t_f$, which is a function of $p$.
-
-The final partial derivatives $\partial \tilde{y}(t_f) / {}\partial p$ are
-known as the {}\textit{direct sensitivities} and are independent of any
-particular choice of the auxiliary response functions $\tilde{g}(\ldots)$.
-In fact, these direct sensitivities $\partial \tilde{y}(t_f) / {}\partial p$
-can be useful in their own right in some types of analysis (see [???]).
-
-Solving for $\partial \tilde{y}(t_f) / {}\partial p$ requires solving the
-following forward direct sensitivity equations
+The direct sensitivity method for computing the first derivative object
+$\partial {}\hat{d} / {}\partial p$, as derived in
+Appendix~\ref{rythmos:app:direct-sens-derivation}, involves first solving the
+$n_p$ direct sensitivity equations
 %
 \begin{eqnarray}
 %
-\frac{\partial \tilde{c}}{\partial \dot{\tilde{y}}} \left(\frac{\partial}{\partial t} \frac{\partial \tilde{y}(t)}{\partial p} \right)
-+ \frac{\partial \tilde{c}}{\partial y} \left(\frac{\partial \tilde{y}(t)}{\partial p}\right)
-+ \frac{\partial \tilde{c}}{\partial p} & = & 0, \; t \in \left[ t_i, t_f \right], \label{rythmos:eqn:app:direct-c_tilde} \\
-\frac{\partial y(t_i)}{\partial p} & = & \frac{\partial y_0}{\partial p}. \label{rythmos:eqn:app:direct-c_tilde:ic}
+\frac{\partial c}{\partial \dot{y}} \dot{S} + \frac{\partial c}{\partial y} S + \frac{\partial c}{\partial p}
+& = & 0, \; t \in \left[ t_0, t_f \right], \label{rythmos:eqn:sens:direct-c} \\
+S(t_0) & = & \frac{\partial y_0}{\partial p}. \label{rythmos:eqn:sens:direct-c:ic}
 \end{eqnarray}
 %
-These sensitivity equations are easily derived by simply differentiating
-(\ref{rythmos:eqn:app:c_tilde})--(\ref{rythmos:eqn:app:c_tilde:ic}) with
-respect to each parameter $p_i$, for $i = 1 {}\ldots n_p$, and then combining
-each of the columns in the multi-vector form show above.
+followed by the computation of the reduced derivatives
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial p} 
+= \int_{t_0}^{t_f} \left( \frac{\partial g}{\partial y} S +  \frac{\partial g}{\partial p} \right) dt
++ \left. \left(  \frac{\partial h}{\partial y} S + \frac{\partial h}{\partial p} \right) \right|_{t=t_f},
+\label{rythmos:eqn:sens:d_d_hat_d_p_2}
+\end{equation}
+%
+\begin{tabbing}
+\hspace{4ex}where\hspace{1ex}\= \\
+\> $S = \frac{\partial y}{\partial p} {}\in {}\mathcal{Y}|\mathcal{P}$ is the
+direct sensitivitity of the state at $t\in[t_0,t_f]$, \\
+\> $\dot{S} = \left(\frac{\partial}{\partial t} \frac{\partial y(t)}{\partial p}\right)
+{}\in {}\mathcal{Y}|\mathcal{P}$ is the time derivative of $S$ at $t\in[t_0,t_f]$, \\
+\> $\frac{\partial c}{\partial {}\dot{y}} {}\in {}\mathcal{C}|\mathcal{Y}$ is defined on
+$t\in[t_0,t_f]$, \\
+\> $\frac{\partial c}{\partial y} {}\in {}\mathcal{C}|\mathcal{Y}$ is defined on $t\in[t_0,t_f]$, \\
+\> $\frac{\partial c}{\partial p} {}\in {}\mathcal{C}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, \\
+\> $\frac{\partial y_0}{\partial p} {}\in {}\mathcal{Y}|\mathcal{P}$ is defined only at $t=t_0$, \\
+\> $\frac{\partial {}\hat{g}}{\partial p} {}\in {}\mathcal{G}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, \\
+\> $\frac{\partial {}\hat{h}}{\partial p} {}\in {}\mathcal{G}|\mathcal{P}$ is defined only at $t=t_f$, and \\
+\> $\frac{\partial {}\hat{d}}{\partial p} {}\in {}\mathcal{G}|\mathcal{P}$ is defined independent of time.
+\end{tabbing}
 
-The state sensitivity DAEs
-(\ref{rythmos:eqn:app:direct-c_tilde})--(\ref{rythmos:eqn:app:direct-c_tilde:ic})
-are integrated together with the state DAEs
-(\ref{rythmos:eqn:app:c_tilde})--(\ref{rythmos:eqn:app:c_tilde:ic}).  Because
-all of these DAE equations are integrated together, only local time-step
-storage is required.  Note that the differential variables ${}\partial
-\tilde{y}(t) / {}\partial p$ appear linearly in the equations and the
-direct sensitivity DAEs are linear DAEs.  The dominant cost of the sensitivity
-computation is the $n_p$ independent DAEs represented by in
-(\ref{rythmos:eqn:app:direct-c_tilde})--(\ref{rythmos:eqn:app:direct-c_tilde:ic})
-that must be solved.  It is this set of equations that gives the direct
-approach its $O(n_p)$ complexity.
+This computation is performed by integrating the state
+(\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) together with the
+direct sensitivity equations
+(\ref{rythmos:eqn:sens:direct-c})--(\ref{rythmos:eqn:sens:direct-c:ic}) and
+the integral in (\ref{rythmos:eqn:sens:d_d_hat_d_p_2}) is computed while the
+DAEs are being integrated.
 
-Once the direct sensitivity equations are solved for ${}\partial \tilde{y}(t)
-/ {}\partial p$, then $\partial {}\hat{g} / {}\partial p$ in
-(\ref{rythmos:eqn:app:g_hat_direct}) is easily evaluated using the derivatives
-$\partial \tilde{g} / {}\partial \tilde{y}(t_f)$ and $\partial \tilde{g} /
-{}\partial p$, or approximated using directional finite differences of
-$\tilde{g}(\ldots)$.
+There are a variety of approaches for integrating the the state and direct
+sensitivity equations (see [???]) but arguably the the more efficient approach
+is to solve for the (nonlinear) time step for the state equations
+(\ref{rythmos:eqn:sens:c}) first followed by computing the linear time step
+for the direct sensitivities (\ref{rythmos:eqn:sens:direct-c}) and the
+integral in (\ref{rythmos:eqn:sens:d_d_hat_d_p_2}).
 
-The direct sensitivity equations can be presented to an implicit time
-integrator in the form
-(\ref{rythmos:eqn:dae})--(\ref{rythmos:eqn:dae:ic}) by simply
-defining the composite state vector
+A few important properites of the direct sensitivity equations are worth
+noting: they are linear, and the sensitivity DAE for each sensitivity
+parameter $p_i$ ($i=1\ldots{}n_p$) are independent.
+
+Note that the evaluation of the residual for the direct sensitivity equations
+in (\ref{rythmos:eqn:sens:direct-c}) requires the computation of ?????
+
+Some tips from DASPK 3.0 [???] for solving this problem are:
+\begin{itemize}
+%
+{}\item Solve state equation, applying error control first, to convergence for a
+time step for the state.
+%
+{}\item Next, solve sensitivity equations using a Newton method (even though the problem
+is linear) as this gives a more stable solution.
+%
+{}\item Consider truncation error for each set of parameters independently and take
+the max for the overall error control.
+%
+\end{itemize}
+
+Some tips from CVODES [???] for solving this problem are:
+\begin{itemize}
+%
+{}\item The linear sensitivity systems are also solved using a Newton method,
+mainly to allow the use of out-of-date preconditioners.
+%
+{}\item Step size control may or may not consider the sensitivity parameters.
+%
+{}\item Error control of the integration of the quadrature variables does
+not seem to be taken into account.
+%
+\end{itemize}
+
+Note that for the purposes of a general time stepper algorithm that accepts
+the general DAE formulation $f(\dot{x},x,t)$, it is easy to cast the direct
+sensitivity equations in that form by first defining the composite vector
 %
 \begin{equation}
 x =
 {\bmat{c}
-\tilde{y} \\
-\frac{\partial \tilde{y}}{\partial p_1} \\ \vdots \\ \frac{\partial \tilde{y}}{\partial p_{n_u}}
+S_{(:,1)} \\ \vdots \\ S_{(:,n_p)}
 \emat}
-\in \mathcal{Y}^{n_p+1}
+\in \mathcal{Y}^{n_p}
 \end{equation}
 %
-and then defining a similar composite DAE function
+consisting of the columns $S_{(:,i)}$ of $S$ and then defining a similar
+composite DAE function
 %
 \begin{equation}
 f(\dot{x},x,t) =
 {\bmat{c}
 %
-\tilde{c}\left( \dot{\tilde{y}}(t), \tilde{y}(t), p, v(t), t \right) \\
-%
-\frac{\partial \tilde{c}}{\partial \dot{\tilde{y}}} \left(\frac{\partial}{\partial t} \frac{\partial \tilde{y}(t)}{\partial p_1} \right)
-+ \frac{\partial \tilde{c}}{\partial y} \left(\frac{\partial \tilde{y}(t)}{\partial p_1}\right)
-+ \frac{\partial \tilde{c}}{\partial p_1} \\
+\frac{\partial c}{\partial \dot{y}} \dot{S}_{(:,1)}
++ \frac{\partial c}{\partial y} S_{(:,1)}
++ \frac{\partial c}{\partial p_{(1)}} \\
 %
 \vdots \\
 %
-\frac{\partial \tilde{c}}{\partial \dot{\tilde{y}}} \left(\frac{\partial}{\partial t} \frac{\partial \tilde{y}(t)}{\partial p_{n_p}} \right)
-+ \frac{\partial \tilde{c}}{\partial y} \left(\frac{\partial \tilde{y}(t)}{\partial p_{n_p}}\right)
-+ \frac{\partial \tilde{c}}{\partial p_{n_p}}
+\frac{\partial c}{\partial \dot{y}} \dot{S}_{(:,n_p)}
++ \frac{\partial c}{\partial y} S_{(:,n_p)}
++ \frac{\partial c}{\partial p_{(n_p)}}
 %
 \emat}
-\in \tilde{\mathcal{Y}}^{n_p+1} \times \mathcal{P} \times \mathcal{V} \rightarrow \tilde{\mathcal{C}}^{n_p+1}.
+\in \mathcal{Y}^{n_p} \rightarrow \mathcal{C}^{n_p}.
 \label{rythmos:eqn:direct-sens-daes}
 \end{equation}
 %
-Therefore, the direct sensitivity equations can be cast as a single DAE from
-the standpoint of a general time integration algorithm.
-
 The matrix $M$ in (\ref{rythmos:eqn:M}) for
 (\ref{rythmos:eqn:direct-sens-daes}) is given by
 %
 \begin{equation}
-\alpha \frac{\partial f}{\partial \dot{x}} + \frac{\partial f}{\partial x} = 
+\alpha \frac{\partial f}{\partial \dot{x}} + \beta \frac{\partial f}{\partial x} = 
 {\bmat{cccc}
-\alpha \frac{\partial \tilde{c}}{\partial \dot{\tilde{y}}} + \frac{\partial \tilde{c}}{\partial \tilde{y}} \\
-& \alpha \frac{\partial \tilde{c}}{\partial \dot{\tilde{y}}} + \frac{\partial \tilde{c}}{\partial \tilde{y}} \\
+\alpha \frac{\partial c}{\partial \dot{y}} + \beta \frac{\partial c}{\partial y} \\
+& \alpha \frac{\partial c}{\partial \dot{y}} + \beta \frac{\partial c}{\partial y} \\
 & & \ddots \\
-& & & \alpha \frac{\partial \tilde{c}}{\partial \dot{\tilde{y}}} + \frac{\partial \tilde{c}}{\partial \tilde{y}}
+& & & \alpha \frac{\partial c}{\partial \dot{y}} + \beta \frac{\partial c}{\partial y}
 \emat}
+in \mathcal{C}^{n_p}|\mathcal{Y}^{n_p}
 \label{rythmos:eqn:direct-sens-daes-jac}
 \end{equation}
 %
 which is a block diagonal matrix with the same block along the diagonal and
-all quantities are evaluated at the same trial point
-$(\dot{\tilde{y}},\tilde{y},u,t)$ as defined by the time integration
-algorithm.
+all quantities are evaluated at the same trial point $(\dot{y},y,u,t)$ as
+defined by the time integration algorithm.  Note that in the software
+implimentation using Thyra, it is easy to cast back and forth between a
+multi-vector and vector view of the same data and it is therefore easy to take
+advantage of multi-vector computations even through the time integrator has no
+idea that multi-vectors are being used under the covers.
 
-From looking at the structure of (\ref{rythmos:eqn:direct-sens-daes-jac}) it
-is clear that specialized solution strategies are in order.  Significant
-computational savings to be gained when solving the direct sensitivity
-equations by taking advantage of block linear solvers and these equations also
-offer great opportunities for course-grained parallel speedup (i.e.\ by
-solving for blocks of different sensitivities on different clusters of
-processors, see [???]).
+Note that with the addition of quadrature variables $w(t)\in\mathcal{G}$ and
+the associated quadrature ODEs $\dot{w}(t) = g(y(t),p,v(t),t)$, the
+sensitivity problem can be transformed to remove an explicit integration of
+the the distributed response function $g(y(t),p,v(t),t)$ from the problem
+seen.  This approach is used in CVODES and DASPK 3.0 to some extent and this
+has advantages and disadvantages.  This creates essentially another combined
+set of staggered DAEs that are solved by a single time stepper algorithm.
+This may imply that the error in the quadrature equations are considered when
+taking a time step for the state equations.  This may or may not be desirable.
 
-Also note that the computation of forward direct sensitivities can take
-advantage of cheap and easy to use forward AD tools or just directional finite
-differences to evaluate sub-Jacobian vector products needed by the algorithms.
+Note that the structure and properites of the direct sensitivity equations in
+(\ref{rythmos:eqn:sens:direct-c}) can exploited in a few different ways
+as described in the following subsections.
 
-Issue: How does adaptive step-size control affect the direct sensitivity
-computation?  This will effect how general software is used and what other
-specializations are needed.
+\subsubsection{Block linear solvers}
 
-\subsection{Transient Adjoint Sensitivity Solvers}
-\label{rythmos:scn:transientsensitivity:adjoint}
+Different blocks of sensitivities (i.e.\ for $i = i_k {}\ldots i_{k+1}$) can
+be solved at one time using block direct or iterative linear solvers.  The use
+of such block solvers in CVODES, IDAS or DASPK 3.0 is not possible given the
+structure of these codes.  The use of block iterative linear solver (such as
+block GMRES in Belos [???])  may speed up the calcuation by an order of
+magniture or more comparted to solving the linear systems one RHS at a time.
 
-Adjoint sensitivity approaches are more computationally efficient when $n_u$
-is large and/or when $n_v > 0$.  The adjoint sensitivity equations are derived in
-Appendix~??? and for the model in (???)--(???) are given as
+Because of the use of block linear solvers, our direct sensitivity DAE solvers
+may achieve as much as an order of magnitude of speedup or more over a solver
+such as CVODES that only allows for solving sensitivity systems one RHS at a
+time (see the function {}\texttt{cv\_lsolveS(...)} in [???CVODES User's
+Guide???]).
+
+\subsubsection{Exploitation of parallism for blocks for sensitivities}
+
+Since each direct sensitivity equation is indepenent of the others, they can
+be solved in parallel blocks and parallel clusters of processors.  For
+example, consider a DAE that comes from a discritized PDE who's state is
+distrubuted over 10 and has $n_p=100$ parameters to compute sensitivities for.
+The solution of the direct sensitivity equations can be solved on a single
+chuck of 10 processors where all 100 DAEs are solved simultaneously using a
+block solver.  However, the direct sensitivity DAEs can also be solved on 10
+chucks of 10 processors each (i.e.\ 100 overall processors) where blocks of 10
+direct sensitivity DAEs are solved on each chunk of processors.  However, when
+using this approach, note that in general the state DAE has to be integrated
+on each of the chunks of processors along with the direct sensitivity DAEs and
+this will severely impact parallel speedup.  However, if the state DAE is
+linear then the state is not needed to define the direct sensitivity DAEs and
+therefore no state computation is needed in order to solve the direct
+sensitivity DAEs.  In this case, better parallel speedup can be achieve to
+larger numbers of chunks of processors.  However, parallel speedup will be
+limited when the numbers of sensitivity DAEs becomes too small an each chunk
+of processors since the block linear solver will slow down (because of poorer
+flop rates due to reductions in cache efficiency and global communication
+overhead).
+
+\subsection{Transient adjoint sensitivity computations}
+
+The most general statement of the adjoint equations associated with the state
+equations in (\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) and the
+response functions in (\ref{rythmos:eqn:sens:d}), as derived in Appendix~???,
+is
 %
-???
+\begin{eqnarray}
+- \frac{d}{dt}\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)
++  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:app:eqn:sens:adj} \\
+\left.\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)\right|_{t=t_f}
+& = & - \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
+\label{rythmos:app:eqn:sens:adj:fc}
+\end{eqnarray}
 %
+where $\Lambda\in\mathcal{C}|\mathcal{G}$ is the multi-vector of Lagrange
+multipliers at $t\in[t_0,t_f]$.  As noted in Appendix~??? and [???], the above
+form of the adjoint may be unstable for some DAEs.  Here we consider index-0
+and index-1 DAEs where $\partial c / {}\partial {}\dot{y}$ is constant and
+non-constant.
 
-\section{Stability analysis and Eigen problems}
+Note that for index-0 DAEs (which includes implicit and explicit ODEs) that
+the mass matrix $\partial c / {}\partial {}\dot{y}$ is non-singular and
+therefore the final condition (\ref{rythmos:app:eqn:sens:adj:fc}) becomes
+trivially easy to solve as it just requires an inversion of $\partial c /
+{}\partial {}\dot{y}$ (assuming that the mass matrix is easy to invert).
+
+\subsubsection{Non-augmented adjoint equations for constant mass matrices}
+
+When $\partial c / {}\partial {}\dot{y}$ is constant, then
+(\ref{rythmos:app:eqn:sens:adj}) reduces to
+%
+\begin{eqnarray}
+- \frac{\partial c}{\partial \dot{y}}^H \dot{\Lambda}
++  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:app:eqn:sens:adj} \\
+\left.\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)\right|_{t=t_f}
+& = & - \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
+\label{rythmos:app:eqn:sens:adj:fc}
+\end{eqnarray}
+%
+where $\dot{\Lambda}=d(\Lambda)/d(t)\in\mathcal{C}|\mathcal{G}$.
+
+The adjoint DAE can be cast in the standard form $f(\dot{x},x,t)$ understood
+by a general time integrator by first defining the composite vector
+%
+\begin{equation}
+x =
+{\bmat{c}
+\Lambda_{(:,1)} \\ \vdots \\ \Lambda_{(:,n_g)}
+\emat}
+\in \mathcal{C}^{n_g}
+\end{equation}
+%
+consisting of the columns $\Lambda_{(:,j)}$ of $\Lambda$ and then defining the
+associated composite DAE function
+%
+\begin{equation}
+f(\dot{x},x,t) =
+{\bmat{c}
+%
+- \frac{\partial c}{\partial \dot{y}}^H \dot{\Lambda}_{(:,1)}
++  \frac{\partial c}{\partial y}^H \Lambda_{(:,1)} + \frac{\partial g_{(1)}}{\partial y}^H
+%
+\vdots \\
+%
+- \frac{\partial c}{\partial \dot{y}}^H \dot{\Lambda}_{(:,n_g)}
++  \frac{\partial c}{\partial y}^H \Lambda_{(:,n_g)} + \frac{\partial g_{(n_g)}}{\partial y}^H
+%
+\emat}
+\in \mathcal{Y}^{n_p} \rightarrow \mathcal{C}^{n_p}.
+\label{rythmos:eqn:adj-sens-daes}
+\end{equation}
+%
+Note also that a transformation in the sensitivity equations of $\tau = t_f -
+t$ is needed to allow the integration backward in time using a forward time
+integrator.
+
+The matrix $M$ in (\ref{rythmos:eqn:M}) for
+(\ref{rythmos:eqn:adj-sens-daes}) is given by
+%
+\begin{equation}
+\alpha \frac{\partial f}{\partial \dot{x}} + \beta \frac{\partial f}{\partial x}
+= 
+{\bmat{ccc}
+\alpha \frac{\partial c}{\partial \dot{y}}^H + \beta \frac{\partial c}{\partial y}^H \\
+& \ddots \\
+& & \alpha \frac{\partial c}{\partial \dot{y}}^H + \beta \frac{\partial c}{\partial y}^H
+\emat}
+\in \mathcal{C}^{n_p}|\mathcal{Y}^{n_p}
+\label{rythmos:eqn:adj-sens-daes-jac}
+\end{equation}
+%
+which is a block diagonal matrix with the same block along the diagonal and
+all quantities are evaluated at the same trial point $(\dot{y},y,u,t)$ as
+defined by the time integration algorithm.  An important property of this
+block matrix is that each block along the diagonal is the adjoint of the
+matrix ${}\alpha (\partial c / {}\partial {}\dot{y}) + {}\beta (\partial c /
+{}\partial y)$ which is needed by the forward implicit solvers and the direct
+sensitivity solvers.  In general, the adjoint time stepper can be implemented
+just from the same sensitivity objects as used for the forward and direct
+sensitivity solves with the added requirement that adjoint operations with
+these object be supported.
+
+Also note that the block diagonal form of
+(\ref{rythmos:eqn:adj-sens-daes-jac}) immediately lends itself for use with a
+block linear solver.  When $n_g$ is larger, then a block linear solver may
+provide significant speedups over a single RHS linear solver implementation
+such as is the case in CVODES and IDAS (see ??? in [???] for example).
+
+\subsubsection{Augmented adjoint equations for non-constant mass matrices}
+
+When $\partial c / {}\partial {}\dot{y}$ is a function of $t$ and/or $y$ then
+the adjoint equations in
+(\ref{rythmos:app:eqn:sens:adj})--(\ref{rythmos:app:eqn:sens:adj:fc}) are
+transformed into the {}\textit{augmented adjoint equations} which take the
+form
+%
+\begin{eqnarray}
+\frac{d}{dt}\left( \bar{\Lambda} \right)
++  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:app:eqn:sens:aug-adj-de} \\
+\bar{\Lambda} + \frac{\partial c}{\partial \dot{y}}^H
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:app:eqn:sens:aug-adj-ae} \\
+\left. \bar{\Lambda} \right|_{t=t_f}
+& = & \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)}.
+\label{rythmos:eqn:sens:aug-adj:fc}
+\end{eqnarray}
+
+The augmented adjoint system can be stated in the standard form understood by
+general time integrators by first defining the composite vector
+%
+\begin{equation}
+x =
+{\bmat{c}
+{\bmat{c} \bar{\Lambda}_{(:,1)} \\ \Lambda_{(:,1)} \emat} \\
+\vdots \\
+{\bmat{c} \bar{\Lambda}_{(:,n_g)} \\ \Lambda_{(:,n_g)} \emat} \\
+\emat}
+\in \mathcal{C}^{2 n_g}
+\end{equation}
+%
+consisting of the columns $\bar{\Lambda}_{(:,j)}\in\mathcal{C}$ and
+$\Lambda_{(:,j)}\in\mathcal{C}$ of $\bar{\Lambda}$ and $\Lambda$,
+respectively, and then defining the associated composite DAE function
+%
+\begin{equation}
+f(\dot{x},x,t) =
+{\bmat{c}
+%
+{\bmat{c}
+\frac{d}{dt}\left( \bar{\Lambda}_{(:,1)} \right)
++ \frac{\partial c}{\partial y}^H \Lambda_{(:,1)} + \frac{\partial g_{(1)}}{\partial y}^H
+\\
+\bar{\Lambda}_{(:,1)} + \frac{\partial c}{\partial \dot{y}}^H \Lambda_{(:,1)}
+\emat} \\
+%
+\vdots \\
+%
+{\bmat{c}
+\frac{d}{dt}\left( \bar{\Lambda}_{(:,n_g)} \right)
++ \frac{\partial c}{\partial y}^H \Lambda_{(:,n_g)} + \frac{\partial g_{(n_g)}}{\partial y}^H
+\\
+\bar{\Lambda}_{(:,n_g)} + \frac{\partial c}{\partial \dot{y}}^H \Lambda_{(:,n_g)}
+\emat} \\
+%
+\emat}
+\in \rightarrow \mathcal{C}^{2 n_p}|\mathcal{Y}^{2 n_p}.
+\label{rythmos:eqn:aug-adj-sens-daes}
+\end{equation}
+%
+Note also that a transformation in the sensitivity equations of $\tau = t_f -
+t$ is needed to allow the integration backward in time using a forward time
+integrator.
+
+The matrix $M$ in (\ref{rythmos:eqn:M}) for
+(\ref{rythmos:eqn:aug-adj-sens-daes}) is given by
+%
+\begin{equation}
+\alpha \frac{\partial f}{\partial \dot{x}} + \beta \frac{\partial f}{\partial x}
+= 
+{\bmat{ccc}
+%
+{\bmat{cc}
+\alpha I & \beta \frac{\partial c}{\partial y}^H \\
+\beta I &  \beta \frac{\partial c}{\partial \dot{y}}^H
+\emat} \\
+%
+& \ddots \\
+%
+& & {\bmat{cc}
+\alpha I & \beta \frac{\partial c}{\partial y}^H \\
+\beta I &  \beta \frac{\partial c}{\partial \dot{y}}^H
+\emat}
+%
+\emat}
+\in \mathcal{Y}^{2 n_p}|\mathcal{C}^{2 n_p}
+\label{rythmos:eqn:aug-adj-sens-daes-jac}
+\end{equation}
+%
+which is a block diagonal matrix with the same block along the diagonal and
+all quantities are evaluated at the same trial point $(\dot{y},y,u,t)$ as
+defined by the time integration algorithm.  At first glance, the blocks
+along the diagonal
+%
+\begin{equation}
+{\bmat{cc}
+\alpha I & \beta \frac{\partial c}{\partial y}^H \\
+\beta I &  \beta \frac{\partial c}{\partial \dot{y}}^H
+\emat} \in \mathcal{Y}^{n_p}|\mathcal{C}^{n_p}
+\label{rythmos:eqn:aug-adj-sens-jac}
+\end{equation}
+%
+do not seem to correspond to the adjoint of the general form shown for the
+matrix $M$ in (\ref{rythmos:eqn:M}) that we are trying to exploit.  However,
+to show how to utilize the general form of $M$ in (\ref{rythmos:eqn:M}),
+consider the solution of any a system of the form
+%
+\begin{equation}
+{\bmat{cc}
+\alpha I & \beta \frac{\partial c}{\partial y}^H \\
+\beta I &  \beta \frac{\partial c}{\partial \dot{y}}^H
+\emat}
+{\bmat{c} v_1 \\ v_2 \emat}
+=
+{\bmat{c} b_1 \\ b_2 \emat}
+\label{rythmos:eqn:aug-adj-sens-system}
+\end{equation}
+%
+for arbitary vectors $v_1, v_2 {}\in\mathcal{C}$ and $b_1, b_2
+{}\in\mathcal{Y}$.  Apply the transformation
+%
+\[
+{\bmat{cc}
+-\frac{\beta}{\alpha} I & I \\
+ & I
+\emat}
+\left[
+{\bmat{cc}
+\alpha I & \beta \frac{\partial c}{\partial y}^H \\
+\beta I &  \beta \frac{\partial c}{\partial \dot{y}}^H
+\emat}
+{\bmat{c} v_1 \\ v_2 \emat}
+=
+{\bmat{c} b_1 \\ b_2 \emat}
+\right]
+\]
+%
+yields the transformed system
+%
+\begin{equation}
+{\bmat{cc}
+ & \bar{\alpha} \frac{\partial c}{\partial \dot{y}}^H + \bar{\beta} \frac{\partial c}{\partial y}^H \\
+\beta I &  \beta \frac{\partial c}{\partial \dot{y}}^H
+\emat}
+{\bmat{c} v_1 \\ v_2 \emat}
+=
+{\bmat{c}  b_2 - \bar{\gamma} b_1 \\ b_2 \emat}
+\label{rythmos:eqn:aug-adj-sens-trans-system}
+\end{equation}
+%
+where $\bar{\alpha}=\beta$, $\bar{\beta}=\beta^2/\alpha$, and
+$\bar{\gamma}=\beta/2$.  This system can then be solved as
+%
+\[
+v_2 = \left( \bar{\alpha} \frac{\partial c}{\partial \dot{y}}^H + \bar{\beta} \frac{\partial c}{\partial y}^H \right)^{-1}
+\left(  b_2 - \bar{\gamma} b_1 \right)
+\]
+%
+followed by
+%
+\[
+v_1 = \frac{1}{\beta} \left( b_2 - \beta \frac{\partial c}{\partial \dot{y}}^H v_2 \right).
+\]
+%
+Therefore, the Schur complement
+%
+\[
+\bar{\alpha} \frac{\partial c}{\partial \dot{y}}^H + \bar{\beta} \frac{\partial c}{\partial y}^H
+\]
+%
+that is solved for is of the general form needed for the forward and direct
+sensitivity and no new functionality over what is needed for the non-augmented
+adjoint DAE form is required for the adjoint system.  Solving the augmented
+DAE system only requires a few extra operations but requires twice the
+time-step storage since both $\bar{\Lambda}$ and $\Lambda$ need to be
+maintained.
+
+Again, these computations can be rearranged so that multi-vector operations
+and block solvers can be utilized resulting in significant speedups over a
+single vector RHS version such as in CVODES and IDAS.
+
+\subsubsection{Adjoint reduced gradient computations}
+
+As the adjoint is being computed, the integral
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial p}^H =
+\int_{t_0}^{t_f} \left(
+    \frac{\partial g}{\partial p}^H
+    + \frac{\partial c}{\partial p}^H \Lambda
+  \right) dt
+  + \left. \frac{\partial h}{\partial p}^H \right|_{t=t_f}
+  - \left. \left( \frac{\partial y_0}{\partial p}^H \frac{\partial c}{\partial \dot{y}}^H \Lambda \right) \right|_{t=t_0}
+\label{rythmos:eqn:sens:d_d_hat_d_p}
+\end{equation}
+%
+and the point-wise gradient
+%
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial v(t)}^H
+= \frac{\partial g}{\partial v(t)}^H + \frac{\partial c}{\partial v(t)}^H \Lambda(t),
+t\in[t_0,t_f]
+\label{rythmos:eqn:sens:d_d_hat_d_v_t}
+\end{equation}
+%
+can both be computed.  Note that these computations depend on the state $y(t)$
+as well as on the adjoint $\Lambda(t)$ in general and therefore the state and
+the (local) adjoint history are both needed.  If the integral equation is
+computed using quadrature variables, the getting access to $y(t)$ and
+$\Lambda(t)$ is automatic but if these equations are integrated using a
+different time stepping algorithm (working backward in time), then more
+general interpolation access to $y(t)$ and $\Lambda(t)$ will be required.
+
+\section{Stability analysis and eigen problems}
 
 {}\textbf{ToDo: Andy, can you fill this section in or tell me what the
 requirements are?}
 
-\section{Application requirements}
+\section{General DAE formulation and requirements}
 
-In this section we state the requirements for applications to support various
+In this section we state the requirements for a general DAE to support various
 time integration methods, direct and adjoint sensitivity computations, and
-other types of numerical problems.  Our goal here is to model the requirements
-at a level of abstraction most convenient for application developers.  Here we
-define the concept of a parameterized atomic DAE (or ODE) that takes the form
+other types of numerical problems.  The most fundamental implementation of the
+interface described here will be provided by the underlying application.  Our
+goal here is to model the requirements at a level of abstraction most
+convenient for application developers.  However, many other composite DAE
+objects will also exist that will be based on the basic DAE abstractions.
+
+Here we define the concept of a parameterized general DAE (or ODE) that takes
+the form
 %
 \begin{eqnarray}
 c\left( \dot{y}(t), y(t), \{u_l\}, t \right) & = & 0,
-\; t \in \left[ t_i, t_f \right] \label{rythmos:eqn:atomic:c} \\
-y(0) & = & y_0(\{u_l\}) \label{rythmos:eqn:atomic:c:ic}
+\; t \in \left[ t_0, t_f \right] \label{rythmos:eqn:gen:c} \\
+y(t_0) & = & y_0(\{u_l\}) \label{rythmos:eqn:gen:c:ic}
 \end{eqnarray}
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
 \>	$y(t) \:\in\:\mathcal{Y}$ are the transient state variables, \\
 \>	$\dot{y}(t) = d(y)/d(t)\:\in\:\mathcal{Y}$ is the vector of temporal derivatives of $y(t)$, \\
 \>	$\{u_l\}$ is a set of auxiliary parameter vectors with $|\{u_l\}| = N_u$ members, \\
-\>	$u_l\in\mathcal{U}_l$, $l=1 {}\ldots N_u$, is the $l^{\mbox{th}}$ subset of auxiliary parameters, \\
+\>	$u_l\in\mathcal{U}_l$, $l=1 {}\ldots N_u$, is the $l^{\mbox{th}}$ subvector of auxiliary parameters, \\
 \>	$c(\dot{y}(t), y(t), \{u_l\}, t) :
 		\mathcal{Y}^2 \times \mathcal{U}_1 \times \ldots \times \mathcal{U}_{N_u} \times \RE
 		\rightarrow \mathcal{C}$ are the state DAEs, \\
 \>	$y_0(\{u_l\}) \:\in\:\mathcal{U}_1 \times \ldots \times \mathcal{U}_{N_u} \rightarrow \mathcal{Y}$
-		define the initial conditions for $y(0)$ as a function of $\{u_l\}$, \\
+		define the initial conditions for $y(t_0)$ as a function of $\{u_l\}$, \\
 \>	$\mathcal{Y} \:\subseteq\:\RE^{n_y}$ is the vector space of the state variables $y(t)$, \\
 \>	$\mathcal{U}_l \:\subseteq\:\RE^{n_{u,l}}$ is the vector space of $u_l$ ($l = 1 {}\ldots N_u$), \\
 \>	$\mathcal{C} \:\subseteq\:\RE^{n_y}$ is the vector space of the output of the DAE function $c(\ldots)$.
 \end{tabbing}
 
 The DAE formulation above in
-(\ref{rythmos:eqn:atomic:c})--(\ref{rythmos:eqn:atomic:c:ic}) differs slightly
-than the application DAE formulation in
-(\ref{rythmos:eqn:app:c})--(\ref{rythmos:eqn:app:c:ic}) in that the latter is
-more specific to sensitivity computations while the former is more general and
-more amiable to a general software implementation.  The DAE in
-(\ref{rythmos:eqn:atomic:c})--(\ref{rythmos:eqn:atomic:c:ic}) is meant to
-represent any atomic set of DAEs that require a coupled solution and are
-parameterized on one or more different subsets of auxiliary parameters
-$u_l\in\mathcal{U}_l$.  Different subsets of auxiliary parameters
-$u_l\in\mathcal{U}_l$ can be mapped into different types of quantities in
-different types of numerical methods.  Some of the kinds of roles that an
-individual subset vector $u_l\in\mathcal{U}_l$ of auxiliary parameters can
-represent are:
+(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) differs slightly than
+the sensitivity DAE formulation in
+(\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) in that the latter
+is more specific to sensitivity computations while the former is more general
+and more amiable to a general software implementation.  The DAE in
+(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) is meant to represent
+the most general DAE formulation that allows the composition of multiple DAEs
+(for example in a staggered mode).  Different subvectors of auxiliary
+parameters $u_l\in\mathcal{U}_l$ can be mapped into different types of
+quantities in different types of numerical methods.  Some of the kinds of
+roles that an individual subset vector $u_l\in\mathcal{U}_l$ of auxiliary
+parameters can represent are:
 %
 \begin{itemize}
 %
-{}\item Steady-state parameters for sensitivity computations (i.e.\ $u_l =
-p$ in (\ref{rythmos:eqn:app:c}))
+{}\item Steady-state parameters for sensitivity computations (i.e.\ $u_1 =
+p$ in (\ref{rythmos:eqn:sens:c}))
 %
-{}\item Transient parameters for sensitivity computations (i.e.\ $u_l = v(t)$
-in (\ref{rythmos:eqn:app:c}))
+{}\item Transient parameters for sensitivity computations (i.e.\ $u_2 = v(t)$
+in (\ref{rythmos:eqn:sens:c}))
 %
-{}\item Coupling variables between different DAEs (e.g.\ $u_l = y$ in
-(\ref{rythmos:eqn:app:h}))
+{}\item Coupling variables between different DAEs (e.g.\ $u_1 = y_1$ in
+(\ref{rythmos:eqn:stag:c2}))
 %
 {}\item Continuation parameters (i.e.\ to aid in the solution of the implicit
-nonlinear time step equations $r(z)=0$ in (\ref{rythmos:eqn:r}))
+nonlinear time step equations $r(z)=0$ in (\ref{rythmos:eqn:r}) or in the
+solution of initial conditions)
 %
 {}\item Uncertain parameters (i.e.\ to be manipulated in an uncertainty
 quantification study)
 %
 \end{itemize}
 
-From the application developer's point of view, how a particular set of
-parameters is used in some higher-level numerical algorithm does not greatly
-influence what is required from a application to allow the manipulation of
-these parameters or in how derivatives for those variables are computed by the
-application.  The atomic DAE model in
-(\ref{rythmos:eqn:atomic:c})--(\ref{rythmos:eqn:atomic:c:ic}) can be used to
-represent (\ref{rythmos:eqn:app:c})--(\ref{rythmos:eqn:app:c:ic}) and
-(\ref{rythmos:eqn:app:h})--(\ref{rythmos:eqn:app:h:ic}) in a sensitivity
-computation and we only need to consider computational requirements with a
-single set of DAE equations.
+From the DAE developer's point of view, how a particular set of parameters is
+used in some higher-level numerical algorithm does not greatly influence what
+is required from the DAE to allow the manipulation of these parameters or in
+how derivatives for those variables are computed.  The general DAE model in
+(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) can be used, for
+example, to represent
+(\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) in a sensitivity
+computation, or can represent each DAE in a staggered set of DAEs, or any
+other type of DAE.
 
 For the purpose of sensitivity computations we will also define a general
 set of auxiliary response functions of the form
 %
 \begin{equation}
-g(\{\hat{u}_l\}) \in \hat{\mathcal{U}}_1 \times \ldots \times \hat{\mathcal{U}}_{\hat{N}_u} \rightarrow \mathcal{G}.
-\label{rythmos:eqn:atomic:g}
+g_j(y,\{\hat{u}_l\},t) \in \mathcal{U}_1 \times \ldots \times \mathcal{U}_{\hat{N}_u} \rightarrow \mathcal{G}_j, j=1 \ldots N_g, 
+\label{rythmos:eqn:gen:g}
 \end{equation}
 %
-where this set of auxiliary parameters $\{\hat{u}_l\}$ does not map one-to-one
-with the set $\{u_l\}$ for any particular set of DAE.  For example, for the
-sensitivity response function problem in (\ref{rythmos:eqn:app:g}) we have
-$\hat{u}_1 = y(t)$, $\hat{u}_2 = p$, and $\hat{u}_3 = v(t)$.  The purpose of
-defining a more general set of response functions in
-(\ref{rythmos:eqn:atomic:g}) is to provide a concise description of the
-requirements for various types of computations.
+The purpose of defining a general set of response functions in
+(\ref{rythmos:eqn:gen:g}) is to provide a concise description of the
+requirements for various types of computations.  The reason for defining
+different sets of response functions $g_j(\ldots)$ is that any particualar
+member may represent a high-dimensional function with a specialized scalar
+product for its vector space $\mathcal{G}_j$.  Note that computing
+sensitivities for a a very high dimensional vector function $g_j(\ldots)$ is
+intractable for an adjoint approach but is very a direct sensitivity approach
+(note: the steady-state interface for nonlinear problems should be changed in
+this way to support large dimensional response functions as well).
 
-Here we divide up the requirements for an atomic DAE in
-(\ref{rythmos:eqn:atomic:c})--(\ref{rythmos:eqn:atomic:c:ic}) and an atomic
-set of response functions in (\ref{rythmos:eqn:atomic:g}) into three different
-categories: forward solve, direct sensitivities and adjoint sensitivities.
+Note that the evaluations for $c(\dot{y},y,\{u_l\},t)$ and $g_j(y,\{u_l\}t)$
+(for $j = 1 {}\ldots N_g$) may share common subcomputations and therefore
+adding provisions to allow efficient simultaneous computations of all of the
+objects is advisable.  In addition, the derivative computations described
+below will automatically compute the function values when AD is used so a
+means to allow the simultaneous computation of derivative objects along with
+function values is needed for optimal performance.  Also, if the DAE
+implementation does copy the state then it would be advisable to tell the DAE
+when the state being passed in has changed or not.
+
+Here we divide up the requirements for general DAE in
+(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) and the response
+functions in (\ref{rythmos:eqn:gen:g}) into three different categories:
+forward solve, direct sensitivities and adjoint sensitivities.
 
 \subsection{Requirements for forward solve}
 
 Here we describe requirements for
-(\ref{rythmos:eqn:atomic:c})--(\ref{rythmos:eqn:atomic:c:ic}) needed to
+(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) needed to
 implement a basic class of implicit forward integration methods.
 
 \begin{itemize}
 
-\item\textbf{Zero-order requirements}
+\item\textbf{Zero-order requirements (explicit and implicit time steppers)}
 
 \begin{itemize}
 %
@@ -1204,44 +1653,65 @@ $t\in\RE$, evaluate
 (\dot{y},y,\{u_l\},t) {}\rightarrow c(\dot{y},y,\{u_l\},t)\in\mathcal{C}.
 \]
 %
-{}\item Auxiliary response evaluation: Given selections for
-$\hat{u}_l\in\hat{\mathcal{U}}_l$ (for $l=1\ldots{}\hat{N}_u$), evaluate
+{}\item Auxiliary response evaluation: Given selections for $y\in\mathcal{Y}$,
+$u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), and $t\in\RE$ evaluate
 \[
-\{u_l\} {}\rightarrow g(\{\hat{u}_l\},t)\in\mathcal{G}.
+\{u_l\} {}\rightarrow g(\{u_l\},t)\in\mathcal{G}_j, j = 1 \ldots N_g.
 \]
 %
 \end{itemize}
 
-\item\textbf{First-order requirements}
+\item\textbf{First-order requirements (implicit time steppers and sensitivity computations)}
 
 \begin{itemize}
 %
 {}\item Formation of $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) +
-({}\partial c / {}\partial y)$: Given selections for $\dot{y}\in\mathcal{Y}$,
-$y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$,
-and $\alpha\in\RE$, evaluate an abstract nonsingular object
+{}\beta ({}\partial c / {}\partial y)$: Given selections for
+$\dot{y}\in\mathcal{Y}$, $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for
+$l=1\ldots{}N_u$), $t\in\RE$, $\alpha\in\RE$, and $\beta\in\RE$ evaluate an
+abstract nonsingular object
 \[
 (\dot{y},y,\{u_l\},t) {}\rightarrow M
-= {}\alpha \frac{\partial c}{\partial {}\dot{y}} + \frac{\partial c}{\partial y}
+= {}\alpha \frac{\partial c}{\partial {}\dot{y}} + \beta \frac{\partial c}{\partial y}
 {}\in {}\mathcal{C}|\mathcal{Y}.
 \]
+Note the special cases of $(\alpha,\beta)=(1,0)$ and $(\alpha,\beta)=(0,1)$
+allow a client to access the operators $({}\partial c / {}\partial {}\dot{y})$
+and $({}\partial c / {}\partial y)$ separately.  Of course the operator
+returned for $M = ({}\partial c / {}\partial {}\dot{y})$ for the case of
+$(\alpha,\beta)=(1,0)$ is not guarranteed to be nonsingualar.  Only opeators
+$M$ for reasonable finite nonzero values of $\alpha$ and $\beta$ are
+guaranteed to be nonsingular.
+%
+{}\item Allow resuse of factorizations, preconditioners etc.\ form some old
+nonsingular operator $M_{\mbox{old}}$ in the reformation of $M = {}\alpha
+({}\partial c / {}\partial {}\dot{y}) + {}\beta ({}\partial c / {}\partial
+y)$: Given a previously computed nonsingular operator $M_{\mbox{old}}$, create
+a new operator $M$ at a new point $(\dot{y},y,t)$ what reuses any
+factorizations or precondioners from $M_{\mbox{old}}$ but represents the
+correct analytic operator.  This capability is needed to allow a time stepper
+algorithm to have some control over when preconditioners or factorizations are
+updated.  However, the newly computed operator $M$ must still provide a
+sufficient analytic approximation to the true matrix which is needed for
+sensitivity computations.
 %
 {}\item Appliction of $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) +
-({}\partial c / {}\partial y)$: Given a preformed object for $M = {}\alpha
-({}\partial c / {}\partial {}\dot{y}) + ({}\partial c / {}\partial y)$, then
-provide the ability to apply the operator as
+{}\beta ({}\partial c / {}\partial y)$: Given a preformed object for $M =
+{}\alpha ({}\partial c / {}\partial {}\dot{y}) + {}\beta ({}\partial c /
+{}\partial y)$, provide the ability to apply the operator as
 \[
 Y = M X
 \]
 where $X\in\mathcal{Y}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
-and $Y\in\mathcal{C}|\RE^m$ is the LHS solution multi-vector.  The purpose of
-stating the multi-vector form is to encourage the development of block methods
-that are useful for other types of more advanced algorithms.
+and $Y\in\mathcal{C}|\RE^m$ is the LHS multi-vector.  The purpose of stating
+the multi-vector form is to encourage the development of block methods that
+are useful for other types of more advanced algorithms.
 %
 {}\item Solve with $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) +
-({}\partial c / {}\partial y)$: Given a preformed object for $M = {}\alpha
-({}\partial c / {}\partial {}\dot{y}) + ({}\partial c / {}\partial y)$, then
-provide the ability to (approximately) solve for systems of the form
+{}\beta ({}\partial c / {}\partial y)$: Given a preformed object for $M =
+{}\alpha ({}\partial c / {}\partial {}\dot{y}) + {}\beta ({}\partial c /
+{}\partial y)$, then provide the ability to (approximately) solve for systems
+of the form
 \[
 X = M^{-1} B
 \]
@@ -1255,15 +1725,18 @@ linear systems of the form
 x = M^{-1} b,
 \]
 where $b\in\mathcal{Y}$ and $x\in\mathcal{C}$, automatically satisfies this
-requirement.  The exact specification of what is meant to (approximately) solve
-systems of this nature must be accurately specified.
+requirement.  The exact specification of what is meant to (approximately)
+solve systems of this nature must be accurately specified. Note that a status
+test that will work for composite and block linear solvers is needed which is
+different than for a strightforward iterative or direct linear solver.
 %
 {}\item{} [Optional] Formation and maintance of multiple $M = {}\alpha
-({}\partial c / {}\partial {}\dot{y}) + ({}\partial c / {}\partial y)$
+({}\partial c / {}\partial {}\dot{y}) + {}\beta ({}\partial c / {}\partial y)$
 objects: Some types of numerical algorithms can be implemented much more
 efficiently if more than one instance of $M = {}\alpha ({}\partial c /
-{}\partial {}\dot{y}) + ({}\partial c / {}\partial y)$ can be computed and
-maintained simultaneously.
+{}\partial {}\dot{y}) + {}\beta ({}\partial c / {}\partial y)$ can be computed
+and maintained simultaneously.  This may be needed, for instance, in an
+implicit RK method as described in Section ???.
 %
 \end{itemize}
 
@@ -1273,8 +1746,9 @@ maintained simultaneously.
 
 In addition for the requirements for forward solves described in the previous
 section, here we describe an additional set of requirements for
-(\ref{rythmos:eqn:atomic:c})--(\ref{rythmos:eqn:atomic:c:ic}) needed to
-implement the implicit direct sensitivity methods as described in Section \ref{rythmos:scn:transientsensitivity:direct}.
+(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) needed to
+implement the implicit direct sensitivity methods as described in Section
+\ref{rythmos:scn:transientsensitivity:direct}.
 
 \begin{itemize}
 
@@ -1284,13 +1758,13 @@ $l=1\ldots{}N_u$) and some $U_l\in\mathcal{U}_l|\RE^m$ compute the action of
 (\{u_l\},U_l) {}\rightarrow \frac{\partial y_0}{\partial u_l} U_l \in \mathcal{Y}|\RE^m
 \; \mbox{for} \; l = 1 {}\ldots N_u,
 \]
-or equivalently evaluate the sensitivity themselves
+or alternatively evaluate the sensitivity themselves as a multi-vector
 \[
 \{u_l\} {}\rightarrow \frac{\partial y_0}{\partial u_l} \in \mathcal{Y}|\mathcal{U}_l
 \; \mbox{for} \; l = 1 {}\ldots N_u.
 \]
 
-{}\item DAE Auxiliary sensitivities: Given selections for
+{}\item DAE auxiliary direct sensitivities: Given selections for
 $\dot{y}\in\mathcal{Y}$, $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for
 $l=1\ldots{}N_u$), $t\in\RE$, and some $U_l\in\mathcal{U}_l|\RE^m$ compute
 the action of
@@ -1298,23 +1772,23 @@ the action of
 (\dot{y},y,\{u_l\},t,U_l) {}\rightarrow \frac{\partial c}{\partial u_l} U_l \in \mathcal{C}|\RE^m,
 \; \mbox{for} \; l = 1 {}\ldots N_u,
 \]
-or alternatively compute the sensitivities themselves
+or alternatively compute the sensitivities themselves as a multi-vector
 \[
 (\dot{y},y,\{u_l\},t) {}\rightarrow \frac{\partial c}{\partial u_l} \in \mathcal{C}|\mathcal{U}_l,
 \; \mbox{for} \; l = 1 {}\ldots N_u.
 \]
 
-{}\item Auxiliary response function sensitivities: Given selections for
-$\hat{u}_l\in\hat{\mathcal{U}}_l$ (for $l=1\ldots{}\hat{N}_u$), and some
-$\hat{U}_l\in\hat{\mathcal{U}}_l|\RE^m$ compute the action of
+{}\item Auxiliary response function direct sensitivities: Given selections for
+$y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ ,
+and some $U_l\in\mathcal{U}_l|\RE^m$ compute the action of
 \[
-(\{\hat{u}_l\},\hat{U}_l) {}\rightarrow \frac{\partial g}{\partial \hat{u}_l} U_l \in \mathcal{G}|\RE^m,
-\; \mbox{for} \; l = 1 {}\ldots N_u,
+(y,\{u_l\},U_l) {}\rightarrow \frac{\partial g_j}{\partial u_l} U_l \in \mathcal{G}|\RE^m,
+\; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g
 \]
-or alternatively compute the sensitivities themselves
+or alternatively compute the sensitivities themselves as a multi-vector
 \[
-(\{\hat{u}_l\}) {}\rightarrow \frac{\partial g}{\partial u_l} \in \mathcal{G}|\hat{\mathcal{U}}_l,
-\; \mbox{for} \; l = 1 {}\ldots N_u.
+(y,\{u_l\},U_l) {}\rightarrow \frac{\partial g_j}{\partial u_l} \in \mathcal{G}|\mathcal{U}_l,
+\; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g.
 \]
 
 \end{itemize}
@@ -1326,27 +1800,152 @@ $(\{\hat{u}_l\},t) {}\rightarrow g$, respectively.  Therefore, numerical
 methods that only require forward sensitivities as described above can always
 use directional finite differences and therefore require really extra
 functionality beyond what is needed for the forward solve.  Some numerical
-methods, such as sensitivity computations, do require some degree of
-exactness from derivative computations used for $M = {}\alpha ({}\partial c /
-{}\partial {}\dot{y}) + ({}\partial c / {}\partial y)$ and the objects
-described above.
+methods, such as sensitivity computations, do require some degree of exactness
+from derivative computations used for $M = {}\alpha ({}\partial c / {}\partial
+{}\dot{y}) + {}\beta ({}\partial c / {}\partial y)$ and the other derivative
+objects described above.
 
 \subsection{Requirements for first-order adjoint sensitivities}
 
 In this section we describe an extra set of requirements for implementing
-adjoint methods.
+adjoint methods.  Basically, these requirements state that the derivative
+objects described for the direct sensitivity methods need to also support
+adjoints.
 
-\section{General adaptive step-size control strategies}
+\begin{itemize}
 
-Todd: Can you say something general here?  How can this be modeled in the most
-general way to allow for reuse?
+{}\item Initial condition adjoint sensitivity: Given $u_l\in\mathcal{U}_l$ (for
+$l=1\ldots{}N_u$) and some $V\in\mathcal{C}|\RE^m$ compute the action of
+\[
+(\{u_l\},U_l) {}\rightarrow \frac{\partial y_0}{\partial u_l}^H V \in \mathcal{U}_l|\RE^m
+\; \mbox{for} \; l = 1 {}\ldots N_u,
+\]
+or alternatively evaluate the sensitivity themselves as a multi-vector
+\[
+\{u_l\} {}\rightarrow \frac{\partial y_0}{\partial u_l} \in \mathcal{Y}|\mathcal{U}_l
+\; \mbox{for} \; l = 1 {}\ldots N_u.
+\]
+%
+{}\item Appliction of adjoint operator $M^H = {}\alpha ({}\partial c /
+{}\partial {}\dot{y}) + {}\beta ({}\partial c / {}\partial y)^H$: Given a
+preformed object for $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) +
+{}\beta ({}\partial c / {}\partial y)$, provide the ability to apply the
+operator as
+\[
+Y = M^H X
+\]
+where $X\in\mathcal{C}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
+and $Y\in\mathcal{Y}|\RE^m$ is the LHS multi-vector.  The purpose of
+stating the multi-vector form is to encourage the development of block methods
+that are useful for other types of more advanced algorithms.
+%
+{}\item Solve with adjoint operator $M^H = {}\alpha ({}\partial c / {}\partial
+{}\dot{y}) + {}\beta ({}\partial c / {}\partial y)^H$: Given a preformed
+object for $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) + {}\beta
+({}\partial c / {}\partial y)$, then provide the ability to (approximately)
+solve for systems of the form
+\[
+X = M^{-H} B
+\]
+where $B\in\mathcal{C}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
+and $X\in\mathcal{Y}|\RE^m$ is the LHS solution multi-vector.  The purpose of
+stating the linear solve requirement in multi-vector form is to encourage the
+development of block linear solver approaches that are useful for other types
+of more advanced algorithms.  However, note that the ability to solve single
+linear systems of the form
+\[
+x = M^{-H} b,
+\]
+where $b\in\mathcal{C}$ and $x\in\mathcal{Y}$, automatically satisfies this
+requirement.  The exact specification of what is meant to (approximately)
+solve systems of this nature must be accurately specified. Note that a status
+test that will work for composite and block linear solvers is needed which is
+different than for a strightforward iterative or direct linear solver.
+%
+{}\item DAE auxiliary adjoint sensitivities: Given selections for
+$\dot{y}\in\mathcal{Y}$, $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for
+$l=1\ldots{}N_u$), $t\in\RE$, and some $V\in\mathcal{C}|\RE^m$ compute
+the action of
+\[
+(\dot{y},y,\{u_l\},t,V) {}\rightarrow \frac{\partial c}{\partial u_l}^H V \in \mathcal{U}_l|\RE^m,
+\; \mbox{for} \; l = 1 {}\ldots N_u,
+\]
+or alternatively compute the sensitivities themselves as a multi-vector
+\[
+(\dot{y},y,\{u_l\},t) {}\rightarrow \frac{\partial c}{\partial u_l} \in \mathcal{C}|\mathcal{U}_l,
+\; \mbox{for} \; l = 1 {}\ldots N_u.
+\]
 
-\section{Checkpointing Storage Management Strategies}
+{}\item Auxiliary response function adjoint sensitivities: Given selections for
+$y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ ,
+and some $V\in\mathcal{G}_j|\RE^m$ compute the action of
+\[
+(y,\{u_l\},U_l) {}\rightarrow \frac{\partial g_j}{\partial u_l}^H V \in \mathcal{U}_l|\RE^m,
+\; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g
+\]
+or alternatively compute the sensitivities themselves as a multi-vector
+\[
+(y,\{u_l\},U_l) {}\rightarrow \frac{\partial g_j}{\partial u_l} \in \mathcal{G}|\mathcal{U}_l,
+\; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g.
+\]
+
+\end{itemize}
+
+Note that unlike the direct sensitivity requirements, these adjoints can not
+be simulated using directional finite differences.  In general, the best way
+to perform these adjoint computations is a talyored use of the reverse mode of
+AD.  Or, if the matrix and multi-vector objects can be created explicitly,
+then they can just be transposed (or conjugate transpose in the complex case)
+to provide the needed adjoint operations.
+
+\section{General adaptive error-control strategies}
+
+RAB's comments on this:
+\begin{itemize}
+%
+{}\item It seems that error control, step size control and order control is
+very integral in a specific class of DAE and ODE solvers.  Therefore, as a
+first pass, it may just make sense to just make an atomic time stepping
+algorithm define the time step equations and perform step-size and order
+control.
+%
+{}\item After some more thought, there is little reason to allow mixing and
+matching of time stepping methods for predictors and correctors.  While the
+predictor is essentially an explicit time stepping method there are other ways
+of reusing common code than to reuse entire time stepping objects for
+predictors.
+%
+{}\item External clients should be able to replace the error and step-size
+control algorithms in addition to being able to adjust the ``magic''
+parameters.
+%
+{}\item For staggered DAEs, an overall error control strategy should be
+composable just from local truncation error estimates from atomic time
+stepping methods.
+%
+\end{itemize}
+
+\section{Checkpointing and Interpolation Storage Management Strategies}
 
 Notes: Here we want to outline the basic hierarchal checkpointing strategy of
 Griewank and describe how it relates to the time integrators.  We also want to
 discuss the basic idea of the ``Momento'' design pattern and how it can be
 brought to bare here.
+
+There are a few points to be made about checkpointing and interpolation:
+\begin{itemize}
+%
+{}\item An time stepper (or a series of staggered time steppers) restarted
+form a checkpoint should produce the exact same (binary) output as if the
+integration never stopped.  This makes a checkpoint a special time event that
+affects a lot of other things.
+%
+{}\item A time stepper should be able to write out $(y(t),\dot{y}(t))$ at the
+end if each time step so that a Hermite interpolant can be achieved.  Or, an
+abstract interpolation object (which may be specific to a time integrator)
+should be constructed and maintained by a time integrator.
+%
+\end{itemize}
 
 \section{Example applications}
 
@@ -1378,9 +1977,427 @@ with these applications.
 %
 \appendix
 
-\section{Derivation of general direct sensitivity equations}
+\section{Derivation of transient sensitivity computations}
+\label{rythmos:app:sens-derivations}
 
-\section{Derivation of general adjoint sensitivity equations}
+Here we derive direct and adjoint sensitivity methods for general DAEs as
+described in Section~\ref{rythmos:sec:trans-sens}.  Restated, the general DAE
+model is
+%
+\begin{eqnarray}
+c\left( \dot{y}(t), y(t), p, v(t), t \right) & = & 0,
+\; t \in \left[ t_0, t_f \right] \label{rythmos:apdx:eqn:sens:c} \\
+y(0) & = & y_0(p) \label{rythmos:apdx:eqn:sens:c:ic}
+\end{eqnarray}
+%
+and the auxiliary response functions, for which sensitivities are computed, are
+%
+\begin{equation}
+d(y(t_0:t_f),p,v(t_0:t_f))
+= \int_{t_0}^{t_f} g(y(t),p,v(t),t) dt + h(y(t_f),p),
+\label{rythmos:apdx:eqn:sens:d}
+\end{equation}
+%
+where $y(t){}\:\in\:\mathcal{Y}$, $\dot{y}(t) = d(y)/d(t)\:\in\:\mathcal{Y}$,
+$p{}\:\in\:\mathcal{P}$, $v(t){}\:\in\:\mathcal{V}$, $c(\dot{y}(t), y(t), p,
+v(t), t)
+:{}\mathcal{Y}^2{}\times{}\mathcal{P}{}\times{}\mathcal{V}{}\times{}\RE
+{}\rightarrow{}\mathcal{C}$,
+$y_0(p){}\:\in\:\mathcal{P}{}\rightarrow{}\mathcal{Y}$, $g(y(t),p,v(t),t)
+:{}\: {}\mathcal{Y}{}\times{}\mathcal{P}{}\times{}\mathcal{V}{}\RE
+{}\rightarrow{}\mathcal{G}$, $h(y(t_f),p) :{}\:
+{}\mathcal{Y}{}\times{}\mathcal{P} {}\rightarrow{}\mathcal{G}$,
+$\mathcal{G}{}\:\subseteq\:\RE^{n_g}$, $\mathcal{Y}{}\:\subseteq\:\RE^{n_y}$,
+$\mathcal{P}{}\:\subseteq\:\RE^{n_p}$, $\mathcal{V}{}\:\subseteq\:\RE^{n_v}$,
+and $\mathcal{C}{}\:\subseteq\:\RE^{n_y}$.
+
+The implicit state solution for the DAEs in
+(\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) gives
+$y(p,v(t_0:t),t)\in\mathcal{Y}$, where $v(t_0:t)$ is short hand for the
+selection of $v(t)$ (or a discrete approximation in a practical
+implementation) in the range $t\in[t_0,t_f]$.  The full implicit state
+solution for $y(t)$ in $t\in[t_0,t_f]$ is signified as
+$y(p,v(t_0:t_f),t_0:t_f)$.
+
+\subsection{Derivation of general direct sensitivity equations}
+\label{rythmos:app:direct-sens-derivation}
+
+For the derivation of direct sensitivities we will ignore the
+transient parameters $v(t)$ for $t\in[t_0,t_f]$ since direct
+sensitivity methods for such problems are typically impractical.
+
+Note: For some applications where $n_v$ is not too large and where
+$v(t_0:t_f)$ is given a very course discretization in $t\in[t_0,t_f]$,
+computing direct sensitivities with respect to the discretized $v$ can
+be practical.
+
+Given the implicit state function and ignoring the presence of $v(t)$, a
+reduced set of auxiliary response functions are defined as
+%
+\begin{equation}
+\hat{d}(p)
+= \int_{t_0}^{t_f} \hat{g}(p,t) dt + \hat{h}(p),
+\label{rythmos:apdx:eqn:sens:d_hat}
+\end{equation}
+\begin{tabbing}
+\hspace{4ex}where\hspace{1ex}\= \\
+\>	$\hat{g}(p,t) = g(y(p,t),p,t)) : \:
+		\mathcal{P} \times \RE \rightarrow \mathcal{G}$ is defined on $t\in[t_0,t_f]$, and \\
+\>	$\hat{h}(p) = h(y(p,t_f),p)) : \:
+		\mathcal{P} \rightarrow \mathcal{G}$ is defined only at $t=t_f$.
+\end{tabbing}
+%
+The direct sensitivity problem is easily stated by differentiating
+(\ref{rythmos:apdx:eqn:sens:d_hat}) with respect to $p$ to obtain
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial p} 
+= \int_{t_0}^{t_f} \left( \frac{\partial g}{\partial y} \frac{\partial y}{\partial p} +  \frac{\partial g}{\partial p} \right) dt
++ \left. \left(  \frac{\partial h}{\partial y} \frac{\partial y}{\partial p} + \frac{\partial h}{\partial p} \right) \right|_{t=t_f},
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_p}
+\end{equation}
+\begin{tabbing}
+\hspace{4ex}where\hspace{1ex}\= \\
+\>	$\frac{\partial \hat{g}}{\partial p} \in \mathcal{G}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, \\
+\>	$\frac{\partial \hat{h}}{\partial p} \in \mathcal{G}|\mathcal{P}$ is defined only at $t=t_f$, \\
+\>	$\frac{\partial y}{\partial p} \in \mathcal{Y}|\mathcal{P}$ is the direct sensitivitity of the state
+    at $t\in[t_0,t_f]$, and \\
+\>	$\frac{\partial \hat{d}}{\partial p} \in \mathcal{G}|\mathcal{P}$ is defined independent of time.
+\end{tabbing}
+
+The direct sensitivity $\partial y / {}\partial p$ is computed by solving a
+set of $n_p$ independent direct sensitivity equations which are obtained by
+differentating
+(\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) with
+respect to $p$ to give
+%
+\begin{eqnarray}
+%
+\frac{\partial c}{\partial \dot{y}} \left(\frac{\partial}{\partial t} \frac{\partial y(t)}{\partial p} \right)
++ \frac{\partial c}{\partial y} \left(\frac{\partial y(t)}{\partial p}\right)
++ \frac{\partial c}{\partial p} & = & 0, \; t \in \left[ t_0, t_f \right], \label{rythmos:apdx:eqn:sens:direct-c} \\
+\frac{\partial y(t_0)}{\partial p} & = & \frac{\partial y_0}{\partial p}. \label{rythmos:apdx:eqn:sens:direct-c:ic}
+\end{eqnarray}
+\begin{tabbing}
+\hspace{4ex}where\hspace{1ex}\= \\
+\>	$\frac{\partial c}{\partial \dot{y}} \in \mathcal{C}|\mathcal{Y}$ is defined on $t\in[t_0,t_f]$, \\
+\>	$\frac{\partial c}{\partial y} \in \mathcal{C}|\mathcal{Y}$ is defined on $t\in[t_0,t_f]$, \\
+\>	$\frac{\partial c}{\partial p} \in \mathcal{C}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, and \\
+\>	$\frac{\partial y_0}{\partial p} \in \mathcal{Y}|\mathcal{P}$ is defined only at $t=t_0$.
+\end{tabbing}
+
+These $n_p$ independent sensitivity equations are solved for ${}\partial y /
+{}\partial p {}\in\mathcal{Y}|\mathcal{P}$ forward in time from $t=t_0$.  The
+integral in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) can be evaluated along
+with the integration of
+(\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) and
+(\ref{rythmos:apdx:eqn:sens:direct-c})--(\ref{rythmos:apdx:eqn:sens:direct-c:ic}).
+Note that (\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic})
+and
+(\ref{rythmos:apdx:eqn:sens:direct-c})--(\ref{rythmos:apdx:eqn:sens:direct-c:ic})
+are a staggered set of DAE equations in that
+(\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) are solved
+first followed by
+(\ref{rythmos:apdx:eqn:sens:direct-c})--(\ref{rythmos:apdx:eqn:sens:direct-c:ic}).
+
+\subsection{Derivation of general adjoint sensitivity equations}
+
+In this section we consider the derivation of adjoint approaches for computing
+sensitivities of the reduced response function $\hat{d}(p,v(t_0,t_f))$ with
+respect to $p$ and $v(t)$ for $t\in[t_0,t_f]$.  The primary devise that that
+we use here is the Lagrangian which is a special function which is the
+weighted composition of the response function and the DAE constraints.  This
+derivation follows in a similary manner from the one in [???].  The Lagrangian
+is
+%
+\begin{eqnarray}
+L(y(t_0:t_f),p,v(t_0:t_f),\Lambda(t_0:t_f))
+& = & \int_{t_0}^{t_f} g(y(t),p,v(t),t) dt + h(y(t_f),p) \nonumber \\
+& & + \int_{t_0}^{t_f} \Lambda(t)^H c(\dot{y}(t),y(t),p,v(t),t) dt,
+\label{rythmos:apdx:eqn:sens:L}
+\end{eqnarray}
+\begin{tabbing}
+\hspace{4ex}where\hspace{1ex}\= \\
+\>	$\Lambda(t) \in \mathcal{C}|\mathcal{G}$ are the Lagrange multipliers defined on $t\in[t_0,t_f]$,
+\end{tabbing}
+%
+and $\Lambda(t)^H\in\mathcal{G}|\mathcal{C}$ is the adjoint operator
+of $\Lambda(t)$.
+
+A few remarks about the Lagrangian function in (\ref{rythmos:apdx:eqn:sens:L})
+are in order before we get into the detailed derivations.  While the
+Lagrangian function can have a significant theoretial interpretation in a
+variety of contexts, it is usually primarily just a convenient means to derive
+sensitivities of constrained problems.  For instance, it is well known that
+the variations of the Lagrangian set to zero represent the first-order
+optimality conditions for the constrained optimization problem of minimizing
+(or maximizing) (\ref{rythmos:apdx:eqn:sens:d}) (with $n_g=1$ of course)
+subject to
+(\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}).
+
+In the following derivations, we will plug the implicit state function
+$y(p,v(t_0:t),t)$ into (\ref{rythmos:apdx:eqn:sens:L}), forming a reduced
+Lagrangian $\hat{L}(p,v(t_0:t_f))$ and then take variations with
+respect to $p$ and $v(t_0:t_f)$.  From these variations, followed by
+some other manipulations, the adjoint equation will fall out as well
+as the other derivative computations.
+
+Note: I am a litte very uncomfortable with this approach of plugging
+$y(p,v(t_0:t),t)$ into the Lagrangian and then taking variations.  However,
+this approach works correctly for steady-state problems and therefore should
+also work for transient problems.  Therefore, for now, I am just going to
+accept that I don't fully appreciate the foundation for this general approach
+but I will just accept that it is bullet proof and gives the right result
+every time.
+
+\subsubsection{Sensitivities for steady-state paramters and the adjoint equation}
+
+In this section we will derive the expressions for $\partial {}\hat{d}
+/ {}\partial p$ and in the process will derive the adjoint equation
+and boundary conditions that solves for $\Lambda(t)$.  We start by
+taking the variation of (\ref{rythmos:apdx:eqn:sens:L}) (through the
+implicit function $y(p,v(t_0:t),t)$) with respect to $p$ and we claim
+that this will be equal to $\partial {}\hat{d} / {}\partial p$.  This
+variation is
+%
+\begin{eqnarray}
+\frac{\partial \hat{d}}{\partial p}
+& = & \frac{\partial \hat{L}}{\partial p}
+\nonumber \\
+& = & \int_{t_0}^{t_f} \left( \frac{\partial g}{\partial y} \frac{\partial y}{\partial p} +  \frac{\partial g}{\partial p} \right) dt
++ \left. \left(  \frac{\partial h}{\partial y} \frac{\partial y}{\partial p} + \frac{\partial h}{\partial p} \right) \right|_{t=t_f}
+\nonumber \\
+& & + \int_{t_0}^{t_f} \Lambda^H \left( \frac{\partial c}{\partial \dot{y}} \frac{d}{dt}\left( \frac{\partial y}{\partial p} \right)
+   + \frac{\partial c}{\partial y} \frac{\partial y}{\partial p} +  \frac{\partial c}{\partial p} \right) dt.
+\label{rythmos:apdx:eqn:sens:d_L_hat_d_p}
+\end{eqnarray}
+%
+Substituting the integration by parts
+%
+\begin{equation}
+\int_{t_0}^{t_f} \left[ \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right) \frac{d}{dt}\left( \frac{\partial y}{\partial p} \right) \right] dt
+= \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial p} \right) \right|_{t_0}^{t_f}
+- \int_{t_0}^{t_f} \left[ \frac{d}{dt}\left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right) \frac{\partial y}{\partial p} \right] dt
+\end{equation}
+%
+into (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_p}) and rearranging yields
+%
+\begin{eqnarray}
+\frac{\partial \hat{d}}{\partial p}
+& = & \int_{t_0}^{t_f} \left(
+    \frac{\partial g}{\partial p}
+    + \Lambda^H \frac{\partial c}{\partial p}
+  \right) dt
+  + \left. \left( \frac{\partial h}{\partial p} \right) \right|_{t=t_f}
+  - \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial p} \right) \right|_{t=t_0}
+\nonumber \\
+& & + \int_{t_0}^{t_f} \left(
+    - \frac{d}{dt}\left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right)
+    +  \Lambda^H \frac{\partial c}{\partial y} +  \frac{\partial g}{\partial y}
+  \right) \frac{\partial y}{\partial p} dt
+\nonumber \\
+& & + \left. \left[ \left(
+    \Lambda^H \frac{\partial c}{\partial \dot{y}}
+    +  \frac{\partial h}{\partial y}
+  \right)  \frac{\partial y}{\partial p} \right] \right|_{t=t_f}
+\label{rythmos:apdx:eqn:sens:d_L_hat_d_p_2}.
+\end{eqnarray}
+%
+We will now indentify the integrand in the second integral in
+(\ref{rythmos:apdx:eqn:sens:d_L_hat_d_p_2}) as the adjoint equation and we
+will force it to be satisfied as
+%
+\begin{equation}
+- \frac{d}{dt}\left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right)
++  \Lambda^H \frac{\partial c}{\partial y} +  \frac{\partial g}{\partial y} = 0, \; t \in \left[ t_0, t_f \right].
+\label{rythmos:apdx:eqn:sens:adj-trans}
+\end{equation}
+%
+We must also specify boundary conditions for the adjoint equation in
+(\ref{rythmos:apdx:eqn:sens:adj-trans}).  As stated in [???] for index-0 and
+index-1 DAEs, we can simply specify the endpoint condition
+%
+\begin{equation}
+\left. \left(
+  \Lambda^H \frac{\partial c}{\partial \dot{y}}
+  +  \frac{\partial h}{\partial y}
+\right) \right|_{t=t_f}
+ = 0,
+\label{rythmos:apdx:eqn:sens:adj-trans:fc}
+\end{equation}
+%
+which drops out the last term in
+(\ref{rythmos:apdx:eqn:sens:d_L_hat_d_p_2}) and, together with
+(\ref{rythmos:apdx:eqn:sens:adj-trans}), leaves
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial p} =
+\int_{t_0}^{t_f} \left(
+    \frac{\partial g}{\partial p}
+    + \Lambda^H \frac{\partial c}{\partial p}
+  \right) dt
+  + \left. \left( \frac{\partial h}{\partial p} \right) \right|_{t=t_f}
+  - \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial p} \right) \right|_{t=t_0}.
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}
+\end{equation}
+
+We now restate the adjoint and reduced sensitivities in
+(\ref{rythmos:apdx:eqn:sens:adj-trans})--(\ref{rythmos:apdx:eqn:sens:adj-trans:fc})
+and (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) in standard
+columnwise form for $\Lambda$ which yields the adjoint DAE equations
+%
+\begin{eqnarray}
+- \frac{d}{dt}\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)
++  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:adj} \\
+\left.\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)\right|_{t=t_f}
+& = & - \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
+\label{rythmos:apdx:eqn:sens:adj:fc}
+\end{eqnarray}
+%
+and the reduced gradient expression
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial p}^H =
+\int_{t_0}^{t_f} \left(
+    \frac{\partial g}{\partial p}^H
+    + \frac{\partial c}{\partial p}^H \Lambda
+  \right) dt
+  + \left. \frac{\partial h}{\partial p}^H \right|_{t=t_f}
+  - \left. \left( \frac{\partial y_0}{\partial p}^H \frac{\partial c}{\partial \dot{y}}^H \Lambda \right) \right|_{t=t_0}.
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}
+\end{equation}
+%
+where we have substituted $\partial y_0 / {}\partial p$ for $\partial
+y / {}\partial p$ in the last term.
+
+As described in [???], for some classes of up to index-2 DAEs, the form of the
+adjoint in
+(\ref{rythmos:apdx:eqn:sens:adj})--(\ref{rythmos:apdx:eqn:sens:adj:fc}) may be
+unstable while the {}\textit{augmented adjoint system}
+%
+\begin{eqnarray}
+\frac{d}{dt}\left( \bar{\Lambda} \right)
++  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H \Lambda
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:aug-adj-de} \\
+\bar{\Lambda} + \frac{\partial c}{\partial \dot{y}}^H
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:aug-adj-ae} \\
+\left. \bar{\Lambda} \right|_{t=t_f}
+& = & \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
+\label{rythmos:apdx:eqn:sens:aug-adj:fc}
+\end{eqnarray}
+%
+generally is stable when the forward DAE is stable.
+
+\subsubsection{Adjoint sensitivities for transient paramters}
+
+Here we consider the derivation of the sensitivity
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial v(t)} \in \mathcal{G}|\mathcal{V}, \; \mbox{for} \; t\in[t_0,t_f].
+\end{equation}
+%
+Our derivation for these sensitivities for the transient paramters
+$v(t)$ will be a little different than for the steady-state parameters
+$p$.  The primary reason for using a different derivation is that the
+infinite-dimensional transient paramters $v(t_0:t_f)$ are
+fundamentally different than finite-dimensional steady-state paramters
+$p$.  Bacause of the infinite-dimensional nature of $v(t_0,t_f)$, we
+use a different tool of functional analysis.  The tool we use is the
+application of the infinite-dimensional operator $\partial \hat{L} /
+{}\partial v(t_0:t_f)$ to the infinite-dimensional perturbation
+$\delta v(t_0:t_f)$ where we will then indentify $\partial {}\hat{d} /
+{}\partial v(t) = {}\partial {}\hat{L} / {}\partial v(t)$ in the
+integrand of
+%
+\begin{equation}
+\left( \frac{\partial \hat{d}}{\partial v(t_0:t_f)} \right) \delta v(t_0:t_f)
+= \left( \frac{\partial \hat{L}}{\partial v(t_0:t_f)} \right) \delta v(t_0:t_f)
+= \int_{t_0}^{t_f} \frac{\partial \hat{L}}{\partial v(t)} \delta v(t) dt
+= \int_{t_0}^{t_f} \frac{\partial \hat{d}}{\partial v(t)} \delta v(t) dt.
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v}
+\end{equation}
+%
+The integral in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v}) is the
+defintion of the inner product of two functions in an
+infinite-dimensional space.
+   
+We begin our derivation of $\partial {}\hat{d} / {}\partial v(t)$ by
+linearizing $\hat{L}(p,v(t_0:t_f))$ with respect to $\delta
+v(t_0:t_f)$ as
+%
+\begin{eqnarray}
+\left( \frac{\partial \hat{d}}{\partial v(t_0:t_f)} \right) \delta v(t_0:t_f)
+& = & \left( \frac{\partial \hat{L}}{\partial v(t_0:t_f)} \right) \delta v(t_0:t_f)
+\nonumber \\
+& = & \int_{t_0}^{t_f} \left( \frac{\partial g}{\partial y} \frac{\partial y}{\partial v} \delta v +  \frac{\partial g}{\partial v} \delta v \right) dt
++ \left. \left(  \frac{\partial h}{\partial y} \frac{\partial y}{\partial v} \delta v \right) \right|_{t=t_f}
+\nonumber \\
+& & + \int_{t_0}^{t_f} \Lambda^H \left( \frac{\partial c}{\partial \dot{y}} \frac{d}{dt}\left( \frac{\partial y}{\partial v} \right) \delta v
+   + \frac{\partial c}{\partial y} \frac{\partial y}{\partial v} \delta v +  \frac{\partial c}{\partial v} \delta v \right) dt.
+\label{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v}
+\end{eqnarray}
+%
+Substituting the integration by parts
+%
+\begin{equation}
+\int_{t_0}^{t_f} \left[ \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right) \frac{d}{dt}\left( \frac{\partial y}{\partial v} \right) \delta v \right] dt
+= \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial v} \delta v \right) \right|_{t_0}^{t_f}
+- \int_{t_0}^{t_f} \left[ \frac{d}{dt}\left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right) \frac{\partial y}{\partial v} \delta v \right] dt
+\end{equation}
+%
+into (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v}) and rearranging
+yields
+%
+\begin{eqnarray}
+\left( \frac{\partial \hat{d}}{\partial v(t_0:t_f)} \right) \delta v(t_0:t_f)
+& = & \int_{t_0}^{t_f} \left[ \left(
+    \frac{\partial g}{\partial v}
+    + \Lambda^H \frac{\partial c}{\partial v}
+  \right) \delta v \right] dt
+  - \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial v} \delta v \right) \right|_{t=t_0}
+\nonumber \\
+& & + \int_{t_0}^{t_f} \left[ \left(
+    - \frac{d}{dt}\left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right)
+    +  \Lambda^H \frac{\partial c}{\partial y} +  \frac{\partial g}{\partial y}
+  \right) \frac{\partial y}{\partial v} \delta v \right] dt
+\nonumber \\
+& & + \left. \left[ \left(
+    \Lambda^H \frac{\partial c}{\partial \dot{y}}
+    +  \frac{\partial h}{\partial y}
+  \right)  \frac{\partial y}{\partial v} \delta v \right] \right|_{t=t_f}
+\label{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_2}.
+\end{eqnarray}
+%
+By applying our choice for the adjoint
+(\ref{rythmos:apdx:eqn:sens:adj-trans}) and its final condition
+(\ref{rythmos:apdx:eqn:sens:adj-trans:fc}) and noting that $y(t_0) =
+y_0(p)$ is not a function so that of $v$ and therefore $\partial y /
+{}\partial v(t) = 0$ at $t=t_0$, then what is left of
+(\ref{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_2}) becomes
+%
+\begin{eqnarray}
+\left( \frac{\partial \hat{d}}{\partial v(t_0:t_f)} \right) \delta v(t_0:t_f)
+& = & \int_{t_0}^{t_f} \left[ \left(
+    \frac{\partial g}{\partial v}
+    + \Lambda^H \frac{\partial c}{\partial v}
+  \right) \delta v \right] dt
+\label{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_3}.
+\end{eqnarray}
+
+By comparing (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_3}) to
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v}) it is clear that
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial v(t)}^H
+= \frac{\partial g}{\partial v(t)}^H + \frac{\partial c}{\partial v(t)}^H \Lambda(t)
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_v_t}
+\end{equation}
+%
+is the reduced gradient that we are seeking.
 
 \begin{SANDdistribution}
 % External
