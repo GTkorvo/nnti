@@ -498,7 +498,7 @@ public class MultiVector extends DistObject implements Externalizable {
         int lid;
         double[] importValues;
         
-        // if this.values doesn't exist yet, create it
+        // if this.values doesn't exist yet, create it before doing unpack and combine
         if (this.values == null) {
             for(int i=0; i < importData.length; i++) {
                 // if a vnode didn't send us any data, then importData[vnodeId] == null
@@ -512,7 +512,7 @@ public class MultiVector extends DistObject implements Externalizable {
                 }
             }
             
-            // if this.values is still null, then we probably don't have any Gids, or somethin went wrong
+            // if this.values is still null, then we probably don't have any Gids, or something went wrong
             // so assume we don't have any gids
             if (this.values == null) {
                 this.values = new double[0][0];
@@ -535,6 +535,7 @@ public class MultiVector extends DistObject implements Externalizable {
             reverseExportVnodeIdsGidsLids[2] = new int[sumEntries];
             reverseExportVnodeIdsGidsLids[3] = new int[sumEntries];
         }
+        // now unpack and combine
         int revCount = 0;
         for(int i=0; i < importData.length; i++) {
             // if a vnode didn't send us any data, then importData[vnodeId] == null
@@ -573,7 +574,7 @@ public class MultiVector extends DistObject implements Externalizable {
                         }
                     }
                     else {
-                        this.println("ERR", "The combine mode you specified is not supported by MultiVector import/export.");
+                        this.println("FATALERR", "The combine mode you specified is not supported by MultiVector import/export.");
                         System.exit(1);
                     }
                 }
