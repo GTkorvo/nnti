@@ -70,29 +70,29 @@ public class CisMatrix extends DistObject {
         JpetraTreeMap rowColTreeMap;
         if (!this.OuterTree.containsKey(new Integer(globalRowColId))) {
             rowColTreeMap = new JpetraTreeMap();
-            this.println("STD", "globalRowCol does not exist, creating...");
+            //this.println("STD", "globalRowCol does not exist, creating...");
             this.OuterTree.put(new Integer(globalRowColId), rowColTreeMap);
         }
         else {
-            this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
+            //this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
             rowColTreeMap = (JpetraTreeMap) OuterTree.get(new Integer(globalRowColId));
         }
         
         // now that we know the row/col exists, insert entries into the row/col
         // and sum them with any pre-existing entries
-        this.println("STD", "CisMatrix is internally inserting entries...");
+        //this.println("STD", "CisMatrix is internally inserting entries...");
         Object temp;
         int toInsert;
         for(int i=0; i < indices.length; i++) {
-            this.println("STD", "Inserting index " + indices[i]);
+            //this.println("STD", "Inserting index " + indices[i]);
             temp = rowColTreeMap.get(new Integer(indices[i]));
             if (temp == null) {
-                this.println("STD", "Index " + indices[i] + " does not exist, creating...");
+                //this.println("STD", "Index " + indices[i] + " does not exist, creating...");
                 this.numTotalEntries++;
                 rowColTreeMap.put(new Integer(indices[i]), new Double(entries[i]));
             }
             else {
-                this.println("STD", "Index " + indices[i] + " does exists, adding to prevous value...");
+                //this.println("STD", "Index " + indices[i] + " does exists, adding to prevous value...");
                 rowColTreeMap.put(new Integer(indices[i]), new Double(entries[i] + ((Double) temp).doubleValue()));
             }
         }
@@ -109,28 +109,28 @@ public class CisMatrix extends DistObject {
         JpetraTreeMap rowColTreeMap;
         if (!this.OuterTree.containsKey(new Integer(globalRowColId))) {
             rowColTreeMap = new JpetraTreeMap();
-            this.println("STD", "globalRowCol does not exist, creating...");
+            //this.println("STD", "globalRowCol does not exist, creating...");
             this.OuterTree.put(new Integer(globalRowColId), rowColTreeMap);
         }
         else {
-            this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
+            //this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
             rowColTreeMap = (JpetraTreeMap) OuterTree.get(new Integer(globalRowColId));
         }
         
         // now that we know the row/col exists, insert entries into the row/col
         // and sum them with any pre-existing entries
-        this.println("STD", "CisMatrix is internally inserting an entry...");
+        //this.println("STD", "CisMatrix is internally inserting an entry...");
         Object temp;
         int toInsert;
-        this.println("STD", "Inserting index " + index);
+        //this.println("STD", "Inserting index " + index);
         temp = rowColTreeMap.get(new Integer(index));
         if (temp == null) {
-            this.println("STD", "Index " + index + " does not exist, creating...");
+            //this.println("STD", "Index " + index + " does not exist, creating...");
             this.numTotalEntries++;
             rowColTreeMap.put(new Integer(index), new Double(entry));
         }
         else {
-            this.println("STD", "Index " + index + " does exists, adding to prevous value...");
+            //this.println("STD", "Index " + index + " does exists, adding to prevous value...");
             rowColTreeMap.put(new Integer(index), new Double(entry + ((Double) temp).doubleValue()));
         }
     }
@@ -158,14 +158,14 @@ public class CisMatrix extends DistObject {
         int i=0;
         //startIndex = 0;
         while(outerIterator.hasNext()) {
-            this.println("STD", "Doing an outer loop...");
+            //this.println("STD", "Doing an outer loop...");
             outerMapEntry = (Map.Entry) outerIterator.next();
             innerTree = (JpetraTreeMap) outerMapEntry.getValue();
             innerKeysValues = innerTree.entrySet();
             innerIterator = innerKeysValues.iterator();
             numEntriesColRow = 0;
             while (innerIterator.hasNext()) {
-                this.println("STD", "Doing an inner loop...");
+                //this.println("STD", "Doing an inner loop...");
                 innerMapEntry = (Map.Entry) innerIterator.next();
                 this.doubleValues[nextEntryIndex] = ((Double) innerMapEntry.getValue()).doubleValue();
                 tempGraph[nextEntryIndex++] = ((Integer) innerMapEntry.getKey()).intValue();

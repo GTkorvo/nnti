@@ -41,7 +41,7 @@ public class ElementSpace {
     private int numMyGlobalElements;
     private int numIndicesPerVnode;
     private int numRemainderIndices;
-    private int myGlobalStartIndex;
+    private int minMyGlobalElementId;
     private int minLocalElementId;
     private int maxLocalElementId;
     private int minGlobalElementId;
@@ -59,8 +59,9 @@ public class ElementSpace {
         this.numGlobalElements = numGlobalElements;
         
         // for serial only
-        if (comm.getIsSerial()) {
+        if (comm.isSerial()) {
             // do nothing
+            this.minMyGlobalElementId = 0;
             this.numMyGlobalElements = this.numGlobalElements;
             this.distributedGlobally = false;
             this.distributedLinearly = true;
@@ -85,7 +86,7 @@ public class ElementSpace {
         else {
             numRemainderIndicesToAdd = numRemainderIndices;
         }
-        this.myGlobalStartIndex = (comm.getVnodeId() * this.numIndicesPerVnode) + this.numRemainderIndices;
+        this.minMyGlobalElementId = (comm.getVnodeId() * this.numIndicesPerVnode) + this.numRemainderIndices;
     }
     
     /**
@@ -96,10 +97,11 @@ public class ElementSpace {
         // for both serial and parallel
         this.myGlobalElements = myGlobalElements;
         this.numMyGlobalElements = myGlobalElements.length;
+        this.minMyGlobalElementId = myGlobalElements[0];
         this.comm = comm;
         
         // serial only
-        if (comm.getIsSerial()) {
+        if (comm.isSerial()) {
             this.numGlobalElements = myGlobalElements.length;
             return;
         }
@@ -109,6 +111,34 @@ public class ElementSpace {
         // of elements on each vnode
         // this.numGlobalElements = ?
     }
+    
+    /**
+     * Constructs an <code>ElementSpace</code> automatically based on the user defined
+     * linear distribution of global elements given to each vnode.
+     *
+     * @param numGlobalElements -1 for globaly distributed or numMyGlobalElements for local/serial
+     */
+    public ElementSpace(int numGlobalElements, int numMyGlobalElements, Comm comm) {
+        this.numMyGlobalElements = numMyGlobalElements;
+        this.comm = comm;
+        this.distributedLinearly = true;
+        
+        if (comm.isSerial() || (numGlobalElements == numMyGlobalElements)) {
+            this.distributedGlobally = false;
+            this.numGlobalElements = numGlobalElements;
+            this.numMyGlobalElements = numMyGlobalElements;
+            return;
+        }
+        
+        // find the number of global elements by finding the sum of all local elements
+        int[] sum = comm.sumAll(new int[]{numMyGlobalElements});
+        this.numGlobalElements = sum[0];
+        int[] scanSum = comm.scanSums(new int[]{numMyGlobalElements});
+        int myMaxGlobalElementId = scanSum[0];
+        this.minMyGlobalElementId = myMaxGlobalElementId - numMyGlobalElements;
+        
+    }
+    
     
     public int getLocalElementId(int globalElementId) {
         // for both serial and parallel
@@ -120,12 +150,12 @@ public class ElementSpace {
         
         // for even contigous distribution compute the global ID
         // serial only
-        if (comm.getIsSerial()) {
+        if (comm.isSerial()) {
             return globalElementId;
         }
         
         // parallel only
-        return globalElementId - myGlobalStartIndex;
+        return globalElementId - minMyGlobalElementId;
     }
     
     public int getGlobalElementId(int localElementId) {
@@ -138,12 +168,12 @@ public class ElementSpace {
         
         // for even contigous distribution compute the global ID
         // serial only
-        if (comm.getIsSerial()) {
+        if (comm.isSerial()) {
             return localElementId;
         }
         
         // parallel only
-        return myGlobalStartIndex + localElementId;
+        return minMyGlobalElementId + localElementId;
     }
     
     public boolean isMyLocalElementId(int globalElementId) {
@@ -189,10 +219,14 @@ public class ElementSpace {
             return this.myGlobalElements;
         }
         
-        int[] generatedGlobalElementIds = new int[this.numMyGlobalElements];
-        for (int i=0; i < this.numMyGlobalElements; i++) {
-            generatedGlobalElementIds[i] = i;
+        int[] generatedGlobalElementIds = null;
+        if (distributedLinearly) {
+            generatedGlobalElementIds = new int[this.numMyGlobalElements];
+            for (int i=0; i < this.numMyGlobalElements; i++) {
+                generatedGlobalElementIds[i] = i + this.minMyGlobalElementId;
+            }
         }
+        
         return generatedGlobalElementIds;
     }
     

@@ -138,7 +138,7 @@ public class SerialComm extends JpetraObject implements Comm {
      * Accessor to determine if <code>this</code> is in serial mode.  Always returns true.
      * @return true
      */
-    public boolean getIsSerial() {
+    public boolean isSerial() {
         return true;
     }
     

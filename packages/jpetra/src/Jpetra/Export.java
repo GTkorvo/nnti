@@ -40,24 +40,31 @@ public class Export extends JpetraObject {
         this.sourceVectorSpace = sourceVectorSpace;
         this.targetVectorSpace = targetVectorSpace;
         
-        int[] sourceGids = null;
+        int[] sourceGids;
         if (sourceVectorSpace.getNumMyGlobalEntries() > 0) {
             sourceGids = sourceVectorSpace.getMyGlobalEntryIds();
         }
+        else {
+            sourceGids = new int[0];
+        }
         
-        int[] targetGids = null;
+        int[] targetGids;
         if (targetVectorSpace.getNumMyGlobalEntries() > 0) {
             targetGids = targetVectorSpace.getMyGlobalEntryIds();
+        }
+        else {
+            targetGids = new int[0];
         }
         
         int numSameGids;
         int minNumIds = Util.min(sourceGids.length, targetGids.length);
+        this.println("STD", "sourceGids.length: " + sourceGids.length + " targetGids.length: " + targetGids.length);
         for (numSameGids = 0; numSameGids < minNumIds; numSameGids++) {
             if (sourceGids[numSameGids] != targetGids[numSameGids]) {
                 break;
             }
-            numSameGids++;
         }
+        this.println("STD", "numSameGids: " + numSameGids);
         
         int numPermuteGids = 0;
         int numExportGids = 0;
@@ -70,17 +77,25 @@ public class Export extends JpetraObject {
             }
         }
         
-        int[] exportLids = null;
-        int[] exportGids = null;
-        int[] permuteToLids = null;
-        int[] permuteFromLids = null;
+        int[] exportLids;
+        int[] exportGids;
+        int[] permuteToLids;
+        int[] permuteFromLids;
         if (numExportGids > 0) {
             exportLids = new int[numExportGids];
             exportGids = new int[numExportGids];
         }
+        else {
+            exportLids = new int[0];
+            exportGids = new int[0];
+        }
         if (numPermuteGids > 0)  {
             permuteToLids = new int[numPermuteGids];
             permuteFromLids = new int[numPermuteGids];
+        }
+        else {
+            permuteToLids = new int[0];
+            permuteFromLids = new int[0];
         }
         
         numPermuteGids = 0;
@@ -98,6 +113,18 @@ public class Export extends JpetraObject {
             }
         }
         
+        
+        this.println("STD", "LIDS  GIDS");
+        this.println("STD", "----------");
+        for(int i=0; i < exportLids.length; i++) {
+            this.println("STD", exportLids[i] + " " + exportGids[i]);
+        }
+        
+        this.println("STD", "ToLIDS  FromLIDS");
+        this.println("STD", "----------------");
+        for(int i=0; i < permuteToLids.length; i++) {
+            this.println("STD", permuteToLids[i] + " " + permuteFromLids[i]);
+        }
         
     }
     

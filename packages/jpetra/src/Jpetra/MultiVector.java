@@ -36,6 +36,10 @@ public class MultiVector extends DistObject {
     VectorSpace vectorSpace;
     double[][] values;  // in column major form
     
+    public MultiVector(VectorSpace vectorSpace) {
+        this.vectorSpace = vectorSpace;
+    }
+    
     public MultiVector(VectorSpace vectorSpace, double[][] values) {
         this.vectorSpace = vectorSpace;
         this.values = values;

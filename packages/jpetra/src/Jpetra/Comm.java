@@ -286,7 +286,7 @@ public interface Comm {
      *
      * @return <code>true</code> in serial mode, otherwise <code>false</code>
      */
-    public boolean getIsSerial();
+    public boolean isSerial();
     
     public Directory createDirectory(ElementSpace elementSpace);
     

@@ -1,3 +1,31 @@
+// @HEADER
+// ***********************************************************************
+//
+//               Java Implementation of the Petra Library
+//                 Copyright (2004) Sandia Corporation
+//
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
+//
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
+// ***********************************************************************
+// @HEADER
+
 package Jpetra.MatrixMarketIO;
 
 import java.io.BufferedWriter;
@@ -19,7 +47,7 @@ public class GraphReader extends JpetraObject {
     }
     
     // need to make it generate its own vector space
-    public static Graph read(String fileName, VectorSpace vectorSpace, boolean rowOriented, Comm comm) throws java.io.IOException {
+    public static Graph read(String fileName, boolean rowOriented, Comm comm) throws java.io.IOException {
         // Open file for reading. If it's compressed, use on the fly
         // decompression
         FileInputStream fis = new FileInputStream(fileName);
@@ -35,8 +63,7 @@ public class GraphReader extends JpetraObject {
         String[] comments = mvr.readComments();
         MatrixSize size = mvr.readMatrixSize(info);
         
-        ElementSpace myElementSpace = new ElementSpace(size.numRows(), comm);
-        VectorSpace myVectorSpace = new VectorSpace(myElementSpace);
+        
         Graph result = null;
         
         int[] row = null, col = null;
@@ -79,7 +106,15 @@ public class GraphReader extends JpetraObject {
                  shouldn't end up here.*/
             } else if (info.isPattern()) {
                 mvr.readPattern(row, col);
-                result = buildGraphFromSparse(row, col, vectorSpace, rowOriented);
+                ElementSpace myElementSpace;
+                if (rowOriented) {
+                    myElementSpace = new ElementSpace(size.numRows(), comm);
+                }
+                else {
+                    myElementSpace = new ElementSpace(size.numColumns(), comm);
+                }
+                VectorSpace myVectorSpace = new VectorSpace(myElementSpace);
+                result = buildGraphFromSparse(row, col, myVectorSpace, rowOriented);
             }
             // !! need to add some support for this one!
             else
@@ -168,7 +203,7 @@ public class GraphReader extends JpetraObject {
                 //this.println("STD", "Doing an inner loop...");
                 innerMapEntry = (Map.Entry) innerIterator.next();
                 //this.doubleValues[nextEntryIndex] = ((Double) innerMapEntry.getValue()).doubleValue();
-                tempGraph[nextEntryIndex++] = ((Integer) innerMapEntry.getKey()).intValue();
+                tempGraph[nextEntryIndex++] = ((Integer) innerMapEntry.getKey()).intValue() - 1;
                 numEntriesColRow++;
             }
             //if (this.maxSecondaryId < tempGraph[nextEntryIndex-1]) {

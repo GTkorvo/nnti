@@ -31,12 +31,7 @@ package Jpetra;
 import CCJ.*;
 import java.io.Serializable;
 
-/*
- * CcjCom.java
- *
- * Created on Fri May 30 22:30:05 CDT 2003
- */
-
+import Jpetra.CcjSupport.*;
 
 /**
  * <code>CcjComm</code> is the implementatin of the <code>Comm</code> interface
@@ -139,7 +134,7 @@ public class CcjComm extends JpetraObject implements Comm {
      *
      * @return <code>isSerial</code>
      */
-    public boolean getIsSerial() {
+    public boolean isSerial() {
         return isSerial;
     }      
     
