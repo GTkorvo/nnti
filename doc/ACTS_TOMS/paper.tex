@@ -1140,27 +1140,29 @@ options as appropriate.
 
 \subsection{Using Epetra Objects with Trilinos Packages}
 
-In this section we provide a simple example of how Epetra matrices and
-vectors can be initialized, reordered and then used by multiple
-Trilinos packages.  In this particular case we do not use the Epetra
-construction facilities because of space considerations, but it is
+In this section we provide several examples of how Epetra matrices and
+vectors can be initialized and used by multiple
+Trilinos packages.  In this particular case we do use the Epetra
+entry-by-entry construction facilities for simplicity, but it is
 worth noting that Epetra matrices can be efficiently constructed
-entry-by-entry, row-by-row or column-by-column, where entries can be
+row-by-row or column-by-column, where entries can be
 single scalar values or variable sized block entries.  There is also
-support for clique-based construction where, for example, element
+support for clique-based construction where, for example, finite element
 stiffness matrices may be passed in to fill the matrix.  Finally,
 almost any combination of these fill techniques can be used on a given
 matrix.
 
-Figure~\ref{fig:readmatrix} shows how a matrix can be read from the
-Trilinos Utilities package matrix gallery.  The matrix and vectors are
-initially in natural ordering.  However, they can be easily reorder
-via one of multiple techniques.  In particular, Epetra provides an
-interface to Zoltan~\cite{zoltan} which in turn provides multiple load
-balancing options to minimize communication costs and balance
-computational load and improve local ordering.  In this particular figure, we indicate that a
-two-dimensional partitioning is performed as well as a reverse
-Cuthill-McKee reordering on the equations that are local to each processor
+Figure~\ref{fig:readmatrix} shows a very simple test program that
+builds a tridiagonal matrix distributed across the parallel machine
+with 1000 rows per processor.  The right-hand-side and solution
+vectors are chosen to have the same layout.  We do not require that
+matrices and vector have identical distributions.  However, a
+discussion of the parallel data distribution features of Epetra is
+beyond the scope of this paper.  The reader is referred
+to~\cite{Repartitioning} for a full discussion of this topic.
+Next we construct a linear problem, which assures that the matrix and
+vectors are compatible.  Finally we construct an AztecOO solver object
+to solve the system using Jacobi-scaled Conjugate Gradients.
 \begin{figure}
 {\scriptsize
 \begin{tabular}{|p{2.4in}|p{2.4in}|}\hline
@@ -1224,7 +1226,8 @@ paramlist.set("AZ_solver", AZ_cg);
 
 paramlist.set("precond", AZ_Jacobi);
 
-// Iterate
+// Iterate up to 100 iterations or until
+// tolerance of 1.0E-8 is met.
 solver.Iterate(1000, 1.0E-8);
 
 // Report results, finish     
@@ -1245,6 +1248,12 @@ return 0;
 solve a tridiagonal system using Epetra and AztecOO}
 \end{figure}
 
+In Figure~\ref{fig:prectrid} we show two different preconditioners
+setup processes.  Each is a legitimate substitution for the single
+line {\\tt paramlist.set("precond", AZ\_Jacobi);} in
+Figure~\ref{fig:solvetrid}.  The primary observation we make here is
+that, although the Epetra, AztecOO, ML and IFPACK packages are
+independently developed, they are fully interoperable with each other.
 \begin{figure}
 {\scriptsize
 \begin{tabular}{|p{2.4in}|p{2.4in}|}\hline
@@ -1261,7 +1270,7 @@ solve a tridiagonal system using Epetra and AztecOO}
 // Create ML multilevel preconditioner
 ML *ml_handle;
 
-// Maximum number of levels
+// Maximum number of levels 
 int N_levels = 10;
 
 // output level
@@ -1365,71 +1374,6 @@ solver.SetPrecOperator(&ICT);
 \caption{\label{fig:prectrid} Two code fragments that construct
 preconditioners for program in Figure~\ref{fig:solvetrid}.}
 \end{figure}
-
-\begin{figure}
-{\scriptsize
-\begin{tabular}{|p{4.8in}|}\hline
-\begin{verbatim}
-//
-// ***************************************************************************
-// ************************Main CG Loop***************************************
-// ***************************************************************************
-//
-if (_om.doOutput( 2 )) _os << "Entering main CG loop" << endl << endl;
-
-for (_iter=0; _stest.CheckStatus(this) == Unconverged && !exit_flg; _iter++)
-{
-  //
-  // Multiply the current direction vector by A and store in _Ap
-  //       _Ap = A*_p
-  //
-  _lp.ApplyOp( *_p, *_Ap );
-  //
-  // Compute alpha := <_residvec, _z> / <_p, _Ap >
-  //
-  _p->MvTransMv( one, *_Ap, temp_sdm );
-  _residvec->MvTransMv( one/temp_sdm(0,0), *_z, alpha );
-  //
-  // Check that alpha is a positive number!
-  //
-  if ( alpha(0,0) <= zero ) {
- if (_om.doOutput( 0 )) {
-   _os << " Exiting CG iteration " << endl;
-   _os << " Reason: Non-positive value for p^T*A*p ("<< alpha(0,0) <<") !!! "<< endl;
- }
- break; // Get out from this solve.
-  }
-  //
-  // Update the solution vector x := x + alpha * _p
-  //
-  _cur_block_sol->MvAddMv( one, *_cur_block_sol, alpha(0,0), *_p );
-  _lp.SolutionUpdated();
-  //
-  // Compute the denominator of beta before residual is updated [old <_residvec, _z>]
-  //
-  _residvec->MvTransMv( one, *_z, temp_sdm );
-  //
-  // Compute the new residual _residvec := _residvec - alpha * _Ap
-  //
-  _residvec->MvAddMv( one, *_residvec, -alpha(0,0), *_Ap );
-  //
-  // Compute beta := [new <_residvec, _z>] / [old <_residvec, _z>], and new direction vector
-  //
-  if (_lp.ApplyLeftPrec( *_residvec, *_z ) != Ok ) 
-      { _z->MvAddMv( one, *_residvec, zero, *_residvec ); }
-  //
-  _residvec->MvTransMv( one/temp_sdm(0,0), *_z, beta );
-  //
-  _p->MvAddMv( one, *_residvec, beta(0,0), *_p );
-  //
-} // end of the main CG loop -- for(_iter = 0;...)
-// *******************************************************************************
-\end{verbatim}
-\\\hline
-\end{tabular}}
-\caption{\label{fig:genericCG} Main iteration loop of Belos Conjugate Gradient Solver}
-\end{figure}
-
 
 \subsection{An Illustration of Trilinos Interoperability}
 \label{subsect:meros}
