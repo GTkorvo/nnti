@@ -1,0 +1,183 @@
+package Jpetra.MatrixMarketIO;
+
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.zip.GZIPInputStream;
+
+import java.util.Set;
+import java.util.Iterator;
+import java.util.Map;
+
+import Jpetra.*;
+
+public class GraphReader extends JpetraObject {
+    
+    public GraphReader() {
+    }
+    
+    // need to make it generate its own vector space
+    public static Graph read(String fileName, VectorSpace vectorSpace, boolean rowOriented, Comm comm) throws java.io.IOException {
+        // Open file for reading. If it's compressed, use on the fly
+        // decompression
+        FileInputStream fis = new FileInputStream(fileName);
+        InputStreamReader isr = null;
+        if (fileName.endsWith("gz"))
+            isr = new InputStreamReader(new GZIPInputStream(fis));
+        else
+            isr = new InputStreamReader(fis);
+        MatrixVectorReader mvr = new MatrixVectorReader(isr);
+        
+        // Read header
+        MatrixInfo info = mvr.readMatrixInfo();
+        String[] comments = mvr.readComments();
+        MatrixSize size = mvr.readMatrixSize(info);
+        
+        ElementSpace myElementSpace = new ElementSpace(size.numRows(), comm);
+        VectorSpace myVectorSpace = new VectorSpace(myElementSpace);
+        Graph result = null;
+        
+        int[] row = null, col = null;
+        Object data = null, dataR = null, dataI = null;
+        
+        // Call appropriate parser
+        if (info.isDense()) {
+            if (info.isInteger()) {
+                //data = new int[size.numEntries()];
+                //mvr.readArray((int[]) data);
+                // !! need to change type ?
+            } else if (info.isReal()) {
+                //data = new double[size.numEntries()];
+                //mvr.readArray((double[]) data);
+            } else if (info.isComplex()) {
+                //dataR = new double[size.numEntries()];
+                //dataI = new double[size.numEntries()];
+                //mvr.readArray((double[]) dataR, (double[]) dataI);
+                JpetraObject.println("ERR", "Complex data type not supported by Graph.");
+            } else
+                throw new IOException("Parser error");
+        } else {
+            row = new int[size.numEntries()];
+            col = new int[size.numEntries()];
+            if (info.isInteger()) {
+                //data = new int[size.numEntries()];
+                //mvr.readCoordinate(row, col, (int[]) data);
+                // !! need to do something here
+            } else if (info.isReal()) {
+                //data = new double[size.numEntries()];
+                //mvr.readCoordinate(row, col, (double[]) data);
+            } else if (info.isComplex()) {
+                /*dataR = new double[size.numEntries()];
+                dataI = new double[size.numEntries()];
+                mvr.readCoordinate(
+                row,
+                col,
+                (double[]) dataR,
+                (double[]) dataI);
+                 shouldn't end up here.*/
+            } else if (info.isPattern()) {
+                mvr.readPattern(row, col);
+                result = buildGraphFromSparse(row, col, vectorSpace, rowOriented);
+            }
+            // !! need to add some support for this one!
+            else
+                throw new IOException("Parser error");
+        }
+        
+        mvr.close();
+        fis.close();
+        
+        return result;
+    }
+    
+    public static Graph buildGraphFromSparse(int[] row, int[] col, VectorSpace vectorSpace, boolean rowOriented) {
+        JpetraTreeMap OuterTree = new JpetraTreeMap();
+        int[] rowColMajor;
+        int[] rowColMinor;
+        if (rowOriented) {
+            rowColMajor = row;
+            rowColMinor = col;
+        }
+        else {
+            rowColMinor = row;
+            rowColMajor = col;
+        }
+        
+        int numElements = 0;
+        int numTotalEntries = 0;
+        // need to see if the JpetraTreeMap exists for the specified row/col
+        for(int i=0; i < rowColMajor.length; i++) {
+            JpetraTreeMap rowColTreeMap;
+            if (!OuterTree.containsKey(new Integer(rowColMajor[i]))) {
+                rowColTreeMap = new JpetraTreeMap();
+                //this.println("STD", "globalRowCol does not exist, creating...");
+                OuterTree.put(new Integer(rowColMajor[i]), rowColTreeMap);
+                numElements++;
+            }
+            else {
+                //this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
+                rowColTreeMap = (JpetraTreeMap) OuterTree.get(new Integer(rowColMajor[i]));
+            }
+            
+            // now that we know the row/col exists, insert entries into the row/col
+            // and sum them with any pre-existing entries
+            //this.println("STD", "CisMatrix is internally inserting an entry...");
+            Object temp;
+            int toInsert;
+            //this.println("STD", "Inserting index " + index);
+            temp = rowColTreeMap.get(new Integer(rowColMinor[i]));
+            rowColTreeMap.put(new Integer(rowColMinor[i]), new Integer(1));
+            numTotalEntries++;
+            /*if (temp == null) {
+                //this.println("STD", "Index " + index + " does not exist, creating...");
+                rowColTreeMap.put(new Integer(rowColMinor[i]), new Integer(1));
+            }
+            else {
+                //this.println("STD", "Index " + index + " does exists, adding to prevous value...");
+                //rowColTreeMap.put(new Integer(index), new Double(entry + ((Double) temp).doubleValue()));
+            }*/
+        }
+        
+        //this.doubleValues = new double[this.numTotalEntries];
+        int[] numEntries = new int[numElements];
+        
+        Set outerKeysValues = OuterTree.entrySet();
+        Iterator outerIterator = outerKeysValues.iterator();
+        Map.Entry outerMapEntry;
+        
+        JpetraTreeMap innerTree;
+        Set innerKeysValues;
+        Iterator innerIterator;
+        Map.Entry innerMapEntry;
+        
+        int nextEntryIndex=0;
+        int numEntriesColRow;
+        int[] tempGraph = new int[numTotalEntries];
+        int i=0;
+        //startIndex = 0;
+        while(outerIterator.hasNext()) {
+            //this.println("STD", "Doing an outer loop...");
+            outerMapEntry = (Map.Entry) outerIterator.next();
+            innerTree = (JpetraTreeMap) outerMapEntry.getValue();
+            innerKeysValues = innerTree.entrySet();
+            innerIterator = innerKeysValues.iterator();
+            numEntriesColRow = 0;
+            while (innerIterator.hasNext()) {
+                //this.println("STD", "Doing an inner loop...");
+                innerMapEntry = (Map.Entry) innerIterator.next();
+                //this.doubleValues[nextEntryIndex] = ((Double) innerMapEntry.getValue()).doubleValue();
+                tempGraph[nextEntryIndex++] = ((Integer) innerMapEntry.getKey()).intValue();
+                numEntriesColRow++;
+            }
+            //if (this.maxSecondaryId < tempGraph[nextEntryIndex-1]) {
+            //    this.maxSecondaryId = tempGraph[nextEntryIndex-1];
+            //}
+            //this.startIndex[i] = startIndex;
+            //startIndex += numEntriesColRow;
+            numEntries[i++] = numEntriesColRow;
+        }
+        return new Graph(vectorSpace, tempGraph, numEntries);
+    }
+}

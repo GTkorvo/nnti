@@ -48,9 +48,11 @@ public class CisMatrix extends DistObject {
     //private int[] startIndex;   // number of entries before the current row/col
     private JpetraTreeMap OuterTree;
     private int numTotalEntries;
+    private int maxSecondaryId;
     
     public CisMatrix(VectorSpace primaryVectorSpace, boolean rowOriented) {
         this.filled = false;
+        this.maxSecondaryId = 0;
         this.primaryVectorSpace=primaryVectorSpace;
         //this.graph = new Graph(this.primaryVectorSpace);
         this.rowOriented = rowOriented;
@@ -83,15 +85,15 @@ public class CisMatrix extends DistObject {
         int toInsert;
         for(int i=0; i < indices.length; i++) {
             this.println("STD", "Inserting index " + indices[i]);
-            temp = rowColTreeMap.get(new Double(indices[i]));
+            temp = rowColTreeMap.get(new Integer(indices[i]));
             if (temp == null) {
                 this.println("STD", "Index " + indices[i] + " does not exist, creating...");
                 this.numTotalEntries++;
-                rowColTreeMap.put(new Double(indices[i]), new Double(entries[i]));
+                rowColTreeMap.put(new Integer(indices[i]), new Double(entries[i]));
             }
             else {
                 this.println("STD", "Index " + indices[i] + " does exists, adding to prevous value...");
-                rowColTreeMap.put(new Double(indices[i]), new Double(entries[i] + ((Double) temp).doubleValue()));
+                rowColTreeMap.put(new Integer(indices[i]), new Double(entries[i] + ((Double) temp).doubleValue()));
             }
         }
     }
@@ -121,15 +123,15 @@ public class CisMatrix extends DistObject {
         Object temp;
         int toInsert;
         this.println("STD", "Inserting index " + index);
-        temp = rowColTreeMap.get(new Double(index));
+        temp = rowColTreeMap.get(new Integer(index));
         if (temp == null) {
             this.println("STD", "Index " + index + " does not exist, creating...");
             this.numTotalEntries++;
-            rowColTreeMap.put(new Double(index), new Double(entry));
+            rowColTreeMap.put(new Integer(index), new Double(entry));
         }
         else {
             this.println("STD", "Index " + index + " does exists, adding to prevous value...");
-            rowColTreeMap.put(new Double(index), new Double(entry + ((Double) temp).doubleValue()));
+            rowColTreeMap.put(new Integer(index), new Double(entry + ((Double) temp).doubleValue()));
         }
     }
     
@@ -165,9 +167,12 @@ public class CisMatrix extends DistObject {
             while (innerIterator.hasNext()) {
                 this.println("STD", "Doing an inner loop...");
                 innerMapEntry = (Map.Entry) innerIterator.next();
-                this.doubleValues[nextEntryIndex] = ((Double) innerMapEntry.getValue()).intValue();
-                tempGraph[nextEntryIndex++] = ((Double) innerMapEntry.getKey()).intValue();
+                this.doubleValues[nextEntryIndex] = ((Double) innerMapEntry.getValue()).doubleValue();
+                tempGraph[nextEntryIndex++] = ((Integer) innerMapEntry.getKey()).intValue();
                 numEntriesColRow++;
+            }
+            if (this.maxSecondaryId < tempGraph[nextEntryIndex-1]) {
+                this.maxSecondaryId = tempGraph[nextEntryIndex-1];
             }
             //this.startIndex[i] = startIndex;
             //startIndex += numEntriesColRow;
@@ -183,19 +188,57 @@ public class CisMatrix extends DistObject {
     }
     
     public void printOut(String iostream) {
-        this.println("STD", "Printout() is starting...");
+        this.println("STD", "CistMatrix.Printout() is starting...");
         if (!filled) {
             this.print("ERR", "You must call fillComplete() before calling printOut(String iostream)");
         }
         int i=0;
-        this.println("STD", "this.numEntries.length=" + numEntries.length);
+        //this.println("STD", "this.numEntries.length=" + numEntries.length);
         for(int row=0; row < this.numEntries.length; row++) {
-            this.println("STD", "Doing a row loop...");
+            //this.println("STD", "Doing a row loop...");
             for(int entry=0; entry < numEntries[row]; entry++) {
-                this.println("STD", "\nDoing an entry loop...");
-                this.print(iostream, row + " " + graph.getIndex(i) + " " + doubleValues[i++]);
+                //this.println("STD", "\nDoing an entry loop...");
+                this.println(iostream, row + " " + graph.getIndex(i) + " " + doubleValues[i++]);
             }
         }
-        this.println("STD", "Printout() has ended...");
+        this.println("STD", "CistMatrix.Printout() has ended...");
+    }
+    
+    public int getNumNonZeros() {
+        return this.doubleValues.length;
+    }
+    
+    public int getNumRows() {
+        if (this.rowOriented) {
+            return this.primaryVectorSpace.getNumMyGlobalEntries();
+        }
+        else {
+            return this.maxSecondaryId+1;
+        }
+    }
+    
+    public int getNumColumns() {
+        if (this.rowOriented) {
+            return this.maxSecondaryId+1;
+        }
+        else {
+            return this.primaryVectorSpace.getNumMyGlobalEntries();
+        }
+    }
+    
+    public boolean isRowOriented() {
+        return this.rowOriented;
+    }
+    
+    public Graph getGraph() {
+        return this.graph;
+    }
+    
+    public double[] getEntriesArray() {
+        return this.doubleValues;
+    }
+    
+    public int[] getNumEntriesArray() {
+        return this.numEntries;
     }
 }

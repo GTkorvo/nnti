@@ -28,14 +28,13 @@
 
 package Jpetra;
 
-import com.braju.format.*;
 /**
  *
  * @author  Jason Cross
  */
 public class MultiVector extends DistObject {
     VectorSpace vectorSpace;
-    double[][] values;
+    double[][] values;  // in column major form
     
     public MultiVector(VectorSpace vectorSpace, double[][] values) {
         this.vectorSpace = vectorSpace;
@@ -222,10 +221,17 @@ public class MultiVector extends DistObject {
     public void printOut(String iostream) {
         for(int i=0; i < values.length; i++) {
             for (int j=0; j < values[i].length; j++) {
-                //this.println(iostream, i + " " + j + " " + values[i][j]);
-                Format.printf("%' 'f ", new Parameters(values[i][j]));
+                this.println(iostream, i + " " + j + " " + values[i][j]);
             }
             System.out.println("");
         }
+    }
+    
+    public int getNumCols() {
+        return this.values.length;
+    }
+    
+    public int getNumRows() {
+        return this.values[0].length;
     }
 }

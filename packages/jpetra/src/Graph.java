@@ -37,14 +37,17 @@ public class Graph extends DistObject {
     private int[] numEntries;  // number of entries per array
     VectorSpace dVectorSpace; // the domain vector space
     private boolean filled;
+    //boolean rowOriented;
     private JpetraTreeMap OuterMap;
     
-    public Graph(VectorSpace vectorSpace) {
+    public Graph(VectorSpace vectorSpace, boolean rowOriented) {
+        //this.rowOriented = rowOriented;
         this.filled = false;
         this.dVectorSpace = vectorSpace;
     }
     
     public Graph(VectorSpace vectorSpace, int[] nonZeroEntries, int[] numEntries) {
+        //this.rowOriented = rowOriented;
         this.filled = true;
         this.dVectorSpace = vectorSpace;
         this.nonZeroEntries = nonZeroEntries;
@@ -52,7 +55,25 @@ public class Graph extends DistObject {
         
     }
     
+    //public boolean isRowOriented() {
+    //    return this.rowOriented;
+    //}
+    
+    
+    
+    public int getNumNonZeros() {
+        return this.nonZeroEntries.length;
+    }
+    
+    public int[] getNumEntriesArray() {
+        return this.numEntries;
+    }
+    
     public int getIndex(int entryId) {
         return nonZeroEntries[entryId];
+    }
+    
+    public int[] getNonZeroEntriesArray() {
+        return this.nonZeroEntries;
     }
 }

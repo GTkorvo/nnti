@@ -197,7 +197,7 @@ public class ElementSpace {
     }
     
     public int[] getRemoteVnodeIdList(int[] remoteGlobalElementIds) {
-        
+        return null; // temporary so class will compile
     }
     
     public boolean isDistributedGlobally() {

@@ -20,7 +20,6 @@
 
 package Jpetra.MatrixMarketIO;
 
-import Jpetra.MatrixMarketIO.*;
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
@@ -28,6 +27,8 @@ import java.io.Reader;
 import java.io.StreamTokenizer;
 import java.util.LinkedList;
 import java.util.List;
+
+import Jpetra.MatrixMarketIO.*;
 
 /**
  * Reads matrices and vectors
@@ -229,7 +230,9 @@ public class MatrixVectorReader extends BufferedReader {
 	 * newline
 	 */
 	public String[] readComments() throws IOException {
-		List list = new LinkedList();
+		/*
+                 * we don't need comments so this is disabled
+                List list = new LinkedList();
 		while (true) {
 			mark(1024); // Line length equal 1024 at most
 			String line = readLine().trim();
@@ -242,7 +245,9 @@ public class MatrixVectorReader extends BufferedReader {
 		}
 
 		//return list.toArray(new String[list.size()]);
-                return (String[]) list.toArray();
+                return (String[]) list.toArray();  //this doesn't cast properly.. danget
+                 */
+            return null;
 	}
 
 	/**
