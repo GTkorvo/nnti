@@ -1,89 +1,47 @@
-%
-% This is an example LaTeX file which uses the SANDreport class file.
-% It shows how a SAND report should be formatted, what sections and
-% elements it should contain, and how to use the SANDreport class.
-%
-% Build it using
-%     latex SANDExample
-%     bibtex SANDExample
-%     latex SANDExample
-%     latex SANDExample
-%     dvips -o SANDExample.ps SANDExample.dvi
-%     ps2pdf SANDExample.ps SANDExample.pdf
-%
-% This file and the SANDreport.cls file are based on information
-% contained in "Guide to Preparing {SAND} Reports", Sand98-0730, edited
-% by Tamara K. Locke.
-% Please send corrections and suggestions for improvements to
-% Rolf Riesen, Org. 9223, MS 1110, rolf@cs.sandia.gov
-%
-\documentclass[12pt,relax]{SANDreport}
+\documentclass[12pt,relax]{TrilinosOverview}
 
-% If you want to relax some of the SAND98-0730 requirements, use the "relax"
-% option. It adds spaces and boldface in the table of contents, and does not
-% force the page layout sizes.
-% e.g. \documentclass[relax,12pt]{SANDreport}
-%
-% You can also use the "strict" option, which applies even more of the
-% SAND98-0730 guidelines. It gets rid of section numbers which are often
-% useful; e.g. \documentclass[strict]{SANDreport}
+\title{An Overview of the Trilinos Project}
+\SANDsubtitle{}
+
+\author{Michael A.~Heroux, Roscoe Bartlett, David Day, \\
+Robert Hoekstra, Jonathan Hu, Tamara Kolda, \\
+Rich Lehoucq, Kevin Long, Roger Pawlowski, \\
+Andrew Rothfuss, Andrew Salinger, Heidi Thornquist, \\
+Ray Tuminaro, Jim Willenbring, Alan Williams, \\
+ \\
+Sandia National Laboratories\\
+P.O. Box 5800\\
+Albuquerque, NM 87185-1110 \\
+maherou@sandia.gov
+}
+
+\date{}
 
 
-
-% ---------------------------------------------------------------------------- %
-%
-% Set the title, author, and date
-%
-    \title{An Overview of the Trilinos Project}
-
-    \author{Michael A.~Heroux\\
-	  Sandia National Laboratories\\
-	  P.O. Box 5800\\
-	  Albuquerque, NM 87185-1110 \\
-	  maherou@sandia.gov \\
-	 }
-
-    % There is a "Printed" date on the title page of a SAND report, so
-    % the generic \date should generally be empty.
-    \date{}
-
-
-% ---------------------------------------------------------------------------- %
-% Set some things we need for SAND reports. These are mandatory
-%
 \SANDnum{SAND2003-xxxx}
-\SANDprintDate{February 2003}
-\SANDauthor{Michael A.~Heroux, Sandia National Laboratories}
+\SANDprintDate{June 2003}
+\SANDauthor{
+Michael A.~Heroux, Roscoe Bartlett, David Day, \\
+Robert Hoekstra, Jonathan Hu, Tamara Kolda, \\
+Rich Lehoucq, Kevin Long, Roger Pawlowski, \\
+Andrew Rothfuss, Andrew Salinger, Heidi Thornquist, \\
+Ray Tuminaro, Jim Willenbring, Alan Williams, \\
+ \\
+Sandia National Laboratories}
 
 
-% ---------------------------------------------------------------------------- %
-% The following definitions are optional. The values shown are the default
-% ones provided by SANDreport.cls
-%
 \SANDreleaseType{Unlimited Release}
 
 
-% ---------------------------------------------------------------------------- %
-% The following definitions do not have a default value and will not
-% print anything, if not defined
-%
-%\SANDsupersed{SAND00-0000}{January 0000}
-\SANDdistcategory{UC-999}	% DOE mandates it, but many reports don't have it
+\SANDdistcategory{UC-999}
 
 
-% ---------------------------------------------------------------------------- %
-%
-% Start the document
-%
 \begin{document}
-    \maketitle
+\maketitle
 
-    % ------------------------------------------------------------------------ %
-    % An Abstract is required for SAND reports
-    %
-    \begin{abstract}
-The Trilinos Project is an effort to develop parallel solver algorithms and libraries 
-within 
+\begin{abstract}
+The Trilinos Project is an effort to develop parallel solver 
+algorithms and libraries within 
 an object-oriented software framework for the solution of large-scale, complex
 multi-physics engineering and scientific applications.   Our emphasis is on 
 developing robust, scalable algorithms in a software framework, using abstract 
@@ -94,18 +52,13 @@ Fortran user interface support.  We provide an open architecture that allows
 easy integration with other solver packages and we deliver our software to 
 the outside community via the Gnu Lesser General Public License
 (LGPL)~\cite{gnu-license-site}.
-This report provides an overview of Trilinos, discussing the objectives, history,
-current development and future plans of the project.
-    \end{abstract}
+This report provides an overview of Trilinos, discussing the 
+objectives, history, current development and future plans of the project.
+\end{abstract}
 
 
-    % ------------------------------------------------------------------------ %
-    % An Acknowledgement section is optional but important, if someone made
-    % contributions or helped beyond the normal part of a work assignment.
-    % Use \section* since we don't want it in the table of context
-    %
-    \clearpage
-    \section*{Acknowledgement}
+\clearpage
+\section*{Acknowledgement}
 The authors would like to acknowledge the support of the ASCI and LDRD programs
 that funded development of Trilinos and recognize all Trilinos contributors: 
 Teri Barth, David Day, Bob Heaphy, Mike Heroux, Robert Hoekstra, Jonathan Hu, 
@@ -115,118 +68,107 @@ Jim Willenbring and Alan Williams.
 
 
 
-    % ------------------------------------------------------------------------ %
-    % The table of contents and list of figures and tables
-    % Comment out \listoffigures and \listoftables if there are no
-    % figures or tables. Make sure this starts on an odd numbered page
-    %
-    \clearpage
-    \tableofcontents
-    \listoffigures
-    \listoftables
+\clearpage
+\tableofcontents
+\listoffigures
+\listoftables
 
 
-    % ---------------------------------------------------------------------- %
-    % An optional preface or Foreword
-%    \clearpage
-%    \section{Preface}
-%	Although muggles usually have only limited experience with
-%	magic, and many even dispute its existence, it is worthwhile
-%	to be open minded and explore the possibilities.
+\clearpage
+\section{Summary}
 
+A core requirement of many engineering and scientific applications is 
+the need to solve linear and non-linear systems of equations, eigensystems 
+and other related problems.  Thus it is no surprise that any 
+part of the application that solves these problems is called a ``solver.'' 
+The exact definition of what specifically constitutes a solver depends on 
+many factors.  However, a good working definition of a solver is
+the following: {\it Any piece of software that finds unknown values for 
+some set of discrete governing equations in 
+an application.}  Another characteristic of solvers is that we can often 
+implement them in such a way that they are ``general-purpose'', so that the
+details of how the discrete problem was formed are not specifically needed 
+for the solver to work (although information about problem characteristics 
+can often be vital to robust solutions.)
 
-    % ---------------------------------------------------------------------- %
-    % An optional executive summary
-    \clearpage
-    \section{Summary}
-
-A core requirement of many engineering and scientific applications is the need to solve linear and non-linear 
-systems of equations, eigensystems and other related problems.  Thus it is no surprise that any 
-part of the application that solves these problems is called a ``solver.'' The exact definition of what
-specifically constitutes a solver depends on many factors.  However, a good working definition of a solver is
-the following: {\it Any piece of software that finds unknown values for some set of discrete
-governing equations in 
-an application.}  Another characteristic of solvers is that we can often implement them in such a way that they
-are ``general-purpose'', so that the
-details of how the discrete problem was formed are not specifically needed for the solver to work (although
-information about problem characteristics can often be vital to robust solutions.)
-
-General-purpose linear and eigensolvers have been successfully used across a broad set of applications and 
-computer systems.  EISPACK~\cite{eispack}, LINPACK~\cite{linpack} and LAPACK~\cite{lapack} are just a few of
-the many packages that have made a tremendous impact, providing robust portable solvers to a broad set of 
-applications.  More recently packages such as PETSc~\cite{petsc-home-page,petsc-manual,petsc-efficient} 
+General-purpose linear and eigensolvers have been successfully used across 
+a broad set of applications and computer systems.  EISPACK~\cite{eispack}, 
+LINPACK~\cite{linpack} and LAPACK~\cite{lapack} are just a few of
+the many packages that have made a tremendous impact, providing robust 
+portable solvers to a broad set of applications.  More recently packages 
+such as PETSc~\cite{petsc-home-page,petsc-manual,petsc-efficient} 
 and Aztec~\cite{Aztec2.1} have provided a large
-benefit to applications by giving users access to parallel distributed memory solvers that are easy-to-use and
-robust.
+benefit to applications by giving users access to parallel distributed 
+memory solvers that are easy-to-use and robust.
 
-Sandia has historically had efforts to develop scalable solver algorithms and software.  Often this
-development has been done within the context of a specific application code, providing a good robust solver
-that specifically meets the needs of that application.  Even Aztec, one of the most important general-purpose
-solvers developed at Sandia, was developed specifically for MPSalsa~\cite{MPSalsa-User-Guide,MPSalsa-Theory} 
-and only later extracted 
-for use with other applications.  Unfortunately, even though application-focused solvers 
-tend to be very robust and can often be made into very effective general-purpose solvers, the opportunity
-to re-use the basic set of tools developed for one solver in the development of another solver becomes very
-difficult.
+Sandia has historically had efforts to develop scalable solver algorithms 
+and software.  Often this development has been done within the context of 
+a specific application code, providing a good robust solver that 
+specifically meets the needs of that application.  Even Aztec, one of 
+the most important general-purpose solvers developed at Sandia, was 
+developed specifically for MPSalsa~\cite{MPSalsa-User-Guide,MPSalsa-Theory} 
+and only later extracted for use with other applications.  Unfortunately, 
+even though application-focused solvers tend to be very robust and can 
+often be made into very effective general-purpose solvers, the 
+opportunity to re-use the basic set of tools developed for one solver 
+in the development of another solver becomes very difficult.
 
 The Trilinos Project grew out of this group of established numerical algorithms
 efforts at Sandia, motivated by  a recognition that a modest degree of 
-coordination among these efforts could have a large positive impact on the quality and
-usability of the software we produce and therefore enhance the
+coordination among these efforts could have a large positive impact on 
+the quality and usability of the software we produce and therefore enhance the
 research, development and integration of new solver algorithms into
-applications.  Although the project has existed for only two years, the degree of effort
-required to develop new parallel solvers has been substantially reduced because our common
-infrastructure provides an excellent starting point.  Furthermore, many applications are
-standardizing on the Trilinos matrix and vector classes.  As a result, these applications
-have access to all Trilinos solver components without any unnecessary interface modifications.
+applications.  Although the project has existed for only two years, 
+the degree of effort required to develop new parallel solvers has been 
+substantially reduced because our common infrastructure provides an excellent starting point.  Furthermore, many applications are standardizing on the 
+Trilinos matrix and vector classes.  As a result, these applications
+have access to all Trilinos solver components without any unnecessary 
+interface modifications.
 
 This document provides an overview of the Trilinos project,
 focusing on the project philosophy and description, and
 providing the reader with an summary of the project in its current state.  
 
 
-    % ---------------------------------------------------------------------- %
-    % An optional glossary. We don't want it to be numbered
-    \clearpage
-    \section*{Nomenclature}
-    \addcontentsline{toc}{section}{Nomenclature}
-    \begin{itemize}
-	\item[Package]
-	    A collection of software focused on one primary class of numerical methods
-	\item[Trilinos]
-	    A Greek term that loosely translated means ``a string of pearls,'' meant
-         to evoke an image that each Trilinos package is a pearl in its own right,
-         but is even more valuable when combined with other packages.
-	\item[Petra]
-	    A Greek term meaning ``foundation.''  Trilinos has three Petra libraries: Epetra, 
-	    Tpetra and Jpetra (discussed in Section~\ref{subsect:PetraObjectModel}) that
-	    provide basic classes for constructing and manipulating matrix, graph and vector 
-	    objects.
-        \item[AztecOO] Linear solver package based on preconditioned Krylov methods.  A
-	  follow-on to the Aztec solver package.  Supports all Aztec interfaces and
-	  functionality, but also provides significant new functionality.
-	\item[TSF]
-	\item[NOX]
-	\item[ML] A collection of geometric and algebraic multigrid methods and
-    domain decomposition methods.
-    The
-    algebraic methods are based primarily on the ideas of smoothed aggregation.
-    The methods in ML can be used either as linear solvers or as preconditioners
-    to an outer iterative method.
-    ML has no explicit dependencies on any other Trilinos packages and can be
-    built as a standalone package.
+\clearpage
+\section*{Nomenclature}
+\addcontentsline{toc}{section}{Nomenclature}
+\begin{itemize}
+\item[Package]
+A collection of software focused on one primary class of numerical methods
+\item[Trilinos]
+A Greek term that loosely translated means ``a string of pearls,'' meant
+to evoke an image that each Trilinos package is a pearl in its own right,
+but is even more valuable when combined with other packages.
+\item[Petra]
+A Greek term meaning ``foundation.''  Trilinos has three Petra libraries: 
+Epetra, Tpetra and Jpetra (discussed in 
+Section~\ref{subsect:PetraObjectModel}) that provide basic classes for 
+constructing and manipulating matrix, graph and vector objects.
+\item[AztecOO] Linear solver package based on preconditioned Krylov methods.  A
+follow-on to the Aztec solver package.  Supports all Aztec interfaces and
+functionality, but also provides significant new functionality.
+\item[TSF] Collection of abstract interfaces for accessing solver
+functionality without explicit dependence on concrete classes.  TSF is
+spread across three packages:  TSFUtils, TSFCore and TSFExtended.
+\item[NOX] A collection of nonlinear solvers implemented in a
+self-contained package.  NOX contains basic Newton, line search and
+tensor-based methods for solving nonlinear equations.  It is designed
+to be easily integrated into an existing application.  It can work
+with Epetra, AztecOO, PETSc and LAPACK as the underlying linear
+algebra services packages.
+\item[ML] A collection of geometric and algebraic multigrid methods and
+domain decomposition methods.  The algebraic methods are based primarily 
+on the ideas of smoothed aggregation.  The methods in ML can be used either as linear solvers or as preconditioners to an outer iterative method.
+ML has no explicit dependencies on any other Trilinos packages and can be
+built as a standalone package.
+\item[Komplex] Complex linear equation solver using equivalent real 
+formulations, built on top of Aztec.
+\item[Ifpack] Object-oriented algebraic preconditioner, compatible with 
+Epetra and AztecOO.
 
-	\item[Komplex] Complex linear equation solver using equivalent real formulations,
-	  built on top of Aztec.
-	\item[Ifpack] Object-oriented algebraic preconditioner, compatible with Epetra and
-	  AztecOO.
-    \end{itemize}
+\end{itemize}
 
-
-    % ---------------------------------------------------------------------- %
-    % This is where the body of the report begins; usually with an Introduction
-    %
-    \SANDmain		% Start the main part of the report
 
 \section{Introduction}
 
@@ -265,8 +207,8 @@ Each Trilinos package is a self-contained, independent piece
 of software with its own set of requirements, its own development team
 and group of users.  Because of this,
 Trilinos itself is designed to respect the autonomy of packages.
-Trilinos offers a variety of ways for a particular package to interact with other
-Trilinos packages.  It also offers a set of tools that can
+Trilinos offers a variety of ways for a particular package to interact 
+with other Trilinos packages.  It also offers a set of tools that can
 assist package developers with builds across multiple platforms, generating
 documentation and regression testing across a set of target platforms.
 At the same time, what a package {\it must} do to be called a Trilinos
@@ -338,8 +280,9 @@ other packages.
 
 \item Source code repository and build tools: Trilinos source code is
 maintained in a CVS~\cite{CVS} repository that is accessible via a
-web-based interface package called Bonsai~\cite{Bonsai}.  Features and bug reports
-are tracked using Bugzilla~\cite{Bugzilla}, and email lists are
+web-based interface package called Bonsai~\cite{Bonsai}.  Features 
+and bug reports are tracked using Bugzilla~\cite{Bugzilla}, and email 
+lists are
 maintained for Trilinos as a whole and for each package.  Support for new
 packages can easily be added.  All tools are accessible from the main
 Trilinos website~\cite{Trilinos-home-page}.
@@ -360,10 +303,12 @@ Trilinos packages.
 Matrices, vectors and graphs are basic objects used in most solver
 algorithms. Most Trilinos
 packages interact with these kinds of objects via abstract interfaces that
-allow a package to define what services and behaviors are expected from the objects,
+allow a package to define what services and behaviors are expected from 
+the objects,
 without enforcing a specific implementation.  However, in order to use
 these packages, some concrete
-implementation must be selected.  Epetra (and in the future other packages described
+implementation must be selected.  Epetra (and in the future other 
+packages described
 in Section~\ref{subsect:PetraObjectModel}) is a collection of concrete
 classes that supports the construction and use of vectors, sparse
 graphs, and dense and sparse matrices.  It provides serial, parallel and
@@ -442,7 +387,8 @@ internally, a package can in turn use other Trilinos packages to
 manipulate its own internal objects.
 
 \subsection{Mechanism 4: Package access solver service via TSF interface}
-TSF provides an abstract solver interface with access to multiple concrete solvers. 
+TSF provides an abstract solver interface with access to multiple concrete 
+solvers. 
 A package can access solver services via TSF and therefore be able to use
 any solver that implements the TSF interface.
 
@@ -472,10 +418,12 @@ automatically along with a large number of other Trilinos packages.
 \subsection{The Petra Object Model}
 \label{subsect:PetraObjectModel}
 The Petra class libraries provide a
-foundation for all Trilinos solver development.  Petra provides object classes for
+foundation for all Trilinos solver development.  Petra provides 
+object classes for
 constructing and using parallel, distributed memory matrices and vectors.  
 Petra exists in
-multiple forms.  Its most basic form is as an object model~\cite{HeroHoekWill2002}.
+multiple forms.  Its most basic form is as an object 
+model~\cite{HeroHoekWill2002}.
 As such, it is an abstract 
 description of a variety of vector, matrix and supporting classes, along with a 
 description of
@@ -487,232 +435,189 @@ of the Petra Object Model: Epetra, Tpetra and Jpetra.
 Epetra~\cite{Epetra-User-Guide}, the current production version of Petra,
  is written for real-valued double-precision scalar field data only, and
 restricts itself to a stable core
-of the C++ language standard.  As such, Epetra is very portable and stable, and  
+of the C++ language standard.  As such, Epetra is very portable and 
+stable, and  
 is accessible to Fortran and C users.  
-Epetra is unique in that it combines in a single package (i) support for generic parallel
-machine descriptions, (ii) extensive use of standard numerical libraries, (iii) use of best
-practices in object-oriented C++ programming and (iv) parallel data redistribution.
-Other basic linear algebra packages, e.~.g.~ the Template Numerical Toolkit~\cite{TNT-site},
-PETSc~\cite{petsc-manual} and the Matrix Template Library~\cite{SiekLums98}, feature one
-or two of these aspects only.  The availability of Epetra has facilitated rapid development
-of numerous applications and solvers at Sandia because many of the complicated issues of
+Epetra is unique in that it combines in a single package (i) support 
+for generic parallel
+machine descriptions, (ii) extensive use of standard numerical 
+libraries, (iii) use of best
+practices in object-oriented C++ programming and (iv) parallel data 
+redistribution.
+Other basic linear algebra packages, e.~.g.~ the Template Numerical 
+Toolkit~\cite{TNT-site},
+PETSc~\cite{petsc-manual} and the Matrix Template 
+Library~\cite{SiekLums98}, feature one
+or two of these aspects only.  The availability of Epetra has 
+facilitated rapid development
+of numerous applications and solvers at Sandia because many of the 
+complicated issues of
 working on a parallel distributed memory machine are handled by Epetra.
 
 Application developers can use Epetra to construct and manipulate matrices
-and vectors, and then pass these objects to most Trilinos solver components.  Furthermore,
-solver developers can develop many new algorithms relying solely on Epetra classes to
-handle the intricacies of parallel execution.  Epetra also has extensive parallel data  
-redistribution capabilities, including an interface to the Zoltan load-balancing
-library~\cite{zoltan-ug}.
+and vectors, and then pass these objects to most Trilinos solver components.
+Furthermore, solver developers can develop many new algorithms relying 
+solely on Epetra classes to handle the intricacies of parallel execution.  
+Epetra also has extensive parallel data  redistribution capabilities, 
+including an interface to the Zoltan load-balancing library~\cite{zoltan-ug}.
 
 \subsection{Tpetra: Templated C++ Implementation of Petra Object Model}
 
-In addition to Epetra, we have started development of a templated version of Petra,
-called Tpetra, that implements the scalar and ordinal fields as templated types.  
-When fully developed, Tpetra will allow
-matrices and vectors to be composed of real or complex, and single or double precision scalar
-values.  Furthermore, in principle, any abstract data type (ADT) can be used as 
-the scalar field type as long
-as the ADT supports basic mathematical operations such as addition and multiplication and
-inversion. Specifically, we could compute using an interval scalar field, matrices, integers,
-etc., without any additional code development in Tpetra.  
-Tpetra can also use any size integer for indexing.  Typically the ordinal field would be 
-an integral data type such as int or long int.  However,
-any ADT that supports an indexing capability can be used, including integers in other bases, 
-or cyclic indexing. Additionally, Tpetra also
-uses the C++ language standard more fully.  In particular, it utilizes the Standard
-Template Library (STL)~\cite{Stroustrup}, to provide maximal
-algorithmic efficiency with minimal code
-development.
+In addition to Epetra, we have started development of a templated 
+version of Petra, called Tpetra, that implements the scalar and 
+ordinal fields as templated types.  When fully developed, Tpetra 
+will allow matrices and vectors to be composed of real or complex, 
+and single or double precision scalar values.  Furthermore, in 
+principle, any abstract data type (ADT) can be used as the scalar 
+field type as long as the ADT supports basic mathematical operations 
+such as addition and multiplication and inversion. Specifically, we 
+could compute using an interval scalar field, matrices, integers, etc., 
+without any additional code development in Tpetra.  Tpetra can also 
+use any size integer for indexing.  Typically the ordinal field would 
+be an integral data type such as int or long int.  However, any ADT 
+that supports an indexing capability can be used, including integers in 
+other bases, or cyclic indexing. Additionally, Tpetra also uses the 
+C++ language standard more fully.  In particular, it utilizes the 
+Standard Template Library (STL)~\cite{Stroustrup}, to provide maximal 
+algorithmic efficiency with minimal code development.
 
 We will fully develop Tpetra as a peer library to Epetra. By using partial
-specialization of templates, we will base Tpetra on established libraries such as the
-BLAS~\cite{BLAS1,BLAS2,BLAS3} and LAPACK~\cite{lapack} and therefore acquire the
-performance and robustness of these libraries.
+specialization of templates, we will base Tpetra on established libraries 
+such as the BLAS~\cite{BLAS1,BLAS2,BLAS3} and LAPACK~\cite{lapack} and 
+therefore acquire the performance and robustness of these libraries.
 Like Epetra, Tpetra is written for generic parallel distributed
 memory computers whose nodes are
 potentially shared memory multiprocessors.
 
 \subsection{Jpetra: Java Implementation of Petra Object Model}
 
-In addition to Tpetra, we have started a Java implementation of Petra.  The primary design
-goals of this project are to produce a library that is a high performance, pure Java
-implementation of Petra.  By restricting ourselves to Java and avoiding the use of the Java
-Native Interface (JNI)~\cite{JNI-site} to link to other libraries, we
-get the true portability that Java
-promises.  The fundamental implication of these goals is that we cannot rely on
-BLAS~\cite{BLAS1,BLAS2,BLAS3}, LAPACK~\cite{lapack} or MPI~\cite{MPI}
-since they are not written in Java, and we do not use the JNI.
-As such, we must track the development of pure Java equivalents of these libraries.  Several
-efforts, including Ninja~\cite{MoreMidkGuptArtiWuAlma2001} and
-MPJ~\cite{CarpGetoJuddSkjeFox2000}, provide equivalent functionality to the BLAS, LAPACK and
-MPI, but are completely written in Java.
+In addition to Tpetra, we have started a Java implementation of Petra.  
+The primary design goals of this project are to produce a library that 
+is a high performance, pure Java implementation of Petra.  By restricting 
+ourselves to Java and avoiding the use of the Java Native Interface 
+(JNI)~\cite{JNI-site} to link to other libraries, we get the true 
+portability that Java promises.  The fundamental implication of these 
+goals is that we cannot rely on BLAS~\cite{BLAS1,BLAS2,BLAS3}, 
+LAPACK~\cite{lapack} or MPI~\cite{MPI} since they are not written in 
+Java, and we do not use the JNI.  As such, we must track the development 
+of pure Java equivalents of these libraries.  Several efforts, including 
+Ninja~\cite{MoreMidkGuptArtiWuAlma2001} and 
+MPJ~\cite{CarpGetoJuddSkjeFox2000}, provide equivalent functionality 
+to the BLAS, LAPACK and MPI, but are completely written in Java.
 
-We will fully implement Jpetra as a peer library to Epetra.  By making extensive use of Java
-interfaces, we can create loose dependencies on emerging BLAS, LAPACK and MPI replacements as
-they become mature and stable.  Recently, several research
-efforts~\cite{MoreMidkGuptArtiWuAlma2001,SCIMARK-site}
-have shown that there is no fundamental performance bottleneck using Java.  Instead, Java
-compilers and user practices have been the issue.  As a result, Java holds much promise as a
-high performance computing language.  Jpetra will facilitate adoption of Java in scientific and
-engineering applications.   Java also has native graphical user interfaces (GUI) support.  A
-significant part of Jpetra will be the development of GUI tools for visualization and
-manipulation of Jpetra objects.
+We will fully implement Jpetra as a peer library to Epetra.  By making 
+extensive use of Java interfaces, we can create loose dependencies on 
+emerging BLAS, LAPACK and MPI replacements as they become mature and 
+stable.  Recently, several research 
+efforts~\cite{MoreMidkGuptArtiWuAlma2001,SCIMARK-site} have shown 
+that there is no fundamental performance bottleneck using Java.  
+Instead, Java compilers and user practices have been the issue.  
+As a result, Java holds much promise as a high performance computing 
+language.  Jpetra will facilitate adoption of Java in scientific and 
+engineering applications.   Java also has native graphical user 
+interfaces (GUI) support.  A significant part of Jpetra will be 
+the development of GUI tools for visualization and manipulation of 
+Jpetra objects.
 
 
 \subsection{TSF: The Trilinos Abstract Class Package}
 
-Packages like Epetra, Tpetra and Jpetra provide a broad set of powerful 
-capabilities.  As a direct
-result, their class and interface specifications can be quite complex and difficult to use
-for algorithm developers that only need to work with abstract matrix and vector objects.
-Furthermore, implementation details are necessarily exposed in the Petra libraries
-in a way that commits users
-of these packages to pay attention to the particular way these packages are implemented.
-For some types of algorithms (for example, algorithms like incomplete factorizations that 
-must work directly with matrix coefficients as efficiently as possible), working at this
-concrete level is necessary.  
+Packages like Epetra, Tpetra and Jpetra provide a broad set of 
+powerful capabilities.  As a direct result, their class and interface 
+specifications can be quite complex and difficult to use for algorithm 
+developers that only need to work with abstract matrix and vector 
+objects.  Furthermore, implementation details are necessarily exposed 
+in the Petra libraries in a way that commits users of these packages 
+to pay attention to the particular way these packages are implemented.  
+For some types of algorithms (for example, algorithms like incomplete 
+factorizations that must work directly with matrix coefficients as 
+efficiently as possible), working at this concrete level is necessary.  
 
-However, many algorithms have no need for this detailed
-information.  Forcing use of these concrete classes is a disservice to these algorithm
-developers because they are forced to deal with details that are irrelevant to their work.
-This causes undue burden on the developer, and make their code tightly connected to the 
-concrete library for no good reason.
+However, many algorithms have no need for this detailed information.  
+Forcing use of these concrete classes is a disservice to these 
+algorithm developers because they are forced to deal with details 
+that are irrelevant to their work.  This causes undue burden on 
+the developer, and make their code tightly connected to the concrete 
+library for no good reason.
 
-The TSF abstract class package addresses this potential problem by defining a collection 
-of classes that define the expected behavior of abstract matrix and vector objects from a
-user perspective, independent of implementation.  The result is that each TSF class has
-a much simpler interface than the corresponding Epetra interface.  Furthermore, the TSF
-interface can be implemented using Epetra, or any other package that can provide the 
-required functionality.
+The TSF abstract class package addresses this potential problem by 
+defining a collection of classes that define the expected behavior 
+of abstract matrix and vector objects from a user perspective, 
+independent of implementation.  The result is that each TSF class 
+has a much simpler interface than the corresponding Epetra interface.  
+Furthermore, the TSF interface can be implemented using Epetra, or 
+any other package that can provide the required functionality.
 
-TSF provides abstract interfaces for vector, matrix, operator and solver objects.  In
-addition, it has powerful aggregation mechanisms that allow existing TSF objects to 
-be combined in a variety of ways to create new TSF objects.
-TSF can be useful in many situations.  For example:
+TSF provides abstract interfaces for vector, matrix, operator and 
+solver objects.  In addition, it has powerful aggregation mechanisms 
+that allow existing TSF objects to be combined in a variety of ways 
+to create new TSF objects.  TSF can be useful in many situations.  
+For example:
 \begin{enumerate}
+
 \item Generic Krylov method implementation:  If a preconditioned Krylov solver 
-is implemented using TSF vectors and operators, then any concrete package that implements
-the TSF vector and operator interfaces can be used with the Krylov solver.
-\item Generic solver driver:  If an application accesses solver services via the TSF
-solver interfaces, then any solver that implements the TSF solver interface is 
-accessible to that application.
-\item Aggregate objects to implicitly construct a Schur complement: 
-TSF provides mechanisms to implicitly 
-construct a matrix of operators, the sum or composition of two operators, the inverse
-of an operator, etc.  Similar aggregation mechanisms are available for vectors, matrices
-and solvers.  Given these mechanisms, a TSF operator that describes the action of the
-Schur compliment of an operator is easy to define.  Let
-\[
-A=\left[
-\begin{array}{ll}
-A_{11} & A_{12} \\
-A_{21} & A_{22}
-\end{array} \right].
-\]
-Then the Schur compliment of $A$ with respect to $A_{22}$ is 
-$S = A_{22} - A_{21}A_{11}^{-1}A_{12}$.
-Assume that A11, A12, A21 and A22 are TSF operator objects containing $A_{11}$, $A_{12}$,
-$A_{21}$ and $A_{22}$, respectively.  To very explicit, we can think of these objects
- as Epetra matrices that are encapsulated as TSF operators.  Given these four TSF operator 
-objects, we can form aggregate TSF operator objects in a variety of ways.  In particular,
-TSF has operator classes that are derived from the base TSF operator class (and are thus
-also TSF operator objects) but require existing TSF operators to be well-defined.  For
-example, one such derived TSF operator class will create a composed operator by
-taking two existing TSF operators as
-input arguments to its constructor and recording references to the two existing operators.
-When the apply method of the composed operator is called, it will in turn call the apply
-methods of the two operators that were passed into its constructor.  Similar aggregate
-operators exist for the sum of two existing operators and the inverse of an operator.
+is implemented using TSF vectors and operators, then any concrete package 
+that implements the TSF vector and operator interfaces can be used 
+with the Krylov solver.
 
-The following code fragments illustrate the construction and apply processes for the 
-ComposedOperator class.  In this example, {\tt left} and {\tt right} are existing TSF operators
-and the {\it this} operator is being constructed and used.
+\item Generic solver driver:  If an application accesses solver 
+services via the TSF solver interfaces, then any solver that 
+implements the TSF solver interface is accessible to that application.
 
-\begin{verbatim}
-TSFComposedOperator::TSFComposedOperator(const TSFLinearOperator& left,
-                                         const TSFLinearOperator& right)
-: TSFLinearOperatorBase(right.domain(), left.range()),
-left_(left), right_(right) {
-  if (left_.domain() != right_.range()) {
-   TSFError::raise("domain-range mismatch in TSFComposedOperator ctor");
-  }
-}
-
-void TSFComposedOperator::apply(const TSFVector& in, 
-                                      TSFVector& out) const {
-
-  /* apply operators in order from right to left */
-  TSFVector tmp = right_.range().createMember();
-  right_.apply(in, tmp);
-  left_.apply(tmp, out);
-}
-
-\end{verbatim}
-
-
-\begin{verbatim}
-TSFInverseOperator::TSFInverseOperator(const TSFLinearOperator& op,
-                                       const TSFLinearSolver& solver)
-: TSFLinearOperatorBase(op.range(), op.domain()), 
-op_(op), solver_(solver)
-{}
-
-void TSFInverseOperator::apply(const TSFVector& in, TSFVector& out) const {
-
-	solver.solve(*this, in, out);
-}
-
-\end{verbatim}
-
-There is a number of other aggregation operators.  More details of all the possible 
-aggregations can be found in the TSF User Guide~\cite{TSF-User-Guide}.
-
-Given these aggregation capabilities, one can implicitly form the Schur compliment $S$ via
-a sequence of TSF operator constructor calls, first constructing a TSF operator
-InvA11 containing $A_{11}^{-1}$ by passing
-in $A_{11}$ and some solver to use with $A_{11}$ into the TSFInverseOperator constructor, 
-then constructing InvA11timesA12 by passing in InvA11 and A12 into TSFComposedOperator, then 
-A21timesInvA11timesA12 similarly, and finally S by passing in A22 and -A21timesInvA11timesA12
-into TSFSumOperator.
+\item Aggregate objects to implicitly construct aggregate operators: 
+TSF provides mechanisms to implicitly construct a matrix of operators, 
+the sum or composition of two operators, the inverse of an operator, 
+etc.  Similar aggregation mechanisms are available for vectors, matrices
+and solvers.
 
 \end{enumerate}
 
 \subsection{AztecOO: Concrete Preconditioned Iterative Solver Package}
 
-AztecOO is an object-oriented follow-on to Aztec~\cite{Aztec2.1}.  As such, it has
-all of the same capabilities as Aztec, but provides a more elegant interface and numerous functionality
-extensions.  AztecOO specifically solves a linear system $AX=B$ where $A$ is a linear 
-operator, $X$ is a multivector containing one or more initial guesses on entry and the
-corresponding solutions on exit, and $B$ contains the corresponding right-hand-sides.
+AztecOO is an object-oriented follow-on to Aztec~\cite{Aztec2.1}.  
+As such, it has all of the same capabilities as Aztec, but provides 
+a more elegant interface and numerous functionality extensions.  
+AztecOO specifically solves a linear system $AX=B$ where $A$ is a 
+linear operator, $X$ is a multivector containing one or more initial 
+guesses on entry and the corresponding solutions on exit, and $B$ 
+contains the corresponding right-hand-sides.
 
-AztecOO accepts user matrices and vectors as Epetra objects.  The operator $A$ and any
-preconditioner, say $M \approx A^{-1}$, need not be concrete Epetra objects.
-Instead, AztecOO expects $A$ and $M$ to be Epetra\_Operator or Epetra\_RowMatrix objects. 
-Both Epetra\_Operator and Epetra\_RowMatrix are pure virtual classes.  Therefore, any other
-matrix library can be used to supply $A$ and $M$, as long as that library can implement
-the  Epetra\_Operator or Epetra\_RowMatrix interfaces, something that is fairly straight-forward
- for most linear solver libraries.
+AztecOO accepts user matrices and vectors as Epetra objects.  The 
+operator $A$ and any preconditioner, say $M \approx A^{-1}$, need 
+not be concrete Epetra objects.  Instead, AztecOO expects $A$ and 
+$M$ to be Epetra\_Operator or Epetra\_RowMatrix objects.  Both 
+Epetra\_Operator and Epetra\_RowMatrix are pure virtual classes.  
+Therefore, any other matrix library can be used to supply $A$ 
+and $M$, as long as that library can implement the  Epetra\_Operator 
+or Epetra\_RowMatrix interfaces, something that is fairly 
+straight-forward for most linear solver libraries.
 
-AztecOO provides scalings, parallel domain decomposition preconditioners, and a very robust
-set of Krylov methods.  It runs very efficiently on distributed memory parallel computers or
-on serial computers.  Also, AztecOO implements the Epetra\_Operator interface.  Therefore,
-an AztecOO solver object can be used as a preconditioner for another AztecOO object.
+AztecOO provides scalings, parallel domain decomposition 
+preconditioners, and a very robust set of Krylov methods.  It runs 
+very efficiently on distributed memory parallel computers or on 
+serial computers.  Also, AztecOO implements the Epetra\_Operator 
+interface.  Therefore, an AztecOO solver object can be used as a 
+preconditioner for another AztecOO object.
 
-\subsection{Ifpack: Incomplete Factorizations and Other Algebraic Preconditioners}
+\subsection{Ifpack: Incomplete Factorizations and Other Algebraic 
+Preconditioners}
 
 Ifpack provides local incomplete factorization preconditioners in a
-parallel domain decomposition framework.  It accepts user data as Epetra\_RowMatrix objects
-(including Epetra\_CrsMatrix, Epetra\_VbrMatrix and Epetra\_MsrMatrix objects, since these
+parallel domain decomposition framework.  It accepts user data as 
+Epetra\_RowMatrix objects (including Epetra\_CrsMatrix, 
+Epetra\_VbrMatrix and Epetra\_MsrMatrix objects, since these
 classes implement the Epetra\_RowMatrix interface)
-and can construct a large variety of ILU preconditioners.  Ifpack preconditioners implement
-the Epetra\_Operator interface.  Therefore, they can be used as preconditioners for AztecOO.
-The current released version of Ifpack provides only a relaxed ILUK preconditioner.
+and can construct a large variety of ILU preconditioners.  Ifpack 
+preconditioners implement the Epetra\_Operator interface.  Therefore, 
+they can be used as preconditioners for AztecOO.  The current 
+released version of Ifpack provides a relaxed ILUK preconditioner and
+incomplete Cholesky with threshold dropping.
 
 \subsection{Komplex: Solver Suite for Complex-valued Linear Systems}
 
-Komplex solves complex-valued linear systems using equivalent real-valued formulations of 
-twice the dimension.  Given the following complex-valued linear system:
+Komplex solves complex-valued linear systems using equivalent 
+real-valued formulations of twice the dimension.  Given the following 
+complex-valued linear system:
 \begin{equation}
 \label{Complex}
 C w = d,
@@ -724,15 +629,16 @@ in its real and imaginary terms,
 \begin{equation}\label{linearsystem}
 ( A + i B )(x+iy) = b+ic.
 \end{equation}
-Equating the real and imaginary parts of the expanded equation, respectively,
-gives rise to four
-possible 2-by-2 block formulations.  We list one of these in Equation~(\ref{Komplex-1}).
+Equating the real and imaginary parts of the expanded equation, 
+respectively, gives rise to four
+possible 2-by-2 block formulations.  We list one of these in 
+Equation~(\ref{Komplex-1}).
 \paragraph{K1 Formulation}
 \begin{equation}\label{Komplex-1}
    \left( \begin{array}{rr}
-                                    A & -B  \\
-                                    B &  A
-                             \end{array}
+                       A & -B  \\
+                       B &  A
+   \end{array}
    \right)
    \left( \begin{array}{r}
                                     x  \\
@@ -747,15 +653,18 @@ possible 2-by-2 block formulations.  We list one of these in Equation~(\ref{Komp
    \right).
 \end{equation}
 
-Although most preconditioning and iterative methods are generally well-defined for
-complex-valued systems, with real-valued systems being a special case, most widely-available
-solver packages focus exclusively on real-valued systems or treat complex-valued systems as
-an afterthought.  Therefore, by transforming the complex-valued system into a real-valued 
-system, we can immediately leverage all of the investment in real-valued solvers.  KomplexOO
-constructs an equivalent real-valued formulation for a given complex-valued linear system
-and then calls AztecOO to solve the problem, returning the solution back to the user in
-a form compatible with the original complex-valued problem.  Details of mathematical and
-practical issues of Komplex can be found in Day and Heroux~\cite{DayHero2001}.
+Although most preconditioning and iterative methods are generally 
+well-defined for complex-valued systems, with real-valued systems 
+being a special case, most widely-available solver packages focus 
+exclusively on real-valued systems or treat complex-valued systems 
+as an afterthought.  Therefore, by transforming the complex-valued 
+system into a real-valued system, we can immediately leverage all 
+of the investment in real-valued solvers.  KomplexOO constructs an 
+equivalent real-valued formulation for a given complex-valued linear 
+system and then calls AztecOO to solve the problem, returning the 
+solution back to the user in a form compatible with the original 
+complex-valued problem.  Details of mathematical and practical 
+issues of Komplex can be found in Day and Heroux~\cite{DayHero2001}.
 
 \subsection{NOX: Nonlinear Solver Package}
 
@@ -904,20 +813,13 @@ party solvers are easily added as necessary.
 to combine many solvers and bring them to bear on a single problem.
 \end{enumerate}
 
-    % ---------------------------------------------------------------------- %
-    % References
-    %
-    \clearpage
-    \bibliographystyle{plain}
-    \bibliography{TrilinosOverview}
-    \addcontentsline{toc}{section}{References}
+\clearpage
+\bibliographystyle{plain}
+\bibliography{TrilinosOverview}
+\addcontentsline{toc}{section}{References}
 
 
-    % ---------------------------------------------------------------------- %
-    % Appendices should be stand-alone for SAND reports. If there is only
-    % one appendix, put \setcounter{secnumdepth}{0} after \appendix
-    %
-    \appendix
+\appendix
 \section{A Brief Overview of Some Object-Oriented Concepts}
 \label{sect:OOTutorial}
 
@@ -1044,24 +946,19 @@ using a secondary template which has a specialization for each possible type
 that is to be supported. This secondary template is only used internally, and
 is not exposed to the end user.
 
-    % \printindex
 
-    \begin{SANDdistribution}
-	\SANDdistExternal{1}{An Address\\ 99 $99^{th}$ street NW\\City, State}
-	\SANDdistExternal{3}{Some Address\\ and street\\City, State}
-	\bigskip
-	\SANDdistExternal{12}{Another Address\\ On a street\\City, State\\U.S.A.}
+\begin{SANDdistribution}
+\SANDdistExternal{1}{An Address\\ 99 $99^{th}$ street NW\\City, State}
+\SANDdistExternal{3}{Some Address\\ and street\\City, State}
+\bigskip
+\SANDdistExternal{12}{Another Address\\ On a street\\City, State\\U.S.A.}
 
+\SANDdistInternal{1}{1110}{Rolf Riesen}{9223}
 
-	\SANDdistInternal{1}{1110}{Rolf Riesen}{9223}
-
-	% Housekeeping copies necessary for every unclassified report:
-	\SANDdistInternal{1}{9018}{Central Technical Files}{8940-2}
-	\SANDdistInternal{2}{0899}{Technical Library}{4916}
-	\SANDdistInternal{2}{0619}{Review \& Approval Desk}{4916}
-
-	% If report has a Patent Caution or Patent Interest, add this:
-	\SANDdistInternal{3}{0161}{Patent and Licensing Office}{4916}
-    \end{SANDdistribution}
+% Housekeeping copies necessary for every unclassified report:
+\SANDdistInternal{1}{9018}{Central Technical Files}{8940-2}
+\SANDdistInternal{2}{0899}{Technical Library}{4916}
+\SANDdistInternal{2}{0619}{Review \& Approval Desk}{4916}
+\end{SANDdistribution}
 
 \end{document}
