@@ -104,9 +104,9 @@
 
 % We're based on the standard article class and assume certain
 % options. Set those, and pass all others to the article class
-\DeclareOption*{\PassOptionsToClass{\CurrentOption}{report}}
+\DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}
 \ProcessOptions
-\LoadClass[letterpaper,twoside,final,notitlepage]{report}
+\LoadClass[letterpaper,twoside,final,notitlepage]{article}
 
 
 %
