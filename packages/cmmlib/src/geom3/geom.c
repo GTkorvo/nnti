@@ -1,8 +1,11 @@
 #include "cmm.h"
 #include "geom.h"
 
-
 /*
+
+I need to modify this for Doxygen.
+
+
 
 The following is an experiment at defining xml documentation for the
 code.
