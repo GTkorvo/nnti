@@ -59,43 +59,45 @@ public class CcjHosts {
         host=-1;
         numberOfCPUs = 0;
         while (line != null) {
-            String[] lineSplit = line.split(":");
-            int hostPort=Registry.REGISTRY_PORT;
-            InetAddress address;
-            
-            if (lineSplit != null) {
-                try {
-                    address = InetAddress.getByName(lineSplit[0]);
-                    String name = address.getHostAddress();
-            
-                    host_names.add(name);                
+            if (('/' != line.charAt(0)) && ('#' != line.charAt(0))) {
+                String[] lineSplit = line.split(":");
+                int hostPort=Registry.REGISTRY_PORT;
+                InetAddress address;
                 
-                if (lineSplit.length == 2) {
-                    hostPort += new Integer(lineSplit[1]).intValue();
-                }
-
-                host_ports.add(""+hostPort);
-                
-                if (activeInterface == null) {
+                if (lineSplit != null) {
                     try {
-                        activeInterface = NetworkInterface.getByInetAddress(address);
+                        address = InetAddress.getByName(lineSplit[0]);
+                        String name = address.getHostAddress();
+                
+                        host_names.add(name);                
+                    
+                    if (lineSplit.length == 2) {
+                        hostPort += new Integer(lineSplit[1]).intValue();
                     }
-                    //exception is useless information
-                    catch (Exception e) {}
-                    if (activeInterface != null) {
-                        hostName = name;
-                        host=i;
-                        port=hostPort;
+    
+                    host_ports.add(""+hostPort);
+                    
+                    if (activeInterface == null) {
+                        try {
+                            activeInterface = NetworkInterface.getByInetAddress(address);
+                        }
+                        //exception is useless information
+                        catch (Exception e) {}
+                        if (activeInterface != null) {
+                            hostName = name;
+                            host=i;
+                            port=hostPort;
+                        }
                     }
-                }
-                numberOfCPUs++;
-                i++;
-                }
-                catch (java.net.UnknownHostException e) {
-                    throw new CCJException("Could not find host name " + lineSplit[0] + " " + e);
+                    numberOfCPUs++;
+                    i++;
+                    }
+                    catch (java.net.UnknownHostException e) {
+                        throw new CCJException("Could not find host name " + lineSplit[0] + " " + e);
+                    }
                 }
             }
-
+            
             try {
                 line = in.readLine();
             }
@@ -104,6 +106,8 @@ public class CcjHosts {
                 
             }
         }
+        
+        
         try {
             in.close();
         }

@@ -94,53 +94,6 @@ public class CcjGatherDoubleArray implements Partitionable {
     }
     
     /**
-     * Copies <code>allElements[0]</code> and then compares the rest of the elements of<code>allElements</code>
-     * to the first element array to find the max values for each second degree element.
-     *
-     * @return array with all the second degree max values
-     */
-    public double[] getMaxs () {
-        //copy allElements[0]
-        double[] doubleMaxs = new double[allElements[0].length];
-        System.arraycopy(allElements[0], 0, doubleMaxs, 0, allElements[0].length);
-        
-        //find the maxs
-        //step through each element of allElemenents
-        for(int i=1; i < allElements.length; i++) {
-            //step through each second degree element of current allElements element
-            for(int j=0; j < allElements[i].length; j++) {
-                //whichever value is the max is stored to doubleMaxs
-                if (doubleMaxs[j] < allElements[i][j]) {
-                    doubleMaxs[j] = allElements[i][j];
-                }
-            }
-        }
-        
-        return doubleMaxs;
-    }
-
-    /**
-     * Copies <code>allElements[0]</code> and then compares the rest of the elements of<code>allElements</code>
-     * to the first element array to find the min values for each second degree element.
-     *
-     * @return array with all the second degree min values
-     */
-    //see double[] getMaxs() for code comments    
-    public double[] getMins () {
-        double[] doubleMins = new double[allElements[0].length];
-        System.arraycopy(allElements[0], 0, doubleMins, 0, allElements[0].length);
-        for(int i=1; i < allElements.length; i++) {
-            for(int j=0; j < allElements[i].length; j++) {
-                if (doubleMins[j] > allElements[i][j]) {
-                    doubleMins[j] = allElements[i][j];
-                }
-            }
-        }
-        
-        return doubleMins;
-    } 
-    
-    /**
      * Starts at <code>allElements[index]</code> and decraments down allElements adding all second degree values of
      * <code>allElements</code> to the second degree values of <code>allElements[index]</code>.
      

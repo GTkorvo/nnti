@@ -56,11 +56,20 @@ public class CcjCommMinMaxAllTest {
              realIntMin = new int[]{-2,1,2,3};
              realDoubleMin = new double[]{-2,1,2,3};               
          }
-         
+         //int[] myIntMax = new int[myIntArray.length];
+         //System.arraycopy(myIntArray, 0, myIntMax, 0, myIntArray.length);
          int[] myIntMax = comm.maxAll(myIntArray);
+         
+         //double[] myDoubleMax = new double[myDoubleArray.length];
+         //System.arraycopy(myDoubleArray, 0, myDoubleMax, 0, myDoubleArray.length);
          double[] myDoubleMax = comm.maxAll(myDoubleArray);
          
+         //int[] myIntMin = new int[myIntArray.length];
+         //System.arraycopy(myIntArray, 0, myIntMin, 0, myIntArray.length);
          int[] myIntMin = comm.minAll(myIntArray);
+         
+         //double[] myDoubleMin = new double[myDoubleArray.length];
+         //System.arraycopy(myDoubleArray, 0, myDoubleMin, 0, myDoubleArray.length);
          double[] myDoubleMin = comm.minAll(myDoubleArray);        
          
          if (!java.util.Arrays.equals(myIntMax, realIntMax)) {

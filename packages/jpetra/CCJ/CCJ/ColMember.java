@@ -428,7 +428,9 @@ System.err.println("bind throws " + e);
 
 
     private Serializable broadcast(ColGroup group, Serializable objectToDistribute, int root, int tag) throws CCJException, NoSuchMemberException {
-
+    
+    if (DEBUG) System.out.println("Doing broadcast");
+    
 	int rank_rel;
 	int mask, sum;
 	Serializable result = null;
@@ -520,6 +522,8 @@ System.err.println("bind throws " + e);
 				int tag)
 	    throws CCJException, NoSuchMemberException {
 
+    if (DEBUG) System.out.println("Doing reduce");
+	        
 	int mask, relrank, peer;
 	Serializable result = dataObject;
 	Serializable data;
@@ -614,17 +618,19 @@ System.err.println("bind throws " + e);
 
 	int size = group.size();
 
+    if (DEBUG) System.out.println("Doing allReduce");
+    
 	// If the number of processors, we prefer to do a butterfly allReduce.
 	// That is most efficient.
 	/*MODIFIED
 	The allReduce_Butterfly method seems to be flawed and needs to be further tested and fixed.
-	
+	*/
 	for (int i = 0; i < 31; i++) {
 	    if (size == (1 << i)) {
 	//    System.out.println("Doing butterfly reduce");
 		return allReduce_butterfly(group, dataObject, reductionObject);
 	    }
-	}*/
+	}
     
     //System.out.println("Doing bcast reduce");
 	return allReduce_reduce_bcast(group, dataObject, reductionObject);
@@ -637,8 +643,10 @@ System.err.println("bind throws " + e);
 				Reducible reductionObject)
 	    throws CCJException, NoSuchMemberException {
 	Serializable result;
+    if (DEBUG) System.out.println("Doing allReduce_reduce_bcast");
+	
 	result = reduce(group, dataObject, reductionObject, 0, ColGroup.ALLREDUCETAG1);
-
+    
 //        DebugInterface(result);
 	return broadcast(group, result, 0, ColGroup.ALLREDUCETAG2);
 
@@ -651,6 +659,8 @@ System.err.println("bind throws " + e);
 				Reducible reductionObject)
 	    throws CCJException, NoSuchMemberException {
 
+    if (DEBUG) System.out.println("Doing allReduce_butterfly");
+    
 	int local_tag = group.getNewGroupTag(ColGroup.ALLREDUCETAG1);
 
 	Serializable local_result, remote_result;
@@ -724,6 +734,7 @@ System.err.println("bind throws " + e);
 
 	// For some reason he starts with a FLATGATHERTAG but then switches to GATHERTAG when doing the sending and receiving ???
 
+    if (DEBUG) System.out.println("Doing flatGather");
 	// Just do a flat gather. So every member sends its data to root
 	int local_tag = group.getNewGroupTag(ColGroup.FLATGATHERTAG);
 
@@ -778,6 +789,7 @@ System.err.println("bind throws " + e);
 
 	//System.err.println("1");
 
+    if (DEBUG) System.out.println("Doing gather");
 	int mask, relrank, peer;
 	Serializable result = dataObject;
 
@@ -916,6 +928,7 @@ System.err.println("bind throws " + e);
 	    throws CCJException, NoSuchMemberException {
 	int size = group.size();
 
+    if (DEBUG) System.out.println("Doing allGather");
 	// If the number of processors, we prefer to do a butterfly allGather.
 	// That is most efficient.
 	for (int i = 0; i < 31; i++) {
@@ -933,6 +946,7 @@ System.err.println("bind throws " + e);
 		Serializable dataObject)
 	    throws CCJException, NoSuchMemberException {
 
+    if (DEBUG) System.out.println("Doing allGather_butterfly");
 	// A butterfly allGather. Works only if the number of members is
 	// a power of two.
 	//
@@ -1066,6 +1080,7 @@ System.err.println("bind throws " + e);
 		Serializable dataObject)
 	    throws CCJException, NoSuchMemberException {
 
+    if (DEBUG) System.out.println("Doing allGather_double_ring");
 	// Do a double ring allGather. Less efficient than a butterfly
 	// allGather, but works for any number of hosts.
 	// Algorithm:
@@ -1167,6 +1182,8 @@ System.err.println("bind throws " + e);
 	// Do a flat tree like magpie
 	// For some reason he starts with a FLATSCATTERTAG but then switches to SCATTERTAG when doing the sending and receiving ???
 
+    if (DEBUG) System.out.println("Doing flatScatter");
+    
 	int local_tag = group.getNewGroupTag(ColGroup.FLATSCATTERTAG);
 
 	if (cachedGroup != group) {
@@ -1208,6 +1225,8 @@ System.err.println("bind throws " + e);
 	    throws CCJException, NoSuchMemberException {
 
 	// Don't do a flat tree like magpie, but bcast everything and filter.
+
+    if (DEBUG) System.out.println("Doing scatter");
 
 	// NOTE: Used to be a Serializable [] -> manta dies !
 	Serializable[] objectArray = null;
@@ -1322,6 +1341,8 @@ System.err.println("bind throws " + e);
     public void barrier(ColGroup group)
 	    throws CCJException, NoSuchMemberException {
 
+    if (DEBUG) System.out.println("Doing barrier");
+    
 	MyEntry e_left = null;
 	MyEntry e_right = null;
 

@@ -197,71 +197,71 @@ public class CcjLink extends ColMember {
     }
 
     /**
-     * Wrapper to CCJ <code>allGather</code> then calls <code>CcjGatherDoubleArray.getMaxs()</code>.
-     */     
-    public double[] maxAll(double [] partialMaxs) {
-        //used internally by CCJ to handle the <code>gatherAll</code> of arrays    
-        CcjGatherDoubleArray globalMaxs = new CcjGatherDoubleArray(group.size());
-        
-        try {
-            allGather(group, globalMaxs, partialMaxs);
-        }
-        catch (CCJException e) {
-            System.err.println("Error in CCJ maxAll: " + e);
-        }
-        
-        return globalMaxs.getMaxs();
-    }
-
-    /**
-     * Wrapper to CCJ <code>allGather</code> then calls <code>CcjGatherIntArray.getMaxs()</code>.
-     */    
+     * Wrapper to CCJ <code>allReduce</code>.
+     */
     public int[] maxAll(int [] partialMaxs) {
-        //used internally by CCJ to handle the <code>gatherAll</code> of arrays
-        CcjGatherIntArray globalMaxs = new CcjGatherIntArray(group.size());
+        CcjReduceIntMaxArray maxInts = new CcjReduceIntMaxArray();
         
-        try {
-            allGather(group, globalMaxs, partialMaxs);
-        }
-        catch (CCJException e) {
-            System.err.println("Error in CCJ maxAll: " + e);
-        }
+        int[] toReturn=null;
+            try {
+                toReturn = (int[]) allReduce(group, partialMaxs, maxInts);
+            }
+            catch (CCJException e) {
+                System.err.println("Error in CCJ intMaxAll: " + e);
+            }
+            
+        return toReturn;
+    }
+    
+    /**
+     * Wrapper to CCJ <code>allReduce</code>.
+     */       
+    public double[] maxAll(double [] partialMaxs) {
+        CcjReduceDoubleMaxArray maxDoubles = new CcjReduceDoubleMaxArray();
         
-        return globalMaxs.getMaxs();
+        double[] toReturn=null;
+            try {
+                toReturn = (double[]) allReduce(group, partialMaxs, maxDoubles);
+            }
+            catch (CCJException e) {
+                System.err.println("Error in CCJ doubleMaxAll: " + e);
+            }
+            
+        return toReturn;
     }
 
     /**
-     * Wrapper to CCJ <code>allGather</code> then calls <code>CcjGatherDoubleArray.getMins()</code>.
-     */     
+     * Wrapper to CCJ <code>allReduce</code>.
+     */ 
     public double[] minAll(double [] partialMins) {
-        //used internally by CCJ to handle the <code>gatherAll</code> of arrays
-        CcjGatherDoubleArray globalMins = new CcjGatherDoubleArray(group.size());
+        CcjReduceDoubleMinArray minDoubles = new CcjReduceDoubleMinArray();
         
-        try {
-            allGather(group, globalMins, partialMins);
-        }
-        catch (CCJException e) {
-            System.err.println("Error in CCJ minAll: " + e);
-        }
-        
-        return globalMins.getMins();
+        double[] toReturn=null;
+            try {
+                toReturn = (double[]) allReduce(group, partialMins, minDoubles);
+            }
+            catch (CCJException e) {
+                System.err.println("Error in CCJ doubleMinAll: " + e);
+            }
+            
+        return toReturn;
     }
 
     /**
-     * Wrapper to CCJ <code>allGather</code> then calls <code>CcjGatherIntArray.getMins()</code>.
-     */         
+     * Wrapper to CCJ <code>allReduce</code>.
+     */     
     public int[] minAll(int [] partialMins) { 
-        //used internally by CCJ to handle the <code>gatherAll</code> of arrays
-        CcjGatherIntArray globalMins = new CcjGatherIntArray(group.size());
+        CcjReduceIntMinArray minInts = new CcjReduceIntMinArray();
         
-        try {
-            allGather(group, globalMins, partialMins);
-        }
-        catch (CCJException e) {
-            System.err.println("Error in CCJ minAll: " + e);
-        }
-        
-        return globalMins.getMins();
+        int[] toReturn=null;
+            try {
+                toReturn = (int[]) allReduce(group, partialMins, minInts);
+            }
+            catch (CCJException e) {
+                System.err.println("Error in CCJ intMinAll: " + e);
+            }
+            
+        return toReturn;
     }
 
     /**

@@ -27,10 +27,10 @@ class CcjReduceAllSumIntArray implements Reducible {
     
         //add the partial sums together
         for(int i=0; i < partialSumsA.length; i++) {
-            partialSumsA[i] += partialSumsB[i];
+            partialSumsB[i] += partialSumsA[i];
         }
         
         //returned the summed partial sums
-        return partialSumsA;
+        return partialSumsB;
     }
 }

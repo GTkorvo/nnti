@@ -92,48 +92,6 @@ public class CcjGatherIntArray implements Partitionable {
         
         return returnResults;
     }
-
-    /**
-     * Copies <code>allElements[0]</code> and then compares the rest of the elements of<code>allElements</code>
-     * to the first element array to find the max values for each second degree element.
-     *
-     * @return array with all the second degree max values
-     */
-    //see double[] CcjGatherDoubleArray.getMaxs() for code comments      
-    public int[] getMaxs () {
-        int[] intMaxs = new int[allElements[0].length];
-        System.arraycopy(allElements[0], 0, intMaxs, 0, allElements[0].length);
-        for(int i=1; i < allElements.length; i++) {
-            for(int j=0; j < allElements[i].length; j++) {
-                if (intMaxs[j] < allElements[i][j]) {
-                    intMaxs[j] = allElements[i][j];
-                }
-            }
-        }
-        
-        return intMaxs;
-    }
-
-    /**
-     * Copies <code>allElements[0]</code> and then compares the rest of the elements of<code>allElements</code>
-     * to the first element array to find the min values for each second degree element.
-     *
-     * @return array with all the second degree min values
-     */
-    //see double[] CcjGatherDoubleArray.getMaxs() for code comments        
-    public int[] getMins () {
-        int[] intMins = new int[allElements[0].length];
-        System.arraycopy(allElements[0], 0, intMins, 0, allElements[0].length);
-        for(int i=1; i < allElements.length; i++) {
-            for(int j=0; j < allElements[i].length; j++) {
-                if (intMins[j] > allElements[i][j]) {
-                    intMins[j] = allElements[i][j];
-                }
-            }
-        }
-        
-        return intMins;
-    }
     
     /**
      * Starts at <code>allElements[index]</code> and decraments down allElements adding all second degree values of
