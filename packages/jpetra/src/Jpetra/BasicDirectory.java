@@ -33,8 +33,9 @@ import java.util.Iterator;
 import java.io.Serializable;
 
 /**
+ * <code>BasicDirectory</code> is not used directly by the user.
  *
- * @author  Jason Cross
+ * @author Jason Cross
  */
 public class BasicDirectory extends JpetraObject implements Directory {
     private VectorSpace vectorSpace;
@@ -173,7 +174,48 @@ public class BasicDirectory extends JpetraObject implements Directory {
         // for arbitrary distribution
         int[][] tmp = this.directoryVectorSpace.getRemoteVnodeIdList(globalElements);
         Distributor distributor = vectorSpace.getComm().createDistributor();
-        distributor.createFromReceives(globalElements, tmp[0], vectorSpace.getComm());  // tmp[0] is the directorVnodes array
-
-    }  
+        int[] gidsToSend = distributor.createFromReceives(globalElements, tmp[0], vectorSpace.getComm());  // tmp[0] is the directoryVnodes array
+        Serializable[] packedGidsToSend = new Serializable[gidsToSend.length];
+        int directoryLid;
+        for(int i=0; i < gidsToSend.length; i++) {
+            this.println("STD", "I need to send gid owner vnode/lid: " + gidsToSend[i]);
+            directoryLid = directoryVectorSpace.getLocalIndex(gidsToSend[i]);
+            packedGidsToSend[i] = new int[]{this.directoryVnodeIds[directoryLid], gidsToSend[i], this.directoryLids[directoryLid]};
+        }
+        
+        Serializable[] receives = distributor.distribute(packedGidsToSend);
+        int[] tmp1;
+        Serializable[] tmp2;
+        for(int i=0; i < receives.length; i++) {
+            if (receives[i] != null) {
+                tmp2 = (Serializable[]) receives[i];
+                for(int j=0; j < tmp2.length; j++) {
+                    tmp1 = (int[]) tmp2[j];
+                    this.println("STD", "dirVnode: " + i + " ownwerVnode: " + tmp1[0] + " gid: " + tmp1[1] + " lid: " + tmp1[2]);
+                }
+            }
+        }
+        
+        // insert the receives into the output array in the same order as the gids in the import array
+        Serializable[] intArrays;
+        int[] intArray;
+        for(int i=0; i < receives.length; i++) {
+            if (receives[i] != null) {
+                intArrays = (Serializable[]) receives[i];
+                for(int j=0; j < intArrays.length; j++) {
+                    intArray = (int[]) intArrays[j];
+                    for(int k=0; k < globalElements.length; k++) {
+                        if (globalElements[k] == intArray[1]) {
+                            vnodeIdsLids[0][k] = intArray[0];
+                            vnodeIdsLids[1][k] = intArray[2];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        
+        return vnodeIdsLids;
+    }
 }

@@ -45,22 +45,42 @@ public class CcjDistributor extends JpetraObject implements Distributor {
     int[] exportVnodeIds;
     int[] senders;
     
+    int[] packedGidsToSend; //used for createFromReceives
+    
     public CcjDistributor() {
         // empty
     }
     
-    public void createFromReceives(int[] remoteGids, int[] remoteVnodeIds, Comm comm) {
+    public int[] createFromReceives(int[] remoteGids, int[] remoteVnodeIds, Comm comm) {
         this.comm = comm;
         
-        computeSends(remoteGids, remoteVnodeIds);
-        // now do createFromSends
+        createFromSends(computeSends(remoteGids, remoteVnodeIds), this.comm);
+        return this.packedGidsToSend;
     }
     
-    public void computeSends(int[] remoteGids, int[] remoteVnodeIds) {
+    public int[] computeSends(int[] remoteGids, int[] remoteVnodeIds) {
         Distributor distributor = comm.createDistributor();
         distributor.createFromSends(remoteVnodeIds, comm);
         int[][] gidsToSend = distributor.distribute(remoteGids);
         
+        int totalGidsToSend = 0;
+        for(int i=0; i < gidsToSend.length; i++) {
+            if (gidsToSend[i] == null) {
+                gidsToSend[i] = new int[0];
+            }
+            totalGidsToSend += gidsToSend[i].length;
+        }
+        int[] sendToVnodeIds = new int[totalGidsToSend];
+        this.packedGidsToSend = new int[totalGidsToSend];
+        int index = 0;
+        for(int i=0; i < gidsToSend.length; i++) {
+            for(int j=0; j < gidsToSend[i].length; j++) {
+                sendToVnodeIds[index] = i;
+                this.packedGidsToSend[index++] = gidsToSend[i][j];
+            }
+        }
+        
+        return sendToVnodeIds;
     }
     
     public void createFromSends(int[] exportVnodeIds, Comm comm) {
@@ -71,42 +91,45 @@ public class CcjDistributor extends JpetraObject implements Distributor {
         boolean vnodesInOrder = true;
         this.startIndices = new int[comm.getNumVnodes()];
         this.numSends = new int[comm.getNumVnodes()];
-        int iTemp;
-        for(iTemp=0; iTemp < this.exportVnodeIds.length-1; iTemp++) {
-            if (this.vnodesInOrder && (this.exportVnodeIds[iTemp] > this.exportVnodeIds[iTemp+1])) {
-                this.vnodesInOrder = false;
-            }
-            this.numSends[this.exportVnodeIds[iTemp]]++;  // count up how many elements to send to the vnode
-        }
-        this.numSends[this.exportVnodeIds[iTemp]]++;
         
-        if (this.vnodesInOrder) {
-            // easy setup since the exportVnodeIds are in linear order...
-            for(int i=0; i < this.numSends.length-1; i++) {
-                this.startIndices[i+1] = this.numSends[i] + this.startIndices[i];
+        if (exportVnodeIds.length != 0) {
+            int iTemp;
+            for(iTemp=0; iTemp < this.exportVnodeIds.length-1; iTemp++) {
+                if (this.vnodesInOrder && (this.exportVnodeIds[iTemp] > this.exportVnodeIds[iTemp+1])) {
+                    this.vnodesInOrder = false;
+                }
+                this.numSends[this.exportVnodeIds[iTemp]]++;  // count up how many elements to send to the vnode
             }
-        }
-        else {
-            // vnodes are out of order
-            this.nextIndex = new int[exportVnodeIds.length];
-            int[] previousIndex = new int[comm.getNumVnodes()];
-            int[] count = new int[comm.getNumVnodes()];  // counts how many gid will be sent to the respective vnode
-            for(int i=0; i < this.startIndices.length; i++) {
-                this.startIndices[i] = -1;
-                previousIndex[i] = -1;
-            }
+            this.numSends[this.exportVnodeIds[iTemp]]++;
             
-            int lastIndex;
-            for(int i=0; i < this.exportVnodeIds.length; i++) {
-                lastIndex = previousIndex[this.exportVnodeIds[i]];
-                if (lastIndex == -1) {
-                    this.startIndices[this.exportVnodeIds[i]] = i;
+            if (this.vnodesInOrder) {
+                // easy setup since the exportVnodeIds are in linear order...
+                for(int i=0; i < this.numSends.length-1; i++) {
+                    this.startIndices[i+1] = this.numSends[i] + this.startIndices[i];
                 }
-                else {
-                    this.nextIndex[lastIndex] = i;
+            }
+            else {
+                // vnodes are out of order
+                this.nextIndex = new int[exportVnodeIds.length];
+                int[] previousIndex = new int[comm.getNumVnodes()];
+                int[] count = new int[comm.getNumVnodes()];  // counts how many gid will be sent to the respective vnode
+                for(int i=0; i < this.startIndices.length; i++) {
+                    this.startIndices[i] = -1;
+                    previousIndex[i] = -1;
                 }
-                previousIndex[exportVnodeIds[i]] = i;
-                count[this.exportVnodeIds[i]]++;
+                
+                int lastIndex;
+                for(int i=0; i < this.exportVnodeIds.length; i++) {
+                    lastIndex = previousIndex[this.exportVnodeIds[i]];
+                    if (lastIndex == -1) {
+                        this.startIndices[this.exportVnodeIds[i]] = i;
+                    }
+                    else {
+                        this.nextIndex[lastIndex] = i;
+                    }
+                    previousIndex[exportVnodeIds[i]] = i;
+                    count[this.exportVnodeIds[i]]++;
+                }
             }
         }
         
@@ -176,7 +199,13 @@ public class CcjDistributor extends JpetraObject implements Distributor {
         int dataIndex;
         for(int i=0; i < numSends.length; i++) {
             if(numSends[i] > 0) {
-                this.println("STD", "Sending " + numSends[i] + " objects to vnode " + i);
+                //this.println("STD", "Sending " + numSends[i] + " objects to vnode " + i);
+                
+                /*this.println("STD", "startIndices.length: " + startIndices.length);
+                for(int i2=0; i2 < this.startIndices.length; i2++) {
+                    this.println("STD", "startIndices[" + i2 + "]=" + this.startIndices[i2]);
+                }*/
+                
                 // we're going to send data to vnode i
                 // so buffer up all send objects
                 buffer = new Serializable[numSends[i]];
@@ -205,5 +234,9 @@ public class CcjDistributor extends JpetraObject implements Distributor {
     
     public int[] getSenders() {
         return this.senders;
+    }
+    
+    public int[] getExportVnodeIds() {
+        return this.exportVnodeIds;
     }
 }

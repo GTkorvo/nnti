@@ -28,8 +28,10 @@
 
 package Jpetra;
 
+import java.io.Serializable;
+
 /**
- * <code>SerialComm</comm> is a simple class that implements the <code>Comm</code>
+ * <code>SerialComm</code> is a simple class that implements the <code>Comm</code>
  * interface for serial communication.  Most methods either simply return the
  * parameters passed to them or return a hard coded value.
  *
@@ -37,7 +39,9 @@ package Jpetra;
  */
 public class SerialComm extends JpetraObject implements Comm {
     
-    /** Creates a new instance of SerialComm */
+    /** 
+     * Creates a new instance of SerialComm.
+     */
     public SerialComm() {
         // empty
     }
@@ -278,42 +282,44 @@ public class SerialComm extends JpetraObject implements Comm {
     public void threadBarrier() {
         // empty
     }
-    
-    //public Distributor createDistributor() {
-    //}
-    
-    public Directory createDirectory(ElementSpace elementSpace) {
-        return new SerialDirectory(elementSpace);
-    }
-    
-    public Distributor createDistributor() {
+
+    public Directory createDirectory(VectorSpace vectorSpace) {
+        return new BasicDirectory(vectorSpace);
     }
     
     public int[][] gatherAll2dArray(int[] myElements) {
     }
     
     public void send(Serializable[] exportObject, int destinationVnode) {
+        // empty
     }
     
     public void send(int[] exportObject, int destinationVnode) {
+        // empty
     }
     
     public void setupReceives(int numReceives) {
     }
     
     public Serializable receive(int senderId) {
+        return null;
     }
     
     public int[] scatterIntArray(int[] in) {
+        return new int[]{in[0]};
     }
     
     public int[] scatter2dArray(int[][] in) {
+        return in[0];
     }
     
     public int[][] gather(int[] in) {
+        int[][] out = new int[1][];
+        out[0] = in;
+        return out;
     }
     
-    public void send(java.io.Serializable exportObject, int destinationVnode) {
+    public void send(Serializable exportObject, int destinationVnode) {
     }
     
 }

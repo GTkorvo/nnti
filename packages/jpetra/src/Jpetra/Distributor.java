@@ -42,7 +42,7 @@ public interface Distributor {
      * @return Number of global elements this vnode will receive.
      */
     //public int[] createFromRecieves(int[] remoteGlobalElementIds, int[] remoteGlobalVnodeIds, int[] exportElementIds, int[] exportVnodeIds);
-    public void createFromReceives(int[] remoteGids, int[] remoteVnodeIds, Comm comm);
+    public int[] createFromReceives(int[] remoteGids, int[] remoteVnodeIds, Comm comm);
     
     /**
      *
@@ -54,4 +54,5 @@ public interface Distributor {
     public int[][] distribute(int[] toSendData);
     
     public int[] getSenders();
+    public int[] getExportVnodeIds();
 }

@@ -28,6 +28,8 @@
 
 package Jpetra;
 
+import java.io.Serializable;
+
 /**
  *
  * @author  Jason Cross
@@ -225,7 +227,7 @@ public class MultiVector extends DistObject {
     public void printOut(String iostream) {
         for(int i=0; i < values.length; i++) {
             for (int j=0; j < values[i].length; j++) {
-                this.println(iostream, i + " " + j + " " + values[i][j]);
+                this.println(iostream, "col: " + i + " row: " + j + " value: " + values[i][j]);
             }
             System.out.println("");
         }
@@ -237,5 +239,73 @@ public class MultiVector extends DistObject {
     
     public int getNumRows() {
         return this.values[0].length;
+    }
+    
+    public void copyAndPermute(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids) {
+        double[][] srcValues = ((MultiVector) distObjectSource).getValues();
+        for(int i=0; i < numSameGids; i++) {
+            for(int cols=0; cols < srcValues.length; cols++) {
+                this.values[cols][i] = srcValues[cols][i];
+            }
+        }
+        
+        for(int i=0; i < permuteToLids.length; i++) {
+            for(int cols=0; cols < srcValues.length; cols++) {
+                this.values[cols][permuteToLids[i]] = srcValues[cols][permuteFromLids[i]];
+            }
+        }
+    }
+    
+    public Serializable[] packAndPrepare(DistObject distObjectSource, int[] exportGids, int[] exportLids) {
+        Serializable[] exportData = new Serializable[exportGids.length];  // the object to be exported by Distributor.distribute
+        Serializable[] entryData; // [0] = the Gid, [1] = the values (tmpEntry)
+        double[] tmpEntry;  // used to build an array of all the row entries being exported
+        double[][] exportValues = ((MultiVector) distObjectSource).getValues();
+        for(int i=0; i < exportGids.length; i++) {
+            entryData = new Serializable[2];
+            exportData[i] = entryData;
+            entryData[0] = new Integer(exportGids[i]);  // set the Gid
+            tmpEntry = new double[exportValues.length]; // allocate space for all the row entries
+            entryData[1] = tmpEntry;  // set the values array
+            for(int j=0; j < tmpEntry.length; j++) {
+                // copy all the row entries out of exportValues
+                tmpEntry[j] = exportValues[j][exportLids[i]];
+            }
+        }
+        
+        return exportData;
+    }
+    
+    public void unpackAndCombine(Serializable[] importData, int combineMode) {
+        Serializable[] entry;
+        Serializable[] entryData;
+        int[] intArray;
+        int gid;
+        int lid;
+        double[] importValues;
+        for(int i=0; i < importData.length; i++) {
+            // if a vnode didn't send us any data, then importData[vnodeId] == null
+            if (importData[i] != null) {
+                entry = (Serializable[]) importData[i];  // get the array of elements send to us by the vnode i
+                // unpack each element
+                for(int j=0; j < entry.length; j++) {
+                    entryData = (Serializable[]) entry[j];
+                    gid = ((Integer) entryData[0]).intValue();
+                    lid = vectorSpace.getLocalIndex(gid);
+                    importValues = (double[]) entryData[1];
+                    
+                    // combine the existing local values and imported values as defined by the combine mode passed in
+                    if (combineMode == DistObject.ADD) {
+                        for(int k=0; k < this.values.length; k++) {
+                            this.values[k][lid] += importValues[k];
+                        }
+                    }
+                    else {
+                        this.println("ERR", "The combine mode you specified is not support yet!");
+                        System.exit(0);
+                    }
+                }
+            }
+        }
     }
 }

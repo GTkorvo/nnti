@@ -31,6 +31,7 @@ package Jpetra;
 import java.util.Set;
 import java.util.Iterator;
 import java.util.Map;
+import java.io.Serializable;
 
 /**
  *
@@ -45,7 +46,7 @@ public class CisMatrix extends DistObject {
     private boolean filled;
     private double[] doubleValues;
     private int[] numEntries;  // number of entries per row/col
-    //private int[] startIndex;   // number of entries before the current row/col
+    private int[] startIndex;   // number of entries before the current row/col
     private JpetraTreeMap OuterTree;
     private int numTotalEntries;
     private int maxSecondaryId;
@@ -59,23 +60,24 @@ public class CisMatrix extends DistObject {
         this.OuterTree = new JpetraTreeMap();
     }
     
-    public void insertEntries(int globalRowColId, int[] indices, double[] entries) {
-        if (this.filled) {
+    public void insertEntries(int localRowColId, int[] indices, double[] entries, int combineMode) {
+        /*if (this.filled) {
             this.println("ERR", "insertEntiries cannot be called after fillComplete().");
-        }
+        }*/
+        this.filled = false;
         
-        // need to check if I own the globalRowColId
+        // !! need to check if I own the globalRowColId
         
         // need to see if the JpetraTreeMap exists for the specified row/col
         JpetraTreeMap rowColTreeMap;
-        if (!this.OuterTree.containsKey(new Integer(globalRowColId))) {
+        if (!this.OuterTree.containsKey(new Integer(localRowColId))) {
             rowColTreeMap = new JpetraTreeMap();
             //this.println("STD", "globalRowCol does not exist, creating...");
-            this.OuterTree.put(new Integer(globalRowColId), rowColTreeMap);
+            this.OuterTree.put(new Integer(localRowColId), rowColTreeMap);
         }
         else {
-            //this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
-            rowColTreeMap = (JpetraTreeMap) OuterTree.get(new Integer(globalRowColId));
+            //this.println("STD", "localRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
+            rowColTreeMap = (JpetraTreeMap) OuterTree.get(new Integer(localRowColId));
         }
         
         // now that we know the row/col exists, insert entries into the row/col
@@ -98,23 +100,24 @@ public class CisMatrix extends DistObject {
         }
     }
     
-    public void insertEntry(int globalRowColId, int index, double entry) {
-        if (this.filled) {
+    public void insertEntry(int localRowColId, int index, double entry, int combineMode) {
+        /*if (this.filled) {
             this.println("ERR", "insertEntiry cannot be called after fillComplete().");
-        }
+        }*/
+        this.filled = false;
         
-        // need to check if I own the globalRowColId
+        // !! need to check if I own the globalRowColId
         
         // need to see if the JpetraTreeMap exists for the specified row/col
         JpetraTreeMap rowColTreeMap;
-        if (!this.OuterTree.containsKey(new Integer(globalRowColId))) {
+        if (!this.OuterTree.containsKey(new Integer(localRowColId))) {
             rowColTreeMap = new JpetraTreeMap();
             //this.println("STD", "globalRowCol does not exist, creating...");
-            this.OuterTree.put(new Integer(globalRowColId), rowColTreeMap);
+            this.OuterTree.put(new Integer(localRowColId), rowColTreeMap);
         }
         else {
             //this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
-            rowColTreeMap = (JpetraTreeMap) OuterTree.get(new Integer(globalRowColId));
+            rowColTreeMap = (JpetraTreeMap) OuterTree.get(new Integer(localRowColId));
         }
         
         // now that we know the row/col exists, insert entries into the row/col
@@ -136,12 +139,13 @@ public class CisMatrix extends DistObject {
     }
     
     public void fillComplete() {
-        if (this.filled) {
+        /*if (this.filled) {
             this.print("ERR", "fillComplete() may only be called once.");
-        }
+        }*/
         this.filled = true;
         this.doubleValues = new double[this.numTotalEntries];
         this.numEntries = new int[primaryVectorSpace.getNumMyGlobalEntries()];
+        this.startIndex = new int[primaryVectorSpace.getNumMyGlobalEntries()];
         
         Set outerKeysValues = this.OuterTree.entrySet();
         Iterator outerIterator = outerKeysValues.iterator();
@@ -156,7 +160,7 @@ public class CisMatrix extends DistObject {
         int numEntriesColRow;
         int[] tempGraph = new int[this.numTotalEntries];
         int i=0;
-        //startIndex = 0;
+        int intStartIndex = 0;
         while(outerIterator.hasNext()) {
             //this.println("STD", "Doing an outer loop...");
             outerMapEntry = (Map.Entry) outerIterator.next();
@@ -174,11 +178,16 @@ public class CisMatrix extends DistObject {
             if (this.maxSecondaryId < tempGraph[nextEntryIndex-1]) {
                 this.maxSecondaryId = tempGraph[nextEntryIndex-1];
             }
-            //this.startIndex[i] = startIndex;
-            //startIndex += numEntriesColRow;
+            this.startIndex[i] = intStartIndex;
+            intStartIndex += numEntriesColRow;
             this.numEntries[i++] = numEntriesColRow;
         }
         this.graph = new Graph(primaryVectorSpace, tempGraph, this.numEntries);
+        
+        // if we wanted to do away with the TreeMaps at this point to save memory
+        // then OuterTree map would need to be set to null so the java garbage collector
+        // would know to pick it up
+        // OuterTree = null
     }
     
     public void scale(double scaler) {
@@ -188,7 +197,7 @@ public class CisMatrix extends DistObject {
     }
     
     public void printOut(String iostream) {
-        this.println("STD", "CistMatrix.Printout() is starting...");
+        this.println("STD", "CisMatrix.printout() is starting...");
         if (!filled) {
             this.print("ERR", "You must call fillComplete() before calling printOut(String iostream)");
         }
@@ -201,7 +210,7 @@ public class CisMatrix extends DistObject {
                 this.println(iostream, row + " " + graph.getIndex(i) + " " + doubleValues[i++]);
             }
         }
-        this.println("STD", "CistMatrix.Printout() has ended...");
+        this.println("STD", "CisMatrix.printout() has ended...");
     }
     
     public int getNumNonZeros() {
@@ -241,4 +250,134 @@ public class CisMatrix extends DistObject {
     public int[] getNumEntriesArray() {
         return this.numEntries;
     }
+    
+    public int[] getStartIndex() {
+        return this.startIndex;
+    }
+    
+    public int[] getNumEntries() {
+        return this.numEntries;
+    }
+    
+    public boolean isFilled() {
+        return this.filled;
+    }
+    
+    public VectorSpace getVectorSpace() {
+        return this.primaryVectorSpace;
+    }
+    
+    public Serializable[] packAndPrepare(DistObject distObjectSource, int[] exportGids, int[] exportLids) {
+        CisMatrix exportMatrix = (CisMatrix) distObjectSource;
+        
+        Serializable[] exportData = new Serializable[exportGids.length];  // the object to be exported by Distributor.distribute
+        
+        // this code depends on this CisMatrix being filled
+        if (!exportMatrix.isFilled()) {
+            exportMatrix.fillComplete();
+        }
+        
+        // get all necessary information to allow us to access the elements of exportMatrix
+        int[] exportNumEntries = exportMatrix.getNumEntries();
+        int[] exportStartIndex = exportMatrix.getStartIndex();
+        double[] exportDoubleValues = exportMatrix.getEntriesArray();
+        int[] graphArray = exportMatrix.getGraph().getNonZeroEntriesArray();
+        
+        int[] indices;
+        double[] values;
+        Serializable[] element;
+        int lid;
+        Serializable[] noEntries = new Serializable[]{new Integer(-1)};  // send this array if the entire elements (row/col) of exportMatrix is filled with 0's
+        for(int i=0; i < exportLids.length; i++) {
+            lid = exportLids[i];
+            if (exportNumEntries[lid] == 0) {
+                exportData[i] = noEntries;
+            }
+            else {
+                // copy array slices from the exportDoubleValues and graphArray into temporary arrays
+                // so that the element (col/row) can be sent to another vnode
+                indices = new int[exportNumEntries[lid]];
+                values = new double[exportNumEntries[lid]];
+                System.arraycopy(exportDoubleValues, exportStartIndex[lid], values, 0, values.length);
+                System.arraycopy(graphArray, exportStartIndex[lid], indices, 0, indices.length);
+                
+                // data is prepared, now pack it up
+                element = new Serializable[3];
+                element[0] = new Integer(exportGids[i]);
+                element[1] = indices;
+                element[2] = values;
+                exportData[i] = element;
+            }
+        }
+        
+        return exportData;
+    }
+    
+    public void unpackAndCombine(Serializable[] importData, int combineMode) {
+        int[] indices;
+        double[] values;
+        Serializable[] element;
+        Serializable[] elementArray;
+        int gid;
+        
+        if (combineMode == DistObject.ADD) {
+            for(int i=0; i < importData.length; i++) {
+                if (importData[i] != null) {
+                    elementArray = (Serializable[]) importData[i];
+                    for(int j=0; j < elementArray.length; j++) {
+                        element = (Serializable[]) elementArray[j];
+                        gid = ((Integer) element[0]).intValue();
+                        // gid == -1 means that the sending vnode didn't have a nonzero value for the entire
+                        // row/col of that gid so we can just ignore it
+                        if (gid != -1) {
+                            this.println("STD", "adding " + ((int[]) element[1]).length + " num of elements to gid " + gid);
+                            this.insertEntries(primaryVectorSpace.getLocalIndex(gid), (int[]) element[1], (double[]) element[2], combineMode);
+                        }
+                    } // end for j
+                } // end if (importData[i] != null)
+            }  // end for i
+        }
+        else {
+            this.println("ERR", "The specified combine mode is not supported by CisMatrix unpackAndCombine.");
+        }
+    }
+    
+    public void copyAndPermute(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids, int combineMode) {
+        CisMatrix sourceMatrix = (CisMatrix) distObjectSource;
+        // get all the necessary information from sourceMatrix in order to access its elements
+        double[] srcValues = sourceMatrix.getEntriesArray();
+        int[] srcStartIndices = sourceMatrix.getStartIndex();
+        int[] srcIndices = (sourceMatrix.getGraph()).getNonZeroEntriesArray();
+        int[] srcNumEntries = sourceMatrix.getNumEntries();
+        
+        double[] tmpEntries;
+        int[] tmpIndices;
+        for(int i=0; i < numSameGids; i++) {
+            // srcNumEntries[i] == 0 then all the values in that row/col are 0 so we don't need to do anything
+            if (srcNumEntries[i] != 0) {
+                // copy array slices from the srcValues and srcIndices into temporary arrays
+                // so that insertEntries can be used to insert the imported data into this CisMatrix
+                tmpEntries = new double[srcNumEntries[i]];
+                tmpIndices = new int[srcNumEntries[i]];
+                System.arraycopy(srcValues, srcStartIndices[i], tmpEntries, 0, tmpEntries.length);
+                System.arraycopy(srcIndices, srcStartIndices[i], tmpIndices, 0, tmpIndices.length);
+                this.insertEntries(i, tmpIndices, tmpEntries, combineMode);
+            }
+        }
+        
+        int srcLid;
+        for(int i=0; i < permuteToLids.length; i++) {
+            srcLid = permuteFromLids[i];
+            if (srcNumEntries[srcLid] != 0) {
+                // this does the same thing as the for loop above with numSameGids except
+                // here we also permute the values from the src Gid to the target Gid
+                tmpEntries = new double[srcNumEntries[srcLid]];
+                tmpIndices = new int[srcNumEntries[srcLid]];
+                System.arraycopy(srcValues, srcStartIndices[srcLid], tmpEntries, 0, tmpEntries.length);
+                System.arraycopy(srcIndices, srcStartIndices[srcLid], tmpIndices, 0, tmpIndices.length);
+                this.insertEntries(permuteToLids[i], tmpIndices, tmpEntries, combineMode);
+            }
+        }
+    }
+    
 }
