@@ -240,7 +240,11 @@ certain types of error-controlling optimization algorithms.
 
 {}\item Be compatible with automatic differentiation (AD).
 
-{}\item ???
+{}\item Allow recording of adaptive time steps so that same steps can be used
+in perturbed solutions.  This feature allows for better performance of line
+searches and other computations that have a smoothness requirement that may be
+violated if different adaptive time steps are taken resulting in a
+discontinuity.
 
 \end{enumerate}
 
@@ -268,7 +272,7 @@ independent from specific time integration methods.
 
 \end{enumerate}
 
-\section{Mathematical formulation of DAE/ODE for DAE/ODE solvers}
+\section{Mathematical Formulation of DAE/ODE for DAE/ODE Solvers}
 \label{rythmos:scn:mathformulation}
 
 Here we describe the basic mathematical form of a general nonlinear DAE (or
@@ -599,6 +603,7 @@ Section
 {}\textbf{Todd: Can you fill this in?}
 
 \subsubsection{Implicit Runge-Kutta methods}
+\label{rythmos:sec:implicit-rk}
 
 We now consider a class of powerful and popular one-step methods for solving
 implicit DAEs, implicit Runge-Kutta (RK) methods.  The most general form
@@ -894,13 +899,13 @@ In this section we describe the nuts and bolts associated with direct and
 adjoint sensitivity methods that are derived in
 Appendix~\ref{rythmos:app:sens-derivations}.
 
-The general DAE model for sensitivity computations that we consider here takes
-the form
+The general state DAE model for sensitivity computations that we
+consider here takes the form
 %
 \begin{eqnarray}
 c\left( \dot{y}(t), y(t), p, v(t), t \right) & = & 0,
-\; t \in \left[ t_0, t_f \right] \label{rythmos:eqn:sens:c} \\
-y(0) & = & y_0(p) \label{rythmos:eqn:sens:c:ic}
+\; t \in \left[ t_0, t_f \right], \label{rythmos:eqn:sens:c} \\
+y(0) & = & y_0(p), \label{rythmos:eqn:sens:c:ic}
 \end{eqnarray}
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
@@ -910,8 +915,8 @@ y(0) & = & y_0(p) \label{rythmos:eqn:sens:c:ic}
 \>	$v(t) \:\in\:\mathcal{V}$ are transient auxiliary variables defined on $t\in[t_0,t_f]$, \\
 \>	$c(\dot{y}(t), y(t), p, v(t), t) :
 		\mathcal{Y}^2 \times \mathcal{P} \times \mathcal{V} \times \RE
-		\rightarrow \mathcal{C}$ are the state DAEs, \\
-\>	$y_0(p) \:\in\:\mathcal{P} \rightarrow \mathcal{Y}$ define the initial conditions for $y(t_0)$ as a function of $p$, \\
+		\rightarrow \mathcal{C}$ are the state DAE functions, \\
+\>	$y_0(p) \:\in\:\mathcal{P} \rightarrow \mathcal{Y}$ define the initial condition for $y(t_0)$ as a function of $p$, \\
 \>	$\mathcal{Y} \:\subseteq\:\RE^{n_y}$ is the vector space of the state variables $y(t)$, \\
 \>	$\mathcal{P} \:\subseteq\:\RE^{n_p}$ is the vector space of the steady-state auxiliary variables $p$, \\
 \>	$\mathcal{V} \:\subseteq\:\RE^{n_v}$ is the vector space of the transient auxiliary variables $v(t)$, and \\
@@ -924,10 +929,6 @@ selected, determine a fully specified set of DAEs that can be solved forward
 in time for the state variables $y(t)$.  The form of the DAE in
 (\ref{rythmos:eqn:sens:c}), which has auxiliary variables, arises in a number
 of contexts other than the sensitivity computations being considered here.
-
-Note that the input $v(t_0:t_f)$ is really an infinite dimensional
-input in general but in practice will be a finite-dimensional
-discretizations.
 
 We now define a composite set of auxiliary response functions for which
 sensitivities will be computed
@@ -943,21 +944,21 @@ d(y(t_0:t_f),p,v(t_0:t_f))
 		\mathcal{Y} \times \mathcal{P} \times \mathcal{V} \times \RE
 		\rightarrow \mathcal{G}$ are distributed response functions defined on $t\in[t_0,t_f]$, \\
 \>	$h(y(t_f),p) : \: \mathcal{Y} \times \mathcal{P}
-		\rightarrow \mathcal{G}$ are terminal response functions defined only at $t=t_f$, and \\
-\>	$\mathcal{G} \:\subseteq\:\RE^{n_g}$ is the vector space of the auxiliary response functions.
+		\rightarrow \mathcal{G}$ are terminal response functions defined only at $t=t_f$, \\
+\>	$\mathcal{G} \:\subseteq\:\RE^{n_g}$ is the vector space of the auxiliary response functions, \\
+\>	$y(t_0:t_f)$ is shorthand for the infinite dimensional function $y(t)$ in $t\in[t_0,t]$, and \\
+\>	$v(t_0:t_f)$ is shorthand for the infinite dimensional function $v(t)$ in $t\in[t_0,t]$.
 \end{tabbing}
 
 Note that the domain space for the overall response
 $d(y(t_0:t_f),p,v(t_0:t_f)$ is infinite since $y(t_0:t_f)$ and
 $v(t_0:t_f)$ are infinite in the continuous formulation.
 
-The state DAEs in
+The state DAE in
 (\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) may be used
-to define the implicit state function $y(p,v(t_0:t),t)$, where
-$v(t_0:t)$ is short hand for the selection of $v(t)$ (or a discrete
-approximation in a practical implementation) in the range
-$t\in[t_0,t]$.  The full implicit state solution for $y(t)$ in
-$t\in[t_0,t_f]$ is signified as $y(p,v(t_0:t_f),t_0:t_f)$.
+to define the implicit state function $y(p,v(t_0:t),t)$.  The full
+implicit state solution for $y(t)$ in $t\in[t_0,t_f]$ is signified as
+$y(p,v(t_0:t_f),t_0:t_f)$.
 
 The implicit state solution $y(p,v(t_0:t),t)\in\mathcal{Y}$ substituted into
 (\ref{rythmos:eqn:sens:d}) gives the reduced auxiliary response functions
@@ -969,7 +970,7 @@ The implicit state solution $y(p,v(t_0:t),t)\in\mathcal{Y}$ substituted into
 \end{equation}
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
-\>	$\hat{g}(p,v(t)) = g(y(p,v(t_0:t),t),p,v(t),t) : \:
+\>	$\hat{g}(p,v(t),t) = g(y(p,v(t_0:t),t),p,v(t),t) : \:
 		\mathcal{P} \times \mathcal{V} \times \RE	\rightarrow \mathcal{G}$, and \\
 \>	$\hat{h}(p) = h(y(p,v(t_0:t),t),p) : \: \mathcal{P}	\rightarrow \mathcal{G}$.
 \end{tabbing}
@@ -995,11 +996,12 @@ involving the transient auxiliary variables $v(t)$ because of the large
 discretized dimension of $v(t_i:t_f)$.
 
 \subsection{Transient direct sensitivity computations}
+\label{rythmos:sec:direct-sens}
 
 The direct sensitivity method for computing the first derivative object
 $\partial {}\hat{d} / {}\partial p$, as derived in
 Appendix~\ref{rythmos:app:direct-sens-derivation}, involves first solving the
-$n_p$ direct sensitivity equations
+$n_p$ independent direct sensitivity equations
 %
 \begin{eqnarray}
 %
@@ -1040,35 +1042,46 @@ direct sensitivity equations
 the integral in (\ref{rythmos:eqn:sens:d_d_hat_d_p_2}) is computed while the
 DAEs are being integrated.
 
-There are a variety of approaches for integrating the the state and direct
+There are a variety of approaches for integrating the state and direct
 sensitivity equations (see [???]) but arguably the the more efficient approach
 is to solve for the (nonlinear) time step for the state equations
-(\ref{rythmos:eqn:sens:c}) first followed by computing the linear time step
-for the direct sensitivities (\ref{rythmos:eqn:sens:direct-c}) and the
-integral in (\ref{rythmos:eqn:sens:d_d_hat_d_p_2}).
+(\ref{rythmos:eqn:sens:c}) first, followed by computing the linear time step
+for the direct sensitivities (\ref{rythmos:eqn:sens:direct-c}), and then
+finally evaluating the integral in (\ref{rythmos:eqn:sens:d_d_hat_d_p_2}).
 
 A few important properties of the direct sensitivity equations are worth
 noting: they are linear, and the sensitivity DAE for each sensitivity
 parameter $p_i$ ($i=1\ldots{}n_p$) are independent.
 
 Note that the evaluation of the residual for the direct sensitivity equations
-in (\ref{rythmos:eqn:sens:direct-c}) requires the computation of ?????
+in (\ref{rythmos:eqn:sens:direct-c}) requires the computation of the composite
+operator multivector product
+%
+\[
+\frac{\partial c}{\partial \dot{y}} \dot{S} + \frac{\partial c}{\partial y} S
+\]
+%
+where $\dot{S}, S {}\in\mathcal{Y}|\mathcal{G}$ are any arbitary multivectors.
+This is functionality that is not directly used by a forward time integrator
+but the general form of $M$ in (\ref{rythmos:eqn:M}) supports this by
+computing two operators with $(\alpha=1,\beta=0)$ and $(\alpha=0,\beta=1)$.
 
-Some tips from DASPK 3.0 [???] for solving this problem are:
+Some tips from DASPK~3.0~\cite{new-daspk} for solving this problem are:
 \begin{itemize}
 %
-{}\item Solve state equation, applying error control first, to convergence for a
+{}\item First, Solve state equation, applying error control, to convergence for a
 time step for the state.
 %
 {}\item Next, solve sensitivity equations using a Newton method (even though the problem
-is linear) as this gives a more stable solution.
+is linear) as this gives a more stable solution.  The RHS for the Newton method yields
+a better solution that the RHS for the direct linear solve.
 %
 {}\item Consider truncation error for each set of parameters independently and take
-the max for the overall error control.
+the max for the overall error control and step-size selection.
 %
 \end{itemize}
 
-Some tips from CVODES [???] for solving this problem are:
+Some tips from CVODES~\cite{cvodes} for solving this problem are:
 \begin{itemize}
 %
 {}\item The linear sensitivity systems are also solved using a Newton method,
@@ -1126,27 +1139,29 @@ The matrix $M$ in (\ref{rythmos:eqn:M}) for
 & & \ddots \\
 & & & \alpha \frac{\partial c}{\partial \dot{y}} + \beta \frac{\partial c}{\partial y}
 \emat}
-in \mathcal{C}^{n_p}|\mathcal{Y}^{n_p}
+\in \mathcal{C}^{n_p}|\mathcal{Y}^{n_p}
 \label{rythmos:eqn:direct-sens-daes-jac}
 \end{equation}
 %
 which is a block diagonal matrix with the same block along the diagonal and
-all quantities are evaluated at the same trial point $(\dot{y},y,u,t)$ as
+all quantities are evaluated at the same trial point $(\dot{y},y,p,t)$ as
 defined by the time integration algorithm.  Note that in the software
 implementation using Thyra, it is easy to cast back and forth between a
 multi-vector and vector view of the same data and it is therefore easy to take
 advantage of multi-vector computations even through the time integrator has no
 idea that multi-vectors are being used under the covers.
 
-Note that with the addition of quadrature variables $w(t)\in\mathcal{G}$ and
-the associated quadrature ODEs $\dot{w}(t) = g(y(t),p,v(t),t)$, the
-sensitivity problem can be transformed to remove an explicit integration of
-the the distributed response function $g(y(t),p,v(t),t)$ from the problem
-seen.  This approach is used in CVODES and DASPK 3.0 to some extent and this
-has advantages and disadvantages.  This creates essentially another combined
-set of staggered DAEs that are solved by a single time stepper algorithm.
-This may imply that the error in the quadrature equations are considered when
-taking a time step for the state equations.  This may or may not be desirable.
+With the addition of quadrature variables $w(t)\in\mathcal{G}$ and the
+associated quadrature ODEs $\dot{w}(t) = g(y(t),p,v(t),t)$, the sensitivity
+problem can be transformed to remove an explicit integration of the the
+distributed response function $g(y(t),p,v(t),t)$ from the problem as seen by
+the DAE integrator.  This approach is used in CVODES and DASPK 3.0 to some
+extent and this has advantages and disadvantages.  This creates essentially
+another combined set of staggered DAEs that are solved by a single time
+stepper algorithm.  This may imply that the error in the quadrature equations
+are considered when taking a time step for the state equations.  This may or
+may not be desirable.  The quadrature equations can also be treated as an
+extra set of staggered DAEs which again has advantages and disadvantages.
 
 Note that the structure and properties of the direct sensitivity equations in
 (\ref{rythmos:eqn:sens:direct-c}) can exploited in a few different ways
@@ -1156,7 +1171,7 @@ as described in the following subsections.
 
 Different blocks of sensitivities (i.e.\ for $i = i_k {}\ldots i_{k+1}$) can
 be solved at one time using block direct or iterative linear solvers.  The use
-of such block solvers in CVODES, IDAS or DASPK 3.0 is not possible given the
+of block solvers in CVODES, IDAS or DASPK 3.0 is not possible given the
 structure of these codes.  The use of block iterative linear solver (such as
 block GMRES in Belos [???])  may speed up the calculation by an order of
 magnitude or more compared to solving the linear systems one RHS at a time.
@@ -1164,25 +1179,25 @@ magnitude or more compared to solving the linear systems one RHS at a time.
 Because of the use of block linear solvers, our direct sensitivity DAE solvers
 may achieve as much as an order of magnitude of speedup or more over a solver
 such as CVODES that only allows for solving sensitivity systems one RHS at a
-time (see the function {}\texttt{cv\_lsolveS(...)} in [???CVODES User's
-Guide???]).
+time (see the function {}\texttt{cv\_lsolveS(...)} in
+{}\cite{cvodes-users-guide}).
 
 \subsubsection{Exploitation of parallelism for blocks for sensitivities}
 
 Since each direct sensitivity equation is independent of the others, they can
-be solved in parallel blocks and parallel clusters of processors.  For
+be solved on parallel blocks and parallel clusters of processors.  For
 example, consider a DAE that comes from a discretized PDE who's state is
-distributed over 10 and has $n_p=100$ parameters to compute sensitivities for.
-The solution of the direct sensitivity equations can be solved on a single
-chuck of 10 processors where all 100 DAEs are solved simultaneously using a
-block solver.  However, the direct sensitivity DAEs can also be solved on 10
-chucks of 10 processors each (i.e.\ 100 overall processors) where blocks of 10
-direct sensitivity DAEs are solved on each chunk of processors.  However, when
+distributed over 10 processors and has $n_p=100$ parameters.  The solution of
+the direct sensitivity equations can be solved on a single chuck of 10
+processors where all 100 DAEs are solved simultaneously using a block solver.
+However, the direct sensitivity DAEs can also be solved on 10 chucks of 10
+processors each (i.e.\ 100 overall processors) where blocks of 10 direct
+sensitivity DAEs are solved on each chunk of 10 processors.  However, when
 using this approach, note that in general the state DAE has to be integrated
 on each of the chunks of processors along with the direct sensitivity DAEs and
-this will severely impact parallel speedup.  However, if the state DAE is
-linear then the state is not needed to define the direct sensitivity DAEs and
-therefore no state computation is needed in order to solve the direct
+this will severely impact parallel speedup efficiency.  However, if the state
+DAE is linear then the state is not needed to define the direct sensitivity
+DAEs and therefore no state computation is needed in order to solve the direct
 sensitivity DAEs.  In this case, better parallel speedup can be achieve to
 larger numbers of chunks of processors.  However, parallel speedup will be
 limited when the numbers of sensitivity DAEs becomes too small an each chunk
@@ -1194,8 +1209,8 @@ overhead).
 
 The most general statement of the adjoint equations associated with the state
 equations in (\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) and the
-response functions in (\ref{rythmos:eqn:sens:d}), as derived in Appendix~???,
-is
+response functions in (\ref{rythmos:eqn:sens:d}), as derived in
+Appendix~\ref{rythmos:app:adj-equ-derivation}, is
 %
 \begin{eqnarray}
 - \frac{d}{dt}\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)
@@ -1208,20 +1223,22 @@ is
 \end{eqnarray}
 %
 where $\Lambda\in\mathcal{C}|\mathcal{G}$ is the multi-vector of Lagrange
-multipliers at $t\in[t_0,t_f]$.  As noted in Appendix~??? and [???], the above
-form of the adjoint may be unstable for some DAEs.  Here we consider index-0
-and index-1 DAEs where $\partial c / {}\partial {}\dot{y}$ is constant and
-non-constant.
-
+multipliers at $t\in[t_0,t_f]$.  Here we consider index-0 and index-1 DAEs.
 Note that for index-0 DAEs (which includes implicit and explicit ODEs) that
 the mass matrix $\partial c / {}\partial {}\dot{y}$ is non-singular and
 therefore the final condition (\ref{rythmos:app:eqn:sens:adj:fc}) becomes
 trivially easy to solve as it just requires an inversion of $\partial c /
-{}\partial {}\dot{y}$ (assuming that the mass matrix is easy to invert).
+{}\partial {}\dot{y}$ (assuming that the mass matrix is easy to invert).  For
+index-1 DAEs, the computation of the final condition
+(\ref{rythmos:app:eqn:sens:adj:fc}) is more involved.
+
+The approaches used to solve the adjoint equations differ depending on whether
+$\partial c / {}\partial {}\dot{y}$ is constant or non-constant and both cases
+are discussed in the next two subsections.
 
 \subsubsection{Non-augmented adjoint equations for constant mass matrices}
 
-When $\partial c / {}\partial {}\dot{y}$ is constant, then
+When the mass matrix $\partial c / {}\partial {}\dot{y}$ is constant, then
 (\ref{rythmos:app:eqn:sens:adj}) reduces to
 %
 \begin{eqnarray}
@@ -1257,19 +1274,19 @@ f(\dot{x},x,t) =
 - \frac{\partial c}{\partial \dot{y}}^H \dot{\Lambda}_{(:,1)}
 +  \frac{\partial c}{\partial y}^H \Lambda_{(:,1)} + \frac{\partial g_{(1)}}{\partial y}^H
 %
-\vdots \\
+\\ \vdots \\
 %
 - \frac{\partial c}{\partial \dot{y}}^H \dot{\Lambda}_{(:,n_g)}
 +  \frac{\partial c}{\partial y}^H \Lambda_{(:,n_g)} + \frac{\partial g_{(n_g)}}{\partial y}^H
 %
 \emat}
-\in \mathcal{Y}^{n_p} \rightarrow \mathcal{C}^{n_p}.
+\in \mathcal{C}^{n_p} \rightarrow \mathcal{Y}^{n_p}.
 \label{rythmos:eqn:adj-sens-daes}
 \end{equation}
 %
-Note also that a transformation in the sensitivity equations of $\tau = t_f -
-t$ is needed to allow the integration backward in time using a forward time
-integrator.
+Note also that a transformation in time for the sensitivity equations of $\tau
+= t_f - t$ is needed to allow the integration backward in time using a forward
+time integrator.
 
 The matrix $M$ in (\ref{rythmos:eqn:M}) for
 (\ref{rythmos:eqn:adj-sens-daes}) is given by
@@ -1282,20 +1299,21 @@ The matrix $M$ in (\ref{rythmos:eqn:M}) for
 & \ddots \\
 & & \alpha \frac{\partial c}{\partial \dot{y}}^H + \beta \frac{\partial c}{\partial y}^H
 \emat}
-\in \mathcal{C}^{n_p}|\mathcal{Y}^{n_p}
+\in \mathcal{Y}^{n_p}|\mathcal{C}^{n_p}
 \label{rythmos:eqn:adj-sens-daes-jac}
 \end{equation}
 %
 which is a block diagonal matrix with the same block along the diagonal and
-all quantities are evaluated at the same trial point $(\dot{y},y,u,t)$ as
+all quantities are evaluated at the same trial point $(\dot{y},y,p,v,t)$ as
 defined by the time integration algorithm.  An important property of this
 block matrix is that each block along the diagonal is the adjoint of the
 matrix ${}\alpha (\partial c / {}\partial {}\dot{y}) + {}\beta (\partial c /
-{}\partial y)$ which is needed by the forward implicit solvers and the direct
+{}\partial y)$ which is needed by the implicit forward and direct direct
 sensitivity solvers.  In general, the adjoint time stepper can be implemented
-just from the same sensitivity objects as used for the forward and direct
+using the same sensitivity objects as required by forward and direct
 sensitivity solves with the added requirement that adjoint operations with
-these object be supported.
+these object also need to be supported (see
+Section~\ref{rythmos:sec:general-dae-requirements}).
 
 Also note that the block diagonal form of
 (\ref{rythmos:eqn:adj-sens-daes-jac}) immediately lends itself for use with a
@@ -1305,8 +1323,8 @@ such as is the case in CVODES and IDAS (see ??? in [???] for example).
 
 \subsubsection{Augmented adjoint equations for non-constant mass matrices}
 
-When $\partial c / {}\partial {}\dot{y}$ is a function of $t$ and/or $y$ then
-the adjoint equations in
+When the mass matrix $\partial c / {}\partial {}\dot{y}$ is a function of $t$
+and/or $y$ then the adjoint equations in
 (\ref{rythmos:app:eqn:sens:adj})--(\ref{rythmos:app:eqn:sens:adj:fc}) are
 transformed into the {}\textit{augmented adjoint equations} which take the
 form
@@ -1362,13 +1380,13 @@ f(\dot{x},x,t) =
 \emat} \\
 %
 \emat}
-\in \rightarrow \mathcal{C}^{2 n_p}|\mathcal{Y}^{2 n_p}.
+\in \mathcal{C}^{2 n_p} \rightarrow \mathcal{Y}^{2 n_p}.
 \label{rythmos:eqn:aug-adj-sens-daes}
 \end{equation}
 %
-Note also that a transformation in the sensitivity equations of $\tau = t_f -
-t$ is needed to allow the integration backward in time using a forward time
-integrator.
+Note also that a transformation in time for the sensitivity equations of $\tau
+= t_f - t$ is needed to allow the integration backward in time using a forward
+time integrator.
 
 The matrix $M$ in (\ref{rythmos:eqn:M}) for
 (\ref{rythmos:eqn:aug-adj-sens-daes}) is given by
@@ -1396,22 +1414,22 @@ The matrix $M$ in (\ref{rythmos:eqn:M}) for
 \end{equation}
 %
 which is a block diagonal matrix with the same block along the diagonal and
-all quantities are evaluated at the same trial point $(\dot{y},y,u,t)$ as
-defined by the time integration algorithm.  At first glance, the blocks
-along the diagonal
+all quantities are evaluated at the same trial point $(\dot{y},y,p,v,t)$ as
+defined by the time integration algorithm.  At first glance, the blocks along
+the diagonal
 %
 \begin{equation}
 {\bmat{cc}
 \alpha I & \beta \frac{\partial c}{\partial y}^H \\
 \beta I &  \beta \frac{\partial c}{\partial \dot{y}}^H
-\emat} \in \mathcal{Y}^{n_p}|\mathcal{C}^{n_p}
+\emat} \in \mathcal{Y}^{2}|\mathcal{C}^{2}
 \label{rythmos:eqn:aug-adj-sens-jac}
 \end{equation}
 %
 do not seem to correspond to the adjoint of the general form shown for the
 matrix $M$ in (\ref{rythmos:eqn:M}) that we are trying to exploit.  However,
 to show how to utilize the general form of $M$ in (\ref{rythmos:eqn:M}),
-consider the solution of any a system of the form
+consider the solution of any arbitrary system of the form
 %
 \begin{equation}
 {\bmat{cc}
@@ -1457,7 +1475,7 @@ yields the transformed system
 \end{equation}
 %
 where $\bar{\alpha}=\beta$, $\bar{\beta}=\beta^2/\alpha$, and
-$\bar{\gamma}=\beta/2$.  This system can then be solved as
+$\bar{\gamma}=\beta/\alpha$.  This system can then be solved as
 %
 \[
 v_2 = \left( \bar{\alpha} \frac{\partial c}{\partial \dot{y}}^H + \bar{\beta} \frac{\partial c}{\partial y}^H \right)^{-1}
@@ -1470,18 +1488,19 @@ followed by
 v_1 = \frac{1}{\beta} \left( b_2 - \beta \frac{\partial c}{\partial \dot{y}}^H v_2 \right).
 \]
 %
-Therefore, the Schur complement
+The matrix
 %
 \[
 \bar{\alpha} \frac{\partial c}{\partial \dot{y}}^H + \bar{\beta} \frac{\partial c}{\partial y}^H
 \]
 %
-that is solved for is of the general form needed for the forward and direct
-sensitivity and no new functionality over what is needed for the non-augmented
-adjoint DAE form is required for the adjoint system.  Solving the augmented
-DAE system only requires a few extra operations but requires twice the
-time-step storage since both $\bar{\Lambda}$ and $\Lambda$ need to be
-maintained.
+is known as the Schur complement and in this case is of the same general form
+needed for implicit forward and direct sensitivity solvers and no new
+functionality over what is needed for the solution of the non-augmented
+adjoint DAE form is required for the solution of the augmented adjoint system.
+Solving the augmented adjoint DAE system only requires a few extra operations
+but requires twice the time-step storage since both $\bar{\Lambda}$ and
+$\Lambda$ need to be maintained.
 
 Again, these computations can be rearranged so that multi-vector operations
 and block solvers can be utilized resulting in significant speedups over a
@@ -1512,20 +1531,21 @@ t\in[t_0,t_f]
 \label{rythmos:eqn:sens:d_d_hat_d_v_t}
 \end{equation}
 %
-can both be computed.  Note that these computations depend on the state $y(t)$
-as well as on the adjoint $\Lambda(t)$ in general and therefore the state and
-the (local) adjoint history are both needed.  If the integral equation is
-computed using quadrature variables, the getting access to $y(t)$ and
-$\Lambda(t)$ is automatic but if these equations are integrated using a
-different time stepping algorithm (working backward in time), then more
-general interpolation access to $y(t)$ and $\Lambda(t)$ will be required.
+can both be computed (backwards in time).  Note that these computations depend
+on the state $y(t)$ as well as on the adjoint $\Lambda(t)$ in general and
+therefore the state and the (local) adjoint history are both needed.  If the
+integral equation is computed using quadrature variables, then getting access
+to $y(t)$ and $\Lambda(t)$ is automatic but if these equations are integrated
+using a different time stepping algorithm (working backward in time), then
+more general interpolation access to $y(t)$ and $\Lambda(t)$ will be required.
 
-\section{Stability analysis and eigen problems}
+\section{Stability Analysis and Eigen Problems}
 
-{}\textbf{ToDo: Andy, can you fill this section in or tell me what the
-requirements are?}
+{}\textbf{ToDo: Ask Andy what these methods are ask him to help fill in
+requirements.}
 
-\section{General DAE formulation and requirements}
+\section{General DAE Formulation and Requirements}
+\label{rythmos:sec:general-dae-requirements}
 
 In this section we state the requirements for a general DAE to support various
 time integration methods, direct and adjoint sensitivity computations, and
@@ -1678,7 +1698,7 @@ $u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), and $t\in\RE$ evaluate
 {}\beta ({}\partial c / {}\partial y)$: Given selections for
 $\dot{y}\in\mathcal{Y}$, $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for
 $l=1\ldots{}N_u$), $t\in\RE$, $\alpha\in\RE$, and $\beta\in\RE$ evaluate an
-abstract nonsingular object
+abstract (nonsingular) object
 \[
 (\dot{y},y,\{u_l\},t) {}\rightarrow M
 = {}\alpha \frac{\partial c}{\partial {}\dot{y}} + \beta \frac{\partial c}{\partial y}
@@ -1692,17 +1712,17 @@ $(\alpha,\beta)=(1,0)$ is not guaranteed to be nonsingular.  Only operators
 $M$ for reasonable finite nonzero values of $\alpha$ and $\beta$ are
 guaranteed to be nonsingular.
 %
-{}\item Allow reuse of factorizations, preconditioners etc.\ form some old
-nonsingular operator $M_{\mbox{old}}$ in the reformation of $M = {}\alpha
-({}\partial c / {}\partial {}\dot{y}) + {}\beta ({}\partial c / {}\partial
-y)$: Given a previously computed nonsingular operator $M_{\mbox{old}}$, create
-a new operator $M$ at a new point $(\dot{y},y,t)$ what reuses any
-factorizations or preconditioners from $M_{\mbox{old}}$ but represents the
-correct analytic operator.  This capability is needed to allow a time stepper
-algorithm to have some control over when preconditioners or factorizations are
-updated.  However, the newly computed operator $M$ must still provide a
-sufficient analytic approximation to the true matrix which is needed for
-sensitivity computations.
+{}\item Allow reuse of factorizations, preconditioners, and other such objects
+form some previously created operator $M_{\mbox{old}}$ in the reformation of
+$M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) + {}\beta ({}\partial c /
+{}\partial y)$: Given a previously computed nonsingular operator
+$M_{\mbox{old}}$, create a new operator $M$ at a new point
+$(\dot{y},y,\{u_l\},t)$ that reuses any factorizations or preconditioners from
+$M_{\mbox{old}}$ but represents the correct analytic operator.  This
+capability is needed to allow a time stepper algorithm to have some control
+over when preconditioners or factorizations are updated.  However, the newly
+computed operator $M$ must still provide a sufficient analytic approximation
+to the true matrix which is needed for sensitivity computations.
 %
 {}\item Application of $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) +
 {}\beta ({}\partial c / {}\partial y)$: Given a pre-formed object for $M =
@@ -1714,7 +1734,8 @@ Y = M X
 where $X\in\mathcal{Y}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
 and $Y\in\mathcal{C}|\RE^m$ is the LHS multi-vector.  The purpose of stating
 the multi-vector form is to encourage the development of block methods that
-are useful for other types of more advanced algorithms.
+are useful for other types of more advanced algorithms.  However, a single
+vector version is sufficient to satisfy this requirement.
 %
 {}\item Solve with $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) +
 {}\beta ({}\partial c / {}\partial y)$: Given a pre-formed object for $M =
@@ -1745,7 +1766,7 @@ objects: Some types of numerical algorithms can be implemented much more
 efficiently if more than one instance of $M = {}\alpha ({}\partial c /
 {}\partial {}\dot{y}) + {}\beta ({}\partial c / {}\partial y)$ can be computed
 and maintained simultaneously.  This may be needed, for instance, in an
-implicit RK method as described in Section ???.
+implicit RK method as described in Section~\ref{rythmos:sec:implicit-rk}.
 %
 \end{itemize}
 
@@ -1755,21 +1776,21 @@ implicit RK method as described in Section ???.
 
 In addition for the requirements for forward solves described in the previous
 section, here we describe an additional set of requirements for
-(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) needed to
-implement the implicit direct sensitivity methods as described in Section
-\ref{rythmos:scn:transientsensitivity:direct}.
+(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) needed to implement
+the implicit direct sensitivity methods as described in
+Section~\ref{rythmos:sec:direct-sens}.
 
 \begin{itemize}
 
 {}\item Initial condition direct sensitivity: Given $u_l\in\mathcal{U}_l$ (for
 $l=1\ldots{}N_u$) and some $U_l\in\mathcal{U}_l|\RE^m$ compute the action of
 \[
-(\{u_l\},U_l) {}\rightarrow \frac{\partial y_0}{\partial u_l} U_l \in \mathcal{Y}|\RE^m
+(\{u_l\},U_l) {}\rightarrow \frac{\partial y_0}{\partial u_l} U_l \in \mathcal{Y}|\RE^m,
 \; \mbox{for} \; l = 1 {}\ldots N_u,
 \]
 or alternatively evaluate the sensitivity themselves as a multi-vector
 \[
-\{u_l\} {}\rightarrow \frac{\partial y_0}{\partial u_l} \in \mathcal{Y}|\mathcal{U}_l
+\{u_l\} {}\rightarrow \frac{\partial y_0}{\partial u_l} \in \mathcal{Y}|\mathcal{U}_l,
 \; \mbox{for} \; l = 1 {}\ldots N_u.
 \]
 
@@ -1807,7 +1828,7 @@ always be approximated using directional finite differences of $\{u_l\}
 {}\rightarrow y_0$, $(\dot{y},y,\{u_l\},t) {}\rightarrow c$ and
 $(\{\hat{u}_l\},t) {}\rightarrow g$, respectively.  Therefore, numerical
 methods that only require forward sensitivities as described above can always
-use directional finite differences and therefore require really extra
+use directional finite differences and therefore require really no extra
 functionality beyond what is needed for the forward solve.  Some numerical
 methods, such as sensitivity computations, do require some degree of exactness
 from derivative computations used for $M = {}\alpha ({}\partial c / {}\partial
@@ -1844,15 +1865,17 @@ operator as
 Y = M^H X
 \]
 where $X\in\mathcal{C}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
-and $Y\in\mathcal{Y}|\RE^m$ is the LHS multi-vector.  The purpose of
-stating the multi-vector form is to encourage the development of block methods
-that are useful for other types of more advanced algorithms.
+and $Y\in\mathcal{Y}|\RE^m$ is the LHS multi-vector.  The purpose of stating
+the multi-vector form is to encourage the development of block methods that
+are useful for other types of more advanced algorithms.  However, the ability
+to apply the operator to single multi-vectors automatically satisfies this
+requirement.
 %
 {}\item Solve with adjoint operator $M^H = {}\alpha ({}\partial c / {}\partial
 {}\dot{y}) + {}\beta ({}\partial c / {}\partial y)^H$: Given a pre-formed
 object for $M = {}\alpha ({}\partial c / {}\partial {}\dot{y}) + {}\beta
-({}\partial c / {}\partial y)$, then provide the ability to (approximately)
-solve for systems of the form
+({}\partial c / {}\partial y)$, provide the ability to (approximately) solve
+for systems of the form
 \[
 X = M^{-H} B
 \]
@@ -1907,7 +1930,7 @@ AD.  Or, if the matrix and multi-vector objects can be created explicitly,
 then they can just be transposed (or conjugate transpose in the complex case)
 to provide the needed adjoint operations.
 
-\section{General adaptive error-control strategies}
+\section{General Adaptive Error-Control Strategies}
 
 RAB's comments on this:
 \begin{itemize}
@@ -2039,14 +2062,14 @@ should be constructed and maintained by a time integrator.
 
 \subsection{Interpolation methods}
 
-While there are many possible interpolation techniques possible for
-interpolating the solution of a DAE, the Hermite interpolation seems to be the
-most popular~\cite{sundials}.  The most simple Hermite interpolation stores
-both $y(t_k)$ and $\dot{y}(t_k)$ at various points in time $t_k$ and then the
+While there are many possible interpolation techniques for interpolating the
+solution of a DAE, the Hermite interpolation seems to be the most
+popular~\cite{sundials}.  The simplest Hermite interpolation stores both
+$y(t_k)$ and $\dot{y}(t_k)$ at various points in time $t_k$ and then the
 values of $y(t)$ (and $\dot{y}(t)$) are interpolated using a piecewise cubic
-polynomial formed from $y(t_k)$, $\dot{y)k}(t)$, $y(t_{k+1})$, and
+polynomial formed from $y(t_k)$, $\dot{y}(t_k)$, $y(t_{k+1})$, and
 $\dot{y}(t_{k+1})$, where $t\in[t_k,t_{k+1}]$.  The Hermite interpolate is a
-local computation and is zero-order and first-order continuous.
+local computation and is globally both zero-order and first-order continuous.
 
 Note that interpolation methods may also take into account the accuracy needed
 in the adjoint so that a more course interpolation buffer can be stored (Note:
@@ -2104,10 +2127,10 @@ approaches infinity as the ratio goes to zero.
 \end{center}
 \caption{
 \label{rythmos:fig:checkpoint_graph}
-Plot increased cost of computing adjoint using checkpointed scheme implemented
-by {}\texttt{resolve()} algorithm relative to cost of a single forward solve
-for where the ratio of the number of checkpoints to the total time steps is
-the x-axis where 5000 total time steps where used.  }
+Plot of increased cost of computing adjoint using the checkpoint placement
+scheme implemented by the {}\texttt{revolve()} algorithm relative to cost of a
+single forward solve for where the ratio of the number of checkpoints to the
+total time steps is the x-axis where 5000 total time steps where used.  }
 \end{figure}
 \esinglespace}
 
@@ -2130,12 +2153,14 @@ that come from discretized PDEs, compression in space and even the
 computation of a courser state equation is possible if only inexact
 adjoints are needed.
 
-Note: This may be a good angle for a research proposal.  How do we combine
-knowledge about inexactness with an adjoint time integrator and allow for
-compressed interpolation and checkpointing strategies and control of adaptive
-step-control error?  This leads into an inexactness proposal.
+%
+% Note: This may be a good angle for a research proposal.  How do we combine
+% knowledge about inexactness with an adjoint time integrator and allow for
+% compressed interpolation and checkpointing strategies and control of adaptive
+% step-control error?  This leads into an inexactness proposal.
+%
 
-\section{Example applications}
+\section{Example Applications}
 
 Notes: The purpose of this section is to describe some important Sandia
 applications and describe how the propose time integration tools may be used
@@ -2295,6 +2320,7 @@ expressions that is based on basic principles that have a simple and strong
 foundation.
 
 \subsubsection{Derivation of adjoint equation and sensitivities for steady-state parameters}
+\label{rythmos:app:adj-equ-derivation}
 
 In this section we begin with the same basic expressions of the reduced
 derivative ${}\partial {}\hat{d} / {}\partial p$ in
@@ -2793,6 +2819,46 @@ unstable while the {}\textit{augmented adjoint system}
 \end{eqnarray}
 %
 generally is stable when the forward DAE is stable.
+
+\section{ToDo}
+
+\begin{itemize}
+%
+{}\item Ross: Rederive sensitivities for transient parameters and move the
+Lagrangian-based derivations to a separate Appendix section.
+%
+{}\item Ross: Derive reduced Hessian-vector products for sensitivity
+computations and expand the list of requirements to include second derivative
+computations.  This is needed for the time domain decomposition work.
+%
+{}\item Ross: Get formulations for stability and eigen problems and make sure
+requirements are covered.
+%
+{}\item Ross: Write out adjoint formulations for the basic forward time
+integration methods (do this once we start actually implementing adjoint
+solvers) such that result in discrete adjoints in time.  Idea, record time
+steps of forward calculation to reuse in adjoint calculation if discrete
+adjoints in time are really needed.
+%
+{}\item Ross: Look into issue of the use of scalar products and implicit ODEs that
+avoids explicit inverses of the mass matrix.
+%
+{}\item Ross or Todd: Add formulation for some popular explicit time stepping
+methods.
+%
+{}\item Todd: Add formulation for implicit ``generalized alpha'' methods.
+%
+{}\item Todd: Add formulation for implicit ``theta'' methods.
+%
+{}\item Ross or Todd: Add the ODE formulation for Premo and what transient (or
+pseudo-transient) calculations that Premo performs.
+%
+{}\item Ross: Ask Kevin how Sundance might be able to support all of these
+requirements just by specifying the weak form of the state equation and by
+specifying distributed and terminal response functions.  Sundance should be
+able to produce all of the discretized derivative objects automatically.
+%
+\end{itemize}
 
 \begin{SANDdistribution}
 % External
