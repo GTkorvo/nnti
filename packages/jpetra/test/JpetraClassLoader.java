@@ -26,6 +26,18 @@ public class JpetraClassLoader extends ClassLoader {
     public Class findClass(String name) {
         Class loadedClass = this.findLoadedClass(name);
         if (loadedClass != null) {
+            try {
+                ois.readObject(); // throw away object data, not needed since the class is already loaded
+            }
+            catch (java.io.IOException e) {
+                System.err.println(e.toString());
+                System.exit(1);
+            }
+            catch (java.lang.ClassNotFoundException e) {
+                System.err.println(e.toString());
+                System.exit(1);
+            }
+            
             return loadedClass;
         }
         
