@@ -32,54 +32,42 @@ package Jpetra;
  *
  * @author  Jason Cross
  */
-public class VectorSpace extends JpetraObject {
-    ElementSpace elementSpace;
+public class MultiVector extends JpetraObject {
+    VectorSpace vectorSpace;
+    double[][] values;
     
-    public VectorSpace(ElementSpace elementSpace) {
-        this.elementSpace = elementSpace;
+    public MultiVector(VectorSpace vectorSpace, double[][] values) {
+        this.vectorSpace = vectorSpace;
+        this.values = values;
     }
     
-    public boolean isCompatible(VectorSpace otherVectorSpace) {
-        if (otherVectorSpace == this) {
-            return true;
+    public void putScalar(double scalar) {
+        for(int i=0; i < this.values.length; i++) {
+            for (int j=0; j < this.values[i].length; j++) {
+                this.values[i][j] = scalar;
+            }
+        } 
+    }
+    
+    public double[] dot(MultiVector otherMultiVector) {
+        if (!vectorSpace.isCompatible(otherMultiVector.getVectorSpace())) {
+            this.println("ERR", "The MultiVectors to be dotted are not compatible.");
         }
-        if (this.getNumMyGlobalEntries() == otherVectorSpace.getNumMyGlobalEntries()) {
-            return true;
+	Blas myBlas = new NetlibBlas();
+        double[][] y = otherMultiVector.getValues();
+        double[] result = new double[vectorSpace.getNumMyGlobalEntries()];
+        for(int i=0; i < vectorSpace.getNumMyGlobalEntries(); i++) {
+            result[i] = myBlas.dot(this.values[i], y[i]);
         }
         
-        return false;
+        return result;
     }
     
-    public int getNumGlobalEntries() {
-        return this.elementSpace.getNumGlobalElements();
+    public VectorSpace getVectorSpace () {
+        return this.vectorSpace;
     }
     
-    public int getNumMyGlobalEntries() {
-        return this.elementSpace.getNumMyGlobalElements();
-    }
-    
-    public int getMinLocalIndex() {
-        return this.elementSpace.getMinLocalElementId();
-    }
-    
-    public int getLocalIndex(int globalIndex) {
-        return this.elementSpace.getLocalElementId(globalIndex);
-    }
-    
-    public int getGlobalIndex(int localIndex) {
-        return this.elementSpace.getGlobalElementId(localIndex);
-    }
-    
-    public boolean isMyLocalIndex(int localIndex) {
-        return this.elementSpace.isMyLocalElementId(localIndex);
-    }
-    
-    public boolean isMyGlobalIndex(int globalIndex) {
-        return this.elementSpace.isMyGlobalElementId(globalIndex);
-    }
-    
-    // !! not yet implemented
-    public boolean equals(VectorSpace vectorSpace) {
-        return false;
+    public double[][] getValues() {
+        return this.values;
     }
 }

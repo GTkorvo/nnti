@@ -43,9 +43,9 @@ public class CisMatrix extends JpetraObject {
     private VectorSpace primaryVectorSpace;
     private boolean rowOriented;
     private boolean filled;
-    private int[] intValues;
     private double[] doubleValues;
-    private int[] numEntries;  // number of entries per array
+    private int[] numEntries;  // number of entries per row/col
+    //private int[] startIndex;   // number of entries before the current row/col
     private JpetraTreeMap OuterTree;
     private int numTotalEntries;
     
@@ -57,7 +57,7 @@ public class CisMatrix extends JpetraObject {
         this.OuterTree = new JpetraTreeMap();
     }
     
-    public void insertEntries(int globalRowColId, int[] indices, int[] entries) {
+    public void insertEntries(int globalRowColId, int[] indices, double[] entries) {
         if (this.filled) {
             this.println("ERR", "insertEntiries cannot be called after fillComplete().");
         }
@@ -83,15 +83,15 @@ public class CisMatrix extends JpetraObject {
         int toInsert;
         for(int i=0; i < indices.length; i++) {
             this.println("STD", "Inserting index " + indices[i]);
-            temp = rowColTreeMap.get(new Integer(indices[i]));
+            temp = rowColTreeMap.get(new Double(indices[i]));
             if (temp == null) {
                     this.println("STD", "Index " + indices[i] + " does not exist, creating...");
                 this.numTotalEntries++;
-                rowColTreeMap.put(new Integer(indices[i]), new Integer(entries[i]));
+                rowColTreeMap.put(new Double(indices[i]), new Double(entries[i]));
             }
             else {
                 this.println("STD", "Index " + indices[i] + " does exists, adding to prevous value...");
-                rowColTreeMap.put(new Integer(indices[i]), new Integer(entries[i] + ((Integer) temp).intValue()));
+                rowColTreeMap.put(new Double(indices[i]), new Double(entries[i] + ((Double) temp).doubleValue()));
             }
         }
     }
@@ -101,7 +101,7 @@ public class CisMatrix extends JpetraObject {
             this.print("ERR", "fillComplete() may only be called once.");
         }
         this.filled = true;
-        this.intValues = new int[this.numTotalEntries];
+        this.doubleValues = new double[this.numTotalEntries];
         this.numEntries = new int[primaryVectorSpace.getNumMyGlobalEntries()];
         
         Set outerKeysValues = this.OuterTree.entrySet();
@@ -117,6 +117,7 @@ public class CisMatrix extends JpetraObject {
         int numEntriesColRow;
         int[] tempGraph = new int[this.numTotalEntries];
         int i=0;
+        //startIndex = 0;
         while(outerIterator.hasNext()) {
             this.println("STD", "Doing an outer loop...");
             outerMapEntry = (Map.Entry) outerIterator.next();
@@ -127,13 +128,21 @@ public class CisMatrix extends JpetraObject {
             while (innerIterator.hasNext()) {
                 this.println("STD", "Doing an inner loop...");
                 innerMapEntry = (Map.Entry) innerIterator.next();
-                this.intValues[nextEntryIndex] = ((Integer) innerMapEntry.getValue()).intValue();
-                tempGraph[nextEntryIndex++] = ((Integer) innerMapEntry.getKey()).intValue();
+                this.doubleValues[nextEntryIndex] = ((Double) innerMapEntry.getValue()).intValue();
+                tempGraph[nextEntryIndex++] = ((Double) innerMapEntry.getKey()).intValue();
                 numEntriesColRow++;
             }
+            //this.startIndex[i] = startIndex;
+            //startIndex += numEntriesColRow;
             this.numEntries[i++] = numEntriesColRow;
         }
         this.graph = new Graph(primaryVectorSpace, tempGraph, this.numEntries);
+    }
+    
+    public void scale(double scaler) {
+        for(int i=0; i < this.doubleValues.length; i++) {
+            this.doubleValues[i] *= scaler;
+        }
     }
     
     public void printOut(String iostream) {
@@ -147,7 +156,7 @@ public class CisMatrix extends JpetraObject {
             this.println("STD", "Doing a row loop...");
             for(int entry=0; entry < numEntries[row]; entry++) {
                 this.println("STD", "\nDoing an entry loop...");
-                this.print(iostream, row + " " + graph.getIndex(i) + " " + intValues[i++]);
+                this.print(iostream, row + " " + graph.getIndex(i) + " " + doubleValues[i++]);
             }
         }
         this.println("STD", "Printout() has ended...");
