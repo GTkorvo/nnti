@@ -206,8 +206,8 @@ public interface Comm {
     
     /**
      * Takes a list of values from all vnodes in the communicator, computes
-     * the scan sum, and returns it to all vnodes such that vnodeor i contains
-     * the sum of values from vnodes up to and including vnodeor i.
+     * the scan sum, and returns it to all vnodes such that vnode i contains
+     * the sum of values from vnodes up to and including vnode i.
      *
      * @param myElements    in on entry; the values to be summed across all vnodes
      * @return              out on exit; the list of values summed
@@ -217,8 +217,8 @@ public interface Comm {
     
     /**
      * Takes a list of values from all vnodes in the communicator, computes
-     * the scan sum, and returns it to all vnodes such that vnodeor i contains
-     * the sum of values from vnodes up to and including vnodeor i.
+     * the scan sum, and returns it to all vnodes such that vnode i contains
+     * the sum of values from vnodes up to and including vnode i.
      *
      * @param myElements    in on entry; the values to be summed across all vnodes
      * @return              out on exit; the list of values summed
@@ -268,7 +268,7 @@ public interface Comm {
      *
      * @param newThreadID new thread ID
      */
-    public int setThreadID(int newThreadID);
+    public void setThreadID(int newThreadID);
     
     /**
      * Sets the vnode ID for the calling vnode.
@@ -279,7 +279,7 @@ public interface Comm {
      * 
      * @param newVnodeID new vnode ID
      */
-    public int setMyVnodeID(int newVnodeID);
+    public void setMyVnodeID(int newVnodeID);
     
     /**
      * Accessor to see if the communicator is on a serial or parallel machine.

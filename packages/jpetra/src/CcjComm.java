@@ -347,9 +347,8 @@ public class CcjComm extends JpetraObject implements Comm {
      *
      * @param aThread thread ID
      */       
-    public int setThreadID(int aThread) {
+    public void setThreadID(int aThread) {
         myThread = aThread;
-        return 0;
     }
     
     /**
@@ -358,9 +357,8 @@ public class CcjComm extends JpetraObject implements Comm {
      *
      * @param newVnodeID new proccess ID/rank
      */
-    public int setMyVnodeID(int newVnodeID) {
+    public void setMyVnodeID(int newVnodeID) {
         myVnode = newVnodeID;
-        return 0;
     }
     
     
