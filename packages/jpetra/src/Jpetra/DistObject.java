@@ -123,9 +123,9 @@ public abstract class DistObject extends JpetraObject {
             // so we know which gids we must send for the reverse op
             NullDistObject nullDistObjectTarget = new NullDistObject(this.getVectorSpace());
             NullDistObject nullDistObjectSource = new NullDistObject(distObjectSource.getVectorSpace());
-            this.println("STD", "Doing null export...");
+            //this.println("STD", "Doing null export...");
             nullDistObjectSource.exportValues(nullDistObjectTarget, exporter, DistObject.ADD);
-            this.println("STD", "Done doing null export...");
+            //this.println("STD", "Done doing null export...");
             // the null forward op is complete, now we can do the reverse op
         }
         
@@ -157,9 +157,9 @@ public abstract class DistObject extends JpetraObject {
             // so we know which gids we must send for the reverse op
             NullDistObject nullDistObjectTarget = new NullDistObject(this.getVectorSpace());
             NullDistObject nullDistObjectSource = new NullDistObject(distObjectSource.getVectorSpace());
-            this.println("STD", "Doing null export...");
+            //this.println("STD", "Doing null export...");
             nullDistObjectSource.importValues(nullDistObjectTarget, importer, DistObject.ADD);
-            this.println("STD", "Done doing null export...");
+            //this.println("STD", "Done doing null export...");
             // the null forward op is complete, now we can do the reverse op
         }
         
@@ -214,7 +214,7 @@ public abstract class DistObject extends JpetraObject {
         copyAndPermute(distObjectSource, numSameGids, permuteToLids, permuteFromLids, combineMode);
         if (distObjectSource.getVectorSpace().getComm().isSerial() || (combineMode == DistObject.ZERO)) {
             // just doing a local copy and permute so we're done
-            this.println("STD", "DistObject: Doing copyAndPermute Only!");
+            //this.println("STD", "DistObject: Doing copyAndPermute Only!");
             return;
         }
         Serializable[] exportData = packAndPrepare(distObjectSource, exportGids, exportLids);

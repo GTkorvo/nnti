@@ -35,7 +35,7 @@ package Jpetra;
  * @author  Jason Cross
  */
 public class Vector extends MultiVector {
-       public Vector(VectorSpace vectorSpace) {
+    public Vector(VectorSpace vectorSpace) {
         super(vectorSpace);
     }
     

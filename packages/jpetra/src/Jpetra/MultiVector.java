@@ -62,8 +62,17 @@ public class MultiVector extends DistObject implements Externalizable {
     
     public void putScalar(double scalar) {
         for(int i=0; i < this.values.length; i++) {
-            for (int j=0; j < this.values[i].length; j++) {
+            /*for (int j=0; j < this.values[i].length; j++) {
                 this.values[i][j] = scalar;
+            }*/
+            java.util.Arrays.fill(this.values[i], scalar);
+        }
+    }
+    
+    public void putRandom(RandomNumberGenerator random) {
+        for(int i=0; i < this.values.length; i++) {
+            for (int j=0; j < this.values[i].length; j++) {
+                this.values[i][j] = random.getInt();
             }
         }
     }
@@ -143,7 +152,7 @@ public class MultiVector extends DistObject implements Externalizable {
         
         double[][] y = otherMultiVector.getValues();
         double[] result = new double[vectorSpace.getNumMyGlobalEntries()];
-        for(int i=0; i < vectorSpace.getNumMyGlobalEntries(); i++) {
+        for(int i=0; i < this.getNumCols(); i++) {
             result[i] = this.blas.dot(this.values[i], y[i]);
         }
         updateFlops(2 * this.values.length * this.values[0].length);
@@ -170,22 +179,22 @@ public class MultiVector extends DistObject implements Externalizable {
     }
     
     public double[] norm2() {
-        double[] result = new double[values.length];
-        int sum;
-        for (int i=0; i < values.length; i++) {
-            sum = 0;
-            for(int j=0; j < values[i].length; j++) {
-                sum += values[i][j] * values[i][j];
+        double[] result = new double[this.values.length];
+        double sum;
+        for (int i=0; i < this.values.length; i++) {
+            sum = 0.0;
+            for(int j=0; j < this.values[i].length; j++) {
+                sum += this.values[i][j] * this.values[i][j];
             }
             result[i] = sum;
         }
         
         
         result = vectorSpace.getComm().sumAll(result);
-        for(int i=0; i < values.length; i++) {
+        for(int i=0; i < this.values.length; i++) {
             result[i] = Math.sqrt(result[i]);
         }
-        updateFlops(2 * this.values.length * this.values[0].length);
+        updateFlops(2 * this.values.length * this.getNumRows());
         
         return result;
     }
@@ -251,7 +260,7 @@ public class MultiVector extends DistObject implements Externalizable {
                 }
             }
             updateFlops(2 * this.values.length * this.values[0].length);
-        } 
+        }
         else if (scalarA==1.0) {
             for (int i = 0; i < values.length; i++) {
                 for (int j = 0; j < values[i].length; j++) {
@@ -267,6 +276,122 @@ public class MultiVector extends DistObject implements Externalizable {
                 }
             }
             updateFlops(3 * this.values.length * this.values[0].length);
+        }
+    }
+    
+    public void update(double scalarA, MultiVector A, double scalarB, MultiVector B, double scalarThis) {
+        int i, j;
+        
+        // linear combination of three MultiVectors:
+        // this = ScalarThis * this + ScalarA * A + ScalarB * B
+        
+        if (scalarA==0.0) {
+            this.update(scalarB, B, scalarThis);
+            return;
+        }
+        if (scalarB==0.0) {
+            this.update(scalarA, A, scalarThis);
+            return;
+        }
+        
+        if (this.values.length != A.getNumCols()) {
+            this.println("FATALERR", "In MultiVector.update(double scalarA, MultiVector A, double scalarB, MultiVector B, double scalarThis) this.getNumCols() != A.getNumCols()");
+            System.exit(-1);
+        }
+        if (this.values.length != B.getNumCols()) {
+            this.println("FATALERR", "In MultiVector.update(double scalarA, MultiVector A, double scalarB, MultiVector B, double scalarThis) this.getNumCols() != B.getNumCols()");
+            System.exit(-1);
+        }
+        if (this.getNumRows() != A.getNumRows()) {
+            this.println("FATALERR", "In MultiVector.update(double scalarA, MultiVector A, double scalarB, MultiVector B, double scalarThis) this.getNumRows() != A.getNumRows()");
+            System.exit(-1);
+        }
+        
+        if (this.getNumRows() != B.getNumRows()) {
+            this.println("FATALERR", "In MultiVector.update(double scalarA, MultiVector A, double scalarB, MultiVector B, double scalarThis) this.getNumRows() != B.getNumRows()");
+            System.exit(-1);
+        }
+        
+        double[][] aValues = A.getValues();
+        double[][] bValues = B.getValues();
+        
+        if (scalarThis==0.0) {
+            if (scalarA==1.0) {
+                for (i = 0; i < this.getNumCols(); i++) {
+                    for (j = 0; j < this.getNumRows(); j++) {
+                        this.values[i][j] = aValues[i][j] + scalarB * bValues[i][j];
+                    }
+                }
+                this.updateFlops(2 * this.getNumRows() * this.getNumCols());
+            }
+            else if (scalarB==1.0) {
+                for (i = 0; i < this.getNumCols(); i++) {
+                    for (j = 0; j < this.getNumRows(); j++) {
+                        this.values[i][j] = (scalarA * aValues[i][j]) + bValues[i][j];
+                    }
+                }
+                this.updateFlops(2 * this.getNumRows() * this.getNumCols());
+            }
+            else {
+                for (i = 0; i < this.getNumCols(); i++) {
+                    for (j = 0; j < this.getNumRows(); j++) {
+                        this.values[i][j] = scalarA * aValues[i][j] + scalarB * bValues[i][j];
+                    }
+                }
+                this.updateFlops(3 * this.getNumRows() * this.getNumCols());
+            }
+        }
+        else if (scalarThis==1.0) {
+            if (scalarA==1.0) {
+                for (i = 0; i < this.getNumCols(); i++) {
+                    for (j = 0; j < this.getNumRows(); j++) {
+                        this.values[i][j] += aValues[i][j] + scalarB * bValues[i][j];
+                    }
+                }
+                this.updateFlops(3 * this.getNumRows() * this.getNumCols());
+            }
+            else if (scalarB==1.0) {
+                for (i = 0; i < this.getNumCols(); i++) {
+                    for (j = 0; j < this.getNumRows(); j++) {
+                        this.values[i][j] += scalarA * aValues[i][j] + bValues[i][j];
+                    }
+                }
+                this.updateFlops(3 * this.getNumRows() * this.getNumCols());
+            }
+            else {
+                for (i = 0; i < this.getNumCols(); i++) {
+                    for (j = 0; j < this.getNumRows(); j++) {
+                        this.values[i][j] += scalarA * aValues[i][j] + scalarB * bValues[i][j];
+                    }
+                }
+                this.updateFlops(4 * this.getNumRows() * this.getNumCols());
+            }
+        }
+        else {
+            if (scalarA==1.0) {
+                for (i = 0; i < this.getNumCols(); i++) {
+                    for (j = 0; j < this.getNumRows(); j++) {
+                        this.values[i][j] =  scalarThis * this.values[i][j] + aValues[i][j] + scalarB * bValues[i][j];
+                    }
+                }
+                this.updateFlops(4 * this.getNumRows() * this.getNumCols());
+            }
+            else if (scalarB==1.0) {
+                for (i = 0; i < this.getNumCols(); i++) {
+                    for (j = 0; j < this.getNumRows(); j++) {
+                        this.values[i][j] =  scalarThis * this.values[i][j] + scalarA * aValues[i][j] + bValues[i][j];
+                    }
+                }
+                this.updateFlops(4 * this.getNumRows() * this.getNumCols());
+            }
+            else {
+                for (i = 0; i < this.getNumCols(); i++){
+                    for (j = 0; j < this.getNumRows(); j++) {
+                        this.values[i][j] =  scalarThis * this.values[i][j] + scalarA * aValues[i][j] +  scalarB * bValues[i][j];
+                    }
+                }
+                this.updateFlops(5 * this.getNumRows() * this.getNumCols());
+            }
         }
     }
     

@@ -87,7 +87,7 @@ public class CisMatrix extends DistObject implements Externalizable {
      * @param rowOriented determines whether the <code>CisMatrix</code> is row or column oriented
      */
     public CisMatrix(VectorSpace primaryVectorSpace, boolean rowOriented) {
-        this.outputStreams.put("CISMATRIX", new Output("CisMatrix: ", true, System.out, false, System.out));
+        //this.outputStreams.put("CISMATRIX", new Output("CisMatrix: ", true, System.out, false, System.out));
         
         this.filled = false;
         /*this.maxSecondaryId = 0;*/
@@ -465,7 +465,7 @@ public class CisMatrix extends DistObject implements Externalizable {
                 for(int j=0; j < elementArray.length; j++) {
                     element = (Serializable[]) elementArray[j];
                     gid = ((Integer) element[0]).intValue();
-                    this.println("CISMATRIX", "Checking gid " + gid + " from vnode " + i);
+                    //this.println("CISMATRIX", "Checking gid " + gid + " from vnode " + i);
                     lid = primaryVectorSpace.getLocalIndex(gid);
                     // gid == -1 means that the sending vnode didn't have a nonzero value for the entire
                     // row/col of that gid so we can just ignore it
@@ -476,7 +476,7 @@ public class CisMatrix extends DistObject implements Externalizable {
                         reverseExportVnodeIdsGidsLids[3][revCount++] = lid;
                     }
                     if (gid != -1 && lid != -1) {
-                        this.println("CISMATRIX", "adding " + ((int[]) element[1]).length + " elements to gid " + gid + " from vnode " + i);
+                        //this.println("CISMATRIX", "adding " + ((int[]) element[1]).length + " elements to gid " + gid + " from vnode " + i);
                         this.insertEntries(lid, (int[]) element[1], (double[]) element[2], combineMode);
                     }
                 } // end for j
@@ -579,6 +579,10 @@ public class CisMatrix extends DistObject implements Externalizable {
             this.println("FATALERR", "A CisMatrix must be filled before multiply can be called on it.");
             System.exit(1);
         }
+        
+        // zero out y
+        y.putScalar(0.0);
+        
         // setup temporary MultiVectors
         
         /*
@@ -673,8 +677,8 @@ public class CisMatrix extends DistObject implements Externalizable {
                 double[][] importValues = importMultiVector.getValues();
                 exportValues = new double[importValues.length][this.getNumMyRows()];
                 exportMultiVector = new MultiVector(this.getRowVectorSpace(), exportValues);
-                this.println("CISMATRIX", "y.getVectorSpace().getNumGlobalEntries(): " + y.getVectorSpace().getNumGlobalEntries());
-                this.println("CISMATRIX", "exportMultiVector.getVectorSpace().getNumGlobalEntries(): " + exportMultiVector.getVectorSpace().getNumGlobalEntries());
+                //this.println("CISMATRIX", "y.getVectorSpace().getNumGlobalEntries(): " + y.getVectorSpace().getNumGlobalEntries());
+                //this.println("CISMATRIX", "exportMultiVector.getVectorSpace().getNumGlobalEntries(): " + exportMultiVector.getVectorSpace().getNumGlobalEntries());
                 for(int col=0; col < this.getNumMyColumns(); col++) {
                     for(int vector=0; vector < importMultiVector.getNumCols(); vector++){
                         index = this.startIndex[col];
@@ -698,8 +702,8 @@ public class CisMatrix extends DistObject implements Externalizable {
                 VectorSpace importMultiVectorVS = importMultiVector.getVectorSpace();
                 double[][] importValues = importMultiVector.getValues();
                 this.fillComplete();
-                this.println("CISMATRIX", "doubleValues.length: " + doubleValues.length);
-                this.printOutAllVnodes("CISMATRIX");
+                //this.println("CISMATRIX", "doubleValues.length: " + doubleValues.length);
+                //this.printOutAllVnodes("CISMATRIX");
                 
                 for(int row=0; row < this.getNumMyRows(); row++) {
                     for(int vector=0; vector < exportMultiVector.getNumCols(); vector++){
