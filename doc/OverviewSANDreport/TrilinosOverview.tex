@@ -6,7 +6,7 @@
 \author{Michael Heroux, Roscoe Bartlett, Vicki Howle \\
 Robert Hoekstra, Jonathan Hu, Tamara Kolda, \\
 Richard Lehoucq, Kevin Long, Roger Pawlowski, \\
-Andrew Salinger, Heidi Thornquist, \\
+Eric Phipps, Andrew Salinger, Heidi Thornquist, \\
 Ray Tuminaro, James Willenbring and Alan Williams \\
  \\
 Sandia National Laboratories \\
@@ -21,16 +21,16 @@ Albuquerque, NM 87185-1110
 \SANDprintDate{Printed August 2003}
 \SANDauthor{
 Michael Heroux, Jonathan Hu, Richard Lehoucq, \\
-Heidi Thornquist, Ray Tuminaro and James Willenbring \\
+Heidi Thornquist, Ray Tuminaro, and James Willenbring \\
 Computational Math and Algorithms Department \\
  \\
 Roscoe Bartlett \\
 Optimization and Uncertainty Estimation Department \\
  \\
-Vicki Howle, Tamara Kolda and Kevin Long \\
+Vicki Howle, Tamara Kolda, and Kevin Long \\
 Computational Sciences and Math Department \\
  \\
-Robert Hoekstra, Roger Pawlowski and Andrew Salinger \\
+Robert Hoekstra, Roger Pawlowski, Eric Phipps, and Andrew Salinger \\
 Computational Sciences Department \\
  \\
 Alan Williams \\
@@ -973,7 +973,7 @@ default search direction for a line-search based method is the Newton direction.
 Several line searches are available, as defined in the 
 NOX::LineSearch, and accessed via the
 NOX::LineSearch::Manager class. Some examples are 
-FullStep, Backtrack and MoreThuente
+FullStep, Backtrack, and MoreThuente.
 
 Convergence or failure of a given solver method is determined by the 
 status tests defined in the NOX::StatusTest namespace. Various status
@@ -984,29 +984,41 @@ Generic status test class.
 \subsection{LOCA: Library of Continuation Algorithms}
 
 
-LOCA is a package of scalable stability analysis algorithms (available as part of 
-the NOX nonlinear solver package). When integrated into an application code, 
+LOCA is a package of scalable continuation and bifurcation analysis algorithms.
+It is designed as an extension to the NOX nonlinear solver package since
+the interfacing requirements are a superset of those needed for nonlinear solution.
+When integrated into an application code, 
 LOCA enables the tracking of solution branches as a function of system 
-parameters and the direct tracking of bifurcation points. LOCA (which is 
-written in "C") is designed to drive application codes that use Newton's 
-method to locate steady-state solutions to nonlinear problems. The algorithms 
-are chosen to work for large problems, such as those that arise from 
+parameters and the direct tracking of bifurcation points. It also provides
+an interface to the Anasazi Eigensolver for obtaining linear stability 
+information.  The algorithms are chosen to work with codes that use
+Newton's method to reach steady solutions and to have minimal 
+additional interfacing requirements over the nonlinear solver.
+Furthermore, they are designed for scalability to
+large problems, such as those that arise from 
 discretizations of partial differential equations, and to run on distributed
- memory parallel machines.  
+memory parallel machines~\cite{LOCA-MPSalsa-paper}.  
 
+LOCA provides robust parameter continuation algorithms 
+with sophisticated step size controls for tracking steady
+solutions or bifurcations. There is also an
+artifical parameter homotopy algorithm.
 The approach in LOCA for locating and tracking bifurcations begins with augmenting 
 the residual equations defining a steady state with additional equations that 
-describe the bifurcation. A Newton method is then formulated for this augmented 
-system.  However, instead of loading up the Jacobian matrix for the entire 
+describe the bifurcation~\cite{LOCA-manual}. This is done generically. This augmented system is
+then sent to the NOX library for solution.
+Instead of loading up the Jacobian matrix for the entire 
 augmented system (a task that involves second derivatives and dense matrix rows), 
 bordering algorithms are used to decompose the linear solve into several solves 
 with smaller matrices. Almost all of the algorithms just require multiple solves 
 of the Jacobian matrix for the steady state problem to calculate the Newton 
 updates for the augmented system. This greatly simplifies the implementation, 
-since this is the same linear system that an application code using Newton's 
-method will already have. Only the Hopf tracking algorithm requires 
+since this is the linear system solve that an application code using Newton's 
+method will have invested in. Only the Hopf tracking algorithm requires 
 the solution of a larger matrix, which is the complex matrix involving the 
-Jacobian matrix and an imaginary multiple of the mass matrix. 
+Jacobian matrix and an imaginary multiple of the mass matrix. For this solve
+the Komplex package is used. Online documentation is available
+through the NOX webpage~\cite{NOX-home-page}.
 
 \subsection{Anasazi: Eigensolver package}
 
@@ -1021,7 +1033,8 @@ eigenspace) are considered to be opaque objects---only knowledge of the matrix a
 vectors via elementary operations is necessary. An implementation of Anasazi
 is accomplished via the use of interfaces. Current interfaces available include
 Epetra, so any libraries that understand Epetra matrices and vectors (such
-as AztecOO) may also be used in conjunction with Anasazi.
+as AztecOO) may also be used in conjunction with Anasazi, and an abstract interface
+to the LOCA package.
 
 One of the goals of Anasazi is to allow the user the flexibility 
 to specify the data representation for the matrix and vectors and 
@@ -1046,7 +1059,11 @@ other packages.  Presently we anticipate incorporating PyTrilinos, a
 Python interface to selected Trilinos functionality that allows use of
 the scripting language Python to drive Trilinos.  We also expect that
 the dense solver developed for, among other things, the Linpack
-benchmark will also become a Trilinos package.
+benchmark will also become a Trilinos package. A code for
+performing the nonlinear solution, continuation, and stability 
+analysis of codes with fixed-point iterations (such as explicit
+integration codes), based on the recursive Projection Method, is
+another solver package under development.
 
 To see a complete list of new packages in the future, please look at
 the online version of this overview document, available from the
@@ -1075,7 +1092,7 @@ packages:  By using abstract interfaces in Trilinos packages, we are
 not explicitly dependent on Petra classes for functionality.  
 This allows us to use any
 concrete matrix and vector software with Trilinos packages, 
-including PETSc, the BLAS 
+including PETSc, BLAS, 
 and LAPACK.
 \item A collection of common software tools and processes: New packages can be 
 integrated into Trilinos very easily.  Furthermore, if a package 
