@@ -38,9 +38,9 @@ import java.io.Serializable;
  */
 public class BasicDirectory extends JpetraObject implements Directory {
     private VectorSpace vectorSpace;
-    //private int numVnodes;
-    //private int[] minVnodeGids;
-    //private int minMyGid;
+    private VectorSpace directoryVectorSpace;
+    private int[] directoryVnodeIds;
+    private int[] directoryLids;
     
     public BasicDirectory(VectorSpace vectorSpace) {
         this.vectorSpace = vectorSpace;
@@ -50,12 +50,6 @@ public class BasicDirectory extends JpetraObject implements Directory {
         }
         
         if (vectorSpace.isDistributedLinearly()) {
-            //numVnodes = vectorSpace.getComm().getNumVnodes();
-            //minVnodeGids = new int[numVnodes+1];
-            //minMyGid = vectorSpace.getMinGlobalEntryId();
-            //vectorSpace.getComm().gatherAll(vectorSpace.getMinGlobalEntryId());
-            //minVnodeGids[numVnodes] = 1 + vectorSpace.getMaxGlobalEntryId(); // Set max cap
-            
             return; // nothing to setup
         }
         
@@ -67,18 +61,66 @@ public class BasicDirectory extends JpetraObject implements Directory {
         int minGlobalGid = vectorSpace.getMinGlobalEntryId();
         int maxGlobalGid = vectorSpace.getMaxGlobalEntryId();
         int numDirectoryGlobalEntries = maxGlobalGid - minGlobalGid + 1;
-        VectorSpace directoryVectorSpace = new VectorSpace(new ElementSpace(numDirectoryGlobalEntries, minGlobalGid, vectorSpace.getComm()));
+        this.directoryVectorSpace = new VectorSpace(new ElementSpace(numDirectoryGlobalEntries, minGlobalGid, vectorSpace.getComm()));
+        
+        // debug stuff
+        this.println("STD", "numGlobalEntries: " + directoryVectorSpace.getNumGlobalEntries() + " myMin: " + this.directoryVectorSpace.getMyMinGlobalIndex() + " myMax: " + this.directoryVectorSpace.getMyMaxGlobalIndex());
+        this.println("STD", "minGlobalEntryId: " + directoryVectorSpace.getMinGlobalEntryId() + " maxGlobalEntryId: " + directoryVectorSpace.getMaxGlobalEntryId());
+        int[] myGidsTemp = directoryVectorSpace.getMyGlobalEntryIds();
+        for(int i=0; i < myGidsTemp.length; i++) {
+            this.println("STD", "Gid: " + myGidsTemp[i]);
+        }
+        //end debug stuff
         
         int numMyGlobalDirectoryEntries = directoryVectorSpace.getNumMyGlobalEntries();
         
         // Get list of processors owning the directory entries for the Map GIDs
-        int[][] tmp = directoryVectorSpace.getRemoteVnodeIdList(vectorSpace.getMyGlobalEntryIds());  // get remote vnodeIds
+        int[] myGids = vectorSpace.getMyGlobalEntryIds();
+        int[][] tmp = directoryVectorSpace.getRemoteVnodeIdList(myGids);  // get remote vnodeIds
         int[] sendGidsToVnodes = tmp[0];
         
         // use distributor to send out my Gids to those vnodes who own them in the directory
         Distributor distributor = vectorSpace.getComm().createDistributor();
         distributor.createFromSends(sendGidsToVnodes, vectorSpace.getComm());
+        // now pack up the gids/lids that we have to send to the owner gid directory vnodes
+        Serializable[] toSendData = new Serializable[sendGidsToVnodes.length];
+        for(int i=0; i < myGids.length; i++) {
+            this.println("STD", "packing my gid: " + myGids[i]);
+            toSendData[i] = new int[]{myGids[i], vectorSpace.getLocalIndex(myGids[i])};
+        }
+        // data is packed, so send it off
+        Serializable[] receivedData = distributor.distribute(toSendData);
+        int[] senders = distributor.getSenders();
+        Serializable[] gidsLids;
+        int directoryLid;
+        int[] gidLid;
+        // now unpack data into the tables that support directory lookup
+        this.directoryVnodeIds = new int[directoryVectorSpace.getNumMyGlobalEntries()];
+        this.directoryLids = new int[directoryVectorSpace.getNumMyGlobalEntries()];
+        for(int i=0; i < senders.length; i++) {
+            if (senders[i] == 1) {
+                gidsLids = (Serializable[]) receivedData[i];
+                for(int j=0; j < gidsLids.length; j++) {
+                    gidLid = (int[]) gidsLids[j];
+                    directoryLid = directoryVectorSpace.getLocalIndex(gidLid[0]);
+                    if (directoryLid == -1) {
+                        this.println("ERR", "I don't keep track of gid " + gidLid[0] + " in my directory.");
+                    } else {
+                        this.println("STD", "Adding gid location " + gidLid[0] + " to my directory.");
+                        this.directoryVnodeIds[directoryLid] = i;
+                        this.directoryLids[directoryLid] = gidLid[1];
+                    }
+                }
+            }
+        }
+        // the directory tables are now built
         
+        //debug code
+        int currentGid = directoryVectorSpace.getMyMinGlobalIndex();
+        for(int i=0; i < directoryVectorSpace.getNumMyGlobalEntries(); i++) {
+            this.println("STD", "LID: " + i + " GID: " + currentGid++ + " Owner: " + directoryVnodeIds[i] + " OwnerLid: " + directoryLids[i]);
+        }
+        this.println("STD", "BasicDirectory.generate has finished.");
     }
     
     /**
@@ -129,103 +171,9 @@ public class BasicDirectory extends JpetraObject implements Directory {
         }*/
         
         // for arbitrary distribution
-        Comm comm = vectorSpace.getComm();
-        int[][] neededGlobalElements = comm.gatherAll2dArray(globalElements);
-        
-        this.println("STD", "Gids to find...");
-        for (int i=0; i < neededGlobalElements.length; i++) {
-            this.println("STD", "vnode " + i + " needs Gids:");
-            for(int j=0; j < neededGlobalElements[i].length; j++) {
-                this.println("STD", neededGlobalElements[i][j] + "");
-            }
-        }
-        // set index of vnodeId to 1 if I will send to that vnode
-        int[] response = new int[neededGlobalElements.length];
-        ArrayList[] responseGids = new ArrayList[neededGlobalElements.length];
-        // go through neededGlobalElements, find those that belong to this vnode, and register the Gid to be sent to the neccessary vnode
-        for (int i=0; i < neededGlobalElements.length; i++) {
-            responseGids[i]= new ArrayList();
-            for(int j=0; j < neededGlobalElements[i].length; j++) {
-                if(vectorSpace.isMyGlobalIndex(neededGlobalElements[i][j])) {
-                    response[i] = 1;
-                    responseGids[i].add(new Integer(neededGlobalElements[i][j]));
-                }
-            }
-        }
-        
-        // collect all the responses on the root node
-        int[][] totalResponse = comm.gather(response);
-        // transpose the responses to correspond to each receiving vnode
-        int[][] totalResponseTranspose = new int[comm.getNumVnodes()][comm.getNumVnodes()];
-        if (comm.getVnodeId() == 0) {
-            for(int i=0; i < totalResponse.length; i++) {
-                for(int j=0; j < totalResponse[i].length; j++) {
-                    totalResponseTranspose[j][i] = totalResponse[i][j];
-                }
-            }
-        }
-        // scatter the corresponding response arrays to each vnode from the root node
-        int[] senders = comm.scatter2dArray(totalResponseTranspose);
-        // setup for receiving is done, now we delay receiving until after we have done all our own sends
-        
-        // do async_sends for all vnodes this vnode needs to send to
-        this.println("STD", "Doing sends...");
-        int[] individualResponse;  // the container for the Gids sent to other vnodes
-        Iterator iterator;
-        for(int i=0; i < responseGids.length; i++) {
-            if (responseGids[i].size() > 0) {
-                individualResponse = new int[responseGids[i].size()];  // output an int[] from the ArrayList
-                individualResponse[0] = comm.getVnodeId();  // the first element will hold the vnode id of the sending vnode
-                iterator = responseGids[i].iterator();
-                for(int j=0; j < individualResponse.length; j++) {
-                    individualResponse[j] = ((Integer) iterator.next()).intValue();
-                }
-                this.println("STD", "Sending to vnode " + i);
-                comm.send(individualResponse, i);
-            }
-        }
-        
-        this.println("STD", "Doing barrier...");
-        comm.barrier();  // this barrier may not be needed, for testing purposes
-        
-        // do blocking receives
-        this.println("STD", "I'm vnode " + comm.getVnodeId() + "  Doing receives...");
-        comm.barrier();  // this barrier is probably not needed, for testing purposes
-        // find how many receives we have to do
-        int numSenders = 0;
-        for(int i=0; i < senders.length; i++) {
-            if (senders[i] == 1) {
-                numSenders++;
-            }
-        }
-        // allocate space to receive the Gids owned by each respective vnode
-        int[] senderVnodeIds = new int[numSenders];
-        int[][] receivedGids = new int[numSenders][];
-        int senderIndex = 0;
-        // since each index in the senders array maps to a vnode, i is the vnode ID of the sending vnode
-        for(int i=0; i < senders.length; i++) {
-            if (senders[i] == 1) {
-                senderVnodeIds[senderIndex] = i;
-                receivedGids[senderIndex++] = (int[]) comm.receive(i);
-            }
-        }
-        
-        // unpack and process receives
-        int[] gids;
-        for(int i=0; i < receivedGids.length; i++) {
-            this.println("STD", "Processing message...");
-            gids = receivedGids[i];
-            this.println("STD", "vnode " + senderVnodeIds[i] + " has Gids:");
-            for(int j=0; j < gids.length; j++) {
-                this.println("STD", gids[j] + "");
-            }
-        }
-        
-        this.println("STD", "Doing barrier...");
-        comm.barrier();
-        this.println("STD", "Done doing receives.");
-        //this.println("ERR", "A non-serial non-linear continous vectorSpace was passed to BasicDirectory.getDirectoryEntries().  This is not supported yet!");
-        return null; //temporary so class will compile
-    }
-    
+        int[][] tmp = this.directoryVectorSpace.getRemoteVnodeIdList(globalElements);
+        Distributor distributor = vectorSpace.getComm().createDistributor();
+        distributor.createFromReceives(globalElements, tmp[0], vectorSpace.getComm());  // tmp[0] is the directorVnodes array
+
+    }  
 }

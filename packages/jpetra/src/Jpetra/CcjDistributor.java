@@ -37,92 +37,173 @@ import java.util.LinkedHashSet;
  */
 public class CcjDistributor extends JpetraObject implements Distributor {
     int numReceives;
+    Comm comm;
+    boolean vnodesInOrder;
+    int[] startIndices;
+    int[] numSends;
+    int[] nextIndex;
+    int[] exportVnodeIds;
+    int[] senders;
+    
     public CcjDistributor() {
+        // empty
     }
     
-    /*public int[] createFromRecieves(int[] remoteGlobalElementIds, int[] remoteGlobalVnodeIds, int[] exportElementIds, int[] exportVnodeIds) {
-        return null;  // !! not implemented
-    }*/
-    public void createFromReceives(int[] importVnodeIds) {
-        //TreeSet treeSet = new TreeSet();
-        this.numReceives = 0;
-        int current = -1;
-        for(int i=0; i < importVnodeIds.length; i++) {
-            if (current != importVnodeIds[i]) {
-                current = importVnodeIds[i];
-                this.numReceives++;
-                //treeSet.add(new Integer(importVnodeIds[i]));
-            }
-        }
+    public void createFromReceives(int[] remoteGids, int[] remoteVnodeIds, Comm comm) {
+        this.comm = comm;
+        
+        computeSends(remoteGids, remoteVnodeIds);
+        // now do createFromSends
+    }
+    
+    public void computeSends(int[] remoteGids, int[] remoteVnodeIds) {
+        Distributor distributor = comm.createDistributor();
+        distributor.createFromSends(remoteVnodeIds, comm);
+        int[][] gidsToSend = distributor.distribute(remoteGids);
         
     }
     
     public void createFromSends(int[] exportVnodeIds, Comm comm) {
+        this.exportVnodeIds = exportVnodeIds;
+        this.comm = comm;
+        
         // figure out if the exportVnodeIds are linearly blocked together by vnodeId or if the vnodeIds are out of order
         boolean vnodesInOrder = true;
-        int[] startIndices = new int[comm.getNumVnodes()];
-        int[] numSends = new int[comm.getNumVnodes()];
-        for(int i=0; i < exportVnodeIds.length-1; i++) {
-            if (vnodesInOrder && (exportVnodeIds[i] > exportVnodeIds[i+1])) {
-                vnodesInOrder = false;
+        this.startIndices = new int[comm.getNumVnodes()];
+        this.numSends = new int[comm.getNumVnodes()];
+        int iTemp;
+        for(iTemp=0; iTemp < this.exportVnodeIds.length-1; iTemp++) {
+            if (this.vnodesInOrder && (this.exportVnodeIds[iTemp] > this.exportVnodeIds[iTemp+1])) {
+                this.vnodesInOrder = false;
             }
-            numSends[exportVnodeIds[i]]++;  // count up how many elements to send to the vnode
+            this.numSends[this.exportVnodeIds[iTemp]]++;  // count up how many elements to send to the vnode
         }
+        this.numSends[this.exportVnodeIds[iTemp]]++;
         
-        if (vnodesInOrder) {
+        if (this.vnodesInOrder) {
             // easy setup since the exportVnodeIds are in linear order...
-            for(int i=0; i < numSends.length-1; i++) {
-                startIndices[i+1] = numSends[i] + startIndices[i];
+            for(int i=0; i < this.numSends.length-1; i++) {
+                this.startIndices[i+1] = this.numSends[i] + this.startIndices[i];
             }
         }
         else {
             // vnodes are out of order
-            int[] nextIndex = new int[exportVnodeIds.length];
+            this.nextIndex = new int[exportVnodeIds.length];
             int[] previousIndex = new int[comm.getNumVnodes()];
-            int[] count = new int[comm.getNumVnodes()];
-            for(int i=0; i < startIndices.length; i++) {
-                startIndices[i] = -1;
+            int[] count = new int[comm.getNumVnodes()];  // counts how many gid will be sent to the respective vnode
+            for(int i=0; i < this.startIndices.length; i++) {
+                this.startIndices[i] = -1;
                 previousIndex[i] = -1;
             }
             
             int lastIndex;
-            for(int i=0; i < exportVnodeIds.length; i++) {
-                lastIndex = previousIndex[exportVnodeIds[i]];
+            for(int i=0; i < this.exportVnodeIds.length; i++) {
+                lastIndex = previousIndex[this.exportVnodeIds[i]];
                 if (lastIndex == -1) {
-                    startIndices[exportVnodeIds[i]] = i;
+                    this.startIndices[this.exportVnodeIds[i]] = i;
                 }
                 else {
-                    nextIndex[lastIndex] = i;
+                    this.nextIndex[lastIndex] = i;
                 }
                 previousIndex[exportVnodeIds[i]] = i;
-                count[i]++;
+                count[this.exportVnodeIds[i]]++;
             }
         }
+        
+        ComputeReceives();
     }
     
-    public void distribute(Comm comm, int[] exportVnodeIds, int[] exportGids, int[] exportLids, Serializable[] exportObjects) {
-        Serializable[] importObjects = new Serializable[this.numReceives];
-        
-        // do async sends
-        int current = exportVnodeIds[0];
-        int start = 0;
-        int numSend = 0;
-        for(int i=0; i < exportVnodeIds.length; i++) {
-            if (current != exportVnodeIds[i]) {
-                // copy gids and objects from start to start+numSend
-                // do async_send to vnode current
-                this.println("STD", "sending to " + current);
-                // setup next array slice
-                start = i;
-                numSend = 1;
-                current = exportVnodeIds[i];
+    public void ComputeReceives() {
+        int[] receivingVnodes = new int[comm.getNumVnodes()];  //remember that Java 0's all elements in new int arrays
+        for(int i=0; i < receivingVnodes.length; i++) {
+            if (numSends[i] > 0) {
+                receivingVnodes[i] = 1;
             }
-            numSend++;
         }
-        // do blocking receives
-        for(int i=0; i < this.numReceives; i++) {
-            // do receive
-            this.println("STD", "Waiting to receive... " + 1);
+        
+        // collect all the sending to receiving vnode mappings on the root node
+        int[][] allReceivingVnodes = comm.gather(receivingVnodes);
+        // transpose the receives to correspond to each receiving vnode
+        int[][] allReceivingTranspose = new int[comm.getNumVnodes()][comm.getNumVnodes()];
+        if (comm.getVnodeId() == 0) {
+            for(int i=0; i < allReceivingVnodes.length; i++) {
+                for(int j=0; j < allReceivingVnodes[i].length; j++) {
+                    allReceivingTranspose[j][i] = allReceivingVnodes[i][j];
+                }
+            }
         }
+        // scatter the corresponding receiving arrays to each vnode from the root node
+        this.senders = comm.scatter2dArray(allReceivingTranspose);
+        // setup for receiving is done
+    }
+    
+    public int[][] distribute(int[] toSendData) {
+        // do async_sends
+        int[] buffer;
+        int dataIndex;
+        for(int i=0; i < numSends.length; i++) {
+            if(numSends[i] > 0) {
+                this.println("STD", "Sending " + numSends[i] + " objects to vnode " + i);
+                // we're going to send data to vnode i
+                // so buffer up all send objects
+                buffer = new int[numSends[i]];
+                dataIndex = this.startIndices[i];
+                for(int j=0; j < numSends[i]; j++) {
+                    buffer[j] = toSendData[dataIndex];
+                    dataIndex = nextIndex[dataIndex];
+                    this.println("STD", "next dataIndex: " + dataIndex);
+                }
+                // buffer object filled so send it off to vnode i
+                comm.send(buffer, i);
+            }
+        }
+        // done doing sends, now do receives from known list of senders
+        int[][] receivedData = new int[senders.length][];
+        for(int i=0; i < senders.length; i++) {
+            if (senders[i] == 1) {
+                this.println("STD", "Receiving from vnode " + i);
+                receivedData[i] = (int[]) comm.receive(i);
+            }
+        }
+        // done doing receives, that means we're all finished
+        
+        return receivedData;
+    }
+    
+    public Serializable[] distribute(Serializable[] toSendData) {
+        // do async_sends
+        Serializable[] buffer;
+        int dataIndex;
+        for(int i=0; i < numSends.length; i++) {
+            if(numSends[i] > 0) {
+                this.println("STD", "Sending " + numSends[i] + " objects to vnode " + i);
+                // we're going to send data to vnode i
+                // so buffer up all send objects
+                buffer = new Serializable[numSends[i]];
+                dataIndex = this.startIndices[i];
+                for(int j=0; j < numSends[i]; j++) {
+                    buffer[j] = toSendData[dataIndex];
+                    dataIndex = nextIndex[dataIndex];
+                    this.println("STD", "next dataIndex: " + dataIndex);
+                }
+                // buffer object filled so send it off to vnode i
+                comm.send(buffer, i);
+            }
+        }
+        // done doing sends, now do receives from known list of senders
+        Serializable[] receivedData = new Serializable[senders.length];
+        for(int i=0; i < senders.length; i++) {
+            if (senders[i] == 1) {
+                this.println("STD", "Receiving from vnode " + i);
+                receivedData[i] = comm.receive(i);
+            }
+        }
+        // done doing receives, that means we're all finished
+        
+        return receivedData;
+    }
+    
+    public int[] getSenders() {
+        return this.senders;
     }
 }

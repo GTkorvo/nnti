@@ -287,7 +287,7 @@ public interface Comm {
      * Sends an int arry to a single specified vnode.
      * <b>Note<b>: this is NOT a blocking operation.
      *
-     * @param exportObject the int arrray to be sent
+     * @param exportObject the int array to be sent
      * @param destinationVnode the vnode ID of the receiving vnode
      */
     public void send(int[] exportObject, int destinationVnode);
@@ -296,10 +296,19 @@ public interface Comm {
      * Sends a double arry to a single specified vnode.
      * <b>Note<b>: this is NOT a blocking operation.
      *
-     * @param exportObject the double arrray to be sent
+     * @param exportObject the double array to be sent
      * @param destinationVnode the vnode ID of the receiving vnode
      */
     public void send(double[] exportObject, int destinationVnode);
+    
+    /**
+     * Sends a Serializable arry to a single specified vnode.
+     * <b>Note<b>: this is NOT a blocking operation.
+     *
+     * @param exportObject the Serializable array to be sent
+     * @param destinationVnode the vnode ID of the receiving vnode
+     */
+    public void send(Serializable exportObject, int destinationVnode);
     
     /**
      * Tells <code>Comm</code> how many messages to expect to receive.

@@ -292,7 +292,7 @@ public class SerialComm extends JpetraObject implements Comm {
     public int[][] gatherAll2dArray(int[] myElements) {
     }
     
-    public void send(double[] exportObject, int destinationVnode) {
+    public void send(Serializable[] exportObject, int destinationVnode) {
     }
     
     public void send(int[] exportObject, int destinationVnode) {
@@ -311,6 +311,9 @@ public class SerialComm extends JpetraObject implements Comm {
     }
     
     public int[][] gather(int[] in) {
+    }
+    
+    public void send(java.io.Serializable exportObject, int destinationVnode) {
     }
     
 }

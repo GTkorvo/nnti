@@ -40,15 +40,18 @@ public interface Distributor {
      * @param remoteGlobalElementIds Array of GlobalElementIds that this vnode wants.
      * @param remoteGlobalVnodeIds Array of vnode IDs that correspond to the vnodes that own the global elements specified by <code>remoteGlobalElementIds</code>.
      * @return Number of global elements this vnode will receive.
-     */    
+     */
     //public int[] createFromRecieves(int[] remoteGlobalElementIds, int[] remoteGlobalVnodeIds, int[] exportElementIds, int[] exportVnodeIds);
-    public void createFromReceives(int[] importVnodeIds);
+    public void createFromReceives(int[] remoteGids, int[] remoteVnodeIds, Comm comm);
     
     /**
      *
      * @param exportVnodeIds The vnodes to export my global elements to.
-     */    
+     */
     public void createFromSends(int[] exportVnodeIds, Comm comm);
     
-      public void distribute(Comm comm, int[] exportVnodeIds, int[] exportGids, int[] exportLids, Serializable[] exportObjects);
+    public Serializable[] distribute(Serializable[] exportObjects);
+    public int[][] distribute(int[] toSendData);
+    
+    public int[] getSenders();
 }

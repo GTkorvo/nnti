@@ -28,37 +28,60 @@
 
 package Jpetra;
 
-import org.netlib.blas.Ddot;
-import org.netlib.blas.Dnrm2;
-import org.netlib.blas.Dscal;
-import org.netlib.blas.Dasum;
-import org.netlib.blas.Idamax;
 /**
  *
  * @author  Jason Cross
  */
-public class NetlibBlas extends JpetraObject implements Blas {
-    
-    public void NetlibBlas () {}
-    
-    public double dot(double[] x, double[] y) {
-        return Ddot.ddot(x.length-1, x, 1, 1, y, 1, 1);
-    }
-    
-    public double norm2(double[] x) {
-        return Dnrm2.dnrm2(x.length-1,x,1,1);
-    }
-    
-    public void scale(double scalar, double[] x) {
-        Dscal.dscal(x.length-1,scalar,x,1,1);
+public class JpetraBlas implements Blas {
+    public JpetraBlas() {
+        // empty
     }
     
     public double asum(double[] x) {
-        return Dasum.dasum(x.length-1,x,1,1);
+        double result = 0;
+        for(int i=0; i < x.length; i++) {
+            result += Math.abs(x[i]);
+        }
+        
+        return result;
+    }
+    
+    public double dot(double[] x, double[] y) {
+        double result = 0;
+        for(int i=0; i < x.length; i++) {
+            result += x[i] * y[i];
+        }
+        
+        return result;
     }
     
     public int iamax(double[] x) {
-        return Idamax.idamax(x.length-1,x,1,1);
+        double max = Math.abs(x[0]);
+        int maxIndex = 0;
+        for(int i=1; i < x.length; i++) {
+            if (max < Math.abs(x[i])) {
+                max = Math.abs(x[i]);
+                maxIndex = i;
+            }
+        }
+        
+        return maxIndex;
+    }
+    
+    public double norm2(double[] x) {
+        double result = 0;
+        
+        for(int i=0; i < x.length; i++) {
+            result += x[i] * x[i];
+        }
+        
+        return Math.sqrt(result);
+    }
+    
+    public void scale(double scalar, double[] x) {
+        for(int i=0; i < x.length; i++) {
+            x[i] = x[i] * scalar;
+        }
     }
     
 }

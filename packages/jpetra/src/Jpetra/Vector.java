@@ -28,37 +28,20 @@
 
 package Jpetra;
 
-import org.netlib.blas.Ddot;
-import org.netlib.blas.Dnrm2;
-import org.netlib.blas.Dscal;
-import org.netlib.blas.Dasum;
-import org.netlib.blas.Idamax;
 /**
+ * <code>Vector</code> is a simple wrapper class to <code>MultiVector</code>
+ * which creates a <code>MultiVector</code> with only one column.
  *
  * @author  Jason Cross
  */
-public class NetlibBlas extends JpetraObject implements Blas {
-    
-    public void NetlibBlas () {}
-    
-    public double dot(double[] x, double[] y) {
-        return Ddot.ddot(x.length-1, x, 1, 1, y, 1, 1);
+public class Vector extends MultiVector {
+       public Vector(VectorSpace vectorSpace) {
+        super(vectorSpace);
     }
     
-    public double norm2(double[] x) {
-        return Dnrm2.dnrm2(x.length-1,x,1,1);
+    public Vector(VectorSpace vectorSpace, double[] vectorValues) {
+        super(vectorSpace);
+        this.values = new double[1][];
+        this.values[0] = vectorValues;
     }
-    
-    public void scale(double scalar, double[] x) {
-        Dscal.dscal(x.length-1,scalar,x,1,1);
-    }
-    
-    public double asum(double[] x) {
-        return Dasum.dasum(x.length-1,x,1,1);
-    }
-    
-    public int iamax(double[] x) {
-        return Idamax.idamax(x.length-1,x,1,1);
-    }
-    
 }

@@ -63,6 +63,14 @@ public class VectorSpace extends JpetraObject {
         return this.elementSpace.getMinLocalElementId();
     }
     
+    public int getMyMaxGlobalIndex() {
+        return this.elementSpace.getMyMaxGlobalElementId();
+    }
+    
+    public int getMyMinGlobalIndex() {
+        return this.elementSpace.getMyMinGlobalElementId();
+    }
+    
     public int getLocalIndex(int globalIndex) {
         return this.elementSpace.getLocalElementId(globalIndex);
     }

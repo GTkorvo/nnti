@@ -385,6 +385,10 @@ public class CcjComm extends JpetraObject implements Comm {
         this.myCcjLink.send(exportObject, destinationVnode);
     }
     
+    public void send(Serializable exportObject, int destinationVnode) {
+        this.myCcjLink.send(exportObject, destinationVnode);
+    }
+    
     public void setupReceives(int numReceives) {
         this.myCcjLink.setupReceives(numReceives);
     }

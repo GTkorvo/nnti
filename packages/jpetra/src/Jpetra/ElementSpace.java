@@ -34,7 +34,7 @@ import java.util.TreeMap;
  *
  * @author  Jason Cross
  */
-public class ElementSpace {
+public class ElementSpace extends JpetraObject {
     private int[] myGlobalElements;
     private Comm comm;
     private TreeMap gidsToLids;
@@ -67,9 +67,11 @@ public class ElementSpace {
         
         // for serial only
         if (comm.isSerial()) {
-            // do nothing
             this.minMyGlobalElementId = indexBase;
             this.numMyGlobalElements = this.numGlobalElements;
+            this.maxMyGlobalElementId = this.minMyGlobalElementId + this.numMyGlobalElements-1;
+            this.minGlobalElementId = this.minMyGlobalElementId;
+            this.maxGlobalElementId = this.maxMyGlobalElementId;
             this.distributedGlobally = false;
             this.distributedLinearly = true;
             return;
@@ -94,10 +96,13 @@ public class ElementSpace {
             numRemainderIndicesToAdd = numRemainderIndices;
         }
         this.minMyGlobalElementId = (comm.getVnodeId() * this.numIndicesPerVnode) + this.numRemainderIndices + indexBase;
+        this.maxMyGlobalElementId = this.minMyGlobalElementId + this.numMyGlobalElements-1;
+        this.minGlobalElementId = indexBase;
+        this.maxGlobalElementId = this.minGlobalElementId + this.numGlobalElements-1;
     }
     
     /**
-     * Constructs an arbitrarly defined <code>ElementSpace</code> using <code>myGlobalElements</code>
+     * Constructs an arbitrarily defined <code>ElementSpace</code> using <code>myGlobalElements</code>
      * passed in by the user.
      */
     public ElementSpace(int[] myGlobalElements, Comm comm) {
@@ -187,11 +192,10 @@ public class ElementSpace {
     
     public int getLocalElementId(int globalElementId) {
         // for both serial and parallel
-        if ((globalElementId < this.minGlobalElementId) || (globalElementId > this.maxGlobalElementId)) {
+        if ((globalElementId < this.minMyGlobalElementId) || (globalElementId > this.maxMyGlobalElementId)) {
+            this.println("STD", "GlobalId " + globalElementId + " failed min/max test.");
             return -1;
         }
-        
-        // !! need to add support for arbitrarly defined element spaces
         
         // for even contigous distribution compute the global ID
         // serial only
@@ -207,6 +211,7 @@ public class ElementSpace {
         // abritrarily defined parrallel
         Object result = gidsToLids.get(new Integer(globalElementId));
         if (result == null) {
+            this.println("STD", "GlobalId " + globalElementId + " failed to be found in gidsToLids set.");
             return -1;
         }
         return ((Integer) result).intValue();
@@ -217,8 +222,6 @@ public class ElementSpace {
         if ((localElementId < this.minLocalElementId) || (localElementId > this.maxLocalElementId)) {
             return -1;
         }
-        
-        // !! need to add support for arbitrarly defined element spaces
         
         // for even continous distribution compute the global ID
         // serial only
@@ -269,6 +272,14 @@ public class ElementSpace {
         return this.minGlobalElementId;
     }
     
+    public int getMyMinGlobalElementId() {
+        return this.minMyGlobalElementId;
+    }
+    
+    public int getMyMaxGlobalElementId() {
+        return this.maxMyGlobalElementId;
+    }
+    
     public int getMaxGlobalElementId() {
         return this.maxGlobalElementId;
     }
@@ -288,13 +299,6 @@ public class ElementSpace {
         
         return generatedGlobalElementIds;
     }
-    
-    /*public int[] getRemoteVnodeIdList(int[] remoteGlobalElementIds, int[] remoteVnodeIds, int[] remoteLocalElementIds) {
-        if (this.directory == null) {
-            this.directory = new BasicDirectory();
-        }
-        return null; // temporary so class will compile
-    }*/
     
     public boolean isDistributedGlobally() {
         return this.distributedGlobally;

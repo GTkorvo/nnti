@@ -437,7 +437,7 @@ public class CcjLink extends ColMember {
      * Sends an int arry to a single specified vnode.  Wrapper to CCJ <code>send_async</code>
      * <b>Note</b>: this is NOT a blocking operation.
      *
-     * @param exportObject the int arrray to be sent
+     * @param exportObject the int array to be sent
      * @param destinationVnode the vnode ID of the receiving vnode
      */
     public void send(int[] exportObject, int destinationVnode) {
@@ -453,10 +453,26 @@ public class CcjLink extends ColMember {
      * Sends a double arry to a single specified vnode.  Wrapper to CCJ <code>send_async</code>
      * <b>Note</b>: this is NOT a blocking operation.
      *
-     * @param exportObject the double arrray to be sent
+     * @param exportObject the double array to be sent
      * @param destinationVnode the vnode ID of the receiving vnode
      */
     public void send(double[] exportObject, int destinationVnode) {
+        try {
+            send_async(group, exportObject, destinationVnode);
+        }
+        catch (CCJException e) {
+            System.err.println("Error in CCJ send: " + e);
+        }
+    }
+    
+    /**
+     * Sends a Serializable arry to a single specified vnode.  Wrapper to CCJ <code>send_async</code>
+     * <b>Note</b>: this is NOT a blocking operation.
+     *
+     * @param exportObject the Serializable array to be sent
+     * @param destinationVnode the vnode ID of the receiving vnode
+     */
+    public void send(Serializable exportObject, int destinationVnode) {
         try {
             send_async(group, exportObject, destinationVnode);
         }

@@ -76,6 +76,7 @@ public class Import extends JpetraObject {
         int numRemoteGids = 0;
         for (int i=numSameGids; i < targetGids.length; i++) {
             if (sourceVectorSpace.isMyGlobalIndex(targetGids[i])) {
+                this.println("STD", "Going to permute gid: " + targetGids[i]);
                 numPermuteGids++;
             }
             else {

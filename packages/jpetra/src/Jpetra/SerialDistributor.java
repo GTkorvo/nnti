@@ -37,7 +37,7 @@ public class SerialDistributor extends JpetraObject implements Distributor {
     public SerialDistributor() {
     }
     
-    public void createFromReceives(int[] importVnodeIds) {
+    public void createFromReceives(int[] remoteGids, int[] remoteVnodeIds, Comm comm) {
         return null;  // !! not implemented
     }
     
@@ -46,6 +46,15 @@ public class SerialDistributor extends JpetraObject implements Distributor {
     }
     
     public void distribute(Comm comm, int[] exportVnodeIds, int[] exportGids, int[] exportLids, Serializable[] exportObjects) {
+    }
+    
+    public Serializable[] distribute(java.io.Serializable[] exportObjects) {
+    }
+    
+    public int[] getSenders() {
+    }
+    
+    public int[][] distribute(int[] toSendData) {
     }
     
 }
