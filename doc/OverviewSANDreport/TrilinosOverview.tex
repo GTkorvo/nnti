@@ -7,7 +7,7 @@
 Robert Hoekstra, Jonathan Hu, Tamara Kolda, \\
 Rich Lehoucq, Kevin Long, Roger Pawlowski, \\
 Andrew Rothfuss, Andrew Salinger, Heidi Thornquist, \\
-Ray Tuminaro, Jim Willenbring, Alan Williams, \\
+Ray Tuminaro, Jim Willenbring, Alan Williams \\
  \\
 Sandia National Laboratories\\
 P.O. Box 5800\\
@@ -25,7 +25,7 @@ Michael A.~Heroux, Roscoe Bartlett, David Day, \\
 Robert Hoekstra, Jonathan Hu, Tamara Kolda, \\
 Rich Lehoucq, Kevin Long, Roger Pawlowski, \\
 Andrew Rothfuss, Andrew Salinger, Heidi Thornquist, \\
-Ray Tuminaro, Jim Willenbring, Alan Williams, \\
+Ray Tuminaro, Jim Willenbring, Alan Williams \\
  \\
 Sandia National Laboratories}
 
@@ -40,13 +40,23 @@ Sandia National Laboratories}
 \maketitle
 
 \begin{abstract}
-The Trilinos Project is an effort to develop parallel solver 
+The Trilinos Project is an effort to facilitate the design,
+development, integration and ongoing support of mathematical software
+libraries.  In particular, our goal is to develop parallel solver 
 algorithms and libraries within 
 an object-oriented software framework for the solution of large-scale, complex
 multi-physics engineering and scientific applications.   Our emphasis is on 
 developing robust, scalable algorithms in a software framework, using abstract 
 interfaces for flexible interoperability of components and providing a 
-full-featured set of concrete classes that implement all abstract interfaces. 
+full-featured set of concrete classes that implement all abstract
+interfaces.  
+
+Trilinos uses a two-level software structure designed around
+collections of a
+{\it packages}.  A Trilinos package is an integral unit usually
+developed by a small team of experts in a particular algorithms area
+such as algebraic preconditioners, nonlinear solvers, etc.
+
 Trilinos components are primarily written in C++, but provide essential C and 
 Fortran user interface support.  We provide an open architecture that allows 
 easy integration with other solver packages and we deliver our software to 
@@ -286,7 +296,16 @@ with other Trilinos packages.  It also offers a set of tools that can
 assist package developers with builds across multiple platforms, generating
 documentation and regression testing across a set of target platforms.
 At the same time, what a package {\it must} do to be called a Trilinos
-package is minimal, and varies with each package.
+package is minimal, and varies with each package.  The current
+collection of Trilinos packages is shown in Figure~\ref{Figure:TrilinosPackages}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[height=9in]{../CommonFiles/TrilinosPackagesDiagram}
+\end{center}
+\label{Figure:TrilinosPackages}
+\caption{Current collection of Trilinos Packages}
+\end{figure}
 
 \subsection{Services Provided by Trilinos}
 
@@ -568,7 +587,9 @@ and vectors, and then pass these objects to most Trilinos solver components.
 Furthermore, solver developers can develop many new algorithms relying 
 solely on Epetra classes to handle the intricacies of parallel execution.  
 Epetra also has extensive parallel data  redistribution capabilities, 
-including an interface to the Zoltan load-balancing library~\cite{zoltan-ug}.
+including an interface to the Zoltan load-balancing
+library~\cite{zoltan-ug}.  Epetra is split into two packages:  a core
+package and a set of extensions.
 
 \subsection{Tpetra: Templated C++ Implementation of Petra Object Model}
 
@@ -629,33 +650,48 @@ the development of GUI tools for visualization and manipulation of
 Jpetra objects.
 
 
-\subsection{TSF: The Trilinos Abstract Class Package}
+\subsection{TSF: The Trilinos Abstract Class Packages}
 
-Packages like Epetra, Tpetra and Jpetra provide a broad set of 
-powerful capabilities.  As a direct result, their class and interface 
-specifications can be quite complex and difficult to use for algorithm 
-developers that only need to work with abstract matrix and vector 
-objects.  Furthermore, implementation details are necessarily exposed 
-in the Petra libraries in a way that commits users of these packages 
-to pay attention to the particular way these packages are implemented.  
-For some types of algorithms (for example, algorithms like incomplete 
-factorizations that must work directly with matrix coefficients as 
-efficiently as possible), working at this concrete level is necessary.  
+Many different algorithms are available to solve any given numerical
+problem.  For example, there are many algorithms for solving a system
+of linear equations, and many solver packages are available to solve
+linear systems.  Which package is appropriate is a function of
+many details about the problem being solved and the platform on which
+application is being run. However, even though
+there are many different solvers, conceptually, from an abstract view,
+these solvers are providing a similar capability, and it is
+advantageous to utilize this abstract view.
+TSF is a collection of abstract classes that provides an application
+programmer interface (API) to perform the most common solver
+operations.  It can provide a single interface to many different
+solvers and has powerful compositional mechanisms that support the
+light-weight construction of composite objects from a set of
+existing objects.  As a result, TSF users gain easy access to many
+solvers and can bring multiple solvers to bear on a single problem.
 
-However, many algorithms have no need for this detailed information.  
-Forcing use of these concrete classes is a disservice to these 
-algorithm developers because they are forced to deal with details 
-that are irrelevant to their work.  This causes undue burden on 
-the developer, and make their code tightly connected to the concrete 
-library for no good reason.
+TSF is split into several packages.  The most important user-oriented
+classes are TSFCore and TSFExtended:
+\begin{enumerate}
+\item {\bf TSFCore:} As its name implies, TSFCore contains a small set
+of core classes that are considered essential to almost any abstract
+linear algebra interface.  The primary user classes in TSFCore are
+Vector, MultiVector, LinearOp and VectorSpace. TSFCore is discussed in
+detail in~\cite{TSFCore}.
+\item {\bf TSFExtended:} TSFExtended builds on top of TSFCore and
+includes overloaded, block and composite operators, all of
+which support powerful abstraction capabilities.  The Meros package
+relies on TSFExtended to implicitly construct sophisticated
+Schur compliment preconditioners in terms of exising component
+operators with little overhead in time or memory.
+\end{enumerate}
 
-The TSF abstract class package addresses this potential problem by 
-defining a collection of classes that define the expected behavior 
-of abstract matrix and vector objects from a user perspective, 
-independent of implementation.  The result is that each TSF class 
-has a much simpler interface than the corresponding Epetra interface.  
-Furthermore, the TSF interface can be implemented using Epetra, or 
-any other package that can provide the required functionality.
+Both TSFCore and TSFExtended are important because they allow
+interfacing and sophisticated use of numerical linear algebra objects
+without requiring the user or application to commit to any particular
+concrete linear algebra library.  This approach allows us to leverage
+the investment in sophisticated abstract numerical algorithms across
+many concrete linear algebra libraries and gives application
+developers a single API that provides access to many solver packages.
 
 TSF provides abstract interfaces for vector, matrix, operator and 
 solver objects.  In addition, it has powerful aggregation mechanisms 
@@ -708,19 +744,31 @@ serial computers.  Also, AztecOO implements the Epetra\_Operator
 interface.  Therefore, an AztecOO solver object can be used as a 
 preconditioner for another AztecOO object.
 
-\subsection{Ifpack: Incomplete Factorizations and Other Algebraic 
-Preconditioners}
+\subsection{Belos: Generic implementation of Krylov and Block Krylov
+Methods}
 
-Ifpack provides local incomplete factorization preconditioners in a
-parallel domain decomposition framework.  It accepts user data as 
-Epetra\_RowMatrix objects (including Epetra\_CrsMatrix, 
-Epetra\_VbrMatrix and Epetra\_MsrMatrix objects, since these
-classes implement the Epetra\_RowMatrix interface)
-and can construct a large variety of ILU preconditioners.  Ifpack 
-preconditioners implement the Epetra\_Operator interface.  Therefore, 
-they can be used as preconditioners for AztecOO.  The current 
-released version of Ifpack provides a relaxed ILUK preconditioner and
-incomplete Cholesky with threshold dropping.
+Belos contains a collection of standard Krylov methods such as
+conjugate gradients (CG), GMRES and Bi-CGSTAB.  It also contain flexible
+variants of CG and GMRES, and block versions CG and GMRES.  The
+flexible variants allow variable preconditioners to be used, such that
+the preconditioner at each iteration can change.  Block variants allow
+the solution of multiple simultaneous right-hand-sides.  Block methods
+can also be very effective for problems that have just a few small
+eigenvalues, even if the solution to only a single right-hand-side is
+needed.
+
+Belos is considered a generic implementation because it relies on TSF
+interfaces for access linear operator, preconditioner and vector
+objects.  Therefore it is not explicitly tied to any concrete linear
+algebra library and can in principle be used with any library that
+implements the TSF interfaces.  In particular, Epetra can be used
+since Trilinos provides an Epetra implementation of the TSF
+interfaces.
+
+\subsection{Amesos: Object-oriented Interface to Third-party Direct
+Solvers}
+
+Amesos 
 
 \subsection{Komplex: Solver Suite for Complex-valued Linear Systems}
 
@@ -775,56 +823,19 @@ solution back to the user in a form compatible with the original
 complex-valued problem.  Details of mathematical and practical 
 issues of Komplex can be found in Day and Heroux~\cite{DayHero2001}.
 
-\subsection{NOX: Nonlinear Solver Package}
+\subsection{Ifpack: Incomplete Factorizations and Other Algebraic 
+Preconditioners}
 
-NOX provides a suite of nonlinear solver methods.  It can be easily integrated
-into an application with minimal effort.  Historically, many applications have called
-linear solvers as libraries, but have provided their own nonlinear solver software.  NOX
-can be an improvement because it provides a much larger collection of nonlinear methods,
-and can be easily extended as new nonlinear methods are developed.  
-
-NOX does not depend on any particular linear algebra package, making it easy to install. In
-order to interface to NOX, the user needs to supply methods that derive from the following abstract classes: 
-\begin{itemize}
-\item NOX::Abstract::Vector
-\item NOX::Abstract::Group
-\end{itemize}
-The Vector interface supports basic vector operations such as dot products and vector updates. 
-The Group interface supports non-vector linear algebra functionality and contains methods 
-to evaluate the function and, optionally, the Jacobian.
-Complete details are provided on the NOX website~\cite{NOX-home-page}.
-
-Although users can provide their own Vector and Group implementation, NOX provides three implementations
-of its own.  These are:
-\begin{enumerate}
-\item NOX::LAPACK
-\item NOX::Epetra
-\item NOX::Petsc
-\end{enumerate}
-The LAPACK interface is an interface to the BLAS/LAPACK library. It is not intended for large-scale
-computations, but to serve as an easy-to-understand example of how one might interface to NOX. 
-The Epetra interface is an interface to Epetra.
-The PETSc interface is an interface with the PETSc library. 
-
-All NOX solvers are in the NOX::Solver namespace. The solvers are accessed via the NOX::Solver::Manager. The
-recommended solver is NOX::Solver::LineSearchBased, which is a basic nonlinear solver based on a line search.
-Each solver has a number of options that can be specified, as documented in each class or on the NOX Parameter
-Reference Page. 
-
-The search directions are in the NOX::Direction namespace and accessed via the NOX::Direction::Manager. The
-default search direction for a line-search based method in NOX::Direction::Newton. 
-
-Several line searches are available, as defined in the NOX::LineSearch, and accessed via the
-NOX::LineSearch::Manager class. Examples include 
-\begin{enumerate}
-\item NOX::LineSearch::FullStep
-\item NOX::LineSearch::Backtrack
-\item NOX::LineSearch::MoreThuente
-\end{enumerate}
-
-Convergence or failure of a given solver method is determined by the status tests defined in the
-NOX::StatusTest namespace. Various status tests may be combined via the NOX::StatusTest::Combo object. Users
-are free to create additional status tests that derive from the NOX::StatusTest::Generic class. 
+Ifpack provides local incomplete factorization preconditioners in a
+parallel domain decomposition framework.  It accepts user data as 
+Epetra\_RowMatrix objects (including Epetra\_CrsMatrix, 
+Epetra\_VbrMatrix and Epetra\_MsrMatrix objects, since these
+classes implement the Epetra\_RowMatrix interface)
+and can construct a large variety of ILU preconditioners.  Ifpack 
+preconditioners implement the Epetra\_Operator interface.  Therefore, 
+they can be used as preconditioners for AztecOO.  The current 
+released version of Ifpack provides a relaxed ILUK preconditioner and
+incomplete Cholesky with threshold dropping.
 
 \subsection{ML: Multi-level Preconditioner Package}
 
@@ -892,27 +903,112 @@ ML also accepts Epetra matrix objects.
 More information is available in either the ML User's manual
 \cite{ML-User-Guide} and at the ML website~\cite{ML-home-page}.
 
+\subsection{Meros}
+
+Meros uses the compositional, aggregation and overloaded operator capabilities of
+TSF to provided segregated/block preconditioners for linear systems
+related to fully-coupled Navier-Stokes problems.  This class of
+preconditioners exploits the special properties of these problems to
+segregate the equations and use multi-level preconditioners on the
+matrix sub-blocks.  The overall performance and scalability of these
+preconditioners approaches that of multigrid for certain types of
+problems.  Although the present target problems are related to
+computational fluid dynamics, Meros itself is purely algebraic.
+Because of this, other types of applications can potentially use Meros
+if a similar underlying physics structure is present.
+
+
+\subsection{NOX: Nonlinear Solver Package}
+
+NOX provides a suite of nonlinear solver methods.  It can be easily integrated
+into an application with minimal effort.  Historically, many
+applications have called linear solvers as libraries, but have 
+provided their own nonlinear solver software.  NOX
+can be an improvement because it provides a much larger collection 
+of nonlinear methods,
+and can be easily extended as new nonlinear methods are developed.  
+
+NOX does not depend on any particular linear algebra package, 
+making it easy to install. In order to interface to NOX, the 
+user needs to supply methods that derive from the following abstract classes: 
+\begin{itemize}
+\item NOX::Abstract::Vector
+\item NOX::Abstract::Group
+\end{itemize}
+The Vector interface supports basic vector operations such as dot 
+products and vector updates. 
+The Group interface supports non-vector linear algebra functionality 
+and contains methods 
+to evaluate the function and, optionally, the Jacobian.
+Complete details are provided on the NOX website~\cite{NOX-home-page}.
+
+Although users can provide their own Vector and Group implementation, 
+NOX provides three implementations
+of its own.  These are:
+\begin{enumerate}
+\item NOX::LAPACK
+\item NOX::Epetra
+\item NOX::Petsc
+\end{enumerate}
+The LAPACK interface is an interface to the BLAS/LAPACK library. 
+It is not intended for large-scale
+computations, but to serve as an easy-to-understand example of
+how one might interface to NOX. 
+The Epetra interface is an interface to Epetra.
+The PETSc interface is an interface with the PETSc library. 
+
+All NOX solvers are in the NOX::Solver namespace. The solvers are
+accessed via the NOX::Solver::Manager. The recommended solver is 
+NOX::Solver::LineSearchBased, which is a basic nonlinear solver 
+based on a line search.
+Each solver has a number of options that can be specified, as 
+documented in each class or on the NOX Parameter
+Reference Page. 
+
+The search directions are in the NOX::Direction namespace and 
+accessed via the NOX::Direction::Manager. The
+default search direction for a line-search based method in 
+NOX::Direction::Newton. 
+
+Several line searches are available, as defined in the 
+NOX::LineSearch, and accessed via the
+NOX::LineSearch::Manager class. Examples include 
+\begin{enumerate}
+\item NOX::LineSearch::FullStep
+\item NOX::LineSearch::Backtrack
+\item NOX::LineSearch::MoreThuente
+\end{enumerate}
+
+Convergence or failure of a given solver method is determined by the 
+status tests defined in the NOX::StatusTest namespace. Various status
+tests may be combined via the NOX::StatusTest::Combo object. Users
+are free to create additional status tests that derive from the 
+NOX::StatusTest::Generic class. 
+
 \subsection{Anasazi: Eigensolver package}
 
-Anasazi
 
-An extensible and interoperable framework for large-scale eigenvalue algorithms.
-The motivation for this framework is to provide a generic interface to a collection 
+Anasazi is an extensible and interoperable framework for 
+large-scale eigenvalue algorithms.  The goal of this 
+framework is to provide a generic interface to a collection 
 of algorithms for solving large-scale eigenvalue problems of DOE interest. 
 
 Anasazi is interoperable because both the matrix and vectors (defining the
 eigenspace) are considered to be opaque objects---only knowledge of the matrix and
 vectors via elementary operations is necessary. An implementation of Anasazi
 is accomplished via the use of interfaces. Current interfaces available include
-epetra and so any libraries that understand epetra matrices and vectors (such
+Epetra, so any libraries that understand Epetra matrices and vectors (such
 as AztecOO) may also be used in conjunction with Anasazi.
 
-One of the goals of Anasazi is to allow the user the flexibility to specify the
-data representation for the matrix and vectors and so leverage any existing software
-investment. The algorithms that will be initially available through Anasazi are
-block implicitly restarted Arnoldi and Lanczos methods and preconditioned eigensolvers.
-These include a locally optimal block preconditioned congugate gradient iteration 
-(LOBPCG) for symmetric positive definite generalized eigenvalue problems, and a 
+One of the goals of Anasazi is to allow the user the flexibility 
+to specify the data representation for the matrix and vectors and 
+so leverage any existing software
+investment. The algorithms that will be initially available through 
+Anasazi are block implicitly restarted Arnoldi and Lanczos methods 
+and preconditioned eigensolvers.
+These include a locally optimal block preconditioned congugate 
+gradient iteration  (LOBPCG) for symmetric positive definite 
+generalized eigenvalue problems, and a 
 restarted preconditioned eigensolver for nonsymmetric eigenvalue problems.
 
 
@@ -922,9 +1018,12 @@ restarted preconditioned eigensolver for nonsymmetric eigenvalue problems.
 \section{Conclusions}
 
 The Trilinos project provides a framework for integrating independent 
-solver packages, making the package inter-operable and providing a common ``look-and-feel'' 
-for Trilinos users.  Furthermore, Trilinos provides a collection of useful services for
-independent solver developers, making integration of a package into Trilinos 
+solver packages, making the package inter-operable and providing a 
+common ``look-and-feel'' 
+for Trilinos users.  Furthermore, Trilinos provides a collection 
+of useful services for
+independent solver developers, making integration of a package into 
+Trilinos 
 attractive to developers.
 The primary advantages that the Trilinos Project provides are:
 \begin{enumerate}
@@ -932,20 +1031,26 @@ The primary advantages that the Trilinos Project provides are:
 We can minimize redundant work and jumpstart a new parallel application
 by utilizing Petra class libraries to construct 
 and manipulate matrix, graph and vector objects.
-\item Extensive use of abstract classes, primarily TSF, to define the interaction between Trilinos
+\item Extensive use of abstract classes, primarily TSF, to define the 
+interaction between Trilinos
 packages:  By using abstract interfaces in Trilinos packages, we are
-not explicitly dependent on Petra class for functionality.  This allows us to use any
-concrete matrix and vector software with Trilinos packages, including PETSc, the BLAS 
+not explicitly dependent on Petra class for functionality.  
+This allows us to use any
+concrete matrix and vector software with Trilinos packages, 
+including PETSc, the BLAS 
 and LAPACK.
 \item A collection of common software tools and processes: New packages can be 
-integrated into Trilinos very easily.  Furthermore, if a package does not have
-its own well-developed set of software engineering tools and processes, the Trilinos
-design makes it easy for a package to incorporate Autotools, bug and feature tracking,
+integrated into Trilinos very easily.  Furthermore, if a package 
+does not have its own well-developed set of software engineering tools
+and processes, the Trilinos design makes it easy for a package to 
+incorporate Autotools, bug and feature tracking,
 source code control and mail lists.
-\item A one-to-many API for applications: Application developers who adopt the TSF abstract
-interfaces gain access to many solvers via a single mechanism.  Furthermore, additional third
+\item A one-to-many API for applications: Application developers who 
+adopt the TSF abstract interfaces gain access to many solvers via a 
+single mechanism.  Furthermore, additional third
 party solvers are easily added as necessary.
-\item Solver aggregation capabilities:  Via the TSF aggregation capabilities, it is possible
+\item Solver aggregation capabilities:  Via the TSF aggregation 
+capabilities, it is possible
 to combine many solvers and bring them to bear on a single problem.
 \end{enumerate}
 
