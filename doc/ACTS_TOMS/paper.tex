@@ -87,8 +87,8 @@ minimize the cost of solver integration.  Emphasis is
 required in both new algorithms and new software in order
 to maximum the impact of our efforts.
 
-Sandia has historically had efforts to develop scalable solver algorithms 
-and software.  Often this development has been done within the context of 
+Sandia has developed scalable solver algorithms and software for many years.  
+Often this development has been done within the context of 
 a specific application code, providing a good robust solver that 
 specifically meets the needs of that application.  Even Aztec, one of 
 the most important general-purpose solvers developed at Sandia, was 
@@ -193,7 +193,7 @@ provide a variety of capabilities via straight-forward implementation
 of documented abstract interfaces, without modifying PETSc or Trilinos source code.  
 
 \subsection{Trilinos and the Common Component Architecture}
-The Trilinos package architecture, which the primary difference between
+The Trilinos package architecture, which is the primary difference between
 Trilinos and PETSc,
 is the primary similarity between Trilinos and the CCA.  Like the CCA,
 the Trilinos
@@ -258,9 +258,11 @@ continues to grow.
 
 In our experience mathematical libraries tend to be written by small
 teams of domain experts.  As an example, approximately 25 staff
-members contribute to Trilinos development across approximately 25
+members (not including students) contribute to Trilinos development 
+across approximately 25
 different packages, but most individual Trilinos packages
-are developed by one to three staff members, and no single package has more than five
+are developed by one to three staff members, and no single package 
+has more than five
 developers.   Some staff members contribute to more than one package,
 but very few contribute to more than three packages.  Another
 observation is that mathematical libraries tend to be written
@@ -359,13 +361,58 @@ useful independent of Trilinos itself.  Like all Trilinos packages,
 new\_package is self-contained, and can be configured and
 built independently from the rest of Trilinos.  Similarly, the
 new\_package website is self-contained and essentially independent
-from the rest of the Trilinos website.
+from the rest of the Trilinos website.  Both new\_package and its
+website have been used by other projects that have nothing to do with Trilinos.
 \end{itemize}
 
 
 \section{Overview of Current Package Development}
 \label{sect:Software}
 
+Trilinos package counts have grown rapidly in the four years of its
+existence.  The ``Tri'' in Trilinos originally stood for the initial
+three packages it contained.  Table~\ref{Table:PackageList}
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|l|c|c|c|c|}\hline
+        &             & \multicolumn{4}{|c|}{Release} \\
+\multicolumn{1}{|c|}{Package} &
+\multicolumn{1}{|c|}{Description} &
+\multicolumn{2}{|c|}{3.1 (Sep 2003)} &
+\multicolumn{2}{|c|}{4.0 (Jun 2004)}\\
+          &   & General & Limited &General &Limited \\\hline
+Amesos& 3rd Party Direct Solver Suite  &  & X& X& X \\\hline
+Anasazi& Eigensolver package           &  &  & X& X \\\hline
+AztecOO& Linear Iterative Methods      & X& X& X& X \\\hline
+Belos& Block Linear Solvers            &  &  &  & X \\\hline
+Epetra& Basic Linear Algebra           & X& X& X& X \\\hline
+EpetraExt& Extensions to Epetra        &  & X& X& X \\\hline
+Ifpack& Algebraic Preconditioners      & X& X& X& X \\\hline
+Jpetra& Java Petra Implementation      &  &  &  & X \\\hline
+Kokkos& Sparse Kernels                 &  &  & X& X \\\hline
+Komplex& Complex Linear Methods        & X& X& X& X \\\hline
+LOCA& Bifurcation Analysis Tools       & X& X& X& X \\\hline
+Meros& Segregated Preconditioners      &  & X&  & X \\\hline
+ML& Multi-level Preconditioners        & X& X& X& X \\\hline
+NewPackage& Working Package Prototype  & X& X& X& X \\\hline
+NOX& Nonlinear solvers                 & X& X& X& X \\\hline
+Pliris& Dense direct Solvers           &  &  &  & X \\\hline
+Teuchos& Common Utilities              &  &  & X& X \\\hline
+TSFCore& Abstract Solver API           &  &  & X& X \\\hline
+TSFExt& Extensions to TSFCore          &  &  &  & X \\\hline
+Tpetra& Templated Petra                &  &  &  & X \\\hline\hline
+Totals&                                & 8&11&14&20 \\\hline
+\end{tabular}
+\caption{\label{Table:PackageLists} Trilinos Package Summary and
+Release Status}
+\end{center}
+\end{table}
+shows a brief description and status of packages that have been part
+of the past two releases.  
+In this section we provide an overview of the primary packages in
+current release of Trilinos.  The discussion is ordered so that
+packages that are most fundamental and broadly useful are presented
+first.
 \subsection{Common Tools Package: Teuchos}
 
 As the number of Trilinos packages grows, we have developed the need
@@ -375,31 +422,25 @@ Trilinos to facilitate collection of the common tools.  In order to
 retain the autonomy of other Trilinos packages, no package is required
 to adopt Teuchos classes.  However, a design goal of
 Teuchos is robustness and portability such that dependency on Teuchos
-is not a practical liability.
+is not a practical liability.  Many packages have some
+interoperability with Teuchos but very few have an essential
+dependence on it.  Parameter values for 
+most high-level packages can be set using the Teuchos ParameterList
+class.  For example, ML, IFPACK and AztecOO parameters can be set this
+way, as long as Teuchos support was enabled (via {\tt
+--enable-teuchos}) at configure time.
 
 Teuchos provides classes and interfaces for:
 \begin{enumerate}
 \item Templated access to BLAS and LAPACK interfaces.  Teuchos
 provides a set of interfaces that
-have a single templated parameter for the scalar field.  In cases
+have templated ordinal and scalar types.  Typically the ordinal type
+is the common integer types.  For the scalar type, in cases
 where the template is of type single, double, complex single or
 complex double, the user will be linked to standard BLAS and LAPACK
 functions.  For other data types, we provide generic loops sets for a
-limited set of key kernels.  For example, if the user specifies a
-dense matrix-matrix multiply operation, the standard GEMM BLAS kernel
-will be called for the four primary scalar types.  For other data
-types, Teuchos provides a triple nested loop set that implements the
-same functionality in terms of the ``+'' and ``*'' operators and uses
-scalar traits to define zero and one.  If the
-data type that user passed in supports ``operator+'' and ``operator*''
-and has a well-defined concept of zero, identity and magnitude,
-this type of loop set with compile and execute correctly.  We have used this
-mechanism to compute basic matrix and vector calculations in
-arbitrary precision arithmetic using ARPREC~\cite{ARPREC}.  
-This mechanism can also be used to support interval
-arithmetic, geometric transformation calculations, integers and
-calculations with many more data types.  Clever use of this mechanism can be
-used in multiple ways to analyze and improve the robustness of numerical algorithms.
+limited set of key kernels.
+
 \item Parameter lists:  A parameter list is a collection of key-value
 pairs that can be used to communicate with a packages.  A parameter
 can be used to tune how a package is used, or can provide information
@@ -408,11 +449,6 @@ back to the user from a package.  For example the pair (``Residual Tolerance'',
 use for convergence testing in an iterative process.  Similarly, the
 pair (``Residual Norm'', 9.3245E-7) can be passed back to the user as
 the actual computed residual norm.  
-
-Although a number of packages in Trilinos use their own implementation
-of parameter lists internally, all packages will be able to parse
-Teuchos lists.  This allows users to utilize the same parameter list
-constructs across multiple Trilinos packages.
 
 \item Memory management tools:  Classes for aiding in correct allocation 
 and deletion of memory.  In particular, a reference counting pointer class that 
@@ -434,13 +470,6 @@ the given scalar type.  For example, the magnitude type for double and
 complex double is double.
 \item random: Function that produces a single random value of the
 given scalar type.
-\item Optional machine parameters: Optionally, a scalar type can also
-have machine parameters defined.  These parameter have a one-to-one
-match with the LAPACK LAMCH parameters.  A partial list of these
-parameters includes machine epsilon, arithmetic base, underflow and
-overflow.  These parameters are important for robust floating point
-calculations in many situations, but proper definitions may not be
-obvious or essential for non-standard scalar types.
 \end{itemize}
 
 OrdinalTraits provides information for data types such as int.  Again
@@ -519,7 +548,9 @@ Epetra classes to handle the intricacies of parallel execution.
 Epetra also has extensive parallel data  redistribution capabilities, 
 including an interface to the Zoltan load-balancing
 library~\cite{zoltan-ug}.  Epetra is split into two packages:  a core
-package and a set of extensions.
+package and a set of extensions.  As mentioned above, Epetra supports
+only double-precision real arithmetic.  Support for other types is
+found in Tpetra.
 
 \subsubsection{Tpetra: Templated C++ Implementation of Petra Object Model}
 
@@ -564,20 +595,6 @@ of pure Java equivalents of these libraries.  Several efforts, including
 Ninja~\cite{MoreMidkGuptArtiWuAlma2001} and 
 MPJ~\cite{CarpGetoJuddSkjeFox2000}, provide equivalent functionality 
 to the BLAS, LAPACK and MPI, but are completely written in Java.
-
-We will fully implement Jpetra as a peer library to Epetra.  By making 
-extensive use of Java interfaces, we can create loose dependencies on 
-emerging BLAS, LAPACK and MPI replacements as they become mature and 
-stable.  Recently, several research 
-efforts~\cite{MoreMidkGuptArtiWuAlma2001,SCIMARK-site} have shown 
-that there is no fundamental performance bottleneck using Java.  
-Instead, Java compilers and user practices have been the issue.  
-As a result, Java holds much promise as a high performance computing 
-language.  Java also has native graphical user 
-interfaces (GUI) support.  A significant part of Jpetra will be 
-the development of GUI tools for visualization and manipulation of 
-Jpetra objects.
-
 
 \subsection{TSF: The Trilinos Abstract Class Packages}
 
@@ -625,33 +642,33 @@ the investment in sophisticated abstract numerical algorithms across
 many concrete linear algebra libraries and gives application
 developers a single API that provides access to many solver packages.
 
-TSF provides abstract interfaces for vector, matrix, operator and 
-solver objects.  In addition, it has powerful aggregation mechanisms 
-that allow existing TSF objects to be combined in a variety of ways 
-to create new TSF objects.  TSF can be useful in many situations.  
-For example:
-\begin{enumerate}
+% TSF provides abstract interfaces for vector, matrix, operator and 
+%solver objects.  In addition, it has powerful aggregation mechanisms 
+%that allow existing TSF objects to be combined in a variety of ways 
+%to create new TSF objects.  TSF can be useful in many situations.  
+%For example:
+%\begin{enumerate}
 
-\item Generic Krylov method implementation:  If a preconditioned Krylov solver 
-is implemented using TSF vectors and operators, then any concrete package 
-that implements the TSF vector and operator interfaces can be used 
-with the Krylov solver.  Both the Belos iterative linear solver
-package an Anasazi eigensolver package are based on TSF interfaces and
-are therefore independent of the details of how vectors and linear
-operators are implemented.  
-
-\item Generic solver driver:  If an application accesses solver 
-services via the TSF solver interfaces, then any solver that 
-implements the TSF solver interface is accessible to that application.
-
-\item Aggregate objects to implicitly construct aggregate operators: 
-TSF provides mechanisms to implicitly construct a matrix of operators, 
-the sum or composition of two operators, the inverse of an operator, 
-etc.  Similar aggregation mechanisms are available for vectors, matrices
-and solvers.
-
-\end{enumerate}
-
+%\item Generic Krylov method implementation:  If a preconditioned Krylov solver 
+%is implemented using TSF vectors and operators, then any concrete package 
+%that implements the TSF vector and operator interfaces can be used 
+%with the Krylov solver.  Both the Belos iterative linear solver
+%package an Anasazi eigensolver package are based on TSF interfaces and
+%are therefore independent of the details of how vectors and linear
+%operators are implemented.  
+%
+%\item Generic solver driver:  If an application accesses solver 
+%services via the TSF solver interfaces, then any solver that 
+%implements the TSF solver interface is accessible to that application.
+%
+%\item Aggregate objects to implicitly construct aggregate operators: 
+%TSF provides mechanisms to implicitly construct a matrix of operators, 
+%the sum or composition of two operators, the inverse of an operator, 
+%etc.  Similar aggregation mechanisms are available for vectors, matrices
+%and solvers.
+%
+%\end{enumerate}
+%
 \subsection{AztecOO: Concrete Preconditioned Iterative Solvers}
 
 AztecOO is an object-oriented follow-on to Aztec~\cite{Aztec2.1}.  
@@ -738,50 +755,7 @@ right-hand-side solves can be done sequentially.
 \subsection{Komplex: Solver Suite for Complex-valued Linear Systems}
 
 Komplex solves complex-valued linear systems using equivalent 
-real-valued formulations of twice the dimension.  Given the following 
-complex-valued linear system:
-\begin{equation}
-\label{Complex}
-C w = d,
-\end{equation}
-where $C$ is an $m$-by-$n$ known
-complex matrix, $d$ is a known right-hand side and $w$ is unknown, 
-we can write Equation~(\ref{Complex})
-in its real and imaginary terms,
-\begin{equation}\label{linearsystem}
-( A + i B )(x+iy) = b+ic.
-\end{equation}
-Equating the real and imaginary parts of the expanded equation, 
-respectively, gives rise to four
-possible 2-by-2 block formulations.  We list one of these in 
-Equation~(\ref{Komplex-1}).
-\paragraph*{K1 Formulation}
-\begin{equation}\label{Komplex-1}
-   \left( \begin{array}{cc}
-                       A & -B  \\
-                       B &  A
-   \end{array}
-   \right)
-   \left( \begin{array}{c}
-                                    x  \\
-                                    y
-                             \end{array}
-   \right)
-   =
-   \left( \begin{array}{c}
-                                    b  \\
-                                    c
-                             \end{array}
-   \right).
-\end{equation}
-
-Although most preconditioning and iterative methods are generally 
-well-defined for complex-valued systems, with real-valued systems 
-being a special case, most widely-available solver packages focus 
-exclusively on real-valued systems or treat complex-valued systems 
-as an afterthought.  Therefore, by transforming the complex-valued 
-system into a real-valued system, we can immediately leverage all 
-of the investment in real-valued solvers.  Komplex constructs an 
+real-valued formulations of twice the dimension.  It constructs an 
 equivalent real-valued formulation for a given complex-valued linear 
 system and then calls AztecOO to solve the problem, returning the 
 solution back to the user in a form compatible with the original 
@@ -803,7 +777,7 @@ incomplete Cholesky with threshold dropping.
 
 \subsection{ML: Multi-level Preconditioner Package}
 
-ML is a multigrid, or more generally, a multi-level preconditioner package for
+ML is a multi-level preconditioner package for
 solving linear systems
 from partial differential equation (PDE) discretizations.
 Although any linear system can be used with ML,
@@ -828,19 +802,19 @@ Such systems arise from discretizations of the eddy current approximations to
 Maxwell's equations by either edge elements or Yee-type schemes
 \cite{Bochev:03a,Yee:66}.
 
-The smoother is a specialized distributed relaxation method \cite{Bochev:03a}.
-This method explicitly smooths in $\mbox{range}(S)$, smooths on a projected
- residual
-equation in $\ker(S)$, and updates the approximate solution.
+%The smoother is a specialized distributed relaxation method \cite{Bochev:03a}.
+%This method explicitly smooths in $\mbox{range}(S)$, smooths on a projected
+% residual
+%equation in $\ker(S)$, and updates the approximate solution.
 
-The prolongation operator is constructed so that $\ker(S)$ is properly
- represented on each level.
-In order for ML to build this prolongator, the user must provide two
-additional auxiliary operators: a discrete gradient operator, and a nodal
- finite element matrix.
-Both operators are easy to construct and are often already available in
- applications.
-Further details can be found in \cite{Bochev:03a,Bochev:03b}:
+%The prolongation operator is constructed so that $\ker(S)$ is properly
+% represented on each level.
+%In order for ML to build this prolongator, the user must provide two
+%additional auxiliary operators: a discrete gradient operator, and a nodal
+% finite element matrix.
+%Both operators are easy to construct and are often already available in
+% applications.
+%Further details can be found in \cite{Bochev:03a,Bochev:03b}:
 %
 \item Adaptive Grid approach: The original grid is used as the coarse grid and
 the adaptive refinements determined the fine grid.
@@ -852,18 +826,18 @@ Graph and spatial coordinates are used,
 but there is no necessary correlation required between the two grids.
 \end{enumerate}
 
-ML has two modes of operation.
-In the first mode, ML can be run as a stand-alone solver.
-ML provides its own smoothers and iterative methods.
-In the second mode of operation,
-ML can also be used as a preconditioner to iterative methods within Aztec
- or AztecOO.
-
-ML is quite flexible with regard to matrix formats.
-ML accepts user matrix data in its own format.
-In this case, ML needs two matrix access functions, the first to return
-a matrix row and the second to perform a matrix-vector multiply.
-ML also accepts Epetra matrix objects.
+%ML has two modes of operation.
+%In the first mode, ML can be run as a stand-alone solver.
+%ML provides its own smoothers and iterative methods.
+%In the second mode of operation,
+%ML can also be used as a preconditioner to iterative methods within Aztec
+% or AztecOO.
+%
+%ML is quite flexible with regard to matrix formats.
+%ML accepts user matrix data in its own format.
+%In this case, ML needs two matrix access functions, the first to return
+%a matrix row and the second to perform a matrix-vector multiply.
+%ML also accepts Epetra matrix objects.
 More information is available in either the ML User's manual
 \cite{TuminaroTong:00a} and at the ML website~\cite{ML-home-page}.
 
@@ -905,39 +879,41 @@ supply methods that derive from the NOX Vector and Group abstract
 classes.  The Vector interface supports basic vector operations such
 as dot products and vector updates. The Group interface supports
 non-vector linear algebra functionality and contains methods to
-evaluate the function and, optionally, the Jacobian.  Complete details
-are provided on the NOX website~\cite{NOX-home-page}.
-
+evaluate the function and, optionally, the Jacobian.  
 Although users can provide their own Vector and Group implementation,
 NOX provides three implementations of its own: LAPACK, Epetra and
-PETSc.  The LAPACK interface is an interface to the BLAS/LAPACK
-library. It is not intended for large-scale computations, but to serve
-as an easy-to-understand example of how one might interface to
-NOX.
+PETSc.  Complete details
+are provided on the NOX website~\cite{NOX-home-page}.
 
-All NOX solvers are in the NOX::Solver namespace. The solvers are
-accessed via the NOX::Solver::Manager. The recommended solver is the
-NOX LineSearchBased solver, which is a basic nonlinear solver based on
-a line search.  Each solver has a number of options that can be
-specified, as documented in each class or on the NOX Parameter
-Reference Page.
-
-The search directions are in the NOX::Direction namespace and accessed
-via the NOX::Direction::Manager. The default search direction for a
-line-search based method is the Newton direction.
- 
-Several line searches are available, as defined in the
-NOX::LineSearch, and accessed via the NOX::LineSearch::Manager
-class.
-
-Convergence or failure of a given solver method is determined by the
-status tests defined in the NOX::StatusTest namespace. Various status
-tests may be combined via the Combo object. Users are free to create
-additional status tests that derive from the Generic status test
-class.
+%Although users can provide their own Vector and Group implementation,
+%NOX provides three implementations of its own: LAPACK, Epetra and
+%PETSc.  The LAPACK interface is an interface to the BLAS/LAPACK
+%library. It is not intended for large-scale computations, but to serve
+%as an easy-to-understand example of how one might interface to
+%NOX.%
+%
+%All NOX solvers are in the NOX::Solver namespace. The solvers are
+%accessed via the NOX::Solver::Manager. The recommended solver is the
+%NOX LineSearchBased solver, which is a basic nonlinear solver based on
+%a line search.  Each solver has a number of options that can be
+%specified, as documented in each class or on the NOX Parameter
+%Reference Page.%
+%
+%The search directions are in the NOX::Direction namespace and accessed
+%via the NOX::Direction::Manager. The default search direction for a
+%line-search based method is the Newton direction.
+% 
+%Several line searches are available, as defined in the
+%NOX::LineSearch, and accessed via the NOX::LineSearch::Manager
+%class.%
+%
+%Convergence or failure of a given solver method is determined by the
+%status tests defined in the NOX::StatusTest namespace. Various status
+%tests may be combined via the Combo object. Users are free to create
+%additional status tests that derive from the Generic status test
+%class.
 
 \subsection{LOCA: Library of Continuation Algorithms}
-
 
 LOCA is a package of scalable continuation and bifurcation analysis algorithms.
 It is designed as an extension to the NOX nonlinear solver package since
@@ -954,48 +930,50 @@ large problems, such as those that arise from
 discretizations of partial differential equations, and to run on distributed
 memory parallel machines~\cite{LOCA-MPSalsa-paper}.  
 
-LOCA provides robust parameter continuation algorithms 
-with sophisticated step size controls for tracking steady
-solutions or bifurcations. There is also an
-artificial parameter homotopy algorithm.
-The approach in LOCA for locating and tracking bifurcations begins with augmenting 
-the residual equations defining a steady state with additional equations that 
-describe the bifurcation~\cite{LOCA-manual}. This is done generically. This 
-augmented system is then sent to the NOX library for solution.
-Instead of assembling the Jacobian matrix for the entire 
-augmented system (a task that involves second derivatives and dense matrix rows), 
-bordering algorithms are used to decompose the linear solve into several solves 
-with smaller matrices. Almost all of the algorithms just require multiple solves 
-of the Jacobian matrix for the steady state problem to calculate the Newton 
-updates for the augmented system. This greatly simplifies the implementation, 
-since this is the linear system solve that an application code using Newton's 
-method will have invested in. Only the Hopf tracking algorithm requires 
-the solution of a larger matrix, which is the complex matrix involving the 
-Jacobian matrix and an imaginary multiple of the mass matrix. For this solve
-the Komplex package is used. Online documentation is available
-through the NOX webpage~\cite{NOX-home-page}.
+%LOCA provides robust parameter continuation algorithms 
+%with sophisticated step size controls for tracking steady
+%solutions or bifurcations. There is also an
+%artificial parameter homotopy algorithm.
+%The approach in LOCA for locating and tracking bifurcations begins with augmenting 
+%the residual equations defining a steady state with additional equations that 
+%describe the bifurcation~\cite{LOCA-manual}. This is done generically. This 
+%augmented system is then sent to the NOX library for solution.
+%Instead of assembling the Jacobian matrix for the entire 
+%augmented system (a task that involves second derivatives and dense matrix rows), 
+%bordering algorithms are used to decompose the linear solve into several solves 
+%with smaller matrices. Almost all of the algorithms just require multiple solves 
+%of the Jacobian matrix for the steady state problem to calculate the Newton 
+%updates for the augmented system. This greatly simplifies the implementation, 
+%since this is the linear system solve that an application code using Newton's 
+%method will have invested in. Only the Hopf tracking algorithm requires 
+%the solution of a larger matrix, which is the complex matrix involving the 
+%Jacobian matrix and an imaginary multiple of the mass matrix. For this solve
+%the Komplex package is used. Online documentation is available
+%through the NOX webpage~\cite{NOX-home-page}.
 
 \subsection{Anasazi: Eigensolver package}
 
-
 Anasazi is an extensible and interoperable framework for 
-large-scale eigenvalue algorithms.  The goal of this 
-framework is to provide a generic interface to a collection 
-of algorithms for solving large-scale eigenvalue problems. 
-
-Anasazi is interoperable because both the matrix and vectors (defining the
-eigenspace) are considered to be opaque objects---only knowledge of the matrix and
-vectors via elementary operations is necessary. An implementation of Anasazi
-is accomplished via the use of interfaces. Current interfaces available include
-Epetra, so any libraries that understand Epetra matrices and vectors (such
-as AztecOO) may also be used in conjunction with Anasazi, and an abstract interface
-to the LOCA package.
-
-One of the goals of Anasazi is to allow the user the flexibility 
-to specify the data representation for the matrix and vectors and 
-so leverage any existing software
-investment. The algorithms that will be initially available through 
-Anasazi are block implicitly restarted Arnoldi and Lanczos methods 
+large-scale eigenvalue algorithms written using TSF interfaces to
+abstract operator and vector objects.  
+%The goal of this 
+%framework is to provide a generic interface to a collection 
+%of algorithms for solving large-scale eigenvalue problems. 
+%
+%Anasazi is interoperable because both the matrix and vectors (defining the
+%eigenspace) are considered to be opaque objects---only knowledge of the matrix and
+%vectors via elementary operations is necessary. An implementation of Anasazi
+%is accomplished via the use of interfaces. Current interfaces available include
+%Epetra, so any libraries that understand Epetra matrices and vectors (such
+%as AztecOO) may also be used in conjunction with Anasazi, and an abstract interface
+%to the LOCA package.
+%
+%One of the goals of Anasazi is to allow the user the flexibility 
+%to specify the data representation for the matrix and vectors and 
+%so leverage any existing software
+%investment. 
+The first version of  
+Anasazi includes block implicitly restarted Arnoldi and Lanczos methods 
 and preconditioned eigensolvers.
 These include a locally optimal block preconditioned conjugate 
 gradient iteration  (LOBPCG) for symmetric positive definite 
@@ -1020,94 +998,149 @@ analysis of codes with fixed-point iterations (such as explicit
 integration codes), based on the Recursive Projection Method, is
 another solver package under development.
 
-To see a complete list of new packages in the future, please look at
-the online version of this overview document, available from the
-Trilinos website~\cite{Trilinos-home-page}.
+\section{Trilinos Package Interoperability}
+\label{sect:Interoperability}
 
-\section{Trilinos Package Interoperability Mechanisms}
-\label{sect:PackageDefinition}
-As mentioned above, what a package {\it must} do to be called a Trilinos
-package is minimal, and varies with each package.  In this section we
-list the primary mechanisms for a package to become part of Trilinos.
+As mentioned above, what a package {\it must} do to be Trilinos
+compatible is minimal, and varies with each package.  In this section we
+discuss the primary mechanisms for Trilinos compatibility
+and then go on to illustrate with code fragments how some of these
+mechanisms work.  Table~\ref{Table:Mechanisms} lists the six primary
+interoperability mechanisms.
 Note that each mechanism is an extension or augmentation of package
 capabilities, creating connections between packages.  Thus, a package does 
-not need to change its internal structure to become part of Trilinos.
-
-\paragraph*{Mechanism 1: Package Accepts User Data as Epetra Objects}
-All solver packages require some user data (usually in the form of
-vectors and matrices) or require the user to supply the action of an
-operator on a vector.  Accepting this data in the form of Epetra
-objects is the first Trilinos interoperability mechanism.  Any package
+not need to change its internal structure to become Trilinos compatible.
+\begin{table}
+\begin{center}
+\begin{tabular}{|p{1.75in}|p{2.75in}|}\hline
+\multicolumn{1}{|c|}{Mechanism} &
+\multicolumn{1}{|c|}{Comments}\\\hline
+Package accepts user matrices and vectors as Epetra objects. &  
+\begin{enumerate}
+\item Any package
 that accepts user data this way immediately becomes accessible to an
-application that has built its data using Epetra.  We expect every
-Trilinos package to implement this mechanism in some way.  Since
-Epetra provides a variety of ways to extract data from an Epetra
-object, minimally we expect that a package can at least copy data from
-the user objects that were built using Epetra.  More often, a well-designed
-package can typically encapsulate Epetra objects and ask for services from
-the Epetra objects without explicitly copying them.  In the future, as
-Tpetra matures (and C++ compilers mature), we expect Tpetra to be a
-companion package to Epetra, fulfilling a similar role.
-
-\paragraph*{Mechanism 2: Package Callable via TSF Interfaces}
-TSF provides a set of abstract interfaces that can be used to
-interface to a variety of solver packages.  TSF can accept
-pre-constructed solver objects, e.g., preconditioners, iterative
-solvers, etc., by simple encapsulation or it can
-construct solver objects using one of a variety of factories.  Once
-constructed, a solver object can be further modified by passing it a
-parameter list containing a list of key-value pairs that can control
-solver behavior when it is trying to solve a problem.  For example,
-the parameter list could specify a residual tolerance for an iterative solver.
-
-A package is callable via TSF if it implements one or more of the TSF
-abstract class interfaces, making it available to TSF users as one of a
-suite of possible solver options.
-
-\paragraph*{Mechanism 3: Package Can Use Epetra Internally}
-
-Another interoperability mechanism available to a package is that of
-using Epetra objects as the
-internal objects for storing vector, matrices, etc. that are seldom or
-never seen by the user.  In many instances, this mechanism has no
-practical advantages.  However, in some instances, there can be a
-saving in storage requirements.  Furthermore, by using Epetra objects
+application that has built its data using Epetra. 
+\item Minimally we expect that a package can copy data from user
+objects built using Epetra.  Often a package can encapsulate Epetra
+objects without explicitly copying data.  
+\end{enumerate} \\\hline
+Package parameters can be set and retrieved via Teuchos ParameterLists. &
+\begin{enumerate}
+\item The Teuchos ParameterList provides a uniform way to handle parameters
+across packages.  
+\item Package dependence on Teuchos is typically
+conditional, enabled by { \tt --enable-teuchos}. 
+\end{enumerate}\\\hline 
+Package provides adaptors to TSF interfaces. &
+\begin{enumerate}
+\item Most packages can supply preconditioning or solver services in a
+generic sense.
+\item If a package provides an implementation of one or more TSF
+abstract interfaces, it is usable by any other package written using
+TSF interfaces.
+\end{enumerate}\\\hline
+Package can use Epetra internally. &
+\begin{enumerate}
+\item Epetra (and in the future Tpetra) can be used for storing
+vector, matrices, etc. that are seldom or
+never seen by the user.  
+\item  By using Epetra objects
 internally, a package can in turn use other Trilinos packages to
 manipulate its own internal objects.
+\end{enumerate}\\\hline
+Package accesses services via TSF interfaces.&
+\begin{enumerate}
+\item Example of generic programming.
+\item Allows access to multiple other Trilinos packages.
+\end{enumerate}\\\hline
+Package build process is compatible with Trilinos {\tt configure} script. &
+\begin{enumerate}
+\item The Trilinos {\tt configure} script supports many options such
+as selective enabling of packages, specification of BLAS and LAPACK
+location, etc.
+\item Packages can enhance interoperability by supporting these build
+options as appropriate.
+\end{enumerate}\\\hline
+\end{tabular}
+\caption{\label{Table:Mechanisms} Package Interoperability Mechanisms}
+\end{center}
+\end{table}
+%\paragraph*{Mechanism 1: Package Accepts User Data as Epetra Objects}
+%All solver packages require some user data (usually in the form of
+%vectors and matrices) or require the user to supply the action of an
+%operator on a vector.  Accepting this data in the form of Epetra
+%objects is the first Trilinos interoperability mechanism.  Any package
+%that accepts user data this way immediately becomes accessible to an
+%application that has built its data using Epetra.  We expect every
+%Trilinos package to implement this mechanism in some way.  Since
+%Epetra provides a variety of ways to extract data from an Epetra
+%object, minimally we expect that a package can at least copy data from
+%the user objects that were built using Epetra.  More often, a well-designed
+%package can typically encapsulate Epetra objects and ask for services from
+%the Epetra objects without explicitly copying them.  In the future, as
+%Tpetra matures (and C++ compilers mature), we expect Tpetra to be a
+%companion package to Epetra, fulfilling a similar role.
+%
+%\paragraph*{Mechanism 2: Package Callable via TSF Interfaces}
+%TSF provides a set of abstract interfaces that can be used to
+%interface to a variety of solver packages.  TSF can accept
+%pre-constructed solver objects, e.g., preconditioners, iterative
+%solvers, etc., by simple encapsulation or it can
+%construct solver objects using one of a variety of factories.  Once
+%constructed, a solver object can be further modified by passing it a
+%parameter list containing a list of key-value pairs that can control
+%solver behavior when it is trying to solve a problem.  For example,
+%the parameter list could specify a residual tolerance for an iterative solver.
+%
+%A package is callable via TSF if it implements one or more of the TSF
+%abstract class interfaces, making it available to TSF users as one of a
+%suite of possible solver options.
+%
+%\paragraph*{Mechanism 3: Package Can Use Epetra Internally}
+%
+%Another interoperability mechanism available to a package is that of
+%using Epetra objects as the
+%internal objects for storing vector, matrices, etc. that are seldom or
+%never seen by the user.  In many instances, this mechanism has no
+%practical advantages.  However, in some instances, there can be a
+%saving in storage requirements.  Furthermore, by using Epetra objects
+%internally, a package can in turn use other Trilinos packages to
+%manipulate its own internal objects.
+%
+%\paragraph*{Mechanism 4: Package accesses services via TSF interface}
+%TSF provides an abstract solver interface with access to multiple concrete 
+%solvers. 
+%A package can access solver services via TSF and therefore be able to use
+%any solver that implements the TSF interface.  By using TSF to access
+%external objects such vectors, linear operators and solvers, a package
+%has access to any concrete implementation of the TSF interfaces.  This
+%is beneficial for access to a broad set of concrete classes, and also
+%minimizes the need for additional abstract interfaces and the
+%corresponding concrete implementations of these additional abstract interfaces.
+%
+%\paragraph*{Mechanism 5: Package Builds Under Trilinos {\tt configure} Scripts}
+%Trilinos uses Autoconf~\cite{Autoconf} and Automake~\cite{Automake} to
+%build libraries and test suites.  The Trilinos directory structure
+%keeps each Trilinos package completely self-contained.  As such, each
+%package is free to use its own configuration and build process.  At
+%the same time, Trilinos has a top-level configure script that traverses
+%the directory structure invoking package configure scripts,
+%passing on any parameter definitions
+%from the top level.  Similarly, the make process is also recursive.
+%
+%A package may easily be automatically built from the top-level
+%Trilinos configuration and make process by copying and modifying the
+%Autoconf and Automake scripts from another package.  The benefit for
+%doing this is that Autoconf and Automake improve the portability of a
+%package across a broad set of platforms.  Also, Automake provides a
+%rich set of targets for building libraries, software distributions,
+%test suites and installation processes.  If a package adopts the
+%Trilinos configuration and build process, it will be built
+%automatically along with other Trilinos packages.
 
-\paragraph*{Mechanism 4: Package accesses services via TSF interface}
-TSF provides an abstract solver interface with access to multiple concrete 
-solvers. 
-A package can access solver services via TSF and therefore be able to use
-any solver that implements the TSF interface.  By using TSF to access
-external objects such vectors, linear operators and solvers, a package
-has access to any concrete implementation of the TSF interfaces.  This
-is beneficial for access to a broad set of concrete classes, and also
-minimizes the need for additional abstract interfaces and the
-corresponding concrete implementations of these additional abstract interfaces.
 
-\paragraph*{Mechanism 5: Package Builds Under Trilinos {\tt configure} Scripts}
-Trilinos uses Autoconf~\cite{Autoconf} and Automake~\cite{Automake} to
-build libraries and test suites.  The Trilinos directory structure
-keeps each Trilinos package completely self-contained.  As such, each
-package is free to use its own configuration and build process.  At
-the same time, Trilinos has a top-level configure script that traverses
-the directory structure invoking package configure scripts,
-passing on any parameter definitions
-from the top level.  Similarly, the make process is also recursive.
-
-A package may easily be automatically built from the top-level
-Trilinos configuration and make process by copying and modifying the
-Autoconf and Automake scripts from another package.  The benefit for
-doing this is that Autoconf and Automake improve the portability of a
-package across a broad set of platforms.  Also, Automake provides a
-rich set of targets for building libraries, software distributions,
-test suites and installation processes.  If a package adopts the
-Trilinos configuration and build process, it will be built
-automatically along with other Trilinos packages.
-
-\section{An Illustration of Trilinos Interoperability}
-\label{sect:meros}
+\subsection{An Illustration of Trilinos Interoperability}
+\label{subsect:meros}
 
 The Meros package in Trilinos is designed to provide scalable
 preconditioners for the incompressible Navier-Stokes equations and similarly
