@@ -29,9 +29,6 @@ Michael Heroux \\
 Computational Math/Algorithms \\ \\
 Roscoe Bartlett \\
 Optimization/Uncertainty Estim \\ \\
-Kevin Long \\
-Paul Boggs \\
-Computational Sciences \& Math \\ \\
 Sandia National Laboratories\footnote{
 Sandia is a multiprogram laboratory operated by Sandia Corporation, a
 Lockheed-Martin Company, for the United States Department of Energy
@@ -43,13 +40,11 @@ under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA
 % Set some things we need for SAND reports. These are mandatory
 %
 \SANDnum{SAND2004-???}
-\SANDprintDate{October 2004}
+\SANDprintDate{October 22,2004}
 \SANDauthor{
 Heidi Thornquist \\
 Michael Heroux \\
-Roscoe Bartlett \\
-Kevin Long \\
-Paul Boggs
+Roscoe Bartlett
 }
 
 % ---------------------------------------------------------------------------- %
@@ -243,7 +238,7 @@ which transform the system ({}\ref{belos:eqn:ScaledSystem}) into
 If scaling is not first performed then the preconditioners $P_L$ and
 $P_R$ are formed from the unscaled operator $A$.  The operator
 $\hat{A} = P_L \tilde{A} P_R$.  will be refereed to as the
-{}\textit{combined} operator.
+{}\textit{composite} operator.
 
 In order to use the scaled preconditioned operator $\hat{A}$, the the
 original right-hand side(s) $B$ must be transformed as
@@ -283,7 +278,7 @@ X = S_R P_R \hat{X} \in \RE^{n \times m}.
 %
 {}\noindent{}The details on how this solution multi-vector $X$ is
 recovered will vary based on the specific type of concrete
-{}\textit{iterative solver implementation} being used (for example,
+{}\textit{concrete iterative linear solver} being used (for example,
 GMRES and BiCGStab will handle this differently).
 
 The software described here is designed to accept the operators
@@ -429,10 +424,10 @@ it will be clear what quantities are immediately available and what
 quantities will require extra computation.
 
 The scaled preconditioned multi-vector quantities $\breve{R}$,
-$\breve{X}$ and/or $\breve{Z}$ would be dealt with by an iterative
-linear solver implementation that did not want to be concerned about
-what type of scaling and/or preconditioning was being used but instead
-just cared about the combined operator.
+$\breve{X}$ and/or $\breve{Z}$ would be dealt with by a concrete
+iterative linear solver that did not want to be concerned about what
+type of scaling and/or preconditioning was being used but instead just
+cared about the composite operator.
 
 Every iterative solver method can cheaply define at least some native
 relative residual error.  This native relative residual error will
@@ -454,7 +449,7 @@ n_j = ||\breve{R}_{(:,j)}|| / ||(\breve{R}_0)_{(:,j)}||, \; \mbox{for} j = 1 \ld
 \end{equation}
 %
 in the case of GMRES, BiCGStab and others that only care about the
-combined operator.  Here the norm $||.||$ will be defined to be the
+composite operator.  Here the norm $||.||$ will be defined to be the
 natural norm of the vector spaces involved (i.e.~$||x|| =
 {}\sqrt{<x,x>}$ where $<.,.>$ is the defined scalar product of the
 vector space involved).
@@ -490,7 +485,7 @@ represented using basic TSFCore interfaces.  In addition, the
 criteria.  Such convergence criteria will be referred to as
 {}\textit{status tests}.
 
-\item{}\textit{Iterative solver implementation} : 
+\item{}\textit{Concrete iterative linear solver} : 
 An implementation of a (Krylov) iterative linear equation solver such
 as GMRES.  Such an implementation may be a true block RHS solver or
 just a single-RHS solver.
@@ -510,24 +505,26 @@ solving a set of equations using these iterative linear solvers.
 \caption{
 \label{belos:fig:BelosUseCases}
 UML use-case diagram : Basic use cases
-for {}\textit{clients} and {}\textit{iterative solver implementations}.}
+for {}\textit{clients} and {}\textit{concrete iterative linear solver}.}
 \end{figure}
 \esinglespace}
 
 Some more specific requirements related to the use cases shown in
 Figure {}\ref{belos:fig:BelosUseCases} for of above defined
-{}\textit{client} and {}\textit{iterative solver implementation}
+{}\textit{client} and {}\textit{concrete iterative linear solver}
 software are given below:
 
 \begin{enumerate}
 
 \item
+
 A {}\textit{client} should be able to setup and solve a linear system
 without knowing the concrete type of iterative linear solver being
 used.  {}\textit{Justification:} This is the main -- if not the entire
 -- point of this whole design.  {}\textit{Importance:} Fundamental.
 
 \item
+
 The implemented algorithms should be near optimal in storage and CPU
 time.  {}\textit{Justification:} An algorithm coded by hand in Fortran
 77 should not be significantly more efficient any way which is
@@ -535,6 +532,7 @@ critical for scientific computing.  {}\textit{Importance:}
 Fundamental.
 
 \item
+
 The linear solvers should accept objects only through the basic
 TSFCore linear operator, vector, multi-vector and vector space
 interfaces.  {}\textit{Justification:} Automatic interoperability
@@ -542,6 +540,7 @@ between different types of ANAs requires this.  {}\textit{Importance:}
 Fundamental.
 
 \item
+
 The linear solvers should use the definition of the scalar product
 defined by the vector spaces defined by the operators in the linear
 problem.  This means that the scalar product $<x,u>$ defined by the
@@ -558,6 +557,7 @@ convienent to only require the accumulation of the scalar product
 itself.  {}\textit{Importance:} Fundamental.
 
 \item
+
 These interfaces should be general and efficient for both true block
 RHS and single RHS iterative linear solvers.
 {}\textit{Justification:} While block iterative linear solvers are
@@ -566,71 +566,78 @@ or can only exploit linear solves for single RHSs.  For example, a
 basic Newton method can only solve linear systems one RHS at a time.
 In addition, we want to encourage the development of single-RHS
 iterative methods in this framework, not discourage it by requiring
-that all concrete iterative linear solvers be true block solvers.
-{}\textit{Importance:} Fundamental.
+that all {}\textit{concrete iterative linear solvers} be true block
+solvers.  {}\textit{Importance:} Fundamental.
 
 \item
+
 These interfaces should support left and/or right preconditioners.
 {}\textit{Importance:} Fundamental.
 
 \item
-The interfaces should support {}\textit{iterative solver
-implementations} that do not require adjoints and those that do (only
-for operators that support adjoints of course).
-{}\textit{Importance:} Fundamental.
+
+The interfaces should support {}\textit{concrete iterative linear
+solvers} that do not require adjoints and those that do (only for
+operators that support adjoints of course).  {}\textit{Importance:}
+Fundamental.
 
 \item
+
 Interfaces and utilities should, when possible, insulate
-{}\textit{iterative solver implementations} away from details of
+{}\textit{concrete iterative linear solver} away from details of
 whether left and/or right preconditioning is being used when applying
 the composite operator but also allow this information to be known,
 and access to constituent operators should be provided if desired.
 {}\textit{Justification:} Most iterative solver algorithms only care
-about the combined preconditioned operator and need not be bothered
-with preconditioners but others do like flexible GMRES which needs to
-apply the right preconditioner separately from the left preconditioner
-and operator itself.  CG is another example where the preconditioner
-can be treated in a special way (i.e.~to define a new definition of
-the scalar product). {}\textit{Importance:} Desired.
+about the composite operator and need not be bothered with
+preconditioners but others do like flexible GMRES which needs to apply
+the right preconditioner separately from the left preconditioner and
+operator itself.  CG is another example where the preconditioner can
+be treated in a special way (i.e.~to define a new definition of the
+scalar product). {}\textit{Importance:} Desired.
 
 \item
-For the {}\textit{client's} and the {}\textit{iterative solver
-implementation's} benefit, default handling of standard pre- and
+
+For the {}\textit{client's} and the {}\textit{concrete iterative
+linear solver's} benefit, default handling of standard pre- and
 post-processing of RHS and LHS associated with left and/or right
 scaling and left and/or right preconditioning should be provided.
 {}\textit{Justification:} It seems reasonable to collect this commonly
 needed functionality in one standard place so that different
-{}\textit{iterative solver implementations} do not need to rewrite
+{}\textit{concrete iterative linear solvers} do not need to rewrite
 this code over and over again.  {}\textit{Importance:} Desired.
 
 \item
+
 These interfaces should be minimal but sufficient for
-{}\textit{clients} of iterative solvers and {}\textit{iterative solver
-implementations}.  {}\textit{Justification:} This is a basic principle
-of good object-oriented software design.  {}\textit{Importance:}
-Desired.
+{}\textit{clients} of iterative solvers and {}\textit{concrete
+iterative linear solvers}.  {}\textit{Justification:} This is a basic
+principle of good object-oriented software design.
+{}\textit{Importance:} Desired.
 
 \item
+
 Allow for flexible and powerful status (i.e.~convergence) tests that
 can be provided by the {}\textit{client} and are independent from the
-{}\textit{iterative solver implementation}.  Cheap native norm-based
+{}\textit{concrete iterative linear solver}.  Cheap native norm-based
 or iteration count-based status tests should be automatically
 available but more expensive status tests based on the unscaled,
 unpreconditioned solutions and residuals should also be supported.
 {}\textit{Justification:} One reason that some iterative linear solver
 algorithms are constantly rewritten over and over again is to
 accommodate different convergence criteria.  By separating the
-convergence criteria from {}\textit{iterative solver implementation},
+convergence criteria from {}\textit{concrete iterative linear solver},
 these solver implementations become much more reusable.
 {}\textit{Importance:} Fundamental.
 
 \item
-Expanding on the above requirement, every {}\textit{iterative solver
-implementation} must provide a cheap estimate of the relative
+
+Expanding on the above requirement, every {}\textit{concrete iterative
+iterative solver} must provide a cheap estimate of the relative
 unpreconditioned or preconditioned residual error as defined in either
 (\ref{belos:eqn:scaled_unprec_rel_norms}) or
 (\ref{belos:eqn:scaled_prec_rel_norms}).  In addition a
-{}\textit{iterative solver implementation} will identify the exact
+{}\textit{concrete iterative linear solver} will identify the exact
 nature of this residual.  {}\textit{Justification:} Most iterative
 solver algorithms maintain the preconditioned residual $\P_L S_L
 {}\bar{R}$ itself while, on the other hand, GMRES can cheaply maintain
@@ -641,13 +648,14 @@ applications in order to ensure certain numerical properties of an
 algorithm.  {}\textit{Importance:} Fundamental.
 
 \item
+
 Status tests should allow for dynamic (i.e.~during an iteration run)
 deflation (i.e.~the removal of individual RHS and LHS vectors for
-systems that are converged) but an {}\textit{iterative solver
-implementation} should be free to keep such tagged linear systems in
-the current set.  {}\textit{Justification:} Some block iterative
-solvers, such as block CG, can effectively remove individual RHSs as
-they converge thereby reducing the cost of block solves in some cases
+systems that are converged) but an {}\textit{concrete iterative linear
+solver} should be free to keep such tagged linear systems in the
+current set.  {}\textit{Justification:} Some block iterative solvers,
+such as block CG, can effectively remove individual RHSs as they
+converge thereby reducing the cost of block solves in some cases
 (especially when some RHSs have tighter tolerances than others).
 Without the functionality of deflation, a block iterative solver may
 result in more work than a single RHS linear solver in some extreme
@@ -655,6 +663,7 @@ cases (e.g.~two linear systems that have radically different
 convergence criteria).  {}\textit{Importance:} Fundamental.
 
 \item
+
 Status tests should be alerted when a new iterative run (on one or
 more simultaneous RHSs) is started.  {}\textit{Justification:}
 Alerting a status test when a new iterative run is started allows a
@@ -662,9 +671,10 @@ simplification of the design of status tests.  {}\textit{Importance:}
 Desired.
 
 \item
+
 Multiple independent status tests should be allowed and the overall
 efficiency of these independent status tests should be very close to
-the performance were the status tests to be combined in more careful
+the performance were the status tests to be composite in more careful
 manner.  {}\textit{Justification:} More than one status test may
 require the current unscaled unpreconditioned solution $\bar{X}$
 and/or the unscaled unpreconditioned residual $\bar{R}$ and these
@@ -672,6 +682,7 @@ quantities should not have to be recomputed from scratch by different
 independent status tests.  {}\textit{Importance:} Fundamental.
 
 \item
+
 Specialized status tests for specific types of iterative solvers
 should be allowed.  {}\textit{Justification:} Very specialized status
 tests can be based on things like estimates of the eigenvalues of a
@@ -679,9 +690,10 @@ matrix that is generated from information being accumulated during an
 iterative solve (i.e.~from the Krylov subspace).  {}\textit{Importance:} Fundamental.
 
 \item
+
 These interfaces should be designed and partitioned so as to minimize
 opportunities for mistakes by developers of {}\textit{client} and
-{}\textit{iterative solver implementation} software.
+{}\textit{concrete iterative linear solver} software.
 {}\textit{Justification:} It is a good object-oriented design
 principle to design, develop and deploy interfaces that are designed
 for specific types of clients and use cases.  Such designs result in
@@ -746,7 +758,7 @@ multiple-RHS $B$ and the multiple-LHS solution $X$.
 \item{}\texttt{Belos::BasicIteration}:
 This is the base interface class for all iterative linear solvers.
 This class serves in two roles.  In its first role this interface
-decouples concrete {}\textit{iterative solver implementations} from
+decouples concrete {}\textit{concrete iterative linear solver} from
 {}\textit{client} software and is the basic mechanism for delivering a
 linear problem to be solved and for invoking the iterative solver.
 The second role of this interface is to present basic information
@@ -756,9 +768,9 @@ broken up into two interfaces in the actual C++ interface classes
 ({}\texttt{Basic\-Iteration} and {}\texttt{Basic\-Iteration\-State}).
 
 \item{}\texttt{IterativeSolverImplemenation}:
-This is a place holder for any particular concrete {}\textit{iterative
-solver implementation} such as block or non-block GMRES or block or
-non-block CG.
+This is a place holder for any particular {}\textit{concrete iterative
+linear solver} such as block or non-block GMRES or block or non-block
+CG.
 
 \item{}\texttt{Belos::LinearProblem}:
 This class serves in several related roles.  In its first role, the
@@ -769,7 +781,7 @@ passed to a {}\texttt{Basic\-Iteration} object in order to solve a set
 of linear systems.  In its second role, the {}\texttt{Linear\-Problem}
 object provides basic services such as preprocessing the RHS and
 post-processing the LHS for the {}\texttt{Basic\-Iteration} subclass
-{}\texttt{Iterative\-Solver\-Implementation}.  The third role that
+{}\texttt{Concrete\-Iterative\-Linear\-Solver}.  The third role that
 {}\texttt{Linear\-Problem} serves is as an interface that a
 {}\texttt{Status\-Test} object can query to get unscaled
 unpreconditioned residuals and other information if so desired.  This
@@ -780,28 +792,27 @@ interfaces that are customized for these three different roles
 {}\texttt{Linear\-Problem\-State}).
 
 \item{}\texttt{StatusTest}:
-This abstract interface class decouples concrete {}\textit{iterative
-solver implementations} away for specific types of status
-(convergence) tests.  This allows a concrete {}\textit{iterative
-solver implementation} to focus on its basic iteration, without having
-to worry about when to stop (i.e.~converge).  A single
-{}\texttt{Status\-Test} object is associated with a a single
-{}\texttt{Linear\-Problem} object and this {}\texttt{Status\-Test}
-object may know specific convergence test for individual RHSs in $B$
-which forms the set of linear equations.
+This abstract interface class decouples {}\textit{concrete iterative
+linear solvers} away for specific types of status (convergence) tests.
+This allows a {}\textit{concrete iterative linear solver} to focus on
+its basic iteration, without having to worry about when to stop
+(i.e.~converge).  A single {}\texttt{Status\-Test} object is
+associated with a a single {}\texttt{Linear\-Problem} object and this
+{}\texttt{Status\-Test} object may know specific convergence test for
+individual RHSs in $B$ which forms the set of linear equations.
 
 \item{}\texttt{MySpecializedStatusTest}:
 This class is a place-holder for any particular concrete
 {}\texttt{Status\-Test} subclass.  The {}\textit{client} knows about
-the concrete type of this object but the {}\textit{iterative solver
-implementation} does not (because it is abstracted through the
+the concrete type of this object but the {}\textit{concrete iterative
+linear solver} does not (because it is abstracted through the
 {}\texttt{StatusTest} interface).  While most concrete
 {}\texttt{StatusTest} subclasses can get everything they need from the
 {}\texttt{Basic\-Iteration} and {}\texttt{Linear\-Problem} interfaces
 about the state of the iterative solver, this particular subclass
 {}\texttt{My\-Specialized\-Status\-Test} shows that it has a
 dependency on the the concrete
-{}\texttt{Iterative\-Solver\-Implementation} subclass so as to take
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} subclass so as to take
 advantage of some more specialized specific information about the
 iteration.  Access to this derived type is accomplished through a
 dynamic cast when needed.  However, in most cases, dynamic casting
@@ -816,7 +827,26 @@ Now that the basic object model for these interfaces has been
 described we now show a more detailed design-level model where all the
 UML classes map directly to actual C++ classes.  The basic
 design-level model of the interfaces for iterative linear solvers is
-shown in Figure {}\ref{belos:fig:BelosInterfaces}.
+shown in Figure {}\ref{belos:fig:BelosInterfacesHarder}.  A more
+detailed model showing member functions and more relationships is
+shown in Figture {}\ref{belos:fig:BelosInterfaces}.
+
+
+
+{\bsinglespace
+\begin{figure}[t]
+\begin{center}
+%\fbox{
+\includegraphics*[scale=0.85]{BelosInterfacesHarder}
+%}
+\end{center}
+\caption{
+\label{belos:fig:BelosInterfacesHarder}
+UML class diagram : Design-level model
+for the most basic interfaces for iterative linear solvers.}
+\end{figure}
+\esinglespace}
+
 
 {\bsinglespace
 \begin{figure}
@@ -827,8 +857,8 @@ shown in Figure {}\ref{belos:fig:BelosInterfaces}.
 \end{center}
 \caption{
 \label{belos:fig:BelosInterfaces}
-UML class diagram : Design-level model
-for the most basic interfaces for iterative linear solvers.}
+UML class diagram : Detailed design-level model for the most basic
+interfaces for iterative linear solvers.}
 \end{figure}
 \esinglespace}
 
@@ -844,10 +874,10 @@ The use case descriptions will involve collaborations with the
 following objects in pseudo-code:
 
 \begin{tabular}{lll}
-{\small\texttt{TSFCore::LinOpPersisting<Scalar>}} & {\small\texttt{A}} & : Unscaled operator $A$ \\
-{\small\texttt{TSFCore::LinOpPersisting<Scalar>}} & {\small\texttt{A\_tilde}} & : Scaled operator $\tilde{A}$ \\
-{\small\texttt{TSFCore::LinOpPersisting<Scalar>}} & {\small\texttt{P\_L}} & : Left preconditioner $P_L$ \\
-{\small\texttt{TSFCore::LinOpPersisting<Scalar>}} & {\small\texttt{P\_R}} & : Right preconditioner $P_R$ \\
+{\small\texttt{TSFCore::LinearOpHandle<Scalar>}} & {\small\texttt{A}} & : Unscaled operator $A$ \\
+{\small\texttt{TSFCore::LinearOpHandle<Scalar>}} & {\small\texttt{A\_tilde}} & : Scaled operator $\tilde{A}$ \\
+{\small\texttt{TSFCore::LinearOpHandle<Scalar>}} & {\small\texttt{P\_L}} & : Left preconditioner $P_L$ \\
+{\small\texttt{TSFCore::LinearOpHandle<Scalar>}} & {\small\texttt{P\_R}} & : Right preconditioner $P_R$ \\
 {\small\texttt{RefCountPtr<const TSFCore::Vector<Scalar> >}} & {\small\texttt{s\_R}} & : Left scaling vector $s_L$ \\
 {\small\texttt{RefCountPtr<const TSFCore::Vector<Scalar> >}} & {\small\texttt{s\_R}} & : Right scaling vector $s_R$ \\
 {\small\texttt{RefCountPtr<const TSFCore::MultiVector<Scalar> >}} & {\small\texttt{B}} & : RHS $B$ \\
@@ -859,15 +889,11 @@ following objects in pseudo-code:
 {\small\texttt{RefCountPtr<BasicIteration<Scalar> >}} & {\small\texttt{bi}} & : A basic iteration object
 \end{tabular}
 
-Note that {}\texttt{TSFCore::\-Lin\-Op\-Persisting} is a small simple
+Note that {}\texttt{TSFCore::\-Linear\-Op\-Handle} is a small simple
 concrete class whose only purpose for existence is to aggregate a
 smart pointer to a {}\texttt{TSFCore::\-Linear\-Op} object and its
 ``mathematical'' definition of the nontranposed operator which is
-stored as a {}\texttt{TSFCore::\-ETransp} enum object.  Note that
-there is also a type called {}\texttt{TSFCore::\-Lin\-Op\-Persisting}
-which is similar except it is for passing a
-{}\texttt{TSFCore::\-Linear\-Op} and its ``mathematical'' definition
-of the nontranposed operator for non-presisting relationships.
+stored as a {}\texttt{TSFCore::\-ETransp} enum object.
 
 Most of these use cases do not involve very interesting dynamic
 behavior but some do.  An overall UML diagram encompassing most of
@@ -894,7 +920,7 @@ sides.}
 
 The first set of use cases involve the basic interactions of the
 {}\textit{client} while the second set involve the interactions of the
-{}\textit{iterative solver implementation}.
+{}\textit{concrete iterative linear solver}.
 
 \subsubsection*{Use cases involving the {}\textit{client}}
 
@@ -987,8 +1013,8 @@ as:
   lpup->setBlockSize(blockSize);
 \end{verbatim}}
 
-This block size may be modified by the {}\textit{iterative solver
-implementation} for instance if deflation, as described in Section
+This block size may be modified by the {}\textit{concrete iterative
+linear solver} for instance if deflation, as described in Section
 {}\ref{sec:basic-block-solves}, is used.
 
 Finally, the linear problem object setup is completed with a called to
@@ -999,7 +1025,7 @@ Finally, the linear problem object setup is completed with a called to
 
 which performs several tasks such as checking that a valid problem has
 been set up (by checking the compatibility of the various vector
-spaces) and building a combined operator object for $\hat{A} = P_L
+spaces) and building a composite operator object for $\hat{A} = P_L
 \tilde{A} P_R$.
 
 {}\item Use case : \textbf{Iterate on linear problem}
@@ -1008,7 +1034,7 @@ spaces) and building a combined operator object for $\hat{A} = P_L
 {}\texttt{Basic\-Iteration}
 
 The {}\texttt{Basic\-Iteration} interface abstracts the
-{}\texttt{Linear\-Solver\-Implementation} away from the
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} away from the
 {}\texttt{Client}.
 
 The client sets the linear problem and invokes the solver as shown
@@ -1024,15 +1050,15 @@ The {}\texttt{Basic\-Iteration::\-set\-Problem(...)} function accepts
 a linear problem object through the
 {}\texttt{Linear\-Problem\-Iteration} interface.  The
 {}\texttt{Linear\-Problem\-Iteration} interface contains all of the
-functionality that a {}\texttt{Linear\-Solver\-Implementation} needs
-to solve the set of equations but does not contain functions to change
-the definition of the linear problem (i.e.~an iterative solver can not
-accidentally change the operator, the RHS or any of the
+functionality that a {}\texttt{Concrete\-Iterative\-Linear\-Solver}
+needs to solve the set of equations but does not contain functions to
+change the definition of the linear problem (i.e.~an iterative solver
+can not accidentally change the operator, the RHS or any of the
 preconditioners).  The {}\texttt{Linear\-Problem\-Iteration} interface
 class is discussed in more detail in the other use cases which are
 also shown in Figure {}\ref{belos:fig:BelosUseCases} involving the
-{}\textit{iterative solver implementation} .  The actual linear solver
-algorithm is invoked using the
+{}\textit{concrete iterative linear solver} .  The actual linear
+solver algorithm is invoked using the
 {}\texttt{Basic\-Iteration::\-iterate(...)} function which only
 returns when the {}\texttt{Status\-Test} object says to or if the
 maximum number of iterations {}\texttt{maxNumIters} is reached.  When
@@ -1075,14 +1101,14 @@ various operators and multi-vector objects.
 
 \end{enumerate}
 
-\subsubsection*{Use cases involving the {}\textit{iterative solver implementation}}
+\subsubsection*{Use cases involving the {}\textit{concrete iterative linear solver}}
 
-All of the use cases involving the {}\textit{iterative solver
-implementation} are wrapped in the above use case ``Iterate on linear
+All of the use cases involving the {}\textit{concrete iterative linear
+solver} are wrapped in the above use case ``Iterate on linear
 problem'' which is invoked using the function
-{}\texttt{Linear\-Solver\-Implementation::\-iterate(...)}.  Pseudo
-code for how this function might be implemented that is consistent
-with Figure {}\ref{belos:fig:BelosInterfaces} and Figure
+{}\texttt{Concrete\-Iterative\-Linear\-Solver::\-iterate(...)}.
+Pseudo code for how this function might be implemented that is
+consistent with Figure {}\ref{belos:fig:BelosInterfaces} and Figure
 {}\ref{belos:fig:BelosSequence} is shown below:
 
 {\scriptsize\begin{verbatim}
@@ -1095,13 +1121,15 @@ with Figure {}\ref{belos:fig:BelosInterfaces} and Figure
     ...
     // Solve the systems as a set of block solves
     const int numTotalRhs = lpi_->getTotalNumRhs();
-    int numRhsSolved = 0;
-    while ( numRhsSolved < numTotalRhs ) {
-      IterateReturn nextBlockReturn = nextBlock( maxNumIter, &numRhsSolved );
+    bool allFinished = false;
+    while ( !allFinished ) {
+      IterateReturn nextBlockReturn = nextBlock( maxNumIter, &allFinished );
+      if(allFinished) break;
       numCumulativeIter += nextBlockReturn.numCumulativeIter;
       if( nextBlockReturn.iterateTermination != TERMINATION_STATUS_TEST ) allConverged = false;
+    }
     return IterateReturn( allConverged ? TERMINATION_STATUS_TEST : TERMINATION_MAX_NUM_ITER, numCumulativeIter );
-   }
+  }
 \end{verbatim}}
 
 Note that the fact that the function {}\texttt{nextBlock(...)} is
@@ -1114,14 +1142,14 @@ These use cases are more complicated than those that just involved the
 {}\textit{client} which where described above.  This is a good thing
 since developers that write {}\textit{client} code are likely to be
 less experienced C++ programmers.  However, developers of
-{}\texttt{Iterative\-Solver\-Implementation} subclasses are likely to
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} subclasses are likely to
 be more advanced C++ programmers but these interfaces should still try
 to make the development of these subclasses as easy and error-free as
 possible.  To help avoid mistakes, a minimal but complete interface to
 a linear problem is presented to a
-{}\texttt{Iterative\-Solver\-Implementation} through the
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} through the
 {}\texttt{Linear\-Problem\-Iteration} interface.  This interface
-allows the {}\texttt{Iterative\-Solver\-Implementation} to setup the
+allows the {}\texttt{Concrete\-Iterative\-Linear\-Solver} to setup the
 current RHS $\bar{B}$ and LHS $\bar{X}$ multi-vectors and update the
 current estimate of the solution.  This interface, however, does not
 allow a {}\texttt{Linear\-Problem\-Iteration} to accidentally change
@@ -1138,12 +1166,12 @@ preconditioners) solver implementation.  This scenario however is not
 {}\item Use case : \textbf{Setup to solve current block system}
 
 {}\noindent{}Classes/interfaces involved :
-{}\texttt{Linear\-Solver\-Implementation} and
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} and
 {}\texttt{Linear\-Problem\-Iteration}
 
-In this use case, the {}\texttt{Linear\-Solver\-Implementation} object
+In this use case, the {}\texttt{Concrete\-Iterative\-Linear\-Solver} object
 sets the linear problem object up for the next set of iterations on a
-block of RHSs.  The {}\texttt{Linear\-Solver\-Implementation} object
+block of RHSs.  The {}\texttt{Concrete\-Iterative\-Linear\-Solver} object
 tells the {}\texttt{Linear\-Problem\-Iteration} object {}\texttt{lpi}
 which set of right-hand sides it will solve next and what block size
 to use.  For a block linear solver that can gain from a multi-RHS
@@ -1153,14 +1181,11 @@ be iterated on next and what block size to use.
 
 {\scriptsize\begin{verbatim}
   template <class Scalar>
-  IterateReturn IterativeSolverImplementation<Scalar>::nextBlock( const int maxNumIters, int *numRhsSolved )
+  IterateReturn ConcreteIterativeLinearSolver<Scalar>::nextBlock( const int maxNumIters, bool *allFinished )
   {
     // Setup for next set of solves
-    const int blockSize = lpi_->getBlockSize();
-    const int firstRhsOffset = *numRhsSolved;  // Set the first column of next set of RHSs to solve.
-    const int numRhsRemaining = lpi_->numTotalRhs()-(*numRhsSolved);
-    const int currNumRhs = min(numRhsRemaining,blockSize); // Number of RHSs to solve next
-    lpi_->setCurrSystem(firstRhsOffset,currNumRhs,blockSize);
+  	*allFinished = !lpi_->setupCurrSystem(); // If there is not a current system then we are all finished!
+    if(*allFinished) return IterateReturn(); 
     // Inform the status test that we are solving a new block of systems
     StatusTest<Scalar> *statusTest = lpi_->getStatusTest();
     if(statusTest) statusTest->reset();
@@ -1174,8 +1199,7 @@ be iterated on next and what block size to use.
     if( currNumIters_==maxNumIter && doIterationReturn!=TERMINATION_STATUS_TEST )
       doIterationReturn = TERMINATION_MAX_NUM_ITER;
     // Copy whatever is remaining in current LHS into full LHS
-    lpi_->setCurrToFullLhs(*this);
-    *numRhsSolved += currNumRhs;
+    lpi_->finalizeCurrSystem(*this);
     // Return status of this block
     return IterateReturn(doIterationReturn,currNumIters_);
   }
@@ -1192,19 +1216,17 @@ object will, by default, pad the last {}\texttt{blockSize} -
 {}\texttt{num\-Rhs\-Remaining} columns of the RHS and LHS with vectors
 as described in Section {}\ref{sec:basic-block-solves}.
 
-A {}\texttt{Linear\-Solver\-Implementation} that can only perform a
+A {}\texttt{Concrete\-Iterative\-Linear\-Solver} that can only perform a
 single-RHS iteration would ignore the block size and set the current
 block size as 1 as:
 
 {\scriptsize\begin{verbatim}
   template <class Scalar>
-  IterateReturn IterativeSolverImplementation<Scalar>::nextBlock(const int maxNumIters, int *numRhsSolved)
+  IterateReturn ConcreteIterativeLinearSolver<Scalar>::nextBlock(const int maxNumIters, bool *allFinished)
   {
     // Setup for next set of solves
-    const int blockSize = 1;
-    const int firstRhsOffset = *numRhsSolved;  // Set the first column of next set of RHSs to solve.
-    const int currNumRhs = 1;
-    lpi_->setCurrSystem(firstRhsOffset,currNumRhs,currNumRhs);
+    *allFinished = !lpi_->setupCurrSystem(); // If there is not a current system then we are all finished!
+    if(*allFinished) return IterateReturn(); 
     // Perform iterations on this RHS
     EIterateTermination doIterationReturn = TERMINATION_UNDEFINED;
     for( currNumIters_ = 0; currNumIters_ < maxNumIter; ++currNumIters_ ) {
@@ -1226,7 +1248,7 @@ block size as 1 as:
 current block system}
 
 {}\noindent{}Classes/interfaces involved :
-{}\texttt{Linear\-Solver\-Implementation}, {}\texttt{Status\-Test},
+{}\texttt{Concrete\-Iterative\-Linear\-Solver}, {}\texttt{Status\-Test},
 {}\texttt{Basic\-Iteration\-State}, {}\texttt{Linear\-Problem\-State}
 
 This is one of the more complex use cases.  The goal of the design to
@@ -1247,7 +1269,7 @@ solution.  The status test is invoked as shown below:
 
 {\scriptsize\begin{verbatim}
   template <class Scalar>
-  IterationReturn IterativeSolverImplementation<Scalar>::doIteration()
+  IterationReturn ConcreteIterativeLinearSolver<Scalar>::doIteration()
   {
     // Ask the status test to check the status of the current systems
     const int currBlockSize = lpi_->getCurrBlockSize();
@@ -1263,7 +1285,7 @@ solution.  The status test is invoked as shown below:
 \end{verbatim}}
 
 Before the status test is invoked, the
-{}\texttt{Linear\-Solver\-Implementation} object informs the
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} object informs the
 {}\texttt{Linear\-Problem\-Iteration} object if the solution
 multi-vector {}\texttt{currLhs} is currently up to date or not.  This
 is performed by the call to
@@ -1350,16 +1372,6 @@ interface.  }
 
 \fbox{
 \begin{minipage}{\textwidth}
-
-
-{\scriptsize{}\noindent{}\texttt{int getTotalNumRhs() const}} \\
-$\bullet$ Returns the total number of RHSs $m$.
-
-{\scriptsize{}\noindent{}\texttt{const Vector<Scalar>* getRightScaling()
-const}} \\ $\bullet$ Returns pointer to optional scaling vector $s_R$.
-
-{\scriptsize{}\noindent{}\texttt{const Vector<Scalar>* getLeftScaling()
-const}} \\ $\bullet$ Returns pointer to optional scaling vector $s_L$.
 
 {\scriptsize{}\noindent{}\texttt{int getCurrNumRhs() const}} \\
 $\bullet$ Returns the current number of RHSs $\bar{m}$.
@@ -1547,23 +1559,23 @@ very common type of status test in many cases.
 ``converged'' RHSs}
 
 {}\noindent{}Classes/interfaces involved :
-{}\texttt{Linear\-Solver\-Implementation} and
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} and
 {}\texttt{Linear\-Problem\-Iteration}
 
 After the {}\texttt{Status\-Test} object {}\texttt{st} has determined
 which systems have been sufficiently converged then the
-{}\texttt{Linear\-Solver\-Implementation} object can optionally remove
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} object can optionally remove
 or deflate these systems from the current set of RHSs.  For some block
 solvers, like block GMRES, it is not possible to deflate during an
 iterative run but for others, like block CG, deflation is possible.
-In any case, if the {}\texttt{Linear\-Solver\-Implementation} object
+In any case, if the {}\texttt{Concrete\-Iterative\-Linear\-Solver} object
 decides to remove some systems that have been converged, then it can
 tell the {}\texttt{Linear\-Problem\-Iteration} object {}\texttt{lpi}
 which RHSs these are and they will be removed as follows:
 
 {\scriptsize\begin{verbatim}
   template <class Scalar>
-  IterationReturn IterativeSolverImplementation<Scalar>::doIteration()
+  IterationReturn ConcreteIterativeLinearSolver<Scalar>::doIteration()
   {
     ...
     if(statusTest) {
@@ -1628,7 +1640,7 @@ updated then the function
 called.
 
 In addition, after the {}\texttt{deflate(...)} function is caled the
-{}\texttt{Linear\-Solver\-Implementation} would also have to deflate
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} would also have to deflate
 its data structures for ``converged'' the RHSs being removed but this
 is simple given generic helper functions.
 
@@ -1636,17 +1648,17 @@ is simple given generic helper functions.
 system}
 
 {}\noindent{}Classes/interfaces involved :
-{}\texttt{Linear\-Solver\-Implementation} and
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} and
 {}\texttt{Linear\-Problem\-Iteration}
 
 Really the only interaction between the
-{}\texttt{Linear\-Solver\-Implementation} object and the
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} object and the
 {}\texttt{Linear\-Problem\-Iteration} object needed in order to
 perform a single iteration is in applying the operator and (optional)
 preconditioners.  In order to insulate the
-{}\texttt{Linear\-Solver\-Implementation} object from having to worry
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} object from having to worry
 about whether left and/or right preconditioning is being used a
-combined linear operator object for $\hat{A} = P_L \tilde{A} P_R$ is
+composite linear operator object for $\hat{A} = P_L \tilde{A} P_R$ is
 returned from the function
 {}\texttt{Linear\-Problem\-State::\-get\-Conbined\-Operator(...)} (as
 shown in the scenario in Figure {}\ref{belos:fig:BelosSequence}).  The
@@ -1660,16 +1672,17 @@ oblivious to the type of scaling and preconditioning being used.
 current block system}
 
 {}\noindent{}Classes/interfaces involved :
-{}\texttt{Linear\-Solver\-Implementation} and
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} and
 {}\texttt{Linear\-Problem\-Iteration}
 
 After the {}\texttt{Status\-Test} object determines that all of the
 current linear systems are solved for, the
-{}\texttt{Linear\-Solver\-Implementation} object would then update
-those components of the final solution by simply calling the function
+{}\texttt{Concrete\-Iterative\-Linear\-Solver} object would then
+update those components of the final solution by simply calling the
+function
 
 {\scriptsize\begin{verbatim}
-   lpi_->setCurrToFullLhs(*this);
+   lpi_->finalizeCurrSystem(*this);
 \end{verbatim}}
 
 {}\noindent{}as shown in the pseudo code for the function
@@ -1678,24 +1691,25 @@ the {}\texttt{Basic\-Iteration\-State\-::force\-Curr\-Lhs\-Update()}
 function to get the solution for whatever converged RHSs that have not
 already been deflated out and then sets these into the full LHS.  An
 concrete implementation of the
-{}\texttt{set\-Curr\-To\-Full\-Lhs(...)} function is shown below:
+{}\texttt{finalize\-Curr\-System(...)} function is shown below:
 
 {\scriptsize\begin{verbatim}
   template <class Scalar>
-  void LinearProblem<Scalar>::setCurrToFullLhs( const BasicIterationState &bis )
+  void LinearProblem<Scalar>::finalizeCurrSystem( const BasicIterationState &bis )
   {
     if(!isCurrLhsUpdated_) bis.forceCurrLhsUpdate();
     assign( &*lhs_->subView(currNumRhs_,&currRhsIndexes_[0]), *currLhs_->subView(TSFCore::Range1D(1,currNumRhs_)) );
-    currNumRhs_ = 0; // Set as uninitialized
+    currFirstRhsOffset_ += currInitNumRhs_; // Increment the current offset into the block of RHSs
+    currNumRhs_ = 0;                        // Set as uninitialized
   }
 \end{verbatim}}
 
 \end{enumerate}
 
-\subsection{Concrete iterative solver implementations}
+\subsection{Concrete iterative linear solvers}
 
-There are several iterative linear solver implementations that support
-these interfaces:
+There are several concrete iterative linear solver implementations
+that support these interfaces:
 
 \begin{enumerate}
 \item {}\texttt{Belos::NonblockGmres}: Non-block GMRES (with only single RHS) (Ross/Heidi), status = completed
