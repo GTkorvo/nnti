@@ -1,0 +1,241 @@
+class BlockMapTest {
+
+    public static void main(String [] args) {
+	
+	int i;
+
+	int size = 1;
+	int rank = 0;
+	boolean verbose = false;
+
+	if(args.length > 0 && args[0].equals("-v")) verbose = true;
+
+	Jpetra.SerialComm comm = new Jpetra.SerialComm();
+	int pid = comm.getPID();
+	int numProc = comm.getNumProc();
+
+	if(verbose) System.out.println("Processor "+pid+" of "+numProc+" is alive.");
+
+	boolean verbose1 = verbose;
+	verbose = (pid == 0);
+
+	int numNodeElements = 10000;
+	int numGlobalElements = numNodeElements*numProc+Math.min(numProc, 3);
+	if(pid < 3) numNodeElements++;
+	int indexBase = 0;
+	int elementSize = 7;
+	boolean isDistributedGlobal = numGlobalElements > numNodeElements;
+
+	// Test uniform linear distribution constructor
+	Jpetra.BlockMap map = new Jpetra.BlockMap(numGlobalElements, elementSize, indexBase, comm);
+	if(verbose) System.out.println("1) Checking BlockMap(numGlobalElements, elementSize, indexBase, comm");
+	int ierr = checkmap(map, numGlobalElements, numNodeElements, null, elementSize, null,
+			    numGlobalElements*elementSize, numNodeElements*elementSize,
+			    indexBase, comm, isDistributedGlobal);
+	if(verbose) {
+	    if(ierr == 0) System.out.println("Checked OK");
+	    else System.out.println("Error code: "+ierr);
+	    System.out.println();
+	}
+	if(ierr != 0) System.exit(0);
+
+	// Test user defined linear distribution constructor
+	map = new Jpetra.BlockMap(numGlobalElements, numNodeElements, elementSize, indexBase, comm);
+	if(verbose) System.out.println("2) Checking BlockMap(numGlobalElements, numNodeElements, elementSize, indexBase, comm");
+	ierr = checkmap(map, numGlobalElements, numNodeElements, null, elementSize, null,
+			numGlobalElements*elementSize, numNodeElements*elementSize,
+			indexBase, comm, isDistributedGlobal);
+
+	if(verbose) {
+	    if(ierr == 0) System.out.println("Checked OK");
+	    else System.out.println("Error code: "+ierr);
+	    System.out.println();
+	}
+
+	// Test user defined arbitrary distribution constructor
+	// Generate global element list.
+	int [] globalElements = new int [numNodeElements];
+	int maxGid = (comm.getPID()+1)*numNodeElements-1+indexBase;
+	for(i=0; i<numNodeElements; i++) globalElements[i] = maxGid-i;
+
+	map = new Jpetra.BlockMap(numGlobalElements, numNodeElements, globalElements, elementSize, indexBase, comm);
+	if(verbose) System.out.println("3) Checking BlockMap(numGlobalElements, numNodeElements, globalElements, elementSize, indexBase, comm");
+	ierr = checkmap(map, numGlobalElements, numNodeElements, globalElements, elementSize, null,
+			numGlobalElements*elementSize, numNodeElements*elementSize,
+			indexBase, comm, isDistributedGlobal);
+	if(verbose) {
+	    if(ierr == 0) System.out.println("Checked OK");
+	    else System.out.println("Error code: "+ierr);
+	    System.out.println();
+	}
+	if(ierr != 0) System.exit(0);
+
+	int [] elementSizeList = new int [numNodeElements];
+	int numNodeEquations = 0;
+	int numGlobalEquations = 0;
+	for(i=0; i<numNodeElements; i++) {
+	    elementSizeList[i] = i%6+2; // blocksizes go from 2 to 7
+	    numNodeEquations += elementSizeList[i];
+	}
+	elementSize = 7; // Set to maximum for use in checkmap
+	numGlobalEquations = comm.getNumProc()*numNodeEquations;
+
+	// Adjust numGlobalEquations based on processor ID
+	if(comm.getNumProc() > 3) {
+	    if(comm.getPID() > 2) numGlobalEquations += 3*((numNodeElements)%6+2);
+	    else numGlobalEquations -= (comm.getNumProc()-3)*((numNodeElements-1)%6+2);
+	}
+
+	for(int k=0; k<elementSizeList.length; k++) if(elementSizeList[k] <= 0) System.out.println(k+" "+elementSizeList[k]);
+	map = new Jpetra.BlockMap(numGlobalElements, numNodeElements, globalElements, elementSizeList,
+				  indexBase, comm);
+	if(verbose) System.out.println("4) Checking BlockMap(numGlobalElements, numNodeElements, globalElements, elementSizeList, indexBase, comm");
+	ierr = checkmap(map, numGlobalElements, numNodeElements, globalElements, elementSize, elementSizeList,
+			numGlobalEquations, numNodeEquations,
+			indexBase, comm, isDistributedGlobal);
+	if(verbose) {
+	    if(ierr == 0) System.out.println("Checked OK");
+	    else System.out.println("Error code: "+ierr);
+	    System.out.println();
+	}
+	if(ierr != 0) System.exit(0);
+
+	// Test copy constructor
+	Jpetra.BlockMap map1 = new Jpetra.BlockMap(map);
+
+	if(verbose) System.out.println("5) Checking BlockMap(map)");
+	ierr = checkmap(map1, numGlobalElements, numNodeElements, globalElements, elementSize, elementSizeList,
+			numGlobalEquations, numNodeEquations,
+			indexBase, comm, isDistributedGlobal);
+	if(verbose) {
+	    if(ierr == 0) System.out.println("Checked OK");
+	    else System.out.println("Error code: "+ierr);
+	    System.out.println();
+	}
+	if(ierr != 0) System.exit(0);
+
+	System.exit(0);
+    }
+
+    public static int checkmap(Jpetra.BlockMap map, int numGlobalElements, int numNodeElements,
+			       int [] globalElements, int elementSize, int [] elementSizeList,
+			       int numGlobalEquations, int numNodeEquations,
+			       int indexBase, Jpetra.Comm comm, boolean isDistributedGlobal) {
+
+	int i;
+	
+	if(elementSizeList == null) {
+	    if(!map.hasConstantElementSize()) return -1;
+	}
+	else {
+	    if(map.hasConstantElementSize()) return -1;
+	}
+	
+	if(isDistributedGlobal != map.isDistributedGlobal()) return -3;
+
+	int [] myElementSizeList;
+
+	if(elementSizeList == null) {
+	    if(map.getElementSize() != elementSize) return -4;
+	    
+	    myElementSizeList = new int [numNodeElements];
+
+	    if(map.getElementSizeList(myElementSizeList) != 0) return -5;
+	    for(i=0; i<numNodeElements; i++) {
+		if(myElementSizeList[i] != elementSize) return -5;
+	    }
+	}
+	else {
+	    myElementSizeList = new int[numNodeElements];
+	    if(map.getElementSizeList(myElementSizeList) != 0) return -5;
+	    
+	    for(i=0; i<numNodeElements; i++) {
+		if(myElementSizeList[i] != elementSizeList[i]) return -5;
+	    }
+	}
+
+	Jpetra.SerialComm comm1 = (Jpetra.SerialComm)map.getComm();
+
+	if(comm1.getNumProc() != comm.getNumProc()) return -6;
+	if(comm1.getPID() != comm.getPID()) return -7;
+	if(map.getIndexBase() != indexBase) return -8;
+	if(!map.isLinearMap() && globalElements == null) return -9;
+	if(map.isLinearMap() && globalElements != null) return -9;
+	if(map.getMaxAllGID() != numGlobalElements-1+indexBase) return -10;
+	if(map.getMaxElementSize() != elementSize) return -11;
+	if(map.getMaxLID() != numNodeElements-1+indexBase) return -12;
+
+	int maxGid = (comm.getPID()+1)*numNodeElements-1+indexBase;
+	if(comm.getPID() > 2) maxGid += 3;
+	if(!isDistributedGlobal) maxGid = numNodeElements-1+indexBase;
+	if(map.getMaxNodeGID() != maxGid) return -13;
+
+	if(map.getMinAllGID() != indexBase) return -14;
+
+	if(elementSizeList == null) {
+	    if(map.getMinElementSize() != elementSize) return -15;
+	}
+	else if(map.getMinElementSize() != 2) return -15;
+
+	if(map.getMinLID() != indexBase) return -16;
+
+	int minGid = comm.getPID()*numNodeElements+indexBase;
+	if(comm.getPID() > 2) minGid += 3;
+	if(!isDistributedGlobal) minGid = 0;
+	if(map.getMinNodeGID() != minGid) return -17;
+
+	int [] globalElements1 = new int[numNodeElements];
+	globalElements1 = map.getGlobalElements();
+	if(globalElements == null) {
+	    for(i=0; i<numNodeElements; i++) {
+		if(globalElements1[i] != minGid+i) return -18;
+	    }
+	}
+	else {
+	    for(i=0; i<numNodeElements; i++) {
+		if(globalElements1[i] != globalElements[i]) return -18;
+	    }
+	}
+
+	if(map.getNumGlobalElements() != numGlobalElements) return -19;
+	if(map.getNumGlobalEquations() != numGlobalEquations) return -20;
+	if(map.getNumNodeElements() != numNodeElements) return -21;
+	if(map.getNumNodeEquations() != numNodeEquations) return -22;
+
+	if(map.isLinearMap()) {
+	    int [] gidList = new int [3];
+	    int [] pidList = new int [3];
+	    int [] lidList = new int [3];
+	    int pid = map.getComm().getPID();
+
+	    int numIDs = 0;
+	    //gidList[numIDs++] = map.maxAllGID()+1; // Should return -1 for both pid and lid
+	    if(map.getMinNodeGID()-1 >= map.getMinAllGID()) gidList[numIDs++] = map.getMinNodeGID()-1;
+	    if(map.getMaxNodeGID()+1 <= map.getMaxAllGID()) gidList[numIDs++] = map.getMaxNodeGID()+1;
+
+	    map.getRemoteIDList(numIDs, gidList, pidList, lidList);
+
+	    numIDs = 0;
+
+	    if(map.getMinNodeGID()-1 >= map.getMinAllGID()) {
+		if(pidList[numIDs++] != pid-1) {
+		    return -23;
+		}
+	    }
+	    if(map.getMaxNodeGID()+1 <= map.getMaxAllGID()) {
+		if(pidList[numIDs] != pid-1) {
+		    return -24;
+		}
+	    }
+	    if(map.getMaxNodeGID()+1 <= map.getMaxAllGID()) {
+		if(lidList[numIDs++] != 0) {
+		    return -25;
+		}
+	    }
+	}
+
+	return 0;
+    }
+
+    
+}
