@@ -99,7 +99,6 @@ often be made into very effective general-purpose solvers, the
 opportunity to re-use the basic set of tools developed for one solver 
 in the development of another solver becomes very difficult.
 
- 
 The Trilinos Project grew out of this group of established numerical algorithms
 efforts at Sandia, motivated by  a recognition that a modest degree of 
 coordination among these efforts could have a large positive impact on 
@@ -108,15 +107,14 @@ research, development and integration of new solver algorithms into
 applications.  With the advent of Trilinos, the degree of effort required 
 to develop new parallel solvers has been 
 substantially reduced, because our common infrastructure provides an good 
-starting point.  Furthermore, many applications are standardizing on the 
+starting point for new development.  Furthermore, many applications 
+are standardizing on the 
 Trilinos matrix and vector classes.  As a result, these applications
 have access to all Trilinos solver packages without  
 interface modifications. 
 
-\subsection{Trilinos Package Concept}
-
-The fundamental concept in Trilinos is the {\it package}. Trilinos
-uses a two-level software structure designed around collections of
+The fundamental building block in Trilinos is the {\it package}. Trilinos
+uses a two-level software architecture designed around collections of
 packages.  Each package is a numerical library (or collection of
 libraries) that is:
 \begin{itemize}
@@ -130,10 +128,8 @@ scalable data models, etc.
 These packages can be distributed within Trilinos or separately. 
 The Trilinos framework provides a common look-and-feel that 
 includes configuration, documentation, licensing, and bug 
-tracking.  There are also guidelines for adding new packages 
-to Trilinos, and it is worth noting here that Trilinos is the 
-first and only solver framework to formalize the process of 
-integrating new solver technology into the framework. 
+tracking.  There are also guidelines and tools for adding new packages 
+to Trilinos. 
 
 The Trilinos project encompasses a variety of efforts that are to some
 extent self-contained but at the same time inter-related.  The
@@ -158,8 +154,6 @@ algorithms.Finally, Section~\ref{sect:SQA} discusses the role of
 Trilinos to improve software quality and reduce the cost of software 
 quality assurance processes, an increasingly important aspect
 of computer modeling and simulation for science and engineering.  
-
-
 
 \section{Related Work}
 
@@ -196,7 +190,7 @@ modular architecture and each package is interoperable with other
 packages but not interdependent.  Most Trilinos packages are
 data-neutral in design and in fact could easily use PETSc libraries to
 provide a variety of capabilities via straight-forward implementation
-of documented interfaces, without modifying PETSc or Trilinos source code.  
+of documented abstract interfaces, without modifying PETSc or Trilinos source code.  
 
 \subsection{Trilinos and the Common Component Architecture}
 The Trilinos package architecture, which the primary difference between
@@ -204,8 +198,8 @@ Trilinos and PETSc,
 is the primary similarity between Trilinos and the CCA.  Like the CCA,
 the Trilinos
 package architecture supports interoperability of independent
-pieces of software.  However, the CCA uses a much more advance runtime
-environment to manage the coupling of components, whereas Trilinos'
+pieces of software.  However, the CCA uses an advanced runtime
+environment to manage the coupling of components, whereas Trilinos
 uses the polymorphism that is inherent in the C++ language.  Both
 approaches are essential and very compatible.  In fact, the modularity
 and independence of Trilinos
@@ -217,12 +211,12 @@ are written in C++ and provide numerical linear algebra objects
 that can be used to implement numerical algorithms.  MTL
 makes more aggressive use of template facilities in C++ and allows
 more elegant and flexible implementations.  However, portability of
-MTL is a major problem since a number of C++ compilers do not 
+MTL is a major issue since a number of C++ compilers do not 
 support some of
 the features used by MTL.  Another difference is that MTL provides its
 own functionality that is similar to the BLAS, whereas Epetra and
 Tpetra rely on optimal BLAS libraries for performance.  A final
-primary difference is that MTL executes on serial machines only.  
+major difference is that MTL executes on serial machines only.  
 Epetra and Tpetra support distributed
 memory objects and provide parallel data repartitioning
 capabilities~\cite{Repartitioning}.
@@ -232,36 +226,55 @@ capabilities~\cite{Repartitioning}.
 Trilinos and POOMA are similar in that they both provide serial and parallel
 distributed memory linear algebra objects, along with automatic support of
 interprocessor communication.   POOMA differs from Trilinos in its
-focus on arrays and overload operator syntax, both of which make
+focus on arrays and overloaded operator syntax, which make
 grid-based calculations and explicit methods easy to implement.  In
-fact, much of its terminology uses grid concepts.  POOMA also focuses
+fact, much of POOMA terminology uses grid concepts.  POOMA also focuses
 only on basic linear algebra computations.  No implicit solvers are
 provided, although grid-based implicit solvers can be easily built
 using POOMA objects.
-Trilinos can be used for grid-based computations, but it primarily focuses on
-irregular, unstructured computations.  Trilinos makes no assumptions
-about regularity and, although several Trilinos packages are dedicated
-to basic linear algebra computations, the primary focus of Trilinos is
-on advanced solver algorithms.
+Trilinos packages such as Epetra and Tpetra can be used for grid-based
+computations, but their primary focus is on
+irregular, unstructured computations.  Other Trilinos packages access
+linear algebra services via abstract vector and operator interfaces.
+Therefore, POOMA object could be used via these interfaces. 
 
 \subsection{Trilinos and Other Solver Libraries}
-Trilinos is different than other solver projects in that it both
-provides significant new solver capabilities as independent packages
-and also provides an explicit, documented modular architecture that 
+Trilinos provides significant new solver capabilities as 
+self-contained Trilinos packages.  It also provides an explicit,
+documented, modular architecture that 
 facilitates interoperability.  This allows Trilinos to easily use
-other solver libraries and to also provide, via any single Trilinos
-package, solver capabilities to other libraries.
+other solver libraries and to also provide, via any individual Trilinos
+package, solver capabilities to other libraries. External solver
+libraries are made Trilinos-compatible, not by integrating them into
+Trilinos, but by augmenting the capabilities of the external library.
+This difference in design philosophy is subtle but important,
+especially for scalable growth in package count.  Using this approach,
+Trilinos will never become a large monolithic piece of software,
+something that is very important as the volume of solver software
+continues to grow.
 
-\section{Services Provided by Trilinos Framework}
+\section{Services Provided by Trilinos}
 \label{sect:TrilinosServices}
 
-Trilinos provides a variety of services to mathematical library
-developers.  First and foremost, the Trilinos package architecture
-allows the introduction of a new package without any interdependencies
-between a new package and the rest of Trilinos.  
+In our experience mathematical libraries tend to be written by small
+teams of domain experts.  As an example, approximately 25 staff
+members contribute to Trilinos development across approximately 25
+different packages, but most individual Trilinos packages
+are developed by one to three staff members, and no single package has more than five
+developers.   Some staff members contribute to more than one package,
+but very few contribute to more than three packages.  Another
+observation is that mathematical libraries tend to be written
+by experienced numerical software
+developers who do not have much, if any, experience with formal
+software tools and processes.  Both of these observations have
+motivated the Trilinos design and implementation.  The Trilinos
+package architecture naturally supports small inter-related team
+development efforts.  The following set of services, provided on a
+package-by-package basis, directly addresses the second observation.
 
-In particular, the following are
-provided:
+
+Trilinos provides a variety of services to mathematical library
+developers.  In particular, the following are provided:
 \begin{itemize}
 \item {\bf Configuration management:}
 Autoconf~\cite{Autoconf},  Automake~\cite{Automake} and
@@ -276,27 +289,27 @@ New package developers who are not currently using autotools, but would like
 to, can get a jump start by using a Trilinos package called
 ``new\_package'' (see below). 
 
-Trilinos provides a set of M4~\cite{M4} macros that can be used by any other
+Trilinos provides a library of M4~\cite{M4} macros that can be used by any other
 package that wants to use Autoconf and Automake for configuring and
 building libraries.  These macros perform common configuration tasks such as
-locating a valid LAPACK~\cite{lapack} library, or checking for a user-
-defined MPI C compiler.  These macros minimize the amount of redundant
+locating a valid LAPACK~\cite{lapack} library, checking for a
+user-defined MPI C compiler or determining inter-language linking
+rules.  This library of macros minimizes the amount of redundant
  effort in using Autotools, and make it easier to apply a general change to
 the configure process for all packages.
 
-\item {\bf Regression testing:} Trilinos provides a variety of regression
+\item {\bf Automated Regression testing:} Trilinos provides a variety of regression
 testing capabilities.  Although the test suite is always improving,
 good coverage testing is available for the major Trilinos packages.
 Integrating new tests into Trilinos is accomplished by creating
 specially named directories in the CVS repository and creating scripts
-that run package tests.  These scripts can be executed manually and
-are also run as part of the automated regression test harness (see
-next item).
-
-\item {\bf Automatic Testing:} Trilinos Packages that configure and build using 
-Autotools can easily utilize the the Trilinos test harness.  On a nightly 
+that run package tests.  For example, an executable script committed
+to the repository in the directory 
+Trilinos/packages/epetra/test/scripts/daily/serial can be executed manually and
+will also run daily on any platform that has the Epetra serial test harness
+installed, as part of the automated regression test harness.  On a nightly 
 basis, the test harness builds the most recent versions of Trilinos libraries 
-and runs any tests that have been integrated into the testharness.  
+and runs any tests that are present in one of these special directories.  
 
 \item {\bf Portable interface to BLAS and LAPACK:} The Basic Linear Algebra
 Subprograms (BLAS)~\cite{BLAS1,BLAS2,BLAS3} and LAPACK~\cite{lapack}
@@ -304,7 +317,7 @@ provide a large repository of robust, high-performance mathematical
 software for serial and shared memory parallel dense linear algebra
 computations.  However, the BLAS and LAPACK interfaces are Fortran
 specifications, and the mechanism for calling Fortran interfaces from
-C and C++ varies across computing platforms.  Epetra (and Teuchos)
+C and C++ varies across computing platforms.  Epetra and Teuchos
 provide a set of simple, portable interfaces to the BLAS and LAPACK
 that provide uniform access to the BLAS and LAPACK across a broad
 set of platforms.  These interfaces are accessible to
