@@ -58,7 +58,13 @@ public class BasicDirectory extends JpetraObject implements Directory {
         }
         
         if (vectorSpace.isDistributedLinearly()) {
-            allMinGids = vectorSpace.getComm().gatherAll(vectorSpace.getMyMinGlobalIndex());
+            int[] tmp = new int[]{vectorSpace.getMyMinGlobalIndex()};
+            this.println("DIRECTORY", "Submitting min gid: " + tmp[0] + "to the gatherAll()");
+            this.allMinGids = vectorSpace.getComm().gatherAll(tmp);
+            this.println("DIRECTORY", "vectorSpace.getMyMinGlobalIndex(): " + vectorSpace.getMyMinGlobalIndex());
+            for(int i=0; i < this.allMinGids.length; i++) {
+                this.println("DIRECTORY", "vnode: " + i + " minGid: " + this.allMinGids[i]);
+            }
             return; // nothing else left to do
         }
         

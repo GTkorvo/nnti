@@ -156,6 +156,7 @@ public class Export extends JpetraObject {
                 for(int i = 0; i < exportGids.length; i++) {
                     // exportVnodeIds are set to -1 if no vnode owns the corresponding Gid
                     if(exportVnodeIds[i] == -1) {
+                        this.println("EXPORT", "Gid " + exportGids[i] + " not found.");
                         count++;
                     }
                 }

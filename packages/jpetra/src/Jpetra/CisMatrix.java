@@ -87,7 +87,7 @@ public class CisMatrix extends DistObject implements Externalizable {
      * @param rowOriented determines whether the <code>CisMatrix</code> is row or column oriented
      */
     public CisMatrix(VectorSpace primaryVectorSpace, boolean rowOriented) {
-        this.outputStreams.put("CISMATRIX", new Output("CisMatrix: ", true, System.out, false, System.out));
+        this.outputStreams.put("CISMATRIX", new Output("CisMatrix: ", false, System.out, false, System.out));
         
         this.filled = false;
         /*this.maxSecondaryId = 0;*/
@@ -320,8 +320,25 @@ public class CisMatrix extends DistObject implements Externalizable {
         return this.doubleValues.length;
     }
     
+    public int getNumGlobalRows() {
+        if (this.rowOriented) {
+            return this.primaryVectorSpace.getNumGlobalEntries();
+        }
+        else {
+            return this.secondaryVectorSpace.getNumGlobalEntries();
+        }
+    }
     
-    public int getNumRows() {
+    public int getNumGlobalColumns() {
+        if (this.rowOriented) {
+            return this.secondaryVectorSpace.getNumGlobalEntries();
+        }
+        else {
+            return this.primaryVectorSpace.getNumGlobalEntries();
+        }
+    }
+    
+    public int getNumMyRows() {
         if (this.rowOriented) {
             return this.primaryVectorSpace.getNumMyGlobalEntries();
         }
@@ -330,7 +347,7 @@ public class CisMatrix extends DistObject implements Externalizable {
         }
     }
     
-    public int getNumColumns() {
+    public int getNumMyColumns() {
         if (this.rowOriented) {
             return this.secondaryVectorSpace.getNumMyGlobalEntries();
         }
@@ -577,12 +594,12 @@ public class CisMatrix extends DistObject implements Externalizable {
         //if (useTransposeA == CisMatrix.USE_A) {
         if (useTransposeA == CisMatrix.USE_A) {
             this.println("CISMATRIX", "Doing compatibility checks for A.");
-            if (this.getColumnVectorSpace().getNumGlobalEntries() != x.getVectorSpace().getNumGlobalEntries()) {
-                this.println("FATALERR", "In CisMatrix.muliptly: The number of columns in CisMatrix A (" + this.getColumnVectorSpace().getNumGlobalEntries() + ") != the number of rows (" + x.getVectorSpace().getNumGlobalEntries() + ") in MultiVector x.");
+            if (this.getColumnVectorSpace().getNumGlobalEntries() > x.getVectorSpace().getNumGlobalEntries()) {
+                this.println("FATALERR", "In CisMatrix.muliptly: The number of columns in CisMatrix A (" + this.getColumnVectorSpace().getNumGlobalEntries() + ") > the number of rows (" + x.getVectorSpace().getNumGlobalEntries() + ") in MultiVector x.");
                 System.exit(1);
             }
-            if (this.getRowVectorSpace().getNumGlobalEntries() != y.getVectorSpace().getNumGlobalEntries()) {
-                this.println("FATALERR", "In CisMatrix.muliptly: The number of rows in CisMatrix A (" + this.getRowVectorSpace().getNumGlobalEntries() + ") != the number of rows (" + y.getVectorSpace().getNumGlobalEntries() + ") in MultiVector y.");
+            if (this.getRowVectorSpace().getNumGlobalEntries() > y.getVectorSpace().getNumGlobalEntries()) {
+                this.println("FATALERR", "In CisMatrix.muliptly: The number of rows in CisMatrix A (" + this.getRowVectorSpace().getNumGlobalEntries() + ") > the number of rows (" + y.getVectorSpace().getNumGlobalEntries() + ") in MultiVector y.");
                 System.exit(1);
             }
             if (x.getNumCols() != y.getNumCols()) {
@@ -592,12 +609,12 @@ public class CisMatrix extends DistObject implements Externalizable {
         }
         else {
             this.println("CISMATRIX", "Doing compatibility checks for the transpose of A.");
-            if (this.getRowVectorSpace().getNumGlobalEntries() != x.getVectorSpace().getNumGlobalEntries()) {
-                this.println("FATALERR", "In CisMatrix.multiply: The number of columns in CisMatrix A' (" + this.getRowVectorSpace().getNumGlobalEntries() + ") != the number of rows (" + x.getVectorSpace().getNumGlobalEntries() + ") in MultiVector x.");
+            if (this.getRowVectorSpace().getNumGlobalEntries() > x.getVectorSpace().getNumGlobalEntries()) {
+                this.println("FATALERR", "In CisMatrix.multiply: The number of columns in CisMatrix A' (" + this.getRowVectorSpace().getNumGlobalEntries() + ") > the number of rows (" + x.getVectorSpace().getNumGlobalEntries() + ") in MultiVector x.");
                 System.exit(1);
             }
-            if (this.getColumnVectorSpace().getNumGlobalEntries() != y.getVectorSpace().getNumGlobalEntries()) {
-                this.println("FATALERR", "In CisMatrix.multiply: The number of rows in CisMatrix A' (" + this.getColumnVectorSpace().getNumGlobalEntries() + ") != the number of rows (" + y.getVectorSpace().getNumGlobalEntries() + ") in MultiVector y.");
+            if (this.getColumnVectorSpace().getNumGlobalEntries() > y.getVectorSpace().getNumGlobalEntries()) {
+                this.println("FATALERR", "In CisMatrix.multiply: The number of rows in CisMatrix A' (" + this.getColumnVectorSpace().getNumGlobalEntries() + ") > the number of rows (" + y.getVectorSpace().getNumGlobalEntries() + ") in MultiVector y.");
                 System.exit(1);
             }
             if (x.getNumCols() != y.getNumCols()) {
@@ -614,19 +631,24 @@ public class CisMatrix extends DistObject implements Externalizable {
         int index;
         if(useTransposeA == CisMatrix.USE_A) {
             if(this.rowOriented) {
-                MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumColumns()]);
+                MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumGlobalColumns()]);
                 Import importer = new Import(x.getVectorSpace(), importMultiVector.getVectorSpace());
                 importMultiVector.importValues(x, importer, DistObject.REPLACE);
+                this.println("CISMATRIX", "printing importMultiVector...");
+                importMultiVector.printOutAllVnodes("STD");
                 double[][] importValues = importMultiVector.getValues();
                 
-                exportValues = new double[importValues.length][this.getNumRows()];
+                exportValues = new double[importValues.length][this.getNumMyRows()];
                 exportMultiVector = new MultiVector(this.getRowVectorSpace(), exportValues);
-                for(int row=0; row < this.getNumRows(); row++) {
+                VectorSpace importMultiVectorVectorSpace = importMultiVector.getVectorSpace();
+                for(int row=0; row < this.getNumMyRows(); row++) {
                     for(int vector=0; vector < importMultiVector.getNumCols(); vector++){
                         sum = 0;
                         index = this.startIndex[row];
                         for(int col=0; col < this.numEntries[row]; col++) {
-                            sum += this.doubleValues[index] * importValues[vector][indices[index++]];
+                            this.println("STD", "this.doubleValues[index] * importValues[vector][indices[index++]]" + this.doubleValues[index] +" * " + importValues[vector][indices[index]]);
+                            //sum += this.doubleValues[index] * importValues[vector][importMultiVectorVectorSpace.getLocalIndex(indices[index++])];
+                            sum += this.doubleValues[index++] * importValues[vector][col];  // assume that Gids of importValues are in the same order as the Gids from doubleValues
                         }
                         exportValues[vector][row] = sum;
                     }
@@ -638,15 +660,15 @@ public class CisMatrix extends DistObject implements Externalizable {
                 // possibly generate a new VectorSpace for the importMultiVector from the nonzero vectors of the ColumnVectorSpace
                 // would be less communication if there are 0 vectors
                 // for now this works though
-                MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumColumns()]);
+                MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumMyColumns()]);
                 Import importer = new Import(x.getVectorSpace(), importMultiVector.getVectorSpace());
                 importMultiVector.importValues(x, importer, DistObject.REPLACE);
                 double[][] importValues = importMultiVector.getValues();
-                exportValues = new double[importValues.length][this.getNumRows()];
+                exportValues = new double[importValues.length][this.getNumMyRows()];
                 exportMultiVector = new MultiVector(this.getRowVectorSpace(), exportValues);
                 this.println("CISMATRIX", "y.getVectorSpace().getNumGlobalEntries(): " + y.getVectorSpace().getNumGlobalEntries());
                 this.println("CISMATRIX", "exportMultiVector.getVectorSpace().getNumGlobalEntries(): " + exportMultiVector.getVectorSpace().getNumGlobalEntries());
-                for(int col=0; col < this.getNumColumns(); col++) {
+                for(int col=0; col < this.getNumMyColumns(); col++) {
                     for(int vector=0; vector < importMultiVector.getNumCols(); vector++){
                         index = this.startIndex[col];
                         for(int row=0; row < this.numEntries[col]; row++) {
@@ -660,16 +682,16 @@ public class CisMatrix extends DistObject implements Externalizable {
         }
         else {
             if(this.rowOriented) {
-                exportValues = new double[x.getNumCols()][this.getNumColumns()];
+                exportValues = new double[x.getNumCols()][this.getNumMyColumns()];
                 exportMultiVector = new MultiVector(this.getColumnVectorSpace(), exportValues);
                 Import importer = new Import(x.getVectorSpace(), this.getColumnVectorSpace());
                 exportMultiVector.importValues(x, importer, DistObject.REPLACE);
                 // need to check this....
-                MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumColumns()]);
+                MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumMyColumns()]);
                 
                 double[][] importValues = importMultiVector.getValues();
                 
-                for(int row=0; row < this.getNumRows(); row++) {
+                for(int row=0; row < this.getNumMyRows(); row++) {
                     for(int vector=0; vector < exportMultiVector.getNumCols(); vector++){
                         index = this.startIndex[row];
                         for(int col=0; col < this.numEntries[row]; col++) {
@@ -680,16 +702,18 @@ public class CisMatrix extends DistObject implements Externalizable {
                 
                 Import import2 = new Import(y.getVectorSpace(), importMultiVector.getVectorSpace());
                 y.exportValues(importMultiVector, import2, DistObject.ADD);
+                //Export exporter = new Export(y.getVectorSpace(), importMultiVector.getVectorSpace());
+                //y.exportValues(importMultiVector, exporter, DistObject.ADD);
             }
             else {
-                MultiVector importMultiVector = new MultiVector(this.getRowVectorSpace(), new double[x.getNumCols()][this.getNumRows()]);
+                MultiVector importMultiVector = new MultiVector(this.getRowVectorSpace(), new double[x.getNumCols()][this.getNumMyRows()]);
                 Import importer = new Import(x.getVectorSpace(), importMultiVector.getVectorSpace());
                 importMultiVector.importValues(x, importer, DistObject.REPLACE);
                 double[][] importValues = importMultiVector.getValues();
                 
-                exportValues = new double[importValues.length][this.getNumColumns()];
+                exportValues = new double[importValues.length][this.getNumMyColumns()];
                 exportMultiVector = new MultiVector(this.getColumnVectorSpace(), exportValues);
-                for(int col=0; col < this.getNumColumns(); col++) {
+                for(int col=0; col < this.getNumMyColumns(); col++) {
                     for(int vector=0; vector < importMultiVector.getNumCols(); vector++){
                         sum = 0;
                         index = this.startIndex[col];

@@ -181,7 +181,6 @@ public class CcjDistributor extends JpetraObject implements Distributor {
                 for(int j=0; j < numSends[i]; j++) {
                     buffer[j] = toSendData[dataIndex];
                     dataIndex = nextIndex[dataIndex];
-                    this.println("DISTRIBUTOR", "next dataIndex: " + dataIndex);
                 }
                 // buffer object filled so send it off to vnode i
                 comm.send(buffer, i);
@@ -223,7 +222,6 @@ public class CcjDistributor extends JpetraObject implements Distributor {
                     for(int j=0; j < numSends[i]; j++) {
                         buffer[j] = exportObjects[dataIndex];
                         dataIndex = nextIndex[dataIndex];
-                        this.println("DISTRIBUTOR", "next dataIndex: " + dataIndex);
                     }
                     // buffer object filled so send it off to vnode i
                     comm.send(buffer, i);

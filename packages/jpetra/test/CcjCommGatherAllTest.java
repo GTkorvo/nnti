@@ -26,6 +26,8 @@
 // ***********************************************************************
 // @HEADER
 
+package test;
+
 import Jpetra.*;
 import java.util.Arrays;
 
@@ -37,7 +39,7 @@ public class CcjCommGatherAllTest {
      }
      
      public CcjCommGatherAllTest(String[] args) {
-         Jpetra.CcjComm comm = new Jpetra.CcjComm("ccjhosts.txt");
+         Jpetra.CcjComm comm = new Jpetra.CcjComm("test/ccjhosts.txt");
          
          if(args.length > 0 && args[0].equals("-v")) verbose = true;
       

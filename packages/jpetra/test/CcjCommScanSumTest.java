@@ -43,8 +43,8 @@ public class CcjCommScanSumTest {
         output.initializeOutput();
         
         Jpetra.CcjComm comm = new Jpetra.CcjComm("test/ccjhosts.txt");
-        if (comm.getNumVnodes() !=3 ) {
-            System.out.println("Fatal Error: This test must be run with 3 virutal nodes!");
+        if (comm.getNumVnodes() !=4 ) {
+            System.out.println("Fatal Error: This test must be run with 4 virutal nodes!");
         }
         if(args.length > 0 && args[0].equals("-v")) verbose = true;
         
@@ -60,14 +60,51 @@ public class CcjCommScanSumTest {
             myIntArray = new int[]{2,1,98,3};
             myDoubleArray = new double[]{2,1,98,3};
         }
-        else {
+        else if (comm.getVnodeID()==2) {
             myIntArray = new int[]{-2,4,102,9};
             myDoubleArray = new double[]{-2,4,102,9};
+        }
+        else {
+            myIntArray = new int[]{5,6,7,8};
+            myDoubleArray = new double[]{5,6,7,8};
         }
         
         int[] myIntScanSum = comm.scanSums(myIntArray);
         double[] myDoubleScanSum = comm.scanSums(myDoubleArray);
         
+        // need to finish fixing this
+        if (comm.getVnodeID()==0) {
+            if (myIntScanSum[0] != 5 || myIntScanSum[1] != 7 || myIntScanSum[2] != 2 || myIntScanSum[3] != 1000) {
+                System.out.println("intScanSum failed for vnode0");
+            }
+            if (!java.util.Arrays.equals(myDoubleScanSum, new double[]{5,7,2,1000})) {
+                System.out.println("doubleScanSum failed for vnode0");
+            }
+        }
+        else if (comm.getVnodeID()==1) {
+            if (!java.util.Arrays.equals(myIntScanSum, new int[]{7,8,100,1003})) {
+                System.out.println("intScanSum failed for vnode1");
+            }
+            if (!java.util.Arrays.equals(myDoubleScanSum, new double[]{7,8,100,1003})) {
+                System.out.println("doubleScanSum failed for vnode1");
+            }
+        }
+        else if (comm.getVnodeID()==2) {
+            if (!java.util.Arrays.equals(myIntScanSum, new int[]{5,12,202,1012})) {
+                System.out.println("intScanSum failed for vnode2");
+            }
+            if (!java.util.Arrays.equals(myDoubleScanSum, new double[]{5,12,202,1012})) {
+                System.out.println("doubleScanSum failed for vnode2");
+            }
+        }
+        else {
+            if (!java.util.Arrays.equals(myIntScanSum, new int[]{10,18,209,1020})) {
+                System.out.println("intScanSum failed for vnode3");
+            }
+            if (!java.util.Arrays.equals(myDoubleScanSum, new double[]{10,18,209,1020})) {
+                System.out.println("doubleScanSum failed for vnode3");
+            }
+        }
         
         if (verbose) {
             for(int i=0; i < myIntScanSum.length; i++) {

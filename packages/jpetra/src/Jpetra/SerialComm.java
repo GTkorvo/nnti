@@ -315,6 +315,11 @@ public class SerialComm extends JpetraObject implements Comm {
     }
     
     public Serializable maxAll(Serializable partialMaxs) {
+        return partialMaxs;
+    }
+    
+    public double[] minAll(double[] partialMins) {
+        return partialMins;
     }
     
 }

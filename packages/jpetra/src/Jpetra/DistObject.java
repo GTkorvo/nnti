@@ -201,6 +201,7 @@ public abstract class DistObject extends JpetraObject {
         copyAndPermute(this.distObjectSource, this.numSameGids, this.permuteToLids, this.permuteFromLids, this.combineMode);
         if (distObjectSource.getVectorSpace().getComm().isSerial() || (this.combineMode == DistObject.ZERO)) {
             // just doing a local copy and permute so we're done
+            this.println("STD", "DistObject: Doing copyAndPermute Only!");
             return;
         }
         Serializable[] exportData = packAndPrepare(this.distObjectSource, this.exportGids, this.exportLids);

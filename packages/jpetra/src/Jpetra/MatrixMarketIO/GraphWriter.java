@@ -50,7 +50,7 @@ public class GraphWriter extends JpetraObject {
         PrintWriter out = new PrintWriter(new FileOutputStream(fileName));
         
         out.println("%%MatrixMarket matrix coordinate pattern general");
-        out.println(cisMatrix.getNumRows() + " " + cisMatrix.getNumColumns() + " " + graph.getNumNonZeros());
+        out.println(cisMatrix.getNumMyRows() + " " + cisMatrix.getNumMyColumns() + " " + graph.getNumNonZeros());
         out.println();
         int[] numEntries = graph.getNumEntriesArray();
         int[] nonZeros = graph.getNonZeroEntriesArray();

@@ -82,7 +82,7 @@ public class CisMatrixWriter extends JpetraObject {
      */
     private static void write(PrintWriter out, CisMatrix cisMatrix) throws java.io.IOException {
         out.println("%%MatrixMarket matrix coordinate real general");
-        out.println(cisMatrix.getNumRows() + " " + cisMatrix.getNumColumns() + " " + cisMatrix.getNumNonZeros());
+        out.println(cisMatrix.getNumMyRows() + " " + cisMatrix.getNumMyColumns() + " " + cisMatrix.getNumNonZeros());
         out.println();
         int[] numEntries = cisMatrix.getNumEntriesArray();
         double[] entries = cisMatrix.getEntriesArray();

@@ -122,7 +122,6 @@ public class Import extends JpetraObject {
         // i is my local id
         for (int i=this.numSameGids; i < targetGids.length; i++) {
             if (sourceVectorSpace.isMyGlobalIndex(targetGids[i])) {
-                this.println("IMPORT", "need remote gid: " + targetGids[i]);
                 permuteToLids[numPermuteGids] = i;
                 permuteFromLids[numPermuteGids++] = sourceVectorSpace.getLocalIndex(targetGids[i]);
             }

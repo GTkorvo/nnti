@@ -353,7 +353,7 @@ public class MultiVector extends DistObject implements Externalizable {
                     entryData = (Serializable[]) entry[j];
                     gid = ((Integer) entryData[0]).intValue();
                     lid = vectorSpace.getLocalIndex(gid);
-                    
+                    this.println("STD", "MultiVector: Combining Gid: " + gid + " lid: " + lid);
                     // debugging code!!!
                     if (lid == -1) {
                         this.println("ERR", "In MultiVector: Got a bad gid: " + gid);
