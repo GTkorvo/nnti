@@ -56,7 +56,8 @@ comm =  Comm.java \
 	CcjDistributor.java \
 	SerialDistributor.java
 util =  Time.java \
-	Util.java
+	Util.java \
+        FlopCounter.java
 data_structs =  ElementSpace.java \
 		VectorSpace.java \
 		Graph.java \
