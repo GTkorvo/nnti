@@ -298,7 +298,9 @@ public class CcjLink extends ColMember {
         return globalSums.scanSums(rank);
     }
         
-        //not used but required to extend <code>ColMember</code>
+        /**
+         * not used but required to extend CCJ <code>ColMember</code>
+         */
         public void run() {
 	        //empty
 	    }

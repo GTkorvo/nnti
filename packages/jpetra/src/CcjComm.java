@@ -18,8 +18,8 @@ import java.io.Serializable;
  * <p>
  * To use <code>CcjComm</code> first an instance of CcjComm needs to be created.
  * A the path and file name of a ccjhosts file needs to be passed to the <code>CcjComm</code> contructor.
- * The format of this file is one IP or host name and port per line, seperated by a
- * by a color (:).  Note that the port number is optional.
+ * The format of this file is one IP or host name and port per line, seperated
+ * by a colon (:).  Note that the port number is optional.
  * <p>Example ccjhosts file:
  * <pre>
  * // comments begining with /
@@ -39,7 +39,7 @@ import java.io.Serializable;
  * file to the same path on each physical node, or a shared file system could be used.
  *<p>
  *
- * Adapted from SerialComm by Mike Heroux and
+ * Adapted from <code>SerialComm</code> by Mike Heroux and
  * Michael William Boldt.
  *
  * @author  Jason Cross 
