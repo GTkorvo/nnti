@@ -1,0 +1,1356 @@
+\documentclass[pdf,ps2pdf,11pt]{SANDreport}
+\usepackage{pslatex}
+
+%Local stuff
+\usepackage{graphicx}
+\usepackage{latexsym}
+\input{rab_commands}
+
+% If you want to relax some of the SAND98-0730 requirements, use the "relax"
+% option. It adds spaces and boldface in the table of contents, and does not
+% force the page layout sizes.
+% e.g. \documentclass[relax,12pt]{SANDreport}
+%
+% You can also use the "strict" option, which applies even more of the
+% SAND98-0730 guidelines. It gets rid of section numbers which are often
+% useful; e.g. \documentclass[strict]{SANDreport}
+
+% ---------------------------------------------------------------------------- %
+%
+% Set the title, author, and date
+%
+
+\title{
+Thyra Software
+}
+\author{
+Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
+... \\ \\
+Sandia National Laboratories\footnote{
+Sandia is a multiprogram laboratory operated by Sandia Corporation, a
+Lockheed-Martin Company, for the United States Department of Energy
+under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA, \\
+}
+\date{}
+
+% ---------------------------------------------------------------------------- %
+% Set some things we need for SAND reports. These are mandatory
+%
+\SANDnum{SAND2005-xxxx}
+\SANDprintDate{January 12, 2005}
+\SANDauthor{
+Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
+... \\ \\
+}
+
+% ---------------------------------------------------------------------------- %
+% The following definitions are optional. The values shown are the default
+% ones provided by SANDreport.cls
+%
+%\SANDreleaseType{Unlimited Release}
+\SANDreleaseType{Not approved for release outside Sandia}
+
+% ---------------------------------------------------------------------------- %
+% The following definition does not have a default value and will not
+% print anything, if not defined
+%
+%\SANDsupersed{SAND1901-0001}{January 1901}
+
+% ---------------------------------------------------------------------------- %
+%
+% Start the document
+%
+\begin{document}
+
+\maketitle
+
+% ------------------------------------------------------------------------ %
+% An Abstract is required for SAND reports
+%
+
+%
+\begin{abstract}
+%
+This is a design document for various interfaces and support software for
+facilitating the interoperability between different types of software modules
+primarily, but not limited to, Trilinos.  The term {}\textit{Thyra}, which
+means ``interface'' or ``grand entrance'' in Greek, is used to encompass type
+of software.  This document describes the basic categories of interfaces and
+support software and outlines how this software is organized into Trilinos
+packages and subdirectories within packages.
+%
+\end{abstract}
+%
+
+% ------------------------------------------------------------------------ %
+% An Acknowledgement section is optional but important, if someone made
+% contributions or helped beyond the normal part of a work assignment.
+% Use \section* since we don't want it in the table of context
+%
+\clearpage
+\section*{Acknowledgement}
+The authors would like to thank ...
+
+The format of this report is based on information found
+in~\cite{Sand98-0730}.
+
+% ------------------------------------------------------------------------ %
+% The table of contents and list of figures and tables
+% Comment out \listoffigures and \listoftables if there are no
+% figures or tables. Make sure this starts on an odd numbered page
+%
+\clearpage
+\tableofcontents
+\listoffigures
+%\listoftables
+
+% ---------------------------------------------------------------------- %
+% An optional preface or Foreword
+%\clearpage
+%\section{Preface}
+%Although muggles usually have only limited experience with
+%magic, and many even dispute its existence, it is worthwhile
+%to be open minded and explore the possibilities.
+
+% ---------------------------------------------------------------------- %
+% An optional executive summary
+%\clearpage
+%\section{Summary}
+%Once a certain level of mistrust and scepticism has
+%been overcome, magic finds many uses in todays science
+%and engineering. In this report we explain some of the
+%fundamental spells and instruments of magic and wizardry. We
+%then conclude with a few examples on how they can be used
+%in daily activities at national Laboratories.
+
+% ---------------------------------------------------------------------- %
+% An optional glossary. We don't want it to be numbered
+%\clearpage
+%\section*{Nomenclature}
+%\addcontentsline{toc}{section}{Nomenclature}
+%\begin{itemize}
+%\item[alohomora]
+%spell to open locked doors and containers
+%\end{itemize}
+
+% ---------------------------------------------------------------------- %
+% This is where the body of the report begins; usually with an Introduction
+%
+\setcounter{secnumdepth}{3}
+\SANDmain % Start the main part of the report
+
+\section{Introduction}
+
+There are many different categories of interfaces and software that (will)
+make up and are (or will be) closly related to Thyra.
+
+There are multiple purposes for this document:
+\begin{itemize}
+%
+{}\item Categorize current and planned interfaces and software related to Thyra
+%
+{}\item Document dependencies between various software categories to guide how
+this software is partitioned into internal (or external) Trilinos
+``packages''
+%
+\end{itemize}
+
+Over time, this document will be morphed into an overview of current and
+planned Thyra software and will provide a very brief outline for this
+software.  However, the major effort to document this software should be
+provided by online documentation (using Doxygen) and summaries can be created
+from that effort.
+
+These various categories are described in the next two sections followed by
+UML diagram summaries.
+
+%
+\section{Thyra Abstract Interfaces}
+%
+
+These abstract interfaces in Thyra described in this section define the
+foundation for all interoperability between various Trilinos and non-Trilinos
+packages and related software.  The interfaces are subdivided into ANA
+interfaces and non-ANA interfaces in the next two subsections.
+
+\subsection{Thyra ANA Interfaces}
+
+This set of interfaces is designed to support interoperability for ANAs only.
+Figure~\ref{thyra:fig:ThyraANAInterfaces} shows these categories and their
+interdependencies as UML packages.
+
+%
+\subsubsection{Operator/Vector Interfaces}
+%
+
+These are the basic C++ interface classes for vectors, vector spaces, linear
+operators and multi-vectors.  Also included in this category is minimal
+support software that allows the default definition of a multi-vector.
+Included here is support software for concrete implementations for serial
+vectors and multi-vectors.  These are needed to provide a default definition
+for the domain space of multi-vectors for the default multi-vector
+implementation.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item Basic abstract linear algebra interfaces: {}\texttt{VectorBase},
+{}\texttt{VectorSpaceBase}, {}\texttt{LinearOpBase}, and
+{}\texttt{MultiVectorBase}
+%
+{}\item Adapter support subclasses for serial vectors, multi-vectors and
+vector spaces:
+%
+{}\item Concrete implementations of serial vectors, multi-vectors and vector
+spaces:
+%
+\end{itemize}
+
+{}\textit{Current status:} This software currently is located in
+{}\texttt{TSFCore/src/interfaces/Core}.
+
+{}\textit{Dependencies:} None
+
+%
+\subsubsection{Basic Linear Solver Status Test Interfaces}
+%
+
+These interfaces represent abstractions for status tests that are mainly
+targeted to iterative solvers but can also be used for direct solvers (with
+iterative refinement) as well.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{LinearStatusTestBase}: Status test interface that allows clients
+to specify when to stop a single, atomic linear solver.
+%
+\end{itemize}
+
+{}\textit{Current status:} A superset of this interface is contained in
+{}\texttt{belos/belos\_new/src/interfaces}.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\end{itemize}
+
+%
+\subsubsection{Basic Iterative Linear Solver Interfaces}
+%
+
+These are the basic interfaces that are needed to abstract away block
+iterative linear solvers (such as those in Belos) for a client that already
+has the operator, preconditioner, RHS and inital LHS ready to go.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{BasicIterativeLinearSolverBase}: Basic linear iteration
+interface to set problem and invoke iterations
+%
+\end{itemize}
+
+{}\textit{Current status:} A superset of this interface is contained in
+{}\texttt{belos/belos\_new/src/interfaces}.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+%
+{}\item {}\textit{Operator/Vector Interfaces}
+%
+{}\item {}\textit{Basic Linear Solver Status Test Interfaces}: These status
+tests are used to tell the concrete iterative linear solver implementations
+when to stop.
+%
+\end{itemize}
+
+%
+\subsubsection{Basic Iterative Eigen Solver Interfaces}
+%
+
+These represent interfaces for abstracting basic block eigen solvers (such as
+are being developed in Anasazi) from a client that has operators and problem
+multi-vectors already created and initialized.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{BasicIterativeEigenSolverBase}: Interface representing an eign
+solver that allows the problem operator(s) and multi-vectors to be set and
+have the solver iterations started.
+%
+{}\item {}\texttt{EigenStatusTestBase}: A status test interface that lets the eign
+solver know when to stop iterating.
+%
+\end{itemize}
+
+{}\textit{Current status:} Aspects of this interface are currently in
+{}\texttt{anasazi/src}
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\end{itemize}
+%
+\subsubsection{Linear Solver Manager Interfaces}
+%
+
+These interfaces represent a higher-level interface to direct or iterative
+linear solvers than what is represented by the {}\textit{Basic Iterative
+Linear Solver Interfaces}.  However, it is assumed that the underlying solve
+involves a single atomic direct or iterative solve.  As a result, the more
+detailed {}\textit{Basic Linear Solver Status Test Interfaces} can be used.
+Composite, non-atomic solves are not allowed (see the {}\textit{Operator Solve
+Interfaces}).  This type of interface (or interfaces) should be appropriate as
+an intermediate utility layer that lies below the {}\textit{Operator Solve
+Interfaces}.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{LinearSolverBase}: High-level linear solver interface that
+accepts a LinearOpBase object, a RHS MultiVectorBase object, and an initial
+LHS MultiVectorBase object, then returns an approximate solution RHS vector.
+%
+\end{itemize}
+
+{}\textit{Current status:} An interface of this type is represented by the
+current {}\texttt{TSFExtended\-::Linear\-Solver\-Base} interface but is not
+general for multi-vectors.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Basic Linear Solver Status Test Interfaces}
+\end{itemize}
+
+{}\textbf{Note:} These interfaces do not depend in any way on the
+{}\textit{Basic Iterative Linear Solver Interfaces} but concrete subclasses of
+these interfaces might (see Item ???).
+
+%
+\subsubsection{Operator Solve Interfaces}
+%
+
+These interfaces represent the highest-level interface to a linear solve.
+These interfaces makes no assumption about how the underlying linear system is
+solved and therefore can not have a status test that is based on only
+algorithmic details such as iteration counts.
+
+Examples of the types of linear operators that might support this interface
+are:
+%
+\begin{itemize}
+%
+{}\item Block linear operators where the solve is performed by solving one or
+more solves with the blocks along the diagonal:  Important examples include
+block diagonal, block lower triangular, and block upper triangular operators
+where solves are performed using the blocks along the diagonal.
+%
+{}\item Multipliciative operators: One example is a multiplicative operator
+such as $C = A B$ where $A$ and $B$ both support a solve operation.  The
+linear system $C x = b {}\rightarrow A B x = b$ can be solved by first solving
+$A y = b$ and then solving $B x = y$.
+%
+{}\item Sherman-Morrison-Woodbury operator solves: As an example, consider the
+operator $A = I + D D^T$ where $A\in\RE^{n {}\times n}$, $D\in\RE{n {}\times
+m}$ and $m {}\ll n$.  A linear solve with $A x = b$ can be solved as $x = (I -
+D^T (I + D^T D)^{-1} D) b$ where $(I + D^T D)\in\RE{m {}\times m}$ is a small
+dense positive-definite matrix that is easily formed, factored (Cholesky) and
+solved.
+%
+\end{itemize}
+
+The convergence criteria used for these types of operator solves must be
+purely based on the relative errors of the linear system (i.e.\ relative
+residual error or relative solution error).  In the most general cases, it
+will be non-trivial to guarantee that a relative error is satisfied.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{LinearOpWithSolveBase} or {}\texttt{NonsingLinearOpBase} or
+something else: Highest level interface for an operator that can support a
+linear solve function.  The {}\texttt{solve(...)} member function accepts a
+RHS MultiVectorBase object, and an initial LHS MultiVectorBase object, then
+returns an approximate solution LHS solution.  The convergence criteria will
+be a simple tolerance (or set of tolerances) for the relative residual or
+relative solution errors.  Tolerances can be targeted from different blocks of
+RHSs to allow for different convergence criteria.
+%
+\end{itemize}
+
+{}\textit{Current status:} The interfaces that most closely resembles the
+proposed interface are {}\texttt{TSFCore\-::Nonlin\-::Linear\-Op\-With\-Solve}
+and {}\texttt{NOX\-::Abstract\-::Group\-::apply\-Jacobian\-Inverse(...)}.  The
+function {}\texttt{NOX\-::Abstract\-::Group\-::apply\-Jacobian\-Inverse(...)} 
+only supports residual tolerances and single vector RHSs while
+{}\texttt{TSFCore\-::Nonlin\-::Linear\-Op\-With\-Solve} as the wrong status
+tests.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\end{itemize}
+
+{}\textbf{Note:} These interfaces do not depend in any way on the
+{}\textit{Basic Iterative Linear Solver Interfaces} or the {}\textit{Linear
+Solver Manager Interfaces} but concrete subclasses of these interfaces might
+(see Item ???).
+
+%
+\subsubsection{Miscellaneous Extended Functionality Interfaces}
+%
+
+These are ``Strategy'' interfaces for performing various types of tasks that
+are useful to ANA, or almost ANA, code.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{LinearOpAdjointerBase}: Given an input linear operator $A$
+(possibly composed from one or more operators other using other extended
+strategy interfaces), return a new linear operator $B = A^H$ that is the
+adjoint (or perhaps transpose).  I typical implementation for an input
+explicit sparse matrix is that a new explicit sparse matrix object will be
+returned.  However, other implementations are also possible.
+%
+{}\item {}\texttt{LinearOpSummerBase}: Given two or more input linear
+operators create (or update) a linear operator that represents the scaled sum
+(or difference) of them.  A typical implementation for explicit input sparse
+matrix objects is the creation of an explicit output sparse matrix object.
+However, other implementations are possible.
+%
+{}\item {}\texttt{LinearOpMultiplierBase}: Given two linear operators create
+(or update) a linear operator that represents the scaled product of them.  A
+typical implementation for explicit input sparse matrix objects is the
+creation of an explicit output sparse matrix object.  However, other
+implementations are possible.
+%
+{}\item {}\texttt{LinearOpBlockComposerBase}: Given two or more linear
+operators create (or update) a block linear operator that represents the
+composite linear operator.  A typical implementation for explicit input sparse
+matrix objects is the creation of an explicit output sparse matrix object.
+However, other more specialized implementations are possible.
+%
+{}\item {}\texttt{PreconditionerFactoryBase}: Given a linear operator $A$,
+(possibly composed from one or more operators using the above extended
+strategy interfaces) create (or update) a linear operator $P$ that improves
+the conditioning of the input operator (i.e.\ $\kappa(P A) < {}\kappa(A)$).
+Typically the underlying operator is really an explicit sparse matrix but
+other options are possible.  The preconditioners created by this object will
+generally be of the algebraic variety but, again, other options are possible.
+The abstract definition of a ``preconditioner'' are quite general.  The
+creation of an abstract preconditioner from an abstract operator allows the
+use of an single atomic iterative linear solver ANA such as provided through
+the {}\textit{Basic Iterative Linear Solver Interfaces}.
+%
+{}\item {}\texttt{LinearOpWithSolveFactoryBase}: Given an input operator
+(possibly composed from one or more operators using the above extended
+strategy interfaces), create a new {}\texttt{Linear\-Op\-With\-Solve} object
+the allows for solves with various RHSs.
+%
+\end{itemize}
+
+The purpose of these various interfaces is to allow them to be stringed
+together by an ANA in order to allow the composition of new types of linear
+operators to generally be used in a linear solve.  The general idea is that an
+ANA will transform one or more operators using the
+{}\texttt{Linear\-Op\-Adjointer\-Base}, {}\texttt{Linear\-Op\-Summer\-Base},
+{}\texttt{Linear\-Op\-Multiplier\-Base} and/or
+{}\texttt{Linear\-Op\-Block\-Composer\-Base} strategy interfaces to form a new
+operator $A$.  This new operator $A$ can then be used in one of several ways
+to solve a linear system with $A$ and we list these from the lowest to the
+highest level of use.  First, $A$ may be passed into a
+{}\texttt{Preconditioner\-Factory\-Base} strategy object to create a
+preconditioner $P$ to be used, along with $A$, with a basic iterative linear
+solver through the {}\textit{Basic Iterative Linear Solver Interfaces}.
+Second, a higher-level usage would be to pass the new operator $A$ into a
+{}\textit{Linear\-Solver\-Base} object to perform an atomic linear solve using
+a direct or iterative linear solver.  Third, the highest-level usage of $A$
+would be to pass $A$ to a {}\texttt{Linear\-Op\-With\-Solve\-Factory\-Base}
+strategy object to create a {}\texttt{Linear\-Op\-With\-Solve} object which
+then allows for any arbitrary method to solve for linear systems.  Note that
+this last use is the most approriate for must nonlinear ANA algorithms since
+it allows the most flexibility in how a linear system is solved.
+
+{}\textit{Current status:} Some software of this type is contained in
+TSFExtended.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Operator Solve Interfaces}: Only for the {}\texttt{Linear\-Op\-With\-Solve\-Factory\-Base}
+interface
+\end{itemize}
+
+%
+\subsubsection{Steady-State Nonlinear Problem Interfaces}
+%
+
+These interfaces represent a set of steady-state state equations and auxiliary
+functions that can be cast into a variety of problem types such as a)
+nonlinear equations (e.g.\ for NOX), b) coupled nonlinear equations (e.g.\ for
+NOX), c) stability analysis and continuation (e.g.\ for LOCA), d) uncertainty
+quantification (e.g.\ for an SFE method), and e) constrained optimization
+(e.g.\ for MOOCHO).
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{NonlinearProblemBase}: Represents a set of steady-state
+state and auxilary response functions.
+%
+\end{itemize}
+
+{}\textit{Current status:} Interfaces of this type are currently in
+{}\texttt{TSFCore/src/interfaces/Nonlin}
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Operator Solve Interfaces}: Used to represent the state
+Jacobian matrix and allow for Jacobian solves.
+\end{itemize}
+
+%
+\subsubsection{Steady-State Nonlinear Equation Solver Interfaces}
+%
+
+These represent interfaces for steady-state nonlinear solvers capable of
+solving steady-state nonlinear problems of the form represented through the
+{}\textit{Steady-State Nonlinear Problem Interfaces} described above.  A
+client should be able to define the problem in an abstract way, define
+relative residual or relative solution tolerances, and then invoke the
+nonlinear solver.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{NonlinearSolverBase}: This interface allows a client to set
+a {}\texttt{NonlinearProblemBase} object, specify relative residual or
+solution error tolerances, and then invoke the nonlinear solver.
+%
+\end{itemize}
+
+{}\textit{Current status:} NOX-specific versions of these interfaces are
+present in the current NOX/LOCA packages.  The interface
+{}\texttt{TSFExtended\-::Nonlinear\-Solver\-Base} appears to be related to
+this type of interface as well.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Operator Solve Interfaces}
+\item {}\textit{Steady-State Nonlinear Problem Interfaces}
+\end{itemize}
+
+%
+\subsubsection{Transient Nonlinear Problem Interfaces}
+%
+
+These are the interfaces to transient linear problems (i.e.\ ODEs or DAEs)
+that parallel the {}\textit{Steady-State Nonlinear Problem Interfaces}
+metioned previously.  This interfaces may come in ANA-friendly and
+APP-friendly versions (i.e.\ interfaces easy for ANAs to use and interfaces
+easy for APPs to define).  Support software will be included to bridge the
+ANA-friendly and APP-friendly versions together.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{TransientNonlinearProblemBase}: Defines the ODEs or DAEs and
+may include auxilary ODEs/DAEs, auxilary variables and response functions.
+%
+\end{itemize}
+
+{}\textit{Current status:} There is not interface like this currently in
+existance but is planned as part of Rythmos in FY2005.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Operator Solve Interfaces}: Used to represent the summed
+mass and stiffness state Jacobians and allow for solves.
+\end{itemize}
+
+%
+\subsubsection{Transient Nonlinear Equation Solver Interfaces}
+%
+
+These represent interfaces for transient nonlinear solvers capable of solving
+transient nonlinear problems of the form represented through the
+{}\textit{Transient Nonlinear Problem Interfaces} described above.  A client
+should be able to define the problem in an abstract way, invoke the time
+integrator and have some control over what occurs.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{TransientNonlinearSolverBase}: This interface allows a client to
+set a {}\texttt{TransientNonlinearProblemBase} object and then invoke the
+transient nonlinear solver.
+%
+{}\item {}\texttt{TransientNonlinearStatusTestBase}: Defines NOX-style status tests?
+%
+{}\item There will be a series of interfaces that are yet to be determined and
+the above are purely speculative.
+%
+\end{itemize}
+
+{}\textit{Current status:} There are no interfaces like this that currently
+exist by basic version may be created as part of Rythmos in FY2005 or FY2006.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Operator Solve Interfaces}
+\item {}\textit{Transient Nonlinear Problem Interfaces}
+\end{itemize}
+
+%
+\subsection{Thyra Non-ANA Interfaces}
+%
+
+These are useful interfaces that are not needed for the development or
+interoperability of ANAs.  Instead, these interfaces define APP-LAL and
+LAL-LAL interactions.  These interfaces and their dependencies are shown in
+Figure~\ref{thyra:fig:ThyraNonANAInterfaces}.
+
+%
+\subsubsection{SPMD Matrix/Vector Load/Access Interfaces}
+%
+
+These represent the basic interfaces for loading and/or accessing the entries
+of distributed memory vectors and sparse matrices in an SPMD environment.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{LoadableVectorBase}, {}\texttt{LoadableMatrixBase},
+{}\texttt{AccessibleVectorBase}, {}\texttt{RowAccessibleMatrixBase}
+%
+\end{itemize}
+
+{}\textit{Current status:} These interfaces currently exist in various
+subdirectories of TSFExtended.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\end{itemize}
+
+%
+\subsubsection{SPMD Matrix/Vector Creational Interfaces}
+%
+
+These are interfaces that allow the creation of loadable vectors and sparse
+matrices given basic element-to-process distribution information.  These allow
+an APP code to create and fill vector and matrix objects without having to
+know what concrete implementation is begin used.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{LoadableVectorFactoryBase}: Factory interface for creating
+{}\texttt{LoadableVectorBase} objects.
+%
+{}\item {}\texttt{LoadableVectorFactoryFactoryBase}: Factory interface for
+creating {}\texttt{LoadableVectorFactoryBase} objects given a distribution of
+elements to processors.
+%
+{}\item {}\texttt{LoadableMatrixFactoryBase}: Factory interface for creating
+{}\texttt{LoadableVectorFactoryBase} objects for the rows and columnes.
+%
+\end{itemize}
+
+{}\textit{Current status:} The interface
+{}\texttt{TSFExtended::VectorTypeExtensions} is a ``Facade'' that represents
+all of this conbined functionality.  However,
+{}\texttt{TSFExtended::VectorTypeExtensions} creates ANA-related objects such
+as {}\texttt{VectorSpaceBase} objects that my not be needed by an application
+code.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{SPMD Matrix/Vector Load/Access Interfaces}
+\end{itemize}
+
+{}\textbf{Note}: The current interfaces in TSFExtended depend on the
+{}\textit{Operator/Vector Interfaces} which may be considered a violation
+of the separation of concerns between ANA and non-ANA (i.e.\ APP and LALxx)
+software.  This should be corrected in Thyra if possible.
+
+%
+\section{Thyra-Related Support Software}
+%
+
+This section describes software that is not central to interoperatiblity but
+instead provides useful infrastructure and utilities that is very useful none
+the less.  This software is broken up into ANA and non-ANA subcategories in
+the following subsections.
+
+%
+\subsection{Thyra ANA Support Software}
+%
+
+This is support software needed to provide concrete implementation of Thyra
+interfaces for use by ANAs.  These categories of software and there
+dependancies are shown in Figure~\ref{thyra:fig:ThyraANASupportSoftware}.
+
+%
+\subsubsection{Operator/Vector Adapter Support}
+%
+
+This category contains adapter support subclasses for such things as MPI-based
+SPMD implementations, client/server and master/slave configurations.  Each
+particualar type of adapter support are independent and not related.  For
+example, there is no depandancies between a client/server proxy vector
+subclass and support for MPI-based SPMD implementations.  Note, these adapter
+support subclasses only contain functionality needed by the
+{}\textit{Operator/Vector Interfaces} and not the {}\textit{SPMD Matrix/Vector
+Load/Access Interfaces}.
+
+{}\textit{Current status:} This software currently is located in
+{}\texttt{TSFCore/src/adapters}.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\end{itemize}
+
+%
+\subsubsection{Concrete Operator/Vector Adapters}
+%
+
+These are specific concrete adapter subclasses for adapting such
+implementations such as Epetra and PETSc to {}\textit{Operator/Vector
+Interface} objects.
+
+{}\textit{Current status:} This software currently is located in
+{}\texttt{TSFCore/src/adapters}.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Operator/Vector Support}
+\end{itemize}
+
+%
+\subsubsection{ANA Development Utilities for Operator/Vector Interfaces}
+%
+
+This category contains convenience software to make the development of ANAs
+using the {}\textit{Operator/Vector Interfaces} easier but do not require
+any more functionality that just what is in the {}\textit{Operator/Vector
+Interfaces}.  There are many different subcategories of this software but a
+few of the more important ones are:
+
+\begin{itemize}
+
+{}\item{}\textbf{``Composite'' subclasses}: Product vectors, block operators,
+multiplicative operators, additive operators etc.  Note that with respect to
+composite linear operators, these utility classes are distinctly different
+than these part of the {}\textit{Miscellaneous Extended Functionality
+Interfaces}.  The difference is that the composite operator subclasses
+described here only define new linear operators that are only used for
+operator applications.  On the other hand, the linear operators that are
+created by the strategy objects in the {}\textit{Miscellaneous Extended
+Functionality Interfaces} ultimately will be used to solve for linear systems
+or other more specialized uses.
+
+{}\item{}\textbf{Handle classes and operator overloading}: Support for
+MATLAB-like linear algebra notation in C++.
+
+{}\item{}\textbf{Miscellaneous utilities}: Explicit vector access utilities
+etc.  These are simply utility classes that call the explicit element access
+functions in the {}\texttt{Vector\-Base} and the
+{}\texttt{Multi\-Vector\-Base} objects are do not involve, in any way, the
+{}\textit{{SPMD Matrix/Vector Load/Access Interfaces}}.
+
+\end{itemize}
+
+{}\textit{Current status:} This software currently is located in
+{}\texttt{TSFCore/src/utilities} and in some respects also in TSFExtended.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+{}\item{}\textit{Operator/Vector Interfaces}
+\end{itemize}
+
+%
+\subsubsection{Basic Iterative Linear Solver Implementations}
+%
+
+These are concrete implementations of block iterative linear solvers that only
+deal with objects through the {}\textit{Operator/Vector Interfaces}.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item \texttt{Thyra::BlockCg}: Thin adapter subclass for
+{}\texttt{Belos::BlockCG}
+%
+{}\item \texttt{Thyra::BlockGmres}: Thin adapter subclass for
+{}\texttt{Belos::BlockGmres}
+%
+{}\item Etc...
+%
+\end{itemize}
+
+{}\textit{Current status:} Such adapters do not exist because the interfaces
+do not exist but the implementations of block CG and GMRES in Belos should
+support these fairly easily.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Basic Linear Solver Status Test Interfaces}
+\item {}\textit{Basic Iterative Linear Solver Interfaces}
+\end{itemize}
+
+%
+\subsubsection{Basic Iterative Eigens Solver Implementations}
+%
+
+These are concrete implementations of block iterative eigen solvers that only
+deal with objects through the {}\textit{Operator/Vector Interfaces}.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item Thin adapter subclasses around current Anasazi solvers.
+%
+{}\item Etc...
+%
+\end{itemize}
+
+{}\textit{Current status:} Such adapters do not exist because the interfaces
+do not exist but the implementations of block eigen solvers in Anasazi should
+support these fairly easily.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Basic Iterative Eigen Solver Interfaces}
+\end{itemize}
+
+%
+\subsubsection{Concrete (Iterative) Linear Solver Manager Subclasses}
+%
+
+These are concrete subclasses of the {}\textit{Linear Solver Manager
+Interfaces} that build a ``Facade'' for a complete atomic iterative linear
+solver out of lower-level abstract objects which will include a) one or more
+{}\texttt{Preconditioner\-Factory\-Base} objects, b) one or more
+{}\texttt{Basic\-Iterative\-Linear\-Solver\-Base} objects.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item Example: {}\texttt{IterativeLinearSolverManager} ??? 
+%
+{}\item ...
+%
+\end{itemize}
+
+{}\textit{Current status:} Some code in TSFExtended has this flavor but is not
+exactly what is proposed here.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Basic Linear Solver Status Test Interfaces}
+\item {}\textit{Basic Iterative Linear Solver Interfaces}
+\item {}\textit{Miscellaneous Extended Functionality Interfaces}
+(i.e.\ {}\texttt{Preconditioner\-Factory\-Base})
+\end{itemize}
+
+%
+\subsubsection{Concrete Steady-State Nonlinear Equation Solver Implementations}
+%
+
+These represent concrete implementations of steady-state nonlinear equation
+solvers.  For the most part, these will be thin adapter subclasses around NOX
+but some other, more specialized, implementations may be needed as well.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{NOXNonlinearSolver}???
+%
+\end{itemize}
+
+{}\textit{Current status:} NOX will be the most prevalent concrete
+implementation of steady-state nonlinear equation solvers but there may be
+other more specialized examples.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Operator Solve Interfaces}
+\item {}\textit{Steady-State Nonlinear Problem Interfaces}
+\item {}\textit{Steady-State Nonlinear Equation Solver Interfaces}
+\end{itemize}
+
+%
+\subsubsection{Concrete Transient Nonlinear Equation Solver Implementations}
+%
+
+These represent concrete implementations of transient (explicit and implicit)
+nonlinear equation solvers.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item ANA implementations of explicit and implicit ODE and/or DAE solvers.
+%
+\end{itemize}
+
+{}\textit{Current status:} Nothing like this currently exist but development
+is planned for FY2005 in Rythmos.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Operator Solve Interfaces}
+\item {}\textit{Steady-State Nonlinear Problem Interfaces} to define the time-step system
+\item {}\textit{Steady-State Nonlinear Equation Solver Interfaces} to solve the time-step system
+\item {}\textit{Transient Nonlinear Problem Interfaces} used to access problem
+\item {}\textit{Transient Nonlinear Equation Solver Interfaces} implemented here
+\end{itemize}
+
+%
+\subsection{Non-ANA Support Software}
+%
+
+This is support software that provides implementations for the
+{}\textit{Non-ANA Interfaces} described above and do not (or at least should
+not) depend on {}\textit{ANA} software or interfaces in any way.
+
+%
+\subsubsection{Utilities for use of SPMD Matrix/Vector Load/Access and Creational Interfaces}
+%
+
+This category contains convience software to make to use of the {}\textit{SPMD
+Matrix/Vector Load/Access Interfaces} and the {}\textit{SPMD Matrix/Vector
+Creational Interfaces} easier for some individuals to use.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item Handle classes that support load/access and creational interfaces.
+%
+\end{itemize}
+
+{}\textit{Current status:} These handles are basically the current
+{}\texttt{TSFExtended\-::Vector}, {}\texttt{TSFExtended\-::LinearOperator},
+{}\texttt{TSFExtended\-::VectorType} etc.\ handle classes that are in use in
+Sundance and Split.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+{}\item{}\textit{SPMD Matrix/Vector Load/Access Interfaces}
+{}\item{}\textit{SPMD Matrix/Vector Creational Interfaces}
+\end{itemize}
+
+%
+\subsubsection{SPMD Matrix/Vector Load/Access and Creational Adapter Support}
+%
+
+This category would contain any support software that helps to create concrete
+subclasss implementations of the {}\textit{SPMD Matrix/Vector Load/Access
+Interfaces} or the {}\textit{SPMD Matrix/Vector Creational Interfaces} without
+being specific to a particular concrete implementation (e.g.\ Epetra or
+PETSc).
+
+{}\textit{Current status:} As far as I know there is basically none of this
+software present in TSFExtended.
+
+
+{}\textit{Dependencies:}
+\begin{itemize}
+{}\item{}\textit{SPMD Matrix/Vector Load/Access Interfaces}
+{}\item{}\textit{SPMD Matrix/Vector Creational Interfaces}
+\end{itemize}
+
+%
+\subsubsection{Concrete SPMD Matrix/Vector Load/Access and Creational Subclasses}
+%
+
+These are concrete implementations of subclasses that support the
+{}\textit{SPMD Matrix/Vector Load/Access Interfaces} or the {}\textit{SPMD
+Matrix/Vector Creational Interfaces}.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item Epetra adapters
+%
+{}\item PETSc adapters
+%
+{}\item LAPACK/BLAS adapters
+%
+{}\item ...
+%
+\end{itemize}
+
+{}\textit{Current status:} This software is currently contained in TSFExtended
+in classes such as {}\texttt{TSFExtended\-::Epetra\-Vector},
+{}\texttt{TSFExtended\-::Epetra\-Matrix},
+{}\texttt{TSFExtended\-::Epetra\-Vector\-Type},
+{}\texttt{TSFExtended\-::Epetra\-Vector\-Space} etc.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+{}\item{}\textit{SPMD Matrix/Vector Load/Access Interfaces}
+{}\item{}\textit{SPMD Matrix/Vector Creational Interfaces}
+{}\item{}\textit{SPMD Matrix/Vector Load/Access and Creational Adapter
+Support}
+\end{itemize}
+
+%
+\subsection{Mixed ANA and Non-ANA Support Software}
+%
+
+This is software that combines elements of ANA and Non-ANA software in such a
+way that can not be specifically seperated out into one category or the other.
+
+%
+\subsubsection{Concrete Miscellaneous Non-ANA Extended Functionality Subclasses}
+%
+
+These are concrete implementations of extended functionality that can not have
+general ANA implementations.  Examples include algebraic and multi-level
+algebraic preconditioners.
+
+%
+\subsubsection{Concrete (Direct) Linear Solver Manager Subclasses}
+%
+
+These are concrete subclasses of the {}\textit{Linear Solver Manager
+Interfaces} that builds a linear solver using Ameso for instance.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{AmesosLinearSolverManager}: Takes wrapped Epetra objects for
+a linear systems and calls a direct linear solver through an Amesos interface.
+%
+{}\item {}\texttt{LAPACKLinearSolverManager}: Takes a dense matrix and solves
+the linear system using an LAPACK solver.  Actually, there may be several
+different concrete LAPACK subclasses for different matrix types (i.e.\ general
+(GE), symmetric (SY), s.p.d.\ (PO) etc.).
+%
+{}\item ...
+%
+\end{itemize}
+
+{}\textit{Current status:} There is currently nothing like this in TSFCore or
+TSFExteneded (that I know of) but an LAPACK subclasss was in the old TSF.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Basic Linear Solver Status Test Interfaces}
+\item {}\textit{Linear Solver Manager Interfaces}
+\end{itemize}
+
+%
+\subsubsection{Steady-State Nonlinear Problem Adapter Support}
+%
+
+These include usefull C++ classes and other software that provide basic
+support for developing concrete steady-state nonlinear problems but are
+independent of a specific application or physics.  Examples include support
+software for the SPMD Load/Access and Creational interfaces or perhaps
+directly for Epetra in the near term.
+
+{}\textit{Current status:} There is nothing quite like this in existance that
+I know of but with {}\textit{SPMD Matrix/Vector Load/Access Interfaces} and
+the {}\textit{SPMD Matrix/Vector Creational Interfaces} available, these types
+of support subclasses would make since.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Linear Solver Manager Interfaces} or some of the 
+lower level interfaces to linear solvers and preconditoner factories.
+\item {}\textit{Steady-State Nonlinear Problem Interfaces}
+\item {}\textit{SPMD Matrix/Vector Load/Access Interfaces}
+\item {}\textit{SPMD Matrix/Vector Creational Interfaces}
+\end{itemize}
+
+{}\textbf{Note}: If applications directly use the {}\textit{Thyra Non-ANA
+Interfaces} then application subclasses can be directly created from these
+subclasses in a way as to be independent of a particualar set of data
+structures such as Epetra.
+
+{}\textbf{Note}: This software is listed in the mixed ANA and Non-ANA support
+category but there are some scenarios where this my be put into the ANA-only
+support category if there is no reliance on the {}\textit{Thyra Non-ANA
+Interfaces}.  For example, preconditioner factories and linear problem manager
+interfaces can remove all interdependance on the Non-ANA interfaces listed
+above in some cases.
+
+%
+\subsubsection{Concrete Steady-State Nonlinear Problem Subclasses}
+%
+
+These are concrete implementations of steady-state nonlinear problems that are
+tied to a particular application of class of applications.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{Epetra::NonlinearProblemBase}: Defines a steady-state
+Nonlinear problem purely in terms of Epetra objects (i.e.\ like
+{}\texttt{NOX\-::Epetra\-::Interface}.
+%
+{}\item {}\texttt{Thyra::EpetraNonlinearProblem}: Adapts an
+{}\texttt{Epetra\-::Nonlinear\-Problem\-Base} object into a
+{}\texttt{Thyra\-::Nonlinear\-Problem\-Base} object.  This class should derive
+from a more general support subclass that has a linear solver factory etc.
+%
+\end{itemize}
+
+{}\textit{Current status:} A prototype for this software currently exists in
+{}\texttt{TSFCore/src/adapters/aztecoo}
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Linear Solver Manager Interfaces} or some of the 
+lower level interfaces to linear solvers and preconditoner factories.
+\item {}\textit{Operator Solve Interfaces}
+\item {}\textit{Steady-State Nonlinear Problem Interfaces}
+\item {}\textit{Steady-State Nonlinear Problem Adapter Support} ???
+\end{itemize}
+
+{}\textbf{Note}: One can write prefectly good concrete subclasses in this
+category without dependance on any of the {}\textit{Thyra Non-ANA Interfaces}
+listed above.  Using the {}\textit{Thyra Non-ANA Interfaces} directly means
+that application codes may be written in such a way as to not be specific to
+Epetra or some other concrete data structures.
+
+%
+\subsubsection{Transient Nonlinear Problem Adapter Support}
+%
+
+These include usefull C++ classes and other software that provide basic
+support for developing concrete transient nonlinear problems but is
+independent of a specific application or physics.  Examples include support
+software for the SPMD Load/Access and Creational interfaces or perhaps Epetra.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item
+%
+\end{itemize}
+
+{}\textit{Current status:}
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\end{itemize}
+
+%
+\subsubsection{Concrete Transient Nonlinear Problem Subclasses}
+%
+
+These are concrete implementations of transient nonlinear problems that are
+tied to a particular application of class of applications.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item Example: {}\texttt{PremoTransientNonlinearProblem}
+%
+{}\item Example: {}\texttt{XyceTransientNonlinearProblem}
+%
+{}\item ...
+%
+\end{itemize}
+
+{}\textit{Current status:} Nothing like this currently exists in the form
+suggested here.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Transient Nonlinear Problem Interfaces}
+\item {}\textit{Transient Nonlinear Problem Adapter Support}
+\end{itemize}
+
+%
+\section{Software Dependency Diagrams}
+%
+
+Here are several UML package diagrams 
+
+However, note that the UML packages in these diagrams do not translate
+directly into C++ namespaces as is typically the case.  Instead, the UML
+packages in this diagram simply represent collections of interrelated software
+that is appropriate to put in different sub-directories and help to define
+basic interdependencies.
+
+{\bsinglespace
+\begin{figure}[p]
+\begin{center}
+%\fbox{
+\includegraphics*[scale=0.70]{ThyraANAInterfaces}
+%}
+\end{center}
+\caption{
+\label{thyra:fig:ThyraANAInterfaces}
+Dependencies between different categories of {}\textit{Thyra ANA Interfaces}.
+}
+\end{figure}
+\esinglespace}
+
+{\bsinglespace
+\begin{figure}[p]
+\begin{center}
+%\fbox{
+\includegraphics*[scale=0.70]{ThyraNonANAInterfaces}
+%}
+\end{center}
+\caption{
+\label{thyra:fig:ThyraNonANAInterfaces}
+Dependencies between different categories of {}\textit{Thyra Non-ANA Interfaces}.
+}
+\end{figure}
+\esinglespace}
+
+{\bsinglespace
+\begin{figure}[p]
+\begin{center}
+%\fbox{
+\includegraphics*[scale=0.70]{ThyraANASupportSoftware}
+%}
+\end{center}
+\caption{
+\label{thyra:fig:ThyraANASupportSoftware}
+Dependencies between different categories of {}\textit{Thyra ANA Support Software}.
+}
+\end{figure}
+\esinglespace}
+
+%
+\section{Partitioning of Thyra into Packages and Subdirectories}
+%
+
+In this section we show how the various categories of software described above
+are translated into Trilinos packages and subdirectories within packages.  It
+is important to remember the basic dependancies represented here.
+
+ToDo: Fill the below structure as needed.
+
+\noindent{}\textbf{Trilinos pxackages and subdirectories:}
+%
+
+\bifthen
+\>{}\texttt{Thyra} \\
+\>\>\texttt{src} \\
+\>\>\>\texttt{ana} \\
+\>\>\>\>\texttt{rtop}\\
+\>\>\>\>\>Contains RTOp infrastructure and a library of RTOp implementations \\
+\>\>\>\>\texttt{operator\_vector} \\
+\>\>\>\>\>\texttt{interfaces} \\
+\>\>\>\>\>\>Contains {}\textit{Operator/Vector Interfaces} \\
+\>\>\>\>\>\texttt{ana\_support}\\
+\>\>\>\>\>\>Contains {}\textit{ANA Development Utilitiies for Operator/Vector Interfaces} \\
+\>\>\>\>\>\texttt{adapter\_support}\\
+\>\>\>\>\>\>Contains {}\textit{Operator/Vector Adapter Support} \\
+\>\>\>\>\>\texttt{extended\_interfaces} \\
+\>\>\>\>\>\>Contains a subset {}\textit{Miscellaneous Extended Functionality Interfaces} \\
+\>\>\>\>\>\>\>that depends only on the {}\textit{Operator/Vector Interfaces} \\
+\>\>\>\>\texttt{basic\_linear\_solvers} \\
+\>\>\>\>\>\texttt{status\_tests} \\
+\>\>\>\>\>\>\texttt{interfaces} \\
+\>\>\>\>\>\>\>Contains {}\textit{Basic Linear Solver Status Test Interfaces} \\
+\>\>\>\>\>\>\texttt{implementations} \\
+\>\>\>\>\>\>\>Contains {}\textit{Basic Linear Solver Status Test Implementations} \\
+\>\>\>\>\>\texttt{iterative\_linear\_solvers} \\
+\>\>\>\>\>\>\texttt{basic\_iterative\_linear\_solvers} \\
+\>\>\>\>\>\>\>\texttt{interfaces} \\
+\>\>\>\>\>\>\>\>Contains {}\textit{Basic Iterative Linear Solver Interfaces} \\
+\>\>\>\>\>\>\texttt{linear\_solver\_managers} \\
+\>\>\>\>\>\>\>\texttt{interfaces} \\
+\>\>\>\>\>\>\>\>Contains {}\textit{Linear Solver Manager Interfaces} \\
+\>\>\>\>\texttt{operator\_solvers} \\
+\>\>\>\>\>\texttt{interfaces} \\
+\>\>\>\>\>\>Contains {}\textit{Operator Solver Interfaces} \\
+\>\>\>\>\>\texttt{implementations} \\
+\>\>\>\>\>\>Contains {}\textit{Operator Solver Implementations} in terms of \\
+\>\>\>\>\>\>\>{}\textit{Linear Solver Manager Interfaces} \\
+\>\>\>\>\>\texttt{extended\_interfaces} \\
+\>\>\>\>\>\>Contains a subset {}\textit{Miscellaneous Extended Functionality Interfaces} \\
+\>\>\>\>\>\>\>that includes {}\texttt{LinearOpWithSolveFactoryBase} \\
+\>\>\>\>\texttt{nonlinear\_problems} \\
+\>\>\>\>\>\texttt{interfaces} \\
+\>\>\>\>\>\>Contains {}\textit{Steady-State Nonlinear Problem Interfaces} \\
+\>\>\>\>\texttt{nonlinear\_solvers} \\
+\>\>\>\>\>\texttt{interfaces} \\
+\>\>\>\>\>\>Contains {}\textit{Steady-State Nonlinear Equation Solver Interfaces} \\
+\>\>\>\>\texttt{transient\_nonlinear\_problems} \\
+\>\>\>\>\>\texttt{interfaces} \\
+\>\>\>\>\>\>Contains {}\textit{Transient Nonlinear Problem Interfaces} \\
+\>\>\>\>\texttt{transient\_nonlinear\_solvers} \\
+\>\>\>\>\>\texttt{interfaces} \\
+\>\>\>\>\>\>Contains {}\textit{Transient Nonlinear Equation Solver Interfaces} \\
+\>\>\>\texttt{nonana} ??? \\
+\>\>\>\>\texttt{matrix\_vector} ??? \\
+\>\>\>\>\>Contains {}\textit{SPMD Matrix/Vector Load/Access Interfaces} ??? \\
+\>\>\>\>\>Contains {}\textit{SPMD Matrix/Vector Creational Interfaces} ??? \\
+\eifthen
+
+%\begin{itemize}
+%\item{}\texttt{Thyra}
+%  \begin{itemize}
+%  \item\texttt{src}
+%    \begin{itemize}
+%    \item\texttt{ana}
+%      \begin{itemize}
+%      \item\texttt{rtop}: Contains RTOp infrastructure and a library of RTOp implementations
+%      \item\texttt{operator\_vector}
+%        \begin{itemize}
+%        \item\texttt{interfaces}: Contains {}\textit{Operator/Vector Interfaces}
+%        \item\texttt{ana\_support}: Contains {}\textit{ANA Development Utilitiies for Operator/Vector Interfaces}
+%        \item\texttt{adapter\_support}: Contains {}\textit{Operator/Vector Adapter Support}
+%        \end{itemize}
+%      \end{itemize}
+%    \item\texttt{nonana}
+%    \end{itemize}
+%  \end{itemize}
+%\end{itemize}
+
+
+% ---------------------------------------------------------------------- %
+% References
+%
+\clearpage
+%\bibliographystyle{plain}
+%\bibliography{references}
+%\addcontentsline{toc}{section}{References}
+
+% ---------------------------------------------------------------------- %
+% Appendices should be stand-alone for SAND reports. If there is only
+% one appendix, put \setcounter{secnumdepth}{0} after \appendix
+%
+%\appendix
+
+\begin{SANDdistribution}
+% External
+% Housekeeping copies necessary for every unclassified report:
+\SANDdistInternal{1}{9018}{Central Technical Files}{8945-1}
+\SANDdistInternal{2}{0899}{Technical Library}{9610}
+\SANDdistInternal{2}{0612}{Review \& Approval Desk}{4916}
+% If report has a Patent Caution or Patent Interest, add this:
+%\SANDdistInternal{3}{0161}{Patent and Licensing Office}{4916}
+\end{SANDdistribution}
+
+\end{document}
