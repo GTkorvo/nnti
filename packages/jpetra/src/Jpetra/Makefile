@@ -30,7 +30,7 @@ core =  Output.java \
 	JpetraObject.java
 misc_support =  Blas.java \
 		NetlibBlas.java \
-		JpetraBlas.java \
+		JpetraBlas.java
 ccj_support =   CcjSupport/CcjReduceAllSumIntArray.java  \
 		CcjSupport/CcjReduceDoubleMaxArray.java \
 		CcjSupport/CcjGatherDoubleArray.java \
@@ -83,4 +83,4 @@ all:
 makejar:
 	jar -cf ../../Jpetra.jar ../Jpetra/*.class ../Jpetra/CcjSupport/*.class ../Jpetra/MatrixMarketIO/*.class	
 clean:
-	rm -f *.class *~
+	rm -f *.class MatrixMarketIO/*.class CcjSupport/*.class
