@@ -54,7 +54,6 @@ public class Import extends JpetraObject {
         this.sourceVectorSpace = sourceVectorSpace;
         this.targetVectorSpace = targetVectorSpace;
         
-        
         // first get all the global IDs from the source and target VectorSpaces and put them into arrays we can use
         int[] sourceGids;
         if (sourceVectorSpace.getNumMyGlobalEntries() > 0) {

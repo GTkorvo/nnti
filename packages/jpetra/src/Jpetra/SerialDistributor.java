@@ -67,21 +67,27 @@ public class SerialDistributor extends JpetraObject implements Distributor {
     }
     
     public boolean doneForwardOp() {
+        return false;
     }
     
     public int[] getReverseExportGids() {
+        return null;
     }
     
     public int[] getReverseExportLids() {
+        return null;
     }
     
     public int[] getReverseExportVnodeIds() {
+        return null;
     }
     
     public void setDoneForwardOp(boolean doneForwardOp) {
+        // empty
     }
     
     public void setReverseExportVnodeIdsGidsLids(int[][] reverseExportVnodeIdsGidsLids) {
+        // empty
     }
     
 }

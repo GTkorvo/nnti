@@ -109,7 +109,7 @@ public abstract class DistObject extends JpetraObject {
     public void importValues(DistObject distObjectSource, Export exporter, int combineMode) {
 
         this.distributor = exporter.getDistributor();
-        if (this.distributor.doneForwardOp() == false) {
+        if ((!distObjectSource.getVectorSpace().getComm().isSerial()) && (this.distributor.doneForwardOp() == false)) {
             // do a null forward op to figure out what gids will be sent to us
             // so we know which gids we must send for the reverse op
             NullDistObject nullDistObjectTarget = new NullDistObject(this.getVectorSpace());
@@ -128,10 +128,11 @@ public abstract class DistObject extends JpetraObject {
         this.remoteGids = exporter.getExportGids();
         this.permuteToLids = exporter.getPermuteFromLids();
         this.permuteFromLids = exporter.getPermuteToLids();
-        this.exportLids = this.distributor.getReverseExportLids();
-        this.exportGids = this.distributor.getReverseExportGids();
-        this.exportVnodeIds = this.distributor.getReverseExportVnodeIds();
-        
+        if (!distObjectSource.getVectorSpace().getComm().isSerial()) {
+            this.exportLids = this.distributor.getReverseExportLids();
+            this.exportGids = this.distributor.getReverseExportGids();
+            this.exportVnodeIds = this.distributor.getReverseExportVnodeIds();
+        }
         
         this.combineMode = combineMode;
         this.distObjectSource = distObjectSource;
@@ -140,7 +141,7 @@ public abstract class DistObject extends JpetraObject {
     
     public void exportValues(DistObject distObjectSource, Import importer, int combineMode) {
         this.distributor = importer.getDistributor();
-        if (this.distributor.doneForwardOp() == false) {
+        if ((!distObjectSource.getVectorSpace().getComm().isSerial()) && (this.distributor.doneForwardOp() == false)) {
             // do a null forward op to figure out what gids will be sent to us
             // so we know which gids we must send for the reverse op
             NullDistObject nullDistObjectTarget = new NullDistObject(this.getVectorSpace());
@@ -159,10 +160,11 @@ public abstract class DistObject extends JpetraObject {
         this.remoteGids = importer.getExportGids();
         this.permuteToLids = importer.getPermuteFromLids();
         this.permuteFromLids = importer.getPermuteToLids();
-        this.exportLids = this.distributor.getReverseExportLids();
-        this.exportGids = this.distributor.getReverseExportGids();
-        this.exportVnodeIds = this.distributor.getReverseExportVnodeIds();
-        
+        if (!distObjectSource.getVectorSpace().getComm().isSerial()) {
+            this.exportLids = this.distributor.getReverseExportLids();
+            this.exportGids = this.distributor.getReverseExportGids();
+            this.exportVnodeIds = this.distributor.getReverseExportVnodeIds();
+        }
         
         this.combineMode = combineMode;
         this.distObjectSource = distObjectSource;
@@ -197,7 +199,7 @@ public abstract class DistObject extends JpetraObject {
      */
     public void doTransfer(boolean doReverse) {
         copyAndPermute(this.distObjectSource, this.numSameGids, this.permuteToLids, this.permuteFromLids, this.combineMode);
-        if (this.combineMode == DistObject.ZERO) {
+        if (distObjectSource.getVectorSpace().getComm().isSerial() || (this.combineMode == DistObject.ZERO)) {
             // just doing a local copy and permute so we're done
             return;
         }
