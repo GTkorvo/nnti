@@ -133,10 +133,10 @@ algorithm development.
 In this paper we present a detailed object model for vectors 
 and matrices that are intended for use in a parallel, distributed 
 memory computing environment.  We present a brief overview of 
-the classes in the next section followed by a detailed UML object 
-model in the next section.  In subsequent sections we will present 
-a collection of pure virtual classes, two C++ implementations of 
-this model and a Java implementation.
+the classes, followed by a UML object model, in the next section.
+In subsequent sections we present a collection of pure virtual
+classes, two C++ implementations of this model and a Java
+implementation.
 
 
 \section{Overview of Primary Petra Classes}
@@ -144,7 +144,7 @@ this model and a Java implementation.
 In this section we present in logical order the basic object classes 
 needed for parallel vectors and matrices.  Each of the object
 classes represents a family of classes with one base class and 
-specialization of the base class.
+specializations of the base class.
 
 \paragraph{Comm Class:  Parallel Machine Description}
 
@@ -152,8 +152,8 @@ We begin with the Comm class that describes parallel machines.
 This class is an attribute in most other classes since it provides 
 essential information and services needed for operations across the 
 parallel machine.  The Comm class provides information about the number 
-of  logical nodes on the parallel machine and node identification.  It 
-also provides basic services such as global synchronization and collective 
+of  logical processors on the parallel machine and processor identification.
+It also provides basic services such as global synchronization and collective 
 communications.
 
 \paragraph{Map Class: Object Distribution Specification}
@@ -163,7 +163,7 @@ specification of the distribution of a collection of global identifiers
 (GIDs).  GIDs are integer values and need not be uniquely owned by a 
 processor or cover a contiguous range of integer values.  An object is 
 distributed across the parallel machine by associating subsets of the 
-object data with the GIDs.  Each node of the parallel machine will be 
+object data with the GIDs.  Each processor of the parallel machine will be 
 assigned zero or more GIDs.  Example 1 illustrates this concept for the 
 simple case of a distributed vector.   Each map object requires a Comm 
 object to be passed in at construction.
@@ -192,8 +192,8 @@ specialization of the multivector class (a multivector with one vector).
 A graph object specifies a set of vertices and the connecting edge pairs.
 The graph is then constructed across a parallel machine by associating each
 row of the graph with a GID and assigning the entire row of the graph to the
-node(s) that owns the GID. In the Petra object model, graph objects are held
-as attributes by matrix classes, and are used to define and describe the
+processor(s) that owns the GID. In the Petra object model, graph objects are
+held as attributes by matrix classes, and are used to define and describe the
 structure of the matrix (location of nonzero entries).
 
 \paragraph{Operator Class: Linear Operator Object}
@@ -215,50 +215,77 @@ matrix norms and scalings.  It can also be queried row-wise for matrix entries.
 As will be discussed in a later section, Petra implementations include both
 point-entry and block-entry matrix classes.
 
-Figure~\ref{matvecmap} shows inheritance (solid lines) and collaborations
-(dotted lines) among the Matrix, Vector and Map classes.
-\begin{figure}[ht]
-\begin{center}
-\epsfig{file=PetraMVM.eps, scale=1.0}
-\caption{Matrix, Vector and Map inheritance and collaborations.}
-\label{matvecmap}
-\end{center}
-\end{figure}
-
 
 \paragraph{Import and Export Classes:  Parallel Data Redistribution}
 
-Given a vector, multivector, graph or matrix distributed across nodes via a map (call 
-it a source map), it is possible to redistribute any of these objects by creating a 
-new map (a target map) and then creating an import or an export object to redistribute 
-the object to the layout specified by the target map.
+Given a vector, multivector, graph or matrix distributed across processors
+via a map (call it a source map), it is possible to redistribute any of these
+objects by creating a new map (a target map) and then creating an import or
+an export object to redistribute the object to the layout specified by the
+target map.
 
-An import object is used in the situation where a target map is constructed using GIDs 
-that the calling node want to obtain from the source map layout.  An export object is 
-used when the target map is constructed so that each GID in the source map is uniquely 
-owned by one node in the target map, effectively asserting that each calling processor 
-wants to export anything that is in its source map but not in its target map.  Import 
-and export objects form the basis for all data communication on the parallel machine.
+An import object is used in the situation where a target map is constructed
+using GIDs that the calling processor wants to obtain from the source map
+layout.  An export object is used when the target map is constructed so that
+each GID in the source map is uniquely owned by one processor in the target
+map, effectively asserting that each calling processor wants to export anything
+that is in its source map but not in its target map.  Import and export
+objects form the basis for all data communication on the parallel machine.
 
 \paragraph{Serial Dense Matrix and Vector Classes:  Serial Dense Linear Algebra Objects}
 
-Because there are many good implementations of serial dense linear algebra operations, 
-e.g. optimized BLAS on many computers, we provide an abstract class hierarchy to define 
-dense matrix and vector objects.  The default implementation of these classes uses the 
-standard Fortran BLAS and LAPACK interfaces~\cite{BLAS1,BLAS2,BLAS3,LAPACK}, 
-but other similar libraries could be 
-used, including shared memory parallel implementations of the same libraries.
+Because there are many good implementations of serial dense linear algebra
+operations, e.g. optimized BLAS on many computers, we provide an abstract
+class hierarchy to define dense matrix and vector objects.  The default
+implementation of these classes uses the standard Fortran BLAS and LAPACK
+interfaces~\cite{BLAS1,BLAS2,BLAS3,LAPACK}, but other similar libraries could
+be used, including shared memory parallel implementations of the same
+libraries.
 
 \paragraph{Linear Problem Class:  Composite Class for Defining a Linear Problem}
 
-One of the most common uses for matrix and vector classes is solving a linear system of 
-equations, $AX = B$, where $A$ is a known (sparse) matrix, $B$ is a known set of one or 
-more right hand side vectors and $X$ is the corresponding set of initial solution 
-guesses (if any).  To facilitate this process, we define a composite linear problem 
-class that contains an abstract row-biased matrix object (the base class of our 
-row-biased class and block row-biased matrix classes), a multivector (which could be a 
-vector since multivector is the base class for vectors) containing the right hand side 
-and another multivector containing the initial guess.
+One of the most common uses for matrix and vector classes is solving a linear
+system of equations, $AX = B$, where $A$ is a known (sparse) matrix, $B$ is a
+known set of one or more right hand side vectors and $X$ is the corresponding
+set of initial solution guesses (if any).  To facilitate this process, we
+define a composite linear problem class that contains an abstract row-biased
+matrix object (the base class of our row-biased and block row-biased matrix
+classes), a multivector (which could be a vector since multivector is the base
+class for vectors) containing the right hand side and another multivector
+containing the initial guess.
+
+\subsection{UML Depiction of Petra Object Model}
+
+The static structure diagrams in figures~\ref{matvecmap} and \ref{distobj}
+show inheritance (solid lines) and collaborations (dotted lines) in the
+Petra object model.
+\begin{figure}[ht]
+\begin{center}
+\epsfig{file=PetraMVM.eps, scale=1.0}
+\caption{Relationships among primary Petra classes.}
+\label{matvecmap}
+\end{center}
+\end{figure}
+Figure~\ref{matvecmap} shows relationships among the primary classes that users
+interact with directly. Note that the diagram doesn't show complete lists of
+operations for any of the classes, but simply shows a couple for each. This
+diagram shows base classes in the Petra object model. In an implementation of
+this model, such as the Epetra package, there are also concrete matrix classes
+that implement RowMatrix, etc.  
+
+Figure~\ref{distobj} shows those aspects of the object model that enable
+\begin{figure}[ht]
+\begin{center}
+\epsfig{file=DistObject.eps, scale=1.0}
+\caption{DistObject is the base for objects such as matrix and vector that can be re-distributed by the user.}
+\label{distobj}
+\end{center}
+\end{figure}
+parallel data redistribution. Each of the classes that can be redistributed
+inherit the DistObject class. DistObject provides the Import() and Export()
+methods, and declares other methods that are implemented by derived classes for
+packing and unpacking data which is communicated among processors. Parallel
+data redistribution will be discussed in more detail in a later section.
 
 \section{Parallel Machine Interfaces and Implementations}
 
@@ -271,8 +298,6 @@ and another multivector containing the initial guess.
 \subsection{Parallel Machine Implementations}
 Figure~\ref{commfigure} shows the relationship between the Comm interface and
 the implementations for MPI and Serial environments, as well as the dependence
-between the implementation classes and their associated reference-counted
-data objects.
 \begin{figure}[ht]
 \begin{center}
 \epsfig{file=Comm.eps, scale=1.0}
@@ -280,6 +305,9 @@ data objects.
 \label{commfigure}
 \end{center}
 \end{figure}
+between the implementation classes and their associated reference-counted
+data objects.
+
 \subsubsection{Serial Implementation}
 \subsubsection{MPI Implementation}
 \subsubsection{LBComm Implementation}
