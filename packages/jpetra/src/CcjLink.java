@@ -10,8 +10,8 @@ import java.io.Serializable;
  */
 
 /**
- * CcjLink provides the wrappers and data representation objects
- * that CcjComm uses to interact with CCJ.
+ * <code>CcjLink</code> provides the wrappers and data representation objects
+ * that <code>CcjComm</code> uses to interact with CCJ.
  *
  * @author  Jason Cross 
  */
@@ -19,12 +19,12 @@ import java.io.Serializable;
 public class CcjLink extends ColMember {
     
     /**
-     * number of vnodees in the <code>group</code>
+     * number of vnodes in the <code>group</code>
      */
     private int numVnodes;
     
     /**
-     * vnode group; all vnodees belong to the same group
+     * vnode group; all vnodes belong to the same group
      */
     private ColGroup group;
     
@@ -298,8 +298,8 @@ public class CcjLink extends ColMember {
         return globalSums.scanSums(rank);
     }
         
-        //not used
+        //not used but required to extend <code>ColMember</code>
         public void run() {
-	    //empty
+	        //empty
 	    }
     }

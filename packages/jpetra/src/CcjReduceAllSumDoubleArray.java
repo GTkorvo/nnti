@@ -12,7 +12,7 @@ import java.io.Serializable;
 /**
  * This class defines the algorithm used by by CCJ to sum all the <code>partialSums</code> together during a CCJ
  * <code>allReduce</code> call.
- * Implements the CCJ interface Reducible.
+ * Implements the CCJ interface <code>Reducible</code>.
  *
  * @author Jason Cross
  */

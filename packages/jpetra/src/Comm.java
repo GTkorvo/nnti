@@ -12,7 +12,10 @@ import java.io.Serializable;
  * Comm is the interface for the all the Jpetra communication
  * classes.
  *
- * NOTE:  A vnode is considered to be a memory image and not a physical machine.
+ * Terminology:  A vnode is considered to be a virtual node (a memory image) and not a physical machine.
+ * A physical node is considered to be a physical machine, and may have many vnodes on it.
+ * The term node has no meaning, and should be qualified by virtual or physical.
+ * A thread is a sub process of a vnode.  Every vnode has 1 or more threads.
  *
  * @author  Mike Heroux
  * @author  Michael William Boldt

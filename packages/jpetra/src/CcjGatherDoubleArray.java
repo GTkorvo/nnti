@@ -12,7 +12,7 @@ import CCJ.*;
 
 /**
  * Used by CCJ to collect all the <code>allElements</code> together during a CCJ <code>allGather<code> call.
- * Implements the CCJ interface Partitionable.
+ * Implements the CCJ interface <code>Partitionable</code>.
  *
  * @author Jason Cross
  */
