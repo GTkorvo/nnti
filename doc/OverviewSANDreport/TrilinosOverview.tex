@@ -109,9 +109,9 @@ current development and future plans of the project.
     \section*{Acknowledgement}
 The author would like to acknowledge the support of the ASCI and LDRD programs
 that funded development of Trilinos and the talented group of Trilinos contributors: 
-Robert Hoekstra, Alan Williams, Richard Lehoucq, James Willenbring, Kevin Long, Tamara
-Kolda, Roger Pawlowski, David Day, Ray Tuminaro, Jonathan Hu, Mark Adams and Teri
-Barth.
+Teri Barth, David Day, Bob Heaphy, Robert Hoekstra, Jonathan Hu, Tammy Kolda, Rich Lehoucq,
+Kevin Long, Roger Pawlowski, Andrew Rothfuss, Andrew Salinger, Ken Stanley, Ray Tuminaro,
+Jim Willenbring and Alan Williams.
 
 
 
@@ -668,6 +668,7 @@ parallel domain decomposition framework.  It accepts user data as Epetra\_RowMat
 classes implement the Epetra\_RowMatrix interface)
 and can construct a large variety of ILU preconditioners.  Ifpack preconditioners implement
 the Epetra\_Operator interface.  Therefore, they can be used as preconditioners for AztecOO.
+The current released version of Ifpack provides only a relaxed ILUK preconditioner.
 
 \subsection{Komplex: Solver Suite for Complex-valued Linear Systems}
 
@@ -719,21 +720,76 @@ practical issues of Komplex can be found in Day and Heroux~\cite{DayHero2001}.
 
 \subsection{NOX: Nonlinear Solver Package}
 
-NOX provides access to a suite of nonlinear solver methods.  It can be easily integrated
+NOX provides a suite of nonlinear solver methods.  It can be easily integrated
 into an application with minimal effort.  Historically, many applications have called
 linear solvers as libaries, but have provided their own nonlinear solver software.  NOX
 can be an improvement because it provides a much larger collection of nonlinear methods,
-and can be easily extended as new nonlinear methods are developed.  Presently, it contains
-the following methods:
+and can be easily extended as new nonlinear methods are developed.  
+
+NOX does not depend on any particular linear algebra package, making it easy to install. In
+order to interface to NOX, the user needs to supply methods that derive from the following abstract classes: 
+\begin{itemize}
+\item NOX::Abstract::Vector
+\item NOX::Abstract::Group
+\end{itemize}
+The Vector interface supports basic vector operations such as dot products and vector updates. 
+The Group interface supports non-vector linear algebra functionality and contains methods 
+to evaluate the function and, optionally, the Jacobian.
+Complete details are provided on the NOX website~\cite{NOX-home-page}.
+
+Although users can provide their own Vector and Group implementation, NOX provides three implementations
+of its own.  These are:
 \begin{enumerate}
-\item blah, blah, blah
+\item NOX::LAPACK
+\item NOX::Epetra
+\item NOX::Petsc
+\end{enumerate}
+The LAPACK interface is an interface to the BLAS/LAPACK library. It is not intended for large-scale
+computations, but to serve as an easy-to-understand example of how one might interface to NOX. 
+The Epetra interface is an interface to Epetra.
+The PETSc interface is an interface with the PETSc library. 
+
+All NOX solvers are in the NOX::Solver namespace. The solvers are accessed via the NOX::Solver::Manager. The
+recommended solver is NOX::Solver::LineSearchBased, which is a basic nonlinear solver based on a line search.
+Each solver has a number of options that can be specified, as documented in each class or on the NOX Parameter
+Reference Page. 
+
+The search directions are in the NOX::Direction namespace and accessed via the NOX::Direction::Manager. The
+default search direction for a line-search based method in NOX::Direction::Newton. 
+
+Several line searches are available, as defined in the NOX::LineSearch, and accessed via the
+NOX::LineSearch::Manager class. Examples include 
+\begin{enumerate}
+\item NOX::LineSearch::FullStep
+\item NOX::LineSearch::Backtrack
+\item NOX::LineSearch::MoreThuente
 \end{enumerate}
 
-NOX uses pure virtual classes to work with all matrix, operator and vector objects.  Therefore,
-it can be used with any external software that can implement these interfaces.  Epetra and
-PETSc implementations of the pure virtual classes are already implemented.
+Convergence or failure of a given solver method is determined by the status tests defined in the
+NOX::StatusTest namespace. Various status tests may be combined via the NOX::StatusTest::Combo object. Users
+are free to create additional status tests that derive from the NOX::StatusTest::Generic class. 
 
 \subsection{ML: Multi-level Preconditioner Package}
+
+ML is a multigrid, or more generally, a multi-level preconditioner package for solving linear systems
+from partial dirential equation (PDE) discretizations. Although any linear system can be used with ML,
+problems that have an underlying PDE nature have the best chance of successful use of ML.
+
+ML provides several approaches to constructing and solving the multi-level problem:
+\begin{enumerate}
+\item Algebraic (Vanek) smoothed aggregation approach:  The matrix graph is colored to 
+create ``balls'' of aggregate nodes. Then a projection operator is formed by applying a smoother to the 
+aggregate nodes, taking into account the null space of the PDE operator.
+\item Adaptive Grid approach: The original grid is used as the coarse grid and the adaptive refinements
+determined the fine grid.  Prolongation and restriction operators are determined using simple interpolation
+and weighted injection.
+\item Two-grid approach: A fine and (very) coarse grid are used.  Graph and spatial coordinates are used, 
+but there is no necessary correlation required between the two grids.
+\end{enumerate}
+
+ML can be run as a stand-alone solver, providing its own smoothers and iterative methods, or can be used with
+Aztec or AztecOO.  ML can accept user matrix data in its own format, or as Epetra matrix objects.  More
+information is available at the ML website~\cite{ML-home-page}.
 
 \section{Conclusions}
 
