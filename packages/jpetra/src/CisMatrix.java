@@ -36,7 +36,7 @@ import java.util.Map;
  *
  * @author  Jason Cross
  */
-public class CisMatrix extends JpetraObject {
+public class CisMatrix extends DistObject {
     public static final boolean ROW_ORIENTED = true;
     public static final boolean COL_ORIENTED = false;
     private Graph graph;
@@ -69,7 +69,7 @@ public class CisMatrix extends JpetraObject {
         if (!this.OuterTree.containsKey(new Integer(globalRowColId))) {
             rowColTreeMap = new JpetraTreeMap();
             this.println("STD", "globalRowCol does not exist, creating...");
-            this.OuterTree.put(new Integer(globalRowColId), rowColTreeMap); 
+            this.OuterTree.put(new Integer(globalRowColId), rowColTreeMap);
         }
         else {
             this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
@@ -85,7 +85,7 @@ public class CisMatrix extends JpetraObject {
             this.println("STD", "Inserting index " + indices[i]);
             temp = rowColTreeMap.get(new Double(indices[i]));
             if (temp == null) {
-                    this.println("STD", "Index " + indices[i] + " does not exist, creating...");
+                this.println("STD", "Index " + indices[i] + " does not exist, creating...");
                 this.numTotalEntries++;
                 rowColTreeMap.put(new Double(indices[i]), new Double(entries[i]));
             }
@@ -93,6 +93,43 @@ public class CisMatrix extends JpetraObject {
                 this.println("STD", "Index " + indices[i] + " does exists, adding to prevous value...");
                 rowColTreeMap.put(new Double(indices[i]), new Double(entries[i] + ((Double) temp).doubleValue()));
             }
+        }
+    }
+    
+    public void insertEntry(int globalRowColId, int index, double entry) {
+        if (this.filled) {
+            this.println("ERR", "insertEntiry cannot be called after fillComplete().");
+        }
+        
+        // need to check if I own the globalRowColId
+        
+        // need to see if the JpetraTreeMap exists for the specified row/col
+        JpetraTreeMap rowColTreeMap;
+        if (!this.OuterTree.containsKey(new Integer(globalRowColId))) {
+            rowColTreeMap = new JpetraTreeMap();
+            this.println("STD", "globalRowCol does not exist, creating...");
+            this.OuterTree.put(new Integer(globalRowColId), rowColTreeMap);
+        }
+        else {
+            this.println("STD", "globalRowCol exists, setting rowColTreeMap to existing JpetraTreeMap...");
+            rowColTreeMap = (JpetraTreeMap) OuterTree.get(new Integer(globalRowColId));
+        }
+        
+        // now that we know the row/col exists, insert entries into the row/col
+        // and sum them with any pre-existing entries
+        this.println("STD", "CisMatrix is internally inserting an entry...");
+        Object temp;
+        int toInsert;
+        this.println("STD", "Inserting index " + index);
+        temp = rowColTreeMap.get(new Double(index));
+        if (temp == null) {
+            this.println("STD", "Index " + index + " does not exist, creating...");
+            this.numTotalEntries++;
+            rowColTreeMap.put(new Double(index), new Double(entry));
+        }
+        else {
+            this.println("STD", "Index " + index + " does exists, adding to prevous value...");
+            rowColTreeMap.put(new Double(index), new Double(entry + ((Double) temp).doubleValue()));
         }
     }
     

@@ -78,6 +78,30 @@ public class VectorSpace extends JpetraObject {
         return this.elementSpace.isMyGlobalElementId(globalIndex);
     }
     
+    public int[] getMyGlobalEntryIds() {
+        return this.elementSpace.getMyGlobalElementIds();
+    }
+    
+    public int[] getRemoteVnodeIdList(int[] remoteGlobalIndices) {
+        return this.elementSpace.getRemoteVnodeIdList(remoteGlobalIndices);
+    }
+    
+    public boolean isDistributedGlobally() {
+        return this.elementSpace.isDistributedGlobally();
+    }
+    
+    public boolean isDistributedLinearly() {
+        return this.elementSpace.isDistributedLinearly();
+    }
+    
+    public int getMinGlobalEntryId() {
+        return this.elementSpace.getMinGlobalElementId();
+    }
+    
+    public int getMaxGlobalEntryId() {
+        return this.elementSpace.getMaxGlobalElementId();
+    }    
+    
     public Comm getComm() {
         return this.elementSpace.getComm();
     }

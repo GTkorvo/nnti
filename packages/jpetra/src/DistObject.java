@@ -32,27 +32,34 @@ package Jpetra;
  *
  * @author  Jason Cross
  */
-public class Graph extends DistObject {
-    private int[] nonZeroEntries;  // contigous 2-d array of non-zero ID entries
-    private int[] numEntries;  // number of entries per array
-    VectorSpace dVectorSpace; // the domain vector space
-    private boolean filled;
-    private JpetraTreeMap OuterMap;
+public abstract class DistObject extends JpetraObject {
+    public static final int ADD = 0;
+    public static final int ZERO = 1;
+    public static final int INSERT = 2;
+    public static final int AVERAGE = 3;
+    public static final int ABSMAX = 4;
+    //private Comm comm;
     
-    public Graph(VectorSpace vectorSpace) {
-        this.filled = false;
-        this.dVectorSpace = vectorSpace;
+    public DistObject() {
     }
     
-    public Graph(VectorSpace vectorSpace, int[] nonZeroEntries, int[] numEntries) {
-        this.filled = true;
-        this.dVectorSpace = vectorSpace;
-        this.nonZeroEntries = nonZeroEntries;
-        this.numEntries = numEntries;
+    public void importValues(DistObject distObjectSrc, Import importer, int combineMode) {
         
     }
     
-    public int getIndex(int entryId) {
-        return nonZeroEntries[entryId];
+    public void importValues(DistObject distObjectSrc, Export exporter, int combineMode) {
+        
     }
+    
+    public void exportValues(DistObject distObjectSrc, Import importer, int combineMode) {
+        
+    }
+    
+    public void exportValues(DistObject distObjectSrc, Export exporter, int combineMode) {
+        
+    }
+    
+    //public Comm getComm() {
+    //    return this.comm;
+    //}
 }

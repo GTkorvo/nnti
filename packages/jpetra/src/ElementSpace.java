@@ -47,6 +47,8 @@ public class ElementSpace {
     private int minGlobalElementId;
     private int maxGlobalElementId;
     
+    private boolean distributedGlobally;
+    private boolean distributedLinearly;
     /**
      * Constructs an <code>ElementSpace</code> automatically based on the contigous
      * even distribution of global elements to each vnode.
@@ -60,10 +62,15 @@ public class ElementSpace {
         if (comm.getIsSerial()) {
             // do nothing
             this.numMyGlobalElements = this.numGlobalElements;
+            this.distributedGlobally = false;
+            this.distributedLinearly = true;
             return;
         }
         
         // for parallel only
+        // !! right now this is for linear uniform distributions!
+        this.distributedGlobally = true;
+        this.distributedLinearly = true;
         numIndicesPerVnode = numGlobalElements / comm.getNumVnodes();
         numRemainderIndices = numGlobalElements % comm.getNumVnodes();
         this.numMyGlobalElements = numIndicesPerVnode;
@@ -96,7 +103,7 @@ public class ElementSpace {
             this.numGlobalElements = myGlobalElements.length;
             return;
         }
-    
+        
         // parallel only
         // need to get the number of global elements by doing a gather of the number
         // of elements on each vnode
@@ -175,6 +182,30 @@ public class ElementSpace {
     
     public int getMaxGlobalElementId() {
         return this.maxGlobalElementId;
+    }
+    
+    public int[] getMyGlobalElementIds() {
+        if (this.myGlobalElements != null) {
+            return this.myGlobalElements;
+        }
+        
+        int[] generatedGlobalElementIds = new int[this.numMyGlobalElements];
+        for (int i=0; i < this.numMyGlobalElements; i++) {
+            generatedGlobalElementIds[i] = i;
+        }
+        return generatedGlobalElementIds;
+    }
+    
+    public int[] getRemoteVnodeIdList(int[] remoteGlobalElementIds) {
+        
+    }
+    
+    public boolean isDistributedGlobally() {
+        return this.distributedGlobally;
+    }
+    
+    public boolean isDistributedLinearly() {
+        return this.distributedLinearly;
     }
     
     public Comm getComm() {

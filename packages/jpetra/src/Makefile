@@ -24,26 +24,24 @@
 # 
 # ************************************************************************
 
-# classes that currently don't compile or are not used
-# Histogram.java VecView.java Graph.java
-
 # group classes by type/function in order to setup a correct build order
-core_classes = Output.java JpetraException.java JpetraObject.java
-ccj_classes =  CcjComm.java CcjReduceAllSumIntArray.java CcjDistributor.java \
+core = Output.java JpetraException.java JpetraObject.java
+misc_support = Blas.java NetlibBlas.java JpetraTreeMap.java
+ccj_support = CcjReduceAllSumIntArray.java  \
 		CcjReduceDoubleMaxArray.java CcjGatherDoubleArray.java \
 		CcjReduceDoubleMinArray.java CcjGatherIntArray.java \
 		CcjReduceIntMaxArray.java CcjGatherSerializableArray.java \
 		CcjReduceIntMinArray.java CcjLink.java CcjScatter2DArray.java \
 		CcjReduceAllSumDoubleArray.java
-comm_classes = Comm.java SerialComm.java Directory.java \
-		LocalMap.java Exporter.java Importer.java \
-		DistObject.java Distributor.java SerialDistributor.java $(ccj_classes)
-util_classes = Time.java Util.java
-data_structs = ElementSpace.java VectorSpace.java Vector.java MultiVector.java
+comm = Comm.java Distributor.java CcjComm.java Directory.java SerialComm.java  \
+		 DistObject.java Export.java Import.java \
+		 CcjDistributor.java SerialDistributor.java
+util = Time.java Util.java
+data_structs = ElementSpace.java VectorSpace.java Graph.java CisMatrix.java MultiVector.java
 		  
 all:
 	#the compilation will fail if the classes are not compiled in the proper order
-	javac -d .. $(core_classes) $(util_classes) $(comm_classes) $(data_structs)
+	javac -d .. $(core) $(misc_support) $(util) $(ccj_support) $(comm) $(data_structs)
 	
 	# old build command
 	#javac -d ..  BlockMap.java Comm.java CrsMatrix.java Directory.java Exporter.java Graph.java \
