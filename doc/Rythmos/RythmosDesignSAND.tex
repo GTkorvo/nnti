@@ -244,7 +244,7 @@ certain types of error-controlling optimization algorithms.
 
 \end{enumerate}
 
-\subsection{Weaker requirements (wants)}
+\subsection{Weak requirements (wants)}
 
 Here we list requirements that have a much lower priority and may be
 considered optional.
@@ -736,6 +736,7 @@ from a variety of standpoints but I don't have any references for this yet.}
 %\subsection{General Solution Stragegies for Implicit Nonlinear Time Step Equations}
 
 \section{Staggered DAEs/ODEs}
+\label{rythmos:sec:staggered-daes}
 
 A typical situation that occurs is when a set of two or more DAEs/ODEs are
 solved in which the solutions are propogated from one to the other.  Here we
@@ -857,6 +858,14 @@ the interpolation interface for extracting $y_1(t)$ as called by the second
 time integrator, then steps-size control would not be an issue.  In addition,
 handling the errors separately may be an advantage since the these two DAEs
 may have different solution error requirements.
+
+Note: We need to look at the theory for the propogation of errors in a
+staggered time stepper in order to be faithful about satisfying user-defined
+error tolerances.  For example, if the first DAE is solved inexactly, then
+this error will be propogated to the second DAE and will be componded by the
+error in solving the second DAE.  Therefore, one can not simply look at just
+the errors in the two DAE separately if one wants to insure an accurate error
+bound on the second DAE.
 %
 {}\item {}\textbf{Linearity, nonlinearity and relative cost}: One of the
 biggest advantages of solving the staggered DAEs using separate time stepping
@@ -1927,16 +1936,97 @@ stepping methods.
 
 \section{Checkpointing and Interpolation Storage Management Strategies}
 
-Notes: Here we want to outline the basic hierarchal checkpointing strategy of
-Griewank and describe how it relates to the time integrators.  We also want to
-discuss the basic idea of the ``Momento'' design pattern and how it can be
-brought to bare here.
+Checkpointing a transient iterative computation (or any other expensive
+iterative computation) is an important capability in large-scale scientific
+computing.  A checkpoint is a snap shoot of the state of an iterative
+computation that can be saved to a hard disk and then read back in later to
+restart the computation from the checkpoint from such that it results in the
+same computations as if the computations where never interupted.  There are
+various levels of checkpoints but in its most basic form we use the term
+checkpoint to mean that the state is written in at a level such then when read
+back in to a time integrator that is results in the exact same
+{}\underline{binary} computations that would have resulted if the computation
+was not restarted.
 
-There are a few points to be made about checkpointing and interpolation:
+Checkpoints are primarily needed for the following use cases:
+%
 \begin{itemize}
 %
-{}\item An time stepper (or a series of staggered time steppers) restarted
-form a checkpoint should produce the exact same (binary) output as if the
+{}\item {}\textbf{Fault tolerance}: By periodically checkpointing an iterative
+solve on an MPP, if one or more processors goes down, the computation can be
+restarted on a different set of processors from the last checkpoint.  Note
+that in this case, one can only expect the same binary output from the
+simulation if using the same number and same type of processors and if the
+results of MPI global reductions is the same for the new processor topology.
+Also note that this type of checkpointing requires that the checkpoints be
+saved in such a way that they can be retrieved if one or more processors goes
+down.  This means that using local disk storage on a processor is less
+attractive than using a globally shared disk array.
+%
+{}\item {}\textbf{Recomputation of the state for adjoint computations}:
+Another big motivator for checkpointing capability is the need to recompute
+the state equation (\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic})
+when the adjoint sensitivity equation
+(\ref{rythmos:app:eqn:sens:adj})--(\ref{rythmos:app:eqn:sens:adj:fc}) is
+solved backwards in time.  This topic is discussed in more detail below.
+These types of checkpoints may best be stored on a local disk on each
+processor in an MPP which results in faster I/O.  Note that this type of
+checkpointing and the more traditional fault-tolerant checkpointing, where
+checkpoints are written to a nonlocal disk array, may both be appropriate in
+an adjoint computation.
+%
+\end{itemize}
+
+In general, each time stepper algorithm will be responsible for specifying how
+to checkpoint it's algorithm with the least possible data such that a restart
+will result in the same binary results.
+
+Related to checkpointing in the need to interpolate an integrated solution.
+Interpolation is needed for the following use cases:
+%
+\begin{itemize}
+%
+{}\item {}\textbf{Allowing clients to pick out solutions at specific time
+points}: There are situations where clients need to extract the state soltuion
+at specific time points in order to, for instance, compare to some other
+estimate of the state such as in a least-squares problem.  Another example of
+this is in extracting the state at some final time $t_f$ which the time
+integrator may not necessary stop exactly on.  For example, if the Jacobian is
+being reused for the last time step it may be more efficient to actually
+integrate past $t_f$ and then let the user pick out $t_f$ using some
+interpolation.
+%
+{}\item {}\textbf{Interpolation of the state for the backward adjoint
+computaions}: In general, the backward integration of the adjoint equation
+(\ref{rythmos:app:eqn:sens:adj})--(\ref{rythmos:app:eqn:sens:adj:fc}) will not
+fall directly on the same time steps used to compute the state equation
+(\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}), especially if
+adaptive timestepping is used.  Therefore, there must be some general means
+for a time integrator to record a history of its soltuion in an interpolation
+buffer that can then be queryed for values of the sate $y(t)$ and perhaps even
+the time derivative $\dot{y}(t)$ at specific times $t$.  Interpolation will be
+discussed in more detail later.
+%
+{}\item {}\textbf{Interplation of DAE soltuions in decoupled staggered DAE
+time steppers}: On way to solve staggered DAEs, such as described in
+Section~\ref{rythmos:sec:staggered-daes}, is to use separate time integrators
+for the first and second DAEs.  This allows different time stepping algorithms
+tailored to each set of DAEs and result in an overall better time integration
+scheme.  This however, requires that the second DAE be able to read the state
+from the first DAE in a general way.  If the first time stepper algorithm can
+provide an interplation buffer that can be queried for $y_1(t)$ and/or
+$\dot{y}_1(t)$ by the second DAE, then the two time stepper algorithms can be
+completely decoupled.  Note that the interpolation buffer needed in this use
+case is likely much shorter than would be needed for an interpolation of the
+state solution as required by an adjoint time integrator.
+%
+\end{itemize}
+
+A few ideas regarding checkpointing and interpolation are:
+\begin{itemize}
+%
+{}\item A time stepper (or a series of staggered time steppers) restarted form
+a checkpoint should produce the exact same (binary) output as if the
 integration never stopped.  This makes a checkpoint a special time event that
 affects a lot of other things.
 %
@@ -1946,6 +2036,104 @@ abstract interpolation object (which may be specific to a time integrator)
 should be constructed and maintained by a time integrator.
 %
 \end{itemize}
+
+\subsection{Interpolation methods}
+
+While there are many possible interploation techniques possible for
+interpolating the solution of a DAE, the Hermite interploation seems to be the
+most popular~\cite{sundials}.  The most simple Hermite interplation stores
+both $y(t_k)$ and $\dot{y}(t_k)$ at various points in time $t_k$ and then the
+values of $y(t)$ (and $\dot{y}(t)$) are interpolated using a piecewise cubic
+polynomial formed from $y(t_k)$, $\dot{y)k}(t)$, $y(t_{k+1})$, and
+$\dot{y}(t_{k+1})$, where $t\in[t_k,t_{k+1}]$.  The Hermite interpolate is a
+local computation and is zero-order and first-order continuous.
+
+Note that interpolation methods may also take into account the accuracy needed
+in the adjoint so that a more course interpolation buffer can be stored (Note:
+ask Andrei about this).
+
+\subsection{Checkpointing for adjoint sensitivity computations}
+
+The adjoint solution of
+(\ref{rythmos:app:eqn:sens:adj})--(\ref{rythmos:app:eqn:sens:adj:fc}) requires
+access to the state $y(t)$ as it is integrated backwards in time.  If there is
+sufficient storage, then a complete interpolation buffer for $y(t)$ for
+$t\in[t_0,t_f]$ can be stored while the state equation
+(\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) is integrated
+forward in time.  This state interpolation buffer can then be used to
+integrate the adjoint backward in time.  However, if there is not sufficient
+disk space to store a sufficiently accurage interpolation buffer, then this
+approach will not work and a checkpoint strategy must be employed.
+
+Checkpointing strategies\footnote{Note that the term ``checkpoint'' is being
+somewhat overloaded here in the context of trasient adjoint problems and is
+more entailed than the basic definition of a checkpoint of a single state and
+previously defined.} for adjoint problems store a series of snapshots and then
+recompute the state again one or more times in smaller time segments in order
+to build smaller temporary interpolation buffers that can then be used to
+integrate the adjoint backward in time one piece at a time.
+
+The question to ask is, ``Given a limited interpolation buffer (to be stored
+in core) and a maximum number of checkpoints that can be stored (as allowed by
+the disk storage), how should checkpoints be set that result in the minimum
+about of recomputation of the forward state equation?''  This question is
+answered the checkpointed algorithm of Griwank~\cite{347846} and is
+encapuslated in a simple program called {}\texttt{revolve()}~\cite{347846}.
+The algorithm implemented in this simple driver program directs the forward
+checkpointing and reverse adjoint computations in such a way as to provably
+minimize the amount of needed recomputation of the forward problem.  The key
+to using {}\texttt{revolve()} is to realize that {}\texttt{revolve}'s concept
+of a ``step'' is the length of the forward computation that can be stored in
+an incore interpolation buffer or as a set of computations such that the
+operation count swaps individual checkpoint management.
+Figure~\ref{rythmos:fig:checkpoint_graph} shows a plot of the relative
+increase in cost in recomputing the forward solution for various ratios of the
+number of checkpoint stored with respect to the total number of ``steps'' (as
+defined by {}\texttt{resolve}).  Amazingly, as little as a 1\% ratio of
+checkpoints to ``steps'' only increases the number of forward computation by
+2.7!  It is not until the ratio of checkpoints to ``time'' steps goes below
+0.1\% does the cost start to dramatically increase and asymptotically
+approaches infinity as the ratio goes to zeo.
+
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[scale=0.75]{checkpoint_graph}
+%}
+\end{center}
+\caption{
+\label{rythmos:fig:checkpoint_graph}
+Plot increased cost of computing adjoint using checkpointed scheme implemented
+by {}\texttt{resolve()} algorihtm relative to cost of a single forward solve
+for where the ratio of the number of checkpoints to the total time steps is
+the x-axis where 5000 total time steps where used.  }
+\end{figure}
+\esinglespace}
+
+Note: The {}\texttt{revolve()} function has sevaral basic problems -- such as
+the use of static data, global namespace pollution, explicit calls to
+{}\texttt{printf()}, the use of ``magic numbers'', and non-intuative calling
+sequences -- that makes it inappropriate for large-scale production programs.
+However, this code can easily be refactored into a more general C++ class that
+allows for multiple instances and better usability.  The question is how to
+build general software around a simple utility such as this.
+
+\subsection{Checkpoint compression strategies}
+
+If one is willing to give up binary restart-ability for the state computation
+and is willing to allow some greater degree error in the adjoint sensitivity
+computation, then compression strategies for the state can be used to even
+further reduce memory storage.  For all DAEs, compression in time is possible
+where interpolates are spaced out according to some error bound.  For DAEs
+that come from discretized PDEs, compression in space and even the
+computatioin of a courser state equation is possible if only inexact
+adjoints are needed.
+
+Note: This may be a good angle for a research proposal.  How do we combine
+knowledge about inexactness with an adjoint time integrator and allow for
+compressed interpolation and checkpointing strategies and control of adaptive
+step-control error?  This leads into an inexactness proposal.
 
 \section{Example applications}
 
@@ -2019,7 +2207,23 @@ implementation) in the range $t\in[t_0,t_f]$.  The full implicit state
 solution for $y(t)$ in $t\in[t_0,t_f]$ is signified as
 $y(p,v(t_0:t_f),t_0:t_f)$.
 
-\subsection{Derivation of general direct sensitivity equations}
+Given the implicit state function, a reduced set of auxiliary response
+functions are defined as
+%
+\begin{equation}
+\hat{d}(p,v(t_i:t_f))
+= \int_{t_0}^{t_f} \hat{g}(p,v(t),t) dt + \hat{h}(p),
+\label{rythmos:apdx:eqn:sens:d_hat}
+\end{equation}
+\begin{tabbing}
+\hspace{4ex}where\hspace{1ex}\= \\
+\>	$\hat{g}(p,v(t),t) = g(y(p,t),p,v(t),t)) : \:
+		\mathcal{P} \times \mathcal{V} \times \RE \rightarrow \mathcal{G}$ is defined on $t\in[t_0,t_f]$, and \\
+\>	$\hat{h}(p) = h(y(p,t_f),p)) : \:
+		\mathcal{P} \rightarrow \mathcal{G}$ is defined only at $t=t_f$.
+\end{tabbing}
+
+\subsection{Derivation of direct sensitivities}
 \label{rythmos:app:direct-sens-derivation}
 
 For the derivation of direct sensitivities we will ignore the
@@ -2031,22 +2235,6 @@ $v(t_0:t_f)$ is given a very course discretization in $t\in[t_0,t_f]$,
 computing direct sensitivities with respect to the discretized $v$ can
 be practical.
 
-Given the implicit state function and ignoring the presence of $v(t)$, a
-reduced set of auxiliary response functions are defined as
-%
-\begin{equation}
-\hat{d}(p)
-= \int_{t_0}^{t_f} \hat{g}(p,t) dt + \hat{h}(p),
-\label{rythmos:apdx:eqn:sens:d_hat}
-\end{equation}
-\begin{tabbing}
-\hspace{4ex}where\hspace{1ex}\= \\
-\>	$\hat{g}(p,t) = g(y(p,t),p,t)) : \:
-		\mathcal{P} \times \RE \rightarrow \mathcal{G}$ is defined on $t\in[t_0,t_f]$, and \\
-\>	$\hat{h}(p) = h(y(p,t_f),p)) : \:
-		\mathcal{P} \rightarrow \mathcal{G}$ is defined only at $t=t_f$.
-\end{tabbing}
-%
 The direct sensitivity problem is easily stated by differentiating
 (\ref{rythmos:apdx:eqn:sens:d_hat}) with respect to $p$ to obtain
 %
@@ -2100,15 +2288,203 @@ are a staggered set of DAE equations in that
 first followed by
 (\ref{rythmos:apdx:eqn:sens:direct-c})--(\ref{rythmos:apdx:eqn:sens:direct-c:ic}).
 
-\subsection{Derivation of general adjoint sensitivity equations}
+\subsection{Derivation of adjoint sensitivities using direct sensitivity weak form}
+
+Here we describe a derivation for the adjoint equation and the gradient
+expressions that is based on basic principles that have a simple and strong
+foundation.
+
+\subsubsection{Derivation of adjoint equation and sensitivities for steady-state parameters}
+
+In this section we begin with the same basic expressions of the reduced
+derivative ${}\partial {}\hat{d} / {}\partial p$ in
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) and the direct sensitivity equations
+for ${}\partial y / {}\partial p$ in
+(\ref{rythmos:apdx:eqn:sens:direct-c})--(\ref{rythmos:apdx:eqn:sens:direct-c:ic})
+and then perform basic manipulations in order to arrive at the adjoint
+equations and the adjoint sensitivitities for ${}\partial {}\hat{d} /
+{}\partial p$.
+
+We begin our derivation of the adjoint equation and sensitivities for
+steady-state parameters by writing the weak form of the direct sensitivity
+equations (\ref{rythmos:apdx:eqn:sens:direct-c}) which is
+%
+\begin{equation}
+\int_{t_0}^{t_f} \Lambda^H \left(
+\frac{\partial c}{\partial \dot{y}} \left(\frac{\partial}{\partial t} \frac{\partial y(t)}{\partial p} \right)
++ \frac{\partial c}{\partial y} \left(\frac{\partial y(t)}{\partial p}\right)
++ \frac{\partial c}{\partial p}
+\right) dt = 0,
+\label{rythmos:apdx:eqn:sens:weak-direct-c}
+\end{equation}
+%
+where at this point $\Lambda(t)\in\mathcal{C}|\mathcal{G}$ is any appropriate
+weighting function that is also consistent with the initial conditions
+(\ref{rythmos:apdx:eqn:sens:direct-c:ic}).  Later, $\Lambda$ will be chosen to
+be the adjoint vatiables but for now it is nothing more than an arbitrary
+weighting function for the purpose of stating the weak form.  The solution to
+the weak form of (\ref{rythmos:apdx:eqn:sens:weak-direct-c}) is every bit as
+valid and is indeed more general than the strong form in
+(\ref{rythmos:apdx:eqn:sens:direct-c}) and we lose nothing by considering the
+weak form [???].
+
+Next, we substitute the integration by parts
+%
+\begin{equation}
+\int_{t_0}^{t_f} \left[ \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right) \frac{d}{dt}\left( \frac{\partial y}{\partial p} \right) \right] dt
+= \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial p} \right) \right|_{t_0}^{t_f}
+- \int_{t_0}^{t_f} \left[ \frac{d}{dt}\left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right) \frac{\partial y}{\partial p} \right] dt
+\end{equation}
+%
+into (\ref{rythmos:apdx:eqn:sens:weak-direct-c}) and rearrange which yeilds
+%
+\begin{equation}
+\int_{t_0}^{t_f} \left( \Lambda^H \frac{\partial c}{\partial p} \right) dt
++ \int_{t_0}^{t_f} \left[
+    - \frac{d}{dt}\left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right)
+    + \Lambda^H \frac{\partial c}{\partial y}
+  \right] \frac{\partial y}{\partial p} dt
++ \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial p} \right) \right|_{t_0}^{t_f}
+= 0
+\label{rythmos:apdx:eqn:sens:weak-direct-c-2}
+\end{equation}
+%
+At this point in the derivation we decide to restrict the possible set of
+functions for $\Lambda(t)$ by forcing $\Lambda(t)$ to satisfy the differential
+equation
+%
+\begin{equation}
+- \frac{d}{dt}\left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right)
++  \Lambda^H \frac{\partial c}{\partial y} = - \frac{\partial g}{\partial y}, \; t \in \left[ t_0, t_f \right].
+\label{rythmos:apdx:eqn:sens:adj-trans}
+\end{equation}
+%
+All that we have done in (\ref{rythmos:apdx:eqn:sens:adj-trans}) is to make
+what apears to be an arbitrary choice to help narrow the weighting function
+$\Lambda(t)$ from the infinite set of possible choices.  It will be clear
+below why this chose is a convenient one.  Note that the choice in
+(\ref{rythmos:apdx:eqn:sens:adj-trans}) does not in and of itself uniquely
+determine $\Lambda(t)$ as no boundary conditions have yet be specified.  When
+we move toward the end of the derivation, a natural choice for a boundary
+condition that uniquely specifies $\Lambda(t)$ will fall out.
+
+The next step in the derivation is somewhat non-direct but is based on simple
+principles that have simple and clear mathematical foundations.  Here we
+substitute (\ref{rythmos:apdx:eqn:sens:adj-trans}) into
+(\ref{rythmos:apdx:eqn:sens:weak-direct-c-2}), add
+%
+\[
+\left. \left( \frac{\partial h}{\partial y} \frac{\partial y}{\partial p} \right) \right|_{t=t_f}
+\]
+%
+to both side of the equation, and then rearrange to yield
+%
+\begin{eqnarray}
+\int_{t_0}^{t_f} \left( \frac{\partial g}{\partial y} \frac{\partial y}{\partial p} \right) dt
++ \left. \left( \frac{\partial h}{\partial y} \frac{\partial y}{\partial p} \right) \right|_{t=t_f}
+& = &  \int_{t_0}^{t_f} \left( \Lambda^H \frac{\partial c}{\partial p} \right) dt
+- \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial p} \right) \right|_{t=t_0}
+\nonumber \\
+& & - \left. \left[ \left(
+    \Lambda^H \frac{\partial c}{\partial \dot{y}}
+    +  \frac{\partial h}{\partial y}
+  \right)  \frac{\partial y}{\partial p} \right] \right|_{t=t_f}.
+\label{rythmos:apdx:eqn:sens:weak-direct-c-3}
+\end{eqnarray}
+%
+By rearranging (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) to
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial p} 
+= \left[
+    \int_{t_0}^{t_f} \left(
+      \frac{\partial g}{\partial y} \frac{\partial y}{\partial p} \right) dt
+      + \left. \left( \frac{\partial h}{\partial y} \frac{\partial y}{\partial p} \right) \right|_{t=t_f}
+  \right]
++ \left[
+    \int_{t_0}^{t_f} \frac{\partial g}{\partial p} dt
+    + \left. \left( \frac{\partial h}{\partial p} \right) \right|_{t=t_f}
+  \right]
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_p-2}
+\end{equation}
+%
+and substituting in (\ref{rythmos:apdx:eqn:sens:weak-direct-c-3}) gives
+%
+\begin{eqnarray}
+\frac{\partial \hat{d}}{\partial p} 
+& = & \int_{t_0}^{t_f} \left( \Lambda^H \frac{\partial c}{\partial p} \right) dt
+- \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial p} \right) \right|_{t=t_0}
+\nonumber \\
+& & + \int_{t_0}^{t_f} \frac{\partial g}{\partial p} dt
+    + \left. \left( \frac{\partial h}{\partial p} \right) \right|_{t=t_f}
+\nonumber \\
+& & - \left. \left[ \left(
+    \Lambda^H \frac{\partial c}{\partial \dot{y}}
+    +  \frac{\partial h}{\partial y}
+  \right)  \frac{\partial y}{\partial p} \right] \right|_{t=t_f}
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}
+\end{eqnarray}
+%
+We are not finished yet since as we stated eariler, the choice for the
+weighting functions $\Lambda(t)$ have not yet been uniquely specified.
+Looking at the two endpoint conditions in
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}) involving $\Lambda^H$, we see that
+there is an expression at $t=t_0$ and an expression at $t=t_f$, and we can
+choice either one of these as a boundary condition to close the adjoint
+equation.  While in theory either of these endpoint conditions could be chosen
+for the adjoint equation to specify different weighting functions
+$\Lambda(t)$, as stated in [???], only the condition at $t=t_f$ of
+%
+\begin{equation}
+\left. \left(
+  \Lambda^H \frac{\partial c}{\partial \dot{y}}
+  +  \frac{\partial h}{\partial y}
+\right) \right|_{t=t_f}
+ = 0,
+\label{rythmos:apdx:eqn:sens:adj-trans:fc}
+\end{equation}
+%
+yields a stable DAE which can be integrated backward in time.  Finally,
+substituting (\ref{rythmos:apdx:eqn:sens:adj-trans:fc}) and $\partial y_0 /
+{}\partial p$ for $\partial y / {}\partial p$ in the second expression at
+$t=t_0$ in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}) we arrive the final
+expression for reduced derivative
+%
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial p} =
+\int_{t_0}^{t_f} \left(
+    \frac{\partial g}{\partial p}
+    + \Lambda^H \frac{\partial c}{\partial p}
+  \right) dt
+  + \left. \left( \frac{\partial h}{\partial p} \right) \right|_{t=t_f}
+  - \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial p} \right) \right|_{t=t_0}.
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}
+\end{equation}
+
+In conclusion, (\ref{rythmos:apdx:eqn:sens:adj-trans}) and
+(\ref{rythmos:apdx:eqn:sens:adj-trans:fc}) define the set of adjoint DAE
+equations that solve for $\Lambda(t)$ that are integrated backwards in time
+and (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) gives the expression for
+the computation of $\partial {}\hat{d} / {}\partial p$ in terms of the
+computed adjoint $\Lambda(t)$.
+
+\subsubsection{Derivation of adjoint sensitivitities for transient parameters}
+
+\subsection{Derivation of adjoint sensitivities using reduced Lagrangian}
 
 In this section we consider the derivation of adjoint approaches for computing
 sensitivities of the reduced response function $\hat{d}(p,v(t_0,t_f))$ with
-respect to $p$ and $v(t)$ for $t\in[t_0,t_f]$.  The primary devise that that
-we use here is the Lagrangian which is a special function which is the
-weighted composition of the response function and the DAE constraints.  This
-derivation follows in a similary manner from the one in [???].  The Lagrangian
-is
+respect to $p$ and $v(t)$ for $t\in[t_0,t_f]$ using a Lagranian approach.  The
+primary devise that that we use here is the Lagrangian which is a special
+function which is the weighted composition of the response function and the
+DAE constraints.  This derivation follows in a similary manner from the one in
+[???].  The advantage of the Lagrangian approach is that the algebraic
+manipulations are more straightforward but the disadvantage is that it lacks
+the more comfortable approaches used in the above direct sensitivity weak-form
+derivations for the adjoint.
+
+The Lagrangian is
 %
 \begin{eqnarray}
 L(y(t_0:t_f),p,v(t_0:t_f),\Lambda(t_0:t_f))
@@ -2210,11 +2586,11 @@ will force it to be satisfied as
 \begin{equation}
 - \frac{d}{dt}\left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \right)
 +  \Lambda^H \frac{\partial c}{\partial y} +  \frac{\partial g}{\partial y} = 0, \; t \in \left[ t_0, t_f \right].
-\label{rythmos:apdx:eqn:sens:adj-trans}
+\label{rythmos:apdx:eqn:sens:adj-trans-2}
 \end{equation}
 %
 We must also specify boundary conditions for the adjoint equation in
-(\ref{rythmos:apdx:eqn:sens:adj-trans}).  As stated in [???] for index-0 and
+(\ref{rythmos:apdx:eqn:sens:adj-trans-2}).  As stated in [???] for index-0 and
 index-1 DAEs, we can simply specify the endpoint condition
 %
 \begin{equation}
@@ -2223,12 +2599,13 @@ index-1 DAEs, we can simply specify the endpoint condition
   +  \frac{\partial h}{\partial y}
 \right) \right|_{t=t_f}
  = 0,
-\label{rythmos:apdx:eqn:sens:adj-trans:fc}
+\label{rythmos:apdx:eqn:sens:adj-trans:fc-2}
 \end{equation}
 %
-which drops out the last term in
-(\ref{rythmos:apdx:eqn:sens:d_L_hat_d_p_2}) and, together with
-(\ref{rythmos:apdx:eqn:sens:adj-trans}), leaves
+which drops out the last term in (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_p_2})
+and, together with (\ref{rythmos:apdx:eqn:sens:adj-trans-2}) and substituting
+$\partial y_0 / {}\partial p$ for $\partial y / {}\partial p$ in the second
+expression at $t=t_0$, leaves
 %
 \begin{equation}
 \frac{\partial \hat{d}}{\partial p} =
@@ -2237,60 +2614,12 @@ which drops out the last term in
     + \Lambda^H \frac{\partial c}{\partial p}
   \right) dt
   + \left. \left( \frac{\partial h}{\partial p} \right) \right|_{t=t_f}
-  - \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial p} \right) \right|_{t=t_0}.
-\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}
-\end{equation}
-
-We now restate the adjoint and reduced sensitivities in
-(\ref{rythmos:apdx:eqn:sens:adj-trans})--(\ref{rythmos:apdx:eqn:sens:adj-trans:fc})
-and (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) in standard
-columnwise form for $\Lambda$ which yields the adjoint DAE equations
-%
-\begin{eqnarray}
-- \frac{d}{dt}\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)
-+  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H
-& = & 0, \; t \in \left[ t_0, t_f \right],
-\label{rythmos:apdx:eqn:sens:adj} \\
-\left.\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)\right|_{t=t_f}
-& = & - \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
-\label{rythmos:apdx:eqn:sens:adj:fc}
-\end{eqnarray}
-%
-and the reduced gradient expression
-%
-\begin{equation}
-\frac{\partial \hat{d}}{\partial p}^H =
-\int_{t_0}^{t_f} \left(
-    \frac{\partial g}{\partial p}^H
-    + \frac{\partial c}{\partial p}^H \Lambda
-  \right) dt
-  + \left. \frac{\partial h}{\partial p}^H \right|_{t=t_f}
-  - \left. \left( \frac{\partial y_0}{\partial p}^H \frac{\partial c}{\partial \dot{y}}^H \Lambda \right) \right|_{t=t_0}.
-\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}
+  - \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y_0}{\partial p} \right) \right|_{t=t_0}
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final-2}
 \end{equation}
 %
-where we have substituted $\partial y_0 / {}\partial p$ for $\partial
-y / {}\partial p$ in the last term.
-
-As described in [???], for some classes of up to index-2 DAEs, the form of the
-adjoint in
-(\ref{rythmos:apdx:eqn:sens:adj})--(\ref{rythmos:apdx:eqn:sens:adj:fc}) may be
-unstable while the {}\textit{augmented adjoint system}
-%
-\begin{eqnarray}
-\frac{d}{dt}\left( \bar{\Lambda} \right)
-+  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H \Lambda
-& = & 0, \; t \in \left[ t_0, t_f \right],
-\label{rythmos:apdx:eqn:sens:aug-adj-de} \\
-\bar{\Lambda} + \frac{\partial c}{\partial \dot{y}}^H
-& = & 0, \; t \in \left[ t_0, t_f \right],
-\label{rythmos:apdx:eqn:sens:aug-adj-ae} \\
-\left. \bar{\Lambda} \right|_{t=t_f}
-& = & \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
-\label{rythmos:apdx:eqn:sens:aug-adj:fc}
-\end{eqnarray}
-%
-generally is stable when the forward DAE is stable.
+which is the same as (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) derived
+in another way.
 
 \subsubsection{Adjoint sensitivities for transient paramters}
 
@@ -2373,8 +2702,8 @@ yields
 \end{eqnarray}
 %
 By applying our choice for the adjoint
-(\ref{rythmos:apdx:eqn:sens:adj-trans}) and its final condition
-(\ref{rythmos:apdx:eqn:sens:adj-trans:fc}) and noting that $y(t_0) =
+(\ref{rythmos:apdx:eqn:sens:adj-trans-2}) and its final condition
+(\ref{rythmos:apdx:eqn:sens:adj-trans:fc-2}) and noting that $y(t_0) =
 y_0(p)$ is not a function so that of $v$ and therefore $\partial y /
 {}\partial v(t) = 0$ at $t=t_0$, then what is left of
 (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_2}) becomes
@@ -2398,6 +2727,57 @@ By comparing (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_3}) to
 \end{equation}
 %
 is the reduced gradient that we are seeking.
+
+\subsection{The adjoint, the reduced gradient and the augmented adjoint}
+
+We now restate the adjoint in (\ref{rythmos:apdx:eqn:sens:adj-trans}) and
+(\ref{rythmos:apdx:eqn:sens:adj-trans:fc}), and the reduced sensitivities in
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) in standard columnwise form
+for $\Lambda$ which yields the adjoint DAE equations
+%
+\begin{eqnarray}
+- \frac{d}{dt}\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)
++  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:adj} \\
+\left.\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)\right|_{t=t_f}
+& = & - \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
+\label{rythmos:apdx:eqn:sens:adj:fc}
+\end{eqnarray}
+%
+and the reduced gradient expression
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial p}^H =
+\int_{t_0}^{t_f} \left(
+    \frac{\partial g}{\partial p}^H
+    + \frac{\partial c}{\partial p}^H \Lambda
+  \right) dt
+  + \left. \frac{\partial h}{\partial p}^H \right|_{t=t_f}
+  - \left. \left( \frac{\partial y_0}{\partial p}^H \frac{\partial c}{\partial \dot{y}}^H \Lambda \right) \right|_{t=t_0}.
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final-2}
+\end{equation}
+%
+
+As described in [???], for some classes of up to index-2 DAEs, the form of the
+adjoint in
+(\ref{rythmos:apdx:eqn:sens:adj})--(\ref{rythmos:apdx:eqn:sens:adj:fc}) may be
+unstable while the {}\textit{augmented adjoint system}
+%
+\begin{eqnarray}
+\frac{d}{dt}\left( \bar{\Lambda} \right)
++  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H \Lambda
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:aug-adj-de} \\
+\bar{\Lambda} + \frac{\partial c}{\partial \dot{y}}^H
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:aug-adj-ae} \\
+\left. \bar{\Lambda} \right|_{t=t_f}
+& = & \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
+\label{rythmos:apdx:eqn:sens:aug-adj:fc}
+\end{eqnarray}
+%
+generally is stable when the forward DAE is stable.
 
 \begin{SANDdistribution}
 % External
