@@ -36,11 +36,11 @@ public class Directory extends JpetraObject {
             // Since the map is linear, we know that all GIDs are contiguous on each process
             // and can be found using the MinGIDs.
             
-            int numProc = map.getComm().getNumProc();
+            int numProc = map.getComm().getNumVnodes();
             allMinGIDs = new int [numProc+1];
             int [] minProcessGID = new int [1];
             minProcessGID[0] = map.getMinProcessGID();
-            map.getComm().gatherAll(1, minProcessGID, allMinGIDs);
+            allMinGIDs = map.getComm().gatherAll(minProcessGID);
             allMinGIDs[numProc] = 1 + map.getMaxAllGID(); // Set max cap
         }
             
@@ -88,8 +88,8 @@ public class Directory extends JpetraObject {
         int ierr = 0;
         /* MPI: int j; */
         int i;
-        int myPID = map.getComm().getPID();
-        int numProc = map.getComm().getNumProc();
+        int myPID = map.getComm().getVnodeID();
+        int numProc = map.getComm().getNumVnodes();
         int nOverP = map.getNumGlobalElements() / numProc;
         int remainder = map.getNumGlobalElements() % numProc;
         

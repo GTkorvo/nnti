@@ -76,8 +76,8 @@ public class BlockMap extends JpetraObject {
 	    System.exit(1);
 	}
         
-        int numProc = comm.getNumProc();
-        int myPID = comm.getPID();
+        int numProc = comm.getNumVnodes();
+        int myPID = comm.getVnodeID();
         numProcessElements = this.numGlobalElements / numProc;
         int remainder = this.numGlobalElements % numProc;
         int startIndex = myPID * (numProcessElements + 1);
@@ -147,8 +147,8 @@ public class BlockMap extends JpetraObject {
 	    System.exit(1);
 	}
         
-        int numProc = comm.getNumProc();
-        int myPID= comm.getPID();
+        int numProc = comm.getNumVnodes();
+        int myPID= comm.getVnodeID();
         if (numProc == 1 || numGlobalElements == numProcessElements) {
             this.numGlobalElements = this.numProcessElements;
             // Check to see if user's value for numGlobalElements is either -1 
@@ -180,7 +180,7 @@ public class BlockMap extends JpetraObject {
             arrayArg0[0] = this.numProcessElements;
             int [] arrayArg1 = new int[1];
             arrayArg1[0] = this.numGlobalElements;
-            this.comm.sumAll(1, arrayArg0, arrayArg1);
+            arrayArg1 = this.comm.sumAll(arrayArg0);
             this.numGlobalElements = arrayArg1[0];
             
             // Check to see if user's value for numGlobalElements is either -1
@@ -203,7 +203,7 @@ public class BlockMap extends JpetraObject {
             // Use the scanSum function to compute a prefix sum of the number of equations
             arrayArg0[0] = this.numProcessElements;
             arrayArg1[0] = maxProcessGID;
-            this.comm.scanSums(1, arrayArg0, arrayArg1);
+            arrayArg1 = this.comm.scanSums(arrayArg0);
             maxProcessGID = arrayArg1[0];
             
             int startIndex = maxProcessGID - this.numProcessElements;
@@ -280,8 +280,8 @@ public class BlockMap extends JpetraObject {
         if(numProcessElements > 0) this.globalElements = new int [numProcessElements];
         
         // Get procssor information
-        int numProc = comm.getNumProc();
-        int myPID = comm.getPID();
+        int numProc = comm.getNumVnodes();
+        int myPID = comm.getVnodeID();
         if(numProcessElements > 0) {
             // Compute min/max GID on this process
             minProcessGID = globalElements[0];
@@ -329,7 +329,7 @@ public class BlockMap extends JpetraObject {
             arrayArg0[0] = this.numProcessElements;
             int [] arrayArg1 = new int [1];
             arrayArg1[0] = this.numGlobalElements;
-            this.comm.sumAll(1, arrayArg0, arrayArg1);
+            arrayArg1 = this.comm.sumAll(arrayArg0);
             this.numGlobalElements = arrayArg1[0];
             // Check to see if user's value for numGlobalElements is either -1
             // (in which case we use our computed value) or matches ours.
@@ -353,7 +353,7 @@ public class BlockMap extends JpetraObject {
             int [] tmpRecv = new int [2];
             tmpSend[0] = -minProcessGID; // Negative sign lets us do one reduction
             tmpSend[1] =  maxProcessGID;
-            this.comm.maxAll(2, tmpSend, tmpRecv);
+            tmpRecv = this.comm.maxAll(tmpSend);
             minAllGID = -tmpRecv[0];
             maxAllGID =  tmpRecv[1];
             
@@ -444,8 +444,8 @@ public class BlockMap extends JpetraObject {
         }
         // Get process information
 
-        int numProc = comm.getNumProc();
-        int myPID = comm.getPID();
+        int numProc = comm.getNumVnodes();
+        int myPID = comm.getVnodeID();
 
         if(numProcessElements>0) {
             // Compute min/max GID and element size, number of equations on this process
@@ -503,7 +503,7 @@ public class BlockMap extends JpetraObject {
             int [] tmpRecv = new int [4];
             tmpSend[0] = this.numProcessElements;
             tmpSend[1] = numProcessEquations;
-            this.comm.sumAll(2, tmpSend, tmpRecv);
+            tmpRecv = this.comm.sumAll(tmpSend);
             this.numGlobalElements =  tmpRecv[0];
             numGlobalEquations = tmpRecv[1];
 
@@ -525,7 +525,7 @@ public class BlockMap extends JpetraObject {
             tmpSend[2] = - minProcessElementSize;
             tmpSend[3] =   maxProcessElementSize;
 
-            this.comm.maxAll(4, tmpSend, tmpRecv);
+            tmpRecv = this.comm.maxAll(tmpSend);
 
             minAllGID =      - tmpRecv[0];
             maxAllGID =        tmpRecv[1];
@@ -999,10 +999,12 @@ public class BlockMap extends JpetraObject {
             arg1[0] = globalSameMap;
             // if(comm.minAll(1, arg0, arg1) != 0) throw new JpetraException
             //    ("Error in function: sameAs");
-	    if(comm.minAll(1, arg0, arg1) != 0) {
-		System.out.println("BlockMap sameAs: error in call to comm.minAll");
-		System.exit(1);
-	    }
+	    
+	    arg1 = comm.minAll(arg0);
+	    //if(comm.minAll(1, arg0, arg1) != 0) {
+		//System.out.println("BlockMap sameAs: error in call to comm.minAll");
+		//System.exit(1);
+	    //}
     
             return(globalSameMap == 1);
         }

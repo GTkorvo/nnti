@@ -451,10 +451,10 @@ public class Graph extends JpetraObject {
 	    tempVec[1] = numProcessBlockDiagonals;
 	    tempMaxNumI[0] = maxNumIndices;
 
-	    getComm().sumAll(2, tempVec, tempRes);
+	    tempRes = getComm().sumAll(tempVec);
 	    numGlobalEntries = tempRes[0];
 	    globalMaxNumIndices = tempRes[1];
-	    getComm().maxAll(1, tempMaxNumI, tempRes);
+	    tempRes = getComm().maxAll(tempMaxNumI);
 	    globalMaxNumIndices = tempRes[0];
 
 	    int rowElementSize = rowMap.getMaxElementSize();
@@ -493,7 +493,7 @@ public class Graph extends JpetraObject {
 	    tempVec[1] = numProcessBlockDiagonals;
 	    tempVec[2] = numProcessNonzeros;
 	    
-	    getComm().sumAll(3, tempVec, tempRes);
+	    tempRes = getComm().sumAll(tempVec);
 
 	    numGlobalEntries = tempRes[0];
 	    numGlobalBlockDiagonals = tempRes[1];
@@ -502,7 +502,7 @@ public class Graph extends JpetraObject {
 	    tempVec[0] = maxNumIndices;
 	    tempVec[1] = maxNumNonzeros;
 	    
-	    getComm().sumAll(2, tempVec, tempRes);
+	    tempRes = getComm().sumAll(tempVec);
 
 	    globalMaxNumIndices = tempRes[0];
 	    globalMaxNumNonzeros = tempRes[1];

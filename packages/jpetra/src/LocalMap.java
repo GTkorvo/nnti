@@ -37,7 +37,7 @@ public class LocalMap extends Jpetra.Map {
 	int [] res = new int [2];
 	tmp[0] = numProcessElements;
 	tmp[1] = - numProcessElements;
-	comm.maxAll(2, tmp, res);
+	res = comm.maxAll(tmp);
 
 	int tmp1 = res[0];
 	int tmp2 = - res[1];

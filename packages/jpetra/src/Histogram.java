@@ -1,4 +1,4 @@
-//package JpetraVis;
+package JpetraVis;
 
 /* Histogram Printing Program
    Created by Kara Hansen
@@ -7,6 +7,7 @@
 
 import javax.swing.*;
 import java.awt.*;
+import Jpetra.*;
 
 public class Histogram{
     public static void main (String args[]) {
@@ -15,8 +16,8 @@ public class Histogram{
         //double vector[] = {-4, 0, 3, 15, 23, 15, 1, 2, 3, 10, -2, -1, 5, 7, 24, 10, 22, 6, -1, -9, 0, 40, 33, 30, 25, 20, 34, 22, 19, 18, 13, 15, 24};
 	double vector[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 5, 3, 2, 0, 4, 15, 12, 3, 4, 5, 9};
        
-	VecView myVectorView = new VecView(vector, "Test", Color.orange);
+	VecView myVectorView = new VecView(vector, "Test");
 	myVectorView.histogram();
-	//myVectorView.xygraph();    
+	myVectorView.xygraph();    
     }
 }
