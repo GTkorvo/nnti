@@ -216,6 +216,8 @@ public class CcjLink extends ColMember {
             JpetraObject.println("ERR","In CCJ doubleSumAll: " + e);
         }
         
+        // following line is to see if this fixes odd flop results
+        this.barrier();
         return toReturn;
     }
     
@@ -234,6 +236,8 @@ public class CcjLink extends ColMember {
             JpetraObject.println("ERR", "In CCJ intSumAll: " + e);
         }
         
+        // following line is to see if this fixes odd flop results
+        this.barrier();
         return toReturn;
     }
     
