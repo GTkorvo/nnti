@@ -47,8 +47,8 @@ public class CrsMatrixTest {
 	Jpetra.Map map = new Jpetra.Map(numGlobalEquations, numVnodeEquations, 0, comm);
 
 	// Get and update list and number of local equations from newly created map
-	int [] nodeGlobalElements = new int[map.getNumVnodeElements()];
-	map.getGlobalElements(nodeGlobalElements);
+	int [] nodeGlobalElements = new int[map.getNumMyElements()];
+	map.getMyGlobalElements(nodeGlobalElements);
 
 	// Create an integer vector NumNz that is used to build the Petra Matrix.
 	// NumNz[i] is the Number of OFF-DIAGONAL term for the ith global equation on this processor

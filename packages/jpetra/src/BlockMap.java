@@ -8,6 +8,7 @@ package Jpetra;
 /**
  * @author  Mike Heroux
  * @author  Michael William Boldt
+ * @author  Jason Cross
  * @version 
  */
 public class BlockMap extends JpetraObject {

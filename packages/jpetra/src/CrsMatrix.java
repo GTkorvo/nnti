@@ -39,7 +39,7 @@ public class CrsMatrix extends JpetraObject {
      * @param numEntriesPerRow The ith entry indicates the approximate number of entries in the ith row
      */
     public CrsMatrix(String cv, final Jpetra.Map rowMap, int [] numEntriesPerRow) {
-	this.numProcessRows = rowMap.getNumVnodeEquations();
+	this.numProcessRows = rowMap.getNumMyEquations();
 	this.cv = cv;
 	this.graph = new Jpetra.Graph(cv, rowMap, numEntriesPerRow);
 	int ierr = allocate();
@@ -55,7 +55,7 @@ public class CrsMatrix extends JpetraObject {
      * @param numEntriesPerRow Approximate number of entries in each row, 0 will result in fill during the insertion phase
      */
     public CrsMatrix(String cv, final Jpetra.Map rowMap, int numEntriesPerRow) {
-	this.numProcessRows = rowMap.getNumVnodeEquations();
+	this.numProcessRows = rowMap.getNumMyEquations();
 	this.cv = cv;
        // This constructor is not in Graph!!!	this.graph = new Jpetra.Graph(cv, rowMap, numEntriesPerRow);
 	int ierr = allocate();
@@ -73,7 +73,7 @@ public class CrsMatrix extends JpetraObject {
      * @param numEntriesPerRow The ith entry indicates the approximate number of entries in the ith row
      */
     public CrsMatrix(String cv, final Jpetra.Map rowMap, final Jpetra.Map colMap, int [] numEntriesPerRow) {
-	this.numProcessRows = rowMap.getNumVnodeEquations();
+	this.numProcessRows = rowMap.getNumMyEquations();
 	this.cv = cv;
 	this.graph = new Jpetra.Graph(cv, rowMap, colMap, numEntriesPerRow);
 	int ierr = allocate();
@@ -91,7 +91,7 @@ public class CrsMatrix extends JpetraObject {
      * @param numEntriesPerRow Approximate number of entries in each row
      */
     public CrsMatrix(String cv, final Jpetra.Map rowMap, final Jpetra.Map colMap, int numEntriesPerRow) {
-	this.numProcessRows = rowMap.getNumVnodeEquations();
+	this.numProcessRows = rowMap.getNumMyEquations();
 	this.cv = cv;
 	int [] tmp = { numEntriesPerRow };
 	this.graph = new Jpetra.Graph(cv, rowMap, colMap, tmp);

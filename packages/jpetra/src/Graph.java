@@ -187,13 +187,13 @@ public class Graph extends JpetraObject {
     private void initializeDefaults() {
         numGlobalBlockRows = rowMap.getNumGlobalElements();
         numGlobalBlockCols = colMap.getNumGlobalElements();
-        numProcessBlockRows = rowMap.getNumVnodeElements();
-        numProcessBlockCols = colMap.getNumVnodeElements();
+        numProcessBlockRows = rowMap.getNumMyElements();
+        numProcessBlockCols = colMap.getNumMyElements();
         
         numGlobalRows = rowMap.getNumGlobalEquations();
         numGlobalCols = colMap.getNumGlobalEquations();
-        numProcessRows = rowMap.getNumVnodeEquations();
-        numProcessCols = colMap.getNumVnodeEquations();
+        numProcessRows = rowMap.getNumMyEquations();
+        numProcessCols = colMap.getNumMyEquations();
         
         globalMaxRowDim = rowMap.getMaxElementSize();
         maxRowDim = rowMap.getMaxElementSize();
@@ -599,7 +599,7 @@ public class Graph extends JpetraObject {
 	    // If owned, transform global index to local index.
 	    // If not owned, add to importMap for later use.
 
-	    numProcessBlockCols = domainMap.getNumVnodeElements();
+	    numProcessBlockCols = domainMap.getNumMyElements();
 
 	    int incBlockCols = Math.max(Math.min(numProcessBlockCols/4, 100), 10);
 	    int maxBlockCols = 0;
@@ -670,7 +670,7 @@ public class Graph extends JpetraObject {
 		util.sort(true, numRemote, PIDList, 0, null, nLists, sortLists);
 		System.arraycopy(remoteSizeList, 0, sizeList, numProcessBlockCols, remoteSizeList.length);
 
-		domainMap.getGlobalElements(colIndices);
+		domainMap.getMyGlobalElements(colIndices);
 		if(doSizes) domainMap.getElementSizeList(sizeList);
 
 		numProcessBlockCols = newNumProcessBlockCols;
@@ -713,7 +713,7 @@ public class Graph extends JpetraObject {
 
 	    // Easy to do if constant element size
 	    if(rangeMap.hasConstantElementSize())
-		numProcessCols = numProcessBlockCols * rangeMap.getMaxVnodeElementSize();
+		numProcessCols = numProcessBlockCols * rangeMap.getMaxMyElementSize();
 	    else {
 		numProcessCols = 0;
 		for(i=0; i<numProcessBlockRows; i++) {

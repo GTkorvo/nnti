@@ -4,7 +4,6 @@ import java.io.Serializable;
 import CCJ.CCJException;
 
 public class CcjDistributor implements Distributor {
-   // DistObject output;
     CcjComm myComm;
     CcjLink myCcjLink;
     CCJ.ColGroup group;
@@ -21,7 +20,6 @@ public class CcjDistributor implements Distributor {
     int max_send_length;
     int total_recv_length;
     int size_indices_to;
-    //int NumRemoteIDs;
     int size_indices_from;
     
     int[] tmpnrecvs;
