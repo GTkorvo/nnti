@@ -1,4 +1,4 @@
-\documentclass[12pt,relax]{OODataRedistribution}
+\documentclass[12pt,relax]{TrilinosDoc}
 % ---------------------------------------------------------------------------- %
 %
 % Set the title, author, and date
@@ -40,6 +40,7 @@
 {\fancyplain{}{\rightmark}}
 \rhead[\fancyplain{}{\leftmark}]
 {\fancyplain{}{OO Parallel Data Redistribution}}
+\usepackage{graphicx} 
 
 
 \begin{document}
@@ -82,9 +83,10 @@ the initial distribution of work and data is optimal.  In the single program mul
 are not sending or receiving data.  We use the term {it parallel data
 redistribution (PDR)} to refer to the simultaneous exchange of distributed data as it occurs during
 the execution of an SPMD program.  The focus of the paper is to develop an object-oriented
-model for PDR.
+model for PDR.  These ideas have been used in the Epetra~\cite{Epetra-User-Guide} and
+Tpetra~\cite{Tpetra-User-Guide} software packages.
 
-Two of the most common classes of PDR operations are :
+Two of the most common classes of PDR operations are:
 \begin{enumerate}
 \item Collective operations, such as the dot
 product of two distributed vectors, and 
@@ -96,6 +98,46 @@ communicate with some, but typically not all, other processors.
 \subsection{Regular pattern and collective operations}
 
 \subsection{Sparse Matrix Vector Multiplication}
+
+One of the most common pattern-dependent distributed memory kernels is sparse matrix vector multiplication.
+This type of kernel appears in many types of applications but is often implemented assuming a
+one-dimensional partitioning of the row (or columns) of the matrix such that each row is uniquely and
+completely assigned to one processor.  Also, in the square matrix case, the vectors are usually distributed
+with a conformal partitioning.  Figure~\ref{MatrixVectorDistribution} illustrates this case for a 4-by-4
+problem on two processors.  The first (last) two rows of the matrix and the first (last) two elements of 
+both vectors are assigned to PE 0 (PE 1).  Given this distribution, the non-zero pattern of the matrix stored
+on each processor determines which elements of $x$ are required to compute $w$.  On PE 0, there are no
+non-zero entries in the third column, so that column is not present on PE 0, and the third element of $x$
+(stored on PE 1) does not need to be sent to PE 0.  Therefore, locally, the fourth
+column of the global matrix become the third column on PE 0, and the fourth global element of $x$ is labeled
+as the third elements locally on PE 0, as illustrated in Figure~\ref{PE1MatrixVectorDistribution}.
+
+On PE1, global
+
+\begin{figure} 
+\begin{center} 
+\includegraphics[height=3in]{TwoPESpMV}
+\end{center} 
+\label{MatrixVectorDistribution}
+\caption{Matrix and vector assigments on two memory images}
+\end{figure} 
+
+\begin{figure} 
+\begin{center} 
+\includegraphics[height=3in]{PE0SpMV}
+\end{center} 
+\label{PE0MatrixVectorDistribution}
+\caption{Contents of memory image on PE 0 after distribution}
+\end{figure} 
+
+\begin{figure} 
+\begin{center} 
+\includegraphics[height=3in]{PE1SpMV}
+\end{center} 
+\label{PE1MatrixVectorDistribution}
+\caption{Contents of memory image on PE 1 after distribution}
+\end{figure} 
+
 
 \section{PDR Terms and Concepts}
 \label{sect:concepts}
@@ -132,6 +174,8 @@ elements that should be assigned to the processor and a list of related GIDs.
 \subsection{User Oriented Distributed Object Classes}
 
 \subsection{Import and Export Classes}
+
+\subsubsection{Classification of Global IDs}
 
 
 \section{Using Imports and Exports for Common PDR Operations}
