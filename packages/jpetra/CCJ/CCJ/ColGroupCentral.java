@@ -15,7 +15,7 @@ final public class ColGroupCentral
 	extends UnicastRemoteObject
 	implements ColGroupCentralInterface {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     // If these numbers are changed: see ColMember.java
     private static final int GROUPSHIFT = 4; // Number of bits groups will be shifted into tags.

@@ -1,3 +1,5 @@
+package test;
+
 import CCJ.*;
 
 import java.io.Serializable;
@@ -9,7 +11,7 @@ public class testR extends ColMember {
     public static void main(String[] args) {
     
         try {
-            ColGroupMaster groupMaster = new ColGroupMaster("ccjhosts.txt");
+            ColGroupMaster groupMaster = new ColGroupMaster("test/ccjhosts.txt");
             new testR(groupMaster);
         } catch (CCJException e) {
             System.err.println("Error in PingPong constructor: " + e);
@@ -49,6 +51,7 @@ public class testR extends ColMember {
             barrier(group);
             send_async(group, data, 1);
             //receive = (String) receive(group, 1);
+            data = new String("hello number two");
             send_async(group, data, 2);
             //receive = new String(receive + (String) receive(group, 2));
         }
@@ -87,7 +90,7 @@ public class testR extends ColMember {
         } catch (CCJException e) {
 	    System.out.println(rank + ": Test : oops, something is wrong !");
 	    }
-        System.out.println("Recieved: "+ receive);
+        System.out.println("Received: "+ receive);
         System.exit(1);	    
     }
 

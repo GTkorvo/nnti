@@ -24,7 +24,7 @@ import java.util.Vector;
 
 final public class ColGroupMaster {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static final int MAX_RETRIES = 10;
 

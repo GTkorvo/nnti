@@ -13,10 +13,10 @@ import java.io.Serializable;
 final public class ColGroup implements Serializable {
 
     // NOTE: Due to the counter[] in this object, it can only be used by a single GroupMember -- Jason
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     // The tags to identify messages from different operations.
-    // AllReduce and allGather have two fases, so need two tags.
+    // AllReduce and allGather have two phases, so need two tags.
     protected static final int BROADCASTTAG = 0;
     protected static final int REDUCETAG = 1;
     protected static final int GATHERTAG = 2;
