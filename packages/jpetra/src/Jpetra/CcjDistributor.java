@@ -47,6 +47,12 @@ public class CcjDistributor extends JpetraObject implements Distributor {
     
     int[] packedGidsToSend; //used for createFromReceives
     
+    
+    // for reverse op.
+    int[] reverseSenders;
+    private boolean doneForwardOp;
+    private int[][] reverseExportVnodeIdsGidsLids;
+    
     public CcjDistributor() {
         // empty
     }
@@ -193,38 +199,69 @@ public class CcjDistributor extends JpetraObject implements Distributor {
         return receivedData;
     }
     
-    public Serializable[] distribute(Serializable[] toSendData) {
+    public Serializable[] distribute(Serializable[] exportObjects, boolean doReverse) {
         // do async_sends
         Serializable[] buffer;
         int dataIndex;
-        for(int i=0; i < numSends.length; i++) {
-            if(numSends[i] > 0) {
-                //this.println("STD", "Sending " + numSends[i] + " objects to vnode " + i);
-                
+        if (!doReverse) {
+            this.reverseSenders = new int[comm.getNumVnodes()];
+            for(int i=0; i < numSends.length; i++) {
+                if(numSends[i] > 0) {
+                    this.reverseSenders[i] = 1;  // if we reverse this op. then we will receive from vnode i
+                    //this.println("STD", "Sending " + numSends[i] + " objects to vnode " + i);
+                    
                 /*this.println("STD", "startIndices.length: " + startIndices.length);
                 for(int i2=0; i2 < this.startIndices.length; i2++) {
                     this.println("STD", "startIndices[" + i2 + "]=" + this.startIndices[i2]);
                 }*/
-                
-                // we're going to send data to vnode i
-                // so buffer up all send objects
-                buffer = new Serializable[numSends[i]];
-                dataIndex = this.startIndices[i];
-                for(int j=0; j < numSends[i]; j++) {
-                    buffer[j] = toSendData[dataIndex];
-                    dataIndex = nextIndex[dataIndex];
-                    this.println("STD", "next dataIndex: " + dataIndex);
+                    
+                    // we're going to send data to vnode i
+                    // so buffer up all send objects
+                    buffer = new Serializable[numSends[i]];
+                    dataIndex = this.startIndices[i];
+                    for(int j=0; j < numSends[i]; j++) {
+                        buffer[j] = exportObjects[dataIndex];
+                        dataIndex = nextIndex[dataIndex];
+                        this.println("STD", "next dataIndex: " + dataIndex);
+                    }
+                    // buffer object filled so send it off to vnode i
+                    comm.send(buffer, i);
                 }
-                // buffer object filled so send it off to vnode i
-                comm.send(buffer, i);
             }
         }
+        else {
+            dataIndex = 0;
+            for(int i=0; i < reverseExportVnodeIdsGidsLids[0].length; i++) {
+                if (reverseExportVnodeIdsGidsLids[0][i] > 0) {
+                    this.println("STD", "Sending " + reverseExportVnodeIdsGidsLids[0][i] + " objects to vnode " + i);
+                    
+                    // we're going to send data to vnode i
+                    // so buffer up all send objects
+                    buffer = new Serializable[reverseExportVnodeIdsGidsLids[0][i]];
+                    for(int j=0; j < reverseExportVnodeIdsGidsLids[0][i]; j++) {
+                        buffer[j] = exportObjects[dataIndex++];
+                    }
+                    // buffer object filled so send it off to vnode i
+                    comm.send(buffer, i);
+                }
+            }
+        }
+        
         // done doing sends, now do receives from known list of senders
-        Serializable[] receivedData = new Serializable[senders.length];
-        for(int i=0; i < senders.length; i++) {
-            if (senders[i] == 1) {
-                this.println("STD", "Receiving from vnode " + i);
-                receivedData[i] = comm.receive(i);
+        Serializable[] receivedData = new Serializable[comm.getNumVnodes()];
+        if (!doReverse) {
+            for(int i=0; i < senders.length; i++) {
+                if (senders[i] == 1) {
+                    this.println("STD", "Receiving from vnode " + i);
+                    receivedData[i] = comm.receive(i);
+                }
+            }
+        } else {
+            for(int i=0; i < reverseSenders.length; i++) {
+                if (reverseSenders[i] == 1) {
+                    this.println("STD", "Receiving from vnode " + i);
+                    receivedData[i] = comm.receive(i);
+                }
             }
         }
         // done doing receives, that means we're all finished
@@ -240,7 +277,27 @@ public class CcjDistributor extends JpetraObject implements Distributor {
         return this.exportVnodeIds;
     }
     
-    class plan {
-                
+    public void setReverseExportVnodeIdsGidsLids(int[][] reverseExportVnodeIdsGidsLids) {
+        this.reverseExportVnodeIdsGidsLids = reverseExportVnodeIdsGidsLids;
+    }
+    
+    public int[] getReverseExportVnodeIds() {
+        return this.reverseExportVnodeIdsGidsLids[1];
+    }
+    
+    public int[] getReverseExportGids() {
+        return this.reverseExportVnodeIdsGidsLids[2];
+    }
+    
+    public int[] getReverseExportLids() {
+        return this.reverseExportVnodeIdsGidsLids[3];
+    }
+    
+    public boolean doneForwardOp() {
+        return this.doneForwardOp;
+    }
+    
+    public void setDoneForwardOp(boolean doneForwardOp) {
+        this.doneForwardOp = doneForwardOp;
     }
 }

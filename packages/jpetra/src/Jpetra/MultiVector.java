@@ -37,6 +37,7 @@ import java.io.Serializable;
 public class MultiVector extends DistObject {
     VectorSpace vectorSpace;
     double[][] values;  // in column major form
+    private boolean doneForward;
     
     public MultiVector(VectorSpace vectorSpace) {
         this.vectorSpace = vectorSpace;
@@ -241,17 +242,17 @@ public class MultiVector extends DistObject {
         return this.values[0].length;
     }
     
-    public void copyAndPermute(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids) {
+    public void copyAndPermute(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids, int combineMode) {
         double[][] srcValues = ((MultiVector) distObjectSource).getValues();
         for(int i=0; i < numSameGids; i++) {
             for(int cols=0; cols < srcValues.length; cols++) {
-                this.values[cols][i] = srcValues[cols][i];
+                this.values[cols][i] += srcValues[cols][i];
             }
         }
         
         for(int i=0; i < permuteToLids.length; i++) {
             for(int cols=0; cols < srcValues.length; cols++) {
-                this.values[cols][permuteToLids[i]] = srcValues[cols][permuteFromLids[i]];
+                this.values[cols][permuteToLids[i]] += srcValues[cols][permuteFromLids[i]];
             }
         }
     }
@@ -276,13 +277,30 @@ public class MultiVector extends DistObject {
         return exportData;
     }
     
-    public void unpackAndCombine(Serializable[] importData, int combineMode) {
+    public int[][] unpackAndCombine(Serializable[] importData, int combineMode) {
         Serializable[] entry;
         Serializable[] entryData;
         int[] intArray;
         int gid;
         int lid;
         double[] importValues;
+        // for reverse op
+        int[][] reverseExportVnodeIdsGidsLids = null;
+        if (!this.doneForward) {
+            int sumEntries = 0;
+            for(int i=0; i < importData.length; i++) {
+                // if a vnode didn't send us any data, then importData[vnodeId] == null
+                if (importData[i] != null) {
+                    sumEntries += ((Serializable[]) importData[i]).length;
+                }
+            }
+            reverseExportVnodeIdsGidsLids = new int[4][];
+            reverseExportVnodeIdsGidsLids[0] = new int[vectorSpace.getComm().getNumVnodes()];
+            reverseExportVnodeIdsGidsLids[1] = new int[sumEntries];
+            reverseExportVnodeIdsGidsLids[2] = new int[sumEntries];
+            reverseExportVnodeIdsGidsLids[3] = new int[sumEntries];
+        }
+        int revCount = 0;
         for(int i=0; i < importData.length; i++) {
             // if a vnode didn't send us any data, then importData[vnodeId] == null
             if (importData[i] != null) {
@@ -292,6 +310,12 @@ public class MultiVector extends DistObject {
                     entryData = (Serializable[]) entry[j];
                     gid = ((Integer) entryData[0]).intValue();
                     lid = vectorSpace.getLocalIndex(gid);
+                    if (!this.doneForward) {
+                        reverseExportVnodeIdsGidsLids[0][i]++;
+                        reverseExportVnodeIdsGidsLids[1][revCount] = i;
+                        reverseExportVnodeIdsGidsLids[2][revCount] = gid;
+                        reverseExportVnodeIdsGidsLids[3][revCount++] = lid;
+                    }
                     importValues = (double[]) entryData[1];
                     
                     // combine the existing local values and imported values as defined by the combine mode passed in
@@ -307,5 +331,9 @@ public class MultiVector extends DistObject {
                 }
             }
         }
+        
+        this.doneForward = true;
+        
+        return reverseExportVnodeIdsGidsLids;
     }
 }

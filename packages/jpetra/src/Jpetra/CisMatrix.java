@@ -51,6 +51,9 @@ public class CisMatrix extends DistObject {
     private int numTotalEntries;
     private int maxSecondaryId;
     
+    // for reverse op
+    private boolean doneForward;
+    
     public CisMatrix(VectorSpace primaryVectorSpace, boolean rowOriented) {
         this.filled = false;
         this.maxSecondaryId = 0;
@@ -319,13 +322,31 @@ public class CisMatrix extends DistObject {
         return exportData;
     }
     
-    public void unpackAndCombine(Serializable[] importData, int combineMode) {
+    public int[][] unpackAndCombine(Serializable[] importData, int combineMode) {
         int[] indices;
         double[] values;
         Serializable[] element;
         Serializable[] elementArray;
         int gid;
+        int lid;
         
+        // for reverse op
+        int[][] reverseExportVnodeIdsGidsLids = null;
+        if (!this.doneForward) {
+            int sumEntries = 0;
+            for(int i=0; i < importData.length; i++) {
+                // if a vnode didn't send us any data, then importData[vnodeId] == null
+                if (importData[i] != null) {
+                    sumEntries += ((Serializable[]) importData[i]).length;
+                }
+            }
+            reverseExportVnodeIdsGidsLids = new int[4][];
+            reverseExportVnodeIdsGidsLids[0] = new int[primaryVectorSpace.getComm().getNumVnodes()];
+            reverseExportVnodeIdsGidsLids[1] = new int[sumEntries];
+            reverseExportVnodeIdsGidsLids[2] = new int[sumEntries];
+            reverseExportVnodeIdsGidsLids[3] = new int[sumEntries];
+        }
+        int revCount = 0;
         if (combineMode == DistObject.ADD) {
             for(int i=0; i < importData.length; i++) {
                 if (importData[i] != null) {
@@ -333,11 +354,19 @@ public class CisMatrix extends DistObject {
                     for(int j=0; j < elementArray.length; j++) {
                         element = (Serializable[]) elementArray[j];
                         gid = ((Integer) element[0]).intValue();
+                        this.println("STD", "Checking gid " + gid + " from vnode " + i);
+                        lid = primaryVectorSpace.getLocalIndex(gid);
                         // gid == -1 means that the sending vnode didn't have a nonzero value for the entire
                         // row/col of that gid so we can just ignore it
-                        if (gid != -1) {
-                            this.println("STD", "adding " + ((int[]) element[1]).length + " num of elements to gid " + gid);
-                            this.insertEntries(primaryVectorSpace.getLocalIndex(gid), (int[]) element[1], (double[]) element[2], combineMode);
+                        if (!this.doneForward) {
+                            reverseExportVnodeIdsGidsLids[0][i]++;
+                            reverseExportVnodeIdsGidsLids[1][revCount] = i;
+                            reverseExportVnodeIdsGidsLids[2][revCount] = gid;
+                            reverseExportVnodeIdsGidsLids[3][revCount++] = lid;
+                        }
+                        if (gid != -1 && lid != -1) {
+                            this.println("STD", "adding " + ((int[]) element[1]).length + " elements to gid " + gid + " from vnode " + i);
+                            this.insertEntries(lid, (int[]) element[1], (double[]) element[2], combineMode);
                         }
                     } // end for j
                 } // end if (importData[i] != null)
@@ -346,6 +375,12 @@ public class CisMatrix extends DistObject {
         else {
             this.println("ERR", "The specified combine mode is not supported by CisMatrix unpackAndCombine.");
         }
+        
+        if (!this.doneForward) {
+            this.doneForward = true;
+        }
+        
+        return reverseExportVnodeIdsGidsLids;
     }
     
     public void copyAndPermute(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids, int combineMode) {

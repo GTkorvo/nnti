@@ -195,7 +195,7 @@ public class Import extends JpetraObject {
                 this.exportLids[i] = sourceVectorSpace.getLocalIndex(this.exportGids[i]);
                 this.println("STD", "sending gid: " + this.exportGids[i] +" to vnode: " + this.exportVnodeIds[i] + " with myLid: " + this.exportLids[i]);
             }
-        }  // end if (sourceVectorSpace.isDistributedGlobally())  
+        }  // end if (sourceVectorSpace.isDistributedGlobally())
     }
     
     

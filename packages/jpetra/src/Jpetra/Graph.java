@@ -32,7 +32,7 @@ package Jpetra;
  *
  * @author  Jason Cross
  */
-public class Graph extends DistObject {
+public class Graph {
     private int[] nonZeroEntries;  // contigous 2-d array of non-zero ID entries
     private int[] numEntries;  // number of entries per array
     VectorSpace dVectorSpace; // the domain vector space

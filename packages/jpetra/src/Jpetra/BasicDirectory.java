@@ -90,7 +90,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
             toSendData[i] = new int[]{myGids[i], vectorSpace.getLocalIndex(myGids[i])};
         }
         // data is packed, so send it off
-        Serializable[] receivedData = distributor.distribute(toSendData);
+        Serializable[] receivedData = distributor.distribute(toSendData, false);
         int[] senders = distributor.getSenders();
         Serializable[] gidsLids;
         int directoryLid;
@@ -183,7 +183,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
             packedGidsToSend[i] = new int[]{this.directoryVnodeIds[directoryLid], gidsToSend[i], this.directoryLids[directoryLid]};
         }
         
-        Serializable[] receives = distributor.distribute(packedGidsToSend);
+        Serializable[] receives = distributor.distribute(packedGidsToSend, false);
         int[] tmp1;
         Serializable[] tmp2;
         for(int i=0; i < receives.length; i++) {

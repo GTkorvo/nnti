@@ -50,9 +50,24 @@ public interface Distributor {
      */
     public void createFromSends(int[] exportVnodeIds, Comm comm);
     
-    public Serializable[] distribute(Serializable[] exportObjects);
+    public Serializable[] distribute(Serializable[] exportObjects, boolean doReverse);
     public int[][] distribute(int[] toSendData);
     
     public int[] getSenders();
     public int[] getExportVnodeIds();
+    
+    
+    // for reverse op
+
+    public void setReverseExportVnodeIdsGidsLids(int[][] reverseExportVnodeIdsGidsLids);
+    
+    public int[] getReverseExportVnodeIds();
+    
+    public int[] getReverseExportGids();
+    
+    public int[] getReverseExportLids();
+    
+    public boolean doneForwardOp();
+    
+    public void setDoneForwardOp(boolean doneForwardOp);
 }

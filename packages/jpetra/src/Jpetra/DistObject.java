@@ -73,6 +73,7 @@ public abstract class DistObject extends JpetraObject {
      * Does nothing.
      */
     public DistObject() {
+        // empty
     }
     
     /**
@@ -84,6 +85,7 @@ public abstract class DistObject extends JpetraObject {
      * @param combineMode One of the declared combine mode constants in <code>DistObject</code>.
      */
     public void importValues(DistObject distObjectSource, Import importer, int combineMode) {
+        
         this.numSameGids = importer.getNumSameGids();
         this.remoteLids = importer.getRemoteLids();
         this.remoteGids = importer.getRemoteGids();
@@ -97,18 +99,74 @@ public abstract class DistObject extends JpetraObject {
         this.combineMode = combineMode;
         this.distObjectSource = distObjectSource;
         
-        doTransfer();
+        doTransfer(false);
     }
     
     public void importValues(DistObject distObjectSource, Export exporter, int combineMode) {
+
+        this.distributor = exporter.getDistributor();
+        if (this.distributor.doneForwardOp() == false) {
+            // do a null forward op to figure out what gids will be sent to us
+            // so we know which gids we must send for the reverse op
+            NullDistObject nullDistObjectTarget = new NullDistObject(this.getVectorSpace());
+            NullDistObject nullDistObjectSource = new NullDistObject(distObjectSource.getVectorSpace());
+            this.println("STD", "Doing null export...");
+            nullDistObjectSource.exportValues(nullDistObjectTarget, exporter, DistObject.ADD);
+            this.println("STD", "Done doing null export...");
+            // the null forward op is complete, now we can do the reverse op
+        }
         
+        // same as forward op
+        this.numSameGids = exporter.getNumSameGids();
+        
+        // reverse of forward op
+        this.remoteLids = exporter.getExportLids();
+        this.remoteGids = exporter.getExportGids();
+        this.permuteToLids = exporter.getPermuteFromLids();
+        this.permuteFromLids = exporter.getPermuteToLids();
+        this.exportLids = this.distributor.getReverseExportLids();
+        this.exportGids = this.distributor.getReverseExportGids();
+        this.exportVnodeIds = this.distributor.getReverseExportVnodeIds();
+        
+        
+        this.combineMode = combineMode;
+        this.distObjectSource = distObjectSource;
+        doTransfer(true);
     }
     
     public void exportValues(DistObject distObjectSource, Import importer, int combineMode) {
+        this.distributor = importer.getDistributor();
+        if (this.distributor.doneForwardOp() == false) {
+            // do a null forward op to figure out what gids will be sent to us
+            // so we know which gids we must send for the reverse op
+            NullDistObject nullDistObjectTarget = new NullDistObject(this.getVectorSpace());
+            NullDistObject nullDistObjectSource = new NullDistObject(distObjectSource.getVectorSpace());
+            this.println("STD", "Doing null export...");
+            nullDistObjectSource.importValues(nullDistObjectTarget, importer, DistObject.ADD);
+            this.println("STD", "Done doing null export...");
+            // the null forward op is complete, now we can do the reverse op
+        }
         
+        // same as forward op
+        this.numSameGids = importer.getNumSameGids();
+        
+        // reverse of forward op
+        this.remoteLids = importer.getExportLids();
+        this.remoteGids = importer.getExportGids();
+        this.permuteToLids = importer.getPermuteFromLids();
+        this.permuteFromLids = importer.getPermuteToLids();
+        this.exportLids = this.distributor.getReverseExportLids();
+        this.exportGids = this.distributor.getReverseExportGids();
+        this.exportVnodeIds = this.distributor.getReverseExportVnodeIds();
+        
+        
+        this.combineMode = combineMode;
+        this.distObjectSource = distObjectSource;
+        doTransfer(true);
     }
     
     public void exportValues(DistObject distObjectSource, Export exporter, int combineMode) {
+        
         this.numSameGids = exporter.getNumSameGids();
         this.remoteLids = exporter.getRemoteLids();
         this.remoteGids = exporter.getRemoteGids();
@@ -122,7 +180,7 @@ public abstract class DistObject extends JpetraObject {
         this.combineMode = combineMode;
         this.distObjectSource = distObjectSource;
         
-        doTransfer();
+        doTransfer(false);
     }
     
     /**
@@ -133,15 +191,19 @@ public abstract class DistObject extends JpetraObject {
      * order to send all exports to the corresponding vnodes and receive all imports from other vnodes.
      * This method should not be overriden by classes extending <code>DistObject</code>.
      */
-    public void doTransfer() {
+    public void doTransfer(boolean doReverse) {
         copyAndPermute(this.distObjectSource, this.numSameGids, this.permuteToLids, this.permuteFromLids, this.combineMode);
         if (this.combineMode == DistObject.ZERO) {
             // just doing a local copy and permute so we're done
             return;
         }
         Serializable[] exportData = packAndPrepare(this.distObjectSource, this.exportGids, this.exportLids);
-        Serializable[] importData = this.distributor.distribute(exportData);
-        unpackAndCombine(importData, combineMode);
+        Serializable[] importData = this.distributor.distribute(exportData, doReverse);
+        int[][] reverseExportVnodeIdsGidsLids = unpackAndCombine(importData, combineMode);
+        if ((doReverse != true) && (this.distributor.doneForwardOp() != true)) {
+            this.distributor.setDoneForwardOp(true);
+            this.distributor.setReverseExportVnodeIdsGidsLids(reverseExportVnodeIdsGidsLids);
+        }
     }
     
     /**
@@ -165,7 +227,7 @@ public abstract class DistObject extends JpetraObject {
      * @param importData The data object returned from <code>Distributor.distribute</code> which contains all elements sent to this vnode.
      * @param combineMode One of the declared combine mode constants in <code>DistObject</code>.
      */
-    public abstract void unpackAndCombine(Serializable[] importData, int combineMode);
+    public abstract int[][] unpackAndCombine(Serializable[] importData, int combineMode);
     
     /**
      * Should not be called directly by the user.
@@ -179,4 +241,6 @@ public abstract class DistObject extends JpetraObject {
      * @param combineMode One of the declared combine mode constants in <code>DistObject</code>.
      */
     public abstract void copyAndPermute(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids, int combineMode);
+
+    public abstract VectorSpace getVectorSpace();
 }

@@ -52,7 +52,7 @@ public class SerialDistributor extends JpetraObject implements Distributor {
         // empty
     }
     
-    public Serializable[] distribute(Serializable[] exportObjects) {
+    public Serializable[] distribute(Serializable[] exportObjects, boolean doReverse) {
         return null;
     }
     public int[][] distribute(int[] toSendData) {
@@ -64,6 +64,24 @@ public class SerialDistributor extends JpetraObject implements Distributor {
     }
     public int[] getExportVnodeIds() {
         return null;
+    }
+    
+    public boolean doneForwardOp() {
+    }
+    
+    public int[] getReverseExportGids() {
+    }
+    
+    public int[] getReverseExportLids() {
+    }
+    
+    public int[] getReverseExportVnodeIds() {
+    }
+    
+    public void setDoneForwardOp(boolean doneForwardOp) {
+    }
+    
+    public void setReverseExportVnodeIdsGidsLids(int[][] reverseExportVnodeIdsGidsLids) {
     }
     
 }

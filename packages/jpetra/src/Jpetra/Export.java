@@ -195,7 +195,7 @@ public class Export extends JpetraObject {
             }
             // distribute export Gids to all vnodes that we export to and receive back a import Gids
             // from other vnodes sending to us
-            Serializable[] packedRemoteGids = distributor.distribute(packedExportGids);
+            Serializable[] packedRemoteGids = distributor.distribute(packedExportGids, false);
             // unpack the import Gids we received
             int numPackedRemoteGids = 0;
             for(int i=0; i < packedRemoteGids.length; i++) {

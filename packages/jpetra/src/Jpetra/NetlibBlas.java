@@ -50,7 +50,7 @@ public class NetlibBlas extends JpetraObject implements Blas {
     }
     
     public void scale(double scalar, double[] x) {
-        Dscal.dscal(x.length-1,scalar,x,1,1);
+        Dscal.dscal(x.length,scalar,x,0,1);
     }
     
     public double asum(double[] x) {
