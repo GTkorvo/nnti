@@ -40,11 +40,10 @@ import java.io.Serializable;
  */
 
 class CcjReduceIntMinArray implements Reducible {
-
     public Serializable reduce(Serializable partialMins1, Serializable partialMins2) {
-        int [] partialMinsA = (int []) partialMins1;
-        int [] partialMinsB = (int []) partialMins2;
-    
+        int[] partialMinsA = (int[]) partialMins1;
+        int[] partialMinsB = (int[]) partialMins2;
+
         // modifying paritalMaxsA will modify the array passed in by the user
         // therefore for saftey reasons do not modify partialMaxsA
         for(int i=0; i < partialMinsA.length; i++) {

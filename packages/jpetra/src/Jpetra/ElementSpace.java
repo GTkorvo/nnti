@@ -247,6 +247,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         // find the number of global elements by finding the sum of all local elements
         int[] sum = comm.sumAll(new int[]{this.numMyGlobalElements});
         this.numGlobalElements = sum[0];
+        this.maxGlobalElementId = this.numGlobalElements -1;
         int[] scanSum = comm.scanSums(new int[]{this.numMyGlobalElements});
         this.println("STD", "ElementSpace: there are " + scanSum[0] + " gids before mine. I have " + this.numMyGlobalElements + " gids.");
         this.maxMyGlobalElementId = scanSum[0] + indexBase-1;  // -1 to make indexing start at 0

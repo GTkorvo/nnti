@@ -43,6 +43,7 @@ public class BasicDirectory extends JpetraObject implements Directory {
     private int[] directoryVnodeIds;
     private int[] directoryLids;
     private int[] allMinGids;  // for linear nonuniform distributions
+    private int[] numGidsOnVnodes; // for linear nonuniform distributions
     
     public BasicDirectory(VectorSpace vectorSpace) {
         this.outputStreams.put("DIRECTORY", new Output("BasicDirector: ", true, System.out, false, System.out));
@@ -58,13 +59,17 @@ public class BasicDirectory extends JpetraObject implements Directory {
         }
         
         if (vectorSpace.isDistributedLinearly()) {
-            int[] tmp = new int[]{vectorSpace.getMyMinGlobalIndex()};
+            int[] tmp = new int[]{vectorSpace.getMyMinGlobalIndex(), vectorSpace.getNumMyGlobalEntries()};
             this.println("DIRECTORY", "Submitting min gid: " + tmp[0] + "to the gatherAll()");
-            this.allMinGids = vectorSpace.getComm().gatherAll(tmp);
+            tmp = vectorSpace.getComm().gatherAll(tmp);
+            this.allMinGids = new int[tmp.length + 1];
+            System.arraycopy(tmp, 0, this.allMinGids, 0, tmp.length);
+            this.allMinGids[allMinGids.length - 1] = vectorSpace.getMaxGlobalEntryId(); // set max cap for GID searching algorithm below in getDirectoryEntries
             this.println("DIRECTORY", "vectorSpace.getMyMinGlobalIndex(): " + vectorSpace.getMyMinGlobalIndex());
-            for(int i=0; i < this.allMinGids.length; i++) {
-                this.println("DIRECTORY", "vnode: " + i + " minGid: " + this.allMinGids[i]);
+            for(int i=0; i < this.allMinGids.length-1; i+=2) {
+                this.println("DIRECTORY", "vnode: " + i/2 + " minGid: " + this.allMinGids[i] + " numGids: " + this.allMinGids[i+1]);
             }
+            
             return; // nothing else left to do
         }
         
@@ -191,29 +196,60 @@ public class BasicDirectory extends JpetraObject implements Directory {
                 int LID = -1; // Assume not found
                 int Proc = -1;
                 int GID = globalElements[i];
+                boolean found;
+                boolean wrap;
+                boolean doneWrap;
+                int Proc1;
+                this.println("DIRECTORY", "Checking for gid: " + GID);
                 if (GID < minAllGids) {
+                    this.println("DIRECTORY", "gid: " + GID + " is less than minAllGids: " + minAllGids);
                     // error
                 }
                 else if (GID > maxAllGids) {
+                    this.println("DIRECTORY", "gid: " + GID + " is greater than maxAllGids: " + maxAllGids);
                     // error
                 }
                 else {
                     // Guess uniform distribution and start a little above it
-                    int Proc1 = Util.min(GID/Util.max(n_over_p,1) + 2, numVnodes-1);
-                    boolean found = false;
-                    while (Proc1 >= 0 && Proc1 < numVnodes) {
-                        if (allMinGids[Proc1]<=GID) {
-                            if (GID <allMinGids[Proc1+1]) {
-                                found = true;
-                                break;
+                    Proc1 = Util.min(GID/Util.max(n_over_p,1) + 2, numVnodes-1);
+                    Proc1 = Proc1 * 2;
+                    found = false;
+                    wrap = true;
+                    doneWrap = false;
+                    while(wrap) {
+                        while (Proc1 >= 0 && Proc1 < numVnodes*2) {
+                            //this.println("DIRECTORY", "Proc1: " + Proc1/2 + " GID: " + GID);
+                            if (allMinGids[Proc1] <= GID) {
+                                //if (GID < allMinGids[Proc1+2]) {
+                                if ((allMinGids[Proc1 + 1] + allMinGids[Proc1]) > GID) { // allMinGids[Proc1] is the minGid of that vnode, allMinGids[Proc1 + 1] is the number of Gids on that vnode
+                                    found = true;
+                                    break;
+                                }
+                                else Proc1+=2;
                             }
-                            else Proc1++;
+                            else Proc1-=2;
                         }
-                        else Proc1--;
+                        
+                        if (found) {
+                            wrap = false;
+                        }
+                        else if(allMinGids[Proc1-2] != allMinGids[Proc1]) {
+                            wrap = false;
+                        }
+                        else {
+                            if (doneWrap) {
+                                wrap = false;
+                            }
+                            else {
+                                doneWrap = true;
+                                Proc1 = 0;
+                            }
+                        }
                     }
                     if (found) {
                         Proc = Proc1;
                         LID = GID - allMinGids[Proc];
+                        this.println("DIRECTORY", "gid: " + GID + "found on Proc: " + Proc);
                     }
                 }
                 vnodeIdsLids[0][i] = Proc;

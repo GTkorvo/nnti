@@ -354,6 +354,14 @@ public class CcjLink extends ColMember {
             JpetraObject.println("ERR", "In CCJ scanSums: " + e);
         }
         
+        // hopefull this prevents synchronization problems
+        // when using 4 nodes for scanSums, the third node
+        // gets an incorrect result, I think this is due
+        // to synchronization since if I print allElements
+        // before doing the main algorythm in scanSums(rank)
+        // then it works correctly, hence this barrier buys
+        // some time to allow things to sync up, I hope
+        this.barrier();
         return globalSums.scanSums(rank);
     }
     
@@ -371,6 +379,14 @@ public class CcjLink extends ColMember {
             JpetraObject.println("ERR", "In CCJ scanSums: " + e);
         }
         
+        // hopefull this prevents synchronization problems
+        // when using 4 nodes for scanSums, the third node
+        // gets an incorrect result, I think this is due
+        // to synchronization since if I print allElements
+        // before doing the main algorythm in scanSums(rank)
+        // then it works correctly, hence this barrier buys
+        // some time to allow things to sync up, I hope
+        this.barrier();
         return globalSums.scanSums(rank);
     }
     

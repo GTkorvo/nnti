@@ -87,7 +87,7 @@ public class CisMatrix extends DistObject implements Externalizable {
      * @param rowOriented determines whether the <code>CisMatrix</code> is row or column oriented
      */
     public CisMatrix(VectorSpace primaryVectorSpace, boolean rowOriented) {
-        this.outputStreams.put("CISMATRIX", new Output("CisMatrix: ", false, System.out, false, System.out));
+        this.outputStreams.put("CISMATRIX", new Output("CisMatrix: ", true, System.out, false, System.out));
         
         this.filled = false;
         /*this.maxSecondaryId = 0;*/
@@ -575,6 +575,10 @@ public class CisMatrix extends DistObject implements Externalizable {
     }
     
     public void multiply(boolean useTransposeA, MultiVector x, MultiVector y) {
+        if (!this.filled) {
+            this.println("FATALERR", "A CisMatrix must be filled before multiply can be called on it.");
+            System.exit(1);
+        }
         // setup temporary MultiVectors
         
         /*
@@ -646,9 +650,12 @@ public class CisMatrix extends DistObject implements Externalizable {
                         sum = 0;
                         index = this.startIndex[row];
                         for(int col=0; col < this.numEntries[row]; col++) {
-                            this.println("STD", "this.doubleValues[index] * importValues[vector][indices[index++]]" + this.doubleValues[index] +" * " + importValues[vector][indices[index]]);
+                            this.println("STD", "this.doubleValues[index] * importValues[vector][indices[index++]]" + this.doubleValues[index] +" * " + importValues[vector][importMultiVectorVectorSpace.getLocalIndex(indices[index])]); //importValues[vector][indices[index]]);
                             //sum += this.doubleValues[index] * importValues[vector][importMultiVectorVectorSpace.getLocalIndex(indices[index++])];
-                            sum += this.doubleValues[index++] * importValues[vector][col];  // assume that Gids of importValues are in the same order as the Gids from doubleValues
+			    
+			    // NOTE!! i think importValues[vector][col] is incorrect and should be importValues[vector][importMultiVectorVectorSpace.getLocalIndex(indices[index++])]
+                            //sum += this.doubleValues[index++] * importValues[vector][col];  // assume that Gids of importValues are in the same order as the Gids from doubleValues
+                            sum += this.doubleValues[index] * importValues[vector][importMultiVectorVectorSpace.getLocalIndex(indices[index++])];
                         }
                         exportValues[vector][row] = sum;
                     }
@@ -688,14 +695,18 @@ public class CisMatrix extends DistObject implements Externalizable {
                 exportMultiVector.importValues(x, importer, DistObject.REPLACE);
                 // need to check this....
                 MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumMyColumns()]);
-                
+                VectorSpace importMultiVectorVS = importMultiVector.getVectorSpace();
                 double[][] importValues = importMultiVector.getValues();
+                this.fillComplete();
+                this.println("CISMATRIX", "doubleValues.length: " + doubleValues.length);
+                this.printOutAllVnodes("CISMATRIX");
                 
                 for(int row=0; row < this.getNumMyRows(); row++) {
                     for(int vector=0; vector < exportMultiVector.getNumCols(); vector++){
                         index = this.startIndex[row];
                         for(int col=0; col < this.numEntries[row]; col++) {
-                            importValues[vector][indices[index]] += this.doubleValues[index++] * exportValues[vector][row];
+                            //importValues[vector][indices[index]] += this.doubleValues[index++] * exportValues[vector][row];
+                            importValues[vector][importMultiVectorVS.getLocalIndex(indices[index])] += this.doubleValues[index++] * exportValues[vector][row];
                         }
                     }
                 }

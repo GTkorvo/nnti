@@ -466,7 +466,8 @@ public class MultiVector extends DistObject implements Externalizable {
             return false;
         }
         // check to see if the values 2d arrays are the same
-        double[][] otherValues = otherMultiVector.getValues();
+        
+        /*double[][] otherValues = otherMultiVector.getValues();
         for(int i=0; i < this.values.length; i++) {
             if (this.values[i].length != otherValues[i].length) {
                 return false;
@@ -475,6 +476,13 @@ public class MultiVector extends DistObject implements Externalizable {
                 if (this.values[i][j] != otherValues[i][j]) {
                     return false;
                 }
+            }
+        }*/
+        
+        double[][] otherValues = otherMultiVector.getValues();
+        for(int i=0; i < this.values.length; i++) {
+            if (!java.util.Arrays.equals(this.values[i], otherValues[i])) {
+                return false;
             }
         }
         
