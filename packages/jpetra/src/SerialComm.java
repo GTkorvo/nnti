@@ -169,4 +169,8 @@ public class SerialComm extends JpetraObject implements Comm {
         return 1;
     }
     
+    public Distributor createDistributor() {
+    	return new SerialDistributor(this);
+    }
+    
 }
