@@ -904,11 +904,11 @@ y(0) & = & y_0(p), \label{rythmos:eqn:sens:c:ic}
 \end{eqnarray}
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
-\>	$y(t) \:\in\:\mathcal{Y}$ are the transient state variables defined on $t\in[t_0,t_f]$, \\
-\>	$\dot{y}(t) = d(y)/d(t)\:\in\:\mathcal{Y}$ is the vector of temporal derivatives of $y(t)$ defined on $t\in[t_0,t_f]$, \\
-\>	$p \:\in\:\mathcal{P}$ are steady-state auxiliary variables, \\
-\>	$v(t) \:\in\:\mathcal{V}$ are transient auxiliary variables defined on $t\in[t_0,t_f]$, \\
-\>	$c(\dot{y}(t), y(t), p, v(t), t) :
+\>	$y : t \rightarrow y(t) \:\in\:\mathcal{Y}$ are the transient state variables defined on $t\in[t_0,t_f]$, \\
+\>	$\dot{y} : t \rightarrow \dot{y}(t) = d(y)/d(t)\:\in\:\mathcal{Y}$ are the temporal derivatives of $y$ defined on $t\in[t_0,t_f]$, \\
+\>	$p \:\in\:\mathcal{P}$ are steady-state auxiliary parameters, \\
+\>	$v : t \rightarrow v(t) \:\in\:\mathcal{V}$ are transient auxiliary parameters defined on $t\in[t_0,t_f]$, \\
+\>	$c(\dot{y}, y, p, v, t) :
 		\mathcal{Y}^2 \times \mathcal{P} \times \mathcal{V} \times \RE
 		\rightarrow \mathcal{C}$ are the state DAE functions, \\
 \>	$y_0(p) \:\in\:\mathcal{P} \rightarrow \mathcal{Y}$ define the initial condition for $y(t_0)$ as a function of $p$, \\
@@ -918,10 +918,10 @@ y(0) & = & y_0(p), \label{rythmos:eqn:sens:c:ic}
 \>	$\mathcal{C} \:\subseteq\:\RE^{n_y}$ is the vector space of the output of the DAE function $c(\ldots)$.
 \end{tabbing}
 
-The auxiliary variables $p$ and $v(t)$ in (\ref{rythmos:eqn:sens:c}) represent
+The auxiliary parameters $p$ and $v$ in (\ref{rythmos:eqn:sens:c}) represent
 adjustable variables that can be manipulated for some purpose and, once
 selected, determine a fully specified set of DAEs that can be solved forward
-in time for the state variables $y(t)$.  The form of the DAE in
+in time for the state variables $y$.  The form of the DAE in
 (\ref{rythmos:eqn:sens:c}), which has auxiliary variables, arises in a number
 of contexts other than the sensitivity computations being considered here.
 
@@ -935,27 +935,39 @@ d(y,p,v)
 \end{equation}
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
-\>	$g(y(t),p,v(t),t) : \:
+\>	$g(y,p,v,t) : \:
 		\mathcal{Y} \times \mathcal{P} \times \mathcal{V} \times \RE
 		\rightarrow \mathcal{G}$ are distributed response functions defined on $t\in[t_0,t_f]$, \\
-\>	$h(y(t_f),p) : \: \mathcal{Y} \times \mathcal{P}
-		\rightarrow \mathcal{G}$ are terminal response functions defined only at $t=t_f$, \\
-\>	$\mathcal{G} \:\subseteq\:\RE^{n_g}$ is the vector space of the auxiliary response functions, \\
-\>	$y$ is shorthand for the infinite dimensional function $y(t)$ in $t\in[t_0,t]$, and \\
-\>	$v$ is shorthand for the infinite dimensional function $v(t)$ in $t\in[t_0,t]$.
+\>	$h(y,p) : \: \mathcal{Y} \times \mathcal{P}
+		\rightarrow \mathcal{G}$ are terminal response functions defined only at $t=t_f$, and \\
+\>	$\mathcal{G} \:\subseteq\:\RE^{n_g}$ is the vector space of the auxiliary response functions.
 \end{tabbing}
 
-Note that the domain space for the overall response
-$d(y,p,v$ is infinite since $y$ and
-$v$ are infinite in the continuous formulation.
+{}\textit{Remark on notation:} In this discussion we use the unadorned
+identifiers $y$ and $v$ to represent the entire infinite-dimensional functions
+over the domain $t\in[t_0,t_f]$ and in some contexts also the values of these
+functions at points $t$.  In some cases, $y(t)\in\mathcal{Y}$ and
+$v(t)\in\mathcal{V}$ are used to denote specific values of these functions to
+remove ambiguity.  In general, the meaning of $y$ and $v$ as either the entire
+functions or as particular values of these functions at points $t$ should be
+clear from the context in which these identifiers are used.  In cases where
+confusion may result, the exact meaning will be explained.
 
-The state DAE in
-(\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) may be used
-to define the implicit state function $y(p,v,t)$.  The full
-implicit state solution for $y(t)$ in $t\in[t_0,t_f]$ is signified as
-$y(p,v,t_0:t_f)$.
+Note that the domain $(y,p,v)$ for the overall response function $d(y,p,v)$ is
+infinite since $y$ and $v$ are infinite in the continuous formulation.
 
-The implicit state solution $y(p,v,t)\in\mathcal{Y}$ substituted into
+
+The implicit state solution for the DAEs in
+(\ref{rythmos:apdx:eqn:sens:c})--(\ref{rythmos:apdx:eqn:sens:c:ic}) at points
+$t$ is signified as $y(p,v,t)\in\mathcal{Y}$, where $v$ in this case is the
+selection of transient parameters in the range $t\in[t_0,t]$.  Note that
+selections for $v$ in the range $(t:t_f]$ have no influence on the implicit
+state solution $y$ up to the time $t$.  The full infinite-dimensional implicit
+state solution for $y$ in $t\in[t_0,t_f]$ is signified as $y(p,v)$ where in
+this case $v$ represents the entire selection for the transient parameters in
+$[t_0,t_f]$.
+
+The implicit state solution $y(p,v,t)$ substituted into
 (\ref{rythmos:eqn:sens:d}) gives the reduced auxiliary response functions
 %
 \begin{equation}
@@ -987,14 +999,14 @@ and adjoint approaches for the computation of
 %
 Note that it is generally not computationally tractable to compute a discrete
 approximation to the first derivative object (\ref{rythmos:eqn:d_d_hat_d_v})
-involving the transient auxiliary variables $v(t)$ because of the large
-discretized dimension of $v(t_i:t_f)$.
+involving the transient auxiliary variables $v$ because of the large
+discretized dimension of $v$.
 
 \subsection{Transient direct sensitivity computations}
 \label{rythmos:sec:direct-sens}
 
-The direct sensitivity method for computing the first derivative object
-$\jac{\hat{d}}{p}$, as derived in
+The direct sensitivity method for computing the reduced first derivative
+object $\jac{\hat{d}}{p}$, as derived in
 Appendix~\ref{rythmos:app:direct-sens-derivation}, involves first solving the
 $n_p$ independent direct sensitivity equations
 %
@@ -1002,7 +1014,7 @@ $n_p$ independent direct sensitivity equations
 %
 \Jac{c}{\dot{y}} \dot{S} + \Jac{c}{y} S + \Jac{c}{p}
 & = & 0, \; t \in \left[ t_0, t_f \right], \label{rythmos:eqn:sens:direct-c} \\
-S(t_0) & = & \Jac{y_0}{p}. \label{rythmos:eqn:sens:direct-c:ic}
+S(t_0) & = & \Jac{y_0}{p}, \label{rythmos:eqn:sens:direct-c:ic}
 \end{eqnarray}
 %
 followed by the computation of the reduced derivatives
@@ -1016,11 +1028,11 @@ followed by the computation of the reduced derivatives
 %
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
-\> $S = \Jac{y}{p} {}\in {}\mathcal{Y}|\mathcal{P}$ is the
+\> $S = \jac{y}{p} {}\in {}\mathcal{Y}|\mathcal{P}$ is the
 direct sensitivity of the state at $t\in[t_0,t_f]$, \\
-\> $\dot{S} = \left(\frac{d}{dt} \Jac{y}{p}\right)
+\> $\dot{S} = \frac{d}{dt}\left(\jac{y}{p}\right)
 {}\in {}\mathcal{Y}|\mathcal{P}$ is the time derivative of $S$ at $t\in[t_0,t_f]$, \\
-\> $\Jac{c}{{}\dot{y}} {}\in {}\mathcal{C}|\mathcal{Y}$ is defined on
+\> $\jac{c}{{}\dot{y}} {}\in {}\mathcal{C}|\mathcal{Y}$ is defined on
 $t\in[t_0,t_f]$, \\
 \> $\jac{c}{y} {}\in {}\mathcal{C}|\mathcal{Y}$ is defined on $t\in[t_0,t_f]$, \\
 \> $\jac{c}{p} {}\in {}\mathcal{C}|\mathcal{P}$ is defined on $t\in[t_0,t_f]$, \\
@@ -1065,7 +1077,7 @@ computing two operators with $(\alpha=1,\beta=0)$ and $(\alpha=0,\beta=1)$.
 Some tips from DASPK~3.0~\cite{new-daspk} for solving this problem are:
 \begin{itemize}
 %
-{}\item First, Solve state equation, applying error control, to convergence for a
+{}\item First, solve state equation, applying error control, to convergence for a
 time step for the state.
 %
 {}\item Next, solve sensitivity equations using a Newton method (even though the problem
@@ -1081,9 +1093,9 @@ Some tips from CVODES~\cite{cvodes} for solving this problem are:
 \begin{itemize}
 %
 {}\item The linear sensitivity systems are also solved using a Newton method,
-mainly to allow the use of out-of-date preconditioners.
+mainly to allow the use of out-of-date Jacobians.
 %
-{}\item Step size control may or may not consider the sensitivity parameters.
+{}\item Step-size control may or may not consider the sensitivity parameters.
 %
 {}\item Error control of the integration of the quadrature variables does
 not seem to be taken into account.
@@ -1155,9 +1167,10 @@ the DAE integrator.  This approach is used in CVODES and DASPK 3.0 to some
 extent and this has advantages and disadvantages.  This creates essentially
 another combined set of staggered DAEs that are solved by a single time
 stepper algorithm.  This may imply that the error in the quadrature equations
-are considered when taking a time step for the state equations.  This may or
-may not be desirable.  The quadrature equations can also be treated as an
-extra set of staggered DAEs which again has advantages and disadvantages.
+are considered when taking a time step for the direct sensitivity equations
+which may or may not be desirable.  The quadrature equations can also be
+treated as an extra set of staggered DAEs which again has advantages and
+disadvantages.
 
 Note that the structure and properties of the direct sensitivity equations in
 (\ref{rythmos:eqn:sens:direct-c}) can exploited in a few different ways
@@ -1173,7 +1186,7 @@ block GMRES in Belos [???])  may speed up the calculation by an order of
 magnitude or more compared to solving the linear systems one RHS at a time.
 
 Because of the use of block linear solvers, our direct sensitivity DAE solvers
-may achieve as much as an order of magnitude of speedup or more over a solver
+may achieved as much as an order of magnitude of speedup or more over a solver
 such as CVODES that only allows for solving sensitivity systems one RHS at a
 time (see the function {}\texttt{cv\_lsolveS(...)} in
 {}\cite{cvodes-users-guide}).
@@ -1196,10 +1209,10 @@ DAE is linear then the state is not needed to define the direct sensitivity
 DAEs and therefore no state computation is needed in order to solve the direct
 sensitivity DAEs.  In this case, better parallel speedup can be achieve to
 larger numbers of chunks of processors.  However, parallel speedup will be
-limited when the numbers of sensitivity DAEs becomes too small an each chunk
-of processors since the block linear solver will slow down (because of poorer
-flop rates due to reductions in cache efficiency and global communication
-overhead).
+limited when the numbers of sensitivity DAEs becomes too small on each chunk
+of processors since the block linear solver will slow down (because of slower
+flop rates due to reductions in cache efficiency and increased relative global
+communication overhead).
 
 \subsection{Transient adjoint sensitivity computations}
 \label{rythmos:sec:adj-sens}
@@ -2086,7 +2099,7 @@ integrate the adjoint backward in time one piece at a time.
 The question to ask is, ``Given a limited interpolation buffer (to be stored
 in core) and a maximum number of checkpoints that can be stored (as allowed by
 the disk storage), how should checkpoints be set that result in the minimum
-about of recomputation of the forward state equation?''  This question is
+amount of recomputation of the forward state equation?''  This question is
 answered the checkpointed algorithm of Griwank~\cite{347846} and is
 encapsulated in a simple program called {}\texttt{revolve()}~\cite{347846}.
 The algorithm implemented in this simple driver program directs the forward
@@ -2102,7 +2115,7 @@ number of checkpoint stored with respect to the total number of ``steps'' (as
 defined by {}\texttt{resolve}).  Amazingly, as little as a 1\% ratio of
 checkpoints to ``steps'' only increases the number of forward computation by
 2.7!  It is not until the ratio of checkpoints to ``time'' steps goes below
-0.1\% does the cost start to dramatically increase and asymptotically
+0.1\% does the added cost starts to dramatically increase and asymptotically
 approaches infinity as the ratio goes to zero.
 
 {\bsinglespace
@@ -2757,6 +2770,18 @@ DAE system is to be preferred in a software implementation.
 \section{ToDo}
 
 \begin{itemize}
+%
+{}\item Ross: Include requirements for spatially continuous direct and adjoint
+sensitivity methods and describe how these can easily be exploited (even when
+these sensitivities live on different spaces using different spatial
+discretizations).
+%
+{}\item Ross: Include requirements for explicit time integrators for direct
+and adjoint sensitivitity systems.  Describe how AD can easily be used to
+provide such evaluations.  Just because an application can not use an implicit
+time integration method is not excuse for not supporting direct and adjoint
+sensitivity methods, especially if continuous sensitivities are to be<
+considered.
 %
 {}\item Ross: Derive reduced Hessian-vector products for sensitivity
 computations and expand the list of requirements to include second derivative
