@@ -42,6 +42,8 @@ ccj_support =   CcjSupport/CcjReduceAllSumIntArray.java  \
 		CcjSupport/CcjScatterIntArray.java \
 		CcjSupport/CcjScatter2DArray.java \
 		CcjSupport/CcjReduceAllSumDoubleArray.java \
+		CcjSupport/CcjReduceMaxSerializable.java \
+		CcjSupport/CcjReduceMinSerializable.java \
 		CcjSupport/CcjLink.java
 comm =  Comm.java \
 	Distributor.java \

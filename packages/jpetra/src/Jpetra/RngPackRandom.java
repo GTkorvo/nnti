@@ -3,6 +3,7 @@ package Jpetra;
 import edu.cornell.lassp.houle.RngPack.*;
 
 /**
+ * Download from http://www.honeylocust.com/RngPack/
  *
  * @author  Jason Cross
  */
