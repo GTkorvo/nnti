@@ -2,7 +2,7 @@ import Jpetra.*;
 import matvis.*;
 import javax.swing.*;
 import JpetraVis.*;
-
+import java.awt.Color;
 
 public class CGDriver implements Runnable {
     public CGDriver() {}
