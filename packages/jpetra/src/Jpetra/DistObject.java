@@ -60,18 +60,18 @@ public abstract class DistObject extends JpetraObject {
     private Distributor distributor;
     
     // for data I will receive
-    private int numSameGids;
-    private int[] remoteLids;  // another vnode's lid for the gid I need
-    private int[] remoteGids;  // gid I need not on my vnode
-    private int[] permuteToLids;
-    private int[] permuteFromLids;
-    private int combineMode;
-    private DistObject distObjectSource;
+    //private int numSameGids;
+    //private int[] remoteLids;  // another vnode's lid for the gid I need
+    //private int[] remoteGids;  // gid I need not on my vnode
+    //private int[] permuteToLids;
+    //private int[] permuteFromLids;
+    //private int combineMode;
+    //private DistObject distObjectSource;
     
     // for data I will send
-    private int[] exportLids;
-    private int[] exportGids;
-    private int[] exportVnodeIds;
+    //private int[] exportLids;
+    //private int[] exportGids;
+    //private int[] exportVnodeIds;
     
     // for flops
     private FlopCounter flops;
@@ -92,21 +92,27 @@ public abstract class DistObject extends JpetraObject {
      * @param combineMode One of the declared combine mode constants in <code>DistObject</code>.
      */
     public void importValues(DistObject distObjectSource, Import importer, int combineMode) {
-        
-        this.numSameGids = importer.getNumSameGids();
-        this.remoteLids = importer.getRemoteLids();
-        this.remoteGids = importer.getRemoteGids();
-        this.permuteToLids = importer.getPermuteToLids();
-        this.permuteFromLids = importer.getPermuteFromLids();
-        this.exportLids = importer.getExportLids();
-        this.exportGids = importer.getExportGids();
-        this.exportVnodeIds = importer.getExportVnodeIds();
         this.distributor = importer.getDistributor();
         
-        this.combineMode = combineMode;
-        this.distObjectSource = distObjectSource;
         
-        doTransfer(false);
+        /*
+        this.remoteLids = importer.getRemoteLids();
+        this.remoteGids = importer.getRemoteGids();
+        this.exportVnodeIds = importer.getExportVnodeIds();*/
+        
+        //this.numSameGids = importer.getNumSameGids();
+        //this.permuteToLids = importer.getPermuteToLids();
+        //this.permuteFromLids = importer.getPermuteFromLids();
+        //this.exportLids = importer.getExportLids();
+        //this.exportGids = importer.getExportGids();
+        
+        
+        
+        //this.combineMode = combineMode;
+        //this.distObjectSource = distObjectSource;
+        
+        doTransfer(distObjectSource, importer.getNumSameGids(), importer.getPermuteToLids(), importer.getPermuteFromLids(),
+                   importer.getExportGids(), importer.getExportLids(), combineMode, false);
     }
     
     public void importValues(DistObject distObjectSource, Export exporter, int combineMode) {
@@ -124,22 +130,24 @@ public abstract class DistObject extends JpetraObject {
         }
         
         // same as forward op
-        this.numSameGids = exporter.getNumSameGids();
+        //this.numSameGids = exporter.getNumSameGids();
         
         // reverse of forward op
-        this.remoteLids = exporter.getExportLids();
-        this.remoteGids = exporter.getExportGids();
-        this.permuteToLids = exporter.getPermuteFromLids();
-        this.permuteFromLids = exporter.getPermuteToLids();
+        //this.remoteLids = exporter.getExportLids();
+        //this.remoteGids = exporter.getExportGids();
+        //this.permuteToLids = exporter.getPermuteFromLids();
+        //this.permuteFromLids = exporter.getPermuteToLids();
         if (!distObjectSource.getVectorSpace().getComm().isSerial()) {
-            this.exportLids = this.distributor.getReverseExportLids();
-            this.exportGids = this.distributor.getReverseExportGids();
-            this.exportVnodeIds = this.distributor.getReverseExportVnodeIds();
+        //    this.exportLids = this.distributor.getReverseExportLids();
+        //    this.exportGids = this.distributor.getReverseExportGids();
+        //    this.exportVnodeIds = this.distributor.getReverseExportVnodeIds();
         }
         
-        this.combineMode = combineMode;
-        this.distObjectSource = distObjectSource;
-        doTransfer(true);
+        //this.combineMode = combineMode;
+        //this.distObjectSource = distObjectSource;
+        
+       doTransfer(distObjectSource, exporter.getNumSameGids(), exporter.getPermuteToLids(), exporter.getPermuteFromLids(),
+                   exporter.getExportGids(), exporter.getExportLids(), combineMode, true);
     }
     
     public void exportValues(DistObject distObjectSource, Import importer, int combineMode) {
@@ -156,40 +164,42 @@ public abstract class DistObject extends JpetraObject {
         }
         
         // same as forward op
-        this.numSameGids = importer.getNumSameGids();
+        //this.numSameGids = importer.getNumSameGids();
         
         // reverse of forward op
-        this.remoteLids = importer.getExportLids();
-        this.remoteGids = importer.getExportGids();
-        this.permuteToLids = importer.getPermuteFromLids();
-        this.permuteFromLids = importer.getPermuteToLids();
+        //this.remoteLids = importer.getExportLids();
+        //this.remoteGids = importer.getExportGids();
+        //this.permuteToLids = importer.getPermuteFromLids();
+        //this.permuteFromLids = importer.getPermuteToLids();
         if (!distObjectSource.getVectorSpace().getComm().isSerial()) {
-            this.exportLids = this.distributor.getReverseExportLids();
-            this.exportGids = this.distributor.getReverseExportGids();
-            this.exportVnodeIds = this.distributor.getReverseExportVnodeIds();
+          //  this.exportLids = this.distributor.getReverseExportLids();
+          //  this.exportGids = this.distributor.getReverseExportGids();
+          //  this.exportVnodeIds = this.distributor.getReverseExportVnodeIds();
         }
         
-        this.combineMode = combineMode;
-        this.distObjectSource = distObjectSource;
-        doTransfer(true);
+        //this.combineMode = combineMode;
+        //this.distObjectSource = distObjectSource;
+        doTransfer(distObjectSource, importer.getNumSameGids(), importer.getPermuteToLids(), importer.getPermuteFromLids(),
+                   importer.getExportGids(), importer.getExportLids(), combineMode, true);
     }
     
     public void exportValues(DistObject distObjectSource, Export exporter, int combineMode) {
         
-        this.numSameGids = exporter.getNumSameGids();
-        this.remoteLids = exporter.getRemoteLids();
-        this.remoteGids = exporter.getRemoteGids();
-        this.permuteToLids = exporter.getPermuteToLids();
-        this.permuteFromLids = exporter.getPermuteFromLids();
-        this.exportLids = exporter.getExportLids();
-        this.exportGids = exporter.getExportGids();
-        this.exportVnodeIds = exporter.getExportVnodeIds();
+        //this.numSameGids = exporter.getNumSameGids();
+        //this.remoteLids = exporter.getRemoteLids();
+        //this.remoteGids = exporter.getRemoteGids();
+        //this.permuteToLids = exporter.getPermuteToLids();
+        //this.permuteFromLids = exporter.getPermuteFromLids();
+        //this.exportLids = exporter.getExportLids();
+        //this.exportGids = exporter.getExportGids();
+        //this.exportVnodeIds = exporter.getExportVnodeIds();
         this.distributor = exporter.getDistributor();
         
-        this.combineMode = combineMode;
-        this.distObjectSource = distObjectSource;
+        //this.combineMode = combineMode;
+        //this.distObjectSource = distObjectSource;
         
-        doTransfer(false);
+        doTransfer(distObjectSource, exporter.getNumSameGids(), exporter.getPermuteToLids(), exporter.getPermuteFromLids(),
+                   exporter.getExportGids(), exporter.getExportLids(), combineMode, false);
     }
     
     /**
@@ -200,14 +210,14 @@ public abstract class DistObject extends JpetraObject {
      * order to send all exports to the corresponding vnodes and receive all imports from other vnodes.
      * This method should not be overriden by classes extending <code>DistObject</code>.
      */
-    public void doTransfer(boolean doReverse) {
-        copyAndPermute(this.distObjectSource, this.numSameGids, this.permuteToLids, this.permuteFromLids, this.combineMode);
-        if (distObjectSource.getVectorSpace().getComm().isSerial() || (this.combineMode == DistObject.ZERO)) {
+    public void doTransfer(DistObject distObjectSource, int numSameGids, int[] permuteToLids, int[] permuteFromLids, int[] exportGids, int[] exportLids, int combineMode, boolean doReverse) {
+        copyAndPermute(distObjectSource, numSameGids, permuteToLids, permuteFromLids, combineMode);
+        if (distObjectSource.getVectorSpace().getComm().isSerial() || (combineMode == DistObject.ZERO)) {
             // just doing a local copy and permute so we're done
             this.println("STD", "DistObject: Doing copyAndPermute Only!");
             return;
         }
-        Serializable[] exportData = packAndPrepare(this.distObjectSource, this.exportGids, this.exportLids);
+        Serializable[] exportData = packAndPrepare(distObjectSource, exportGids, exportLids);
         Serializable[] importData = this.distributor.distribute(exportData, doReverse);
         int[][] reverseExportVnodeIdsGidsLids = unpackAndCombine(importData, combineMode);
         if ((doReverse != true) && (this.distributor.doneForwardOp() != true)) {
@@ -273,6 +283,15 @@ public abstract class DistObject extends JpetraObject {
     public double getFlops() {
         if (this.flops != null) {
             return this.flops.getFlops();
+        }
+        
+        return 0;
+    }
+    
+    public double getGlobalMegaFlops(Comm comm) {
+        if (this.flops != null) {
+            double[] flopsDone = comm.sumAll(new double[]{this.flops.getFlops()});
+            return flopsDone[0]/(1000000);
         }
         
         return 0;

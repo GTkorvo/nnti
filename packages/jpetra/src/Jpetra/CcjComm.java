@@ -68,26 +68,10 @@ import Jpetra.CcjSupport.*;
  * @author  Jason Cross
  */
 public class CcjComm extends JpetraObject implements Comm {
-    
-    /**
-     * this thread's ID, currently not implemented
-     */
-    private int myThread;
-    
     /**
      * this vnode's rank/ID
      */
     private int myVnode;
-    
-    /**
-     * number of threads in this vnode, set to 1
-     */
-    private int numMyThreads;
-    
-    /**
-     * number of threads total, currently threads are not implemented so set to numVnodes
-     */
-    private int numThreads;
     
     /**
      * total number of vnodes
@@ -119,10 +103,8 @@ public class CcjComm extends JpetraObject implements Comm {
         //set fields
         this.myVnode = this.myCcjLink.getRank();
         this.numVnodes = this.myCcjLink.getNumVnodes();
-        this.numThreads = this.numVnodes;
         
         //threads are not implemented, so set to 1
-        this.numMyThreads = 1;
         if (this.numVnodes == 1) {
             this.isSerial = true;
         }
@@ -322,42 +304,6 @@ public class CcjComm extends JpetraObject implements Comm {
     }
     
     /**
-     * Accessor for <code>myThread</code>.
-     *
-     * @return <code>myThread</code>
-     */
-    public int getThreadId() {
-        return myThread;
-    }
-    
-    /**
-     * Accessor for <code>numMyThreads</code>.
-     *
-     * @return <code>numMyThreads</code>
-     */
-    public int getNumMyThreads() {
-        return numMyThreads;
-    }
-    
-    /**
-     * Accessor for <code>numThreads</code>.
-     *
-     * @return <code>numThreads</code>
-     */
-    public int getNumThreads() {
-        return numThreads;
-    }
-    
-    /**
-     * Sets the thread ID.
-     *
-     * @param aThread thread ID
-     */
-    public void setThreadID(int aThread) {
-        myThread = aThread;
-    }
-    
-    /**
      * Sets the vnode ID.  The ID is also the rank, do not change this
      * unless you know exaclty what you are doing.
      *
@@ -366,7 +312,6 @@ public class CcjComm extends JpetraObject implements Comm {
     public void setMyVnodeID(int newVnodeID) {
         myVnode = newVnodeID;
     }
-    
     
     public Distributor createDistributor() {
         return new CcjDistributor();

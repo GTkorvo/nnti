@@ -45,6 +45,7 @@ public class MultiVector extends DistObject implements Externalizable {
     VectorSpace vectorSpace;
     double[][] values;  // in column major form
     private boolean doneForward;
+    private Blas blas;
     
     public MultiVector() {
         // empty
@@ -113,26 +114,39 @@ public class MultiVector extends DistObject implements Externalizable {
         for (int i=0; i < result.length; i++) {
             result[i] /= numGlobalEntries;
         }
+        updateFlops(this.values.length * this.values[0].length);
+        
         return result;
     }
     
     public void scale(double scalar) {
-        Blas myBlas = new NetlibBlas();
-        for (int i=0; i < values.length; i++) {
-            myBlas.scale(scalar, values[i]);
+        if (this.blas == null) {
+            this.blas = new JpetraBlas();
         }
+        
+        for (int i=0; i < this.values.length; i++) {
+            this.blas.scale(scalar, this.values[i]);
+        }
+        
+        updateFlops(this.values.length * this.values[0].length);
     }
     
     public double[] dot(MultiVector otherMultiVector) {
         if (!vectorSpace.isCompatible(otherMultiVector.getVectorSpace())) {
-            this.println("ERR", "The MultiVectors to be dotted are not compatible.");
+            this.println("FATALERR", "The MultiVectors to be dotted are not compatible.");
+            System.exit(-1);
         }
-        Blas myBlas = new NetlibBlas();
+        
+        if (this.blas == null) {
+            this.blas = new JpetraBlas();
+        }
+        
         double[][] y = otherMultiVector.getValues();
         double[] result = new double[vectorSpace.getNumMyGlobalEntries()];
         for(int i=0; i < vectorSpace.getNumMyGlobalEntries(); i++) {
-            result[i] = myBlas.dot(this.values[i], y[i]);
+            result[i] = this.blas.dot(this.values[i], y[i]);
         }
+        updateFlops(2 * this.values.length * this.values[0].length);
         
         result = vectorSpace.getComm().sumAll(result);
         return result;
@@ -140,10 +154,16 @@ public class MultiVector extends DistObject implements Externalizable {
     
     public double[] norm1() {
         double[] result = new double[values.length];
-        Blas myBlas = new NetlibBlas();
-        for(int i=0; i < values.length; i++) {
-            result[i] = myBlas.asum(values[i]);
+        
+        if (this.blas == null) {
+            this.blas = new JpetraBlas();
         }
+        
+        
+        for(int i=0; i < values.length; i++) {
+            result[i] = this.blas.asum(values[i]);
+        }
+        updateFlops(2 * this.values.length * this.values[0].length);
         
         result = vectorSpace.getComm().sumAll(result);
         return result;
@@ -160,20 +180,26 @@ public class MultiVector extends DistObject implements Externalizable {
             result[i] = sum;
         }
         
+        
         result = vectorSpace.getComm().sumAll(result);
         for(int i=0; i < values.length; i++) {
             result[i] = Math.sqrt(result[i]);
         }
+        updateFlops(2 * this.values.length * this.values[0].length);
+        
         return result;
     }
     
     public double[] normInf() {
         double[] result = new double[values.length];
         
-        Blas myBlas = new NetlibBlas();
+        if (this.blas == null) {
+            this.blas = new JpetraBlas();
+        }
+        
         int j;
         for (int i=0; i < values.length; i++) {
-            j = myBlas.iamax(values[i]);
+            j = this.blas.iamax(values[i]);
             result[i] = Math.abs(values[i][j]);
         }
         
@@ -207,7 +233,8 @@ public class MultiVector extends DistObject implements Externalizable {
     
     public void update(double scalarA, MultiVector A, double scalarThis) {
         if (!vectorSpace.isCompatible(A.getVectorSpace())) {
-            this.println("ERR", "The MultiVectors are not compatible.");
+            this.println("FATALERR", "The MultiVectors are not compatible.");
+            System.exit(0);
         }
         
         double[][] valuesA = A.getValues();
@@ -215,24 +242,31 @@ public class MultiVector extends DistObject implements Externalizable {
             for (int i = 0; i < values.length; i++) {
                 for (int j = 0; j < values[i].length; j++) values[i][j] = scalarA * valuesA[i][j];
             }
+            updateFlops(this.values.length * this.values[0].length);
         }
         else if (scalarThis==1.0) {
-            for (int i = 0; i < values.length; i++)
+            for (int i = 0; i < values.length; i++) {
                 for (int j = 0; j < values[i].length; j++) {
                     values[i][j] = values[i][j] + scalarA * valuesA[i][j];
                 }
-        }
+            }
+            updateFlops(2 * this.values.length * this.values[0].length);
+        } 
         else if (scalarA==1.0) {
-            for (int i = 0; i < values.length; i++)
+            for (int i = 0; i < values.length; i++) {
                 for (int j = 0; j < values[i].length; j++) {
                     values[i][j] = scalarThis * values[i][j] + valuesA[i][j];
                 }
+            }
+            updateFlops(2 * this.values.length * this.values[0].length);
         }
         else {
-            for (int i = 0; i < values.length; i++)
+            for (int i = 0; i < values.length; i++) {
                 for (int j = 0; j < values[i].length; j++) {
                     values[i][j] = scalarThis * values[i][j] + scalarA *  valuesA[i][j];
                 }
+            }
+            updateFlops(3 * this.values.length * this.values[0].length);
         }
     }
     
@@ -481,6 +515,7 @@ public class MultiVector extends DistObject implements Externalizable {
         }
         MultiVector cloneMultiVector = new MultiVector(this.vectorSpace, cloneValues);
         cloneMultiVector.doneForward = this.doneForward;
+        cloneMultiVector.setBlas(this.blas);
         
         return cloneMultiVector;
     }
@@ -501,19 +536,6 @@ public class MultiVector extends DistObject implements Externalizable {
             this.println("STD", "In MultiVector.equals: !otherMultiVector.getVectorSpace().equals(this.vectorSpace)");
             return false;
         }
-        // check to see if the values 2d arrays are the same
-        
-        /*double[][] otherValues = otherMultiVector.getValues();
-        for(int i=0; i < this.values.length; i++) {
-            if (this.values[i].length != otherValues[i].length) {
-                return false;
-            }
-            for(int j=0; j < this.values[i].length; j++) {
-                if (this.values[i][j] != otherValues[i][j]) {
-                    return false;
-                }
-            }
-        }*/
         
         double[][] otherValues = otherMultiVector.getValues();
         for(int i=0; i < this.values.length; i++) {
@@ -524,5 +546,13 @@ public class MultiVector extends DistObject implements Externalizable {
         }
         
         return true;
+    }
+    
+    public void setBlas(Blas blas) {
+        this.blas = blas;
+    }
+    
+    public Blas getBlas() {
+        return this.blas;
     }
 }

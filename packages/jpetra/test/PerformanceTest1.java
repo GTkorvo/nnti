@@ -115,13 +115,25 @@ public class PerformanceTest1 extends JpetraObject {
         //y.printOutAllVnodes("MAIN");
         this.println("MAIN", "y=A*x complete.");
         this.println("MAIN", "operation took " + elapsedTime + " seconds and did " + (flopsDone[0]/(1000000)) + " Mflops which is " + ((flopsDone[0]/elapsedTime)/1000000) + " Mflops/sec.");
+        
+        // get rid of vector x
+        x = null;
+        xValues = null;
+        xElementSpace = null;
+        
+        this.println("MAIN", "Running the garbage collector.");
+        System.gc();
+        this.println("MAIN", "Garbage collector run.");
+        
         int count = 0;
         for(int i=0; i < comm.getNumVnodes(); i++) {
             this.println("MAIN", "mem info for vnode " + i);
             this.println("MAIN", "  totalMemory=" + memoryInfo[count] + " freeMemory=" + memoryInfo[count+1] + " usedMemory=" + (memoryInfo[count] - memoryInfo[count+1]));
             count += 2;
         }
+        
         this.println("MAIN", "DONE");
+        
         System.exit(0);
     }
     
