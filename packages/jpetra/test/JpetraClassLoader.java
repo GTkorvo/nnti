@@ -16,6 +16,7 @@ public class JpetraClassLoader extends ClassLoader {
     ObjectInputStream ois;
     
     public JpetraClassLoader() {
+        // empty
     }
     
     public void setObjectInputStream(ObjectInputStream ois) {
@@ -23,6 +24,11 @@ public class JpetraClassLoader extends ClassLoader {
     }
     
     public Class findClass(String name) {
+        Class loadedClass = this.findLoadedClass(name);
+        if (loadedClass != null) {
+            return loadedClass;
+        }
+        
         byte[] b = loadClassData(name);
         return defineClass(name, b, 0, b.length);
     }
