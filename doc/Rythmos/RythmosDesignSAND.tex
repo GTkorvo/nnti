@@ -2227,6 +2227,36 @@ with these applications.
 
 \subsection{Xyce}
 
+Xyce \cite{Xyce,Xyce_time} is an analog circuit simulator capable of efficiently
+simulating circuits on large scale distributed memory computers.  Circuits are
+passed to Xyce through netlists which are text files containing lists of
+devices and their network connectivity.  These devices are typically described
+by DAEs, but there are a few devices which are described best by
+integro-differential equations (in particular, the transmission line device).
+These latter devices are handled in an approximate way while maintaining a
+circuit DAE of the form:
+
+\begin{eqnarray}\label{rythmos:eqn:xyce:dae}
+\dot{q}(x)+f(x)+b(t) & = & 0 \\
+x(0) & = & x_0.
+\end{eqnarray}
+
+In this formulation, $q$ represents the charge and flux contributions from
+linear and nonlinear capacitors and inductors, $f$ represents the linear and
+nonlinear current contributions from devices like the diode and the BJT, and
+$b$ represents the source terms to the circuit.   SPICE \cite{Spice} solves
+this DAE by using first and second order implicit BDF methods for ODEs and
+asking the time integrator to differentiate $q$ when forming the residual.
+Xyce has traditionally followed this approach, but an effort is underway which
+solves the DAE equation (\ref{rythmos:eqn:xyce:dae}) directly using the
+implicit BDF methods from IDA \cite{IDA}.   The circuits of interest to Xyce so
+far have not had a DAE index greater than 1, and often the DAE is simply an ODE
+with linear algebraic constraints.  Due to the desire to solve large scale
+problems, parallelization has been incorporated which requires the use of
+preconditioners for Jacobian solves with the implicit BDF methods.  In general,
+preconditioners must be tuned for each circuit due to the inherently widely
+varying behavior of circuit equations.
+
 \subsection{Premo}
 
 \subsection{Charon}
