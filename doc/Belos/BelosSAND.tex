@@ -43,7 +43,7 @@ under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA
 % Set some things we need for SAND reports. These are mandatory
 %
 \SANDnum{SAND2004-???}
-\SANDprintDate{August 2004}
+\SANDprintDate{September 2004}
 \SANDauthor{
 Heidi Thornquist \\
 Michael Heroux \\
@@ -153,8 +153,8 @@ in~\cite{Sand98-0730}.
 
 Here we describe a set of object-oriented interfaces based on TSFCore
 {}\cite{ref:TSFCore} for the development and use of preconditioned
-iterative linear solvers for the set of simultaneous block linear
-equations
+iterative linear solvers for sets of of simultaneous block linear
+equations of the form
 %
 \begin{equation}
 A X = B
@@ -164,8 +164,8 @@ A X = B
 {}\noindent{}where $A\in\RE^{n {}\times n}$ is a matrix operator,
 $X\in\RE^{n {}\times m}$ is the solution multi-vector and $B\in\RE^{n
 {}\times m}$ is the right-hand side multi-vector.  From here on, the
-matrix $A$, which happens to be a linear operator, will be referred to
-as ``the operator'' to distinguish it from other linear operators.
+matrix $A$, which is a linear operator, will be referred to as ``the
+operator'' to distinguish it from other linear operators.
 
 Associated with every linear system of the form (\ref{belos:eqn:AX=B})
 is an initial guess $X_0$ which in many cases will just be zero.
@@ -224,8 +224,8 @@ These scalings transform the system in ({}\ref{belos:eqn:AX=B}) into
 \end{equation}
 %
 After the operator matrix $A$ is scaled to form $\tilde{A}$, left
-and/or right preconditioners $P_L$ and $P_R$ are usually formed which
-transform the system ({}\ref{belos:eqn:ScaledSystem}) into
+and/or right preconditioners $P_L$ and $P_R$ are typically formed
+which transform the system ({}\ref{belos:eqn:ScaledSystem}) into
 %
 \[
 \underbrace{P_L \tilde{A} P_R}_{\displaystyle{\hat{A}}}
@@ -241,7 +241,9 @@ transform the system ({}\ref{belos:eqn:ScaledSystem}) into
 \end{equation}
 %
 If scaling is not first performed then the preconditioners $P_L$ and
-$P_R$ are formed from the unscaled operator $A$.
+$P_R$ are formed from the unscaled operator $A$.  The operator
+$\hat{A} = P_L \tilde{A} P_R$.  will be refereed to as the
+{}\textit{combined} operator.
 
 In order to use the scaled preconditioned operator $\hat{A}$, the the
 original right-hand side(s) $B$ must be transformed as
@@ -254,7 +256,7 @@ original right-hand side(s) $B$ must be transformed as
 {}\noindent{}before the iterative solve is performed.
 
 Note that a transformation of an initial guess $X_0$ to form an
-initial guess $\hat{X}^0$ is not necessary since most iterative
+initial guess $\hat{X}_0$ is not necessary since most iterative
 methods just need the initial residual
 %
 \begin{eqnarray}
@@ -326,7 +328,7 @@ current starting initial guess $\bar{X}_0$ are defined either as
 %
 \begin{eqnarray}
 \bar{X}_0 & = & (X_0)_{(:,k+1:k+b)} \in \RE^{n \times b} \label{X_bar_r_b} \\
-\bar{B}   & = & (B)_{(:,k:k+1+b)} \in \RE^{n \times b} \label{B_bar_r_b}
+\bar{B}   & = & (B)_{(:,k+1:k+b)} \in \RE^{n \times b} \label{B_bar_r_b}
 \end{eqnarray}
 %
 {}\noindent{}for the case $k+b {}\leq m$, where $k\in[0,m-1]$ is the
@@ -390,45 +392,60 @@ as the update from the guess for the most recent restart
 $\bar{X}_{0,r}$ and not from the starting inital guess $\bar{X}_0$.
 
 {}\item $\bar{R} = A \bar{X} - \bar{B} {}\in\RE^{n {}\times
-{}\bar{b}}$ : The current residual multi-vector with respect to
-$\bar{X}$ and $\bar{B}$.
-
-{}\item $\breve{R} = P_L S_L \bar{R} {}\in\RE^{n {}\times {}\bar{b}}$
-: The current native residual multi-vector with respect to $\bar{X}$
-and $\bar{B}$.
+{}\bar{b}}$ : The current unscaled, unpreconditioned residual
+multi-vector with respect to $\bar{X}$ and $\bar{B}$.
 
 \end{itemize}
 
-The multi-vector quantities $\bar{B}$, $\bar{R}_0$, $\bar{X}$, and
-$\breve{R}$ are defined for every block iterative solver method and
-should be accessible for the definition of convergence tests.  In all
-of the iterative linear solvers these quantities can be viewed as
-derived attributes of the state of the iterative solver and while
-these quantities may require extra computation this does not change
-whether or not they are computable for all iterative solvers.  In all
-of the iterative solvers it will be clear what quantities are
-immediately available and what quantities will require extra
-computation.  Of particualar importance are the column-wise norms $n_j
-= ||\breve{R}_{(:,j)}||$ which every iterative solver implementation
-is required (even GMRES) to provide at a relatively low cost (i.e.~no
-more than just a simple norm calculation).
+The multi-vector quantities $\bar{B}$, $\bar{R}_0$ and $\bar{X}$ are
+defined for every block iterative solver method and should be
+accessible for the definition of convergence tests.  In all of the
+iterative linear solvers these quantities can be viewed as derived
+attributes of the state of the iterative solver and while these
+quantities may require extra computation this does not change whether
+or not they are computable for all iterative solvers.  In all of the
+iterative solvers it will be clear what quantities are immediately
+available and what quantities will require extra computation.
+
+Every iterative solver method can cheaply define at least some native
+relative residual tolerance error.  This native relative error will
+come in one of two forms.  Either the relative norms will be based on
+the scaled, unpreconditioned residuals
+%
+\begin{equation}
+n_j = ||S_L \bar{R}_{(:,j)}|| / ||S_L (\bar{R}_0)_{(:,j)}||, \; \mbox{for} j = 1 \ldots \bar{b}
+\label{belos:eqn:scaled_unprec_rel_norms}
+\end{equation}
+%
+in the case of a standard CG algorithm for instance, or will be based
+on scaled, preconditioned residuals
+%
+\begin{equation}
+n_j = ||P_L S_L \bar{R}_{(:,j)}|| / ||P_L S_L (\bar{R}_0)_{(:,j)}||, \; \mbox{for} j = 1 \ldots \bar{b}
+\label{belos:eqn:scaled_prec_rel_norms}
+\end{equation}
+%
+in the case of GMRES, BiCGStab and others.  Here the norm $||.||$ will
+be defined to be the natural norm of the vector spaces involved
+(i.e.~$||x|| = {}\sqrt{<x,x>}$ where $<.,.>$ is the defined scalar
+product of the vector space involved).
 
 %
 \section{Basic interfaces for iterative linear solvers}
 %
 
 Here we describe the basic interfaces to iterative linear solvers
-given that the operator, scalings and preconditioner objects are
-already formed as are the RHS and LHS multi-vector objects.
+given that the operator, scalings and preconditioner objects, along
+with the RHS and LHS multi-vector objects, are already formed.
 
 %
 \subsection{Requirements for basic interfaces to iterative solvers}
 \label{sec:requirements}
 %
 
-Before describing the requirements, a few definitions are needed to
-identify two types of software and therefore two types of software
-developers:
+Before describing the requirements of the linear solvers, a few
+definitions are needed to identify two types of software and therefore
+two types of software developers:
 
 \begin{itemize}
 
@@ -478,8 +495,8 @@ software are given below:
 \item
 A {}\textit{client} should be able to setup and solve a linear system
 without knowing the concrete type of iterative linear solver being
-used.  This is the main -- if not the entire -- point of this whole
-design.  {}\textit{Importance:} Fundamental.
+used.  {}\textit{Justification:} This is the main -- if not the entire
+-- point of this whole design.  {}\textit{Importance:} Fundamental.
 
 \item
 The implemented algorithms should be near optimal in storage and CPU
@@ -494,6 +511,22 @@ TSFCore linear operator, vector, multi-vector and vector space
 interfaces.  {}\textit{Justification:} Automatic interoperability
 between different types of ANAs requires this.  {}\textit{Importance:}
 Fundamental.
+
+\item
+The linear solvers should use the definition of the scalar product
+defined by the vector spaces defined by the operators in the linear
+problem.  This means that a scalar product $<x,u>$ defined by the
+vector space for $x$ and $u$ and not just simply the dot product $x^T
+u$.  This also means using the definition of the natural norm $||x|| =
+\sqrt{<x,x>}$ as defined by the scalar product $<x,x>$ and just simply
+the Euclidean norm $||x||_2 = \sqrt{x^T x>}$.
+{}\textit{Justification:} For some types of applications the
+definition of the scalar product can have a dramatic impact on
+improving the performance of the iterative method.  While in theory
+these scalar products can also be represented as operators that are
+aggregated with the other preconditioners, in practice it is much more
+convienent to only require the accumulation of the scalar product
+itself.  {}\textit{Importance:} Fundamental.
 
 \item
 These interfaces should be general and efficient for both true block
@@ -524,7 +557,9 @@ and access to constituent operators should be provided if desired.
 about the combined preconditioned operator and need not be bothered
 with preconditioners but others do like flexible GMRES which needs to
 apply the right preconditioner separately from the left preconditioner
-and operator itself.  {}\textit{Importance:} Desired.
+and operator itself.  CG is another example where the preconditioner
+can be treated in a special way (i.e.~to define a new definition of
+the scalar product). {}\textit{Importance:} Desired.
 
 \item
 For the {}\textit{client's} and the {}\textit{iterative solver
@@ -548,33 +583,49 @@ Allow for flexible and powerful status (i.e.~convergence) tests that
 can be provided by the {}\textit{client} and are independent from the
 {}\textit{iterative solver implementation}.  Cheap native norm-based
 or iteration count-based status tests should be automatically
-available but more expensive status tests based on the unscaled
+available but more expensive status tests based on the unscaled,
 unpreconditioned solutions and residuals should also be supported.
-{}\textit{Justification:} One reason that same iterative linear solver
+{}\textit{Justification:} One reason that some iterative linear solver
 algorithms are constantly rewritten over and over again is to
 accommodate different convergence criteria.  By separating the
 convergence criteria from {}\textit{iterative solver implementation},
-these implementations become much more reusable.
+these solver implementations become much more reusable.
 {}\textit{Importance:} Fundamental.
 
 \item
+Expanding on the above requirement, every {}\textit{iterative solver
+implementation} must provide a cheap estimate of the relative
+unpreconditioned or preconditioned residual error as defined in either
+(\ref{belos:eqn:scaled_unprec_rel_norms}) or
+(\ref{belos:eqn:scaled_prec_rel_norms}).  In addition a
+{}\textit{iterative solver implementation} will identify the exact
+nature of this residual.  {}\textit{Justification:} Most iterative
+solver algorithms maintain the preconditioned residual $\P_L S_L
+{}\bar{R}$ itself while, on the other hand, GMRES can cheaply maintain
+its norm.  CG will maintian the scaled but unpreconditioned residual
+$S_L {}\bar{R}$.  Providing such a well defined relative residual
+error to status tests (i.e.~{}\textit{clients}) is critical in many
+applications in order to ensure certain numerical properties of an
+algorithm.  {}\textit{Importance:} Fundamental.
+
+\item
 Status tests should allow for dynamic (i.e.~during an iteration run)
-deflation (i.e.~the removal of RHS and LHS vectors for systems that
-are converged) but an {}\textit{iterative solver implementation}
-should be free to keep such tagged linear systems in the current set.
-{}\textit{Justification:} Some block iterative solvers, such as block
-CG, can effectively remove individual RHSs as they converge thereby
-reducing the cost of block solves in some cases (especially when some
-RHSs have tighter tolerances than others).  Without the functionality
-of deflation, a block iterative solver may result in more work than a
-single RHS linear solver in some extreme cases (e.g.~two linear
-systems that have radically different convergence criteria).
-{}\textit{Importance:} Fundamental.
+deflation (i.e.~the removal of individual RHS and LHS vectors for
+systems that are converged) but an {}\textit{iterative solver
+implementation} should be free to keep such tagged linear systems in
+the current set.  {}\textit{Justification:} Some block iterative
+solvers, such as block CG, can effectively remove individual RHSs as
+they converge thereby reducing the cost of block solves in some cases
+(especially when some RHSs have tighter tolerances than others).
+Without the functionality of deflation, a block iterative solver may
+result in more work than a single RHS linear solver in some extreme
+cases (e.g.~two linear systems that have radically different
+convergence criteria).  {}\textit{Importance:} Fundamental.
 
 \item
 Status tests should be alerted when a new iterative run (on one or
 more simultaneous RHSs) is started.  {}\textit{Justification:}
-Alerting a status test when a new iterative run is stated allows a
+Alerting a status test when a new iterative run is started allows a
 simplification of the design of status tests.  {}\textit{Importance:}
 Desired.
 
@@ -761,10 +812,10 @@ The use case descriptions will involve collaborations with the
 following objects in pseudo-code:
 
 \begin{tabular}{lll}
-{\small\texttt{TSFCore::LinOp<Scalar>}} & {\small\texttt{A}} & : Unscaled operator $A$ \\
-{\small\texttt{TSFCore::LinOp<Scalar>}} & {\small\texttt{A\_tilde}} & : Scaled operator $\tilde{A}$ \\
-{\small\texttt{TSFCore::LinOp<Scalar>}} & {\small\texttt{P\_L}} & : Left preconditioner $P_L$ \\
-{\small\texttt{TSFCore::LinOp<Scalar>}} & {\small\texttt{P\_R}} & : Right preconditioner $P_R$ \\
+{\small\texttt{TSFCore::LinOpPersisting<Scalar>}} & {\small\texttt{A}} & : Unscaled operator $A$ \\
+{\small\texttt{TSFCore::LinOpPersisting<Scalar>}} & {\small\texttt{A\_tilde}} & : Scaled operator $\tilde{A}$ \\
+{\small\texttt{TSFCore::LinOpPersisting<Scalar>}} & {\small\texttt{P\_L}} & : Left preconditioner $P_L$ \\
+{\small\texttt{TSFCore::LinOpPersisting<Scalar>}} & {\small\texttt{P\_R}} & : Right preconditioner $P_R$ \\
 {\small\texttt{RefCountPtr<const TSFCore::Vector<Scalar> >}} & {\small\texttt{s\_R}} & : Left scaling vector $s_L$ \\
 {\small\texttt{RefCountPtr<const TSFCore::Vector<Scalar> >}} & {\small\texttt{s\_R}} & : Right scaling vector $s_R$ \\
 {\small\texttt{RefCountPtr<const TSFCore::MultiVector<Scalar> >}} & {\small\texttt{B}} & : RHS $B$ \\
@@ -773,20 +824,24 @@ following objects in pseudo-code:
 {\small\texttt{RefCountPtr<LinearProblemSetup<Scalar> >}} & {\small\texttt{lpup}} & : ``Setup'' interface to {}\texttt{lp} \\
 {\small\texttt{RefCountPtr<LinearProblemIteration<Scalar> >}} & {\small\texttt{lpi}} & : ``Iteration'' interface to  {}\texttt{lp} \\
 {\small\texttt{RefCountPtr<LinearProblemState<Scalar> >}} & {\small\texttt{lps}} & : Status test interface to  {}\texttt{lp} \\
-{\small\texttt{RefCountPtr<BasicIteration<Scalar> >}} & {\small\texttt{bi}} & : A concrete basic iteration object
+{\small\texttt{RefCountPtr<BasicIteration<Scalar> >}} & {\small\texttt{bi}} & : A basic iteration object
 \end{tabular}
 
-Note that {}\texttt{TSFCore::\-LinOp} is a small simple concrete class
-whose only purpose for existence is to aggregate a smart pointer to a
-{}\texttt{TSFCore::\-Linear\-Op} object and its ``mathematical''
-definition of the nontranposed operator which is stored as a
-{}\texttt{TSFCore::\-ETransp} enum object.
+Note that {}\texttt{TSFCore::\-Lin\-Op\-Persisting} is a small simple
+concrete class whose only purpose for existence is to aggregate a
+smart pointer to a {}\texttt{TSFCore::\-Linear\-Op} object and its
+``mathematical'' definition of the nontranposed operator which is
+stored as a {}\texttt{TSFCore::\-ETransp} enum object.  Note that
+there is also a type called {}\texttt{TSFCore::\-Lin\-Op\-Persisting}
+which is similar except it is for passing a
+{}\texttt{TSFCore::\-Linear\-Op} and its ``mathematical'' definition
+of the nontranposed operator for non-presisting relationships.
 
 Most of these use cases do not involve very interesting dynamic
-behavior but some do.  An overall UML diagram encompassing most or all
-of these use cases into a single combined UML sequence diagram is
-shown in Figure {}\ref{belos:fig:BelosSequence}.  The specific use
-cases that are part of the scenario shown in Figure
+behavior but some do.  An overall UML diagram encompassing most of
+these use cases into a single combined UML sequence diagram is shown
+in Figure {}\ref{belos:fig:BelosSequence}.  The specific use cases
+that are part of the scenario shown in Figure
 {}\ref{belos:fig:BelosSequence} are described in more detail below as
 well as variations on each of these use cases.
 
@@ -829,8 +884,19 @@ there are some more specialized use cases where a different concrete
 implementation may be needed.
 
 In any case, a {}\texttt{Linear\-Problem\-Setup} object
-{}\texttt{lpup} must be setup.  At a minimum, the linear problem
-object must be setup with an operator, the RHS and LHS as follows:
+{}\texttt{lpup} must be setup.  Before the linear problem is setup
+it is a good idea to first wipe out any current linear system that
+may be set using:
+
+{\scriptsize\begin{verbatim}
+  lpup->unitialize();
+  lpup->setRhs(B);
+  lpup->setLhs(X);
+\end{verbatim}}
+
+Once the {}\texttt{Linear\-Problem\-Setup} object {}\texttt{lpup} is
+clean then, at a minimum, it must be setup with an operator, the RHS
+and LHS as follows:
 
 {\scriptsize\begin{verbatim}
   lpup->setOperator(A);
@@ -838,31 +904,34 @@ object must be setup with an operator, the RHS and LHS as follows:
   lpup->setLhs(X);
 \end{verbatim}}
 
-If preconditioning but not scaling is used, then the linear problem
-object {}\texttt{lpup} is setup as follows:
+If left and/or right preconditioning but not scaling is used, then the
+linear problem object {}\texttt{lpup} is setup as follows:
 
 {\scriptsize\begin{verbatim}
   lpup->setOperator(A);
-  lpup->setLeftPrec(P_L);
-  lpup->setRightPrec(P_R);
+  if(useLeftPrec)  lpup->setLeftPrec(P_L);
+  if(useRightPrec) lpup->setRightPrec(P_R);
   lpup->setRhs(B);
   lpup->setLhs(X);
 \end{verbatim}}
 
-If preconditioning and scaling is used, then the linear problem object
-{}\texttt{lpup} is setup as follows:
+Above, a left and/or right preconditioner can be specified.
+
+If left and/or right preconditioning and left and/or right scaling is
+used, then the linear problem object {}\texttt{lpup} is setup as
+follows:
 
 {\scriptsize\begin{verbatim}
   lpup->setOperator(A_tilde);
-  lpup->setLeftPrec(P_L);
-  lpup->setRightPrec(P_R);
-  lpup->setLeftScaling(s_L);
-  lpup->setRightScaling(s_R);
+  if(useLeftPrec)  lpup->setLeftPrec(P_L);
+  if(useRightPrec) lpup->setRightPrec(P_R);
+  if(useLeftScaling)  lpup->setLeftScaling(s_L);
+  if(useRightScaling) lpup->setRightScaling(s_R);
   lpup->setRhs(B);
   lpup->setLhs(X);
 \end{verbatim}}
 
-Furthermore, the {}\texttt{Client} must set a single
+Furthermore, the {}\texttt{Client} may set a single
 {}\texttt{Status\-Test} object that defines the convergence criteria
 for each of the columns in $B$ and $X$ as follows:
 
@@ -874,7 +943,9 @@ A {}\texttt{Status\-Test} subclass object can apply a different status
 test for each individual column in $B$ (in which case it needs to know
 how many columns there are in $B$ at a minimum) or can just apply a
 generic status test (in which case it does not need to know how many
-columns there are in $B$).
+columns there are in $B$).  A status test is optional but recommended
+since the iterative solver will simply iterate to the maximum
+iterations if not stopped by a status test.
 
 Finally, the block size $b$ as defined in Section
 (\ref{sec:basic-block-solves}) to be used by block solvers can be set
@@ -886,7 +957,18 @@ as:
 
 This block size may be modified by the {}\textit{iterative solver
 implementation} for instance if deflation, as described in Section
-{}\ref{sec:basic-block-solves}X, is used.
+{}\ref{sec:basic-block-solves}, is used.
+
+Finally, the linear problem object setup is completed with a called to
+
+{\scriptsize\begin{verbatim}
+  lpup->completeSetup();
+\end{verbatim}}
+
+which performs several tasks such as checking that a valid problem has
+been set up (by checking the compatibility of the various vector
+spaces) and building a combined operator object for $\hat{A} = P_L
+\tilde{A} P_R$.
 
 {}\item Use case : \textbf{Iterate on linear problem}
 
@@ -897,13 +979,13 @@ The {}\texttt{Basic\-Iteration} interface abstracts the
 {}\texttt{Linear\-Solver\-Implementation} away from the
 {}\texttt{Client}.
 
-The client sets the linear problem and starts the iteration as shown
+The client sets the linear problem and invokes the solver as shown
 in Figure {}\ref{belos:fig:BelosSequence} and as follows:
 
 {\scriptsize\begin{verbatim}
   bi->setProblem(lpup);
   bi->initialize();
-  bi->iterate(maxNumIters);
+  IterateReturn iterateReturn = bi->iterate(maxNumIters);
 \end{verbatim}}
 
 The {}\texttt{Basic\-Iteration::\-set\-Problem(...)} function accepts
@@ -913,14 +995,23 @@ a linear problem object through the
 functionality that a {}\texttt{Linear\-Solver\-Implementation} needs
 to solve the set of equations but does not contain functions to change
 the definition of the linear problem (i.e.~an iterative solver can not
-change the operator, the RHS or any of the preconditioners).  The
-{}\texttt{Linear\-Problem\-Iteration} interface class is discussed in
-more detail in the other use cases which are also shown in Figure
-{}\ref{belos:fig:BelosUseCases} involving the {}\textit{iterative
-solver implementation} .  The actual linear solver algorithm is
-invoked using the {}\texttt{Basic\-Iteration::\-iterate(...)} function
-which only returns when the {}\texttt{Status\-Test} object says to or
-if the maximum number of iterations {}\texttt{maxNumIters} is reached.
+accidentally change the operator, the RHS or any of the
+preconditioners).  The {}\texttt{Linear\-Problem\-Iteration} interface
+class is discussed in more detail in the other use cases which are
+also shown in Figure {}\ref{belos:fig:BelosUseCases} involving the
+{}\textit{iterative solver implementation} .  The actual linear solver
+algorithm is invoked using the
+{}\texttt{Basic\-Iteration::\-iterate(...)} function which only
+returns when the {}\texttt{Status\-Test} object says to or if the
+maximum number of iterations {}\texttt{maxNumIters} is reached.  When
+this function returns, it returns a simple struct object
+{}\texttt{iterateReturn} of type {}\texttt{IterateReturn}.  This
+object gives the reason for the return in
+{}\texttt{iterateReturn\-.iterateReturn} (takes on values
+{}\texttt{TERMINATION\-\_STATUS\-\_TEST} and
+{}\texttt{TERMINATION\-\_MAX\-\_NUM\-\_ITER}) and the cumulative
+number of iterations required in
+{}\texttt{iterateReturn\-.numCumulativeIter}.
 
 {}\item Use case : \textbf{Retrieve ``solution''}
 
@@ -935,6 +1026,20 @@ not found) is obtained as shown in Figure
   bi->finalize();
   RefCountPtr<TSFCore::MultiVector<Scalar> > solution = bi->getProblem()->getLhs();
 \end{verbatim}}
+
+If status of this solution is given by the return value of the
+{}\texttt{Basic\-Iteration::\-iterate(...)} function.
+
+After a linear system is completely solved it is a good idea to unset the
+linear problem and unintialize it as
+
+{\scriptsize\begin{verbatim}
+  bi->setProblem(null);
+  lpup->uninitialize()
+\end{verbatim}}
+
+{}\noindent{}in order to make sure no references are remaining to the
+various operators and multi-vector objects.
 
 \end{enumerate}
 
@@ -952,12 +1057,19 @@ with Figure {}\ref{belos:fig:BelosInterfaces} and Figure
   template <class Scalar>
   void LinearSolverImplementation<Scalar>::iterate( const int maxNumIters )
   { 
-    const int numTotalRhs = getProblem()->getTotalNumRhs();
+    int numCumulativeIter = 0;
+    bool allConverged = true;
+    // Do some initial setup for the particular solver algorithm
+    ...
+    // Solve the systems as a set of block solves
+    const int numTotalRhs = lpi_->getTotalNumRhs();
     int numRhsSolved = 0;
-    while( numRhsSolved < numTotalRhs ) {
-      nextBlock(maxNumIters,&numRhsSolved);
-    }
-  }
+    while ( numRhsSolved < numTotalRhs ) {
+      IterateReturn nextBlockReturn = nextBlock( maxNumIter, &numRhsSolved );
+      numCumulativeIter += nextBlockReturn.numCumulativeIter;
+      if( nextBlockReturn.iterateTermination != TERMINATION_STATUS_TEST ) allConverged = false;
+    return IterateReturn( allConverged ? TERMINATION_STATUS_TEST : TERMINATION_MAX_NUM_ITER, numCumulativeIter );
+   }
 \end{verbatim}}
 
 Note that the fact that the function {}\texttt{nextBlock(...)} is
@@ -969,20 +1081,25 @@ notation for representing iteration in a UML sequence diagram
 These use cases are more complicated than those that just involved the
 {}\textit{client} which where described above.  This is a good thing
 since developers that write {}\textit{client} code are likely to be
-less experienced C++ programmers.  Developers of
+less experienced C++ programmers.  However, developers of
 {}\texttt{Iterative\-Solver\-Implementation} subclasses are likely to
 be more advanced C++ programmers but these interfaces should still try
-to make the development of these subclasses as easy as possible.  To
-help avoid mistakes, a minimal but complete interface to a linear
-problem is presented to a {}\texttt{Iterative\-Solver\-Implementation}
-through the {}\texttt{Linear\-Problem\-Iteration} interface.  This
-interface allows the {}\texttt{Iterative\-Solver\-Implementation} to
-setup the current RHS $\bar{B}$ and LHS $\bar{X}$ multi-vectors and
-update the current estimate of the solution.  This interface, however,
-does not allow a {}\texttt{Linear\-Problem\-Iteration} to accidentally
-change the definition of the original RHS $B$, or the operator for the
-matrix $\tilde{A}$ or $A$ or any of the preconditioners $P_L$ or
-$P_R$.
+to make the development of these subclasses as easy and error-free as
+possible.  To help avoid mistakes, a minimal but complete interface to
+a linear problem is presented to a
+{}\texttt{Iterative\-Solver\-Implementation} through the
+{}\texttt{Linear\-Problem\-Iteration} interface.  This interface
+allows the {}\texttt{Iterative\-Solver\-Implementation} to setup the
+current RHS $\bar{B}$ and LHS $\bar{X}$ multi-vectors and update the
+current estimate of the solution.  This interface, however, does not
+allow a {}\texttt{Linear\-Problem\-Iteration} to accidentally change
+the definition of the original RHS $B$, or the operator for the matrix
+$\tilde{A}$ or $A$ or any of the preconditioners $P_L$ or $P_R$.
+
+The scenario shown in Figure {}\ref{belos:fig:BelosSequence} is
+consistent with a BiCGStab or CG (using left and right
+preconditioners) solver implementation.  This scenario however is not
+100\% consistent with a GMRES solver.
 
 \begin{enumerate}
 
@@ -1004,40 +1121,44 @@ be iterated on next and what block size to use.
 
 {\scriptsize\begin{verbatim}
   template <class Scalar>
-  void IterativeSolverImplementation<Scalar>::nextBlock( const int maxNumIters, int *numRhsSolved )
+  IterateReturn IterativeSolverImplementation<Scalar>::nextBlock( const int maxNumIters, int *numRhsSolved )
   {
     // Setup for next set of solves
     const int blockSize = lpi_->getBlockSize();
     const int firstRhsOffset = *numRhsSolved;  // Set the first column of next set of RHSs to solve.
-    const int numRhsRemaining = lpi_->numTotalRhs()-numRhsSolved;
-    const int numRhs = min(numRhsRemaining,blockSize); // Number of RHSs to solve next
-    lpi_->setCurrSystem(firstRhsOffset,numRhs,blockSize,INITIALIZE_RHS_LHS);
-    RefCountPtr<MultiVector<Scalar> >       currLhs = lpi_->getCurrLhs();
-    RefCountPtr<const MultiVector<Scalar> > currRhs = lpi_->getCurrRhs();
-    // Perform iterations
-    for( int iter = 0; iter < numMaxIter; ++iter ) {
-      doIteration();
+    const int numRhsRemaining = lpi_->numTotalRhs()-(*numRhsSolved);
+    const int currNumRhs = min(numRhsRemaining,blockSize); // Number of RHSs to solve next
+    lpi_->setCurrSystem(firstRhsOffset,currNumRhs,blockSize);
+    // Inform the status test that we are solving a new block of systems
+    StatusTest<Scalar> *statusTest = lpi_->getStatusTest();
+    if(statusTest) statusTest->reset();
+    // Perform iterations on this block of RHSs
+    EIterateTermination doIterationReturn = TERMINATION_UNDEFINED;
+    for( currNumIters_ = 0; currNumIters_ < maxNumIter; ++currNumIters_ ) {
+      doIterationReturn = doIteration();
+      if(doIterationReturn==TERMINATION_STATUS_TEST)
+       break;
     }
-    // Copy current LHS into full LHS
-    lpi_->setCurrToFullLhs();
-    *numRhsSolved += numRhsRemaining;
+    if( currNumIters_==maxNumIter && doIterationReturn!=TERMINATION_STATUS_TEST )
+      doIterationReturn = TERMINATION_MAX_NUM_ITER;
+    // Copy whatever is remaining in current LHS into full LHS
+    lpi_->setCurrToFullLhs(*this);
+    *numRhsSolved += currNumRhs;
+    // Return status of this block
+    return IterateReturn(doIterationReturn,currNumIters_);
   }
 \end{verbatim}}
 
 {}\noindent{}The {}\texttt{Linear\-Problem\-Iteration} {}\texttt{lpi}
-object would be responsible for initializing {}\texttt{currRhs} and
+object is responsible for initializing {}\texttt{currRhs} and
 {}\texttt{currLhs} multi-vectors with the appropriate columns from
 {}\texttt{rhs} and {}\texttt{lhs} respectively inside of the call to
-{}\texttt{set\-Curr\-System(...,\-INITIALIZE\_\-RHS\_\-LHS)}.  If
-{}\texttt{set\-Curr\-System(...,\-NO\_\-INTIALIZE\_\-RHS\_\-LHS)} is
-called then the solver would be responsible for initializing
-{}\texttt{currRhs} and {}\texttt{currLhs}.  Above, if the block size
+{}\texttt{set\-Curr\-System(...)}.  Above, if the block size
 {}\texttt{blockSize} is larger than the number of right-hand sides
 remaining {}\texttt{num\-Rhs\-Remaining}, then the {}\texttt{lpi}
-object will by default pad the last {}\texttt{blockSize} -
-{}\texttt{num\-Rhs\-Remaining} columns of the RHS and LHS with
-arbitrary vectors as described in Section
-{}\ref{sec:basic-block-solves}.
+object will, by default, pad the last {}\texttt{blockSize} -
+{}\texttt{num\-Rhs\-Remaining} columns of the RHS and LHS with vectors
+as described in Section {}\ref{sec:basic-block-solves}.
 
 A {}\texttt{Linear\-Solver\-Implementation} that can only perform a
 single-RHS iteration would ignore the block size and set the current
@@ -1045,51 +1166,29 @@ block size as 1 as:
 
 {\scriptsize\begin{verbatim}
   template <class Scalar>
-  void IterativeSolverImplementation<Scalar>::nextBlock(const int maxNumIters, int *numRhsSolved)
+  IterateReturn IterativeSolverImplementation<Scalar>::nextBlock(const int maxNumIters, int *numRhsSolved)
   {
     // Setup for next set of solves
     const int blockSize = 1;
     const int firstRhsOffset = *numRhsSolved;  // Set the first column of next set of RHSs to solve.
-    const int numRhs = 1;
-    lpi_->setCurrSystem(firstRhsOffset,numRhs,blockSize,INITIALIZE_RHS_LHS);
-    RefCountPtr<MultiVector<Scalar> >       currLhs = lpi_->getCurrLhs();
-    RefCountPtr<const MultiVector<Scalar> > currRhs = lpi_->getCurrRhs();
-    // Perform iterations
-    for( int iter = 0; iter < numMaxIter; ++iter ) {
-      doIteration();
+    const int currNumRhs = 1;
+    lpi_->setCurrSystem(firstRhsOffset,currNumRhs,currNumRhs);
+    // Perform iterations on this RHS
+    EIterateTermination doIterationReturn = TERMINATION_UNDEFINED;
+    for( currNumIters_ = 0; currNumIters_ < maxNumIter; ++currNumIters_ ) {
+      doIterationReturn = doIteration();
+      if(doIterationReturn==TERMINATION_STATUS_TEST)
+       break;
     }
+    if( currNumIters_==maxNumIter && doIterationReturn!=TERMINATION_STATUS_TEST )
+      doIterationReturn = TERMINATION_MAX_NUM_ITER;
     // Copy current solution into full solution
     lpi_->setCurrToFullsolution(*this);
     *numRhsSolved += 1;
+    // Return status of this block
+    return IterateReturn(doIterationReturn,currNumIters_);
   }
 \end{verbatim}}
-
-{}\item Use case : \textbf{Perform iteration(s) on current block
-system}
-
-{}\noindent{}Classes/interfaces involved :
-{}\texttt{Linear\-Solver\-Implementation} and
-{}\texttt{Linear\-Problem\-Iteration}
-
-Really the only interaction between the
-{}\texttt{Linear\-Solver\-Implementation} object and the
-{}\texttt{Linear\-Problem\-Iteration} object needed in order to
-perform a single iteration is in applying the operator and (optional)
-preconditioners.  In order to insulate the
-{}\texttt{Linear\-Solver\-Implementation} object from having to worry
-about whether left and/or right preconditioning is being used the
-function {}\texttt{Linear\-Problem\-State::\-apply\-Op(...)} is
-provided that aggregates $\hat{A} = P_L \tilde{A} P_R$ into a single
-operator application.
-
-{}\noindent{}\textbf{Remark:} Consider defining a general aggregate
-operator type for composed operators like $\hat{A} = P_L \tilde{A}
-P_R$ and then simply expose that operator from the
-{}\texttt{Linear\-Problem\-State} interface (calling it something like
-{}\texttt{opAll}).  The only problem with this is that this might
-suggest that this aggregate operator might be in TSFExtended which
-would mean that TSFExtended could not depend on Belos.  This needs to
-be worked out.
 
 {}\item Use case : \textbf{Determine status of individual RHSs in 
 current block system}
@@ -1107,21 +1206,25 @@ very cheap (i.e.~no extra cost) to very expensive (i.e.~doubling or
 more the cost of an iteration) without having to perform any dynamic
 casting.
 
-As shown in Figure {}\ref{belos:fig:BelosSequence}, after each
-iteration of the iterative solver, the {}\texttt{Status\-Test} object
-{}\texttt{st} is called as shown below:
+As shown in Figure {}\ref{belos:fig:BelosSequence}, at the beginning
+of each iteration, the {}\texttt{Status\-Test} object {}\texttt{st} is
+called in order to determine the status of the current solution.  The
+status test is performed before the computation of the iteration so as
+to allow the status test to examine the starting guess for the
+solution.  The status test is invoked as shown below:
 
 {\scriptsize\begin{verbatim}
   template <class Scalar>
-  void IterativeSolverImplementation<Scalar>::doIteration()
+  IterationReturn IterativeSolverImplementation<Scalar>::doIteration()
   {
-    // Perform linear algebra for current iteration
-    computeIteration();
-    // Inform if the current solution is set or not
-    lpi_->setSolutionUpdated(solutionUpdated_);
-    // Check the status of current set of linear systems
-    std::vector<StatusType> status(numCurrRhs_);
-    lpi_->getStatusTest()->checkStatus(this,currNumRhs_,&status[0]);
+    // Ask the status test to check the status of the current systems
+    const int currNumRhs = lpi_->getCurrNumRhs();
+    StatusTest<Scalar> *statusTest = lpi_->getStatusTest();
+    if(statusTest) {
+      std::vector<EStatusType> status(currNumRhs,STATUS_UNCHECKED);
+      statusTest->checkStatus(*this,currNumRhs,currNumRhs,&status[0]);
+      ...
+    }
     ...
   }
 \end{verbatim}}
@@ -1131,23 +1234,25 @@ Before the status test is invoked, the
 {}\texttt{Linear\-Problem\-Iteration} object if the solution
 multi-vector {}\texttt{currLhs} is currently up to date or not.  This
 is performed by the call to
-{}\texttt{lpi\_->\-set\-Solution\-Updated(\-solution\-Updated\-)} where
-{}\texttt{solution\-Updated} is a {}\texttt{bool}ean that is
-determined by the type of solver algorithm.  For example, GMRES would
-set {}\texttt{solution\-Updated=false} since it can not cheaply
-maintain the current solution while CG would set
-{}\texttt{solution\-Updated=true} since CG does automatically maintain
-the current solution.  In the scenario in Figure
-{}\ref{belos:fig:BelosSequence}, the
-{}\texttt{Linear\-Solver\-Implementation} object sets this to
-{}\texttt{false}.
+{}\texttt{lpi\_->\-set\-Curr\-Lhs\-Updated(\-curr\-Lhs\-Updated\-)}
+where {}\texttt{curr\-Lhs\-Updated} is a {}\texttt{bool}ean that is
+determined by the type of solver algorithm.  For most solver
+algorithms {}\texttt{curr\-Lhs\-Updated=false} would be set as is
+shown in the scenario in Figure {}\ref{belos:fig:BelosSequence}.
+However, there are cases when the current LHS may be directly updated
+by the solver algorithm such as where there is no right
+preconditioning or scaling when using BiCG, BiCGStab, QMR etc.~or when
+using CG (where a single preconditioner is used to define the scalar
+product).
 
-After the status of the current estimate of the solution is set, the
-{}\texttt{Status\-Test} object {}\texttt{st} is invoked by calling its
-virtual {}\texttt{checkStatus(...)} member function where the solver
-passes itself as the first argument as shown above. By passing the
-solver to the {}\texttt{Status\-Test} object, even the most
-specialized status tests can be implemented through dynamic casting.
+After
+{}\texttt{lpi\_->\-set\-Curr\-Lhs\-Updated(\-false\-)} is
+called, the {}\texttt{Status\-Test} object {}\texttt{st} is invoked by
+calling its virtual {}\texttt{checkStatus(...)} member function where
+the solver passes itself as the first argument as shown above. By
+passing the solver to the {}\texttt{Status\-Test} object, even the
+most specialized status tests can be implemented through dynamic
+casting.
 
 Once this {}\texttt{Status\-Test} object is activated, it calls back
 on the {}\texttt{Basic\-Iteration\-State} and
@@ -1167,6 +1272,10 @@ attributes defined in Section {}\ref{sec:basic-block-solves}.
 \fbox{
 \begin{minipage}{\textwidth}
 
+{\scriptsize{}\noindent{}\texttt{const LinearProblemState<Scalar>\&
+getProblem() const}} \\ $\bullet$ Returns reference to the
+{}\texttt{Linear\-Problem\-State} object {}\texttt{lps}.
+
 {\scriptsize{}\noindent{}\texttt{int getCurrNumIters() const}} \\
 $\bullet$ Returns the total current number of iterative solver
 iterations over all restarts.
@@ -1175,20 +1284,25 @@ iterations over all restarts.
 $\bullet$ Returns the total current number of iterative solver
 restarts (really only applicable to GMRES).
 
-{\scriptsize{}\noindent{}\texttt{void getCurrNativeResiduals( Scalar
-norms[], MultiVector<Scalar>** residuals = NULL ) const}} \\ $\bullet$
-Returns the norms of the current native residual $n_j =
-||\breve{R}_{(:,j)}||$ for each of the current RHSs $\bar{B}$ in the
-array output argument {}\texttt{norms[]} (length $\bar{b}$) and
+{\scriptsize{}\noindent{}\texttt{ENativeResidualType
+getCurrNativeResidualType () const}} \\ $\bullet$ Returns the nature
+of the native residual norms returned by
+{}\texttt{get\-Curr\-Native\-Residuals(...)}.
+
+{\scriptsize{}\noindent{}\texttt{void getCurrNativeResiduals( const
+int currBlockSize, Scalar norms[], const MultiVector<Scalar>**
+residuals = NULL ) const}} \\ $\bullet$ Returns the relative norms of
+the current native residual as either
+(\ref{belos:eqn:scaled_unprec_rel_norms}) for
+{}\texttt{get\-Curr\-Native\-Residual\-Type()==NATIVE\-\_RESIDUAL\-\_UNPRECONDITIONED}
+or (\ref{belos:eqn:scaled_prec_rel_norms}) for
+{}\texttt{get\-Curr\-Native\-Residual\-Type()==NATIVE\-\_RESIDUAL\-\_PRECONDITIONED}
+in the array output argument {}\texttt{norms[]} (length $\bar{b}$) and
 optionally a pointer to the native residual multi-vector in
 {}\texttt{*residuals} if such a multi-vector is being maintained
-(e.g.~CG will have this residual multi-vector while GMRES will not).
-Note that all iterative solvers must be able to return the norms array
-{}\texttt{norms[]}.
-
-{\scriptsize{}\noindent{}\texttt{const LinearProblemState<Scalar>\&
-getProblem() const}} \\ $\bullet$ Returns reference to the
-{}\texttt{Linear\-Problem\-State} object {}\texttt{lps}.
+(e.g.~CG may have this residual multi-vector while GMRES will not).
+Note that all iterative solvers must be able to return the relative
+norms array {}\texttt{norms[]}.
 
 \end{minipage}
 } % \fbox
@@ -1208,42 +1322,41 @@ interface.  }
 {\scriptsize{}\noindent{}\texttt{int getTotalNumRhs() const}} \\
 $\bullet$ Returns the total number of RHSs $m$.
 
-{\scriptsize{}\noindent{}\texttt{const Vector<Scalar>* getRhsScaling()
+{\scriptsize{}\noindent{}\texttt{const Vector<Scalar>* getRightScaling()
 const}} \\ $\bullet$ Returns pointer to optional scaling vector $s_R$.
 
-{\scriptsize{}\noindent{}\texttt{const Vector<Scalar>* getLhsScaling()
+{\scriptsize{}\noindent{}\texttt{const Vector<Scalar>* getLeftScaling()
 const}} \\ $\bullet$ Returns pointer to optional scaling vector $s_L$.
-
-{\scriptsize{}\noindent{}\texttt{int getCurrBlockSize() const}} \\
-$\bullet$ Returns the current block size $\bar{b}$.
 
 {\scriptsize{}\noindent{}\texttt{int getCurrNumRhs() const}} \\
 $\bullet$ Returns the current number of RHSs $\bar{m}$.
 
-{\scriptsize{}\noindent{}\texttt{void getCurrRhsIndexes( int
-currRhsIndexes[] ) const}} \\ $\bullet$ Returns array
-{}\texttt{curr\-Num\-Indexes[]} of length $\bar{b}$ of indexes that
+{\scriptsize{}\noindent{}\texttt{int getCurrBlockSize() const}} \\
+$\bullet$ Returns the current block size $\bar{b}$.
+
+{\scriptsize{}\noindent{}\texttt{void getCurrRhsIndexes( const int
+currNumRhs, int currRhsIndexes[] ) const}} \\ $\bullet$ Returns array
+{}\texttt{curr\-Num\-Indexes[]} of length $\bar{m}$ of indexes that
 define mapping matrix $\bar{Q}$.  Note that entires in
 {}\texttt{curr\-Num\-Indexes[]} for artificial augmented columns are
-given a negative value to distinguish these columns from columns in
-the original RHS $B$.
+not given since they do not map to original RHSs.
+
+{\scriptsize{}\noindent{}\texttt{const MultiVector<Scalar>\&
+getCurrRhs() const}} \\ $\bullet$ Returns reference to non-mutable
+current RHS $\bar{B}$.
 
 {\scriptsize{}\noindent{}\texttt{const MultiVector<Scalar>\&
 getCurrInitResidual() const}} \\ $\bullet$ Returns reference to
 current initial residual multi-vector $\bar{R}_0$.
 
 {\scriptsize{}\noindent{}\texttt{RefCountPtr<const MultiVector<Scalar>
-> getCurrRhs() const}} \\ $\bullet$ Returns smart pointer to
-non-mutable current RHS $\bar{B}$.
-
-{\scriptsize{}\noindent{}\texttt{RefCountPtr<const MultiVector<Scalar>
 > getCurrInitLhs() const}} \\ $\bullet$ Returns smart pointer to
 non-mutable current initial LHS $\bar{X}_{0,r}$ for the current
 restart.
 
-{\scriptsize{}\noindent{}\texttt{RefCountPtr<MultiVector<Scalar> >
-getCurrLhs() const}} \\ $\bullet$ Returns smart pointer to mutable
-current LHS $\bar{X}$ for the current restart.
+{\scriptsize{}\noindent{}\texttt{const MultiVector<Scalar>\&
+getCurrRhs() const}} \\ $\bullet$ Returns reference to non-mutable
+current LHS $\bar{X}$.
 
 {\scriptsize{}\noindent{}\texttt{const MultiVector<Scalar>\&
 getCurrResidual() const}} \\ $\bullet$ Returns reference to current
@@ -1272,16 +1385,16 @@ information.  These query functions are shown in Figure
 \fbox{
 \begin{minipage}{\textwidth}
 
-{\scriptsize{}\noindent{}\texttt{bool isCurrInitResidualUpdated()
+{\scriptsize{}\noindent{}\texttt{bool isCurrInitResidualComputed()
 const}} \\ $\bullet$ Returns {}\texttt{true} if $\bar{R}_0$ is
-currently updated.
+currently computed.
 
 {\scriptsize{}\noindent{}\texttt{bool isCurrLhsUpdated() const}} \\
 $\bullet$ Returns {}\texttt{true} if $\bar{X}$ is currently updated.
 
-{\scriptsize{}\noindent{}\texttt{bool isCurrResidualUpdated() const}}
+{\scriptsize{}\noindent{}\texttt{bool isCurrResidualComputed() const}}
 \\ $\bullet$ Returns {}\texttt{true} if $\bar{R}$ is currently
-updated.
+computed.
 
 \end{minipage}
 } % \fbox
@@ -1291,7 +1404,6 @@ Derived attribute boolean query functions for
 {}\texttt{Linear\-Problem\-State} interface.  }
 
 \end{figure}
-
 
 The scenario in Figure {}\ref{belos:fig:BelosSequence} shows a
 norm-based status test being used.  In this case, converged solutions
@@ -1306,30 +1418,38 @@ The following pseudo-code shows how this {}\texttt{Status\-Test}
 subclass might implement this status test:
 
 {\scriptsize\begin{verbatim}
-  template <class Scalar>
-  void ResidNormStatusTest<Scalar>::checkStatus(
-    const BasicIterationState<Scalar>   &bis
-    ,const int                          currNumRhs   // == bis.getProblem().getCurrNumRhs()
-    ,StatusType                         status[]     // Array length currNumRhs
+  template<class Scalar>
+  void ResidualNormStatusTest<Scalar>::protectedCheckStatus(
+    const BasicIterationState<Scalar>         &bis
+    ,const int                                currBlockSize // == bis.getProblem().getBlockSize()
+    ,const int                                currNumRhs    // == bis.getProblem().getCurrNumRhs()
+    ,EStatusType                              status[]      // Array length currNumRhs
     )
   {
+    const std::vector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType> &tols = this->tols();
     const LinearProblemState<Scalar> &lps = bis.getProblem();
-    // Force the computation of the current solution if it is not already available
-    if(!lps.isCurrLhsUpdated()) bis.forceCurrLhsUpdate();
-    // Get the initial and current residuals and their norms
-    const MultiVector<Scalar> &R_bar_0 = lps.getCurrInitResidual(); // Is cached internally
-    const MultiVector<Scalar> &R_bar  = lps.getCurrResidual();     // Is cached internally
-    std::vector<Scalar> R_bar_0_nrms(currNumRhs), R_bar_nrms(currNumRhs);
-    norms( *R_bar_0, &R_bar_0_nrms[0] ); 
-    norms( *R_bar, &R_bar_nrms[0] );
-    // Get the mapping of the current RHSs to the original full RHSs
-    std::vector<int> currRhsIndexes(currNumRhs);
-    lps.getCurrRhsIndexes(&currRhsIndexes[0]);
-    // Enforce different tolerances for each original RHS
-    for( int k = 0; k < numCurrRhs; ++k ) {
-      const int origRhsIndex = currRhsIndexes[k];
-      if( R_bar_nrm[k]/R_bar_0_nrm[k] < tols_[origRhsIndex] )  status[k] = STATUS_CONVERGED;
-      else                                                     status[k] = STATUS_UNCONVERGED;
+  #ifdef _DEBUG
+    TEST_FOR_EXCEPT( tols.size() > 1 && ( lps.getTotalNumRhs() != static_cast<int>(tols.size()) ) );
+  #endif
+    // Force update of currLhs
+    if(!lps.isCurrLhsUpdated()) bis.forceCurrLhsUpdate();  
+    // Get the current and initial unscaled unpreconditioned residuals and compute their norms
+    const TSFCore::MultiVector<Scalar>
+      &R_bar_0 = lps.getCurrInitResidual(),
+      &R_bar   = lps.getCurrResidual();
+    if(static_cast<int>(R_bar_norms_.size()) < currBlockSize) {
+      R_bar_norms_.resize(currBlockSize);
+      R_bar_0_norms_.resize(currBlockSize);
+    }
+    TSFCore::norms( R_bar, &R_bar_norms_[0] );
+    TSFCore::norms( R_bar_0, &R_bar_0_norms_[0] );
+    if( static_cast<int>(currRhsIndexes_.size()) < currNumRhs ) currRhsIndexes_.resize(currNumRhs);
+    bis.getProblem().getCurrRhsIndexes( currNumRhs, &currRhsIndexes_[0] );
+    for( int k = 0; k < currNumRhs; ++k ) {
+      const int origRhsIndex = currRhsIndexes_[k];
+      const typename ST::magnitudeType R_rel_norm = R_bar_norms_[k] / R_bar_0_norms_[k];
+      if( R_rel_norm <= tols[origRhsIndex-1] )  status[k] = STATUS_CONVERGED;
+      else                                      status[k] = STATUS_UNCONVERGED;
     }
   }
 \end{verbatim}}
@@ -1337,14 +1457,15 @@ subclass might implement this status test:
 The above example status test function can match a particular column
 in the current residual $\bar{R}$ with an original column in the full
 RHS $B$ by calling the function
-{}\texttt{Linear\-Problem\-State::\-getCurrRhsIndexes(...)}  which
-returns an array of indexes mapping the current RHSs to the original
-RHSs.  The returned integer array essentially defines the mapping
-matrix $\bar{Q}$ defined in Section {}\ref{sec:basic-block-solves}.
-These returned indexes (in the array {}\texttt{currRhsIndexes}) are
-used to select potentially different tolerances from the private array
-{}\texttt{tols\_} (where {}\texttt{tols\_} was setup by the client
-before invoking the linear solver).
+{}\texttt{Linear\-Problem\-State::\-get\-Curr\-Rhs\-Indexes(...)}
+which returns an array of indexes mapping the current RHSs to the
+original RHSs.  The returned integer array essentially defines the
+mapping matrix $\bar{Q}$ defined in Section
+{}\ref{sec:basic-block-solves}.  These returned indexes (in the array
+{}\texttt{currRhsIndexes[]}) are used to select potentially different
+tolerances from the private array {}\texttt{tols} (where
+{}\texttt{this->tols()} was setup by the client before invoking the
+linear solver).
 
 {}\texttt{Status\-Test} subclasses can also be easily setup that do
 not require the current solution or unscaled unpreconditioned residual
@@ -1353,35 +1474,34 @@ iterations (by checking
 {}\texttt{Basic\-Iteration\-State::\-get\-Curr\-Num\-Iters()}), the
 number of restart iterations (i.e.~for GMRES by checking
 {}\texttt{Basic\-Iteration\-State::\-get\-Curr\-Num\-Restarts()}), or
-the native residual norms $n_j = ||\breve{R}_{(:,j)}||$ (returned by
-calling
+the native residual norms (returned by calling
 {}\texttt{Basic\-Iteration\-State::\-get\-Curr\-Native\-Residuals(...)}).
 Every implementation of {}\texttt{Basic\-Iteration} (and therefore
 {}\texttt{Basic\-Iteration\-State}) is required to maintain an
-estimate of the norm(s) of the current block of linear systems.  The
-native norms $n_j = ||\breve{R}_{(:,j)}||$ are returned by the
-function
+estimate of the norm(s) of the current block of linear systems as
+defined by (\ref{belos:eqn:scaled_unprec_rel_norms}) or
+(\ref{belos:eqn:scaled_prec_rel_norms}).  The native norms are
+returned by the function
 {}\texttt{Basic\-Iteration\-State::\-getCurrNativeResidual(...)}.  The
 following function shows how to check the native residual norms for a
 simple norm-based status test subclass that only compares to a single
 tolerance:
 
 {\scriptsize\begin{verbatim}
-  template <class Scalar>
-  void NativeNormStatusTest<Scalar>::checkStatus(
-    const BasicIterationState<Scalar>   &bis
-    ,const int                          currNumRhs   // == bis.getProblem().getCurrNumRhs()
-    ,StatusType                         status[]     // Array length currNumRhs
+  template<class Scalar>
+  void ResidualNormStatusTest<Scalar>::protectedCheckStatus(
+    const BasicIterationState<Scalar>         &bis
+    ,const int                                currBlockSize // == bis.getProblem().getBlockSize()
+    ,const int                                currNumRhs    // == bis.getProblem().getCurrNumRhs()
+    ,EStatusType                              status[]      // Array length currNumRhs
     )
   {
-    // Get the native norms
-    std::vector<Scalar> R_native_nrms(currNumRhs);
-    bis.getCurrNativeResiduals( &R_native_nrns[0] );
-    // Enforce the same tolerance for all RHSs
-    for( int k = 0; k < numCurrRhs; ++k ) {
-      const int origRhsIndex = currRhsIndexes[k];
-      if( R_native_nrm[k] < tol_ )  status[k] = STATUS_CONVERGED;
-      else                          status[k] = STATUS_UNCONVERGED;
+    if(static_cast<int>(R_native_norms_.size()) < currBlockSize) R_native_norms_.resize(currBlockSize);
+    bis.getCurrNativeResiduals( currBlockSize, &R_native_norms_[0] );
+    for( int k = 0; k < currNumRhs; ++k ) {
+      const int origRhsIndex = currRhsIndexes_[k];
+      if( R_native_norms_[k] <= tol )  status[k] = STATUS_CONVERGED;
+      else                             status[k] = STATUS_UNCONVERGED;
     }
   }
 \end{verbatim}}
@@ -1410,16 +1530,31 @@ which RHSs these are and they will be removed as follows:
 
 {\scriptsize\begin{verbatim}
   template <class Scalar>
-  void IterativeSolverImplementation<Scalar>::doIteration(...)
+  IterationReturn IterativeSolverImplementation<Scalar>::doIteration()
   {
-    ..
-    // Deflate systems that are converged
-    int numToRemove = 0;
-    std::vector<int> indexesToRemove(lpi_->getCurrNumRhs());
-    for( int k = 0; k < lpi_->getNumCurrRhs(); ++k )
-      if(status[k]==STATUS_CONVERGED) indexesToRemove[numToRemove++] = currRhsIndexes[k];
-    lpi_->deflate(*this,numToReomve,&indexesToRemove[0]);
-    ..
+    ...
+    if(statusTest) {
+      ...
+      // Get a list of the systems that have converged (according to status test)
+      bool allConverged = true;
+      int numToRemove = 0;
+      std::vector<int> indexesToRemove(currNumRhs);
+      for( int k = 0; k < currNumRhs; ++k ) {
+        if(status[k]==STATUS_CONVERGED)
+          indexesToRemove[numToRemove++] = k+1; // These are one-based
+        else
+          allConverged = false;
+      }
+      if(allConverged)
+        return TERMINATION_STATUS_TEST;
+      // Deflate systems that are converged (if not all converged)
+      if(numToRemove) {
+        lpi_->deflate(*this,numToRemove,&indexesToRemove[0]);
+        // Deflate private workspace
+        ...
+      }
+    }
+    ...
   }
 \end{verbatim}}
 
@@ -1429,40 +1564,64 @@ for the converged and deflated RHSs.  The following is an
 implementation of the {}\texttt{deflate(...)} function:
 
 {\scriptsize\begin{verbatim}
-  template <class Scalar>
-  void LinearProblem<Scalar>::defalate( const BasicIterationState &bis
-      ,const int numToRemove, const int indexesToRemove[]  )
+  template<class Scalar>
+  void LinearProblem<Scalar>::deflate(
+    const BasicIterationState<Scalar>        &bis
+    ,const int                               numCurrRhsToRemove
+    ,const int                               currRhsIndexesToRemove[]
+    )
   {
-    // Get the current "conveged" LHSs
-    RefCountPtr<MultiVector<Scalar> > currConvLhs;
-    if( this->isCurrLhsUpdated() ) // Already updated?  Just grab them from a view!
-      currConvLhs = this->getCurrLhs()->subView(numToRemove,indexesToRemove);
-    else                           // Not already updated?  Force just the computation of these!  
-      currConvLhs = bis.getCurrLhs(numToRemove,indexesToRemove);
-    // Get the full indexes of converged LHSs
-    std::vector<int> currRhsIndexes(currNumRhs);
-    this->getCurrRhsIndexes(&currRhsIndexes[0]);
-    std::vector<int> fullIndexesToRemove(numToRemove);
-    for( int k = 0; k < numToRemove; ++k ) fullIndexesToRemove[k] = currRhsIndexes[indexesToRemove[k]];
-    // Set the converged current LHS to full LHS
-    const RefCountPtr<MultiVector<Scalar> > lhs = this->getLhs();
-    assign( &*lhs->subView(numToRemove,&fullIndexesToRemove[0]), *currConvLhs );
+    if(!numCurrRhsToRemove) return; // Nothing to deflate!
+    // Get the indexes in the original RHS of the converged RHSs
+    std::vector<int> origRhsIndexesToRemove(numCurrRhsToRemove);
+    for( int k = 0; k < numCurrRhsToRemove; ++k )
+      origRhsIndexesToRemove[k] = currRhsIndexes_[currRhsIndexesToRemove[k]-1];
+    // Copy converged LHS into full LHS
+    if(!this->isCurrLhsUpdated()) bis.forceCurrLhsUpdate();
+    assign( &*lhs_->subView(numCurrRhsToRemove,&origRhsIndexesToRemove[0])
+            ,*currLhs_->subView(numCurrRhsToRemove,&currRhsIndexesToRemove[0]) );
+    // Deflate private multi-vectors and arrays
+    ...
+    // Update the dimensions
+    currNumRhs_ -= numCurrRhsToRemove;
+    currBlockSize_ -= numCurrRhsToRemove;
+    ...
   }
 \end{verbatim}}
 
 In the above function, if the current LHS solution $\bar{X}$ is not
 updated then the function
-{}\texttt{Basic\-Iteration\-State\-::get\-Curr\-Lhs(...)} with the
-indexes of only the LHSs that are ``converged'' and not all the
-current LHS.  Note that calling the function
-{}\texttt{Basic\-Iteration\-State\-::force\-Curr\-Lhs\-Update()} would
-result in unecessary compuations since it would also compute columns
-for LHSs that are not converged and these current LHS would simply be
-thrown away.
+{}\texttt{Basic\-Iteration\-State\-::force\-Curr\-Lhs\-Update()} is
+called.
 
-In addition, after the {}\texttt{deflate(...)} function the
+In addition, after the {}\texttt{deflate(...)} function is caled the
 {}\texttt{Linear\-Solver\-Implementation} would also have to deflate
-its data structures for ``converged'' the RHSs being removed.
+its data structures for ``converged'' the RHSs being removed but this
+is simple given generic helper functions.
+
+{}\item Use case : \textbf{Perform iteration(s) on current block
+system}
+
+{}\noindent{}Classes/interfaces involved :
+{}\texttt{Linear\-Solver\-Implementation} and
+{}\texttt{Linear\-Problem\-Iteration}
+
+Really the only interaction between the
+{}\texttt{Linear\-Solver\-Implementation} object and the
+{}\texttt{Linear\-Problem\-Iteration} object needed in order to
+perform a single iteration is in applying the operator and (optional)
+preconditioners.  In order to insulate the
+{}\texttt{Linear\-Solver\-Implementation} object from having to worry
+about whether left and/or right preconditioning is being used a
+combined linear operator object for $\hat{A} = P_L \tilde{A} P_R$ is
+returned from the function
+{}\texttt{Linear\-Problem\-State::\-get\-Conbined\-Operator(...)} (as
+shown in the scenario in Figure {}\ref{belos:fig:BelosSequence}).  The
+current scaled preconditioned residual $P_L S_L \bar{R}$ itself can be
+computed using the function
+{}\texttt{Linear\-Problem\-Iteration::\-compute\-Curr\-Prec\-Residual(...)} 
+and this is all that most iterative solves need what wish to be
+oblivious to the type of scaling and preconditioning being used.
 
 {}\item Use case : \textbf{Finalize computation of ``solution'' of
 current block system}
@@ -1485,23 +1644,16 @@ those components of the final solution by simply calling the function
 the {}\texttt{Basic\-Iteration\-State\-::force\-Curr\-Lhs\-Update()}
 function to get the solution for whatever converged RHSs that have not
 already been deflated out and then sets these into the full LHS.  An
-implementation of the {}\texttt{set\-Curr\-To\-Full\-Lhs(...)} 
-function is shown below:
+concrete implementation of the
+{}\texttt{set\-Curr\-To\-Full\-Lhs(...)} function is shown below:
 
 {\scriptsize\begin{verbatim}
   template <class Scalar>
   void LinearProblem<Scalar>::setCurrToFullLhs( const BasicIterationState &bis )
   {
-    // Get the current "conveged" LHSs
-    bis.forceCurrLhsUpdate()
-    const RefCountPtr<const MultiVector<Scalar> > currLhs = this->getCurrLhs();
-    // Get the full indexes of converged LHSs
-    const int currNumRhs = this->currNumRhs();
-    std::vector<int> currRhsIndexes(currNumRhs);
-    this->getCurrRhsIndexes(&currRhsIndexes[0]);
-    // Set the converged current LHS to full LHS
-    const RefCountPtr<MultiVector<Scalar> > lhs = this->getLhs();
-    assign( &*lhs->subView(currNumRhs,&currRhsIndexes[0]), *currLhs );
+    if(!isCurrLhsUpdated_) bis.forceCurrLhsUpdate();
+    assign( &*lhs_->subView(currNumRhs_,&currRhsIndexes_[0]), *currLhs_->subView(TSFCore::Range1D(1,currNumRhs_)) );
+    currNumRhs_ = 0; // Set as uninitialized
   }
 \end{verbatim}}
 
@@ -1513,13 +1665,18 @@ There are several iterative linear solver implementations that support
 these interfaces:
 
 \begin{enumerate}
-\item Block flexible (and regular) GMRES (Heidi)
-\item Block CG (Heidi)
-\item Non-block flexible (and regular) GMRES (with only single RHS) (Ross/Heidi)
-\item Non-block CG (with simple multiple RHS) (Ross)
-\item Non-block BiCG (with simple multiple RHS ) (Ross)
-\item Non-block BiCGStab (with only single RHS) (Kevin)
+\item {}\texttt{Belos::NonblockGmres}: Non-block GMRES (with only single RHS) (Ross/Heidi), status = completed
+\item {}\texttt{Belos::NonblockCg}: Non-block CG (with simple multiple RHS) (Ross), status = completed
+\item {}\texttt{Belos::BlockGmres}: Block flexible (and regular) GMRES (Heidi), status = not yet
+\item {}\texttt{Belos::BlockCg}: Block CG (Heidi), not yet
+\item {}\texttt{Belos::NonblockBiCg}: Non-block BiCG (with simple multiple RHS ) (Ross), status = not yet
+\item {}\texttt{Belos::NonblockBiCgStab}: Non-block BiCGStab (with only single RHS) (Kevin), status = not yet
 \end{enumerate}
+
+The solvers {}\texttt{Belos::NonblockGmres} and
+{}\texttt{Belos::NonblockCg} are working solvers but can also be
+consisdered to be prototypical code to demonstrate the principles
+involved.
 
 \section{Summary}
 
@@ -1543,7 +1700,6 @@ in such a way as to maximize reuse.
 
 \begin{SANDdistribution}
 % External
-\SANDdistExternal{1}{} Carl Laird \\ Department Chemical Engineering\\Carnegie Mellon University\\5000 Forms Ave.\\Pittsburgh, PA 15213
 \SANDdistExternal{1}{} Matthias Heinkenschloss \\ Department of Computational and Applied Mathematics\\MS 134 Rice University\\
 6100 S. Main Street\\Houston, TX 77005-1892
 \SANDdistExternal{1}{} Bill Symes\\Department of Computational and Applied Mathematics\\MS 134 Rice University\\
@@ -1553,19 +1709,13 @@ in such a way as to maximize reuse.
 \SANDdistExternal{1}{} Mark Gockenbach \\ Department of Mathematical Sciences\\Michigan Technological University\\ 
 1400 Townsend Drive\\Houghton, Michigan 49931-1295, U.S.A.
 \SANDdistExternal{1}{} Paul Sexton \\ Box 1560 \\ St. John's University \\ Collegeville, MN 56321
-\SANDdistExternal{1}{} Andreas Wachter \\  \\ IBM Watson Research Center \\
-???Address???
 % Sandia Line
 %\SANDdistInternal{1}{0847}{Bill Camp}{9200}
 %\SANDdistInternal{1}{0847}{Sudip Dosanjh}{9233}
 % 9211
 \SANDdistInternal{1}{0370}{Scott Mitchell}{9211}
-\SANDdistInternal{1}{0370}{David Gay}{9211}
 \SANDdistInternal{1}{0370}{Roscoe Bartlett}{9211}
-\SANDdistInternal{1}{0370}{Scott Collis}{9211}
 \SANDdistInternal{1}{0370}{Bart van Bloemen Waanders}{9211}
-\SANDdistInternal{1}{0370}{Mike Eldred}{9211}
-\SANDdistInternal{1}{0370}{Laura Swiler}{9211}
 % 9214
 \SANDdistInternal{1}{9159}{Mark Adams}{9214}
 \SANDdistInternal{1}{1110}{Pavel Bochev}{9214}
