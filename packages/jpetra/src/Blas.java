@@ -35,4 +35,12 @@ package Jpetra;
 public interface Blas {
     public double dot(double[] x, double[] y);
     
+    public double norm2(double[] x);
+    
+    public void scale(double scalar, double[] x);
+    
+    public double asum(double[] x);
+    
+    public int iamax(double[] x);
+    
 }

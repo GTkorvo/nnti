@@ -148,7 +148,7 @@ public class CcjComm extends JpetraObject implements Comm {
      *
      * @return <code>myVnode</code>
      */
-    public int getMyVnode() {
+    public int getVnodeId() {
         return myVnode;
     }
 
@@ -320,7 +320,7 @@ public class CcjComm extends JpetraObject implements Comm {
      *
      * @return <code>myThread</code>
      */      
-    public int getThreadID() {
+    public int getThreadId() {
         return myThread;
     }
 
@@ -363,7 +363,7 @@ public class CcjComm extends JpetraObject implements Comm {
     
     
     public Distributor createDistributor() {
-        return new CcjDistributor(this);
+        return new CcjDistributor();
     }
     
     public CcjLink getCcjLink() {
@@ -375,6 +375,7 @@ public class CcjComm extends JpetraObject implements Comm {
     }
     
     public Directory createDirectory(ElementSpace elementSpace) {
+        return null;
     }
     
 }

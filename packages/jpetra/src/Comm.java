@@ -252,12 +252,12 @@ public interface Comm {
      *
      * @return the rank of the calling vnode in MPI (CCJ); 0 in serial mode
      */
-    public int getVnodeID();
+    public int getVnodeId();
     
     /**
      * Ask about this one.
      */
-    public int getThreadID();
+    public int getThreadId();
     
     /**
      * Sets the thread ID for the calling vnode.

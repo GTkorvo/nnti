@@ -170,7 +170,7 @@ public class SerialComm extends JpetraObject implements Comm {
      * Always returns 0 since threads are not yet implemented.
      * @return 0
      */
-    public int getThreadID() {
+    public int getThreadId() {
         return 0;
     }
     
@@ -178,7 +178,7 @@ public class SerialComm extends JpetraObject implements Comm {
      * Since this is a serial implementation of <code>Comm</code> it always returns 0.
      * @return 0
      */
-    public int getVnodeID() {
+    public int getVnodeId() {
         return 0;
     }
     

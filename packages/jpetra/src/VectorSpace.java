@@ -78,6 +78,10 @@ public class VectorSpace extends JpetraObject {
         return this.elementSpace.isMyGlobalElementId(globalIndex);
     }
     
+    public Comm getComm() {
+        return this.elementSpace.getComm();
+    }
+    
     // !! not yet implemented
     public boolean equals(VectorSpace vectorSpace) {
         return false;

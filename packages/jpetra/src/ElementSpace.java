@@ -70,15 +70,15 @@ public class ElementSpace {
         int numRemainderIndicesToAdd = 0;
         // if the ElementSpace does not map evenly onto all vectors
         // then give vnodes < remainder an additional element
-        if (comm.getVnodeID() < this.numRemainderIndices) {
+        if (comm.getVnodeId() < this.numRemainderIndices) {
             this.numMyGlobalElements++;
             // accounts for the indices owned by vnodes < myVnode
-            numRemainderIndicesToAdd = comm.getVnodeID();
+            numRemainderIndicesToAdd = comm.getVnodeId();
         }
         else {
             numRemainderIndicesToAdd = numRemainderIndices;
         }
-        this.myGlobalStartIndex = (comm.getVnodeID() * this.numIndicesPerVnode) + this.numRemainderIndices;
+        this.myGlobalStartIndex = (comm.getVnodeId() * this.numIndicesPerVnode) + this.numRemainderIndices;
     }
     
     /**
@@ -96,7 +96,7 @@ public class ElementSpace {
             this.numGlobalElements = myGlobalElements.length;
             return;
         }
-        
+    
         // parallel only
         // need to get the number of global elements by doing a gather of the number
         // of elements on each vnode

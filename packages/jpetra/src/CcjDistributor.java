@@ -28,38 +28,21 @@
 
 package Jpetra;
 
-import org.netlib.blas.Ddot;
-import org.netlib.blas.Dnrm2;
-import org.netlib.blas.Dscal;
-import org.netlib.blas.Dasum;
-import org.netlib.blas.Idamax;
 /**
  *
  * @author  Jason Cross
  */
-public class NetlibBlas extends JpetraObject implements Blas {
+public class CcjDistributor extends JpetraObject implements Distributor {
     
-    public void NetlibBlas () {}
-    
-    public double dot(double[] x, double[] y) {
-        return Ddot.ddot(x.length-1, x, 1, 1, y, 1, 1);
+public CcjDistributor() {
     }
     
-    public double norm2(double[] x) {
-        return Dnrm2.dnrm2(x.length-1,x,1,1);
+    public int[] createFromRecieves(int[] remoteGlobalElementIds, int[] remoteGlobalVnodeIds) {
+        return null;  // !! not implemented
     }
     
-    public void scale(double scalar, double[] x) {
-        Dscal.dscal(x.length-1,scalar,x,1,1);
-        return;
-    }
-    
-    public double asum(double[] x) {
-        return Dasum.dasum(x.length-1,x,1,1);
-    }
-    
-    public int iamax(double[] x) {
-        return Idamax.idamax(x.length-1,x,1,1);
+    public int createFromSends(int[] exportVnodeIds) {
+        return 0; // !! not implemented
     }
     
 }

@@ -44,7 +44,15 @@ public class Util extends JpetraObject {
     public Util(Util util) {
     }
 
-    public void sort(boolean sortAscending, int numKeys, int [] keys, int numDoubleCompanions, 
+    public static double max(double x, double y) {
+        return (( (x) > (y) ) ? x : y);
+    }
+    
+    public static double min(double x, double y) {
+        return (( (x) < (y) ) ? x : y);
+    }
+    
+    public static void sort(boolean sortAscending, int numKeys, int [] keys, int numDoubleCompanions, 
                      double [][] doubleCompanions, int numIntCompanions, int [][] intCompanions) {
                      
         int i;
