@@ -57,7 +57,10 @@ comm =  Comm.java \
 	SerialDistributor.java
 util =  Time.java \
 	Util.java \
-        FlopCounter.java
+        FlopCounter.java \
+        RandomNumberGenerator.java \
+        JavaRandom.java \
+        RngPackRandom.java
 data_structs =  ElementSpace.java \
 		VectorSpace.java \
 		Graph.java \
@@ -74,14 +77,14 @@ mmio =  MatrixMarketIO/VectorInfo.java \
 	MatrixMarketIO/GraphReader.java \
 	MatrixMarketIO/GraphWriter.java \
 	MatrixMarketIO/MultiVectorReader.java \
-	MatrixMarketIO/MultiVectorWriter.java \
+	MatrixMarketIO/MultiVectorWriter.java 
 
 
 
 #the compilation will fail if the classes are not compiled in the proper order		  
 all:
 	javac -d ../.. $(core) $(misc_support) $(util) $(ccj_support) $(comm) $(data_structs) $(mmio)
-makejar:
-	jar -cf ../../Jpetra.jar ../Jpetra/*.class ../Jpetra/CcjSupport/*.class ../Jpetra/MatrixMarketIO/*.class	
+jar:
+	jar -cf ../../Jpetra.jar ../../Jpetra/*.class ../../Jpetra/CcjSupport/*.class ../../Jpetra/MatrixMarketIO/*.class	
 clean:
-	rm -f *.class MatrixMarketIO/*.class CcjSupport/*.class
+	rm -f ../../Jpetra/*.class ../../Jpetra/MatrixMarketIO/*.class ../../Jpetra/CcjSupport/*.class

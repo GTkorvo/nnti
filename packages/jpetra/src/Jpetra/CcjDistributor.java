@@ -54,7 +54,7 @@ public class CcjDistributor extends JpetraObject implements Distributor {
     private int[][] reverseExportVnodeIdsGidsLids;
     
     public CcjDistributor() {
-        this.outputStreams.put("DISTRIBUTOR", new Output("CcjDistributor: ", true, System.out, false, System.out));
+        //this.outputStreams.put("DISTRIBUTOR", new Output("CcjDistributor: ", true, System.out, false, System.out));
         // empty
     }
     
@@ -173,7 +173,7 @@ public class CcjDistributor extends JpetraObject implements Distributor {
         int dataIndex;
         for(int i=0; i < numSends.length; i++) {
             if(numSends[i] > 0) {
-                this.println("DISTRIBUTOR", "Sending " + numSends[i] + " objects to vnode " + i);
+                //this.println("DISTRIBUTOR", "Sending " + numSends[i] + " objects to vnode " + i);
                 // we're going to send data to vnode i
                 // so buffer up all send objects
                 buffer = new int[numSends[i]];
@@ -190,7 +190,7 @@ public class CcjDistributor extends JpetraObject implements Distributor {
         int[][] receivedData = new int[senders.length][];
         for(int i=0; i < senders.length; i++) {
             if (senders[i] == 1) {
-                this.println("DISTRIBUTOR", "Receiving from vnode " + i);
+                //this.println("DISTRIBUTOR", "Receiving from vnode " + i);
                 receivedData[i] = (int[]) comm.receive(i);
             }
         }
@@ -232,7 +232,7 @@ public class CcjDistributor extends JpetraObject implements Distributor {
             dataIndex = 0;
             for(int i=0; i < reverseExportVnodeIdsGidsLids[0].length; i++) {
                 if (reverseExportVnodeIdsGidsLids[0][i] > 0) {
-                    this.println("DISTRIBUTOR", "Sending " + reverseExportVnodeIdsGidsLids[0][i] + " objects to vnode " + i);
+                    //this.println("DISTRIBUTOR", "Sending " + reverseExportVnodeIdsGidsLids[0][i] + " objects to vnode " + i);
                     
                     // we're going to send data to vnode i
                     // so buffer up all send objects
@@ -251,14 +251,14 @@ public class CcjDistributor extends JpetraObject implements Distributor {
         if (!doReverse) {
             for(int i=0; i < senders.length; i++) {
                 if (senders[i] == 1) {
-                    this.println("DISTRIBUTOR", "Receiving from vnode " + i);
+                    //("DISTRIBUTOR", "Receiving from vnode " + i);
                     receivedData[i] = comm.receive(i);
                 }
             }
         } else {
             for(int i=0; i < reverseSenders.length; i++) {
                 if (reverseSenders[i] == 1) {
-                    this.println("DISTRIBUTOR", "Receiving from vnode " + i);
+                    //this.println("DISTRIBUTOR", "Receiving from vnode " + i);
                     receivedData[i] = comm.receive(i);
                 }
             }

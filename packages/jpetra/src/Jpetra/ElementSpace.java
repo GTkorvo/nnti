@@ -193,7 +193,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         tmp = comm.maxAll(tmp);
         this.maxGlobalElementId = tmp[0];
         // find the number of global elements
-        this.println("STD", "ElementSpace: maxGid: " + this.maxGlobalElementId + " minGid: " + this.minGlobalElementId);
+        //this.println("STD", "ElementSpace: maxGid: " + this.maxGlobalElementId + " minGid: " + this.minGlobalElementId);
         this.numGlobalElements = this.maxGlobalElementId - this.minGlobalElementId + 1;
         
         // find global min and max for global elements
@@ -204,14 +204,14 @@ public class ElementSpace extends JpetraObject implements Externalizable {
             maxInteger = new Integer(this.maxMyGlobalElementId);
         }*/
         
-        this.println("STD", "ElementSpace(int[], Comm): minMyGlobalElementId: " + this.minMyGlobalElementId + " maxMyGlobalElementId: " + this.maxMyGlobalElementId);
+        //this.println("STD", "ElementSpace(int[], Comm): minMyGlobalElementId: " + this.minMyGlobalElementId + " maxMyGlobalElementId: " + this.maxMyGlobalElementId);
         /*Serializable tmp = comm.minAll((Serializable) minInteger);
         this.minGlobalElementId = ((Integer) tmp).intValue();
         tmp = comm.maxAll((Serializable) maxInteger);
         this.maxGlobalElementId = ((Integer) tmp).intValue();
          */
         // find the number of global elements
-        this.println("STD", "ElementSpace(int[], Comm): maxGid: " + this.maxGlobalElementId + " minGid: " + this.minGlobalElementId);
+        //this.println("STD", "ElementSpace(int[], Comm): maxGid: " + this.maxGlobalElementId + " minGid: " + this.minGlobalElementId);
         this.numGlobalElements = this.maxGlobalElementId - this.minGlobalElementId + 1;
     }
     
@@ -276,7 +276,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         }
         
         if ((globalElementId < this.minMyGlobalElementId) || (globalElementId > this.maxMyGlobalElementId)) {
-            this.println("STD", "GlobalId " + globalElementId + " failed min/max (" + this.minMyGlobalElementId + "/" + this.maxMyGlobalElementId + ") test. getNumMyGlobalElements(): " + this.getNumMyGlobalElements());
+            //this.println("STD", "GlobalId " + globalElementId + " failed min/max (" + this.minMyGlobalElementId + "/" + this.maxMyGlobalElementId + ") test. getNumMyGlobalElements(): " + this.getNumMyGlobalElements());
             return -1;
         }
         
@@ -294,7 +294,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
         // abritrarily defined parrallel
         Object result = gidsToLids.get(new Integer(globalElementId));
         if (result == null) {
-            this.println("STD", "GlobalId " + globalElementId + " failed to be found in gidsToLids set.");
+            //this.println("STD", "GlobalId " + globalElementId + " failed to be found in gidsToLids set.");
             return -1;
         }
         return ((Integer) result).intValue();
@@ -459,7 +459,7 @@ public class ElementSpace extends JpetraObject implements Externalizable {
             otherElementSpace.minLocalElementId != this.minLocalElementId ||
             otherElementSpace.maxLocalElementId != this.maxLocalElementId) {
                 
-            this.println("STD", "numGlobalElements: " + otherElementSpace.numGlobalElements + " " + this.numGlobalElements);
+            /*this.println("STD", "numGlobalElements: " + otherElementSpace.numGlobalElements + " " + this.numGlobalElements);
             this.println("STD", "minGlobalElementId: " + otherElementSpace.minGlobalElementId + " " + this.minGlobalElementId);
             this.println("STD", "maxGlobalElementId: " + otherElementSpace.maxGlobalElementId + " " + this.maxGlobalElementId);
             this.println("STD", "distributedGlobally: " + otherElementSpace.distributedGlobally + " " + this.distributedGlobally);
@@ -469,12 +469,12 @@ public class ElementSpace extends JpetraObject implements Externalizable {
             this.println("STD", "maxMyGlobalElementId: " + otherElementSpace.maxMyGlobalElementId + " " + this.maxMyGlobalElementId);
             this.println("STD", "minLocalElementId: " + otherElementSpace.minLocalElementId + " " + this.minLocalElementId);
             this.println("STD", "maxLocalElementId: " + otherElementSpace.maxLocalElementId + " " + this.maxLocalElementId);
-            this.println("STD", "In ElementSpace.equals: one of the attributes of the two ElementSpaces did not match.");
+            this.println("STD", "In ElementSpace.equals: one of the attributes of the two ElementSpaces did not match.");*/
             return false;
         }
         
         if (!this.distributedLinearly && !this.distributedUniformly && !otherElementSpace.gidsToLids.equals(this.gidsToLids)) {
-            this.println("STD", "In ElementSpace.equals: !otherElementSpace.gidsToLids.equals(this.gidsToLids)");
+            //this.println("STD", "In ElementSpace.equals: !otherElementSpace.gidsToLids.equals(this.gidsToLids)");
             return false;
         }
         
