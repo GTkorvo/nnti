@@ -1138,6 +1138,298 @@ options as appropriate.
 %Trilinos configuration and build process, it will be built
 %automatically along with other Trilinos packages.
 
+\subsection{Using Epetra Objects with Trilinos Packages}
+
+In this section we provide a simple example of how Epetra matrices and
+vectors can be initialized, reordered and then used by multiple
+Trilinos packages.  In this particular case we do not use the Epetra
+construction facilities because of space considerations, but it is
+worth noting that Epetra matrices can be efficiently constructed
+entry-by-entry, row-by-row or column-by-column, where entries can be
+single scalar values or variable sized block entries.  There is also
+support for clique-based construction where, for example, element
+stiffness matrices may be passed in to fill the matrix.  Finally,
+almost any combination of these fill techniques can be used on a given
+matrix.
+
+Figure~\ref{fig:readmatrix} shows how a matrix can be read from the
+Trilinos Utilities package matrix gallery.  The matrix and vectors are
+initially in natural ordering.  However, they can be easily reorder
+via one of multiple techniques.  In particular, Epetra provides an
+interface to Zoltan~\cite{zoltan} which in turn provides multiple load
+balancing options to minimize communication costs and balance
+computational load and improve local ordering.  In this particular figure, we indicate that a
+two-dimensional partitioning is performed as well as a reverse
+Cuthill-McKee reordering on the equations that are local to each processor
+\begin{figure}
+{\scriptsize
+\begin{tabular}{|p{2.4in}|p{2.4in}|}\hline
+\begin{verbatim}
+// Header files omitted...
+int main(int argc, char *argv[]) {
+
+// Initialize MPI, MpiComm
+MPI_Init(&argc,&argv);
+Epetra_MpiComm Comm( MPI_COMM_WORLD );
+                     
+// Put same number of equations on each PE   
+int NumMyElements = 1000 ;
+Epetra_Map Map(-1, NumMyElements, 0, Comm);
+int NumGlobalElements = Map.NumGlobalElements();
+
+// Create Matrix: tridiag(-1,2,-1) 
+Epetra_CrsMatrix A(Copy, Map, 3);
+double negOne = -1.0; double posTwo = 2.0;
+
+for (int i=0; i<NumMyElements; i++) {
+  int GlobalRow = A.GRID(i); 
+  int RowLess1 = GlobalRow - 1; 
+  int RowPlus1 = GlobalRow + 1;
+  if (RowLess1!=-1) 
+    A.InsertGlobalValues(GlobalRow, 1, 
+                         &negOne, &RowLess1);
+  if (RowPlus1!=NumGlobalElements) 
+    A.InsertGlobalValues(GlobalRow, 1, 
+                         &negOne, &RowPlus1);
+  A.InsertGlobalValues(GlobalRow, 1, &posTwo, 
+                       &GlobalRow);
+}
+// Complete matrix preprocessing
+A.FillComplete(); 
+
+// ***** Create x and b vectors 
+Epetra_Vector x(Map);
+Epetra_Vector b(Map);
+b.Random(); // Fill RHS with random #s
+\end{verbatim}
+&
+\begin{verbatim}
+
+// Create Linear Problem 
+Epetra_LinearProblem problem(&A, &x, &b);  
+
+// Create/define AztecOO instance 
+AztecOO solver(problem);
+
+// Create Teuchos Parameter List
+Teuchos::ParameterList paramlist;
+
+// Tell AztecOO to solve using CG
+paramlist.set("AZ_solver", AZ_cg);
+ 
+// Select AztecOO Jacobi preconditioner
+// In later examples this single line will
+// be replaced by construction and setup of
+// other preconditioners such as ML and IFPACK
+
+paramlist.set("precond", AZ_Jacobi);
+
+// Iterate
+solver.Iterate(1000, 1.0E-8);
+
+// Report results, finish     
+cout << "Solver performed " 
+     << solver.NumIters()  
+     << " iterations." << endl
+     << "Norm of true residual = " 
+     << solver.TrueResidual() 
+     << endl;
+
+MPI_Finalize() ;
+return 0;
+}
+\end{verbatim}
+\\\hline
+\end{tabular}}
+\caption{\label{fig:solvetrid} Simple C++ program to construct and
+solve a tridiagonal system using Epetra and AztecOO}
+\end{figure}
+
+\begin{figure}
+{\scriptsize
+\begin{tabular}{|p{2.4in}|p{2.4in}|}\hline
+\begin{verbatim}
+
+// This code fragment constructs an ML
+// multi-level preconditioner based on 
+// smoothed aggregation.
+// It can directly replace the single line:
+// paramlist.set("precond", AZ_Jacobi);
+// in the code in Figure 1.
+
+
+// Create ML multilevel preconditioner
+ML *ml_handle;
+
+// Maximum number of levels
+int N_levels = 10;
+
+// output level
+ML_Set_PrintLevel(3);
+ML_Create(&ml_handle,N_levels);
+
+// wrap Epetra matrix A into ML matrix 
+// (data is NOT copied)
+EpetraMatrix2MLMatrix(ml_handle, 0, A);
+
+// We are interested in smoothed aggregation
+// so create a ML_Aggregate object
+ML_Aggregate *agg_object;
+ML_Aggregate_Create(&agg_object);
+
+// specify max coarse size (ML will not 
+// coarsen further 
+// if the matrix at a given level is
+// smaller than specified here)
+ML_Aggregate_Set_MaxCoarseSize(agg_object,1);
+
+// generate the hierarchy
+N_levels = 
+  ML_Gen_MGHierarchy_UsingAggregation
+  (ml_handle, 0, ML_INCREASING, agg_object);
+
+// Set a symmetric Gauss-Seidel smoother for 
+// MG method (change if matrix  not symmetric)
+ML_Gen_Smoother_SymGaussSeidel(ml_handle, 
+ML_ALL_LEVELS, ML_BOTH, 1, ML_DEFAULT);
+
+// generate solver
+ML_Gen_Solver(ml_handle,ML_MGV, 0, N_levels-1);
+
+// wrap ML_Operator into Epetra_Operator
+ML_Epetra::MultiLevelOperator  
+  MLop(ml_handle,Comm,*Map,*Map);
+
+// Register this operator as preconditioner
+solver.SetPrecOperator(&MLop);
+
+// ... Now continue with execution of AztecOO
+\end{verbatim}
+&
+\begin{verbatim}
+
+// This code fragment constructs an IFPACK
+// preconditioner based on incomplete
+// Cholesky with threshold tolerances
+// It can directly replace the single line:
+// paramlist.set("precond", AZ_Jacobi);
+// in the code in Figure 1.
+
+
+// This time we will count FLOPS
+Epetra_Flops fact_counter;
+
+// Create and start timer
+Epetra_Time timer;
+
+// Create Incomplete Cholesksy preconditioner
+// Drop threshold of 10E-6.
+// Maximum entries per row is 100.
+Ifpack_CrsIct ICT(A, 1.0e-6, 100);
+
+// Associate flop counter with preconditioner
+ICT.SetFlopCounter(fact_counter);
+
+// Initialize preconditioner values
+ICT.InitValues(A);
+
+// Compute factor
+ICT.Factor();
+
+// Get elapsed time since timer was created
+elapsed_time = timer.ElapsedTime();
+
+// Get number of FLOPS, MFLOPS
+total_flops = fact_counter.Flops();
+MFLOPs = total_flops/elapsed_time/1000000.0;
+
+cout << "Time to construct preconditioner = "
+     << elapsed_time << endl
+     << "MFLOPS for Factorization = " 
+     << MFLOPs << endl;
+
+// Compute condition number estimate 
+// for preconditioner
+double Condest;
+ICT.Condest(transA, Condest);
+cout << "Preconditioner condition estimate = " 
+     << Condest << endl;
+
+// Register this operator as preconditioner
+solver.SetPrecOperator(&ICT);
+
+// ... Now continue with execution of AztecOO
+\end{verbatim}
+\\\hline
+\end{tabular}}
+\caption{\label{fig:prectrid} Two code fragments that construct
+preconditioners for program in Figure~\ref{fig:solvetrid}.}
+\end{figure}
+
+\begin{figure}
+{\scriptsize
+\begin{tabular}{|p{4.8in}|}\hline
+\begin{verbatim}
+//
+// ***************************************************************************
+// ************************Main CG Loop***************************************
+// ***************************************************************************
+//
+if (_om.doOutput( 2 )) _os << "Entering main CG loop" << endl << endl;
+
+for (_iter=0; _stest.CheckStatus(this) == Unconverged && !exit_flg; _iter++)
+{
+  //
+  // Multiply the current direction vector by A and store in _Ap
+  //       _Ap = A*_p
+  //
+  _lp.ApplyOp( *_p, *_Ap );
+  //
+  // Compute alpha := <_residvec, _z> / <_p, _Ap >
+  //
+  _p->MvTransMv( one, *_Ap, temp_sdm );
+  _residvec->MvTransMv( one/temp_sdm(0,0), *_z, alpha );
+  //
+  // Check that alpha is a positive number!
+  //
+  if ( alpha(0,0) <= zero ) {
+ if (_om.doOutput( 0 )) {
+   _os << " Exiting CG iteration " << endl;
+   _os << " Reason: Non-positive value for p^T*A*p ("<< alpha(0,0) <<") !!! "<< endl;
+ }
+ break; // Get out from this solve.
+  }
+  //
+  // Update the solution vector x := x + alpha * _p
+  //
+  _cur_block_sol->MvAddMv( one, *_cur_block_sol, alpha(0,0), *_p );
+  _lp.SolutionUpdated();
+  //
+  // Compute the denominator of beta before residual is updated [old <_residvec, _z>]
+  //
+  _residvec->MvTransMv( one, *_z, temp_sdm );
+  //
+  // Compute the new residual _residvec := _residvec - alpha * _Ap
+  //
+  _residvec->MvAddMv( one, *_residvec, -alpha(0,0), *_Ap );
+  //
+  // Compute beta := [new <_residvec, _z>] / [old <_residvec, _z>], and new direction vector
+  //
+  if (_lp.ApplyLeftPrec( *_residvec, *_z ) != Ok ) 
+      { _z->MvAddMv( one, *_residvec, zero, *_residvec ); }
+  //
+  _residvec->MvTransMv( one/temp_sdm(0,0), *_z, beta );
+  //
+  _p->MvAddMv( one, *_residvec, beta(0,0), *_p );
+  //
+} // end of the main CG loop -- for(_iter = 0;...)
+// *******************************************************************************
+\end{verbatim}
+\\\hline
+\end{tabular}}
+\caption{\label{fig:genericCG} Main iteration loop of Belos Conjugate Gradient Solver}
+\end{figure}
+
 
 \subsection{An Illustration of Trilinos Interoperability}
 \label{subsect:meros}
