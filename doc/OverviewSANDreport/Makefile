@@ -20,4 +20,4 @@ print: $(TARGET).dvi
 
 clean:
 	rm -f *.ps *.pdf *.dvi *.aux *.toc *.idx *.ind *.ilg *.log *.out \
-           *.bbl *.blg *.lof *.lot
+           *.bbl *.blg *.lof *.lot *.tex~

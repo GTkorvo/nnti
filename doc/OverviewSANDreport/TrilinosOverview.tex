@@ -288,7 +288,8 @@ these packages, some concrete
 implementation must be selected.  Epetra (and in the future other packages described
 in Section~\ref{subsect:PetraObjectModel}) is a collection of concrete
 classes that supports the construction and use of vectors, sparse
-graphs, and dense and sparse matrices.  It provides serial, parallel and distributed memory
+graphs, and dense and sparse matrices.  It provides serial, parallel and
+ distributed memory
 capabilities.  It uses the BLAS and LAPACK where possible, and as a
 result has good performance characteristics.
 
@@ -386,10 +387,12 @@ manipulate its own internal objects.
 \label{subsect:PetraObjectModel}
 The Petra class libraries provide a
 foundation for all Trilinos solver development.  Petra provides object classes for
-constructing and using parallel, distributed memory matrices and vectors.  Petra exists in
+constructing and using parallel, distributed memory matrices and vectors.  
+Petra exists in
 multiple forms.  Its most basic form is as an object model~\cite{HeroHoekWill2002}.
 As such, it is an abstract 
-description of a variety of vector, matrix and supporting classes, along with a description of
+description of a variety of vector, matrix and supporting classes, along with a 
+description of
 how these classes interact.  There are presently three implementations
 of the Petra Object Model: Epetra, Tpetra and Jpetra.
 
@@ -522,21 +525,172 @@ A_{21} & A_{22}
 \]
 Then the Schur compliment of $A$ with respect to $A_{22}$ is 
 $S = A_{22} - A_{21}A_{11}^{-1}A_{12}$.
-Assume that A11, A12, A21 and A22 are TSF operator objects that store $A_{11}$, $A_{12}$,
-$A_{21}$ and $A_{22}$.  To very explicit, we can think of these objects as Epetra matrices
-that are encapsulated as TSF operators.
+Assume that A11, A12, A21 and A22 are TSF operator objects containing $A_{11}$, $A_{12}$,
+$A_{21}$ and $A_{22}$, respectively.  To very explicit, we can think of these objects
+ as Epetra matrices that are encapsulated as TSF operators.  Given these four TSF operator 
+objects, we can form aggregate TSF operator objects in a variety of ways.  In particular,
+TSF has operator classes that are derived from the base TSF operator class (and are thus
+also TSF operator objects) but require existing TSF operators to be well-defined.  For
+example, one such derived TSF operator class will create a composed operator by
+taking two existing TSF operators as
+input arguements to its constructor and recording references to the two existing operators.
+When the apply method of the composed operator is called, it will in turn call the apply
+methods of the two operators that were passed into its constructor.  Similar aggregate
+operators exist for the sum of two existing operators and the inverse of an operator.
+
+The following code fragments illustrate the construction and apply processes for the 
+ComposedOperator class.  In this example, {\tt left} and {\tt right} are existing TSF operators
+and the {\it this} is being constructed and used.
+
+\begin{verbatim}
+TSFComposedOperator::TSFComposedOperator(const TSFLinearOperator& left,
+                                         const TSFLinearOperator& right)
+: TSFLinearOperatorBase(right.domain(), left.range()),
+left_(left), right_(right) {
+  if (left_.domain() != right_.range()) {
+   TSFError::raise("domain-range mismatch in TSFComposedOperator ctor");
+  }
+}
+
+void TSFComposedOperator::apply(const TSFVector& in, TSFVector& out) const {
+
+  /* apply operators in order from right to left */
+  TSFVector tmp = right_.range().createMember();
+  right_.apply(in, tmp);
+  left_.apply(tmp, out);
+}
+
+\end{verbatim}
+
+
+\begin{verbatim}
+TSFInverseOperator::TSFInverseOperator(const TSFLinearOperator& op,
+                                       const TSFLinearSolver& solver)
+: TSFLinearOperatorBase(op.range(), op.domain()), 
+op_(op), solver_(solver)
+{}
+
+void TSFInverseOperator::apply(const TSFVector& in, TSFVector& out) const {
+
+	solver.solve(*this, in, out);
+}
+
+\end{verbatim}
+
+There is a number of other aggregation operators.  More details of all the possible 
+aggregations can be found in the TSF User Guide~\cite{TsfUserGuide}.
+
+Given these aggregation capabilities, one can implicitly form the Schur compliment $S$ via
+a sequence of TSF operator constructor calls, first constructing a TSF operator
+InvA11 containing $A_{11}^{-1}$ by passing
+in $A_{11}$ and some solver to use with $A_{11}$ into the TSFInverseOperator constructor, 
+then constructing InvA11timesA12 by passing in InvA11 and A12 into TSFComposedOperator, then 
+A21timesInvA11timesA12 similarly, and finally S by passing in A22 and -A21timesInvA11timesA12
+into TSFSumOperator.
+
 \end{enumerate}
 
-\subsection{AztecOO}
+\subsection{AztecOO: Concrete Preconditioned Iterative Solver Package}
 
-\subsection{Ifpack}
+AztecOO is an object-oriented follow-on to Aztec~\cite{Aztec2.1}.  As such, it provides
+all of the same capabilities as Aztec, but provides more elegant interface and some extended
+functionality.  Aztec specifically solves a linear system $AX=B$ where $A$ is a linear 
+operator, $X$ is a multivector containing one or more initial guess on entry and the
+corresponding solutions on exit, and the corresponding right-hand-sides in $B$.
 
-\subsection{Komplex}
+AztecOO accepts user matrices and vectors as Epetra objects.  The operator $A$ and any
+preconditioner, say $M \approx A^{-1}$, need not be concrete Epetra objects.
+Instead, AztecOO expects $A$ and $M$ to be Epetra\_Operator or Epetra\_RowMatrix objects. 
+Both Epetra\_Operator and Epetra\_RowMatrix are pure virtual classes.  Therefore, any other
+matrix library can be used to supply $A$ and $M$, as long as that library can implement
+the  Epetra\_Operator or Epetra\_RowMatrix interfaces, something that is not too difficult
+to do for most linear solver libraries.
 
-\subsection{NOX}
-	
+AztecOO provides scalings, parallel domain decomposition preconditioners, and a very robust
+set of Krylov methods.  It runs very efficiently on distributed memory parallel computers or
+on serial computers.  Also, AztecOO implements the Epetra\_Operator interface.  Therefore,
+an AztecOO solver object can be used as a preconditioner for another AztecOO object.
+
+\subsection{Ifpack: Incomplete Factorizations and Other Algebraic Preconditioners}
+
+Ifpack provides local incomplete factorization preconditioners in a
+parallel domain decomposition framework.  It accepts user data as Epetra\_RowMatrix objects
+(including Epetra\_CrsMatrix, Epetra\_VbrMatrix and Epetra\_MsrMatrix objects, since these
+classes derive from Epetra\_RowMatrix)
+and can construct a large variety of ILU preconditioners.  Ifpack preconditioners implement
+the Epetra\_Operator interface.  Therefore, they can be used as preconditioners for AztecOO.
+
+\subsection{Komplex: Solver Suite for Complex-valued Linear Systems}
+
+Komplex solves complex-valued linear systems using equivalent real-valued formulations of 
+twice the dimension.  Given the following complex-valued linear system:
+\begin{equation}
+\label{Complex}
+C w = d,
+\end{equation}
+where $C$ is an $m$-by-$n$ known
+complex matrix, $d$ is a known right-hand side and $w$ is unknown, 
+we can write Equation~(\ref{Complex})
+in its real and imaginary terms,
+\begin{equation}\label{linearsystem}
+( A + i B )(x+iy) = b+ic.
+\end{equation}
+Equating the real and imaginary parts of the expanded equation, respectively,
+gives rise to four
+possible 2-by-2 block formulations.  We list one of these in Equation~(\ref{Komplex-1}).
+\paragraph{K1 Formulation}
+\begin{equation}\label{Komplex-1}
+   \left( \begin{array}{rr}
+                                    A & -B  \\
+                                    B &  A
+                             \end{array}
+   \right)
+   \left( \begin{array}{r}
+                                    x  \\
+                                    y
+                             \end{array}
+   \right)
+   =
+   \left( \begin{array}{r}
+                                    b  \\
+                                    c
+                             \end{array}
+   \right).
+\end{equation}
+
+Although most preconditioning and iterative methods are generally well-defined for
+complex-valued systems, with real-valued systems being a special case, most widely-available
+solver packages focus exclusively on real-valued systems or treat complex-valued systems as
+an afterthought.  Therefore, by transforming the complex-valued system into a real-valued 
+system, we can immediately leverage all of the investment in real-valued solvers.  KomplexOO
+constructs an equivalent real-valued formulation for a given complex-valued linear system
+and then calls AztecOO to solve the problem, returning the solution back to the user in
+a form compatible with the original complex-valued problem.
+
+\subsection{NOX: Nonlinear Solver Package}
+
+NOX provides access to a suite of nonlinear solver methods.  It can be easily integrated
+into an application with minimal effort.  Historically, many applications have called
+linear solvers as libaries, but have provided their own nonlinear solver software.  NOX
+can be an improvement because it provides a much larger collection of nonlinear methods,
+and can be easily extended as new nonlinear methods are developed.  Presently, it contains
+the following methods:
+\begin{enumerate}
+\item blah, blah, blah
+\end{enumerate}
+
+NOX uses pure virtual classes to work with all matrix, operator and vector objects.  Therefore,
+it can be used with any external software that can implement these interfaces.  Epetra and
+PETSc implementations of the pure virtual classes are already implemented.
 
     \section{Conclusion}
+
+The Trilinos project provides a framework for integrating independent 
+solver packages, making the package inter-operable and providing a common ``look-and-feel'' 
+for Trilinos users.  Furthermore, Trilinos provides a collection of useful services for
+independent solver developers, making integration of a package attractive to developers.
+The ultimate result of developing the Trilinos framework is that it minimizes redundant
+effort on the part of solver developers by providing an existing set of tools  
 
 
     % ---------------------------------------------------------------------- %
@@ -578,7 +732,8 @@ that are encapsulated as TSF operators.
 \section{A Brief Overview of Some Object-Oriented Concepts}
 \label{sect:OOTutorial}
 Object-oriented.
-Define ``factory''.  Implementation, interface, derived, specialization.
+Define ``factory''.  Implementation, interface, derived, specialization. 
+The {\it this} object. Pure virtual classes.
     % \printindex
 
     \begin{SANDdistribution}
