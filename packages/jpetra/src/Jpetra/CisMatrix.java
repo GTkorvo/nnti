@@ -575,6 +575,7 @@ public class CisMatrix extends DistObject implements Externalizable {
     }
     
     public void multiply(boolean useTransposeA, MultiVector x, MultiVector y) {
+        Time timer = new Time(this.primaryVectorSpace.getComm());
         if (!this.filled) {
             this.println("FATALERR", "A CisMatrix must be filled before multiply can be called on it.");
             System.exit(1);
@@ -649,6 +650,8 @@ public class CisMatrix extends DistObject implements Externalizable {
                 exportValues = new double[importValues.length][this.getNumMyRows()];
                 exportMultiVector = new MultiVector(this.getRowVectorSpace(), exportValues);
                 VectorSpace importMultiVectorVectorSpace = importMultiVector.getVectorSpace();
+                double setupTime = timer.getElapsedTime();
+                timer.resetStartTime();
                 for(int row=0; row < this.getNumMyRows(); row++) {
                     for(int vector=0; vector < importMultiVector.getNumCols(); vector++){
                         sum = 0;
@@ -664,8 +667,17 @@ public class CisMatrix extends DistObject implements Externalizable {
                         exportValues[vector][row] = sum;
                     }
                 }
+                double multTime = timer.getElapsedTime();
+                timer.resetStartTime();
                 Export exporter = new Export(exportMultiVector.getVectorSpace(), y.getVectorSpace());
                 y.exportValues(exportMultiVector, exporter, DistObject.ADD);
+                double exportTime = timer.getElapsedTime();
+                if (this.primaryVectorSpace.getComm().getNumVnodes() == 1) {
+                    this.println("STD", "setupTime\t" + setupTime + "\nmultTime\t" + multTime + "\nexportTime\t" + exportTime);
+                }
+                else {
+                    this.println("STD", setupTime + "\n" + multTime + "\n" + exportTime);
+                }
             }
             else {
                 // possibly generate a new VectorSpace for the importMultiVector from the nonzero vectors of the ColumnVectorSpace
