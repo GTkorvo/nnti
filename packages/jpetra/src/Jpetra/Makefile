@@ -31,7 +31,6 @@ core =  Output.java \
 misc_support =  Blas.java \
 		NetlibBlas.java \
 		JpetraBlas.java \
-		JpetraTreeMap.java
 ccj_support =   CcjSupport/CcjReduceAllSumIntArray.java  \
 		CcjSupport/CcjReduceDoubleMaxArray.java \
 		CcjSupport/CcjGatherDoubleArray.java \
