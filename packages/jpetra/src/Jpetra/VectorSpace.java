@@ -28,13 +28,21 @@
 
 package Jpetra;
 
+import java.io.Externalizable;
+import java.io.ObjectOutput;
+import java.io.ObjectInput;
+
 /**
  *
  * @author  Jason Cross
  */
-public class VectorSpace extends JpetraObject {
+public class VectorSpace extends JpetraObject implements Externalizable {
     ElementSpace elementSpace;
     Directory directory;
+    
+    public VectorSpace() {
+        // empty
+    }
     
     public VectorSpace(ElementSpace elementSpace) {
         this.elementSpace = elementSpace;
@@ -127,8 +135,21 @@ public class VectorSpace extends JpetraObject {
         return this.elementSpace.getNumIndicesPerVnode();
     }
     
+    protected void setComm(Comm comm) {
+        this.elementSpace.setComm(comm);
+    }
+    
     // !! not yet implemented
     public boolean equals(VectorSpace vectorSpace) {
         return false;
     }
+    
+    public void readExternal(ObjectInput in) throws java.io.IOException, ClassNotFoundException {
+        this.elementSpace = (ElementSpace) in.readObject();
+    }
+    
+    public void writeExternal(ObjectOutput out) throws java.io.IOException {
+        out.writeObject(this.elementSpace);
+    }
+    
 }

@@ -37,7 +37,7 @@ import Jpetra.*;
  *
  * @author  Jason Cross
  */
-public class MultiVectorWriter {
+public class MultiVectorWriter extends JpetraObject {
     
     public MultiVectorWriter() {
         // empty

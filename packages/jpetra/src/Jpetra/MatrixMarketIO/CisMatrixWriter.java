@@ -40,7 +40,7 @@ import Jpetra.*;
  *
  * @author Jason Cross
  */
-public class CisMatrixWriter {
+public class CisMatrixWriter extends JpetraObject {
     /**
      * Opens a TCP/IP connection to Matvis and sends the <code>CisMatrix</code> to Matvis for dispaly.
      *

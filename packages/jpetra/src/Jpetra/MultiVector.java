@@ -29,15 +29,26 @@
 package Jpetra;
 
 import java.io.Serializable;
+import java.io.Externalizable;
+import java.io.ObjectOutput;
+import java.io.ObjectInput;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
 
 /**
  *
  * @author  Jason Cross
  */
-public class MultiVector extends DistObject {
+public class MultiVector extends DistObject implements Externalizable {
     VectorSpace vectorSpace;
     double[][] values;  // in column major form
     private boolean doneForward;
+    
+    public MultiVector() {
+        // empty
+    }
     
     public MultiVector(VectorSpace vectorSpace) {
         this.vectorSpace = vectorSpace;
@@ -371,4 +382,47 @@ public class MultiVector extends DistObject {
         return reverseExportVnodeIdsGidsLids;
     }
     
+    public void writeExternal(ObjectOutput out) throws java.io.IOException {
+        out.writeObject(this.values);
+        out.writeObject(this.vectorSpace);
+    }
+    
+    public void readExternal(ObjectInput in) throws java.io.IOException, ClassNotFoundException {
+        this.values = (double[][]) in.readObject();
+        this.vectorSpace = (VectorSpace) in.readObject();
+    }
+    
+    public static MultiVector readFromFile(String fileName, Comm comm) {
+        try {
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileName));
+            MultiVector multiVector = (MultiVector) ois.readObject();
+            ois.close();
+            multiVector.getVectorSpace().setComm(comm);
+            return multiVector;
+        } catch (java.io.IOException e) {
+            JpetraObject.println("FATALERR", e.toString());
+            System.exit(1);
+        } catch (java.lang.ClassNotFoundException e) {
+            JpetraObject.println("FATALERR", e.toString());
+            System.exit(1);
+        }
+        
+        return null; // should never get here
+    }
+    
+    public static void writeToFile(String fileName, MultiVector multiVector) {
+        if (multiVector.getVectorSpace().isDistributedGlobally()) {
+            JpetraObject.println("FATALERR", "Only a serial MultiVector can be written to a serialized object file.");
+            System.exit(1);
+        }
+        
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileName));
+            oos.writeObject(multiVector);
+            oos.close();
+        } catch (java.io.IOException e) {
+            JpetraObject.println("FATALERR", e.toString());
+            System.exit(1);
+        }
+    }
 }

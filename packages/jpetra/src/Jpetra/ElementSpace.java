@@ -29,12 +29,15 @@
 package Jpetra;
 
 import java.util.TreeMap;
+import java.io.Externalizable;
+import java.io.ObjectOutput;
+import java.io.ObjectInput;
 
 /**
  *
  * @author  Jason Cross
  */
-public class ElementSpace extends JpetraObject {
+public class ElementSpace extends JpetraObject implements Externalizable {
     private int[] myGlobalElements;
     private Comm comm;
     private TreeMap gidsToLids;
@@ -56,6 +59,11 @@ public class ElementSpace extends JpetraObject {
     
     private boolean distributedGlobally;
     private boolean distributedLinearly;
+    
+    public ElementSpace() {
+        //empty
+    }
+    
     /**
      * Constructs an <code>ElementSpace</code> automatically based on the contigous
      * even distribution of global elements to each vnode.
@@ -322,4 +330,39 @@ public class ElementSpace extends JpetraObject {
     public int getNumIndicesPerVnode() {
         return this.numIndicesPerVnode;
     }
+    
+    protected void setComm(Comm comm) {
+        this.comm = comm;
+    }
+    
+    public void readExternal(ObjectInput in) throws java.io.IOException, ClassNotFoundException {
+        this.numGlobalElements = in.readInt();
+        this.numMyGlobalElements = in.readInt();
+        this.minMyGlobalElementId = in.readInt();
+        this.maxMyGlobalElementId = in.readInt();
+        this.minLocalElementId = in.readInt();
+        this.maxLocalElementId = in.readInt();
+        this.minGlobalElementId = in.readInt();
+        this.maxGlobalElementId = in.readInt();
+        this.distributedGlobally = in.readBoolean();
+        this.distributedLinearly = in.readBoolean();
+        this.myGlobalElements = (int[]) in.readObject();
+        this.gidsToLids = (TreeMap) in.readObject();
+    }
+    
+    public void writeExternal(ObjectOutput out) throws java.io.IOException {
+        out.writeInt(this.numGlobalElements);
+        out.writeInt(this.numMyGlobalElements);
+        out.writeInt(this.minMyGlobalElementId);
+        out.writeInt(this.maxMyGlobalElementId);
+        out.writeInt(this.minLocalElementId);
+        out.writeInt(this.maxLocalElementId);
+        out.writeInt(this.minGlobalElementId);
+        out.writeInt(this.maxGlobalElementId);
+        out.writeBoolean(this.distributedGlobally);
+        out.writeBoolean(this.distributedLinearly);
+        out.writeObject(this.myGlobalElements);
+        out.writeObject(this.gidsToLids);
+    }
+    
 }

@@ -34,12 +34,19 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.io.Serializable;
+import java.io.Externalizable;
+import java.io.ObjectOutput;
+import java.io.ObjectInput;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
 
 /**
  *
  * @author  Jason Cross
  */
-public class CisMatrix extends DistObject {
+public class CisMatrix extends DistObject implements Externalizable {
     /**
      * Pass to the CisMatrix constructor to make the CisMatrix row oriented.
      */
@@ -67,6 +74,10 @@ public class CisMatrix extends DistObject {
     
     // for reverse op
     private boolean doneForward;  // true if the forward import/export have been performed on this CisMatrix
+    
+    public CisMatrix() {
+        this.secondaryTree = new TreeSet();
+    }
     
     /**
      * Construct an empty <code>CisMatrix</code>.  The <code>secondaryVectorSpace</code> will be generated automatically
@@ -573,7 +584,7 @@ public class CisMatrix extends DistObject {
                 exportMultiVector = new MultiVector(this.getColumnVectorSpace(), exportValues);
                 Import importer = new Import(x.getVectorSpace(), this.getColumnVectorSpace());
                 exportMultiVector.importValues(x, importer, DistObject.REPLACE);
-
+                
                 MultiVector importMultiVector = new MultiVector(this.getColumnVectorSpace(), new double[x.getNumCols()][this.getNumColumns()]);
                 
                 double[][] importValues = importMultiVector.getValues();
@@ -586,7 +597,7 @@ public class CisMatrix extends DistObject {
                         }
                     }
                 }
-
+                
                 Import import2 = new Import(y.getVectorSpace(), importMultiVector.getVectorSpace());
                 y.exportValues(importMultiVector, import2, DistObject.ADD);
             }
@@ -596,6 +607,60 @@ public class CisMatrix extends DistObject {
             }
         }
         
+    }
+    
+    public void writeExternal(ObjectOutput out) throws java.io.IOException {
+        out.writeObject(this.primaryVectorSpace);
+        out.writeBoolean(this.rowOriented);
+        out.writeObject(this.doubleValues);
+        out.writeObject(this.numEntries);
+        out.writeObject(this.startIndex);
+        out.writeObject(this.OuterTree);
+        out.writeInt(this.numTotalEntries);
+    }
+    
+    public void readExternal(ObjectInput in) throws java.io.IOException, ClassNotFoundException {
+        this.primaryVectorSpace = (VectorSpace) in.readObject();
+        this.rowOriented = in.readBoolean();
+        this.doubleValues = (double[]) in.readObject();
+        this.numEntries = (int[]) in.readObject();
+        this.startIndex = (int[]) in.readObject();
+        this.OuterTree = (TreeMap) in.readObject();
+        this.numTotalEntries = in.readInt();
+    }
+    
+    public static CisMatrix readFromFile(String fileName, Comm comm) {
+        try {
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileName));
+            CisMatrix cisMatrix = (CisMatrix) ois.readObject();
+            ois.close();
+            cisMatrix.getVectorSpace().setComm(comm);
+            return cisMatrix;
+        } catch (java.io.IOException e) {
+            JpetraObject.println("FATALERR", e.toString());
+            System.exit(1);
+        } catch (java.lang.ClassNotFoundException e) {
+            JpetraObject.println("FATALERR", e.toString());
+            System.exit(1);
+        }
+        
+        return null; // should never get here
+    }
+    
+    public static void writeToFile(String fileName, CisMatrix cisMatrix) {
+        if (cisMatrix.getVectorSpace().isDistributedGlobally()) {
+            JpetraObject.println("FATALERR", "Only a serial MultiVector can be written to a serialized object file.");
+            System.exit(1);
+        }
+        
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileName));
+            oos.writeObject(cisMatrix);
+            oos.close();
+        } catch (java.io.IOException e) {
+            JpetraObject.println("FATALERR", e.toString());
+            System.exit(1);
+        }
     }
     
 }

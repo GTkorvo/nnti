@@ -37,7 +37,7 @@ import Jpetra.*;
  *
  * @author  Jason Cross
  */
-public class GraphWriter {
+public class GraphWriter extends JpetraObject {
     
     public GraphWriter() {
     }
