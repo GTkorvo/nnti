@@ -4,28 +4,36 @@
 \newcommand{\esinglespace}{}
 \markboth{Michael Heroux et al.}{An Overview of Trilinos}
 
-\title{An Overview of Trilinos}
+\title{An Overview of the Trilinos Project}
 
-\author{MICHAEL HEROUX, ROSCOE BARTLETT, VICKI HOWLE \\
-ROBERT HOEKSTRA, JONATHAN HU, TAMARA KOLDA, \\
-RICHARD LEHOUCQ, KEVIN LONG, ROGER PAWLOWSKI, \\
-ERIC PHIPPS, ANDREW SALINGER, HEIDI THORNQUIST, \\
-RAY TUMINARO, JAMES WILLENBRING  ALAN WILLIAMS \\
- \\
+\author{MICHAEL A. HEROUX \\ 
+ROSCOE A. BARTLETT \\
+VICKI E. HOWLE \\
+ROBERT J. HOEKSTRA \\
+JONATHAN HU \\
+TAMARA G. KOLDA \\
+RICHARD B. LEHOUCQ \\
+KEVIN R. LONG \\
+ROGER P. PAWLOWSKI \\
+ERIC T. PHIPPS \\
+ANDREW J. SALINGER \\
+HEIDI K. THORNQUIST \\
+RAY S. TUMINARO \\
+JAMES M. WILLENBRING \\
+ALAN WILLIAMS \\
 Sandia National Laboratories \\
-Albuquerque, NM 87185}
+and \\
+Kendall S. Stanley \\
+500 Software}
 
 \begin{abstract}
-The Trilinos Project is an effort to facilitate the design,
-development, integration and ongoing support of mathematical software
-libraries.  In particular, our goal is to develop parallel solver 
-algorithms and libraries within 
-an object-oriented software framework for the solution of large-scale, complex
-multi-physics engineering and scientific applications.   Our emphasis is on 
-developing robust, scalable algorithms in a software framework, using abstract 
-interfaces for flexible interoperability of components while providing a 
-full-featured set of concrete classes that implement all abstract
-interfaces.  
+The Trilinos Project is an effort to facilitate the design, development, 
+integration and ongoing support of mathematical software libraries within an 
+object-oriented framework for the solution of large-scale, complex multi-physics 
+engineering and scientific problems.  Trilinos addresses two fundamental issues 
+of developing software for these problems: (i) Providing a streamlined process 
+and set of tools for development of new algorithmic implementations and (ii) 
+promoting interoperability of independently developed software.  
 
 Trilinos uses a two-level software structure designed around
 collections of
@@ -36,13 +44,11 @@ Packages exist underneath
 the Trilinos top level, which provides a common look-and-feel,
 including configuration, documentation, licensing, and bug-tracking.
 
-Trilinos packages are primarily written in C++, but provide some C and 
-Fortran user interface support.  We provide an open architecture that allows 
-easy integration with other solver packages and we deliver our software to 
-the outside community via the Gnu Lesser General Public License
-(LGPL)~\cite{gnu-license-site}.
-This report provides an overview of Trilinos, discussing the 
-objectives, history, current development and future plans of the project.
+Here we present the overall Trilinos design.  We describe how our use of 
+abstract interfaces with default concrete implementations of these interfaces 
+provides us with full functionality and flexibility.  Finally, we discuss the 
+services that Trilinos provides to a prospective package and how these services 
+are used by various packages.
 \end{abstract}
 
 \category{...}{...}{...}
@@ -57,34 +63,31 @@ objectives, history, current development and future plans of the project.
 Sandia is a multiprogram laboratory operated by Sandia Corporation, a
 Lockheed-Martin Company, for the United States Department of Energy
 under Contract DE-AC04-94AL85000.
+
 \end{bottomstuff}
 
 \maketitle
 
 
-\section{Background}
+\section{Introduction}
 
-A core requirement of many engineering and scientific applications is 
-the need to solve linear and non-linear systems of equations, eigensystems 
-and other related problems.  Thus it is no surprise that any 
-part of the application that solves these problems is called a ``solver.'' 
-The exact definition of what specifically constitutes a solver depends on 
-many factors.  However, a good working definition of a solver is
-the following: {\it Any piece of software that finds unknown values for 
-some set of discrete governing equations in 
-an application.}  Another characteristic of solvers is that we can often 
-implement them in such a way that they are ``general-purpose'', so that the
-details of how the discrete problem was formed are not specifically needed 
-for the solver to work (although information about problem characteristics 
-can often be vital to robust solutions.)
+Research efforts in advanced solution algorithms and parallel solver
+libraries have historically had a large impact on engineering and
+scientific computing.  Algorithmic advances increase the range
+of tractable problems and reduce the cost of solving existing
+problems.  Well-designed solver libraries provide a mechanism for
+leveraging solver development across a broad set of applications and
+minimize the cost of solver integration.  Emphasis is
+required in both new algorithms and new software in order
+to maximum the impact of our efforts.
 
 General-purpose linear and eigensolvers have been successfully used across 
 a broad set of applications and computer systems.  EISPACK~\cite{eispack}, 
 LINPACK~\cite{linpack} and LAPACK~\cite{lapack} are just a few of
 the many packages that have made a tremendous impact, providing robust 
 portable solvers to a broad set of applications.  More recently packages 
-such as PETSc~\cite{petsc-home-page,petsc-manual,petsc-efficient} 
-and Aztec~\cite{Aztec2.1} have provided a large
+such as PETSc~\cite{petsc-home-page,petsc-manual,petsc-efficient}, 
+Scalapack~\cite{scalapack} and Aztec~\cite{Aztec2.1} have provided a large
 benefit to applications by giving users access to parallel distributed 
 memory solvers that are easy-to-use and robust.
 
@@ -107,34 +110,19 @@ the quality and usability of the software we produce and therefore enhance the
 research, development and integration of new solver algorithms into
 applications.  With the advent of Trilinos, the degree of effort required 
 to develop new parallel solvers has been 
-substantially reduced because our common infrastructure provides an excellent 
+substantially reduced, because our common infrastructure provides an good 
 starting point.  Furthermore, many applications are standardizing on the 
 Trilinos matrix and vector classes.  As a result, these applications
-have access to all Trilinos solver components without any unnecessary 
-interface modifications.
-
-This document provides an overview of the Trilinos project,
-focusing on the project philosophy and description, and
-providing the reader with a summary of the project in its current state.  
-
-\section{Introduction}
-
-Research efforts in advanced solution algorithms and parallel solver
-libraries have historically had a large impact on engineering and
-scientific computing.  Algorithmic advances increase the range
-of tractable problems and reduce the cost of solving existing
-problems.  Well-designed solver libraries provide a mechanism for
-leveraging solver development across a broad set of applications and
-minimize the cost of solver integration.  Emphasis is
-required in both new algorithms and new software in order
-to maximum the impact of our efforts.
+have access to all Trilinos solver components without  
+interface modifications. 
 
 The Trilinos project encompasses a variety of efforts that are to some
 extent self-contained but at the same time inter-related.  The
 Trilinos design allows individual packages to grow and mature
 autonomously to the extent the algorithms and package developers
-dictate. 
-
+dictate.  This document provides an overview of the project,
+focusing on the project philosophy and description, and
+providing the reader with a summary of the project in its current state.  
 Integration of a package into Trilinos, and what Trilinos can provide
 to a package, have multiple possibilities
 that will be discussed in Section~\ref{sect:TrilinosDesign}.
@@ -142,11 +130,14 @@ Section~\ref{sect:PetraAndTSF} discusses two special collections of Trilinos
 packages: Petra and TSF.  The general definition of a Trilinos
 package is presented in Section~\ref{sect:PackageDefinition}
 An overview of current software research and
-development is given in Section~\ref{sect:Software}.  
-Finally, this document contains
-an appendix, which gives a brief
-tutorial on object-oriented concepts for readers who are unfamiliar
-with the area.  
+development is given in Section~\ref{sect:Software}. 
+Section~\cite{sect:meros} presents the Meros package in greater detail
+because it illustrates how multiple Trilinos packages can be combined to quickly provide
+production implementations of state-of-the-art algorithms.
+Finally, Section~\ref{sect:SQA} discusses the role of Trilinos to improve software quality
+and reduce the cost of software quality assurance processes, an increasingly important aspect
+of computer modeling and simulation for science and engineering.  
+
 
 \section{Trilinos Design Philosophy}
 \label{sect:TrilinosDesign}
@@ -164,7 +155,7 @@ collection of Trilinos packages is shown in Figure~\ref{Figure:TrilinosPackages}
 
 \begin{figure}
 \begin{center}
-\includegraphics[height=6in,angle=90]{../CommonFiles/TrilinosPackagesDiagram}
+\includegraphics[height=5.5in,angle=90]{../CommonFiles/TrilinosPackagesDiagram}
 \end{center}
 \caption{\label{Figure:TrilinosPackages}Current collection of Trilinos Packages}
 \end{figure}
@@ -180,12 +171,11 @@ Autoconf~\cite{Autoconf},  Automake~\cite{Automake} and
 Libtool~\cite{Libtool} provide a robust, full-featured set of tools for
 building software across a broad set of platforms (see also the ``Goat
 Book''~\cite{GoatBook}).  Although these
-tools are not official standards, they are commonly used in many
-packages.  Nearly all existing
+tools are not official standards, they are widely used.  All existing
 Trilinos packages use Autoconf and Automake.  Libtool support will be
 added in future releases. 
 
-Package developers who are not currently using autotools, but would like
+New package developers who are not currently using autotools, but would like
 to, can get a jump start by using a Trilinos package called
 ``new\_package'' (see below). 
 
@@ -264,7 +254,7 @@ from the rest of the Trilinos website.
 
 \section{Petra and TSF: Two Special Package Collections}
 \label{sect:PetraAndTSF}
-In order to understand what Trilinos provides beyond the
+In order to understand what Trilinos provides beyond infrastructure and the
 contributions of each Trilinos package, we briefly discuss two special
 collections of
 Trilinos packages: Petra and TSF.  These two packages collections are
@@ -311,7 +301,8 @@ operations.  It can provide a single interface to many different
 solvers.  Furthermore, TSFExtended has powerful compositional
 mechanisms that support the
 light-weight construction of composite objects from a set of
-existing objects.  As a result, TSF users gain easy access to many
+existing objects (see Section~\ref{sect:meros}).  
+As a result, TSF users gain easy access to many
 solvers and can bring multiple solvers to bear on a single problem.
 
 \section{Common Tools Package: Teuchos}
@@ -321,7 +312,7 @@ for a common collection of tools that can be leverages across all
 packages.  The Teuchos package is a relatively recent addition to
 Trilinos to facilitate collection of the common tools.  In order to
 retain the autonomy of other Trilinos packages, no package is required
-to adopt Teuchos class for internal use.  However, a design goal of
+to adopt Teuchos classes.  However, a design goal of
 Teuchos is robustness and portability such that dependency on Teuchos
 is not a practical liability.
 
@@ -333,8 +324,7 @@ have a single templated parameter for the scalar field.  In cases
 where the template is of type single, double, complex single or
 complex double, the user will be linked to standard BLAS and LAPACK
 functions.  For other data types, we provided generic loops sets for a
-limited set of key kernels (NOTE: Generic support for LAPACK
-functionality is very limited).  For example, if the user specifies a
+limited set of key kernels.  For example, if the user specifies a
 dense matrix-matrix multiply operation, the standard GEMM BLAS kernel
 will be called for the four primary scalar types.  For other data
 types, Teuchos provides a triple nested loop set that implements the
@@ -343,10 +333,12 @@ scalar traits to define zero and one.  If the
 data type that user passed in supports ``operator+'' and ``operator*''
 and has a well-defined concept of zero, identity and magnitude,
 this type of loop set with compile and execute correctly.  We have used this
-mechanism to compute basic matrix and vector calculations using
-arbitrary precision arithmetic.  This capability can be used to support interval
+mechanism to compute basic matrix and vector calculations in
+arbitrary precision arithmetic using ARPREC~\cite{ARPREC}.  
+This mechanism can also be used to support interval
 arithmetic, geometric transformation calculations, integers and
-calculations with many more data types.
+calculations with many more data types.  Clever use of this mechanism can be
+used in multiple ways to analyze and improve the robustness of numerical algorithms.
 \item Parameter lists:  A parameter list is a collection of key-value
 pairs that can be used to communicate with a packages.  A parameter
 can be used to tune how a package is used, or can provide information
@@ -416,7 +408,7 @@ Note that each mechanism is an extension or augmentation of package
 capabilities, creating connections between packages.  Thus, a package does 
 not need to change its internal structure to become part of Trilinos.
 
-\paragraph{Mechanism 1: Package Accepts User Data as Epetra Objects}
+\paragraph*{Mechanism 1: Package Accepts User Data as Epetra Objects}
 All solver packages require some user data (usually in the form of
 vectors and matrices) or require the user to supply the action of an
 operator on a vector.  Accepting this data in the form of Epetra
@@ -432,7 +424,7 @@ the Epetra objects without explicitly copying them.  In the future, as
 Tpetra matures (and C++ compilers mature), we expect Tpetra to be a
 companion package to Epetra, fulfilling a similar role.
 
-\paragraph{Mechanism 2: Package Callable via TSF Interfaces}
+\paragraph*{Mechanism 2: Package Callable via TSF Interfaces}
 TSF provides a set of abstract interfaces that can be used to
 interface to a variety of solver packages.  TSF can accept
 pre-constructed solver objects, e.g., preconditioners, iterative
@@ -447,7 +439,7 @@ A package is callable via TSF if it implements one or more of the TSF
 abstract class interfaces, making it available to TSF users as one of a
 suite of possible solver options.
 
-\paragraph{Mechanism 3: Package Can Use Epetra Internally}
+\paragraph*{Mechanism 3: Package Can Use Epetra Internally}
 
 Another interoperability mechanism available to a package is that of
 using Epetra objects as the
@@ -458,7 +450,7 @@ saving in storage requirements.  Furthermore, by using Epetra objects
 internally, a package can in turn use other Trilinos packages to
 manipulate its own internal objects.
 
-\paragraph{Mechanism 4: Package accesses services via TSF interface}
+\paragraph*{Mechanism 4: Package accesses services via TSF interface}
 TSF provides an abstract solver interface with access to multiple concrete 
 solvers. 
 A package can access solver services via TSF and therefore be able to use
@@ -469,7 +461,7 @@ is beneficial for access to a broad set of concrete classes, and also
 minimizes the need for additional abstract interfaces and the
 corresponding concrete implementations of these additional abstract interfaces.
 
-\paragraph{Mechanism 5: Package Builds Under Trilinos {\tt configure} Scripts}
+\paragraph*{Mechanism 5: Package Builds Under Trilinos {\tt configure} Scripts}
 Trilinos uses Autoconf~\cite{Autoconf} and Automake~\cite{Automake} to
 build libraries and test suites.  The Trilinos directory structure
 keeps each Trilinos package completely self-contained.  As such, each
@@ -624,7 +616,8 @@ includes overloaded, block and composite operators, all of
 which support powerful abstraction capabilities.  The Meros package
 relies on TSFExtended to implicitly construct sophisticated
 Schur compliment preconditioners in terms of existing component
-operators with little overhead in time or memory.
+operators with little overhead in time or memory.  Section
+~\ref{sect:meros} discusses this topic in detail.
 \end{enumerate}
 
 Both TSFCore and TSFExtended are important because they allow
@@ -645,7 +638,10 @@ For example:
 \item Generic Krylov method implementation:  If a preconditioned Krylov solver 
 is implemented using TSF vectors and operators, then any concrete package 
 that implements the TSF vector and operator interfaces can be used 
-with the Krylov solver.
+with the Krylov solver.  Both the Belos iterative linear solver
+package an Anasazi eigensolver package are based on TSF interfaces and
+are therefore independent of the details of how vectors and linear
+operators are implemented.  
 
 \item Generic solver driver:  If an application accesses solver 
 services via the TSF solver interfaces, then any solver that 
@@ -716,7 +712,7 @@ There are a number of high-quality direct sparse
 solvers available to the general public, each of which (i) has a unique
 interface and (ii) can be especially suitable for specific uses.
 Because of this, we provide access to these solvers through a common
-interface.  Specifically, we provide interfaces to all direct solver
+interface.  Specifically, we provide interfaces to all direct solvers
 supported by Amesos.  These interfaces allow Epetra matrices and
 vectors to be used with each third-party solver.  At this time, we
 provide support for SuperLU (serial), SuperLUDist~\cite{superlu-home-page}, 
@@ -730,7 +726,7 @@ third-party solver once a solver object is instantiated.  This
 abstract interface is implemented by each Amesos direct solver class.
 For example, except for the construction phase (which can be
 accomplished generically using a ``factory'' as described in the
-Appendix), an instance of a solver object,
+Design Patterns book~\cite{Gamma}), an instance of a solver object,
 whether it be a SuperLU solver instance, DSCPack, etc., can be driven
 via the the Amesos base solver interface.  This interface allows the
 user to request computation of a symbolic factorization, numeric
@@ -740,13 +736,7 @@ solver interface is to support efficient reuse of information.
 Specifically, if a sequence of factorizations uses the same nonzero
 structure but has different values, the Amesos base solver class can
 allow efficient reuse of the structure.  Similarly, repeated
-right-hand-side solves can be done sequentially.  One should note that
-this fine-grain control does not eliminate simple uses.  If the
-``solve'' method in the Amesos base solver class is called without any
-previous call to the numeric factorization, or to neither the symbolic
-or numeric factorization, the solver object will be aware of this and
-perform the necessary preliminary steps for the call to the solve
-method to succeed.
+right-hand-side solves can be done sequentially.
 
 \subsection{Komplex: Solver Suite for Complex-valued Linear Systems}
 
@@ -768,7 +758,7 @@ Equating the real and imaginary parts of the expanded equation,
 respectively, gives rise to four
 possible 2-by-2 block formulations.  We list one of these in 
 Equation~(\ref{Komplex-1}).
-\paragraph{K1 Formulation}
+\paragraph*{K1 Formulation}
 \begin{equation}\label{Komplex-1}
    \left( \begin{array}{rr}
                        A & -B  \\
@@ -794,7 +784,7 @@ being a special case, most widely-available solver packages focus
 exclusively on real-valued systems or treat complex-valued systems 
 as an afterthought.  Therefore, by transforming the complex-valued 
 system into a real-valued system, we can immediately leverage all 
-of the investment in real-valued solvers.  KomplexOO constructs an 
+of the investment in real-valued solvers.  Komplex constructs an 
 equivalent real-valued formulation for a given complex-valued linear 
 system and then calls AztecOO to solve the problem, returning the 
 solution back to the user in a form compatible with the original 
@@ -808,7 +798,7 @@ parallel domain decomposition framework.  It accepts user data as
 Epetra\_RowMatrix objects (including Epetra\_CrsMatrix, 
 Epetra\_VbrMatrix and Epetra\_MsrMatrix objects, since these
 classes implement the Epetra\_RowMatrix interface)
-and can construct a large variety of ILU preconditioners.  Ifpack 
+and can construct a variety of ILU preconditioners.  Ifpack 
 preconditioners implement the Epetra\_Operator interface.  Therefore, 
 they can be used as preconditioners for AztecOO.  The current 
 released version of Ifpack provides a relaxed ILUK preconditioner and
@@ -892,7 +882,8 @@ preconditioners approaches that of multigrid for certain types of
 problems.  Although the present target problems are related to
 computational fluid dynamics, Meros itself is purely algebraic.
 Because of this, other types of applications can potentially use Meros
-if a similar underlying physics structure is present.
+if a similar underlying physics structure is present.  The details of
+Meros are discussed in Section~\ref{sect:meros}.
 
 
 \subsection{NOX: Nonlinear Solver Package}
@@ -925,8 +916,7 @@ NOX provides three implementations of its own: LAPACK, Epetra and
 PETSc.  The LAPACK interface is an interface to the BLAS/LAPACK
 library. It is not intended for large-scale computations, but to serve
 as an easy-to-understand example of how one might interface to
-NOX. The Epetra interface is an interface to Epetra.  The PETSc
-interface is an interface with the PETSc library.
+NOX.
 
 All NOX solvers are in the NOX::Solver namespace. The solvers are
 accessed via the NOX::Solver::Manager. The recommended solver is the
@@ -1037,6 +1027,11 @@ To see a complete list of new packages in the future, please look at
 the online version of this overview document, available from the
 Trilinos website~\cite{Trilinos-home-page}.
 
+\section{An Illustration of Trilinos Interoperability}
+\label{sect:meros}
+
+\section{Software Engineering Issues}
+\label{sect:SQA}
 
 \section{Conclusions}
 
