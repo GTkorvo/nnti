@@ -43,7 +43,7 @@ under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA
 % Set some things we need for SAND reports. These are mandatory
 %
 \SANDnum{SAND2004-???}
-\SANDprintDate{September 2004}
+\SANDprintDate{October 2004}
 \SANDauthor{
 Heidi Thornquist \\
 Michael Heroux \\
@@ -323,8 +323,9 @@ Here we state in more precise mathematical terms what multi-vector
 quantities that a block iterative solver maintains.  It is important
 to define these quantities carefully since they can be used to
 determine convergence of the iterative method.  When a new block of
-systems is setup to be solved, the current RHS $\bar{B}$ and the
-current starting initial guess $\bar{X}_0$ are defined either as
+systems is setup to be solved, the current unscaled unpreconditioned
+RHS $\bar{B}$ and the current starting initial guess $\bar{X}_0$ are
+defined either as
 %
 \begin{eqnarray}
 \bar{X}_0 & = & (X_0)_{(:,k+1:k+b)} \in \RE^{n \times b} \label{X_bar_r_b} \\
@@ -355,80 +356,108 @@ currently being solved which defines the current quantities:
 
 \begin{itemize}
 
-{}\item $R_0 = A X_0 - B {}\in\RE^{n
-{}\times m}$ : The full residual multi-vector with respect to
-full initial guess $X_0$ and right-hand side $B$.
+{}\item $R_0 = A X_0 - B {}\in\RE^{n {}\times m}$ : The full unscaled
+unpreconditioned residual multi-vector with respect to full initial
+guess $X_0$ and right-hand side $B$.
 
 {}\item $\bar{B}={\bmat{cc} B \bar{Q} & \bar{V} \emat}\in\RE^{n
-{}\times \bar{b}}$ : The current (augmented if $k+b > m$)
-right-hand side mulit-vector (where $\bar{V}=\emptyset$ if $k+b {}\leq
-m$ or is some well-conditioned mulit-vector $\bar{V}\in\RE^{n {}\times
-m-(k+\bar{m})}$ if $k+b > m$).
+{}\times \bar{b}}$ : The current unscaled unpreconditioned (augmented
+if $k+b > m$) right-hand side mulit-vector (where $\bar{V}=\emptyset$
+if $k+b {}\leq m$ or is some well-conditioned mulit-vector
+$\bar{V}\in\RE^{n {}\times m-(k+\bar{m})}$ if $k+b > m$).
+
+{}\item $\breve{B} = P_L S_L \bar{B}$ : The current scaled
+preconditioned right-hand side mulit-vector.
 
 {}\item $\bar{X}_0={\bmat{cc} X_0 \bar{Q} & 0 \emat}\in\RE^{n {}\times
 {}\bar{b}}$ : The current (augmented if $k+b > m$) starting initial
-guess for the solution associated with $\bar{B}$ (where $0=\emptyset$
-if $k+b {}\leq m$ or $0\in\RE^{n {}\times m-(k+\bar{m})}$ if $k+b >
-m$).
+guess for the unscaled unpreconditioned solution associated with
+$\bar{B}$ (where $0=\emptyset$ if $k+b {}\leq m$ or $0\in\RE^{n
+{}\times m-(k+\bar{m})}$ if $k+b > m$).
 
-{}\item $\bar{R}_0 = A \bar{X}_0 - \bar{B} {}\in\RE^{n
-{}\times {}\bar{b}}$ : The current staring initial residual
-multi-vector with respect to current starting initial guess
+{}\item $\breve{X} = S_R P_R \bar{X}_0$ : The current starting initial
+guess for the scaled preconditioned solution.
+
+{}\item $\bar{R}_0 = A \bar{X}_0 - \bar{B} {}\in\RE^{n {}\times
+{}\bar{b}}$ : The current staring initial unscaled unpreconditioned
+residual multi-vector with respect to current starting initial guess
 $\bar{X}_0$.
 
+{}\item $\breve{R}_0 = A \breve{X}_0 - \breve{B} = P_L S_L \bar{R}_0$
+: The current staring initial scaled preconditioned residual
+multi-vector.
+
 {}\item $\bar{X}_{0,r}\in\RE^{n {}\times {}\bar{b}}$ : The current
-initial guess for the solution associated with $\bar{B}$ for the
-current restart (i.e.~$\bar{X}_{0,r} {}\neq \bar{X}_0$ after the first
-restart).
+initial guess for the unscaled unpreconditioned solution associated
+with $\bar{B}$ for the current restart (i.e.~$\bar{X}_{0,r} {}\neq
+\bar{X}_0$ after the first restart).
 
 {}\item $\bar{X}\in\RE^{n {}\times {}\bar{b}}$ : The current
-approximate left-hand-side solution associated with $\bar{B}$ for the
-current restart.
+approximate left-hand-side unscaled unpreconditioned solution
+associated for the current restart.
 
-{}\item $\bar{Z}\in\RE^{n {}\times {}\bar{b}}$ : The update defining
-$\bar{X} = \bar{X}_{0,r} + S_R P_R \bar{Z}$ which is computed directly
-in many cases by the iterative solver.  Note that $\bar{Z}$ is defined
-as the update from the guess for the most recent restart
-$\bar{X}_{0,r}$ and not from the starting inital guess $\bar{X}_0$.
+{}\item $\breve{X} = S_R P_R \bar{X}$ : The current approximate
+left-hand-side scaled preconditioned solution associated with
+$\breve{B}$ for the current restart.
+
+{}\item $\breve{Z}\in\RE^{n {}\times {}\bar{b}}$ : The unscaled
+unpreconditioned update multi-vector defining $\bar{X} = \bar{X}_{0,r}
++ S_R P_R {}\breve{Z}$ which is computed directly in many cases by the
+iterative solver (i.e.~GMRES).  Note that $\breve{Z}$ is defined as
+the update from the guess for the most recent restart $\bar{X}_{0,r}$
+and not from the starting inital guess $\bar{X}_0$.
 
 {}\item $\bar{R} = A \bar{X} - \bar{B} {}\in\RE^{n {}\times
-{}\bar{b}}$ : The current unscaled, unpreconditioned residual
+{}\bar{b}}$ : The current unscaled unpreconditioned residual
 multi-vector with respect to $\bar{X}$ and $\bar{B}$.
+
+{}\item $\breve{R} = \hat{A} \breve{X} - \breve{B} = P_L S_L \bar{R}$
+: The current scaled preconditioned residual multi-vector with respect
+to $\breve{X}$ and $\breve{B}$.
 
 \end{itemize}
 
-The multi-vector quantities $\bar{B}$, $\bar{R}_0$ and $\bar{X}$ are
-defined for every block iterative solver method and should be
-accessible for the definition of convergence tests.  In all of the
-iterative linear solvers these quantities can be viewed as derived
-attributes of the state of the iterative solver and while these
-quantities may require extra computation this does not change whether
-or not they are computable for all iterative solvers.  In all of the
-iterative solvers it will be clear what quantities are immediately
-available and what quantities will require extra computation.
+The unscaled unpreconditioned multi-vector quantities $\bar{B}$,
+$\bar{R}_0$, $\bar{R}$ and $\bar{X}$ are defined for every block
+iterative solver method and should be accessible for the definition of
+convergence (i.e.~status) tests.  In all of the iterative linear
+solvers these quantities can be viewed as derived attributes of the
+state of the iterative solver and while these quantities may require
+extra computation this does not change whether or not they are
+computable for all iterative solvers.  In all of the iterative solvers
+it will be clear what quantities are immediately available and what
+quantities will require extra computation.
+
+The scaled preconditioned multi-vector quantities $\breve{R}$,
+$\breve{X}$ and/or $\breve{Z}$ would be dealt with by an iterative
+linear solver implementation that did not want to be concerned about
+what type of scaling and/or preconditioning was being used but instead
+just cared about the combined operator.
 
 Every iterative solver method can cheaply define at least some native
-relative residual tolerance error.  This native relative error will
+relative residual error.  This native relative residual error will
 come in one of two forms.  Either the relative norms will be based on
-the scaled, unpreconditioned residuals
+the scaled unpreconditioned residuals
 %
 \begin{equation}
 n_j = ||S_L \bar{R}_{(:,j)}|| / ||S_L (\bar{R}_0)_{(:,j)}||, \; \mbox{for} j = 1 \ldots \bar{b}
 \label{belos:eqn:scaled_unprec_rel_norms}
 \end{equation}
 %
-in the case of a standard CG algorithm for instance, or will be based
-on scaled, preconditioned residuals
+in the case of a standard CG algorithm where the preconditioner was
+used to define the scalar product for instance, or will be based on
+scaled preconditioned residuals
 %
 \begin{equation}
-n_j = ||P_L S_L \bar{R}_{(:,j)}|| / ||P_L S_L (\bar{R}_0)_{(:,j)}||, \; \mbox{for} j = 1 \ldots \bar{b}
+n_j = ||\breve{R}_{(:,j)}|| / ||(\breve{R}_0)_{(:,j)}||, \; \mbox{for} j = 1 \ldots \bar{b}
 \label{belos:eqn:scaled_prec_rel_norms}
 \end{equation}
 %
-in the case of GMRES, BiCGStab and others.  Here the norm $||.||$ will
-be defined to be the natural norm of the vector spaces involved
-(i.e.~$||x|| = {}\sqrt{<x,x>}$ where $<.,.>$ is the defined scalar
-product of the vector space involved).
+in the case of GMRES, BiCGStab and others that only care about the
+combined operator.  Here the norm $||.||$ will be defined to be the
+natural norm of the vector spaces involved (i.e.~$||x|| =
+{}\sqrt{<x,x>}$ where $<.,.>$ is the defined scalar product of the
+vector space involved).
 
 %
 \section{Basic interfaces for iterative linear solvers}
@@ -515,15 +544,15 @@ Fundamental.
 \item
 The linear solvers should use the definition of the scalar product
 defined by the vector spaces defined by the operators in the linear
-problem.  This means that a scalar product $<x,u>$ defined by the
-vector space for $x$ and $u$ and not just simply the dot product $x^T
-u$.  This also means using the definition of the natural norm $||x|| =
-\sqrt{<x,x>}$ as defined by the scalar product $<x,x>$ and just simply
-the Euclidean norm $||x||_2 = \sqrt{x^T x>}$.
+problem.  This means that the scalar product $<x,u>$ defined by the
+vector space for $x$ and $u$ must be used and not just simply the dot
+product $x^T u$.  This also means using the definition of the natural
+norm $||x|| = {}\sqrt{<x,x>}$ as defined by the scalar product $<x,x>$
+and just simply the Euclidean norm $||x||_2 = \sqrt{x^T x>}$.
 {}\textit{Justification:} For some types of applications the
 definition of the scalar product can have a dramatic impact on
-improving the performance of the iterative method.  While in theory
-these scalar products can also be represented as operators that are
+improving the performance of an iterative method.  While in theory
+these scalar products can also be represented as operators that can be
 aggregated with the other preconditioners, in practice it is much more
 convienent to only require the accumulation of the scalar product
 itself.  {}\textit{Importance:} Fundamental.
@@ -535,6 +564,9 @@ RHS and single RHS iterative linear solvers.
 very important, many different uses of iterative solvers only require
 or can only exploit linear solves for single RHSs.  For example, a
 basic Newton method can only solve linear systems one RHS at a time.
+In addition, we want to encourage the development of single-RHS
+iterative methods in this framework, not discourage it by requiring
+that all concrete iterative linear solvers be true block solvers.
 {}\textit{Importance:} Fundamental.
 
 \item
@@ -1218,11 +1250,12 @@ solution.  The status test is invoked as shown below:
   IterationReturn IterativeSolverImplementation<Scalar>::doIteration()
   {
     // Ask the status test to check the status of the current systems
+    const int currBlockSize = lpi_->getCurrBlockSize();
     const int currNumRhs = lpi_->getCurrNumRhs();
     StatusTest<Scalar> *statusTest = lpi_->getStatusTest();
     if(statusTest) {
-      std::vector<EStatusType> status(currNumRhs,STATUS_UNCHECKED);
-      statusTest->checkStatus(*this,currNumRhs,currNumRhs,&status[0]);
+      std::vector<EStatusType> status(currBlockSize,STATUS_UNCHECKED);
+      statusTest->checkStatus(*this,currBlockSize,currNumRhs,&status[0]);
       ...
     }
     ...
@@ -1419,7 +1452,7 @@ subclass might implement this status test:
 
 {\scriptsize\begin{verbatim}
   template<class Scalar>
-  void ResidualNormStatusTest<Scalar>::protectedCheckStatus(
+  void ResidualNormStatusTest<Scalar>::checkStatus(
     const BasicIterationState<Scalar>         &bis
     ,const int                                currBlockSize // == bis.getProblem().getBlockSize()
     ,const int                                currNumRhs    // == bis.getProblem().getCurrNumRhs()
@@ -1489,7 +1522,7 @@ tolerance:
 
 {\scriptsize\begin{verbatim}
   template<class Scalar>
-  void ResidualNormStatusTest<Scalar>::protectedCheckStatus(
+  void ResidualNormStatusTest<Scalar>::checkStatus(
     const BasicIterationState<Scalar>         &bis
     ,const int                                currBlockSize // == bis.getProblem().getBlockSize()
     ,const int                                currNumRhs    // == bis.getProblem().getCurrNumRhs()
@@ -1617,7 +1650,7 @@ combined linear operator object for $\hat{A} = P_L \tilde{A} P_R$ is
 returned from the function
 {}\texttt{Linear\-Problem\-State::\-get\-Conbined\-Operator(...)} (as
 shown in the scenario in Figure {}\ref{belos:fig:BelosSequence}).  The
-current scaled preconditioned residual $P_L S_L \bar{R}$ itself can be
+current scaled preconditioned residual $\breve{R}$ itself can be
 computed using the function
 {}\texttt{Linear\-Problem\-Iteration::\-compute\-Curr\-Prec\-Residual(...)} 
 and this is all that most iterative solves need what wish to be
