@@ -2499,7 +2499,7 @@ expression for reduced derivative
     + \Lambda^H \frac{\partial c}{\partial p}
   \right) dt
   + \left. \left( \frac{\partial h}{\partial p} \right) \right|_{t=t_f}
-  - \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y}{\partial p} \right) \right|_{t=t_0}.
+  - \left. \left( \Lambda^H \frac{\partial c}{\partial \dot{y}} \frac{\partial y_0}{\partial p} \right) \right|_{t=t_0}.
 \label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}
 \end{equation}
 
@@ -2512,7 +2512,58 @@ computed adjoint $\Lambda(t)$.
 
 \subsubsection{Derivation of adjoint sensitivities for transient parameters}
 
-\subsection{Derivation of adjoint sensitivities using reduced Lagrangian}
+\subsection{The adjoint, the reduced gradient and the augmented adjoint}
+
+We now restate the adjoint in (\ref{rythmos:apdx:eqn:sens:adj-trans}) and
+(\ref{rythmos:apdx:eqn:sens:adj-trans:fc}), and the reduced sensitivities in
+(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) in standard column-wise form
+for $\Lambda$ which yields the adjoint DAE equations
+%
+\begin{eqnarray}
+- \frac{d}{dt}\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)
++  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:adj} \\
+\left.\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)\right|_{t=t_f}
+& = & - \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
+\label{rythmos:apdx:eqn:sens:adj:fc}
+\end{eqnarray}
+%
+and the reduced gradient expression
+%
+\begin{equation}
+\frac{\partial \hat{d}}{\partial p}^H =
+\int_{t_0}^{t_f} \left(
+    \frac{\partial g}{\partial p}^H
+    + \frac{\partial c}{\partial p}^H \Lambda
+  \right) dt
+  + \left. \frac{\partial h}{\partial p}^H \right|_{t=t_f}
+  - \left. \left( \frac{\partial y_0}{\partial p}^H \frac{\partial c}{\partial \dot{y}}^H \Lambda \right) \right|_{t=t_0}.
+\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final-2}
+\end{equation}
+%
+
+As described in [???], for some classes of up to index-2 DAEs, the form of the
+adjoint in
+(\ref{rythmos:apdx:eqn:sens:adj})--(\ref{rythmos:apdx:eqn:sens:adj:fc}) may be
+unstable while the {}\textit{augmented adjoint system}
+%
+\begin{eqnarray}
+\frac{d}{dt}\left( \bar{\Lambda} \right)
++  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H \Lambda
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:aug-adj-de} \\
+\bar{\Lambda} + \frac{\partial c}{\partial \dot{y}}^H
+& = & 0, \; t \in \left[ t_0, t_f \right],
+\label{rythmos:apdx:eqn:sens:aug-adj-ae} \\
+\left. \bar{\Lambda} \right|_{t=t_f}
+& = & \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
+\label{rythmos:apdx:eqn:sens:aug-adj:fc}
+\end{eqnarray}
+%
+generally is stable when the forward DAE is stable.
+
+\section{Derivation of adjoint sensitivities using the reduced Lagrangian}
 
 In this section we consider the derivation of adjoint approaches for computing
 sensitivities of the reduced response function $\hat{d}(p,v(t_0,t_f))$ with
@@ -2567,7 +2618,7 @@ accept that I don't fully appreciate the foundation for this general approach
 but I will just accept that it is bullet proof and gives the right result
 every time.
 
-\subsubsection{Sensitivities for steady-state parameters and the adjoint equation}
+\subsection{Sensitivities for steady-state parameters and the adjoint equation}
 
 In this section we will derive the expressions for $\partial {}\hat{d}
 / {}\partial p$ and in the process will derive the adjoint equation
@@ -2662,7 +2713,7 @@ expression at $t=t_0$, leaves
 which is the same as (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) derived
 in another way.
 
-\subsubsection{Adjoint sensitivities for transient parameters}
+\subsection{Adjoint sensitivities for transient parameters}
 
 Here we consider the derivation of the sensitivity
 %
@@ -2769,63 +2820,12 @@ By comparing (\ref{rythmos:apdx:eqn:sens:d_L_hat_d_v_delta_v_3}) to
 %
 is the reduced gradient that we are seeking.
 
-\subsection{The adjoint, the reduced gradient and the augmented adjoint}
-
-We now restate the adjoint in (\ref{rythmos:apdx:eqn:sens:adj-trans}) and
-(\ref{rythmos:apdx:eqn:sens:adj-trans:fc}), and the reduced sensitivities in
-(\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) in standard column-wise form
-for $\Lambda$ which yields the adjoint DAE equations
-%
-\begin{eqnarray}
-- \frac{d}{dt}\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)
-+  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H
-& = & 0, \; t \in \left[ t_0, t_f \right],
-\label{rythmos:apdx:eqn:sens:adj} \\
-\left.\left( \frac{\partial c}{\partial \dot{y}}^H \Lambda \right)\right|_{t=t_f}
-& = & - \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
-\label{rythmos:apdx:eqn:sens:adj:fc}
-\end{eqnarray}
-%
-and the reduced gradient expression
-%
-\begin{equation}
-\frac{\partial \hat{d}}{\partial p}^H =
-\int_{t_0}^{t_f} \left(
-    \frac{\partial g}{\partial p}^H
-    + \frac{\partial c}{\partial p}^H \Lambda
-  \right) dt
-  + \left. \frac{\partial h}{\partial p}^H \right|_{t=t_f}
-  - \left. \left( \frac{\partial y_0}{\partial p}^H \frac{\partial c}{\partial \dot{y}}^H \Lambda \right) \right|_{t=t_0}.
-\label{rythmos:apdx:eqn:sens:d_d_hat_d_p_final-2}
-\end{equation}
-%
-
-As described in [???], for some classes of up to index-2 DAEs, the form of the
-adjoint in
-(\ref{rythmos:apdx:eqn:sens:adj})--(\ref{rythmos:apdx:eqn:sens:adj:fc}) may be
-unstable while the {}\textit{augmented adjoint system}
-%
-\begin{eqnarray}
-\frac{d}{dt}\left( \bar{\Lambda} \right)
-+  \frac{\partial c}{\partial y}^H \Lambda + \frac{\partial g}{\partial y}^H \Lambda
-& = & 0, \; t \in \left[ t_0, t_f \right],
-\label{rythmos:apdx:eqn:sens:aug-adj-de} \\
-\bar{\Lambda} + \frac{\partial c}{\partial \dot{y}}^H
-& = & 0, \; t \in \left[ t_0, t_f \right],
-\label{rythmos:apdx:eqn:sens:aug-adj-ae} \\
-\left. \bar{\Lambda} \right|_{t=t_f}
-& = & \left. \frac{\partial h}{\partial y}^H \right|_{y=y(t_f)},
-\label{rythmos:apdx:eqn:sens:aug-adj:fc}
-\end{eqnarray}
-%
-generally is stable when the forward DAE is stable.
-
 \section{ToDo}
 
 \begin{itemize}
 %
-{}\item Ross: Rederive sensitivities for transient parameters and move the
-Lagrangian-based derivations to a separate Appendix section.
+{}\item Ross: Rederive sensitivities for transient parameters using weak form
+of direct sensitivity equations.
 %
 {}\item Ross: Derive reduced Hessian-vector products for sensitivity
 computations and expand the list of requirements to include second derivative
