@@ -142,21 +142,19 @@ state.
 Section~\ref{Sect:RelatedWork} discusses work that is related to Trilinos. 
 Integration of a package into Trilinos, and what Trilinos can provide
 to a package, will be discussed in Section~\ref{sect:TrilinosServices}.
-Section~\ref{sect:PetraAndTSF} discusses two special collections of Trilinos
-packages: Petra and TSF.  The general definition of a Trilinos
-package is presented in Section~\ref{sect:PackageDefinition}
-An overview of current software research and
-development is given in Section~\ref{sect:Software}. 
-Section~\ref{sect:meros} presents the Meros package in greater detail
+Section~\ref{sect:Software} discusses the current collection of Trilinos
+packages.  Section~\ref{sect:Interoperability} presents some code
+fragments that illustrate the interoperability of Trilinos packages.
+This section also discusses the Meros package in greater detail
 because it illustrates how multiple Trilinos packages can be combined 
 to quickly provide production implementations of state-of-the-art 
-algorithms.Finally, Section~\ref{sect:SQA} discusses the role of 
+algorithms.  Finally, Section~\ref{sect:SQA} discusses the role of 
 Trilinos to improve software quality and reduce the cost of software 
 quality assurance processes, an increasingly important aspect
 of computer modeling and simulation for science and engineering.  
 
 \section{Related Work}
-
+\label{Sect:RelatedWork}
 General-purpose solver libraries have been used successfully across 
 a broad set of applications and computer systems.  EISPACK~\cite{eispack}, 
 LINPACK~\cite{linpack} and LAPACK~\cite{lapack} are just a few of
@@ -403,7 +401,7 @@ TSFExt& Extensions to TSFCore          &  &  &  & X \\\hline
 Tpetra& Templated Petra                &  &  &  & X \\\hline\hline
 Totals&                                & 8&11&14&20 \\\hline
 \end{tabular}
-\caption{\label{Table:PackageLists} Trilinos Package Summary and
+\caption{\label{Table:PackageList} Trilinos Package Summary and
 Release Status}
 \end{center}
 \end{table}
@@ -613,7 +611,7 @@ operations.  It can provide a single interface to many different
 solvers.  Furthermore, TSFExtended has powerful compositional
 mechanisms that support the
 light-weight construction of composite objects from a set of
-existing objects (see Section~\ref{sect:meros}).
+existing objects (see Section~\ref{subsect:meros}).
 As a result, TSF users gain easy access to many
 solvers and can bring multiple solvers to bear on a single problem.
 
@@ -631,7 +629,7 @@ which support powerful abstraction capabilities.  The Meros package
 relies on TSFExtended to implicitly construct sophisticated
 Schur compliment preconditioners in terms of existing component
 operators with little overhead in time or memory.  Section
-~\ref{sect:meros} discusses this topic in detail.
+~\ref{subsect:meros} discusses this topic in detail.
 \end{enumerate}
 
 Both TSFCore and TSFExtended are important because they allow
@@ -854,7 +852,7 @@ problems.  Although the present target problems are related to
 computational fluid dynamics, Meros itself is purely algebraic.
 Because of this, other types of applications can potentially use Meros
 if a similar underlying physics structure is present.  The details of
-Meros are discussed in Section~\ref{sect:meros}.
+Meros are discussed in Section~\ref{subsect:meros}.
 
 
 \subsection{NOX: Nonlinear Solver Package}
@@ -1152,7 +1150,7 @@ stiffness matrices may be passed in to fill the matrix.  Finally,
 almost any combination of these fill techniques can be used on a given
 matrix.
 
-Figure~\ref{fig:readmatrix} shows a very simple test program that
+Figure~\ref{fig:solvetrid} shows a very simple test program that
 builds a tridiagonal matrix distributed across the parallel machine
 with 1000 rows per processor.  The right-hand-side and solution
 vectors are chosen to have the same layout.  We do not require that
@@ -1548,14 +1546,90 @@ that each package is typically written by five or fewer people,
 implementation of the ASCI SQE process by each package team would be
 almost impossible.  Fortunately, the Trilinos infrastructure
 can address the majority of the ASCI SQE practice, fully or
-partially.  In fact, of the 47 practices listed in~\cite{ASCISQE2003},
-32 of them are the sole responsibility of the Trilinos framework, and
-the framework provides significant support for the remaining
-15~\cite{Trilinos-Dev-Guide-II}.   Only those practices that are truly
+partially.  Table~\ref{table:practices} highlights how Trilinos aids
+package developers with some of the 47 practices listed in~\cite{ASCISQE2003}.
+Details of Trilinos vs. package responsibilities is presented 
+in~\cite{Trilinos-Dev-Guide-II}.   In general, only those practices that are truly
 unique to a package are primarily package responsibilities.  This gives
 package developers the ability to focus on the core issues of
 algorithm design and implementation, and package level documentation
 and testing.
+\begin{table}
+\begin{center}
+\begin{tabular}{|p{1.75in}|p{2.75in}|}\hline
+\multicolumn{1}{|c|}{Trilinos Framework Feature} &
+\multicolumn{1}{|c|}{SQE Practices Impact}\\\hline
+Yearly Trilinos User Group Meeting (TUG) and Developer Forum: Trilinos Users
+and Developers gather once a year for tutorials, package feature updates,
+user/developer requirements discussion and developer training. &  
+\begin{enumerate}
+\item Requirements: Facilitates progress on all aspects of the Requirements Phase in
+the software lifecycle, including gathering, derivation,
+documentation, feasibility, etc. 
+\item User training: Provides a forum for all package teams to train new and existing
+users.
+\item Developer training: Provides developer training on Trilinos-provided tools and
+processes and on SQE reqirements.
+\end{enumerate} \\\hline
+Monthly Trilinos leaders meetings: Trilinos leaders, including package
+development leaders, key managers, funding sources and other
+stakeholders participate in monthly phone meetings to discuss any
+timely issues related to the Trilinos Project. &
+\begin{enumerate}
+\item Requirements tracking.
+\item Developer Training.
+\item Design reviews.
+\item Policy decisions across all development phases.
+\end{enumerate}\\\hline 
+Trilinos and package mail lists:  Trilinos lists for leaders,
+announcements, developers, users, checkins and similar lists at the package level
+support a variety of communication.  All lists are archived, providing
+critical artifacts for assessments and audits. &
+\begin{enumerate}
+\item Trilinos-leaders list: Provides agenda and archive of meeting minutes.
+\item Trilinos-developers and package-developers lists: Provides
+discussion forum and archive for specification and design decisions at
+the Trilinos and package levels.
+\item Trilinos-annouce list: Documents the completion of each phase of
+a Trilinos release.
+\item Trilinos-regression list: Archives test regression suite output.
+\end{enumerate}\\\hline
+Trilinos and Trilinos3PL source repositories. &
+\begin{enumerate}
+\item Source management:  All source code, development and user documentation is retained
+and tracked.
+\item Versioning: All released versions are separately tracked.
+\item  Third-party software: In addition to Trilinos
+and package source, Trilinos provides a third-party library repository
+with reference versions of all external software, including BLAS,
+LAPACK, Umfpack, etc.
+\end{enumerate}\\\hline
+Trilinos Bugzilla Database.&
+\begin{enumerate}
+\item Requirements:  Supports collection, tracking and management of requirements,
+enhancements and software faults.
+\end{enumerate}\\\hline
+Trilinos {\tt configure} script and M4 macros. &
+\begin{enumerate}
+\item Portable builds: The Trilinos {\tt configure} script and related macros support
+portable installation of Trilinos and its packages.
+\item Software release: The ``make install'' option is used to
+create any reasonable combination of Trilinos packages for web-based distribution.
+\end{enumerate}\\\hline
+Trilinos test harness. &
+\begin{enumerate}
+\item Testing support: Trilinos provides a base testing plan and 
+automated testing across
+multiple platforms, plus creation of testing artifacts.
+\item Software metrics: Test harness results are used to derive a
+variety of metrics for SQE.
+\end{enumerate}\\\hline
+\end{tabular}
+\caption{\label{table:practices} Trilinos Framework support of package
+SQE practices}
+\end{center}
+\end{table}
+
 
 \section{Conclusions}
 
