@@ -24,12 +24,36 @@
 # 
 # ************************************************************************
 
+# classes that currently don't compile or are not used
+# Histogram.java VecView.java Graph.java
+
+# group classes by type/function in order to setup a correct build order
+core_classes = "Output.java JpetraException.java JpetraObject.java"
+ccj_classes =  "CcjComm.java CcjReduceAllSumIntArray.java CcjDistributor.java \
+		CcjReduceDoubleMaxArray.java CcjGatherDoubleArray.java \
+		CcjReduceDoubleMinArray.java CcjGatherIntArray.java \
+		CcjReduceIntMaxArray.java CcjGatherSerializableArray.java \
+		CcjReduceIntMinArray.java CcjLink.java CcjScatter2DArray.java \
+		CcjReduceAllSumDoubleArray.java"
+comm_classes = "Comm.java SerialComm.java Directory.java Blockmap.java Map.java \
+		LocalMap.jhava Exporter.java Importer.java \
+		DistObject.java Distributor.java SerialDistributor.java $(ccj_classes)"
+util_classes = "Time.java Util.java"
+data_structs = "ElementSpace.java CrsMatrix.java SerialDenseMatrix.java IntSerialDenseMatrix.java \
+		SerialSymDenseMatrix.java SerialDenseVector.java IntSerialDenseVector.java \
+		VectorSpace.java Vector.java MultiVector.java"
+		  
 all:
-	javac -d ..  BlockMap.java Comm.java CrsMatrix.java Directory.java Exporter.java Graph.java \
-                  Importer.java JpetraException.java JpetraObject.java LocalMap.java \
-                  Map.java MatView.java MultiVector.java SerialComm.java Time.java Util.java \
-                  Vector.java CcjGatherIntArray.java CcjGatherDoubleArray.java CcjReduceAllSumDoubleArray.java \
-                  CcjReduceAllSumIntArray.java CcjLink.java
-# Histogram.java VecView.java
+	#the compilation will fail if the classes are not compiled in the proper order
+	javac -d .. $(core_classes) $(util_classes) $(comm_classes) $(data_structs)
+	
+	# old build command
+	#javac -d ..  BlockMap.java Comm.java CrsMatrix.java Directory.java Exporter.java Graph.java \
+        #          Importer.java JpetraException.java JpetraObject.java LocalMap.java \
+        #          Map.java MatView.java MultiVector.java SerialComm.java Time.java Util.java \
+        #          Vector.java CcjGatherIntArray.java CcjGatherDoubleArray.java CcjReduceAllSumDoubleArray.java \
+        #          CcjReduceAllSumIntArray.java CcjLink.java
+
+
 clean:
 	rm *~
