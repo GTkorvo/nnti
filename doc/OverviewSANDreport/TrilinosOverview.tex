@@ -83,7 +83,8 @@
     % An Abstract is required for SAND reports
     %
     \begin{abstract}
-The Trilinos Project is an effort to develop parallel solver algorithms within 
+The Trilinos Project is an effort to develop parallel solver algorithms and libraries 
+within 
 an object-oriented software framework for the solution of large-scale, complex
 multi-physics engineering and scientific applications.   Our emphasis is on 
 developing robust, scalable algorithms in a software framework, using abstract 
@@ -138,15 +139,50 @@ Barth.
     % An optional executive summary
     \clearpage
     \section{Summary}
-The Trilinos Project grew out of a group of established numerical algorithms
+
+A core requirement of many engineering and scientific applications is the need to solve linear and non-linear 
+systems of equations, eigensystems and other related problems.  Thus it is no surprise that any 
+part of the application that solves these problems is called a ``solver.'' The exact definition of what
+specifically constitutes a solver depends on many factors.  However, a good working definition of a solver is
+the following: {\it Any piece of software that finds unknown values for some set of discrete
+governing equations in 
+an application.}  Another characteristic of solvers is that we can often implement them in such a way that they
+are ``general-purpose'', so that the
+details of how the discrete problem was formed are not specifically needed for the solver to work (although
+information about problem characteristics can often be vital to robust solutions.)
+
+General-purpose linear and eigensolvers have been successfully used across a broad set of applications and 
+computer systems.  EISPACK~\cite{eispack}, LINPACK~\cite{linpack} and LAPACK~\cite{lapack} are just a few of
+the many packages that have made a tremendous impact, providing robust portable solvers to a broad set of 
+applications.  More recently packages such as PETSc~\cite{petsc-home-page,petsc-manual,petsc-efficient} 
+and Aztec~\cite{Aztec2.1} have provided a large
+benefit to applications by giving users access to parallel distributed memory solvers that are easy-to-use and
+robust.
+
+Sandia has historically had efforts to develop scalable solver algorithms and software.  Often this
+development has been done within the context of a specific application code, providing a good robust solver
+that specifically meets the needs of that application.  Even Aztec, one of the most important general-purpose
+solvers developed at Sandia, was developed specifically for MPSalsa~\cite{MPSalsa-User-Guide,MPSalsa-Theory} 
+and only later extracted 
+for use with other applications.  Unfortunately, even though application-focused solvers 
+tend to be very robust and can often be made into very effective general-purpose solvers, the opportunity
+to re-use the basic set of tools developed for one solver in the development of another solver becomes very
+difficult.
+
+The Trilinos Project grew out of this group of established numerical algorithms
 efforts at Sandia, motivated by  a recognition that a modest degree of 
 coordination among these efforts could have a large positive impact on the quality and
 usability of the software we produce and therefore enhance the
 research, development and integration of new solver algorithms into
-applications.  This document describes the Trilinos project,
+applications.  Although the project has existed for only two years, the degree of effort
+required to develop new parallel solvers has been substantially reduced because our common
+infrastructure provides an excellent starting point.  Furthermore, many applications are
+standardizing on the Trilinos matrix and vector classes.  As a result, these applications
+have access to all Trilinos solver components without any unnecessary interface modifications.
+
+This document provides an overview of the Trilinos project,
 focusing on the project philosophy and description, and
-providing the reader with an overview of the project in its current state.  It also
-includes brief developer and user guides.
+providing the reader with an summary of the project in its current state.  
 
 
     % ---------------------------------------------------------------------- %
@@ -178,7 +214,7 @@ of tractable problems and reduce the cost of solving existing
 problems.  Well-designed solver libraries provide a mechanism for
 leveraging solver development across a broad set of applications and
 minimize the cost of solver integration.  Emphasis is
-required in both new algorithms and new solver frameworks in order
+required in both new algorithms and new software in order
 to achieve the maximum impact of efforts.
 
 The Trilinos project encompasses a variety of efforts that are to some
@@ -193,15 +229,12 @@ that will be discussed in Section~\ref{sect:TrilinosDesign}.
 Section~\ref{sect:EpetraAndTSF} discusses two special Trilinos
 packages: Epetra and TSF.  The general definition of a Trilinos
 package is presented in Section~\ref{sect:PackageDefinition}
-
-An overview of current algorithmic and software research and
-development is given in Sections~\ref{sect:Algorithms}
-and~\ref{sect:Software}, respectively.  Finally this document contains
-three appendices.  Appendix~\ref{sect:OOTutorial} gives a brief
+An overview of current software research and
+development is given in Section~\ref{sect:Software}.  
+Finally, this document contains
+an Appendix~\ref{sect:OOTutorial} which gives a brief
 tutorial on object-oriented concepts for readers who are unfamiliar
-with the area.  Appendix~\ref{sect:UserGuide} provides a brief User Guide
-for Trilinos and finally Appendix~\ref{sect:DeveloperGuide} provides a
-set of policies and procedures for Trilinos developers.
+with the area.  
 
 \section{Trilinos Design Philosophy}
 \label{sect:TrilinosDesign}
@@ -242,7 +275,7 @@ testing capabilities.  Within a number of Trilinos packages, we employ
 used and probed.  In addition, Trilinos performs ``black box'' testing
 of packages via the Trilinos Solver Framework (TSF) virtual class
 interfaces.  Any package that implements the TSF interfaces (see
-Section~\cite{Interop_TSF} below), can be tested via this black box
+Section~\ref{subsect:InteropTSF} below), can be tested via this black box
 test environment.  ({\bf NOTE: Black box testing via TSF is not in
 place at this time}
 
@@ -295,6 +328,7 @@ capabilities.  It uses the BLAS and LAPACK where possible, and as a
 result has good performance characteristics.
 
 \subsection{TSF}
+\label{subsect:InteropTSF}
 Many different algorithms are available to solve any given numerical
 problems.  For example, there are many algorithms for solving a system
 of linear equations, and many solver packages are available to solve
@@ -384,6 +418,7 @@ internally, a package can in turn use other Trilinos packages to
 manipulate its own internal objects.
 
 \section{Overview of Current Package Development}
+\label{sect:Software}
 
 \subsection{The Petra Object Model}
 \label{subsect:PetraObjectModel}
@@ -555,7 +590,8 @@ left_(left), right_(right) {
   }
 }
 
-void TSFComposedOperator::apply(const TSFVector& in, TSFVector& out) const {
+void TSFComposedOperator::apply(const TSFVector& in, 
+                                      TSFVector& out) const {
 
   /* apply operators in order from right to left */
   TSFVector tmp = right_.range().createMember();
@@ -581,7 +617,7 @@ void TSFInverseOperator::apply(const TSFVector& in, TSFVector& out) const {
 \end{verbatim}
 
 There is a number of other aggregation operators.  More details of all the possible 
-aggregations can be found in the TSF User Guide~\cite{TsfUserGuide}.
+aggregations can be found in the TSF User Guide~\cite{TSF-User-Guide}.
 
 Given these aggregation capabilities, one can implicitly form the Schur compliment $S$ via
 a sequence of TSF operator constructor calls, first constructing a TSF operator
@@ -687,7 +723,9 @@ NOX uses pure virtual classes to work with all matrix, operator and vector objec
 it can be used with any external software that can implement these interfaces.  Epetra and
 PETSc implementations of the pure virtual classes are already implemented.
 
-\section{Conclusion}
+\subsection{ML: Multi-level Preconditioner Package}
+
+\section{Conclusions}
 
 The Trilinos project provides a framework for integrating independent 
 solver packages, making the package inter-operable and providing a common ``look-and-feel'' 
@@ -741,13 +779,14 @@ understand them and use them.
 
 \subsection{Object-oriented Programming}
 We use the term object-oriented programming (OOP) to refer to a philosophy of 
-software engineering where data and
-procedures (called methods) that are logically related are kept together in a class.  
+software engineering where 
+procedures (called methods) and data that are logically related are kept together in a single
+logical unit called a class.  
 Although it is not alway clear which data and methods should belong in a given class, we
 can generally agree on basic associations.  As an example, one obvious class for a solver
 framework is a Vector.  For our purposes, we consider a vector object to have finite dimension
 and a basis.  Therefore, it contains data that can be indexed.  Some obvious vector operations
-are norms, dot products and vector updates.  Vector can also be used with a linear operator,
+are norms, dot products and vector updates.  Vector can also be multiplied by a linear operator,
 or more specifically a matrix.  However, we commonly put this kind of method in the matrix
 class because matrices tend to be more complicated objects and writing the method in the matrix
 class is easier.
