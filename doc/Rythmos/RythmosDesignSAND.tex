@@ -192,6 +192,7 @@ physics and multi-physics coupling.
 ToDo: Spell out more requirements!
 
 \section{Mathematical formulation for DAE/ODE solvers}
+\label{rythmos:scn:mathformulation}
 
 Here we describe the basic mathematical form of a general nonlinear DAE (or
 ODE) for the purpose of presenting it to a forward time integrator.  At the
@@ -246,7 +247,7 @@ DAE.
 \end{itemize}
 %
 In addition, the ODE/DAE may linear or nonlinear and DAEs are classified by
-their index [???].  It is expected that a DAE will be able to tell a time
+their index \cite{BCP}.  It is expected that a DAE will be able to tell a time
 integrator what type of problem it is (i.e.\ explicit ODE, implicit ODE,
 general DAE) and which, if any, of the variables are linear in the problem.
 This type of information can be exploited in a time integration algorithm.
@@ -270,7 +271,7 @@ We first consider explicit methods followed by implicit methods.
 Explicit integration methods are primarily only attractive for explicit and
 implicit ODEs but some classes of DAEs can be considered as well (i.e.\ by
 nonlinearly eliminating the algebraic variables using the algebraic equations
-in a semi-explicit DAE, see [???]).  For this discussion, we will also assume
+in a semi-explicit DAE \cite{BCP}).  For this discussion, we will also assume
 that the DAE has been written in the explicit ODE form (i.e.\ ${}\partial f /
 {}\partial {}\dot{x} = I$).  Note that implicit ODEs can always be written as
 explicit ODEs by multiplying the implicit ODE from the right with $({}\partial
@@ -376,7 +377,7 @@ and the form of the approximation is
 \end{equation}
 %
 where $\Delta t = t_{k+1} - t_k$ and $\beta_j$, for $j=0 {}\ldots p$, are the
-BDF method coefficients (see [???]).
+BDF method coefficients \cite{AscherPetzold}.
 
 The nonlinear time step equation to advance the solution from $t_k$ to
 $t_{k+1}$ is then formed by substituting $\dot{x} = \dot{x}_{k+1}$ in
@@ -395,7 +396,7 @@ x_{k+1}$.  All of the other state variables $x_{k+1-j}$, for $j = 1 {}\ldots
 p$, are given.
 
 Note that the first-order BDF method with $p=1$, $\beta_0 = 1$ and $\beta_1 =
--1$ is simply the standard backward Euler time integration method [???].
+-1$ is simply the standard backward Euler time integration method \cite{AscherPetzold}.
 
 When considering a general Newton-like method for solving
 (\ref{rythmos:eqn:bdf_dae_ne}), note that the Newton Jacobian of these
@@ -417,7 +418,7 @@ time step equations; this will not be true for some of the other methods.
 \subsubsection{Generalized Theta methods}
 
 The next fairly straightforward class of methods are the so called $\theta$
-(Theta) methods.  Theta methods define a time step equation by requiring
+(Theta) methods \cite{HairerWanner}.  Theta methods define a time step equation by requiring
 enforcement of the DAE equation at an intermediate time in the range
 $t_{\theta} {}\in [t_k,t_{k+1}]$ where $t_{\theta} = t_k + \theta ( t_{k+1} -
 t_k )$ and $\theta {}\in [0,1]$.  Then, Theta-averaged values for $x$ and $t$
@@ -429,8 +430,8 @@ f\left( \frac{x_{k+1} - x_{k}}{\Delta t},x_k + \theta ( x_{k+1} - x_{k} ), t_k +
 \end{equation}
 %
 which is then solved for the unknown state $x_{k+1}$.  The values of $\theta =
-0$, $\myonehalf$ and $1$ give the well known forward Euler [???], midpoint
-rule [???], and backward Euler [???] methods.
+0$, $\myonehalf$ and $1$ give the well known forward Euler, midpoint
+rule, and backward Euler methods \cite{HairerWanner}.
 
 {}\textbf{ToDo: Todd, is this correct?  I could not find a specific reference
 for a general DAE but this seems not to be consistent with the midpoint rule
@@ -489,10 +490,11 @@ form as the Jacobian in (\ref{rythmos:eqn:M}) where $\alpha = 2/\Delta t$.
 The Jacobian in (\ref{rythmos:eqn:trap_M}) is not an exact Jacobian for the
 equations in (\ref{rythmos:eqn:trap_dae_ne}) but can produce good Newton steps
 in many cases.  However, an inexact Jacobian such as this can cause a problem
-when sensitivity computations are being performed (see Section ???).
+when sensitivity computations are being performed (see Section \ref{rythmos:scn:transientsensitivity}).
 
-\subsubsection{Generalized Alpha methods ???}
+\subsubsection{Generalized Alpha methods}
 
+\cite{GeneralizedAlpha}
 {}\textbf{Todd: Can you fill this in?}
 
 \subsubsection{Implicit Runge-Kutta methods}
@@ -615,13 +617,15 @@ applications of the operator and preconditioner for matrices of the form
 advantage of multi-vector operations when possible and if it makes since to do
 so.}
 
-\subsubsection{Discontinuous Galerkin in time ???}
+\subsubsection{Discontinuous Galerkin in time}
 
+\cite{DGTime}
 {}\textbf{Todd: Scott Collis mentioned this a something that can be important
 from a variety of standpoints but I don't have any references for this yet.}
 
-\subsubsection{Finite-elements in time ???}
+\subsubsection{Finite-elements in time }
 
+\cite{FETime}
 {}\textbf{Todd: Scott Collis mentioned this a something that can be important
 from a variety of standpoints but I don't have any references for this yet.}
 
@@ -633,7 +637,7 @@ from a variety of standpoints but I don't have any references for this yet.}
 
 \section{Mathematical Formation for ODEs/DAEs for Applications}
 
-The form of the DAE described in Section ??? relates directly to what is
+The form of the DAE described in Section \ref{rythmos:scn:mathformulation} relates directly to what is
 needed for the implementation of explicit and implicit time integration
 methods.  In this section, we will present a form of the the DAE that is most
 directly related to what applications must provide, especially as it relates
@@ -670,7 +674,7 @@ adjustable variables that can be manipulated for some purpose and, once
 selected, determine a fully specified set of DAEs that can be solved forward
 in time for the state variables $y(t)$.  The form of the DAE in
 (\ref{rythmos:eqn:app:c}), which has auxiliary variables, arises in a number
-of contexts such as direct sensitivity computations (see Section ???) and in
+of contexts such as direct sensitivity computations (see Section \ref{rythmos:scn:transientsensitivity:direct}) and in
 multi-disciplinary (i.e.\ multi-physics) coupling.
 
 In many situations, quantities of interest or response functions are important
@@ -834,6 +838,7 @@ surprising given the nature of these DAEs (i.e.\ the original DAEs are
 independent of the auxiliary DAEs).
 
 \section{Transient Sensitivity Computations}
+\label{rythmos:scn:transientsensitivity}
 
 In this section we describe the basics of direct and adjoint sensitivity
 computations.  The results from these computations are useful in a variety of
@@ -862,6 +867,7 @@ course discrete approximation to the first derivative object
 $v(t)$ because of the large discretized dimension of $v(t_i:t_f)$.
 
 \subsection{Transient Direct Sensitivity Solvers}
+\label{rythmos:scn:transientsensitivity:direct}
 
 In this section we consider the solution of direct sensitivity equations to
 compute the first derivative object ${}\partial {}\hat{g} / {}\partial p$ in
@@ -886,7 +892,7 @@ The final partial derivatives $\partial \tilde{y}(t_f) / {}\partial p$ are
 known as the {}\textit{direct sensitivities} and are independent of any
 particular choice of the auxiliary response functions $\tilde{g}(\ldots)$.
 In fact, these direct sensitivities $\partial \tilde{y}(t_f) / {}\partial p$
-can be useful in their own right in some types of analyzes (see [???]).
+can be useful in their own right in some types of analysis (see [???]).
 
 Solving for $\partial \tilde{y}(t_f) / {}\partial p$ requires solving the
 following forward direct sensitivity equations
@@ -1000,6 +1006,7 @@ computation?  This will effect how general software is used and what other
 specializations are needed.
 
 \subsection{Transient Adjoint Sensitivity Solvers}
+\label{rythmos:scn:transientsensitivity:adjoint}
 
 Adjoint sensitivity approaches are more computationally efficient when $n_u$
 is large and/or when $n_v > 0$.  The adjoint sensitivity equations are derived in
@@ -1182,9 +1189,9 @@ systems of this nature must be accurately specified.
 \subsection{Requirements for first-order direct sensitivities}
 
 In addition for the requirements for forward solves described in the previous
-section, he we describe an additional set of requirements for
+section, here we describe an additional set of requirements for
 (\ref{rythmos:eqn:atomic:c})--(\ref{rythmos:eqn:atomic:c:ic}) needed to
-implement the implicit direct sensitivity methods as described in Section~???.
+implement the implicit direct sensitivity methods as described in Section \ref{rythmos:scn:transientsensitivity:direct}.
 
 \begin{itemize}
 
@@ -1278,9 +1285,9 @@ with these applications.
 % References
 %
 \clearpage
-%\bibliographystyle{plain}
-%\bibliography{references}
-%\addcontentsline{toc}{section}{References}
+\bibliographystyle{plain}
+\bibliography{RythmosDesignSAND}
+\addcontentsline{toc}{section}{References}
 
 % ---------------------------------------------------------------------- %
 % Appendices should be stand-alone for SAND reports. If there is only
