@@ -2,6 +2,7 @@
 \usepackage{graphicx}
 \newcommand{\bsinglespace}{\renewcommand{\baselinestretch}{1.2}\small\normalsize}
 \newcommand{\esinglespace}{}
+\newcommand{\elementspace}{{\it ElementSpace}}
 \markboth{Michael A. Heroux et al.}{An Overview of Trilinos}
 
 \title{An Overview of the Trilinos Project}
@@ -282,9 +283,13 @@ interoperability are all organized via packages.
 
 Package
 interoperability is accomplished via configure-time enabling of
-package-to-package coupling.  For example, IFPACK has many parameters
+package-to-package coupling.  For example, the algebraic preconditioner
+package called IFPACK has many parameters
 to control how preconditioners are constructed and used, e.~.g~.,
-level of fill in an incomplete factorization.  Teuchos provides a
+level of fill in an incomplete factorization.  Teuchos, described in
+Section~\ref{subsect:teuchos}, is a package of commonly
+used utility classes such as portable BLAS interfaces and timers.  Teuchos 
+provides a
 parameter list class that can be used to specify parameter values.
 If the argument {\tt
 --enable-teuchos} is specified when IFPACK is configured, Teuchos
@@ -481,7 +486,7 @@ current release of Trilinos.  The discussion is ordered so that
 packages that are most fundamental and broadly useful are presented
 first.
 \subsection{Common Tools Package: Teuchos}
-
+\label{subsect:teuchos}
 As the number of Trilinos packages grows, we have developed the need
 for a collection of tools that can be leveraged across all
 packages.  The Teuchos package is a relatively recent addition to
@@ -586,7 +591,128 @@ As such, it is an abstract
 description of a variety of vector, matrix and supporting classes, along with a 
 description of
 how these classes interact.  There are presently three implementations
-of the Petra Object Model: Epetra, Tpetra and Jpetra.
+of the Petra Object Model: Epetra, Tpetra and Jpetra.  Before
+describing these implementations, we first discuss distribution concepts.
+
+Although a detailed discussion of data and work distribution in the
+Petra Object Model is beyond the scope of this paper, we briefly present
+these topics.  We also introduce \elementspace{} objects, objects that 
+describe the layout of
+distributed objects in Petra, and their relationship to distributed
+vectors, multivectors, graphs and matrices.  A full description of the
+Petra Object Model can be found in~\cite{Repartitioning}.
+
+A critical feature of Petra is the ability to easily define and
+efficiently execute data redistribution in parallel.  Because of this,
+Petra's data model is built around this concept.  Data redistribution 
+requires the identification of data packets that 
+should be moved as part of the redistribution. For a simple vector 
+that is distributed across a parallel machine, the natural packet is 
+a single vector value. For a collection of vectors with the same 
+distribution, what we define to be a multivector, the natural packet 
+is all values across a row of column vectors. For matrices, if we 
+store nonzero entries row-by-row, then the index and nonzero values 
+data are used to define a packet. We can similarly define a 
+column-oriented matrix, or more generally a compressed index matrix, 
+where the row or column orientation is part of the definition of the 
+class attributes. A compressed index graph is similar to a matrix,
+except that it involves pattern information
+only. Table~\ref{Table:PacketDefinitions} lists the 
+\begin{table}
+\begin{center}
+\begin{tabular}{|p{1.75in}|p{2.75in}|}\hline
+\multicolumn{1}{|c|}{Object} &
+\multicolumn{1}{|c|}{Packet Definition}\\\hline
+Vector     & Single vector value.\\\hline
+Multivector     & Row of vector values.\\\hline
+Compressed Index Storage Graph (CISGraph)     & List of column/row
+indices for one graph row/column.\\\hline
+Compressed Index Storage Matrix (CISMatrix)     & List of values and
+column/row indices for one matrix row/column.\\\hline
+\end{tabular}
+\caption{\label{Table:PacketDefinitions} Packet Definitions for Common
+Petra Object Types}
+\end{center}
+\end{table}
+common linear algebra objects we use, and describes the packet
+definition for each object.
+
+To facilitate redistribution and provide a generic analysis
+capability, we use elements as a representation of packets. 
+Specifically, regardless of packet definition, we associate an 
+element global ID (GID) with each packet of a distributed object. We do this 
+by defining an \elementspace{} object (called a Map object in Epetra). 
+\elementspace{} objects are used to 
+\begin{enumerate}
+\item Define the layout of distributed 
+object across a parallel machine, and 
+\item Compute a plan to redistribute an object distributed via 
+one ElementSpace to another ElementSpace distribution.
+\end{enumerate}
+
+Example: Suppose we want to construct a 
+vector with 99 entries so that it is approximately evenly distributed 
+across four processors, and vector entries are stored in increasing 
+order. Table~\ref{Table:Layout} lists a natural distribution of element GIDs that would
+describe the layout of this type of vector. 
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|p{2.75in}|}\hline
+\multicolumn{1}{|c|}{Processor ID} &
+\multicolumn{1}{|c|}{Element GIDs}\\\hline
+0     & $\{ 0, 1, \ldots, 24\}$ \\\hline
+1     & $\{ 25, 26, \ldots, 49\}$\\\hline
+2     & $\{ 50, 51, \ldots, 74\}$\\\hline
+3     & $\{ 75, 76, \ldots, 98\}$\\\hline
+\end{tabular}
+\caption{\label{Table:Layout} Standard Distribution of 99 Elements}
+\end{center}
+\end{table}
+
+In our object-oriented model, we construct a distributed object by
+first defining an \elementspace{} object. Given an \elementspace{} object, 
+we can define any number of linear algebra objects with a compatible 
+layout. For example, using an \elementspace{} object with the element ID 
+distribution in Table~\ref{Table:Layout}, we can define any number of vectors having 
+the first 25 vector entries on PE 0, the next 25 on PE 1, etc. We can 
+also define a row matrix having rows 0 through 24 on PE 0, rows 25 
+through 49 on PE 1, etc.  It is worth noting that, although the
+example in Table~\ref{Table:Layout} is a simple linear distribution of
+GIDs, \elementspace{} objects can contain GIDs in any order and
+multiplicity on any processor.  This ability is important for data
+redistribution and replicating data across the parallel machine.
+
+For distributed matrices and graphs four \elementspace{} objects are
+needed:
+\begin{itemize}
+\item RowElementSpace: On each processor this \elementspace{} lists 
+the GIDs that will be ``managed'' by that processor, typically meaning
+that the processor owns part or all of the data associated with that
+row.
+\item ColElementSpace: Same as RowElementSpace, except that it deals
+with column.
+\item DomainElementSpace: The distribution of GIDs associated with
+vectors and multivectors that are in the domain of the matrix.  These
+GIDs must be uniquely associated with a processor.
+\item RangeElementSpace: Same as DomainElementSpace, except that it
+deals with the range space.
+\end{itemize}
+
+Given this general framework, the Petra Object Model supports any
+distribution of data across the parallel machine.  Any matrix, graph,
+vector or multivector entry
+can be owned by any processor, or shared or replicated across multiple
+processors.  Depending on the type of constructor used, data may be
+assigned by any processor, even if the processor is not the eventual
+owner of the data.  A more efficient class of constructors requires
+that the processor which owns the data (as prescribed by the relevant
+\elementspace{} objects) must define the data.  Some constructors
+support data entry that is in between these two extremes.
+
+We have only briefly touched on the data distribution and
+redistribution capabilities provided by the Petra Object Model.
+However, for brevity we now move on to a description of the three
+Petra implementations.
 
 \subsubsection{Epetra: Essential Implementation of Petra Object Model}
 
@@ -647,6 +773,7 @@ to the BLAS, LAPACK and MPI, but are completely written in Java.
 Presently we are using CCJ~\cite{CCJ} as the implementation of the
 Jpetra parallel machine interface for inter-node communications, and we are using
 JLAPACK~\cite{JLAPACK} to implement our interface for serial linear algebra kernels.
+
 
 \subsection{TSF: The Trilinos Abstract Class Packages}
 
