@@ -360,12 +360,12 @@ public class BasicPerfTestSerial extends JpetraObject {
         boolean summary = false;
         
         // Check if we should print verbose results to standard out
-        if ((args.length > 5) && (args[6].charAt(0) == '-' ) && (args[6].charAt(1) == 'v')) {
+        if ((args.length > 5) && (args[5].charAt(0) == '-' ) && (args[5].charAt(1) == 'v')) {
             verbose = true;
         }
         
         // Check if we should print verbose results to standard out
-        if ((args.length > 5) && (args[6].charAt(0) == '-') && (args[6].charAt(1) == 's')) {
+        if ((args.length > 5) && (args[5].charAt(0) == '-') && (args[5].charAt(1) == 's')) {
             summary = true;
         }
         
