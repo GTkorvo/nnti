@@ -1,0 +1,126 @@
+CCJ -- Object-based Message Passing and Collective Communication in Java
+
+See the paper in http://www.cs.vu.nl/~kielmann/papers/cpe01.ps.gz
+
+Be well aware that some names have changed with respect to (older
+versions of) that paper:
+
+DividableDataObjectInterface	-> Partitionable
+ReductionObjectInterface	-> Reducible
+
+The correct prototype of CCJ/send_receive is:
+
+Serializable send_receive(ColGroup sendGroup, Serializable sendObject,
+			  int destination, ColGroup receiveGroup,
+			  int source);
+
+Besides ColGroupMaster.addMember(String groupName, ColMember member)
+there is a method ColGroupMaster.deleteMember(String groupName, ColMember
+member) that does a leave from the group.
+
+RMI programs generally do not exit gracefully, since the registry wants
+to live on. Applications must generally call System.exit(int exit)
+in each participating process to terminate.
+
+Creation of a ColGroupMaster must precede creation of ColMembers (or
+their descendant classes that are implemented in your application).
+ColGroupMaster initializes the Registry, and ColMember depends on that.
+
+=========================================================================
+
+For win32:
+- For win32, you must do the actions of 'configure' and 'make' by yourself.
+  This will amount to typing javac *.java in the relevant directories
+  (CCJ; examples\*; jg-bench; jg-bench\section?\*). 
+  Skip the rest of this README, except the paragraph "Running", the bit
+  about -DCCJ_HOSTS="......."
+
+=========================================================================
+
+The rest is for Unix.
+
+Requirements:
+- You need gnu make, otherwise our Makefiles will fail. See www.gnu.org.
+- You need some Java 1.1 or 1.2 (maybe 1.3, untested). See e.g. java.sun.com;
+  or www.ibm.com, then search developerworks for "IBM Developer Kit for Java
+  under Linux"
+
+=========================================================================
+
+Configuration, installation.
+
+Unpack this tarball (obviously you just did that to read this).
+Go to CCJ-<most-recent-version>/, there type:
+./configure
+
+Options for configure are supplied when you type
+./configure --help
+
+Then type
+make
+
+Maybe the only configure flag you need help with is --rmic-lower=<lo-version>.
+configure assumes that you have an rmic version that corresponds to
+your java version. If this is not the case, you must change the
+value of rmic-lower to the correct lower version index; e.g.,
+if you have an rmic that works for java-1.1.x, you specify
+--rmic-lower=1; if you have an rmic that works for java-1.2.0 or higher,
+you specify --rmic-lower=2.
+When the choice is wrong, generated <class>_Stub.java and <class_Skel>.java
+files appear in the wrong directory. They must be generated in
+CCJ-<most-recent-version>/CCJ; if it's wrong, they may appear in
+CCJ-<most-recent-version> or CCJ-most-recent-version/CCJ/CCJ.
+Running of examples will then fail with a ClassNotFoundException:
+CCJ.ColGroupCentral_Stub.
+
+=========================================================================
+
+Running
+
+Run a java process on each machine. Besides the usual java command,
+java flags (like --classpath ...), main class, application arguments,
+you need to specify one property to the java virtual machines:
+
+-DCCJ_HOSTS=".. list of host names .."
+
+where you must fill in the machine names (IP addresses or whatever) of
+all hosts that participate in this parallel run, separated by blanks.
+This list must be the same for all participating processes!
+
+E.g.:
+java <java-flags> Main_class <appl-flags> -DCCJ_HOSTS="host0 .. hostn"
+
+The CCJ library figures out from the list who it is itself, and who the
+other participants are.
+
+Numerous examples are bundled in the examples/ directories.
+
+=========================================================================
+
+JavaGrande benchmarks
+
+Jason Maassen (http://www.cs.vu.nl/~jason) ported the parallel JavaGrande
+Benchmarks to CCJ. These are bundled in the subdirectory jg-bench.
+Configuration is done automatically together with the CCJ configuration.
+
+To build:
+cd jg-bench
+make
+
+then
+cd section?/<application>
+make
+...run...
+
+=========================================================================
+
+CCJ has been tested with Manta, see http://www.cs.vu.nl/manta
+Manta provides _fast_ serialization, and latencies close to those
+of your network. It is a static compiler that currently (only) generates
+i386 code. To use CCJ with Manta, you have to tell configure where
+the manta compiler is:
+./configure --manta-root=<path to directory that contains the manta compiler>
+
+Then you must edit the generated config.mk to indicate that you will
+build manta iso java/bytecode/JVM.
+
