@@ -555,7 +555,7 @@ public boolean computeRecvs( int my_proc, int nprocs, boolean Deterministic ) {
              obj_size );*/
             
             /*
-            debug code
+            debug code*/
              System.out.println("------------------------------");
              System.out.println("self_recv_address: " + self_recv_address);
              System.out.println("recv_array.length: " + recv_array.length);
@@ -565,7 +565,7 @@ public boolean computeRecvs( int my_proc, int nprocs, boolean Deterministic ) {
              System.out.println("indices_to[self_index]: " + indices_to[self_index]);
              
              System.out.println("lengths_to: " + lengths_to[self_num]);
-             */
+             
              
              System.arraycopy(export_objs, indices_to[self_index]*obj_size, recv_array, self_recv_address, obj_size);
              self_index++;

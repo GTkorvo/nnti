@@ -659,16 +659,20 @@ public class Graph extends JpetraObject {
 		    nLists++;
 		}
 		domainMap.getRemoteIDList(numRemote, remoteColIndices, PIDList, null, remoteSizeList);
-		System.arraycopy(remoteSizeList, 0, sizeList, numProcessBlockCols, remoteSizeList.length);
+		
+		// had to add a check to make sure that remoteSizeList is not null
+		if (remoteSizeList != null) {
+		    System.arraycopy(remoteSizeList, 0, sizeList, numProcessBlockCols, remoteSizeList.length);
+		}
 
 		// Sort external column indices so that all columns coming from a given remote process are contiguous
 
 		Util util = new Util();
 		int [][] sortLists = new int [2][];
 		sortLists[0] = remoteColIndices;
-		sortLists[1] = remoteSizeList;
+		if (remoteSizeList != null) sortLists[1] = remoteSizeList;
 		util.sort(true, numRemote, PIDList, 0, null, nLists, sortLists);
-		System.arraycopy(remoteSizeList, 0, sizeList, numProcessBlockCols, remoteSizeList.length);
+		if (remoteSizeList != null) System.arraycopy(remoteSizeList, 0, sizeList, numProcessBlockCols, remoteSizeList.length);
 
 		domainMap.getMyGlobalElements(colIndices);
 		if(doSizes) domainMap.getElementSizeList(sizeList);

@@ -28,6 +28,8 @@ public class Exporter extends JpetraObject {
     private int numSend = 0;
     private int numRecv = 0;
     
+    
+    private Distributor distor;
     // #ifdef PETRA_MPI ...
     
     /** Creates new Exporter */
@@ -39,19 +41,19 @@ public class Exporter extends JpetraObject {
         
         int i;
         
-        int numSourceIDs = sourceMap.getNumVnodeElements();
-        int numTargetIDs = targetMap.getNumVnodeElements();
+        int numSourceIDs = sourceMap.getNumMyElements();
+        int numTargetIDs = targetMap.getNumMyElements();
         
         int [] targetGIDs = null;
         if(numTargetIDs > 0) {
             targetGIDs = new int [numTargetIDs];
-            targetMap.getGlobalElements(targetGIDs);
+            targetMap.getMyGlobalElements(targetGIDs);
         }
         
         int [] sourceGIDs = null;
         if(numSourceIDs > 0) {
             sourceGIDs = new int [numSourceIDs];
-            sourceMap.getGlobalElements(sourceGIDs);
+            sourceMap.getMyGlobalElements(sourceGIDs);
         }
         
         int minIDs = Math.min(numSourceIDs, numTargetIDs);
@@ -97,7 +99,86 @@ public class Exporter extends JpetraObject {
             System.exit(1);
         }
         
-        // #ifdef PETRA_MPI ...
+        // Test for distributed cases
+        int ierr = 0;
+      
+        if (sourceMap.isDistributedGlobal()) {
+      
+          if (numExporterIDs>0) exportPIDs = new int[numExporterIDs];
+          ierr = targetMap.getRemoteIDList(numExporterIDs, exportGIDs, exportPIDs, null); // Get remote PIDs
+          // if( ierr ) throw ReportError("Error in EpetraBlockMap::RemoteIDList", ierr);
+          if( ierr != 0) System.err.println("Error in BlockMap.getRemoteIDList " + ierr);
+          
+          //Get rid of IDs not in Target Map
+          if(numExporterIDs>0) {
+            int cnt = 0;
+            for( i = 0; i < numExporterIDs; ++i )
+          if( exportPIDs[i] == -1 ) ++cnt;
+            if( cnt != 0 ) {
+          int[] newexportGIDs = null;
+          int[] newexportPIDs = null;
+          int cnt1 = numExporterIDs-cnt;
+          if (cnt1 != 0) {
+            newexportGIDs = new int[cnt1];
+            newexportPIDs = new int[cnt1];
+          }
+          cnt = 0;
+          for( i = 0; i < numExporterIDs; ++i )
+            if( exportPIDs[i] != -1 ) {
+              newexportGIDs[cnt] = exportGIDs[i];
+              newexportPIDs[cnt] = exportPIDs[i];
+              ++cnt;
+                }
+          // assert(cnt==cnt1); // Sanity test
+          if (cnt!=cnt1) System.err.println("Failed sanity test cnt==cnt1 in Exporter");
+          
+          numExporterIDs = cnt;
+          /*delete [] exportGIDs;
+          delete [] exportPIDs;*/
+          exportGIDs = newexportGIDs;
+          exportPIDs = newexportPIDs;
+          System.err.println("Warning in Exporter: Source IDs not found in Target Map (Do you want to export from subset of Source Map?)");
+            }
+          }
+          
+          distor = sourceMap.getComm().createDistributor();
+          
+          // Construct list of exports that calling processor needs to send as a result
+          // of everyone asking for what it needs to receive.
+          
+          boolean Deterministic = true;
+          // ierr = distor->CreateFromSends( numExporterIDs, exportPIDs,Deterministic, NumRemoteIDs);
+          numRemoteIDs = distor.createFromSends( numExporterIDs, exportPIDs, Deterministic );
+          
+          
+          // if (ierr!=0) throw ReportError("Error in EpetraDistributor.CreateFromSends()", ierr);
+          // if (ierr!=0) System.err.println("Error in EpetraDistributor.CreateFromSends() " + ierr);
+          
+          // Use comm plan with exportGIDs to find out who is sending to us and
+          // get proper ordering of GIDs for remote entries 
+          // (that we will convert to LIDs when done).
+          
+          if (numRemoteIDs>0) remoteLIDs = new int[numRemoteIDs]; // Allocate space for LIDs in target that are
+          // going to get something from off-processor.
+          // ierr = distor->Do(reinterpretcast<char *> (exportGIDs), 
+          //    sizeof( int ),
+          //    reinterpretcast<char *> (RemoteLIDs));
+          // if (ierr) throw ReportError("Error in EpetraDistributor.Do()", ierr);
+          remoteLIDs = distor.distDo(1, numRemoteIDs, exportGIDs);
+          
+          // Remote IDs come in as GIDs, convert to LIDs
+          for (i=0; i< numRemoteIDs; i++) {
+            remoteLIDs[i] = targetMap.getLID(remoteLIDs[i]);
+            //NumRecv += TargetMap.ElementSize(RemoteLIDs[i]); // Count total number of entries to receive
+            numRecv += targetMap.getMaxElementSize(); // Count total number of entries to receive (currently need max)
+          }
+      
+          /*if (numExporterIDs>0) delete [] exportGIDs;*/
+        }
+        /*if (NumTargetIDs>0) delete [] TargetGIDs;
+        if (NumSourceIDs>0) delete [] SourceGIDs;*/
+        
+        return;
     }
     
     public Exporter(Exporter exporter) {

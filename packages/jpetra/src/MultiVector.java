@@ -128,7 +128,7 @@ public class MultiVector extends JpetraObject {
     private void initialize(BlockMap map, int numVectors) {
         indexBase = map.getIndexBase();
         this.map = map;
-        vnodeLength = map.getNumVnodeEquations();
+        vnodeLength = map.getNumMyEquations();
         globalLength = map.getNumGlobalEquations();
         this.numVectors = numVectors;
         distributedGlobal = map.isDistributedGlobal();
