@@ -42,14 +42,17 @@ import java.util.HashMap;
  *
  * @author  Michael William Boldt
  * @author Jason Cross
- * @version 
+ * @version
  */
 public class JpetraObject extends java.lang.Object implements Serializable, Cloneable {
     private static HashMap outputStreams = new HashMap(4);
     /**
      * Creates a new JpetraObject
      */
-    public JpetraObject() {
+    public JpetraObject() {  
+    }
+    
+    public void initializeOutput() {
         if (outputStreams.isEmpty()) {
             outputStreams.put("STD", new Output("", true, System.out, false, System.out));
             outputStreams.put("ERR", new Output("Error: ", true, System.out, false, System.out));
@@ -58,32 +61,32 @@ public class JpetraObject extends java.lang.Object implements Serializable, Clon
         }
     }
     
-    public static void setRootPrint (String key, boolean rootPrint) {
+    public static void setRootPrint(String key, boolean rootPrint) {
         Output out = (Output) outputStreams.get(key);
         out.setRootPrint(rootPrint);
     }
-
-    public static void setRootStream (String key, PrintStream rootStream) {
+    
+    public static void setRootStream(String key, PrintStream rootStream) {
         Output out = (Output) outputStreams.get(key);
         out.setRootStream(rootStream);
-    }    
-     
-    public static void setVnodesPrint (String key, boolean vnodesPrint) {
+    }
+    
+    public static void setVnodesPrint(String key, boolean vnodesPrint) {
         Output out = (Output) outputStreams.get(key);
         out.setVnodesPrint(vnodesPrint);
-    }    
+    }
     
-    public static void setVnodesStream (String key, PrintStream vnodesStream) {
+    public static void setVnodesStream(String key, PrintStream vnodesStream) {
         Output out = (Output) outputStreams.get(key);
         out.setVnodesStream(vnodesStream);
-    } 
+    }
     
-    public static void print (String key, String message) {
+    public static void print(String key, String message) {
         Output out = (Output) outputStreams.get(key);
         out.print(message);
     }
- 
-    public static void println (String key, String message) {
+    
+    public static void println(String key, String message) {
         Output out = (Output) outputStreams.get(key);
         out.println(message);
     }

@@ -1,3 +1,4 @@
+=======
 // @HEADER
 // ***********************************************************************
 // 
@@ -27,33 +28,98 @@
 // @HEADER
 
 package Jpetra;
-/*
- * Vector.java
- *
- * Created on May 30, 2001, 3:00 PM
- */
 
+import java.io.*;
 
 /**
  *
- * @author  Mike Heroux
- * @author  Michael William Boldt
- * @version 
+ * @author  jc
  */
-public class Vector extends MultiVector {
+public class Vector extends JpetraObject {
+    VectorSpace vectorSpace;
+    BLAS blas;
     
-    public Vector(BlockMap map) throws JpetraException {
-        super(map, 1);
+    double[] A;
+    
+    /** Creates a new instance of Vector */
+    public Vector(VectorSpace vectorSpace) {
+        this.vectorSpace = vectorSpace;
+        this.A = new double[vectorSpace.getNumMyEntries()];
     }
     
-    /** Creates new Vector */
-    public Vector(String copyView, BlockMap map, double [][] values)
-    throws JpetraException {
-        super(copyView, map, values, 1);
+    
+    //! Set object values from user array. Throws an exception if an incorrect number of entries are specified.
+    public Vector(double[] vectorEntries, int numEntries, VectorSpace vectorSpace) {
+        this.vectorSpace = vectorSpace;
+        this.blas = null;
+        
+        int length = getNumMyEntries();
+        if(numEntries != length)
+            this.print("ERR", "numEntries = " + numEntries + ".  Should be = " + length + ".");
+        A = new double[length];
+        
+        // replace later with java.util.arraycopy
+        for(int i = 0; i < length; i++)
+            A[i] = vectorEntries[i];
     }
     
-    public Vector(String copyView, Vector source, int index)
-    throws JpetraException {
-        super(copyView, source, index, 1);
+    //! Copy constructor.
+    public Vector(Vector source) {
+        this.vectorSpace = source.vectorSpace;
+        this.A = source.A;
+        this.blas = source.blas;
+    }
+    
+    public double getIndex(int index) {
+        return(A[index]);
+    }
+    
+    public void setIndex (int index, double value) {
+        A[index] = value;
+    }
+    
+    
+    //@{ \name Attribute access methods
+    
+    //! Returns number of vector entries owned by this image.
+    public int getNumMyEntries() {
+        return(vectorSpace().getNumMyEntries());
+    };
+    
+    //! Returns number of vector entries across all images.
+    public int getNumGlobalEntries() {
+        return(vectorSpace().getNumGlobalEntries());
+    };
+    
+    //@}
+    
+    
+    //@{ \name I/O methods
+    
+    //! Print method, used by overloaded << operator.
+    public void print(PrintStream os) {
+        
+        int myImageID = vectorSpace().comm().getVnodeID();
+        int numImages = vectorSpace().comm().getNumVnodes();
+        
+        for (int imageCtr = 0; imageCtr < numImages; imageCtr++) {
+            if (myImageID == imageCtr) {
+                if (myImageID == 0) {
+                    os.println("Number of Global Entries  = " + getNumGlobalEntries());
+                }
+                os.println("\nVnodeID = " + myImageID);
+                os.println("Number of Local Entries   = " + getNumMyEntries());
+                os.println("Contents: ");
+                for(int i = 0; i < getNumMyEntries(); i++)
+                    os.print(A[i] + " ");
+                os.println("\n");
+            }
+        }
+    }
+    //@}
+    
+    //! Returns a const reference to the VectorSpace this Vector belongs to.
+    private VectorSpace vectorSpace() {
+        return(vectorSpace);
     }
 }

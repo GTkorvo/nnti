@@ -289,6 +289,6 @@ public interface Comm {
     public boolean getIsSerial();
     
     
-    public Distributor createDistributor();    
+    //public Distributor createDistributor(); now created by Platform 
 }
 
