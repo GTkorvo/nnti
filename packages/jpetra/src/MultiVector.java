@@ -20,7 +20,7 @@ public class MultiVector extends JpetraObject {
     protected double [][] values = null;
     private BlockMap map;
     protected double flops = 0.0;
-    private int processLength = 0;
+    private int vnodeLength = 0;
     
     // User-queriable attributes
     private int globalLength = 0;
@@ -116,7 +116,7 @@ public class MultiVector extends JpetraObject {
         initialize(source, numVectors);
         allocate(copyView);
         
-        double[][] sourceValues = new double [numVectors] [processLength];
+        double[][] sourceValues = new double [numVectors] [vnodeLength];
         System.arraycopy(source, startIndex, sourceValues, 0, numVectors);
         if(copyView == "Copy") doCopy(sourceValues);
         else doView(sourceValues);
@@ -128,7 +128,7 @@ public class MultiVector extends JpetraObject {
     private void initialize(BlockMap map, int numVectors) {
         indexBase = map.getIndexBase();
         this.map = map;
-        processLength = map.getNumProcessEquations();
+        vnodeLength = map.getNumVnodeEquations();
         globalLength = map.getNumGlobalEquations();
         this.numVectors = numVectors;
         distributedGlobal = map.isDistributedGlobal();
@@ -141,7 +141,7 @@ public class MultiVector extends JpetraObject {
     private void initialize(MultiVector source, int numVectors) {
         indexBase = source.indexBase;
         map = source.map;
-        processLength = source.processLength;
+        vnodeLength = source.vnodeLength;
         globalLength = source.globalLength;
         this.numVectors = numVectors;
         distributedGlobal = source.distributedGlobal;
@@ -167,7 +167,7 @@ public class MultiVector extends JpetraObject {
 	    System.out.println("Number of vectors must be greater than 0, is "+numVectors);
 	    System.exit(1);
 	}
-        if(copyView == "Copy") values = new double [numVectors][processLength];
+        if(copyView == "Copy") values = new double [numVectors][vnodeLength];
         else if(copyView == "View") values = new double [numVectors][];
 	/*
         else throw new JpetraException
@@ -195,7 +195,7 @@ public class MultiVector extends JpetraObject {
      */
     private void doCopy(double [][] source) {
         for(int i=0; i<numVectors; i++)
-            System.arraycopy(source[i], 0, values[i], 0, processLength);
+            System.arraycopy(source[i], 0, values[i], 0, vnodeLength);
     }
     
     /**
@@ -215,7 +215,7 @@ public class MultiVector extends JpetraObject {
         // For MPI change so not all processes get same randoms
         int i, j;
         for(i=0; i<numVectors; i++)
-            for(j=0; j<processLength; j++)
+            for(j=0; j<vnodeLength; j++)
                 values[i][j] = 2 * Math.random() - 1;
         return 0;
     }
@@ -226,7 +226,7 @@ public class MultiVector extends JpetraObject {
      */
     public int extractCopy(double [][] vectorArray) {
         for(int i=0; i<numVectors; i++)
-            System.arraycopy(values[i], 0, vectorArray[i], 0, processLength);
+            System.arraycopy(values[i], 0, vectorArray[i], 0, vnodeLength);
         return 0;
     }
 
@@ -244,7 +244,7 @@ public class MultiVector extends JpetraObject {
      */
     public int putScalar(double scalar) {
         for(int i=0; i<numVectors; i++)
-            for(int j=0; j<processLength; j++) values[i][j] = scalar;
+            for(int j=0; j<vnodeLength; j++) values[i][j] = scalar;
         return 0;
     }
     
@@ -668,12 +668,12 @@ public class MultiVector extends JpetraObject {
         int i;
         
         if(numVectors != a.numVectors) return -1;
-        if(processLength != a.processLength) return -2;
+        if(vnodeLength != a.vnodeLength) return -2;
         double [] localResult = new double [numVectors];
         
         for(i=0; i<numVectors; i++) {
             sum = 0.0;
-            for(j=0; j<processLength; j++) sum += values[i][j] * a.values[i][j];
+            for(j=0; j<vnodeLength; j++) sum += values[i][j] * a.values[i][j];
             localResult[i] = sum;
         }
         
@@ -684,15 +684,15 @@ public class MultiVector extends JpetraObject {
         int i;
         
         if(numVectors != a.numVectors) return -1;
-        if(processLength != a.processLength) return -2;
+        if(vnodeLength != a.vnodeLength) return -2;
         
         double [][] aValues = a.values;
         
         for(i=0; i<numVectors; i++) {
 	    doubleTemp[i] = 0.0;
-	    for (int j=0; j<processLength; j++) doubleTemp[i] += values[i][j]*aValues[i][j];
+	    for (int j=0; j<vnodeLength; j++) doubleTemp[i] += values[i][j]*aValues[i][j];
 	} 
-	    // doubleTemp[i] = DDOT.DDOT(processLength, values[i], 0, aValues[i], 0);
+	    // doubleTemp[i] = DDOT.DDOT(vnodeLength, values[i], 0, aValues[i], 0);
         result = comm.sumAll(doubleTemp);
         
         updateFlops(2 * globalLength * numVectors);
@@ -708,12 +708,12 @@ public class MultiVector extends JpetraObject {
         int i, j;
         
         if(numVectors != a.numVectors) return -1;
-        if(processLength != a.processLength) return -2;
+        if(vnodeLength != a.vnodeLength) return -2;
         
         double [][] aValues = a.values;
         
         for(i=0; i<numVectors; i++)
-            for(j=0; j<processLength; j++)
+            for(j=0; j<vnodeLength; j++)
                 values[i][j] = Math.abs(aValues[i][j]);
         return 0;
     }
@@ -742,7 +742,7 @@ public class MultiVector extends JpetraObject {
         int i;
         
         for(i=0; i<numVectors; i++)
-            DSCAL.DSCAL(processLength, scalar, values[i], 1);
+            DSCAL.DSCAL(vnodeLength, scalar, values[i], 1);
         
         updateFlops(globalLength * numVectors);
         
@@ -757,12 +757,12 @@ public class MultiVector extends JpetraObject {
         int i, j;
         
         if(numVectors != a.numVectors) return -1;
-        if(processLength != a.processLength) return -2;
+        if(vnodeLength != a.vnodeLength) return -2;
         
         double [][] aValues = a.values;
         
         for(i=0; i<numVectors; i++)
-            for(j=0; j<processLength; j++) values[i][j] = scalar * aValues[i][j];
+            for(j=0; j<vnodeLength; j++) values[i][j] = scalar * aValues[i][j];
         updateFlops(globalLength * numVectors);
         return 0;
     }
@@ -774,32 +774,32 @@ public class MultiVector extends JpetraObject {
         int i, j;
         
         if(numVectors != a.numVectors) return -1;
-        if(processLength != a.processLength) return -2;
+        if(vnodeLength != a.vnodeLength) return -2;
         
         double [][] aValues = a.values;
         
         if(scalar == 0.0) {
             for(i=0; i<numVectors; i++)
-                for(j=0; j<processLength; j++)
+                for(j=0; j<vnodeLength; j++)
                     values[i][j] = scalarA * aValues[i][j];
             updateFlops(globalLength * numVectors);
         }
         
         else if(scalar == 1.0) {
             for(i=0; i<numVectors; i++)
-                for(j=0; j<processLength; j++)
+                for(j=0; j<vnodeLength; j++)
                     values[i][j] = values[i][j] + scalarA * aValues[i][j];
             updateFlops(2 * globalLength * numVectors);
         }
         else if(scalarA == 1.0) {
 	    for(i=0; i<numVectors; i++)
-		for(j=0; j<processLength; j++)
+		for(j=0; j<vnodeLength; j++)
 		    values[i][j] = scalar * values[i][j] + aValues[i][j];
 	    updateFlops(2 * globalLength * numVectors);
 	}
         else {
             for(i=0; i<numVectors; i++)
-                for(j=0; j<processLength; j++)
+                for(j=0; j<vnodeLength; j++)
                     values[i][j] = scalar * values[i][j] + scalarA * aValues[i][j];
             updateFlops(3 * globalLength * numVectors);
         }
@@ -818,7 +818,7 @@ public class MultiVector extends JpetraObject {
         if(scalarB == 0.0) return update(scalarA, a, scalar);
         
         if(numVectors != a.numVectors || numVectors != b.numVectors) return -1;
-        if(processLength != a.processLength || processLength != b.processLength) return -2;
+        if(vnodeLength != a.vnodeLength || vnodeLength != b.vnodeLength) return -2;
         
         double [][] aValues = a.values;
         double [][] bValues = b.values;
@@ -826,21 +826,21 @@ public class MultiVector extends JpetraObject {
         if(scalar == 0.0) {
             if(scalarA == 1.0) {
                 for(i=0; i<numVectors; i++)
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = aValues[i][j] + scalarB * bValues[i][j];
                 updateFlops(2 * globalLength * numVectors);
             }
             
             else if(scalarB == 1.0) {
                 for(i=0; i<numVectors; i++)
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = bValues[i][j] + scalarA * aValues[i][j];
                 updateFlops(2 * globalLength * numVectors);
             }
             
             else {
                 for(i=0; i<numVectors; i++)
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = scalarA * aValues[i][j] + scalarB * bValues[i][j];
                 updateFlops(3 * globalLength * numVectors);
             }
@@ -849,21 +849,21 @@ public class MultiVector extends JpetraObject {
         else if(scalar == 1.0) {
             if(scalarA == 1.0) {
                 for(i=0; i<numVectors; i++)
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] += aValues[i][j] + scalarB * bValues[i][j];
                 updateFlops(3 * globalLength * numVectors);
             }
             
             else if(scalarB == 1.0) {
                 for(i=0; i<numVectors; i++)
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] += bValues[i][j] + scalarA * aValues[i][j];
                 updateFlops(3 * globalLength * numVectors);
             }
             
             else {
                 for(i=0; i<numVectors; i++)
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] += scalarA * aValues[i][j] + scalarB * bValues[i][j];
                 updateFlops(4 * globalLength * numVectors);
             }
@@ -872,21 +872,21 @@ public class MultiVector extends JpetraObject {
         else {
             if(scalarA == 1.0) {
                 for(i=0; i<numVectors; i++)
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = scalar * values[i][j] + aValues[i][j] + scalarB * bValues[i][j];
                 updateFlops(4 * globalLength * numVectors);
             }
             
             else if(scalarB == 1.0) {
                 for(i=0; i<numVectors; i++)
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = scalar * values[i][j] + scalarA * aValues[i][j] + bValues[i][j];
                 updateFlops(4 * globalLength * numVectors);
             }
             
             else {
                 for(i=0; i<numVectors; i++)
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = scalar * values[i][j] + scalarA * aValues[i][j] + scalarB * bValues[i][j];
                 updateFlops(5 * globalLength * numVectors);
             }
@@ -908,9 +908,9 @@ public class MultiVector extends JpetraObject {
         double sum;
  
         for(i=0; i<numVectors; i++) {
-            //doubleTemp[i] = DASUM.DASUM(processLength, values[i], 1);
+            //doubleTemp[i] = DASUM.DASUM(vnodeLength, values[i], 1);
             sum = 0.0;
-            for(j=0; j<processLength; j++) sum += Math.abs(values[i][j]);
+            for(j=0; j<vnodeLength; j++) sum += Math.abs(values[i][j]);
             doubleTemp[i] = sum;
         }
 
@@ -935,7 +935,7 @@ public class MultiVector extends JpetraObject {
         
         for(i=0; i<numVectors; i++) {
             sum = 0.0;
-            for(j=0; j<processLength; j++) sum += values[i][j] * values[i][j];
+            for(j=0; j<vnodeLength; j++) sum += values[i][j] * values[i][j];
             doubleTemp[i] = sum;
         }
         result = comm.sumAll(doubleTemp);
@@ -953,12 +953,12 @@ public class MultiVector extends JpetraObject {
  
         for(i=0; i<numVectors; i++) {
             maxval = 0.0;
-            for(j=0; j<processLength; j++) {
+            for(j=0; j<vnodeLength; j++) {
                 double temp = Math.abs(values[i][j]);
                 if (temp>maxval) maxval = temp;
             }
             doubleTemp[i] = maxval;
-            //j = IDAMAX.IDAMAX(processLength, values[i], 1) - 1;
+            //j = IDAMAX.IDAMAX(vnodeLength, values[i], 1) - 1;
             //doubleTemp[i] = Math.abs(values[i][j]);
         }
  
@@ -984,7 +984,7 @@ public class MultiVector extends JpetraObject {
 
 	if(weights.numVectors == 1) oneW = true;
 	else if(numVectors != weights.numVectors) return -1;
-        if(processLength != weights.processLength) return -2;
+        if(vnodeLength != weights.vnodeLength) return -2;
         
         double [][] wValues = weights.values;
         
@@ -992,7 +992,7 @@ public class MultiVector extends JpetraObject {
             double [] w = wValues[0];
             for(i=0; i<numVectors; i++) {
                 sum = 0.0;
-                for(j=0; j<processLength; j++) {
+                for(j=0; j<vnodeLength; j++) {
                     double tmp = values[i][j] / w[j];
                     sum += tmp * tmp;
                 }
@@ -1003,7 +1003,7 @@ public class MultiVector extends JpetraObject {
         else {
             for(i=0; i<numVectors; i++) {
                 sum = 0.0;
-                for(j=0; j<processLength; j++) {
+                for(j=0; j<vnodeLength; j++) {
                     double tmp = values[i][j] / wValues[i][j];
                     sum += tmp * tmp;
                 }
@@ -1029,7 +1029,7 @@ public class MultiVector extends JpetraObject {
         int i, j;
         for(i=0; i<numVectors; i++) {
             double minVal = values[i][0];
-            for(j=1; j<processLength; j++) minVal = Math.min(minVal, values[i][j]);
+            for(j=1; j<vnodeLength; j++) minVal = Math.min(minVal, values[i][j]);
             doubleTemp[i] = minVal;
         }
         
@@ -1047,7 +1047,7 @@ public class MultiVector extends JpetraObject {
         int i, j;
         for(i=0; i<numVectors; i++) {
             double maxVal = values[i][0];
-            for(j=1; j<processLength; j++) maxVal = Math.max(maxVal, values[i][j]);
+            for(j=1; j<vnodeLength; j++) maxVal = Math.max(maxVal, values[i][j]);
             doubleTemp[i] = maxVal;
         }
         
@@ -1067,7 +1067,7 @@ public class MultiVector extends JpetraObject {
         
         for(i=0; i<numVectors; i++) {
             double sum = 0.0;
-            for(j=0; j<processLength; j++) sum += values[i][j];
+            for(j=0; j<vnodeLength; j++) sum += values[i][j];
             doubleTemp[i] = sum;
         }
         
@@ -1090,13 +1090,13 @@ public class MultiVector extends JpetraObject {
      */
     public int multiply(String transA, String transB, double scalarAB,
     MultiVector a, MultiVector b, double scalar) {
-        int aNRows = (transA.equals("T")) ? a.numVectors : a.processLength;
-        int aNCols = (transA.equals("T")) ? a.processLength : a.numVectors;
-        int bNRows = (transB.equals("T")) ? b.numVectors : b.processLength;
-        int bNCols = (transB.equals("T")) ? b.processLength : b.numVectors;
+        int aNRows = (transA.equals("T")) ? a.numVectors : a.vnodeLength;
+        int aNCols = (transA.equals("T")) ? a.vnodeLength : a.numVectors;
+        int bNRows = (transB.equals("T")) ? b.numVectors : b.vnodeLength;
+        int bNCols = (transB.equals("T")) ? b.vnodeLength : b.numVectors;
         double scalarLocal = scalar;
 
-        if(this.processLength != aNRows ||
+        if(this.vnodeLength != aNRows ||
 	   aNCols          != bNRows ||
 	   this.numVectors != bNCols) return -2;
         
@@ -1112,7 +1112,7 @@ public class MultiVector extends JpetraObject {
             if(scalar != 0.0 && case2)
                 if(comm.getVnodeID() != 0) scalarLocal = 0.0;
 
-	    int m = this.processLength;
+	    int m = this.vnodeLength;
 	    int n = this.numVectors;
 	    int k = aNCols;
 
@@ -1175,7 +1175,7 @@ public class MultiVector extends JpetraObject {
         if(scalarAB == 0.0) return scale(scalar);
         if(a.numVectors != 1 && a.numVectors != b.numVectors) return -1;
         if(numVectors != b.numVectors) return -2;
-        if(processLength != a.processLength || processLength != b.processLength) return -3;
+        if(vnodeLength != a.vnodeLength || vnodeLength != b.vnodeLength) return -3;
         
         double [][] aVals = a.values;
         double [][] bVals = b.values;
@@ -1186,7 +1186,7 @@ public class MultiVector extends JpetraObject {
             if(scalarAB == 1.0) {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*incA];
-                    for(j=0; j<processLength; j++) values[i][j] = aVector[j] * bVals[i][j];
+                    for(j=0; j<vnodeLength; j++) values[i][j] = aVector[j] * bVals[i][j];
                 }
                 updateFlops(globalLength * numVectors);
             }
@@ -1194,7 +1194,7 @@ public class MultiVector extends JpetraObject {
             else {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*incA];
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = scalarAB * aVector[j] * bVals[i][j];
                 }
                 updateFlops(2 * globalLength * numVectors);
@@ -1204,7 +1204,7 @@ public class MultiVector extends JpetraObject {
             if(scalarAB == 1.0) {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*incA];
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] += aVector[j] * bVals[i][j];
                 }
                 updateFlops(2 * globalLength * numVectors);
@@ -1212,7 +1212,7 @@ public class MultiVector extends JpetraObject {
             else {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*incA];
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] += scalarAB * aVector[j] * bVals[i][j];
                 }
                 updateFlops(3 * globalLength * numVectors);
@@ -1222,7 +1222,7 @@ public class MultiVector extends JpetraObject {
             if(scalarAB == 1.0) {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*incA];
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = scalar * values[i][j] + aVector[j] * bVals[i][j];
                 }
                 updateFlops(3 * globalLength * numVectors);
@@ -1230,7 +1230,7 @@ public class MultiVector extends JpetraObject {
             else {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*incA];
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = scalar * values[i][j] + scalarAB * aVector[j]
                         * bVals[i][j];
                 }
@@ -1245,10 +1245,10 @@ public class MultiVector extends JpetraObject {
         
         int i, j;
         
-        double [] tmp = new double [processLength];
+        double [] tmp = new double [vnodeLength];
         
         for(i=0; i<numVectors; i++) {
-            for(j=0; j<processLength; j++) tmp[j] = values[i][j];
+            for(j=0; j<vnodeLength; j++) tmp[j] = values[i][j];
             values[i] = comm.sumAll(tmp);
         }
         
@@ -1266,7 +1266,7 @@ public class MultiVector extends JpetraObject {
         if(scalarAB == 0.0) return scale(scalar);
         if(a.numVectors != 1 && a.numVectors != b.numVectors) return -1;
         if(numVectors != b.numVectors) return -2;
-        if(processLength != a.processLength || processLength != b.processLength) return -3;
+        if(vnodeLength != a.vnodeLength || vnodeLength != b.vnodeLength) return -3;
         
         double [][] aVals = a.values;
         double [][] bVals = b.values;
@@ -1278,7 +1278,7 @@ public class MultiVector extends JpetraObject {
             if(scalarAB == 1.0) {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*inCA];
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = bVals[i][j] / aVector[j];
                 }
                 updateFlops(globalLength * numVectors);
@@ -1286,7 +1286,7 @@ public class MultiVector extends JpetraObject {
             else {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*inCA];
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = scalarAB * bVals[i][j] / aVector[j];
                 }
                 updateFlops(2 * globalLength * numVectors);
@@ -1296,7 +1296,7 @@ public class MultiVector extends JpetraObject {
             if(scalarAB == 1.0) {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*inCA];
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] += bVals[i][j] / aVector[j];
                 }
                 updateFlops(2 * globalLength * numVectors);
@@ -1304,7 +1304,7 @@ public class MultiVector extends JpetraObject {
             else {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*inCA];
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] += scalarAB * bVals[i][j] / aVector[j];
                 }
                 updateFlops(3 * globalLength * numVectors);
@@ -1314,7 +1314,7 @@ public class MultiVector extends JpetraObject {
             if(scalarAB == 1.0) {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*inCA];
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = scalar * values[i][j] + bVals[i][j] / aVector[j];
                 }
                 updateFlops(3 * globalLength * numVectors);
@@ -1322,7 +1322,7 @@ public class MultiVector extends JpetraObject {
             else {
                 for(i=0; i<numVectors; i++) {
                     double [] aVector = aVals[i*inCA];
-                    for(j=0; j<processLength; j++)
+                    for(j=0; j<vnodeLength; j++)
                         values[i][j] = scalar * values[i][j] + scalarAB * bVals[i][j] / aVector[j];
                 }
                 updateFlops(4 * globalLength * numVectors);
@@ -1357,10 +1357,10 @@ public class MultiVector extends JpetraObject {
     }
     
     /**
-     * Accessor for processLength.
+     * Accessor for vnodeLength.
      */
-    public int getProcessLength() {
-        return processLength;
+    public int getVnodeLength() {
+        return vnodeLength;
     }
     
     /**
@@ -1408,7 +1408,7 @@ public class MultiVector extends JpetraObject {
     
     public double VALUEAT(int row, int col) {
         //if(row >= numVectors) throw new JpetraException("row must be less than numVectors");
-        //if(col >= processLength) throw new JpetraException("col must be less than processLength");
+        //if(col >= vnodeLength) throw new JpetraException("col must be less than vnodeLength");
         return values[row][col];
     }
     
@@ -1440,7 +1440,7 @@ public class MultiVector extends JpetraObject {
         else theClone.intTemp = null;
         
         if(values != null) {
-            theClone.values = new double [numVectors][processLength];
+            theClone.values = new double [numVectors][vnodeLength];
             for(int i=0; i<numVectors; i++)
                 System.arraycopy(values[i], 0, theClone.values[i], 0, values[i].length);
         }
@@ -1458,10 +1458,10 @@ public class MultiVector extends JpetraObject {
     public void print() {
 	System.out.println("Number Vectors:  "+getNumVectors());
 	System.out.println("Global Length:   "+getGlobalLength());
-	System.out.println("Process Length:     "+getProcessLength());
+	System.out.println("Process Length:     "+getVnodeLength());
 	
 	int numVecs = getNumVectors();
-	int length = getProcessLength();
+	int length = getVnodeLength();
 	double [][] vals = this.extractView();
 	
 	System.out.println("   Process    Row Index    Col Index    Value");

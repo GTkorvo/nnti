@@ -22,18 +22,18 @@ class MultiVectorTest {
 	boolean verbose1 = verbose;
 	if(verbose && rank != 0) verbose = false;
 	
-	int numNodeElements = 10000;
-	int numNodeElements1 = numNodeElements;
-	int numGlobalElements = numNodeElements * numProc + Math.min(numProc, 3);
-	if(pid < 3) numNodeElements++;
+	int numVnodeElements = 10000;
+	int numVnodeElements1 = numVnodeElements;
+	int numGlobalElements = numVnodeElements * numProc + Math.min(numProc, 3);
+	if(pid < 3) numVnodeElements++;
 	int indexBase = 0;
 	int elementSize = 7;
-	boolean isDistributedGloal = (numGlobalElements > numNodeElements);
+	boolean isDistributedGloal = (numGlobalElements > numVnodeElements);
 	int numVectors = 4;
 	
 	// Test LocalMap constructor
-	if(verbose) System.out.println("Checking LocalMap(numNodeElements1, indexBase, comm)");
-	Jpetra.LocalMap localMap = new Jpetra.LocalMap(numNodeElements1, indexBase, comm);
+	if(verbose) System.out.println("Checking LocalMap(numVnodeElements1, indexBase, comm)");
+	Jpetra.LocalMap localMap = new Jpetra.LocalMap(numVnodeElements1, indexBase, comm);
 
 	// Test uniform linear linear distribution constructor
 	if(verbose) System.out.println("Checking BlockMap(numGlobalElements, elementSize, indexBase, comm)");
@@ -147,11 +147,11 @@ class MultiVectorTest {
 	int j;
 	double fi;
 	double fj;
-	int aRows = a.getNodeLength();
+	int aRows = a.getVnodeLength();
 	int aCols = a.getNumVectors();
-	int sqrtARows = sqrtA.getNodeLength();
+	int sqrtARows = sqrtA.getVnodeLength();
 	int sqrtACols = sqrtA.getNumVectors();
-	int bRows = b.getNodeLength();
+	int bRows = b.getVnodeLength();
 	int bCols = b.getNumVectors();
 
 	double [][] ap;
@@ -172,9 +172,9 @@ class MultiVectorTest {
 	cPlusBp = cPlusB.extractView();
 	weightsp = weights.extractView();
 
-	boolean aIsLocal = (a.getNodeLength() == a.getGlobalLength());
-	boolean bIsLocal = (b.getNodeLength() == b.getGlobalLength());
-	boolean cIsLocal = (c.getNodeLength() == c.getGlobalLength());
+	boolean aIsLocal = (a.getVnodeLength() == a.getGlobalLength());
+	boolean bIsLocal = (b.getVnodeLength() == b.getGlobalLength());
+	boolean cIsLocal = (c.getVnodeLength() == c.getGlobalLength());
 
 	int aIndexBase = a.getMap().getIndexBase();
 	int bIndexBase = b.getMap().getIndexBase();
@@ -186,16 +186,16 @@ class MultiVectorTest {
 	int [] bGlobalElements = new int [bRows];
 	aMap.getGlobalElements(bGlobalElements);
 
-	if(c.getNodeLength() != aRows ||
+	if(c.getVnodeLength() != aRows ||
 	   aRows             != bRows ||
 	   c.getNumVectors() != aCols ||
 	   aCols             != bCols ||
 	   sqrtARows         != aRows ||
 	   sqrtACols         != aCols ||
-	   c.getNodeLength() != cAlphaA.getNodeLength() ||
+	   c.getVnodeLength() != cAlphaA.getVnodeLength() ||
 	   c.getNumVectors() != cAlphaA.getNumVectors() ||
-	   c.getNodeLength() != cAlphaAPlusB.getNodeLength() ||
-	   c.getNodeLength() != cPlusB.getNodeLength() ||
+	   c.getVnodeLength() != cAlphaAPlusB.getVnodeLength() ||
+	   c.getVnodeLength() != cPlusB.getVnodeLength() ||
 	   c.getNumVectors() != cPlusB.getNumVectors() ) {
 	    return -2;
 	}
@@ -337,12 +337,12 @@ class MultiVectorTest {
 	cpp = new double [numVectors][];
 
 	for(i=0; i<numVectors; i++) {
-	    if(a.getNodeLength() != b.getNodeLength()) {
-		System.out.println(i+" a:"+a.getNodeLength()+", b:"+b.getNodeLength());
+	    if(a.getVnodeLength() != b.getVnodeLength()) {
+		System.out.println(i+" a:"+a.getVnodeLength()+", b:"+b.getVnodeLength());
 	    }
-	    app[i] = new double [a.getNodeLength()+i];
-	    bpp[i] = new double [b.getNodeLength()+i];
-	    cpp[i] = new double [c.getNodeLength()+i];
+	    app[i] = new double [a.getVnodeLength()+i];
+	    bpp[i] = new double [b.getVnodeLength()+i];
+	    cpp[i] = new double [c.getVnodeLength()+i];
 	}
 
 	Jpetra.MultiVector a1 = new Jpetra.MultiVector("View", localMap, app, numVectors);
@@ -390,18 +390,18 @@ class MultiVectorTest {
 	int i, j;
 	double fi, fj;
 
-	double [][] ap = new double [a.getNodeLength()][a.getNumVectors()];
-	double [][] bp = new double [b.getNodeLength()][b.getNumVectors()];
-	double [][] cp = new double [c.getNodeLength()][c.getNumVectors()];
-	double [][] cGemmp = new double [cGemm.getNodeLength()][cGemm.getNumVectors()];
+	double [][] ap = new double [a.getVnodeLength()][a.getNumVectors()];
+	double [][] bp = new double [b.getVnodeLength()][b.getNumVectors()];
+	double [][] cp = new double [c.getVnodeLength()][c.getNumVectors()];
+	double [][] cGemmp = new double [cGemm.getVnodeLength()][cGemm.getNumVectors()];
 
-	int aRows = a.getNodeLength();
+	int aRows = a.getVnodeLength();
 	int aCols = a.getNumVectors();
-	int bRows = b.getNodeLength();
+	int bRows = b.getVnodeLength();
 	int bCols = b.getNumVectors();
-	int cRows = c.getNodeLength();
+	int cRows = c.getVnodeLength();
 	int cCols = c.getNumVectors();
-	int cGemmRows = cGemm.getNodeLength();
+	int cGemmRows = cGemm.getVnodeLength();
 	int cGemmCols = cGemm.getNumVectors();
 	ap = a.extractView();
 	bp = b.extractView();
@@ -409,13 +409,13 @@ class MultiVectorTest {
 	cGemmp = cGemm.extractView();
 
 	/* DEBUG
-	int opACols = (transa.equals("N")) ? a.getNumVectors() : a.getNodeLength();
-	int opBRows = (transb.equals("N")) ? b.getNodeLength() : b.getNumVectors();
+	int opACols = (transa.equals("N")) ? a.getNumVectors() : a.getVnodeLength();
+	int opBRows = (transb.equals("N")) ? b.getVnodeLength() : b.getNumVectors();
 	int cGlobalInnerDim = (transa.equals("N")) ? a.getNumVectors() : a.getGlobalLength();
 	*/
-	int opACols = (transa.equals("N")) ? a.getNodeLength() : a.getNumVectors();
-	int opBRows = (transb.equals("N")) ? b.getNumVectors() : b.getNodeLength();
-	int cGlobalInnerDim = (transa.equals("N")) ? a.getNodeLength() : a.getGlobalLength();
+	int opACols = (transa.equals("N")) ? a.getVnodeLength() : a.getNumVectors();
+	int opBRows = (transb.equals("N")) ? b.getNumVectors() : b.getVnodeLength();
+	int cGlobalInnerDim = (transa.equals("N")) ? a.getVnodeLength() : a.getGlobalLength();
 
 	System.out.println("transa: "+transa+", transb: "+transb);
 	System.out.println("ACols: "+opACols+", BRows: "+opBRows);
@@ -435,16 +435,16 @@ class MultiVectorTest {
 	bMap.getGlobalElements(bGlobalElements);
 
 	// Check for compatible dimensions
-	if(c.getNodeLength() != cRows ||
+	if(c.getVnodeLength() != cRows ||
 	   opACols           != opBRows ||
 	   c.getNumVectors() != cCols ||
-	   c.getNodeLength() != cGemm.getNodeLength() ||
+	   c.getVnodeLength() != cGemm.getVnodeLength() ||
 	   c.getNumVectors() != cGemm.getNumVectors()) {
 
-	    if(c.getNodeLength() != cRows) System.out.println(1);
+	    if(c.getVnodeLength() != cRows) System.out.println(1);
 	    if(opACols != opBRows) System.out.println(2);
 	    if(c.getNumVectors() != cCols) System.out.println(3);
-	    if(c.getNodeLength() != cGemm.getNodeLength()) System.out.println(4);
+	    if(c.getVnodeLength() != cGemm.getVnodeLength()) System.out.println(4);
 	    if(c.getNumVectors() != cGemm.getNumVectors()) System.out.println(5);
 	    return -2;
 	}

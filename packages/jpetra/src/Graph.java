@@ -187,13 +187,13 @@ public class Graph extends JpetraObject {
     private void initializeDefaults() {
         numGlobalBlockRows = rowMap.getNumGlobalElements();
         numGlobalBlockCols = colMap.getNumGlobalElements();
-        numProcessBlockRows = rowMap.getNumProcessElements();
-        numProcessBlockCols = colMap.getNumProcessElements();
+        numProcessBlockRows = rowMap.getNumVnodeElements();
+        numProcessBlockCols = colMap.getNumVnodeElements();
         
         numGlobalRows = rowMap.getNumGlobalEquations();
         numGlobalCols = colMap.getNumGlobalEquations();
-        numProcessRows = rowMap.getNumProcessEquations();
-        numProcessCols = colMap.getNumProcessEquations();
+        numProcessRows = rowMap.getNumVnodeEquations();
+        numProcessCols = colMap.getNumVnodeEquations();
         
         globalMaxRowDim = rowMap.getMaxElementSize();
         maxRowDim = rowMap.getMaxElementSize();
@@ -599,7 +599,7 @@ public class Graph extends JpetraObject {
 	    // If owned, transform global index to local index.
 	    // If not owned, add to importMap for later use.
 
-	    numProcessBlockCols = domainMap.getNumProcessElements();
+	    numProcessBlockCols = domainMap.getNumVnodeElements();
 
 	    int incBlockCols = Math.max(Math.min(numProcessBlockCols/4, 100), 10);
 	    int maxBlockCols = 0;
@@ -713,7 +713,7 @@ public class Graph extends JpetraObject {
 
 	    // Easy to do if constant element size
 	    if(rangeMap.hasConstantElementSize())
-		numProcessCols = numProcessBlockCols * rangeMap.getMaxProcessElementSize();
+		numProcessCols = numProcessBlockCols * rangeMap.getMaxVnodeElementSize();
 	    else {
 		numProcessCols = 0;
 		for(i=0; i<numProcessBlockRows; i++) {

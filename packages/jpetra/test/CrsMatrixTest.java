@@ -36,28 +36,28 @@ public class CrsMatrixTest {
 	// Redefine verbose to only printon PE 0
 	if(verbose && rank != 0) verbose = false;
 
-	int numNodeEquations = 10000;
-	int numGlobalEquations = numNodeEquations * numProc + Math.min(numProc, 3);
-	if(pid < 3) numNodeEquations++;
+	int numVnodeEquations = 10000;
+	int numGlobalEquations = numVnodeEquations * numProc + Math.min(numProc, 3);
+	if(pid < 3) numVnodeEquations++;
 	int indexBase = 0;
 	int elementSize = 7;
-	boolean isDistributedGlobal = numGlobalEquations > numNodeEquations;
+	boolean isDistributedGlobal = numGlobalEquations > numVnodeEquations;
 
 	// Construct a map that puts approximately the same number of equations on each processor
-	Jpetra.Map map = new Jpetra.Map(numGlobalEquations, numNodeEquations, 0, comm);
+	Jpetra.Map map = new Jpetra.Map(numGlobalEquations, numVnodeEquations, 0, comm);
 
 	// Get and update list and number of local equations from newly created map
-	int [] nodeGlobalElements = new int[map.getNumNodeElements()];
+	int [] nodeGlobalElements = new int[map.getNumVnodeElements()];
 	map.getGlobalElements(nodeGlobalElements);
 
 	// Create an integer vector NumNz that is used to build the Petra Matrix.
 	// NumNz[i] is the Number of OFF-DIAGONAL term for the ith global equation on this processor
 
-	int [] numNz = new int[numNodeEquations];
+	int [] numNz = new int[numVnodeEquations];
 
 	// We are building a tridiagonal matrix where each row has (-1 2 -1)
 	// So we need 2 off-diagonal terms (except for the first and last equation)
-	for(i=0; i<numNodeEquations; i++)
+	for(i=0; i<numVnodeEquations; i++)
 	    if(nodeGlobalElements[i] == 0 || nodeGlobalElements[i] == numGlobalEquations - 1)
 		numNz[i] = 1;
 	    else
@@ -80,7 +80,7 @@ public class CrsMatrixTest {
 	double [] twoa = {2.0};
 	int numEntries;
 
-	for(i=0; i<numNodeEquations; i++) {
+	for(i=0; i<numVnodeEquations; i++) {
 	    if(nodeGlobalElements[i] == 0) {
 		indices[0] = 1;
 		numEntries = 1;
@@ -123,18 +123,18 @@ public class CrsMatrixTest {
 	    System.exit(0);
 	}
 
-	int numNodeNonzeros = 3 * numNodeEquations;
-	if(a.LRID(0) >= 0) numNodeNonzeros--;
-	if(a.LRID(numGlobalEquations-1) >= 0) numNodeNonzeros--;
+	int numVnodeNonzeros = 3 * numVnodeEquations;
+	if(a.LRID(0) >= 0) numVnodeNonzeros--;
+	if(a.LRID(numGlobalEquations-1) >= 0) numVnodeNonzeros--;
 
-	if(check(a, numNodeEquations, numGlobalEquations, numNodeNonzeros, 3*numGlobalEquations-2,
+	if(check(a, numVnodeEquations, numGlobalEquations, numVnodeNonzeros, 3*numGlobalEquations-2,
 		 nodeGlobalElements, verbose) != 0) {
 	    System.out.println("Error in check");
 	    System.exit(0);
 	}
     }
 
-    public static int check(Jpetra.CrsMatrix a, int numNodeRows1, int numGlobalRows1, int numNodeNonzeros1,
+    public static int check(Jpetra.CrsMatrix a, int numVnodeRows1, int numGlobalRows1, int numVnodeNonzeros1,
 			    int numGlobalNonzeros1, int [] nodeGlobalElements, boolean verbose) {
 	return 0;
     }
