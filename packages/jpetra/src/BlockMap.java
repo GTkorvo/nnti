@@ -150,6 +150,7 @@ public class BlockMap extends JpetraObject {
         int numProc = comm.getNumVnodes();
         int myPID= comm.getVnodeID();
         if (numProc == 1 || numGlobalElements == numVnodeElements) {
+            System.out.println("Got here 2!!!");
             this.numGlobalElements = this.numVnodeElements;
             // Check to see if user's value for numGlobalElements is either -1 
             // (in which case we use our computed value) or matches ours.
@@ -180,6 +181,7 @@ public class BlockMap extends JpetraObject {
             arrayArg0[0] = this.numVnodeElements;
             int [] arrayArg1 = new int[1];
             arrayArg1[0] = this.numGlobalElements;
+            System.out.println("Got here!!");
             arrayArg1 = this.comm.sumAll(arrayArg0);
             this.numGlobalElements = arrayArg1[0];
             
@@ -1071,9 +1073,9 @@ public class BlockMap extends JpetraObject {
     } 
 
     public int [] GETGE() {
-	return globalElements;
+	    return globalElements;
     }
     public int [] GETESL() {
-	return elementSizeList;
+	    return elementSizeList;
     }
 }

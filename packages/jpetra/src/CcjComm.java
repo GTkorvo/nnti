@@ -4,7 +4,7 @@ import CCJ.*;
 import java.io.Serializable;
 
 /*
- * CCJCom.java
+ * CcjCom.java
  *
  * Created on Fri May 30 22:30:05 CDT 2003
  */
@@ -318,5 +318,11 @@ public class CcjComm extends JpetraObject implements Comm {
         myVnode = newVnodeID;
         return 0;
     }
+    
+    
+    public Distributor createDistributor() {
+        return new CcjDistributor(this);
+    }
+    
     
 }

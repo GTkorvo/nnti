@@ -42,8 +42,8 @@ public class Importer extends JpetraObject {
         this.sourceMap = sourceMap;
         
         int i;
-        int numSourceIDs = sourceMap.getNumProcessElements();
-        int numTargetIDs = targetMap.getNumProcessElements();
+        int numSourceIDs = sourceMap.getNumVnodeElements();
+        int numTargetIDs = targetMap.getNumVnodeElements();
         
         int [] targetGIDs = null;
         if(numTargetIDs > 0) {

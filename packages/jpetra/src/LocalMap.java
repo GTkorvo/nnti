@@ -15,34 +15,34 @@ public class LocalMap extends Jpetra.Map {
 
     /** Creates new LocalMap */
     public LocalMap(int numVnodeElements, int indexBase, Comm comm) {
-	super(numVnodeElements, numVnodeElements, indexBase, comm);
-	if(checkInput() != 0) {
-	    System.out.println("Replicated Local Map not the same size onf all PEs");
-	    System.exit(1);
-	}
+        super(numVnodeElements, numVnodeElements, indexBase, comm);
+        if(checkInput() != 0) {
+            System.out.println("Replicated Local Map not the same size onf all PEs");
+            System.exit(1);
+        }
     }
 
     public LocalMap(LocalMap map) {
-	super(map);
-	isDistributedGlobal = false;
-	if(checkInput() != 0) {
-	    System.out.println("Replicated Local Map not the same size on all PEs");
-	    System.exit(1);
-	}
+        super(map);
+        isDistributedGlobal = false;
+        if(checkInput() != 0) {
+            System.out.println("Replicated Local Map not the same size on all PEs");
+            System.exit(1);
+        }
     }
     
     private int checkInput() {
-	isDistributedGlobal = false;
-	int [] tmp = new int [2];
-	int [] res = new int [2];
-	tmp[0] = numVnodeElements;
-	tmp[1] = - numVnodeElements;
-	res = comm.maxAll(tmp);
-
-	int tmp1 = res[0];
-	int tmp2 = - res[1];
-
-	if(tmp1 == tmp2) return 0;
-	else return -1;
+        isDistributedGlobal = false;
+        int [] tmp = new int [2];
+        int [] res = new int [2];
+        tmp[0] = numVnodeElements;
+        tmp[1] = - numVnodeElements;
+        res = comm.maxAll(tmp);
+    
+        int tmp1 = res[0];
+        int tmp2 = - res[1];
+    
+        if(tmp1 == tmp2) return 0;
+        else return -1;
     }
 }

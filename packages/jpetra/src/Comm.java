@@ -258,6 +258,9 @@ public interface Comm {
      *
      * @return <code>true</code> in serial mode, otherwise <code>false</code>
      */
-    public boolean getIsSerial();    
+    public boolean getIsSerial();
+    
+    
+    public Distributor createDistributor();    
 }
 
