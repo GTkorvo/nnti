@@ -35,13 +35,11 @@ ccj_classes =  CcjComm.java CcjReduceAllSumIntArray.java CcjDistributor.java \
 		CcjReduceIntMaxArray.java CcjGatherSerializableArray.java \
 		CcjReduceIntMinArray.java CcjLink.java CcjScatter2DArray.java \
 		CcjReduceAllSumDoubleArray.java
-comm_classes = Comm.java SerialComm.java Directory.java Blockmap.java Map.java \
+comm_classes = Comm.java SerialComm.java Directory.java \
 		LocalMap.java Exporter.java Importer.java \
 		DistObject.java Distributor.java SerialDistributor.java $(ccj_classes)
 util_classes = Time.java Util.java
-data_structs = ElementSpace.java CrsMatrix.java SerialDenseMatrix.java IntSerialDenseMatrix.java \
-		SerialSymDenseMatrix.java SerialDenseVector.java IntSerialDenseVector.java \
-		VectorSpace.java Vector.java MultiVector.java
+data_structs = ElementSpace.java VectorSpace.java Vector.java MultiVector.java
 		  
 all:
 	#the compilation will fail if the classes are not compiled in the proper order
