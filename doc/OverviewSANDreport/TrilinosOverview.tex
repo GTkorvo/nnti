@@ -17,7 +17,7 @@
 % Please send corrections and suggestions for improvements to
 % Rolf Riesen, Org. 9223, MS 1110, rolf@cs.sandia.gov
 %
-\documentclass[12pt,strict]{SANDreport}
+\documentclass[12pt,relax]{SANDreport}
 
 % If you want to relax some of the SAND98-0730 requirements, use the "relax"
 % option. It adds spaces and boldface in the table of contents, and does not
@@ -177,7 +177,7 @@ scientific computing.  Algorithmic advances increase the range
 of tractable problems and reduce the cost of solving existing
 problems.  Well-designed solver libraries provide a mechanism for
 leveraging solver development across a broad set of applications and
-minimizing the cost of solver integration.  Emphasis is
+minimize the cost of solver integration.  Emphasis is
 required in both new algorithms and new solver frameworks in order
 to achieve the maximum impact of efforts.
 
@@ -207,11 +207,11 @@ set of policies and procedures for Trilinos developers.
 \label{sect:TrilinosDesign}
 Each Trilinos package is a self-contained, independent piece
 of software with its own set of requirememts, its own development team
-and a group of users.  Because of this,
+and group of users.  Because of this,
 Trilinos itself is designed to respect the autonomy of packages.
 Trilinos offers a variety of ways for a particular package to interact with other
-Trilinos packages.  Trilinos also offers a set of tools that can
-assist a package with builds across muliple platforms, generating
+Trilinos packages.  It also offers a set of tools that can
+assist package developers with builds across muliple platforms, generating
 documentation and regression testing across a set of target platforms.
 At the same time, what a package {\it must} do to be called a Trilinos
 package is minimal, and varies with each package.
@@ -255,7 +255,8 @@ computations.  However, the BLAS and LAPACK interfaces are Fortran
 specifications, and the mechanism for calling Fortran interfaces from
 C and C++ varies across computing platforms.  Epetra (and Tpetra)
 provide a set of simple, portable interfaces to the BLAS and LAPACK
-that hide these interface variations.  These interfaces are accessible to
+that provide uniform access to the BLAS and LAPACK across a broad
+set of platforms.  These interfaces are accessible to
 other packages.
 
 \item Source code repository and build tools: Trilinos source code is
@@ -281,8 +282,8 @@ Trilinos packages.
 \subsection{Epetra}
 Matrices, vectors and graphs are basic objects used in most solver
 algorithms. Most Trilinos
-packages interact with these objects via abstract interfaces that
-allow a package to define what services and behaviors are expected,
+packages interact with these kinds of objects via abstract interfaces that
+allow a package to define what services and behaviors are expected from the objects,
 without enforcing a specific implementation.  However, in order to use
 these packages, some concrete
 implementation must be selected.  Epetra (and in the future other packages described
@@ -298,7 +299,8 @@ Many different algorithms are available to solve any given numerical
 problems.  For example, there are many algorithms for solving a system
 of linear equations, and many solver packages are available to solve
 linear systems.  Which package is appropriate is a function of
-many details about the problem being solved. However, even though
+many details about the problem being solved and the platform on which
+application is being run. However, even though
 there are many different solvers, conceptually, from an abstract view,
 these solvers are providing a similar capability, and it is
 advantageous to utilize this abstract view.
@@ -320,9 +322,9 @@ Note that each mechanism is an extension or augmentation of package
 capabilities, creating connections between packages.  Thus, a package does 
 not need to change its internal structure to become part of Trilinos.
 
-\subsection{Package Accepts User Data as Epetra Objects}
-All solver packages require some user data, usually in the form of
-vectors and matrices, or require the user to supply the action of an
+\subsection{Mechanism 1: Package Accepts User Data as Epetra Objects}
+All solver packages require some user data (usually in the form of
+vectors and matrices) or require the user to supply the action of an
 operator on a vector.  Accepting this data in the form of Epetra
 objects is the first Trilinos interoperability mechanism.  Any package
 that accept user data this way immediately becomes accessible to an
@@ -334,7 +336,7 @@ the user objects that were built using Epetra.  More often, a well-designed
 package can typically encapsulate Epetra objects and ask for services from
 the Epetra objects without explicitly copying them.
 
-\subsection{Package Callable via TSF Interfaces}
+\subsection{Mechanism 2: Package Callable via TSF Interfaces}
 TSF provides a powerful set of abstract interfaces that can be used to
 interface to a variety of solver packages.  TSF can accept
 pre-constructed solver objects, e.g., preconditioners, iterative
@@ -350,7 +352,7 @@ A package is callable via TSF if it implements one or more of the TSF
 abstract class interface, making it available to TSF users as one of a
 suite of possible solver options.
 
-\subsection{Package Builds Under Trilinos {\tt configure} Scripts}
+\subsection{Mechanism 3: Package Builds Under Trilinos {\tt configure} Scripts}
 Trilinos uses Autoconf~\cite{Autoconf} and Automake~\cite{Automake} to
 build libraries and test suites.  The Trilinos directory structure
 keeps each Trilinos package completely self-contained.  As such, each
@@ -370,7 +372,7 @@ test suites and installation processes.  If a package adopts the
 Trilinos configuration and build process, it will be built
 automatically along with a large number of other Trilinos packages.
 
-\subsection{Package Can Use Epetra Internally}
+\subsection{Mechanism 4: Package Can Use Epetra Internally}
 
 The final interoperability mechanism available to a package is that of
 using Epetra objects as the
@@ -480,7 +482,8 @@ Packages like Epetra, Tpetra and Jpetra provide a broad set of powerful
 capabilities.  As a direct
 result, their class and interface specifications can be quite complex and difficult to use
 for algorithm developers that only need to work with abstract matrix and vector objects.
-Furthermore, implementation details are necessarily exposed in a way that commit users
+Furthermore, implementation details are necessarily exposed in the Petra libraries
+in a way that commits users
 of these packages to pay attention to the particular way these packages are implemented.
 For some types of algorithms (for example, algorithms like incomplete factorizations that 
 must work directly with matrix coefficients as efficiently as possible), working at this
@@ -540,7 +543,7 @@ operators exist for the sum of two existing operators and the inverse of an oper
 
 The following code fragments illustrate the construction and apply processes for the 
 ComposedOperator class.  In this example, {\tt left} and {\tt right} are existing TSF operators
-and the {\it this} is being constructed and used.
+and the {\it this} operator is being constructed and used.
 
 \begin{verbatim}
 TSFComposedOperator::TSFComposedOperator(const TSFLinearOperator& left,
@@ -596,15 +599,15 @@ AztecOO is an object-oriented follow-on to Aztec~\cite{Aztec2.1}.  As such, it p
 all of the same capabilities as Aztec, but provides more elegant interface and some extended
 functionality.  Aztec specifically solves a linear system $AX=B$ where $A$ is a linear 
 operator, $X$ is a multivector containing one or more initial guess on entry and the
-corresponding solutions on exit, and the corresponding right-hand-sides in $B$.
+corresponding solutions on exit, and $B$ contains the corresponding right-hand-sides.
 
 AztecOO accepts user matrices and vectors as Epetra objects.  The operator $A$ and any
 preconditioner, say $M \approx A^{-1}$, need not be concrete Epetra objects.
 Instead, AztecOO expects $A$ and $M$ to be Epetra\_Operator or Epetra\_RowMatrix objects. 
 Both Epetra\_Operator and Epetra\_RowMatrix are pure virtual classes.  Therefore, any other
 matrix library can be used to supply $A$ and $M$, as long as that library can implement
-the  Epetra\_Operator or Epetra\_RowMatrix interfaces, something that is not too difficult
-to do for most linear solver libraries.
+the  Epetra\_Operator or Epetra\_RowMatrix interfaces, something that is fairly straigh-forward
+ for most linear solver libraries.
 
 AztecOO provides scalings, parallel domain decomposition preconditioners, and a very robust
 set of Krylov methods.  It runs very efficiently on distributed memory parallel computers or
@@ -616,7 +619,7 @@ an AztecOO solver object can be used as a preconditioner for another AztecOO obj
 Ifpack provides local incomplete factorization preconditioners in a
 parallel domain decomposition framework.  It accepts user data as Epetra\_RowMatrix objects
 (including Epetra\_CrsMatrix, Epetra\_VbrMatrix and Epetra\_MsrMatrix objects, since these
-classes derive from Epetra\_RowMatrix)
+classes implement the Epetra\_RowMatrix interface)
 and can construct a large variety of ILU preconditioners.  Ifpack preconditioners implement
 the Epetra\_Operator interface.  Therefore, they can be used as preconditioners for AztecOO.
 
@@ -665,7 +668,8 @@ an afterthought.  Therefore, by transforming the complex-valued system into a re
 system, we can immediately leverage all of the investment in real-valued solvers.  KomplexOO
 constructs an equivalent real-valued formulation for a given complex-valued linear system
 and then calls AztecOO to solve the problem, returning the solution back to the user in
-a form compatible with the original complex-valued problem.
+a form compatible with the original complex-valued problem.  Details of mathematical and
+practical issues of Komplex can be found in Day and Heroux~\cite{DayHero2001}.
 
 \subsection{NOX: Nonlinear Solver Package}
 
@@ -683,15 +687,35 @@ NOX uses pure virtual classes to work with all matrix, operator and vector objec
 it can be used with any external software that can implement these interfaces.  Epetra and
 PETSc implementations of the pure virtual classes are already implemented.
 
-    \section{Conclusion}
+\section{Conclusion}
 
 The Trilinos project provides a framework for integrating independent 
 solver packages, making the package inter-operable and providing a common ``look-and-feel'' 
 for Trilinos users.  Furthermore, Trilinos provides a collection of useful services for
-independent solver developers, making integration of a package attractive to developers.
-The ultimate result of developing the Trilinos framework is that it minimizes redundant
-effort on the part of solver developers by providing an existing set of tools  
-
+independent solver developers, making integration of a package into Trilinos 
+attractive to developers.
+The primary advantages that the Trilinos Project provides are:
+\begin{enumerate}
+\item A common core of basic linear algebra classes:
+We can minimize redundant work and jumpstart a new parallel application
+by utilizing Petra class libraries to construct 
+and manipulate matrix, graph and vector objects.
+\item Extensive use of abstract classes, primarily TSF, to define the interaction between Trilinos
+packages:  By using abstract interfaces in Trilinos packages, we are
+not explicitly dependent on Petra class for functionality.  This allows us to use any
+concrete matrix and vector software with Trilinos packages, including PETSc, the BLAS 
+and LAPACK.
+\item A collection of common software tools and processes: New packages can be 
+integrated into Trilinos very easily.  Furthermore, if a package does not have
+its own well-developed set of software engineering tools and processes, the Trilinos
+design makes it easy for a package to incorporate Autotools, bug and feature tracking,
+source code control and mail lists.
+\item A one-to-many API for applications: Application developers who adopt the TSF abstract
+interfaces gain access to many solvers via a single mechanism.  Furthermore, additional third
+party solvers are easily added as necessary.
+\item Solver aggregation capabilities:  Via the TSF aggregation capabilities, it is possible
+to combine many solvers and bring them to bear on a single problem.
+\end{enumerate}
 
     % ---------------------------------------------------------------------- %
     % References
@@ -707,31 +731,43 @@ effort on the part of solver developers by providing an existing set of tools
     % one appendix, put \setcounter{secnumdepth}{0} after \appendix
     %
     \appendix
-    \section{Historical Perspective}
-	This is an example of an appendix.
-
-	If we follow~\cite{Sand98-0730} strictly, we would have to
-	have a separate bibliography section for each appendix.
-	The style file doesn't provide that, but it can be done
-	using the {\tt bibunits} and {\tt chapterbib} packages.
-
-	If there are many subsections in an appendix, it should also
-	have its own table of contents. Again, the SAND report class
-	file does not provide that functionality.
-
-	\subsection{The Past a Long Time Ago}
-	    This is where we talk about things so old nobody
-	    can verify them. We are safe.
-
-	\subsection{The Past More Recently}
-	    Now we have to be a little bit more careful, since
-	    records exist from that time, and some people still
-	    alive actually lived back then.
-
-
 \section{A Brief Overview of Some Object-Oriented Concepts}
 \label{sect:OOTutorial}
-Object-oriented.
+
+Much of the discussion in this document assumes some familiarity with object-oriented
+concepts and terminology. We realize that some readers may not be very familiar with these 
+topics. Therefore, we provide this appendix to cover some of the basic topics, as we 
+understand them and use them.
+
+\subsection{Object-oriented Programming}
+We use the term object-oriented programming (OOP) to refer to a philosophy of 
+software engineering where data and
+procedures (called methods) that are logically related are kept together in a class.  
+Although it is not alway clear which data and methods should belong in a given class, we
+can generally agree on basic associations.  As an example, one obvious class for a solver
+framework is a Vector.  For our purposes, we consider a vector object to have finite dimension
+and a basis.  Therefore, it contains data that can be indexed.  Some obvious vector operations
+are norms, dot products and vector updates.  Vector can also be used with a linear operator,
+or more specifically a matrix.  However, we commonly put this kind of method in the matrix
+class because matrices tend to be more complicated objects and writing the method in the matrix
+class is easier.
+
+Some of the strengths of OOP are a strong emphasis on the interaction of objects with each
+other, that is, on interfaces between classes.  By focusing on interfaces we get a variety of
+benefits.  First, a well-designed interface prescribe {\it what} should be done by a piece of
+software, not {\it how} it should be done.  This fact, combined with the fact that a class
+owns it data, allows great flexibility in how methods are implemented.  Even more importantly,
+once software is in use, OOP techniques give us great flexibility to change the implementation
+of a class without changing the interface.  Since a user only works with the interface 
+(methods) of a class, we can change the implementation of a class without requiring any major
+change in the user code.  
+
+We have used this flexibility within the Trilinos Project.  In particular, earlier versions
+of Petra were based on code from Aztec, which allowed us to get working versions of Petra
+very quickly.  Over time we replace the Aztec code with implementations that offered more
+flexibility and features.  However, the overall design of many of the Petra classes has
+remained fundamentally the same.
+
 Define ``factory''.  Implementation, interface, derived, specialization. 
 The {\it this} object. Pure virtual classes.
     % \printindex
