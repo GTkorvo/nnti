@@ -94,7 +94,6 @@
 }
 \ifthenelse{\boolean{relaxedSAND} \and \boolean{strictSAND}}   {
   \ClassWarning{SANDreport.cls}{Both, "strict" and "relax" options given}
-}{
 }
 
 % We're based on the standard article class and assume certain
@@ -882,9 +881,9 @@
 }
 
 % Trilinos Header style
-\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\chaptermark}[1]{\markboth{\thesection\ #1}}
 \renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
 \lhead[\fancyplain{}{\TrilinosTM{} Overview }]%
 {\fancyplain{}{\rightmark}}
-\rhead[\fancyplain{}{\leftmark}]
+\rhead[\fancyplain{}{\rightmark}]
 {\fancyplain{}{\TrilinosTM{} Overview}}

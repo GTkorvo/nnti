@@ -3,7 +3,7 @@
 \title{An Overview of Trilinos}
 \SANDsubtitle{}
 
-\author{Michael Heroux, Roscoe Bartlett, \\
+\author{Michael Heroux, Roscoe Bartlett, Vicki Howle \\
 Robert Hoekstra, Jonathan Hu, Tamara Kolda, \\
 Richard Lehoucq, Kevin Long, Roger Pawlowski, \\
 Andrew Salinger, Heidi Thornquist, \\
@@ -27,11 +27,11 @@ Computational Math and Algorithms Department \\
 Roscoe Bartlett \\
 Optimization and Uncertainty Estimation Department \\
  \\
+Vicki Howle, Tamara Kolda and Kevin Long \\
+Computational Sciences and Math Department \\
+ \\
 Robert Hoekstra, Roger Pawlowski and Andrew Salinger \\
 Computational Sciences Department \\
- \\
-Tamara Kolda, Kevin Long \\
-Computational Sciences and Math Department \\
  \\
 Alan Williams \\
 High Performance Computing and Networking Department \\
@@ -56,12 +56,12 @@ algorithms and libraries within
 an object-oriented software framework for the solution of large-scale, complex
 multi-physics engineering and scientific applications.   Our emphasis is on 
 developing robust, scalable algorithms in a software framework, using abstract 
-interfaces for flexible interoperability of components and providing a 
+interfaces for flexible interoperability of components while providing a 
 full-featured set of concrete classes that implement all abstract
 interfaces.  
 
 Trilinos uses a two-level software structure designed around
-collections of a
+collections of
 {\it packages}.  A Trilinos package is an integral unit usually
 developed by a small team of experts in a particular algorithms area
 such as algebraic preconditioners, nonlinear solvers, etc.
@@ -77,7 +77,7 @@ objectives, history, current development and future plans of the project.
 
 
 \clearpage
-\section*{Acknowledgement}
+\section*{Acknowledgments}
 The authors would like to acknowledge the support of the ASCI and LDRD programs
 that funded development of Trilinos.
 
@@ -90,8 +90,8 @@ that funded development of Trilinos.
 \listoffigures
 
 \clearpage
-\section*{Nomenclature}
 \addcontentsline{toc}{section}{Nomenclature}
+\section*{Nomenclature}
 \input{../CommonFiles/TrilinosNomenclature}
 
 \section{Background}
@@ -137,8 +137,8 @@ efforts at Sandia, motivated by  a recognition that a modest degree of
 coordination among these efforts could have a large positive impact on 
 the quality and usability of the software we produce and therefore enhance the
 research, development and integration of new solver algorithms into
-applications.  Although the project has existed for only two years, 
-the degree of effort required to develop new parallel solvers has been 
+applications.  With the advent of Trilinos, the degree of effort required 
+to develop new parallel solvers has been 
 substantially reduced because our common infrastructure provides an excellent 
 starting point.  Furthermore, many applications are standardizing on the 
 Trilinos matrix and vector classes.  As a result, these applications
@@ -147,7 +147,7 @@ interface modifications.
 
 This document provides an overview of the Trilinos project,
 focusing on the project philosophy and description, and
-providing the reader with an summary of the project in its current state.  
+providing the reader with a summary of the project in its current state.  
 
 \section{Introduction}
 
@@ -159,7 +159,7 @@ problems.  Well-designed solver libraries provide a mechanism for
 leveraging solver development across a broad set of applications and
 minimize the cost of solver integration.  Emphasis is
 required in both new algorithms and new software in order
-to achieve the maximum impact of efforts.
+to maximum the impact of our efforts.
 
 The Trilinos project encompasses a variety of efforts that are to some
 extent self-contained but at the same time inter-related.  The
@@ -170,13 +170,13 @@ dictate.
 Integration of a package into Trilinos, and what Trilinos can provide
 to a package, have multiple possibilities
 that will be discussed in Section~\ref{sect:TrilinosDesign}.
-Section~\ref{sect:PetraAndTSF} discusses two special Trilinos
-packages: Epetra and TSF.  The general definition of a Trilinos
+Section~\ref{sect:PetraAndTSF} discusses two special collections of Trilinos
+packages: Petra and TSF.  The general definition of a Trilinos
 package is presented in Section~\ref{sect:PackageDefinition}
 An overview of current software research and
 development is given in Section~\ref{sect:Software}.  
 Finally, this document contains
-an Appendix~\ref{sect:OOTutorial} which gives a brief
+an appendix, which gives a brief
 tutorial on object-oriented concepts for readers who are unfamiliar
 with the area.  
 
@@ -198,8 +198,7 @@ collection of Trilinos packages is shown in Figure~\ref{Figure:TrilinosPackages}
 \begin{center}
 \includegraphics[height=6in,angle=90]{../CommonFiles/TrilinosPackagesDiagram}
 \end{center}
-\label{Figure:TrilinosPackages}
-\caption{Current collection of Trilinos Packages}
+\caption{\label{Figure:TrilinosPackages}Current collection of Trilinos Packages}
 \end{figure}
 
 \subsection{Services Provided by Trilinos}
@@ -208,7 +207,7 @@ Trilinos provides a variety of services to a developer wanting to
 integrate a package into Trilinos.  In particular, the following are
 provided:
 \begin{itemize}
-\item Configuration management:
+\item {\bf Configuration management:}
 Autoconf~\cite{Autoconf},  Automake~\cite{Automake} and
 Libtool~\cite{Libtool} provide a robust, full-featured set of tools for
 building software across a broad set of platforms (see also the ``Goat
@@ -220,12 +219,7 @@ added in future releases.
 
 Package developers who are not currently using autotools, but would like
 to, can get a jump start by using a Trilinos package called
-``new\_package''.  This trivial package exists for one primary purpose.
-It walks a developer through the process of setting up a package to
-configure and build using autotools.  This package is not yet complete, 
-but is far enough along to be of use to a developer who does not have 
-extensive Autotools experience. 
- 
+``new\_package'' (see below). 
 
 Trilinos provides a set of M4~\cite{M4} macros that can be used by any other
 package that wants to use Autoconf and Automake for configuring and
@@ -233,11 +227,9 @@ building libraries.  These macros perform common configuration tasks such as
 locating a valid LAPACK~\cite{lapack} library, or checking for a user-
 defined MPI C compiler.  These macros minimize the amount of redundant
  effort in using Autotools, and make it easier to apply a general change to
-the configure process for all packages.  However, use of these tools is not 
-required.
+the configure process for all packages.
 
-
-\item Regression testing: Trilinos provides a variety of regression
+\item {\bf Regression testing:} Trilinos provides a variety of regression
 testing capabilities.  Although the test suite is always improving,
 good coverage testing is available for the major Trilinos packages.
 Integrating new tests into Trilinos is accomplished by creating
@@ -246,14 +238,12 @@ that run package tests.  These scripts can be executed manually and
 are also run as part of the automated regression test harness (see
 next item).
 
-\item Periodic Testing: Trilinos Packages that configure and build using 
+\item {\bf Automatic Testing:} Trilinos Packages that configure and build using 
 Autotools can easily utilize the the Trilinos test harness.  On a nightly 
 basis, the test harness builds the most recent versions of Trilinos libraries 
-and runs any tests that have been integrated into the testharness.  Currently 
-the testharness only runs on Linux, IRIX64, and DEC/OSF1, but it will 
-eventually run on 5-8 platforms.
+and runs any tests that have been integrated into the testharness.  
 
-\item Portable interface to BLAS and LAPACK: The Basic Linear Algebra
+\item {\bf Portable interface to BLAS and LAPACK:} The Basic Linear Algebra
 Subprograms (BLAS)~\cite{BLAS1,BLAS2,BLAS3} and LAPACK~\cite{lapack}
 provide a large repository of robust, high-performance mathematical
 software for serial and shared memory parallel dense linear algebra
@@ -265,7 +255,7 @@ that provide uniform access to the BLAS and LAPACK across a broad
 set of platforms.  These interfaces are accessible to
 other packages.
 
-\item Source code repository and other software process tools:
+\item {\bf Source code repository and other software process tools:}
 Trilinos source code is
 maintained in a CVS~\cite{CVS} repository that is accessible via a
 secure connection from anywhere on the internet.  It is also browsable
@@ -276,7 +266,7 @@ maintained for Trilinos as a whole and for each package.  Support for new
 packages can easily be added.  All tools are accessible from the main
 Trilinos website~\cite{Trilinos-home-page}.
 
-\item Quick-start package infrastructure: Via the new\_package package in
+\item {\bf Quick-start package infrastructure:} Via the new\_package package in
 Trilinos, a new or existing software project can quickly adopt a
 variety of useful software processes and tools.  new\_package provides a
 starting point for:
@@ -296,7 +286,7 @@ copy and modify the new\_package web source for use with a new
 Trilinos package.
 \end{itemize}
 
-It is worth noting that the Trilinos new\_package package can be
+{\bf Note:}It is worth mentioning that the Trilinos new\_package package can be
 useful independent of Trilinos itself.  Like all Trilinos packages,
 new\_package is self-contained, and can be configured and
 built independently from the rest of Trilinos.  Similarly, the
@@ -363,7 +353,7 @@ for a common collection of tools that can be leverages across all
 packages.  The Teuchos package is a relatively recent addition to
 Trilinos to facilitate collection of the common tools.  In order to
 retain the autonomy of other Trilinos packages, no package is required
-to adopt Teuchos class for internal.  However, a design goal of
+to adopt Teuchos class for internal use.  However, a design goal of
 Teuchos is robustness and portability such that dependency on Teuchos
 is not a practical liability.
 
@@ -381,10 +371,10 @@ dense matrix-matrix multiply operation, the standard GEMM BLAS kernel
 will be called for the four primary scalar types.  For other data
 types, Teuchos provides a triple nested loop set that implements the
 same functionality in terms of the ``+'' and ``*'' operators and uses
-scalar traits to defined zero, one and magnitude type.  If the
+scalar traits to define zero and one.  If the
 data type that user passed in supports ``operator+'' and ``operator*''
 and has a well-defined concept of zero, identity and magnitude,
-this loop set with compile and execute correctly.  We have used this
+this type of loop set with compile and execute correctly.  We have used this
 mechanism to compute basic matrix and vector calculations using
 arbitrary precision arithmetic.  This capability can be used to support interval
 arithmetic, geometric transformation calculations, integers and
@@ -481,7 +471,7 @@ solver behavior when it is trying to solve a problem.  For example,
 the parameter list could specify a residual tolerance for an iterative solver.
 
 A package is callable via TSF if it implements one or more of the TSF
-abstract class interface, making it available to TSF users as one of a
+abstract class interfaces, making it available to TSF users as one of a
 suite of possible solver options.
 
 \paragraph{Mechanism 3: Package Can Use Epetra Internally}
@@ -495,11 +485,16 @@ saving in storage requirements.  Furthermore, by using Epetra objects
 internally, a package can in turn use other Trilinos packages to
 manipulate its own internal objects.
 
-\paragraph{Mechanism 4: Package access solver service via TSF interface}
+\paragraph{Mechanism 4: Package accesses services via TSF interface}
 TSF provides an abstract solver interface with access to multiple concrete 
 solvers. 
 A package can access solver services via TSF and therefore be able to use
-any solver that implements the TSF interface.
+any solver that implements the TSF interface.  By using TSF to access
+external objects such vectors, linear operators and solvers, a package
+has access to any concrete implementation of the TSF interfaces.  This
+is beneficial for access to a broad set of concrete classes, and also
+minimizes the need for additional abstract interfaces and the
+corresponding concrete implementations of these additional abstract interfaces.
 
 \paragraph{Mechanism 5: Package Builds Under Trilinos {\tt configure} Scripts}
 Trilinos uses Autoconf~\cite{Autoconf} and Automake~\cite{Automake} to
@@ -519,7 +514,7 @@ package across a broad set of platforms.  Also, Automake provides a
 rich set of targets for building libraries, software distributions,
 test suites and installation processes.  If a package adopts the
 Trilinos configuration and build process, it will be built
-automatically along with a large number of other Trilinos packages.
+automatically along with other Trilinos packages.
 
 \section{Overview of Current Package Development}
 \label{sect:Software}
@@ -539,7 +534,7 @@ description of
 how these classes interact.  There are presently three implementations
 of the Petra Object Model: Epetra, Tpetra and Jpetra.
 
-\subsection{Epetra: Essential Implementation of Petra Object Model}
+\subsubsection{Epetra: Essential Implementation of Petra Object Model}
 
 Epetra~\cite{Epetra-User-Guide}, the current production version of Petra,
  is written for real-valued double-precision scalar field data only, and
@@ -547,17 +542,11 @@ restricts itself to a stable core
 of the C++ language standard.  As such, Epetra is very portable and 
 stable, and  
 is accessible to Fortran and C users.  
-Epetra is unique in that it combines in a single package (i) support 
+Epetra combines in a single package (i) support 
 for generic parallel
 machine descriptions, (ii) extensive use of standard numerical 
-libraries, (iii) use of best
-practices in object-oriented C++ programming and (iv) parallel data 
-redistribution.
-Other basic linear algebra packages, e.~.g.~ the Template Numerical 
-Toolkit~\cite{TNT-site},
-PETSc~\cite{petsc-manual} and the Matrix Template 
-Library~\cite{SiekLums98}, feature one
-or two of these aspects only.  The availability of Epetra has 
+libraries, (iii) use of object-oriented C++ programming and (iv) parallel data 
+redistribution.  The availability of Epetra has 
 facilitated rapid development
 of numerous applications and solvers at Sandia because many of the 
 complicated issues of
@@ -572,7 +561,7 @@ including an interface to the Zoltan load-balancing
 library~\cite{zoltan-ug}.  Epetra is split into two packages:  a core
 package and a set of extensions.
 
-\subsection{Tpetra: Templated C++ Implementation of Petra Object Model}
+\subsubsection{Tpetra: Templated C++ Implementation of Petra Object Model}
 
 In addition to Epetra, we have started development of a templated 
 version of Petra, called Tpetra, that implements the scalar and 
@@ -589,11 +578,11 @@ be an integral data type such as int or long int.  However, any ADT
 that supports an indexing capability can be used, including integers in 
 other bases, or cyclic indexing. Additionally, Tpetra also uses the 
 C++ language standard more fully.  In particular, it utilizes the 
-Standard Template Library (STL)~\cite{Stroustrup}, to provide maximal 
+Standard Template Library (STL)~\cite{Stroustrup}, to provide good 
 algorithmic efficiency with minimal code development.
 
-We will fully develop Tpetra as a peer library to Epetra. By using partial
-specialization of templates, we will base Tpetra on established libraries 
+We are developing Tpetra as a peer library to Epetra. By using partial
+specialization of templates, we are basing Tpetra on established libraries 
 such as the BLAS~\cite{BLAS1,BLAS2,BLAS3} and LAPACK~\cite{lapack} and 
 therefore acquire the performance and robustness of these libraries.
 Like Epetra, Tpetra is written for generic parallel distributed
@@ -602,11 +591,11 @@ potentially shared memory multiprocessors.
 
 \subsection{Jpetra: Java Implementation of Petra Object Model}
 
-In addition to Tpetra, we have started a Java implementation of Petra.  
+In addition to Tpetra, we are developing a Java implementation of Petra.  
 The primary design goals of this project are to produce a library that 
 is a high performance, pure Java implementation of Petra.  By restricting 
 ourselves to Java and avoiding the use of the Java Native Interface 
-(JNI)~\cite{JNI-site} to link to other libraries, we get the true 
+(JNI)~\cite{JNI-site} to link to other libraries, we get the byte-code 
 portability that Java promises.  The fundamental implication of these 
 goals is that we cannot rely on BLAS~\cite{BLAS1,BLAS2,BLAS3}, 
 LAPACK~\cite{lapack} or MPI~\cite{MPI} since they are not written in 
@@ -624,8 +613,7 @@ efforts~\cite{MoreMidkGuptArtiWuAlma2001,SCIMARK-site} have shown
 that there is no fundamental performance bottleneck using Java.  
 Instead, Java compilers and user practices have been the issue.  
 As a result, Java holds much promise as a high performance computing 
-language.  Jpetra will facilitate adoption of Java in scientific and 
-engineering applications.   Java also has native graphical user 
+language.  Java also has native graphical user 
 interfaces (GUI) support.  A significant part of Jpetra will be 
 the development of GUI tools for visualization and manipulation of 
 Jpetra objects.
@@ -698,7 +686,7 @@ and solvers.
 
 \end{enumerate}
 
-\subsection{AztecOO: Concrete Preconditioned Iterative Solver Package}
+\subsection{AztecOO: Concrete Preconditioned Iterative Solvers}
 
 AztecOO is an object-oriented follow-on to Aztec~\cite{Aztec2.1}.  
 As such, it has all of the same capabilities as Aztec, but provides 
@@ -739,15 +727,14 @@ eigenvalues, even if the solution to only a single right-hand-side is
 needed.
 
 Belos is considered a generic implementation because it relies on TSF
-interfaces for access linear operator, preconditioner and vector
+interfaces for access to linear operator, preconditioner and vector
 objects.  Therefore it is not explicitly tied to any concrete linear
 algebra library and can in principle be used with any library that
 implements the TSF interfaces.  In particular, Epetra can be used
 since Trilinos provides an Epetra implementation of the TSF
 interfaces.
 
-\subsection{Amesos: Object-oriented Interface to Third-party Direct
-Solvers}
+\subsection{Amesos: Object-oriented Interface to Direct Solvers}
 
 The Amesos package is markedly different than most other Trilinos
 packages.  It is designed to provide a common interface to a
@@ -769,8 +756,8 @@ provides an abstract base class that facilitates generic use of a
 third-party solver once a solver object is instantiated.  This
 abstract interface is implemented by each Amesos direct solver class.
 For example, except for the construction phase (which can be
-accomplished generically using a ``factory'' as described in
-Appendix~\ref{sect:OOTutorial}, an instance of a solver object,
+accomplished generically using a ``factory'' as described in the
+Appendix), an instance of a solver object,
 whether it be a SuperLU solver instance, DSCPack, etc., can be driven
 via the the Amesos base solver interface.  This interface allows the
 user to request computation of a symbolic factorization, numeric
@@ -841,8 +828,7 @@ solution back to the user in a form compatible with the original
 complex-valued problem.  Details of mathematical and practical 
 issues of Komplex can be found in Day and Heroux~\cite{DayHero2001}.
 
-\subsection{Ifpack: Incomplete Factorizations and Other Algebraic 
-Preconditioners}
+\subsection{Ifpack: Parallel Algebraic Preconditioners}
 
 Ifpack provides local incomplete factorization preconditioners in a
 parallel domain decomposition framework.  It accepts user data as 
@@ -913,7 +899,7 @@ In the second mode of operation,
 ML can also be used as a preconditioner to iterative methods within Aztec
  or AztecOO.
 
-ML is quite flexible with regards to matrix formats.
+ML is quite flexible with regard to matrix formats.
 ML accepts user matrix data in its own format.
 In this case, ML needs two matrix access functions, the first to return
 a matrix row and the second to perform a matrix-vector multiply.
@@ -924,7 +910,7 @@ More information is available in either the ML User's manual
 \subsection{Meros}
 
 Meros uses the compositional, aggregation and overloaded operator capabilities of
-TSF to provided segregated/block preconditioners for linear systems
+TSF to provide segregated/block preconditioners for linear systems
 related to fully-coupled Navier-Stokes problems.  This class of
 preconditioners exploits the special properties of these problems to
 segregate the equations and use multi-level preconditioners on the
@@ -938,8 +924,8 @@ if a similar underlying physics structure is present.
 
 \subsection{NOX: Nonlinear Solver Package}
 
-NOX provides a suite of nonlinear solver methods.  It can be easily integrated
-into an application with minimal effort.  Historically, many
+NOX provides a suite of nonlinear solver methods that can be easily integrated
+into an application.  Historically, many
 applications have called linear solvers as libraries, but have 
 provided their own nonlinear solver software.  NOX
 can be an improvement because it provides a much larger collection 
@@ -948,26 +934,17 @@ and can be easily extended as new nonlinear methods are developed.
 
 NOX does not depend on any particular linear algebra package, 
 making it easy to install. In order to interface to NOX, the 
-user needs to supply methods that derive from the following abstract classes: 
-\begin{itemize}
-\item NOX::Abstract::Vector
-\item NOX::Abstract::Group
-\end{itemize}
+user needs to supply methods that derive from the 
+NOX Vector and Group abstract classes.
 The Vector interface supports basic vector operations such as dot 
 products and vector updates. 
 The Group interface supports non-vector linear algebra functionality 
-and contains methods 
-to evaluate the function and, optionally, the Jacobian.
+and contains methods to evaluate the function and, optionally, the Jacobian.
 Complete details are provided on the NOX website~\cite{NOX-home-page}.
 
 Although users can provide their own Vector and Group implementation, 
 NOX provides three implementations
-of its own.  These are:
-\begin{enumerate}
-\item NOX::LAPACK
-\item NOX::Epetra
-\item NOX::Petsc
-\end{enumerate}
+of its own: LAPACK, Epetra and PETSc.
 The LAPACK interface is an interface to the BLAS/LAPACK library. 
 It is not intended for large-scale
 computations, but to serve as an easy-to-understand example of
@@ -977,7 +954,7 @@ The PETSc interface is an interface with the PETSc library.
 
 All NOX solvers are in the NOX::Solver namespace. The solvers are
 accessed via the NOX::Solver::Manager. The recommended solver is 
-NOX::Solver::LineSearchBased, which is a basic nonlinear solver 
+the NOX LineSearchBased solver, which is a basic nonlinear solver 
 based on a line search.
 Each solver has a number of options that can be specified, as 
 documented in each class or on the NOX Parameter
@@ -985,23 +962,18 @@ Reference Page.
 
 The search directions are in the NOX::Direction namespace and 
 accessed via the NOX::Direction::Manager. The
-default search direction for a line-search based method in 
-NOX::Direction::Newton. 
+default search direction for a line-search based method is the Newton direction. 
 
 Several line searches are available, as defined in the 
 NOX::LineSearch, and accessed via the
-NOX::LineSearch::Manager class. Examples include 
-\begin{enumerate}
-\item NOX::LineSearch::FullStep
-\item NOX::LineSearch::Backtrack
-\item NOX::LineSearch::MoreThuente
-\end{enumerate}
+NOX::LineSearch::Manager class. Some examples are 
+FullStep, Backtrack and MoreThuente
 
 Convergence or failure of a given solver method is determined by the 
 status tests defined in the NOX::StatusTest namespace. Various status
-tests may be combined via the NOX::StatusTest::Combo object. Users
-are free to create additional status tests that derive from the 
-NOX::StatusTest::Generic class. 
+tests may be combined via the Combo object. Users
+are free to create additional status tests that derive from the
+Generic status test class. 
 
 \subsection{LOCA: Library of Continuation Algorithms}
 
@@ -1019,29 +991,16 @@ discretizations of partial differential equations, and to run on distributed
 The approach in LOCA for locating and tracking bifurcations begins with augmenting 
 the residual equations defining a steady state with additional equations that 
 describe the bifurcation. A Newton method is then formulated for this augmented 
-system; however, instead of loading up the Jacobian matrix for the entire 
-augmented system (a task that involved second derivatives and dense matrix rows), 
+system.  However, instead of loading up the Jacobian matrix for the entire 
+augmented system (a task that involves second derivatives and dense matrix rows), 
 bordering algorithms are used to decompose the linear solve into several solves 
 with smaller matrices. Almost all of the algorithms just require multiple solves 
 of the Jacobian matrix for the steady state problem to calculate the Newton 
 updates for the augmented system. This greatly simplifies the implementation, 
 since this is the same linear system that an application code using Newton's 
-method will already have invested in. Only the Hopf tracking algorithm requires 
+method will already have. Only the Hopf tracking algorithm requires 
 the solution of a larger matrix, which is the complex matrix involving the 
 Jacobian matrix and an imaginary multiple of the mass matrix. 
-
-The following algorithms are presently available in  LOCA: 
-\begin{itemize}
-\item Zero order continuation. 
-\item First order continuation.  
-\item Arc length continuation.
-\item Multi-parameter continuation.
-\item Turning point continuation.
-\item Pitchfork bifurcation continuation. 
-\item Hopf bifurcation continuation.
-\item Phase transition continuation. 
-\item Eigenvalue approximation.
-\end{itemize}
 
 \subsection{Anasazi: Eigensolver package}
 
@@ -1049,7 +1008,7 @@ The following algorithms are presently available in  LOCA:
 Anasazi is an extensible and interoperable framework for 
 large-scale eigenvalue algorithms.  The goal of this 
 framework is to provide a generic interface to a collection 
-of algorithms for solving large-scale eigenvalue problems of DOE interest. 
+of algorithms for solving large-scale eigenvalue problems. 
 
 Anasazi is interoperable because both the matrix and vectors (defining the
 eigenspace) are considered to be opaque objects---only knowledge of the matrix and
@@ -1107,7 +1066,7 @@ and manipulate matrix, graph and vector objects.
 \item Extensive use of abstract classes, primarily TSF, to define the 
 interaction between Trilinos
 packages:  By using abstract interfaces in Trilinos packages, we are
-not explicitly dependent on Petra class for functionality.  
+not explicitly dependent on Petra classes for functionality.  
 This allows us to use any
 concrete matrix and vector software with Trilinos packages, 
 including PETSc, the BLAS 
@@ -1153,7 +1112,7 @@ obvious class for a solver framework is a Vector.  For our purposes, we
 consider a vector object to have finite dimension and a basis.  Therefore, it
 contains data that can be indexed.  Some obvious vector operations are norms,
 dot products and vector updates.  Vectors can also be multiplied by a linear operator,
-or more specifically a matrix.  However, we commonly put this kind of method in the matrix
+or more specifically by a matrix.  However, we commonly put this kind of method in the matrix
 class because matrices tend to be more complicated objects and writing the method in the matrix
 class is easier.
 
@@ -1162,7 +1121,7 @@ other, that is, on interfaces between classes.  By focusing on interfaces we get
 benefits.  First, a well-designed interface prescribes {\it what} should be done by a piece of
 software, not {\it how} it should be done.  This fact, combined with the fact that a class
 owns its data, allows great flexibility in how methods are implemented.  Even more importantly,
-once software is in use, OOP techniques give us great flexibility to change the implementation
+once software is in use, OOP techniques give us flexibility to change the implementation
 of a class without changing the interface.  Since a user only works with the interface 
 (methods) of a class, we can change the implementation of a class without requiring any major
 change in the user code.  
@@ -1173,7 +1132,7 @@ very quickly.  Over time we replace the Aztec code with implementations that off
 flexibility and features.  However, the overall design of many of the Petra classes has
 remained fundamentally the same.
 
-\subsubsection{Some Key OOP Terms}
+\subsection{Some Key OOP Terms}
 Throughout this paper we have used a number of terms repeatedly, and sometimes
 interchangeably. In this section, we define these terms. Note that these terms
 (and many more) are discussed in great detail in books by
