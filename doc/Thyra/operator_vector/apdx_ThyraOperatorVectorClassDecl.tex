@@ -1,0 +1,137 @@
+%
+\section{Thyra Operator/Vector Interfaces C++ Declarations}
+\label{app:tsfcore_classes}
+%
+
+{\scriptsize\begin{verbatim}
+namespace Thyra {
+
+using RangePack::Range1D;
+template<class Scalar> class VectorSpaceFactoryBase;
+template<class Scalar> class VectorSpaceBase;
+template<class Scalar> class VectorBase;
+template<class Scalar> class OpBase;
+template<class Scalar> class LinearOpBase;
+template<class Scalar> class MultiVectorBase;
+template<class Scalar>
+
+class VectorSpaceFactoryBase {
+public:
+  virtual Teuchos::RefCountPtr< const VectorSpaceBase<Scalar> > createVecSpc(int dim) const = 0;
+};
+
+template<class Scalar>
+class VectorSpaceBase {
+public:
+  virtual ~VectorSpaceBase() {}
+  virtual Index dim() const = 0;
+  virtual bool isCompatible( const VectorSpaceBase<Scalar>& vecSpc ) const = 0;
+  virtual Teuchos::RefCountPtr< VectorBase<Scalar> > createMember() const = 0;
+  virtual bool isInCore() const;
+  virtual Teuchos::RefCountPtr< MultiVectorBase<Scalar> > createMembers(int numMembers) const;
+  virtual Teuchos::RefCountPtr<VectorBase<Scalar> > createMemberView(
+            const RTOpPack::MutableSubVectorBaseT<Scalar> &raw_v ) const;
+  virtual Teuchos::RefCountPtr<const VectorBase<Scalar> > createMemberView(
+            const RTOpPack::SubVectorBaseT<Scalar> &raw_v ) const;
+  virtual Teuchos::RefCountPtr<MultiVectorBase<Scalar> > createMembersView(
+            const RTOpPack::MutableSubMultiVectorBaseT<Scalar> &raw_mv ) const;
+  virtual Teuchos::RefCountPtr<const MultiVectorBase<Scalar> > createMembersView(
+            const RTOpPack::SubMultiVectorBaseT<Scalar> &raw_mv ) const;
+  virtual Teuchos::RefCountPtr< const VectorSpaceFactoryBase<Scalar> > smallVecSpcFcty() const;
+  virtual Scalar scalarProd( const VectorBase<Scalar>& x, const VectorBase<Scalar>& y ) const;
+  virtual void scalarProds( const MultiVectorBase<Scalar>& X, const MultiVectorBase<Scalar>& Y
+    ,Scalar scalar_prods[] ) const;
+  virtual Teuchos::RefCountPtr< const VectorSpaceBase<Scalar> > clone() const;
+};
+
+template<class Scalar>
+class OpBase {
+public:
+  virtual ~OpBase();
+  virtual Teuchos::RefCountPtr< const VectorSpaceBase<Scalar> > domain() const = 0;
+  virtual Teuchos::RefCountPtr< const VectorSpaceBase<Scalar> > range() const = 0;
+  virtual bool opSupported(ETransp M_trans) const;
+};
+
+template<class Scalar>
+class LinearOpBase : virtual public OpBase<Scalar> {
+public:
+  virtual void apply( const ETransp M_trans, const VectorBase<Scalar> &x
+    ,VectorBase<Scalar> *y ,const Scalar alpha=1.0 ,const Scalar beta=0.0 ) const = 0;
+  virtual Teuchos::RefCountPtr<const LinearOpBase<Scalar> > clone() const;
+  virtual void apply( const ETransp M_trans ,const MultiVectorBase<Scalar> &X
+    ,MultiVectorBase<Scalar> *Y ,const Scalar alpha=1.0 ,const Scalar beta=0.0 ) const;
+};
+
+template<class Scalar>
+class MultiVectorBase : virtual public LinearOpBase<Scalar> {
+public:
+  virtual Teuchos::RefCountPtr<const VectorBase<Scalar> > col(Index j) const;
+  virtual Teuchos::RefCountPtr<VectorBase<Scalar> > col(Index j) = 0;
+  virtual Teuchos::RefCountPtr<const MultiVectorBase<Scalar> > clone_mv() const;
+  virtual Teuchos::RefCountPtr<MultiVectorBase<Scalar> > clone_mv();
+  virtual Teuchos::RefCountPtr<const MultiVectorBase<Scalar> > subView( const Range1D& col_rng ) const;
+  virtual Teuchos::RefCountPtr<MultiVectorBase<Scalar> > subView( const Range1D& col_rng );
+  virtual Teuchos::RefCountPtr<const MultiVectorBase<Scalar> > subView( const int numCols, const int cols[] ) const;
+  virtual Teuchos::RefCountPtr<MultiVectorBase<Scalar> > subView( const int numCols, const int cols[] );
+  virtual void applyOp( const RTOpPack::RTOpT<Scalar> &primary_op, const size_t num_multi_vecs
+    ,const MultiVectorBase<Scalar>* multi_vecs[], const size_t num_targ_multi_vecs
+    ,MultiVectorBase<Scalar>* targ_multi_vecs[], RTOpPack::ReductTarget* reduct_objs[], const Index primary_first_ele
+    ,const Index primary_sub_dim,const Index primary_global_offset, const Index secondary_first_ele
+    ,const Index secondary_sub_dim ) const;
+  virtual void applyOp( const RTOpPack::RTOpT<Scalar> &primary_op, const RTOpPack::RTOpT<Scalar> &secondary_op
+    ,const size_t num_multi_vecs, const MultiVectorBase<Scalar>* multi_vecs[], const size_t num_targ_multi_vecs
+    ,MultiVectorBase<Scalar>* targ_multi_vecs[], RTOpPack::ReductTarget* reduct_obj, const Index primary_first_ele
+    ,const Index primary_sub_dim, const Index primary_global_offset, const Index secondary_first_ele
+    ,const Index secondary_sub_dim ) const;
+  virtual void getSubMultiVectorBase( const Range1D &rowRng, const Range1D &colRng
+    ,RTOpPack::SubMultiVectorBaseT<Scalar> *sub_mv ) const;
+  virtual void freeSubMultiVectorBase( RTOpPack::SubMultiVectorBaseT<Scalar>* sub_mv ) const;
+  virtual void getSubMultiVectorBase( const Range1D &rowRng, const Range1D &colRng
+    ,RTOpPack::MutableSubMultiVectorBaseT<Scalar> *sub_mv );
+  virtual void commitSubMultiVectorBase( RTOpPack::MutableSubMultiVectorBaseT<Scalar>* sub_mv );
+  void apply( const ETransp M_trans, const VectorBase<Scalar> &x, VectorBase<Scalar> *y, const Scalar alpha
+    ,const Scalar beta ) const;
+  Teuchos::RefCountPtr<const LinearOpBase<Scalar> > clone() const;
+};
+
+template<class Scalar>
+class VectorBase : virtual public MultiVectorBase<Scalar> {
+public:
+  virtual ~VectorBase() {}
+  virtual Teuchos::RefCountPtr< const VectorSpaceBase<Scalar> > space() const = 0;
+  virtual void applyOp( const RTOpPack::RTOpT<Scalar> &op, const size_t num_vecs
+    ,const VectorBase<Scalar>* vecs[], const size_t num_targ_vecs ,VectorBase<Scalar>* targ_vecs[]
+    ,RTOpPack::ReductTarget *reduct_obj ,const Index first_ele ,const Index sub_dim
+    ,const Index global_offset ) const = 0;
+  virtual void getSubVectorBase( const Range1D& rng, RTOpPack::SubVectorBaseT<Scalar>* sub_vec ) const;
+  virtual void freeSubVectorBase( RTOpPack::SubVectorBaseT<Scalar>* sub_vec ) const;
+  virtual void getSubVectorBase( const Range1D& rng, RTOpPack::MutableSubVectorBaseT<Scalar>* sub_vec );
+  virtual void commitSubVectorBase( RTOpPack::MutableSubVectorBaseT<Scalar>* sub_vec );
+  virtual void setSubVectorBase( const RTOpPack::SparseSubVectorBaseT<Scalar>& sub_vec );
+  // Multi-vector overrides
+  ...
+};
+
+template<class Scalar>
+void applyOp( const RTOpPack::RTOpT<Scalar> &op, const size_t num_vecs
+    ,const VectorBase<Scalar>* vecs[], const size_t num_targ_vecs ,VectorBase<Scalar>* targ_vecs[]
+    ,RTOpPack::ReductTarget *reduct_obj ,const Index first_ele=1 ,const Index sub_dim=0
+    ,const Index global_offset=0 );
+
+template<class Scalar>
+void applyOp( const RTOpPack::RTOpT<Scalar> &primary_op, const size_t num_multi_vecs
+  ,const MultiVectorBase<Scalar>* multi_vecs[], const size_t num_targ_multi_vecs
+  ,MultiVectorBase<Scalar>* targ_multi_vecs[], RTOpPack::ReductTarget* reduct_objs[], const Index primary_first_ele=1
+  ,const Index primary_sub_dim=1, const Index primary_global_offset=0, const Index secondary_first_ele=1
+  ,const Index secondary_sub_dim=0 ) const;
+
+template<class Scalar>
+void applyOp( const RTOpPack::RTOpT<Scalar> &primary_op, const RTOpPack::RTOpT<Scalar> &secondary_op
+  ,const size_t num_multi_vecs, const MultiVectorBase<Scalar>* multi_vecs[], const size_t num_targ_multi_vecs
+  ,MultiVectorBase<Scalar>* targ_multi_vecs[], RTOpPack::ReductTarget *reduct_obj, const Index primary_first_ele=1
+  ,const Index primary_sub_dim=0, const Index primary_global_offset=0, const Index secondary_first_ele=1
+  ,const Index secondary_sub_dim=0 ) const;
+
+} // namespace Thyra
+\end{verbatim}}
