@@ -62,6 +62,8 @@ Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
 %
 \begin{document}
 
+\raggedright
+
 \maketitle
 
 % ------------------------------------------------------------------------ %
@@ -74,9 +76,9 @@ Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
 This is a design document for various interfaces and support software for
 facilitating the interoperability between different types of software modules
 primarily, but not limited to, Trilinos.  The term {}\textit{Thyra}, which
-means ``interface'' or ``grand entrance'' in Greek, is used to encompass type
-of software.  This document describes the basic categories of interfaces and
-support software and outlines how this software is organized into Trilinos
+means ``interface'' or ``grand entrance'' in Greek, is used to encompass this
+type of software.  This document describes the basic categories of interfaces
+and support software and outlines how this software is organized into Trilinos
 packages and subdirectories within packages.
 %
 \end{abstract}
@@ -168,16 +170,16 @@ UML diagram summaries.
 \section{Thyra Abstract Interfaces}
 %
 
-These abstract interfaces in Thyra described in this section define the
+The abstract interfaces in Thyra described in this section define the
 foundation for all interoperability between various Trilinos and non-Trilinos
-packages and related software.  The interfaces are subdivided into ANA
+packages and related software.  These interfaces are subdivided into ANA
 interfaces and non-ANA interfaces in the next two subsections.
 
 \subsection{Thyra ANA Interfaces}
 
 This set of interfaces is designed to support interoperability for ANAs only.
 Figure~\ref{thyra:fig:ThyraANAInterfaces} shows these categories and their
-interdependencies as UML packages.
+interdependencies as UML packages (not to be confused with Trilinos packages).
 
 %
 \subsubsection{Operator/Vector Interfaces}
@@ -239,9 +241,9 @@ to specify when to stop a single, atomic linear solver.
 \subsubsection{Basic Iterative Linear Solver Interfaces}
 %
 
-These are the basic interfaces that are needed to abstract away block
-iterative linear solvers (such as those in Belos) for a client that already
-has the operator, preconditioner, RHS and inital LHS ready to go.
+These are the basic interfaces that are needed to abstract block iterative
+linear solvers (such as those in Belos) for a client that already has the
+operator, preconditioner, RHS and inital LHS ready to go.
 
 {}\textit{Representative members:}
 \begin{itemize}
@@ -302,16 +304,18 @@ Linear Solver Interfaces}.  However, it is assumed that the underlying solve
 involves a single atomic direct or iterative solve.  As a result, the more
 detailed {}\textit{Basic Linear Solver Status Test Interfaces} can be used.
 Composite, non-atomic solves are not allowed (see the {}\textit{Operator Solve
-Interfaces}).  This type of interface (or interfaces) should be appropriate as
-an intermediate utility layer that lies below the {}\textit{Operator Solve
-Interfaces}.
+Interfaces} supporting the more general case).  This type of interface (or
+interfaces) should be appropriate as an intermediate utility layer that lies
+below the {}\textit{Operator Solve Interfaces}.
 
 {}\textit{Representative members:}
 \begin{itemize}
 %
 {}\item {}\texttt{LinearSolverBase}: High-level linear solver interface that
-accepts a LinearOpBase object, a RHS MultiVectorBase object, and an initial
-LHS MultiVectorBase object, then returns an approximate solution RHS vector.
+accepts a {}\texttt{Linear\-Op\-Base} object, a RHS
+{}\texttt{Multi\-Vector\-Base} object, and an initial LHS
+{}\texttt{Multi\-Vector\-Base} object, then returns an approximate solution
+LHS vector.
 %
 \end{itemize}
 
@@ -335,7 +339,7 @@ these interfaces might (see Item ???).
 
 These interfaces represent the highest-level interface to a linear solve.
 These interfaces makes no assumption about how the underlying linear system is
-solved and therefore can not have a status test that is based on only
+solved and therefore can not have a status test that is based on any
 algorithmic details such as iteration counts.
 
 Examples of the types of linear operators that might support this interface
@@ -343,29 +347,29 @@ are:
 %
 \begin{itemize}
 %
-{}\item Block linear operators where the solve is performed by solving one or
-more solves with the blocks along the diagonal:  Important examples include
-block diagonal, block lower triangular, and block upper triangular operators
-where solves are performed using the blocks along the diagonal.
+{}\item Block triangular linear operators.  In this operators the solve is
+executed by performing one or more solves with the blocks along the diagonal:
+Important examples include block diagonal, block lower triangular, and block
+upper triangular operators.
 %
-{}\item Multipliciative operators: One example is a multiplicative operator
-such as $C = A B$ where $A$ and $B$ both support a solve operation.  The
-linear system $C x = b {}\rightarrow A B x = b$ can be solved by first solving
-$A y = b$ and then solving $B x = y$.
+{}\item Multipliciative operators: Another example is a multiplicative
+operator such as $C = A B$ where $A$ and $B$ both support a solve operation.
+The linear system $C x = b {}\rightarrow A B x = b$ can be solved by first
+solving $A y = b$ and then solving $B x = y$.
 %
-{}\item Sherman-Morrison-Woodbury operator solves: As an example, consider the
-operator $A = I + D D^T$ where $A\in\RE^{n {}\times n}$, $D\in\RE{n {}\times
-m}$ and $m {}\ll n$.  A linear solve with $A x = b$ can be solved as $x = (I -
-D^T (I + D^T D)^{-1} D) b$ where $(I + D^T D)\in\RE{m {}\times m}$ is a small
-dense positive-definite matrix that is easily formed, factored (Cholesky) and
-solved.
+{}\item Sherman-Morrison-Woodbury operator: As yet another example, consider
+the operator $A = I + D D^T$ where $A\in\RE^{n {}\times n}$, $D\in\RE^{n
+{}\times m}$ and $m {}\ll n$.  A linear solve with $A x = b$ can be solved as
+$x = (I - D^T (I + D^T D)^{-1} D) b$ where $(I + D^T D)\in\RE^{m {}\times m}$
+is a small dense positive-definite matrix that is easily formed, factored
+(using Cholesky) and solved.
 %
 \end{itemize}
 
 The convergence criteria used for these types of operator solves must be
 purely based on the relative errors of the linear system (i.e.\ relative
-residual error or relative solution error).  In the most general cases, it
-will be non-trivial to guarantee that a relative error is satisfied.
+residual error or relative solution error).  In the more general cases, it
+will be non-trivial to guarantee that a relative error is strictly satisfied.
 
 {}\textit{Representative members:}
 \begin{itemize}
@@ -373,21 +377,24 @@ will be non-trivial to guarantee that a relative error is satisfied.
 {}\item {}\texttt{LinearOpWithSolveBase} or {}\texttt{NonsingLinearOpBase} or
 something else: Highest level interface for an operator that can support a
 linear solve function.  The {}\texttt{solve(...)} member function accepts a
-RHS MultiVectorBase object, and an initial LHS MultiVectorBase object, then
-returns an approximate solution LHS solution.  The convergence criteria will
-be a simple tolerance (or set of tolerances) for the relative residual or
-relative solution errors.  Tolerances can be targeted from different blocks of
-RHSs to allow for different convergence criteria.
+RHS {}\texttt{MultiVectorBase} object, and an initial LHS
+{}\texttt{MultiVectorBase} object, then returns an approximate LHS solution.
+The convergence criteria will be a simple tolerance (or set of tolerances) for
+the relative residual or relative solution errors.  Tolerances can be targeted
+to different blocks of RHSs to allow for different convergence criteria.
+This interface allows, for instance, the SVD of the RHSs to form smaller
+blocks of RHS that can be passed to an atomic direct or iterative linear
+solver.
 %
 \end{itemize}
 
-{}\textit{Current status:} The interfaces that most closely resembles the
+{}\textit{Current status:} The interfaces that most closely resemble the
 proposed interface are {}\texttt{TSFCore\-::Nonlin\-::Linear\-Op\-With\-Solve}
 and {}\texttt{NOX\-::Abstract\-::Group\-::apply\-Jacobian\-Inverse(...)}.  The
 function {}\texttt{NOX\-::Abstract\-::Group\-::apply\-Jacobian\-Inverse(...)} 
 only supports residual tolerances and single vector RHSs while
-{}\texttt{TSFCore\-::Nonlin\-::Linear\-Op\-With\-Solve} as the wrong status
-tests.
+{}\texttt{TSFCore\-::Nonlin\-::Linear\-Op\-With\-Solve} has the wrong status
+tests all together.
 
 {}\textit{Dependencies:}
 \begin{itemize}
@@ -404,17 +411,16 @@ Solver Manager Interfaces} but concrete subclasses of these interfaces might
 %
 
 These are ``Strategy'' interfaces for performing various types of tasks that
-are useful to ANA, or almost ANA, code.
+are useful to ANA, or almost-ANA, code.
 
 {}\textit{Representative members:}
 \begin{itemize}
 %
-{}\item {}\texttt{LinearOpAdjointerBase}: Given an input linear operator $A$
-(possibly composed from one or more operators other using other extended
-strategy interfaces), return a new linear operator $B = A^H$ that is the
-adjoint (or perhaps transpose).  I typical implementation for an input
-explicit sparse matrix is that a new explicit sparse matrix object will be
-returned.  However, other implementations are also possible.
+{}\item {}\texttt{LinearOpAdjointerBase}: Given an input linear operator $A$,
+return a new linear operator $B = A^H$ that is the adjoint (or perhaps
+transpose).  A typical implementation for an input explicit sparse matrix is
+that a new explicit sparse matrix object will be returned.  However, other
+implementations are also possible.
 %
 {}\item {}\texttt{LinearOpSummerBase}: Given two or more input linear
 operators create (or update) a linear operator that represents the scaled sum
@@ -438,20 +444,25 @@ However, other more specialized implementations are possible.
 (possibly composed from one or more operators using the above extended
 strategy interfaces) create (or update) a linear operator $P$ that improves
 the conditioning of the input operator (i.e.\ $\kappa(P A) < {}\kappa(A)$).
-Typically the underlying operator is really an explicit sparse matrix but
-other options are possible.  The preconditioners created by this object will
-generally be of the algebraic variety but, again, other options are possible.
-The abstract definition of a ``preconditioner'' are quite general.  The
+Typically the underlying operator is an explicit sparse matrix but other
+options are possible.  The preconditioners created by this object will
+generally be of the algebraic variety but, again, other options is possible.
+The abstract definition of a ``preconditioner'' is quite general.  The
 creation of an abstract preconditioner from an abstract operator allows the
-use of an single atomic iterative linear solver ANA such as provided through
+use of a single atomic iterative linear solver ANA such as provided through
 the {}\textit{Basic Iterative Linear Solver Interfaces}.
 %
 {}\item {}\texttt{LinearOpWithSolveFactoryBase}: Given an input operator
 (possibly composed from one or more operators using the above extended
-strategy interfaces), create a new {}\texttt{Linear\-Op\-With\-Solve} object
-the allows for solves with various RHSs.
+strategy interfaces), create a new {}\texttt{Linear\-Op\-With\-Solve\-Base}
+object the allows for solves with various RHSs.
 %
 \end{itemize}
+
+Note: An issue that all of the above interfaces needs to deal with is if the
+output linear operator will be dependent on the input linear operator.  If so,
+then a {}\texttt{RefCountPtr} will have to be passed in for the input linear
+operator.
 
 The purpose of these various interfaces is to allow them to be stringed
 together by an ANA in order to allow the composition of new types of linear
@@ -470,10 +481,10 @@ Second, a higher-level usage would be to pass the new operator $A$ into a
 {}\textit{Linear\-Solver\-Base} object to perform an atomic linear solve using
 a direct or iterative linear solver.  Third, the highest-level usage of $A$
 would be to pass $A$ to a {}\texttt{Linear\-Op\-With\-Solve\-Factory\-Base}
-strategy object to create a {}\texttt{Linear\-Op\-With\-Solve} object which
-then allows for any arbitrary method to solve for linear systems.  Note that
-this last use is the most approriate for must nonlinear ANA algorithms since
-it allows the most flexibility in how a linear system is solved.
+strategy object to create a {}\texttt{Linear\-Op\-With\-Solve\-Base} object
+which then allows for any arbitrary method to solve for linear systems.  Note
+that this last use is the most approriate for most nonlinear ANA algorithms
+since it allows the most flexibility in how a linear system is solved.
 
 {}\textit{Current status:} Some software of this type is contained in
 TSFExtended.
@@ -481,7 +492,7 @@ TSFExtended.
 {}\textit{Dependencies:}
 \begin{itemize}
 \item {}\textit{Operator/Vector Interfaces}
-\item {}\textit{Operator Solve Interfaces}: Only for the {}\texttt{Linear\-Op\-With\-Solve\-Factory\-Base}
+\item {}\textit{Operator Solve Interfaces} (Only for the {}\texttt{Linear\-Op\-With\-Solve\-Factory\-Base})
 interface
 \end{itemize}
 
@@ -661,7 +672,7 @@ creating {}\texttt{LoadableVectorFactoryBase} objects given a distribution of
 elements to processors.
 %
 {}\item {}\texttt{LoadableMatrixFactoryBase}: Factory interface for creating
-{}\texttt{LoadableVectorFactoryBase} objects for the rows and columnes.
+{}\texttt{LoadableVectorFactoryBase} objects for the rows and columns.
 %
 \end{itemize}
 
@@ -687,7 +698,7 @@ software.  This should be corrected in Thyra if possible.
 %
 
 This section describes software that is not central to interoperatiblity but
-instead provides useful infrastructure and utilities that is very useful none
+instead provides useful infrastructure and utilities that is very helpful none
 the less.  This software is broken up into ANA and non-ANA subcategories in
 the following subsections.
 
@@ -749,16 +760,20 @@ few of the more important ones are:
 
 \begin{itemize}
 
+{}\item{}\textbf{Unit testing classes}: These are classes for testing
+the basic interfaces {}\texttt{Vector\-Base}, {}\texttt{Multi\-Vector\-Base},
+{}\texttt{Linear\-Op\-Base}, and {}\texttt{Vector\-Space\-Base}.
+
 {}\item{}\textbf{``Composite'' subclasses}: Product vectors, block operators,
 multiplicative operators, additive operators etc.  Note that with respect to
 composite linear operators, these utility classes are distinctly different
-than these part of the {}\textit{Miscellaneous Extended Functionality
+than those part of the {}\textit{Miscellaneous Extended Functionality
 Interfaces}.  The difference is that the composite operator subclasses
-described here only define new linear operators that are only used for
-operator applications.  On the other hand, the linear operators that are
-created by the strategy objects in the {}\textit{Miscellaneous Extended
-Functionality Interfaces} ultimately will be used to solve for linear systems
-or other more specialized uses.
+described here define new linear operators that are only used for operator
+applications (i.e.\ {}\texttt{apply(...)}).  On the other hand, the linear
+operators that are created by the strategy objects in the
+{}\textit{Miscellaneous Extended Functionality Interfaces} ultimately will be
+used to solve for linear systems or other more specialized use.
 
 {}\item{}\textbf{Handle classes and operator overloading}: Support for
 MATLAB-like linear algebra notation in C++.
@@ -766,7 +781,7 @@ MATLAB-like linear algebra notation in C++.
 {}\item{}\textbf{Miscellaneous utilities}: Explicit vector access utilities
 etc.  These are simply utility classes that call the explicit element access
 functions in the {}\texttt{Vector\-Base} and the
-{}\texttt{Multi\-Vector\-Base} objects are do not involve, in any way, the
+{}\texttt{Multi\-Vector\-Base} objects and do not involve, in any way, the
 {}\textit{{SPMD Matrix/Vector Load/Access Interfaces}}.
 
 \end{itemize}
@@ -843,7 +858,7 @@ support these fairly easily.
 These are concrete subclasses of the {}\textit{Linear Solver Manager
 Interfaces} that build a ``Facade'' for a complete atomic iterative linear
 solver out of lower-level abstract objects which will include a) one or more
-{}\texttt{Preconditioner\-Factory\-Base} objects, b) one or more
+{}\texttt{Preconditioner\-Factory\-Base} objects, and b) one or more
 {}\texttt{Basic\-Iterative\-Linear\-Solver\-Base} objects.
 
 {}\textit{Representative members:}
@@ -1030,13 +1045,13 @@ algebraic preconditioners.
 %
 
 These are concrete subclasses of the {}\textit{Linear Solver Manager
-Interfaces} that builds a linear solver using Ameso for instance.
+Interfaces} that builds a linear solver using Amesos for instance.
 
 {}\textit{Representative members:}
 \begin{itemize}
 %
 {}\item {}\texttt{AmesosLinearSolverManager}: Takes wrapped Epetra objects for
-a linear systems and calls a direct linear solver through an Amesos interface.
+a linear system and calls a direct linear solver through an Amesos interface.
 %
 {}\item {}\texttt{LAPACKLinearSolverManager}: Takes a dense matrix and solves
 the linear system using an LAPACK solver.  Actually, there may be several
@@ -1189,7 +1204,8 @@ suggested here.
 \section{Software Dependency Diagrams}
 %
 
-Here are several UML package diagrams 
+Here are several UML package diagrams that outline the various dependencies in
+Thyra.
 
 However, note that the UML packages in these diagrams do not translate
 directly into C++ namespaces as is typically the case.  Instead, the UML
@@ -1243,11 +1259,25 @@ Dependencies between different categories of {}\textit{Thyra ANA Support Softwar
 \section{Partitioning of Thyra into Packages and Subdirectories}
 %
 
-In this section we show how the various categories of software described above
-are translated into Trilinos packages and subdirectories within packages.  It
-is important to remember the basic dependancies represented here.
+In this section, we try to map the various categories of software described
+above into Trilinos packages and subdirectories.  In the next subsection, a
+detailed long-term plan for the directory structure is given along with some
+minimal descriptions of what is contained in what directory or subdirectory.
+In the subsection later, a current or soon-to-be-current subset of this full
+directory structure is presented.  The purpose of having a long-term and a
+short-term directory structure (with the short-term being a subset of the
+long-term) is to allow the short-term description to be much more concise.
 
-ToDo: Fill the below structure as needed.
+%
+\subsection{Long-term directory structure}
+%
+
+In this section we show how the various categories of software described above
+may be translated into Trilinos packages and subdirectories in the future.  It
+is important to remember the basic dependancies represented here.  This
+package and directory structure will be modified as time goes on.  A subset of
+this directory structure that reflects current or soon-to-be-current structure
+is shown in the next subsection.
 
 \noindent{}\textbf{Trilinos packages and subdirectories:}
 %
@@ -1257,11 +1287,11 @@ ToDo: Fill the below structure as needed.
 \>\>\texttt{doc}\\
 \>\>\>Contains DoxyfileWeb and index.doc for all of Thyra (roadmap) \\
 \>\>\texttt{src} \\
+\>\>\>\texttt{utils}\\
+\>\>\>\>Contains some utility software not directly related to any category \\
 \>\>\>\texttt{ana} \\
 \>\>\>\>\texttt{doc}\\
 \>\>\>\>\>Contains DoxyfileWeb and index.doc for all Thyra ANA software \\
-\>\>\>\>\texttt{utils}\\
-\>\>\>\>\>Contains some utility software not directly related to any category \\
 \>\>\>\>\texttt{rtop}\\
 \>\>\>\>\>\texttt{doc}\\
 \>\>\>\>\>\>Contains DoxyfileWeb and index.doc for a doxygen collection \\
@@ -1274,13 +1304,17 @@ ToDo: Fill the below structure as needed.
 \>\>\>\>\>\>Contains DoxyfileWeb and index.doc for this software \\
 \>\>\>\>\>\texttt{interfaces} \\
 \>\>\>\>\>\>Contains {}\textit{Operator/Vector Interfaces} \\
+\>\>\>\>\>\texttt{extended\_interfaces} \\
+\>\>\>\>\>\>Contains a subset {}\textit{Miscellaneous Extended Functionality Interfaces} \\
+\>\>\>\>\>\>\>that depends only on the {}\textit{Operator/Vector Interfaces} \\
 \>\>\>\>\>\texttt{ana\_support}\\
 \>\>\>\>\>\>Contains {}\textit{ANA Development Utilitiies for Operator/Vector Interfaces} \\
 \>\>\>\>\>\texttt{adapter\_support}\\
 \>\>\>\>\>\>Contains {}\textit{Operator/Vector Adapter Support} \\
-\>\>\>\>\>\texttt{extended\_interfaces} \\
-\>\>\>\>\>\>Contains a subset {}\textit{Miscellaneous Extended Functionality Interfaces} \\
-\>\>\>\>\>\>\>that depends only on the {}\textit{Operator/Vector Interfaces} \\
+\>\>\>\>\>\>\texttt{serial}\\
+\>\>\>\>\>\>\>Contains additional adapter support software for serial implementations \\
+\>\>\>\>\>\>\texttt{mpi}\\
+\>\>\>\>\>\>\>Contains adapter support software for MPI, SPMD implementations \\
 \>\>\>\>\texttt{basic\_linear\_solvers} \\
 \>\>\>\>\>\texttt{doc}\\
 \>\>\>\>\>\>Contains DoxyfileWeb and index.doc for this software \\
@@ -1331,6 +1365,16 @@ ToDo: Fill the below structure as needed.
 \>\>\>\>\>\>Contains DoxyfileWeb and index.doc for this software \\
 \>\>\>\>\>Contains {}\textit{SPMD Matrix/Vector Load/Access Interfaces} ??? \\
 \>\>\>\>\>Contains {}\textit{SPMD Matrix/Vector Creational Interfaces} ??? \\
+\>\>\texttt{example} \\
+\>\>\>\texttt{utils}\\
+\>\>\>\texttt{ana} \\
+\>\>\>\>\texttt{rtop}\\
+\>\>\>\>\texttt{operator\_vector} \\
+\>\>\texttt{test} \\
+\>\>\>\texttt{utils}\\
+\>\>\>\texttt{ana} \\
+\>\>\>\>\texttt{rtop}\\
+\>\>\>\>\texttt{operator\_vector} \\
 \\
 \>\texttt{epetra} \\
 \>\>\texttt{src} \\
@@ -1352,26 +1396,64 @@ ToDo: Fill the below structure as needed.
 \>\>\>\>\>to \texttt{Thyra::TransientNonlinearProblemBase} \\
 \eifthen
 
-%\begin{itemize}
-%\item{}\texttt{Thyra}
-%  \begin{itemize}
-%  \item\texttt{src}
-%    \begin{itemize}
-%    \item\texttt{ana}
-%      \begin{itemize}
-%      \item\texttt{rtop}: Contains RTOp infrastructure and a library of RTOp implementations
-%      \item\texttt{operator\_vector}
-%        \begin{itemize}
-%        \item\texttt{interfaces}: Contains {}\textit{Operator/Vector Interfaces}
-%        \item\texttt{ana\_support}: Contains {}\textit{ANA Development Utilitiies for Operator/Vector Interfaces}
-%        \item\texttt{adapter\_support}: Contains {}\textit{Operator/Vector Adapter Support}
-%        \end{itemize}
-%      \end{itemize}
-%    \item\texttt{nonana}
-%    \end{itemize}
-%  \end{itemize}
-%\end{itemize}
+%
+\subsection{Short-term/current Trilinos package/directory structure}
+%
 
+In this section we show the current or the soon-to-be-current directory
+structure of Thyra.  This structure is a subset of the long-term planned
+directory structure in the previous section which contains some documentation.
+A summary of the current or soon-to-be-current directory structure is shown in
+Figure~\ref{thyra:fig:curr_dir_structure}.
+
+\begin{figure}
+\begin{verbatim}
+Trilinos
+|
+|- packages
+   |
+   |- thyra
+   |  |- doc
+   |  |- src
+   |  |  |- utils
+   |  |  |- ana
+   |  |     |- doc
+   |  |     |- rtop
+   |  |     |  |- doc
+   |  |     |  |- base
+   |  |     |  |- ops_lib
+   |  |     |- operator_vector
+   |  |        |- doc
+   |  |        |- interfaces
+   |  |        |- extended_interfaces
+   |  |        |- ana_support
+   |  |        |- adapter_support
+   |  |           |- serial
+   |  |           |- mpi
+   |  |- example
+   |  |  |- utils
+   |  |  |- ana
+   |  |     |- rtop
+   |  |     |- operator_vector
+   |  |- test
+   |  |  |- utils
+   |  |  |- ana
+   |  |     |- rtop
+   |  |     |- operator_vector
+   |
+   |- epetra
+      |- thyra
+         |- src
+         |- example
+         |- test
+\end{verbatim}
+\caption{
+\label{thyra:fig:curr_dir_structure}
+Current directory structure for Thyra-related Trilinos packages.
+}
+\end{figure}
+
+\clearpage
 
 % ---------------------------------------------------------------------- %
 % References
