@@ -40,7 +40,7 @@ under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA, \\
 % Set some things we need for SAND reports. These are mandatory
 %
 \SANDnum{SAND2005-xxxx}
-\SANDprintDate{January 12, 2005}
+\SANDprintDate{April 26, 2005}
 \SANDauthor{
 Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
 Todd Coffey \\ Computational Math/Algorithms \\ \\
@@ -604,16 +604,13 @@ Section {}\ref{rythmos:sec:adj-sens}).
 
 \subsubsection{Generalized Alpha methods}
 
-  The Generalized-$\alpha$ methods can be roughly described as follows \cite{ChungHulbert,JansenWhitingHulbert,BonelliBursiErlicherVulcan}.
+The Generalized-$\alpha$ methods can be roughly described as follows
+{}\cite{ChungHulbert,JansenWhitingHulbert,BonelliBursiErlicherVulcan}.
 
-  We consider the implicitly defined ODE:
-\begin{eqnarray} \label{rythmos:eqn:ODE}
-M\dot{x} & = & F(x,t) \\
-x(t_0) & = & x_0,
-\end{eqnarray}
-where, $M$ is called a mass matrix and is generally non-singular, but we would
-like to also consider the singular case.  The main parameters of interest in
-this class of methods, 
+We consider implicit ODEs where $\jac{f}{\dot{x}}$ is nonsingular but in the
+future we may also consider the more general case where $\jac{f}{\dot{x}}$ is
+rank deficient for the DAE case.  The main parameters of interest in this
+class of methods,
 \begin{tabbing}
 \hspace{4ex}are\hspace{5ex}\= \\
 \>	$\alpha_f$, which determines where $x$ is solved \\
@@ -622,41 +619,61 @@ this class of methods,
 \end{tabbing}
 
 If the method is to be second order, there is only once choice for $\gamma =
-\frac{1}{2}+\alpha_m - \alpha_f$.  To maintain stability, $\alpha_f$ and $\alpha_m$ must satisfy
+{}\frac{1}{2}+\alpha_m - {}\alpha_f$.  To maintain stability, $\alpha_f$ and
+$\alpha_m$ must satisfy
+%
 \begin{equation}\label{rythmos:eqn:genalpha:stab}
 \alpha_m \ge \alpha_t \ge \frac{1}{2}.
 \end{equation}
-It should be noted here, that $\alpha_f$ and $\alpha_m$ can be chosen such that
-$t^{n+\alpha_f}$ and $t^{n+\alpha_m}$ lie outside the interval $[t^n,t^{n+1}]$.
+%
+It should be noted here, that $\alpha_f$ and $\alpha_m$ can be chosen such
+that $t_{k+\alpha_f}$ and $t_{k+\alpha_m}$ lie outside the interval
+$[t_k,t_{k+1}]$.
 
-Given these three coefficients, $\Delta t^n$, and initial data for $x^n=(t_n)$ and
-$\dot{x}^n=\dot{x}(t_n)$, the procedure is as follows.
-Form a predictor for $x^{n+1}$:
+Given these three coefficients, $\Delta t^n$, and initial data for $x_k=(t_k)$
+and $\dot{x}^n=\dot{x}(t_k)$, the procedure is as follows.  Form a predictor
+for $x_{k+1}$:
+%
 \begin{equation} \label{rythmos:eqn:genalpha:predictor1}
-x^{n+1}_{(0)} = x^n + \Delta t^n\dot{x}^n.
+x_{k+1}^{(0)} = x_k + \Delta t_k\dot{x}_k.
 \end{equation}
-Higher order predictors are computed from Adams-Bashforth predictors \cite{AdamsBashforth}, in particular the second order predictor in this context is:
+%
+Higher order predictors are computed from Adams-Bashforth predictors
+\cite{AdamsBashforth}, in particular the second order predictor in this
+context is:
+%
 \begin{equation} \label{rythmos:eqn:genalpha:predictor2}
-x^{n+1}_{(0)} = x^n + \frac{\Delta t^n}{2}\left(2+\frac{\Delta t^n}{\Delta t^{n+1}}\right)\dot{x}^n - \frac{(\Delta t^n)^2}{2\Delta t^{n-1}}\dot{x}^{n-1}.
+x_{k+1}^{(0)} = x_k + \frac{\Delta t_k}{2}\left(2+\frac{\Delta t_k}{\Delta t_{k+1}}\right)\dot{x}_k
+  - \frac{(\Delta t_k)^2}{2\Delta t^{n-1}}\dot{x}^{n-1}.
 \end{equation}
-Then we interpolate between $x^n$ and $x^{n+1}$ to obtain $x^{n+\alpha_f}$:
+%
+Then we interpolate between $x_k$ and $x_{k+1}$ to obtain $x_{k+\alpha_f}$:
+%
 \begin{equation}\label{rythmos:eqn:genalpha:xalphaf}
-x^{n+\alpha_f} = (1-\alpha_f)x^n + \alpha_f x^{n+1}_{(0)}.
+x_{k+\alpha_f} = (1-\alpha_f)x_k + \alpha_f x_{k+1}^{(0)}.
 \end{equation}
-Now we compute an approximation to $\dot{x}^{n+\alpha_m}$:
+%
+Now we compute an approximation to $\dot{x}_{k+\alpha_m}$:
+%
 \begin{equation}\label{rythmos:eqn:genalpha:xdotalpham}
-\dot{x}^{n+\alpha_m}_{(0)} = \left(1-\frac{\alpha_m}{\gamma}\right)\dot{x}^n
-+ \left(\frac{\alpha_m}{\alpha_f\Delta t^n\gamma}\right)
-\left(x^{n+\alpha_f}_{(0)} - (1-\alpha_f)x^n\right).
+\dot{x}_{k+\alpha_m}^{(0)} = \left(1-\frac{\alpha_m}{\gamma}\right)\dot{x}_k
++ \left(\frac{\alpha_m}{\alpha_f\Delta t_k\gamma}\right)
+\left(x_{k+\alpha_f}^{(0)} - (1-\alpha_f)x_k\right).
 \end{equation}
+%
 Given this approximation, we can solve the nonlinear problem:
+%
 \begin{equation}\label{rythmos:eqn:genalpha:nonlinear}
-M\dot{x}^{n+\alpha_m}_{(0)} - F(x^{n+\alpha_f}_{(0)},t^{n+\alpha_f}) = 0.
+f(\dot{x}_{k+\alpha_m}^{(0)},x_{k+\alpha_f}^{(0)},t_{k+\alpha_f}) = 0.
 \end{equation}
-for $x^{n+\alpha_f}_{(0)}$ and then compute $\dot{x}^{n+\alpha_m}_{(0)}$ using equation (\ref{rythmos:eqn:genalpha:xdotalpham}).  Finally, we interpolate back to the desired output time:
+%
+for $x_{k+\alpha_f}^{(0)}$ and then compute $\dot{x}_{k+\alpha_m}^{(0)}$ using
+equation (\ref{rythmos:eqn:genalpha:xdotalpham}).  Finally, we interpolate
+back to the desired output time:
+%
 \begin{eqnarray}\label{rythmos:eqn:genalpha:interp}
-x^{n+1} & = & \left(1-\frac{1}{\alpha_f}\right)x^n + \frac{1}{\alpha_f}x^{n+\alpha_f} \\
-\dot{x}^{n+1} & = & \left(1-\frac{1}{\alpha_m}\right)\dot{x}^n + \frac{1}{\alpha_m}\dot{x}^{n+\alpha_f}.
+x_{k+1} & = & \left(1-\frac{1}{\alpha_f}\right)x_k + \frac{1}{\alpha_f}x_{k+\alpha_f} \\
+\dot{x}^{n+1} & = & \left(1-\frac{1}{\alpha_m}\right)\dot{x}_k + \frac{1}{\alpha_m}\dot{x}_{k+\alpha_f}.
 \end{eqnarray}
 
 The theory for this family of methods comes from the existing methods that fall
@@ -1305,6 +1322,37 @@ as it just requires an inversion of $\jac{c}{\dot{y}}$ (assuming that the mass
 matrix is easy to invert).  For index-1 DAEs, the computation of the final
 condition (\ref{rythmos:app:eqn:sens:adj:fc}) is more involved.
 
+As the adjoint is being computed, the integral
+%
+\begin{equation}
+\Jac{\hat{d}}{p}^T =
+\int_{t_0}^{t_f} \left(
+    \Jac{g}{p}^T
+    + \Jac{c}{p}^T \Lambda
+  \right) dt
+  + \left. \Jac{h}{p}^T \right|_{t=t_f}
+  - \left. \left( \Jac{y_0}{p}^T \Jac{c}{\dot{y}}^T \Lambda \right) \right|_{t=t_0}
+\label{rythmos:eqn:sens:d_d_hat_d_p}
+\end{equation}
+%
+and the point-wise gradient
+%
+%
+\begin{equation}
+\Jac{\hat{d}}{v(t)}^T
+= \Jac{g}{v(t)}^T + \Jac{c}{v(t)}^T \Lambda(t),
+t\in[t_0,t_f]
+\label{rythmos:eqn:sens:d_d_hat_d_v_t}
+\end{equation}
+%
+can both be computed (backwards in time).  Note that these computations depend
+on the state $y(t)$ as well as on the adjoint $\Lambda(t)$ in general and
+therefore the state and the (local) adjoint history are both needed.  If the
+integral equation is computed using quadrature variables, then getting access
+to $y(t)$ and $\Lambda(t)$ is automatic but if these equations are integrated
+using a different time stepping algorithm (working backward in time), then
+more general interpolation access to $y(t)$ and $\Lambda(t)$ will be required.
+
 The approaches used to solve the adjoint equations differ depending on whether
 $\jac{c}{\dot{y}}$ is constant or non-constant and both cases are discussed in
 the next two subsections.
@@ -1578,38 +1626,6 @@ Again, these computations can be rearranged so that multi-vector operations
 and block solvers can be utilized resulting in significant speedups over a
 single vector RHS version such as in CVODES and IDAS.
 
-\subsubsection{Adjoint reduced gradient computations}
-
-As the adjoint is being computed, the integral
-%
-\begin{equation}
-\Jac{\hat{d}}{p}^T =
-\int_{t_0}^{t_f} \left(
-    \Jac{g}{p}^T
-    + \Jac{c}{p}^T \Lambda
-  \right) dt
-  + \left. \Jac{h}{p}^T \right|_{t=t_f}
-  - \left. \left( \Jac{y_0}{p}^T \Jac{c}{\dot{y}}^T \Lambda \right) \right|_{t=t_0}
-\label{rythmos:eqn:sens:d_d_hat_d_p}
-\end{equation}
-%
-and the point-wise gradient
-%
-%
-\begin{equation}
-\Jac{\hat{d}}{v(t)}^T
-= \Jac{g}{v(t)}^T + \Jac{c}{v(t)}^T \Lambda(t),
-t\in[t_0,t_f]
-\label{rythmos:eqn:sens:d_d_hat_d_v_t}
-\end{equation}
-%
-can both be computed (backwards in time).  Note that these computations depend
-on the state $y(t)$ as well as on the adjoint $\Lambda(t)$ in general and
-therefore the state and the (local) adjoint history are both needed.  If the
-integral equation is computed using quadrature variables, then getting access
-to $y(t)$ and $\Lambda(t)$ is automatic but if these equations are integrated
-using a different time stepping algorithm (working backward in time), then
-more general interpolation access to $y(t)$ and $\Lambda(t)$ will be required.
 
 \section{Stability Analysis and Eigen Problems}
 
@@ -2329,8 +2345,8 @@ operator $A$ that maps vectors from the {}\textit{domain} vector space
 $\mathcal{X}$ to the {}\textit{range} vector space $\mathcal{Y}$ is denoted
 $A\in\mathcal{Y}|\mathcal{X}$.  In some contexts, vectors themselves can be
 used as linear operators.  For example, the vector $x\in\mathcal{X}$ can be
-thought of as the linear operator $x\in\mathcal{X}|\RE$ an it's adjoint can be
-applied to another vector $v\in\mathcal{X}$ as $x^T v {}\in\RE$ which is
+thought of as the linear operator $x\in\mathcal{X}|\RE$ and it's adjoint can
+be applied to another vector $v\in\mathcal{X}$ as $x^T v {}\in\RE$ which is
 exaclty equivalent to the definition of the space $\mathcal{X}$'s scalar
 product
 %
@@ -2357,7 +2373,7 @@ A multivector $V\in\mathcal{X}|\RE^{m}$ is a special kind of linear operator
 in that its domain space is simply the $m$-dimensional Euclidean space and its
 columns are generally considered to be dense vectors.  In some contexts,
 multivectors appear as arguments of a linear operator
-$Y\in\mathcal{Y}|\mathcal{X}$ such as
+$A\in\mathcal{Y}|\mathcal{X}$ such as
 %
 \[
 Y = A X
@@ -2365,8 +2381,8 @@ Y = A X
 %
 where $X\in\mathcal{X}|\RE^m$ and $Y\in\mathcal{Y}|\RE^m$.  This dual nature
 of a multivector (i.e.\ both as a set of concatonated vectors for arguments to
-other linear operators and as linear operators) greatly simplifies the
-notation of various formulations.
+other linear operators and as linear operators themselves) greatly simplifies
+the notation of various formulations.
 
 \subsection{Partial Derivative Operator Notation}
 
