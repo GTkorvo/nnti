@@ -1,4 +1,4 @@
-\documentclass[12pt,relax]{PetraObjectModel}
+\documentclass[10pt,relax]{PetraObjectModel}
 % ---------------------------------------------------------------------------- %
 %
 % Set the title, author, and date
@@ -7,18 +7,17 @@
 \SANDsubtitle{}
 
 \author{Michael A.~Heroux, Robert J. Hoekstra and Alan Williams \\
-	   Sandia National Laboratories\\
-	   P.O. Box 5800\\
-	   Albuquerque, NM 87185-1110
-	 }
+       Sandia National Laboratories\\
+       P.O. Box 5800\\
+       Albuquerque, NM 87185-1110
+     }
 
 % There is a "Printed" date on the title page of a SAND report, so
 % the generic \date should generally be empty.
 \date{}
 
 
-\SANDnum{SAND2003-xxxx}
-\SANDprintDate{February 2003}
+\SANDnum{SAND2005-xxxx} \SANDprintDate{June 2005}
 \SANDauthor{Michael A.~Heroux \\
 Computational Mathematics and Algorithms Department \\
  \\
@@ -41,19 +40,19 @@ Albuquerque, NM 87185-1110}
 \maketitle
 
 \begin{abstract}
-This paper describes the design and implementation of a parallel, 
+This paper describes the design and implementation of a parallel,
 distributed memory, object oriented model for basic
-matrix and vector services required for the solution of linear, 
-non-linear and evolutionary problems which arise in scientific 
-and engineering applications.  We first provide an overview of 
-the basic object model using the Unified Modeling Language (UML), 
+matrix and vector services required for the solution of linear,
+non-linear and evolutionary problems which arise in scientific
+and engineering applications.  We first provide an overview of
+the basic object model using the Unified Modeling Language (UML),
 and then discuss in detail several implementations.
 \end{abstract}
 
 
 \clearpage
 \section*{Acknowledgement}
-The author would like to acknowledge the support of the ASCI and LDRD programs
+The authors would like to acknowledge the support of the ASCI and LDRD programs
 that funded development of Trilinos.
 
 \newpage
@@ -68,22 +67,22 @@ that funded development of Trilinos.
 \addcontentsline{toc}{section}{Nomenclature}
 \section*{Nomenclature}
 \begin{itemize}
-\item[Processor] A computing element that can execute compiled 
-code and directly access some physical memory resource.  Typically 
+\item[Processor] A computing element that can execute compiled
+code and directly access some physical memory resource.  Typically
 a processor is one of the commonly available commodity microprocessors.
 
-\item[Process] An executable file submitted to the operating system.  
-A process must be assigned to a processor in order to execute.  At 
-any given time, it may be running on a processor or sitting idle in 
+\item[Process] An executable file submitted to the operating system.
+A process must be assigned to a processor in order to execute.  At
+any given time, it may be running on a processor or sitting idle in
 memory.
 
-\item[Node] A computing element that has a single, usually 
-hardware-supported, address space.  In other words, a processor 
-on a node can directly address any memory location on the node.  
-A node has one or more processors, all of which have access to the 
-same shared memory.  Typically a node is a single integrated hardware 
+\item[Node] A computing element that has a single, usually
+hardware-supported, address space.  In other words, a processor
+on a node can directly address any memory location on the node.
+A node has one or more processors, all of which have access to the
+same shared memory.  Typically a node is a single integrated hardware
 unit that, in other customer situations, would be sold as a
-stand-alone 
+stand-alone
 system.
 
 \item[Memory Image]  Some portion of memory existing on a single node.
@@ -91,8 +90,8 @@ This memory is associated with one or more processes.
 
 
 \item[Parallel Machine] For our purposes a parallel machine is a
-collection of $l$ nodes, where the $i^{th}$ node has $k_i$ processors that have 
-shared memory.  The total number of processors is 
+collection of $l$ nodes, where the $i^{th}$ node has $k_i$ processors that have
+shared memory.  The total number of processors is
 \begin{equation}
 p = \sum_{i=0}^{l-1} k_i
 \end{equation}
@@ -104,60 +103,294 @@ p = \sum_{i=0}^{l-1} k_i
 \section{Introduction}
 
 
-Many numerical algorithms for the solution of problems in 
-scientific and engineering applications use vectors and 
-matrices as basic elements.   Generally, the exact details 
-of how these mathematical objects are stored, or how computations 
-are performed using them, is not of primary importance for the 
-algorithm designer.  Because of this, using abstract object models 
-that describe the attributes and methods associated with each 
-object class, and defining the relationship between classes, is an 
-effective way to separate algorithm design and implementation from 
+Many numerical algorithms for the solution of problems in
+scientific and engineering applications use vectors and
+matrices as basic elements.   Generally, the exact details
+of how these mathematical objects are stored, or how computations
+are performed using them, is not of primary importance for the
+algorithm designer.  Because of this, using abstract object models
+that describe the attributes and methods associated with each
+object class, and defining the relationship between classes, is an
+effective way to separate algorithm design and implementation from
 vector and matrix design.
 
-The practical importance of this separation comes from the fact 
-that there are many different data structures used to store 
-vectors and matrices and correspondingly many different ways 
-to implement basic matrix and vector operations.  The variety 
-of vector matrix data structures and implementations is, to 
-some extent, a result of arbitrary choices made by application 
-designers.  However, often there are sound reasons for choosing 
-particular data structures, either because of the intended 
-computer architecture or because of the specifics of the 
-application.  Abstraction of the vector and matrix objects 
-leverages the investment in sophisticated algorithm implementations 
-across many different vector and matrix implementations and 
-provides a convenient generic programming framework for new 
+The practical importance of this separation comes from the fact
+that there are many different data structures used to store
+vectors and matrices and correspondingly many different ways
+to implement basic matrix and vector operations.  The variety
+of vector matrix data structures and implementations is, to
+some extent, a result of arbitrary choices made by application
+designers.  However, often there are sound reasons for choosing
+particular data structures, either because of the intended
+computer architecture or because of the specifics of the
+application.  Abstraction of the vector and matrix objects
+leverages the investment in sophisticated algorithm implementations
+across many different vector and matrix implementations and
+provides a convenient generic programming framework for new
 algorithm development.
 
-In this paper we present a detailed object model for vectors 
-and matrices that are intended for use in a parallel, distributed 
-memory computing environment.  We present a brief overview of 
+In this paper we present a detailed object model for vectors
+and matrices that are intended for use in a parallel, distributed
+memory computing environment.  We present a brief overview of
 the classes, followed by a UML object model, in the next section.
 In subsequent sections we present a collection of pure virtual
 classes, two C++ implementations of this model and a Java
 implementation.
 
+\section{Sample Use Cases}
+
+To illustrate the types of problems we are addressing and to motivate
+our design, we begin with a discussion of several examples.
+Specifically, we discuss:
+\begin{enumerate}
+\item Sparse matrix-vector multiplication,
+\item Overlapping Schwarz preconditioning,
+\item Migration of matrix and vector data for direct solvers.
+\end{enumerate}
+
+\subsection{Sparse Matrix-vector Multiplication}
+
+Sparse matrix-vector multiplication is one of the most important parallel
+distributed memory kernel for a broad set of applications.  For
+unstructured problems, communication patterns for this kernel are
+determined at run-time by the nonzero pattern of the sparse matrix.
+For many PDE applications and sparse iterative solver libraries, a
+row-based partitioning has been commonly used.  For example,
+PETSc~\cite{petsc-home-page,petsc-manual,petsc-efficient} and
+Aztec~\cite{Aztec2.1} both use this distribution by default for
+general sparse matrices.  Figure~\ref{fig:MatrixPartitions}(a) shows
+this partitioning for a 4-by-4 matrix $A$ on two processors.  In this case
+the first two rows are stored on the local memory of the first
+processor while the last two rows are stored on the second processor.
+In contrast, sparse direct
+solvers are primarily based on column partitionings as shown in
+Figure~\ref{fig:MatrixPartitions}(b), storing the first two columns of
+the matrix on the first processor and the last two rows on the second processor.
+\begin{figure}
+\begin{center}
+\begin{equation}
+A=\left[
+\begin{array}{cccc}
+a_{11} & a_{12}&      0 &      0\\
+a_{21} & a_{22}& a_{23} &      0\\\hline
+     0 &     0 & a_{33} & a_{34}\\
+a_{41} &     0 & a_{43} & a_{44}\\
+\end{array}
+\right]
+\hspace{.3in}
+A=\left[
+\begin{array}{cc|cc}
+a_{11} & a_{12}&      0 &      0\\
+a_{21} & a_{22}& a_{23} &      0\\
+     0 &     0 & a_{33} & a_{34}\\
+a_{41} &     0 & a_{43} & a_{44}\\
+\end{array}
+\right]
+\end{equation}
+\end{center}
+\caption{\label{fig:MatrixPartitions} (a) Row-partitioned matrix $A$ (b)
+Column-partitioned matrix $A$.}
+\end{figure}
+
+Regardless of how the matrix is partitioned, vectors are typically
+partitioned to match the row or column distribution.
+Figure~\ref{fig:VectorPartitions} shows how 4-by-1 vectors $x$ and $y$
+would typically be stored to be compatible with $A$ in
+Figure~\ref{fig:MatrixPartitions}.
+\begin{figure}
+\begin{center}
+\begin{equation}
+x=\left[
+\begin{array}{l}
+x_{1}\\
+x_{2}\\\hline
+x_{3}\\
+x_{4}\\
+\end{array}
+\right]
+\hspace{.8in}
+y=\left[
+\begin{array}{l}
+y_{1}\\
+y_{2}\\\hline
+y_{3}\\
+y_{4}\\
+\end{array}
+\right]
+\end{equation}
+\end{center}
+\caption{\label{fig:VectorPartitions} Partitioned vectors $x$ and $y$.}
+\end{figure}
+
+\subsubsection{Row-oriented multiplication}
+Assuming our matrix $A$ is partitioned as in
+Figure~\ref{fig:MatrixPartitions}(a), to compute $y=Ax$ each
+processor needs to first obtain value of $x$ that are not
+local\footnote{The astute reader will notice that we can attempt to
+simultaneously compute the local contribution while obtaining
+off-processor elements if $x$ as long as asynchronous communication
+is supported.  For example, on the first processor, we can compute
+the portions of $y_1$ and $y_2$ that depend on $x_1$ and $x_2$.
+Practically speaking, the extra complexity of this approach
+typically does not improve performance, because local memory
+bandwidth is required by both the local computation and
+processor-to-processor communication. Since bandwidth is the typical
+bottleneck for most sparse matrix computations, there is no
+effective speedup.  In fact, we have observed reduced performance on
+some computer systems}. We call this type of data transfer an {\it
+import} operation, where we know what we want to receive. For our
+specific example, the first processor needs $x_3$ and the second
+processor needs $x_1$. Once the off-processor $x$ values are
+obtained the matrix vector multiplication can proceed without
+further communication since elements of $y$ are stored on the same
+processors as rows of $A$.
+
+\subsubsection{Column-oriented multiplication}
+Assuming our matrix $A$ is partitioned as in
+Figure~\ref{fig:MatrixPartitions}(b), we can begin computing $y=Ax$
+without any communication.  However, after this step each processor
+will have contributions to $y$ that must be sent to to the other
+processor for summation.  We call this type of
+data transfer an {\it export} operation, where we know what we want to
+send.  For our specific example, the first processor must send its
+portion of $y_4$ to the second processor and the second processor
+must send it portion of $y_2$ to the first processor.  As each
+processor receives data from other processors it must sum the partial
+results to obtain the final result for $y$.
+
+\framebox{\begin{minipage}[c]{\textwidth}{ {\bf Definitions:} In the
+Petra Object Model, an \textit{\textbf{import}} object is used when
+a given processor knows the information it wants to receive from one
+or more other processors. The complement of import is
+\textit{\textbf{export}}, where a processor holds information that
+should be sent to another processor. }\end{minipage}}
+
+
+\subsection{Overlapping Schwarz preconditioning}
+
+Schwarz methods are a family of domain decomposition
+methods that introduce coarse-grain parallelism by
+partitioning the problem domain into subdomains.  Assuming one or more
+subdomains is completely assigned to a processor, on each subdomain
+the majority of computation can be performed without communication.
+Overlapping Schwarz methods assign parts of subdomains to more that
+one processor.  Without overlap, preconditioners based on Schwarz
+methods tend to lose robustness as the number of subdomains increases.
+With overlap this problem still exists, but is less pronounced.  In
+many practical settings, even though overlap introduces redundant
+work, there is an overall improvement in performance.
+
+The typical way to implement overlapping Schwarz preconditioners is to
+create a submatrix for each
+overlapped subdomain.  Given this matrix, we can choose one of many
+serial preconditioners and apply it to the submatrix as though it were
+the full matrix.  Common submatrix preconditioners are Gauss-Seidel,
+Incomplete Cholesky or Incomplete LU.
+
+\subsubsection{Determining the overlap}
+
+Although Overlapping Schwarz methods originated in the context of
+PDEs on continuous domains, it is well-known that they can be
+applied to sparse matrices that are similar in nature to PDEs.  In
+particular, level-based overlap approaches are simple to define.
+Consider the row-oriented matrix $A$ in
+Figure~\ref{fig:MatrixPartitions}(a). Level-1 overlap is obtained by
+determining which columns have non-zero entries on a processor and
+then including the corresponding rows in the overlap.  For the first
+(last) two rows of our matrix $A$, there is a non-zero entry in
+column 3 (1). The level-one overlap matrices are shown in
+Figure~\ref{fig:OverlapMatrixPartitions}.
+\begin{figure}
+\begin{center}
+\begin{equation}
+\textrm{Overlapped} A_1=\left[
+\begin{array}{cccc}
+a_{11} & a_{12}&      0 &      0\\
+a_{21} & a_{22}& a_{23} &      0\\
+     0 &     0 & a_{33} & a_{34}\\
+\end{array}
+\right] \hspace{.3in} \textrm{Overlapped} A_2 =\left[
+\begin{array}{cccc}
+a_{11} & a_{12}&      0 &      0\\
+     0 &     0 & a_{33} & a_{34}\\
+a_{41} &     0 & a_{43} & a_{44}\\
+\end{array}
+\right]
+\end{equation}
+\end{center}
+\caption{\label{fig:OverlapMatrixPartitions} Overlapped matrix $A$
+on (a) first processor and (b) second processor.}
+\end{figure}
+
+\subsubsection{Factoring the overlapped preconditioner}
+
+Note that we can view the construction of the overlap matrix as an
+import operation.  On each processor, we scan the columns of the
+owned rows, looking for entries whose column number has no
+corresponding row number on the processor.  The import step then
+gathers the off-processor rows, typically ignoring any column
+entries that do not correspond to rows in the overlapped matrix.
+After the import step, any serial preconditioner can be used as-is,
+since all data is local and the matrix is square.
+
+
+\subsubsection{Applying the overlapped preconditioner}
+
+In order to apply the preconditioner, say $z = M^{-1}r$ as part of a
+preconditioned iterative method, the same basic import pattern is
+needed to get off-processor entries of $r$ as we used for creating
+the overlap matrix.  Similarly, we will have extra values of $z$ on
+each processor that must be resolved.  These can be combined as an
+average using an export pattern that is the reverse of the import,
+or can simply be set to zero if the entry is does not correspond to
+an owned row of the original matrix.
+
+\subsection{Migration of matrix and vector data for direct solvers}
+
+Although iterative methods are attractive for distributed memory
+parallel execution, frequently a sparse direct solver can be faster,
+especially for one and two-dimensional problems and problems where
+the matrix is especially sparse.  At the same time, sparse direct
+solvers typically do not scale well beyond several tens of
+processors.  Therefore, even if an application is running on a large
+number of processors, constructing matrices and vectors that are
+distributed across all processors, it often makes sense to migrate
+the matrix and vectors to fewer processors (even down to one
+processor in some instances) for best performance from the direct
+sparse solver.  This type of operation can also be viewed as an
+import.  In the simplest case, where all data will be gathered onto
+a single processor, the import involves gathering all matrix
+coefficients from remote processors to one.
+
+Note that this migration can be just as easily viewed as an export,
+where all processor will send their portion of the matrix to a
+single processor.  We also note that, once the solution is computed
+on a single processor, a reverse operation using the same import (or
+export) pattern will place the solution values back onto the
+processors in the original application distribution.  In this way,
+the solver does not even need to know that the data migration
+occurred.
+
 
 \section{Overview of Primary Petra Classes}
 
-In this section we present in logical order the basic object classes 
+In this section we present in logical order the basic object classes
 needed for parallel vectors and matrices.  Each of the object
-classes represents a family of classes with one base class and 
+classes represents a family of classes with one base class and
 specializations of the base class.
 
 \paragraph{Comm, Distributor and Directory Classes:  Parallel Machine
  Description}
 
-We begin with the Comm class that describes parallel machines.  
-This class is an attribute in most other classes since it provides 
-essential information and services needed for operations across the 
-parallel machine.  The Comm class provides information about the number 
-of  logical processors on the parallel machine and processor identification.
-It also provides basic services such as global synchronization and collective 
-communications. The Distributor and Directory classes encapsulate information
-necessary for performing gather/scatter operations and referencing of non-local
-data.
+We begin with the Comm class that describes parallel machines. This
+class is an attribute in most other classes since it provides
+essential information and services needed for operations across the
+parallel machine.  The Comm class provides information about the
+number of  logical processors on the parallel machine and processor
+identification. It also provides basic services such as global
+synchronization and collective communications. The Distributor and
+Directory classes encapsulate information necessary for performing
+import/export operations and referencing of non-local data.
 
 \paragraph{Platform: Factory for Parallel Machine Description classes}
 
@@ -172,68 +405,87 @@ Next we present the ElementSpace and BlockElementSpace classes.  These classes
 are a specification of the distribution of a collection of elements, represented
 by global identifiers (GIDs). BlockElementSpace is a generalization of
 ElementSpace, allowing for elements with more than 1 associated scalar point.
- GIDs are integer values and need not be uniquely owned by a 
-processor or cover a contiguous range of integer values.  An object is 
-distributed across the parallel machine by associating subsets of the 
-object data with the GIDs.  Each processor of the parallel machine will be 
-assigned zero or more GIDs.  Example 1 illustrates this concept for the 
+ GIDs are integer values and need not be uniquely owned by a
+processor or cover a contiguous range of integer values.  An object is
+distributed across the parallel machine by associating subsets of the
+object data with the GIDs.  Each processor of the parallel machine will be
+assigned zero or more GIDs.  Example 1 illustrates this concept for the
 simple case of a distributed vector.   Each ElementSpace object requires a
 Platform object to be passed in at construction.
 
 \paragraph{VectorSpace Class: Mathematical Vector-Space Object}
 
-A VectorSpace object provides a set of indices for addressing and manipulating
-Vector objects. A VectorSpace can be initialized from either an ElementSpace or
-a BlockElementSpace.
+A VectorSpace object provides a set of indices for addressing and
+manipulating Vector objects. A VectorSpace can be initialized from
+either an ElementSpace or a BlockElementSpace.  A VectorSpace
+instance can generate a Vector or MultiVector instance.  VectorSpace
+objects are also used to test the compatibility of two distributed
+mathematical objects. The Vector, MultiVector, CisGraph, CisMatrix,
+Import and Export classes each have one or more VectorSpace objects
+as attributes to encode data distribution and to test
+compatibilities.
 
 \paragraph{Vector Class:  Mathematical Vector Object}
 
-This class allows construction and manipulation of vectors, and supports 
-operations involving vectors.  Basic vector 
-operations include norms, dot products, vector updates, etc.  The interface 
-to the vector constructors and vector methods is independent of the specifics 
-of the parallel machine and the vector distribution since this information is 
-encapsulated in the VectorSpace object passed in during construction.
+This class allows construction and manipulation of vectors, and
+supports operations involving vectors.  Basic vector operations
+include norms, dot products, vector updates, etc.  The interface to
+the Vector constructors and Vector methods is independent of the
+specifics of the parallel machine and the Vector distribution since
+this information is encapsulated in the VectorSpace object passed in
+during construction.  Vectors can be generated from a given
+VectorSpace object and, once instantiated, a Vector can provide
+access to the VectorSpace used to create it.
 
-\paragraph{Multivector Class:  Generalization of a Dense Matrix}
+\paragraph{MultiVector Class:  Generalization of a Dense Matrix}
 
-This class allows the construction and manipulation of a collection of 
-vectors that have the same size and distribution, i.e., the same VectorSpace.  
-A multivector is a generalization of a dense matrix.  There are methods 
-in the class that provide results for each vector in the multivector and 
-methods that view the multivector as a matrix.  In a practical implementation, 
-one should note that the vector class can usually be implemented as a 
-specialization of the multivector class (a multivector with one vector).
+This class allows the construction and manipulation of a collection
+of Vectors that have the same size and distribution, i.e., the same
+VectorSpace. A MultiVector is a generalization of a dense matrix.
+There are methods in the class that provide results for each Vector
+in the MultiVector and methods that view the MultiVector as a
+matrix. In a practical implementation, one should note that the
+Vector class can usually be implemented as a specialization of the
+MultiVector class (a MultiVector with one Vector).
 
-\paragraph{Compressed-Index Graph Class:  Connectivity Graph Object}
+\paragraph{Compressed-Index Graph (CISGraph) Class:  Connectivity Graph Object}
 
-A graph object specifies a set of vertices and the connecting edge pairs.
-The graph is then constructed across a parallel machine by associating each
-row of the graph with a GID and assigning the entire row of the graph to the
-processor(s) that owns the GID. In the Petra object model, graph objects are
-held as attributes by matrix classes, and are used to define and describe the
-structure of the matrix (location of nonzero entries).
+A graph object specifies a set of vertices and the connecting edge
+pairs.  It can also be represented as a binary-valued matrix where
+entries are one or zero.  A value of one at entry (i,j) in the graph
+indicates that a (directed) edge exists from node i to node j in the
+graph.  A graph is constructed across a parallel machine by
+declaring either a row or column orientation and then associating
+each row (column) of the graph with a GID and assigning the entire
+row (column) of the graph to the processor(s) that owns the GID. In
+the Petra object model, CISGraph objects are held as attributes by
+matrix classes, and are used to define and describe the structure of
+the matrix (location of nonzero entries).
 
 \paragraph{Operator Class: Linear Operator Object}
 
-The Operator interface is the highest-level abstraction for matrix objects,
-representing only mathematical operations performed with matrices and
-specifically avoiding issues relating to storage formats and implementation
-details. The Operator interface is inherited and implemented by all of our
-'concrete' matrix classes.  Algorithms which are written to use these
-abstract Operators rather than specific matrix class types may make use of
-any matrix type that implements the Operator interface.
+The Operator interface is the highest-level abstraction for all
+linear operator objects, in particular matrix objects, representing
+mathematical operations that require only the \textit{action} of the
+operator on a Vector or MultiVector and specifically avoiding issues
+relating to storage formats and implementation details. The Operator
+interface is inherited by the CISMatrix interface and implemented by
+all of our 'concrete' matrix classes, so that any CISMatrix
+\textit{isa} Operator and any Petra matrix \textit{isa} Operator.
+Algorithms which are written to use these abstract Operators rather
+than specific matrix class types may make use of any matrix type
+that implements the Operator interface.
 
-\paragraph{Compressed-Index Matrix Class: Sparse Matrix Object}
+\paragraph{Compressed-Index Matrix (CISMatrix) Class: Sparse Matrix Object}
 
-A compressed-index matrix is very similar to a compressed-index graph. 
-Additionally it 
-contains matrix values and has methods to compute matrix-vector and
-matrix-multivector multiplications.  It also has methods to provide certain
-matrix norms and scalings.  It can also be queried for matrix entries, which
-are usually returned a row at a time or a column at a time.
-As will be discussed in a later section, Petra implementations include both
-point-entry and block-entry matrix classes.
+A compressed-index matrix is very similar to a compressed-index
+graph. Additionally it contains matrix values and has methods to
+compute matrix-vector and matrix-multivector multiplications.  It
+has methods to provide certain matrix norms and scalings.  It can
+also be queried for matrix entries, which are usually returned a row
+at a time or a column at a time. As will be discussed in a later
+section, Petra implementations include both point-entry and
+block-entry matrix classes.
 
 
 \paragraph{Import and Export Classes:  Parallel Data Redistribution}
@@ -356,7 +608,7 @@ ElementSpace class. The ElementSpace class describes not only global properties
 such as total
 number of elements, but also distribution and partitioning properties such as
 number of local elements (local to a particular processor), etc.
- 
+
 There are a number of ways to define a distributed index space using the Petra
 ElementSpace. Depending on how the indices are assigned to processors, the
 distribution
@@ -393,11 +645,11 @@ global identifiers (GIDs).
 In the Petra object model, the Vector class is defined to have dense,
 real-valued entries or elements. Each Vector object has a VectorSpace object
 as an attribute, and VectorSpaces can be initialized from either an
-ElementSpace or a BlockElementSpace.  Vector objects are distributed across the 
+ElementSpace or a BlockElementSpace.  Vector objects are distributed across the
 parallel machine at construction by passing the VectorSpace into the
  constructor.
-The ElementSpace determines the global length of the vector 
-and the list of GIDs on each processor 
+The ElementSpace determines the global length of the vector
+and the list of GIDs on each processor
 determines the segment of the vector stored on the processor.
 
 \subsection{MultiVectors as Distributed Dense Matrices}
@@ -426,7 +678,7 @@ efficient communication during a sparse matrix vector multiplication.
 
 A graph requires an ElementSpace to be passed in at construction time.
 In addition to passing in an ElementSpace, one may provide
-information about how many nonzero entries will be inserted into each row 
+information about how many nonzero entries will be inserted into each row
 of the graph on each processor.  This information can be helpful for
 performance, but is not required, nor is it a fatal error if the estimate
 is incorrect.  One should note that a row may be owned by more than one node.
@@ -467,7 +719,7 @@ interconnected vertices into a single vertex, creating a sparse matrix of
 dense matrices.  Most methods in the block-entry matrix class mirror the
 methods in the point-entry matrix class.
 
-It is worth mentioning that both of the above matrix classes inherit 
+It is worth mentioning that both of the above matrix classes inherit
 a common abstract row-biased matrix interface.  This allows us to use the
 abstract base class for operations where the details of the matrix entries
 are not of interest, such as matrix-vector multiplication.
@@ -475,8 +727,8 @@ are not of interest, such as matrix-vector multiplication.
 
 
 \section{Parallel Data Redistribution}
-For our purposes, parallel data redistribution concerns the redistribution of 
-data on a parallel distributed memory computer, where all processors on the 
+For our purposes, parallel data redistribution concerns the redistribution of
+data on a parallel distributed memory computer, where all processors on the
 machine are participating in the operation, even though some processors may
 send or receive no data.  The data is assumed to be partitioned across the
 machine in some form already, including the case where one processor owns all
@@ -502,7 +754,7 @@ Tpetra~\cite{Tpetra-User-Guide} software packages.
 Two of the most common classes of PDR operations are:
 \begin{enumerate}
 \item Collective operations, such as the dot
-product of two distributed vectors, and 
+product of two distributed vectors, and
 \item Sparse all-to-all operations, where each processor will
 communicate with some, but typically not all, other processors.
 \end{enumerate}
@@ -512,56 +764,56 @@ communicate with some, but typically not all, other processors.
 
 \subsection{Sparse Matrix Vector Multiplication}
 
-One of the most common pattern-dependent distributed memory 
+One of the most common pattern-dependent distributed memory
 kernels is sparse matrix vector multiplication.
-This type of kernel appears in many types of applications but 
+This type of kernel appears in many types of applications but
 is often implemented assuming a
-one-dimensional partitioning of the rows (or columns) of the 
+one-dimensional partitioning of the rows (or columns) of the
 matrix such that each row is uniquely and
-completely assigned to one processor.  Also, in the square 
+completely assigned to one processor.  Also, in the square
 matrix case, the vectors are usually distributed
-with a conformal partitioning.  Figure~\ref{MatrixVectorDistribution} 
+with a conformal partitioning.  Figure~\ref{MatrixVectorDistribution}
 illustrates this case for a 4-by-4
-problem on two processors.  The first (last) two rows of 
-the matrix and the first (last) two elements of 
-both vectors are assigned to PE 0 (PE 1).  Given this 
+problem on two processors.  The first (last) two rows of
+the matrix and the first (last) two elements of
+both vectors are assigned to PE 0 (PE 1).  Given this
 distribution, the non-zero pattern of the matrix stored
-on each processor determines which elements of $x$ are 
+on each processor determines which elements of $x$ are
 required to compute $w$.  On PE 0, there are no
-non-zero entries in the third column, so that column is 
+non-zero entries in the third column, so that column is
 not present on PE 0, and the third element of $x$
-(stored on PE 1) does not need to be sent to PE 0.  
+(stored on PE 1) does not need to be sent to PE 0.
 Therefore, locally, the fourth
-column of the global matrix become the third column on 
+column of the global matrix become the third column on
 PE 0, and the fourth global element of $x$ is labeled
-as the third elements locally on PE 0, as illustrated 
+as the third elements locally on PE 0, as illustrated
 in Figure~\ref{PE1MatrixVectorDistribution}.
 
 On PE1, global
 
-\begin{figure} 
-\begin{center} 
+\begin{figure}
+\begin{center}
 \includegraphics[height=3in]{TwoPESpMV}
-\end{center} 
+\end{center}
 \label{MatrixVectorDistribution}
 \caption{Matrix and vector assigments on two memory images}
-\end{figure} 
+\end{figure}
 
-\begin{figure} 
-\begin{center} 
+\begin{figure}
+\begin{center}
 \includegraphics[height=3in]{PE0SpMV}
-\end{center} 
+\end{center}
 \label{PE0MatrixVectorDistribution}
 \caption{Contents of memory image on PE 0 after distribution}
-\end{figure} 
+\end{figure}
 
-\begin{figure} 
-\begin{center} 
+\begin{figure}
+\begin{center}
 \includegraphics[height=3in]{PE1SpMV}
-\end{center} 
+\end{center}
 \label{PE1MatrixVectorDistribution}
 \caption{Contents of memory image on PE 1 after distribution}
-\end{figure} 
+\end{figure}
 
 
 \section{PDR Terms and Concepts}
@@ -572,17 +824,17 @@ On PE1, global
 \subsection{Element Spaces and Global IDs}
 
 Given an existing distribution of data, we want a formal mechanism for describing
-how the data should be redistributed.  To accomplish this, we define an 
+how the data should be redistributed.  To accomplish this, we define an
 {\it element space} as a collection of labeled elements.  The exact meaning of
 an element is determined by the type of object we are redistributing.
 The label associated with each element is a signed integer value which we refer to as
-the {\it global identifier} or {\it GID} of that element.  If there are no 
-repeated GIDs associated with an element space, the element space is said to 
+the {\it global identifier} or {\it GID} of that element.  If there are no
+repeated GIDs associated with an element space, the element space is said to
 have the one-to-one property.  For many of the redistribution operations, the
 one-to-one property is required for one or both of the element spaces involved
 in the redistribution operation.
 
-An element space is itself a distributed object.  An Espace is constructed by 
+An element space is itself a distributed object.  An Espace is constructed by
 having each processor call the espace constructor, passing in the number of
 elements that should be assigned to the processor and a list of related GIDs.
 
