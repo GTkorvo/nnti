@@ -31,6 +31,7 @@
 \usepackage{amssymb}
 \usepackage{amsfonts}
 \usepackage{palatino}
+\usepackage{rotating,tabularx}
 
 \def\choicebox#1#2{\noindent$\hphantom{th}$\parbox[t]{1.8in}{\sf
 #1}\parbox[t]{4.5in}{#2}\\[0.8em]}
@@ -726,7 +727,7 @@ preconditioners.  For certain combinations of iterative methods and
 linear systems, the error at each iteration projected onto the
 eigenfunctions has components that decay at a rate proportional to the
 corresponding eigenvalue (or frequency).  Multilevel methods exploit
-this property \cite{Briggs2000} by projecting the linear system onto a
+this property \cite{Briggs} by projecting the linear system onto a
 hierarchy of increasingly coarsened ``meshes" so that each error
 component rapidly decays on at least one coarse ``mesh."  The linear
 system on the coarsest ``mesh,'' called the coarse grid problem, is
@@ -746,7 +747,7 @@ the automatic generation of a grid-hierarchy for GMG and the
 specification of the ML, designed for unstructured problems, are
 beyond the scope of this overview.
 
-Algebraic multigrid (AMG) (see \cite[Section 8]{Briggs2000}) method
+Algebraic multigrid (AMG) (see \cite[Section 8]{Briggs}) method
 development has been motivated by the demand for multilevel methods
 that are easier to use.  In AMG, both the matrix hierarchy and the
 prolongation operators are constructed just from the stiffness matrix.
@@ -809,6 +810,118 @@ Finally, some capabilities are given to handle dense and serial linear
 algebra problems.  These capabilities are based on the Epetra wrapper
 for BLAS and LAPACK, and therefore the serial dense module of
 \PyTrilinos\ is computationally efficient.
+
+%-----------------------------------------------------------------------------
+\section{Comparison Between Trilinos and PyTrilinos}
+\label{sec:comp}
+%-----------------------------------------------------------------------------
+
+\begin{sidewaystable}
+\begin{tabular}{| c  | c|}
+  \hline 
+  Trilinos Source & PyTrilinos Source \\
+  \hline
+
+\footnotesize
+\begin{minipage}{10cm}
+\begin{verbatim}
+#include "ml_include.h"
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#include "Epetra_Map.h"
+#include "Epetra_Vector.h"
+#include "Epetra_CrsMatrix.h"
+#include "Epetra_LinearProblem.h"
+#include "Trilinos_Util_CrsMatrixGallery.h"
+#include "AztecOO.h"
+#include "ml_MultiLevelPreconditioner.h"
+
+int main(int argc, char *argv[])
+{
+  MPI_Init(&argc,&argv);
+  Epetra_MpiComm Comm(MPI_COMM_WORLD);
+
+  int n = 100 * 100 * 100;
+  
+  CrsMatrixGallery Gallery("laplace_3d", Comm);
+  Gallery.Set("problem_size", n);
+  
+  Epetra_RowMatrix* A  = Gallery.GetMatrix();
+  Epetra_LinearProblem* Problem = Gallery.GetLinearProblem();
+  AztecOO solver(*Problem);
+
+  Teuchos::ParameterList MLList;
+  MLList.set("output", 10);
+  MLList.set("max levels",5);
+  MLList.set("aggregation: type", "Uncoupled");
+  MLList.set("smoother: type","symmetric Gauss-Seidel");
+  MLList.set("smoother: pre or post", "both");
+  MLList.set("coarse: type","Amesos-KLU");
+
+  MultiLevelPreconditioner* MLPrec = 
+    new MultiLevelPreconditioner(*A, MLList);
+
+  solver.SetPrecOperator(MLPrec);
+  solver.SetAztecOption(AZ_solver, AZ_cg);
+  solver.SetAztecOption(AZ_output, 32);
+  solver.Iterate(500, 1e-5);
+
+  delete MLPrec;
+  
+  MPI_Finalize();
+  exit(EXIT_SUCCESS);
+}
+\end{verbatim}
+\end{minipage}
+&
+\footnotesize
+\begin{minipage}{10cm}
+\begin{verbatim}
+#! /usr/bin/env python
+
+try:
+  from PyTrilinos import ML, Triutils, AztecOO, Epetra
+except ImportError:
+  raise ImportError, "import error"
+
+Epetra.Init()
+Comm = Epetra.PyComm()
+
+n = 100 * 100 * 100
+
+Gallery = Triutils.CrsMatrixGallery("laplace_3d", Comm)
+Gallery.Set("problem_size", n);
+Matrix = Gallery.GetMatrix();
+LHS = Gallery.GetStartingSolution();
+RHS = Gallery.GetRHS();
+
+MLList = {
+  "max levels"            : 5, 
+  "output"                : 10,
+  "smoother: pre or post" : "both",
+  "smoother: type"        : "symmetric Gauss-Seidel",
+  "aggregation: type"     : "Uncoupled",
+  "coarse: type"          : "Amesos-KLU"
+};
+
+Prec = ML.MultiLevelPreconditioner(Matrix, False)
+Prec.SetParameterList(MLList)
+Prec.ComputePreconditioner()
+
+Solver = AztecOO.AztecOO(Matrix, LHS, RHS)
+Solver.SetPrecOperator(Prec)
+Solver.SetAztecOption(AztecOO.AZ_solver, AztecOO.AZ_cg);
+Solver.SetAztecOption(AztecOO.AZ_output, 32);
+Solver.Iterate(500, 1e-5)
+
+Epetra.Finalize()
+\end{verbatim}
+\end{minipage}
+\\
+&  \\
+\hline
+\end{tabular}
+\end{sidewaystable}
 
 %-----------------------------------------------------------------------------
 \section{Comparison with Related Projects}
