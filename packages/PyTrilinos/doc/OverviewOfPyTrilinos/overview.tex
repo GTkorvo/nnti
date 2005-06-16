@@ -248,8 +248,13 @@ The key components are:
   development that allows high-performance scalable linear algebra
   operations for problems defined on sparse matrices. Trilinos
   contains more that half a million of code lines, and it can
-  interface to several third-party libraries.  {\bf COUNT THE
-    LINES???}
+  interface to several third-party libraries. The source codes of the
+  ``stable'' linear algebra packages of Trilinos account for about 300,000
+  code lines, divided in about 67,000 code lines for distributed linear
+  algebra objects and utilities, 20,000 code lines for direct solvers and
+  interfaces to third-party direct solvers, 128,000 code lines for multilevel
+  preconditioners, and 76,000 code lines for other algebraic preconditioners
+  and Krylov accelerators.
 
 \item {\bf Numeric}, a well-established Python module to handle
   matrices and vectors; see~\cite{numeric}.
@@ -265,6 +270,18 @@ The key components are:
   distribution since Python version 2.2.
 
 \end{enumerate}
+
+A description of the organization of  the linear algebra modules of
+PyTrilinos, with some of the third-party libraries can be accessed,
+is reported in Figure~\ref{fig:organization}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=12cm]{../UsersGuide/organization.eps}
+\caption{Organization of the linear algebra modules of PyTrilinos.}
+\label{fig:organization}
+\end{center}
+\end{figure}
 
 %-----------------------------------------------------------------------------
 \section{PyTrilinos Organization}
@@ -313,8 +330,10 @@ The modules of \PyTrilinos\ are:
   such, \PyTrilinos\ makes it possible to access state-of-the-art
   direct solver algorithms developed by groups of specialists, and
   written in different languages (C, FORTRAN77, FORTRAN90), in both
-  serial and parallel.  We refer to the Amesos reference
-  guide~\cite{Amesos-Reference-Guide} for more details.
+  serial and parallel. By using Amesos, more than 350,000 code lines (without
+  considering BLAS, LAPACK, and ScaLAPACK) can be easily accessed from any
+  code based on Trilinos (and therefore PyTrilinos).  We refer to the Amesos
+  reference guide~\cite{Amesos-Reference-Guide} for more details.
 
 \item {\bf AztecOO} contains preconditioned Krylov accelerators, like
   CG, GMRES and several others, based on the popular Aztec
@@ -325,8 +344,8 @@ The modules of \PyTrilinos\ are:
   compatible with Epetra and AztecOO.  It supports construction and
   use of parallel distributed memory preconditioners such as
   overlapping Schwarz domain decomposition with several local solvers.
-  IFPACK can take advantage of SPARSKIT~\cite{sparskit}, an venerable
-  but successful software package.
+  IFPACK can take advantage of SPARSKIT~\cite{sparskit}, a venerable
+  but successful software package; see~\cite{ifpack-guide}.
 
 \item {\bf ML} contains a set of multilevel preconditioners based on
   aggregation procedures for serial and vector problems. ML can take
@@ -409,11 +428,24 @@ in serial mode, or an {\tt Epetra.MpiComm} if \PyTrilinos\ has support for
 MPI. By using {\tt Epetra.PyComm}, \PyTrilinos\ scripts are virtually
 identical for both serial and parallel runs, and generally reads:
 \begin{verbatim}
-    Epetra.MpiInit()
+    Epetra.Init()
     comm = Epetra.PyComm()
     ...
-    Epetra.MpiFinalize()
+    Epetra.Finalize()
 \end{verbatim}
+
+A pictorial representation of how communication are handled in
+the case of two  processors is given in Figure~\ref{fig:distributed}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[height=5cm]{../UsersGuide/distributed_object.eps}
+\caption{All distributed PyTrilinos objects are based on the Epetra.MpiComm
+  object, which takes care of calling MPI functions for intra-processor
+    communications.}
+\label{fig:distributed}
+\end{center}
+\end{figure}
 
 %-----------------------------------------------------------------------------
 \section{Using PyTrilinos}
@@ -770,18 +802,18 @@ using a Python dictionary:
 \end{verbatim}
 Then, we create the preconditioner and compute it,
 \begin{verbatim}
-    Prec = ML.MultiLevelPreconditioner(Matrix, False)
-    Prec.SetParameterList(MLList)
-    Prec.ComputePreconditioner()
+    >>> Prec = ML.MultiLevelPreconditioner(Matrix, False)
+    >>> Prec.SetParameterList(MLList)
+    >>> Prec.ComputePreconditioner()
 \end{verbatim}
 Finally, we set up the solver, and specifies to use {\tt Prec} as
 preconditioner:
 \begin{verbatim}
-    Solver = AztecOO.AztecOO(Matrix, LHS, RHS)
-    Solver.SetPrecOperator(Prec)
-    Solver.SetAztecOption(AztecOO.AZ_solver, AztecOO.AZ_cg)
-    Solver.SetAztecOption(AztecOO.AZ_output, 16)
-    Solver.Iterate(1550, 1e-5)
+    >>> Solver = AztecOO.AztecOO(Matrix, LHS, RHS)
+    >>> Solver.SetPrecOperator(Prec)
+    >>> Solver.SetAztecOption(AztecOO.AZ_solver, AztecOO.AZ_cg)
+    >>> Solver.SetAztecOption(AztecOO.AZ_output, 16)
+    >>> Solver.Iterate(1550, 1e-5)
 \end{verbatim}
 
 \subsection{Utilities}
@@ -799,8 +831,8 @@ important Epetra objects are made available. For example, to read a
 vector and a matrix stored in Matrix-Market format, one simply has to
 write:
 \begin{verbatim}
-    (ierr, X2) = EpetraExt.MatrixMarketFileToMultiVector("x.mm", Map)
-    (ierr, A2) = EpetraExt.MatrixMarketFileToCrsMatrix("A.mm", Map)
+    >>> (ierr, X2) = EpetraExt.MatrixMarketFileToMultiVector("x.mm", Map)
+    >>> (ierr, A2) = EpetraExt.MatrixMarketFileToCrsMatrix("A.mm", Map)
 \end{verbatim}
 
 These functions are a powerful tool for exchanging data between C++
@@ -821,9 +853,138 @@ for BLAS and LAPACK, and therefore the serial dense module of
   \hline 
   Trilinos Source & PyTrilinos Source \\
   \hline
+  & \\
 
 \footnotesize
-\begin{minipage}{10cm}
+\begin{minipage}{10.5cm}
+\begin{verbatim}
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#include "Epetra_CrsMatrix.h"
+#include "Epetra_Vector.h"
+
+int main(int argc, char *argv[]) 
+{
+  MPI_Init(&argc, &argv);
+  Epetra_MpiComm Comm(MPI_COMM_WORLD);
+
+  int NumGlobalRows = 1000000;
+  Epetra_Map Map(NumGlobalRows, 0, Comm);
+  Epetra_Vector LHS_exact(Map);
+  Epetra_Vector LHS(Map);
+  Epetra_Vector RHS(Map);
+  Epetra_CrsMatrix Matrix(Copy, Map, 0);
+
+  int Indices[3];
+  double Values[3];
+  int NumEntries;
+
+  int NumLocalRows = Map.NumMyElements();
+
+  for (int ii = 0 ; ii < NumLocalRows ; ++ii) {
+    int i = Map.GID(ii);
+    if (i == 0) {
+      Indices[0] = i; Indices[1] = i + 1;
+      Values[0] = 2.0; Values[1] = -1.0;
+      NumEntries = 2;
+    }
+    else if (i == NumGlobalRows - 1) {
+      Indices[0] = i; Indices[1] = i - 1;
+      Values[0] = 2.0; Values[1] = -1.0;
+      NumEntries = 2;
+    }
+    else {
+      Indices[0] = i; Indices[1] = i - 1; Indices[2] = i + 1;
+      Values[0] = 2.0; Values[1] = -1.0; Values[2] = -1.0;
+      NumEntries = 3;
+    }
+    Matrix.InsertGlobalValues(i, NumEntries, Values, 
+                              Indices);
+  }
+  Matrix.FillComplete();
+ 
+  MPI_Finalize();
+  return(EXIT_SUCCESS);
+}
+\end{verbatim}
+\end{minipage}
+&
+\footnotesize
+\begin{minipage}{10.5cm}
+\begin{verbatim}
+#! /usr/bin/env python
+try:
+  from PyTrilinos import Amesos, Epetra
+except ImportError:
+  raise ImportError, "error w/ Amesos or Epetra"
+
+Epetra.Init()
+# dimension of the problem
+NumGlobalRows = 1000000
+Comm = Epetra.PyComm()
+Map = Epetra.Map(NumGlobalRows, 0, Comm)
+LHS_exact = Epetra.Vector(Map)
+LHS = Epetra.Vector(Map)
+RHS = Epetra.Vector(Map)
+Matrix = Epetra.CrsMatrix(Epetra.Copy, Map, 0)
+
+NumLocalRows = Map.NumMyElements()
+
+for ii in range(0, NumLocalRows):
+  i = Map.GID(ii)
+  if i == 0:
+    Indices = [i, i + 1];
+    Values  = [2.0, -1.0];
+  elif i == NumGlobalRows - 1:
+    Indices = [i, i - 1];
+    Values  = [2.0, -1.0];
+  else:
+    Indices = [  i,  i - 1, i + 1];
+    Values  = [2.0,   -1.0,  -1.0];
+  Matrix.InsertGlobalValues(i, Values, Indices);
+ierr = Matrix.FillComplete();
+ 
+Epetra.Finalize();
+\end{verbatim}
+\end{minipage}
+\\
+&  \\
+\hline
+\end{tabular}
+\caption{Code listings for the Epetra test case.}
+\label{tab:code_epetra}
+\end{sidewaystable}
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{| l | c | c |}
+\hline
+\tt NumGlobalRows & Trilinos & PyTrilinos \\
+\hline
+1,000 & 0.010 & 0.15 \\
+10,000 & 0.113 & 0.241 \\
+100,000 & 0.280 & 1.238 \\
+1,000,000 & 1.925 & 11.28 \\
+\hline
+\end{tabular}
+\caption{CPU time (in seconds) on Linux/GCC for the codes reported in
+Table~\ref{tab:code_epetra}.}
+\label{tab:time_epetra}
+\end{center}
+\end{table}
+
+
+
+\begin{sidewaystable}
+\begin{tabular}{| c  | c|}
+  \hline 
+  Trilinos Source & PyTrilinos Source \\
+  \hline
+  & \\
+
+\footnotesize
+\begin{minipage}{10.5cm}
 \begin{verbatim}
 #include "ml_include.h"
 #include "mpi.h"
@@ -875,7 +1036,7 @@ int main(int argc, char *argv[])
 \end{minipage}
 &
 \footnotesize
-\begin{minipage}{10cm}
+\begin{minipage}{10.5cm}
 \begin{verbatim}
 #! /usr/bin/env python
 
@@ -921,7 +1082,29 @@ Epetra.Finalize()
 &  \\
 \hline
 \end{tabular}
+\caption{Code listings for the ML test.}
+\label{tab:code_ml}
 \end{sidewaystable}
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{| l | c | c |}
+\hline
+\tt n & Trilinos & PyTrilinos \\
+\hline
+20  & 0.499  & 0.597 \\
+40  & 2.24   & 2.287 \\
+60  & 7.467  & 7.36 \\
+80  & 17.018 & 17.365 \\
+100 & 32.13  & 32.565 \\
+\hline
+\end{tabular}
+\caption{CPU time (in seconds) on Linux/GCC for the codes reported in
+Table~\ref{tab:code_ml}.}
+\label{tab:time_ml}
+\end{center}
+\end{table}
 
 %-----------------------------------------------------------------------------
 \section{Comparison with Related Projects}
