@@ -108,9 +108,7 @@ efficient precompiled libraries for all computationally expensive tasks. Thus,
 we take advantage of both the flexibility and ease of use of Python,
 and the efficiency of the underlying C++, C and FORTRAN numerical
 kernels. The presented numerical results show that, if properly used, the
-overhead required by the Python interpreter is negligible. The presented
-numerical results show that, if properly used, the overhead required by the
-Python interpreter is negligible.
+overhead required by the Python interpreter is negligible. 
 
 To run in parallel, \PyTrilinos\ simply requires a standard Python
 interpreter.  The fundamental MPI calls are abstracted beneath the
@@ -153,14 +151,12 @@ instruction as it is executed. This comes at a computational price, since the in
 may require several CPU cycles to parse each instruction. Therefore,
 interpreted languages are usually disregarded by developers of
 high-performance applications (often as a pre-conceptual idea). Almost all
-high-performance libraries are written in compiled languages
-such as C, C++ or FORTRAN. Using these languages, developers can obtain 
-high performance and portable codes,
-since these languages are reasonably well standarized and compilers quite
-mature on almost all platforms.  However,
-these languages require constant attention to low-level system
-programming, like memory allocation and deallocation.  Because
-compilation and linking are essential steps, the development cycle can
+high-performance libraries are written in compiled languages such as C, C++ or
+FORTRAN. Since these languages are reasonably well standarized and compilers
+quite mature on almost all platforms, developers can obtain highly efficient
+and portable codes.  The downside is that a constant attention to low-level
+system programming, like memory allocation and deallocation, is required.
+Because compilation and linking are essential steps, the development cycle can
 be slowed down considerably, sometimes making the development of new algorithm
 problematic.
 
@@ -174,7 +170,7 @@ almost impossible for a single programming language to be at the same
 time easy-to-use, allow fast development, and produce optimized
 executables. Indeed, the goals of efficiency and flexibility are often
 in conflict with each other.
-From our point of view, the key observation is that, for most
+From our point of view, the key observation to solve this problem is that, for most
 applications, the time-critical portion of the code that requires the
 efficiency of a compiled language is related to a small set of
 self-contained functions or classes. Therefore, one can adopt an
@@ -221,10 +217,10 @@ project design, the organization of PyTrilinos and its division into modules.
 Comments on the usage of
 parallel, MPI Python scripts using PyTrilinos are reported in
 Section~\ref{sec:serial}. 
-Section~\ref{sec:related} positions PyTrilinos with respect to similar
-projects. 
+Section~\ref{sec:comparison_python} positions PyTrilinos with respect to similar Python projects. 
+Section~\ref{sec:comparison_matlab} compares PyTrilinos with MATLAB.
 Examples of usage and comparisons between Trilinos
-and PyTrilinos codes are reported in Section~\ref{sec:comparision}.
+and PyTrilinos codes are reported in Section~\ref{sec:comparison_trilinos}.
 Concluding remarks are reported in Section~\ref{sec:concluding}.
 
 %-----------------------------------------------------------------------------
@@ -423,8 +419,8 @@ All these projects allow the use of Python through the interactive  prompt,
 
 Our approach is somehow complementary to the efforts of these projects. 
 We decided to use a standard, out-of-the-box, Python interpreter, then wrap 
-only the very basic MPI functions 
-(MPI\_Init(), MPI\_Finalize(), and MPI\_COMM\_WORLD). By wrapping these three
+only the very basic of MPI:
+MPI\_Init(), MPI\_Finalize(), and MPI\_COMM\_WORLD. By wrapping these three
 objects, one can define an MPI-based Epetra communicator, on which
 all wrapped Trilinos packages are already
 based. This reflects the philosophy of all the
@@ -448,11 +444,12 @@ identical for both serial and parallel runs, and generally reads:
 \end{verbatim}
 A pictorial representation of how communication are handled in
 the case of two  processors is given in Figure~\ref{fig:distributed}. For
-serial runs, both Init() and Finalize() are empty instructions.
+serial runs, both Init() and Finalize() are empty instructions; for parallel
+runs, Init() calls MPI\_Init() and Finalize() finalizes the MPI environment.
 
 \smallskip
 
-The major disadvantage of this approach is that Python cannot be run
+The major disadvantages of this approach are that Python cannot be run
 interactively if more than one processor is used, and we experienced problems
 with some MPI interpreters (in particular MPICH) to execute Python scripts.
 Besides, although all the most important MPI calls are available through
@@ -471,8 +468,8 @@ calls are handled by Epetra, no major overhead occurs, other than that of
 parsing a Python instruction. Second, all PyTrilinos modules that require
 direct MPI calls can dynamic cast the Epetra.Comm object, retrive the MPI
 communicator object, then use direct C/C++ MPI calls. As such, the entire set of MPI
-function is available to developers. Third, a standard Python interpreter is
-required. Finally, serial and paralle scripts are identical, and 
+function is available to developers with no additional overhead. Third, a standard Python interpreter is
+used. Finally, serial and paralle scripts are identical, and 
  PyTrilinos scripts can be run in parallel
 by using an instruction of type
 \begin{verbatim}
@@ -499,53 +496,65 @@ instructions required to define an Epetra.PyComm.
 
 In order to present the functionalities of PyTrilinos, this Section will
 briefly describe the main capabilities of all modules, together with a brief
-mathematical background of the implemented algorithms.
+mathematical background of the implemented algorithms. More technical details
+on the usage of the linear algebra modules of PyTrilinos can be found
+in~\cite{pytrilinos-la-guide}.
 
 %-----------------------------------------------------------------------------
 \subsection{The Epetra Module}
 \label{subsec:epetra}
 %-----------------------------------------------------------------------------
 
-Two Epetra objects are important for this
-  discussion. The first object is a {\sl communicator}, which
-  encapsulates all the inter-processor data exchange. The second
-  object is a {\sl map}, which describes the domain decomposition of
+The Epetra module offers a large variety of objects for linear algebra and
+parallel processing. The most basic objects are the
+{\sl communicator}, which
+  encapsulates all the inter-processor data exchange, and the 
+  {\sl map}, which describes the domain decomposition of
   distributed linear algebra objects. Serial runs make use of trivial
   communicators and maps; parallel runs adopt an MPI-based
   communicator and support arbitrary maps.
-  
+
+Several other functionalities are offered by Epetra:
+\begin{itemize}
+\item
 Epetra provides an extensive set of classes to create and fill
 distributed sparse matrices. These classes allow row-by-row or
 element-by-element constructions. Support is provided for common
 matrix operations, including scaling, norm, matrix-vector
-multiplication and matrix-multivector multiplication.  Using Epetra
-objects, applications do not need to know about the particular storage
-format, and other implementation details such as data layout, the
-number and location of ghost nodes. Matrices can be stored row-by-row using
-class Epetra.CrsMatrix, and vectors with classes Epetra.Vector and
-Epetra.MultiVector.
-Another useful class is Epetra.FECrsMatrix.  The most important
-additional feature provided by the Epetra.FECrsMatrix compared
-to Epetra.CrsMatrix, is the capability to set non-local matrix
-elements. Serial dense linear algebra is supported 
+multiplication and matrix-multivector multiplication.  
+Matrices can be stored row-by-row using
+class Epetra.CrsMatrix. This class is derived from the pure abstract class
+Epetra.RowMatrix, and as such it can be used with all the linear algebra
+modules of PyTrilinos.
+\item Non-local matrix elements can be set using class Epetra.FECrsMatrix.
+\item Distributed vectors (whose local component is at the same time a
+                           Numeric vector) can be handled with classes
+Epetra.Vector and Epetra.MultiVector. Operations like norms and AXPY's are
+supported.
+\item Distributed graphs can be created using class Epetra.CrsGraph.
+\item Serial dense linear algebra is supported 
 (as a light-weight on the top of BLAS and LAPACK) through classes
 Epetra.SerialDenseVector and Epetra.SerialDenseMatrix.
- Class Epetra.Time can be used
-to track the elapsed CPU time, and class Epetra.CrsGraph to define distributed
-graphs.
+\item Several utilities are available, for example Epetra.Time offers a clean
+an consistent access to timing routines.
+\end{itemize}
 
 %-----------------------------------------------------------------------------
 \subsection{The Triutils Module}
 \label{subsec:triutils}
 %-----------------------------------------------------------------------------
 
-Triutils provides matrix reading and matrix generation capabilities. This
-module is mainly meant for testing solvers. A function is available to read a
-matrix from the popular Harwell/Boeing format.
-Several matrices, corresponding to finite difference discretization of model
-problems, can be generated using the matrix gallery of Triutils, which
-provides functionalities similar to that of the MATLAB's {\tt gallery}
-command; see~\cite[Chapter 5]{Trilinos-tutorial} for more details.
+The Triutils module provides:
+\begin{itemize}
+\item Matrix reading capabilities: A function is
+available to read a matrix from the popular Harwell/Boeing format. 
+\item Matrix generation capabilities. Several matrices, corresponding to
+finite difference discretization of model problems, can be generated using the
+matrix gallery of Triutils, which provides functionalities similar to that of
+the MATLAB's {\tt gallery} command; see~\cite[Chapter 5]{Trilinos-tutorial}
+for more details.
+\end{itemize}
+This module is mainly meant for testing linear solvers.  
 
 %-----------------------------------------------------------------------------
 \subsection{The Amesos Module}
@@ -584,9 +593,14 @@ All Amesos objects are constructed from the function class {\tt
   Amesos}.   The main goal of this class is to allow the user to select
 any supported (and enabled at configuration time) direct solver,
 simply changing an input parameter. An example of script reading the linear
-system stored in the Harwell/Boeing format, the solving the problem using
+system stored in the Harwell/Boeing format, then solving the problem using
 SuperLU is reported in Figure~\ref{fig:amesos}.
-Several parameters, specified using Python's dictionaries, are available to toggle the selected Amesos solver.
+Several parameters, specified using Python's dictionaries, are available to
+toggle the selected Amesos solver. These parameters share the same name used
+by Trilinos codes; a list of available parameters can be found in the Amesos
+manual~\cite{Amesos-Reference-Guide}. Note that, just by changing the value of
+\verb!SolverType!, the {\sl same} script can be used to experiment with all
+the solvers supported by Amesos.
 
 \begin{figure}
 \begin{center}
@@ -634,12 +648,13 @@ Epetra.Finalize()
 \end{figure}
 
 %-----------------------------------------------------------------------------
-\subsection{The AztecOO and IFPACK Modules}
+\subsection{The AztecOO, IFPACK and ML Modules}
 \label{subsec:aztecoo_ifpack}
 %-----------------------------------------------------------------------------
 
 For a sparse matrix, the major inconvenience of direct solution
-methods is that the $L$ and $U$ factors are typically much denser than
+methods (as presented in section \ref{subsec:amesos}) 
+  is that the $L$ and $U$ factors are typically much denser than
 the original matrix $A$, making Gaussian elimination too memory
 demanding for large scale problems. Moreover, the factorization
 process is inherently serial, and parallel factorization algorithms
@@ -654,8 +669,8 @@ in their simplest form) matrix-vector and vector-vector products, and
 both operations scale well for sparse matrices.
 
 Unfortunately, the convergence of iterative methods is determined by
-the spectral properties of the matrix $A$ (typically, its condition
-number $\kappa(A)$), and for real-life problems $\kappa(A)$ is
+the spectral properties of the matrix $A$ --- typically, its condition
+number $\kappa(A)$, which for real-life problems $\kappa(A)$ is
 ``large'', meaning that the iterative solution method will converge
 slowly. To solve this problem, the original linear system is replaced
 by
@@ -665,7 +680,8 @@ A P^{-1} P X = B
 where $P$, called a {\sl preconditioner}, is an operator whose inverse
 aim to represent the inverse of $A$, though being much cheaper to
 compute.  $P$ is chosen so that $AP^{-1}$ is easier to solver than $A$
-(that is, it is better conditioned).
+(that is, it is better conditioned), in terms of both iterations to converge
+and CPU time.
 
 \smallskip
 
@@ -706,13 +722,15 @@ written as
 \end{equation}
 where $M$ represents the number of subdomains, $R_i$ is a rectangular
 Boolean matrix that restricts a global vector to the subspace defined
-by the interior of the $i$th subdomain, and $B_i$ approximates the
+by the interior of the $i$th subdomain, and $B_i^{-1}$ approximates the
 inverse of
 \begin{equation}
   \label{eq:aztecoo_tilde_a}
   A_i = R_i A R_i^T ,
 \end{equation}
 for example, being its ILU factorization.
+
+\medskip
 
 To adopt an iterative solver (for example, CG),
 with 1550 maximum iterations and a tolerance of $10^{-5}$ on the
@@ -772,19 +790,17 @@ Epetra.Finalize()
 \end{center}
 \end{figure}
 
-%-----------------------------------------------------------------------------
-\subsection{The ML Module}
-\label{subsec:ml}
-%-----------------------------------------------------------------------------
+\medskip
 
 Another class of preconditioners is given by multilevel
-preconditioners.  For certain combinations of iterative methods and
+preconditioners.  
+For certain combinations of iterative methods and
 linear systems, the error at each iteration projected onto the
 eigenfunctions has components that decay at a rate proportional to the
 corresponding eigenvalue (or frequency).  Multilevel methods exploit
 this property \cite{Briggs} by projecting the linear system onto a
-hierarchy of increasingly coarsened ``meshes" so that each error
-component rapidly decays on at least one coarse ``mesh."  The linear
+hierarchy of increasingly coarsened ``meshes'' so that each error
+component rapidly decays on at least one coarse ``mesh.''  The linear
 system on the coarsest ``mesh,'' called the coarse grid problem, is
 solved directly.  The iterative method is called the smoother, as a
 reflection of its diminished role as a way to damp out the high
@@ -808,8 +824,17 @@ system and select a preconditioning strategy.  In AMG, the only
 additional information required from the user is to specify a
 coarsening strategy.
 
+Using the ML module, the user can easily create black-box two-level and
+multilevel preconditioners based on smoothed aggregation  procedures
+(see \cite{sala04analysis,brezina97robust} and the references therein).
+Parameters are specified using a Python's dictionary, as presented for the
+Amesos module in Section~\ref{subsec:amesos}; the list of accepted parameters
+is given in~\cite{ml-guide}. Note that applications using ML preconditioners
+have been proved to be scalable up to thousands of
+processors~\cite{ijnme,shadid-jcp-dd-precond}.
+
 %-----------------------------------------------------------------------------
-\subsection{EpetraExt}
+\subsection{The EpetraExt Module}
 \label{subsec:epetraext}
 %-----------------------------------------------------------------------------
 
@@ -831,27 +856,14 @@ obtained with production codes and damped on file using the EpetraExt package,
   numerical algorithm.
 
 %-----------------------------------------------------------------------------
-\section{Comparison with Related Projects}
-\label{sec:related}
+\section{Comparison Between PyTrilinos and Related Python Projects}
+\label{sec:comparison_python}
 %-----------------------------------------------------------------------------
 
 This Section positions PyTrilinos with respect to the following similar
-projects:
+Python projects:
 
 \begin{itemize}
-
-\item {\bf MATLAB.} Any mathematical software framework which
-  claims to be easy-to-use cannot avoid a comparison with MATLAB, the
-  {\sl de-facto} standard for the development of numerical analysis
-  algorithms and software. Our impression is that, while MATLAB's
-  vector syntax and built-in matrix data types greatly simplifies the
-  programming language, it is not possible to perform large-scale
-  computing using this language. MATLAB's sparse matrix operations are
-  slow compared with Epetra's. Another handicap of MATLAB is its
-  inflexible language: There may be only one visible function in a
-  file, and the function name must be the file name itself. This can
-  make harder to modularize the code.  Other desirable language
-  features, such as exception handling, are also missing in MATLAB.
 
 \item {\bf Numeric.} The Python Numeric module adds a fast, compact,
   multidimensional array language facility to Python.  Many existing
@@ -891,11 +903,100 @@ projects:
   structured binary files), to MPI (Message Passing Interface), and to
   BSPlib (Bulk Synchronous Parallel programming).
 
+\note{What is the difference between SciPy and ScientificPython?}
 \end{itemize}
 
 %-----------------------------------------------------------------------------
-\section{Comparison Between Trilinos and PyTrilinos}
-\label{sec:comparision}
+\section{Comparison Between PyTrilinos and MATLAB}
+\label{sec:comparison_matlab}
+%-----------------------------------------------------------------------------
+
+Any mathematical software framework which
+claims to be easy-to-use cannot avoid a comparison with MATLAB, the
+{\sl de-facto} standard for the development of numerical analysis
+algorithms and software. Our impression is that, while MATLAB's
+vector syntax and built-in matrix data types greatly simplifies the
+programming language, it is not possible to perform large-scale
+computing using this language. MATLAB's sparse matrix operations are
+slow compared with Epetra's. Another handicap of MATLAB is its
+inflexible language: There may be only one visible function in a
+file, and the function name must be the file name itself. This can
+make harder to modularize the code.  Other desirable language
+features, such as exception handling, are also missing in MATLAB.
+
+We now compares the CPU time required by MATLAB 7.0 (R14) and
+PyTrilinos to create a dense and a sparse matrix. 
+The first test sets the elements
+of a serial dense matrix, where each $(i,j)$ element of the square real
+matrix $A$ is defined as $A(i,j) = 1/(i + j)$. The second test,
+instead, creates a sparse diagonal matrix, setting one element
+at-a-time. The MATLAB code reads:
+\begin{verbatim}
+    A = spalloc(n, n, n);
+    for i=1:n
+      A(i,j) = 1;
+    end
+\end{verbatim}
+while the PyTrilinos code contains the instructions:
+\begin{verbatim}
+    A = Epetra.CrsMatrix(Epetra.Copy, Map, 1)
+    for i in range(0, n):
+      A.InsertGlobalValues(i, [1.0], [i])
+    A.FillComplete()
+\end{verbatim}
+Cleraly, other techniques exist to create in MATLAB and in PyTrilinos sparse
+diagonal matrices. However, real applications often have the need of settings
+the elements of a matrix one (or few) at-a-time, and therefore this comparison
+well represents more general applications. From Table~\ref{tab:matlab_dense},
+  it is evident that MATLAB is more efficient than PyTrilinos in the handling
+  of dense matrices, but PyTrilinos excels for sparse matrices, as reported in
+  Table~\ref{tab:matlab_sparse}. Since PyTrilinos is mainly meant for sparse
+  matrices, these results confirm the validity of the project with respect to
+  MATLAB, especially because the set of algorithms available in PyTrilinos to
+  handle and solve linear systems with sparse matrices is fairly superior to
+  that included in MATLAB.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{| l | c | c |}
+\hline
+$n$ & MATLAB & PyTrilinos \\
+\hline
+\hline
+10     & 0.00001 & 0.000416 \\
+100    & 0.0025 & 0.0357 \\ 
+1,000  & 0.0478 & 3.857 \\
+\hline
+\end{tabular}
+\caption{CPU time (in seconds) required by MATLAB and PyTrilinos to set the
+  elements of a  dense matrix of size $n$.}
+\label{tab:matlab_dense}
+\end{center}
+\end{table}
+
+\begin{table}
+\begin{center}
+\begin{tabular}{| l | c | c |}
+\hline
+$n$ & MATLAB & PyTrilinos \\
+\hline
+\hline
+10      & 0.00006 & 0.000159 \\ 
+1,000   & 0.00397 & 0.0059 \\
+10,000  & 0.449   & 0.060 \\
+50,000  & 11.05   & 0.313 \\
+100,000 & 50.98   & 0.603 \\
+\hline
+\end{tabular}
+\caption{CPU time (in seconds) required by MATLAB and PyTrilinos to set the
+  elements of a  sparse diagonal matrix of size $n$.}
+\label{tab:matlab_sparse}
+\end{center}
+\end{table}
+
+%-----------------------------------------------------------------------------
+\section{Comparison Between PyTrilinos and Trilinos}
+\label{sec:comparison_trilinos}
 %-----------------------------------------------------------------------------
 
 It is  important to position PyTrilions with respect to Trilinos itself.
@@ -948,7 +1049,7 @@ codes.
 \label{sec:fine}
 %-----------------------------------------------------------------------------
 
-This Section we presents how to construct a
+This Section we present how to construct a
 distributed (sparse) matrix, arising from a finite-difference solution
 of a one-dimensional Laplace problem. This matrix looks like:
 \begin{equation*}
@@ -1091,7 +1192,7 @@ Epetra.Finalize();
 \end{sidewaystable}
 
 Table~\ref{tab:time_epetra} compares the CPU time required on a 1.7 GHz Linux
-machine to run the two codes, for different values of the matrix size. Only
+machine to run the two codes for different values of the matrix size. Only
 one processor has been used in the computations. Although the PyTrilinos code
 can be considered somehow shorter and cleaner, it is slower of a factor of
 about 10. This is due to several overhead: first, the parsing of each Python
@@ -1402,7 +1503,8 @@ encountered are:
   does a lot of work.  Therefore, for rarely called function, this
   penalty is negligible.  All performance critical kernels should be
   written in C, C++, or Fortran, and everything else can be in Python, as we
-  have shown for model problems in Section~\ref{sec:comparison}.
+  have shown for model problems in Sections~\ref{sec:comparison_python},
+  \ref{sec:comparison_matlab} and \ref{sec:comparison_trilinos}.
 
   This is especially critical in applications where function callbacks
   are used.  For example, in the NOX module, it is common to set up an
