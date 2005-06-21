@@ -36,7 +36,7 @@
 \def\choicebox#1#2{\noindent$\hphantom{th}$\parbox[t]{1.8in}{\sf
 #1}\parbox[t]{4.5in}{#2}\\[0.8em]}
 
-\author{Marzio Sala, Micheal Heroux\\
+\author{Marzio Sala, Michael A. Heroux\\
 Computational Mathematics and Algorithms Department \\ [10pt]
 William F. Spotz, Eric T. Phipps \\
 Applied Computational Methods Department \\ [10pt]
@@ -107,7 +107,10 @@ This hybrid framework uses Python as front-end, and
 efficient precompiled libraries for all computationally expensive tasks. Thus,
 we take advantage of both the flexibility and ease of use of Python,
 and the efficiency of the underlying C++, C and FORTRAN numerical
-kernels.
+kernels. The presented numerical results show that, if properly used, the
+overhead required by the Python interpreter is negligible. The presented
+numerical results show that, if properly used, the overhead required by the
+Python interpreter is negligible.
 
 To run in parallel, \PyTrilinos\ simply requires a standard Python
 interpreter.  The fundamental MPI calls are abstracted beneath the
@@ -136,11 +139,11 @@ developers for their contribution to Trilinos, without which
 %-----------------------------------------------------------------------------
 
 The choice of the programming language for the development and usage of
-large-scale, high-performance numerical algorithm is often a thorny issue.
+large-scale, high-performance numerical algorithms is often a thorny issue.
 Ideally, the programming language is only a tool used to produce a working
 library or application. In practice, the are important differences between the
 several programming languages made available to developers---from FORTRAN77 or
-FORTRAN90, to C and C++, Java, Python, and several others. An important
+FORTRAN90, to C and C++, Java, Python, MATLAB, and several others. An important
 distinction can be made between {\sl interpreted} languages and {\sl compiled}
 languages. For the former, the list of instructions (called {\sl script}) is
 translated at run-time by an interpreter, then executed; for the latter, the
@@ -158,9 +161,11 @@ mature on almost all platforms.  However,
 these languages require constant attention to low-level system
 programming, like memory allocation and deallocation.  Because
 compilation and linking are essential steps, the development cycle can
-be slowed down considerably.  
+be slowed down considerably, sometimes making the development of new algorithm
+problematic.
 
-Our interest is in a high-level, flexible programming environment,
+As developers of numerical algorithms,
+our interest is in a high-level, flexible programming environment,
 with performance comparable to that of native C, C++ or FORTRAN
 code. Flexibility is fundamental to allow rapid prototyping, in the
 sense that the developer should be able to write a basic code
@@ -169,7 +174,6 @@ almost impossible for a single programming language to be at the same
 time easy-to-use, allow fast development, and produce optimized
 executables. Indeed, the goals of efficiency and flexibility are often
 in conflict with each other.
-
 From our point of view, the key observation is that, for most
 applications, the time-critical portion of the code that requires the
 efficiency of a compiled language is related to a small set of
@@ -177,7 +181,8 @@ self-contained functions or classes. Therefore, one can adopt an
 interpreted (and possibly interactive) language, without a big
 performance degradation, provided there is a robust interface between
 the interpreted and compiled languages. Among the available scripting
-languages, we decided to adopt Python. Python
+languages, we decided to adopt Python 
+(see, for instance, \cite{python-book}).  Python
 is an interpreted, interactive, object-oriented programming
 language, which combines remarkable power with very clean syntax (it
 is often observed that well-written Python code reads like pseudo
@@ -196,7 +201,8 @@ environment that can be used to test, validate, use
 and extend serial and parallel numerical algorithms.
 In our opinion, Python naturally complements
 system languages like C, C++ and FORTRAN rather than competing with
-them.
+them. Equivalently, PyTrilinos complements Trilinos by offering a rapid
+development cycle for some of its capabilities.
 
 %Python is a high-level general purpose programming language. Because
 %code is automatically compiled to byte code and executed, Python is
@@ -214,10 +220,12 @@ This document is organized as follows. Section~\ref{sec:design} describes the
 project design, the organization of PyTrilinos and its division into modules.
 Comments on the usage of
 parallel, MPI Python scripts using PyTrilinos are reported in
-Section~\ref{sec:serial}. Examples of usage and comparisons between Trilinos
-and PyTrilinos codes are reported in Section~\ref{sec:comparision}.
+Section~\ref{sec:serial}. 
 Section~\ref{sec:related} positions PyTrilinos with respect to similar
-projects. COncluding remarks are reported in Section~\ref{sec:concluding}.
+projects. 
+Examples of usage and comparisons between Trilinos
+and PyTrilinos codes are reported in Section~\ref{sec:comparision}.
+Concluding remarks are reported in Section~\ref{sec:concluding}.
 
 %-----------------------------------------------------------------------------
 \section{Project Design}
@@ -256,8 +264,6 @@ hybrid, multi-compont applications. As one consequence, systems can
 simultaneously utilize the strengths of Python for rapid development,
 and of traditional languages such as C for rapid execution.  This
 flexibility of development modes is crucial in realistic environments.
-Python is optimized for speed of development, but that alone is not
-enough.
 
 \note{Why no other scripting languages?}
 
@@ -321,23 +327,17 @@ of {\sl modules}, each of them wraps a given Trilinos {\sl package},
 developed by a small team of experts in a particular area.
 Trilinos packages that support namespaces have a Python submodule for
 each namespace.  Algorithmic capabilities are defined within
-independent packages. The modules of \PyTrilinos\ are:
+independent packages. At present, the modules of \PyTrilinos\ are:
 
 \begin{enumerate}
 
 \item {\bf Epetra}, a collection of concrete classes to support the
-  construction and use of vectors, sparse graphs, and dense and sparse
-  matrices. It provides serial, parallel and distributed memory
-  capabilities. Two Epetra objects are important for this
-  discussion. The first object is a {\sl communicator}, which
-  encapsulates all the inter-processor data exchange. The second
-  object is a {\sl map}, which describes the domain decomposition of
-  distributed linear algebra objects. Serial runs make use of trivial
-  communicators and maps; parallel runs adopt an MPI-based
-  communicator and support arbitrary maps. See~\cite{epetra-guide} for
-  more details.  Epetra uses BLAS and LAPACK where possible, and as a
-  result has good performance characteristics.
-
+construction and use of vectors, sparse distributed graphs, and dense and
+distributed sparse matrices. It provides serial, parallel and distributed
+memory capabilities. Epetra supports double-precision floating point data only
+(no single-precision or complex), and uses BLAS and LAPACK where possible, and
+as a result has good performance characteristics.  See~\cite{epetra-guide} for
+more details. 
 \item {\bf EpetraExt} offers a variety of extension capabilities to
   the Epetra package, such as input/output and coloring algorithms.
   The I/O capabilities make it possible to read and write generic
@@ -354,11 +354,12 @@ independent packages. The modules of \PyTrilinos\ are:
   solvers: UMFPACK~\cite{umfpack-acm-toms},
   PARDISO~\cite{pardiso-manual}, TAUCS~\cite{taucs-home-page}, SuperLU
   and SuperLU\_DIST~\cite{superlu-manual},
-  DSCPACK~\cite{dscpack-manual}, and MUMPS~\cite{mumps-manual}. As
+  DSCPACK~\cite{dscpack-manual}, MUMPS~\cite{mumps-manual}, and
+  ScaLAPACK~\cite{scalapack-book,scalapack}. As
   such, \PyTrilinos\ makes it possible to access state-of-the-art
   direct solver algorithms developed by groups of specialists, and
   written in different languages (C, FORTRAN77, FORTRAN90), in both
-  serial and parallel. By using Amesos, more than 350,000 code lines (without
+  serial and parallel environments. By using Amesos, more than 350,000 code lines (without
   considering BLAS, LAPACK, and ScaLAPACK) can be easily accessed from any
   code based on Trilinos (and therefore PyTrilinos).  We refer to the Amesos
   reference guide~\cite{Amesos-Reference-Guide} for more details.
@@ -387,16 +388,13 @@ independent packages. The modules of \PyTrilinos\ are:
 
 Note that all third-party libraries (except BLAS and LAPACK) are
 optional and do not need to be installed to use \PyTrilinos\ (or
-Trilinos).
+Trilinos). 
 
-\note{Say something about modularity, users may decide to compile and/or use
-  only some of the packages}
-
-Epetra is the ``language'' of Trilinos, and offers a convenient set of
-interfaces to define distributed linear algebra objects. Epetra
-supports double-precision floating point data only (no
-single-precision or complex).  \PyTrilinos\ cannot be used without the
-Epetra module.
+All the presented modules depend on Epetra, since Epetra is the ``language''
+of Trilinos, and offers a convenient set of interfaces to define distributed
+linear algebra objects.  \PyTrilinos\ cannot be used without the Epetra
+module, while all the other modules can be enabled or disabled in the
+configuration phase of Trilinos.
 
 %-----------------------------------------------------------------------------
 \section{Serial and Parallel Environments}
@@ -415,7 +413,7 @@ important field of application for most of Trilinos' algorithms. However,
 \item {\bf PyPAR} is a more light-weight wrapper of the MPI library
   for Python~\cite{pypar}.
 \item {\bf Python BSP} supports the more high-level Bulk Synchronous
-  Parallel approach~\cite{FIXME}
+  Parallel approach~\cite{bsp}
 \end{itemize}
 
 All these projects allow the use of Python through the interactive  prompt, 
@@ -424,19 +422,22 @@ All these projects allow the use of Python through the interactive  prompt,
   development. 
 
 Our approach is somehow complementary to the efforts of these projects. 
-We decided to use a standard, out-of-the-box, Python interpreter, then wrap all MPI calls
-through the Epetra package. In fact, all wrapped Trilinos packages are already
-based on Epetra communicators. This reflects the philosophy of all the
+We decided to use a standard, out-of-the-box, Python interpreter, then wrap 
+only the very basic MPI functions 
+(MPI\_Init(), MPI\_Finalize(), and MPI\_COMM\_WORLD). By wrapping these three
+objects, one can define an MPI-based Epetra communicator, on which
+all wrapped Trilinos packages are already
+based. This reflects the philosophy of all the
 considered
 Trilinos packages, that have no explicit dependency on MPI communicators, and
 accept the pure virtual class Epetra\_Comm instead. PyTrilinos scripts create
 a communicator using command
 \begin{verbatim}
-    comm = Epetra.PyComm()
+    >>> comm = Epetra.PyComm()
 \end{verbatim}
-which returns an {\tt Epetra.SerialComm} if \PyTrilinos\ has been compiled
-in serial mode, or an {\tt Epetra.MpiComm} if \PyTrilinos\ has support for
-MPI. By using {\tt Epetra.PyComm}, \PyTrilinos\ scripts are virtually
+which returns an Epetra.SerialComm if \PyTrilinos\ has been compiled
+in serial mode, or an Epetra.MpiComm if \PyTrilinos\ has support for
+MPI. By using Epetra.PyComm, \PyTrilinos\ scripts are virtually
 identical for both serial and parallel runs, and generally reads:
 \begin{verbatim}
     >>> from PyTrilios import Epetra
@@ -477,8 +478,8 @@ by using an instruction of type
 \begin{verbatim}
     % mpirun -np 4 python ./my-script.py
 \end{verbatim}
-where {\tt my-script.py} contains at least the basic instructions required
-to define an Epetra.PyComm.
+at the shell prompt, where {\tt my-script.py} contains at least the basic
+instructions required to define an Epetra.PyComm.
 
 \begin{figure}
 \begin{center}
@@ -505,6 +506,14 @@ mathematical background of the implemented algorithms.
 \label{subsec:epetra}
 %-----------------------------------------------------------------------------
 
+Two Epetra objects are important for this
+  discussion. The first object is a {\sl communicator}, which
+  encapsulates all the inter-processor data exchange. The second
+  object is a {\sl map}, which describes the domain decomposition of
+  distributed linear algebra objects. Serial runs make use of trivial
+  communicators and maps; parallel runs adopt an MPI-based
+  communicator and support arbitrary maps.
+  
 Epetra provides an extensive set of classes to create and fill
 distributed sparse matrices. These classes allow row-by-row or
 element-by-element constructions. Support is provided for common
@@ -805,17 +814,21 @@ coarsening strategy.
 %-----------------------------------------------------------------------------
 
 The EpetraExt module offers
-matrix-matrix operations. Two matrices (with compatible maps) can be
-added or multiplied. Also, reading and writing capabilities of
-important Epetra objects are made available. For example, to read a
+matrix-matrix operations (addition and multiplication), 
+and makes available reading and writing capabilities of
+important Epetra objects. For example, to read a
 vector and a matrix stored in Matrix-Market format, one simply has to
 write:
 \begin{verbatim}
     >>> (ierr, X2) = EpetraExt.MatrixMarketFileToMultiVector("x.mm", Map)
     >>> (ierr, A2) = EpetraExt.MatrixMarketFileToCrsMatrix("A.mm", Map)
 \end{verbatim}
-These functions are a powerful tool for exchanging data between C++
-codes written with Trilinos and Python codes written with \PyTrilinos.
+EpetraExt defines a powerful tool for exchanging data between C++
+codes written with Trilinos and Python codes written with \PyTrilinos. Users
+can load up distributed Trilinos objects,
+obtained with production codes and damped on file using the EpetraExt package,
+  then use Python to validate the code, or perform a fine-tuning of a
+  numerical algorithm.
 
 %-----------------------------------------------------------------------------
 \section{Comparison with Related Projects}
@@ -1107,10 +1120,11 @@ Table~\ref{tab:code_epetra}.}
 \label{sec:coarse}
 %-----------------------------------------------------------------------------
 
-Previous Section~\ref{sec:fine} showed that several overhead make
+Section~\ref{sec:fine} showed that the overhead required by Python and the
+PyTrilinos interfaces make
 fine-grained PyTrilinos scripts not competitive with their Trilinos
 counterpart. This Section, instead, presents how coarse-grained scripts in
-Python are competitive with their Trilinos counterpart.
+Python can be as effective as their compiled Trilinos counterpart.
 Table~\ref{tab:code_ml} presents codes to solve a linear system with a
 multilevel preconditioner based on aggregation; the matrix arises from a
 finite difference discretization of a Laplacian on a 3D structured Cartesian
@@ -1260,17 +1274,12 @@ Table~\ref{tab:code_ml}.}
 \label{sec:concluding}
 %-----------------------------------------------------------------------------
 
-We have presented an overview of the
-\PyTrilinos\ project. \PyTrilinos\ is an effort to facilitate the
-design, development, integration and ongoing support of mathematical
-software libraries.  \PyTrilinos\ provides a simple but powerful rapid
-development language, along with the integration tools needed to apply
-it in realistic development environments. With \PyTrilinos, it is no
-longer necessary to choose between fast development and fast
-execution.
-
-In our opinion, the most significant impact of \PyTrilinos\ is in the
-following areas:
+In this paper we have presented an overview of the \PyTrilinos\ project, an
+effort to facilitate the design, integration and ongoing support of
+mathematical software libraries.  \PyTrilinos\ provides a simple but powerful
+rapid development language, along with the integration tools needed to apply
+it in realistic environments. In our opinion, the most significant impact of
+\PyTrilinos\ is in the following areas:
 
 \begin{itemize}
 
@@ -1278,38 +1287,40 @@ following areas:
   coding is much faster than in other languages. For example, its
   dynamic typing, built-in objects, and garbage collection eliminate
   much of the manual bookkeeping code typically required in languages
-  like C or C++.
+  like C or C++. As most bookkeeping code is missing, Python programs are
+easier to understand and more closely reflect the actual problem they're
+intended to address.  Often, well-written Python code looks like pseudo code,
+  and as such it is easier to write, read, and maintain. 
 
 \item {\bf Brevity.} Python codes can be short and concise. Since things like
 type declaration, memory management, and common data structure implementations
 are absent, Python programs are typically a fraction of their C or C++
-equivalents.  Because most bookkeeping code is missing, Python programs are
-easier to understand and more closely reflect the actual problem they're
-intended to address.  Often, well-written Python code looks like pseudo code,
-  and as such it is is easier to read and maintain. Brevity is also promoted
-  by the object-oriented design of both \PyTrilinos\ and Trilinos itself.  
+equivalents.  Brevity is also promoted
+  by the object-oriented design of both \PyTrilinos\ and Trilinos itself. 
+  Python scripts are short, generally with few jump statements, and therefore
+  have good software metrics in terms of code coverage.
 
 \item {\bf Modularity.} Python allows the code to be organized in
   reusable, self-contained modules.  This also reflects the natural
   structure of Trilinos itself. Since Python supports both structured and
-  object-oriented design, users can adopt their preferred way or writing code.
-  Python scripts are short, generally with few jump statements, and therefore
-  have good software metrics.
+  object-oriented design, users can adopt their preferred way of writing code.
 
 \item {\bf Reusability.} Because Python is a high-level,
   object-oriented language, it encourages writing reusable software
   and well-designed systems.
 
-\item {\bf Legacy code migration.} Moving existing code from C/C++ to
-  Python makes it simpler and more flexible.  Modern numerical
-  algorithms are complex, and both the testing and fine tuning of
-  already developed algorithms, or the development of brand new ones
-  require a massive investment, for which rapid prototyping is
-  essential. On the other hand, programmers simply cannot ignore
-  efficiency completely. Our approach is the following: use Python
-  when speed of development matters, compiled languages when
-  efficiency dominates, and combinations of the two when our goals are
-  not absolute.
+%\item {\bf Legacy code migration.} Moving existing code from C/C++ to
+  %Python makes it simpler and more flexible.  Modern numerical
+  %algorithms are complex, and both the testing and fine tuning of
+  %already developed algorithms, or the development of brand new ones
+  %require a massive investment, for which rapid prototyping is
+  %essential. 
+  %On the other hand, programmers simply cannot ignore
+  %efficiency completely. Our approach is the following: 
+  %We use Python
+  %when speed of development matters, compiled languages when
+  %efficiency dominates, and combinations of the two when our goals are
+  %not absolute.
 
 \item {\bf Explorative Computation.} Since Python is an interpreted
   and interactive scripting language, the user can undertake
@@ -1357,8 +1368,11 @@ with no need to change or update them in a near future.
 
 \smallskip
 
-Of course, Python (and henceforth PyTrilinos) is not the perfect language for
-all problems. The most important problems we have encountered are:
+%With \PyTrilinos, it is no longer necessary to choose between fast development
+%and fast execution.  
+Of course, Python (and henceforth PyTrilinos) is not the
+perfect language for all problems. The most important problems we have
+encountered are:
 
 \begin{itemize}
 
@@ -1387,7 +1401,8 @@ all problems. The most important problems we have encountered are:
   it occurs.  The performance penalty is small if the C/C++ function
   does a lot of work.  Therefore, for rarely called function, this
   penalty is negligible.  All performance critical kernels should be
-  written in C, C++, or Fortran, and everything else can be in Python.
+  written in C, C++, or Fortran, and everything else can be in Python, as we
+  have shown for model problems in Section~\ref{sec:comparison}.
 
   This is especially critical in applications where function callbacks
   are used.  For example, in the NOX module, it is common to set up an
@@ -1398,6 +1413,13 @@ all problems. The most important problems we have encountered are:
   situation is complex and beyond the scope of this overview, we have
   had success with SWIG, the {\tt weave} module and even Numeric array
   syntax.
+
+\item {\bf Difficult Manage of C/C++ Arrays.} Although SWIG makes it easy to
+wrap Python's lists as C and C++ arrays (and vice-versa), 
+this process still requires the
+definition of wrappers in the interface file, that converts the array into a
+list, or a list into an array. Without an explicit wrapper, the proper
+handling of arrays can result in non-intuitive code, or memory leaks.
 
 \item {\bf Limited Templated Code.} Most object-oriented numerical
   libraries are currently adopting massive template support, and
