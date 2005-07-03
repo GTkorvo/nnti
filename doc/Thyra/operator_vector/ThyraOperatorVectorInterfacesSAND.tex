@@ -34,8 +34,8 @@ under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA, \\
 % ---------------------------------------------------------------------------- %
 % Set some things we need for SAND reports. These are mandatory
 %
-\SANDnum{SAND2003-1378}
-\SANDprintDate{April 2004}
+\SANDnum{SAND2005-xxx}
+\SANDprintDate{??? 2005}
 \SANDauthor{
 Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
 }
@@ -45,7 +45,7 @@ Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
 % ones provided by SANDreport.cls
 %
 \SANDreleaseType{Unlimited Release}
-%\SANDreleaseType{Not approved for release outside Sandia}
+%\SANDreleaseType{Not approved for general release}
 
 % ---------------------------------------------------------------------------- %
 % The following definition does not have a default value and will not
@@ -874,14 +874,14 @@ template<class Scalar> void abs( VectorBase<Scalar>* y, const VectorBase<Scalar>
 template<class Scalar> void reciprocal( VectorBase<Scalar>* y
                                         ,const VectorBase<Scalar>& x );           // y(i) = 1/x(i)
 template<class Scalar> void ele_wise_prod( const Scalar& alpha
-    ,const VectorBase<Scalar>& x, const VectorBase<Scalar>& v, VectorBase<Scalar>* y );   // y(i)+=alpha*x(i)*v(i)
+    ,const VectorBase<Scalar>& x, const VectorBase<Scalar>& v, VectorBase<Scalar>* y );// y(i)+=alpha*x(i)*v(i)
 template<class Scalar> void ele_wise_divide( const Scalar& alpha
-    ,const VectorBase<Scalar>& x, const VectorBase<Scalar>& v, VectorBase<Scalar>* y );   // y(i)=alpha*x(i)/v(i)
-template<class Scalar> void linear_combination( const int m                   // y(i) = beta*y(i)
+    ,const VectorBase<Scalar>& x, const VectorBase<Scalar>& v, VectorBase<Scalar>* y );// y(i)=alpha*x(i)/v(i)
+template<class Scalar> void linear_combination( const int m                       // y(i) = beta*y(i)
                              ,const Scalar alpha[], const VectorBase<Scalar>* x[] // + alpha[0]*x[0](i)+...
                              const Scalar &beta, VectorBase<Scalar> *y );         // +.alpha[m-1]*x[m-1](i)
 template<class Scalar> void seed_randomize( unsigned int );                   // Seed for randomize()
-template<class Scalar> void randomize( Scalar l, Scalar u, VectorBase<Scalar>* v ); // v(i) = random(l,u)
+template<class Scalar> void randomize( Scalar l, Scalar u, VectorBase<Scalar>* v );// v(i) = random(l,u)
 } // end namespace Thyra
 ----------------------------------------------------------------------------------------------------
 \end{verbatim}}
@@ -1478,31 +1478,33 @@ public:
 {}\texttt{enum}
 
 {\scriptsize\begin{verbatim}
-enum ETransp { NOTRANS, TRANS, CONJTRANS };
+enum ETransp { NOTRANS, CONJ, TRANS, CONJTRANS };
 \end{verbatim}}
 
-{}\noindent{}The use of an {}\texttt{enum} instead of a simple
-{}\texttt{bool} for the {}\texttt{M\_trans} argument is very
-important.  The use of an {}\texttt{enum} disallows the implicit
-conversion from other types like {}\texttt{char}, {}\texttt{int},
-{}\texttt{double} and any type of pointer.  Using {}\texttt{enum}s
-instead of {}\texttt{bool}s requires more typing but greatly helps to
-avoid introducing bugs into the program that are extremely difficult
-to track down.  In addition, the use of an {}\texttt{enum} allows for
-more than just two values such as is shown for the third value
-{}\texttt{CONJTRANS} which signifies the complex conjugate.
+{}\noindent{}The use of an {}\texttt{enum} instead of a {}\texttt{char} (i.e.\
+BLAS) for the {}\texttt{M\_trans} argument is very important.  The use of an
+{}\texttt{enum} disallows the implicit conversion from other types like
+{}\texttt{bool}, {}\texttt{int}, and {}\texttt{double}.  Using
+{}\texttt{enum}s requires more typing but greatly helps to avoid introducing
+bugs into the program that are extremely difficult to track down.  In
+addition, the use of an {}\texttt{enum} allows for more than just two values
+such as is shown for the second value {}\texttt{CONJ} which signifies
+non-transposed with complex-conjugate elements and the fourth value
+{}\texttt{CONJTRANS} which signifies the transpose operator with
+complex-conjugate elements.
 
-The fact that ANAs can be designed to handle both real and complex
-scalar types presents somewhat of a tricking problem for
+The fact that ANAs can be designed to handle both real and complex scalar
+types presents somewhat of a tricking problem for
 {}\texttt{\textit{Linear\-Op\-Base}} implementations that only support real
-scalars (i.e.~{}\texttt{double}).  The problem is that the transpose
-argument value of {}\texttt{CONJTRANS} may be passed to an real-only
+scalars (i.e.~{}\texttt{double}).  The problem is that the argument value of
+{}\texttt{CONJ} or {}\texttt{CONJTRANS} may be passed to a real-only
 implementation of {}\texttt{\textit{Linear\-Op\-Base}} from from an ANA
 designed to work properly for complex scalars.  Real-valued
 {}\texttt{\textit{Linear\-Op\-Base}} implementations should determine if
 transpose or non-transpose is to be used by checking for
-{}\texttt{M\_trans == NOTRANS} and then assume that if
-{}\texttt{M\_trans != NOTRANS} then the transpose should be used.  For
+{}\texttt{real\-\_trans(M\_trans) == NOTRANS}.  The function
+{}\texttt{real\-\_trans(...)} converts a {}\texttt{CONJ} into a
+{}\texttt{NOTRANS} and a {}\texttt{CONJTRANS} into a {}\texttt{TRANS}.  For
 example, a real-valued implementation of
 {}\texttt{\textit{LinearOp\-::apply(\-...)}} should look like:
 
@@ -1510,7 +1512,7 @@ example, a real-valued implementation of
 void MyLinearOp::apply( const ETransp M_trans, const Vector<double> &x
     ,Vector<double> *y ,const double alpha=1.0 ,const double beta=0.0 ) const
 {
-  if( M_trans == NOTRANS ) {
+  if( real_trans(M_trans) == NOTRANS ) {
     // Apply the non-transposed operator
     ...
   }
@@ -1521,11 +1523,20 @@ void MyLinearOp::apply( const ETransp M_trans, const Vector<double> &x
 }
 \end{verbatim}}
 
+Concrete {}\texttt{\textit{Linear\-Op\-Base}} implementations that can handle
+complex {}\texttt{Scalar} types need to carefully consider how to interpret
+the {}\texttt{ETransp} argument.  When looking for the structural transpose
+(i.e.\ for selecting the range or domain spaces for instance) a template
+implementation capable of handing complex {}\texttt{Scalar} type should check
+{}\texttt{real\-\_trans(M\_trans) == NOTRANS}.
 
-
-This approach automatically makes the enum values of
-{}\texttt{CONJTRANS} and {}\texttt{TRANS} mean the same thing for
-real-valued implementations (as they should).
+Note that most software for handling complex type can not handle the
+{}\texttt{CONJ} value.  For example, LAPACK only handles {}\texttt{NOTRANS},
+{}\texttt{TRANS}, and {}\texttt{CONJTRANS}.  However, the value
+{}\texttt{CONJ} was added to the enum {}\texttt{ETransp} since there are use
+cases where it may come up and {}\texttt{\textit{Linear\-Op\-Base}}
+implementations are free to not support it by returning false from there
+{}\texttt{\textit{opSupported(M\_trans)}} function.
 
 The {}\texttt{\textit{Multi\-Vector\-Base}} version of
 {}\texttt{\textit{LinearOp\-::apply(\-...)}} has an identical prototype except
@@ -2290,13 +2301,13 @@ void foo5(
     Range1D(firstRowOff+1,firstRowOff+A_nrows)
     Range1D(firstColOff+1,firstColOff+A_ncols)
    ,&sub_mv );
-  for( Index j=0; j < sub_mv.numSubCols(); ++j ) {  // Loop over colunmns
-    for( Index i=0; i < sub_mv.subDim(); ++i ) {    //   Loop over elements in a column
-      A[i+j*A_ld]                                   //     Copy elements
+  for( Index j=0; j < sub_mv.numSubCols(); ++j ) {   // Loop over colunmns
+    for( Index i=0; i < sub_mv.subDim(); ++i ) {     //   Loop over elements in a column
+      A[i+j*A_ld]                                    //     Copy elements
         =sub_mv.values()[i+j*sub_mv.leadingDim()];
     }
   }
-  Y.freeSubMultiVector(&sub_mv);                    // Free the view of Y
+  Y.freeSubMultiVector(&sub_mv);                     // Free the view of Y
 }
 \end{verbatim}}
 
@@ -2326,8 +2337,8 @@ void foo6(
   ,const Index firstRowOff, const Index firstColOff, MultiVectorBase<Scalar> *Y
   )
 {
-  RTOpPack::MutableSubMultiVectorT<Scalar> sub_mv;   // Create (init) submultivector view object
-  Y->getSubMultiVector(                              // Initialize the view object
+  RTOpPack::MutableSubMultiVectorT<Scalar> sub_mv;  // Create (init) submultivector view object
+  Y->getSubMultiVector(                             // Initialize the view object
     Range1D(firstRowOff+1,firstRowOff+A_nrows)
     Range1D(firstColOff+1,firstColOff+A_ncols)
    ,&sub_mv );
