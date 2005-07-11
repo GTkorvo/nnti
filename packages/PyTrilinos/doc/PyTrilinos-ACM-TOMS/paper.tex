@@ -37,7 +37,7 @@
 
 \markboth{M. Sala and W. F. Spotz and M. A. Heroux}{...}
 
-\title{FIXME!}
+\title{PyTrilinos:  Using Parallel Distributed Memory Linear Algebra Libraries via Python}
 
 \author{Marzio Sala, W. F. Spotz and M. A. Heroux\\Sandia National Laboratories}
 
@@ -76,11 +76,11 @@ identical.
  Object-oriented design methods}}
 \category{D.2.13}{Software Engineering}{Reusable Software--{\sl Reusable
   libraries}}
-\category{G.1.4}{Numerical Analysis}{General--{\sl Iterative methods}} 
-\category{G.1.3}{Numerical Analysis}{Numerical Linear Algebra--{\sl 
+\category{G.1.4}{Numerical Analysis}{General--{\sl Iterative methods}}
+\category{G.1.3}{Numerical Analysis}{Numerical Linear Algebra--{\sl
   Sparse, structured, and very large systems (direct and iterative methods)}}
-\category{G.1.8}{Numerical Analysis}{Numerical Linear Algebra--{\sl 
- Multigrid and multilevel methods}} 
+\category{G.1.8}{Numerical Analysis}{Numerical Linear Algebra--{\sl
+ Multigrid and multilevel methods}}
 \category{G.4}{Mathematical Software}{Algorithm design and analysis}
 
 %\terms{Documentation, Languages}
@@ -91,7 +91,7 @@ identical.
 \setcounter{page}{1}
 
 \begin{bottomstuff}
-Authors' address: 
+Authors' address:
 PO Box 5800 MS 1110, Albuquerque, NM 87185-1110, U.S.A.\newline
 ASCI program and the DOE Office of Science MICS program at Sandia
   National Laboratory.  Sandia is a multiprogram laboratory operated by
@@ -121,7 +121,8 @@ for the latter, the code is compiled and an executable is created.
 It is well known that interpreted code is easier to use and debug,
 since the interpreter will analyze each instruction as it is
 executed. This comes at a computational price, since the interpreter
-may require several CPU cycles to parse each instruction.
+may require many (but independent of problem size) CPU cycles to
+parse each instruction.
 
 Therefore, interpreted languages are often disregarded by developers
 of high-performance applications or are used only in the concept
@@ -151,7 +152,7 @@ requires the efficiency of a compiled language is related to a small
 set of self-contained functions or classes. Therefore, one can adopt
 an interpreted (and possibly interactive) language, without a big
 performance degradation, provided there is a robust interface
-between the interpreted and compiled languages. Among the available
+between the interpreted and compiled programs. Among the available
 scripting languages, we decided to adopt Python (see, for instance,
 \cite{python-book}).  Python is an interpreted, interactive,
 object-oriented programming language, which combines remarkable
@@ -160,8 +161,8 @@ Python code reads like pseudo code).  Perhaps most importantly, it
 can be easily extended by using SWIG~\cite{swig} to create wrappers
 to modules written in C or C++ for all performance critical tasks.
 
-This article describes a collection of numerical analysis
-algorithms, called PyTrilinos, built on top of the Trilinos
+This article describes a collection of numerical linear algebra and
+solver libraries, called PyTrilinos, built on top of the Trilinos
 project~\cite{Trilinos-home-page,Heroux:2005:OTP}.  It adds
 significant power to the interactive Python session by exposing the
 user to high-level commands and classes for the creation, handling
@@ -170,9 +171,9 @@ objects. Using \PyTrilinos, an interactive Python session becomes a
 powerful data-processing and system-prototyping environment that can
 be used to test, validate, use and extend serial and parallel
 numerical algorithms. In our opinion, Python naturally complements
-system languages like C, C++ and FORTRAN rather than competing with
-them. Equivalently, PyTrilinos complements Trilinos by offering a
-rapid development cycle for some of its capabilities.
+languages like C, C++ and FORTRAN rather than competes with them.
+Similarly, PyTrilinos complements Trilinos by offering a rapid
+development cycle for some of its capabilities.
 
 %Python is a high-level general purpose programming language. Because
 %code is automatically compiled to byte code and executed, Python is
@@ -186,15 +187,16 @@ rapid development cycle for some of its capabilities.
 
 \smallskip
 
-This document is organized as follows. Section~\ref{sec:design} describes the
-project design, the organization of PyTrilinos and its division into modules.
-Comments on the usage of
-parallel, MPI Python scripts using PyTrilinos are reported in
-Section~\ref{sec:serial}.
-Section~\ref{sec:comparison_python} positions PyTrilinos with respect to similar Python projects.
+This document is organized as follows. Section~\ref{sec:design}
+describes the project design, the organization of PyTrilinos and its
+division into modules. Comments on the usage of parallel, MPI Python
+scripts using PyTrilinos are reported in Section~\ref{sec:serial}.
+An overview of how to use PyTrilinos is given in
+Section~\ref{sec:using}.  Section~\ref{sec:comparison_python}
+positions PyTrilinos with respect to similar Python projects.
 Section~\ref{sec:comparison_matlab} compares PyTrilinos with MATLAB.
-Examples of usage and comparisons between Trilinos
-and PyTrilinos codes are reported in Section~\ref{sec:comparison_trilinos}.
+Examples of usage and comparisons between Trilinos and PyTrilinos
+codes are reported in Section~\ref{sec:comparison_trilinos}.
 Concluding remarks are reported in Section~\ref{sec:concluding}.
 
 %-----------------------------------------------------------------------------
@@ -259,7 +261,7 @@ other approaches are:
 such as matrix multiplication and factorizations.  MATLAB is the
 {\it lingua franca} of numerical algorithm developers and is used
 almost universally for algorithm prototyping when problem sizes are
-small, and can in many cases also be a production computing
+small.  In many cases, MATLAB can also be a production computing
 environment. However, MATLAB is often not sufficient for high-end
 application because of its limited parallel computing support.
 MATLAB does support interaction with other languages.  It can be
@@ -305,10 +307,10 @@ The key components are:
 
 \item {\bf Trilinos}, a set of numerical solver packages in active
   development that allows high-performance scalable linear algebra
-  operations for problems defined on sparse matrices. Trilinos
+  operations for large systems of equations. Trilinos
   contains more that half a million of code lines, and it can
-  interface to several third-party libraries. The source codes of the
-  ``stable'' linear algebra packages of Trilinos account for about 300,000
+  interface to many third-party libraries. The source code of the
+  current Trilinos public release accounts for about 300,000
   code lines, divided in about 67,000 code lines for distributed linear
   algebra objects and utilities, 20,000 code lines for direct solvers and
   interfaces to third-party direct solvers, 128,000 code lines for multilevel
@@ -331,8 +333,8 @@ The key components are:
 \end{enumerate}
 
 A description of the organization of  the linear algebra modules of
-PyTrilinos, with some of the third-party libraries can be accessed,
-is reported in Figure~\ref{fig:organization}.
+PyTrilinos, with some of the third-party libraries that can be
+accessed, is shown in Figure~\ref{fig:organization}.
 
 \begin{figure}
 \begin{center}
@@ -399,13 +401,12 @@ more details.
   compatible with Epetra and AztecOO.  It supports construction and
   use of parallel distributed memory preconditioners such as
   overlapping Schwarz domain decomposition with several local solvers.
-  IFPACK can take advantage of SPARSKIT~\cite{sparskit}, a venerable
-  but successful software package; see~\cite{ifpack-guide}.
+  IFPACK can take advantage of SPARSKIT~\cite{sparskit}, a widely used software package; see~\cite{ifpack-guide}.
 
 \item {\bf ML} contains a set of multilevel preconditioners based on
   aggregation procedures for serial and vector problems compatible with Epetra
   and AztecOO. ML can take
-  advantage of the METIS~\cite{metis} ParMETIS~\cite{parmetis}
+  advantage of the METIS~\cite{metis} and ParMETIS~\cite{parmetis}
   libraries to create the aggregates.  For a general introduction to
   ML and its applications, we refer to the ML Users
   Guide~\cite{ml-guide}.
@@ -598,8 +599,9 @@ This module is mainly meant for testing linear solvers.
 \label{subsec:amesos}
 %-----------------------------------------------------------------------------
 
-Once a (square) sparse matrix and two vectors are created, an
-important problem is how to solve the corresponding linear system
+Once a (square) sparse matrix and two vectors or multivectors are
+created, an important problem is how to solve the corresponding
+linear system
 \begin{equation}
   \label{eq:lin_sys}
   A X = B
@@ -618,8 +620,8 @@ both linear and non-linear.
 
 \smallskip
 
-Probably, the most robust strategy to solve (\ref{eq:lin_sys}) is to
-factorize the matrix $A$ into the product of two matrices $L$ and
+Typically, the most robust strategy to solve (\ref{eq:lin_sys}) is
+to factor the matrix $A$ into the product of two matrices $L$ and
 $U$, so that $A = L \, U$, and the linear systems with $L$ and $U$
 are readily solvable. Typically, $L$ and $U$ are a lower and upper
 triangular matrix, respectively, and the process is referred to as
@@ -701,10 +703,11 @@ processors. The forward and back triangular solves typically exhibit
 very poor parallel speedup.
 
 A very well known solution to this problem is to adopt an iterative
-solution process, like conjugate gradient or GMRES~\cite{golub96matrix}. The
-rationale behind iterative methods is that they only require (at least
-in their simplest form) matrix-vector and vector-vector products, and
-both operations scale well for sparse matrices.
+solution process, like conjugate gradient or
+GMRES~\cite{golub96matrix}. The rationale behind iterative methods
+is that they only require (at least in their simplest form)
+matrix-vector and vector-vector operations, and both classes of
+operations scale well.
 
 Unfortunately, the convergence of iterative methods is determined by
 the spectral properties of the matrix $A$ --- typically, its condition
@@ -862,13 +865,14 @@ system and select a preconditioning strategy.  In AMG, the only
 additional information required from the user is to specify a
 coarsening strategy.
 
-Using the ML module, the user can easily create black-box two-level and
-multilevel preconditioners based on smoothed aggregation  procedures
-(see \cite{sala04analysis,brezina97robust} and the references therein).
-Parameters are specified using a Python's dictionary, as presented for the
-Amesos module in Section~\ref{subsec:amesos}; the list of accepted parameters
-is given in~\cite{ml-guide}. Note that applications using ML preconditioners
-have been proved to be scalable up to thousands of
+Using the ML module, the user can easily create black-box two-level
+and multilevel preconditioners based on smoothed aggregation
+procedures (see \cite{sala04analysis,brezina97robust} and the
+references therein). Parameters are specified using a Python
+dictionary, as presented for the Amesos module in
+Section~\ref{subsec:amesos}; the list of accepted parameters is
+given in~\cite{ml-guide}. Note that applications using ML
+preconditioners have been proved to be scalable up to thousands of
 processors~\cite{ijnme,shadid-jcp-dd-precond}.
 
 %-----------------------------------------------------------------------------
@@ -887,9 +891,10 @@ write:
     >>> (ierr, A2) = EpetraExt.MatrixMarketFileToCrsMatrix("A.mm", Map)
 \end{verbatim}
 EpetraExt defines a powerful tool for exchanging data between C++
-codes written with Trilinos and Python codes written with \PyTrilinos. Users
-can load up distributed Trilinos objects,
-obtained with production codes and damped on file using the EpetraExt package,
+codes written with Trilinos and Python codes written with
+\PyTrilinos. Users can load up distributed Trilinos objects,
+obtained with production codes and stored in a file using the
+EpetraExt package,
   then use Python to validate the code, or perform a fine-tuning of a
   numerical algorithm.
 
@@ -911,14 +916,14 @@ Python projects:
   packages, the fundamental \PyTrilinos\ vector class, {\tt
     Epetra.Vector}, inherits from both the C++ {\tt Epetra\_Vector}
   and the Python {\tt UserArray} classes.  Thus a {\tt Epetra.Vector}
-  {\sl is} a Numeric array, and can be treated as such with other
+  {\sl isa} Numeric array, and can be treated as such with other
   Python modules.  However, note that a Numeric array is {\sl not}
   recognized as a {\tt Epetra\_Vector}, since all distributed Epetra
   objects requires an underlying Map (not supported by Numeric).
 
 \item {\bf NumArray.}  NumArray is a reimplementation of Numeric which
   adds the ability to efficiently manipulate large contiguous-data
-  arrays in ways similar to MATLAB and IDL.  Many scientific Python
+  arrays in ways similar to MATLAB.  Many scientific Python
   packages have begun the migration from Numeric to NumArray, although
   not \PyTrilinos.
 
@@ -949,9 +954,9 @@ Python projects:
   PySparse is probably the first successful public-domain software that offers
   efficient sparse matrix capabilities in Python. However, in our opinion
   PyTrilinos allows the user to access a much larger set of well-tested
-  algorithms (including nonlinear solvers) 
+  algorithms (including nonlinear solvers)
   in a more modular way. Besides, PySparse cannot be used in a
-  parallel environments while PyTrilinos do.
+  parallel environments while PyTrilinos can.
 
 \end{itemize}
 
@@ -960,18 +965,18 @@ Python projects:
 \label{sec:comparison_matlab}
 %-----------------------------------------------------------------------------
 
-Any mathematical software framework which
-claims to be easy-to-use cannot avoid a comparison with MATLAB, the
-{\sl de-facto} standard for the development of numerical analysis
-algorithms and software. Our impression is that, while MATLAB's
-vector syntax and built-in matrix data types greatly simplifies the
-programming language, it is not possible to perform large-scale
-computing using this language. MATLAB's sparse matrix operations are
-slow compared with Epetra's. Another handicap of MATLAB is its
-inflexible language: There may be only one visible function in a
-file, and the function name must be the file name itself. This can
-make harder to modularize the code.  Other desirable language
-features, such as exception handling, are also missing in MATLAB.
+Any mathematical software framework which claims to be easy-to-use
+cannot avoid a comparison with MATLAB, the {\sl de-facto} standard
+for the development of numerical analysis algorithms and software.
+Our experience is that, while MATLAB's vector syntax and built-in
+matrix data types greatly simplifies the programming language, it is
+not possible to perform large-scale computing using this language.
+MATLAB's sparse matrix operations are slow compared with Epetra's.
+Another handicap of MATLAB is its inflexible language: There may be
+only one visible function in a file, and the function name must be
+the file name itself. This can make it harder to modularize the
+code. Other desirable language features, such as exception handling,
+are also missing in MATLAB.
 
 We now compares the CPU time required by MATLAB 7.0 (R14) and
 PyTrilinos to create a dense and a sparse matrix.
@@ -1082,16 +1087,17 @@ one-to-one map. The most important differences are:
 
 \end{itemize}
 
-Without doubts, however, the most important comparison between PyTrilinos and
-Trilinos is the analysis of the overhead required by the Python interpreter
-and the interface functions. Here, we distinguish between {\sl fine-grained}
-and {\sl coarse-grained} scripts. With fine-grained script we mean a script
-that contains simple, basic instructions, for which the overhead of parsing
-can be significant. With coarse-grained script, instead, we indicate scripts
-that contain few, computationally intensive statements.
-Sections~\ref{sec:fine} and~\ref{sec:coarse}
-compare two sets of equivalent codes, one based on Trilinos and the other on
-PyTrilinos, and report the CPU time required on a Linux machine to execute the
+Without doubts, however, the most important comparison between
+PyTrilinos and Trilinos is the analysis of the overhead required by
+the Python interpreter and the interface functions. Here, we
+distinguish between {\sl fine-grained} and {\sl coarse-grained}
+scripts. By a fine-grained script we mean one that contains simple,
+basic instructions, for which the overhead of parsing can be
+significant. By a coarse-grained script, instead, we indicate one
+that contain few, computationally intensive, statements.
+Sections~\ref{sec:fine} and~\ref{sec:coarse} compare two sets of
+equivalent codes, one based on Trilinos and the other on PyTrilinos,
+and report the CPU time required on a Linux machine to execute the
 codes.
 
 %-----------------------------------------------------------------------------
@@ -1099,9 +1105,9 @@ codes.
 \label{sec:fine}
 %-----------------------------------------------------------------------------
 
-This Section we present how to construct a
-distributed (sparse) matrix, arising from a finite-difference solution
-of a one-dimensional Laplace problem. This matrix looks like:
+In this Section we present how to construct a distributed (sparse)
+matrix, arising from a finite-difference solution of a
+one-dimensional Laplace problem. This matrix looks like:
 \begin{equation*}
   A = \begin{pmatrix}
      2 & -1     &        &        &    \\
@@ -1241,13 +1247,14 @@ Epetra.Finalize();
 \label{tab:code_epetra}
 \end{sidewaystable}
 
-Table~\ref{tab:time_epetra} compares the CPU time required on a 1.7 GHz Linux
-machine to run the two codes for different values of the matrix size. Only
-one processor has been used in the computations. Although the PyTrilinos code
-can be considered somehow shorter and cleaner, it is slower of a factor of
-about 10. This is due to several overhead: first, the parsing of each Python
-instruction, then the conversion from Python's lists to C++ arrays, then the
-call to the Epetra functions.
+Table~\ref{tab:time_epetra} compares the CPU time required on a 1.7
+GHz Linux machine to run the two codes for different values of the
+matrix size. Only one processor has been used in the computations.
+Although the PyTrilinos code can be considered somehow shorter and
+cleaner, it is slower of a factor of about 10. This is due to
+several sources of overhead: first, the parsing of each Python
+instruction, then the conversion from Python's lists to C++ arrays,
+then the call to the Epetra functions.
 \begin{table}
 \begin{center}
 \begin{tabular}{| l | c | c |}
@@ -1261,7 +1268,7 @@ call to the Epetra functions.
 \hline
 \end{tabular}
 \caption{CPU time (in seconds) on Linux/GCC for the codes reported in
-Table~\ref{tab:code_epetra}.}
+Table~\ref{tab:_epetra}.}
 \label{tab:time_epetra}
 \end{center}
 \end{table}
@@ -1425,12 +1432,13 @@ Table~\ref{tab:code_ml}.}
 \label{sec:concluding}
 %-----------------------------------------------------------------------------
 
-In this paper we have presented an overview of the \PyTrilinos\ project, an
-effort to facilitate the design, integration and ongoing support of
-mathematical software libraries.  \PyTrilinos\ provides a simple but powerful
-rapid development language, along with the integration tools needed to apply
-it in realistic environments. In our opinion, the most significant impact of
-\PyTrilinos\ is in the following areas:
+In this paper we have presented an overview of the \PyTrilinos\
+project, an effort to facilitate the design, integration and ongoing
+support of Python access to a large collection of mathematical
+software libraries. \PyTrilinos\ provides a simple but powerful
+rapid development environment, along with the integration tools
+needed to apply it in realistic environments. In our opinion, the
+most significant impact of \PyTrilinos\ is in the following areas:
 
 \begin{itemize}
 
@@ -1542,7 +1550,11 @@ encountered are:
   large scale computations.
 
 \item {\bf Lack of Compile-time Checks.} In Python all checks must be
-  performed at run-time.
+  performed at run-time.  Furthermore, Python does not support
+  strong typing of variables, so user mistakes related to incorrect
+  variable usage can be a challenge to find and correct, where these
+  types of mistakes would be caught quickly by a strongly-typed
+  language and compiling system such as C++ and Java.
 
 \item {\bf Performance Considerations.}  By using a Python wrapper a
   performance penalty is introduced, due to decoding of Python code,
@@ -1566,7 +1578,7 @@ encountered are:
   had success with SWIG, the {\tt weave} module and even Numeric array
   syntax.
 
-\item {\bf Difficult Manage of C/C++ Arrays.} Although SWIG makes it easy to
+\item {\bf Management of C/C++ Arrays.} Although SWIG makes it easy to
 wrap Python's lists as C and C++ arrays (and vice-versa),
 this process still requires the
 definition of wrappers in the interface file, that converts the array into a
@@ -1588,22 +1600,23 @@ handling of arrays can result in non-intuitive code, or memory leaks.
 
 \smallskip
 
-To summarize, the most important feature of Python is that it is a
-powerful but simple programming language designed for development
-speed, for situations in which the complexity of larger languages can
-be a liability. Of course, Python enthusiasts will point out several
-other strengths of the language; our aim was to show that Python can
-be successfully used to develop and access state-of-the-art numerical
-solver algorithms, in both serial and parallel environments.
+To summarize, the most important feature of Python is its powerful
+but simple programming environment designed for development speed
+and for situations where the complexity of compiled languages can be
+a liability. Of course, Python enthusiasts will point out several
+other strengths of the language; our aim is to show that Python can
+be successfully used to develop and access state-of-the-art
+numerical solver algorithms, in both serial and parallel
+environments.
 
-We believe that \PyTrilinos\ is a very unique effort, since for the
-first time a massive number of high-performance algorithms for
-distributed sparse linear algebra has been made easily available from
-a scripting language.  None of the previously reported projects for
-scientific computing with Python handles sparse and distributed
-matrices, or the diversity of solver algorithms. We hope that PyTrilinos can
-help to make the development cycle of high-performance numerical algorithms
-more efficient and productive.
+We believe that \PyTrilinos\ is a  unique effort, since for the
+first time a large number of high-performance algorithms for
+distributed sparse linear algebra has been made easily available
+from a scripting language.  None of the previously reported projects
+for scientific computing with Python handles sparse and distributed
+matrices, or the diversity of solver algorithms. We hope that
+PyTrilinos can help to make the development cycle of
+high-performance numerical algorithms more efficient and productive.
 
 %-----------------------------------------------------------------------------%
 \bibliographystyle{plain}
