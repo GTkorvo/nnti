@@ -35,7 +35,8 @@
 \newcommand{\BibTeX}{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
-\markboth{M. Sala and W. F. Spotz and M. A. Heroux}{...}
+\markboth{M. Sala and W. F. Spotz and M. A. Heroux}{Using Parallel Libraries via
+  Python}
 
 \title{PyTrilinos:  Using Parallel Distributed Memory Linear Algebra Libraries via Python}
 
@@ -85,7 +86,8 @@ identical.
 
 %\terms{Documentation, Languages}
 
-\keywords{Multilevel preconditioners, object-oriented}
+\keywords{Object-oriented programming, script
+  languages, direct solvers, multilevel preconditioners, nonlinear solvers.}
 \begin{document}
 
 \setcounter{page}{1}
@@ -141,7 +143,8 @@ comparable to that of native C, C++ or FORTRAN code. Flexibility is
 fundamental for rapid prototyping, in the sense that the developer
 should be able to write a basic code satisfying his or her needs in a
 very short time.  However, it is difficult for a single programming
-language to be easy-to-use, support rapid development, and produce
+language to be at the same time 
+easy-to-use, support rapid development, and produce
 optimized executables. Indeed, the goals of efficiency and flexibility
 are often in conflict with each other. From our point of view, the key
 observation to solve this problem is that, for most applications, the
@@ -239,7 +242,7 @@ required without cluttering the code with error checking.
 
 Python's development cycle is dramatically shorter than that of
 traditional tools. In Python, there are no compile or link
-steps--Python programs simply import modules at runtime and use the
+steps---Python programs simply import modules at runtime and use the
 objects they contain. Because of this, Python programs run immediately
 after changes are made. Python integration tools make it usable in
 hybrid, multi-component applications. As one consequence, systems can
@@ -393,7 +396,7 @@ modules of \PyTrilinos\ are:
   to the following third-party serial and parallel sparse direct
   solvers: UMFPACK~\cite{umfpack-acm-toms},
   PARDISO~\cite{oskl:04-etna,sg:04-fgcs},
-  TAUCS~\cite{taucs-home-page}, SuperLU and
+  TAUCS~\cite{rozin04locality,rotkin04design,irony04parallel}, SuperLU and
   SuperLU\_DIST~\cite{superlu-manual}, DSCPACK~\cite{dscpack-manual},
   MUMPS~\cite{mumps-manual}, and
   ScaLAPACK~\cite{scalapack-book,scalapack}. As such,
@@ -403,7 +406,7 @@ modules of \PyTrilinos\ are:
   parallel environments. By using Amesos, more than 350,000 code lines
   (without considering BLAS, LAPACK, and ScaLAPACK) can be easily
   accessed from any code based on Trilinos (and therefore PyTrilinos).
-  We refer to the Amesos reference guide~\cite{Amesos-Reference-Guide}
+  We refer to~\cite{Amesos-Reference-Guide,Amesos-Design}
   for more details.
 
 \item {\bf AztecOO} contains preconditioned Krylov accelerators, like
@@ -672,7 +675,7 @@ both linear and non-linear.
 Typically, the most robust strategy to solve (\ref{eq:lin_sys}) is to
 factor the matrix $A$ into the product of two matrices $L$ and $U$, so
 that $A = L \, U$, and the linear systems with $L$ and $U$ are readily
-solvable. Typically, $L$ and $U$ are a lower and upper triangular
+solvable. Usually, $L$ and $U$ are a lower and upper triangular
 matrix, respectively, and the process is referred to as LU
 decomposition. In PyTrilinos, the direct solution of large linear
 systems is performed by the Amesos module, which defines interfaces to
@@ -751,7 +754,7 @@ matrix-vector and vector-vector operations, and both classes of
 operations scale well.
 
 Unfortunately, the convergence of iterative methods is determined by
-the spectral properties of the matrix $A$ --- typically, its condition
+the spectral properties of the matrix $A$---typically, its condition
 number $\kappa(A)$.  For real-life problems $\kappa(A)$ is often
 ``large'', meaning that the iterative solution method will converge
 slowly. To solve this problem, the original linear system is replaced
@@ -775,20 +778,7 @@ multilevel methods.
 Because ILU preconditioners do not scale well on parallel computers, a
 common practice is to perform {\em local} ILU factorizations.  In this
 situation, each processor computes a factorization of a subset of
-matrix rows and columns independently from all other processors.  This
-additional layer of approximation leads to a block Jacobi type of
-preconditioner across processors, where each block is solved using an
-ILU preconditioner.  The difficulty with this type of preconditioner
-is that it tends to become less robust and require more iterations as
-the number of processors used increases.  This effect can be offset to
-some extent by allowing {\em overlap}.  Overlap refers to having
-processors redundantly own certain rows of the matrix for the ILU
-factorization.  Level-1 overlap is defined so that a processor will
-include rows that are part of its original set.  In addition, if row
-$i$ is part of its original set and row $i$ of $A$ has a nonzero entry
-in column $j$, then row $j$ will also be included in the factorization
-on that processor.  Other levels of overlap are computed recursively.
-
+matrix rows and columns independently from all other processors.  
 What we have just described is an example of one-level overlapping
 domain decomposition (DD) preconditioners.  The basic idea of DD
 methods consists in dividing the computational domain into a set of
@@ -827,7 +817,7 @@ to define other flavors of domain decomposition preconditioners.
 \begin{figure}
   \begin{center}
     \includegraphics[height=5cm]{sparsity.ps}
-    \caption{Sparsity pattern of matrix {\tt fidap05} obtained using
+    \caption{Plot of sparsity pattern of a matrix obtained using
       {\tt IFPACK.PrintSparsity()}.}
     \label{fig:sparsity}
   \end{center}
@@ -975,7 +965,9 @@ Python projects:
   such with other Python modules.  However, note that a Numeric array
   is {\sl not} recognized as a {\tt Epetra\_Vector}, since all
   distributed Epetra objects requires an underlying communicator and
-  map (not supported by Numeric).
+  map (not supported by Numeric). 
+
+  {\bf Some of this has already been discussed in Section 2.4...}
 
 \item {\bf NumArray.}  NumArray is a reimplementation of Numeric which
   adds the ability to efficiently manipulate large contiguous-data
@@ -983,12 +975,16 @@ Python projects:
   have begun the migration from Numeric to NumArray, although not
   \PyTrilinos.
 
+  {\bf Why aren't we using NumArray?}
+
 \item {\bf SciPy.} SciPy is an open source library of scientific tools
   for Python. SciPy supplements the popular Numeric module, gathering
   a variety of high level science and engineering modules together as
   a single package. SciPy includes modules for graphics and plotting,
   optimization, integration, special functions, signal and image
   processing, genetic algorithms, ODE solvers, and others.
+
+  {\bf Why aren't we using SciPy?}
 
 \item {\bf ScientificPython.}  ScientificPython is a collection of
   Python modules that are useful for scientific computing. In this
@@ -1001,6 +997,8 @@ Python projects:
   models. There are also interfaces to the netCDF library (portable
   structured binary files), to MPI (Message Passing Interface), and to
   BSPlib (Bulk Synchronous Parallel programming).
+
+  {\bf Why aren't we using ScientificPython?}
 
 \item {\bf PySparse.}  PySparse~\cite{broker05using} can handle
   symmetric and non-symmetric serial sparse matrices, and contains a
@@ -1024,22 +1022,43 @@ Python projects:
 
 Any mathematical software framework which claims ease-of-use cannot
 avoid a comparison with MATLAB, the {\sl de-facto} standard for the
-development of numerical analysis algorithms and software.  Our
+development of numerical analysis algorithms and software.  
+Our
 experience is that, while MATLAB's vector syntax and built-in matrix
 data types greatly simplifies the programming language, it is not
 possible to perform large-scale computing using this language.
-MATLAB's sparse matrix operations are slow compared with Epetra's.
+MATLAB's sparse matrix operations are slow compared with Epetra's, as later
+shown in this Section.
 Another handicap of MATLAB is the inflexibility of its scripting
 language: There may be only one visible function in a file, and the
 function name must be the file name itself. This can make it harder to
 modularize the code. Other desirable language features, such as
 exception handling, are also missing in MATLAB.
 
-With respect to efficiency, we can compare the CPU time required by
-MATLAB 7.0 (R14) and PyTrilinos to create a dense and a sparse matrix.
+We now present some numerical results that compare the CPU time required by
+PyTrilinos and MATLAB 7.0 (R14) to create a dense and a sparse matrix. 
 The first test sets the elements of a serial dense matrix, where each
 $(i,j)$ element of the square real matrix $A$ is defined as $A(i,j) =
-1/(i + j)$. The second test creates a sparse diagonal matrix, setting
+1/(i + j)$. The corresponding MATLAB code reads as follows:
+\begin{verbatim}
+    A = zeros(n, n);
+    for i=1:n
+      for j=1:n
+        A(i,j) = 1.0/(i + j);
+      end
+    end
+\end{verbatim}
+while the PyTrilinos code is:
+\begin{verbatim}
+    A = Epetra.SerialDenseMatrix(n, n)
+    for i in xrange(4):
+      for j in xrange(4):
+        A[i,j] = 1.0 / (i + j + 2)
+\end{verbatim}
+From Table~\ref{tab:matlab_dense}, it is evident that MATLAB is more
+efficient than PyTrilinos in the handling of dense matrices.
+
+The second test creates a sparse diagonal matrix, setting
 one element at a time. The MATLAB code reads:
 \begin{verbatim}
     A = spalloc(n, n, n);
@@ -1055,17 +1074,24 @@ while the PyTrilinos code contains the instructions:
     A.FillComplete()
 \end{verbatim}
 Clearly, other techniques exist to create in MATLAB and in PyTrilinos
-sparse diagonal matrices. However, real applications often have the
-need of settings the elements of a matrix one (or a few) at a time,
-and therefore this comparison represents more general applications.
-From Table~\ref{tab:matlab_dense}, it is evident that MATLAB is more
-efficient than PyTrilinos in the handling of dense matrices, but
-PyTrilinos excels for sparse matrices, as reported in
-Table~\ref{tab:matlab_sparse}. Since PyTrilinos is intended largely
+sparse diagonal matrices. However, the presented example is representative of
+several real applications, which often have the
+need of settings the elements of a matrix one (or a few) at a time. Numerical
+results for this test case are reported in Table~\ref{tab:matlab_sparse}. Even
+for mid-sized sparse matrices, PyTrilinos is much faster than MATLAB's
+built-in sparse matrix capabilities.
+Table~\ref{tab:matlab_matvec} reports the CPU required for a matrix-vector
+product. The sparse matrices arise from
+a 5-pt discretization of a Laplacian on a 2D Cartesian grid 
+(as produced in MATLAB by the command \verb!gallery('poisson', n)!).  Note
+that PyTrilinos is up to 50\% faster than MATLAB for this very
+important computational kernel.
+
+Since PyTrilinos is intended largely
 for sparse matrices, these results confirm the validity of the project
 with respect to MATLAB, especially because the set of algorithms
 available in PyTrilinos to handle and solve sparse linear systems is
-superior to that available in MATLAB.
+superior to that available in MATLAB. 
 
 \begin{table}
   \begin{center}
@@ -1105,13 +1131,34 @@ superior to that available in MATLAB.
   \end{center}
 \end{table}
 
+\begin{table}
+  \begin{center}
+    \begin{tabular}{| l | c | c |}
+      \hline
+      $n$ & MATLAB & PyTrilinos \\
+      \hline
+      \hline
+      50     & 0.02    & 0.0070   \\
+      100    & 0.110   & 0.0503   \\
+      500    & 3.130   & 2.0547   \\
+      1,000  & 12.720  & 8.203    \\
+      \hline
+    \end{tabular}
+    \caption{CPU time (in seconds) required by MATLAB and PyTrilinos
+      to perform 100 matrix-vector products. The sparse matrices, of size $n
+        \times n$, correspond to a 5-pt discretization of a 2D Laplacian on a
+        rectangular Cartesian grid.}
+    \label{tab:matlab_matvec}
+  \end{center}
+\end{table}
+
 %-----------------------------------------------------------------------------
 \section{Comparison Between PyTrilinos and Trilinos}
 \label{sec:comparison_trilinos}
 %-----------------------------------------------------------------------------
 
 It is important to position PyTrilinos with respect to Trilinos
-itself. You can think of \PyTrilinos\ as a python interface to the
+itself. You can think of \PyTrilinos\ as a Python interface to the
 most successful and stable numerical algorithms of Trilinos.  Hence,
 not all the algorithms and the tools of Trilinos are (or will) be
 ported to \PyTrilinos, even if there is an on-going effort to wrap all
@@ -1176,7 +1223,8 @@ The Trilinos and PyTrilinos codes are reported in
 Table~\ref{tab:code_epetra}.  The matrix is constructed row-by-row,
 and we specify the values of the matrix entries one row at a time,
 using the {\tt InsertGlobalValues} method.  In C++, this method takes
-an {\tt int}, a {\tt double*} and an {\tt int*} to specify the number
+(other than the row ID)
+a {\tt double*}, an {\tt int*} and an {\tt int}  to specify the number
 of matrix entries, their values and which columns they occupy.  In
 Python, we use lists in place of C arrays (in this example named {\tt
   Values} and {\tt Indices}), and no longer need to specify the number
@@ -1184,7 +1232,8 @@ of entries, but rather just ensure that the lists have the same
 length.  Note the distinction between local and global elements and
 the use of the global ID method of the {\tt map} object, {\tt GID()}.
 This is not necessary in a serial code, but it is the proper logic in
-parallel.
+parallel. Therefore, the same script can be used for both serial and paralle
+runs.
 
 Finally, we transform the matrix representation into one based on
 local indexes. The transformation is required in order to perform
@@ -1195,7 +1244,7 @@ border and external elements for a matrix-vector product of the form
 $B = AX$. Also, the communication pattern is established. As we have
 specified just one map, Epetra assumes that the rows of $A$ are
 distributed among the processes in the same way of the elements of $X$
-and $B$.
+and $B$, but more general maps are supported as well.
 
 \begin{sidewaystable}
   \begin{tabular}{| c  | c|}
@@ -1219,9 +1268,6 @@ int main(int argc, char *argv[])
 
   int NumGlobalRows = 1000000;
   Epetra_Map Map(NumGlobalRows, 0, Comm);
-  Epetra_Vector LHS_exact(Map);
-  Epetra_Vector LHS(Map);
-  Epetra_Vector RHS(Map);
   Epetra_CrsMatrix Matrix(Copy, Map, 0);
 
   int Indices[3];
@@ -1258,15 +1304,12 @@ int main(int argc, char *argv[])
     \footnotesize
     \begin{minipage}{10.5cm}
 \begin{verbatim}
-from PyTrilinos import Amesos, Epetra
+from PyTrilinos import Epetra
 
 Epetra.Init()
 NumGlobalRows = 1000000
 Comm = Epetra.PyComm()
 Map = Epetra.Map(NumGlobalRows, 0, Comm)
-LHS_exact = Epetra.Vector(Map)
-LHS = Epetra.Vector(Map)
-RHS = Epetra.Vector(Map)
 Matrix = Epetra.CrsMatrix(Epetra.Copy, Map, 0)
 
 NumLocalRows = Map.NumMyElements()
@@ -1318,7 +1361,7 @@ Epetra functions.
       \hline
     \end{tabular}
     \caption{CPU time (in seconds) on Linux/GCC for the codes reported
-      in Table~\ref{tab:_epetra}.}
+      in Table~\ref{tab:code_epetra}.}
     \label{tab:time_epetra}
   \end{center}
 \end{table}
@@ -1329,7 +1372,7 @@ Epetra functions.
 %-----------------------------------------------------------------------------
 
 Section~\ref{sec:fine} showed that the overhead required by Python and
-the PyTrilinos interfaces make fine-grained PyTrilinos scripts
+the PyTrilinos interfaces makes fine-grained PyTrilinos scripts
 uncompetitive with their Trilinos counterparts. This section, instead,
 presents how coarse-grained scripts in Python can be as effective as
 their compiled Trilinos counterparts.  Table~\ref{tab:code_ml}
@@ -1638,6 +1681,8 @@ we have encountered are:
   functions are of necessity Python functions.  We have had success
   with SWIG, the {\tt weave} module and even Numeric array syntax.
 
+  {\bf Last sentence is difficult to read}
+
 \item {\bf Management of C/C++ Arrays.} Although SWIG makes it easy to
   wrap Python's lists as C and C++ arrays (and vice-versa), this
   process still requires the definition of wrappers in the interface
@@ -1676,6 +1721,12 @@ computing with Python handles sparse and distributed matrices, or the
 diversity of solver algorithms. We hope that PyTrilinos can help to
 make the development cycle of high-performance numerical algorithms
 more efficient and productive.
+
+\bigskip
+
+{\bf Add other keywords?}
+
+{\bf running title (in markboth()?}
 
 %-----------------------------------------------------------------------------%
 \bibliographystyle{acmtrans}
