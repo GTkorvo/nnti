@@ -1514,6 +1514,7 @@ in the following Section.
     \label{tab:time_ml}
   \end{center}
 \end{table}
+
 %-----------------------------------------------------------------------------
 \subsection{Parallel Coarse-grained Scripts}
 \label{sec:parallel}
@@ -1524,7 +1525,7 @@ and the PyTrilinos interfaces makes coarse-grained PyTrilinos
 scripts very competitive with their Trilinos counterparts. This
 section presents how parallel coarse-grained scripts in Python can
 also be as effective as their compiled Trilinos counterparts.
-Table~\ref{tab:code_parallel_mv} presents codes to compute ten
+Table~\ref{tab:code_parallel_matvec} presents codes to compute ten
 matrix-vector multiplications on a 2D beam-like Poisson problem,
 where the beam grows in length so that each processor has the same
 size subproblem, regardless of number of processors.
@@ -1557,7 +1558,7 @@ int main(int argc, char *argv[])
   MPI_Init(&argc, &argv);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 
-  int nx = 4000;
+  int nx = 1000;
   int ny = 1000 * Comm.NumProc();
 
   CrsMatrixGallery Gallery("laplace_2d", Comm);
@@ -1596,7 +1597,7 @@ from PyTrilinos import Epetra, Triutils
 
 Epetra.Init()
 Comm = Epetra.PyComm()
-nx = 4000
+nx = 1000
 ny = 1000 * Comm.NumProc()
 Gallery = Triutils.CrsMatrixGallery("laplace_2d", Comm)
 Gallery.Set("nx", nx)
@@ -1624,7 +1625,7 @@ Epetra.Finalize()
 \end{sidewaystable}
 
 Numerical results are reported in
-Table~\ref{tab:time_parallel_matvec}. Experiments were conducted on
+Figure~\ref{fig:time_parallel_matvec}. Experiments were conducted on
 a 16-node Linux/GCC/LAM-MPI cluster where each node has a single AMD
 Athlon (Barton 2600) processor and the cluster has a dedicated Fast
 Ethernet switch for inter-node communication. The timing results
@@ -1632,26 +1633,36 @@ show that there is essentially no difference in timing results for
 either version, and that parallel scalability is excellent, as it
 should be for this type of problem.
 
-\begin{table}
-  \begin{center}
-    \begin{tabular}{| r | c | c |}
-      \hline
-      \tt p & Trilinos & PyTrilinos \\
-      \hline
-      1  & 2.39  & 2.38  \\
-      2  & 2.96  & 2.97  \\
-      4  & 3.00  & 3.01  \\
-      8  & 3.02  & 3.02  \\
-      12 & 3.02  & 3.03 \\
-      16 & 3.00  & 3.02 \\
-      \hline
-    \end{tabular}
-    \caption{Wall-clock time (in seconds) on 16-node Linux/GCC cluster for the codes reported
-      in Table~\ref{tab:code_parallel_matvec}.}
-    \label{tab:time_parallel_matvec}
-  \end{center}
-\end{table}
+%\begin{table}
+%  \begin{center}
+%    \begin{tabular}{| r | c | c |}
+%      \hline
+%      \tt p & Trilinos & PyTrilinos \\
+%      \hline
+%      1  & 2.39  & 2.38  \\
+%      2  & 2.96  & 2.97  \\
+%      4  & 3.00  & 3.01  \\
+%      8  & 3.02  & 3.02  \\
+%      12 & 3.02  & 3.03 \\
+%      16 & 3.00  & 3.02 \\
+%      \hline
+%    \end{tabular}
+%    \caption{Wall-clock time (in seconds) on 16-node Linux/GCC cluster for the codes reported
+%      in Table~\ref{tab:code_parallel_matvec}.}
+%    \label{tab:time_parallel_matvec}
+%  \end{center}
+%\end{table}
 
+\begin{figure}
+\begin{center}
+\includegraphics[width=7cm]{scalability-1k.eps}
+\caption{Wall-clock time (in seconds) on 16-node Linux/GCC cluster for the
+  codes reported in Table~\ref{tab:code_parallel_matvec}. The bars report the
+time required by Trilinos, while the line reports the ratio between the time
+required by PyTrilinos and the time required by Trilinos.}
+\label{fig:time_parallel_matvec}
+\end{center}
+\end{figure}
 %
 %-----------------------------------------------------------------------------
 \section{Performance Considerations}
