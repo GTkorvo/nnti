@@ -145,7 +145,7 @@ comparable to that of native C, C++ or FORTRAN code. Flexibility is
 fundamental for rapid prototyping, in the sense that the developer
 should be able to write a basic code satisfying his or her needs in a
 very short time.  However, it is difficult for a single programming
-language to be at the same time 
+language to be at the same time
 easy-to-use, support rapid development, and produce
 optimized executables. Indeed, the goals of efficiency and flexibility
 are often in conflict with each other. From our point of view, the key
@@ -297,7 +297,7 @@ approaches are:
   because it requires an additional (SIDL) interface specification
   which must be manually synchronized with the native Trilinos C++
   interfaces.  This is labor-intensive and prone to human error.  By
-  comparsion, SWIG directly includes or imports C/C++ headers, an
+  comparison, SWIG directly includes or imports C/C++ headers, an
   approach which requires no manual synchronization.
 
 \end{itemize}
@@ -780,7 +780,7 @@ multilevel methods.
 Because ILU preconditioners do not scale well on parallel computers, a
 common practice is to perform {\em local} ILU factorizations.  In this
 situation, each processor computes a factorization of a subset of
-matrix rows and columns independently from all other processors.  
+matrix rows and columns independently from all other processors.
 What we have just described is an example of one-level overlapping
 domain decomposition (DD) preconditioners.  The basic idea of DD
 methods consists in dividing the computational domain into a set of
@@ -934,7 +934,7 @@ form
   F(x^*) = 0,
 \end{equation}
 where $F$ is a nonlinear system of equations defined for a vector of
-unknowns $x$, whose (possibly nonunique) solution is given by
+unknowns $x$, whose (possibly non-unique) solution is given by
 $x=x^*$.  Currently, to use NOX in Python, the user defines a python
 class that implements one or more of the following methods:
 \begin{verbatim}
@@ -967,14 +967,14 @@ Python projects:
   such with other Python modules.  However, note that a Numeric array
   is {\sl not} recognized as a {\tt Epetra\_Vector}, since all
   distributed Epetra objects requires an underlying communicator and
-  map (not supported by Numeric). 
+  map (not supported by Numeric).
 
   {\bf Some of this has already been discussed in Section 2.4...}
 
 \item {\bf NumArray.}  NumArray is a reimplementation of Numeric which
   adds the ability to efficiently manipulate large contiguous-data
   arrays in ways similar to MATLAB.  Many scientific Python packages
-  have begun the migration from Numeric to NumArray; \PyTrilinos\ 
+  have begun the migration from Numeric to NumArray; \PyTrilinos\
   developers are currently exploring the possibility.
 
   {\bf Why aren't we using NumArray?}
@@ -1024,7 +1024,7 @@ Python projects:
 
 Any mathematical software framework which claims ease-of-use cannot
 avoid a comparison with MATLAB, the {\sl de-facto} standard for the
-development of numerical analysis algorithms and software.  
+development of numerical analysis algorithms and software.
 Our
 experience is that, while MATLAB's vector syntax and built-in matrix
 data types greatly simplifies the programming language, it is not
@@ -1038,7 +1038,7 @@ modularize the code. Other desirable language features, such as
 exception handling, are also missing in MATLAB.
 
 We now present some numerical results that compare the CPU time required by
-PyTrilinos and MATLAB 7.0 (R14) to create a dense and a sparse matrix. 
+PyTrilinos and MATLAB 7.0 (R14) to create a dense and a sparse matrix.
 The first test sets the elements of a serial dense matrix, where each
 $(i,j)$ element of the square real matrix $A$ is defined as $A(i,j) =
 1/(i + j)$. The corresponding MATLAB code reads as follows:
@@ -1084,7 +1084,7 @@ for mid-sized sparse matrices, PyTrilinos is much faster than MATLAB's
 built-in sparse matrix capabilities.
 Table~\ref{tab:matlab_matvec} reports the CPU required for a matrix-vector
 product. The sparse matrices arise from
-a 5-pt discretization of a Laplacian on a 2D Cartesian grid 
+a 5-pt discretization of a Laplacian on a 2D Cartesian grid
 (as produced in MATLAB by the command \verb!gallery('poisson', n)!).  Note
 that PyTrilinos is up to 50\% faster than MATLAB for this very
 important computational kernel.
@@ -1093,7 +1093,7 @@ Since PyTrilinos is intended largely
 for sparse matrices, these results confirm the validity of the project
 with respect to MATLAB, especially because the set of algorithms
 available in PyTrilinos to handle and solve sparse linear systems is
-superior to that available in MATLAB. 
+superior to that available in MATLAB.
 
 \begin{table}
   \begin{center}
@@ -1232,10 +1232,10 @@ Python, we use lists in place of C arrays (in this example named {\tt
   Values} and {\tt Indices}), and no longer need to specify the number
 of entries, but rather just ensure that the lists have the same
 length.  Note the distinction between local and global elements and
-the use of the global ID method of the {\tt map} object, {\tt GID()}.
-This is not necessary in a serial code, but it is the proper logic in
-parallel. Therefore, the same script can be used for both serial and paralle
-runs.
+the use of the global ID method of the {\tt map} object, {\tt
+GID()}. This is not necessary in a serial code, but it is the proper
+logic in parallel. Therefore, the same script can be used for both
+serial and parallel runs.
 
 Finally, we transform the matrix representation into one based on
 local indexes. The transformation is required in order to perform
@@ -1514,6 +1514,143 @@ in the following Section.
     \label{tab:time_ml}
   \end{center}
 \end{table}
+%-----------------------------------------------------------------------------
+\subsection{Parallel Coarse-grained Scripts}
+\label{sec:parallel}
+%-----------------------------------------------------------------------------
+
+Section~\ref{sec:coarse} showed that the overhead required by Python
+and the PyTrilinos interfaces makes coarse-grained PyTrilinos
+scripts very competitive with their Trilinos counterparts. This
+section presents how parallel coarse-grained scripts in Python can
+also be as effective as their compiled Trilinos counterparts.
+Table~\ref{tab:code_parallel_mv} presents codes to compute ten
+matrix-vector multiplications on a 2D beam-like Poisson problem,
+where the beam grows in length so that each processor has the same
+size subproblem, regardless of number of processors.
+
+\begin{sidewaystable}
+  \begin{tabular}{| c  | c|}
+    \hline
+    Trilinos Source & PyTrilinos Source \\
+    \hline
+    & \\
+
+    \footnotesize
+    \begin{minipage}{10.5cm}
+\begin{verbatim}
+
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#include "Epetra_Vector.h"
+#include "Epetra_Time.h"
+#include "Epetra_RowMatrix.h"
+#include "Epetra_CrsMatrix.h"
+#include "Epetra_Time.h"
+#include "Epetra_LinearProblem.h"
+#include "Trilinos_Util_CrsMatrixGallery.h"
+
+using namespace Trilinos_Util;
+
+int main(int argc, char *argv[])
+{
+  MPI_Init(&argc, &argv);
+  Epetra_MpiComm Comm(MPI_COMM_WORLD);
+
+  int nx = 4000;
+  int ny = 1000 * Comm.NumProc();
+
+  CrsMatrixGallery Gallery("laplace_2d", Comm);
+  Gallery.Set("ny", ny);
+  Gallery.Set("nx", nx);
+  Gallery.Set("problem_size",nx*ny);
+  Gallery.Set("map_type", "linear");
+
+  Epetra_LinearProblem* Problem = Gallery.GetLinearProblem();
+  assert (Problem != 0);
+  // retrieve pointers to solution (lhs), right-hand side (rhs)
+  // and matrix itself (A)
+  Epetra_MultiVector* lhs = Problem->GetLHS();
+  Epetra_MultiVector* rhs = Problem->GetRHS();
+  Epetra_RowMatrix* A = Problem->GetMatrix();
+
+  Epetra_Time Time(Comm);
+
+  for (int i = 0 ; i < 10 ; ++i)
+    A->Multiply(false, *lhs, *rhs);
+
+  cout << Time.ElapsedTime() << endl;
+
+  MPI_Finalize();
+
+  return(EXIT_SUCCESS);
+} // end of main()
+\end{verbatim}
+    \end{minipage}
+    &
+    \footnotesize
+    \begin{minipage}{10.5cm}
+\begin{verbatim}
+#! /usr/bin/env python
+from PyTrilinos import Epetra, Triutils
+
+Epetra.Init()
+Comm = Epetra.PyComm()
+nx = 4000
+ny = 1000 * Comm.NumProc()
+Gallery = Triutils.CrsMatrixGallery("laplace_2d", Comm)
+Gallery.Set("nx", nx)
+Gallery.Set("ny", ny)
+Gallery.Set("problem_size", nx * ny)
+Gallery.Set("map_type", "linear")
+Matrix = Gallery.GetMatrix()
+LHS = Gallery.GetStartingSolution()
+RHS = Gallery.GetRHS()
+Time = Epetra.Time(Comm)
+
+for i in xrange(10):
+  Matrix.Multiply(False, LHS, RHS)
+
+print Time.ElapsedTime()
+Epetra.Finalize()
+\end{verbatim}
+    \end{minipage}
+    \\
+    &  \\
+    \hline
+  \end{tabular}
+  \caption{Code listings for the scalable matrix-vector multiplication test, where p is the number of nodes used.}
+  \label{tab:code_parallel_matvec}
+\end{sidewaystable}
+
+Numerical results are reported in
+Table~\ref{tab:time_parallel_matvec}. Experiments were conducted on
+a 16-node Linux/GCC/LAM-MPI cluster where each node has a single AMD
+Athlon (Barton 2600) processor and the cluster has a dedicated Fast
+Ethernet switch for inter-node communication. The timing results
+show that there is essentially no difference in timing results for
+either version, and that parallel scalability is excellent, as it
+should be for this type of problem.
+
+\begin{table}
+  \begin{center}
+    \begin{tabular}{| r | c | c |}
+      \hline
+      \tt p & Trilinos & PyTrilinos \\
+      \hline
+      1  & 2.39  & 2.38  \\
+      2  & 2.96  & 2.97  \\
+      4  & 3.00  & 3.01  \\
+      8  & 3.02  & 3.02  \\
+      12 & 3.02  & 3.03 \\
+      16 & 3.00  & 3.02 \\
+      \hline
+    \end{tabular}
+    \caption{Wall-clock time (in seconds) on 16-node Linux/GCC cluster for the codes reported
+      in Table~\ref{tab:code_parallel_matvec}.}
+    \label{tab:time_parallel_matvec}
+  \end{center}
+\end{table}
 
 %
 %-----------------------------------------------------------------------------
@@ -1547,10 +1684,10 @@ and run embedded C or C++ code within a Python function.
 
 We will demonstrate the advantages of these approaches by way of a
 case study, involving the solution of a common nonlinear flow test
-case, the incompressible lid-driven driven cavity problem~\cite{Ghia},
+case, the incompressible lid-driven cavity problem~\cite{Ghia},
 expressed here in terms of the stream function and vorticity.  The
-stream function $\psi$ is defined implicitly in terms of the $x-$ and
-$y-$ flow velocity components $u$ and $v$:
+stream function $\psi$ is defined implicitly in terms of the $x-$
+and $y-$ flow velocity components $u$ and $v$:
 \begin{equation}
   \label{eq:velocities}
   u = \frac{\partial \psi}{\partial x}, v = -\frac{\partial
