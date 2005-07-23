@@ -67,7 +67,7 @@ int main( int argc, char* argv[] )
   UtilityBaseFactory *utilityFactory = 0;
   if(useA) utilityFactory = new UtilityAFactory();
   else     utilityFactory = new UtilityBFactory();
-  // Create cleints
+  // Create clients
   ClientA a;
   ClientB b1, b2;
   ClientC c(utilityFactory,shareUtility);

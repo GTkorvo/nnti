@@ -69,7 +69,7 @@ int main( int argc, char* argv[] )
   RefCountPtr<UtilityBaseFactory> utilityFactory;
   if(useA) utilityFactory = rcp(new UtilityAFactory());
   else     utilityFactory = rcp(new UtilityBFactory());
-  // Create cleints
+  // Create clients
   ClientA a;
   ClientB b1, b2;
   ClientC c(utilityFactory,shareUtility);
