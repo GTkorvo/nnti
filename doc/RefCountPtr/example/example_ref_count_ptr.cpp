@@ -45,11 +45,11 @@ public:
   void g( const ClientA &a ) { a.f(*utility_); }
 };
 class ClientC {
-  RefCountPtr<UtilityBaseFactory> utilityFactory_;
-  RefCountPtr<UtilityBase>        utility_;
-  bool                            shareUtility_;
+  RefCountPtr<const UtilityBaseFactory> utilityFactory_;
+  RefCountPtr<UtilityBase>              utility_;
+  bool                                  shareUtility_;
 public:
-  ClientC( const RefCountPtr<UtilityBaseFactory> &utilityFactory, bool shareUtility )
+  ClientC( const RefCountPtr<const UtilityBaseFactory> &utilityFactory, bool shareUtility )
     :utilityFactory_(utilityFactory)
     ,utility_(utilityFactory->createUtility())
     ,shareUtility_(shareUtility) {}
