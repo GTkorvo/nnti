@@ -39,7 +39,7 @@
   Python}
 
 \title{PyTrilinos: Using Parallel Distributed Memory Linear Algebra
-  Libraries via Python}
+  Libraries via Python. WHAT ABOUT NOX/LOCA?}
 
 \author{Marzio Sala, W. F. Spotz and M. A. Heroux\\Sandia National
   Laboratories}
@@ -67,11 +67,9 @@ properly used, the overhead required by the Python interpreter is
 negligible.
 
 To run in parallel, \PyTrilinos\ simply requires a standard Python
-interpreter.  The fundamental MPI calls are abstracted beneath the
-Epetra module layer, and all inter-processor communications by all
-\PyTrilinos\ modules are handled using Epetra communicators. This
-makes serial and parallel scripts using \PyTrilinos\ virtually
-identical.
+interpreter.  The fundamental MPI calls are abstracted beneath an abstract
+layer, that manages all inter-processor communications.  This makes serial and
+parallel scripts using \PyTrilinos\ virtually identical.
 \end{abstract}
 
 \category{D.1.3}{Programming Techniques}{Parallel Programming}
@@ -324,7 +322,7 @@ The key components are:
   code lines for direct solvers and interfaces to third-party direct
   solvers, 128,000 code lines for multilevel preconditioners, and
   76,000 code lines for other algebraic preconditioners and Krylov
-  accelerators.
+  accelerators. {\bf SAY SOMETHING ABOUT HOW MANY PEOPLE ARE WORKING ON IT?}
 
 \item {\bf Numeric}, a well-established Python module to handle
   multi-dimensional arrays including vectors and
@@ -346,14 +344,15 @@ The key components are:
 
 \end{enumerate}
 
-A description of the organization of the linear algebra modules of
-PyTrilinos, with some of the third-party libraries that can be
+A description of the organization of the 
+PyTrilinos modules, with some of the third-party libraries that can be
 accessed, is shown in Figure~\ref{fig:organization}.
 
 \begin{figure}
 \begin{center}
 \includegraphics[width=12cm]{organization.eps}
-\caption{Organization of the linear algebra modules of PyTrilinos.}
+\caption{Organization of the PyTrilinos modules. Not represented in the
+  picture are the interaction among Trilinos modules and with Numeric.}
 \label{fig:organization}
 \end{center}
 \end{figure}
@@ -368,8 +367,11 @@ of {\sl modules}, each of which wraps a given Trilinos {\sl package},
 where a package is an integral unit usually developed by a small team
 of experts in a particular area.  Trilinos packages that support
 namespaces have a Python submodule for each namespace.  Algorithmic
-capabilities are defined within independent packages. At present, the
-modules of \PyTrilinos\ are:
+capabilities are defined within independent packages;
+packages can easily interoperate since generic adaptors are available
+(in the form of pure virtual classes) to define distributed vectors and
+matrices.
+At present, the modules of \PyTrilinos\ are:
 
 \begin{enumerate}
 
@@ -437,9 +439,10 @@ modules of \PyTrilinos\ are:
   facilitated by interface base classes which users can inherit from
   and define concrete methods for residual fills, Jacobian matrix
   computation, etc.  NOX also provides some concrete classes which
-  interface to Epetra, LAPACK, PETSc and others.  For Python, a
-  PyInterface class has been defined, designed to work with
-  Epetra.Vectors.
+  interface to Epetra, LAPACK, PETSc and others.  
+  %For Python, a
+  %PyInterface class has been defined, designed to work with
+  %Epetra.Vectors.
 
 \end{enumerate}
 
@@ -453,12 +456,14 @@ define distributed linear algebra objects.  \PyTrilinos\ cannot be
 used without the Epetra module, while all the other modules can be
 enabled or disabled in the configuration phase of Trilinos.
 
-Epetra.Vector objects have been designed to multiply inherit, not only
-from the Epetra\_Vector C++ class, but the Numeric UserArray Python
-class.  The constructors are written to ensure that the internal data
-pointers of both classes point to the same buffer in memory so that
-the Python programmer can treat an Epetra.Vector either type of linear
-algebra object.
+% This seems too detailed to me at this point. We are saying something later.
+% MS
+%Epetra.Vector objects have been designed to multiply inherit, not only
+%from the Epetra\_Vector C++ class, but the Numeric UserArray Python
+%class.  The constructors are written to ensure that the internal data
+%pointers of both classes point to the same buffer in memory so that
+%the Python programmer can treat an Epetra.Vector either type of linear
+%algebra object.
 
 %-----------------------------------------------------------------------------
 \section{Serial and Parallel Environments}
@@ -507,7 +512,7 @@ specialized communicator using command
 which returns an Epetra.SerialComm if \PyTrilinos\ has been compiled
 in serial mode, or an Epetra.MpiComm if \PyTrilinos\ has support for
 MPI. By using Epetra.PyComm, \PyTrilinos\ scripts are virtually
-identical for both serial and parallel runs, and generally reads:
+identical for both serial and parallel runs, and generally read:
 \begin{verbatim}
     >>> from PyTrilinos import Epetra
     >>> Epetra.Init()
@@ -524,16 +529,20 @@ MPI environment.
 \smallskip
 
 The major disadvantages of this approach are that Python cannot be run
-interactively if more than one processor is used, and we experienced
-problems with some MPI interpreters (in particular MPICH) to execute
-Python scripts.  Although all the most important MPI calls are
+interactively if more than one processor is used.
+%, and we experienced
+%problems with some MPI interpreters (in particular MPICH) to execute
+%Python scripts.  
+Although all the most important MPI calls are
 available through Epetra.Comm objects (for example, the rank of a
 process is returned by method {\tt Comm.MyPID()} and the number of
 processes involved in the computation by method {\tt Comm.NumProc()}),
 not all the functions specified by the MPI forum are readily available
-through the Comm object.  For example, there are no point-to-point
-communications, or non-blocking functions. Also, PyTrilinos always
-uses MPI\_COMM\_WORLD as its basic communicator.
+through this object.  For example, at the moment there are no point-to-point
+communications, or non-blocking functions (though they could be easily added in
+the future).
+%Also, PyTrilinos always
+%uses MPI\_COMM\_WORLD as its basic communicator.
 
 In our opinion, these are only minor drawbacks, and the list of
 advantages is much longer. First, since all calls are handled by
@@ -739,8 +748,10 @@ Epetra.Finalize()
 \label{subsec:aztecoo_ifpack}
 %-----------------------------------------------------------------------------
 
-For a sparse matrix, the major inconvenience of direct solution
-methods (as presented in section \ref{subsec:amesos}) is that the $L$
+For a sparse matrix, the major inconveniences of direct solution
+methods (as presented in section \ref{subsec:amesos}) are that 
+the factorization algorithm requires $\mathcal{O}(k)$ operations, with $k$
+typically between 2 and 3, and the $L$
 and $U$ factors are typically much denser than the original matrix
 $A$, making LU decomposition too memory demanding for large scale
 problems. Moreover, the factorization process is inherently serial,
@@ -861,7 +872,7 @@ Epetra.Finalize()
 
 \medskip
 
-Another class of preconditioner is given by multilevel
+Another class of preconditioners is given by multilevel
 preconditioners.  For certain combinations of iterative methods and
 linear systems, the error at each iteration projected onto the
 eigenfunctions has components that decay at a rate proportional to the
@@ -891,7 +902,8 @@ select a preconditioning strategy.  In AMG, the only additional
 information required from the user is to specify a coarsening
 strategy.
 
-Using the ML module, the user can easily create black-box two-level
+The AMG module of PyTrilinos is ML. Using this module,
+the user can easily create black-box two-level
 and multilevel preconditioners based on smoothed aggregation
 procedures (see \cite{sala04analysis,brezina97robust} and the
 references therein). Parameters are specified using a Python
@@ -1149,8 +1161,8 @@ $(i,j)$ element of the square real matrix $A$ is defined as $A(i,j) =
 while the PyTrilinos code is:
 \begin{verbatim}
     A = Epetra.SerialDenseMatrix(n, n)
-    for i in xrange(4):
-      for j in xrange(4):
+    for i in xrange(n):
+      for j in xrange(n):
         A[i,j] = 1.0 / (i + j + 2)
 \end{verbatim}
 From Table~\ref{tab:matlab_dense}, it is evident that MATLAB is more
@@ -1174,7 +1186,7 @@ while the PyTrilinos code contains the instructions:
 Clearly, other techniques exist to create in MATLAB and in PyTrilinos
 sparse diagonal matrices. However, the presented example is representative of
 several real applications, which often have the
-need of settings the elements of a matrix one (or a few) at a time. Numerical
+need of setting the elements of a matrix one (or a few) at a time. Numerical
 results for this test case are reported in Table~\ref{tab:matlab_sparse}. Even
 for mid-sized sparse matrices, PyTrilinos is much faster than MATLAB's
 built-in sparse matrix capabilities.
@@ -1283,8 +1295,9 @@ one-to-one map. The most important differences are:
   {\tt print vector} will yield the Numeric array result (but the {\tt
     Print()} method works as expected).
 
-\item Parameter lists from the \teuchos\ package are replaced by
-  Python dictionaries.
+% We never talked about Teuchos... I guess this is too detailed at this point..
+%\item Parameter lists from the \teuchos\ package are replaced by
+%Python dictionaries. 
 
 \end{itemize}
 
@@ -1437,7 +1450,7 @@ Epetra.Finalize()
   \label{tab:code_epetra}
 \end{sidewaystable}
 
-Table~\ref{tab:time_epetra} compares the CPU time required on a 1.7
+Table~\ref{tab:time_epetra} compares the CPU time required on a Pentium M 1.7
 GHz Linux machine to run the two codes for different values of the
 matrix size. Only one processor has been used in the computations.
 Although the PyTrilinos script requires fewer lines of code, it is
@@ -1924,7 +1937,6 @@ easily implement nonuniform mesh sizes.  Either way, the savings was
 over 5.5 seconds, bringing the overall savings to just over 27.5
 seconds and a speedup factor of over 20.
 
-%
 %-----------------------------------------------------------------------------
 \section{Concluding Remarks}
 \label{sec:concluding}
@@ -1991,8 +2003,10 @@ most significant impact of \PyTrilinos\ is in the following areas:
 
 \item {\bf Integration.} Python was designed to be a ``glue'' language
   and \PyTrilinos\ relies on the ability to mix components written in
-  other languages. C, C++ and FORTRAN code is called, but note that
-  Python programmers don't need to care.  Python lends itself to
+  other languages. 
+  %C, C++ and FORTRAN code is called, but note that
+  %Python programmers don't need to care.  
+  Python lends itself to
   experimental, interactive program development, and encourages
   developing systems incrementally by testing components in isolation
   and putting them together later.  By themselves, neither C nor
@@ -2043,8 +2057,6 @@ most significant impact of \PyTrilinos\ is in the following areas:
 
 \smallskip
 
-%With \PyTrilinos, it is no longer necessary to choose between fast development
-%and fast execution.
 Of course, Python (and by extension PyTrilinos) is not the perfect
 language or environment for all problems. The most important problems
 we have encountered are:
@@ -2092,7 +2104,8 @@ we have encountered are:
   functions are of necessity Python functions.  We have had success
   with SWIG, the {\tt weave} module and even Numeric array syntax.
 
-  {\bf Last sentence is difficult to read}
+  {\bf Last sentence is difficult to read and very technical. Should we skip
+    it?}
 
 \item {\bf Management of C/C++ Arrays.} Although SWIG makes it easy to
   wrap Python's lists as C and C++ arrays (and vice-versa), this
@@ -2134,6 +2147,15 @@ make the development cycle of high-performance numerical algorithms
 more efficient and productive.
 
 \bigskip
+
+%-----------------------------------------------------------------------------
+\section*{Acknowledgments}
+\label{sec:acks}
+%-----------------------------------------------------------------------------
+
+The authors would like to thank all the Trilinos developers for their
+contributions to Trilinos, without which PyTrilinos would not exist. We
+also thank Michael Gee for reading an earlier version of the manuscript.
 
 {\bf Add other keywords?}
 
