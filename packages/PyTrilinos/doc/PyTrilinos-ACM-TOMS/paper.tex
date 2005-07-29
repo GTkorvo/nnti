@@ -928,22 +928,118 @@ of numerical algorithms.
 \label{subsec:nox}
 %-----------------------------------------------------------------------------
 
-The NOX module provides algorithms to solve nonlinear problems of the
-form
+The NOX module is intended to solve nonlinear problems of the form
 \begin{equation}
+  \label{eq:nonlinear}
   F(x^*) = 0,
 \end{equation}
 where $F$ is a nonlinear system of equations defined for a vector of
 unknowns $x$, whose (possibly non-unique) solution is given by
-$x=x^*$.  Currently, to use NOX in Python, the user defines a python
-class that implements one or more of the following methods:
+$x=x^*$.  NOX supports a variety of algorithms for
+solving~(\ref{eq:nonlinear}), all of which utilize a common interface
+framework for passing data and parameters between the user's top-level
+code and underlying NOX routines.
+
+This framework takes the form of a base class that we inherit from and
+that supports a given data format, for example {\tt
+  NOX::Epetra::Interface} {\tt NOX::LAPACK::Interface} or {\tt
+  NOX::Petsc::Interface}.  Our derived class then implements the
+method {\tt computeF} with arguments for input $x$ and the result $F$.
+Depending on the algorithm employed, other methods may be required,
+and include {\tt computeJacobian}, {\tt computePrecMatrix} and {\tt
+  computePreconditioner}.
+
+The Python implementation of NOX supports the Epetra interface.
+However, additional code was required to ensure NOX could call back to
+python and that the data would be passed between NOX and Python
+correctly.  To achieve this, an new interface named {\tt PyInterface}
+was developed:
 \begin{verbatim}
-    computeF(self)
-    computeJacobian(self, x, m)
-    computePrecMatrix(self, x, m)
-    computePreconditioner(self, x, op)
+    from PyTrilinos import NOX
+    class Problem(NOX.Epetra.PyInterface):
+        def computeF(self, x, rhs):
+            ...
+            return True
 \end{verbatim}
-More to come...
+When NOX needs the function $F$ to be computed, it will send {\tt x}
+and {\tt rhs}, via the {\tt PyInterface} class, to {\tt computeF} as
+{\tt Epetra.Vector}s.  The method should {\tt return} a Boolean
+indicating whether the computation was successful or not.  If
+required, the methods {\tt computeJacobian}, {\tt computePrecMatrix}
+and {\tt computePreconditioner} may also be provided.
+
+Typically, our derived class can become quite extensive, with a
+constructor and set and get methods for physical parameters, mesh
+information and meta-information such as graph connectivity.  But
+minimally, all that is required is a {\tt computeF} method.  We will,
+however, have to provide an {\tt Epetra\_Operator} that computes the
+Jacobian for our system.  NOX provides a way to approximate the
+Jacobian using a finite difference formula:
+\begin{equation}
+  J_{ij} = \frac{\partial F_i}{\partial x_j} = \frac{F_i(x+\delta e_j)
+    - F_i(x)}{\delta}
+\end{equation}
+where $J=\{J_{ij}\}$ is the Jacobian matrix, $\delta$ is a small
+perturbation, and $e_j$ is the cartesian unit vector for dimension
+$j$.  This operator can be constructed as follows:
+\begin{verbatim}
+    from PyTrilinos import Epetra
+    comm    = Epetra.SerialComm()
+    map     = Epetra.Map(n,0,comm)
+    iGuess  = Epetra.Vector(map)
+    problem = Problem()
+    jacOp   = NOX.Epetra.FiniteDifference(problem, iGuess)
+\end{verbatim}
+This operator is then passed to the {\tt Group} constructor, which
+defines the nonlinear system:
+\begin{verbatim}
+    group = NOX.Epetra.Group(prParams, lsParams, problem, iGuess, jacOp)
+\end{verbatim}
+where {\tt prParams} and {\tt lsParams} are {\tt NOX.Parameter.List}s
+with printing and linear system parameters, respectively.  They are
+typically set via
+\begin{verbatim}
+    nlParams = NOX.Parameter.List()
+    nlParams.setParameter("Nonlinear Solver", "Line Search Based")
+    prParams  = nlParams.sublist("Printing")
+    prParams.setParameter("Output Precision", 3)
+    ...
+    dirParams = nlParams.sublist("Direction")
+    dirParams.setParameter("Method", "Newton")
+    newtonParams = dirParams.sublist("Newton")
+    newtonParams.setParameter("Forcing Term Method", "Constant")
+    lsParams = newtonParams.sublist("Linear Solver")
+    lsParams.setParameter("Aztec Solver", "GMRES")
+    ...
+\end{verbatim}
+See the NOX documentation for details on building parameter lists.  We
+are almost ready to construct a solver manager.  All we need is our
+group, the top-level parameter list, and a stopping criterion:
+\begin{verbatim}
+    relResid = NOX.StatusTest.NormF(group, 1.0e-6)
+    solver   = NOX.Solver.Manager(group, relResid, nlParams)
+\end{verbatim}
+All of the NOX {\tt StatusTest} classes are supported, including {\tt
+  Combo}, for building compund stopping tests.  Now all that is left
+to do is execute the solver and extract the results.
+\begin{verbatim}
+    status = solver.solve()
+    print "\nStatus test:"
+    if (status == NOX.StatusTest.Converged):
+        print "Nonlinear solver converged!"
+        nlOutParams = nlParams.sublist("Output")
+        lsOutParams = lsParams.sublist("Output")
+        nlIts = nlOutParams.getParameter("Nonlinear Iterations")
+        lsIts = lsOutParams.getParameter("Total Number of Linear Iterations")
+        resid = nlOutParams.getParameter("2-Norm of Residual")
+        print "Nonlinear its = %d, total linear its = %d, residual = %f" \
+              % (nlIts, lsIts, resid)
+\end{verbatim}
+We note that the {\tt FiniteDifferencing} operator is extremely
+inefficient and that the computation of Jacobians for sparse systems
+can be sped up considerably by using the {\tt
+  NOX.Epetra.FiniteDifferenceColoring} operator instead, along with
+the graph coloring algorithms in {\tt EpetraExt}.
 
 %-----------------------------------------------------------------------------
 \section{Comparison Between PyTrilinos and Related Python Projects}
@@ -1740,8 +1836,8 @@ A second, and preferable, way to implement these equations would be to
 use array slice syntax.  This forces the loops to be executed by the
 underlying compiled Numeric code, and is more efficient:
 \begin{verbatim}
-    u[1:nx-1,1:ny-1] = (psi[2:nx,1:ny-1] - psi[0:nx-2,1:ny-1]) / (2*h)
-    v[1:nx-1,1:ny-1] = (psi[1:nx-1,0:ny-2] - psi[1:nx-1,2:ny]) / (2*h)
+    u[1:-1,1:-1] = (psi[2:,1:-1] - psi[0:-2,1:-1]) / (2*h)
+    v[1:-1,1:-1] = (psi[1:-1,0:-2] - psi[1:-1,2:]) / (2*h)
 \end{verbatim}
 This approach is not always possible, especially if the governing
 equation to be approximated is particularly complex.  A third way to
