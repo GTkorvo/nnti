@@ -199,8 +199,9 @@ to similar Python projects.  Section~\ref{sec:comparison_matlab}
 compares PyTrilinos with MATLAB.  A comparison between Trilinos and
 PyTrilinos implementations is presented in
 Section~\ref{sec:comparison_trilinos}.  Performance considerations are
-addressed in Section~\ref{sec:performance} and concluding remarks are
-given in Section~\ref{sec:concluding}.
+addressed in Section~\ref{sec:performance}. A discussion of the advantages and
+limitations of PyTrilios is reported in Section~\ref{sec:discussion}.
+Conclusions are given in Section~\ref{sec:concluding}.
 
 %-----------------------------------------------------------------------------
 \section{Project Design}
@@ -1077,38 +1078,48 @@ Python projects:
   distributed Epetra objects requires an underlying communicator and
   map (not supported by Numeric).
 
-  {\bf Some of this has already been discussed in Section 2.4...}
-
 \item {\bf NumArray.}  NumArray is a reimplementation of Numeric which
   adds the ability to efficiently manipulate large contiguous-data
   arrays in ways similar to MATLAB.  Many scientific Python packages
   have begun the migration from Numeric to NumArray; \PyTrilinos\
   developers are currently exploring the possibility.
 
-  {\bf Why aren't we using NumArray?}
+\item {\bf ScientificPython.}  ScientificPython is a collection of
+  Python modules that are useful for scientific computing. It supports special
+  functions, interpolation, it has a Geometry submodule that defines 3D
+  vectors and tensors, automatic derivatives, nonlinear least-square fits,
+  polynomials, elementary statistics, physical constants and units, signal
+  processing and other.
+  Several modules are dedicated to 3D visualization;
+  There are also interfaces to the netCDF library (portable
+  structured binary files), to MPI (Message Passing Interface), and to
+  BSPlib (Bulk Synchronous Parallel programming). In our opinion
+  ScientificPython and PyTrilinos are not really competitors, since the
+  numerical algorithms they contain are targeted to different kinds of
+  problems.
 
-\item {\bf SciPy.} SciPy is an open source library of scientific tools
-  for Python. SciPy supplements the popular Numeric module, gathering
+\item {\bf SciPy.} SciPy is a much larger project, and provides its own
+  version of much (but not all) of what ScientificPython does. SciPy can be seen
+  as an attempt to provide Python wrappers for some of the numerical software
+  offered by netlib.org.
+  As PyTrilinos, SciPy supplements the popular Numeric module, gathering
   a variety of high level science and engineering modules together as
   a single package. SciPy includes modules for graphics and plotting,
   optimization, integration, special functions, signal and image
-  processing, genetic algorithms, ODE solvers, and others.
-
-  {\bf Why aren't we using SciPy?}
-
-\item {\bf ScientificPython.}  ScientificPython is a collection of
-  Python modules that are useful for scientific computing. In this
-  collection you will find modules that cover basic geometry (vectors,
-  tensors, transformations, vector and tensor fields), Quaternions,
-  automatic derivatives, (linear) interpolation, polynomials,
-  elementary statistics, nonlinear least-square fits, unit
-  calculations, Fortran-compatible text formatting, 3D visualization
-  via VRML, and Tk widgets for simple line plots and 3D wireframe
-  models. There are also interfaces to the netCDF library (portable
-  structured binary files), to MPI (Message Passing Interface), and to
-  BSPlib (Bulk Synchronous Parallel programming).
-
-  {\bf Why aren't we using ScientificPython?}
+  processing, genetic algorithms, ODE solvers, and others. 
+  
+  As regards the
+  serial dense linear algebra modules, both SciPy and PyTrilinos defines
+  interfaces to optimized LAPACK and BLAS routines. However, PyTrilinos offers
+  a wide variety of tools to create and use distributed sparse matrices and
+  vectors that cannot be found in SciPy. In our experience, the SciPy capabilities to manage sparse matrices
+  are quite limited. For example, SciPy offers a wrap to one sparse serial
+  direct solver, SuperLU, while
+  PyTrilinos can interface with several serial and parallel direct solver
+  through the Amesos module. At least in our experience, the nonlinear module
+  of SciPy can be used to solve only limited-size problems, while the
+  algorithms provided by the NOX modules have been used to solve nonlinear PDE
+  problems with up to hundreds of millions of unknowns.
 
 \item {\bf PySparse.}  PySparse~\cite{broker05using} can handle
   symmetric and non-symmetric serial sparse matrices, and contains a
@@ -1124,6 +1135,12 @@ Python projects:
   can.
 
 \end{itemize}
+
+In our opinion, what PyTrilinos adds to the computational scientist's Python
+toolkit that is new is object oriented algorithm interfaces, a ground-up
+design to support sparsity and distributed computing, and truly robust
+linear and nonlinear solvers with extensive preconditioning support, none of
+which currently exist in ScientificPython, SciPy, or PySparse.
 
 %-----------------------------------------------------------------------------
 \section{Comparison Between PyTrilinos and MATLAB}
@@ -1938,8 +1955,8 @@ over 5.5 seconds, bringing the overall savings to just over 27.5
 seconds and a speedup factor of over 20.
 
 %-----------------------------------------------------------------------------
-\section{Concluding Remarks}
-\label{sec:concluding}
+\section{Discussion}
+\label{sec:discussion}
 %-----------------------------------------------------------------------------
 
 In this paper we have presented an overview of the \PyTrilinos\
@@ -2127,7 +2144,10 @@ we have encountered are:
 
 \end{itemize}
 
-\smallskip
+%-----------------------------------------------------------------------------
+\section{Concluding Remarks}
+\label{sec:concluding}
+%-----------------------------------------------------------------------------
 
 To summarize, the most important feature of Python is its powerful but
 simple programming environment designed for development speed and for
