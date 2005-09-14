@@ -213,6 +213,164 @@ spaces:
 
 {}\textit{Dependencies:} None
 
+
+%
+\subsubsection{Operator Solve Interfaces}
+%
+
+These interfaces represent the highest-level interface to a linear solve.
+These interfaces makes no assumption about how the underlying linear system is
+solved and therefore can not have a status test that is based on any
+algorithmic details such as iteration counts.
+
+Examples of the types of linear operators that might support this interface
+are:
+%
+\begin{itemize}
+%
+{}\item Block triangular linear operators.  In this operators the solve is
+executed by performing one or more solves with the blocks along the diagonal:
+Important examples include block diagonal, block lower triangular, and block
+upper triangular operators.
+%
+{}\item Multipliciative operators: Another example is a multiplicative
+operator such as $C = A B$ where $A$ and $B$ both support a solve operation.
+The linear system $C x = b {}\rightarrow A B x = b$ can be solved by first
+solving $A y = b$ and then solving $B x = y$.
+%
+{}\item Sherman-Morrison-Woodbury operator: As yet another example, consider
+the operator $A = I + D D^T$ where $A\in\RE^{n {}\times n}$, $D\in\RE^{n
+{}\times m}$ and $m {}\ll n$.  A linear solve with $A x = b$ can be solved as
+$x = (I - D^T (I + D^T D)^{-1} D) b$ where $(I + D^T D)\in\RE^{m {}\times m}$
+is a small dense positive-definite matrix that is easily formed, factored
+(using Cholesky) and solved.
+%
+\end{itemize}
+
+The convergence criteria used for these types of operator solves must be
+purely based on the relative errors of the linear system (i.e.\ relative
+residual error or relative solution error).  In the more general cases, it
+will be non-trivial to guarantee that a relative error is strictly satisfied.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{LinearOpWithSolveBase}: Highest level interface for an
+operator that can support a linear solve function.  The {}\texttt{solve(...)} 
+member function accepts a RHS {}\texttt{MultiVectorBase} object, and an
+initial LHS {}\texttt{MultiVectorBase} object, then returns an approximate LHS
+solution.  The convergence criteria is a simple tolerance (or set of
+tolerances) for the relative residual or relative solution errors.  Tolerances
+can be targeted to different blocks of RHSs to allow for different convergence
+criteria.  This interface allows, for instance, the SVD of the RHSs to form
+smaller blocks of RHS that can be passed to an atomic direct or iterative
+linear solver.
+%
+\end{itemize}
+
+{}\textit{Current status:} These interfaces are currently part of the
+{}\texttt{Thyra} package.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\end{itemize}
+
+{}\textbf{Note:} These interfaces do not depend in any way on the
+{}\textit{Basic Iterative Linear Solver Interfaces} or the {}\textit{Linear
+Solver Manager Interfaces} but concrete subclasses of these interfaces might
+(see Item ???).
+
+%
+\subsubsection{Miscellaneous Extended Functionality Interfaces}
+%
+
+These are ``Strategy'' interfaces for performing various types of tasks that
+are useful to ANA, or almost-ANA, code.
+
+{}\textit{Representative members:}
+\begin{itemize}
+%
+{}\item {}\texttt{LinearOpAdjointerBase}: Given an input linear operator $A$,
+return a new linear operator $B = A^H$ that is the adjoint (or perhaps
+transpose).  A typical implementation for an input explicit sparse matrix is
+that a new explicit sparse matrix object will be returned.  However, other
+implementations are also possible.
+%
+{}\item {}\texttt{LinearOpSummerBase}: Given two or more input linear
+operators create (or update) a linear operator that represents the scaled sum
+(or difference) of them.  A typical implementation for explicit input sparse
+matrix objects is the creation of an explicit output sparse matrix object.
+However, other implementations are possible.
+%
+{}\item {}\texttt{LinearOpMultiplierBase}: Given two linear operators create
+(or update) a linear operator that represents the scaled product of them.  A
+typical implementation for explicit input sparse matrix objects is the
+creation of an explicit output sparse matrix object.  However, other
+implementations are possible.
+%
+{}\item {}\texttt{LinearOpBlockComposerBase}: Given two or more linear
+operators create (or update) a block linear operator that represents the
+composite linear operator.  A typical implementation for explicit input sparse
+matrix objects is the creation of an explicit output sparse matrix object.
+However, other more specialized implementations are possible.
+%
+{}\item {}\texttt{PreconditionerFactoryBase}: Given a linear operator $A$,
+(possibly composed from one or more operators using the above extended
+strategy interfaces) create (or update) a linear operator $P$ that improves
+the conditioning of the input operator (i.e.\ $\kappa(P A) < {}\kappa(A)$).
+Typically the underlying operator is an explicit sparse matrix but other
+options are possible.  The preconditioners created by this object will
+generally be of the algebraic variety but, again, other options is possible.
+The abstract definition of a ``preconditioner'' is quite general.  The
+creation of an abstract preconditioner from an abstract operator allows the
+use of a single atomic iterative linear solver ANA such as provided through
+the {}\textit{Basic Iterative Linear Solver Interfaces}.
+%
+{}\item {}\texttt{LinearOpWithSolveFactoryBase}: Given an input operator
+(possibly composed from one or more operators using the above extended
+strategy interfaces), create a new {}\texttt{Linear\-Op\-With\-Solve\-Base}
+object the allows for solves with various RHSs.
+%
+\end{itemize}
+
+Note: An issue that all of the above interfaces needs to deal with is if the
+output linear operator will be dependent on the input linear operator.  If so,
+then a {}\texttt{RefCountPtr} will have to be passed in for the input linear
+operator.
+
+The purpose of these various interfaces is to allow them to be stringed
+together by an ANA in order to allow the composition of new types of linear
+operators to generally be used in a linear solve.  The general idea is that an
+ANA will transform one or more operators using the
+{}\texttt{Linear\-Op\-Adjointer\-Base}, {}\texttt{Linear\-Op\-Summer\-Base},
+{}\texttt{Linear\-Op\-Multiplier\-Base} and/or
+{}\texttt{Linear\-Op\-Block\-Composer\-Base} strategy interfaces to form a new
+operator $A$.  This new operator $A$ can then be used in one of several ways
+to solve a linear system with $A$ and we list these from the lowest to the
+highest level of use.  First, $A$ may be passed into a
+{}\texttt{Preconditioner\-Factory\-Base} strategy object to create a
+preconditioner $P$ to be used, along with $A$, with a basic iterative linear
+solver through the {}\textit{Basic Iterative Linear Solver Interfaces}.
+Second, a higher-level usage would be to pass the new operator $A$ into a
+{}\textit{Linear\-Solver\-Base} object to perform an atomic linear solve using
+a direct or iterative linear solver.  Third, the highest-level usage of $A$
+would be to pass $A$ to a {}\texttt{Linear\-Op\-With\-Solve\-Factory\-Base}
+strategy object to create a {}\texttt{Linear\-Op\-With\-Solve\-Base} object
+which then allows for any arbitrary method to solve for linear systems.  Note
+that this last use is the most approriate for most nonlinear ANA algorithms
+since it allows the most flexibility in how a linear system is solved.
+
+{}\textit{Current status:} Some software of this type is contained in
+TSFExtended.
+
+{}\textit{Dependencies:}
+\begin{itemize}
+\item {}\textit{Operator/Vector Interfaces}
+\item {}\textit{Operator Solve Interfaces} (Only for the {}\texttt{Linear\-Op\-With\-Solve\-Factory\-Base})
+interface
+\end{itemize}
+
 %
 \subsubsection{Basic Linear Solver Status Test Interfaces}
 %
@@ -334,189 +492,23 @@ general for multi-vectors.
 these interfaces might (see Item ???).
 
 %
-\subsubsection{Operator Solve Interfaces}
+\subsubsection{Model Evaluator Interfaces}
 %
 
-These interfaces represent the highest-level interface to a linear solve.
-These interfaces makes no assumption about how the underlying linear system is
-solved and therefore can not have a status test that is based on any
-algorithmic details such as iteration counts.
-
-Examples of the types of linear operators that might support this interface
-are:
-%
-\begin{itemize}
-%
-{}\item Block triangular linear operators.  In this operators the solve is
-executed by performing one or more solves with the blocks along the diagonal:
-Important examples include block diagonal, block lower triangular, and block
-upper triangular operators.
-%
-{}\item Multipliciative operators: Another example is a multiplicative
-operator such as $C = A B$ where $A$ and $B$ both support a solve operation.
-The linear system $C x = b {}\rightarrow A B x = b$ can be solved by first
-solving $A y = b$ and then solving $B x = y$.
-%
-{}\item Sherman-Morrison-Woodbury operator: As yet another example, consider
-the operator $A = I + D D^T$ where $A\in\RE^{n {}\times n}$, $D\in\RE^{n
-{}\times m}$ and $m {}\ll n$.  A linear solve with $A x = b$ can be solved as
-$x = (I - D^T (I + D^T D)^{-1} D) b$ where $(I + D^T D)\in\RE^{m {}\times m}$
-is a small dense positive-definite matrix that is easily formed, factored
-(using Cholesky) and solved.
-%
-\end{itemize}
-
-The convergence criteria used for these types of operator solves must be
-purely based on the relative errors of the linear system (i.e.\ relative
-residual error or relative solution error).  In the more general cases, it
-will be non-trivial to guarantee that a relative error is strictly satisfied.
+A single interface will represent a large number of different type of problems
+from steady-state nonlinear equations to transient optimization problems.
+This one interface will be the universal interoperability interface for NOX,
+LOCA, Rythmos, MOOCHO, CAPO and almost any other nonlinear ANA.
 
 {}\textit{Representative members:}
 \begin{itemize}
 %
-{}\item {}\texttt{LinearOpWithSolveBase} or {}\texttt{NonsingLinearOpBase} or
-something else: Highest level interface for an operator that can support a
-linear solve function.  The {}\texttt{solve(...)} member function accepts a
-RHS {}\texttt{MultiVectorBase} object, and an initial LHS
-{}\texttt{MultiVectorBase} object, then returns an approximate LHS solution.
-The convergence criteria will be a simple tolerance (or set of tolerances) for
-the relative residual or relative solution errors.  Tolerances can be targeted
-to different blocks of RHSs to allow for different convergence criteria.
-This interface allows, for instance, the SVD of the RHSs to form smaller
-blocks of RHS that can be passed to an atomic direct or iterative linear
-solver.
+{}\item {}\texttt{ModelEvaluatorBase}: The one do-all interface to nonlinear
+problems!
 %
 \end{itemize}
 
-{}\textit{Current status:} The interfaces that most closely resemble the
-proposed interface are {}\texttt{TSFCore\-::Nonlin\-::Linear\-Op\-With\-Solve}
-and {}\texttt{NOX\-::Abstract\-::Group\-::apply\-Jacobian\-Inverse(...)}.  The
-function {}\texttt{NOX\-::Abstract\-::Group\-::apply\-Jacobian\-Inverse(...)} 
-only supports residual tolerances and single vector RHSs while
-{}\texttt{TSFCore\-::Nonlin\-::Linear\-Op\-With\-Solve} has the wrong status
-tests all together.
-
-{}\textit{Dependencies:}
-\begin{itemize}
-\item {}\textit{Operator/Vector Interfaces}
-\end{itemize}
-
-{}\textbf{Note:} These interfaces do not depend in any way on the
-{}\textit{Basic Iterative Linear Solver Interfaces} or the {}\textit{Linear
-Solver Manager Interfaces} but concrete subclasses of these interfaces might
-(see Item ???).
-
-%
-\subsubsection{Miscellaneous Extended Functionality Interfaces}
-%
-
-These are ``Strategy'' interfaces for performing various types of tasks that
-are useful to ANA, or almost-ANA, code.
-
-{}\textit{Representative members:}
-\begin{itemize}
-%
-{}\item {}\texttt{LinearOpAdjointerBase}: Given an input linear operator $A$,
-return a new linear operator $B = A^H$ that is the adjoint (or perhaps
-transpose).  A typical implementation for an input explicit sparse matrix is
-that a new explicit sparse matrix object will be returned.  However, other
-implementations are also possible.
-%
-{}\item {}\texttt{LinearOpSummerBase}: Given two or more input linear
-operators create (or update) a linear operator that represents the scaled sum
-(or difference) of them.  A typical implementation for explicit input sparse
-matrix objects is the creation of an explicit output sparse matrix object.
-However, other implementations are possible.
-%
-{}\item {}\texttt{LinearOpMultiplierBase}: Given two linear operators create
-(or update) a linear operator that represents the scaled product of them.  A
-typical implementation for explicit input sparse matrix objects is the
-creation of an explicit output sparse matrix object.  However, other
-implementations are possible.
-%
-{}\item {}\texttt{LinearOpBlockComposerBase}: Given two or more linear
-operators create (or update) a block linear operator that represents the
-composite linear operator.  A typical implementation for explicit input sparse
-matrix objects is the creation of an explicit output sparse matrix object.
-However, other more specialized implementations are possible.
-%
-{}\item {}\texttt{PreconditionerFactoryBase}: Given a linear operator $A$,
-(possibly composed from one or more operators using the above extended
-strategy interfaces) create (or update) a linear operator $P$ that improves
-the conditioning of the input operator (i.e.\ $\kappa(P A) < {}\kappa(A)$).
-Typically the underlying operator is an explicit sparse matrix but other
-options are possible.  The preconditioners created by this object will
-generally be of the algebraic variety but, again, other options is possible.
-The abstract definition of a ``preconditioner'' is quite general.  The
-creation of an abstract preconditioner from an abstract operator allows the
-use of a single atomic iterative linear solver ANA such as provided through
-the {}\textit{Basic Iterative Linear Solver Interfaces}.
-%
-{}\item {}\texttt{LinearOpWithSolveFactoryBase}: Given an input operator
-(possibly composed from one or more operators using the above extended
-strategy interfaces), create a new {}\texttt{Linear\-Op\-With\-Solve\-Base}
-object the allows for solves with various RHSs.
-%
-\end{itemize}
-
-Note: An issue that all of the above interfaces needs to deal with is if the
-output linear operator will be dependent on the input linear operator.  If so,
-then a {}\texttt{RefCountPtr} will have to be passed in for the input linear
-operator.
-
-The purpose of these various interfaces is to allow them to be stringed
-together by an ANA in order to allow the composition of new types of linear
-operators to generally be used in a linear solve.  The general idea is that an
-ANA will transform one or more operators using the
-{}\texttt{Linear\-Op\-Adjointer\-Base}, {}\texttt{Linear\-Op\-Summer\-Base},
-{}\texttt{Linear\-Op\-Multiplier\-Base} and/or
-{}\texttt{Linear\-Op\-Block\-Composer\-Base} strategy interfaces to form a new
-operator $A$.  This new operator $A$ can then be used in one of several ways
-to solve a linear system with $A$ and we list these from the lowest to the
-highest level of use.  First, $A$ may be passed into a
-{}\texttt{Preconditioner\-Factory\-Base} strategy object to create a
-preconditioner $P$ to be used, along with $A$, with a basic iterative linear
-solver through the {}\textit{Basic Iterative Linear Solver Interfaces}.
-Second, a higher-level usage would be to pass the new operator $A$ into a
-{}\textit{Linear\-Solver\-Base} object to perform an atomic linear solve using
-a direct or iterative linear solver.  Third, the highest-level usage of $A$
-would be to pass $A$ to a {}\texttt{Linear\-Op\-With\-Solve\-Factory\-Base}
-strategy object to create a {}\texttt{Linear\-Op\-With\-Solve\-Base} object
-which then allows for any arbitrary method to solve for linear systems.  Note
-that this last use is the most approriate for most nonlinear ANA algorithms
-since it allows the most flexibility in how a linear system is solved.
-
-{}\textit{Current status:} Some software of this type is contained in
-TSFExtended.
-
-{}\textit{Dependencies:}
-\begin{itemize}
-\item {}\textit{Operator/Vector Interfaces}
-\item {}\textit{Operator Solve Interfaces} (Only for the {}\texttt{Linear\-Op\-With\-Solve\-Factory\-Base})
-interface
-\end{itemize}
-
-%
-\subsubsection{Steady-State Nonlinear Problem Interfaces}
-%
-
-These interfaces represent a set of steady-state state equations and auxiliary
-functions that can be cast into a variety of problem types such as a)
-nonlinear equations (e.g.\ for NOX), b) coupled nonlinear equations (e.g.\ for
-NOX), c) stability analysis and continuation (e.g.\ for LOCA), d) uncertainty
-quantification (e.g.\ for an SFE method), and e) constrained optimization
-(e.g.\ for MOOCHO).
-
-{}\textit{Representative members:}
-\begin{itemize}
-%
-{}\item {}\texttt{NonlinearProblemBase}: Represents a set of steady-state
-state and auxilary response functions.
-%
-\end{itemize}
-
-{}\textit{Current status:} Interfaces of this type are currently in
-{}\texttt{TSFCore/src/interfaces/Nonlin}
+{}\textit{Current status:} The beginnings of this in the {}\texttt{thyra} package.
 
 {}\textit{Dependencies:}
 \begin{itemize}
@@ -531,59 +523,27 @@ Jacobian matrix and allow for Jacobian solves.
 
 These represent interfaces for steady-state nonlinear solvers capable of
 solving steady-state nonlinear problems of the form represented through the
-{}\textit{Steady-State Nonlinear Problem Interfaces} described above.  A
-client should be able to define the problem in an abstract way, define
-relative residual or relative solution tolerances, and then invoke the
-nonlinear solver.
+{}\textit{Model Evaluator Interfaces} described above.  A client should be
+able to define the problem in an abstract way, define relative residual or
+relative solution tolerances, and then invoke the nonlinear solver.
 
 {}\textit{Representative members:}
 \begin{itemize}
 %
 {}\item {}\texttt{NonlinearSolverBase}: This interface allows a client to set
-a {}\texttt{NonlinearProblemBase} object, specify relative residual or
-solution error tolerances, and then invoke the nonlinear solver.
+a {}\texttt{ModelEvaluatorBase} object, specify relative residual or solution
+error tolerances, and then invoke the nonlinear solver.
 %
 \end{itemize}
 
-{}\textit{Current status:} NOX-specific versions of these interfaces are
-present in the current NOX/LOCA packages.  The interface
-{}\texttt{TSFExtended\-::Nonlinear\-Solver\-Base} appears to be related to
-this type of interface as well.
+{}\textit{Current status:} A prototype for this interface currently exists in
+the {}\texttt{thyra} package.
 
 {}\textit{Dependencies:}
 \begin{itemize}
 \item {}\textit{Operator/Vector Interfaces}
 \item {}\textit{Operator Solve Interfaces}
-\item {}\textit{Steady-State Nonlinear Problem Interfaces}
-\end{itemize}
-
-%
-\subsubsection{Transient Nonlinear Problem Interfaces}
-%
-
-These are the interfaces to transient linear problems (i.e.\ ODEs or DAEs)
-that parallel the {}\textit{Steady-State Nonlinear Problem Interfaces}
-metioned previously.  This interfaces may come in ANA-friendly and
-APP-friendly versions (i.e.\ interfaces easy for ANAs to use and interfaces
-easy for APPs to define).  Support software will be included to bridge the
-ANA-friendly and APP-friendly versions together.
-
-{}\textit{Representative members:}
-\begin{itemize}
-%
-{}\item {}\texttt{TransientNonlinearProblemBase}: Defines the ODEs or DAEs and
-may include auxilary ODEs/DAEs, auxilary variables and response functions.
-%
-\end{itemize}
-
-{}\textit{Current status:} There is not interface like this currently in
-existance but is planned as part of Rythmos in FY2005.
-
-{}\textit{Dependencies:}
-\begin{itemize}
-\item {}\textit{Operator/Vector Interfaces}
-\item {}\textit{Operator Solve Interfaces}: Used to represent the summed
-mass and stiffness state Jacobians and allow for solves.
+\item {}\textit{Model Evaluator Interfaces}
 \end{itemize}
 
 %
@@ -592,15 +552,15 @@ mass and stiffness state Jacobians and allow for solves.
 
 These represent interfaces for transient nonlinear solvers capable of solving
 transient nonlinear problems of the form represented through the
-{}\textit{Transient Nonlinear Problem Interfaces} described above.  A client
-should be able to define the problem in an abstract way, invoke the time
-integrator and have some control over what occurs.
+{}\textit{Model Evaluator Interfaces} described above.  A client should be
+able to define the problem in an abstract way, invoke the time integrator and
+have some control over what occurs.
 
 {}\textit{Representative members:}
 \begin{itemize}
 %
-{}\item {}\texttt{TransientNonlinearSolverBase}: This interface allows a client to
-set a {}\texttt{TransientNonlinearProblemBase} object and then invoke the
+{}\item {}\texttt{TransientNonlinearSolverBase}: This interface allows a
+client to set a {}\texttt{ModelEvaluatorBase} object and then invoke the
 transient nonlinear solver.
 %
 {}\item {}\texttt{TransientNonlinearStatusTestBase}: Defines NOX-style status tests?
@@ -610,14 +570,14 @@ the above are purely speculative.
 %
 \end{itemize}
 
-{}\textit{Current status:} There are no interfaces like this that currently
-exist by basic version may be created as part of Rythmos in FY2005 or FY2006.
+{}\textit{Current status:} Interfaces like this may be developed as part of
+the {}\texttt{rythmos} package.
 
 {}\textit{Dependencies:}
 \begin{itemize}
 \item {}\textit{Operator/Vector Interfaces}
 \item {}\textit{Operator Solve Interfaces}
-\item {}\textit{Transient Nonlinear Problem Interfaces}
+\item {}\textit{Model Evauator Interfaces}
 \end{itemize}
 
 %
@@ -649,7 +609,7 @@ subdirectories of TSFExtended.
 
 {}\textit{Dependencies:}
 \begin{itemize}
-\item {}\textit{Operator/Vector Interfaces}
+\item None!
 \end{itemize}
 
 %
@@ -697,7 +657,7 @@ software.  This should be corrected in Thyra if possible.
 \section{Thyra-Related Support Software}
 %
 
-This section describes software that is not central to interoperatiblity but
+This section describes software that is not central to interoperability but
 instead provides useful infrastructure and utilities that is very helpful none
 the less.  This software is broken up into ANA and non-ANA subcategories in
 the following subsections.
@@ -1285,26 +1245,27 @@ is shown in the next subsection.
 \bifthen
 \>\texttt{thyra} \\
 \>\>\texttt{doc}\\
-\>\>\>Contains DoxyfileWeb and index.doc for all of Thyra (roadmap) \\
+\>\>\>Contains Doxyfile and index.doc for all of Thyra (roadmap) \\
 \>\>\texttt{src} \\
 \>\>\>\texttt{utils}\\
 \>\>\>\>Contains some utility software not directly related to any category \\
 \>\>\>\texttt{ana} \\
 \>\>\>\>\texttt{doc}\\
-\>\>\>\>\>Contains DoxyfileWeb and index.doc for all Thyra ANA software \\
+\>\>\>\>\>Contains Doxyfile and index.doc for all Thyra ANA software \\
 \>\>\>\>\texttt{rtop}\\
 \>\>\>\>\>\texttt{doc}\\
-\>\>\>\>\>\>Contains DoxyfileWeb and index.doc for a doxygen collection \\
+\>\>\>\>\>\>Contains Doxyfile and index.doc for a doxygen collection \\
 \>\>\>\>\>\texttt{base}\\
 \>\>\>\>\>\>Contains Fundamentals of RTOp as well as some utilities \\
 \>\>\>\>\>\texttt{ops\_lib}\\
 \>\>\>\>\>\>Contains lots of standard and non-standard RTOp implementation \\
 \>\>\>\>\texttt{operator\_vector} \\
 \>\>\>\>\>\texttt{doc}\\
-\>\>\>\>\>\>Contains DoxyfileWeb and index.doc for this software \\
+\>\>\>\>\>\>Contains Doxyfile and index.doc for this software \\
 \>\>\>\>\>\texttt{interfaces} \\
 \>\>\>\>\>\>Contains {}\textit{Operator/Vector Interfaces} \\
 \>\>\>\>\>\texttt{extended\_interfaces} \\
+\>\>\>\>\>\>Contains {}\textit{Operator Solver Interfaces} \\
 \>\>\>\>\>\>Contains a subset {}\textit{Miscellaneous Extended Functionality Interfaces} \\
 \>\>\>\>\>\>\>that depends only on the {}\textit{Operator/Vector Interfaces} \\
 \>\>\>\>\>\texttt{ana\_support}\\
@@ -1317,7 +1278,7 @@ is shown in the next subsection.
 \>\>\>\>\>\>\>Contains adapter support software for MPI, SPMD implementations \\
 \>\>\>\>\texttt{basic\_linear\_solvers} \\
 \>\>\>\>\>\texttt{doc}\\
-\>\>\>\>\>\>Contains DoxyfileWeb and index.doc for this software \\
+\>\>\>\>\>\>Contains Doxyfile and index.doc for this software \\
 \>\>\>\>\>\texttt{status\_tests} \\
 \>\>\>\>\>\>\texttt{interfaces} \\
 \>\>\>\>\>\>\>Contains {}\textit{Basic Linear Solver Status Test Interfaces} \\
@@ -1330,39 +1291,25 @@ is shown in the next subsection.
 \>\>\>\>\>\>\texttt{linear\_solver\_managers} \\
 \>\>\>\>\>\>\>\texttt{interfaces} \\
 \>\>\>\>\>\>\>\>Contains {}\textit{Linear Solver Manager Interfaces} \\
-\>\>\>\>\texttt{operator\_solvers} \\
+\>\>\>\>\texttt{nonlinear} \\
 \>\>\>\>\>\texttt{doc}\\
-\>\>\>\>\>\>Contains DoxyfileWeb and index.doc for this software \\
-\>\>\>\>\>\texttt{interfaces} \\
-\>\>\>\>\>\>Contains {}\textit{Operator Solver Interfaces} \\
-\>\>\>\>\>\texttt{implementations} \\
-\>\>\>\>\>\>Contains {}\textit{Operator Solver Implementations} in terms of \\
-\>\>\>\>\>\>\>{}\textit{Linear Solver Manager Interfaces} \\
-\>\>\>\>\>\texttt{extended\_interfaces} \\
-\>\>\>\>\>\>Contains a subset {}\textit{Miscellaneous Extended Functionality Interfaces} \\
-\>\>\>\>\>\>\>that includes {}\texttt{LinearOpWithSolveFactoryBase} \\
-\>\>\>\>\texttt{nonlinear\_problems} \\
-\>\>\>\>\>\texttt{doc}\\
-\>\>\>\>\>\>Contains DoxyfileWeb and index.doc for this software \\
-\>\>\>\>\>\texttt{interfaces} \\
-\>\>\>\>\>\>Contains {}\textit{Steady-State Nonlinear Problem Interfaces} \\
-\>\>\>\>\texttt{nonlinear\_solvers} \\
-\>\>\>\>\>\texttt{interfaces} \\
-\>\>\>\>\>\>Contains {}\textit{Steady-State Nonlinear Equation Solver Interfaces} \\
-\>\>\>\>\texttt{transient\_nonlinear\_problems} \\
-\>\>\>\>\>\texttt{interfaces} \\
-\>\>\>\>\>\>Contains {}\textit{Transient Nonlinear Problem Interfaces} \\
-\>\>\>\>\texttt{transient\_nonlinear\_solvers} \\
-\>\>\>\>\>\texttt{doc}\\
-\>\>\>\>\>\>Contains DoxyfileWeb and index.doc for this software \\
-\>\>\>\>\>\texttt{interfaces} \\
-\>\>\>\>\>\>Contains {}\textit{Transient Nonlinear Equation Solver Interfaces} \\
+\>\>\>\>\>\>Contains Doxyfile and index.doc for this software \\
+\>\>\>\>\>\texttt{model\_evaluator} \\
+\>\>\>\>\>\>\texttt{interfaces} \\
+\>\>\>\>\>\>\>Contains {}\textit{Model Evaluator Interfaces} \\
+\>\>\>\>\>\>\texttt{ana\_support} \\
+\>\>\>\>\>\>\>Contains general ANA support software for {}\textit{Model Evaluator Interfaces} \\
+\>\>\>\>\>\texttt{solvers} \\
+\>\>\>\>\>\>\texttt{interfaces} \\
+\>\>\>\>\>\>\>Contains {}\textit{Steady-State Nonlinear Solver Interfaces} \\
+\>\>\>\>\>\>\texttt{ana\_support} \\
+\>\>\>\>\>\>\>Contains general ANA support software for {}\textit{Steady-State Nonlinear Solver Interfaces} \\
 \>\>\>\texttt{nonana} ??? \\
 \>\>\>\>\texttt{doc}\\
-\>\>\>\>\>Contains DoxyfileWeb and index.doc for all non-ANA Thyra software \\
+\>\>\>\>\>Contains Doxyfile and index.doc for all non-ANA Thyra software \\
 \>\>\>\>\texttt{spmd\_matrix\_vector} ??? \\
 \>\>\>\>\>\texttt{doc}\\
-\>\>\>\>\>\>Contains DoxyfileWeb and index.doc for this software \\
+\>\>\>\>\>\>Contains Doxyfile and index.doc for this software \\
 \>\>\>\>\>Contains {}\textit{SPMD Matrix/Vector Load/Access Interfaces} ??? \\
 \>\>\>\>\>Contains {}\textit{SPMD Matrix/Vector Creational Interfaces} ??? \\
 \>\>\texttt{example} \\
@@ -1423,29 +1370,33 @@ Trilinos
    |  |     |  |- base
    |  |     |  |- ops_lib
    |  |     |- operator_vector
+   |  |     |  |- doc
+   |  |     |  |- interfaces
+   |  |     |  |- extended_interfaces
+   |  |     |  |- ana_support
+   |  |     |  |- adapter_support
+   |  |     |     |- serial
+   |  |     |     |- mpi
+   |  |     |- nonlinear
    |  |        |- doc
-   |  |        |- interfaces
-   |  |        |- extended_interfaces
-   |  |        |- ana_support
-   |  |        |- adapter_support
-   |  |           |- serial
-   |  |           |- mpi
+   |  |        |- model_evaluator
+   |  |        |  |- interfaces
+   |  |        |  |- ana_support
+   |  |        |- solvers
+   |  |           |- interfaces
+   |  |           |- ana_support
    |  |- example
    |  |  |- utils
    |  |  |- ana
    |  |     |- rtop
    |  |     |- operator_vector
+   |  |     |- nonlinear
    |  |- test
-   |  |  |- utils
-   |  |  |- ana
-   |  |     |- rtop
-   |  |     |- operator_vector
-   |
-   |- epetra
-      |- thyra
-         |- src
-         |- example
-         |- test
+   |     |- utils
+   |     |- ana
+   |        |- rtop
+   |        |- operator_vector
+   |        |- nonlinear
 \end{verbatim}
 \caption{
 \label{thyra:fig:curr_dir_structure}
