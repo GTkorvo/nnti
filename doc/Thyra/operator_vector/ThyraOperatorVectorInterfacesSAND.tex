@@ -20,8 +20,7 @@
 % Set the title, author, and date
 %
 
-\title{
-Thyra Operator/Vector Interfaces }
+\title{ Overview of Fundamental Thyra Operator/Vector Interfaces }
 \author{
 Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
 Sandia National Laboratories\footnote{
@@ -165,46 +164,41 @@ and, if properly designed, gives the application easy access to more
 than one option for each critical technology area, e.g., access to
 multiple linear solver packages.
 
-One category of modules that is becoming increasingly important is
-abstract numerical algorithms (ANAs).  ANAs such as linear and
-nonlinear equation solvers, methods for stability and bifurcation
-analysis, transient solvers, uncertainty quantification methods and
-nonlinear programming solvers for optimization are typically
-mathematically sophisticated but have surprisingly little essential
-dependence on the details of what computer system is being used or how
-matrices and vectors are stored and computed.  Thus, by using abstract
-interface capabilities in languages such as C++, we can implement ANA
-software such that it will work, unchanged, with a variety of
-applications and linear algebra libraries.  Such an approach is often
-referred to as {\it generic
-programming}~\cite{ref:boost_generic_programming}.
+One category of modules that is becoming increasingly important is abstract
+numerical algorithms (ANAs).  ANAs such as linear and nonlinear equation
+solvers, methods for stability and bifurcation analysis, transient solvers,
+uncertainty quantification methods and nonlinear programming solvers for
+optimization are typically mathematically sophisticated but have surprisingly
+little essential dependence on the details of what computer system is being
+used or how matrices and vectors are stored and computed.  Thus, by using
+abstract interface capabilities in languages such as C++, we can implement ANA
+software such that it will work, unchanged, with a variety of applications and
+linear algebra libraries.  Such an approach is often referred to as {\it
+generic programming}~\cite{ref:boost_generic_programming}.
 
-In this paper we describe a set of basic interfaces for the Trilinos
-Solver Framework (TSF) called Thyra as the common interface for (i)
-ANA development, (ii) the integration of an ANA into an application
-(APP) and (iii) providing services to the ANA from a linear algebra
-library (LAL).  By agreeing on a simple minimal common interface layer
-such as Thyra, we eliminate the many-to-many dependency problem of
-ANA/APP interfaces.  Thyra is not primarily designed to be the most
-convenient interface for the direct development of ANAs but it can be
-used in direct ANA development.  Instead, Thyra is designed to make
-it easier for developers to provide the basic functionality from APPs
-and LALs required for the implementation of ANAs.
+In this paper we describe a set of basic operator/vector interfaces provided
+in the Trilinos package Thyra that form the foundation for (i) ANA
+development, (ii) the integration of an ANA into an application (APP) and
+(iii) providing services to the ANA from a linear algebra library (LAL).  By
+agreeing on a simple minimal common interface layer such as the foundational
+Thyra operator/vector interfaces, we eliminate the many-to-many dependency
+problem of ANA/APP interfaces.  These fundamental Thyra interfaces is not
+primarily designed to be the most convenient interface for the direct
+development of ANAs but it can be used in direct ANA development.  Instead,
+these interfaces are designed to make it easier for developers to provide the
+basic functionality from APPs and LALs required for the implementation of
+ANAs.
 
-While Thyra provides a mechanism to express all of the functionality required
-to be directly used in ANA development it does not attempt to provide a full
-collection of methods that directly support the anticipated functionality
-needs of ANAs.  Instead Thyra relies on a simple but powerful reduction and
-transformation operator mechanism~\cite{ref:rtop_toms} that can be used to
-express any element-wise vector reduction or transformation operation.  More
-direct and convenient access to functionality that might be desired by a given
-ANA is provided in a companion project called TSFExtended [???].  Some extra
-functionality inbetween what is provided in the basic Thyra interfaces
-described here and TSFExtended is contained in utility software that is also
-contained in the {}\texttt{Thyra} namespace which will be referred to as
-Thyra/utilities.  Extended functionality can be very helpful in developing ANA
-code and some examples are discussed in
-Section~\ref{tsfcore:sec:convenience_functionality}.
+While these Thyra interfaces provide a mechanism to express all of the
+functionality required to be directly used in ANA development it does not
+attempt to provide a full collection of methods that directly support the
+anticipated functionality needs of ANAs.  Instead they rely on a simple but
+powerful reduction and transformation operator mechanism~\cite{ref:rtop_toms}
+that can be used to express any element-wise vector reduction or
+transformation operation.  Additional functionality to support both the
+devleopment of ANAs and the implementation of the operator/vector interfaces
+is being added to the Thyra package all the time but this is not the focus of
+this discussion.
 
 It is difficult to describe a set of linear algebra interfaces outside
 of the context of some class of numerical problems.  For this purpose,
@@ -223,8 +217,9 @@ class diagrams.  We also assume that the reader has some background in
 large-scale numerics and will therefore be able to appreciate the
 challenges that are addressed by Thyra.
 
-To motivate Thyra, we discuss the context for Thyra in large-scale (both in
-lines of code and in problem dimensionality) numerical software in
+To motivate the fundamental Thyra operator/vector interfaces, we discuss the
+context for Thyra in large-scale (both in lines of code and in problem
+dimensionality) numerical software in
 Section~\ref{tsfcore:sec:classification_of_lin_alg_itfc}.  The major
 requirements for Thyra are spelled out in
 Section~\ref{tsfcore:sec:Thyra_requirements}.  This is followed by an overview
@@ -232,15 +227,18 @@ of the Thyra linear algebra interfaces in
 Section~\ref{tsfcore:sec:Thyra_core_overview} and a detailed discussion of the
 design of the Thyra linear algebra interfaces in
 Section~\ref{tsfcore:sec:Thyra_Details} including numerous examples.  A
-complete example ANA for the iterative solution of simultaneous systems of
-linear equations (using a simple BiCG method) is described in
-Section~\ref{tsfcore:sec:ANA_iter_solver_example}.  A discussion of some of
-the object-oriented and other general software design concepts and principles
-that have gone into the development of Thyra is deferred to
-Section~\ref{tsfcore:sec:general_software_concepts}.  Some of the nonessential
-but convenient functionality that is useful to direct ANA developers that is
-missing in Thyra is described in
+discussion of some of the object-oriented and other general software design
+concepts and principles that have gone into the development of Thyra is
+deferred to Section~\ref{tsfcore:sec:general_software_concepts}.  Some of the
+nonessential but convenient functionality that is useful to direct ANA
+developers that is missing in Thyra is described in
 Section~\ref{tsfcore:sec:convenience_functionality}.
+
+Note that the online documentation for Thyra at
+{}\texttt{http://software.sandia.gov/Trilinos/packages/thyra} should be the
+definitive information source for Thyra.  This document only tries to discuss
+some of the more significant issues associated with Thyra and discuss its
+rational for existence.
 
 %
 \section{Classification of linear algebra interfaces}
@@ -1457,154 +1455,117 @@ Section~\ref{tsfcore:sec:Thyra_core_overview} for the
 %
 
 The C++ prototype for the {}\texttt{\textit{Vector\-Base}} version of
-{}\texttt{\textit{LinearOp\-::apply(\-...)}} is
+{}\texttt{\textit{LinearOp\-::apply(\-...)}} and
+{}\texttt{\textit{LinearOp\-::apply\-Transpose(\-...)}} is
 
 {\scriptsize\begin{verbatim}
 namespace Thyra{
-template<class Scalar>
-class LinearOp : public virtual OpBase<Scalar> {
+template<class RangeScalar, class DomainScalar>
+class LinearOp : public virtual Teuchos::Describable {
 public:
   ...
   virtual void apply(
-    ETransp M_trans, const VectorBase<Scalar> &x, VectorBase<Scalar> *y
-    ,Scalar alpha = 1.0, Scalar beta = 0.0
+    EConj conj, const MultiVectorBase<DomainScalar> &X, MultiVectorBase<RangeScalar> *Y
+    ,RangeScalar alpha = Teuchos::ScalarTraits<RangeScalar>::one()
+    ,RangeScalar beta = Teuchos::ScalarTraits<RangeScalar>::zero()
+    ) const = 0;
+  virtual void applyTranspose(
+    EConj conj, const MultiVectorBase<RangeScalar> &X, MultiVectorBase<DomainScalar> *Y
+    ,DomainScalar alpha = Teuchos::ScalarTraits<RangeScalar>::one()
+    ,DomainScalar beta = Teuchos::ScalarTraits<RangeScalar>::zero()
     ) const = 0;
   ...
 };
 } // namespace Thyra
 \end{verbatim}}
 
-{}\noindent{}where the type {}\texttt{ETransp} is the C++
-{}\texttt{enum}
+{}\noindent{}where the type {}\texttt{EConj} is the C++ {}\texttt{enum}
 
 {\scriptsize\begin{verbatim}
-enum ETransp { NOTRANS, CONJ, TRANS, CONJTRANS };
+enum EConj { NONCONJ_ELE, CONJ_ELE };
 \end{verbatim}}
 
-{}\noindent{}The use of an {}\texttt{enum} instead of a {}\texttt{char} (i.e.\
-BLAS) for the {}\texttt{M\_trans} argument is very important.  The use of an
-{}\texttt{enum} disallows the implicit conversion from other types like
-{}\texttt{bool}, {}\texttt{int}, and {}\texttt{double}.  Using
-{}\texttt{enum}s requires more typing but greatly helps to avoid introducing
-bugs into the program that are extremely difficult to track down.  In
-addition, the use of an {}\texttt{enum} allows for more than just two values
-such as is shown for the second value {}\texttt{CONJ} which signifies
-non-transposed with complex-conjugate elements and the fourth value
-{}\texttt{CONJTRANS} which signifies the transpose operator with
-complex-conjugate elements.
+Two version of a apply function are needed since the range and domain scalar
+types may be different.  Examples of operators where the range and domain
+scalar types include real-to-complex DFT and double-to-extended-precision
+operators.
 
-The fact that ANAs can be designed to handle both real and complex scalar
-types presents somewhat of a tricking problem for
-{}\texttt{\textit{Linear\-Op\-Base}} implementations that only support real
-scalars (i.e.~{}\texttt{double}).  The problem is that the argument value of
-{}\texttt{CONJ} or {}\texttt{CONJTRANS} may be passed to a real-only
-implementation of {}\texttt{\textit{Linear\-Op\-Base}} from from an ANA
-designed to work properly for complex scalars.  Real-valued
-{}\texttt{\textit{Linear\-Op\-Base}} implementations should determine if
-transpose or non-transpose is to be used by checking for
-{}\texttt{real\-\_trans(M\_trans) == NOTRANS}.  The function
-{}\texttt{real\-\_trans(...)} converts a {}\texttt{CONJ} into a
-{}\texttt{NOTRANS} and a {}\texttt{CONJTRANS} into a {}\texttt{TRANS}.  For
-example, a real-valued implementation of
-{}\texttt{\textit{LinearOp\-::apply(\-...)}} should look like:
+The use of an {}\texttt{enum} instead of a {}\texttt{char} (i.e.\ BLAS) for
+the {}\texttt{conj} argument is very important.  The use of an {}\texttt{enum}
+disallows the implicit conversion from other types like {}\texttt{bool},
+{}\texttt{int}, and {}\texttt{double}.  Using {}\texttt{enum}s requires more
+typing but greatly helps to avoid introducing bugs into the program that are
+extremely difficult to track down.
 
-{\scriptsize\begin{verbatim}
-void MyLinearOp::apply( const ETransp M_trans, const Vector<double> &x
-    ,Vector<double> *y ,const double alpha=1.0 ,const double beta=0.0 ) const
-{
-  if( real_trans(M_trans) == NOTRANS ) {
-    // Apply the non-transposed operator
-    ...
-  }
-  else {
-    // Apply the transposed operator
-    ...
-  }
-}
-\end{verbatim}}
+Note that most software for handling complex data types can not handle the
+{}\texttt{CONJ\_ELE} value with the
+{}\texttt{\textit{LinearOp\-::apply(\-...)}} function.  For example, LAPACK
+only handles {}\texttt{'notranspose'}, {}\texttt{'transpose'}, and
+{}\texttt{'conjugate transpose'} and has not concept of a non-transposed
+conjugate matrix-vector product.  However, the concept of a non-transposed
+conjugate application was added since it may come up in certain strange
+situations and a {}\texttt{\textit{Linear\-Op\-Base}} implementation is always
+free to not support a particular apply mode by returning false from
+{}\texttt{\textit{applySupports(EConj)}} or
+{}\texttt{\textit{applyTransposeSupports(EConj)}}.
 
-Concrete {}\texttt{\textit{Linear\-Op\-Base}} implementations that can handle
-complex {}\texttt{Scalar} types need to carefully consider how to interpret
-the {}\texttt{ETransp} argument.  When looking for the structural transpose
-(i.e.\ for selecting the range or domain spaces for instance) a template
-implementation capable of handing complex {}\texttt{Scalar} type should check
-{}\texttt{real\-\_trans(M\_trans) == NOTRANS}.
-
-Note that most software for handling complex type can not handle the
-{}\texttt{CONJ} value.  For example, LAPACK only handles {}\texttt{NOTRANS},
-{}\texttt{TRANS}, and {}\texttt{CONJTRANS}.  However, the value
-{}\texttt{CONJ} was added to the enum {}\texttt{ETransp} since there are use
-cases where it may come up and {}\texttt{\textit{Linear\-Op\-Base}}
-implementations are free to not support it by returning false from there
-{}\texttt{\textit{opSupported(M\_trans)}} function.
-
-The {}\texttt{\textit{Multi\-Vector\-Base}} version of
-{}\texttt{\textit{LinearOp\-::apply(\-...)}} has an identical prototype except
-the {}\texttt{\textit{Vector\-Base}} arguments are replaced with
-{}\texttt{\textit{Multi\-Vector\-Base}} arguments.  The
-{}\texttt{\textit{Multi\-Vector\-Base}} version has a default implementation
-based on the {}\texttt{\textit{Vector\-Base}} version as described in
-Section~\ref{tsfcore:sec:vector_vs_multivector}.
-
-In the above prototype, the scalars $\alpha$ and $\beta$ default to
-$1.0$ and $0.0$ respectively.  Therefore, by leaving the default
-values, the default operation becomes
+In the above prototype, the scalars $\alpha$ and $\beta$ default to $1$ and
+$0$ respectively.  Therefore, by leaving the default values, the default
+operation becomes
 %
 \[
-y = op(M) x
+Y = op(M) X
 \]
 %
-which is the same form that is declared in
-{}\texttt{\textit{HCL\-\_Linear\-Operator\-::apply(\-...)}}.  However, the
-scalars $\alpha$ and $\beta$ provide direct calls to BLAS functions and remove
-the need to create temporaries when performing long operations (see
-Section~\ref{tsfcore:sec:multi_vec_linear_op}).  For example, consider the
-following long expression
+which is the same form that is declared in some other operator interfaces.
+However, the scalars $\alpha$ and $\beta$ provide direct calls to BLAS
+functions and remove the need to create temporaries when performing long
+operations (see Section~\ref{tsfcore:sec:multi_vec_linear_op}).  For example,
+consider the following long expression
 %
 \[
-y = A u + \gamma B^T v + \eta C w
+Y = A U + \gamma B^T V + \eta C W
 \]
 %
 where $A$, $B$ and $C$ are {}\texttt{\textit{Linear\-Op\-Base}} objects and
-$y$, $u$, $v$ and $w$ are {}\texttt{\textit{Vector\-Base}} objects.  Using
-Thyra, this long operation can be performed as follows
+$Y$, $U$, $v$ and $W$ are {}\texttt{\textit{Multi\-Vector\-Base}} objects.
+Using Thyra, this long operation can be performed as follows
 
 {\scriptsize\begin{verbatim}
 template<class Scalar>
 void Thyra::long_expression(
-  const LinearOpBase<Scalar>& A, const VectorBase<Scalar>& u
-  ,Scalar gamma, const LinearOpBase<Scalar>& B, const VectorBase<Scalar>& u
-  ,Scalar eta, const LinearOpBase<Scalar>& C, const VectorBase<Scalar>& w
-  ,VectorBase<Scalar>* y
+  const LinearOpBase<Scalar>& A, const MultiVectorBase<Scalar>& U
+  ,Scalar gamma, const LinearOpBase<Scalar>& B, const MultiVectorBase<Scalar>& V
+  ,Scalar eta, const LinearOpBase<Scalar>& C, const MultiVectorBase<Scalar>& W
+  ,MultiVectorBase<Scalar>* Y
   )
 {
-  A.apply(NOTRANS,u,y);              // y  =  A*u
-  B.apply(TRANS,v,y,gamma,1.0,1.0);  // y +=  gamma*B'*v
-  C.apply(NOTRANS,w,y,eta,1.0,1.0);  // y +=  eta*C*w
+  A.apply(NOTRANS,U,Y);              // Y  =  A*U
+  B.apply(TRANS,V,Y,gamma,1.0,1.0);  // Y +=  gamma*B'*V
+  C.apply(NOTRANS,w,y,eta,1.0,1.0);  // Y +=  eta*C*W
 }
 \end{verbatim}}
 
-{}\noindent{}where no temporary vectors are required.  Note that if
-the arguments {}\texttt{alpha=1.0} and {}\texttt{beta=0.0} where fixed
-(as they are in HCL for instance), the above operation would have to
-be implemented as:
+{}\noindent{}where no temporary multi-vectors are required.  Note that if the
+arguments {}\texttt{alpha=1.0} and {}\texttt{beta=0.0} where fixed (as they
+are in HCL for instance), the above operation would have to be implemented as:
 
 {\scriptsize\begin{verbatim}
 template<class Scalar>
 void Thyra::bad_long_expression(
-  const LinearOpBase<Scalar>& A, const VectorBase<Scalar>& u
-  ,Scalar gamma, const LinearOpBase<Scalar>& B, const VectorBase<Scalar>& u
-  ,Scalar eta, const LinearOpBase<Scalar>& C, const VectorBase<Scalar>& w
+  const LinearOpBase<Scalar>& A, const MultiVectorBase<Scalar>& U
+  ,Scalar gamma, const LinearOpBase<Scalar>& B, const MultiVectorBase<Scalar>& V
+  ,Scalar eta, const LinearOpBase<Scalar>& C, const MultiVectorBase<Scalar>& W
   ,VectorBase<Scalar>* y
   )
 {
-  Teuchos::RefCountPtr<VectorBase<Scalar> >
-    t = A.range()->createMember(); // Create a temporary to store the intermediate  products
-  A.apply(NOTRANS,u,y);            // y  =  A*u
-  B.apply(TRANS,v,t.get());        // t  =  B'*v
-  axpy(gamma,*t,y);                // y +=  gamma*t
-  C.apply(NOTRANS,w,t.get());      // t  =  C*w
-  axpy(eta,*t,y);                  // y +=  eta*t
+  Teuchos::RefCountPtr<MultiVectorBase<Scalar> >
+    T = createMembers(A.range(),Y->domain()->dim()); // Create a temporary to store the intermediates
+  A.apply(NOTRANS,U,Y);            // Y  =  A*U
+  B.apply(TRANS,V,&*T);            // T  =  B'*V
+  axpy(gamma,*T,Y);                // Y +=  gamma*T
+  C.apply(NOTRANS,W,&*T);          // T  =  C*W
+  axpy(eta,*T,Y);                  // Y +=  eta*T
 }
 \end{verbatim}}
 
@@ -1615,11 +1576,11 @@ it is also longer and more difficult to write.  The arguments
 near-optimal implementation and for ease of use.
 
 Note that some implementations of {}\texttt{\textit{Linear\-Op\-Base}} may not
-be able to apply the operator with a value of $\beta {}\ne 0$ without
-creating at least one temporary vector (or multi-vector).  However,
-this is a minor performance issue in most use cases and if $\beta
-{}\ne 0$ is required then a temporary will have to be created by
-someone anyway.
+be able to apply the operator with a value of $\beta {}\ne 0$ without creating
+at least one temporary vector (or multi-vector).  However, this is a minor
+performance issue in most use cases and if $\beta {}\ne 0$ is required then a
+temporary will have to be created by someone anyway there there is really no
+significant performance hit.
 
 %
 \subsubsection{Optional support for adjoints}
@@ -1628,12 +1589,14 @@ someone anyway.
 
 The {}\texttt{\textit{Linear\-Op\-Base}} interface only optionally supports
 transposed (adjoint) matrix-vector multiplications.  If the function
-{}\texttt{\textit{opSupported(M\_trans)}} returns {}\texttt{false}, then the
-argument {}\texttt{M\_trans}, when passed to {}\texttt{\textit{apply(\-...)}},
-will result in an {}\texttt{OpNotSupported} exception being thrown.  This
-specification, while not ideal from an object-orientation purest point of
-view, does satisfy the basic principles outlined in
-Section~\ref{tsfcore:sec:general_software_concepts}.
+{}\texttt{\textit{applyTransposeSupports(conj)}} returns {}\texttt{false},
+then the argument {}\texttt{conj}, when passed to
+{}\texttt{\textit{apply\-Transpose(\-...)}}, will result in an
+{}\texttt{Op\-Not\-Supported} exception being thrown.  This specification,
+while not ideal from an object-orientation purest point of view, does satisfy
+the basic principles outlined in
+Section~\ref{tsfcore:sec:general_software_concepts} in that the preconditions
+are known by all clients since they are given by the interface.
 
 %
 \subsection{\texttt{\textit{Multi\-Vector\-Base}}}
@@ -2425,7 +2388,7 @@ The standard also guarantees that the conversions
 signed char -> signed short int -> signed int -> signed long int
 \end{verbatim}}
 %
-{}\noindent{}are always `value preserving'' (see ???).  Therefore, any
+{}\noindent{}are always ``value preserving'' (see ???).  Therefore, any
 conversion from a {}\texttt{signed short int} to a {}\texttt{signed long int}
 and back will give the same {}\texttt{signed short int} number.  This is the
 key behavior of C++ that allows the definition only a single {}\texttt{Index}
@@ -3088,144 +3051,144 @@ default implementation of the {}\texttt{\textit{Multi\-Vector\-Base}}
 version of the function {}\texttt{\textit{LinearOp\-::apply(\-...)}} 
 which is based on the {}\texttt{\textit{Vector\-Base}} version).
 
+%%
+%\section{Nonessential but Convenient Functionality}
+%\label{tsfcore:sec:convenience_functionality}
+%%
 %
-\section{Nonessential but Convenient Functionality}
-\label{tsfcore:sec:convenience_functionality}
+%While the basic Thyra interfaces described in this paper provide all
+%of the functionality required to be directly used in ANA development
+%these interfaces lack much of the nonessential but convenient
+%functionality that is very helpful in developing ANA code.  This
+%nonessential but convenient functionality can be built on top of the
+%core functionality which is precisely the type of extra functionality
+%that Thyra/utilities and TSFExtended provide.  In this section,
+%several different examples of nonessential but convenient
+%functionality are given along with references to where this
+%functionality exists in TSF and {}\textit{AbstractLinAlgPack}.
 %
-
-While the basic Thyra interfaces described in this paper provide all
-of the functionality required to be directly used in ANA development
-these interfaces lack much of the nonessential but convenient
-functionality that is very helpful in developing ANA code.  This
-nonessential but convenient functionality can be built on top of the
-core functionality which is precisely the type of extra functionality
-that Thyra/utilities and TSFExtended provide.  In this section,
-several different examples of nonessential but convenient
-functionality are given along with references to where this
-functionality exists in TSF and {}\textit{AbstractLinAlgPack}.
-
+%%
+%\subsection{Sub-vector views as {}\texttt{\textit{Vector\-Base}} objects}
+%%
 %
-\subsection{Sub-vector views as {}\texttt{\textit{Vector\-Base}} objects}
+%In Section~\ref{tsfcore:sec:vec_apply_op}, the use case where the sub-vectors
+%of a {}\texttt{\textit{Vector\-Base}} object are treated as logical vector was
+%discussed.  The example in that section got the job done but a better approach
+%to providing access to sub-vectors is to create a sub-view decorator subclass
+%(see the ``decorator'' pattern in {}\cite{ref:gama_et_al_1995}) that allows
+%the creation of a {}\texttt{Vector\-Base} view object of a contiguous range of
+%elements in another {}\texttt{Vector\-Base} object.  Such a subclass is
+%included in {}\textit{AbstractLinAlgPack} (see {}\texttt{VectorSubView} and
+%{}\texttt{Vector\-Mutable\-Sub\-View}) and is very useful for high-level ANA
+%code.  These ``sub-view'' subclasses can be easily implemented through the
+%{}\texttt{\textit{Vector\-::applyOp(\-...)}}  function.
 %
-
-In Section~\ref{tsfcore:sec:vec_apply_op}, the use case where the sub-vectors
-of a {}\texttt{\textit{Vector\-Base}} object are treated as logical vector was
-discussed.  The example in that section got the job done but a better approach
-to providing access to sub-vectors is to create a sub-view decorator subclass
-(see the ``decorator'' pattern in {}\cite{ref:gama_et_al_1995}) that allows
-the creation of a {}\texttt{Vector\-Base} view object of a contiguous range of
-elements in another {}\texttt{Vector\-Base} object.  Such a subclass is
-included in {}\textit{AbstractLinAlgPack} (see {}\texttt{VectorSubView} and
-{}\texttt{Vector\-Mutable\-Sub\-View}) and is very useful for high-level ANA
-code.  These ``sub-view'' subclasses can be easily implemented through the
-{}\texttt{\textit{Vector\-::applyOp(\-...)}}  function.
-
+%%
+%\subsection{Composition of {}\texttt{\textit{Vector\-Base}} and {}\texttt{\textit{Linear\-Op\-Base}} objects}
+%\label{tsfcore:sec:composite_abstractions}
+%%
 %
-\subsection{Composition of {}\texttt{\textit{Vector\-Base}} and {}\texttt{\textit{Linear\-Op\-Base}} objects}
-\label{tsfcore:sec:composite_abstractions}
+%The ideal way to represent composite blocked or product vector objects, such
+%as described in Section~\ref{tsfcore:sec:vec_apply_op}, is to create a
+%composite blocked or product vector subclass.  Interfaces and implementations
+%of such product objects are provided in Thyra/utilites (see the classes
+%{}\texttt{Product\-Vector\-Space}, {}\texttt{Product\-Vector} and
+%{}\texttt{Product\-Multi\-Vector}).  These types of composite product
+%{}\texttt{\textit{Vector\-Base}} and {}\texttt{\textit{Vector\-Space\-Base}}
+%subclasses are easy to develop because of the specification of
+%{}\texttt{\textit{Vector\-::applyOp(\-...)}}.
 %
-
-The ideal way to represent composite blocked or product vector objects, such
-as described in Section~\ref{tsfcore:sec:vec_apply_op}, is to create a
-composite blocked or product vector subclass.  Interfaces and implementations
-of such product objects are provided in Thyra/utilites (see the classes
-{}\texttt{Product\-Vector\-Space}, {}\texttt{Product\-Vector} and
-{}\texttt{Product\-Multi\-Vector}).  These types of composite product
-{}\texttt{\textit{Vector\-Base}} and {}\texttt{\textit{Vector\-Space\-Base}}
-subclasses are easy to develop because of the specification of
-{}\texttt{\textit{Vector\-::applyOp(\-...)}}.
-
-Note that a product vector such as
-
-\[
-\tilde{x} = {\bmat{c} x_1 \\ x_2 \\ \vdots \\ x_N \emat}
-\]
-
-{}\noindent{}with $N$ block vectors is distictly different from a
-multi-vector
-
-\[
-Y = {\bmat{cccc} y_1 & y_2 & \ldots & y_N \emat}
-\]
-
-{}\noindent{}with $N$ colunns.  In the multi-vector $Y$, each of the
-column vectors $y_j$ lie in the same vector space (i.e.~the range
-space of the linear operator represented by the multi-vector) which
-may not be the case for the vector blocks $x_j$ of $\tilde{x}$ which
-may lie in distictly different vector spaces $\mathcal{X}_j$.  While
-it may seem that the mathematical differences between a multi-vector
-and a product vector are subtle, they are distictly different from a
-software implication point of view.  Multi-vectors are ment to
-represent tall, thin dense matrices such as for multiple
-right-hand-sides that are passed to a linear solver or for performing
-mulitple linear operator applications (with the same linear operator)
-while product vectors and product vector spaces are ment to represent
-single vector objects which are composed of individual vector blocks
-such as would be used for the composite unknowns in an SFE method or a
-multi-period design problem.  For example, a product vector space
-would be able to create a product multi-vector such as
-
-\[
-\tilde{Y} = {\bmat{c} Y_1 \\ Y_2 \\ \vdots \\ Y_N \emat}
-\]
-
-where each constituent multi-vector $Y_j$ may have a different range
-space but all must have the same domain space obviously.  Such a
-product multi-vector is implemented by
-{}\texttt{Product\-Multi\-Vector}.
-
-Similar generic composition subclasses can also exist for linear
-operators (see TSFExtended).
-
+%Note that a product vector such as
 %
-\subsection{Matlab-like notation and handle classes for linear algebra
-using operator overloading}
-\label{tsfcore:sec:operator_overloading}
+%\[
+%\tilde{x} = {\bmat{c} x_1 \\ x_2 \\ \vdots \\ x_N \emat}
+%\]
 %
-
-Thyra contains abstractions for linear algebra objects.
-Mathematicians use a precise syntax to describe linear algebra
-operations.  Matlab {}\cite{ref:matlab} has established a useful
-convention for mathematical linear algebra syntax using only ASC
-characters.  C++ has operator overloading.  When you put all of this
-together it seems obvious, at first glance, that operator overloading
-in C++ should be used to specify linear algebra operations like
-
-\[
-y = A u + \gamma B^T v + \eta C w
-\]
-
-{}\noindent{}in C++ as
-
-\begin{verbatim}
-  y = A*u + gamma*trans(B)*v + eta*w;
-\end{verbatim}
-
-{}\noindent{}However, providing a near-optimal implementation (i.e.~no
-unnecessary temporaries or multiple memory accesses) of operator
-overloading for linear algebra in C++ is nontrivial.  While this type
-of syntax is desirable, it does not provide any new functionality and
-is only nonessential but convenient functionality and is therefore not
-included in the basic Thyra interfaces.  If such Matlab-like syntax
-is desired, it can be found in TSFExtended through the use of handle
-classes which include overloaded operators.  However, an efficient
-operator overloading mechanism in C++ is hard to implement and is
-difficult for C++ novices to debug through.  Operator overloading
-built on top of Thyra must be bullet proof and provide unmatched
-exception handling so that users must never need to debug through this
-code.
-
-Closely associated with operator overloading is the concept of handle
-classes {}\cite{ref:advanced_c++_coplien}.  Handles assume the same
-type of role as a smart pointers except all of the function forwarding
-(which is performed automatically with the operator function
-{}\texttt{RefCountPtr<>\-::operator->()}) must be performed manually
-in handle class (which must be written an maintained for every function
-on every class by some developer).  Handles make the implementation of
-linear algebra operations with operator overloading much easier.
-Handles are used extensively in TSFExtended.  Since Thyra does not
-implement operator overloading, handles classify as nonessential but
-convenient functionality and are therefore not included in Thyra.
+%{}\noindent{}with $N$ block vectors is distictly different from a
+%multi-vector
+%
+%\[
+%Y = {\bmat{cccc} y_1 & y_2 & \ldots & y_N \emat}
+%\]
+%
+%{}\noindent{}with $N$ colunns.  In the multi-vector $Y$, each of the
+%column vectors $y_j$ lie in the same vector space (i.e.~the range
+%space of the linear operator represented by the multi-vector) which
+%may not be the case for the vector blocks $x_j$ of $\tilde{x}$ which
+%may lie in distictly different vector spaces $\mathcal{X}_j$.  While
+%it may seem that the mathematical differences between a multi-vector
+%and a product vector are subtle, they are distictly different from a
+%software implication point of view.  Multi-vectors are ment to
+%represent tall, thin dense matrices such as for multiple
+%right-hand-sides that are passed to a linear solver or for performing
+%mulitple linear operator applications (with the same linear operator)
+%while product vectors and product vector spaces are ment to represent
+%single vector objects which are composed of individual vector blocks
+%such as would be used for the composite unknowns in an SFE method or a
+%multi-period design problem.  For example, a product vector space
+%would be able to create a product multi-vector such as
+%
+%\[
+%\tilde{Y} = {\bmat{c} Y_1 \\ Y_2 \\ \vdots \\ Y_N \emat}
+%\]
+%
+%where each constituent multi-vector $Y_j$ may have a different range
+%space but all must have the same domain space obviously.  Such a
+%product multi-vector is implemented by
+%{}\texttt{Product\-Multi\-Vector}.
+%
+%Similar generic composition subclasses can also exist for linear
+%operators (see TSFExtended).
+%
+%%
+%\subsection{Matlab-like notation and handle classes for linear algebra
+%using operator overloading}
+%\label{tsfcore:sec:operator_overloading}
+%%
+%
+%Thyra contains abstractions for linear algebra objects.
+%Mathematicians use a precise syntax to describe linear algebra
+%operations.  Matlab {}\cite{ref:matlab} has established a useful
+%convention for mathematical linear algebra syntax using only ASC
+%characters.  C++ has operator overloading.  When you put all of this
+%together it seems obvious, at first glance, that operator overloading
+%in C++ should be used to specify linear algebra operations like
+%
+%\[
+%y = A u + \gamma B^T v + \eta C w
+%\]
+%
+%{}\noindent{}in C++ as
+%
+%\begin{verbatim}
+%  y = A*u + gamma*trans(B)*v + eta*w;
+%\end{verbatim}
+%
+%{}\noindent{}However, providing a near-optimal implementation (i.e.~no
+%unnecessary temporaries or multiple memory accesses) of operator
+%overloading for linear algebra in C++ is nontrivial.  While this type
+%of syntax is desirable, it does not provide any new functionality and
+%is only nonessential but convenient functionality and is therefore not
+%included in the basic Thyra interfaces.  If such Matlab-like syntax
+%is desired, it can be found in TSFExtended through the use of handle
+%classes which include overloaded operators.  However, an efficient
+%operator overloading mechanism in C++ is hard to implement and is
+%difficult for C++ novices to debug through.  Operator overloading
+%built on top of Thyra must be bullet proof and provide unmatched
+%exception handling so that users must never need to debug through this
+%code.
+%
+%Closely associated with operator overloading is the concept of handle
+%classes {}\cite{ref:advanced_c++_coplien}.  Handles assume the same
+%type of role as a smart pointers except all of the function forwarding
+%(which is performed automatically with the operator function
+%{}\texttt{RefCountPtr<>\-::operator->()}) must be performed manually
+%in handle class (which must be written an maintained for every function
+%on every class by some developer).  Handles make the implementation of
+%linear algebra operations with operator overloading much easier.
+%Handles are used extensively in TSFExtended.  Since Thyra does not
+%implement operator overloading, handles classify as nonessential but
+%convenient functionality and are therefore not included in Thyra.
 
 %
 \section{Summary}
