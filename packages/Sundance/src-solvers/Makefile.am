@@ -199,7 +199,7 @@ AM_CPPFLAGS = $(TEUCHOS_CXXFLAGS) $(SOLVERS_INCLUDES)
 # New_Package library specifications
 # ------------------------------------------------------------------------
 #np# replace new_package with the name of the package being autotool'ed here
-TSF_EXTENDED_LIB = libTSFExtended.a
+TSF_EXTENDED_LIB = libTSFExtended.la
 
 #np# replace new_package with the name of the package being autotool'ed here
 TSF_EXTENDED_H = \
@@ -212,7 +212,7 @@ TSF_EXTENDED_H = \
 	$(PRECONDITIONERS_H) 
 
 #np# replace new_package with the name of the package being autotool'ed here
-libTSFExtended_a_SOURCES = \
+libTSFExtended_la_SOURCES = \
 	$(UTILS) \
 	$(VECTORS) \
 	$(OPERATORS) \
@@ -224,7 +224,7 @@ libTSFExtended_a_SOURCES = \
 
 
 #np# replace new_package with the name of the package being autotool'ed here
-EXTRA_libTSFExtended_a_SOURCES = 
+EXTRA_libTSFExtended_la_SOURCES = 
 
 
 
@@ -234,14 +234,14 @@ EXTRA_libTSFExtended_a_SOURCES =
 # ------------------------------------------------------------------------
 
 #np# replace new_package with the name of the package being autotool'ed here
-libTSFExtended_a_LIBADD = $(XTRALDADD)
+libTSFExtended_la_LIBADD = $(XTRALDADD)
 
 # ------------------------------------------------------------------------
 # List of all libraries to install in $(libexecdir)
 # ------------------------------------------------------------------------
 
 #np# replace new_package with the name of the package being autotool'ed here
-lib_LIBRARIES = $(TSF_EXTENDED_LIB)
+lib_LTLIBRARIES = $(TSF_EXTENDED_LIB)
 
 # ------------------------------------------------------------------------
 # List of all headers to install in $(includedir)
