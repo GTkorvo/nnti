@@ -56,7 +56,7 @@ EpetraGhostImporter
 
       const Epetra_Comm& comm = localMap_->Comm();
 
-      ghostMap_ = rcp(new Epetra_Map(nGlobal, nGhostView, 
+      ghostMap_ = rcp(new Epetra_Map(-1, nGhostView, 
                                      &(globalIndices[0]), 0, comm));
 
       importer_ = rcp(new Epetra_Import(*ghostMap_, *localMap_));
