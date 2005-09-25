@@ -47,7 +47,7 @@ EpetraGhostImporter
     }
   else
     {
-      int nGlobal = localMap_->NumGlobalElements();
+      //      int nGlobal = localMap_->NumGlobalElements();
       int nLocal = localMap_->NumMyElements();
       int nGhostView = nLocal+nGhost;
       vector<int> globalIndices(nGhostView);

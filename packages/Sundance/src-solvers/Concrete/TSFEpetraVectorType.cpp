@@ -53,7 +53,7 @@ EpetraVectorType::EpetraVectorType()
 
 
 RefCountPtr<const Thyra::VectorSpaceBase<double> > 
-EpetraVectorType::createSpace(int dimension,
+EpetraVectorType::createSpace(int /*dimension*/,
                               int nLocal,
                               const int* localIndices) const
 {
