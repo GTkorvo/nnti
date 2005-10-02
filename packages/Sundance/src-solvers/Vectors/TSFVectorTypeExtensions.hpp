@@ -31,6 +31,7 @@
 #include "Thyra_VectorSpaceFactoryBase.hpp"
 #include "TSFVectorSpaceDecl.hpp"
 #include "TSFLinearOperatorDecl.hpp" //Decl added by ptb
+#include "TSFMatrixFactory.hpp" 
 #include "TSFGhostImporter.hpp"
 
 namespace TSFExtended
@@ -93,22 +94,15 @@ namespace TSFExtended
 
     
     /**
-     * Create an empty matrix of type compatible with this vector type,
+     * Create a matrix factory of type compatible with this vector type,
      * sized according to the given domain and range spaces.
      */
-    virtual LinearOperator<Scalar>
-    createMatrix(const VectorSpace<Scalar>& domain,
-                 const VectorSpace<Scalar>& range) const = 0 ;
+    virtual RefCountPtr<MatrixFactory<Scalar> >
+    createMatrixFactory(const VectorSpace<Scalar>& domain,
+                        const VectorSpace<Scalar>& range) const = 0 ;
 
     
-    /**
-     * Create an empty matrix of type compatible with this vector type,
-     * sized according to the given domain and range spaces.
-     */
-    virtual LinearOperator<Scalar>
-    createMatrix(const VectorSpace<Scalar>& domain,
-                 const VectorSpace<Scalar>& range,
-                 const int* numEntriesPerRow) const = 0 ;
+    
   };
   
 }

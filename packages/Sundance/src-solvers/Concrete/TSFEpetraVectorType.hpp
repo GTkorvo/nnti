@@ -88,24 +88,12 @@ namespace TSFExtended
 
 
     /**
-     * Create an empty matrix of type compatible with this vector type,
+     * Create a matrix factory of type compatible with this vector type,
      * sized according to the given domain and range spaces.
      */
-    LinearOperator<double>
-    createMatrix(const VectorSpace<double>& domain,
+    RefCountPtr<MatrixFactory<double> >
+    createMatrixFactory(const VectorSpace<double>& domain,
                  const VectorSpace<double>& range) const ;
-
-    
-    /**
-     * Create an empty matrix of type compatible with this vector type,
-     * sized according to the given domain and range spaces.
-     */
-    virtual LinearOperator<double>
-    createMatrix(const VectorSpace<double>& domain,
-                 const VectorSpace<double>& range,
-                 const int* numEntriesPerRow) const ;
-      
-    
 
     
 

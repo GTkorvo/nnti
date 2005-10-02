@@ -30,13 +30,12 @@
 #define TSFLOADABLEMATRIX_HPP
 
 #include "TSFConfigDefs.hpp"
-#include <set>
 
 namespace TSFExtended
 {
   /** 
-   * Class LoadableMatrix provides an abstract interface for configuration
-   * and loading of matrices. 
+   * Class LoadableMatrix provides an abstract interface for 
+   * loading elements into a matrix.
    */
   template <class Scalar>
   class LoadableMatrix 
@@ -45,52 +44,10 @@ namespace TSFExtended
     /** Virtual dtor */
     virtual ~LoadableMatrix(){;}
 
-    /** */
-    virtual void configure(int lowestRow,
-                           const std::vector<std::set<int> >& nonzeros);
-
-    /** */
-    virtual void configure(int lowestRow,
-                           const std::vector<std::vector<int> >& nonzeros);
-
-    /** */
-    virtual void configure(int lowestRow,
-                           const std::vector<int>& rowPtrs,
-                           const std::vector<int>& nnzPerRow,
-                           const std::vector<int>& data);
-
-    /** 
-     * Set the locations of all my nonzero elements. 
-     * @param nLocalRows number of locally-owned rows
-     * @param globalRowIndex array of global indices of the local rows
-     * @param numNonzeros array of number of nonzeros for each row
-     * @param array of arrays of column indices for each row
-     */
-    virtual void setGraph(int nLocalRows,
-                          const int* globalRowIndex,
-                          const int* numNonzeros,
-                          const int** columnIndices) = 0 ;
-    
-    
-
-    /** Insert a set of elements in a row, overwriting any previously
-     * existing values. 
-     * @param globalRowIndex the global index of the row to which these
-     * elements belong.
-     * @param nElemsToInsert the number of elements being inserted in this
-     * step
-     * @param globalColumnIndices array of column indices. Must 
-     * be nElemsToInsert in length. 
-     * @param elements array of element values. Must be nElemsToInsert in
-     * length
-     */
-    virtual void setRowValues(int globalRowIndex,
-                              int nElemsToInsert,
-                              const int* globalColumnIndices,
-                              const Scalar* elementValues) = 0 ;
-
     /** Insert a set of elements in a row, adding to any previously
-     * existing values. 
+     * existing values.  The nonzero structure of the matrix must have
+     * been determined at construction time. 
+     *
      * @param globalRowIndex the global index of the row to which these
      * elements belong.
      * @param nElemsToInsert the number of elements being inserted in this
@@ -105,43 +62,33 @@ namespace TSFExtended
                           const int* globalColumnIndices,
                           const Scalar* elementValues) = 0 ;
 
-
-    /** 
-     *
-     */
-    virtual void addElementBatch(int numRows, 
-                                 int rowBlockSize,
-                                 const int* globalRowIndices,
-                                 int numColumnsPerRow,
-                                 const int* globalColumnIndices,
-                                 const Scalar* values,
-                                 const int* skipRow);
-                                 
-
     /** Set all elements to zero, preserving the existing structure */
     virtual void zero() = 0 ;
-    
 
-    /** Finalize values of the matrix. This is a hook for any
-     * implementation-dependent steps that must be done after
-     * loading of elements. */
-    virtual void freezeValues() = 0 ;
+    /** 
+     * Add to a batch of elements
+     */
+    virtual void addToElementBatch(int numRows, 
+                                   int rowBlockSize,
+                                   const int* globalRowIndices,
+                                   int numColumnsPerRow,
+                                   const int* globalColumnIndices,
+                                   const Scalar* values,
+                                   const int* skipRow);
 
-  private:
-    
-    
+
   };
 
 
   /* Default implementation of addElementBatch */
   template <class Scalar>
-  void LoadableMatrix<Scalar>::addElementBatch(int numRows, 
-                                               int rowBlockSize,
-                                               const int* globalRowIndices,
-                                               int numColumnsPerRow,
-                                               const int* globalColumnIndices,
-                                               const Scalar* values,
-                                               const int* skipRow)
+  void LoadableMatrix<Scalar>::addToElementBatch(int numRows, 
+                                                 int rowBlockSize,
+                                                 const int* globalRowIndices,
+                                                 int numColumnsPerRow,
+                                                 const int* globalColumnIndices,
+                                                 const Scalar* values,
+                                                 const int* skipRow)
   {
     int numRowBlocks = numRows/rowBlockSize;
     int row = 0;
@@ -156,81 +103,6 @@ namespace TSFExtended
             addToRow(globalRowIndices[row], numColumnsPerRow,
                      cols, rowVals);
           }
-      }
-  }
-
-  /* Default implementation of configure */
-  template <class Scalar>
-  void LoadableMatrix<Scalar>::configure(int lowestRow,
-                                         const std::vector<std::set<int> >& nonzeros)
-  {
-    std::vector<double> zeros;
-    std::vector<int> colIndices;
-    unsigned int maxSize = 0;
-
-    for (unsigned int i=0; i<nonzeros.size(); i++)
-      {
-        std::set<int>::const_iterator iter;
-        const std::set<int>& s = nonzeros[i];
-        colIndices.resize(0);
-        for (iter=s.begin(); iter != s.end(); iter++) 
-          {
-            colIndices.push_back(*iter);
-          }
-        if (colIndices.size() > maxSize) 
-          {
-            zeros.resize(colIndices.size());
-            for (unsigned int j=maxSize; j<zeros.size(); j++) zeros[j] = 0.0;
-            maxSize = zeros.size();
-          }
-        setRowValues(lowestRow + i, colIndices.size(),
-                     &(colIndices[0]), &(zeros[0]));
-      }
-  }
-
-
-  /* Default implementation of configure */
-  template <class Scalar>
-  void LoadableMatrix<Scalar>::configure(int lowestRow,
-                                         const std::vector<std::vector<int> >& nonzeroCols)
-  {
-    std::vector<double> zeros;
-    unsigned int maxSize = 0;
-
-    for (unsigned int i=0; i<nonzeroCols.size(); i++)
-      {
-        const std::vector<int>& cols = nonzeroCols[i];
-        if (cols.size() > maxSize) 
-          {
-            zeros.resize(cols.size());
-            for (unsigned int j=maxSize; j<zeros.size(); j++) zeros[j] = 0.0;
-            maxSize = zeros.size();
-          }
-        setRowValues(lowestRow + i, cols.size(),
-                     &(cols[0]), &(zeros[0]));
-      }
-  }
-
-
-  /* Default implementation of configure */
-  template <class Scalar>
-  void LoadableMatrix<Scalar>::configure(int lowestRow,
-                                         const std::vector<int>& rowPtrs,
-                                         const std::vector<int>& nnzPerRow,
-                                         const std::vector<int>& data)
-  {
-    int maxSize = 0;
-    std::vector<double> zeros;
-    for (unsigned int i=0; i<rowPtrs.size(); i++)
-      {
-        if (nnzPerRow[i] > maxSize) 
-          {
-            zeros.resize(nnzPerRow[i]);
-            for (unsigned int j=maxSize; j<zeros.size(); j++) zeros[j] = 0.0;
-            maxSize = zeros.size();
-          }
-        setRowValues(lowestRow + i, nnzPerRow[i],
-                     &(data[rowPtrs[i]]), &(zeros[0]));
       }
   }
 }

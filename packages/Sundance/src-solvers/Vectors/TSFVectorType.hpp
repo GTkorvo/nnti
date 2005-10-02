@@ -69,22 +69,13 @@ namespace TSFExtended
                         int nGhost,
                         const int* ghostIndices) const ;
 
-    /**
-     * Create an empty matrix of type compatible with this vector type,
+     /**
+     * Create a matrix factory of type compatible with this vector type,
      * sized according to the given domain and range spaces.
      */
-    LinearOperator<Scalar>
-    createMatrix(const VectorSpace<Scalar>& domain,
-                 const VectorSpace<Scalar>& range) const ;
-
-    /**
-     * Create an empty matrix of type compatible with this vector type,
-     * sized according to the given domain and range spaces.
-     */
-    LinearOperator<Scalar>
-    createMatrix(const VectorSpace<Scalar>& domain,
-                 const VectorSpace<Scalar>& range,
-                 const int* numEntriesPerRow) const ;
+    virtual RefCountPtr<MatrixFactory<Scalar> >
+    createMatrixFactory(const VectorSpace<Scalar>& domain,
+                        const VectorSpace<Scalar>& range) const ;
                                                       
     
   };
@@ -122,21 +113,14 @@ namespace TSFExtended
   }
 
   template <class Scalar> inline
-  LinearOperator<Scalar>
-  VectorType<Scalar>::createMatrix(const VectorSpace<Scalar>& domain,
-                                   const VectorSpace<Scalar>& range) const
+  RefCountPtr<MatrixFactory<Scalar> >
+  VectorType<Scalar>::createMatrixFactory(const VectorSpace<Scalar>& domain,
+                                          const VectorSpace<Scalar>& range) const
   {
-    return this->ptr()->createMatrix(domain, range);
+    return this->ptr()->createMatrixFactory(domain, range);
   }
 
-  template <class Scalar> inline
-  LinearOperator<Scalar>
-  VectorType<Scalar>::createMatrix(const VectorSpace<Scalar>& domain,
-                                   const VectorSpace<Scalar>& range,
-                                   const int* numEntriesPerRow) const
-  {
-    return this->ptr()->createMatrix(domain, range, numEntriesPerRow);
-  }
+  
 }
 
 #endif

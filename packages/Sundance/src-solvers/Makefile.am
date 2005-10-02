@@ -84,6 +84,7 @@ CONCRETE_H = \
 	$(srcdir)/Concrete/TSFDenseSerialVector.hpp\
 	$(srcdir)/Concrete/TSFEpetraGhostImporter.hpp\
 	$(srcdir)/Concrete/TSFEpetraGhostView.hpp\
+	$(srcdir)/Concrete/TSFEpetraMatrixFactory.hpp\
 	$(srcdir)/Concrete/TSFEpetraMatrix.hpp\
 	$(srcdir)/Concrete/TSFEpetraVector.hpp\
 	$(srcdir)/Concrete/TSFEpetraVectorSpace.hpp\
@@ -96,6 +97,7 @@ CONCRETE = \
 	$(srcdir)/Concrete/TSFEpetraGhostImporter.cpp\
 	$(srcdir)/Concrete/TSFEpetraGhostView.cpp\
 	$(srcdir)/Concrete/TSFEpetraMatrix.cpp\
+	$(srcdir)/Concrete/TSFEpetraMatrixFactory.cpp\
 	$(srcdir)/Concrete/TSFEpetraVector.cpp\
 	$(srcdir)/Concrete/TSFEpetraVectorSpace.cpp\
 	$(srcdir)/Concrete/TSFEpetraVectorType.cpp \
@@ -106,16 +108,19 @@ OPERATORS_H = \
 	$(srcdir)/Operators/TSFBlockOperator.hpp \
 	$(srcdir)/Operators/TSFBlockOperatorDecl.hpp \
 	$(srcdir)/Operators/TSFBlockOperatorImpl.hpp \
+	$(srcdir)/Operators/TSFCollectivelyConfigurableMatrixFactory.hpp \
 	$(srcdir)/Operators/TSFComposedOperator.hpp \
 	$(srcdir)/Operators/TSFDiagonalOperator.hpp\
 	$(srcdir)/Operators/TSFExplicitlyTransposeableOp.hpp\
 	$(srcdir)/Operators/TSFIdentityOperator.hpp \
 	$(srcdir)/Operators/TSFILUFactorizableOp.hpp \
+	$(srcdir)/Operators/TSFIncrementallyConfigurableMatrixFactory.hpp \
 	$(srcdir)/Operators/TSFInverseOperator.hpp \
 	$(srcdir)/Operators/TSFLinearOperator.hpp \
 	$(srcdir)/Operators/TSFLinearOperatorDecl.hpp \
 	$(srcdir)/Operators/TSFLinearOperatorImpl.hpp \
 	$(srcdir)/Operators/TSFLoadableMatrix.hpp\
+	$(srcdir)/Operators/TSFMatrixFactory.hpp\
 	$(srcdir)/Operators/TSFNonlinearOperator.hpp\
 	$(srcdir)/Operators/TSFNonlinearOperatorBase.hpp\
 	$(srcdir)/Operators/TSFRowAccessibleOp.hpp \

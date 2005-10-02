@@ -30,6 +30,7 @@
 #define TSFEPETRAMATRIX_HPP
 
 #include "TSFEpetraVectorSpace.hpp"
+#include "TSFEpetraMatrixFactory.hpp"
 #include "TSFLoadableMatrix.hpp"
 #include "TSFLinearOperatorDecl.hpp"
 #include "TSFRowAccessibleOp.hpp"
@@ -57,14 +58,11 @@ namespace TSFExtended
   public:
     GET_RCP(SingleScalarTypeOp<double>);
 
-    /** Construct an uninitialized EpetraMatrix */
-    EpetraMatrix(const RefCountPtr<const EpetraVectorSpace>& domain,
+    /** Construct an empty EpetraMatrix structured according to the graph 
+     * argument */
+    EpetraMatrix(const Epetra_CrsGraph& graph,
+                 const RefCountPtr<const EpetraVectorSpace>& domain,
                  const RefCountPtr<const EpetraVectorSpace>& range);
-
-    /** Construct an uninitialized EpetraMatrix */
-    EpetraMatrix(const RefCountPtr<const EpetraVectorSpace>& domain,
-                 const RefCountPtr<const EpetraVectorSpace>& range,
-                 const int* numEntriesPerRow);
 
     /** */
     RefCountPtr< const VectorSpaceBase<double> > domain() const {return domain_;}
@@ -80,48 +78,7 @@ namespace TSFExtended
                               const double            alpha,
                               const double            beta) const ;
     
-    /** */
-    virtual void configure(int lowestRow,
-                           const std::vector<std::set<int> >& nonzeros);
-
-
-    /** */
-    virtual void configure(int lowestRow,
-                           const std::vector<std::vector<int> >& nonzeros);
-
-    /** */
-    virtual void configure(int lowestRow,
-                           const std::vector<int>& rowPtrs,
-                           const std::vector<int>& nnzPerRow,
-                           const std::vector<int>& data);
-
-    /** 
-     * Set the locations of all my nonzero elements. 
-     * @param nLocalRows number of locally-owned rows
-     * @param globalRowIndex array of global indices of the local rows
-     * @param numNonzeros array of number of nonzeros for each row
-     * @param array of arrays of column indices for each row
-     */
-    virtual void setGraph(int nLocalRows,
-                          const int* globalRowIndex,
-                          const int* numNonzeros,
-                          const int** columnIndices) ;
-
-    /** Insert a set of elements in a row, overwriting any previously
-     * existing values. 
-     * @param globalRowIndex the global index of the row to which these
-     * elements belong.
-     * @param nElemsToInsert the number of elements being inserted in this
-     * step
-     * @param globalColumnIndices array of column indices. Must 
-     * be nElemsToInsert in length. 
-     * @param elements array of element values. Must be nElemsToInsert in
-     * length
-     */
-    virtual void setRowValues(int globalRowIndex,
-                              int nElemsToInsert,
-                              const int* globalColumnIndices,
-                              const double* elementValues)  ;
+    
 
     /** Insert a set of elements in a row, adding to any previously
      * existing values. 
@@ -141,21 +98,18 @@ namespace TSFExtended
 
 
     /** 
-     *
+     * Add to a batch of elements
      */
-    virtual void addElementBatch(int numRows, 
-                                 int rowBlockSize,
-                                 const int* globalRowIndices,
-                                 int numColumnsPerRow,
-                                 const int* globalColumnIndices,
-                                 const double* values,
-                                 const int* skipRow);
+    virtual void addToElementBatch(int numRows, 
+                                   int rowBlockSize,
+                                   const int* globalRowIndices,
+                                   int numColumnsPerRow,
+                                   const int* globalColumnIndices,
+                                   const double* values,
+                                   const int* skipRow);
 
     /** Set all elements to zero, preserving the existing structure */
     virtual void zero() ;
-
-    /** Finalize values of the matrix.  */
-    virtual void freezeValues() ;
 
 
     /** \name incomplete factorization preconditioning interface */

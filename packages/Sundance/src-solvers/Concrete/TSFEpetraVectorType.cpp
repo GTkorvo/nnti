@@ -27,6 +27,7 @@
 #include "TSFEpetraVectorType.hpp"
 #include "TSFEpetraVectorSpace.hpp"
 #include "TSFEpetraGhostImporter.hpp"
+#include "TSFEpetraMatrixFactory.hpp"
 #include "Epetra_Map.h"
 #include "Epetra_Import.h"
 #include "Epetra_Comm.h"
@@ -80,9 +81,9 @@ EpetraVectorType::createGhostImporter(const VectorSpace<double>& space,
   
 }
 
-LinearOperator<double>
-EpetraVectorType::createMatrix(const VectorSpace<double>& domain,
-                               const VectorSpace<double>& range) const
+RefCountPtr<MatrixFactory<double> >
+EpetraVectorType::createMatrixFactory(const VectorSpace<double>& domain,
+                                      const VectorSpace<double>& range) const
 {
   RefCountPtr<const EpetraVectorSpace> pd 
     = rcp_dynamic_cast<const EpetraVectorSpace>(domain.ptr());
@@ -99,37 +100,12 @@ EpetraVectorType::createMatrix(const VectorSpace<double>& domain,
                      "incompatible range space given to "
                      "EpetraVectorType::createMatrix()");
 
-  RefCountPtr<SingleScalarTypeOp<double> > A = rcp(new EpetraMatrix(pd, pr));
+  //  RefCountPtr<SingleScalarTypeOp<double> > A = rcp(new EpetraMatrix(pd, pr));
 
-  return A;
+  return rcp(new EpetraMatrixFactory(pd, pr));
 }
 
 
-LinearOperator<double>
-EpetraVectorType::createMatrix(const VectorSpace<double>& domain,
-                               const VectorSpace<double>& range,
-                               const int* numEntriesPerRow) const
-{
-  RefCountPtr<const EpetraVectorSpace> pd 
-    = rcp_dynamic_cast<const EpetraVectorSpace>(domain.ptr());
-
-  RefCountPtr<const EpetraVectorSpace> pr 
-    = rcp_dynamic_cast<const EpetraVectorSpace>(range.ptr());
-
-
-  TEST_FOR_EXCEPTION(pd.get()==0, runtime_error, 
-                     "incompatible domain space given to "
-                     "EpetraVectorType::createMatrix()");
-
-  TEST_FOR_EXCEPTION(pr.get()==0, runtime_error, 
-                     "incompatible range space given to "
-                     "EpetraVectorType::createMatrix()");
-
-  RefCountPtr<SingleScalarTypeOp<double> > A 
-    = rcp(new EpetraMatrix(pd, pr, numEntriesPerRow));
-
-  return A;
-}
 
 
 
