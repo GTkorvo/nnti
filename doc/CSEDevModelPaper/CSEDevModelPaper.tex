@@ -370,14 +370,425 @@ a higher level of quality throughout the project.
 \section{Tools}
 \label{Section:Tools}
 
-\subsection{Versioning System}
+\subsection{Version Control System}
 %-----------------------------
+One of the first steps that should be taken to improve software quality is the 
+adoption of a version control system.  Trilinos source code is maintained in a 
+Concurrent Versions System~\cite{CVS}
+(CVS) repository.  It is very easy to add new files and directories to
+the repository.  Projects that already use CVS and are to be merged with 
+another project can even retain their CVS history!
+
+CVS has many more features than those that are described below.  For a more 
+complete listing of CVS features and a description of valid CVS commands, 
+see the GNU CVS Home Page~\cite{CVS}.  Those who still want more information 
+might wish to obtain a copy of 
+{\it Open Source Development with CVS}~\cite{FogelBarCVS}.
+
+A CVS repository stores all of the information about current and past versions
+of all of the files in a project.  (To provide for a safe backup of the 
+project, the CVS repository itself should be backed up on a regular basis.)  
+Developers can ``checkout'' a snapshot of 
+the repository, edit one or more files and then ``commit'' the changes to the
+repository.  Complicated situations arise when multiple developers are 
+editing the same files at the same time.  How these potential ``conflicts'' 
+are resolved is beyond the scope of this document.  Suffice it to say that 
+CVS handles all of the situations that it can.  When it cannot safely handle 
+the situation, it provides a developer with a clear description of which 
+lines of code are in conflict so that the developer can resolve the 
+conflict more quickly.  The ability to checkout a snapshot of the 
+repository from the past has many obvious advantages including making it easy 
+to revert back to an old version of a piece of code that is found to be not 
+portable to an important platform and making it possible to pinpoint the exact 
+commit that caused an error.
+
+Some of the most useful features of CVS include the fact that a CVS 
+repository can be set up in such a way that it is accessible from anywhere, 
+and the ability to create multiple ``branches'' of the same project.  For 
+example, a development branch and multiple release branches would be 
+appropriate for most software projects.  Patches that are applied 
+to a release branch can be ``merged'' back into the development branch.  
+In addition, security can be enforced in a fine-grained manner if necessary.  
+
+One aspect of using CVS that deserves to be stressed is that comments can be 
+made with each commit.  The Trilinos team has found that these comments are 
+very important.  A well thought out comment is very helpful when trying to 
+debug at a later time.  Even if a commit doesn't make any major changes to the 
+code, it is useful to briefly describe what was done.  Some changes that may 
+seem to be minor might not be portable.  At the very least, a comment could 
+help a developer to rule out a particular commit as the inception point 
+of a bug.
+
+Another endearing feature of CVS is that other software quality tools can 
+interact seamlessly with CVS.  For example, CVS commit messages can be sent to
+a Mailman mail list for distribution.  Also, Bonsai provides a convenient 
+interface for accessing CVS information.  See section~\ref{subsect:Bonsai} 
+for a thorough description about how the details of CVS commits are accessible 
+via Bonsai.
+
+% revise and add branch /tag info and more about release uses in general
+
+The CVS history of a project can be made accessible via a
+web-based interface program called Bonsai~\cite{Bonsai}.  This tool can be 
+found on the web at 
+\newline
+\InlineDirectory{http://www.mozilla.org/bonsai.html}.
+Bonsai gives developers the ability to view the changes made to the files in 
+the repository. Developers can search 
+based on filename, directory, branch, date, user who made the 
+change, or any combination of these criteria.  The differences between any two 
+versions of a file may also be viewed, which can be very helpful when 
+debugging.  
+
+Along with the results of a search, the CVS commit messages corresponding to 
+the changes that match the query are also shown.  If any Bugzilla bug numbers 
+were referenced in a commit message, the number of each bug is clickable.  
+Clicking on a bug number will bring up the bug in question.
+
+One very useful advanced feature that Bonsai provides is called ``blame''.  
+Blame allows a developer to view the code within a file and see who was the 
+last person to edit each line and which version of the file 
+the most recent change to each line was made in.
+
+Bonsai doesn't 
+provide any capabilities that are not available via another method.  
+Rather, Bonsai makes doing difficult things a lot easier.
+For example, having the CVS commit message one click away from the line 
+by line changes that
+were made to a file can save a lot of time.  Also the file differences are 
+presented in such a way that multiple lines before and after the differing 
+lines are shown to provide some context for the code that was modified.  
+The interface for Bonsai is very intuitive and can be learned in a matter of 
+minutes.  The time spent learning how to use Bonsai will be more than made up 
+for by using it to track and correct one bug.
 
 \subsection{Mail Lists}
 %----------------------
 
-\subsection{Bug-Tracking}
+Mailman~\cite{Mailman} is an easy to use tool that helps to facilitate 
+communication between
+those involved with a project and to extend the usefulness of other 
+software development tools.  It can be found on the web at 
+\InlineDirectory{http://www.list.org}.  Mailman can be used to establish any 
+number of 
+email lists for a project.  It is advantageous to set up email lists because exactly 
+those people who have declared themselves to be interested in a 
+topic can be included in the circulation of the discussion.  Without 
+mail lists, those who might have insight into an issue can easily be forgotten 
+when sending an email.  Conversely, if people routinely get a lot of emails 
+concerning topics that they do not care about, some will begin deleting
+their email without reading through it.
+
+A specific example of how Mailman 
+has had a positive impact on the Trilinos project is that when a new person
+joins the development team or becomes a user, that person is able to 
+subscribe to the appropriate mail lists and is instantly involved in the 
+conversations that take place.  The mail list archives are also searchable, 
+which allows people new to Trilinos to catch up on interesting events from the 
+past.  Obviously, the searchable archives are useful for new and existing 
+developers, users and management.  The self-documenting feature provided 
+by Mailman's searchable archives is also useful for creating artifacts for 
+audits.  It creates a ``paper trail'' that tracks major decisions that were 
+arrived at and closely follows 
+the evolution of the entire project, especially when Mailman is used in 
+conjunction with other tools such as CVS.
+
+One advanced feature of Mailman that is worth noting is the digest mode option.
+This option gathers all of the emails sent to a particular list for an entire 
+day and sends them out together in one email.  For those who are not closely 
+involved with the discussions that take place on particular lists, but want to 
+keep up with what is happening in general, digest mode can be a very 
+attractive option.  For urgent messages, digest mode can 
+be overridden.
+
+The Trilinos project maintains more than ninety separate mail lists through 
+Mailman.  Mail lists are maintained for Trilinos as a whole and for each 
+package.  Additional mail lists can be set up very easily.  Each Trilinos 
+package usually has five mailing lists.  The example mailing lists mentioned 
+below are to be used for issues relating to all of Trilinos.  
+The names for the lists pertaining to individual packages follow the same 
+naming scheme, simply replace ``Trilinos'' with the name of the package.  For example, the list for Trilinos users is 
+called Trilinos-Users and the email address is 
+\InlineCommand{trilinos-users@software.sandia.gov}  The list 
+for Epetra users is called Epetra-Users and the associated email address is 
+\InlineCommand{epetra-users@software.sandia.gov}.  Following a standard naming
+scheme allows the name of the lists to be remembered easily.  Although the 
+set of mail lists that a software project uses is fully customizable, the 
+Trilinos development team has found the break down of lists that is outlined 
+below to be very effective.
+
+\begin{itemize}
+\item Trilinos-Announce 
+\InlineCommand{trilinos-announce@software.sandia.gov}
+
+All Trilinos release announcements and other major news.  The appropriate 
+audience for this list includes developers, users and management.
+
+\item Trilinos-Checkins 
+\InlineCommand{trilinos-checkins@software.sandia.gov}
+
+CVS commit log messages that are related to Trilinos in general or packages 
+that have not had separate lists established.  The appropriate audience for 
+this list includes developers who are very closely involved with particular 
+aspects of Trilinos development.  Those who are not as closely involved might 
+choose to search the archives as necessary, rather than elect to receive 
+each of the CVS commit log messages.
+
+\item Trilinos-Developers 
+\InlineCommand{trilinos-developers@software.sandia.gov}
+
+All discussions related to Trilinos-specific development (not specific to a 
+Trilinos package) are conducted via this list.  Important development 
+decisions that originate in other places (regular email, discussions, etc) 
+should also be posted to this list (or to the appropriate package list).  
+By doing this, the list archive can provide records that explain why various 
+changes were made over time.  As the name implies, the appropriate audience for
+this list includes Trilinos developers.
+
+\item Trilinos-regression 
+\InlineCommand{trilinos-regression@software.sandia.gov}
+
+All regression test output that is not specific to a package.  The appropriate 
+audience for this list includes developers who are interested in the daily 
+results of the Trilinos test harness.  In reality, few subscribe to this list.
+When problems need to be tracked, the archive can provide all available 
+information.  This list gathers the artifacts necessary to prove that 
+regression testing takes place on a regular basis.
+
+\item Trilinos-Users 
+\InlineCommand{trilinos-users@software.sandia.gov}
+
+List for Trilinos Users.  General discussions about the use of Trilinos.  In 
+addition to users, developers also subscribe to this lists to answer user 
+questions.
+
+\item Trilinos-Leaders
+\InlineCommand{trilinos-leaders@software.sandia.gov}
+
+Mailing list for representatives for each Trilinos package.  There are no 
+leaders lists for individual packages.  In addition to package leaders and 
+interested developers, management will also want to subscribe to this list.
+\end{itemize}
+
+Managing the lists requires a minimal amount of overhead.  List administrators
+are assigned to each list.  The administrators handle issues such as accepting
+or rejecting requests for list membership and posting requests from 
+non-members.  This overhead is covered many times by the fine-grained control
+of information dispersal that Mailman provides and the archives that 
+Mailman maintains.
+
+\subsection{Issue-Tracking}
 %------------------------
+
+An important step in achieving a high level of software quality is tracking
+and organizing issues pertaining to faults in the software and issues related 
+to enhancement requests.  The Trilinos team has implemented a tool called 
+Bugzilla~\cite{Bugzilla} to achieve this end.  Bugzilla  can be found 
+on the web at \newline
+\InlineDirectory{http://www.bugzilla.org}.
+
+All issues related to any Trilinos package are submitted to Bugzilla.  This 
+even applies to cases in which 
+one developer diagnoses and fixes a bug within a short period of time.  A bug 
+report is still very valuable in this case because it provides an artifact 
+that outlines the problem and explains how the problem was fixed.  A bug 
+report should be filled out with as much detail as possible.  Likewise, after 
+a bug has been resolved, the developer should also provide a detailed 
+description of the resolution that was used.  These detailed descriptions have 
+been used to quickly diagnose problems that tend to come up again and again.
+For example, if a particular supported platform doesn't have a header file 
+that is widely considered to be ``standard'', multiple developers might try 
+to use a similar piece of code that is not portable.  A detailed bug report 
+will easily be found based on key words or another piece of relevent search 
+criteria, and will also provide a description of the problem and quite 
+possibly an alternative technique that will fix the issue. 
+
+Issues tracked by Bugzilla can be searched by owner, platform, and many other 
+criteria.  The 
+interface for entering and searching for bugs is both user friendly and 
+customizable.  Major pieces of a software project can be 
+designated as ``products'', different aspects of those products can be 
+listed as ``components'', and versions of the various products can also be 
+entered.  This breakdown makes it easy to categorize and find issues in the 
+Bugzilla database.  For example, Trilinos is composed of individual 
+``packages''.  Each package has been designated as a Trilinos product.  One of 
+the packages within Trilinos is called Epetra.  So a user who is searching for 
+a fix for a build error while building Epetra on a particular 
+machine should select ``Epetra'' in the product field, ``Configuration and 
+Building'' in the component field, the applicable hardware and OS in the 
+fields provided, and
+could also fill in the version field.  Issues can be assigned to any 
+individual with a Bugzilla account.  If a 
+person who is entering a bug report does not know who to assign the bug to,
+the bug can be assigned to a default owner of the selected component 
+by leaving the ``Assigned To'' field blank.  
+
+When submitting an issue, a 
+priority and severity of the bug can be selected (and later changed by the 
+issue owner if desired).  Priority and severity are related, but certainly are 
+not the same.  Priority refers to the order in which the issue should be 
+resolved relative to other issues.  Severity refers to what degree the issue 
+negatively affects the proper functions of the software.  Often there is a 
+correlation between priority and severity; however, this does not have to be
+the case.  For example, an issue that reports a build failure on a 
+machine should be given a severity of ``blocker'' (the highest level of 
+severity), but might be given a low priority because the build failure occurs
+on a platform that is not supported.  Conversely an ``enhancement'' (the 
+lowest severity level) might be a very high priority issue.  Regardless of the 
+priority and severity assigned to an issue, the issue will not be forgotten 
+about in the way that issues sometimes simply fall through the cracks if not 
+properly recorded~\cite{Bugzilla}.
+
+In addition to the basic functionality described above, Bugzilla provides some 
+useful advanced features.  The more advanced features include
+granular security checking, the ability to integrate information with 
+other software development tools including CVS, and inter-bug 
+dependencies and dependency tracking~\cite{Bugzilla}.  Dependency tracking 
+makes it easy to see the relationship 
+between bugs.  The Trilinos team has introduced the concept of a metabug which 
+is a larger task that is dependent on multiple smaller tasks.  Each of the 
+smaller tasks can be assigned to different people. Metabugs make it is easy 
+for project leaders (or management) to track the status of important issues. 
+
+% add release uses here
+
+Bugzilla is an extremely useful tool for developers, users and management.  
+Developers will especially appreciate the ability to search for issues 
+that have been assigned to them and the database of knowledge that grows over
+time.  The Trilinos bugzilla database contains over six hundred issues and 
+has served as a quick reference to numerous problems that took hours, days, 
+or even weeks to solve the first time that the issue was encountered.  The 
+Bugzilla interface has led to a noticeable increase in the quality of 
+issue submissions.  When presented with fields that can be filled in, those 
+who are 
+submitting issues tend to provide more information than they would when just 
+sending an email to a developer about a problem.  This results in quicker 
+issue resolution and a better record of the issue after it has been resolved.  
+
+Users frequently take advantage of Bugzilla's search capability to check on 
+the status of issues that they have submitted.  Users also benefit from the 
+easy to use interface for submitting issues and from the ability to submit 
+issues to default component owners.  
+
+Bugzilla provides management with a quick snapshot of the status of the 
+project.  It can also provide more detailed information about pressing issues.
+
+\subsection{Documentation}
+% not a complete documentation solution
+
+Doxygen~\cite{Doxygen} is a tool that can be used to create 
+extensive documentation for a software project.  In a very short period of 
+time, it is possible to take a well-commented piece 
+of code and create nicely styled and easy to navigate documentation using 
+Doxygen.  The information below is limited 
+to an overview of the features of Doxygen.  For information about how to use 
+Doxygen, see the Doxygen 
+web site at \InlineDirectory{http://www.doxygen.org}.  
+
+Doxygen is meant to be used with C++, C, Java, and IDL, but can also be used 
+in a more limited fashion to create documentation for code written in other
+programming languages.  Doxygen documentation 
+can be generated in several formats including HTML, \LaTeX, Rich Text Format 
+(RTF is compatible Microsoft Word), PostScript, and
+Unix man pages.  One of the most impressive features of Doxygen is its ability 
+to generate dependency graphs, inheritance diagrams, and collaboration 
+diagrams~\cite{Doxygen}.  Another impressive feature of Doxygen is that the 
+documentation is very easy to navigate.  For a sample of how easily Doxygen 
+documentation can be navigated go to
+\newline
+\InlineDirectory{http://software.sandia.gov/trilinos/packages/epetra}.  Then
+click on \InlineDirectory{Documentation}, and then 
+\InlineDirectory{Development Docs}. 
+Throughout the documentation, the name of objects, 
+the name of files, and line numbers within files are all clickable.
+
+\subsection{Configuration Management - Autoconf and Automake}
+% revisit all of this!
+
+Achieving a high level of software quality is complicated immensely when 
+a software project is required to be portable to a wide array of platforms.
+In the past, the Trilinos development team attempted to maintain a large 
+number of platform specific makefiles to improve portability.  For the past 
+year and a half, we have instead utilized GNU Autoconf~\cite{Autoconf} and 
+Automake~\cite{Automake} for 
+the purposes of configuring and building Trilinos, respectively.  Again, 
+the below discussion will be limited to some highlighted features of Autoconf 
+and Automake.  
+For a complete description how to use Autoconf and Automake, see 
+{\it GNU Autoconf, Automake, and Libtool}~\cite{GoatBook}, which is 
+more commonly referred to as the ``Goat Book''.  (Libtool is the third tool 
+in the set of three tools commonly referred to as the ``Autotools''.  Trilinos 
+does not yet use Libtool, although we plan to incorporate it into the build 
+process in the future.)
+
+Unfortunately, Autoconf and Automake have not eliminated all portability 
+problems for Trilinos.  We still have to provide a set of platform specific
+``invoke-configure''scripts to feed to Autoconf.  In addition, the learning 
+curve for Autoconf and Automake was quite steep.  Despite these facts, 
+as a whole, the migration to Autoconf and Automake has been very 
+beneficial.  
+
+Autoconf provides a macro called F77\_FUNC that can be 
+automatically defined during the configure stage to the proper Fortran
+name mangling scheme for the platform that the configure script is run on.  
+Knowing the Fortran name mangling scheme is necessary when calling routines 
+from Fortran libraries such as the BLAS~\cite{BLAS1,BLAS2,BLAS3} and 
+LAPACK~\cite{lapack} from a C or C++ library.  Aside from a few special cases, 
+Autoconf is able to detect the proper name mangling scheme automatically.  
+This eliminates the need for Trilinos packages to have ifdef's for every 
+platform that doesn't use the most common scheme.
+
+In addition, the configure script generated by Autoconf detects which 
+header files are present on a particular 
+machine.  For example, if \InlineDirectory{cmath} is present on a machine, 
+pound include that, otherwise, if \InlineDirectory{math.h} is present, pound 
+include that.  If neither are present, exit configure with an error indicating 
+that one of the two files is required.  Providing the appropriate ifdef's 
+for header files on a per machine basis was a difficult task before the 
+public release of Trilinos.  Now with users spread around the world, that 
+task would be nearly impossible.  Ideally, every machine would 
+have all of the latest standard header files available; in practice, that 
+is far from the case.
+
+The configure script generated by Autoconf conducts many other configure 
+time tests to determine various 
+characteristics of the machine it is running on.  Additional tests can 
+easily be written to test for other characteristics.  The results of these 
+tests can then be used for various purposes, such as conditionally compiling 
+a piece of code, or to define any number of macros.
+
+Automake has greatly simplified the process of writing makefiles.  All a 
+developer has to do is provide a few simple pieces of information, and 
+Automake will generate another file called Makefile.in which is used to 
+generate the appropriate Makefile during the configure stage.
+
+As mentioned above, the learning curve for Autoconf and Automake was quite 
+steep.  Fortunately, a couple of Trilinos developers have created a package 
+called ``new\_package'' to jump start an effort to set up a configure and 
+build system that uses Autoconf and Automake.  The effort was focused 
+primarily on helping new packages join Trilinos, but the directions that 
+new\_package provides can be applied to more general cases as well.  Several
+developers have successfully used new\_package as a starting point for 
+putting an additional
+package into Trilinos.  It is possible to download new\_package from the 
+Trilinos web site.  The download page can be found at \newline 
+\InlineDirectory{http://software.sandia.gov/trilinos/downloads.html}.  After
+downloading new\_package, direct your attention to the README file.
+
+Included with new\_package is a large set of M4~\cite{M4} macros that can 
+be freely used by other projects.  These macros perform many common 
+configuration tasks such as locating a valid LAPACK~\cite{lapack} library, 
+or checking for additional values to prepend to CXXFLAGS that have been 
+specified by a user.  The macros can be found in the \InlineDirectory{config}
+subdirectory of the new\_package download.  These macros minimize the amount of
+redundant effort in using Autoconf and make it easier to apply a common change 
+to multiple projects.  The macros are meant to supplement the large number of 
+M4 macros that come with Autoconf.  Additional M4 macros that are designed for 
+specialized tasks are also available from various sites on the web.
+
+No current tools make porting a trivial issue.  However, a 
+configure and build system using Autoconf and Automake is a 
+noticeable improvement over a more traditional system using simple makefiles.
 
 \subsection{Website}
 %-------------------
