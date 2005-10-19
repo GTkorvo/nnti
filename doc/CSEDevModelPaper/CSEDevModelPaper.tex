@@ -5,14 +5,9 @@
 %## Header ####################################################################
 
 \documentclass[12pt,relax]{article}
-%\usepackage{doublespace}
-%\setlength {\oddsidemargin}{1in}
-%\setlength {\evensidemargin}{1in}
 \addtolength {\textheight}{0.2in}
 \addtolength {\textwidth}{0.2in}
-%DisplayCommand
 \linespread{1.6}
-%\linespread{1.75}
 \newcommand{\DisplayCommand}[1]{%
 \par\vspace{1ex}%
 {\bf Command:}%
@@ -28,22 +23,21 @@
 
 \usepackage{array}
 
+%## Content ###################################################################
+
+%== Title Page ================================================================
+
 \title{Outlining a Development Model for CSE Software}
 
 \author{
+Michael Heroux\\
 James Willenbring\\
 Michael Phenow\\
-Michael Heroux\\
 }
 
 % There is a "Printed" date on the title page of a SAND report, so
 % the generic \date should generally be empty.
 \date{\today} % Remove ``\today'' in final version
-
-% Do we really have to repeat the authors?
-%\author{}
-
-%## Content ###################################################################
 
 \begin{document}
 
@@ -57,19 +51,17 @@ Michael Heroux\\
 Developing computational science and engineering (CSE) software presents some 
 unique challenges.  CSE software projects frequently don't have large budgets 
 to spend on advanced software engineering tools, processes, and personnel.  
-They often are developed by small groups of experts--experts in the particular 
+They often are developed by small groups of experts in the particular 
 computational science or engineering domain in question, not experts on 
-software engineering or software project management.  The Trilinos Project,
-developed at Sandia National Labs, is no different.  It is our belief that 
+software engineering or software project management.  The Trilinos Project
+(an effort to develop parallel solver algorithms and libraries within an
+object-oriented software framework for the solution of large-scale, complex
+multi-physics engineering and scientific applications), which is developed at
+Sandia National Laboratories, is no different.  It is our belief that 
 there are certain low-cost, high-yield processes and tools that tend to work 
-well to enable the development of high quality CSE software.  To demonstrate 
-this, we will draw from our experiences with the Trilinos Project to first
-outline some high-level goals of the project.  We will then present aspects of
-a development model that we think do a good job job of enabling developers to
-reach those ends.  Finally, we will discuss some general classes (and specific
-instances) of tools that enable the development model, and through that, 
-the ultimate goals of the project.  Throughout we will use our experiences on 
-the Trilinos project to provide specific examples of these tools and processes.
+well to enable the development of high quality CSE software.  Using our
+experiences on the Trilinos project, we will provide specific examples of
+these tools and processes.
 
 %\end{abstract}
 
@@ -79,7 +71,7 @@ the Trilinos project to provide specific examples of these tools and processes.
 
 \section*{Acknowledgments}
 
-The authors would like to acknowledge the support of the ASCI and LDRD programs 
+The authors would like to acknowledge the support of the ASC and LDRD programs 
 that funded development of Trilinos and recognize all Trilinos contributors:
 Michael Heroux (project leader), Teri Barth, Ross Bartlett, Paul Boggs, Jason
 Cross, David Day, Clark Dohrmann, Robert Heaphy, Ulrich Hetmaniuk, Robert
@@ -91,13 +83,8 @@ and Alan Williams.
 
 \clearpage
 \tableofcontents
-\listoftables
 
 \clearpage
-%The following file is also used in the User Guide
-%\input{../CommonFiles/TrilinosNomenclature.tex}
-%Nomenclature
-%** Fill in
 
 %== Introduction ==============================================================
 
@@ -107,10 +94,13 @@ and Alan Williams.
 Developing computational science and engineering (CSE) software presents some 
 unique challenges.  CSE software projects frequently don't have large budgets 
 to spend on advanced software engineering tools, processes, and personnel.  
-They often are developed by small groups of experts--experts in the particular 
+They often are developed by small groups of experts in the particular 
 computational science or engineering domain in question, not experts on 
-software engineering or software project management.  The Trilinos Project,
-developed at Sandia National Labs, is no different.  It is our belief that 
+software engineering or software project management.  The Trilinos Project
+(an effort to develop parallel solver algorithms and libraries within an
+object-oriented software framework for the solution of large-scale, complex
+multi-physics engineering and scientific applications), which is developed at
+Sandia National Laboratories, is no different.  It is our belief that 
 there are certain low-cost, high-yield processes and tools that tend to work 
 well to enable the development of high quality CSE software.  To demonstrate 
 this, we will draw from our experiences with the Trilinos Project to first
@@ -120,31 +110,6 @@ reach those ends.  Finally, we will discuss some general classes (and specific
 instances) of tools that enable the development model, and through that, 
 the ultimate goals of the project.  Throughout we will use our experiences on 
 the Trilinos project to provide specific examples of these tools and processes.
-
-%-- Typographical Conventions -------------------------------------------------
-\subsection{Typographical Conventions}
-
-Typographical conventions used in the paper are found in
-Table~\ref{Table:TypoConventions}.
-\begin{table}[ht]
-\scriptsize
-\begin{center}
-\begin{tabular}{|l|l|p{2.0in}|} \hline
-Notation & Example & Description \\ \hline
-\InlineCommand{Verbatim text} & \InlineCommand{../configure --enable-mpi} & 
-URL's, commands, directory and file name examples, and other text associated
-with text displayed in a computer terminal window. \\ \hline
-\InlineCommand{CAPITALIZED\_TEXT} & \InlineCommand{CXXFLAGS} & 
-Environment variables used to configure how tools such as compilers behave. \\ \hline
-\InlineCommand{<text in angle brackets>} & \InlineCommand{../configure
-<user parameters>} & 
-Optional parameters. \\ \hline
-\end{tabular}
-\end{center}
-\caption{\label{Table:TypoConventions} Typographical Conventions for This Document.}
-\end{table}
-
-\clearpage
 
 %== Goals =====================================================================
 
@@ -168,7 +133,7 @@ to the long-term health of the project.
 \subsection{Interoperability}
 %----------------------------
 Because of this modular architecture, it is of utmost importance that the
-various packages "play well together."  For Trilinos to realize its full
+various packages ``play well together.''  For Trilinos to realize its full
 potential, all of the various independent parts need to work together in
 concert.
 
@@ -214,15 +179,12 @@ projects often don't have guaranteed funding far into the future.
 \subsection{Tight Collaboration}
 %-------------------------------
 
-CSE software, like most software, has grown in complexity in recent years.  The
-most interesting and challenging problems are generally not solved by an
-individual or project team existing in a bubble.  Solid relationships with 
-external and internal collaborators are essential.  Likewise, one mark of the 
-success for your project is the
-amount of interest from others looking to use your code in their project.
-And for many projects, these relationships may be even more strongly defined.
-It may be the case that an outside collaborator is a significant stakeholder in
-the project and whose requirements are of utmost importance.
+CSE software, like most software, has grown in complexity in recent years.
+The most interesting and challenging problems are generally not solved by an
+individual or project team working in isolation.  Solid relationships with 
+external and internal collaborators are essential.  It may even be the case
+that an outside collaborator is a significant stakeholder in the project and 
+whose requirements are of utmost importance.
 
 But how do you gather the requirements of your stakeholders?  What happens
 when they change?  Classical development models would prescribe a formal
@@ -233,21 +195,18 @@ of them.
 
 For many CSE projects, this is not a reasonable approach.  When your work, or 
 the work of your stakeholders, is research-intensive or exploratory in nature, 
-the problem may not be understood well enough at the onset of the project to 
-make it worthwhile to define traditional formal 
-requirements.  Requirements will likely change and evolve very quickly.  
-In such cases, attempting to adhere to a classical
-development model becomes, instead of necessary bookkeeping, an exercise in 
-paper-generation.
+the problem may not be understood well enough at the outset of the project to 
+make it worthwhile to define traditional formal requirements.  Requirements 
+will likely change and evolve very quickly.  In such cases, attempting to
+adhere to a classical development model becomes, instead of necessary
+bookkeeping, an exercise in paper-generation.
 
 How then to communicate effectively with your stakeholders?  Establish a
 collaborative relationship with them.  Bring them into the workings of your
 project.  This doesn't mean that they have to be concerned with the day to day
 activities, but rather, use close collaboration to gather, implement,
 integrate, and iterate on their requirements.  Proactively seek additional
-input from stakeholders on a regular basis and keep them well informed, 
-possibly by setting up a mail list for them where important announcements
-are sent.
+input from stakeholders on a regular basis and keep them well informed.
 
 Between packages, Trilinos takes advantage of close collaboration by 
 establishing well-defined channels of communication.  Issue-tracking
@@ -266,11 +225,11 @@ help to steer the project in the right direction.
 \subsection{Frequent Iterations}
 %-------------------------------
 
-The close collaborations mentioned above facilitate the communication of 
-design decisions, requirements, and countless other important bits of
-information.  But the ultimate goal of all this communication is to produce
-working code and the longer development continues without being integrated and
-tested, the more time will have to be sunk into the integration process.  This
+Close collaborations facilitate the communication of design decisions, 
+requirements, and countless other important bits of information, but the
+ultimate goal of all this communication is to produce working code and the
+longer development continues without being integrated and tested, the more
+time will have to be sunk into the integration and debugging processes.  This
 has led the Trilinos Project to strive for shorter iterations where possible.
 %Trilinos tends to release every 6-9 months, so in the context of some 
 %development paradigms, such as XP (cite), Trilinos iterations would not be
@@ -282,39 +241,38 @@ development, and debugging to building, testing, and integrating.  Below we
 will discuss a number of tools that the Trilinos Project relies on to enable
 these short iterations.
 
-\subsection{Quality Control \& Process Improvement}
+\subsection{Process Improvement}
 %--------------------------------------------------
 
-Software is always a work in progress.  On any project there are always things
+Software is always a work in progress.  On any project there are things
 being done well and things that need work.  One of the difficulties of 
 software engineering or software project management is to take the realities
 of a given project and mold them into a form that is in agreement with the
-theories of accepted development models.  Realizing that a wholesale overhaul
-of an entire project to bring it into compliance with an accepted model was 
-infeasible, but also that acceptance of sub-optimal processes is inefficient, 
-the Trilinos Project adopted a model of process improvement by which the 
-processes that drive the project are always subject to ongoing, incremental 
-revision and and improvement.  We always keep our eyes open for the 
-"low-hanging fruit," or those modifications to existing processes that would 
-yield the most benefit with at the least cost.  
+theories of accepted development models.  After realizing that a wholesale 
+overhaul of an entire project to bring it into compliance with an accepted
+model was infeasible, but also that acceptance of sub-optimal processes is
+inefficient, the Trilinos Project adopted a model of process improvement by
+which the processes that drive the project are always subject to ongoing,
+incremental revision and and improvement.  We always keep our eyes open for the 
+``low-hanging fruit,'' or those modifications to existing processes that are
+likely to yield the most benefit at the least cost.  
 
-\subsection{Two-Tiered Organizational Architecture}
+\subsection{Two-Tiered Architecture}
 %--------------------------------------------------
 
 One particularly strong feature of the development model employed by the
 Trilinos Project is its two-tiered architecture.  The functionality of Trilinos
 is divided into a number of small, autonomous modules, called packages. 
-Packages are self-driven and have the freedom to make decisions as they see
-fit.  But, at the central Trilinos level, called the framework, centralized
-guidelines and services are provided.  The package architecture helps to
-encourage modularity throughout Trilinos and also promotes scalability by
-providing a sound model for adding new functionality.  The guidelines provided
-by the framework help promote interoperability between packages.  The services
-provided by the framework help to minimize the overhead that the expert
-developers need to concern themselves with.  The framework also provides a
-first line of support to effectively shield developers from having to deal
+Packages are self-driven, but at the central Trilinos level, called the
+framework, guidelines and services are provided.  The package architecture
+helps to encourage modularity throughout Trilinos and also promotes scalability
+by providing a working model for adding new functionality.  The guidelines
+provided by the framework help promote interoperability between packages.
+The services provided by the framework help to minimize the overhead that the
+expert developers need to concern themselves with.  The framework also provides
+a first line of support to effectively shield developers from having to deal
 with the trivial support requests.  The net effect of all of these factors is
-a higher level of quality throughout the project.
+a higher level of quality and improving efficiency throughout the project.
 
   \subsubsection{Packages}
   %-----------------------
@@ -323,20 +281,14 @@ a higher level of quality throughout the project.
   benefits:  it keeps teams to small groups of experts, it allows for local
   autonomy, and it allows for local authority.
   
-  \begin{enumerate}
-  \item  Small expert groups
-  
   As mentioned above, Trilinos began as three packages and has since grown to 
   include more than 25.  Each of these packages has a different story.  Some
   were started from scratch within Trilinos.  Many others were existing
-  projects that existed elsewhere and were imported into Trilinos.  Of these,
-  we find the whole range, from those just off the ground, to mature codes
-  that have been in use for years.  In all cases, the development of the 
-  code is done by experts in the given domain.  These groups generally consist
-  of one to five developers.  This small size keeps the groups
-  focused, agile, and accountable.
-  
-  \item Local autonomy
+  projects imported into Trilinos.  Of these, we find the whole range, from
+  those just off the ground, to mature codes that have been in use for years.
+  In all cases, the development of the code is done by experts in the given
+  domain.  These groups generally consist of one to five developers.  This
+  small size keeps the groups focused, agile, and accountable.
     
   Packages that join Trilinos after they are relatively mature often wouldn't
   do so if they felt they would be forever dependent on Trilinos.  The design
@@ -344,18 +296,14 @@ a higher level of quality throughout the project.
   entity upon which all packages must be dependent.  Many packages came to 
   Trilinos already having an established user base and it is very important
   for some packages to be able to exist either within the Trilinos framework
-  or completely without it.
-  
-  \item Local authority
+  or completely apart from it.
   
   Similarly, many packages would not be inclined to become a part of Trilinos
-  if they had to surrender the control of their package to somebody else.
-  Being a part of Trilinos brings with it very few requirements.  Instead,
-  there are many guidelines and services that, in practice, are almost all
-  adopted by all packages.  Local decisions about the direction or design of
-  a package are left in the hands of the developers.
-
-  \end{enumerate}
+  if they had to surrender the control of their package.  Being a part of
+  Trilinos brings with it very few requirements.  Instead, there are many
+  guidelines and services that, in practice, are almost all adopted by all
+  packages.  Local decisions about the direction or design of a package are
+  left in the hands of the package developers.
 
   \subsubsection{Framework}
   %------------------------
@@ -365,36 +313,35 @@ a higher level of quality throughout the project.
   for the benefit of member packages, providing numerous services and 
   suggested practices.
 
-  The Trilinos Framework makes many optional, valuable servies available to
-  member packages.  Focusing on a large number of teams
-  makes more advanced servies available to teams that otherwise might be too
-  small to be able to afford such an array of services.  Some of the standard
+  The Trilinos Framework makes many optional, valuable services available to
+  member packages.  Focusing on a large number of packages makes more advanced
+  services available to development teams that otherwise might be too
+  small to have access to such an array of services.  Some of the standard
   services include source control, an issue reporting tool, and mail lists.
   More advanced services include a package webpage prototype and personal 
   assistance in creating and maintaining package websites as well as a build 
   system that allows all packages to be built as a part of a single process 
   and helps to ease some porting issues.  A functional example package called
   New Package can be used by developers to quickly adapt an existing package 
-  to the suggested Trilinos build system or to expediate the process of 
+  to the suggested Trilinos build system or to hasten the process of 
   building a portable package from scratch.  Automated testing on an expanding 
   number of platforms as well as the ability to set up customized test runs is 
   available via the Trilinos Test Harness.  A relatively new service provided 
-  by  the framework is the ablility to view test results on the internet from
+  by  the framework is the ability to view test results on the internet from
   all of the Trilinos Test Harness testing platforms.
   
   As mentioned above, Trilinos does not impose a large number of requirements
   on member packages.  Rather, the Trilinos Framework provides suggested 
-  practices that,
-  for all practical purposes, are adopted by all packages in most cases.  For
-  example, packages are required to complete some sort of organized process
-  prior to an external release (having a documented release process is a 
-  requirement that is imposed by powers above the Trilinos Framework).  The 
-  Trilinos Framework team has developed a checklist that packages can complete
-  to satisfy this requirement; however, package teams are free to develop an
-  alternative process.  At this time, every package uses the default release
-  checklist, which saves developers the hassle of developing an individualized
-  process and gives them a release process that has
-  been improved by several rounds of process improvement based on feedback from
+  practices that, with very few exceptions, are adopted by all packages.
+  For example, packages are required to complete some sort of organized
+  process prior to an external release (having a documented release
+  process is a requirement that is imposed by powers above the Trilinos
+  Framework).  The Trilinos Framework team has developed a checklist that
+  packages can complete to satisfy this requirement; however, package teams
+  are free to develop an alternative process.  At this time, every package uses
+  the default release checklist, which saves developers the hassle of\
+  developing an individualized process and gives them a release process that has
+  been hardened through process improvement based on feedback from
   member package teams.  Another suggested practice is running tests
   associated with a package before committing new code for that package to the 
   CVS repository.  To enable developers to do this more efficiently, there is
@@ -403,15 +350,15 @@ a higher level of quality throughout the project.
 
   With some Trilinos team members concentrated on framework-level issues and
   valuable input from numerous Trilinos package developers, the Trilinos 
-  Framework now provides numerous services and suggested practices that are
-  inexpensive for package teams to utilize and that have evolved over 
+  Framework now provides many valuable services and suggested practices that
+  are inexpensive for package teams to utilize and that have evolved over 
   time based on the experience of dozens of people.
 
   The impact of the Trilinos Framework has spread beyond the boundaries of 
   the project.  The package website template and New Package are available 
   at the Trilinos website.  Other project teams at Sandia are also in various
-  stages of adopting or adapting one or more of many Trilinos services, 
-  including the test harness, homepage, results webpage, 
+  stages of adapting for their own project one or more of many Trilinos
+  services, including the test harness, homepage, results webpage, 
   release checklists, or build system to meet their specific needs. 
 
 % SAMPLE NOTE-BOX ----------------------
@@ -769,7 +716,7 @@ same scripts can be used to generate a package's Doxygen documentation (or all
 of the Trilinos Doxygen documentation) locally, which allows for streamlined
 iterative development of the documentation.
 
-\subsection{Configuration Management - Autoconf and Automake}
+\subsection{Configuration Management}
 % revisit all of this!
 
 Achieving a high level of software quality is complicated immensely when 
