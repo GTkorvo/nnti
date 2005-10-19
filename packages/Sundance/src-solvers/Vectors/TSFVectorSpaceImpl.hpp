@@ -64,7 +64,7 @@ bool VectorSpace<Scalar>::isCompatible(const VectorSpace<Scalar>& vecSpc) const
 {
   TEST_FOR_EXCEPTION(vecSpc.ptr().get() == 0, runtime_error,
                      "null argument in VectorSpace<Scalar>::isCompatible()");
-  return ptr().get()->isCompatible(*(vecSpc.ptr().get()));
+  return this->ptr().get()->isCompatible(*(vecSpc.ptr().get()));
 }
 
 
