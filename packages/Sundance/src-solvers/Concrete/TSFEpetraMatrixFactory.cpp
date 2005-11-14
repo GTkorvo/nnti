@@ -49,7 +49,7 @@ EpetraMatrixFactory::EpetraMatrixFactory(const RefCountPtr<const EpetraVectorSpa
 
 void EpetraMatrixFactory::finalize()
 {
-  int ierr = graph_->FillComplete();
+  int ierr = graph_->FillComplete(*(domain_->epetraMap()), *(range_->epetraMap()));
 
   TEST_FOR_EXCEPTION(ierr < 0, runtime_error, 
                      "EpetraMatrixFactory::finalize() failed during call "
@@ -131,7 +131,7 @@ const Epetra_CrsGraph& EpetraMatrixFactory::graph() const
 
 LinearOperator<double> EpetraMatrixFactory::createMatrix() const
 {
-  RefCountPtr<SingleScalarTypeOp<double> > A 
+  RefCountPtr<SingleScalarTypeOpBase<double> > A 
     = rcp(new EpetraMatrix(graph(), epDomain(), epRange()));
   return A;
 }

@@ -38,7 +38,7 @@
 #include "TSFAccessibleVector.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Teuchos_TimeMonitor.hpp"
-#include "TSFProductVector.hpp"
+#include "Thyra_ProductVector.hpp"
 
 namespace TSFExtendedOps
 {
@@ -342,7 +342,13 @@ namespace TSFExtended
     /** Describe the vector  */
     string description() const
     {
-      return indentedDescribe(0);
+      const Describable* d = 
+        dynamic_cast<const Describable* >(this->ptr().get());
+      if (d != 0)
+        {
+          return d->description();
+        }
+      return "Vector not describable";
     }
 
     string indentedDescribe(int depth) const

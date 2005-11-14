@@ -30,147 +30,57 @@
 #define TSFPRODUCTVECTORSPACEIMPL_HPP
 
 #include "TSFProductVectorDecl.hpp"
-
-
  
 using namespace TSFExtended;
 using namespace Teuchos;
 using std::ostream;
 
-
-
-//========================================================================
-template <class Scalar>
-ProductVectorSpace<Scalar>::
-ProductVectorSpace(const Teuchos::Array<const VectorSpace<Scalar> >
-		   &vecSpaces)
-  :vecSpaces_(vecSpaces),
-   numBlocks_(vecSpaces.size())
+namespace TSFExtended
 {
-  finalize();
+  using Teuchos::Array;
+  using Teuchos::RefCountPtr;
+  /** */
+  template <class Scalar>
+  Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+  productSpace(const Array<VectorSpace<Scalar> >& spaces)
+  {
+    Array<RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > > data(spaces.size());
+    for (unsigned int i=0; i<spaces.size(); i++)
+      {
+        data[i] = spaces[i].ptr();
+      }
+    return rcp(new Thyra::ProductVectorSpace<Scalar>(data.size(), &(data[0])));
+  }
 
-  setUpCore();
-}
-    
+  /** */
+  template <class Scalar>
+  Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+  productSpace(VectorSpace<Scalar>& s1)
+  {
+    return productSpace(tuple(s1));
+  }
 
+  /** */
+  template <class Scalar>
+  Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+  productSpace(VectorSpace<Scalar>& s1, 
+               VectorSpace<Scalar>& s2)
+  {
+    return productSpace(tuple(s1, s2));
+  }
 
+  /** */
+  template <class Scalar>
+  Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+  productSpace(VectorSpace<Scalar>& s1,VectorSpace<Scalar>& s2,
+               VectorSpace<Scalar>& s3)
+  {
+    return productSpace(tuple(s1, s2, s3));
+  }
 
-//========================================================================
-template <class Scalar>
-void ProductVectorSpace<Scalar>::setUpCore()
-{
-  std::vector<Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > >
-    coreVecSpaces(numBlocks_);
-  for (int i = 0; i < numBlocks_; i++)
-    {
-      coreVecSpaces[i] = vecSpaces_[i].ptr();
-    }
-  initialize(numBlocks_, &coreVecSpaces[0]);
-}
-
-
-
-
-
-
-//========================================================================
-template <class Scalar>
-ProductVectorSpace<Scalar>::
-ProductVectorSpace(const VectorSpace<Scalar>& s1, 
-		   const VectorSpace<Scalar>& s2)
-{
-  vecSpaces_.resize(2);
-  vecSpaces_[0] = s1;
-  vecSpaces_[1] = s2;
-  numBlocks_ = 2;
-
-  finalize();
-  setUpCore();
-}
-
-
-
-//========================================================================
-template <class Scalar>
-void ProductVectorSpace<Scalar>::finalize()
-{
-  isInCore_ = true;
-  dim_ = 0;
-  for (int i = 0; i < numBlocks_; i++)
-    {
-      if (!vecSpaces_[i].isInCore()) isInCore_ = false;
-      dim_ += vecSpaces_[i].dim();
-    }
-}
-
-
-
-//========================================================================
-template <class Scalar>
-bool ProductVectorSpace<Scalar>::operator==(const VectorSpace<Scalar> &other) 
-  const
-{
-  const ProductVectorSpace<Scalar>* otherPVS = 
-    dynamic_cast<const ProductVectorSpace<Scalar>* > (other.ptr());
-  if (otherPVS == 0)
-    {
-      return false;
-    }
-  for (int i = 0; i < numBlocks_; i++)
-    {
-      if (vecSpaces_[i] != other->getBlock(i)) 
-	{
-	  return false;
-	} 
-    }
-  return true;
-}
-
-
-
-//========================================================================
-template <class Scalar>
-bool ProductVectorSpace<Scalar>::operator!=(const VectorSpace<Scalar>& other) 
-  const
-{
-  return !(operator==(other));
-}
-
-
-
-
-
-
-//========================================================================
-template <class Scalar>
-RefCountPtr<Thyra::VectorBase<Scalar> >ProductVectorSpace<Scalar>::createMember() const
-{
-  RefCountPtr<const ProductVectorSpace<Scalar> > me = rcp(this, false);
-  VectorSpace<Scalar> vs(me);
-  Vector<Scalar> v = new ProductVector<Scalar>(vs);
-  return v.ptr();
-}
-
-
-
-//========================================================================
-template <class Scalar>
-string ProductVectorSpace<Scalar>::describe(int depth) const
-{
-  string ret = "";
-  for (int i = 0; i < depth; i++)
-    {
-      ret.append("   ");
-    }
-  ret.append("ProductVectorSpace of dimension " + toString(this->dim()) + "\n");
-  for (int i = 0; i < numBlocks_; i++)
-    {
-      ret.append(vecSpaces_[i].describe(depth+1) + "\n");
-    }
-  return ret;
-}
-
-
+  
+  
+} 
 
 
 

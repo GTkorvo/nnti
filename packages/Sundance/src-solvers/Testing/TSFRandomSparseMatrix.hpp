@@ -1,0 +1,173 @@
+/* @HEADER@ */
+/* ***********************************************************************
+// 
+//           TSFExtended: Trilinos Solver Framework Extended
+//                 Copyright (2004) Sandia Corporation
+// 
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
+// 
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
+// **********************************************************************/
+ /* @HEADER@ */
+
+
+#ifndef RANDOMSPARSEMATRIX_HPP
+#define RANDOMSPARSEMATRIX_HPP
+
+#include "TSFOperatorBuilder.hpp"
+#include "Teuchos_ScalarTraits.hpp"
+#include "TSFIncrementallyConfigurableMatrixFactory.hpp"
+#include "TSFLoadableMatrix.hpp"
+
+using namespace TSFExtended;
+using namespace Teuchos;
+using std::ostream;
+
+namespace TSFExtended
+{
+  /** */
+  template <class Scalar>
+  class RandomSparseMatrix : public OperatorBuilder<Scalar>
+  {
+  public:
+    /** */
+    RandomSparseMatrix(int nLocalRows, int nLocalCols,
+                       double onProcDensity,
+                       double offProcDensity,
+                       const VectorType<double>& vecType);
+    /** */
+    RandomSparseMatrix(const VectorSpace<Scalar>& domain,
+                       const VectorSpace<Scalar>& range,
+                       double onProcDensity,
+                       double offProcDensity,
+                       const VectorType<double>& vecType);
+
+    /** */
+    LinearOperator<double> getOp() const {return op_;}
+
+  private:
+
+    void initOp(double onProcDensity,
+                double offProcDensity);
+
+    LinearOperator<double> op_;
+  };
+
+  template <class Scalar> 
+  inline RandomSparseMatrix<Scalar>
+  ::RandomSparseMatrix(int nLocalRows, int nLocalCols,
+                       double onProcDensity,
+                       double offProcDensity,
+                       const VectorType<double>& type)
+    : OperatorBuilder<double>(nLocalRows, nLocalCols, type), op_()
+  {
+    initOp(onProcDensity, offProcDensity);
+  }
+
+
+  template <class Scalar> 
+  inline RandomSparseMatrix<Scalar>
+  ::RandomSparseMatrix(const VectorSpace<Scalar>& d,
+                       const VectorSpace<Scalar>& r,
+                       double onProcDensity,
+                       double offProcDensity,
+                       const VectorType<double>& type)
+    : OperatorBuilder<double>(d, r, type), op_()
+  {
+    initOp(onProcDensity, offProcDensity);
+  }
+
+
+  template <class Scalar> 
+  inline void RandomSparseMatrix<Scalar>
+  ::initOp(double onProcDensity,
+           double offProcDensity)
+  {
+    int rank = MPISession::getRank();
+    int nProc = MPISession::getNProc();
+    RefCountPtr<MatrixFactory<double> > mFact 
+      = vecType().createMatrixFactory(domain(), range());
+
+    int colDimension = domain().dim();
+    int rowDimension = range().dim();
+    int numLocalCols = colDimension / nProc;
+    int numLocalRows = rowDimension / nProc;
+    int lowestLocalRow = numLocalRows * rank;
+    int highestLocalRow = numLocalRows * (rank+1) - 1;
+    int lowestLocalCol = numLocalCols * rank;
+    int highestLocalCol = numLocalCols * (rank+1) - 1;
+
+
+    IncrementallyConfigurableMatrixFactory* icmf 
+      = dynamic_cast<IncrementallyConfigurableMatrixFactory*>(mFact.get());
+    Array<Array<int> > colIndices(numLocalRows);
+    for (int i=0; i<numLocalRows; i++)
+      {
+        int row = lowestLocalRow + i;
+        Array<int>& cols = colIndices[i];
+        for (int j=0; j<colDimension; j++)
+          {
+            double acceptProb;
+            if (j >= lowestLocalCol && j <= highestLocalCol)
+              {
+                acceptProb = onProcDensity;
+              }
+            else
+              {
+                acceptProb = offProcDensity;
+              }
+            double p = 0.5*(ScalarTraits<double>::random() + 1.0);
+
+            if (p < acceptProb)
+              {
+                cols.append(j);
+              }
+          }
+        if (cols.size()>0)
+          {
+            icmf->initializeNonzerosInRow(row, colIndices[i].size(),
+                                          &(colIndices[i][0]));
+          }
+      }
+    icmf->finalize();
+      
+    op_ = mFact->createMatrix();
+      
+    RefCountPtr<LoadableMatrix<double> > mat = op_.matrix();
+
+    /* fill in with the Laplacian operator */
+    for (int i=0; i<numLocalRows; i++)
+      {
+        int row = lowestLocalRow + i;
+        const Array<int>& cols = colIndices[i];
+        Array<Scalar> colVals(cols.size());
+        for (int j=0; j<cols.size(); j++)
+          {
+            colVals[j] = ScalarTraits<Scalar>::random();
+          }
+        if (cols.size() > 0)
+          {
+            mat->addToRow(row, colIndices[i].size(), 
+                          &(colIndices[i][0]), &(colVals[0]));
+          }
+      }
+  }
+}
+
+#endif

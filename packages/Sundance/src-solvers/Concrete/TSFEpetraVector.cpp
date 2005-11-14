@@ -42,7 +42,8 @@ using namespace Thyra;
 using Thyra::Index;
 
 
-EpetraVector::EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs)
+EpetraVector
+::EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs)
   : MPIVectorStd<double>(), epetraVec_(), mpiVecSpace_(), epetraMap_()
 {
   const EpetraVectorSpace* epvs 
@@ -55,6 +56,25 @@ EpetraVector::EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs
 
   epetraMap_ = epvs->epetraMap();
   epetraVec_ = rcp(new Epetra_Vector(*epetraMap_, true));
+
+  RefCountPtr<double> data = rcp(&(epetraVec_->operator[](0)), false);
+  initialize(mpiVecSpace_, data, 1);
+}
+
+EpetraVector
+::EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs,
+               const RefCountPtr<Epetra_Vector>& vec)
+  : MPIVectorStd<double>(), epetraVec_(vec), mpiVecSpace_(), epetraMap_()
+{
+  const EpetraVectorSpace* epvs 
+    = dynamic_cast<const EpetraVectorSpace*>(vs.get());
+  TEST_FOR_EXCEPTION(epvs==0, runtime_error,
+                     "could not cast vector space to EpetraVectorSpace in "
+                     "EpetraVector ctor");
+
+  mpiVecSpace_ = rcp_dynamic_cast<const MPIVectorSpaceBase<double> >(vs);
+
+  epetraMap_ = epvs->epetraMap();
 
   RefCountPtr<double> data = rcp(&(epetraVec_->operator[](0)), false);
   initialize(mpiVecSpace_, data, 1);

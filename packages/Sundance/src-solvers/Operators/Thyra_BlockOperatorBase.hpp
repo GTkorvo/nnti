@@ -66,7 +66,7 @@ namespace Thyra
     virtual int numBlockCols() const = 0 ;
 
     /** Returns the (i,j)-th block */
-    Thyra::RefCountPtr<LinearOpBase<RangeScalar, DomainScalar> > 
+    Teuchos::RefCountPtr<LinearOpBase<RangeScalar, DomainScalar> > 
     getBlock(int i, int j) const ;
 
   }; 

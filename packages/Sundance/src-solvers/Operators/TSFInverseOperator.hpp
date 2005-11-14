@@ -55,10 +55,10 @@ namespace TSFExtended
    */
   template <class Scalar> 
   class InverseOperator : public SingleScalarTypeOp<Scalar>,
-                          public Handleable<SingleScalarTypeOp<Scalar> >
+                          public Handleable<SingleScalarTypeOpBase<Scalar> >
   {
   public:
-    GET_RCP(SingleScalarTypeOp<Scalar>);
+    GET_RCP(SingleScalarTypeOpBase<Scalar>);
 
     /**
      * Ctor with a linear operator and a solver specified.

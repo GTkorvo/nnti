@@ -48,7 +48,7 @@ namespace TSFExtended
 
   /** */
   class EpetraMatrix : public SingleScalarTypeOp<double>,
-                       public Handleable<SingleScalarTypeOp<double> >,
+                       public Handleable<SingleScalarTypeOpBase<double> >,
                        public LoadableMatrix<double>,
                        public RowAccessibleOp<double>,
                        // public ExplicitlyTransposeableOp<double>,
@@ -56,11 +56,16 @@ namespace TSFExtended
                        public ILUFactorizableOp<double>
   {
   public:
-    GET_RCP(SingleScalarTypeOp<double>);
+    GET_RCP(SingleScalarTypeOpBase<double>);
 
     /** Construct an empty EpetraMatrix structured according to the graph 
      * argument */
     EpetraMatrix(const Epetra_CrsGraph& graph,
+                 const RefCountPtr<const EpetraVectorSpace>& domain,
+                 const RefCountPtr<const EpetraVectorSpace>& range);
+
+    /** Wrap an existing Epetra CRS Matrix */
+    EpetraMatrix(const RefCountPtr<Epetra_CrsMatrix>& mat,
                  const RefCountPtr<const EpetraVectorSpace>& domain,
                  const RefCountPtr<const EpetraVectorSpace>& range);
 

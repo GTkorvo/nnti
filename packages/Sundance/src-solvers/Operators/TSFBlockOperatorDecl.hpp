@@ -34,7 +34,8 @@
 #include "TSFExplicitlyTransposeableOp.hpp"
 #include "TSFRowAccessibleOp.hpp"
 #include "TSFHandleable.hpp"
-
+#include "TSFSingleScalarTypeOp.hpp"
+#include "Thyra_DefaultBlockOperatorDecl.hpp"
 
 
 
@@ -43,8 +44,6 @@ namespace TSFExtended
 {
   template <class Scalar>
   class LinearOperator;
-  template <class Scalar>
-  class ProductVectorSpace;
 
   using namespace Teuchos;
 
@@ -55,13 +54,14 @@ namespace TSFExtended
    * @author Paul T Boggs (ptboggs@sandia.gov)
    */
   template <class Scalar>
-  class BlockOperator : public SingleScalarTypeOp<Scalar>,
-                        public Handleable<SingleScalarTypeOp<Scalar> >,
-                        public ExplicitlyTransposeableOp<Scalar>,
-                        public RowAccessibleOp<Scalar>
+  class BlockOperator : public SingleScalarTypeOpBase<Scalar>,
+                        public Handleable<SingleScalarTypeOpBase<Scalar> >,
+                        public RowAccessibleOp<Scalar>,
+                        public Thyra::DefaultBlockOperator<Scalar, Scalar>,
+                        public Printable
   {
   public:
-    GET_RCP(SingleScalarTypeOp<Scalar>);
+    GET_RCP(SingleScalarTypeOpBase<Scalar>);
 
     /** ctor with domain and range specified.  The blocks must be
      *	specified later and all filled before use.
@@ -69,43 +69,13 @@ namespace TSFExtended
     BlockOperator(const VectorSpace<Scalar> &domain, 
 		  const VectorSpace<Scalar> &range);
 
+     /** \brief Return a smart pointer for the range space for <tt>this</tt> operator.
+   */
+  Teuchos::RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > range() const ;
 
-    /** Virtual dtor */
-    virtual ~BlockOperator(){;}
-
-
-    /** Returns the domain  */
-    RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > domain() const;
-    
-
-    /** Returns the range  */
-    RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > range() const;
-
-
-    /** Returns the number of block rows */
-    int numBlockRows() const 
-    {
-      return nBlockRows_;
-    }
-
-    /** Returns  the number of block columns */
-    int numBlockCols() const {return nBlockCols_;}
-
-    /** Returns the (i,j)-th block */
-    LinearOperator<Scalar> getBlock(const int &i, const int &j) const ;
-
-    /** Set the (i,j)-th bock */
-    void setBlock(int i, int j,  
-		  const LinearOperator<Scalar>& sub);
-
-    /** Finalize the matrix by setting the range and domain and 
-     *  filling the non-set blocks with zero if specified.  It also
-     *  checks to be sure all is correct.
-     *
-     *  @param zeroFill bool set to true if the non-set blocks are
-     *  to be set to zero
-     */
-    void finalize(const bool &zeroFill);
+  /** \brief Return a smart pointer for the domain space for <tt>this</tt> operator.
+   */
+  Teuchos::RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > domain() const ;
 
     /** 
      * Compute alpha*M*x + beta*y, where M=*this.
@@ -124,91 +94,43 @@ namespace TSFExtended
                        ,const Scalar            //alpha = 1.0
                        ,const Scalar           // beta  = 0.0
                        ) const;
-    
 
-    /** Apply operator to a vector in the domain space, returning a vector
-     * in the range space 
-     */
-    void applyReg(const Thyra::VectorBase<Scalar>& in, 
-		  const Scalar alpha, 
-		  Thyra::VectorBase<Scalar>* out, 
-		  const Scalar beta) const ;
+    /** */
+    void apply(
+    const EConj                             conj
+    ,const Thyra::MultiVectorBase<Scalar>    &X
+    ,Thyra::MultiVectorBase<Scalar>           *Y
+    ,const Scalar                      alpha = Teuchos::ScalarTraits<Scalar>::one()
+    ,const Scalar                      beta  = Teuchos::ScalarTraits<Scalar>::zero()
+    ) const ;
 
-
-
-    /** Apply transpose operator to a vector in the domain space,
-     * returning a vector in the range space. The default
-     * implementation throws an exception 
-     */
-    virtual void applyTrans(const Thyra::VectorBase<Scalar>& in, 
-			    const Scalar alpha, 
-			    Thyra::VectorBase<Scalar>* out, 
-			    const Scalar beta) const ;
-
+    /** */
+    void applyTranspose(
+    const EConj                            conj
+    ,const Thyra::MultiVectorBase<Scalar>    &X
+    ,Thyra::MultiVectorBase<Scalar>         *Y
+    ,const Scalar                     alpha = Teuchos::ScalarTraits<Scalar>::one()
+    ,const Scalar                     beta  = Teuchos::ScalarTraits<Scalar>::zero()
+    ) const;
 
     /** Get entire row of the block matrix  */
     void getRow(const int& row, Teuchos::Array<int>& indices,
 		Teuchos::Array<Scalar>& values) const;
 
     
-    /**  Create the transpose */
-    LinearOperator<Scalar> formTranspose() const;
 
-    /**
-     * Write to a stream
-     */
-    void print(ostream& os) const;
+    /** */
+    std::ostream& describe(
+    std::ostream                         &out
+    ,const Teuchos::EVerbosityLevel      verbLevel
+    ,const std::string                   leadingIndent
+    ,const std::string                   indentSpacer
+    ) const;
 
-
-    /** Overwrites describe(int depth) to handle the block structure 
-     *
-     * @param depth int to specify how many tabs to indent the line
-     */
-    string describe(int depth) const;
-    
-
+    /** */
+    void print(ostream& os) const ;
   private:
 
-    /** Empty ctor which should not be used  */
-    BlockOperator(){;}
-
-    VectorSpace<Scalar> domain_;
-    VectorSpace<Scalar> range_;
-    int nBlockRows_;
-    int myBlockRow_;
-    int nBlockCols_;
-    bool isFinal_;
-
-    Teuchos::Array<Teuchos::Array<LinearOperator<Scalar> > > sub_;
-    Teuchos::Array<Teuchos::Array<int> > isSet_;
-    LinearOperator<Scalar> opTrp_;
-
-    
-
-
-    /** Private method to check compatibility of the spaces before a
-     *  block is set.  
-     *
-     * @param i int specifying the row
-     * @param j int specifying the col
-     * @param sub LinearOperator to be inserted into the (i, j) position.
-     */
-    void chkSpaces(const int &i, const int &j, 
-		   const LinearOperator<Scalar>& sub) const;
-    
-
-
-    /** Private method to check that all blocks are set */
-    bool chkFinal() const;
-    
-
-    /** Private method to put ZeroOperators in the (i, j) location.
-     *
-     * @param i int specifying the row
-     * @param j int specifying the col
-     */
-    void zeroFill(const int &i, const int &j);
-    
   }; 
 }
 

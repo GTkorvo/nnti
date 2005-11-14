@@ -52,11 +52,11 @@ namespace TSFExtended
    */
   template <class Scalar> 
   class SumOperator : public SingleScalarTypeOp<Scalar>,
-                      public Handleable<SingleScalarTypeOp<Scalar> >,
+                      public Handleable<SingleScalarTypeOpBase<Scalar> >,
                       public RowAccessibleOp<Scalar>
   {
   public:
-    GET_RCP(SingleScalarTypeOp<Scalar>);
+    GET_RCP(SingleScalarTypeOpBase<Scalar>);
 
     /** Construct with a pair of operators and a boolean to indicate
      * if addition or substraction is to be performed. 

@@ -35,6 +35,7 @@
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 #include "Teuchos_RefCountPtr.hpp"
+#include "TSFSingleScalarTypeOpBase.hpp"
 #include "TSFDescribable.hpp"
 
 
@@ -44,32 +45,16 @@ namespace TSFExtended
   using namespace Thyra;
 
   /** 
-   * TSFSingleScalarTypeOp is a subtype of Thyra::LinearOpBase
-   * where the domain and range spaces have the same scalar type.
-   * It is an intermediate measure that simplifies conversion of
-   * TSFCore-based code to Thyra.
+   * Default implementation of SingleScalarTypeOp
    */
   template <class Scalar> 
-  class SingleScalarTypeOp : public Thyra::LinearOpBase<Scalar, Scalar>,
+  class SingleScalarTypeOp : public SingleScalarTypeOpBase<Scalar>,
                              virtual public PTBDescribable
   {
   public:
 
-    /** 
-     * generalApply() applies either the operator or the transpose
-     * according to the value of the transpose flag. This method is
-     * backwards compatible with TSFCore-based code.
-     */
-    virtual void generalApply(const Thyra::ETransp M_trans,
-                              const Thyra::VectorBase<Scalar>    &x,
-                              Thyra::VectorBase<Scalar>* y,
-                              const Scalar alpha = Teuchos::ScalarTraits<Scalar>::one(),
-                              const Scalar beta  = Teuchos::ScalarTraits<Scalar>::zero()) const = 0;
-
-
-
     /** Thyra apply method */
-    void apply(
+    virtual void apply(
                const Thyra::EConj                             conj
                ,const Thyra::MultiVectorBase<Scalar>    &X
                ,Thyra::MultiVectorBase<Scalar>           *Y

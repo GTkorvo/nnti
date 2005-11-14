@@ -57,6 +57,11 @@ namespace TSFExtended
     /** Construct with a smart pointer to an Epetra vector space. */
     EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs);
 
+    /** Construct with smart pointers to an Epetra vector space
+        and an existing Epetra vector. */
+    EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs,
+                 const RefCountPtr<Epetra_Vector>& vec);
+
     /** \name IndexableVector interface */
     //@{
     /** read the element at the given global index */

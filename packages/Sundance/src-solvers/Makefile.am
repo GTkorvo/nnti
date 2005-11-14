@@ -105,6 +105,9 @@ CONCRETE = \
 	$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.cpp
 
 OPERATORS_H = \
+	$(srcdir)/Operators/Thyra_DefaultBlockOperatorDecl.hpp \
+	$(srcdir)/Operators/Thyra_DefaultBlockOperatorImpl.hpp \
+	$(srcdir)/Operators/Thyra_SetableBlockOperatorBase.hpp \
 	$(srcdir)/Operators/TSFBlockOperator.hpp \
 	$(srcdir)/Operators/TSFBlockOperatorDecl.hpp \
 	$(srcdir)/Operators/TSFBlockOperatorImpl.hpp \
@@ -126,6 +129,7 @@ OPERATORS_H = \
 	$(srcdir)/Operators/TSFRowAccessibleOp.hpp \
 	$(srcdir)/Operators/TSFScaledOperator.hpp\
 	$(srcdir)/Operators/TSFSingleScalarTypeOp.hpp\
+	$(srcdir)/Operators/TSFSingleScalarTypeOpBase.hpp\
 	$(srcdir)/Operators/TSFSumOperator.hpp\
 	$(srcdir)/Operators/TSFTransposeOperator.hpp\
 	$(srcdir)/Operators/TSFZeroOperator.hpp 
@@ -164,6 +168,19 @@ NONLINEARSOLVERS = \
 	$(srcdir)/NonlinearSolvers/NOX_TSF_Vector.C \
 	$(srcdir)/NonlinearSolvers/TSFNOXSolver.C 	
 
+
+
+
+TESTING_H = \
+	$(srcdir)/Testing/Thyra_TestSpecifier.hpp \
+	$(srcdir)/Testing/TSFMatrixLaplacian1D.hpp \
+	$(srcdir)/Testing/TSFOperatorBuilder.hpp \
+	$(srcdir)/Testing/TSFRandomBlockMatrix.hpp \
+	$(srcdir)/Testing/TSFRandomSparseMatrix.hpp 
+
+
+TESTING = \
+	$(srcdir)/Testing/TSFMatrixLaplacian1D.cpp
 
 
 
@@ -214,6 +231,7 @@ TSF_EXTENDED_H = \
 	$(CONCRETE_H) \
 	$(LINEARSOLVERS_H) \
 	$(NONLINEARSOLVERS_H) \
+	$(TESTING_H) \
 	$(PRECONDITIONERS_H) 
 
 #np# replace new_package with the name of the package being autotool'ed here
@@ -224,6 +242,7 @@ libTSFExtended_a_SOURCES = \
 	$(CONCRETE) \
 	$(LINEARSOLVERS) \
 	$(NONLINEARSOLVERS) \
+	$(TESTING) \
 	$(PRECONDITIONERS) 
 
 

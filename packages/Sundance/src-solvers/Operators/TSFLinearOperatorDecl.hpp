@@ -33,7 +33,7 @@
 #include "TSFHandle.hpp"
 #include "TSFHandleable.hpp"
 #include "Thyra_LinearOpBase.hpp"
-#include "TSFSingleScalarTypeOp.hpp"
+#include "TSFSingleScalarTypeOpBase.hpp"
 #include "TSFLoadableMatrix.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "TSFRowAccessibleOp.hpp"
@@ -54,7 +54,7 @@ namespace TSFExtended
    * User-level linear operator class
    */
   template <class Scalar>
-  class LinearOperator : public Handle<SingleScalarTypeOp<Scalar> >
+  class LinearOperator : public Handle<SingleScalarTypeOpBase<Scalar> >
   {
   public:
     /** \name Constructors, Destructors, and Assignment Operators */
@@ -63,11 +63,11 @@ namespace TSFExtended
     LinearOperator();
 
     /** Constructor with raw pointer */
-    LinearOperator(Handleable<SingleScalarTypeOp<Scalar> >* rawPtr);
+    LinearOperator(Handleable<SingleScalarTypeOpBase<Scalar> >* rawPtr);
 
 
     /** Constructor with smart pointer */
-    LinearOperator(const RefCountPtr<SingleScalarTypeOp<Scalar> >& smartPtr);
+    LinearOperator(const RefCountPtr<SingleScalarTypeOpBase<Scalar> >& smartPtr);
     //@}
 
     /** Return the domain */
@@ -165,25 +165,12 @@ namespace TSFExtended
     void setBlock(int i, int j, 
 		  const LinearOperator<Scalar>& sub);
 
-    /** Finialize the Block operator 
-     *
-     *@param zerofill bool to indicate if blocks that are not set
-     *                should be automatically set to the zero operator.
-     */
-    void finalize(bool zerofill);
+    
 
     //@}
 
 
-    /** Form a Linear operator in the specified type.  The source
-     *LinearOperator must be RowAccexxible and the target must be
-     *Loadable.
-
-     * @param type is the VectorType used to specify the type of
-     * operator to be formed
-     */
-
-    LinearOperator<Scalar> form(const VectorType<Scalar>& type);
+    
 
       
 

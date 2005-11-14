@@ -40,7 +40,7 @@ namespace TSFExtended
    *
    */
   class IfpackOperator : public SingleScalarTypeOp<double>,
-                       public Handleable<SingleScalarTypeOp<double> >
+                       public Handleable<SingleScalarTypeOpBase<double> >
   {
   public:
     /** */
@@ -69,7 +69,7 @@ namespace TSFExtended
     virtual RefCountPtr< const Thyra::VectorSpaceBase<double> > range() const {return range_;}
 
     /* Handleable boilerplate */
-    GET_RCP(SingleScalarTypeOp<double>);
+    GET_RCP(SingleScalarTypeOpBase<double>);
 
   private:
     RefCountPtr<Ifpack_IlukGraph> precondGraph_;

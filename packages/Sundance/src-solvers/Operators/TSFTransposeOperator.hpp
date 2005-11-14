@@ -51,14 +51,14 @@ namespace TSFExtended
    */
   template <class Scalar>
   class TransposeOperator : public SingleScalarTypeOp<Scalar>,
-			    public Handleable<SingleScalarTypeOp<Scalar> >
+			    public Handleable<SingleScalarTypeOpBase<Scalar> >
     //public LoadableMatrix<Scalar>
     //public ExplicitlyTransposeableOp<Scalar>
     //public Formable<Scalar>,
   {
    
   public:
-    GET_RCP(SingleScalarTypeOp<Scalar>);
+    GET_RCP(SingleScalarTypeOpBase<Scalar>);
 //     virtual RefCountPtr<TransposeOperator<Scalar> > getRcp() 
 //     {return rcp(this);}
 

@@ -38,11 +38,11 @@ using namespace TSFExtended;
 template <class Scalar> 
 void Vector<Scalar>::setBlock(int i, const Vector<Scalar>& v)
 {
-  ProductVector<Scalar>* pv = 
-    dynamic_cast<ProductVector<Scalar>* >(this->ptr().get());
+  Thyra::ProductVector<Scalar>* pv = 
+    dynamic_cast<Thyra::ProductVector<Scalar>* >(this->ptr().get());
   TEST_FOR_EXCEPTION(pv == 0, runtime_error,
-		     "vector not product vector");
-  pv->setBlock(i, v);
+		     "vector is not a product vector");
+  Thyra::assign(pv->getBlock(i).get(), *(v.ptr().get()));
 }  
 
 
@@ -51,10 +51,10 @@ void Vector<Scalar>::setBlock(int i, const Vector<Scalar>& v)
 template <class Scalar> 
 Vector<Scalar> Vector<Scalar>::getBlock(int i) const
 {
-  ProductVector<Scalar>* pv = 
-    dynamic_cast <ProductVector<Scalar>* >(this->ptr().get());
+  Thyra::ProductVector<Scalar>* pv = 
+    dynamic_cast <Thyra::ProductVector<Scalar>* >(this->ptr().get());
   TEST_FOR_EXCEPTION(pv == 0, runtime_error,
-		     "vector not product vector");
+		     "vector is not a product vector");
   return pv->getBlock(i);
 }
 

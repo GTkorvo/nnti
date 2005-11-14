@@ -31,6 +31,7 @@
 #include "TSFVectorTypeExtensions.hpp"
 #include "TSFVectorSpaceDecl.hpp"
 #include "TSFGhostImporter.hpp"
+#include "Teuchos_MPISession.hpp"
 
 namespace TSFExtended
 {
@@ -50,6 +51,10 @@ namespace TSFExtended
      * all processors. This is used when creating multivector-based
      * operators. */
     VectorSpace<Scalar> createReplicatedSpace(int dimension) const ;
+   
+
+    /** create a vector space having nLocal elements on each processor */
+    VectorSpace<Scalar> createEvenlyPartitionedSpace(int nLocal) const ;
 
     /** create a distributed vector space.
      * @param dimension the dimension of the space
@@ -101,6 +106,22 @@ namespace TSFExtended
                                                       const int* locallyOwnedIndices) const
   {
     return this->ptr()->createSpace(dimension, nLocal, locallyOwnedIndices);
+  }
+
+  template <class Scalar> inline 
+  VectorSpace<Scalar> VectorType<Scalar>
+  ::createEvenlyPartitionedSpace(int nLocal) const
+  {
+    int rank = MPISession::getRank();
+    int nProc = MPISession::getNProc();
+    int dimension = nLocal * nProc;
+    Array<int> locallyOwnedIndices(nLocal);
+    int lowestLocalRow = rank*nLocal;
+    for (int i=0; i<nLocal; i++)
+      {
+        locallyOwnedIndices[i] = lowestLocalRow + i;
+      }
+    return this->ptr()->createSpace(dimension, nLocal, &(locallyOwnedIndices[0]));
   }
 
   template <class Scalar> inline 

@@ -48,11 +48,11 @@ namespace TSFExtended
    */
   template <class Scalar> 
   class IdentityOperator : public SingleScalarTypeOp<Scalar>,
-                           public Handleable<SingleScalarTypeOp<Scalar> >,
+                           public Handleable<SingleScalarTypeOpBase<Scalar> >,
                            public RowAccessibleOp<Scalar>
   {
   public:
-    GET_RCP(SingleScalarTypeOp<Scalar>);
+    GET_RCP(SingleScalarTypeOpBase<Scalar>);
 
     /** The domain and range spaces for an identity operator
      * are equivalent, so the ctor needs only a single space

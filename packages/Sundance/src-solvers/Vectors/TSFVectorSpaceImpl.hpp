@@ -30,7 +30,7 @@
 #define TSFVECTORSPACEIMPL_HPP
 
 
-#include "TSFProductVectorSpaceDecl.hpp"
+#include "Thyra_ProductVectorSpaceBase.hpp"
 #include "TSFVectorSpaceDecl.hpp"
 #include "TSFDescribable.hpp"
 
@@ -83,8 +83,8 @@ bool VectorSpace<Scalar>::contains(const Vector<Scalar> &vec) const
 template <class Scalar>
 int VectorSpace<Scalar>::numBlocks() const
 {
-  const ProductVectorSpace<Scalar>* pvs = 
-    dynamic_cast<const ProductVectorSpace<Scalar>* > (this->ptr().get());
+  const Thyra::ProductVectorSpaceBase<Scalar>* pvs = 
+    dynamic_cast<const Thyra::ProductVectorSpaceBase<Scalar>* > (this->ptr().get());
   TEST_FOR_EXCEPTION(pvs == 0, runtime_error,
 		     "Space not a ProductVectorSpace" << endl);
   return pvs->numBlocks();
@@ -96,29 +96,29 @@ int VectorSpace<Scalar>::numBlocks() const
 template <class Scalar>
 VectorSpace<Scalar> VectorSpace<Scalar>::getBlock(const int i) const
 {
-  const ProductVectorSpace<Scalar>* pvs = 
-    dynamic_cast<const ProductVectorSpace<Scalar>* > (this->ptr().get());
+  const Thyra::ProductVectorSpaceBase<Scalar>* pvs = 
+    dynamic_cast<const Thyra::ProductVectorSpaceBase<Scalar>* > (this->ptr().get());
   TEST_FOR_EXCEPTION(pvs == 0, runtime_error,
 		     "Space not a ProductVectorSpace" << endl);
   return pvs->getBlock(i);
 }
 
 
-//========================================================================
-template <class Scalar>
-void VectorSpace<Scalar>::setBlock(int i, 
-				   const VectorSpace<Scalar>& space)
-{
-  const ProductVectorSpace<Scalar>*  pvs = 
-    dynamic_cast<const ProductVectorSpace<Scalar>* >  (this->ptr().get());
+// //========================================================================
+// template <class Scalar>
+// void VectorSpace<Scalar>::setBlock(int i, 
+// 				   const VectorSpace<Scalar>& space)
+// {
+//   const Thyra::ProductVectorSpace<Scalar>*  pvs = 
+//     dynamic_cast<const Thyra::ProductVectorSpace<Scalar>* >  (this->ptr().get());
 
-  TEST_FOR_EXCEPTION(pvs == 0, runtime_error,
-		     "Can't set block of vector space that is " <<
-		     "not a ProductVectorSpace.");
+//   TEST_FOR_EXCEPTION(pvs == 0, runtime_error,
+// 		     "Can't set block of vector space that is " <<
+// 		     "not a ProductVectorSpace.");
 
-  ProductVectorSpace<Scalar>* pvsc = const_cast<ProductVectorSpace<Scalar>*> (pvs);
-  pvsc->setBlock(i, space);
-}
+//   Thyra::ProductVectorSpace<Scalar>* pvsc = const_cast<ProductVectorSpace<Scalar>*> (pvs);
+//   pvsc->setBlock(i, space);
+// }
 
 
 

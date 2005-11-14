@@ -52,11 +52,11 @@ namespace TSFExtended
    */
   template <class Scalar> 
   class ScaledOperator : public SingleScalarTypeOp<Scalar>,
-                         public Handleable<SingleScalarTypeOp<Scalar> >,
+                         public Handleable<SingleScalarTypeOpBase<Scalar> >,
 			 public RowAccessibleOp<Scalar>
   {
   public:
-    GET_RCP(SingleScalarTypeOp<Scalar>);
+    GET_RCP(SingleScalarTypeOpBase<Scalar>);
 
     /**
      * Construct the LinearOperator and the constant scaling factor.

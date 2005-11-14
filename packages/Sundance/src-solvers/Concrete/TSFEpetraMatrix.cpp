@@ -50,6 +50,14 @@ EpetraMatrix::EpetraMatrix(const Epetra_CrsGraph& graph,
     domain_(domain)
 {}
 
+EpetraMatrix::EpetraMatrix(const RefCountPtr<Epetra_CrsMatrix>& mat,
+                           const RefCountPtr<const EpetraVectorSpace>& domain,
+                           const RefCountPtr<const EpetraVectorSpace>& range)
+  : matrix_(mat),
+    range_(range),
+    domain_(domain)
+{}
+
 void EpetraMatrix::generalApply(const Thyra::ETransp M_trans,
                                 const Thyra::VectorBase<double>    &x,
                                 Thyra::VectorBase<double>          *y,

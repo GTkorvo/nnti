@@ -47,11 +47,11 @@ namespace TSFExtended
    */
   template <class Scalar> 
   class DiagonalOperator : public SingleScalarTypeOp<Scalar>,
-                           public Handleable<SingleScalarTypeOp<Scalar> >,
+                           public Handleable<SingleScalarTypeOpBase<Scalar> >,
                            public RowAccessibleOp<Scalar>
   {
   public:
-    GET_RCP(SingleScalarTypeOp<Scalar>);
+    GET_RCP(SingleScalarTypeOpBase<Scalar>);
     /**
      * Construct a vector containing the entries on the diagonal.
      */

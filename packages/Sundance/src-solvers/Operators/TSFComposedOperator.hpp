@@ -49,11 +49,11 @@ namespace TSFExtended
    */
   template <class Scalar> 
   class ComposedOperator : public SingleScalarTypeOp<Scalar>,
-                           public Handleable<SingleScalarTypeOp<Scalar> >,
+                           public Handleable<SingleScalarTypeOpBase<Scalar> >,
                            public RowAccessibleOp<Scalar>
   {
   public:
-    GET_RCP(SingleScalarTypeOp<Scalar>);
+    GET_RCP(SingleScalarTypeOpBase<Scalar>);
     /** 
      * Construct from a pair of linear operators.  Note: need to fix
      * the test_for_exception

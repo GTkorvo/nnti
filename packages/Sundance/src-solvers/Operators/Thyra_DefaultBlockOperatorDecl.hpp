@@ -26,15 +26,14 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef THYRA_BLOCKOPERATORBASE_HPP
-#define THYRA_BLOCKOPERATORBASE_HPP
-
-#include "Thyra_ProductVectorBase.hpp"
-#include "Thyra_ProductVectorSpaceBase.hpp"
+#ifndef THYRA_DEFAULTBLOCKOPERATORDECL_HPP
+#define THYRA_DEFAULTBLOCKOPERATORDECL_HPP
 
 
-
-
+#include "Thyra_LinearOpBase.hpp"
+#include "Thyra_BlockOperatorBase.hpp"
+#include "Thyra_SetableBlockOperatorBase.hpp"
+#include "Teuchos_Array.hpp"
 
 namespace Thyra
 {
@@ -46,25 +45,33 @@ namespace Thyra
    * @author Ross Bartlett (rabartl@sandia.gov)
    */
   template <class RangeScalar, class DomainScalar>
-  class DefaultBlockOperator : public BlockOperatorBase<RangeScalar, DomainScalar>,
-    public MutableBlockOperatorBase<RangeScalar, DomainScalar>
+  class DefaultBlockOperator : public Thyra::LinearOpBase<RangeScalar, DomainScalar>,
+                               public BlockOperatorBase<RangeScalar, DomainScalar>,
+                               public SetableBlockOperatorBase<RangeScalar, DomainScalar>,
+    
+                               public virtual Teuchos::Describable
   {
   public:
 
+    /** */
+    DefaultBlockOperator(const Teuchos::RefCountPtr<const Thyra::ProductVectorSpaceBase<DomainScalar> >& domain,
+                         const Teuchos::RefCountPtr<const Thyra::ProductVectorSpaceBase<RangeScalar> >& range);
+
     /** Returns a product vector view of the domain space */
-    RefCountPtr<const Thyra::ProductVectorSpaceBase<DomainScalar> > domainProductSpace() const ;
+    Teuchos::RefCountPtr<const Thyra::ProductVectorSpaceBase<DomainScalar> > domainProductSpace() const ;
     
 
     /** Returns a product vector view of the range space */
-    RefCountPtr<const Thyra::ProductVectorSpaceBase<RangeScalar> > rangeProductSpace() const ;
+    Teuchos::RefCountPtr<const Thyra::ProductVectorSpaceBase<RangeScalar> > rangeProductSpace() const ;
 
 
-    /** Returns the domain space */
-    RefCountPtr<const Thyra::VectorSpaceBase<DomainScalar> > domain() const ;
-    
+   /** \brief Return a smart pointer for the range space for <tt>this</tt> operator.
+   */
+  Teuchos::RefCountPtr< const Thyra::VectorSpaceBase<RangeScalar> > range() const ;
 
-    /** Returns the range space */
-    RefCountPtr<const Thyra::VectorSpaceBase<RangeScalar> > range() const ;
+  /** \brief Return a smart pointer for the domain space for <tt>this</tt> operator.
+   */
+  Teuchos::RefCountPtr< const Thyra::VectorSpaceBase<DomainScalar> > domain() const ;
 
     /** Returns the number of block rows */
     int numBlockRows() const ;
@@ -74,11 +81,11 @@ namespace Thyra
     int numBlockCols() const ;
 
     /** Returns the (i,j)-th block */
-    RefCountPtr<LinearOpBase<RangeScalar, DomainScalar> > 
+    Teuchos::RefCountPtr<LinearOpBase<RangeScalar, DomainScalar> > 
     getBlock(int i, int j) const ;
 
     /** Sets the (i,j)-th block */
-    void setBlock(int i, int j, const RefCountPtr<LinearOpBase<RangeScalar, DomainScalar> >& subBlock); 
+    void setBlock(int i, int j, const Teuchos::RefCountPtr<LinearOpBase<RangeScalar, DomainScalar> >& subBlock); 
 
 
     /** */
@@ -86,8 +93,8 @@ namespace Thyra
     const EConj                             conj
     ,const MultiVectorBase<DomainScalar>    &X
     ,MultiVectorBase<RangeScalar>           *Y
-    ,const RangeScalar                      alpha = ScalarTraits<RangeScalar>::one()
-    ,const RangeScalar                      beta  = ScalarTraits<RangeScalar>::zero()
+    ,const RangeScalar                      alpha = Teuchos::ScalarTraits<RangeScalar>::one()
+    ,const RangeScalar                      beta  = Teuchos::ScalarTraits<RangeScalar>::zero()
     ) const ;
 
 
@@ -98,7 +105,7 @@ namespace Thyra
     bool applyTransposeSupports( const EConj conj ) const;
 
     /** */
-    applyTranspose(
+    void applyTranspose(
     const EConj                            conj
     ,const MultiVectorBase<RangeScalar>    &X
     ,MultiVectorBase<DomainScalar>         *Y
@@ -106,11 +113,63 @@ namespace Thyra
     ,const DomainScalar                     beta  = ScalarTraits<DomainScalar>::zero()
     ) const;
 
-    /** Do a block-by-block clone of this operator */
-    RefCountPtr<const LinearOpBase<RangeScalar,DomainScalar> > clone() const;
+
+    /** Return a short description of the operator */
+    string description() const ;
+
+    /** */
+    std::ostream& describe(
+    std::ostream                         &out
+    ,const Teuchos::EVerbosityLevel      verbLevel
+    ,const std::string                   leadingIndent
+    ,const std::string                   indentSpacer
+    ) const;
+    
+
+  protected:
+    /** */
+    void applyToVector(
+    const EConj                             conj
+    ,const ProductVectorBase<DomainScalar>    &X
+    ,ProductVectorBase<RangeScalar>           *Y
+    ,const RangeScalar                      alpha
+    ,const RangeScalar                      beta
+    ) const ;
+    /** */
+    void applyTransposeToVector(
+    const EConj                             conj
+    ,const ProductVectorBase<DomainScalar>    &X
+    ,ProductVectorBase<RangeScalar>           *Y
+    ,const RangeScalar                      alpha
+    ,const RangeScalar                      beta
+    ) const ;
+
+    /** */
+    void applyToMultiVector(
+    const EConj                             conj
+    ,const ProductMultiVectorBase<DomainScalar>    &X
+    ,ProductMultiVectorBase<RangeScalar>           *Y
+    ,const RangeScalar                      alpha
+    ,const RangeScalar                      beta
+    ) const ;
+    /** */
+    void applyTransposeToMultiVector(
+    const EConj                             conj
+    ,const ProductMultiVectorBase<DomainScalar>    &X
+    ,ProductMultiVectorBase<RangeScalar>           *Y
+    ,const RangeScalar                      alpha
+    ,const RangeScalar                      beta
+    ) const ;
+
+    
+
     
   private:
-    Array<Array<RefCountPtr<LinearOpBase<RangeScalar, DomainScalar> > > > blocks_;
+    Teuchos::Array<Teuchos::Array<Teuchos::RefCountPtr<LinearOpBase<RangeScalar, DomainScalar> > > > blocks_;
+
+    Teuchos::RefCountPtr<const Thyra::ProductVectorSpaceBase<DomainScalar> > domain_;
+
+    Teuchos::RefCountPtr<const Thyra::ProductVectorSpaceBase<DomainScalar> > range_;
     
   }; 
 }

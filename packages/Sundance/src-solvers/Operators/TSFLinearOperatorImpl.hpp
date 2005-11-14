@@ -53,19 +53,19 @@ class InverseOperator;
 
 //=======================================================================
 template <class Scalar>
-LinearOperator<Scalar>::LinearOperator() : Handle<SingleScalarTypeOp<Scalar> >() {;}
+LinearOperator<Scalar>::LinearOperator() : Handle<SingleScalarTypeOpBase<Scalar> >() {;}
 
 
 
 //=======================================================================
 template <class Scalar>
-LinearOperator<Scalar>::LinearOperator(Handleable<SingleScalarTypeOp<Scalar> >* rawPtr) 
-  : Handle<SingleScalarTypeOp<Scalar> >(rawPtr) {;}
+LinearOperator<Scalar>::LinearOperator(Handleable<SingleScalarTypeOpBase<Scalar> >* rawPtr) 
+  : Handle<SingleScalarTypeOpBase<Scalar> >(rawPtr) {;}
 
 //=======================================================================
 template <class Scalar>
-LinearOperator<Scalar>::LinearOperator(const RefCountPtr<SingleScalarTypeOp<Scalar> >& smartPtr) 
-  : Handle<SingleScalarTypeOp<Scalar> >(smartPtr) {;}
+LinearOperator<Scalar>::LinearOperator(const RefCountPtr<SingleScalarTypeOpBase<Scalar> >& smartPtr) 
+  : Handle<SingleScalarTypeOpBase<Scalar> >(smartPtr) {;}
 
 
 
@@ -223,20 +223,8 @@ void LinearOperator<Scalar>::setBlock(int i, int j,
 		     "Can't call setBlock since operator not BlockOperator");
 
   
-  b->setBlock(i, j, sub);
+  b->setBlock(i, j, sub.ptr());
 } 
-
-//=============================================================================
-template <class Scalar>
-void LinearOperator<Scalar>::finalize(bool zerofill)
-{
-  BlockOperator<Scalar>* b = 
-    dynamic_cast<BlockOperator<Scalar>* >(this->ptr().get());
-  
-  TEST_FOR_EXCEPTION(b == 0, runtime_error, 
-		     "Can't call finalize since operator not BlockOperator");
-  b->finalize(zerofill);
-}
 
 
 
@@ -258,7 +246,8 @@ LinearOperator<Scalar> LinearOperator<Scalar>::getBlock(const int &i,
   
   TEST_FOR_EXCEPTION(b == 0, runtime_error, 
 		     "Can't call getblock since operator not BlockOperator");
-  return this->ptr()->getBlock(i, j);
+  RefCountPtr<LinearOpBase<Scalar, Scalar> > block = b->getBlock(i, j);
+  return rcp_dynamic_cast<SingleScalarTypeOpBase<Scalar> >(block);
 }
 
 
@@ -266,53 +255,6 @@ LinearOperator<Scalar> LinearOperator<Scalar>::getBlock(const int &i,
 
 
 
-
-
-//=============================================================================
-template <class Scalar>
-LinearOperator<Scalar> LinearOperator<Scalar>::form(const VectorType<Scalar>& type)
-{
-  const RowAccessibleOp<Scalar>* me =
-    dynamic_cast<const RowAccessibleOp<Scalar>* >(this->ptr().get());
-
-  TEST_FOR_EXCEPTION(me == 0, runtime_error,
-		     "Given operator is not row accessible.");
-
-
-  int domDimension = this->domain().dim();
-  std::vector<int> rowsDom(domDimension);
-  for (int i = 0; i < domDimension; i++)
-    {
-      rowsDom[i] = i;
-    }
-  VectorSpace<Scalar> domainRet = type.createSpace(domDimension, domDimension, &(rowsDom[0])); 
-
-  int ranDimension = this->range().dim();
-  std::vector<int> rowsRan(ranDimension);
-  for (int i = 0; i < ranDimension; i++)
-    {
-      rowsRan[i] = i;
-    }
-  VectorSpace<Scalar> rangeRet = type.createSpace(ranDimension, ranDimension, &(rowsRan[0])); 
-
-  LinearOperator<Scalar> ret = type.createMatrix(domainRet, rangeRet);
-  LoadableMatrix<Scalar>*  rtnLoad
-    = dynamic_cast<LoadableMatrix<Scalar>* >(ret.ptr().get());
-
-  TEST_FOR_EXCEPTION(rtnLoad == 0, runtime_error,
-		     "Target matrix type is not loadable.");
-
-
-  Teuchos::Array<int> indices;
-  Teuchos::Array<double> vals;
-
-  for (int i = 0; i < ranDimension; i++)
-    {
-      me->getRow(i, indices, vals);
-      rtnLoad->setRowValues(i, indices.length(), &(indices[0]), &(vals[0]));
-    }
-  return ret;
-}
 
 
 
