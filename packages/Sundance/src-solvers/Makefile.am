@@ -105,6 +105,7 @@ CONCRETE = \
 	$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.cpp
 
 OPERATORS_H = \
+	$(srcdir)/Operators/Thyra_BlockOperatorBase.hpp \
 	$(srcdir)/Operators/Thyra_DefaultBlockOperatorDecl.hpp \
 	$(srcdir)/Operators/Thyra_DefaultBlockOperatorImpl.hpp \
 	$(srcdir)/Operators/Thyra_SetableBlockOperatorBase.hpp \
