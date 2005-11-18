@@ -1,0 +1,587 @@
+\documentclass[pdf,ps2pdf,11pt]{SANDreport}
+\usepackage{pslatex}
+
+%Local stuff
+\usepackage{graphicx}
+\usepackage{latexsym}
+\input{rab_commands}
+
+% If you want to relax some of the SAND98-0730 requirements, use the "relax"
+% option. It adds spaces and boldface in the table of contents, and does not
+% force the page layout sizes.
+% e.g. \documentclass[relax,12pt]{SANDreport}
+%
+% You can also use the "strict" option, which applies even more of the
+% SAND98-0730 guidelines. It gets rid of section numbers which are often
+% useful; e.g. \documentclass[strict]{SANDreport}
+
+% ---------------------------------------------------------------------------- %
+%
+% Set the title, author, and date
+%
+
+\title{\center
+Overivew of Thyra\\[2ex] Interfaces and Support Software for the Development
+and Interoperability of Abstract Numerical Algorithms}
+\author{
+Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\ Sandia National
+Laboratories\footnote{ Sandia is a multiprogram laboratory operated by Sandia
+Corporation, a Lockheed-Martin Company, for the United States Department of
+Energy under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA, \\ }
+\date{}
+
+% ---------------------------------------------------------------------------- %
+% Set some things we need for SAND reports. These are mandatory
+%
+\SANDnum{SAND2005-xxx}
+\SANDprintDate{??? 2005}
+\SANDauthor{
+Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
+}
+
+% ---------------------------------------------------------------------------- %
+% The following definitions are optional. The values shown are the default
+% ones provided by SANDreport.cls
+%
+\SANDreleaseType{Unlimited Release}
+%\SANDreleaseType{Not approved for general release}
+
+% ---------------------------------------------------------------------------- %
+% The following definition does not have a default value and will not
+% print anything, if not defined
+%
+%\SANDsupersed{SAND1901-0001}{January 1901}
+
+% ---------------------------------------------------------------------------- %
+%
+% Start the document
+%
+\begin{document}
+
+\maketitle
+
+% ------------------------------------------------------------------------ %
+% An Abstract is required for SAND reports
+%
+
+%
+\begin{abstract}
+%
+Engineering and scientific applications are becoming increasingly modular,
+utilizing publicly defined interfaces to integrate third party tools and
+libraries for services such as mesh generation, data partitioning, equation
+solvers and optimization.  As a result, it is important to understand and
+model the interactions between these various modules, and to develop good
+abstract interfaces between them.  One category of modules that is becoming
+increasingly important is abstract numerical algorithms (ANAs).  ANAs such as
+linear and nonlinear equation solvers, methods for stability and bifurcation
+analysis, uncertainty quantification methods and nonlinear programming solvers
+for optimization are typically mathematically sophisticated but have
+surprisingly little essential dependence on the details of what computer
+system is being used or how matrices and vectors are stored and computed.  As
+a result, using abstract interface capabilities in languages such as C++, we
+can implement ANA software such that it will work, unchanged, with a variety
+of applications and linear algebra libraries.
+
+In this paper, we provide an overview of the Thyra effort to define
+fundamental abstract interfaces to provide the basic functionality and
+interoperability for a broud range of ANAs.  The Trilinos package
+{}\texttt{thyra} defines defferent sets of C++ interface classes and provides
+optional support software.
+%
+\end{abstract}
+%
+
+% ------------------------------------------------------------------------ %
+% An Acknowledgement section is optional but important, if someone made
+% contributions or helped beyond the normal part of a work assignment.
+% Use \section* since we don't want it in the table of context
+%
+\clearpage
+\section*{Acknowledgement}
+The authors would like to thank ...
+
+The format of this report is based on information found
+in~\cite{Sand98-0730}.
+
+% ------------------------------------------------------------------------ %
+% The table of contents and list of figures and tables
+% Comment out \listoffigures and \listoftables if there are no
+% figures or tables. Make sure this starts on an odd numbered page
+%
+\clearpage
+\tableofcontents
+\listoffigures
+%\listoftables
+
+% ---------------------------------------------------------------------- %
+% An optional preface or Foreword
+%\clearpage
+%\section{Preface}
+%Although muggles usually have only limited experience with
+%magic, and many even dispute its existence, it is worthwhile
+%to be open minded and explore the possibilities.
+
+% ---------------------------------------------------------------------- %
+% An optional executive summary
+%\clearpage
+%\section{Summary}
+%Once a certain level of mistrust and scepticism has
+%been overcome, magic finds many uses in todays science
+%and engineering. In this report we explain some of the
+%fundamental spells and instruments of magic and wizardry. We
+%then conclude with a few examples on how they can be used
+%in daily activities at national Laboratories.
+
+% ---------------------------------------------------------------------- %
+% An optional glossary. We don't want it to be numbered
+%\clearpage
+%\section*{Nomenclature}
+%\addcontentsline{toc}{section}{Nomenclature}
+%\begin{itemize}
+%\item[alohomora]
+%spell to open locked doors and containers
+%\end{itemize}
+
+% ---------------------------------------------------------------------- %
+% This is where the body of the report begins; usually with an Introduction
+%
+\SANDmain % Start the main part of the report
+
+\section{Introduction}
+
+One area of steady improvement in large-scale engineering and
+scientific applications is the increased modularity of application
+design and development.  Specification of publicly-defined interfaces,
+combined with the use of third-party software to satisfy critical
+technology needs in areas such as mesh generation, data partitioning
+and solution methods have been generally positive developments in
+application design.  While the use of third party software introduces
+dependencies from the application developer's perspective, it also
+gives the application access to the latest technology in these areas,
+amortizes library and tool development across multiple applications
+and, if properly designed, gives the application easy access to more
+than one option for each critical technology area, e.g., access to
+multiple linear solver packages.
+
+One category of modules that is becoming increasingly important is abstract
+numerical algorithms (ANAs).  ANAs such as linear and nonlinear equation
+solvers, methods for stability and bifurcation analysis, transient solvers,
+uncertainty quantification methods, and nonlinear programming solvers for
+optimization are typically mathematically sophisticated but have surprisingly
+little essential dependence on the details of what computer system is being
+used or how matrices and vectors are stored and computed.  Thus, by using
+abstract interface capabilities in languages such as C++, we can implement ANA
+software such that it will work, unchanged, with a variety of applications and
+linear algebra libraries.
+
+%Such an approach is often referred to as {\it
+%generic programming}~\cite{ref:boost_generic_programming}.
+
+Here we describe a let of layers of abstract interfaces that allows the
+specification of ANAs from basic Krylov linear equation solvers all the way up
+to interior-point methods for optimization.  At the core, we define a set of
+basic operator/vector interfaces that form the the foundation for (i) ANA
+development, (ii) the integration of an ANA into an application (APP) and
+(iii) providing services to the ANA from a linear algebra library (LAL).  By
+agreeing on a simple minimal common interface layer such as the foundational
+Thyra operator/vector interfaces, we eliminate the many-to-many dependency
+problem of ANA/APP interfaces.
+
+While these Thyra interfaces provide a mechanism to express all of the
+functionality required to be directly used in ANA development it does not
+attempt to provide a full collection of methods that directly support the
+anticipated functionality needs of ANAs.  Instead they rely on a simple but
+powerful reduction and transformation operator mechanism~\cite{ref:rtop_toms}
+that can be used to express any element-wise vector reduction or
+transformation operation.  Additional functionality to support both the
+devleopment of ANAs and the implementation of the operator/vector interfaces
+is being added to the Thyra package all the time but this is not the focus of
+this discussion.
+
+It is difficult to describe a set of linear algebra interfaces outside of the
+context of some class of numerical problems.  For this purpose, we will
+consider numerical algorithms where it is possible to implement all of the
+required operations exclusively through well defined interfaces to vectors,
+vector spaces, and linear operators and higher level abstractions built on
+these.  The fundamental Thyra operator/vector interfaces described here are
+the common denominator of all abstract numerical algorithms.
+
+We assume that the reader has a basic understanding of vector
+reduction/transformation operators (RTOp) (see
+{}\cite{ref:rtop_toms}), is comfortable with object-orientation
+{}\cite{ref:gama_et_al_1995} and C++, and knows how to read basic
+Unified Modeling Language (UML) {}\cite{ref:uml_distilled_2nd_ed}
+class diagrams.  We also assume that the reader has some background in
+large-scale numerics and will therefore be able to appreciate the
+challenges that are addressed by Thyra.
+
+%To motivate the fundamental Thyra operator/vector interfaces, we discuss the
+%context for Thyra in large-scale (both in lines of code and in problem
+%dimensionality) numerical software in
+%Section~\ref{thyra:sec:classification_of_lin_alg_itfc}.  The major
+%requirements for Thyra are spelled out in
+%Section~\ref{thyra:sec:Thyra_requirements}.  This is followed by an overview
+%of the Thyra linear algebra interfaces in
+%Section~\ref{thyra:sec:Thyra_core_overview} and a detailed discussion of the
+%design of the Thyra linear algebra interfaces in
+%Section~\ref{thyra:sec:Thyra_Details} including numerous examples.  A
+%discussion of some of the object-oriented and other general software design
+%concepts and principles that have gone into the development of Thyra is
+%deferred to Section~\ref{thyra:sec:general_software_concepts}.  Some of the
+%nonessential but convenient functionality that is useful to direct ANA
+%developers that is missing in Thyra is described in
+%Section~\ref{thyra:sec:convenience_functionality}.
+
+Note that the online documentation for Thyra at
+
+\hspace{4ex}{}\texttt{http://software.sandia.gov/Trilinos/packages/thyra}
+
+{}\noindent{}should be the definitive information source for Thyra.  This
+document only tries to provide an overview of Thyra and explain the philosophy
+behind it.
+
+%
+\section{Classification of linear algebra and other interfaces}
+\label{thyra:sec:classification_of_lin_alg_itfc}
+%
+
+Although we will discuss APPs, ANAs and LALs in detail later in this section,
+we want to briefly introduce these terms here to make them clear.  Also,
+although there are certainly other types of modules in a large-scale
+application, we only focus on these three since they are the ones more
+directly related to ANAs.
+%
+\begin{itemize}
+%
+{}\item Application (APP): The modules of an application that are not ANA or
+LAL modules.  Typically this includes the code that is unique to the
+application itself such as the code that formulates and generates the discrete
+problem to be solved.  In general it would also include other third-party
+software that is not an ANA or LAL module.
+%
+{}\item Abstract Numerical Algorithm (ANA): Software that drives a solution
+process, e.g., an iterative linear or nonlinear solver.  This type of package
+provides solutions to and requires services from the APP, and utilizes
+services from one or more LALs.  It can usually be written so that it does not
+depend on the details of the computer platform, or the details of how the APP
+and LALs are implemented, so that an ANA can be used across many APPs and with
+many LALs.
+%
+{}\item Linear Algebra Library (LAL): Software that provides the ability to
+construct concrete linear algebra objects such as matrices and vectors.  A LAL
+can also be a specific linear solver or preconditioner.
+%
+\end{itemize}
+
+An important focus of this paper is to clearly identify the interfaces between
+APPs, ANAs and LALs for the purposes of defining the Thyra interfaces.
+
+The requirements for the linear algebra objects as imposed by an ANA are very
+different from the requirements imposed by an APP code.  In order to
+differentiate the various types of interfaces and the requirements associated
+with each, consider Figure {}\ref{thyra:fig:ANA_LAL_APP}.  This figure shows
+the three major categories of software modules that make up a complete
+numerical application.  The first category is application (APP) software in
+which the underlying data is defined for the problem.  This could be something
+as simple as the right-hand-side and matrix coefficients of a single linear
+system or as complex as a finite-element method for a 3-D nonlinear
+PDE-constrained optimization problem.  The second category is linear algebra
+library (LAL) software that implements basic linear algebra operations
+{}\cite{ref:demmel_1997, ref:anderson_1995, ref:blackford_et_al_1997,
+ref:aztec, ref:petsc, ref:trilinos}. These types of software include primarily
+matrix-vector multiplication, the creation of a preconditioner (e.g.~ILU), and
+may even include several different types of direct linear solvers.  The third
+category is ANA software that drives the main solution process and includes
+such algorithms as iterative methods for linear and nonlinear systems;
+explicit and implicit methods for ODEs and DAEs; and nonlinear programming
+(NLP) solvers {}\cite{ref:nocedal_wright_1999}.  There are many example
+software packages {}\cite{ref:petsc,ref:aztec,ref:trilinos,ref:pvode,ref:tao}
+that contain ANA software.
+
+{\bsinglespace
+\begin{figure}[t]
+\begin{center}
+%\fbox{
+\includegraphics*[bb= 0.245in 2.95in 10.85in 8.60in,angle=0,scale=0.50
+]{analal}
+%}
+\end{center}
+\caption{
+\label{thyra:fig:ANA_LAL_APP}
+UML {}\cite{ref:booch_et_al_1999} class diagram : Interfaces between abstract numerical algorithm
+(ANA), linear algebra library (LAL), and application (APP) software.
+}
+\end{figure}
+\esinglespace}
+
+The types of ANAs described here only require operations like matrix-vector
+multiplication, linear solves and certain types of vector reduction and
+transformation operations.  All of these operations can be performed with only
+a very abstract view of vectors, vector spaces and linear operators.
+
+An application code, however, has the responsibility of populating vector and
+matrix objects and requires the passing of explicit function and gradient
+value entries, sometimes in a distributed memory parallel environment.  This
+is the purpose of a APP/LAL interface.  This involves a very different set of
+requirements than those described above for the ANA/APP and ANA/LAL
+interfaces.  Examples of APP/LAL interfaces include the FEI {}\cite{ref:fei}
+and much of the ESI [???].
+
+Figure {}\ref{thyra:fig:ANA_LAL_APP} also shows a set of LAL/LAL interfaces
+that allows linear algebra objects from one LAL to collaborate with the
+objects from another LAL.  Theses interfaces are very similar to the APP/LAL
+interfaces and the requirements for this type of interface is also not
+addressed by Thyra.  The ESI {}\cite{ref:esi_2001} contains examples of
+LAL/LAL interfaces.
+
+{}\textbf{ToDo:} Describe interactions between ANAs like a nonlinear equation
+solver needing linear equation solver and a nonlinear time integrator needing
+a nonlinear equation solver.
+
+%
+\section{Thyra: Basic Requirements}
+\label{thyra:sec:Thyra_requirements}
+%
+
+Before describing the C++ interfaces for Thyra, some basic requirements are
+stated.
+
+\begin{enumerate}
+
+{}\item Thyra interfaces should be portable to all the ASC
+{}\cite{ref:doe_asci} platforms where SIERRA {}\cite{ref:SIERRA} and other ASC
+applications might run.
+
+{}\item Thyra interfaces should provide for stable and accurate numerical
+computations at a fundamental level.
+
+{}\item Thyra should provide a minimal, but complete, interface that addresses
+all the basic efficiency needs (in both speed and storage) which will result
+in near-optimal implementations of all of the objects and all of the above
+mentioned ANA algorithms that use these objects.
+
+%All other types of
+%nonessential but convenient functionality (e.g.~Matlab-like syntax using
+%operator overloading, see Section~\ref{thyra:sec:operator_overloading}) will
+%not be addressed by Thyra.  This extra functionality can be built on top the
+%basic Thyra abstractions (e.g.~using TSF).
+
+{}\item ANAs developed with Thyra should be able to transparently utilize
+different types of computing environments such as SPMD\footnote{Single Program
+Multiple Data (SPMD): A single program running in a distributed-memory
+environment on multiple parallel processors},
+client/server\footnote{Client/Server: The ANA runs in a process on a client
+computer and the APP and LAL run in processors on a server},
+out-of-core\footnote{Out-of-core: The data for the problem is stored on disk
+and is read from and written to back disk as needed}, and any combination of
+these configurations.
+
+{}\item The work required to implement adapter subclasses (see the ``Adapter''
+pattern in {}\cite{ref:gama_et_al_1995}) for and with Thyra should be minimal
+and straightforward for all of the existing related linear algebra and ANA
+interfaces.  This requirement is facilitated by the fact that the Thyra
+interfaces are minimal.
+
+\end{enumerate}
+
+A hand-coded program (e.g.~using Fortran 77 and MPI) should not provide any
+significant gains in performance in any of the above categories in any
+computing environment or configuration.  A hand-coded algorithm in Fortran 77
+with MPI should not be able to provide significant improvements in storage
+requirements, computational speed, or numerial stability.  There are many
+numerical algorithms can can not be considered to be ``abstract'' (e.g.\
+Gaussian Elimination) and therefore Thyra and like abstract interfaces should
+not be used for such algorithms.
+
+%
+\section{Thyra Operator/Vector Interfaces: Overview}
+\label{thyra:sec:Thyra_core_overview}
+%
+
+The foundational Thyra operator/vector interfaces are shown in Figure
+{}\ref{thyra:fig:basic_op_vec_itfc}.  Complete C++ class declarations for
+these interfaces are given in Appendix {}\ref{app:thyra_classes}.  The key
+abstractions include vectors, vector spaces, and linear operators.  All of the
+interfaces are templated on the {}\texttt{Scalar} type (the UML notation for
+templated classes is not used in the figure for the sake of improving
+readability).
+
+Vector space is the foundation for all other abstractions.  Vector spaces are
+abstracted through the {}\texttt{\textit{Vector\-Space\-Base}} interface.  A
+{}\texttt{\textit{Vector\-Space\-Base}} object acts primarily as an ``Abstract
+Factory'' {}\cite{ref:gama_et_al_1995} that creates vector objects (which are
+the ``products'' in the ``Abstract Factory'' design pattern).
+
+Vectors are abstracted through the {}\texttt{\textit{Vector\-Base}} interface.
+The {}\texttt{\textit{Vector\-Base}} interface is very minimal and really only
+defines one nontrivial function {}\texttt{\textit{applyOp(\-...)}}.  The
+{}\texttt{\textit{applyOp(\-...)}} function accepts user-defined
+(i.e.~ANA-defined) reduction/transformation operator (RTOp) objects through
+the templated RTOp C++ interface {}\texttt{\textit{RTOpPack::RTOpT}}.  An ever
+increasing set of concrete implementations of RTOps is provided along with
+wrapper convinent function in the ANA support code collection (see ???).  The
+set of operations is also easily extensible.  Every
+{}\texttt{\textit{Vector\-Base}} object provides access to its
+{}\texttt{\textit{Vector\-Space\-Base}} (that was used to create the
+{}\texttt{\textit{Vector\-Base}} object) through the function
+{}\texttt{space()} (shown in Figure {}\ref{thyra:fig:basic_op_vec_itfc} as the
+role name {}\texttt{space} on the association connecting the
+{}\texttt{\textit{Vector\-Base}} and {}\texttt{\textit{Vector\-Space\-Base}}
+classes).
+
+The {}\texttt{\textit{Vector\-Space\-Base}} interface also provides the
+ability to create {}\texttt{\textit{Multi\-Vector\-Base}} objects through the
+{}\texttt{\textit{createMembers(numMembers)}} function.  A
+{}\texttt{\textit{Multi\-Vector\-Base}} is a tall thin dense matrix where each
+column in the matrix is a {}\texttt{\textit{Vector\-Base}} object which is
+accessible through the {}\texttt{\textit{col(...)}} function.
+{}\texttt{\textit{Multi\-Vector\-Base}}s are needed for near-optimal processor
+cache performance (in serial and parallel programs) and to minimize the number
+of global communications in a distributed parallel environment.  The
+{}\texttt{\textit{Multi\-Vector\-Base}} interface is useful in many different
+types ANAs such as block Krylov methods.  The interface class
+{}\texttt{\textit{Vector\-Base}} is derived from
+{}\texttt{\textit{Multi\-Vector\-Base}} so that every
+{}\texttt{\textit{Vector\-Base}} is a {}\texttt{\textit{Multi\-Vector\-Base}}.
+This simplifies the development of ANAs in that any ANA that can handle
+{}\texttt{\textit{Multi\-Vector\-Base}} objects should automatically be able
+to handle {}\texttt{\textit{Vector\-Base}} objects as well.
+
+{}\texttt{\textit{Vector\-Space\-Base}} also declares a virtual function
+called {}\texttt{\textit{scalarProd(x,y)}} which computes the scalar product
+$<x,y>$ for the vector space.  There is also a
+{}\texttt{\textit{Multi\-Vector\-Base}} version
+{}\texttt{\textit{Vector\-Space\-Base\-::scalarProds(...)}}  (not shown in the
+figure) that computes the scalar products of each set of columns vectors in
+two multi-vectors.  Finally, {}\texttt{\textit{Vector\-Space\-Base}} also
+includes the ability to determine the compatibility of vectors from different
+vector spaces through the function {}\texttt{\textit{isCompatible(vecSpc)}}
+(see Section~\ref{thyra:sec:vec_spc_compatibility}).
+
+{\bsinglespace
+\begin{figure}[t]
+\begin{center}
+%\fbox{
+\includegraphics*[bb= 0.0in 0.0in 3.3in 4.4in,scale=0.40
+]{UML1}
+%}%fbox
+%\fbox{
+\includegraphics*[scale=0.65]{ThyraOperatorVector}
+%}%fbox
+\end{center}
+\caption{
+\label{thyra:fig:basic_op_vec_itfc}
+UML class diagram : The fundamental Thyra ANA operator/vector interfaces }
+\end{figure}
+\esinglespace}
+
+Another important type of linear algebra abstraction is a linear operator
+which is represented by the interface class
+{}\texttt{\textit{Linear\-Op\-Base}}.  The
+{}\texttt{\textit{Linear\-Op\-Base}} interface is used to represent quantities
+such as a Jacobian matrix. A {}\texttt{\textit{Linear\-Op\-Base}} object
+defines a linear mapping from vectors in one vector space (called the
+{}\texttt{domain}) to vectors in another vector space (called the
+{}\texttt{range}).  Every {}\texttt{\textit{Linear\-Op\-Base}} object provides
+access to these vector spaces through the functions {}\texttt{domain()} and
+{}\texttt{range()} (shown as the role names {}\texttt{domain} and
+{}\texttt{range} on the associations linking the {}\texttt{\textit{OpBase}}
+and {}\texttt{\textit{Vector\-Space\-Base}} classes).  The exact form of this
+mapping, as implemented by the function {}\texttt{\textit{apply(\-...)}}, is
+%
+\begin{equation}
+Y = \alpha \, M \, X + \beta Y
+\label{thyra:equ:apply_vec}
+\end{equation}
+%
+where $M$ is a {}\texttt{\textit{Linear\-Op\-Base}} object; $X$ and $Y$ are
+{}\texttt{\textit{Multi\-Vector\-Base}} objects; and $\alpha$ and $\beta$ are
+{}\texttt{Scalar} objects.
+
+A {}\texttt{\textit{Linear\-Op\-Base}} object can also, optionally, support
+the transpose (or adjoint) operation:
+%
+\begin{equation}
+Y = \alpha \, op(M) \, X + \beta Y
+\label{thyra:equ:apply_transpose_vec}
+\end{equation}
+%
+through the function {}\texttt{\textit{apply\-Transpose(\-...)}}, where $M$ is
+a {}\texttt{\textit{Linear\-Op\-Base}} object; $op(M)$ is $M^T$ or $M^H$ (as
+determined by the $conj$ argument); $X$ and $Y$ are
+{}\texttt{\textit{Multi\-Vector\-Base}} objects; and $\alpha$ and $\beta$ are
+{}\texttt{Scalar} objects.  The function
+{}\texttt{\textit{applyTranspose(EConj)}} will return false if a particular
+form of the transpose is not supported.
+
+If the adjoint is supported, then it must satisfy the adjoint property
+Specifically, for any two vectors $w\in\mathcal{D}$ (the domain space) and
+$u\in\mathcal{R}$ (the range space), the adjoint operation must obey the
+adjoint property
+\[
+  <u,A v>_{\mathcal{R}} =\!= <A^H u, v>_{\mathcal{D}}.
+\]
+The implications of allowing vector spaces with non-euclidean scalar products
+is explored more deeply in Appendix~???.
+
+Another important part of this design is the fact that
+{}\texttt{\textit{Multi\-Vector\-Base}} derives from
+{}\texttt{\textit{Linear\-Op\-Base}} and therefore every multi-vector object
+is also a linear operator.  This is an elligant way to support the notions of
+block inner products and block updates.
+
+A block inner product is specified as
+\[
+Z = Y^H X
+\]
+where $Y$, $X$ and $Z$ are all multi-vectors.  Note that since $Y$ is a linear
+operator then $Y^H X$ is not simply the block dot product involving the
+cooefficients but instead must be consistent with the scalar product for the
+range of $Y$.
+
+A block update takes the form
+\[
+Z =\alpha Y X + \beta Z
+\]
+where $Y$, $X$ and $Z$ are all multi-vectors and $\alpha$ and $\beta$ are
+scalars.
+
+Also note that since {}\texttt{\textit{Multi\-Vector\-Base}} derives from
+{}\texttt{\textit{Linear\-Op\-Base}} and
+{}\texttt{\textit{Multi\-Vector\-Base}} derives from
+{}\texttt{\textit{Multi\-Vector\-Base}}, therefore, every vector object is
+also a linear operator.  While this may not be a terribly useful feature it
+does mean that one must interpret $y^H x$ to be the same as $<y,x>$ and not
+just the dot product when the space is non-euclidean.
+
+%
+\section{Summary}
+%
+
+Thyra provides the intersection of all of the functionality required by a
+variety of abstract numerical algorithms ranging from iterative linear solvers
+all the way up to optimizers.  By adopting Thyra as a standard interface
+layer, interoperability between applications, linear algebra libraries, and
+abstract numerical algorithms in advanced scientific computing environments
+becomes automatic to a large extent.
+
+% ---------------------------------------------------------------------- %
+% References
+%
+\clearpage
+\bibliographystyle{plain}
+\bibliography{references}
+\addcontentsline{toc}{section}{References}
+
+% ---------------------------------------------------------------------- %
+% Appendices should be stand-alone for SAND reports. If there is only
+% one appendix, put \setcounter{secnumdepth}{0} after \appendix
+%
+\appendix
+%\input{apdx_ThyraOperatorVectorClassDecl}
+
+%\begin{SANDdistribution}
+%\end{SANDdistribution}
+
+\end{document}
