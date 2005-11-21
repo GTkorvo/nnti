@@ -102,10 +102,10 @@ namespace TSFExtended
     int rank = MPISession::getRank();
     int nProc = MPISession::getNProc();
     RefCountPtr<MatrixFactory<double> > mFact 
-      = vecType().createMatrixFactory(domain(), range());
+      = this->vecType().createMatrixFactory(this->domain(), this->range());
 
-    int colDimension = domain().dim();
-    int rowDimension = range().dim();
+    int colDimension = this->domain().dim();
+    int rowDimension = this->range().dim();
     int numLocalCols = colDimension / nProc;
     int numLocalRows = rowDimension / nProc;
     int lowestLocalRow = numLocalRows * rank;

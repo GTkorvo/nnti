@@ -69,17 +69,17 @@ namespace TSFExtended
                       const VectorType<double>& type)
     : OperatorBuilder<double>(d, r, type), op_()
   {
-    op_ = new BlockOperator<Scalar>(domain(), range());
+    op_ = new BlockOperator<Scalar>(this->domain(), this->range());
 
-    for (int i=0; i<range().numBlocks(); i++)
+    for (int i=0; i<this->range().numBlocks(); i++)
       {
-        for (int j=0; j<domain().numBlocks(); j++)
+        for (int j=0; j<this->domain().numBlocks(); j++)
           {
-            RandomSparseMatrix<Scalar> builder(domain().getBlock(j),
-                                               range().getBlock(i),
+            RandomSparseMatrix<Scalar> builder(this->domain().getBlock(j),
+                                               this->range().getBlock(i),
                                                onProcDensity,
                                                offProcDensity,
-                                               vecType());
+                                               this->vecType());
             op_.setBlock(i, j, builder.getOp());
           }
       }
