@@ -1,0 +1,826 @@
+\documentclass[acmtocl]{acmtrans2m}
+%&t&{\tt #}&
+%&v&\verb|#|&
+
+% fancybox prevents the TOC from printing
+%\usepackage{fancyhdr, fancybox, tabularx, verbatim, epsfig}
+\usepackage{fancyhdr, tabularx, verbatim, epsfig}
+\usepackage{amssymb,psboxit}
+\usepackage{rotating}
+
+\acmVolume{0}
+\acmNumber{0}
+\acmYear{00}
+\acmMonth{00}
+
+\newtheorem{interface}{Interface}[section]
+\newtheorem{remark}{Remark}
+
+\newcommand{\BibTeX}{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\markboth{}{Interfaces to Sparse Direct Solvers}
+
+\title{On the Design of Interfaces to Sparse Direct Solvers}
+
+\author{}
+
+\begin{abstract}
+We report on the design of general, flexible, consistent and efficient
+interfaces to direct solver algorithms for the solution
+of systems of linear equations. We suppose that such algorithms are available
+in form of software libraries, and we introduce a framework to facilitate the
+usage of these libraries. This framework is composed by two components:
+an abstract matrix interface to access the
+linear system matrix elements, and an abstract solver interface that controls
+the solution of the linear system. 
+
+We describe a concrete implementation of
+the proposed framework, which allows a high-level view and usage of most of
+the currently available libraries that implements direct solution methods for
+linear systems. We comment on the advantages and limitation of the framework.
+\end{abstract}
+
+
+\category{D.1.3}{Programming Techniques}{Parallel Programming}
+\category{D.2.2}{Software Engineering}{Design Tools and Techniques--{\sl
+ Object-oriented design methods}}
+\category{D.2.13}{Software Engineering}{Reusable Software--{\sl Reusable
+  libraries}}
+\category{G.1.3}{Numerical Analysis}{Numerical Linear Algebra--{\sl 
+  Sparse, structured, and very large systems (direct and iterative methods)}}
+\category{G.4}{Mathematical Software}{Algorithm design and analysis}
+
+%\terms{Documentation, Languages}
+
+\keywords{Multilevel preconditioners, object-oriented}
+\begin{document}
+
+
+\setcounter{page}{1}
+
+\begin{bottomstuff}
+Author's address: 
+\end{bottomstuff}
+
+\maketitle
+
+% --------------------------------------------------------------------------- %
+\section{Managing Direct Solver Libraries}
+\label{sec:introduction}
+% --------------------------------------------------------------------------- %
+
+In this paper we report on the design of general, flexible, consistent and
+efficient interfaces to serial and parallel direct solver algorithms for
+sparse linear systems. We consider serial or distributed linear systems of
+type
+\begin{equation}
+  \label{eq:linear_system}
+  A X = B,
+\end{equation}
+where $A \in \mathbb{R}^{n \times n}$ is a real, square matrix, 
+  and $X \in \mathbb{R}^{n}$ and $B \in \mathbb{R}^{n}$  are the solution and
+right-hand side multi-vector, respectively. 
+
+Generally speaking,
+a direct solver algorithm for (\ref{eq:linear_system}) is any 
+technique that defines three matrices, $L$, $D$ and $U$, so that
+$A = L \, D \, U$, and the linear systems with matrices $L$, $D$ and $U$ are
+easy to solve. Generally, $L$ is a lower triangular matrix, $U$ is an
+upper triangular matrix, and $D$ is a diagonal matrix 
+(or possibly the identity matrix), and the algorithms adopted to calculate the
+$L$, $D$ and $U$ matrices is some variant of the Gaussian elimination
+process~\cite{xxx}. In general, the implementation of direct algorithms
+requires much more expertise, longer time, and more resources than other
+numerical analysis algorithms.  In this article we do not discuss
+factorization algorithms, and we refer
+to~\cite{amestoy01analysis,gupta01recent} and the references therein for more
+details.  
+
+Developing direct solvers for problem (\ref{eq:linear_system}) is a
+challenging task that has been a subject of research for the
+past four decades. Dense linear systems can be solved with the
+well-known (and tested) suite of solvers of the LAPACK
+library~\cite{lapack-guide} in serial, or by the ScaLAPACK
+library~\cite{scalapack-guide} for distributed memory computers.
+
+For sparse matrices, instead, the situation is significantly different.
+Even if significant breakthroughs have been made during the last years,
+it is still very challenging to implement direct solver algorithms
+on a single processor, yet alone on multiprocessor machines. 
+Unfortunately, the simple question of what is the best direct solver library
+has no definite answer, exactly as there is no ``best'' preconditioners for
+all applications. A plethora of methods and implementations are available, and
+each of them can be the best choice for some applications. 
+
+In this paper, we consider the point of view of {\sl users} or direct solver
+libraries, and we present a set of interfaces aiming to make it easier to use
+already available libraries. The proposed set of interfaces
+can be used to access a wide variety of
+well-know libraries of direct solution methods. The interface is clean and
+consistent for all libraries, and automatically manage matrix formats, data
+layout, calling sequences, and all the other ``details'' required by the
+supported libraries. Our final goal is the
+definition of an easy-to-use and efficient framework between them and the
+applications. 
+
+Is such a framework really useful? After all, it is quite simple to 
+write an {\sl adaptor} between a given application code and a direct solver
+library: basically, one
+has to form the linear system matrix using the storage format required by the
+library, then call the correct sequence of instructions to factorize the matrix
+and solve the linear system.  The approach is sub-optimal because it leads to:
+\begin{itemize}
+
+\item 
+{\sl Replicated Code.}
+Direct solution methods are required by several numerical algorithms. An
+incomplete list would include
+implicit time-marching schemes, 
+Newton-like methods, multilevel and domain decomposition preconditioners.
+Writing an adaptor from each of these applications to a given library  
+(or to a  set of libraries) leads to replicated code, which is difficult
+to test, debug, and maintain.
+
+\item 
+{\sl Difficult Testing.}
+It is often difficult to choose the best direct solver library among the
+several existing projects.  In some cases, a theoretical analysis of
+the problem at hand can suggest the right algorithm; alternatively, one can
+consider numerical comparison available in the literature
+on test matrices. Often, however, the best
+choice is to test a given solver on the application, architecture, and data
+set of interest, and this can be done only if an adaptor  to a library
+implementing the given method is already available.
+
+\item 
+{\sl Maintenance Problems.}
+Including the adaptors within the application code requires the application
+developers to take care of several details, like matrix format, memory
+management, calling sequence, header files, and so on, that can vary 
+from one version to the next. 
+
+\item The best algorithm is not known a-priori.
+\end{itemize}
+
+
+A better solution is to introduce an intermediate level between the
+applications and the direct solver libraries, so that each direct solver
+library can be {\sl encapsulated} within an adaptor; see
+Figure~\ref{fig:adapt3}. Each adaptor will take
+care of interfacing each application to a given solver. The model we analyze
+in this paper consists of two abstract layers:
+an {\sl Abstract Matrix Interface} (AMI), to which each application has to
+interface, and an {\sl Abstract Solver Interface} (ASI), based on the AMI; see
+Figure~\ref{fig:adapt3}. The advantages of this approach are the following.
+First, only $m + n$ adaptors have to be written, instead of $m \times n$. 
+Second, the $m$ adaptors from the ASI to the direct solver
+libraries can be distributed within a library that does not depend on any
+specific application (and therefore application developers do not need to
+                      write and maintain). This enhances code usage, and
+allows a better testing and debugging of the interfaces.
+Third, each application just have to write {\sl one} adaptor
+only, from its matrix format to the AMI, to automatically 
+access all the supported adaptors.
+Finally, if a adaptor from the ASI to a new
+solver library is added, then all application can easily take advantage of this new
+library.
+
+\medskip
+
+This document presents how the AMI and the ASI should be
+defined.  Our starting point is the rich set of libraries made available by
+several researchers. These projects are briefly reviewed in
+Section~\ref{sec:review}.  The interfaces are presented in
+Section~\ref{sec:design}. A concrete implementation of these interfaces is
+presented in Section~\ref{sec:concrete}.  Note that we explicitly avoided to
+report any numerical comparison using these libraries, since this task
+is extremely challenging and application dependent. Finally,
+  conclusions are drawn in Section~\ref{sec:conclusions}. 
+
+A concrete implementation is presented. Numerical results
+are reported to show that the overhead is negligible.
+
+%-----------------------------------------------------------------------------
+\section{Brief Overview of Direct Solution Methods}
+\label{sec:theory}
+%-----------------------------------------------------------------------------
+
+{\bf Ken, this section is very incomplete...}
+
+\bigskip
+
+A direct solution method is a variant of Gaussian elimination. For sparse
+matrices, this fills in many elements in the band in which the nonzero
+elements are contained. In order to minimize the storage needed for the
+factorization, research has focuses on finding suitable orderings of the
+matrix. Several strategies have been proposed in the literature:
+\begin{itemize}
+\item For a symmetric, positive definite matrix, pivots can be found on the
+diagonal, therefore one can limit to symmetric permutations (i.e, $P^T A P$)
+  performed solely for reduction of the fill-in.
+\item Another reason to perform pivoting is numerical stability. A two-part
+approach is popular where the matrix is first ordered, using for instance a
+multiple minimum-degree ordering, but during the factorization additional tow
+permutations may be performed for partial pivoting in the pivot column.
+\item Given a permutation of the matrix, there are still several factorization
+algorithms popssible. Many packages focus on finding applications for level-3
+BLAS kernels in the factorization phase.
+\end{itemize}
+Instead of trying to minimize the fill-in by reducing the bandwith, one can
+try a direct approach, as done in nested-dissection ordering methods. These
+methods recursively split the matrix graph in two, thus separating it into
+disjount subgraphs. They rely on the existence of a separator, that is, a set
+of nodes such that the other nodes fall into two mutually unconnected graphs.
+The assumption is that the fill from factoring these subgraphs before
+factoring the separator is likely to be lower than for other orderings. An
+advantage of dissection-type methods is that they lead to large number of
+uncoupled matrix problems, which can be easily parallelized. However, the
+higher levels in the tree quickly have fewer nodes than the number of
+available processors, and they are the larger subproblems  in the algorithm,
+  complicating the parallelization of the method.
+
+Another set of techniques is given by {\sl multifrontal methods}, proposed
+in~\cite{duff83multifrontal}. Here, a tree a multiple fronts--that is, nodes
+allowing simultaneous, independent elimination, is created. Proceeding from
+one node to the nodes connected to it give a {\sl front} and a frontal matrix.
+Frontal matrices quickly become dense, so high performance can be reached
+handling them.
+
+\bigskip
+
+This document presents how the AMI and the ASI should be
+defined.  Our starting point is the rich set of libraries made available by
+several researchers. These projects are briefly reviewed in
+Section~\ref{sec:review}.  The interfaces are presented in
+Section~\ref{sec:design}. A concrete implementation of these interfaces is
+presented in Section~\ref{sec:concrete}.  Note that we explicitly avoided to
+report any numerical comparison using these libraries, since this task
+is extremely challenging and application dependent. Finally,
+  conclusions are drawn in Section~\ref{sec:conclusions}. 
+
+%-----------------------------------------------------------------------------
+\section{Review of Considered Direct Solver Libraries}
+\label{sec:review}
+%-----------------------------------------------------------------------------
+
+This Section gives an overview of some of the direct solver libraries
+we have considered to develop our set of interfaces.
+Our interest in mainly in sparse matrices; however, we have also considered
+two well-known libraries for dense matrices. For processor communication, our
+main interest is in MPI-based libraries.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{| l | p{5cm} r r r|}
+\hline
+Library & Reference & Language & Comm & Matrix\\
+\hline
+UMFPACK & \cite{umfpack-home-page} & C & SERIAL & GENERAL\\
+PARDISO & \cite{oskl:04-etna,sg:04-fgcs} & C & SHARED MEM & GENERAI \\
+TAUCS & \cite{irony04parallel,rotkin04design,rozin04locality} & C & SERIAL &
+SYMMETRIC \\
+SuperLU  & \cite{superlu-manual} & C & SERIAL & GENERAL \\
+SuperLU\_DIST  & \cite{superlu-manual} & C & MPI & GENERAL \\
+DSCPACK & \cite{dscpack-manual} & C & MPI & SYMMETRIC \\
+MUMPS & \cite{mumps-manual} & FORTRAN90 &  MPI  & GENERAL \\
+SPOOLES & \cite{ashcraft99spooles} & C & MPI & ????? \\
+WSMP &  \cite{gupta01recent} & binaries & ??? & ???    
+\end{tabular}
+\caption{Some available libraries for sparse linear systems.}
+\label{tab:libraries}
+\end{center}
+\end{table}
+
+The direct solver libraries we consider are reported in
+Table~\ref{tab:libraries}. We have considered these libraries because of two
+reasons.
+First, these codes use different algorithms that are
+representative of a far wider range of codes. Second, these libraries are
+among the best codes publicly available, and are widely used. 
+
+By analyzing these project, one can observe that:
+\begin{itemize}
+\item {\sl Different programming languages are used,}  even if C appears to be
+  the language of choice of developers in this community.
+
+\item {\sl Different communication paradigm are used.} 
+ Most of the reviewed libraries are serial, some are based on the MPI
+ paradigm, some other can take advantage of shared memory computers.
+
+\item {\sl Different matrix formats are required.} Some libraries require the
+so-called CSR format, other the so-called COO format. 
+
+\item {\sl Different data layout.} Not all solvers can take advantage of
+parallel environments. Those that do, often require different distribution of
+data. 
+
+\item {\sl Different Calling Sequence.} The exact calling sequence varies
+widely from one library to the next.  Some libraries offer more than one way
+to access the factorization and solution phases.
+
+\item {\sl Different algorithms.} The underlying algorithms are radically
+different...
+
+\end{itemize}
+
+%-----------------------------------------------------------------------------
+\section{Project Design}
+\label{sec:design}
+%-----------------------------------------------------------------------------
+
+We aim to construct a framework that allows a transpart and consistent usage
+of all the libraries presented in Section~\ref{sec:review}, and makes it easy
+to extend the support to other (new) projects. We require the following capabilities:
+\begin{itemize}
+
+\item {\sl Simplicity of usage:} Solving linear system (\ref{eq:linear_system}) in a language
+like MATLAB is very easy, just write \verb!X = A \ b!. It should not be much
+more difficult in a production code.
+
+\item {\sl Flexibility:} More than one algorithm must be available,
+  to offer optimal algorithms for small and large matrices, serial and
+  parallel.
+
+\item {\sl Efficiency:} The solution of (\ref{eq:linear_system}) must be as
+efficient as possible, using state-of-the-art algorithms. Besides, the
+overhead due to the C++ design must be minimal.
+\end{itemize}
+
+\bigskip
+
+The first object that we need to introduce is a {\tt Map}, which contains the
+set of local indices, and a local-to-global mapping. The simplest map is a
+linear map, which assigns contiguous subsets of nodes to the different
+processors; however the implementation should be general enough to tackle more
+general maps. A map object will implement the following interface.
+
+\begin{interface}[{\tt Map}]
+\label{int:map}
+\begin{itemize}
+\item {\tt int NumMyElements()} returns the locally owned elements;
+\item {\tt int NumGlobalElements()} returns the global number of elements;
+\item {\tt GID(int LID)} returns the global ID of local node {\tt ID}.
+\end{itemize}
+\end{interface}
+
+{\bf SAY: NO overlap...}
+
+As long as a map object is defined, one can create distributed vectors, that
+are locally defined as arrays of {\tt double}'s. The simplest set of methods
+of a vector is specified in Interface~\ref{int:vector}.
+
+\begin{interface}[{\tt Vector}]
+\label{int:vector}
+\begin{itemize}
+\item {\tt double* Values()} returns a pointer to the local array of values;
+\item {\tt Map\& GetMap()} returns a reference to the underlying Map object.
+\end{itemize}
+\end{interface}
+
+We can now define the most important interface of this paper: the {\tt
+  RowMatrix} class. We decided not to impose any rigid matrix format.
+In fact, although converting a matrix from
+one given format to another is not a difficult operation, it is still a burden
+that can slow down or prevent the usage of a package. Our object is to define
+a unified interface so that the user does not have to worry about the internal
+matrix format of a given package. As concerns the
+data layout, we would like to have the be able to let users provide the linear
+system as it is most convenient to their needs, then let the framework will
+take care of data redistribution.  
+
+Because of the way a Map is defined, the linear system matrix $A$ is
+distributed
+across the processor by assigning each row to a different processor.
+We suppose that $A$ is available in local ordering.
+Therefore, each local matrix can be decomposed as
+\begin{equation}
+A^{(loc)}_i + A^{(ext)}_i,
+  \end{equation}
+where $A^{(loc)}_i$ represents the square submatrix of elements whose row
+and column correspond to locally hosted rows. The number of columns of
+$A^{(ext)}_i$ containing at least one nonzero element defines the number of
+the so-called {\sl ghost nodes}.
+
+\smallskip
+
+The abstract matrix interface is as
+follows. Function names are reported
+without the list of parameters to simplify the discussion.
+
+\begin{interface}[{\tt RowMatrix}]
+\label{int:ami}
+The abstract interface to the distributed square matrix $A$
+will contain the following methods:
+\begin{itemize}
+\item \verb!int NumMyRows()! returns the number of locally hosted rows;
+\item \verb!int NumGlobalRows()! returns the global number of rows;
+\item \verb!int NumGhostNodes()! returns the number of ghost nodes;
+\item \verb!void UpdateGhostNodes(Vector& X)! updates the values of ghost nodes
+ in the input vector {\tt X};
+\item {\tt void ExtractMyRow(int ID, int\& NumEntries, int* Indices, double*
+                             Values)} copies the
+columns and values of all nonzero elements in locally hosted row 
+in the user's allocated arrays.
+\item \verb!Map& GetRowMap()! returns a reference to the map;
+\item \verb!Map& GetColMap()! returns a reference to the map for the columns
+(which contains the ghost elements).
+\end{itemize}
+\end{interface}
+
+Finally, we suppose that, given two maps, called SourceMap and TargetMap, a
+{\tt Redistribute} object can be used to redistribute a {\tt Vector} based on
+{\tt SourceMap} to a vector based on {\tt TargetMap}. This class encapsulates
+all the complexity of data communication.
+
+\begin{remark}
+Talk about Petra model...
+\end{remark}
+%-----------------------------------------------------------------------------
+\subsection{The Abstract Solver Interface}
+\label{sec:asi}
+%-----------------------------------------------------------------------------
+
+The ASI defines how to control the direct solver itself.
+We recall that our main goal is the make the calling sequence required to
+factorize and solve (\ref{eq:linear_system}) as clean and consistent as
+possible.
+To fulfill this design requirement, we split the solution
+of linear system (\ref{eq:linear_system}) into the
+following steps:
+\begin{enumerate}
+\item Definition of the sparsity pattern of the linear system matrix;
+\item Computation of the symbolic factorization;
+\item Definition of the values of the linear system matrix;
+\item Computation of the numeric factorization;
+\item Definition of the values of the right-hand side;
+\item Solution of the linear system.
+\end{enumerate}
+Steps 2, 4 and 6 require access to the matrix, which we suppose to adhere to
+Interface~\ref{int:ami}. Although the concrete implementations of Steps 2, 4
+and 6 depend on the supported library, they can be defined as general-purpose
+methods.
+The abstract solver interface can be defined as follows.
+\begin{interface}[Abstract Solver Interface] 
+\label{int:asi}
+The abstract solver interface
+will contain the following methods:
+\begin{itemize}
+\item \verb!SetMatrix()! sets the linear system matrix;
+\item \verb!SetLHS()! sets the solution multi-vector;
+\item \verb!SetRHS()! sets the right-hand side multi-vector;
+\item \verb!SetParameters()! specifies all the parameters for the solver;
+\item \verb!SymbolicFactorization()! performs the symbolic factorization, that
+is, all the operations that do only require the matrix graph and not the
+actual matrix values;
+\item \verb!NumericFactorization()! performs the numeric factorization, that
+is, computes the matrices $L$, $D$ and $U$ by accessing the matrix values.
+Both the solution and the right-hand side are not required in this phase;
+\item \verb!Solve()! solves the linear system. This phase requires the
+solution and right-hand side vectors.
+\end{itemize}
+\end{interface}
+
+Note that the user can still toggle the parameters of a given solver by using
+method \verb!SetParameters()!. Note also that, by splitting the solution phase
+into \verb!SymbolicFactorization()!, \verb!NumericFactorization()! and
+\verb!Solve()!, one can reuse the symbolic factorization, or the numeric
+factorization, or both, for several calls to \verb!Solve()!. If a solver does
+not require any symbolic factorization (for example, LAPACK), then the adaptor
+will not perform any operation in this method.
+
+\begin{remark}
+The reader might wonder why we have limited our attention to direct methods only, and
+we did not include iterative methods as well in the definition of the abstract
+interfaces. The reason is that, although
+being often more performant in terms of CPU time and memory usage, iterative
+solvers are less robust and mich less black-box than direct methods. Most
+iterative methods are developed for PDE-like problems, and might have poor
+performances if applied to more general matrices. However, libraries based on
+the abstract matrix interface exist, as later discussed in
+Sections~\ref{sec:ifpack} and~\ref{sec:ml}.
+\end{remark}
+
+%------------------------------------------------------------------------- 
+\section{A Concrete Implementation}
+%------------------------------------------------------------------------- 
+
+{\bf Amesos} contains a set of clear and consistent interfaces
+  to the following third-party serial and parallel sparse direct
+  solvers: UMFPACK~\cite{umfpack-acm-toms},
+  PARDISO~\cite{oskl:04-etna,sg:04-fgcs},
+  TAUCS~\cite{rozin04locality,rotkin04design,irony04parallel}, SuperLU
+  and SuperLU\_DIST~\cite{superlu-manual},
+  DSCPACK~\cite{dscpack-manual}, MUMPS~\cite{mumps-manual}, and
+  ScaLAPACK~\cite{scalapack-book,scalapack}.  As such,
+  PyTrilinos\ makes it possible to access state-of-the-art direct
+  solver algorithms developed by groups of specialists, and written in
+  different languages (C, FORTRAN77, FORTRAN90), in both serial and
+  parallel environments.  By using Amesos, more than 350,000 code
+  lines (without considering BLAS, LAPACK, and ScaLAPACK) can be
+  easily accessed from any code based on Trilinos (and therefore
+  PyTrilinos).  We refer
+  to~\cite{Amesos-Reference-Guide,Amesos-Design} for more details.
+
+%-----------------------------------------------------------------------------
+\subsection{An Example of Usage}
+\label{sec:basic}
+%-----------------------------------------------------------------------------
+
+{\bf REPORT A COMPLETE EXAMPLE USING EPETRA....}
+
+A fragment of code using Amesos is as follows.
+Let us suppose that \verb!A! is an \verb!Epetra_RowMatrix!, and \verb!X! and
+\verb!B! are two \verb!Epetra_MultiVector!'s. 
+First,
+  we need to include the header files for Amesos:
+\begin{verbatim}
+#include "Amesos.h"
+#include "Amesos_BaseSolver.h"
+\end{verbatim}
+Note that these header files will {\sl not} include the header files for the
+supported libraries (which are of course needed to compile the Amesos
+library itself).  Then, we need to create an linear problem, as follows:
+\begin{verbatim}
+Epetra_LinearProblem Problem(&A, &X, &B);
+\end{verbatim}
+To make the usage of Amesos simpler, we have written a Factory
+class~\cite{xxx}.
+At this point, we can create an Amesos class using the factory class
+\verb!Amesos!:
+\begin{verbatim}
+Amesos_BaseSolver* Solver;
+Amesos Factory;
+char* SolverType = "Amesos_Klu"; // uses the KLU direct solver
+Solver = Factory.Create(SolverType, Problem);
+\end{verbatim}
+At this point, we can perform the symbolic factorization
+of the linear system matrix:
+\begin{verbatim}
+Solver->SymbolicFactorization();
+\end{verbatim}
+This phase does not require the numerical values of \verb!A!, which can
+therefore be changed after the call to \verb!SymbolicFactorization()!.
+However,  the nonzero pattern of \verb!A! {\em cannot} be
+changed.
+The numeric factorization is performed by
+\begin{verbatim}
+Solver->NumericFactorization();
+\end{verbatim}
+\verb!NumericFactorization()! accesses the values of \verb!A!, but does not
+consider the vectors \verb!X! and \verb!B!. Finally, to solve the linear
+system, we simply write
+\begin{verbatim}
+Solver->Solve();
+\end{verbatim}
+
+In the previous example, we showed how to use the KLU solver 
+(see Section~\ref{sec:klu} for more details). Other interfaces
+can be created using the factory class by simply changing one parameter. Note
+that the supported solver can be serial or parallel, dense or sparse: the user
+code still remains the same (except for the name of the solver); Amesos will
+take care of data redistribution if required by the selected solver. The list
+of supported solvers is reported in Table~\ref{tab:classes}. 
+ Method
+\verb!Factory.Query()! can be used to query the factory about the
+availability of a given solver:
+\begin{verbatim}
+char* SolverType = "Amesos_Klu";
+bool IsAvailable = Factory.Query(SolverType);
+\end{verbatim}
+
+\bigskip
+
+Graph theory ideas can be used to pre-process a sparse matrix to arrage it in
+desiderable patterns so that further computations are easy and fast; a that
+the numerical algorithm goes better (e.g. ILU). Reordering is a very well-know
+technique for direct solvers, see for example [Duff, erisman, reid, direct
+methods for sparse matrices, clarendon press, 1986].
+
+%-----------------------------------------------------------------------------
+\subsection{Local Solvers in Domain Decomposition Preconditioners}
+\label{sec:ifpack}
+%-----------------------------------------------------------------------------
+
+For an abstract point of view, an algebraic domain decomposition
+preconditioner for the iterative solution of the linear system
+(\ref{eq:linear_system})
+if any preconditioner $B$ that can be written as
+\begin{equation}
+\label{eq:prec}
+B^{-1} = \sum_{i=1}^M P'_i {A'_i}^{-1} R_i.
+\end{equation}
+Let $V = \mathbb{R}^n$, and
+let $V_i \subset V, i = 1, \ldots, M$ be a decomposition of $V$, such that
+$\cup_{i=1}^M V_i = V$, and $R_i: V \rightarrow V_i$ a restriction operator
+from $V$ to the subspace $i$ (of size $n_i$),
+and $P_i: V_i \rightarrow V, P'_i : V_i \rightarrow V$ two prolongator
+operators. $A'_i$ is an approximation to $A_i = R_i A P_i$. 
+
+Preconditioners of type (\ref{eq:prec}) constitute an example of one-level
+domain decomposition preconditioners if the spaces $V_i$ are properly chosen,
+so that each $V_i$ contains the unknowns defined on $\Omega_i$, a contiguous
+subset of the computational domain $\Omega$. Parallelizing (\ref{eq:prec})
+is simply obtained by assigning each subdomain to a different processor.
+Often, parallel codes adopt a similar approach to distribute the linear
+system matrix, making (\ref{eq:prec}) a natural candidate for the definition
+of the preconditioner.
+
+The first domain decomposition algorithm has been proposed in 1870 by Schwarz
+to prove the solution of PDE problems on complex shape domains. In modern
+terms, they have been re-discovered in the late 80's, and since then widely
+used by pure mathematicians and computer scientists. We refer to
+monographs~\cite{QV2,smith96parallel} for a detailed
+overview of domain decomposition methods, to~\cite{saad96iterative} for the
+algebraic interpretation,
+  
+\smallskip
+
+Several recent projects have addressed the definition of parallel algebraic
+domain decomposition preconditioners. Among the most successful, we here
+recall the Aztec library~\cite{Aztec}, the PETSc library~\cite{petsc-guide},
+and the PSBLAS~\cite{psblas}. Several other projects are devoted to define
+local algebraic preconditioners, such as SPARSKIT and BPKIT~\cite{bpkit}. 
+A common drawback of all these libraries is that it is not trivial to add new
+techniques to solve the local problems with matrices $A_i'$. IFPACK, instead,
+offers a simple framework that allows the user to specify the local solver.
+Since IFPACK forms the local matrices $A_i'$ by satisfying
+Interface~\ref{int:ami}, it is possible to use the Amesos project to provide
+access to direct solution libraries.
+
+%-----------------------------------------------------------------------------
+\subsection{Coarse Solver in Multilevel Methods}
+\label{sec:ml}
+%-----------------------------------------------------------------------------
+
+The ML project aims to define multilevel preconditioners, in particular of
+algebraic type; see for instance \cite{brandt.classic}, \cite{hack.book}, or
+\cite{hack2.book}.
+A multigrid solver tries to approximate
+the original PDE problem of interest on a hierarchy of grids and use
+`solutions' from coarse grids to accelerate the convergence
+on the finest grid.  A simple multilevel 
+ V cycle consisting of `Nlevel' grids to
+  solve (\ref{eq:linear_system}), with $A_0 = A$
+is illustrated in below.
+\begin{tabbing}
+\hspace{0.35in} \=
+at \= at \= else \= one iteration what there solve hard cat \= \kill
+\> /* \> Solve $A_k$ u = b (k is current grid level) \>\>\>*/ \\
+\> proc multilevel($ A_k, b, u, k $) \\
+\> \> \>   $ u = S^{1}_k (A_k, b, u )$;                           \\
+\> \> \>   if ( $k \ne {\bf Nlevel-1} $)  \\
+%\{                        \\
+\>\>\>\>       $P_{k} = $ determine\_interpolant( $A_k$ ); \\
+\> \>\>\>      $ \hat{r} = P_{k}^T (b - A_k u )$ ;     \\[3pt]
+%\> \>\>\>      /* Coarse grid projection \> \hskip -0.2in */ \\[3pt]
+\> \>\>\>
+               $\hat{A}_{k+1} = P_{k}^T A_k P_{k}$; \hskip .1in v = 0;  \\
+\> \>\>\>      multilevel($\hat{A}_{k+1}, \hat{r}, v, k+1 $);                \\
+\> \>\>\>      $ u = u + P_{k} $ v;                                      \\
+\> \>\>\>      $ u = S^{2}_k (A_k, b, u )$;                           \\
+\> \> \>   else \\
+\> \>\>\>      $ u = A_k^{-1} b$;                           \\
+%\> \>\>   \}   \}                                                            \\
+%\> \}
+\end{tabbing}
+
+In the above method, the $S^{1}_k()$'s and $S^{2}_k()$'s are approximate
+solvers corresponding to $k$ steps of pre and post smoothing,
+respectively. Note that a possible smoother is given by domain decomposition
+preconditioner, and therefore IFPACK preconditioners 
+(possibly using Amesos to provide the local solver) can be used with the
+multilevel scheme. Here, our interest is on the solution of the coarse
+problem, which is usually performed with a direct solution method. Since it is
+easy to wrap an ML matrix into an \verb!Epetra_RowMatrix! (and therefore 
+to satisfy Interface~\ref{int:ami}), ML can use any Amesos supported solver. 
+
+%-----------------------------------------------------------------------------
+\subsection{Using Amesos from Python}
+\label{sec:pytrilinos}
+%-----------------------------------------------------------------------------
+
+Another advantage of a unified interface is...
+
+The Python package PyTrilinos
+offers a wrap for Amesos objects. Using
+PyTrilinos, all the libraries supported by Amesos are made available to Python
+users. An example of usage is reported below.
+
+First, we need to create the Amesos factory,
+\begin{verbatim}
+>>> Factory = Amesos.Factory()
+>>> Solver = Factory.Create("Superlu", Problem)
+\end{verbatim}
+Then, we can perform the symbolic and numeric factorizations using methods
+\begin{verbatim}
+>>> Solver.SymbolicFactorization()
+>>> Solver.NumericFactorization()
+\end{verbatim}
+Solution is computed using
+\begin{verbatim}
+>>> Solver.Solve()
+\end{verbatim}
+
+Several parameters are available to toggle the selected Amesos solver.
+To specify parameters, one can use Python's dictionaries:
+\begin{verbatim}
+>>> Factory = Amesos.Factory();
+>>> Solver = Factory.Create(Type, Problem);
+>>> AmesosList = {
+...  "PrintTiming": ("bool", "true"),
+...  "PrintStatus": ("bool", "true")
+... }
+...
+>>> Solver.SetParameters(AmesosList);
+\end{verbatim}
+
+%-----------------------------------------------------------------------------
+\section{Concluding Remarks}
+\label{sec:conclusions}
+%-----------------------------------------------------------------------------
+
+In this paper, we have presented a model to access direct
+solver libraries. The model is composed by two abstract interfaces, one to
+access the matrix elements, and the other to manage each library.
+The advantages of this model are:
+\begin{itemize}
+
+\item The actual data storage of linear system matrix becomes inessential.
+Each concrete implementation will take care, if necessary, to convert the
+input matrix into the required data format, should the row access provided by
+\verb!ExtractMyRow()! method be not sufficient. This means that the
+application can choose the matrix format independently as long as the abstract
+matrix interface is implemented.
+
+\item Issues like diagonal perturbations, reordering or dropping before the
+ factorization can easily introduces within the AMI. For example, a dropping
+ strategy simply requires a new \verb!ExtractMyRow()! method --- without
+ touching the actual matrix storage.
+
+\item The actual calling sequence required by each library to factorize the
+matrix and solve the linear system becomes inessential. Instead, the user only
+has to call methods \verb!Initialize()!, \verb!Compute()! and
+\verb!Solve()!.
+
+\item Adaptors can be tested more easily because they are all located within
+the same library and not spread out into several application codes.
+\end{itemize}
+
+Clearly,  generalities comes at a price: the presented model has the following
+limitations:
+\begin{itemize}
+\item 
+Each adaptor automatically selects the default parameters defined by the
+supported solver. In most cases, these values are a robust and reliable choice
+for most applications. If required, the user can tune some of the parameters
+by using method \verb!SetParameters()!. However, some fine-tuning can be
+difficult since Interface~\ref{int:asi} has no knowledge of the underlying
+solver data structure.
+
+\item There
+  is no standard way to 
+  convert MPI communicators defined in C to MPI communicators defined
+  in FORTRAN90. On some architectures it is difficult or even
+  impossible to perform such a task. Some hacks may be required.
+
+\item It can be difficult to support single precision and complex arithmetics.
+At present, only double precision is supported by the Amesos project. 
+Although the model can in
+principle support single precision and complex arithmetics 
+(by using templates, for example), no code
+that implements Interface~\ref{int:asi} has been written yet. A templated
+version of Interface~\ref{int:ami} is under development within the Tpetra
+package.
+
+\item 
+It is almost impossible to support different versions of a given software
+library, because
+function names usually do not vary from one version to the
+next, making it impossible for the linker to select the
+  appropriate version of the library.
+
+\item 
+Not all adaptors can be compiled and linked at the same time. Often
+developers of direct solver libraries take advantage of other, smaller
+libraries, that offer common functionalities. Typically, this happens with
+reordering algorithms. Unfortunately,
+  it is not uncommon for different solver libraries to request different
+  versions of a given reordering algorithm, all codes using the same function
+  names. As a result, not all the adaptors can be compiled and used at the
+  same time.
+\end{itemize}
+
+\bigskip
+
+Talk about:
+
+-SQA: debugged interfaces
+
+-automated testing/ better documentation
+%-----------------------------------------------------------------------------%
+\bibliographystyle{acmtrans}
+\bibliography{paper}
+%-----------------------------------------------------------------------------%
+
+\end{document}
