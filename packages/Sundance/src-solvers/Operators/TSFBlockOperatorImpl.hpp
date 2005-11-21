@@ -124,13 +124,13 @@ namespace TSFExtended
     int K = 0;
     int blockRow = 0;
     int rowInBlock = 0;
-    for (int i = 0; i < numBlockRows(); i++)
+    for (int i = 0; i < this->numBlockRows(); i++)
       {
         int numR = -1;
-        for (int j=0; j<numBlockCols(); j++)
+        for (int j=0; j<this->numBlockCols(); j++)
           {
-            if (getBlock(i,j).get()==0) continue;
-            numR = getBlock(i, j)->range()->dim();
+            if (this->getBlock(i,j).get()==0) continue;
+            numR = this->getBlock(i, j)->range()->dim();
           }
         TEST_FOR_EXCEPTION(numR==-1, runtime_error,
                            "Empty block row detected in "
@@ -148,18 +148,18 @@ namespace TSFExtended
     int offset = 0;
     Teuchos::Array<int> localInd;
     Teuchos::Array<Scalar> localVal;
-    for (int i = 0; i < numBlockCols(); i++)
+    for (int i = 0; i < this->numBlockCols(); i++)
       {
-        if (getBlock(blockRow, i).get()==0) continue;
+        if (this->getBlock(blockRow, i).get()==0) continue;
         RefCountPtr<RowAccessibleOp<Scalar> > raOp 
-          = rcp_dynamic_cast<RowAccessibleOp<Scalar> >(getBlock(blockRow, i));
+          = rcp_dynamic_cast<RowAccessibleOp<Scalar> >(this->getBlock(blockRow, i));
         raOp->getRow(rowInBlock,localInd, localVal);
         for (int j = 0; j < localInd.size(); j++)
           {
             indices.append(localInd[j] + offset);
             values.append(localVal[j]);
           }
-        offset += getBlock(blockRow, i)->domain()->dim();
+        offset += this->getBlock(blockRow, i)->domain()->dim();
       }
 
   }
@@ -186,7 +186,7 @@ namespace TSFExtended
   inline void BlockOperator<Scalar>
   ::print(ostream& os) const
   {
-    os << description();
+    os << this->description();
   }
 }
 
