@@ -27,6 +27,7 @@
 /* @HEADER@ */
 
 #include "TSFLinearSolverBuilder.hpp"
+#include "TSFAmesosSolver.hpp"
 #include "TSFAztecSolver.hpp"
 #include "TSFBICGSTABSolver.hpp"
 #include "TSFGMRESSolver.hpp"
@@ -75,6 +76,10 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const XMLObject& xml)
            return new GMRESSolver<double>(params);
          }
     }
+  else if (solverType=="Amesos")
+    {
+      return new AmesosSolver();
+    }
 
   TEST_FOR_EXCEPTION(true, runtime_error, 
                      "Could not create a solver from XML object " 
@@ -108,6 +113,10 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
         {
           return new GMRESSolver<double>(solverSublist);
         }
+    }
+  else if (solverType=="Amesos")
+    {
+      return new AmesosSolver();
     }
 
   TEST_FOR_EXCEPTION(true, runtime_error, 

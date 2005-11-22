@@ -138,6 +138,7 @@ OPERATORS_H = \
 OPERATORS =
 
 LINEARSOLVERS_H = \
+	$(srcdir)/LinearSolvers/TSFAmesosSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFAztecSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFBICGSTABSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFGMRESSolver.hpp \
@@ -151,6 +152,7 @@ LINEARSOLVERS_H = \
 	$(srcdir)/LinearSolvers/TSFSolverState.hpp 
 
 LINEARSOLVERS = \
+	$(srcdir)/LinearSolvers/TSFAmesosSolver.cpp \
 	$(srcdir)/LinearSolvers/TSFAztecSolver.cpp \
 	$(srcdir)/LinearSolvers/TSFLinearSolverBuilder.cpp 
 
