@@ -57,6 +57,12 @@ namespace TSFExtended
     /** Return the dimension of the space */
     int dim() const {return this->ptr()->dim();}
 
+    /** Return the lowest global index accessible on this processor */
+    int lowestLocallyOwnedIndex() const ;
+
+    /** Return the number of elements owned by this processor */
+    int numLocalElements() const ;
+
     /** Check compatibility with another space. Implementation note: 
      * we don't know if the argument vec space is a handle to another
      * vector space or the contents of a handle, and we want the operation
@@ -68,7 +74,6 @@ namespace TSFExtended
      * ends up comparing to the concrete contents of this handle, giving the
      * same results. */
     bool isCompatible(const VectorSpace<Scalar>& vecSpc) const; 
-
 
 
     /** Tell if vectors of this space are in core  */

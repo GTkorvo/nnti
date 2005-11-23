@@ -465,5 +465,76 @@ Scalar Vector<Scalar>::min(const Scalar& bound, int& index)const
   return minEl;
 }
 
+//===========================================================================
+template <class Scalar> inline 
+void Vector<Scalar>::setElement(Index globalIndex, const Scalar& value)
+{ 
+  Thyra::ProductVector<Scalar>* p 
+    = dynamic_cast<Thyra::ProductVector<Scalar>*>(this->ptr().get());
+  if (p != 0)
+    {
+      RefCountPtr<const Thyra::ProductVectorSpaceBase<Scalar> > ps
+	= p->productSpace();
+      int k = 0;
+      for (int i = 0; i < ps->numBlocks(); i++)
+	{
+	  RefCountPtr<Thyra::VectorBase<Scalar> > vec_i = p->getBlock(i);
+	  RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > vs_i 
+	    = p->productSpace()->getBlock(i);
+	  int len = vec_i->space()->dim();
+	  if (globalIndex < k + len )
+	    {
+	      Vector<Scalar> vv(vec_i);
+	      int globalIndexWithinBlock = globalIndex - k;
+	      vv.setElement(globalIndexWithinBlock, value);
+	      break;
+	    }
+	  k += len;
+	}
+    }
+  else
+    {
+      castToLoadable()->setElement(globalIndex, value);
+    }
+}
+
+//===========================================================================
+template <class Scalar> inline 
+void Vector<Scalar>::addToElement(Index globalIndex, const Scalar& value)
+{
+  Thyra::ProductVector<Scalar>* p 
+    = dynamic_cast<Thyra::ProductVector<Scalar>*>(this->ptr().get());
+  if (p != 0)
+    {
+      RefCountPtr<const Thyra::ProductVectorSpaceBase<Scalar> > ps
+	= p->productSpace();
+      int k = 0;
+      for (int i = 0; i < ps->numBlocks(); i++)
+	{
+	  RefCountPtr<Thyra::VectorBase<Scalar> > vec_i = p->getBlock(i);
+	  int len = vec_i->space()->dim();
+	  if (globalIndex < k + len )
+	    {
+	      Vector<Scalar> vv(vec_i);
+	      int globalIndexWithinBlock = globalIndex - k;
+	      vv.addToElement(globalIndexWithinBlock, value);
+	      break;
+	    }
+	  k += len;
+	}
+    }
+  else
+    {
+      castToLoadable()->addToElement(globalIndex, value);
+    }
+}
+
+
+
+
+
+
+
+
 
 #endif

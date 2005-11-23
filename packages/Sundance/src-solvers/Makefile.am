@@ -176,10 +176,12 @@ NONLINEARSOLVERS = \
 
 TESTING_H = \
 	$(srcdir)/Testing/Thyra_TestSpecifier.hpp \
+	$(srcdir)/Testing/TSFCompoundTester.hpp \
 	$(srcdir)/Testing/TSFMatrixLaplacian1D.hpp \
 	$(srcdir)/Testing/TSFOperatorBuilder.hpp \
 	$(srcdir)/Testing/TSFRandomBlockMatrix.hpp \
-	$(srcdir)/Testing/TSFRandomSparseMatrix.hpp 
+	$(srcdir)/Testing/TSFRandomSparseMatrix.hpp \
+	$(srcdir)/Testing/TSFVectorTester.hpp 
 
 
 TESTING = \

@@ -187,6 +187,24 @@ namespace TSFExtended
      */
     void zero();
 
+
+
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    Scalar getElement(int n) const;
+
+    const Scalar getElement(int n) const;
+
+    void setElement(int n, const Scalar& val);
+
+
+
+
+
+
+
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
     //@}
 
     /** \name Element loading interface */

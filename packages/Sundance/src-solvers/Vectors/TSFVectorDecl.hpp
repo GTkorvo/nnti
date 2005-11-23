@@ -291,13 +291,11 @@ namespace TSFExtended
     /** \name Element loading interface */
     //@{
     /** set a single element at the given global index */
-    void setElement(Index globalIndex, const Scalar& value) 
-    {castToLoadable()->setElement(globalIndex, value);}
+    void setElement(Index globalIndex, const Scalar& value) ;
 
     /** add to the existing value of 
      * a single element at the given global index */
-    void addToElement(Index globalIndex, const Scalar& value) 
-    {castToLoadable()->addToElement(globalIndex, value);}
+    void addToElement(Index globalIndex, const Scalar& value) ;
 
     /** set a group of elements */
     void setElements(size_t numElems, const Index* globalIndices, 

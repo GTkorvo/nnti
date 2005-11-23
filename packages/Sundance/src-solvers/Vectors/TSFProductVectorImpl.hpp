@@ -381,6 +381,71 @@ Scalar ProductVector<Scalar>::normInf() const {;}
 template <class Scalar>
 void ProductVector<Scalar>::zero(){;}
 
+
+/**
+ * Get a single element
+ */
+template <class Scalar>
+Scalar ProductVector<Scalar>::getElement(int n) const
+{
+  int k = 0;
+  for (int i = 0; i < numBlocks(); i++)
+    {
+      int len = vecsE_[i].space().dim();
+      if (n < k + len )
+        {
+          const Vector<Scalar>& vv = vecsE_[i];
+          return vv.getElement(n - k);
+        }
+      k += len;
+    }
+  return dummyElement_;
+}
+
+/**
+ * Get a read only single element
+ */
+template <class Scalar>
+const Scalar ProductVector<Scalar>::getElement(int n) const
+{
+  int k = 0;
+  for (int i = 0; i < numBlocks(); i++)
+    {
+      int len = vecsE_[i].space().dim();
+      if (n < k + len )
+        {
+          const Vector<Scalar>& vv = vecsE_[i];
+          return vv.getElement(n - k);
+        }
+      k += len;
+    }
+  return dummyElement_;
+}
+
+
+
+
+/**
+ * Set a single element
+ */
+template <class Scalar>
+void ProductVector<Scalar>::setElement(int n, const Scalar& val)
+{
+  int k = 0;
+  for (int i = 0; i < numBlocks(); i++)
+    {
+      int len = vecsE_[i].space().dim();
+      if (n < k + len )
+        {
+          const Vector<Scalar>& vv = vecsE_[i];
+          vv.setElement(n - k, val);
+        }
+      k += len;
+    }
+}
+
+
+
 //@}
 
 /** \name Element loading interface */
