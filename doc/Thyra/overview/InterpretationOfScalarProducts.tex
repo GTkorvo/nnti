@@ -1,0 +1,871 @@
+\section{Interpretation of Scalar Products}
+
+Here we present a linear algebra interpretation of finite dimensional
+non-Eucliean inner product spaces and how they influence numerical algorithms
+and applications.
+
+\subsection{Introduction to vector spaces, basis representations, scalar products, and natural norms}
+
+\subsubsection{Basis and coefficient representations of vectors and vector spaces}
+
+Consider a vector space $\mathcal{S} {}\subset \RE^n$ with the basis vectors
+$e_i\in\RE^m$, for $i=1\ldots{}m$, such that any vector $x\in\mathcal{S}$ can
+be represented as the linear combination
+%
+\begin{equation}
+x = \sum_{i=1}^{m} e_i \tilde{x}_i
+\label{eqn:x_basis_sum}
+\end{equation}
+%
+where $\tilde{x}\in\RE^m$ is known as the {}\textit{cooefficent vector} for
+$x$ in the space $\mathcal{S}$.  In order for the set of vectors $\{e_i\}$ to
+form a valid basis, they must minimally be linearly independent and $m {}\le
+n$ must be true.  In a finite dimensional setting, when we say that $x$ is in
+some space $\mathcal{S}$ what we means is that it can be composed out of a
+linear combination of the space's basis vectors as shown in
+(\ref{eqn:x_basis_sum}).
+
+Another way to represent (\ref{eqn:x_basis_sum}) is in the form
+%
+\begin{equation}
+x = E \tilde{x}
+\label{eqn:x_basis_matrix}
+\end{equation}
+%
+where $E\in\RE^{n\times{}m}$ matrix defined as
+%
+\begin{equation}
+E = {\bmat{cccc} e_1 & e_2 & {}\ldots & e_m {}\emat}
+\end{equation}
+%
+who's cloumns correspond to the basis vectors for the space $\mathcal{S}$.
+
+\subsubsection{Standard {}\textit{vector} operations}
+
+A few different types of operations can be performed on just the coefficients
+for a set of vectors which have the same meaning for the vectors themselves;
+these are the set of classic {}\textit{vector} operations of assignment to
+zero, vector scaling, and vector addition given below:
+
+\begin{itemize}
+
+{}\item $x = 0$:
+
+$x = E \tilde{x} = 0 \; \Rightarrow \; \tilde{x} = 0$ 
+
+{}\item $z = \alpha x$:
+
+$z = E \tilde{z} = \alpha x = \alpha E \tilde{x} = E ( \alpha
+\tilde{x} ) \; \Rightarrow \; \tilde{z} = \alpha \tilde{x}$
+
+{}\item $z = x + y$:
+
+$z = E \tilde{z} = x + y = E \tilde{x} + E \tilde{y} = E ( \tilde{x} +
+\tilde{y} ) \; \Rightarrow \; \tilde{z} = \tilde{x} + \tilde{y}$
+
+\end{itemize}
+
+Note that other types of element-wise operations on the coefficients like
+element-wise products and divisions are not equivalent to the corresponding
+operations on the vectors themselves and are hense not {}\textit{vector}
+operations.
+
+\subsubsection{Representation of vectors in coefficient form}
+
+At this point, it is important to recognise that both of the ``vectors'' $x$
+and $\tilde{x}$ can be represented as arrays of scalar data in a computer
+program.  However, what we will do below is to show how to go about
+formulating and implementing numerical algorihthms and applications to only
+manipulate arrays of coefficients $\tilde{x}$ of a vector $x$ and never
+manipulate the actual vector $x$ itself.
+
+\subsubsection{Square, invertable basis representations}
+
+Up to this point, the vector space $\mathcal{S}$ can be a strict subspace of
+$\RE^n$ since $m < n$ may be true.  We will now focus on the case where $m =
+n$ which gives a nonsingular basis matrix $E\in\RE^{n\times{}n}$ that can be
+used to represent any vector $x\in\RE^n$.  As a result, $E^{-1}$ is well
+defined and can be used in our expressions.
+
+\subsubsection{Defintion of the scalar (or inner) product for a vector space}
+
+Now consider the dot inner product of any two vectors $x,y\in\mathcal{S}$
+which takes the well known form
+%
+\begin{equation}
+x^H y = \sum_{i=1}^n \mbox{conjugate}(x_i) y_i.
+\label{eqn:inner_x_y_sum}
+\end{equation}
+%
+Using the substitution $x = E {}\tilde{x}$ and $y = E {}\tilde{y}$, the inner
+product in (\ref{eqn:inner_x_y_sum}) can be represented as
+%
+\begin{equation}
+x^H y = ( \tilde{x}^H E^H ) ( E \tilde{y} ) = \tilde{x}^H Q_{\mathcal{S}} \tilde{y}
+\label{eqn:inner_x_y_E_prod}
+\end{equation}
+%
+where $Q_{\mathcal{S}} = E^H E$ is a symmetric positive definite matrix.  It
+is this matrix $Q_{\mathcal{S}}$ that is said the define the scalar (or inner)
+product of two vectors $x,y\in\mathcal{S}$ in terms of their coefficients
+$\tilde{x}$ and $\tilde{y}$ as
+%
+\begin{equation}
+<x,y>_{\mathcal{S}} = \tilde{x}^H Q_{\mathcal{S}} \tilde{y}.
+\label{eqn:inner_prod_defined}
+\end{equation}
+%
+
+In other articles, people tend to use $<x,y>_{\mathcal{S}}$ to stress that the
+scalar product is not simply a dot product involving the vector coefficients.
+However, in our interpretation here, we explicitly differentiate between the
+vector itself $x$ and its corresponding coeeficients $\tilde{x}$.  Therefore,
+$x^H y$ means exactly the same thing as $<x,y>_{\mathcal{S}}$ which is
+different than $\tilde{x}^H {}\tilde{y}$.
+
+\subsubsection{Defintion of the natural norm for a vector space}
+
+The natural norm $||.||_{\mathcal{S}}$ of a vector space is defined as
+%
+\begin{equation}
+||x||_{\mathcal{S}} = \sqrt{<x,x>_{\mathcal{S}}}
+\label{eqn:natural_norm_defined}
+\end{equation}
+%
+where $<x,x>_{\mathcal{S}}$ is defined in (\ref{eqn:inner_prod_defined}) in
+terms of the coefficients $\tilde{x}$.
+
+\subsubsection{Orthonormal and orthogonal basis representations}
+
+Note that all orthonormal sets of basis vectors, i.e.
+\[
+e_i^H e_j = \left\{ \begin{array}{ll} 1 & \mbox{if} \; i = j \\ 0 & \mbox{if} \; i \ne j \end{array}  \right.
+\]
+result in an orthogonal matrix\footnote{In most linear algebra text books and
+literature, the term {}\textit{orthogonal matrix} is used to denote a matrix
+who's columns are orthonormal.  This means that a matrix with just orthogonal
+columns (i.e.\ $e_i^H e_j = \delta \ne 1$ when $i=j$) is not an orthogoal
+matrix.  It would seem to make more sence that a matrix with orthogonal
+columns should be called an ``orthogonal matrix'' and a matrix with
+orthonormal columns should be called an ``orthonormal matrix'' but this is not
+the standard use.} $E$ that gives Identity for the scalar product matrix
+$Q_{\mathcal{S}} = E^H E = I$.  Therefore, all orthonormal sets of basis
+vectors result in a Eucliean scalar product, even if the basis vectors are not
+Cartesian (i.e.\ $e_i^T = {\bmat{ccccc} 0 & {}\ldots & 1 & {}\ldots & 0
+{}\emat}$). Also note that all orthoganal sets of basis vectors give a scalar
+product matrix $Q_{\mathcal{S}} = E^H E$ that is diagonal.
+
+\subsubsection{Equivalence of basis representations and the scalar product}
+
+One important detail to mention is that given a particular vector space
+$\mathcal{S}$ with its corresponding scalar product defined using
+$Q_{\mathcal{S}}$ in (\ref{eqn:inner_prod_defined}), there are infinitely many
+different selections for the basis vectors $E$ that given the same scalar
+product.  To see this, let $F\in\RE^{n\times{}n}$ be any orthogonal matrix
+(i.e.\ $F^H F = I$).  We can the use a particular choice for $F$ to transform
+the scalar product as
+%
+\begin{equation}
+x^H y = \tilde{x}^H Q_{\mathcal{S}} \tilde{y}
+= \tilde{x}^H ( E^H E ) \tilde{y}
+= \tilde{x}^H E^H ( F^H F ) E \tilde{y}
+= ( \tilde{x}^H \bar{E}^H ) ( \bar{E} \tilde{y} )
+= \bar{x}^H \bar{y}
+\label{eqn:inner_x_y_F_E_prod}
+\end{equation}
+%
+where $\bar{x} = {}\bar{E} {}\tilde{x}$, $\bar{x} = {}\bar{E} {}\tilde{x}$,
+and $\bar{E} = F E$.  That that $\bar{E}\in\RE^{n\times{}n}$ actually forms a
+different vector space $\bar{\mathcal{S}}$ but, for the same coefficients, its
+scalar product is exactly the same as for $\mathcal{S}$.  Therefore, when we
+define a vector space by its scalar product, we are really defining a whole
+set of vector spaces instead of just one in that there are infinitely many
+different sets of basis vectors that give infinitely many different vector
+representations for a particular set of coefficients.
+
+\subsubsection{Dealing with scalar products and vector coefficients in algorithm construction}
+
+The reason that one would only want to deal with the coefficients of the
+vectors in a vector space and the scalar product is that it may be
+inconvenient and/or very expensive to build a set of basis vectors so that the
+vectors themselves can be formed and manipulated directly.  This is the case,
+for example, in many different finite-element discretization methods for PDEs.
+
+\subsection{Impact of scalar products on matrix representations of linear operators}
+\label{sec:matrix_representations_of_linear_operators}
+
+Now let's consider the impact that non-Euclidean vector spaces and scalar
+products have on linear operators and their matrix representations.  A linear
+operator $A$ that maps vectors from the space $\mathcal{D}$ to $\mathcal{R}$
+as
+%
+\begin{equation}
+y = A x
+\label{eqn:fwd_op_apply}
+\end{equation}
+%
+where $x\in\mathcal{D}$ and $y\in\mathcal{R}$.  Every finite dimensional
+linear operator has some matrix representation with respect to some basis.
+We consider two such representations in the following two subsections.
+
+\subsubsection{The ``nature'' matrix representation of a linear operator}
+
+First, lets consider the ``natural'' matrix representation $\tilde{A}$ of $A$
+in terms of the basis vectors for the spaces $\mathcal{D}$ and $\mathcal{R}$
+as
+%
+\begin{equation}
+A = E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^H.
+\label{eqn:A_coeff_natural}
+\end{equation}
+%
+Given this matrix form of $A$, the linear operator application becomes
+%
+\begin{eqnarray}
+y
+& = & E_{\mathcal{R}} \tilde{y} \nonumber \\
+& = & A x \nonumber \\
+& = & ( E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^H ) ( E_{\mathcal{D}} \tilde{x} ) \nonumber \\
+& = & E_{\mathcal{R}} ( \tilde{A} Q_{\mathcal{D}}^H \tilde{x} ) \nonumber \\
+&  & \Rightarrow \nonumber \\
+\tilde{y} & = & \tilde{A} Q_{\mathcal{D}} \tilde{x}
+\label{eqn:A_natural_apply}
+\end{eqnarray}
+%
+where $Q_{\mathcal{D}}^H = E_{\mathcal{D}}^H E_{\mathcal{D}}$ is the scalar
+product matrix for the space $\mathcal{D}$.  Hence, we see that applying the
+operator $A$ using (\ref{eqn:A_coeff_natural}) to transform the vector
+coefficients $\tilde{x}$ to $\tilde{y}$ involves injecting the scalar product
+matrix $Q_{\mathcal{D}}$.
+
+Now lets concider the definition of the adjoint using (\ref{eqn:A_coeff_natural}) which is
+%
+\begin{eqnarray}
+v
+& = & E_{\mathcal{D}} \tilde{v} \nonumber \\
+& = & A^H u \nonumber \\
+& = & ( E_{\mathcal{D}} \tilde{A}^H E_{\mathcal{R}}^H ) ( E_{\mathcal{R}} \tilde{u} ) \nonumber \\
+& = & E_{\mathcal{D}} ( \tilde{A}^H Q_{\mathcal{R}}^H \tilde{u} ) \nonumber \\
+&  & \Rightarrow \nonumber \\
+\tilde{v} & = & \tilde{A}^H Q_{\mathcal{R}} \tilde{u}
+\label{eqn:A_natural_apply_adjoint}
+\end{eqnarray}
+%
+where $Q_{\mathcal{R}}^H = E_{\mathcal{R}}^H E_{\mathcal{R}}$ is the scalar
+product matrix for the space $\mathcal{R}$.  This time, the application of the
+adjoint requires the injection of the the scalar product matrix
+$Q_{\mathcal{R}}$.
+
+It is easy to show that (\ref{eqn:A_natural_apply}) and
+(\ref{eqn:A_natural_apply_adjoint}) satisfiy the adjoint relationship
+%
+\begin{equation}
+<A u, v>_{\mathcal{R}} = <u,A^H v>_{\mathcal{D}}
+\label{eqn:adjoint_relation}
+\end{equation}
+%
+as follows
+%
+\begin{eqnarray}
+<A u, v>_{\mathcal{R}}
+& = & (\tilde{A} Q_{\mathcal{D}} \tilde{u} )^H Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
+& = & ( \tilde{u}^H Q_{\mathcal{D}} \tilde{A}^H ) Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
+& = & (\tilde{u}^H ) Q_{\mathcal{D}} ( \tilde{A}^H Q_{\mathcal{R}} \tilde{v}) \nonumber \\
+& = & <u, A^H v>_{\mathcal{D}} \Box
+\label{eqn:adjoint_relation_proved}
+\end{eqnarray}
+%
+
+\subsubsection{The ``Euclidean'' matrix representation of a linear operator}
+\label{sec:euclidean_matrix_rep_linear_operator}
+
+Now consider another matrix representation of a linear operator where the
+forward operator application (\ref{eqn:fwd_op_apply}) is implemented as
+%
+\begin{equation}
+\tilde{y} = \tilde{A} \tilde{x}
+\label{eqn:euclidean_forward_op_apply}
+\end{equation}
+%
+where $x = E_{\mathcal{D}}\tilde{x}$ and $y = E_{\mathcal{R}}\tilde{y}$.  This
+representation is quite common in many different codes and makes good sence in
+many cases.
+
+Given matrix representation of the forward operator application in
+(\ref{eqn:euclidean_forward_op_apply}) one can derive the adjoint operator
+from the adjoint relationship as
+%
+\begin{eqnarray}
+<A u, v>_{\mathcal{R}}
+& = & ( \tilde{A} \tilde{u} )^H Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
+& = & ( \tilde{u}^H \tilde{A}^H ) Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
+& = & \tilde{u}^H ( Q_{\mathcal{D}} Q_{\mathcal{D}}^{-1} ) \tilde{A}^H Q_{\mathcal{R}} \tilde{v} \nonumber \\
+& = & ( \tilde{u}^H ) Q_{\mathcal{D}} ( Q_{\mathcal{D}}^{-1} \tilde{A}^H Q_{\mathcal{R}} \tilde{v} ) \nonumber \\
+& = & <u, A^H v>_{\mathcal{D}}
+\label{eqn:A_adjoint_euclidean_defined}
+\end{eqnarray}
+%
+From (\ref{eqn:A_adjoint_euclidean_defined}) we can see that applying the
+adjoint in this case reqires that the inverse of the scalar product matrix
+$Q_{\mathcal{D}}^{-1}$ be applied and therefore the implementation of $y=A^H
+x$ is given by
+%
+\begin{equation}
+\tilde{y} = Q_{\mathcal{D}}^{-1} \tilde{A}^H Q_{\mathcal{R}} \tilde{x}
+\label{eqn:euclidean_adjoint_op_apply}
+\end{equation}
+%
+From (\ref{eqn:euclidean_forward_op_apply}) or
+(\ref{eqn:euclidean_adjoint_op_apply}), one can derive the exact
+representation of the operator $A$ that is consistent with the basis' for the
+spaces $\mathcal{R}$ and $\mathcal{D}$ and the above expressions.
+
+First, from (\ref{eqn:euclidean_forward_op_apply}) we see that
+%
+\begin{eqnarray}
+y
+& = & E_{\mathcal{R}} \tilde{y} \nonumber \\
+& = & E_{\mathcal{R}} ( \tilde{A} \tilde{x} ) \nonumber \\
+& = & E_{\mathcal{R}} \tilde{A} ( E_{\mathcal{D}}^{-1} E_{\mathcal{D}} ) \tilde{x} \nonumber \\
+& = & ( E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^{-1} ) ( E_{\mathcal{D}} \tilde{x} ) \nonumber \\
+& = & A x \nonumber \\
+&  & \Rightarrow \nonumber \\
+A & = & E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^{-1}
+\label{eqn:A_euclidean}
+\end{eqnarray}
+%
+
+We can also derive the representation of $A$ from
+(\ref{eqn:euclidean_adjoint_op_apply}) as
+%
+\begin{eqnarray}
+y
+& = & E_{\mathcal{D}} \tilde{y} \nonumber \\
+& = & E_{\mathcal{D}} ( Q_{\mathcal{D}}^{-1} \tilde{A}^H Q_{\mathcal{R}} \tilde{x} ) \nonumber \\
+& = & E_{\mathcal{D}} ( E_{\mathcal{D}}^H E_{\mathcal{D}} )^{-1} \tilde{A}^H ( E_{\mathcal{R}}^H E_{\mathcal{R}} ) \tilde{x} \nonumber \\
+& = & E_{\mathcal{D}} ( E_{\mathcal{D}}^{-1} E_{\mathcal{D}} ^{-H} ) \tilde{A}^H ( E_{\mathcal{R}}^H E_{\mathcal{R}} ) \tilde{x} \nonumber \\
+& = & ( E_{\mathcal{D}} E_{\mathcal{D}}^{-1} ) ( E_{\mathcal{D}} ^{-H} \tilde{A}^H E_{\mathcal{R}}^H ) ( E_{\mathcal{R}} \tilde{x} ) \nonumber \\
+& = & A^H x \nonumber \\
+&  & \Rightarrow \nonumber \\
+A^H & = & E_{\mathcal{D}}^{-H} \tilde{A}^H E_{\mathcal{R}}^H  \nonumber \\
+\label{eqn:A_euclidean_adjoint} 
+&  & \Rightarrow \nonumber \\
+A & = & E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^{-1}
+\label{eqn:A_euclidean_again}
+\end{eqnarray}
+%
+Note that we already know that $A$ in (\ref{eqn:A_euclidean}) and
+(\ref{eqn:A_euclidean_again}) already statisfies the adjoint relationship,
+since (\ref{eqn:euclidean_adjoint_op_apply}) was derived from the adjoint
+relationship.
+
+\subsection{Impact of scalar products on derivative representations}
+
+Here we describe how to currectly compute and/or apply the derivative of a
+multi-variable function(s) so as to be consistent with the functions domain
+and range spaces.  We will see that these issues are closely related to the
+discussion of different matrix representations in
+Section~\ref{sec:matrix_representations_of_linear_operators}.  First we
+consider multi-varible scalar functions followed by multi-variable vector
+functions.
+
+\subsubsection{Multi-variable scalar functions}
+\label{sec:scalar_function_derivatives}
+ 
+Consider the scalar function $f(x)$
+\[
+x\in\mathcal{X} \rightarrow f\in\RE.
+\]
+The definition of the first derivative of this function comes from the
+first-order variation
+\[
+\delta f = \Jac{f}{x} \delta x.
+\]
+Therefore, the derivative $\jac{f}{x}$ first and formost is a linear operator
+that when applied to some variation in $x$ of $\delta x$ gives the resulting
+variation, to first order, in the function $f$.  For scalar valued functions,
+it is common to define the {}\textit{gradient} of the function which is
+defined as $\nabla f = \jac{f}{x}^T$ and is usually represented as a vector in
+the space $\mathcal{X}$ and this gives
+\[
+\delta f = {\nabla f}^T \delta x.
+\]
+Let the coefficients of the graient vector be denoted as $\tilde{\nabla f}$
+such that $\nabla f = E {}\tilde{\nabla f}$, where $E$ is the basis for the
+space $\mathcal{X}$.
+
+Now consider an implementation of the function $f(x)$ that takes in the coeffieints
+$\tilde{x}$ and returns $f$ as
+%
+\[
+\tilde{x}\in\RE^n \rightarrow g\in\RE.
+\]
+%
+where $f(x) = g(\tilde{x})$.  The function $g$ is what would be
+directly implemented in a computer code in many cases.  Since $\tilde{x} =
+E^{-1} x$, we see that
+%
+\[
+\Jac{f}{x} = \Jac{g}{\tilde{x}} \Jac{\tilde{x}}{x}  = \Jac{g}{\tilde{x}} E^{-1}
+\]
+%
+which gives
+%
+\begin{equation}
+\nabla f = E^{-T} \nabla g.
+\label{eqn:grad_f_E_grad_f_bar}
+\end{equation}
+%
+Equating (\ref{eqn:grad_f_E_grad_f_bar}) to $\nabla f = E {}\tilde{\nabla f}$
+and performing some manipulation we see that
+%
+\begin{eqnarray}
+\nabla f
+& = & E \tilde{\nabla f} \nonumber \\
+& = & E^{-T} \nabla g \nonumber \\
+& & \nonumber \\
+& \Rightarrow & \nonumber \\
+& & \nonumber \\
+\tilde{\nabla f}
+& = & E^{-1} E^{-T} \nabla g \nonumber \\
+& = & (E^T E)^{-1} \nabla g \nonumber \\
+& = & {Q_{\mathcal{X}}}^{-1} \nabla g.
+\label{eqn:grad_f_tilde}
+\end{eqnarray}
+%
+Therefore, to compute the coefficients $\tilde{\nabla f}$ for the gradient
+vector $\nabla f$ given the gradient $\nabla g$ for the function
+$g(\tilde{x})$, one must apply the inverse of the scalar product matrix
+$Q_{\mathcal{X}}^{-1}$ as shown in (\ref{eqn:grad_f_tilde}).  Note that this
+results in the inner product
+%
+\[
+{\nabla f}^T \delta x = (\tilde{\nabla f})^T Q_{\mathcal{X}} (\tilde{\delta x})
+= ({Q_{\mathcal{X}}}^{-1} {\nabla g}^T) Q_{\mathcal{X}} (\tilde{\delta x})
+= {\nabla g}^T ( {Q_{\mathcal{X}}}^{-1} Q_{\mathcal{X}} ) \tilde{\delta x}
+= {\nabla g}^T \tilde{\delta x}
+\]
+%
+which is nothing more than the simple dot product of involving arrays of data
+that are directly stored and manipulated in the computer.  In this case, it
+would be more efficeint to implement the gradient ${\nabla f}^T$ as a linear
+operator ${\nabla f}^T = {}\jac{f}{x}$ instead of as a vector in order to
+avoid having to apply the inverse ${Q_{\mathcal{X}}}^{-1}$ just to remove its
+effect later using $Q_{\mathcal{X}}$ in the scalar product.  Note that
+representation ${\nabla f}^T = {}\jac{f}{x}$ as a linear operator is more or
+less equivalent to the ``Euclidean'' form of the linear operator described in
+Section~\ref{sec:euclidean_matrix_rep_linear_operator} where the range space
+is simply $\mathcal{R}=\RE^1$.
+
+{}\textbf{ToDo:} Derive and describe the impact of the scalar product on the
+hessian matrix for $f(x)$.  I don't know what this is exactly but I need to
+derive this so that I can determine that the Newton step for the minimization
+algorithm is not effected!
+
+\subsubsection{Multi-variable vector functions}
+\label{sec:vector_function_derivatives}
+
+We now consider the extension of the above discussion for scalar valued
+functions to vector-valued function of the form
+\[
+x\in\mathcal{X} \rightarrow f\in\mathcal{F}.
+\]
+Again, many different algorithms consider the first-order variation
+\[
+\delta f = \Jac{f}{x} \delta x.
+\]
+In this notation, $\jac{f}{x}$ is a linear operator that maps vectors from
+$\delta x\in\mathcal{X}$ to $\delta f\in\mathcal{F}$.  The vectors take the
+form $\delta x = E_{\mathcal{X}} {}\tilde{\delta x}$ and $\delta f =
+E_{\mathcal{R}} {}\tilde{\delta f}$ where ${}\tilde{\delta x}$ and
+${}\tilde{\delta f}$ are the vector coefficients that would be typically
+directly stored and manupilated in a computer program.
+
+Now consider the case where function $f(x)$ is implemented in coefficient form
+through the function
+%
+\[
+\tilde{x}\in\RE^n \rightarrow g\in\RE^m.
+\]
+%
+where $f(x) = E_{\mathcal{F}} g(\tilde{x})$.  The function $g(\tilde{x})$ is
+what would typically be implemented in a computer code and
+$\jac{g}{\tilde{x}}$ could be efficiently and simply computed using automatic
+differentation (AD) [???] for example.  The full forward linear operator would
+then be
+%
+\begin{equation}
+\Jac{f}{x} = E_{\mathcal{F}} \Jac{g}{\tilde{x}} \Jac{\tilde{x}}{x}  = E_{\mathcal{F}} \Jac{g}{\tilde{x}} E_{\mathcal{X}}^{-1}
+\label{eqn:d_f_d_x_euclidean}
+\end{equation}
+%
+which takes the same form as the ``Euclidean'' representation of the linear
+operator described in Section~\ref{sec:euclidean_matrix_rep_linear_operator}.
+This operator $A = \jac{f}{x}$ can either be formed and stored using some
+matrix representation or can be applied implicitly.
+
+One has two choices how to actually implement the operator $A = \jac{f}{x}$
+using a matrix representation.  The first option is to just explicitly store
+the matrix $\jac{g}{\tilde{x}}$ that would be directly computed from the
+function $g(\tilde{x})$ using AD for instance but then this would require that
+the adjoint be implemented as
+%
+\[
+y = \left( \Jac{f}{x} \right)^T x \; \Rightarrow \;
+\tilde{y} = {Q_{\mathcal{X}}}^{-1} \left( \Jac{g}{\tilde{x}} \right)^T Q_{\mathcal{F}} \tilde{x}
+\]
+%
+as shown in (\ref{eqn:euclidean_adjoint_op_apply}), which requires the
+application of the inverse ${Q_{\mathcal{X}}}^{-1}$.
+
+The other option for a matrix representation is to compute and store
+$\tilde{A} = (\jac{g}{x}) E_{\mathcal{X}}^T$ and this gives the ``natural''
+representation
+%
+\begin{equation}
+\Jac{f}{x} = E_{\mathcal{F}} \Jac{g}{\tilde{x}} E_{\mathcal{X}}^{-1}
+= E_{\mathcal{F}} \Jac{g}{\tilde{x}} ( E_{\mathcal{X}}^T E_{\mathcal{X}} ) E_{\mathcal{X}}^{-1}
+= E_{\mathcal{F}} \tilde{A} E_{\mathcal{X}}^T
+\label{eqn:d_f_d_x_natural_rep}
+\end{equation}
+%
+Note that computing and forming $\tilde{A} = (\jac{g}{x}) E_{\mathcal{X}}^T$
+is not possible unless there is a known basis representation $E_{\mathcal{X}}$
+available which may be the case in a finite-element method for instance.  Even
+if the basis $E_{\mathcal{X}}$ is know, the product matrix $\tilde{A} =
+(\jac{g}{x}) E_{\mathcal{X}}^T$ may be too expensive to compute and store.
+
+\subsection{Impact of scalar products on various numerical algorithms}
+
+Here we discuss the bread and butter of the impact of scalar products in how
+they affect numerical algorithms that we develop and implement.  The approach
+taken here is to first start with the algorithms stated in Euclidean form
+without reguard to issues of scalar products.  This is fine as long as we
+recognise that the vectors, $x$ for instance, that we are dealing with will
+eventually be subsututed for there basis and coefficient form $x = E\tilde{x}$
+and we will do the manipulations from there.  What we will try to do is to see
+how the expressions in the algorithm change and we will try to perform the
+manipulations so that we are left wtih only components of vectors (i.e.\
+$\tilde{x}$), scalar products (i.e.\ $Q_{\mathcal{X}}$), and linear operators.
+We will also try to remove any explicit dependence on the exact form of the
+basis representation (i.e.\ the basis $E_{\mathcal{X}}$ should not apprear in
+any final form of the expressions).
+
+It is critical to note that when the selection of the scalar product affects
+an algorithm that it can dramatically improve the performance of the algorithm
+when a good scalar product is selected.  The dramatic improvement in the
+performance of various numerical algorithms with the proper selection of
+scalar products is documented in [???] and [???].  Applications that are based
+on discretizations of PDEs can 
+
+\subsubsection{Newton methods}
+
+The first set of methods that we will consider are Newton methods [???].  In
+there most basic form, a Newton method seeks to solve a set of multi-variable
+nonlinear equations
+%
+\[
+f(x) = 0
+\]
+%
+where $x\in\RE^n$ and
+%
+\[
+x\in\RE^n \rightarrow f\in\RE^n
+\]
+%
+is a vector function of the form described in
+Section~\ref{sec:vector_function_derivatives}.  The undampended Newton method
+seeks to improve the estimate of the solution $x_k$ by solving the linear
+system
+%
+\begin{equation}
+\Jac{f}{x} d = - f(x_k)
+\label{eqn:newton_system}
+\end{equation}
+%
+and then updating
+%
+\begin{equation}
+x_{k+1} = x_k + d.
+\label{eqn:newton_update}
+\end{equation}
+%
+It can be shown than when $x_0$ is sifficiently close to a solution $x^*$
+where $f(x^*)=0$ and if $\jac{f}{x}$ is nonsingular, then the iterates $x_1,
+x_2, {}\ldots, x_k$ converge quadratically with
+%
+\[
+||x_{k+1}-x^*|| < C ||x_k-x^*||^2
+\]
+for some constant $C\in\RE$.  In a real Newton method, some type of
+modification is generally applied to the step computation in
+(\ref{eqn:newton_system}) and/or the update (\ref{eqn:newton_update}) in order
+to insure convergence from remote starting points $x_0$.
+
+We now consider the impact that non-Euclidean basis representations and scalar
+products have on two forms of the Newton method: exact and inexact.
+
+\subsubsection*{Exact Newton methods}
+
+In an exact Newton method, the Newton system in (\ref{eqn:newton_system}) is
+solved to a high precision.  Now let's consider the impact that substituting
+non-Euclidean basis representation has on the Newton method.  The basis
+representations are $x = E_{\mathcal{X}}\tilde{x}$ and $f =
+E_{\mathcal{F}}\tilde{f}$ for the spaces $\mathcal{X}\in\RE^n$ and
+$\mathcal{F}\in\RE^n$.  Now, let us assume the ``Euclidean'' representation
+for $\jac{f}{x}$ which gives the coefficient form of (\ref{eqn:newton_system})
+as
+%
+\begin{equation}
+\tilde{\Jac{f}{x}} \tilde{d} = - \tilde{f}.
+\label{eqn:newton_system_exact_euclidean}
+\end{equation}
+%
+We then substitute $\tilde d$ into the update in (\ref{eqn:newton_update})
+which is
+%
+\begin{equation}
+\tilde{x}_{k+1} = \tilde{x}_k + \tilde{d}.
+\label{eqn:newton_update_exact_euclidean}
+\end{equation}
+%
+Comparing (\ref{eqn:newton_system})--(\ref{eqn:newton_update}) with
+(\ref{eqn:newton_system_exact_euclidean})--(\ref{eqn:newton_update_exact_euclidean}),
+it is clear that the choice of the basis functions for the spaces
+$\mathcal{X}$ or $\mathcal{F}$ has no impact on the Newton steps that are
+generated.  This {}\textit{invariance} property of Newton's method is one of
+its greatest strengths.  However, solving the Newton system exactly can be
+very expensive and taking full spaces can case the algorithm to diverge and
+modifcations to handle these issues are considered next.
+
+\subsubsection*{Inexact Newton methods}
+
+In an inexact Newton method, the linear system in (\ref{eqn:newton_system}) is
+not solved exactly, but instead is only solved to a tolerance of
+%
+\begin{equation}
+\frac{||\Jac{f}{x} d - f_k||_{\mathcal{F}}}{||f_k||_{\mathcal{F}}} \le \eta
+\label{eqn:newton_system_inexact_euclidean}
+\end{equation}
+%
+where $\eta\in\RE$ is known as the forcing term and typically is selected such
+that $\eta {}\propto ||f_k||_{\mathcal{F}}$ in order to ensure quadratic
+convergence.  Now here we see the selection of the scalar product matrix
+$Q_{\mathcal{F}}$ that defines the norm $||.||_{\mathcal{F}}$ (as defined in
+(\ref{eqn:natural_norm_defined})) can have a large impact on the newton step
+computation in (\ref{eqn:newton_system_inexact_euclidean}).  However, assuming
+the ``Euclidean'' form of the forward operator is used as in
+(\ref{eqn:newton_system_exact_euclidean}), then the selection of the scalar
+product for the space $\mathcal{F}$ has no impact on the computed Newton step
+which is the same as (\ref{eqn:newton_update_exact_euclidean}).
+
+\subsubsection{Minimization, merit functions and line search globalization methods}
+
+Let's consider the minimization of a multi-variable scalar function
+%
+\begin{eqnarray}
+\mbox{min} & & f(x)
+\end{eqnarray}
+%
+where $f(x)$ of the form described in
+Section~\ref{sec:scalar_function_derivatives} where $f(x) = g(\tilde{x})$ and
+$g(\tilde{x})$ is what is actually implemented in a computer program.
+
+As stated in Section~\ref{sec:scalar_function_derivatives}, the coefficient
+vector coefficient for the gradient $\nabla f$, which takes the form
+$\tilde{\nabla f} = {Q_{\mathcal{X}}}^{-1} {}\nabla g$, is affected by the
+defintion of the basis $E_{\mathcal{X}}$ but the scalar product
+%
+\begin{equation}
+{\nabla f}^T d
+= ({Q_{\mathcal{X}}}^{-1} {}\nabla g)^T Q_{\mathcal{X}} (\tilde{d})
+ = {\nabla g}^T (\tilde{d})
+\label{eqn:descent_inner_prod}
+\end{equation}
+%
+is not affected, where $d=E_{\mathcal{X}}\tilde{d}\in\mathcal{X}$ is some
+search direction.
+
+One of the most basic requirements for many minimization algorithms is the
+descent requirement which can be stated as
+%
+\begin{equation}
+{\nabla f}^T d < 0
+\label{eqn:descent_condition}
+\end{equation}
+%
+for $\nabla f {}\ne 0$.
+
+Consider the steepest-descent direction $d = -{}\gamma\nabla f$ where $\gamma
+>0$ is some constant.  With a Euclidean basis, the coefficients for this
+direction takes the form $\tilde{d} = -{}\gamma\nabla g$.  However, when a
+non-Euclidean basis is used, the coefficient vector for the the
+steepest-descent direction is
+%
+\[
+\tilde{d} = - \gamma {Q_{\mathcal{X}}}^{-1} \nabla g. 
+\]
+%
+Therefore, the choice of the scalar product can have a dramatic impact on the
+steepest-descent direction.  The descent property for the steepest-descent direction then
+becomes
+%
+\[
+{\nabla f}^T d
+= ( {\nabla g}^T {Q_{\mathcal{X}}}^{-1}) Q_{\mathcal{X}} (-\gamma {Q_{\mathcal{X}}}^{-1} \nabla g)
+= -\gamma {\nabla g}^T {Q_{\mathcal{X}}}^{-1} \nabla g < 0.
+\]
+%
+for $\nabla g {}\ne 0$.  Therefore, the descent property is for the
+steepest-descent direction is changed even though the scalar product
+definition itself is not changed.
+
+Another selection of the step direction takes the form $d = - B^{-1} {}\nabla
+f$ where $B$ is some approximation for the Hessian of $f(x)$.  Since ${}\nabla
+f$ changes with a non-Euclidean basis, so will this search direction.  The
+choice of $B$ will be for variable metric methods will be addressed in
+Section~???.
+
+Descent alone is not sufficient to guarantee convergence.  Instead, more
+stringent conditions must be met.  One such set of conditions include a
+sufficient decrease condition
+%
+\begin{equation}
+f(x_k + \alpha d) \le f_k + c_1 \alpha (\nabla f_k)^T d
+\label{eqn:sufficent_decrease_condition}
+\end{equation}
+%
+(often know as the {}\textit{Armijo condition}), and a curvature condition
+%
+\begin{equation}
+(\nabla f(x_k + \alpha d))^T d \le c_2 (\nabla f_k)^T d
+\label{eqn:curvature_condition}
+\end{equation}
+%
+where $0 < c_1 < c_2 < 1$.  Together,
+(\ref{eqn:sufficent_decrease_condition})--(\ref{eqn:curvature_condition}) are
+known as the {}\textit{Wolfe conditions} [???].
+
+Now let's consider the coefficient form of the conditions in
+(\ref{eqn:sufficent_decrease_condition})--(\ref{eqn:curvature_condition}) for
+non-Euclidean basis' which from (\ref{eqn:descent_inner_prod}) become
+%
+\begin{equation}
+g(\tilde{x}_k + \alpha \tilde{d}) \le g_k + c_1 \alpha (\nabla g_k)^T \tilde{d}
+\label{eqn:sufficent_decrease_condition_scaled}
+\end{equation}
+%
+and
+%
+\begin{equation}
+(\nabla g(\tilde{x}_k + \alpha \tilde{d}))^T \tilde{d} \le c_2 (\nabla g_k)^T \tilde{d}.
+\label{eqn:curvature_condition_scaled}
+\end{equation}
+%
+It is clear from
+(\ref{eqn:sufficent_decrease_condition_scaled})--(\ref{eqn:curvature_condition_scaled})
+that even through the selection of the scalar product defined by
+$Q_{\mathcal{X}}$ affects the steepest-descent direction, for instance, it
+does not actually affect the Wolf conditions for a general direction
+$\tilde{d}$.  What this means is that these conditions are invariant to the
+selection of the basis for the space $\mathcal{X}$ but the search direction
+may be.
+
+\subsubsection{Least-squares merit functions}
+
+\subsubsection{Variable metric quasi-Newton methods}
+
+Non-Euclidean scalar products can dramatically improve the performance of
+optimization methods that use variable-metric quasi-Newton methods.  Here we
+will consider a popular form of variable-metric approximation called the
+BFGS formula [???] given as
+%
+\[
+B_+ = B - \frac{(B s) (B s)^T}{s^T B s} + \frac{y y^T}{y^T s}
+\label{eqn:bfgs_update}
+\]
+%
+where $B$ is the current approximation to the Hessian and $B_+$ is the updated
+approximation.
+
+Generally, the update vectors are defined as $y = {}\nabla f_k - {}\nabla
+f_{k-1}$ and $s = x_k - x_{k-1}$ but the analysis here is independent of the
+actual choices for these vectors.  What will be made clear here is the impact
+that the non-Euclidean scalar products have on the various implemenations of
+this method.
+
+We will consider two forms of the above approximation.  First, we consider an
+explicit implemenation that directly stores the coefficients of the matrix in
+the ``natural'' form.  Second, we consider an implicit implementation that
+only stores pairs of update vectors and applies the inverse implicitly.  The
+implicit representation then leads naturally to a limited-memory
+implementation.
+
+\subsubsection*{Explicit BFGS matrix representation}
+
+For the explicit matrix representation we will assume that $B$ and $B_+$ are
+being stored in the ``natural'' coefficient forms of $B = E {}\tilde{B} E^T$
+and $B_+ = E {}\tilde{B}_+ E^T$.  Note that the basis matrix $E$ is generally
+not given explicitly and a unique choce is not known; only the scalar product
+matrix $Q = E^T E$ is known.  By subsituting in the coefficient forms of $B =
+E {}\tilde{B} E^T$, $B_+ = E {}\tilde{B}_+ E^T$, $y = E {}\tilde{y}$, and $s =
+E {}\tilde{s}$ into (\ref{eqn:bfgs_update}) and performing some manipulation
+we obtain
+%
+\begin{eqnarray}
+E \tilde{B}_+ E^T
+& = & E \tilde{B} E^T
+  - \frac{[(E \tilde{B} E^T)(E \tilde{s})][(E \tilde{B} E^T)(E \tilde{s})]^T}{(E \tilde{s})^T(E \tilde{B} E^T)(E \tilde{s})}
+  + \frac{(E \tilde{y})(E \tilde{y})^T}{(E \tilde{y})^T (E \tilde{s})} \nonumber \\
+& = & E \tilde{B} E^T
+  - \frac{E(\tilde{B} Q \tilde{s})(\tilde{B} Q \tilde{s})^T E^T}{\tilde{s}^T Q (\tilde{B} Q \tilde{s})}
+  + \frac{E \tilde{y} \tilde{y}^T E^T}{\tilde{y}^T Q \tilde{s}} \nonumber \\
+& = & E \left[
+  \tilde{B}
+  - \frac{(\tilde{B} Q \tilde{s})(\tilde{B} Q \tilde{s})^T}{\tilde{s}^T Q (\tilde{B} Q \tilde{s})}
+  + \frac{\tilde{y} \tilde{y}^T}{\tilde{y}^T Q \tilde{s}}
+  \right] E^T \nonumber \\
+& \Rightarrow & \nonumber \\
+\tilde{B}_+
+& = & \tilde{B}
+  - \frac{(\tilde{B} Q \tilde{s})(\tilde{B} Q \tilde{s})^T}{\tilde{s}^T Q (\tilde{B} Q \tilde{s})}
+  + \frac{\tilde{y} \tilde{y}^T}{\tilde{y}^T Q \tilde{s}}.
+\label{eqn:explicit_bfgs_update}
+\end{eqnarray}
+%
+What (\ref{eqn:explicit_bfgs_update}) shows is that the ``natural'' matrix
+representation of $B$ can be updated to $B_+$ by using the coefficients of the
+vectors $\tilde{s}$ and $\tilde{y}$, the matrix coefficients $\tilde{B}$
+themselves, and the action of the scalar product matrix $Q$.  Note that the
+final expressions for the update do not contain the basis matrix $E$ itself
+since this matrix is not known in general.  Also note that $\tilde{q} =
+{}\tilde{B}Q\tilde{s}$ is just the coefficients from the output of the action
+of $q = B s$ and the remaining operations involving $Q$ which are $\tilde{s}^T
+Q\tilde{q}$ and $\tilde{s}^T Q\tilde{q}$ are simply applications of the scalar
+products $<s,q>$ and $<y,y>$ and therefore no direct access the the $Q$
+operator is needed here.  However, note that applying the ``natural''
+representation of $B$ does require
+
+
+  What this means is that code that currently
+implements an explicit BFGS update should only need minor modifications in
+order to work correctly for non-Euclidean scalar products.
+
+\subsubsection*{Implicit BFGS matrix representation}
+
+
+
+
+\subsubsection{Inequality constraints}
+
+\subsection{Summary}
+
+Here we have presented an approach to looking at non-Euclidean scalar product
+spaces that deals in very strightforward terms using the simple concepts of
+linear algebra.  The idea is to first look at all algorithms assuming
+Euclidean vector spaces and explicit vectors and then to substitute in the
+basis representation for non-Euclidean vector spaces.  After this
+substitution, one then tries to manipulate the expression to come up with the
+building blocks of scalar products and linear operators and only considers the
+explicit represntation and manipulation of the vector coefficients.  The
