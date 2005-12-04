@@ -129,8 +129,6 @@ namespace TSFExtended
      */
     LinearOperator<Scalar> inverse(const LinearSolver<Scalar>& solver = LinearSolver<Scalar>()) const ;
 
-    /** Operator composition */
-    LinearOperator<Scalar> operator*(const LinearOperator<Scalar>& other) const ;
 
     /** Operator sum */
     LinearOperator<Scalar> operator+(const LinearOperator<Scalar>& other) const ;
@@ -176,6 +174,7 @@ namespace TSFExtended
 
   private:
   };
+
 }
 
 

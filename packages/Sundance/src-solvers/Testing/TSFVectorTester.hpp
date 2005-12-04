@@ -55,7 +55,7 @@ namespace TSFExtended
 
     /** */
     VectorTester(const VectorSpace<Scalar>& space,
-		 const TestSpecifier<Scalar>& spec);
+                 const TestSpecifier<Scalar>& spec);
 
     /** */
     bool runAllTests() const ;
@@ -92,7 +92,7 @@ namespace TSFExtended
   template <class Scalar> 
   inline VectorTester<Scalar>
   ::VectorTester(const VectorSpace<Scalar>& space,
-		   const TestSpecifier<Scalar>& spec)
+                 const TestSpecifier<Scalar>& spec)
     : spec_(spec), space_(space)
   {;}
 
@@ -138,25 +138,27 @@ namespace TSFExtended
         randomizeVec(b);
         randomizeVec(c);
 
-	/* do the operation with member functions */
-	x = a + b + c;
+        /* do the operation with member functions */
+        x = a + b ;
 
-	/* do the operation elementwise */
-	int low = space_.lowestLocallyOwnedIndex();
-	int high = low + space_.numLocalElements();
+        /* do the operation with member functions */
 
-	for (int i=low; i<high; i++)
-	  {
-	    double a_i = a.getElement(i);
-	    double b_i = b.getElement(i);
-	    double c_i = c.getElement(i);
-	    y.setElement(i, a_i + b_i + c_i);
-	  }
+        /* do the operation elementwise */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
+
+        for (int i=low; i<high; i++)
+          {
+            double a_i = a.getElement(i);
+            double b_i = b.getElement(i);
+            double c_i = c.getElement(i);
+            y.setElement(i, a_i + b_i );
+          }
 	
-	double err = (x-y).normInf();
+        double err = (x-y).normInf();
 
-	cerr << "|sum error|=" << err << endl;
-	if (err > spec_.errorTol())
+        cerr << "|sum error|=" << err << endl;
+        if (err > spec_.errorTol())
           {
             cerr << "vector sum test FAILED: tol = " 
                  << spec_.errorTol() << endl;
@@ -188,31 +190,38 @@ namespace TSFExtended
 
         Vector<Scalar> a = space_.createMember();
 	
-	/* we will load a vector with a_i = i, and then do
-	 * the sum of all elements. If done correctly, the sum will equal 
-	 * N*(N+1)*(2N+1)/6.
-	 */
-	int low = space_.lowestLocallyOwnedIndex();
-	int high = low + space_.numLocalElements();
-	int N = space_.dim();
+        /* we will load a vector with a_i = i, and then do
+         * the sum of all elements. If done correctly, the sum will equal 
+         * N*(N+1)*(2N+1)/6.
+         */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
+        int N = space_.dim();
 
-	for (int i=low; i<high; i++)
-	  {
-	    a.setElement(i, i);
-	  }
+        for (int i=low; i<high; i++)
+          {
+            a.setElement(i, i);
+          }
+        cerr << "a = " << endl << a << endl;
+        Vector<double> b = a.copy();
+        b = b.dotStar(a);
 
-	double sum = 0.0;
-	for (int i=low; i<high; i++)
-	  {
-	    sum += i * a.getElement(i);
-	  }
+        double sum = 0.0;
+        for (int i=low; i<high; i++)
+          {
+            cerr << i << " " << a.getElement(i) << " " << i*a.getElement(i)
+                 << endl;
+            sum += i * a.getElement(i);
+          }
 	
-	double thyraSum = Thyra::sum(*(a.ptr()));
+        double thyraSum = Thyra::sum(*(b.ptr()));
+        cerr << "thyra sum = " << sum << endl;
+        cerr << "thyra sum = " << thyraSum << endl;
 
-	double err = ::fabs(sum - thyraSum);
+        double err = ::fabs(sum - thyraSum);
 
-	cerr << "|setElement error|=" << err << endl;
-	if (err > spec_.errorTol())
+        cerr << "|setElement error|=" << err << endl;
+        if (err > spec_.errorTol())
           {
             cerr << "vector setElement test FAILED: tol = " 
                  << spec_.errorTol() << endl;
@@ -252,24 +261,24 @@ namespace TSFExtended
         randomizeVec(b);
 
 
-	/* do the operation with member functions */
-	x = a.dotStar(b);
+        /* do the operation with member functions */
+        x = a.dotStar(b);
 
-	/* do the operation elementwise */
-	int low = space_.lowestLocallyOwnedIndex();
-	int high = low + space_.numLocalElements();
+        /* do the operation elementwise */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
 
-	for (int i=low; i<high; i++)
-	  {
-	    double a_i = a.getElement(i);
-	    double b_i = b.getElement(i);
-	    y.setElement(i, a_i * b_i);
-	  }
+        for (int i=low; i<high; i++)
+          {
+            double a_i = a.getElement(i);
+            double b_i = b.getElement(i);
+            y.setElement(i, a_i * b_i);
+          }
 	
-	double err = (x-y).normInf();
+        double err = (x-y).normInf();
 
-	cerr << "|dotStar error|=" << err << endl;
-	if (err > spec_.errorTol())
+        cerr << "|dotStar error|=" << err << endl;
+        if (err > spec_.errorTol())
           {
             cerr << "vector dotStar test FAILED: tol = " 
                  << spec_.errorTol() << endl;
@@ -308,24 +317,24 @@ namespace TSFExtended
         randomizeVec(b);
 
 
-	/* do the operation with member functions */
-	x = a.dotSlash(b);
+        /* do the operation with member functions */
+        x = a.dotSlash(b);
 
-	/* do the operation elementwise */
-	int low = space_.lowestLocallyOwnedIndex();
-	int high = low + space_.numLocalElements();
+        /* do the operation elementwise */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
 
-	for (int i=low; i<high; i++)
-	  {
-	    double a_i = a.getElement(i);
-	    double b_i = b.getElement(i);
-	    y.setElement(i, a_i / b_i);
-	  }
+        for (int i=low; i<high; i++)
+          {
+            double a_i = a.getElement(i);
+            double b_i = b.getElement(i);
+            y.setElement(i, a_i / b_i);
+          }
 	
-	double err = (x-y).normInf();
+        double err = (x-y).normInf();
 
-	cerr << "|dotSlash error|=" << err << endl;
-	if (err > spec_.errorTol())
+        cerr << "|dotSlash error|=" << err << endl;
+        if (err > spec_.errorTol())
           {
             cerr << "vector dotSlash test FAILED: tol = " 
                  << spec_.errorTol() << endl;
@@ -362,23 +371,23 @@ namespace TSFExtended
         randomizeVec(a);
 
 
-	/* do the operation with member functions */
-	x = 3.14*a;
+        /* do the operation with member functions */
+        x = 3.14*a;
 
-	/* do the operation elementwise */
-	int low = space_.lowestLocallyOwnedIndex();
-	int high = low + space_.numLocalElements();
+        /* do the operation elementwise */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
 
-	for (int i=low; i<high; i++)
-	  {
-	    double a_i = a.getElement(i);
-	    y.setElement(i, 3.14*a_i);
-	  }
+        for (int i=low; i<high; i++)
+          {
+            double a_i = a.getElement(i);
+            y.setElement(i, 3.14*a_i);
+          }
 	
-	double err = (x-y).normInf();
+        double err = (x-y).normInf();
 
-	cerr << "|scalarMult error|=" << err << endl;
-	if (err > spec_.errorTol())
+        cerr << "|scalarMult error|=" << err << endl;
+        if (err > spec_.errorTol())
           {
             cerr << "vector scalarMult test FAILED: tol = " 
                  << spec_.errorTol() << endl;
@@ -416,24 +425,24 @@ namespace TSFExtended
         randomizeVec(b);
 
 
-	/* do the operation with member functions */
-	x = 3.14*a + 1.4*b;
+        /* do the operation with member functions */
+        x = 3.14*a + 1.4*b;
 
-	/* do the operation elementwise */
-	int low = space_.lowestLocallyOwnedIndex();
-	int high = low + space_.numLocalElements();
+        /* do the operation elementwise */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
 
-	for (int i=low; i<high; i++)
-	  {
-	    double a_i = a.getElement(i);
-	    double b_i = b.getElement(i);
-	    y.setElement(i, 3.14*a_i + 1.4*b_i);
-	  }
+        for (int i=low; i<high; i++)
+          {
+            double a_i = a.getElement(i);
+            double b_i = b.getElement(i);
+            y.setElement(i, 3.14*a_i + 1.4*b_i);
+          }
 	
-	double err = (x-y).normInf();
+        double err = (x-y).normInf();
 
-	cerr << "|overloadedUpdate error|=" << err << endl;
-	if (err > spec_.errorTol())
+        cerr << "|overloadedUpdate error|=" << err << endl;
+        if (err > spec_.errorTol())
           {
             cerr << "vector overloadedUpdate test FAILED: tol = " 
                  << spec_.errorTol() << endl;

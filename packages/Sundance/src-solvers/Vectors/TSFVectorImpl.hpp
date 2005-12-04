@@ -131,8 +131,8 @@ Vector<Scalar>& Vector<Scalar>::acceptCopyOf(const Vector<Scalar>& x)
     TimeMonitor t(*opTimer());
     if (p==0) 
       {
-	Vector<Scalar> me = space().createMember();
-	this->ptr() = me.ptr();
+        Vector<Scalar> me = x.space().createMember();
+        this->ptr() = me.ptr();
       }
     Thyra::assign(p, *px);
   }

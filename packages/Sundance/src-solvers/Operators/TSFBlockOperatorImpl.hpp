@@ -154,7 +154,7 @@ namespace TSFExtended
         RefCountPtr<RowAccessibleOp<Scalar> > raOp 
           = rcp_dynamic_cast<RowAccessibleOp<Scalar> >(this->getBlock(blockRow, i));
         raOp->getRow(rowInBlock,localInd, localVal);
-        for (int j = 0; j < localInd.size(); j++)
+        for (unsigned int j = 0; j < localInd.size(); j++)
           {
             indices.append(localInd[j] + offset);
             values.append(localVal[j]);

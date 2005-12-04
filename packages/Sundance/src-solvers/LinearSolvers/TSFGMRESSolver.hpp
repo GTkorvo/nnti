@@ -39,6 +39,7 @@
 namespace TSFExtended
 {
   using namespace Teuchos;
+
   /**
    *
    */

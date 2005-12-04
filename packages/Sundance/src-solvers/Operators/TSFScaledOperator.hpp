@@ -99,7 +99,7 @@ namespace TSFExtended
 		Teuchos::Array<Scalar>& values) const
     {
       op_.getRow(k, indices, values);
-      for (int i = 0; i < indices.size(); i++)
+      for (unsigned int i = 0; i < indices.size(); i++)
 	{
 	  values[i] *= scale_;
 	}

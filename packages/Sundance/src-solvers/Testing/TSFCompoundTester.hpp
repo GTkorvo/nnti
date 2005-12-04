@@ -32,7 +32,7 @@
 
 #include "TSFLinearOperator.hpp"
 #include "TSFScaledOperator.hpp"
-#include "Thyra_TestSpecifier.hpp"
+#include "TSFTesterBase.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 
 using namespace TSFExtended;
@@ -45,7 +45,7 @@ namespace TSFExtended
 
   /** */
   template <class Scalar>
-  class CompoundTester
+  class CompoundTester : public TesterBase<Scalar>
   {
   public:
     /** \brief Local typedef for promoted scalar magnitude */
@@ -70,11 +70,9 @@ namespace TSFExtended
     /** */
     bool scaledTest() const ;
 
+
   private:
 
-    /** */
-    void randomizeVec(Vector<Scalar>& x) const ;
-    
     LinearOperator<Scalar> A_;
 
     LinearOperator<Scalar> B_;
@@ -94,7 +92,8 @@ namespace TSFExtended
                    const TestSpecifier<Scalar>& sumSpec,
                    const TestSpecifier<Scalar>& composedSpec,
                    const TestSpecifier<Scalar>& scaledSpec)
-    : A_(A),
+    : TesterBase<Scalar>(), 
+      A_(A),
       B_(B),
       sumSpec_(sumSpec),
       composedSpec_(composedSpec),
@@ -112,15 +111,6 @@ namespace TSFExtended
     pass = scaledTest() && pass;
 
     return pass;
-  }
-
-  template <class Scalar> 
-  inline void CompoundTester<Scalar>
-  ::randomizeVec(Vector<Scalar>& x) const
-  {
-    typedef Teuchos::ScalarTraits<Scalar> ST;
-    Thyra::randomize(Scalar(-ST::one()),Scalar(+ST::one()),x.ptr().get());
-    
   }
 
   template <class Scalar> 
@@ -142,26 +132,13 @@ namespace TSFExtended
         ScalarMag err = (y1 - y2).norm2();
 
         cerr << "|y1-y2| = " << err << endl;
-        if (err > sumSpec_.errorTol())
-          {
-            cerr << "operator addition test FAILED: tol = " 
-                 << sumSpec_.errorTol() << endl;
-            return false;
-          }
-        else if (err > sumSpec_.warningTol())
-          {
-            cerr << "WARNING: operator addition test could not beat tol = " 
-                 << sumSpec_.warningTol() << endl;
-          }
+        
+        return checkTest(sumSpec_, err, "operator addition");
       }
-    else
-      {
-        cerr << "skipping operator addition test..." << endl;
-      }
-    cerr << "operator addition test PASSED: tol = " 
-         << sumSpec_.errorTol() << endl;
+    cerr << "skipping operator addition test..." << endl;
     return true;
   }
+
 
   template <class Scalar> 
   inline bool CompoundTester<Scalar>
@@ -184,24 +161,9 @@ namespace TSFExtended
         ScalarMag err = (y1 - y3).norm2();
 
         cerr << "|y1-y3| = " << err << endl;
-        if (err > composedSpec_.errorTol())
-          {
-            cerr << "operator composition test FAILED: tol = " 
-                 << composedSpec_.errorTol() << endl;
-            return false;
-          }
-        else if (err > composedSpec_.warningTol())
-          {
-            cerr << "WARNING: operator composition test could not beat tol = " 
-                 << composedSpec_.warningTol() << endl;
-          }
+        return checkTest(composedSpec_, err, "operator composition");
       }
-    else
-      {
-        cerr << "skipping operator composition test..." << endl;
-      }
-    cerr << "operator composition test PASSED: tol = " 
-         << composedSpec_.errorTol() << endl;
+    cerr << "skipping operator composition test..." << endl;
     return true;
   }
 
@@ -228,24 +190,9 @@ namespace TSFExtended
         ScalarMag err = (y1 - y3).norm2();
 
         cerr << "|y1-y3| = " << err << endl;
-        if (err > scaledSpec_.errorTol())
-          {
-            cerr << "operator scaling test FAILED: tol = " 
-                 << scaledSpec_.errorTol() << endl;
-            return false;
-          }
-        else if (err > scaledSpec_.warningTol())
-          {
-            cerr << "WARNING: operator scaling test could not beat tol = " 
-                 << scaledSpec_.warningTol() << endl;
-          }
+        return checkTest(composedSpec_, err, "operator scaling");
       }
-    else
-      {
-        cerr << "skipping operator scaling test..." << endl;
-      }
-    cerr << "operator scaling test PASSED: tol = " 
-         << scaledSpec_.errorTol() << endl;
+    cerr << "skipping operator scaling test..." << endl;
     return true;
   }
 

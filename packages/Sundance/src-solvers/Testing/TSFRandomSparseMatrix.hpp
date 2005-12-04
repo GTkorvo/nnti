@@ -109,7 +109,7 @@ namespace TSFExtended
     int numLocalCols = colDimension / nProc;
     int numLocalRows = rowDimension / nProc;
     int lowestLocalRow = numLocalRows * rank;
-    int highestLocalRow = numLocalRows * (rank+1) - 1;
+
     int lowestLocalCol = numLocalCols * rank;
     int highestLocalCol = numLocalCols * (rank+1) - 1;
 
@@ -157,7 +157,7 @@ namespace TSFExtended
         int row = lowestLocalRow + i;
         const Array<int>& cols = colIndices[i];
         Array<Scalar> colVals(cols.size());
-        for (int j=0; j<cols.size(); j++)
+        for (unsigned int j=0; j<cols.size(); j++)
           {
             colVals[j] = ScalarTraits<Scalar>::random();
           }

@@ -32,6 +32,7 @@
 #include "TSFConfigDefs.hpp"
 #include "TSFVectorDecl.hpp"
 #include "TSFLinearOperatorDecl.hpp"
+#include "Teuchos_ScalarTraits.hpp"
 
 
 #ifndef DOXYGEN_DEVELOPER_ONLY
@@ -39,50 +40,86 @@
 namespace TSFExtendedOps
 {
   /** 
-   * 
+   *
    */
-  enum LCSign {LCAdd = 1, LCSubtract = -1};
-
-  template <class Scalar>
+  template <class Scalar> 
   class ConvertibleToVector
   {
   public:
-    virtual ~ConvertibleToVector();
-    /** */
-    virtual TSFExtended::Vector<Scalar> eval() const = 0 ;
 
     /** */
-    Scalar operator*(const ConvertibleToVector<Scalar>& other) const ;
+    virtual Vector<Scalar> eval() const = 0 ;
 
     /** */
-    Scalar norm1() const ;
+    VectorSpace<Scalar> space() const {return eval().space();}
+
+    /** Return the dimension of the vector  */
+    int dim() const {return eval().dim();} 
+
+    /** 
+     * Create a new vector that is a copy of this vector 
+     */
+    Vector<Scalar> copy() const {return eval().copy();}
+
+    /** 
+     * Element-by-element product (Matlab dot-star operator)
+     */
+    Vector<Scalar> dotStar(const Vector<Scalar>& other) const 
+    {return eval().dotStar(other);}
+
+    /** 
+     * Element-by-element division (Matlab dot-slash operator)
+     */
+    Vector<Scalar> dotSlash(const Vector<Scalar>& other) const 
+    {return eval().dotSlash(other);}
+
+    /** 
+     * Return element-by-element reciprocal as a new vector
+     */
+    Vector<Scalar> reciprocal() const {return reciprocal();}
+
+    /** 
+     * Return element-by-element absolute value as a new vector
+     */
+    Vector<Scalar> abs() const {return abs();} 
 
     /** */
-    Scalar norm2() const ;
+    Scalar norm2() const {return eval().norm2();}
 
     /** */
-    Scalar normInf() const ;
+    Scalar norm1() const {return eval().norm1();}
+
+    /** */
+    Scalar normInf() const {return eval().normInf();}
+
+    /** */
+    Scalar max() const {return eval().max();}
+
+    /** */
+    Scalar min() const {return eval().min();}
+
+    /** Return the min element and the corresponding index */
+    Scalar min(int& index)const {return eval().min(index);}
+
+    /** Return the max element and the corresponding index */
+    Scalar max(int& index)const {return eval().max(index);}
   };
 
   /** 
-   * Class LC1 holds the information required to perform
-   * a 1-term linear combination, i.e., a scalar times a vector
-   * or an operator times a vectir.
+   * Class OpTimesLC holds an operator times something convertible to a vector
    */
-  template <class Scalar>
-  class LC1 : public ConvertibleToVector<Scalar>
+  template <class Scalar, class Node>
+  class OpTimesLC : public ConvertibleToVector<Scalar>
   {
   public:
-    /** */
-    LC1(const TSFExtended::Vector<Scalar>& x) ;
 
     /** */
-    LC1(const Scalar& alpha, const TSFExtended::Vector<Scalar>& x);
+    OpTimesLC(const Scalar& alpha, const Node& x);
 
     /** */
-    LC1(const Scalar& alpha,
-        const TSFExtended::LinearOperator<Scalar>& op, 
-        const TSFExtended::Vector<Scalar>& x);
+    OpTimesLC(const Scalar& alpha,
+              const TSFExtended::LinearOperator<Scalar>& op, 
+              const Node& x);
 
     /** 
      * Evaluate the term into the argument vector, overwriting 
@@ -100,30 +137,45 @@ namespace TSFExtendedOps
     bool containsVector(const Thyra::VectorBase<Scalar>* vec) const ;
 
     /** */
-    LC1<Scalar> operator*(const Scalar& beta) const ;
+    const LinearOperator<Scalar>& op() const {return op_;}
+
+    /** */
+    const Scalar& alpha() const {return alpha_;}
+
+    /** */
+    const Node& node() const {return x_;}
+
+    /** */
+    Scalar norm2() const {return eval().norm2();}
+
+    /** */
+    Scalar normInf() const {return eval().normInf();}
     
   private:
     Scalar alpha_;
-
+    
     TSFExtended::LinearOperator<Scalar> op_;
 
-    TSFExtended::Vector<Scalar> x_;
+    Node x_;
+
+    /** */
+    static Scalar one() {return Teuchos::ScalarTraits<Scalar>::one();}
+
+    /** */
+    static Scalar zero() {return Teuchos::ScalarTraits<Scalar>::zero();}
   };
 
 
   /**
-   * Class LCN contains an n-term linear combination. 
+   * Class LC2 is a 2-term linear combination
    */
   template <class Scalar, class Node1, class Node2>
-  class LCN : public ConvertibleToVector<Scalar>
+  class LC2  : public ConvertibleToVector<Scalar>
   {
-    public:
+  public:
     /** */
-    LCN(const Node1& x1, const Node2& x2, LCSign sign = LCAdd);
+    LC2(const Node1& x1, const Node2& x2, LCSign sign = LCAdd);
 
-    /** */
-    operator TSFExtended::Vector<Scalar>() const ;
-      
     /** */
     void evalInto(TSFExtended::Vector<Scalar>& result) const ;
 
@@ -136,13 +188,20 @@ namespace TSFExtendedOps
 
     /** */
     bool containsVector(const Thyra::VectorBase<Scalar>* vec) const ;
+
     
-    private:
+  private:
     Node1 x1_;
 
     Node2 x2_;
 
     LCSign sign_;
+
+    /** */
+    static Scalar one() {return Teuchos::ScalarTraits<Scalar>::one();}
+
+    /** */
+    static Scalar zero() {return Teuchos::ScalarTraits<Scalar>::zero();}
   };
 
 }

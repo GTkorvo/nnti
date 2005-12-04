@@ -86,7 +86,7 @@ namespace TSFExtended
     const RefCountPtr<PointerType>& ptr() const {return ptr_;}
 
     /** Read-write access to the underlying smart pointer. */
-    RefCountPtr<PointerType> ptr() {return ptr_;}
+    RefCountPtr<PointerType>& ptr() {return ptr_;}
 
     /** 
      * Print to a stream using the Printable interface. 

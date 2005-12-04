@@ -66,9 +66,9 @@ namespace TSFExtended
                 bool subtraction = false)
       : left_(left.ptr()), 
         right_(right.ptr()), 
-        subtraction_(subtraction),
         domain_(left.domain()),
-        range_(left.range())
+        range_(left.range()),
+        subtraction_(subtraction)
     {
       TEST_FOR_EXCEPTION(domain_ != right_.domain() || range_ != right.range(),
                          runtime_error,
@@ -195,7 +195,7 @@ namespace TSFExtended
                  Teuchos::Array<int>& ind,
                  Teuchos::Array<double>& val) const
     {
-      if (k >= ind.size())
+      if (k >= (int) ind.size())
         {
           LR = -1;
         }
@@ -215,10 +215,10 @@ namespace TSFExtended
               Teuchos::Array<double>& val) const
     {
       bool flip = false;
-      for (int j = 0; j < ind.size();  j++)
+      for (unsigned int j = 0; j < ind.size();  j++)
         {
           flip = false;
-          for (int i = ind.size()-1; i > j; i--)
+          for (unsigned int i = ind.size()-1; i > j; i--)
             {
               if (ind[i] < ind[i-1])
                 {

@@ -234,7 +234,7 @@ namespace Thyra
         for (int j=0; j<numBlockCols(); j++)
           {
             if (blocks_[i][j].get() == 0) continue;
-            bool rowHasNonzeroBlock = false;
+            rowHasNonzeroBlock = true;
             blocks_[i][j]->apply(conj, *(X.getBlock(j).get()),
                                  tmp.get(), ScalarTraits<RangeScalar>::one(),
                                  ScalarTraits<RangeScalar>::one());
@@ -279,7 +279,7 @@ namespace Thyra
         for (int j=0; j<numBlockRows(); j++)
           {
             if (blocks_[j][i].get() == 0) continue;
-            bool colHasNonzeroBlock = false;
+            colHasNonzeroBlock = true;
             blocks_[j][i]->applyTranspose(conj, *(X.getBlock(j).get()),
                                           tmp.get(), 
                                           ScalarTraits<DomainScalar>::one(),

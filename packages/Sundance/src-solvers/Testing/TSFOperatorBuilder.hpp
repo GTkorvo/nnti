@@ -57,6 +57,8 @@ namespace TSFExtended
     OperatorBuilder(const VectorSpace<Scalar>& domain,
                     const VectorSpace<Scalar>& range,
                     const VectorType<Scalar>& vecType);
+    /** */
+    virtual ~OperatorBuilder(){;}
 
     /** */
     const VectorType<Scalar>& vecType() const {return vecType_;}

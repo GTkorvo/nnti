@@ -38,6 +38,7 @@
 #include "TSFTransposeOperator.hpp"
 #include "TSFComposedOperator.hpp"
 #include "TSFSumOperator.hpp"
+#include "TSFScaledOperator.hpp"
 #include "TSFBlockOperatorDecl.hpp"
 #include "TSFVectorType.hpp"
 
@@ -150,14 +151,7 @@ LinearOperator<Scalar>::inverse(const LinearSolver<Scalar>& solver) const
   return op;
 }
 
-//=======================================================================
-template <class Scalar>
-LinearOperator<Scalar> 
-LinearOperator<Scalar>::operator*(const LinearOperator<Scalar>& other) const
-{
-  LinearOperator<Scalar> op = new ComposedOperator<Scalar>(*this, other);
-  return op;
-}
+
 
 //=======================================================================
 template <class Scalar>
@@ -249,10 +243,6 @@ LinearOperator<Scalar> LinearOperator<Scalar>::getBlock(const int &i,
   RefCountPtr<LinearOpBase<Scalar, Scalar> > block = b->getBlock(i, j);
   return rcp_dynamic_cast<SingleScalarTypeOpBase<Scalar> >(block);
 }
-
-
-
-
 
 
 

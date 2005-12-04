@@ -42,14 +42,17 @@
 
 namespace TSFExtendedOps
 {
-  template <class Scalar, class Node1, class Node2> class LCN;
-  template <class Scalar> class LC1;
+  template <class Scalar, class Node1, class Node2> class LC2;
+  template <class Scalar, class Node> class OpTimesLC; 
+  /** 
+   * 
+   */
+  enum LCSign {LCAdd = 1, LCSubtract = -1};
 }
 
 namespace TSFExtended
 {
   using Thyra::Index;
-
 
   /** 
    * User-level vector class. 
@@ -100,21 +103,21 @@ namespace TSFExtended
     HANDLE_CTORS(Vector<Scalar>, Thyra::VectorBase<Scalar>);
 
 #ifndef DOXYGEN_DEVELOPER_ONLY
-    /** Construct a vector from a 1-term LC */
-    Vector(const TSFExtendedOps::LC1<Scalar>& x);
-
-    /** Construct a vector from a N-term LC */
+    /** Construct a vector from a 2-term LC */
     template<class Node1, class Node2>
-    Vector(const TSFExtendedOps::LCN<Scalar, Node1, Node2>& x);
+    Vector(const TSFExtendedOps::LC2<Scalar, Node1, Node2>& x);
 
-    /** Assign a one-term linear combination 
-     * (i.e., a scalar times a vector) 
-     * to this vector */
-    Vector& operator=(const TSFExtendedOps::LC1<Scalar>& x);
+    /** Construct a vector from an operator times a linear combination */
+    template<class Node>
+    Vector(const TSFExtendedOps::OpTimesLC<Scalar, Node>& x);
 
     /** Assign a linear combination of vectors to this vector */
     template<class Node1, class Node2>
-    Vector& operator=(const TSFExtendedOps::LCN<Scalar, Node1, Node2>& x);
+    Vector& operator=(const TSFExtendedOps::LC2<Scalar, Node1, Node2>& x);
+
+    /** Assign a scaled linear combination to this vector */
+    template<class Node>
+    Vector& operator=(const TSFExtendedOps::OpTimesLC<Scalar, Node>& x);
 #endif
     //@}
 
@@ -333,9 +336,19 @@ namespace TSFExtended
       return rtn;
     }
 
-    Vector<Scalar> eval() const {return *this;}
 
 
+    Vector<Scalar> eval() const {return copy();}
+
+    bool containsVector(const Thyra::VectorBase<Scalar>* vec) const
+    {return ptr().get()==vec;}
+
+    void evalInto(Vector<Scalar>& other) const {other.acceptCopyOf(*this);}
+
+    void addInto(Vector<Scalar>& other, TSFExtendedOps::LCSign sign) const
+    {
+      other.update(sign, *this);
+    }
 
     /** Describe the vector  */
     string description() const
@@ -375,9 +388,9 @@ namespace TSFExtended
       
 #endif
   };
-
-  
 }
+
+
 
 
 #endif
