@@ -187,49 +187,155 @@ is extremely challenging and application dependent. Finally,
 \label{sec:theory}
 %-----------------------------------------------------------------------------
 
-{\bf Ken, this section is very incomplete... you can rewrite it entirely if
-  necessary... We should add more references}
+{\bf Ken, this section is still needs references}
+
+Direct solvers use Gaussian elimination (\ref{eq:ldu}) followed by a
+forward solve (\ref{eq:forward}) and a backsolve (\ref{eq:backward})
+to solve a system of linear equations (\ref{eq:orig_eq}):
+
+\begin{eqnarray}
+  \label{eq:orig_eq}
+  A X = B \\ 
+  \label{eq:ldu}
+  PAQ = LDU \\
+  \label{eq:forward}
+  LX_1 = PB \\
+  \label{eq:backward}
+  UQ^{-1}X = D^{-1}X_1  
+\end{eqnarray}
+
+Where: $P$ and $Q$ are permutations.  $L$ and $U$ are lower and upper triangular, respectively.  And, $D$ is diagonal (often the identity matrix).  
+
+If $A$ is sparse, $L$ and $U$
+are typically sparse, though they may have some fill-in, i.e. non-zero entries which are zero in
+$PAQ$.  
+
+In a typical solver for an unsymmetric matrix, the column permuation,
+$Q$ is chosen to minimze fill-in, while $P$, the row permutation, is
+chosen to maintain numerical stability.  
+
+Most direct solvers perform Gaussian elimination ($LU$ decompostion) in
+two phases.  Symbolic factorization analyzes the matrix (typically
+looking only at the structure or non-zero pattern of the matrix).
+Numeric factorization uses the information from the symbolic
+factorization phase, usually including a fill reducing column permutation, 
+to improve performance.  
+
+The performance of a sparse direct solver depends on the underlying
+matrix, computer, application, algorithms, and libraries as well as
+the code and how it is compiled.  Although a solver designed for an
+unsymmetric matrix will work on symmetric matrices, solvers designed
+for symmetric matrices will typically be faster on symmetric matrices.
+Codes designed for shared memory computers will not run on distributed
+memory computers.  Codes designed for distributed memory computers can
+work on shared memory computers, but cannot take full advantage of the
+shared memory architecture.  Many applications require repeated solves
+with little or no difference in the matrix between solves.  Some
+algortihms are able to take advantage of the similarity in matrices
+between solves.
+
+The different charasteristics of the matrices which users wish to
+solve impact sparse direct solvers.  Some matrices are symmetric in both
+structure and data $A_{i,j} = A_{j,i}$ for all $i$ and $j$.  Some of
+the symmetric matrices are positive definite, SPD, and require no
+pivoting.  The most efficient algorithms for symmetric and SPD
+matrices will not work on other matrices.  Some are symmetric in
+structure, $A_{i,j} == 0$ iff $A_{j,i} == 0$, or nearly so.
+Algorithms that maintain symmetry typically outperform others on
+matrices with symmetric or nearly symmetric structure.  Some have many
+columns and/or rows that are structurally identical, or nearly so.
+Aggregating nearly identical rows and columns into blocks allows more
+efficient BLAS3 routines to be used.  Some can be factored with little
+fill-in, others require significant fill-in.  Matrices that can be
+factored with litte fill-in and have few identical or nearly identical
+rows and columns are best handled by a low overhead code that does not
+use the BLAS.  Some matrices are banded or nearly so, allowing the use
+of a banded solver.  Matrices that have a non-trivial reduction to
+block triangular form can be solved more quickly, often dramatically,
+by a solver that includes reduction to block triangular form.  No sparse direct solver is best for all types of matrices.  
+
+Some sparse direct solvers are designed for single processor
+computers, some are designed for shared memory computers and others
+are designed for distributed memory computers.  Solvers designed for
+single processor computers can, if they use the BLAS for much of their
+computation will achieve some speedup on shared memory computers.
+Likewise, solvers designed for distributed memory computers can work
+on shared memory computers using an MPI interface.  However, only
+codes designed for shared memory computers can take advantage of the
+shared memory architecture.  But, codes designed for shared memory
+computers will not work on distributed memory computers.  No single
+code will provide optimal performance across all architectures.
+
+Some solvers handle certain application requirements better than
+others.  Most aplications perform a series of solves, possibly
+involving similar or even identical matrices.  If the matrix does not
+change between two consequetive solves, the symbolic and numeric
+factorization phases need not be performed for each solve.  If the
+structure of the matrix does not change between consequetive solves,
+but the values do, the numeric factorization must be performed for
+each solve, though the symbolic factorization phase need not be.  If
+the matrix values change, but the change is modest, the pivot order
+may not need to change.  Therefore, some applications care most about
+the execution time of the solve phase, while others are most sensitive
+to the execution time of the factorization (numeric and/or symbolic).
+Some applications require more accuracy than others.
 
 
-\include{Theory}
-\bigskip
+\subsection{Solver strategies}
 
-A direct solution method is a variant of Gaussian elimination. For sparse
-matrices, this fills in many elements in the band in which the nonzero
-elements are contained. In order to minimize the storage needed for the
-factorization, research has focuses on finding suitable orderings of the
-matrix. Several strategies have been proposed in the literature:
-\begin{itemize}
-\item For a symmetric, positive definite matrix, pivots can be found on the
-diagonal, therefore one can limit to symmetric permutations (i.e, $P^T A P$)
-  performed solely for reduction of the fill-in.
-\item Another reason to perform pivoting is numerical stability. A two-part
-approach is popular where the matrix is first ordered, using for instance a
-multiple minimum-degree ordering, but during the factorization additional tow
-permutations may be performed for partial pivoting in the pivot column.
-\item Given a permutation of the matrix, there are still several factorization
-algorithms popssible. Many packages focus on finding applications for level-3
-BLAS kernels in the factorization phase.
-\end{itemize}
-Instead of trying to minimize the fill-in by reducing the bandwith, one can
-try a direct approach, as done in nested-dissection ordering methods. These
-methods recursively split the matrix graph in two, thus separating it into
-disjount subgraphs. They rely on the existence of a separator, that is, a set
-of nodes such that the other nodes fall into two mutually unconnected graphs.
-The assumption is that the fill from factoring these subgraphs before
-factoring the separator is likely to be lower than for other orderings. An
-advantage of dissection-type methods is that they lead to large number of
-uncoupled matrix problems, which can be easily parallelized. However, the
-higher levels in the tree quickly have fewer nodes than the number of
-available processors, and they are the larger subproblems  in the algorithm,
-  complicating the parallelization of the method.
+Sparse direct solvers are complex codes which use a number of
+strategies to reduce memory and time costs.  Pivoting for numerical
+stability makes it impossible to know in advance how the algorithm
+will proceed and requires a flexible data structure.  This is
+particularly difficult for distributed memory codes.  
 
-Another set of techniques is given by {\sl multifrontal methods}, proposed
-in~\cite{duff83multifrontal}. Here, a tree a multiple fronts--that is, nodes
-allowing simultaneous, independent elimination, is created. Proceeding from
-one node to the nodes connected to it give a {\sl front} and a frontal matrix.
-Frontal matrices quickly become dense, so high performance can be reached
-handling them.
+Solvers use different strategies to reduce fill-in.  Many ordering
+methods exist to reduce fill-in and most sparse direct solvers support
+more than one.  Some solvers will even choose an ordering method for
+you.  There are multiple variations on minimum degree orderings: AMD,
+COLAMD, MMD and variants within these.  Graph partitioning algorithms
+result in bi-section or multi-section based orderings.  Solvers
+designed for symmetric and nearly symmetric matrices typically use
+symmetric permutations to maintain symmetry.  No single ordering
+method s best for all matrices, nor has a heuristic been found that
+consistently chooses the best ordering.
+
+Since pivoting adds complexity which significantly increase execution
+time, many solvers offer options to reduce the cost of pivoting.  Some
+equilibrate the rows and columns of the matrix to improve diagonal
+dominance.  Many codes will consider the effect on execution time when
+choosing a pivot, accepting some loss of numerical stability.
+Typically this just means accepting the diagonal pivot if it is within
+some threshold of the best available, but some codes will take the
+predicted effect on execution into consideration when choosing an off
+diagonal pivot.
+
+Some codes combine similar rows and columns into blocks to improve
+locality and allow high performing BLAS to be called.  Some combine
+only rows and columns that are identical, others will accept minor
+differences in the rows and columns that they treat as blocks.  Such
+blocking can reduce the cost of symbolic factorization as well.
+
+The three common methods for exploiting parallelism are the
+multi-frontal method, coalescing  similar 
+columns into blocks and calling a parallel dense solver 
+to factor the final block of the matrix.
+
+Some solvers allow incomplete factorizations which ignore small
+elements in the original matrix and/or the $L$ and $U$ factors.
+This feature is used primarily by users seeking a
+preconditioner for an iterative method.
+
+Some solvers use iterative refinement to improve accuracy.  Iterative
+refinement is used most often with codes that do not perform full partial pivoting.  
+
+Given the differences in matrix, computer, application, algorithms,
+and libraries, it is unlikely that a single sparse direct solver will 
+outperform all others across all usages.  
+
+
+
+
 
 %-----------------------------------------------------------------------------
 \section{Review of Considered Direct Solver Libraries}
