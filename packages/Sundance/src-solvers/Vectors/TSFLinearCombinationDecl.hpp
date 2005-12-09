@@ -46,6 +46,8 @@ namespace TSFExtendedOps
   class ConvertibleToVector
   {
   public:
+    /** */
+    virtual ~ConvertibleToVector(){;}
 
     /** */
     virtual Vector<Scalar> eval() const = 0 ;
@@ -114,6 +116,9 @@ namespace TSFExtendedOps
   public:
 
     /** */
+    virtual ~OpTimesLC(){;}
+
+    /** */
     OpTimesLC(const Scalar& alpha, const Node& x);
 
     /** */
@@ -173,6 +178,9 @@ namespace TSFExtendedOps
   class LC2  : public ConvertibleToVector<Scalar>
   {
   public:
+    /** */
+    virtual ~LC2(){;}
+
     /** */
     LC2(const Node1& x1, const Node2& x2, LCSign sign = LCAdd);
 

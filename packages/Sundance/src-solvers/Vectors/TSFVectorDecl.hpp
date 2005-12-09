@@ -341,7 +341,7 @@ namespace TSFExtended
     Vector<Scalar> eval() const {return copy();}
 
     bool containsVector(const Thyra::VectorBase<Scalar>* vec) const
-    {return ptr().get()==vec;}
+    {return this->ptr().get()==vec;}
 
     void evalInto(Vector<Scalar>& other) const {other.acceptCopyOf(*this);}
 

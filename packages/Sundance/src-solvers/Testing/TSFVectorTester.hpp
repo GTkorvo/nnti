@@ -131,12 +131,10 @@ namespace TSFExtended
 
         Vector<Scalar> a = space_.createMember();
         Vector<Scalar> b = space_.createMember();
-        Vector<Scalar> c = space_.createMember();
         Vector<Scalar> x = space_.createMember();
         Vector<Scalar> y = space_.createMember();
         randomizeVec(a);
         randomizeVec(b);
-        randomizeVec(c);
 
         /* do the operation with member functions */
         x = a + b ;
@@ -151,7 +149,6 @@ namespace TSFExtended
           {
             double a_i = a.getElement(i);
             double b_i = b.getElement(i);
-            double c_i = c.getElement(i);
             y.setElement(i, a_i + b_i );
           }
 	
@@ -196,7 +193,6 @@ namespace TSFExtended
          */
         int low = space_.lowestLocallyOwnedIndex();
         int high = low + space_.numLocalElements();
-        int N = space_.dim();
 
         for (int i=low; i<high; i++)
           {

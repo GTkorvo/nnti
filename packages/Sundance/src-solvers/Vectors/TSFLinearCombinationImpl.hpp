@@ -155,6 +155,8 @@ namespace TSFExtended
 {
   using TSFExtendedOps::OpTimesLC;
   using TSFExtendedOps::LC2;
+  using TSFExtendedOps::LCAdd;
+  using TSFExtendedOps::LCSubtract;
 
   /* ------------------------ global methods ----------------------- */
 
