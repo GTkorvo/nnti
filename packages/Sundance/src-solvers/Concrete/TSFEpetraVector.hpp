@@ -31,6 +31,7 @@
 #include "TSFPrintable.hpp"
 #include "Thyra_MPIVectorStdDecl.hpp"
 #include "TSFIndexableVector.hpp"
+#include "TSFRawDataAccessibleVector.hpp"
 #include "TSFVectorDecl.hpp"
 #include "Epetra_FEVector.h"
 #include "Epetra_Vector.h"
@@ -49,6 +50,7 @@ namespace TSFExtended
   class EpetraVector : public MPIVectorStd<double>,
                        public Handleable<VectorBase<double> >,
                        public IndexableVector<double>,
+                       public RawDataAccessibleVector<double>,
                        public Printable
   {
   public:
@@ -70,6 +72,14 @@ namespace TSFExtended
 
     /** writable access to the element at the given global index */
     virtual double& operator[](Index globalIndex) ;
+    //@}
+
+    /** \name Raw data access interface */
+    //@{
+    /** */
+    virtual const double* dataPtr() const {return &(epetraVec_->operator[](0));}
+    /** */
+    virtual double* dataPtr() {return &(epetraVec_->operator[](0));}
     //@}
 
     /** \name LoadableVector interface */

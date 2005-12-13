@@ -44,6 +44,9 @@
 #np# Make sure to list all source files in one of the following categories.
 
 VECTORS_H = \
+	$(srcdir)/Vectors/RTOpPack_SUNDIALS_Helpers.hpp \
+	$(srcdir)/Vectors/RTOpPack_SUNDIALS_Ops.hpp \
+	$(srcdir)/Vectors/Thyra_SUNDIALS_Ops.hpp \
 	$(srcdir)/Vectors/TSFGhostImporter.hpp \
 	$(srcdir)/Vectors/TSFGhostView.hpp \
 	$(srcdir)/Vectors/TSFIndexableVector.hpp\
@@ -58,6 +61,7 @@ VECTORS_H = \
 	$(srcdir)/Vectors/TSFProductVector.hpp\
 	$(srcdir)/Vectors/TSFProductVectorDecl.hpp\
 	$(srcdir)/Vectors/TSFProductVectorImpl.hpp\
+	$(srcdir)/Vectors/TSFRawDataAccessibleVector.hpp\
 	$(srcdir)/Vectors/TSFVector.hpp \
 	$(srcdir)/Vectors/TSFVectorDecl.hpp \
 	$(srcdir)/Vectors/TSFVectorImpl.hpp \
@@ -177,6 +181,7 @@ NONLINEARSOLVERS = \
 TESTING_H = \
 	$(srcdir)/Testing/Thyra_TestSpecifier.hpp \
 	$(srcdir)/Testing/TSFCompoundTester.hpp \
+	$(srcdir)/Testing/TSFHeatOperator1D.hpp \
 	$(srcdir)/Testing/TSFLinearCombinationTester.hpp \
 	$(srcdir)/Testing/TSFMatrixLaplacian1D.hpp \
 	$(srcdir)/Testing/TSFOperatorBuilder.hpp \
@@ -187,7 +192,17 @@ TESTING_H = \
 
 
 TESTING = \
-	$(srcdir)/Testing/TSFMatrixLaplacian1D.cpp
+	$(srcdir)/Testing/TSFHeatOperator1D.cpp \
+	$(srcdir)/Testing/TSFMatrixLaplacian1D.cpp 
+
+
+
+
+ADAPTORS_H = \
+	$(srcdir)/Adapters/TSF_NVector.hpp 
+
+ADAPTORS = \
+	$(srcdir)/Adapters/TSF_NVector.cpp 
 
 
 
@@ -239,6 +254,7 @@ TSF_EXTENDED_H = \
 	$(LINEARSOLVERS_H) \
 	$(NONLINEARSOLVERS_H) \
 	$(TESTING_H) \
+	$(ADAPTORS_H) \
 	$(PRECONDITIONERS_H) 
 
 #np# replace new_package with the name of the package being autotool'ed here
@@ -250,6 +266,7 @@ libTSFExtended_a_SOURCES = \
 	$(LINEARSOLVERS) \
 	$(NONLINEARSOLVERS) \
 	$(TESTING) \
+	$(ADAPTORS) \
 	$(PRECONDITIONERS) 
 
 

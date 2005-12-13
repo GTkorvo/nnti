@@ -32,6 +32,7 @@
 
 #include "TSFVector.hpp"
 #include "Thyra_TestSpecifier.hpp"
+#include "Thyra_SUNDIALS_Ops.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 
 using namespace TSFExtended;
@@ -55,7 +56,8 @@ namespace TSFExtended
 
     /** */
     VectorTester(const VectorSpace<Scalar>& space,
-                 const TestSpecifier<Scalar>& spec);
+                 const TestSpecifier<Scalar>& spec,
+                 const Teuchos::MPIComm& comm = Teuchos::MPIComm::world());
 
     /** */
     bool runAllTests() const ;
@@ -78,6 +80,21 @@ namespace TSFExtended
     /** */
     bool overloadedUpdateTest() const ;
 
+    /** */
+    bool reciprocalTest() const ;
+
+    /** */
+    bool minQuotientTest() const ;
+
+    /** */
+    bool addScalarTest() const ;
+
+    /** */
+    bool compareToScalarTest() const ;
+
+    /** */
+    bool constraintMaskTest() const ;
+
   private:
 
     /** */
@@ -87,13 +104,16 @@ namespace TSFExtended
 
     VectorSpace<Scalar> space_;
 
+    Teuchos::MPIComm comm_;
+
   };
 
   template <class Scalar> 
   inline VectorTester<Scalar>
   ::VectorTester(const VectorSpace<Scalar>& space,
-                 const TestSpecifier<Scalar>& spec)
-    : spec_(spec), space_(space)
+                 const TestSpecifier<Scalar>& spec,
+                 const Teuchos::MPIComm& comm)
+    : spec_(spec), space_(space), comm_(comm)
   {;}
 
   template <class Scalar> 
@@ -108,6 +128,10 @@ namespace TSFExtended
     pass = dotSlashTest() && pass;
     pass = scalarMultTest() && pass;
     pass = overloadedUpdateTest() && pass;
+    pass = reciprocalTest() && pass;
+    pass = minQuotientTest() && pass;
+    pass = constraintMaskTest() && pass;
+    pass = compareToScalarTest() && pass;
 
     return pass;
   }
@@ -209,9 +233,15 @@ namespace TSFExtended
                  << endl;
             sum += i * a.getElement(i);
           }
+
+#ifdef HAVE_MPI
+        Scalar localSum = sum;
+        MPI_Allreduce( (void*) &localSum, (void*) &sum, 
+                       1, MPI_DOUBLE, MPI_SUM, comm_.getComm());
+#endif
 	
         double thyraSum = Thyra::sum(*(b.ptr()));
-        cerr << "thyra sum = " << sum << endl;
+        cerr << "elemwise sum = " << sum << endl;
         cerr << "thyra sum = " << thyraSum << endl;
 
         double err = ::fabs(sum - thyraSum);
@@ -460,7 +490,280 @@ namespace TSFExtended
     return true;
   }
 
+  template <class Scalar> 
+  inline bool VectorTester<Scalar>
+  ::reciprocalTest() const 
+  {
+    if (spec_.doTest())
+      {
+        cerr << "running vector reciprocal test..." << endl;
+
+        Vector<Scalar> a = space_.createMember();
+        randomizeVec(a);
+
+        Vector<Scalar> y = space_.createMember();
+
+        /* load the operation elementwise */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
+
+        int denomsAreOK = true;
+        for (int i=low; i<high; i++)
+          {
+            double a_i = a.getElement(i);
+            if (a_i != Teuchos::ScalarTraits<Scalar>::zero()) 
+              {
+                y.setElement(i, 1.0/a_i );
+              }
+            else
+              {
+                denomsAreOK=false;
+                y.setElement(i, a_i);
+              }
+          }
+        
+        Vector<Scalar> x = space_.createMember();
+        int tDenomsAreOK = Thyra::VInvTest(*(a.ptr()), x.ptr().get());
+        double err = (x - y).norm2();
+
+#ifdef HAVE_MPI
+        int localDenomsAreOK = denomsAreOK;
+        MPI_Allreduce( (void*) &localDenomsAreOK, (void*) &denomsAreOK, 
+                       1, MPI_INT, MPI_LAND, comm_.getComm());
+#endif
+
+        cerr << "|reciprocal error|=" << err << endl;
+        if (err > spec_.errorTol())
+          {
+            cerr << "vector reciprocal test FAILED: tol = " 
+                 << spec_.errorTol() << endl;
+            return false;
+          }
+        else if (tDenomsAreOK != denomsAreOK)
+          {
+            cerr << "vector reciprocal test FAILED: trilinosDenomsOK="
+                 << tDenomsAreOK << ", denomsOK=" << denomsAreOK << endl;
+            return false;
+          }
+        else if (err > spec_.warningTol())
+          {
+            cerr << "WARNING: vector reciprocal test could not beat tol = " 
+                 << spec_.warningTol() << endl;
+          }
+      }
+    else
+      {
+        cerr << "skipping vector reciprocal test..." << endl;
+      }
+    cerr << "vector reciprocal test PASSED: tol = " 
+         << spec_.errorTol() << endl;
+    return true;
+  }
+
+  template <class Scalar> 
+  inline bool VectorTester<Scalar>
+  ::minQuotientTest() const 
+  {
+    if (spec_.doTest())
+      {
+        cerr << "running vector minQuotient test..." << endl;
+
+        Vector<Scalar> a = space_.createMember();
+        Vector<Scalar> b = space_.createMember();
+
+        randomizeVec(a);
+        randomizeVec(b);
+
+        /* perform the operation elementwise */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
+
+        double minQLocal = Teuchos::ScalarTraits<Scalar>::rmax();
+        for (int i=low; i<high; i++)
+          {
+            double a_i = a.getElement(i);
+            double b_i = b.getElement(i);
+            if (b_i != Teuchos::ScalarTraits<Scalar>::zero())
+              {
+                double q = a_i/b_i;
+                if (q < minQLocal) minQLocal = q;
+              }
+          }
+
+        double minQ = minQLocal;
+        comm_.allReduce((void*) &minQLocal, (void*) &minQ, 1, Teuchos::MPIComm::DOUBLE,
+                        Teuchos::MPIComm::MIN);
+	
+
+        double tMinQ = Thyra::VMinQuotient(*(a.ptr()), *(b.ptr()));
+        cerr << "trilinos minQ = " << tMinQ << endl;
+        cerr << "elemwise minQ = " << minQ << endl;
+        double err = fabs(minQ - tMinQ);
+        
+        cerr << "min quotient error=" << err << endl;
+        if (err > spec_.errorTol())
+          {
+            cerr << "min quotient test FAILED: tol = " 
+                 << spec_.errorTol() << endl;
+            return false;
+          }
+        else if (err > spec_.warningTol())
+          {
+            cerr << "WARNING: min quotient test could not beat tol = " 
+                 << spec_.warningTol() << endl;
+          }
+      }
+    else
+      {
+        cerr << "skipping min quotient test..." << endl;
+      }
+    cerr << "min quotient test PASSED: tol = " 
+         << spec_.errorTol() << endl;
+    return true;
+  }
+
+
+
+  template <class Scalar> 
+  inline bool VectorTester<Scalar>
+  ::constraintMaskTest() const 
+  {
+    if (spec_.doTest())
+      {
+        cerr << "running vector constraintMask test..." << endl;
+
+        Vector<Scalar> a = space_.createMember();
+        Vector<Scalar> c = space_.createMember();
+        randomizeVec(a);
+
+        Vector<Scalar> y = space_.createMember();
+        Scalar zero = Teuchos::ScalarTraits<Scalar>::zero();
+
+        /* load the operation elementwise */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
+
+        int allFeasible = true;
+        for (int i=low; i<high; i++)
+          {
+            int feasible = true;
+            double a_i = a.getElement(i);
+            switch(i%4)
+              {
+              case 0:
+                c.setElement(i, -2.0);
+                feasible = a_i < zero;
+                break;
+              case 1:
+                c.setElement(i, -1.0);
+                feasible = a_i <= zero;
+                break;
+              case 2:
+                c.setElement(i, 1.0);
+                feasible = a_i > zero;
+                break;
+              case 3:
+                c.setElement(i, 2.0);
+                feasible = a_i >= zero;
+                break;
+              default:
+                TEST_FOR_EXCEPTION(true, logic_error, "impossible!");
+              }
+            y.setElement(i, (Scalar) !feasible);
+            allFeasible = allFeasible && feasible;
+          }
+	
+        Vector<Scalar> m = space_.createMember();
+        int tAllFeasible = Thyra::VConstrMask(*(a.ptr()), *(c.ptr()), m.ptr().get());
+        double err = (m - y).norm2();
+
+#ifdef HAVE_MPI
+        int localAllFeas = allFeasible;
+        cerr << "local all feas=" << localAllFeas << endl;
+        MPI_Allreduce( (void*) &localAllFeas, (void*) &allFeasible, 
+                       1, MPI_INT, MPI_LAND, comm_.getComm());
+        cerr << "globalal all feas=" << allFeasible << endl;
+#endif
+
+        cerr << "|constraintMask error|=" << err << endl;
+        if (err > spec_.errorTol())
+          {
+            cerr << "vector constraintMask test FAILED: tol = " 
+                 << spec_.errorTol() << endl;
+            return false;
+          }
+        else if (allFeasible != tAllFeasible)
+          {
+            cerr << "vector constraintMask test FAILED: trilinosFeas="
+                 << tAllFeasible << ", feas=" << allFeasible << endl;
+            return false;
+          }
+        else if (err > spec_.warningTol())
+          {
+            cerr << "WARNING: vector constraintMask test could not beat tol = " 
+                 << spec_.warningTol() << endl;
+          }
+      }
+    else
+      {
+        cerr << "skipping vector constraintMask test..." << endl;
+      }
+    cerr << "vector constraintMask test PASSED: tol = " 
+         << spec_.errorTol() << endl;
+    return true;
+  }
   
-  
+
+  template <class Scalar> 
+  inline bool VectorTester<Scalar>
+  ::compareToScalarTest() const 
+  {
+    if (spec_.doTest())
+      {
+        cerr << "running vector compare-to-scalar test..." << endl;
+
+        Vector<Scalar> a = space_.createMember();
+        Vector<Scalar> x = space_.createMember();
+        Vector<Scalar> y = space_.createMember();
+        randomizeVec(a);
+
+        /* do the operation with member functions */
+        Scalar s = 0.5;
+        Thyra::VCompare(s, *(a.ptr()), x.ptr().get());
+
+        /* do the operation elementwise */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
+
+        for (int i=low; i<high; i++)
+          {
+            double a_i = a.getElement(i);
+            y.setElement(i, fabs(a_i) >= s );
+          }
+	
+        double err = (x-y).normInf();
+
+        cerr << "|compare-to-scalar error|=" << err << endl;
+        if (err > spec_.errorTol())
+          {
+            cerr << "vector compare-to-scalar test FAILED: tol = " 
+                 << spec_.errorTol() << endl;
+            return false;
+          }
+        else if (err > spec_.warningTol())
+          {
+            cerr << "WARNING: vector compare-to-scalar test could not beat tol = " 
+                 << spec_.warningTol() << endl;
+          }
+	
+      }
+    else
+      {
+        cerr << "skipping vector compare-to-scalar test..." << endl;
+      }
+    cerr << "vector compare-to-scalar test PASSED: tol = " 
+         << spec_.errorTol() << endl;
+    return true;
+  }
 }
 #endif

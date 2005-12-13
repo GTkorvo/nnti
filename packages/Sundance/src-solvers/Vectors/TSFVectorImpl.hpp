@@ -31,6 +31,7 @@
 
 
 #include "TSFVectorSpaceDecl.hpp"
+#include "Thyra_SUNDIALS_Ops.hpp"
 
 using namespace TSFExtended;
 
@@ -41,7 +42,7 @@ void Vector<Scalar>::setBlock(int i, const Vector<Scalar>& v)
   Thyra::ProductVector<Scalar>* pv = 
     dynamic_cast<Thyra::ProductVector<Scalar>* >(this->ptr().get());
   TEST_FOR_EXCEPTION(pv == 0, runtime_error,
-		     "vector is not a product vector");
+                     "vector is not a product vector");
   Thyra::assign(pv->getBlock(i).get(), *(v.ptr().get()));
 }  
 
@@ -54,7 +55,7 @@ Vector<Scalar> Vector<Scalar>::getBlock(int i) const
   Thyra::ProductVector<Scalar>* pv = 
     dynamic_cast <Thyra::ProductVector<Scalar>* >(this->ptr().get());
   TEST_FOR_EXCEPTION(pv == 0, runtime_error,
-		     "vector is not a product vector");
+                     "vector is not a product vector");
   return pv->getBlock(i);
 }
 
@@ -68,8 +69,8 @@ const AccessibleVector<Scalar>* Vector<Scalar>::castToAccessible() const
   const AccessibleVector<Scalar>* av 
     = dynamic_cast<const AccessibleVector<Scalar>*>(this->ptr().get());
   TEST_FOR_EXCEPTION(av==0, std::runtime_error,
-		     "Attempted to cast non-accessible vector "
-		     << *this << " to an AccessibleVector");
+                     "Attempted to cast non-accessible vector "
+                     << *this << " to an AccessibleVector");
   return av;
 }
 
@@ -80,10 +81,38 @@ LoadableVector<Scalar>* Vector<Scalar>::castToLoadable()
   LoadableVector<Scalar>* lv 
     = dynamic_cast<LoadableVector<Scalar>*>(this->ptr().get());
   TEST_FOR_EXCEPTION(lv==0, std::runtime_error,
-		     "Attempted to cast non-loadable vector "
-		     << *this << " to a LoadableVector");
+                     "Attempted to cast non-loadable vector "
+                     << *this << " to a LoadableVector");
   return lv;
 }
+
+
+//===========================================================================
+template <class Scalar> inline 
+const RawDataAccessibleVector<Scalar>* Vector<Scalar>::castToRawDataAccessible() const
+{
+  const RawDataAccessibleVector<Scalar>* av 
+    = dynamic_cast<const RawDataAccessibleVector<Scalar>*>(this->ptr().get());
+  TEST_FOR_EXCEPTION(av==0, std::runtime_error,
+                     "Attempted to cast non-accessible vector "
+                     << *this << " to an RawDataAccessibleVector");
+  return av;
+}
+
+//===========================================================================
+template <class Scalar> inline 
+RawDataAccessibleVector<Scalar>* Vector<Scalar>::castToRawDataAccessible() 
+{
+  RawDataAccessibleVector<Scalar>* av 
+    = dynamic_cast<RawDataAccessibleVector<Scalar>*>(this->ptr().get());
+  TEST_FOR_EXCEPTION(av==0, std::runtime_error,
+                     "Attempted to cast non-accessible vector "
+                     << *this << " to an RawDataAccessibleVector");
+  return av;
+}
+
+
+
 
 
 
@@ -102,11 +131,10 @@ Vector<Scalar>& Vector<Scalar>::scale(const Scalar& alpha)
 
 
 
-
 //===========================================================================
 template <class Scalar> inline 
 Vector<Scalar>& Vector<Scalar>::update(const Scalar& alpha, 
-				       const Vector<Scalar>& x)
+                                       const Vector<Scalar>& x)
 {
   Thyra::VectorBase<Scalar>* p = this->ptr().get();
   const Thyra::VectorBase<Scalar>* px = x.ptr().get();
@@ -184,6 +212,7 @@ Vector<Scalar> Vector<Scalar>::dotSlash(const Vector<Scalar>& other) const
 
 
 
+
 //===========================================================================
 template <class Scalar> inline 
 Vector<Scalar> Vector<Scalar>::abs() const 
@@ -213,8 +242,6 @@ Vector<Scalar> Vector<Scalar>::reciprocal() const
   }
   return rtn;
 }
-
-
 
 
 
@@ -253,8 +280,8 @@ Vector<Scalar>& Vector<Scalar>::reciprocal()
 //===========================================================================
 template <class Scalar> inline
 Vector<Scalar>& Vector<Scalar>::update(const Scalar& alpha, 
-				       const Vector<Scalar>& x, 
-				       const Scalar& gamma)
+                                       const Vector<Scalar>& x, 
+                                       const Scalar& gamma)
 {
   Thyra::VectorBase<Scalar>* p = this->ptr().get();
   const Thyra::VectorBase<Scalar>* px = x.ptr().get();
@@ -271,10 +298,10 @@ Vector<Scalar>& Vector<Scalar>::update(const Scalar& alpha,
 //===========================================================================
 template <class Scalar> inline
 Vector<Scalar>& Vector<Scalar>::update(const Scalar& alpha, 
-				       const Vector<Scalar>& x, 
-				       const Scalar& beta, 
-				       const Vector<Scalar>& y, 
-				       const Scalar& gamma)
+                                       const Vector<Scalar>& x, 
+                                       const Scalar& beta, 
+                                       const Vector<Scalar>& y, 
+                                       const Scalar& gamma)
 {
   Thyra::VectorBase<Scalar>* p = this->ptr().get();
   const Thyra::VectorBase<Scalar>* px = x.ptr().get();
@@ -344,7 +371,7 @@ Scalar Vector<Scalar>::norm2(const Vector<Scalar>& weights) const
 {
   TimeMonitor t(*opTimer());
     
-  return Thyra::norm_2(*(weights.ptr()) ,*(this->ptr)());
+  return Thyra::norm_2(*(weights.ptr()), *(this->ptr)());
 }
 
 
@@ -393,6 +420,9 @@ void Vector<Scalar>::setToConstant(const Scalar& alpha)
     
   Thyra::assign(this->ptr().get(), alpha);
 }
+
+
+
   
 
 //===========================================================================
@@ -474,23 +504,23 @@ void Vector<Scalar>::setElement(Index globalIndex, const Scalar& value)
   if (p != 0)
     {
       RefCountPtr<const Thyra::ProductVectorSpaceBase<Scalar> > ps
-	= p->productSpace();
+        = p->productSpace();
       int k = 0;
       for (int i = 0; i < ps->numBlocks(); i++)
-	{
-	  RefCountPtr<Thyra::VectorBase<Scalar> > vec_i = p->getBlock(i);
-	  RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > vs_i 
-	    = p->productSpace()->getBlock(i);
-	  int len = vec_i->space()->dim();
-	  if (globalIndex < k + len )
-	    {
-	      Vector<Scalar> vv(vec_i);
-	      int globalIndexWithinBlock = globalIndex - k;
-	      vv.setElement(globalIndexWithinBlock, value);
-	      break;
-	    }
-	  k += len;
-	}
+        {
+          RefCountPtr<Thyra::VectorBase<Scalar> > vec_i = p->getBlock(i);
+          RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > vs_i 
+            = p->productSpace()->getBlock(i);
+          int len = vec_i->space()->dim();
+          if (globalIndex < k + len )
+            {
+              Vector<Scalar> vv(vec_i);
+              int globalIndexWithinBlock = globalIndex - k;
+              vv.setElement(globalIndexWithinBlock, value);
+              break;
+            }
+          k += len;
+        }
     }
   else
     {
@@ -507,31 +537,27 @@ void Vector<Scalar>::addToElement(Index globalIndex, const Scalar& value)
   if (p != 0)
     {
       RefCountPtr<const Thyra::ProductVectorSpaceBase<Scalar> > ps
-	= p->productSpace();
+        = p->productSpace();
       int k = 0;
       for (int i = 0; i < ps->numBlocks(); i++)
-	{
-	  RefCountPtr<Thyra::VectorBase<Scalar> > vec_i = p->getBlock(i);
-	  int len = vec_i->space()->dim();
-	  if (globalIndex < k + len )
-	    {
-	      Vector<Scalar> vv(vec_i);
-	      int globalIndexWithinBlock = globalIndex - k;
-	      vv.addToElement(globalIndexWithinBlock, value);
-	      break;
-	    }
-	  k += len;
-	}
+        {
+          RefCountPtr<Thyra::VectorBase<Scalar> > vec_i = p->getBlock(i);
+          int len = vec_i->space()->dim();
+          if (globalIndex < k + len )
+            {
+              Vector<Scalar> vv(vec_i);
+              int globalIndexWithinBlock = globalIndex - k;
+              vv.addToElement(globalIndexWithinBlock, value);
+              break;
+            }
+          k += len;
+        }
     }
   else
     {
       castToLoadable()->addToElement(globalIndex, value);
     }
 }
-
-
-
-
 
 
 

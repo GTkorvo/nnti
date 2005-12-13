@@ -36,6 +36,7 @@
 #include "TSFVectorSpaceDecl.hpp"
 #include "TSFLoadableVector.hpp"
 #include "TSFAccessibleVector.hpp"
+#include "TSFRawDataAccessibleVector.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Thyra_ProductVector.hpp"
@@ -167,7 +168,7 @@ namespace TSFExtended
      * \endcode
      */
     Vector<Scalar>& update(const Scalar& alpha, const Vector<Scalar>& x, 
-			   const Scalar& gamma);
+                           const Scalar& gamma);
     /** 
      * Add two scaled vectors to this vector times a constant:
      * \code
@@ -175,8 +176,8 @@ namespace TSFExtended
      * \endcode
      */
     Vector<Scalar>& update(const Scalar& alpha, const Vector<Scalar>& x, 
-			   const Scalar& beta, const Vector<Scalar>& y, 
-			   const Scalar& gamma);
+                           const Scalar& beta, const Vector<Scalar>& y, 
+                           const Scalar& gamma);
 
     /** 
      * Copy the values of another vector into this vector
@@ -205,6 +206,7 @@ namespace TSFExtended
      * Return element-by-element reciprocal as a new vector
      */
     Vector<Scalar> reciprocal() const ;
+
 
     /** 
      * Return element-by-element absolute value as a new vector
@@ -250,7 +252,8 @@ namespace TSFExtended
     /**
      * Compute the weighted 2-norm of this vector
      */
-    Scalar norm2(const Vector<Scalar>& weights) const ;      
+    Scalar norm2(const Vector<Scalar>& weights) const ;    
+
 
     /**
      * Compute the infinity-norm of this vector
@@ -302,17 +305,17 @@ namespace TSFExtended
 
     /** set a group of elements */
     void setElements(size_t numElems, const Index* globalIndices, 
-		     const Scalar* values) 
+                     const Scalar* values) 
     {castToLoadable()->setElements(numElems, globalIndices, values);}
 
     /** add to a group of elements */
     void addToElements(size_t numElems, const Index* globalIndices, 
-		       const Scalar* values)
+                       const Scalar* values)
     {castToLoadable()->addToElements(numElems, globalIndices, values);}
 
     /** Do whatever finalization steps are needed by the implementation,
-	for instance, synchronizing border elements. The default implementation
-	* is a no-op. */
+        for instance, synchronizing border elements. The default implementation
+        * is a no-op. */
     void finalizeAssembly() {castToLoadable()->finalizeAssembly();}
     //@}
 
@@ -324,19 +327,32 @@ namespace TSFExtended
 
     /** Get a batch of elements */
     void getElements(const Index* globalIndices, int numElems,
-		     vector<Scalar>& elems) const 
+                     vector<Scalar>& elems) const 
     {castToAccessible()->getElements(globalIndices, numElems, elems);}
     //@}
-      
+
+    /** \name Raw data access interface */
+    //@{
+    /** */
+    const Scalar* dataPtr() const 
+    {return castToRawDataAccessible()->dataPtr();}
+
+    /** */
+    Scalar* dataPtr() 
+    {return castToRawDataAccessible()->dataPtr();}
+    //@}
+
+
+
     /** Get a stopwtach for timing vector operations */
     static RefCountPtr<Time>& opTimer()
     {
       static RefCountPtr<Time> rtn 
-	= TimeMonitor::getNewTimer("Low-level vector operations");
+        = TimeMonitor::getNewTimer("Low-level vector operations");
       return rtn;
     }
 
-
+    
 
     Vector<Scalar> eval() const {return copy();}
 
@@ -383,6 +399,12 @@ namespace TSFExtended
 
     /** Cross-cast vector to a loadable vector */
     LoadableVector<Scalar>* castToLoadable()  ;
+
+    /** Cross-cast vector pointer to a raw data accessible vector */
+    const RawDataAccessibleVector<Scalar>* castToRawDataAccessible() const ;
+
+    /** Cross-cast vector to a raw data accessible vector */
+    RawDataAccessibleVector<Scalar>* castToRawDataAccessible();
 
       
       
