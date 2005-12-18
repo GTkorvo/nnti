@@ -618,6 +618,63 @@ factorization, or both, for several calls to \verb!Solve()!. If a solver does
 not require any symbolic factorization (for example, LAPACK), then the adaptor
 will not perform any operation in this method.
 
+\begin{figure}
+\begin{center}
+\fbox{ \includegraphics[width=12cm]{amesos_flowchart.eps}}
+\end{center}
+\caption{Flowchart.}
+\label{fig:flowchart}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=7cm]{amesos_and_application.eps}
+\end{center}
+\caption{Connection between a generic application and Amesos.}
+\label{fig:app}
+\end{figure}
+
+{\bf to be moved elsewhere...}
+
+We want the application  code not only to manipulate BaseSolver objects 
+(which can be done in an abstract way by using virtual member function and
+ polymorphism), but also to create them without referring to the derived
+classes. 
+A very convenient and extensible way to create (abstract) solver objects is
+through {\sl object factories}. Object factories are a programming
+tool (see~\cite{alexandrescu04modern}) that implement a sort of ``virtual
+constructor,'' in the sense that one can instantiate a generic derived object
+while still working with abstract types.
+
+The factory class simply looks like:
+\begin{verbatim}
+class Factory
+{
+  public:
+    BaseSolver* Create(string type, <params>)
+    {
+      if (type == "solver1")
+        return(new Solver1(<params>));
+      else 
+        ...
+    }
+};
+\end{verbatim}
+where \verb!<params>! is a generic list of parameters, and \verb!Solver1! is a
+BaseObject derived class. 
+
+Of course, one could in principle directly construct the required BaseSolver
+objects in the application code; however, this would mean:
+\begin{itemize}
+\item it collects in one application source file knowledge about
+Amesos-supported solvers;
+\item most Amesos header files have to be included, and this automatically
+includes the header files of the supported libraries;
+\item it is hard to extend and maintain up-to-date.
+\end{itemize}
+
+
+
 %------------------------------------------------------------------------- 
 \section{A Concrete Implementation}
 \label{sec:concrete}
@@ -955,6 +1012,21 @@ The results were obtained on a G4 1.67 GHz with 1 GByte of RAM.}
 \label{tab:interface}
 \end{center}
 \end{table}
+
+{\bf to be moved somewhere else...}
+
+We have preseted a set of reusable components... These generic components bring their
+users the well-known benefits of libraries. Because of their high-level,
+      generic components make it possible to connect intricate and complex
+      application codes to complex linear solver libraries, in a simple and
+      easy-to-maintain way. The elements we have used are: object-oriented
+      design, a little bit of  generic programming, and C++. These elements
+      are combined to achieve a high rate of reuse, for both the point of view
+      of the application and of the supported libraries. For the application,
+      the small amount of required code makes it very convenient to use
+      Amesos. The generality of the components make them applicable to a vast
+      range of applications.
+      
 
 %-----------------------------------------------------------------------------%
 \bibliographystyle{acmtrans}
