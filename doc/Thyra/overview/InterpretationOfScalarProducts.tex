@@ -1,5 +1,57 @@
 \section{Linear Algebra Interpretation of Non-Euclidean Scalar Products and Vector Spaces}
 
+The majority of numerical algorithms in journal articles and text books are
+written in terms of Euclidean vector spaces where dot products are used for
+the scalar inner product.  For example, the inner loop of a linear conjugate
+gradient (CG) method for solving $A x = b$, where $r_0 = b - A x_0$, is often
+written in Euclidean, or dot-product, form as
+%
+\begin{eqnarray*}
+\rho & = & r^H r \\
+p & = & r + \frac{\rho}{\rho_{\mbox{old}}} p \\
+q & = & A p \\
+\alpha & = & \frac{\rho_k}{p^H q} \\
+x & = & x + \alpha p \\
+r & = & r - \alpha q \\
+\rho_{\mbox{old}} & = & \rho
+\end{eqnarray*}
+%
+An experienced mathematician will look at the above algorithm an immediately
+write down the generalized form by replacing the dot products $r^H r$ and $p^H
+q$ with the scalar products $<r,r>$ and $<p,q>$ and restate the inner loop of
+the above CG algorithm as
+%
+\begin{eqnarray*}
+\rho & = & <r,r> \\
+p & = & r + \frac{\rho}{\rho_{\mbox{old}}} p \\
+q & = & A p \\
+\alpha & = & \frac{\rho_k}{<p,q>} \\
+x & = & x + \alpha p \\
+r & = & r - \alpha q \\
+\rho_{\mbox{old}} & = & \rho
+\end{eqnarray*}
+%
+
+Just as with linear CG, many numerical algorithms expressed in Euclidean form
+with dot products and Euclidean norms $||.||_2$ (such as various optimization
+algorithms, stability analysis methods, time integration methods, etc.) have
+strightforward extentions to non-Euclidean vectors and vector spaces.  What we
+would like to do is have a straightforward process by which we can analyze
+many different types of existing numerical algorithms expressed in Euclidean
+form and then write out, if possible, the more general non-Euclidean form of
+these algorithms.
+
+What's the big deal in replacing dot products with scalar products?  What is
+this scalar product $<.,.>$ and what does this mean? By what justification can
+one just replace dot products like $p^H q$ with scalar products $<p,q>$?  What
+else changes due to this subtle change of replacing dot products with scalar
+products?  What does all of this buy you?  Here we seek to answer all of these
+questions in a way that a person without knowledge of functional analysis or
+other advanced mathematics can understand and appreciate.  All that we assume
+is that the reader has a basic understanding of linear algebra and a
+familiarity with multi-variable numerical algorithms like Newton's method
+[???] for nonlinear equations.
+
 Here we present a linear algebra interpretation of finite dimensional
 non-Euclidean inner product spaces and how they influence numerical algorithms
 and applications.  The goal of this treatment is to present this topic in a
@@ -8,11 +60,15 @@ will be to show the relationship between typical Euclidean-based vectors and
 vector spaces (i.e.\ where the dot product is used for the inner product and a
 linear operator is equivalent to a matrix) and non-Euclidean basis
 representations, vectors, and vector spaces (i.e.\ where the inner product is
-defined by a positive-definite matrix and a linear operator is not
-necessarily equivalent to a matrix).  What we will show is a straightforward
-way to take any numerical algorithm that is expressed in Euclidean form and
-then to analyze it for non-Euclidean vectors and spaces and see if it can be
-transformed for use with non-Euclidean spaces.
+defined by a positive-definite matrix and a linear operator is not necessarily
+equivalent to a matrix).  What we will show is a straightforward way to take
+many different types of numerical algorithms that are expressed in Euclidean
+form and then to analyze them for non-Euclidean vectors and spaces and see if
+they can be transformed for use with non-Euclidean spaces.  What we will show
+is that the expression of a numerical algorithm in a non-Euclidean space is
+essentially equivalent to performing a linear transformation of variables and
+model functions except that we do not need to actually perform the
+transformation at the model level which has many different advantages.
 
 \subsection{Introduction to vector spaces, basis representations, scalar products, and natural norms}
 
@@ -88,8 +144,7 @@ $z = E \tilde{z} = x + y = E \tilde{x} + E \tilde{y} = E ( \tilde{x} +
 Note that other types of element-wise operations on the coefficients like
 element-wise products and divisions are not equivalent to the corresponding
 operations on the vectors themselves and are hence not {}\textit{vector}
-operations.  In fact, any element-wise operation is not a {}\textit{vector}
-operation.
+operations.
 
 \subsubsection{Square, invertible basis representations}
 
