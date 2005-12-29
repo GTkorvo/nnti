@@ -112,14 +112,14 @@ of application developers, interested in solving
 Unfortunately, for (distributed) sparse linear systems there is no direct
 solve library of choice. This is in contrast with serial dense solvers, where
 one can take advantage of the widely-available suite of solvers of the LAPACK 
-library~\cite{lapack-guide}, of with distributed dense solvers, where one can
+library~\cite{lapack-guide}, and distributed dense solvers, where one can
 adopt the ScaLAPACK library~\cite{scalapack-guide}.
 
 Since no ``gold standard'' exists, application developers aiming to solve
-(\ref{eq:linear_system}) have to select one the several available libraries,
+(\ref{eq:linear_system}) have to select one of several available libraries,
   then write a custom-made interface between the selected library and
-  their application. This usually requires to store the linear system matrix using the
-  storage format required by the library, then call the correct sequence of
+  their application. This usually requires storing the linear system matrix using the
+  storage format required by the library, then calling the correct sequence of
   instructions to factorize the matrix and solve the linear system.  In our
   opinion, the approach is non-optimal for both application and library
   developers because it:
@@ -168,10 +168,13 @@ required by the supported libraries.
 
 We will present our design as a set of C++ classes. We adopted C++ because it
 supports object-oriented design, and it is relatively easy to interface
-FORTRAN77, FORTRAN90 and C libraries with C++ code. C++ is nowadays a common
+FORTRAN77, FORTRAN90 and C libraries with C++ code. C++ has become a common
 choice for developers  of scientific libraries and applications, and several
 projects have adopted C++ as the language of
 reference~\cite{heroux05trilinos}. 
+%
+%  I think that we can be more direct about our dependence on MPI here.  
+%
 As regards the model of parallel computing,
 we consider parallel architectures with distributed memory, and we suppose
 that a message passing interface (usually MPI~\cite{gropp98mpi}) is adopted.
@@ -272,11 +275,11 @@ Some sparse direct solvers are designed for single processor
 computers, some are designed for shared memory computers and others
 are designed for distributed memory computers.  Solvers designed for
 single processor computers can, if they use the BLAS for much of their
-computation will achieve some speedup on shared memory computers.
+computation, achieve some speedup on shared memory computers.
 Likewise, solvers designed for distributed memory computers can work
 on shared memory computers using an MPI interface.  However, only
 codes designed for shared memory computers can take advantage of the
-shared memory architecture.  But, codes designed for shared memory
+shared memory architecture.  Codes designed for shared memory
 computers will not work on distributed memory computers.  No single
 code will provide optimal performance across all architectures.
 
@@ -313,7 +316,7 @@ symmetric permutations to maintain symmetry.  No single ordering
 method s best for all matrices, nor has a heuristic been found that
 consistently chooses the best ordering.
 
-Since pivoting adds complexity which significantly increase execution
+Since pivoting adds complexity which significantly increases execution
 time, many solvers offer options to reduce the cost of pivoting.  Some
 equilibrate the rows and columns of the matrix to improve diagonal
 dominance.  Many codes will consider the effect on execution time when
@@ -428,13 +431,15 @@ By analyzing the projects of Table~\ref{tab:packages}, one can observe that:
 \item {\sl different programming languages are used,} even most projects are
 developed using the C language;
 
-\item {\sl different communication paradigm are used.} 
+\item {\sl different communication paradigms are used.} 
  Most of the reviewed libraries are serial, some are based on the MPI
  paradigm, others takes advantage of shared memory computers;
 
 \item {\sl different algorithms.} The underlying algorithms can be radically
 different and can therefore perform differently on different matrices and
 machines.
+
+\item {\sl different matrices.}  SPD, symmetric, and non-symmetric
 \end{itemize}
 
 \begin{figure}
