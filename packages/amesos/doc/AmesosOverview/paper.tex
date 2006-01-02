@@ -37,7 +37,7 @@ elements, and control the solution of the linear system.
 We describe a concrete implementation of the proposed interfaces, and we
 report numerical results that show that the overhead induced by the
 object-oriented design is negligible
-under certain conditions. We report examples of applications using the
+under typical conditions. We report examples of applications using the
 presented interfaces, and we comment
 on the advantages and limitation of the design.
 \end{abstract}
@@ -89,7 +89,7 @@ $A = L \, D \, U$, and the linear systems with matrices $L$, $D$ and $U$ are
 easy to solve. Generally, $L$ is a lower triangular matrix, $U$ is an
 upper triangular matrix, and $D$ is a diagonal matrix 
 (or possibly the identity matrix), and the algorithm adopted for their
-computation is some variant of the Gaussian elimination. 
+computation is some variant of Gaussian elimination. 
 The development and implementation of
 direct solvers for (\ref{eq:linear_system}) is a
 challenging task that has been a subject of research for the
@@ -105,15 +105,15 @@ within the same application. An
 incomplete list would include implicit time-marching schemes, 
 Newton-like methods, multilevel and domain decomposition preconditioners. In
 this article we focus on the {\sl usage} of direct solver libraries, and not
-on their development or analysis. The point of view is the one
+on their development or analysis. The point of view is that
 of application developers, interested in solving
 (\ref{eq:linear_system}) using state-of-the-art software libraries.  
 
-Unfortunately, for (distributed) sparse linear systems there is no direct
+Unfortunately, for (distributed) sparse linear systems there is no single direct
 solve library of choice. This is in contrast with serial dense solvers, where
 one can take advantage of the widely-available suite of solvers of the LAPACK 
 library~\cite{lapack-guide}, and distributed dense solvers, where one can
-adopt the ScaLAPACK library~\cite{scalapack-guide}.
+adopt the ScaLAPACK library~\cite{scalapack-guide} or the PLAPACK library~\cite{plapack}.
 
 Since no ``gold standard'' exists, application developers aiming to solve
 (\ref{eq:linear_system}) have to select one of several available libraries,
@@ -127,7 +127,7 @@ Since no ``gold standard'' exists, application developers aiming to solve
 
 \item 
 {\sl offers partial coverage}. Writing a custom-made interface means that only the
-targeted library will be used, while all others will be discarded.
+targeted library will be used.
 This is inconvenient because 
 it is often difficult to choose {\sl a-priori} the best library for a given
 application.
@@ -221,7 +221,7 @@ to solve a system of linear equations (\ref{eq:orig_eq}):
   UQ^{-1}X = D^{-1}X_1  
 \end{eqnarray}
 
-Where: $P$ and $Q$ are permutations.  $L$ and $U$ are lower and upper triangular, respectively.  And, $D$ is diagonal (often the identity matrix).  
+Where: $P$ and $Q$ are permutations.  $L$ and $U$ are lower and upper triangular, respectively, and, $D$ is diagonal (often the identity matrix).  
 
 If $A$ is sparse, $L$ and $U$
 are typically sparse, though they may have some fill-in, i.e. non-zero entries which are zero in
@@ -256,15 +256,15 @@ solve impact sparse direct solvers.  Some matrices are symmetric in both
 structure and data $A_{i,j} = A_{j,i}$ for all $i$ and $j$.  Some of
 the symmetric matrices are positive definite, SPD, and require no
 pivoting.  The most efficient algorithms for symmetric and SPD
-matrices will not work on other matrices.  Some are symmetric in
+matrices will not work on other matrices.  Some matrices are symmetric in
 structure, $A_{i,j} == 0$ iff $A_{j,i} == 0$, or nearly so.
 Algorithms that maintain symmetry typically outperform others on
-matrices with symmetric or nearly symmetric structure.  Some have many
+matrices with symmetric or nearly symmetric structure.  Some matrices have many
 columns and/or rows that are structurally identical, or nearly so.
 Aggregating nearly identical rows and columns into blocks allows more
-efficient BLAS3 routines to be used.  Some can be factored with little
+efficient BLAS3 routines to be used.  Some matrices can be factored with little
 fill-in, others require significant fill-in.  Matrices that can be
-factored with litte fill-in and have few identical or nearly identical
+factored with little fill-in and have few identical or nearly identical
 rows and columns are best handled by a low overhead code that does not
 use the BLAS.  Some matrices are banded or nearly so, allowing the use
 of a banded solver.  Matrices that have a non-trivial reduction to
@@ -307,13 +307,12 @@ particularly difficult for distributed memory codes.
 
 Solvers use different strategies to reduce fill-in.  Many ordering
 methods exist to reduce fill-in and most sparse direct solvers support
-more than one.  Some solvers will even choose an ordering method for
-you.  There are multiple variations on minimum degree orderings: AMD,
+more than one.  Some solvers use heuristics to choose an ordering method.  There are multiple variations on minimum degree orderings: AMD,
 COLAMD, MMD and variants within these.  Graph partitioning algorithms
 result in bi-section or multi-section based orderings.  Solvers
 designed for symmetric and nearly symmetric matrices typically use
 symmetric permutations to maintain symmetry.  No single ordering
-method s best for all matrices, nor has a heuristic been found that
+method is best for all matrices, nor has a heuristic been found that
 consistently chooses the best ordering.
 
 Since pivoting adds complexity which significantly increases execution
@@ -323,7 +322,7 @@ dominance.  Many codes will consider the effect on execution time when
 choosing a pivot, accepting some loss of numerical stability.
 Typically this just means accepting the diagonal pivot if it is within
 some threshold of the best available, but some codes will take the
-predicted effect on execution into consideration when choosing an off
+predicted effect on execution time into consideration when choosing an off
 diagonal pivot.
 
 Some codes combine similar rows and columns into blocks to improve
@@ -426,7 +425,7 @@ Y12M & $\bullet$ & -- & -- & -- & -- & -- & -- & -- & F77 & right-looking Markow
 \label{sec:design}
 %-----------------------------------------------------------------------------
 
-By analyzing the projects of Table~\ref{tab:packages}, one can observe that:
+By analyzing the projects of Table~\ref{tab:packages}, one can observe the following diffences between solvers: 
 \begin{itemize}
 \item {\sl different programming languages are used,} even most projects are
 developed using the C language;
@@ -435,11 +434,10 @@ developed using the C language;
  Most of the reviewed libraries are serial, some are based on the MPI
  paradigm, others takes advantage of shared memory computers;
 
-\item {\sl different algorithms.} The underlying algorithms can be radically
+\item {\sl different algorithms are used.} The underlying algorithms can be radically
 different and can therefore perform differently on different matrices and
 machines.
 
-\item {\sl different matrices.}  SPD, symmetric, and non-symmetric
 \end{itemize}
 
 \begin{figure}
@@ -503,8 +501,8 @@ more difficult in a production code.
   parallel.
 
 \item {\sl Efficiency:} The solution of (\ref{eq:linear_system}) must be as
-efficient as possible, using state-of-the-art algorithms. Besides, the
-overhead due to the design must be minimal.
+efficient as possible, using state-of-the-art algorithms. The
+overhead due to the interface must be minimal.
 \end{itemize}
 
 To satisfy these goals, we introduces a set of abstract classes.
@@ -962,15 +960,18 @@ function names usually do not vary from one version to the
 next, making it impossible for the linker to select the
   appropriate version of the library.
 
-\item 
-Not all interfaces can be compiled and linked at the same time. Often
-developers of direct solver libraries take advantage of other, smaller
-libraries, that offer common functionalities. Typically, this happens with
-reordering algorithms. Unfortunately,
-it is not uncommon for different solver libraries to request different
-versions of a given reordering algorithm, all codes using the same function
-names. As a result, not all the interfaces can be compiled and used at the
-same time.
+%
+%  This bug has been resolved.   I see no reason to mention it at this point.  Ken 
+%
+% \item 
+% Not all interfaces can be compiled and linked at the same time. Often
+% developers of direct solver libraries take advantage of other, smaller
+% libraries, that offer common functionalities. Typically, this happens with
+% reordering algorithms. Unfortunately,
+% it is not uncommon for different solver libraries to request different
+% versions of a given reordering algorithm, all codes using the same function
+% names. As a result, not all the interfaces can be compiled and used at the
+% same time.
 \end{itemize}
 
 %The reader might wonder why we have limited our attention to direct methods only, and
