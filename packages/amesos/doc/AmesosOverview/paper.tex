@@ -111,13 +111,12 @@ Direct solution methods are required by several numerical algorithms, even
 within the same application. An
 incomplete list would include implicit time-stepping schemes, 
 Newton-like methods, multilevel and domain decomposition preconditioners. 
-
 In contrast with serial dense solvers, where one can take advantage of the
 widely-available suite of solvers contained in the LAPACK
 library~\cite{lapack-guide}, and to distributed dense solvers, where one can
 adopt the ScaLAPACK library~\cite{scalapack-guide} or the PLAPACK
 library~\cite{alpatov97plapack}, there is no single direct solve library of
-choice for for (distributed) sparse linear systems.  Since no ``gold
+choice for (distributed) sparse linear systems.  Since no ``gold
 standard'' exists, application developers aiming to solve
 (\ref{eq:linear_system}) have to look
 for the library best optimal to their purposes. This search is affected by the following questions:
@@ -140,7 +139,7 @@ is often underestimated.  In fact, library developers often include a wide varie
 of choices, aiming to provide a powerful and comprehensive library.
 Application developers, instead, are usually not experts in the domain, and do
 not aim to become such. They often choose the code that looks easier to use and
-seems to perform reasonable. This difference of views creates a gap between
+seems to perform in a reasonable way. This difference of views creates a gap between
 the actual and potential use of mathematical software.
 Of course, a simple but inefficient library is of no use; therefore the
 ``optimal'' library will exhibit a mixture of the features outlined above.
@@ -263,7 +262,7 @@ suitable ordering and data structures for efficient factorization;
 \item[(S3)] a solve phase where the factors are used to solve the system using
 forward and backward substitution.
 \end{itemize}
-Some codes combine phases (S1) and (S2). Phase (S2) is usually requires the most
+Some codes combine phases (S1) and (S2). Phase (S2) usually requires the most
 computing time, while phase (S3) is generally one order of magniture faster.
 Phase (S0) is typical of sparse matrices:
 since $A$ is sparse, $L$ and $U$ are typically sparse, though they may have some
@@ -411,26 +410,25 @@ MATLAB      & $\bullet$ & -- & -- & -- & various & \cite{gilbert92sparse} \\
 %
 MUMPS       & $\bullet$ & D & -- & F90 & multifrontal & \cite{mumps-manual} \\
 %
-Oblio       & $\bullet$ & -- & $\bullet$ & ?? & left, right, multifrontal &
+Oblio       & $\bullet$ & -- & $\bullet$ & C++ & left, right, multifrontal &
 \cite{dobrian00oblio} \\
 %  
 PARDISO     & $\bullet$ & S & -- & C & left/right supernodal  & \cite{oskl:04-etna,sg:04-fgcs} \\
 %
-PaStiX      & $\bullet$ & D &  ?? & -- & left-looking supernodal &
-\cite{henon00pastix} \\
+%%PaStiX      & $\bullet$ & D &  ?? & -- & left-looking supernodal & \cite{henon00pastix} \\
 %
 TAUCS       & $\bullet$ & S & $\bullet$ & C & left-looking, multifrontal &
 \cite{irony04parallel,rotkin04design,rozin04locality} \\
 %
 UMFPACK     & $\bullet$ & -- & -- & C & multifrontal & \cite{umfpack-home-page} \\
 %
-SPOOLES     & $\bullet$ & S/D & -- & ?? & left-looking, multifrontal & \cite{ashcraft99spooles} \\
+SPOOLES     & $\bullet$ & S/D & -- & C & left-looking, multifrontal & \cite{ashcraft99spooles} \\
 %  
 SuperLU     & $\bullet$ & -- & -- & C & left-looking supernodal &  \cite{superlu-manual} \\
 %
 SuperLU\_DIST & $\bullet$ & S & -- & C & left-looking supernodal &  \cite{superlu-manual} \\
 SuperLU\_DIST & $\bullet$ & D & -- & C & right-looking supernodal & \cite{superlu-manual} \\
-WSMP & $\bullet$ & S/D & -- & -- & multifrontal & \cite{gupta02improved} \\
+WSMP & $\bullet$ & S/D & -- & binaries & multifrontal & \cite{gupta02improved} \\
 %%Y12M & -- & -- & -- & F77 & right-looking Markowitz & \cite{y12m} \\
 
 
@@ -490,11 +488,12 @@ vectors. Moreover, the calling sequences are strongly vary from one library
 between any two libraries.
 
 However, these differences are of technical (implementation) nature. In
-an abstract sense, all solvers are accessed with a similar sequence of
-steps (S0)--(S1) of Section~\ref{sec:introduction}:
+an abstract sense, all solvers are accessed with a sequence of
+steps similar to steps (S0)--(S1) of Section~\ref{sec:overview}:
 \begin{enumerate}
 \item[(A1)] Definition of the sparsity pattern of the linear system matrix;
-\item[(S0/S1)] Computation of the symbolic factorization;
+\item[(S0/S1)] Computation of the symbolic factorization, which includes
+perordering and analysis;
 \item[(A2)] Definition of the values of the linear system matrix;
 \item[(S2)] Computation of the numeric factorization;
 \item[(A3)] Definition of the values of the right-hand side;
@@ -550,7 +549,7 @@ The {\tt Map} class will contain the following methods:
 \end{interface}
 A {\tt Map} defines the local-to-global numbering. We require that any global
 ID is assigned to exactly one processor. {\tt Map}'s are used to define the
-layout of distributed vectors and matrices. The class {\tt Vector} defines a
+layout of distributed vectors and matrices. The following class {\tt Vector} defines a
 distributed vector, which locally exists as a {\tt double} array.
 A simple set of methods for the {\tt Vector} class is reported by 
 \begin{interface}
@@ -631,7 +630,7 @@ be specified in a variety of ways: for instance,
 the linear system matrix and the right-hand side vectors may become
 available at different times, or
 there might be many linear systems to be solved with the same matrix.
-Interface~\ref{int:lp} can also be used to standarize operations like
+Interface~\ref{int:lp} could also be used to standarize operations like
 scaling or reordering issues.
 
 %\smallskip
@@ -658,7 +657,7 @@ is, all the operations that do only require the matrix graph and not the
 actual matrix values;
 \item \verb!int NumericFactorization()! performs the numeric factorization, that
 is, it computes the matrices $L$, $D$ and $U$ by accessing the matrix values.
-Both the solution and the right-hand side are not required in this phase;
+Both the solution and the right-hand side vectors are not required in this phase;
 \item \verb!int Solve()! solves the linear system. This phase requires the
 solution and the right-hand side vectors.
 \end{itemize}
@@ -671,7 +670,7 @@ solution and the right-hand side vectors.
 
 We now describe a concrete implementation of the proposed interfaces, as
 available in the {\sl \amesos} package~\cite{Amesos-Reference-Guide}\footnote{
-\amesos\ is a Greek term that loosely translated means direct.}.
+\amesos\ is a Greek term that loosely translated means ``direct.''}.
 \amesos,
 developed by (in alphabetical order) T.~Davis, M.~Heroux, R.~Hoekstra, 
 M.~Sala, and K.~Stanley, implements the abstract interfaces described in this
@@ -684,7 +683,8 @@ configure time. Users can take advantage of the bug-tracking tool Bugzilla to
 provide feedback or request improvements.
 
 We have considered the following solvers among those
-reported in Table~\ref{tab:packages}: KLU, UMFPACK, SuperLU, SuperLU\_DIST
+reported in Table~\ref{tab:packages}: KLU\footnote{The sources of KLU are
+  distributed within \amesos.}, UMFPACK, SuperLU, SuperLU\_DIST
 (distributed memory version),
   DSCPACK, MUMPS, TAUCS, and PARDISO.
 These libraries use different algorithms that are
@@ -728,15 +728,15 @@ int main(int argc, char *argv[])
 #endif
 
   Epetra_Map* Map = <create map here, Interface 3.1>;
-  Epetra_MultiVector* x = <create solution vector here, Int. 3.2>;
-  Epetra_MultiVector* b = <create right-hand side here, Int 3.2>; 
-  Epetra_CrsMatrix* A = <create matrix here, Int 3.3>;
+  Epetra_MultiVector* x = <create solution vector here, Interface 3.2>;
+  Epetra_MultiVector* b = <create right-hand side here, Interface 3.2>; 
+  Epetra_CrsMatrix* A = <create matrix here, Interface 3.3>;
 
   Epetra_LinearProblem Problem(A, x, b); // Interface 3.4
 
   Amesos Factory;                  // factory class
   string SolverType = "Umfpack";   // selected interface
-  Amesos_BaseSolver* Solver;       // generic solver object, Int 3.5
+  Amesos_BaseSolver* Solver;       // generic solver object, Int. 3.5
   Solver = Factory.Create(SolverType, Problem);
 
   Teuchos::ParameterList List;     // allocate container for params,
@@ -902,7 +902,7 @@ Therefore, these preconditioners are completed by one or more additional
 in multilevel methods; 
 see for instance \cite{brandt.classic,hack.book,hack2.book}. 
 
-Direct solution methods can be required in two phases: In the application of
+Direct solution methods can be therefore required in two distinct phases: In the application of
 the $A'_i$'s, and in the solution of the coarse problem. In both cases, it
 suffices to wrap the $A'_i$'s or the coarse matrix to satisfy
 Interface~\ref{int:ami} in order to allow an access to any of the libraries
@@ -1010,7 +1010,7 @@ requires about 20 code lines (see Figure~\ref{fig:example}).
 
 \item It is easy to compare different solvers on a given set of problems. The
 \amesos\ distribution contains a (working) template that reads a linear system
-from file (in the popular Harwell/Boeing format~\cite{duff89sparse}) and solves it with all the
+from file in the popular Harwell/Boeing format~\cite{duff89sparse} and solves it with all the
 enabled solvers. Users can easily modify this template to numerically evaluate
 the optimal library for {\sl their} problems.
 It is easy, for example, to test an out-of-core factorization algorithm, or a
@@ -1121,7 +1121,7 @@ precision and complex arithmetics.  Although the model could in principle
 support single precision and complex arithmetics (by using templates, for
                                                   example), no code that
 implements Interface~\ref{int:asi} has been written yet. A templated version
-of Interface~\ref{int:ami} is under development.
+of Interfaces~\ref{int:map}--\ref{int:lp} are under development.
 
 %-----------------------------------------------------------------------------%
 \section*{Acknowledgments}
