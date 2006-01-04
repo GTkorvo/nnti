@@ -87,7 +87,8 @@ right-hand side vectors, respectively.
 Generally speaking,
 a direct solution algorithm for (\ref{eq:linear_system}) is any 
 technique that computes three matrices, $L$, $D$ and $U$, such that
-$A = L \, D \, U$, and the linear systems with matrices $L$, $D$ and $U$ are
+$P\, A\, Q = L \, D \, U$, where $P$ and $Q$ are permutation matrices
+and the linear systems with matrices $L$, $D$ and $U$ are
 easy to solve. The process of computing these three matrices is called {\sl
   factorization}. Generally, $L$ is a lower triangular matrix, $U$ is an
 upper triangular matrix, and $D$ is a diagonal matrix 
@@ -121,20 +122,20 @@ standard'' exists, application developers aiming to solve
 (\ref{eq:linear_system}) have to look
 for the library best optimal to their purposes. This search is affected by the following questions:
 \begin{enumerate}
-\item is the software library easy to use?
-\item is it well documented?
-\item is it actively supported, does its interface change over time?
-\item is it reliable and robust?
-\item is it efficient in terms of CPU time?
-\item how much storage does it require?
+\item[(Q1)] is the software library easy to use?
+\item[(Q2)] is it well documented?
+\item[(Q3)] is it actively supported, does its interface change over time?
+\item[(Q4)] is it reliable and robust?
+\item[(Q5)] is it efficient in terms of CPU time?
+\item[(Q6)] how much storage does it require?
 \end{enumerate}
 The relative importance of these aspects is somehow subjective. For relatively
-simple problems, (5) is usually the key point, followed by (6). For
-complicated problems, and especially in industrial applications, (4) is of
-paramount importance. Points (1), (2) and (3) are usually considered as
+simple problems, (Q5) is usually the key point, followed by (Q6). For
+complicated problems, and especially in industrial applications, (Q4) is of
+paramount importance. Points (Q1), (Q2) and (Q3) are usually considered as
 ``technical details'' of minor importance, even if they aren't. Documentation
 and support are the glue between the library developers and the application
-developers. The importance of point (1)
+developers. The importance of point (Q1)
 is often underestimated.  In fact, library developers often include a wide variety
 of choices, aiming to provide a powerful and comprehensive library.
 Application developers, instead, are usually not experts in the domain, and do
@@ -244,32 +245,16 @@ Section~\ref{sec:conclusions} outlines the conclusions.
 \label{sec:overview}
 %-----------------------------------------------------------------------------
 
-{\bf Ken, this section still needs fixes, citations, and perhaps it should
-  be condensed to shorten the article... }
+This section gives a broad view of the problematics of Gaussian elimination
+algorithms for distributed sparse linear systems. We have no aim of being
+complete; for more details on the subject, the interested reader should
+consult the specialized literature, for example~\cite{REFME} and the
+references therein. 
 
-Generally speaking, a direct solver for (\ref{eq:linear_system}) can be
-written as
-\begin{eqnarray}
-  \label{eq:ldu}
-  PAQ & = & LDU \\
-  \label{eq:forward}
-  Lx_1 & = & Pb \\
-  \label{eq:backward}
-  UQ^{-1}x & = & D^{-1}x_1  
-\end{eqnarray}
-where the
-Gaussian elimination (\ref{eq:ldu}) is followed by a forward solve
-(\ref{eq:forward}) and a backsolve (\ref{eq:backward}) to solve a system of
-linear equations (\ref{eq:linear_system}). In the above equations, $P$ and $Q$
-are permutations,  $L$ and $U$ are lower and upper triangular, respectively,
-and, $D$ is diagonal (often the identity matrix).  
+\smallskip
 
-If $A$ is sparse, $L$ and $U$ are typically sparse, though they may have some
-fill-in, i.e. non-zero entries which are zero in $PAQ$.  
-In a typical solver for an unsymmetric matrix, the column permuation,
-$Q$ is chosen to minimze fill-in, while $P$, the row permutation, is
-chosen to maintain numerical stability.  
-
+Sparse direct solvers are complex codes which use a number of
+strategies to reduce memory and time costs.  
 Most direct solvers perform Gaussian elimination ($LU$ decompostion) in
 two phases.  Symbolic factorization analyzes the matrix (typically
 looking only at the structure or non-zero pattern of the matrix).
@@ -277,69 +262,12 @@ Numeric factorization uses the information from the symbolic
 factorization phase, usually including a fill reducing column permutation, 
 to improve performance.  
 
-The performance of a sparse direct solver depends on the underlying
-matrix, computer, application, algorithms, and libraries as well as
-the code and how it is compiled.  Although a solver designed for an
-unsymmetric matrix will work on symmetric matrices, solvers designed
-for symmetric matrices will typically be faster on symmetric matrices.
-Codes designed for shared memory computers will not run on distributed
-memory computers.  Codes designed for distributed memory computers can
-work on shared memory computers, but cannot take full advantage of the
-shared memory architecture.  Many applications require repeated solves
-with little or no difference in the matrix between solves.  Some
-algortihms are able to take advantage of the similarity in matrices
-between solves.
-
-The different charasteristics of the matrices which users wish to
-solve impact sparse direct solvers.  Some matrices are symmetric in both
-structure and data $A_{i,j} = A_{j,i}$ for all $i$ and $j$.  Some of
-the symmetric matrices are positive definite, SPD, and require no
-pivoting.  The most efficient algorithms for symmetric and SPD
-matrices will not work on other matrices.  Some matrices are symmetric in
-structure, $A_{i,j} == 0$ iff $A_{j,i} == 0$, or nearly so.
-Algorithms that maintain symmetry typically outperform others on
-matrices with symmetric or nearly symmetric structure.  Some matrices have many
-columns and/or rows that are structurally identical, or nearly so.
-Aggregating nearly identical rows and columns into blocks allows more
-efficient BLAS3 routines to be used.  Some matrices can be factored with little
-fill-in, others require significant fill-in.  Matrices that can be
-factored with little fill-in and have few identical or nearly identical
-rows and columns are best handled by a low overhead code that does not
-use the BLAS.  Some matrices are banded or nearly so, allowing the use
-of a banded solver.  Matrices that have a non-trivial reduction to
-block triangular form can be solved more quickly, often dramatically,
-by a solver that includes reduction to block triangular form.  No sparse direct solver is best for all types of matrices.  
-
-Some sparse direct solvers are designed for single processor
-computers, some are designed for shared memory computers and others
-are designed for distributed memory computers.  Solvers designed for
-single processor computers can, if they use the BLAS for much of their
-computation, achieve some speedup on shared memory computers.
-Likewise, solvers designed for distributed memory computers can work
-on shared memory computers using an MPI interface.  However, only
-codes designed for shared memory computers can take advantage of the
-shared memory architecture.  Codes designed for shared memory
-computers will not work on distributed memory computers.  No single
-code will provide optimal performance across all architectures.
-
-Some solvers handle certain application requirements better than
-others.  Most aplications perform a series of solves, possibly
-involving similar or even identical matrices.  If the matrix does not
-change between two consequetive solves, the symbolic and numeric
-factorization phases need not be performed for each solve.  If the
-structure of the matrix does not change between consequetive solves,
-but the values do, the numeric factorization must be performed for
-each solve, though the symbolic factorization phase need not be.  If
-the matrix values change, but the change is modest, the pivot order
-may not need to change.  Therefore, some applications care most about
-the execution time of the solve phase, while others are most sensitive
-to the execution time of the factorization (numeric and/or symbolic).
-Some applications require more accuracy than others.
-
-\bigskip
-
-Sparse direct solvers are complex codes which use a number of
-strategies to reduce memory and time costs.  Pivoting for numerical
+If $A$ is sparse, $L$ and $U$ are typically sparse, though they may have some
+fill-in, i.e. non-zero entries which are zero in $PAQ$.  
+In a typical solver for an unsymmetric matrix, the column permuation,
+$Q$ is chosen to minimze fill-in, while $P$, the row permutation, is
+chosen to maintain numerical stability.  
+Pivoting for numerical
 stability makes it impossible to know in advance how the algorithm
 will proceed and requires a flexible data structure.  This is
 particularly difficult for distributed memory codes.  
@@ -370,10 +298,71 @@ only rows and columns that are identical, others will accept minor
 differences in the rows and columns that they treat as blocks.  Such
 blocking can reduce the cost of symbolic factorization as well.
 
+The performance of a sparse direct solver depends on the underlying
+matrix, computer, application, algorithms, and libraries as well as
+the code and how it is compiled.  
+%Although a solver designed for an
+%unsymmetric matrix will work on symmetric matrices, solvers designed
+%for symmetric matrices will typically be faster on symmetric matrices.
+%Codes designed for shared memory computers will not run on distributed
+%memory computers.  Codes designed for distributed memory computers can
+%work on shared memory computers, but cannot take full advantage of the
+%shared memory architecture.  Many applications require repeated solves
+%with little or no difference in the matrix between solves.  Some
+%algortihms are able to take advantage of the similarity in matrices
+%between solves.
+
+The different charasteristics of the matrices which users wish to
+solve impact sparse direct solvers.  Some matrices are symmetric in both
+structure and data $A_{i,j} = A_{j,i}$ for all $i$ and $j$.  Some of
+the symmetric matrices are positive definite, SPD, and require no
+pivoting.  The most efficient algorithms for symmetric and SPD
+matrices will not work on other matrices.  Some matrices are symmetric in
+structure, $A_{i,j} == 0$ iff $A_{j,i} == 0$, or nearly so.
+Algorithms that maintain symmetry typically outperform others on
+matrices with symmetric or nearly symmetric structure.  Some matrices have many
+columns and/or rows that are structurally identical, or nearly so.
+Aggregating nearly identical rows and columns into blocks allows more
+efficient BLAS3 routines to be used.  Some matrices can be factored with little
+fill-in, others require significant fill-in.  Matrices that can be
+factored with little fill-in and have few identical or nearly identical
+rows and columns are best handled by a low overhead code that does not
+use the BLAS.  Some matrices are banded or nearly so, allowing the use
+of a banded solver.  Matrices that have a non-trivial reduction to
+block triangular form can be solved more quickly, often dramatically,
+by a solver that includes reduction to block triangular form.  No sparse direct solver is best for all types of matrices.  
+
+%% MS % This seems to generic to me... Maybe re-write?  
+%Some sparse direct solvers are designed for single processor
+%computers, some are designed for shared memory computers and others
+%are designed for distributed memory computers.  Solvers designed for
+%single processor computers can, if they use the BLAS for much of their
+%computation, achieve some speedup on shared memory computers.
+%Likewise, solvers designed for distributed memory computers can work
+%on shared memory computers using an MPI interface.  However, only
+%codes designed for shared memory computers can take advantage of the
+%shared memory architecture.  Codes designed for shared memory
+%computers will not work on distributed memory computers.  No single
+%code will provide optimal performance across all architectures.
+
+%Some solvers handle certain application requirements better than
+%others.  Most aplications perform a series of solves, possibly
+%involving similar or even identical matrices.  If the matrix does not
+%change between two consequetive solves, the symbolic and numeric
+%factorization phases need not be performed for each solve.  If the
+%structure of the matrix does not change between consequetive solves,
+%but the values do, the numeric factorization must be performed for
+%each solve, though the symbolic factorization phase need not be.  If
+%the matrix values change, but the change is modest, the pivot order
+%may not need to change.  Therefore, some applications care most about
+%the execution time of the solve phase, while others are most sensitive
+%to the execution time of the factorization (numeric and/or symbolic).
+%Some applications require more accuracy than others.
+
 The three common methods for exploiting parallelism are the
 multi-frontal method, coalescing  similar 
 columns into blocks and calling a parallel dense solver 
-to factor the final block of the matrix.
+to factor the final block of the matrix. ADD REFERENCES....
 
 % MS % discussed in the conclusions: skip it here?
 %
@@ -382,8 +371,8 @@ to factor the final block of the matrix.
 % This feature is used primarily by users seeking a
 % preconditioner for an iterative method.
 
-Some solvers use iterative refinement to improve accuracy.  Iterative
-refinement is used most often with codes that do not perform full partial pivoting.  
+%Some solvers use iterative refinement to improve accuracy.  Iterative
+%refinement is used most often with codes that do not perform full partial pivoting.  
 
 % MS % already discussed in the introduction, skip it here??
 %
@@ -498,16 +487,16 @@ However, these differences are of technical (implementation) nature. In
 an abstract sense, all solvers are accessed with a similar sequence of
 steps:
 \begin{enumerate}
-\item Definition of the sparsity pattern of the linear system matrix;
-\item Computation of the symbolic factorization;
-\item Definition of the values of the linear system matrix;
-\item Computation of the numeric factorization;
-\item Definition of the values of the right-hand side;
-\item Solution of the linear system.
+\item[(S1)] Definition of the sparsity pattern of the linear system matrix;
+\item[(S2)] Computation of the symbolic factorization;
+\item[(S3)] Definition of the values of the linear system matrix;
+\item[(S4)] Computation of the numeric factorization;
+\item[(S5)] Definition of the values of the right-hand side;
+\item[(S6)] Solution of the linear system.
 \end{enumerate}
-A flowchart of processes (1)-(6) is reported in Figure~\ref{fig:flowchart}.
-While steps (1), (3) and (5) are application-dependent, steps (2), (4) and
-(6) can be abstracted to define three phases: a {\sl symbolic
+A flowchart of processes (S1)-(S6) is reported in Figure~\ref{fig:flowchart}.
+While steps (S1), (S3) and (S5) are application-dependent, steps (S2), (S4) and
+(S6) can be abstracted to define three phases: a {\sl symbolic
 factorization}, a {\sl numeric factorization}, and a {\sl solve} phase. The
 symbolic factorization refers to all operations that can be performed by
 accessing the matrix structure only (without touching the values of the matrix entries);
@@ -516,8 +505,8 @@ factored terms, and
 finally the solution phase is related to the computation of the solution vector
 $x$ for a given $b$.
 
-Our aim is to standardize steps (2), (4)
-and (6) to allow a transparent and consistent usage
+Our aim is to standardize steps (S2), (S4)
+and (S6) to allow a transparent and consistent usage
 of most of the libraries of Table~\ref{tab:packages}, this way making it easy
 to extend the support to other (new) projects. We are interested in the
 following capabilities:
