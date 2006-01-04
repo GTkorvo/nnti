@@ -93,7 +93,7 @@ easy to solve. The process of computing these three matrices is called {\sl
   factorization}. Generally, $L$ is a lower triangular matrix, $U$ is an
 upper triangular matrix, and $D$ is a diagonal matrix 
 (or possibly the identity matrix), and the algorithm adopted for their
-computation is some variant of Gaussian elimination method~\cite{REFME}. 
+computation is some variant of Gaussian elimination method.
 The development and implementation of
 direct solvers for (\ref{eq:linear_system}) is a
 challenging task that has been a subject of research over the
@@ -248,39 +248,39 @@ Section~\ref{sec:conclusions} outlines the conclusions.
 This section gives a broad view of the problematics of Gaussian elimination
 algorithms for distributed sparse linear systems. We have no aim of being
 complete; for more details on the subject, the interested reader should
-consult the specialized literature, for example~\cite{REFME} and the
+consult the specialized literature, for example~\cite{duff86direct} and the
 references therein. 
 
 \smallskip
 
-Sparse direct solvers are complex codes which use a number of
-strategies to reduce memory and time costs.  
-Most direct solvers perform Gaussian elimination ($LU$ decompostion) in
-two phases.  Symbolic factorization analyzes the matrix (typically
-looking only at the structure or non-zero pattern of the matrix).
-Numeric factorization uses the information from the symbolic
-factorization phase, usually including a fill reducing column permutation, 
-to improve performance.  
-
-If $A$ is sparse, $L$ and $U$ are typically sparse, though they may have some
+Following~\cite[Chapter 6]{dongarra98numerical}, a direct solution algorithm
+for sparse matrices can be divided in the following phases:
+\begin{itemize}
+\item[(S0)] a preordering phase that exploits structure;
+\item[(S1)] an analysis phase where the matrix structure is analysed to produce a
+suitable ordering and data structures for efficient factorization;
+\item[(S2)] a factorization phase where the numerical factorization is performed;
+\item[(S3)] a solve phase where the factors are used to solve the system using
+forward and backward substitution.
+\end{itemize}
+Some codes combine phases (S1) and (S2). Phase (S2) is usually requires the most
+computing time, while phase (S3) is generally one order of magniture faster.
+Phase (S0) is typical of sparse matrices:
+since $A$ is sparse, $L$ and $U$ are typically sparse, though they may have some
 fill-in, i.e. non-zero entries which are zero in $PAQ$.  
 In a typical solver for an unsymmetric matrix, the column permuation,
-$Q$ is chosen to minimze fill-in, while $P$, the row permutation, is
+$Q$ is chosen to minimize fill-in, while $P$, the row permutation, is
 chosen to maintain numerical stability.  
-Pivoting for numerical
-stability makes it impossible to know in advance how the algorithm
-will proceed and requires a flexible data structure.  This is
-particularly difficult for distributed memory codes.  
-
-Solvers use different strategies to reduce fill-in.  Many ordering
-methods exist to reduce fill-in and most sparse direct solvers support
-more than one.  Some solvers use heuristics to choose an ordering method.  There are multiple variations on minimum degree orderings: AMD,
-COLAMD, MMD and variants within these.  Graph partitioning algorithms
-result in bi-section or multi-section based orderings.  Solvers
-designed for symmetric and nearly symmetric matrices typically use
-symmetric permutations to maintain symmetry.  No single ordering
-method is best for all matrices, nor has a heuristic been found that
-consistently chooses the best ordering.
+%Pivoting for numerical
+%stability makes it impossible to know in advance how the algorithm
+%will proceed and requires a flexible data structure.  This is
+%particularly difficult for distributed memory codes.  
+Many ordering methods exist to reduce fill-in, for example multiple variations
+on minimum degree orderings and graph partitioning algorithms.  Solvers
+designed for symmetric and nearly symmetric matrices typically use symmetric
+permutations to maintain symmetry.  No single ordering method is best for all
+matrices, nor has a heuristic been found that consistently chooses the best
+ordering.
 
 Since pivoting adds complexity which significantly increases execution
 time, many solvers offer options to reduce the cost of pivoting.  Some
@@ -398,23 +398,26 @@ method &
 references \\
 \hline
 %
-CHOLMOD     & $\bullet$ & -- & -- & C & left-looking supernodal & \cite{cholmod} \\
+CHOLMOD     & $\bullet$ & -- & -- & C & left-looking supernodal &
+\cite{davis05cholmod} \\
 %
 DCSPACK     & $\bullet$ & -- & D & C & multifrontal & \cite{dscpack-manual} \\
 %
-KLU         & $\bullet$ & -- & -- & C & left-looking & \cite{klu} \\
+KLU         & $\bullet$ & -- & -- & C & left-looking & \cite{davis05klu} \\
 %
-Mathematica & $\bullet$ & -- & -- & -- & various & \cite{mathematica} \\
+Mathematica & $\bullet$ & -- & -- & -- & various & \cite{wolfram99mathematica} \\
 %
-MATLAB      & $\bullet$ & -- & -- & -- & various & \cite{matlab} \\
+MATLAB      & $\bullet$ & -- & -- & -- & various & \cite{gilbert92sparse} \\
 %
 MUMPS       & $\bullet$ & D & -- & F90 & multifrontal & \cite{mumps-manual} \\
 %
-Oblio       & $\bullet$ & -- & $\bullet$ & ?? & left, right, multifrontal & \cite{oblio} \\
+Oblio       & $\bullet$ & -- & $\bullet$ & ?? & left, right, multifrontal &
+\cite{dobrian00oblio} \\
 %  
 PARDISO     & $\bullet$ & S & -- & C & left/right supernodal  & \cite{oskl:04-etna,sg:04-fgcs} \\
 %
-PaStiX      & $\bullet$ & D &  ?? & -- & left-looking supernodal & \cite{pastix} \\
+PaStiX      & $\bullet$ & D &  ?? & -- & left-looking supernodal &
+\cite{henon00pastix} \\
 %
 TAUCS       & $\bullet$ & S & $\bullet$ & C & left-looking, multifrontal &
 \cite{irony04parallel,rotkin04design,rozin04locality} \\
@@ -427,14 +430,14 @@ SuperLU     & $\bullet$ & -- & -- & C & left-looking supernodal &  \cite{superlu
 %
 SuperLU\_DIST & $\bullet$ & S & -- & C & left-looking supernodal &  \cite{superlu-manual} \\
 SuperLU\_DIST & $\bullet$ & D & -- & C & right-looking supernodal & \cite{superlu-manual} \\
-WSMP & $\bullet$ & S/D & -- & -- & multifrontal & \cite{wsmp} \\
-Y12M & -- & -- & -- & F77 & right-looking Markowitz & \cite{y12m} \\
+WSMP & $\bullet$ & S/D & -- & -- & multifrontal & \cite{gupta02improved} \\
+%%Y12M & -- & -- & -- & F77 & right-looking Markowitz & \cite{y12m} \\
 
 
 \hline
 \end{tabular}
 \caption{Package features. `--' means that the feature is not supported. `S'
-  indicates support for shared memory machines, `M' for distributed memory
+  indicates support for shared memory machines, `D' for distributed memory
     machines.}
 \label{tab:packages}
 \end{center}
@@ -442,8 +445,11 @@ Y12M & -- & -- & -- & F77 & right-looking Markowitz & \cite{y12m} \\
 
 
 Table~\ref{tab:packages} reports some of the publicly available direct
-solvers. A closer look at these solvers reveals the following major
-diffrences:
+solvers; see also~\cite[Section 6.7]{dongarra98numerical} and
+\cite{davis05summary} for a broader overview of available solvers, and
+\cite{hsl06collection} for other direct solver subroutines.
+A closer look at these solvers reveals the following major
+differences:
 \begin{itemize}
 \item {\sl different programming languages are used,} even if most projects are
 written in C;
@@ -461,7 +467,7 @@ machines.
 
 \begin{figure}
 \begin{center}
-\fbox{ \includegraphics[width=12cm]{amesos_flowchart.eps}}
+\fbox{ \includegraphics[width=12cm]{amesos_flowchart.pdf}}
 \end{center}
 \caption{Flowchart of linear system solution. $A, x$ and $b$ represent objects
   defined in the application, while $A', x'$ and $b'$ are the corresponding 
@@ -485,18 +491,18 @@ between any two libraries.
 
 However, these differences are of technical (implementation) nature. In
 an abstract sense, all solvers are accessed with a similar sequence of
-steps:
+steps (S0)--(S1) of Section~\ref{sec:introduction}:
 \begin{enumerate}
-\item[(S1)] Definition of the sparsity pattern of the linear system matrix;
-\item[(S2)] Computation of the symbolic factorization;
-\item[(S3)] Definition of the values of the linear system matrix;
-\item[(S4)] Computation of the numeric factorization;
-\item[(S5)] Definition of the values of the right-hand side;
-\item[(S6)] Solution of the linear system.
+\item[(A1)] Definition of the sparsity pattern of the linear system matrix;
+\item[(S0/S1)] Computation of the symbolic factorization;
+\item[(A2)] Definition of the values of the linear system matrix;
+\item[(S2)] Computation of the numeric factorization;
+\item[(A3)] Definition of the values of the right-hand side;
+\item[(S3)] Solution of the linear system.
 \end{enumerate}
-A flowchart of processes (S1)-(S6) is reported in Figure~\ref{fig:flowchart}.
-While steps (S1), (S3) and (S5) are application-dependent, steps (S2), (S4) and
-(S6) can be abstracted to define three phases: a {\sl symbolic
+A flowchart of the processes is reported in Figure~\ref{fig:flowchart}.
+While steps (A1), (A2) and (A3) are application-dependent, steps (S0/1), (S2) and
+(S3) can be abstracted to define three phases: a {\sl symbolic
 factorization}, a {\sl numeric factorization}, and a {\sl solve} phase. The
 symbolic factorization refers to all operations that can be performed by
 accessing the matrix structure only (without touching the values of the matrix entries);
@@ -505,8 +511,8 @@ factored terms, and
 finally the solution phase is related to the computation of the solution vector
 $x$ for a given $b$.
 
-Our aim is to standardize steps (S2), (S4)
-and (S6) to allow a transparent and consistent usage
+Our aim is to standardize steps (S0/1), (S2)
+and (S3) to allow a transparent and consistent usage
 of most of the libraries of Table~\ref{tab:packages}, this way making it easy
 to extend the support to other (new) projects. We are interested in the
 following capabilities:
@@ -721,16 +727,16 @@ int main(int argc, char *argv[])
   Epetra_SerialComm Comm;
 #endif
 
-  Epetra_Map* Map = <create map here>;
-  Epetra_CrsMatrix* A = <create matrix here>;
-  Epetra_MultiVector* x = <create solution vector here>;
-  Epetra_MultiVector* b = <create right-hand side here>; 
+  Epetra_Map* Map = <create map here, Interface 3.1>;
+  Epetra_MultiVector* x = <create solution vector here, Int. 3.2>;
+  Epetra_MultiVector* b = <create right-hand side here, Int 3.2>; 
+  Epetra_CrsMatrix* A = <create matrix here, Int 3.3>;
 
-  Epetra_LinearProblem Problem(A, x, b);
+  Epetra_LinearProblem Problem(A, x, b); // Interface 3.4
 
   Amesos Factory;                  // factory class
   string SolverType = "Umfpack";   // selected interface
-  Amesos_BaseSolver* Solver;       // generic solver object
+  Amesos_BaseSolver* Solver;       // generic solver object, Int 3.5
   Solver = Factory.Create(SolverType, Problem);
 
   Teuchos::ParameterList List;     // allocate container for params,
@@ -763,7 +769,7 @@ int main(int argc, char *argv[])
 
 \begin{figure}
 \begin{center}
-\includegraphics[width=7cm]{amesos_and_application.eps}
+\includegraphics[width=7cm]{amesos_and_application.pdf}
 \end{center}
 \caption{Connection between a generic application and \amesos.}
 \label{fig:app}
@@ -773,7 +779,7 @@ int main(int argc, char *argv[])
 Interfaces~\ref{int:map}, \ref{int:vector}, \ref{int:ami} and \ref{int:lp}, 
   and it
 internally defines Interface~\ref{int:asi}, as well as all its
-implementations. The Standard Template Library (STL)~\cite{stl} is used
+implementations. The Standard Template Library (STL)~\cite{wise96overview} is used
 to increase performances whenever possible .
 
 An example of usage of \amesos\ is reported in Figure~\ref{fig:example}. The
@@ -852,7 +858,7 @@ For the biggest matrices the overhead is often below 1\%.
 
 \begin{figure}
 \begin{center}
-\includegraphics[angle=90,width=13cm]{interface_time.eps}
+\includegraphics[angle=90,width=13cm]{interface_time.pdf}
 \caption{Additional time required by the \amesos\ interface with respect to the
 time required by the solver, for different matrices and solvers. $n$
   represents the size of the matrix, and $nnz$ the total number of nonzeros.

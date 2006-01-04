@@ -2,6 +2,8 @@
 
 TEX = latex
 
+PDFTEX = pdflatex
+
 BTEX = bibtex
 
 BIBFILE = paper.bib
@@ -24,23 +26,14 @@ all: ${PAPER}.pdf
 #
 ########################################################################
 
-${PAPER}.dvi: ${PAPER}.tex ${PARTS} ${PAPER}.bbl
-	${TEX} ${PAPER}
-	${TEX} ${PAPER}
+${PAPER}.aux: 
+	pdflatex ${PAPER}.tex
 
 ${PAPER}.bbl: ${PAPER}.aux
 	${BTEX} ${PAPER}
 
-${PAPER}.aux: ${PAPER}.tex ${PARTS} force
-	${TEX} ${PAPER}
-
-force:
-
-${PAPER}.ps:    ${PAPER}.dvi
-	dvips -Ppdf -o ${PAPER}.ps ${PAPER}
-
-${PAPER}.pdf:    ${PAPER}.ps
-	ps2pdf ${PAPER}.ps ${PAPER}.pdf
+all:    ${PAPER}.tex ${PAPER}.bbl
+	pdflatex ${PAPER}.tex 
 
 tarfile:
 	tar chvf ${PAPER}.tar Makefile ${PARTS} ${PICTURES} ${BIBFILE} ${OTHER}
