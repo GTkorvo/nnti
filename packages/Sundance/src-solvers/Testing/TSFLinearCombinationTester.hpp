@@ -225,7 +225,7 @@ namespace TSFExtended
     TESTER(2.0*(3.0*(z + A*x) + 4.0*(B*y + z)), 6.0*z + 6.0*A*x + 8.0*B*y + 8.0*z);
     
     TESTER((A*x + B*y) + (A*y + B*x), (A + B)*x + (A+B)*y);
-    TESTER((A*x + B*y) - (A*y + B*x), A*x - A*y + B*y - B*y);
+    TESTER((A*x + B*y) - (A*y + B*x), A*x - A*y + B*y - B*x);
 
     TESTER((A*x + B*y) + 2.0*(A*y + B*x), A*(x + 2.0*y) + B*(2.0*x + y));
     TESTER((A*x + B*y) - 2.0*(A*y + B*x), A*(x - 2.0*y) + B*(y - 2.0*x));

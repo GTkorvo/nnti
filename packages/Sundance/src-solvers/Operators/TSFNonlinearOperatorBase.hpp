@@ -33,6 +33,8 @@
 #include "TSFHandleable.hpp"
 #include "TSFObjectWithVerbosity.hpp"
 #include "TSFVectorDecl.hpp"
+#include "TSFLinearOperator.hpp"
+#include "TSFLinearCombination.hpp"
 
 namespace TSFExtended
 {

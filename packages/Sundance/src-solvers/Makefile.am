@@ -185,6 +185,8 @@ TESTING_H = \
 	$(srcdir)/Testing/TSFLinearCombinationTester.hpp \
 	$(srcdir)/Testing/TSFMatrixLaplacian1D.hpp \
 	$(srcdir)/Testing/TSFOperatorBuilder.hpp \
+	$(srcdir)/Testing/TSFPoissonBoltzmannJacobian.hpp \
+	$(srcdir)/Testing/TSFPoissonBoltzmannOp.hpp \
 	$(srcdir)/Testing/TSFRandomBlockMatrix.hpp \
 	$(srcdir)/Testing/TSFRandomSparseMatrix.hpp \
 	$(srcdir)/Testing/TSFTesterBase.hpp \
@@ -193,7 +195,9 @@ TESTING_H = \
 
 TESTING = \
 	$(srcdir)/Testing/TSFHeatOperator1D.cpp \
-	$(srcdir)/Testing/TSFMatrixLaplacian1D.cpp 
+	$(srcdir)/Testing/TSFMatrixLaplacian1D.cpp \
+	$(srcdir)/Testing/TSFPoissonBoltzmannJacobian.cpp \
+	$(srcdir)/Testing/TSFPoissonBoltzmannOp.cpp 
 
 
 
