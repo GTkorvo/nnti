@@ -451,14 +451,14 @@ show, if possible, how to perform solves with $\jac{r}{z}$ by performing
 solves with the matrix
 %
 \begin{equation}
-M = \alpha \Jac{f}{\dot{x}} + \beta \Jac{f}{x},
-\label{rythmos:eqn:M}
+W = \alpha \Jac{f}{\dot{x}} + \beta \Jac{f}{x},
+\label{rythmos:eqn:W}
 \end{equation}
 %
 evaluated at points $(\dot{x},x,t)$ selected by the time integration method
 and where $\alpha\in\RE$ and $\beta\in\RE$ is some constants also defined by
-the time integration method.  Note that the matrix $M$ above in
-(\ref{rythmos:eqn:M_bdf}) may not necessarily exactly represent $\jac{r}{z}$
+the time integration method.  Note that the matrix $W$ above in
+(\ref{rythmos:eqn:W_bdf}) may not necessarily exactly represent $\jac{r}{z}$
 and $z$ and $r$ may not simply lie in the vector spaces $\mathcal{X}$ and
 $\mathcal{F}$ respectively; but in many cases, they will.
 
@@ -505,14 +505,14 @@ equations is
 \begin{equation}
 \Jac{r}{z}
 = \frac{\gamma_0}{\Delta t} \Jac{f}{\dot{x}} + \Jac{f}{x},
-\label{rythmos:eqn:M_bdf}
+\label{rythmos:eqn:W_bdf}
 \end{equation}
 %
 which is evaluated at the point $\dot{x}$ in (\ref{rythmos:eqn:bdf_x_dot}), $x
 = x_{k+1}$ and $t = t_{k+1}$.  One can immediately identify
-(\ref{rythmos:eqn:M_bdf}) with the general form of the matrix $M$ in
-(\ref{rythmos:eqn:M}) where $\alpha = {}\gamma_0 / \Delta t$ and $\beta = 1$.
-Note that the Jacobian (\ref{rythmos:eqn:M_bdf}) is the exact Jacobian for the
+(\ref{rythmos:eqn:W_bdf}) with the general form of the matrix $W$ in
+(\ref{rythmos:eqn:W}) where $\alpha = {}\gamma_0 / \Delta t$ and $\beta = 1$.
+Note that the Jacobian (\ref{rythmos:eqn:W_bdf}) is the exact Jacobian for the
 nonlinear time step equations; this will not be true for some of the other
 methods.
 
@@ -540,10 +540,10 @@ $z = x_{k+1}$, is
 \begin{equation}
 \Jac{r}{z}
 = \frac{1}{\Delta t} \Jac{f}{\dot{x}} + \theta \Jac{f}{x},
-\label{rythmos:eqn:M_theta}
+\label{rythmos:eqn:W_theta}
 \end{equation}
 %
-which is of general form of the matrix $M$ in (\ref{rythmos:eqn:M}) where
+which is of general form of the matrix $W$ in (\ref{rythmos:eqn:W}) where
 $\alpha = 1 / \Delta t$ and $\beta = \theta$.
 
 \subsubsection{Trapezoidal Methods}
@@ -581,22 +581,22 @@ mean that an object is evaluated at the points $(\dot{x},x,t) =
 ((x_{k+1}-x_k)/\Delta t, x_{k+1}, t_{k+1})$ and $(\dot{x},x,t) =
 ((x_{k+1}-x_k)/\Delta t, x_k, t_k)$ respectively.  Note that the form of the
 Jacobian in (\ref{rythmos:eqn:drdz_trap}) does not match the form of
-(\ref{rythmos:eqn:M}) that we are trying to utilize.  However, a common trick
+(\ref{rythmos:eqn:W}) that we are trying to utilize.  However, a common trick
 in these types of methods to simply replace $x_{k+1}$ and $t_{k+1}$ in the
 second and third arguments of $((x_{k+1}-x_k)/\Delta t, x_{k+1}, t_{k+1})$
 with $x_k$ and $t_k$ in the Jacobian which gives the approximate Jacobian
 %
 \begin{equation}
-M
+W
 = \frac{2}{\Delta t} \Jac{f}{\dot{x}}
 + \Jac{f}{x},
-\label{rythmos:eqn:trap_M}
+\label{rythmos:eqn:trap_W}
 \end{equation}
 %
 where now all of these terms are evaluated at the point $(\dot{x},x,t) =
 ((x_{k+1}-x_k)/\Delta t, x_k, t_k)$.  It is easy to see that this is the same
-form as the Jacobian in (\ref{rythmos:eqn:M}) where $\alpha = 2/\Delta t$ and
-and $\beta = 1$.  The Jacobian in (\ref{rythmos:eqn:trap_M}) is not an exact
+form as the Jacobian in (\ref{rythmos:eqn:W}) where $\alpha = 2/\Delta t$ and
+and $\beta = 1$.  The Jacobian in (\ref{rythmos:eqn:trap_W}) is not an exact
 Jacobian for the equations in (\ref{rythmos:eqn:trap_dae_ne}) but can produce
 good Newton steps in many cases.  However, an inexact Jacobian such as this
 can cause a problem when sensitivity computations are being performed (see
@@ -754,12 +754,12 @@ $\jac{r}{z}$ is represented as
 which is evaluated at the points $(\dot{x},x,t) = ( {}\dot{x}_i, x_k +
 {}\Delta t {}\sum_{j=1}^{p} a_{ij} {}\dot{x}_j, t_k + c_i {}\Delta t )$.  Note
 that $\jac{r_i}{z_j} = {}\jac{r_i}{\dot{x}_j}$ in
-(\ref{rythmos:eqn:dridzi_trap}) is of the same form as (\ref{rythmos:eqn:M})
+(\ref{rythmos:eqn:dridzi_trap}) is of the same form as (\ref{rythmos:eqn:W})
 where $\alpha = 1$ and $\beta = \Delta t a_{ij}$.
 
 When considering a iterative method for solving systems with the block
 operator matrix $\jac{r}{z}$, it is easy to see how to use the general matrix
-$M$ in (\ref{rythmos:eqn:M}) to implement a matrix-vector product, but it is
+$W$ in (\ref{rythmos:eqn:W}) to implement a matrix-vector product, but it is
 not obvious how to precondition such a system.  Clearly a block diagonal
 preconditioner could be used but the effectiveness of such a preconditioning
 strategy is open to question.  Other preconditioning strategies are also
@@ -779,7 +779,7 @@ equations in (\ref{rythmos:eqn:dridzi_trap}) can be solved one at a time for
 $i = 1 {}\ldots p$ which is easily accommodated using a Newton-type method
 where the Newton Jacobian for each $i$ is given by
 (\ref{rythmos:eqn:dridzi_trap}), which is of our basic general form
-(\ref{rythmos:eqn:M}).
+(\ref{rythmos:eqn:W}).
 
 \subsubsection*{Diagonally-implicit IRK methods}
 
@@ -793,7 +793,7 @@ requires that $a_{11} = a_{22} = {}\ldots = a_{pp}$ and $c_{1} = c_{2} =
 achieved since a single set of linear solver objects (i.e.\ operators and
 preconditioners) can be utilized for the solution of the fully coupled system.
 In fact, it may even be possible to utilize multi-vector applications of the
-operator and preconditioner for matrices of the form (\ref{rythmos:eqn:M})
+operator and preconditioner for matrices of the form (\ref{rythmos:eqn:W})
 which can be supported by many applications.
 
 {}\textbf{ToDo: I need to write up some more ideas here to see how to take
@@ -1152,7 +1152,7 @@ operator multivector product
 %
 where $\dot{S}, S {}\in\mathcal{Y}|\mathcal{G}$ are any arbitary multivectors.
 This is functionality that is not directly used by a forward time integrator
-but the general form of $M$ in (\ref{rythmos:eqn:M}) supports this by
+but the general form of $W$ in (\ref{rythmos:eqn:W}) supports this by
 computing two operators with $(\alpha=1,\beta=0)$ and $(\alpha=0,\beta=1)$.
 
 Some tips from DASPK~3.0~\cite{new-daspk} for solving this problem are:
@@ -1217,7 +1217,7 @@ f(\dot{x},x,t) =
 \label{rythmos:eqn:direct-sens-daes}
 \end{equation}
 %
-The matrix $M$ in (\ref{rythmos:eqn:M}) for
+The matrix $W$ in (\ref{rythmos:eqn:W}) for
 (\ref{rythmos:eqn:direct-sens-daes}) is given by
 %
 \begin{equation}
@@ -1409,7 +1409,7 @@ Note also that a transformation in time for the sensitivity equations of $\tau
 = t_f - t$ is needed to allow the integration backward in time using a forward
 time integrator.
 
-The matrix $M$ in (\ref{rythmos:eqn:M}) for
+The matrix $W$ in (\ref{rythmos:eqn:W}) for
 (\ref{rythmos:eqn:adj-sens-daes}) is given by
 %
 \begin{equation}
@@ -1508,7 +1508,7 @@ Note also that a transformation in time for the sensitivity equations of $\tau
 = t_f - t$ is needed to allow the integration backward in time using a forward
 time integrator.
 
-The matrix $M$ in (\ref{rythmos:eqn:M}) for
+The matrix $W$ in (\ref{rythmos:eqn:W}) for
 (\ref{rythmos:eqn:aug-adj-sens-daes}) is given by
 %
 \begin{equation}
@@ -1547,8 +1547,8 @@ the diagonal
 \end{equation}
 %
 do not seem to correspond to the adjoint of the general form shown for the
-matrix $M$ in (\ref{rythmos:eqn:M}) that we are trying to exploit.  However,
-to show how to utilize the general form of $M$ in (\ref{rythmos:eqn:M}),
+matrix $W$ in (\ref{rythmos:eqn:W}) that we are trying to exploit.  However,
+to show how to utilize the general form of $W$ in (\ref{rythmos:eqn:W}),
 consider the solution of any arbitrary system of the form
 %
 \begin{equation}
@@ -1647,49 +1647,49 @@ Here we define the concept of a parameterized general DAE (or ODE) that takes
 the form
 %
 \begin{eqnarray}
-c\left( \dot{y}(t), y(t), \{u_l\}, t \right) & = & 0,
-\; t \in \left[ t_0, t_f \right] \label{rythmos:eqn:gen:c} \\
-y(t_0) & = & y_0(\{u_l\}) \label{rythmos:eqn:gen:c:ic}
+f\left( \dot{x}(t), x(t), \{p_l\}, t \right) & = & 0,
+\; t \in \left[ t_0, t_f \right] \label{rythmos:eqn:gen:f} \\
+x(t_0) & = & x_0(\{p_l\}) \label{rythmos:eqn:gen:f:ic}
 \end{eqnarray}
 \begin{tabbing}
 \hspace{4ex}where\hspace{1ex}\= \\
-\>	$y(t) \:\in\:\mathcal{Y}$ are the transient state variables, \\
-\>	$\dot{y}(t) = d(y)/d(t)\:\in\:\mathcal{Y}$ is the vector of temporal derivatives of $y(t)$, \\
-\>	$\{u_l\}$ is a set of auxiliary parameter vectors with $|\{u_l\}| = N_u$ members, \\
-\>	$u_l\in\mathcal{U}_l$, $l=1 {}\ldots N_u$, is the $l^{\mbox{th}}$ subvector of auxiliary parameters, \\
-\>	$c(\dot{y}(t), y(t), \{u_l\}, t) :
-		\mathcal{Y}^2 \times \mathcal{U}_1 \times \ldots \times \mathcal{U}_{N_u} \times \RE
-		\rightarrow \mathcal{C}$ are the state DAEs, \\
-\>	$y_0(\{u_l\}) \:\in\:\mathcal{U}_1 \times \ldots \times \mathcal{U}_{N_u} \rightarrow \mathcal{Y}$
-		define the initial conditions for $y(t_0)$ as a function of $\{u_l\}$, \\
-\>	$\mathcal{Y} \:\subseteq\:\RE^{n_y}$ is the vector space of the state variables $y(t)$, \\
-\>	$\mathcal{U}_l \:\subseteq\:\RE^{n_{u,l}}$ is the vector space of $u_l$ ($l = 1 {}\ldots N_u$), \\
-\>	$\mathcal{C} \:\subseteq\:\RE^{n_y}$ is the vector space of the output of the DAE function $c(\ldots)$.
+\>	$x(t) \:\in\:\mathcal{X}$ are the transient state variables, \\
+\>	$\dot{x}(t) = d(x)/d(t)\:\in\:\mathcal{X}$ is the vector of temporal derivatives of $x(t)$, \\
+\>	$\{p_l\}$ is a set of auxiliary parameter vectors with $|\{p_l\}| = N_u$ members, \\
+\>	$p_l\in\mathcal{P}_l$, $l=1 {}\ldots N_u$, is the $l^{\mbox{th}}$ subvector of auxiliary parameters, \\
+\>	$f(\dot{x}(t), x(t), \{p_l\}, t) :
+		\mathcal{X}^2 \times \mathcal{P}_1 \times \ldots \times \mathcal{P}_{N_p} \times \RE
+		\rightarrow \mathcal{F}$ are the state DAEs, \\
+\>	$x_0(\{p_l\}) \:\in\:\mathcal{P}_1 \times \ldots \times \mathcal{P}_{N_p} \rightarrow \mathcal{X}$
+		define the initial conditions for $x(t_0)$ as a function of $\{p_l\}$, \\
+\>	$\mathcal{X} \:\subseteq\:\RE^{n_x}$ is the vector space of the state variables $x(t)$, \\
+\>	$\mathcal{P}_l \:\subseteq\:\RE^{n_{p,l}}$ is the vector space of $p_l$ ($l = 1 {}\ldots N_u$), \\
+\>	$\mathcal{F} \:\subseteq\:\RE^{n_x}$ is the vector space of the output of the DAE function $f(\ldots)$.
 \end{tabbing}
 
 The DAE formulation above in
-(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) differs slightly than
+(\ref{rythmos:eqn:gen:f})--(\ref{rythmos:eqn:gen:f:ic}) differs slightly than
 the sensitivity DAE formulation in
 (\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) in that the latter
 is more specific to sensitivity computations while the former is more general
 and more amiable to a general software implementation.  The DAE in
-(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) is meant to represent
+(\ref{rythmos:eqn:gen:f})--(\ref{rythmos:eqn:gen:f:ic}) is meant to represent
 the most general DAE formulation that allows the composition of multiple DAEs
 (for example in a staggered mode).  Different subvectors of auxiliary
-parameters $u_l\in\mathcal{U}_l$ can be mapped into different types of
+parameters $p_l\in\mathcal{P}_l$ can be mapped into different types of
 quantities in different types of numerical methods.  Some of the kinds of
-roles that an individual subset vector $u_l\in\mathcal{U}_l$ of auxiliary
+roles that an individual subset vector $p_l\in\mathcal{P}_l$ of auxiliary
 parameters can represent are:
 %
 \begin{itemize}
 %
-{}\item Steady-state parameters for sensitivity computations (i.e.\ $u_1 =
+{}\item Steady-state parameters for sensitivity computations (i.e.\ $p_1 =
 p$ in (\ref{rythmos:eqn:sens:c}))
 %
-{}\item Transient parameters for sensitivity computations (i.e.\ $u_2 = v(t)$
+{}\item Transient parameters for sensitivity computations (i.e.\ $p_2 = v(t)$
 in (\ref{rythmos:eqn:sens:c}))
 %
-{}\item Coupling variables between different DAEs (e.g.\ $u_1 = x_1$ in
+{}\item Coupling variables between different DAEs (e.g.\ $p_1 = x_1$ in
 (\ref{rythmos:eqn:stag:f2}))
 %
 {}\item Continuation parameters (i.e.\ to aid in the solution of the implicit
@@ -1705,7 +1705,7 @@ From the DAE developer's point of view, how a particular set of parameters is
 used in some higher-level numerical algorithm does not greatly influence what
 is required from the DAE to allow the manipulation of these parameters or in
 how derivatives for those variables are computed.  The general DAE model in
-(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) can be used, for
+(\ref{rythmos:eqn:gen:f})--(\ref{rythmos:eqn:gen:f:ic}) can be used, for
 example, to represent
 (\ref{rythmos:eqn:sens:c})--(\ref{rythmos:eqn:sens:c:ic}) in a sensitivity
 computation, or can represent each DAE in a staggered set of DAEs, or any
@@ -1715,7 +1715,7 @@ For the purpose of sensitivity computations we will also define a general
 set of auxiliary response functions of the form
 %
 \begin{equation}
-g_j(y,\{\hat{u}_l\},t) \in \mathcal{U}_1 \times \ldots \times \mathcal{U}_{\hat{N}_u} \rightarrow \mathcal{G}_j, j=1 \ldots N_g, 
+g_j(x,\{\hat{p}_l\},t) \in \mathcal{P}_1 \times \ldots \times \mathcal{P}_{\hat{N}_p} \rightarrow \mathcal{G}_j, j=1 \ldots N_g, 
 \label{rythmos:eqn:gen:g}
 \end{equation}
 %
@@ -1730,7 +1730,7 @@ intractable for an adjoint approach but is very a direct sensitivity approach
 (note: the steady-state interface for nonlinear problems should be changed in
 this way to support large dimensional response functions as well).
 
-Note that the evaluations for $c(\dot{y},y,\{u_l\},t)$ and $g_j(y,\{u_l\}t)$
+Note that the evaluations for $f(\dot{x},x,\{p_l\},t)$ and $g_j(x,\{p_l\}t)$
 (for $j = 1 {}\ldots N_g$) may share common subcomputations and therefore
 adding provisions to allow efficient simultaneous computations of all of the
 objects is advisable.  In addition, the derivative computations described
@@ -1741,14 +1741,14 @@ implementation does copy the state then it would be advisable to tell the DAE
 when the state being passed in has changed or not.
 
 Here we divide up the requirements for general DAE in
-(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) and the response
+(\ref{rythmos:eqn:gen:f})--(\ref{rythmos:eqn:gen:f:ic}) and the response
 functions in (\ref{rythmos:eqn:gen:g}) into three different categories:
 forward solve, direct sensitivities and adjoint sensitivities.
 
 \subsection{Requirements for forward solve}
 
 Here we describe requirements for
-(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) needed to
+(\ref{rythmos:eqn:gen:f})--(\ref{rythmos:eqn:gen:f:ic}) needed to
 implement a basic class of implicit forward integration methods.
 
 \begin{itemize}
@@ -1757,23 +1757,23 @@ implement a basic class of implicit forward integration methods.
 
 \begin{itemize}
 %
-{}\item Initial condition evaluation: Given $u_l\in\mathcal{U}_l$ (for
+{}\item Initial condition evaluation: Given $p_l\in\mathcal{P}_l$ (for
 $l=1\ldots{}N_u$) evaluate the initial condition function
 \[
-\{u_l\} {}\rightarrow y_0(\{u_l\})\in\mathcal{Y}.
+\{p_l\} {}\rightarrow x_0(\{p_l\})\in\mathcal{X}.
 \]
 %
-{}\item DAE residual evaluation: Given selections for $\dot{y}\in\mathcal{Y}$,
-$y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), and
+{}\item DAE residual evaluation: Given selections for $\dot{x}\in\mathcal{X}$,
+$x\in\mathcal{X}$, $p_l\in\mathcal{P}_l$ (for $l=1\ldots{}N_u$), and
 $t\in\RE$, evaluate
 \[
-(\dot{y},y,\{u_l\},t) {}\rightarrow c(\dot{y},y,\{u_l\},t)\in\mathcal{C}.
+(\dot{x},x,\{p_l\},t) {}\rightarrow f(\dot{x},x,\{p_l\},t)\in\mathcal{F}.
 \]
 %
-{}\item Auxiliary response evaluation: Given selections for $y\in\mathcal{Y}$,
-$u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), and $t\in\RE$ evaluate
+{}\item Auxiliary response evaluation: Given selections for $x\in\mathcal{X}$,
+$p_l\in\mathcal{P}_l$ (for $l=1\ldots{}N_u$), and $t\in\RE$ evaluate
 \[
-\{u_l\} {}\rightarrow g(\{u_l\},t)\in\mathcal{G}_j, j = 1 \ldots N_g.
+\{p_l\} {}\rightarrow g(\{p_l\},t)\in\mathcal{G}_j, j = 1 \ldots N_g.
 \]
 %
 \end{itemize}
@@ -1782,72 +1782,72 @@ $u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), and $t\in\RE$ evaluate
 
 \begin{itemize}
 %
-{}\item Formation of $M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$:
-Given selections for $\dot{y}\in\mathcal{Y}$, $y\in\mathcal{Y}$,
-$u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$, $\alpha\in\RE$, and
+{}\item Formation of $W = {}\alpha (\jac{f}{\dot{x}}) + {}\beta (\jac{f}{x})$:
+Given selections for $\dot{x}\in\mathcal{X}$, $x\in\mathcal{X}$,
+$p_l\in\mathcal{P}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$, $\alpha\in\RE$, and
 $\beta\in\RE$ evaluate an abstract (nonsingular) object
 \[
-(\dot{y},y,\{u_l\},t) {}\rightarrow M
-= {}\alpha \Jac{c}{{}\dot{y}} + \beta \Jac{c}{y}
-{}\in {}\mathcal{C}|\mathcal{Y}.
+(\dot{x},x,\{p_l\},t) {}\rightarrow W
+= {}\alpha \Jac{f}{{}\dot{x}} + \beta \Jac{f}{x}
+{}\in {}\mathcal{F}|\mathcal{X}.
 \]
 Note the special cases of $(\alpha,\beta)=(1,0)$ and $(\alpha,\beta)=(0,1)$
-allow a client to access the operators $(\jac{c}{\dot{y}})$ and $(\jac{c}{y})$
-separately.  Of course the operator returned for $M = \jac{c}{\dot{y}}$ for
+allow a client to access the operators $(\jac{f}{\dot{x}})$ and $(\jac{f}{x})$
+separately.  Of course the operator returned for $W = \jac{f}{\dot{x}}$ for
 the case of $(\alpha,\beta)=(1,0)$ is only guaranteed to be nonsingular for an
-ODE.  For general DAEs, only operators $M$ for reasonable finite nonzero
+ODE.  For general DAEs, only operators $W$ for reasonable finite nonzero
 values of $\alpha$ and $\beta$ are guaranteed to be nonsingular.
 %
 {}\item Allow reuse of factorizations, preconditioners, and other such objects
-form some previously created operator $M_{\mbox{old}}$ in the reformation of
-$M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$: Given a previously
-computed nonsingular operator $M_{\mbox{old}}$, create a new operator $M$ at a
-new point $(\dot{y},y,\{u_l\},t)$ that reuses any factorizations or
-preconditioners from $M_{\mbox{old}}$ but represents the correct analytic
+form some previously created operator $W_{\mbox{old}}$ in the reformation of
+$W = {}\alpha (\jac{f}{\dot{x}}) + {}\beta (\jac{f}{x})$: Given a previously
+computed nonsingular operator $W_{\mbox{old}}$, create a new operator $W$ at a
+new point $(\dot{x},x,\{p_l\},t)$ that reuses any factorizations or
+preconditioners from $W_{\mbox{old}}$ but represents the correct analytic
 operator.  This capability is needed to allow a time stepper algorithm to have
 some control over when preconditioners or factorizations are updated.
-However, the newly computed operator $M$ must still provide a sufficient
+However, the newly computed operator $W$ must still provide a sufficient
 analytic approximation to the true matrix which is needed for sensitivity
 computations.
 %
-{}\item Application of $M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta
-(\jac{c}{y})$: Given a pre-formed object for $M = {}\alpha (\jac{c}{\dot{y}})
-+ {}\beta (\jac{c}{y})$, provide the ability to apply the operator as
+{}\item Application of $W = {}\alpha (\jac{f}{\dot{x}}) + {}\beta
+(\jac{f}{x})$: Given a pre-formed object for $W = {}\alpha (\jac{f}{\dot{x}})
++ {}\beta (\jac{f}{x})$, provide the ability to apply the operator as
 \[
-Y = M X
+X = W X
 \]
-where $X\in\mathcal{Y}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
-and $Y\in\mathcal{C}|\RE^m$ is the LHS multi-vector.  The purpose of stating
+where $X\in\mathcal{X}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
+and $Y\in\mathcal{F}|\RE^m$ is the LHS multi-vector.  The purpose of stating
 the multi-vector form is to encourage the development of block methods that
 are useful for other types of more advanced algorithms.  However, a single
 vector version is sufficient to satisfy this requirement.
 %
-{}\item Solve with $M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$:
-Given a pre-formed object for $M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta
-(\jac{c}{y})$, then provide the ability to (approximately) solve for systems
+{}\item Solve with $W = {}\alpha (\jac{f}{\dot{x}}) + {}\beta (\jac{f}{x})$:
+Given a pre-formed object for $W = {}\alpha (\jac{f}{\dot{x}}) + {}\beta
+(\jac{f}{x})$, then provide the ability to (approximately) solve for systems
 of the form
 \[
-X = M^{-1} B
+X = W^{-1} B
 \]
-where $B\in\mathcal{Y}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
-and $X\in\mathcal{C}|\RE^m$ is the LHS solution multi-vector.  The purpose of
+where $B\in\mathcal{X}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
+and $X\in\mathcal{F}|\RE^m$ is the LHS solution multi-vector.  The purpose of
 stating the linear solve requirement in multi-vector form is to encourage the
 development of block linear solver approaches that are useful for other types
 of more advanced algorithms.  However, note that the ability to solve single
 linear systems of the form
 \[
-x = M^{-1} b,
+x = W^{-1} b,
 \]
-where $b\in\mathcal{Y}$ and $x\in\mathcal{C}$, automatically satisfies this
+where $b\in\mathcal{X}$ and $x\in\mathcal{F}$, automatically satisfies this
 requirement.  The exact specification of what is meant to (approximately)
 solve systems of this nature must be accurately specified. Note that a status
 test that will work for composite and block linear solvers is needed which is
 different than for a straightforward iterative or direct linear solver.
 %
-{}\item{} [Optional] Formation and maintenance of multiple $M = {}\alpha
-(\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$ objects: Some types of numerical
+{}\item{} [Optional] Formation and maintenance of multiple $W = {}\alpha
+(\jac{f}{\dot{x}}) + {}\beta (\jac{f}{x})$ objects: Some types of numerical
 algorithms can be implemented much more efficiently if more than one instance
-of $M = {}\alpha (\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$ can be computed
+of $W = {}\alpha (\jac{f}{\dot{x}}) + {}\beta (\jac{f}{x})$ can be computed
 and maintained simultaneously.  This may be needed, for instance, in an
 implicit RK method as described in Section~\ref{rythmos:sec:implicit-rk}.
 %
@@ -1859,78 +1859,78 @@ implicit RK method as described in Section~\ref{rythmos:sec:implicit-rk}.
 
 In addition for the requirements for forward solves described in the previous
 section, here we describe an additional set of requirements for
-(\ref{rythmos:eqn:gen:c})--(\ref{rythmos:eqn:gen:c:ic}) needed to implement
+(\ref{rythmos:eqn:gen:f})--(\ref{rythmos:eqn:gen:f:ic}) needed to implement
 the implicit direct sensitivity methods as described in
 Section~\ref{rythmos:sec:direct-sens}.
 
 \begin{itemize}
 
-{}\item Initial condition direct sensitivity: Given $u_l\in\mathcal{U}_l$ (for
-$l=1\ldots{}N_u$) and some $U_l\in\mathcal{U}_l|\RE^m$ compute the action of
+{}\item Initial condition direct sensitivity: Given $p_l\in\mathcal{P}_l$ (for
+$l=1\ldots{}N_u$) and some $U_l\in\mathcal{P}_l|\RE^m$ compute the action of
 \[
-(\{u_l\},U_l) {}\rightarrow \Jac{y_0}{u_l} U_l \in \mathcal{Y}|\RE^m,
-\; \mbox{for} \; l = 1 {}\ldots N_u,
+(\{p_l\},U_l) {}\rightarrow \Jac{x_0}{p_l} U_l \in \mathcal{X}|\RE^m,
+\; \mbox{for} \; l = 1 {}\ldots N_p,
 \]
 or alternatively evaluate the sensitivities themselves as a multi-vector
 \[
-\{u_l\} {}\rightarrow \Jac{y_0}{u_l} \in \mathcal{Y}|\mathcal{U}_l,
-\; \mbox{for} \; l = 1 {}\ldots N_u.
+\{p_l\} {}\rightarrow \Jac{x_0}{p_l} \in \mathcal{X}|\mathcal{P}_l,
+\; \mbox{for} \; l = 1 {}\ldots N_p.
 \]
 
 {}\item DAE auxiliary direct sensitivities: Given selections for
-$\dot{y}\in\mathcal{Y}$, $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for
-$l=1\ldots{}N_u$), $t\in\RE$, and some $U_l\in\mathcal{U}_l|\RE^m$ compute
+$\dot{x}\in\mathcal{X}$, $x\in\mathcal{X}$, $p_l\in\mathcal{P}_l$ (for
+$l=1\ldots{}N_u$), $t\in\RE$, and some $U_l\in\mathcal{P}_l|\RE^m$ compute
 the action of
 \[
-(\dot{y},y,\{u_l\},t,U_l) {}\rightarrow \Jac{c}{u_l} U_l \in \mathcal{C}|\RE^m,
-\; \mbox{for} \; l = 1 {}\ldots N_u,
+(\dot{x},x,\{p_l\},t,U_l) {}\rightarrow \Jac{f}{p_l} U_l \in \mathcal{F}|\RE^m,
+\; \mbox{for} \; l = 1 {}\ldots N_p,
 \]
 or alternatively compute the sensitivities themselves as a multi-vector
 \[
-(\dot{y},y,\{u_l\},t) {}\rightarrow \Jac{c}{u_l} \in \mathcal{C}|\mathcal{U}_l,
-\; \mbox{for} \; l = 1 {}\ldots N_u.
+(\dot{x},x,\{p_l\},t) {}\rightarrow \Jac{f}{p_l} \in \mathcal{F}|\mathcal{P}_l,
+\; \mbox{for} \; l = 1 {}\ldots N_p.
 \]
 
 {}\item Auxiliary response function state direct sensitivities: Given
-selections for $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for
-$l=1\ldots{}N_u$), $t\in\RE$ , and some $V\in\mathcal{Y}|\RE^m$
+selections for $x\in\mathcal{X}$, $p_l\in\mathcal{P}_l$ (for
+$l=1\ldots{}N_u$), $t\in\RE$ , and some $V\in\mathcal{X}|\RE^m$
 compute the action of
 \[
-(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{y} V \in \mathcal{G}|\RE^m,
+(x,\{p_l\},V) {}\rightarrow \Jac{g_j}{x} V \in \mathcal{G}|\RE^m,
 \; \mbox{for} \; j = 1 \ldots N_g
 \]
 or alternatively compute the sensitivities themselves as a multi-vector
 \[
-(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{y} \in \mathcal{G}|\mathcal{Y},
+(x,\{p_l\},V) {}\rightarrow \Jac{g_j}{x} \in \mathcal{G}|\mathcal{X},
 \; \mbox{for} \; j = 1 \ldots N_g.
 \]
 
 {}\item Auxiliary response function auxiliary parameter direct
-sensitivities: Given selections for $y\in\mathcal{Y}$,
-$u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ , and some
-$U_l\in\mathcal{U}_l|\RE^m$ compute the action of
+sensitivities: Given selections for $x\in\mathcal{X}$,
+$p_l\in\mathcal{P}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ , and some
+$U_l\in\mathcal{P}_l|\RE^m$ compute the action of
 \[
-(y,\{u_l\},U_l) {}\rightarrow \Jac{g_j}{u_l} U_l \in \mathcal{G}|\RE^m,
-\; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g
+(x,\{p_l\},U_l) {}\rightarrow \Jac{g_j}{p_l} U_l \in \mathcal{G}|\RE^m,
+\; \mbox{for} \; l = 1 {}\ldots N_p, j = 1 \ldots N_g
 \]
 or alternatively compute the sensitivities themselves as a multi-vector
 \[
-(y,\{u_l\},U_l) {}\rightarrow \Jac{g_j}{u_l} \in \mathcal{G}|\mathcal{U}_l,
-\; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g.
+(x,\{p_l\},U_l) {}\rightarrow \Jac{g_j}{p_l} \in \mathcal{G}|\mathcal{P}_l,
+\; \mbox{for} \; l = 1 {}\ldots N_p, j = 1 \ldots N_g.
 \]
 
 \end{itemize}
 
 Note that these three different types of forward derivative computations can
-always be approximated using directional finite differences of $\{u_l\}
-{}\rightarrow y_0$, $(\dot{y},y,\{u_l\},t) {}\rightarrow c$ and
-$(\{\hat{u}_l\},t) {}\rightarrow g$, respectively.  Therefore, numerical
+always be approximated using directional finite differences of $\{p_l\}
+{}\rightarrow x_0$, $(\dot{x},x,\{p_l\},t) {}\rightarrow c$ and
+$(\{\hat{p}_l\},t) {}\rightarrow g$, respectively.  Therefore, numerical
 methods that only require forward sensitivities as described above can always
 use directional finite differences and therefore require really no extra
 functionality beyond what is needed for the forward solve.  Some numerical
 methods, such as sensitivity computations, do require some degree of exactness
-from derivative computations used for $M = {}\alpha (\jac{c}{\dot{y}}) +
-{}\beta (\jac{c}{y})$ and the other derivative objects described above.
+from derivative computations used for $W = {}\alpha (\jac{f}{\dot{x}}) +
+{}\beta (\jac{f}{x})$ and the other derivative objects described above.
 
 \subsection{Requirements for first-order adjoint sensitivities}
 
@@ -1941,93 +1941,93 @@ adjoints.
 
 \begin{itemize}
 
-{}\item Initial condition adjoint sensitivity: Given $u_l\in\mathcal{U}_l$ (for
-$l=1\ldots{}N_u$) and some $V\in\mathcal{C}|\RE^m$ compute the action of
+{}\item Initial condition adjoint sensitivity: Given $p_l\in\mathcal{P}_l$ (for
+$l=1\ldots{}N_u$) and some $V\in\mathcal{F}|\RE^m$ compute the action of
 \[
-(\{u_l\},U_l) {}\rightarrow \Jac{y_0}{u_l}^T V \in \mathcal{U}_l|\RE^m
-\; \mbox{for} \; l = 1 {}\ldots N_u,
+(\{p_l\},U_l) {}\rightarrow \Jac{x_0}{p_l}^T V \in \mathcal{P}_l|\RE^m
+\; \mbox{for} \; l = 1 {}\ldots N_p,
 \]
 or alternatively evaluate the sensitivity themselves as a multi-vector
 \[
-\{u_l\} {}\rightarrow \Jac{y_0}{u_l} \in \mathcal{Y}|\mathcal{U}_l
-\; \mbox{for} \; l = 1 {}\ldots N_u.
+\{p_l\} {}\rightarrow \Jac{x_0}{p_l} \in \mathcal{X}|\mathcal{P}_l
+\; \mbox{for} \; l = 1 {}\ldots N_p.
 \]
 %
-{}\item Application of adjoint operator $M^T = ({}\alpha (\jac{c}{\dot{y}}) +
-{}\beta (\jac{c}{y}))^T$: Given a pre-formed object for $M = {}\alpha
-(\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$, provide the ability to apply the
+{}\item Application of adjoint operator $W^T = ({}\alpha (\jac{f}{\dot{x}}) +
+{}\beta (\jac{f}{x}))^T$: Given a pre-formed object for $W = {}\alpha
+(\jac{f}{\dot{x}}) + {}\beta (\jac{f}{x})$, provide the ability to apply the
 operator as
 \[
-Y = M^T X
+X = W^T X
 \]
-where $X\in\mathcal{C}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
-and $Y\in\mathcal{Y}|\RE^m$ is the LHS multi-vector.  The purpose of stating
+where $X\in\mathcal{F}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
+and $Y\in\mathcal{X}|\RE^m$ is the LHS multi-vector.  The purpose of stating
 the multi-vector form is to encourage the development of block methods that
 are useful for other types of more advanced algorithms.  However, the ability
 to apply the operator to single multi-vectors automatically satisfies this
 requirement.
 %
-{}\item Solve with adjoint operator $M^T = ({}\alpha (\jac{c}{\dot{y}}) +
-{}\beta (\jac{c}{y}))^T$: Given a pre-formed object for $M = {}\alpha
-(\jac{c}{\dot{y}}) + {}\beta (\jac{c}{y})$, provide the ability to
+{}\item Solve with adjoint operator $W^T = ({}\alpha (\jac{f}{\dot{x}}) +
+{}\beta (\jac{f}{x}))^T$: Given a pre-formed object for $W = {}\alpha
+(\jac{f}{\dot{x}}) + {}\beta (\jac{f}{x})$, provide the ability to
 (approximately) solve for systems of the form
 \[
-X = M^{-H} B
+X = W^{-H} B
 \]
-where $B\in\mathcal{C}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
-and $X\in\mathcal{Y}|\RE^m$ is the LHS solution multi-vector.  The purpose of
+where $B\in\mathcal{F}|\RE^m$ is some arbitrary RHS $m$-column multi-vector
+and $X\in\mathcal{X}|\RE^m$ is the LHS solution multi-vector.  The purpose of
 stating the linear solve requirement in multi-vector form is to encourage the
 development of block linear solver approaches that are useful for other types
 of more advanced algorithms.  However, note that the ability to solve single
 linear systems of the form
 \[
-x = M^{-H} b,
+x = W^{-H} b,
 \]
-where $b\in\mathcal{C}$ and $x\in\mathcal{Y}$, automatically satisfies this
+where $b\in\mathcal{F}$ and $x\in\mathcal{X}$, automatically satisfies this
 requirement.  The exact specification of what is meant to (approximately)
 solve systems of this nature must be accurately specified. Note that a status
 test that will work for composite and block linear solvers is needed which is
 different than for a straightforward iterative or direct linear solver.
 %
 {}\item DAE auxiliary adjoint sensitivities: Given selections for
-$\dot{y}\in\mathcal{Y}$, $y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for
-$l=1\ldots{}N_u$), $t\in\RE$, and some $V\in\mathcal{C}|\RE^m$ compute
+$\dot{x}\in\mathcal{X}$, $x\in\mathcal{X}$, $p_l\in\mathcal{P}_l$ (for
+$l=1\ldots{}N_u$), $t\in\RE$, and some $V\in\mathcal{F}|\RE^m$ compute
 the action of
 \[
-(\dot{y},y,\{u_l\},t,V) {}\rightarrow \Jac{c}{u_l}^T V \in \mathcal{U}_l|\RE^m,
-\; \mbox{for} \; l = 1 {}\ldots N_u,
+(\dot{x},x,\{p_l\},t,V) {}\rightarrow \Jac{f}{p_l}^T V \in \mathcal{P}_l|\RE^m,
+\; \mbox{for} \; l = 1 {}\ldots N_p,
 \]
 or alternatively compute the sensitivities themselves as a multi-vector
 \[
-(\dot{y},y,\{u_l\},t) {}\rightarrow \Jac{c}{u_l} \in \mathcal{C}|\mathcal{U}_l,
-\; \mbox{for} \; l = 1 {}\ldots N_u.
+(\dot{x},x,\{p_l\},t) {}\rightarrow \Jac{f}{p_l} \in \mathcal{F}|\mathcal{P}_l,
+\; \mbox{for} \; l = 1 {}\ldots N_p.
 \]
 
 {}\item Auxiliary response function state adjoint sensitivities: Given selections for
-$y\in\mathcal{Y}$, $u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ ,
+$x\in\mathcal{X}$, $p_l\in\mathcal{P}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ ,
 and some $V\in\mathcal{G}_j|\RE^m$ compute the action of
 \[
-(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{y}^T V \in \mathcal{Y}|\RE^m,
+(x,\{p_l\},V) {}\rightarrow \Jac{g_j}{x}^T V \in \mathcal{X}|\RE^m,
 \; \mbox{for} \; j = 1 \ldots N_g
 \]
 or alternatively compute the sensitivities themselves as a multi-vector
 \[
-(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{y} \in \mathcal{G}|\mathcal{Y},
+(x,\{p_l\},V) {}\rightarrow \Jac{g_j}{x} \in \mathcal{G}|\mathcal{X},
 \; \mbox{for} \; j = 1 \ldots N_g.
 \]
 
 {}\item Auxiliary response function auxiliary parameter adjoint
-sensitivities: Given selections for $y\in\mathcal{Y}$,
-$u_l\in\mathcal{U}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ , and some
+sensitivities: Given selections for $x\in\mathcal{X}$,
+$p_l\in\mathcal{P}_l$ (for $l=1\ldots{}N_u$), $t\in\RE$ , and some
 $V\in\mathcal{G}_j|\RE^m$ compute the action of
 \[
-(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{u_l}^T V \in \mathcal{U}_l|\RE^m,
-\; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g
+(x,\{p_l\},V) {}\rightarrow \Jac{g_j}{p_l}^T V \in \mathcal{P}_l|\RE^m,
+\; \mbox{for} \; l = 1 {}\ldots N_p, j = 1 \ldots N_g
 \]
 or alternatively compute the sensitivities themselves as a multi-vector
 \[
-(y,\{u_l\},V) {}\rightarrow \Jac{g_j}{u_l} \in \mathcal{G}|\mathcal{U}_l,
-\; \mbox{for} \; l = 1 {}\ldots N_u, j = 1 \ldots N_g.
+(x,\{p_l\},V) {}\rightarrow \Jac{g_j}{p_l} \in \mathcal{G}|\mathcal{P}_l,
+\; \mbox{for} \; l = 1 {}\ldots N_p, j = 1 \ldots N_g.
 \]
 
 \end{itemize}
@@ -2340,7 +2340,14 @@ Here we define the basic notational constructs that are used in this document.
 First, all vectors, multi-vectors and linear operators have associated vector
 spaces that must be considered.  Suppose we have the vector spaces
 $\mathcal{X}$ and $\mathcal{Y}$.  The vectors $x\in\mathcal{X}$ and
-$y\in\mathcal{Y}$ are said to be members of these vector spaces.  A linear
+$y\in\mathcal{Y}$ are said to be members of these vector spaces.  Let
+$E_{\mathcal{X}}\in\RE^{|\mathcal{X}| {}\times |\mathcal{X}|}$ and
+$E_{\mathcal{Y}}\in\RE^{|\mathcal{Y}| {}\times |\mathcal{Y}|}$ be particular
+selections for the basis representations for the vectors in the spaces
+$\mathcal{X}$ and $\mathcal{Y}$ respectively.  Given a basis selection these
+vectors take the form $x=E_{\mathcal{X}}\tilde{x}$ and
+$y=E_{\mathcal{Y}}\tilde{y}$ where $\tilde{x}\in\RE^{|\mathcal{X}|}$ and
+$\tilde{y}\in\RE^{|\mathcal{Y}|}$ are the coefficient vectors.  A linear
 operator $A$ that maps vectors from the {}\textit{domain} vector space
 $\mathcal{X}$ to the {}\textit{range} vector space $\mathcal{Y}$ is denoted
 $A\in\mathcal{Y}|\mathcal{X}$.  In some contexts, vectors themselves can be
@@ -2351,23 +2358,23 @@ exaclty equivalent to the definition of the space $\mathcal{X}$'s scalar
 product
 %
 \[
-x^T v \equiv \left< x, v \right>_{\mathcal{X}}.
+x^T v \equiv \left< \tilde{x}, \tilde{v} \right>_{\mathcal{X}}
 \]
 %
-The convension of interpreting $x^T$ as a linear operator that performs the
-operation of scalar product greatly simplifies many different formulations.
-
-Note that in general that the adjoint operator $A^T\in\mathcal{Y}|\mathcal{X}$
-must agree with its non-transposed operator $A\in\mathcal{Y}|\mathcal{X}$ by
-the relation
+where
 %
 \[
-v^T ( A u ) = \left< v, A u \right>_{\mathcal{F}} = \left< A^T v, u \right>_{\mathcal{X}} = u^T (A^T v)
+\left< \tilde{x}, \tilde{v} \right>_{\mathcal{X}} = \tilde{x}^T Q_{\mathcal{X}} \tilde{v}
 \]
 %
-where $u\in\mathcal{X}$, $v\in\mathcal{Y}$, and $<.,.>_{\mathcal{X}}$ and
-$<.,.>_{\mathcal{Y}}$ are the scalar products associated with the vector
-spaces $\mathcal{X}$ and $\mathcal{Y}$ respectively.
+and $Q_{\mathcal{X}} = E_{\mathcal{X}}^T E_{\mathcal{X}}$ is a symmetic
+positive-definite matrix .  The convension of interpreting $x^T$ as a linear
+operator that performs the operation of scalar product greatly simplifies many
+different formulations.
+
+As described in [???], we are free to work with vectors and operators in their
+Euclidean form and then come back later and perform the conversion to more
+general vectors spaces with non-Euclidean scalar products in many cases.
 
 A multivector $V\in\mathcal{X}|\RE^{m}$ is a special kind of linear operator
 in that its domain space is simply the $m$-dimensional Euclidean space and its
@@ -2383,6 +2390,10 @@ where $X\in\mathcal{X}|\RE^m$ and $Y\in\mathcal{Y}|\RE^m$.  This dual nature
 of a multivector (i.e.\ both as a set of concatonated vectors for arguments to
 other linear operators and as linear operators themselves) greatly simplifies
 the notation of various formulations.
+
+In what follows, we will define the derivative operators with respect to a
+Euclidean basis.  The transformations to non-Euclidean basis' will be deferred
+until later.
 
 \subsection{Partial Derivative Operator Notation}
 
@@ -3175,6 +3186,81 @@ considering timestepping algorithms for state and adjoint equations, only the
 augmented adjoint DAE is guaranteed to be stable for the same timestep used by
 the forward DAE {}\cite{adjoint-sens-2003}.  Therefore, the augmented adjoint
 DAE system is to be preferred in a software implementation.
+
+\section{Retrofitting of Application Codes that use the Backward-Euler Method}
+
+Here we consider how to retrofitt a current application code that is
+implemented to use only the implicit backward-Euler method for time
+integration.  We will show that many such codes can be easily used to
+implement the DAE function evaluation in (\ref{rythmos:eqn:dae}) and the
+derivative evaluation in (\ref{rythmos:eqn:W}).
+
+Assume that the true DAE function takes the form
+%
+\[
+f(\dot{x},x,t) = M(x) \dot{x} + \bar{f}(x,t)
+\]
+%
+where $M(x)$ is the mass matrix which may be a function of $x$ but not of
+$\dot{x}$.
+
+Typically, an application code that explicitly supports only the
+backward-Euler method will implement the residual equation of the form
+%
+\[
+r(\tilde{x},\bar{x},\tilde{t},\Delta t)
+= M(\tilde{x})\left(\frac{\tilde{x}-\bar{x}}{\Delta t}\right)
++ \bar{f}(\tilde{x},\tilde{t} + \Delta t)
+\]
+%
+where $\bar{x}$ is the previously computed solution at time $\tilde{t}$,
+$\Delta t$ is the time step, and $\tilde{x}$ is the new solution at time
+$\tilde{t} + {}\Delta t$ that is being sought.
+
+Many such application codes will also implement the computation of the
+Jacobian of this residual equation which takes the form
+%
+\[
+J(\tilde{x},\bar{x},\tilde{t},\Delta t)
+= \frac{1}{\Delta t} M + \Jac{\bar{f}}{\tilde{x}}.
+\]
+%
+To see how to use $r(\tilde{x},\bar{x},\tilde{t},\Delta t)$ to compute
+$f(\dot{x},x,t)$ we start by equating
+%
+\[
+f(\dot{x},x,t) = M(x) \dot(x) + \bar{f}(x,t)
+M(\tilde{x})\left(\frac{\tilde{x}-\bar{x}}{\Delta t}\right)
++ \bar{f}(\tilde{x},\tilde{t} + \Delta t)
+\]
+%
+where we immediatly see that we must have $\dot{x} =
+(\tilde{x}-\bar{x})/{\Delta t}$, $x=\tilde{x}$, and $t=\tilde{t}+\Delta t$.
+These leads to the evaluation of $f(\ldots)$ in terms of $r(\ldots)$ as
+%
+\[
+f(\dot{x},x,t)
+= r(x, x - \Delta t \dot{x},t - \Delta t, \Delta t)
+\]
+%
+where here $\Delta t\in\RE$ is an arbitrary number that should be chosen to
+minimize roundoff.
+
+It is also easy to show that the correct matrix $W(\dot{x},x,t)$ can be
+computed from $J(\tilde{x},\bar{x},\tilde{t},\Delta t)$ using $\Delta t =
+(\beta/\alpha)$ as
+%
+\[
+W(\dot{x},x,t)
+= \beta J(x, x - (\beta/\alpha) \dot{x},t - (\beta/\alpha), (\beta/\alpha)).
+\]
+%
+
+In summary, as long as an existing application is flexible enough in order to
+implement the functions $r(\tilde{x},\bar{x},\tilde{t},\Delta t)$ and
+$J(\tilde{x},\bar{x},\tilde{t},\Delta t)$ using their backward Euler method
+and as long as $f(\dot{x},x,t)$ is linear in $\dot{x}$, then the above
+expressions can be used to implement the original DAE model.
 
 \section{ToDo}
 
