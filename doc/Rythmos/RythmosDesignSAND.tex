@@ -2726,7 +2726,7 @@ expressions that are based on simple and straightforward principles.
 \subsubsection{Derivation of adjoint equation and sensitivities for steady-state parameters}
 \label{rythmos:app:adj-equ-derivation}
 
-In this section we begin with the same basic expressions for the reduced
+In this section we begin with the basic expressions for the reduced
 derivative $\jac{\hat{d}}{p}$ in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p}) and
 the direct sensitivity equations for $\jac{y}{p}$ in
 (\ref{rythmos:apdx:eqn:sens:direct-c})--(\ref{rythmos:apdx:eqn:sens:direct-c:ic})
@@ -2796,8 +2796,8 @@ what appears to be an arbitrary choice to help narrow the weighting function
 $\Lambda$ from the infinite set of possible choices.  It will be clear below
 why this chose is a convenient one.  Note that the choice in
 (\ref{rythmos:apdx:eqn:sens:adj-trans}) does not in and of itself uniquely
-determine $\Lambda$ as boundary conditions have yet to be specified.  It will
-be shown latter that the choice of boundary condition is arbitrary but when we
+determine $\Lambda$ since boundary conditions have yet to be specified.  It will
+be shown later that the choice of boundary condition is arbitrary but when we
 move toward the end of the derivation, a natural choice for a boundary
 condition that uniquely specifies $\Lambda$ will fall out.
 
@@ -2836,7 +2836,7 @@ in time from $t_f$ to $t_0$ {}\cite{adjoint-sens-2003}.  However, as described
 in the following theorem, we are free to pick almost any final condition for
 $\Lambda(t_f)$ that is consistent with the adjoint equation at $t_f$ and then
 evaluate the terms in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p-3}) involving
-the resulting adjoint solution.
+the resulting adjoint solution.  This is established in the following theorem.
 
 \begin{theorem}
 If $\Lambda_1$ and $\Lambda_2$ are any two particular bounded solutions to the
@@ -2968,6 +2968,10 @@ equations that solve for a unique adjoint solution $\Lambda$ which are
 integrated backwards in time and
 (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) gives the expression for the
 computation of $\jac{\hat{d}}{p}$ in terms of the computed adjoint $\Lambda$.
+Note that the integral in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_p_final}) can
+be evaluated at the same time that the adjoint is being solved backward in
+time.  Therefore, no storage of the adjoint is needed beyond what is needed
+for the time stepping algorithm.
 
 \subsubsection{Derivation of adjoint sensitivities for transient parameters}
 
@@ -2985,8 +2989,8 @@ transient parameters $v$ are fundamentally different than finite-dimensional
 steady-state parameters $p$.  Because of the infinite-dimensional nature of
 $v$, we use a different tool of functional analysis.  The tool we use is the
 application of the infinite-dimensional operator $\jac{\hat{d}}{v}$ to the
-infinite-dimensional perturbation $\delta v$ where we will then use identify
-$\jac{\hat{d}}{v(t)}$ in the integrand of
+infinite-dimensional perturbation $\delta v$ where we will then use to
+identify $\jac{\hat{d}}{v(t)}$ in the integrand of
 %
 \begin{equation}
 \Jac{\hat{d}}{v} \delta v = \int_{t_0}^{t_f} \Jac{\hat{d}}{v(t)} \delta v(t) dt.
@@ -2994,8 +2998,8 @@ $\jac{\hat{d}}{v(t)}$ in the integrand of
 \end{equation}
 %
 The integral in (\ref{rythmos:apdx:eqn:sens:d_d_hat_d_v_delta_v}) is the
-definition the infinite-dimensional operator application
-$(\jac{\hat{d}}{v(t)}) {}\delta v$ [???].
+definition the infinite-dimensional operator application $(\jac{\hat{d}}{v})
+{}\delta v$ [???].
 
 We begin the derivation with the directional derivative of $\hat{d}(v)$ with
 respect to $v$ along the direction $\delta v$ which is simply
@@ -3114,15 +3118,14 @@ $c(\dot{y},y,v,t) = c(\dot{y},y,t) + v$ which, when substituted into
 \label{rythmos:apdx:eqn:sens:adjoint_interpretation}
 \end{equation}
 %
-where here $v(t)\in\mathcal{C}$ are the perturbations in the state
-constraints.
+where $v(t)\in\mathcal{C}$ are the perturbations in the state constraints.
 
 The knowledge that this selection for the adjoint $\Lambda$ is the sensitivity
-of a functional of interest $d(y)$ with respect the changes in the constriants
-makes the adjoint a useful quantitiy in and of itself.  This is why the
-adjoint is useful in more contexts other than just computing reduced
-deriatives.  Examples of other areas where adjoints are useful are sensitivity
-analysis [???] and error estimation [???].
+of a functional of interest $d(y)$ with respect to the changes in the
+constriants makes the adjoint a useful quantitiy in and of itself.  This is
+why the adjoint is useful in more contexts other than just computing reduced
+derivatives.  Examples of other areas where adjoints are useful are
+sensitivity analysis [???] and error estimation [???].
 
 \subsection{The adjoint, the reduced gradient and the augmented adjoint}
 
@@ -3163,8 +3166,8 @@ and
 \end{equation}
 %
 
-As described in {}\cite{adjoint-sens-2003}, for some classes of up to index-2
-DAEs (including implicit ODES), the form of the adjoint in
+As described in {}\cite{adjoint-sens-2003}, for some classes of DAEs
+(including implicit ODEs), the form of the adjoint in
 (\ref{rythmos:apdx:eqn:sens:adj})--(\ref{rythmos:apdx:eqn:sens:adj:fc}) may be
 unstable while the {}\textit{augmented adjoint system}
 %
@@ -3181,11 +3184,12 @@ unstable while the {}\textit{augmented adjoint system}
 \label{rythmos:apdx:eqn:sens:aug-adj:fc}
 \end{eqnarray}
 %
-generally is stable when the forward DAE is stable.  In addition, when
-considering timestepping algorithms for state and adjoint equations, only the
-augmented adjoint DAE is guaranteed to be stable for the same timestep used by
-the forward DAE {}\cite{adjoint-sens-2003}.  Therefore, the augmented adjoint
-DAE system is to be preferred in a software implementation.
+generally is stable when the forward DAE (up to index 2) is stable.  In
+addition, when considering timestepping algorithms for state and adjoint
+equations, only the augmented adjoint DAE is guaranteed to be stable for the
+same timestep used by the forward DAE {}\cite{adjoint-sens-2003}.  Therefore,
+the augmented adjoint DAE system is to be preferred in a software
+implementation.
 
 \section{Retrofitting of Application Codes that use the Backward-Euler Method}
 
