@@ -29,7 +29,7 @@
 \author{Marzio Sala and Ken Stanley}
 
 \begin{abstract}
-We report on the design of general, flexible, consistent, reusable and efficient
+We discuss the design of general, flexible, consistent, reusable and efficient
 interfaces to direct solution software libraries for 
 systems of linear equations on both serial and distributed memory
 architectures. We introduce a set of abstract classes to access
@@ -94,14 +94,14 @@ The process of computing these three matrices is called {\sl
 upper triangular matrix, and $D$ is a diagonal matrix 
 (or possibly the identity matrix), and the algorithm adopted for their
 computation is some variant of Gaussian elimination method.
+
 The development and implementation of
 direct solvers for (\ref{eq:linear_system}) is a
 challenging task that has been a subject of research over the
 last four decades. 
 A brief overview of direct solution algorithms  is given in 
-Section~\ref{sec:overview}. 
-
-The focus of this article is the {\sl usage} of direct solution methods,
+Section~\ref{sec:overview}; however,
+the focus of this article is on the {\sl usage} of direct solution methods,
     rather than on their development or analysis.
 Therefore, the point of view is the one
 of application developers (users), interested in solving
@@ -134,9 +134,8 @@ The relative importance of these aspects is somehow subjective. For relatively
 simple problems, (Q5) is usually the key point, followed by (Q6). For
 complicated problems, and especially in industrial applications, (Q4) is of
 paramount importance. Points (Q1), (Q2) and (Q3) are usually considered as
-``technical details'' of minor importance, even if they aren't. Documentation
-and support are the glue between the library developers and the application
-developers. In fact, library developers often include a wide variety
+``technical details'' of minor importance, even if they aren't. 
+In fact, library developers often include a wide variety
 of choices, aiming to provide a powerful and comprehensive library.
 Application developers, instead, are usually not experts in the domain, and do
 not aim to become such. They often choose the code that looks easier to use and
@@ -178,7 +177,7 @@ from one library to the following. Although not necessary difficult, these
 activities are usually time-consuming;
 
 \item 
-{\sl delay the usage of new libraries.} 
+{\sl delays the usage of new libraries.} 
 Large application codes usually have a long life.  The sheer size of
 the codes and a natural reluctance to change a successful code discourage any
 effort of rewriting unless absolutely necessary.
@@ -193,22 +192,20 @@ modern software techniques and resorting to object-oriented (OO) design and
 programming.  We propose a set of clean, consistent and easy-to-use interfaces
 between the application and the direct solver libraries.  Each interface takes
 care of dealing with the direct solver library, in a manner that is
-transparent to the application developer, and automatically manage matrix
-formats, data layout, calling conventions, and all the other ``details''
+transparent to the application developers, and automatically manages matrix
+formats, data layout, calling conventions, and everything else is
 required by the supported libraries. 
 
 The basic ideas of our design are indeed quite old, and can be traced back to
 almost 30 years ago~\cite{duff79performance}. More recently,
-\cite{george99object} proposed a set of interfaces for the design of a
-sparse matrix package. We extend these ideas by abstracting the concepts to
-a higher level, by making the interfaces independent of the supported
+  articles~\cite{george99object,dobrian99design} discussed the usage of
+  abstract interfaces and OOD for the direct solution of sparse linear
+  systems.  We extend these ideas by abstracting the concepts to
+a higher level, and making the interfaces independent of the supported
 libraries. The interfaces are presented and implemented as a
 set of C++ classes.  C++~\cite{cppbook}
 supports object-oriented programming, and it is relatively easy to interface
-FORTRAN77, FORTRAN90 and C libraries with C++ code. C++ has become a common
-choice for developers  of scientific libraries and applications, and several
-projects have adopted C++ as the language of
-reference~\cite{heroux05trilinos}. The C++ language
+FORTRAN77, FORTRAN90 and C libraries with C++ code. The C++ language
 supports abstraction through classes, inheritance and polymorphism. For
 application developers, abstraction is important because brings simplicity,
 by allowing components with a minimalistic interface. It also ensures flexibility
@@ -216,6 +213,8 @@ because it decouples the different algorithmic phases from the data structures.
 Finally, abstraction allows extensibility in the sense that new (yet to
                                                                 develop)
 libraries can be easily added, at almost no cost to the application developer.
+Another candidate language could have been FORTRAN90, but it does not have
+inheritance and polymorphism.
 
 %
 %  I think that we can be more direct about our dependence on MPI here.  
@@ -240,18 +239,12 @@ examples of application are reported in Section~\ref{sec:example}.
 Section~\ref{sec:conclusions} outlines the conclusions.
 
 %-----------------------------------------------------------------------------
-\section{Overview of Direct Solution Methods}
+\section{Brief Overview of Direct Solution Methods}
 \label{sec:overview}
 %-----------------------------------------------------------------------------
 
 This section gives a broad view of the problematics of Gaussian elimination
-algorithms for distributed sparse linear systems. We have no aim of being
-complete; for more details on the subject, the interested reader should
-consult the specialized literature, for
-example~\cite{duff86direct,duff97sparse} and the references therein. 
-
-\smallskip
-
+algorithms for distributed sparse linear systems. 
 Following~\cite[Chapter 6]{dongarra98numerical}, a direct solution algorithm
 for sparse matrices can be divided in the following phases:
 \begin{itemize}
@@ -279,27 +272,36 @@ on minimum degree orderings and graph partitioning algorithms.  Solvers
 designed for symmetric and nearly symmetric matrices typically use symmetric
 permutations to maintain symmetry.  No single ordering method is best for all
 matrices, nor has a heuristic been found that consistently chooses the best
-ordering\cite{BaumannFleischmannMutzbauer03,AmestoyDavisDuff03}. 
+ordering~\cite{BaumannFleischmannMutzbauer03,AmestoyDavisDuff03}. 
 
 Since pivoting adds complexity which significantly increases execution
-time, many solvers offer options to reduce the cost of pivoting\cite{LiDemmel509092,sg:04-fgcs}.  Some
+time, many solvers offer options to reduce the cost of pivoting~\cite{LiDemmel509092,sg:04-fgcs}.  Some
 equilibrate the rows and columns of the matrix to improve diagonal
 dominance.  Many codes will consider the effect on execution time when
-choosing a pivot, accepting some loss of numerical stability\cite{Malard126136}.
+choosing a pivot, accepting some loss of numerical stability~\cite{Malard126136}.
 Typically this just means accepting the diagonal pivot if it is within
 some threshold of the best available, but some codes will take the
 predicted effect on execution time into consideration when choosing an off
-diagonal pivot\cite{Davis992205}.
+diagonal pivot~\cite{Davis992205}.
 
-Some codes combine similar rows and columns into blocks to improve
-locality and allow high performing BLAS to be called.  Some combine
-only rows and columns that are identical, others will accept minor
-differences in the rows and columns that they treat as blocks.  Such
-blocking can reduce the cost of symbolic factorization as well\cite{amestoy01analysis}.
+It is possible to combine similar rows and columns into blocks to improve
+locality and allow high performing BLAS to be called; this combination can
+consider only rows and columns that are identical, or accept minor differences
+in the rows and columns that they treat as blocks.  Such blocking can reduce
+the cost of symbolic factorization as well~\cite{amestoy01analysis}.
 
 The performance of a sparse direct solver depends on the underlying
 matrix, computer, application, algorithms, and libraries as well as
 the code and how it is compiled.  
+Given the differences in matrix, computer, application, algorithms,
+and libraries, it is unlikely that a single sparse direct solver will 
+outperform all others across all usages.  
+
+For more details on the subject, the interested reader should
+consult the specialized literature, for
+example~\cite{duff86direct,duff97sparse} and the references therein. 
+
+
 %Although a solver designed for an
 %unsymmetric matrix will work on symmetric matrices, solvers designed
 %for symmetric matrices will typically be faster on symmetric matrices.
@@ -311,26 +313,26 @@ the code and how it is compiled.
 %algorithms are able to take advantage of the similarity in matrices
 %between solves.
 
-The different characteristics of the matrices which users wish to
-solve impact sparse direct solvers.  Some matrices are symmetric in both
-structure and data $A_{i,j} = A_{j,i}$ for all $i$ and $j$.  Some of
-the symmetric matrices are positive definite, SPD, and require no
-pivoting.  The most efficient algorithms for symmetric and SPD
-matrices will not work on other matrices.  Some matrices are symmetric in
-structure, $A_{i,j} == 0$ iff $A_{j,i} == 0$, or nearly so.
-Algorithms that maintain symmetry typically outperform others on
-matrices with symmetric or nearly symmetric structure.  Some matrices have many
-columns and/or rows that are structurally identical, or nearly so.
-Aggregating nearly identical rows and columns into blocks allows more
-efficient BLAS3 routines to be used.  Some matrices can be factored with little
-fill-in, others require significant fill-in.  Matrices that can be
-factored with little fill-in and have few identical or nearly identical
-rows and columns are best handled by a low overhead code that does not
-use the BLAS.  Some matrices are banded or nearly so, allowing the use
-of a banded solver.  Matrices that have a non-trivial reduction to
-block triangular form can be solved more quickly, often dramatically,
-by a solver that includes reduction to block triangular form.  No sparse direct solver is best for all types of matrices.  
-
+%The different characteristics of the matrices which users wish to
+%solve impact sparse direct solvers.  Some matrices are symmetric in both
+%structure and data $A_{i,j} = A_{j,i}$ for all $i$ and $j$.  Some of
+%the symmetric matrices are positive definite, SPD, and require no
+%pivoting.  The most efficient algorithms for symmetric and SPD
+%matrices will not work on other matrices.  Some matrices are symmetric in
+%structure, $A_{i,j} == 0$ iff $A_{j,i} == 0$, or nearly so.
+%Algorithms that maintain symmetry typically outperform others on
+%matrices with symmetric or nearly symmetric structure.  Some matrices have many
+%columns and/or rows that are structurally identical, or nearly so.
+%Aggregating nearly identical rows and columns into blocks allows more
+%efficient BLAS3 routines to be used.  Some matrices can be factored with little
+%fill-in, others require significant fill-in.  Matrices that can be
+%factored with little fill-in and have few identical or nearly identical
+%rows and columns are best handled by a low overhead code that does not
+%use the BLAS.  Some matrices are banded or nearly so, allowing the use
+%of a banded solver.  Matrices that have a non-trivial reduction to
+%block triangular form can be solved more quickly, often dramatically,
+%by a solver that includes reduction to block triangular form.  No sparse direct solver is best for all types of matrices.  
+%
 %% MS % This seems to generic to me... Maybe re-write?  
 %Some sparse direct solvers are designed for single processor
 %computers, some are designed for shared memory computers and others
@@ -358,10 +360,10 @@ by a solver that includes reduction to block triangular form.  No sparse direct 
 %to the execution time of the factorization (numeric and/or symbolic).
 %Some applications require more accuracy than others.
 
-The three common methods for exploiting parallelism are the
-multi-frontal method, coalescing  similar 
-columns into blocks and calling a parallel dense solver 
-to factor the final block of the matrix \cite{amestoy01analysis}.
+%The three common methods for exploiting parallelism are the
+%multi-frontal method, coalescing  similar 
+%columns into blocks and calling a parallel dense solver 
+%to factor the final block of the matrix~\cite{amestoy01analysis}.
 
 % MS % discussed in the conclusions: skip it here?
 %
@@ -372,12 +374,6 @@ to factor the final block of the matrix \cite{amestoy01analysis}.
 
 %Some solvers use iterative refinement to improve accuracy.  Iterative
 %refinement is used most often with codes that do not perform full partial pivoting.  
-
-% MS % already discussed in the introduction, skip it here??
-%
-%Given the differences in matrix, computer, application, algorithms,
-%and libraries, it is unlikely that a single sparse direct solver will 
-%outperform all others across all usages.  
 
 %-----------------------------------------------------------------------------
 \section{Project Design}
@@ -458,26 +454,9 @@ written in C;
 \item {\sl different algorithms are used.} The underlying algorithms do
 considerably differ
 and can therefore perform differently, depending on the considered matrices and
-machines.
+computer architectures.
 
 \end{itemize}
-
-\begin{figure}
-\begin{center}
-\fbox{ \includegraphics[width=12cm]{amesos_flowchart.pdf}}
-\end{center}
-\caption{Flowchart of linear system solution. $A, x$ and $b$ represent objects
-  defined in the application, while $A', x'$ and $b'$ are the corresponding 
-    wrappers that
-    satisfy Interfaces~\ref{int:vector} and \ref{int:ami}. Dashed lines mean
-    that a given phase uses data defined in another phase. From left to right,
-  the first column 
-    represents phases occurring in the application; the second column wrapping
-and calls to generic interface methods; the third column actions
-occurring in the solver interface, while the fourth column calls to supported
-direct solver library.}
-\label{fig:flowchart}
-\end{figure}
 
 Despite these differences, all solvers are accessed with a sequence of
 steps similar to steps (S0)--(S1) of Section~\ref{sec:overview}:
@@ -493,7 +472,6 @@ of the entries of the factored terms;
 \item[(A3)] Definition of the right-hand side;
 \item[(S3)] Solution of the linear system for given $x$ and $b$.
 \end{enumerate}
-A flowchart of the processes is reported in Figure~\ref{fig:flowchart}.
 Steps (A1), (A2) and (A3) are application-dependent; 
 our aim is to standardize steps (S0/1), (S2)
 and (S3) to allow a transparent and consistent usage of all libraries. This
@@ -514,7 +492,7 @@ more difficult in a production code;
 
 To satisfy these goals, we introduce a set of abstract classes, which will be
 used to define interfaces to the data layout of distributed objects, 
-vectors, matrices, linear system (\ref{eq:linear_system}), and the solver.
+vectors, matrices, linear system, and the solver.
 These classes are reported as C++ classes, but the concepts are more general
 and the discussion is largely language-independent.
 
@@ -588,13 +566,21 @@ the (locally owned) row {\tt ID};
                              Values)} copies the
 column IDs and values of all nonzero elements of the locally hosted row {\tt
   ID} in the user's allocated arrays (of length {\tt Length}). The output
-  variable {\tt NumEntries} returns the number of nonzeros in the row.
+  variable {\tt NumEntries} returns the number of nonzeros in the row;
 \item \verb!const Map& GetRowMap()! returns a reference to the map;
+\item \verb!bool IsSymmetric()! returns {\tt true} is only the upper
+triangular part of the matrix is accessed through {\tt GetMyRow()}, {\tt
+  false} otherwise.
 \end{itemize}
 \end{interface}
 Interface~\ref{int:ami} defines a standard set of methods to ``view'' matrix
 elements through row extractions. This approach is used, 
-for instance, in~\cite{Epetra-Ref-Guide,ml-guide,duff02overview,lujan00oolala}.
+for instance,
+in~\cite{Epetra-Ref-Guide,ml-guide,duff02overview,lujan00oolala}. We decided
+not to adopt iterators in {\tt GetMyRow()} to make the code easier to use.
+Besides, since this method will be mostly used to convert the matrix into a
+specific solver's format, the use of iterators would have not increased the
+performances.
 
 \smallskip
 
@@ -644,6 +630,25 @@ solution and the right-hand side vectors.
 provide feedback from the supported library.
 \end{itemize}
 \end{interface}
+
+A flowchart of the factorization processes within a typical application
+is reported in Figure~\ref{fig:flowchart}.
+\begin{figure}
+\begin{center}
+\fbox{ \includegraphics[width=12cm]{amesos_flowchart.pdf}}
+\end{center}
+\caption{Flowchart of linear system solution. $A, x$ and $b$ represent objects
+  defined in the application, while $A', x'$ and $b'$ are the corresponding 
+    wrappers that
+    satisfy Interfaces~\ref{int:vector} and \ref{int:ami}. Dashed lines mean
+    that a given phase uses data defined in another phase. From left to right,
+  the first column 
+    represents phases occurring in the application; the second column wrapping
+and calls to generic interface methods; the third column actions
+occurring in the solver interface, while the fourth column calls to supported
+direct solver library.}
+\label{fig:flowchart}
+\end{figure}
 
 %------------------------------------------------------------------------- 
 \section{A Concrete Implementation}
@@ -746,6 +751,9 @@ implementations (for a little more than 13.000 code lines, including comments
                  and Doxygen documentation), and it
 takes advantage of the {\sc Epetra} package~\cite{Epetra-Ref-Guide} to specify
 Interfaces~\ref{int:map}, \ref{int:vector}, \ref{int:ami} and \ref{int:lp}.
+{\sc Epetra} defines several concrete implementations of
+Interface~\ref{int:ami}, making it easy to read matrices from formats
+  like AIJ or CSR.
 The Standard Template Library (STL)~\cite{wise96overview} is used
 to increase performances whenever possible.
 
@@ -759,7 +767,7 @@ variable \verb!SolverType!, and is created by using the
 factory class \verb!Amesos!. Factory classes are a programming
 tool~\cite{alexandrescu01modern} that implement a sort of ``virtual
 constructor,'' in the sense that one can instantiate a derived (concrete) object
-while still working with abstract types. 
+while still working with abstract data types. 
 The example reported in Figure~\ref{fig:example} adopts UMFPACK as a solver; 
 by using the factory class, other
 interfaces can be created by simply changing the parameter
@@ -771,7 +779,7 @@ interfaces can be created by simply changing the parameter
 
 \begin{figure}
 \begin{center}
-\includegraphics[width=7cm]{amesos_and_application.pdf}
+\includegraphics[width=6cm]{amesos_and_application.pdf}
 \end{center}
 \caption{Connection between a generic application and \amesos.}
 \label{fig:app}
@@ -794,14 +802,13 @@ parameters is reported in~\cite{Amesos-Reference-Guide}.
 % ------------------------------------------------------------------------
 
 The example code of Figure~\ref{fig:example} has shown the facility of usage
-of Amesos; this section, instead, aims to quantify the overhead due to the
-Amesos interface.
+of \amesos; this section, instead, aims to quantify its overhead.
 
 Figure~\ref{fig:results} reports the percentage of CPU time required by the
 \amesos\ interface with respect to the time required by the underlying
 library. We have considered the SuperLU and UMFPACK interface for the solution
 of all matrices in the FIDAP collection, available
-at~\cite{boisvert97matrix}. The considered sizes go from 27 
+at~\cite{boisvert97matrix}. The matrix sizes range from 27 
 ({\tt FIDAP005}) to 22294 ({\tt FIDAPM11}). All problems are solved using one
 1.67 GHz G4 processor with 1024 Mbytes of RAM, running MAC OS X 10.4 and gcc
 4.0.0. The table reports the percentage of the CPU time required by the
@@ -829,7 +836,7 @@ Note that this overhead can indeed be reduced by adding specialized classes,
 
 \begin{figure}
 \begin{center}
-\includegraphics[angle=90,width=13cm]{interface_time.pdf}
+\includegraphics[angle=90,width=12cm]{interface_time.pdf}
 \caption{Additional time required by the \amesos\ interface with respect to the
 time required by the solver, for different matrices and solvers. $n$
   represents the size of the matrix, and $nnz$ the total number of nonzeros.
@@ -871,7 +878,7 @@ Therefore, these preconditioners are completed by one or more additional
 in multilevel methods; 
 see for instance \cite{brandt.classic,hack.book}. 
 
-Direct solution methods can be therefore required in two distinct phases: In the application of
+Direct solution methods can therefore be required in two distinct phases: In the application of
 the $A'_i$'s, and in the solution of the coarse problem. In both cases, it
 suffices to wrap the $A'_i$'s or the coarse matrix to satisfy
 Interface~\ref{int:ami} in order to allow an access to any of the libraries
@@ -1010,7 +1017,7 @@ supported solver. In most cases, these values constitute a robust and reliable
 choice for most applications. If required, the user can tune some of the
 parameters by using method \verb!SetParameters()!. However, fine-tuning can be
 difficult since Interface~\ref{int:asi} has no knowledge of the underlying
-solver data structure. Projects like~\cite{dayde04overview} can provide insight on
+solver data structure. Projects like the GRID/TLSE~\cite{dayde04overview} can provide insight on
 the choice of parameters.
 
 \item There
@@ -1042,6 +1049,11 @@ next, making it impossible for the linker to select the
 Some libraries offer a one-solve routine without storing any data after the
 solution is completed; this option is not  supported
 by the presented design, but it could be easily added.
+
+\item
+There are no capabilities to obtain the $L$, $D$ and $U$ factors, or the
+reorderings $P$ and $Q$. This is because each supported package uses a
+different storage format and distribution.
 
 \item
 Problematic user-package communications. Because of the high-level view, the
