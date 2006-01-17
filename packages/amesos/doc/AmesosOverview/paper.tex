@@ -197,7 +197,7 @@ formats, data layout, calling conventions, and everything else is
 required by the supported libraries. 
 
 The basic ideas of our design are indeed quite old, and can be traced back to
-almost 30 years ago~\cite{duff79performance}. More recently,
+almost 30 years ago~\cite{duff79performance,george79design}. More recently,
   articles~\cite{george99object,dobrian99design} discussed the usage of
   abstract interfaces and OOD for the direct solution of sparse linear
   systems.  We extend these ideas by abstracting the concepts to
@@ -756,6 +756,9 @@ Interface~\ref{int:ami}, making it easy to read matrices from formats
   like AIJ or CSR.
 The Standard Template Library (STL)~\cite{wise96overview} is used
 to increase performances whenever possible.
+The \amesos\ implementation of Interface~\ref{int:asi} also contains methods
+{\tt PrintStatus()} and {\tt PrintTiming()} that offer a standard way to
+access various statistics and timings for all packages.
 
 An example of usage of \amesos\ is reported in Figure~\ref{fig:example}. 
 Although this particular example requires MPI, \amesos\
@@ -1053,7 +1056,8 @@ by the presented design, but it could be easily added.
 \item
 There are no capabilities to obtain the $L$, $D$ and $U$ factors, or the
 reorderings $P$ and $Q$. This is because each supported package uses a
-different storage format and distribution.
+different storage format and distribution. Reordering and scaling can be made
+library-independent by working on Interfaces~\ref{int:ami} and \ref{int:lp}.
 
 \item
 Problematic user-package communications. Because of the high-level view, the
@@ -1086,6 +1090,9 @@ convenient to adopt a project like \amesos. For linear solver
 libraries' developers  writing one interface for their own solver can help to make it
 applicable and testable to a vast range of applications.
 
+One of our goal in the design of \amesos\ was to reduce the intellectual
+effort required to use direct solver libraries. We feel that this objective
+has been achieved, and the performance penalty is very limited in most cases.
 In our opinion, the only limitation of \amesos\ is that it supports double
 precision only, while most direct solvers allows the solution in single
 precision and complex arithmetics.  Although the model could in principle
