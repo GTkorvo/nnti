@@ -3213,34 +3213,34 @@ Typically, an application code that explicitly supports only the
 backward-Euler method will implement the residual equation of the form
 %
 \[
-r(\tilde{x},\bar{x},\tilde{t},\Delta t)
-= M(\tilde{x},\tilde{t} + \Delta t)\left(\frac{\tilde{x}-\bar{x}}{\Delta t}\right)
-+ \bar{f}(\tilde{x},\tilde{t} + \Delta t)
+r(x_{k+1},x_k,t_k,\Delta t)
+= M(x_{k+1},t_k + \Delta t)\left(\frac{x_{k+1}-x_k}{\Delta t}\right)
++ \bar{f}(x_{k+1},t_k + \Delta t)
 \]
 %
-where $\bar{x}$ is the previously computed solution at time $\tilde{t}$,
-$\Delta t$ is the time step, and $\tilde{x}$ is the new solution at time
-$\tilde{t} + {}\Delta t$ that is being sought.
+where $x_k$ is the previously computed solution at time $t_k$,
+$\Delta t$ is the time step, and $x_{k+1}$ is the new solution at time
+$t_k + {}\Delta t$ that is being sought.
 
 Many such application codes will also implement the computation of the
 Jacobian of this residual equation which takes the form
 %
 \[
-J(\tilde{x},\bar{x},\tilde{t},\Delta t)
-= \frac{1}{\Delta t} M + \Jac{\bar{f}}{\tilde{x}}.
+J(x_{k+1},x_k,t_k,\Delta t)
+= \frac{1}{\Delta t} M + \Jac{\bar{f}}{x_{k+1}}.
 \]
 %
-To see how to use $r(\tilde{x},\bar{x},\tilde{t},\Delta t)$ to compute
+To see how to use $r(x_{k+1},x_k,t_k,\Delta t)$ to compute
 $f(\dot{x},x,t)$ we start by equating
 %
 \[
 f(\dot{x},x,t) = M(x,t) \dot(x) + \bar{f}(x,t)
-= M(\tilde{x},\tilde{t} + \Delta t)\left(\frac{\tilde{x}-\bar{x}}{\Delta t}\right)
-+ \bar{f}(\tilde{x},\tilde{t} + \Delta t)
+= M(x_{k+1},t_k + \Delta t)\left(\frac{x_{k+1}-x_k}{\Delta t}\right)
++ \bar{f}(x_{k+1},t_k + \Delta t)
 \]
 %
 where we immediately see that we must have $\dot{x} =
-(\tilde{x}-\bar{x})/{\Delta t}$, $x=\tilde{x}$, and $t=\tilde{t}+\Delta t$.
+(x_{k+1}-x_k)/{\Delta t}$, $x=x_{k+1}$, and $t=t_k+\Delta t$.
 These leads to the evaluation of $f(\ldots)$ in terms of $r(\ldots)$ as
 %
 \[
@@ -3248,11 +3248,12 @@ f(\dot{x},x,t)
 = r(x, x - \Delta t \dot{x},t - \Delta t, \Delta t)
 \]
 %
-where here $\Delta t\in\RE$ is an arbitrary number that should be chosen to
-minimize roundoff.
+where $x_{k+1} = x$, $x_k = x - {}\Delta t {}\dot{x}$, $t_k = t - {}\Delta t$,
+and $\Delta t\in\RE$ is an arbitrary number that should be chosen to minimize
+roundoff.
 
 It is also easy to show that the correct matrix $W(\dot{x},x,t)$ can be
-computed from $J(\tilde{x},\bar{x},\tilde{t},\Delta t)$ using $\Delta t =
+computed from $J(x_{k+1},x_k,t_k,\Delta t)$ using $\Delta t =
 (\beta/\alpha)$ as
 %
 \[
@@ -3262,8 +3263,8 @@ W(\dot{x},x,t)
 %
 
 In summary, as long as an existing application is flexible enough in order to
-implement the functions $r(\tilde{x},\bar{x},\tilde{t},\Delta t)$ and
-$J(\tilde{x},\bar{x},\tilde{t},\Delta t)$ using their backward Euler method
+implement the functions $r(x_{k+1},x_k,t_k,\Delta t)$ and
+$J(x_{k+1},x_k,t_k,\Delta t)$ using their backward Euler method
 and as long as $f(\dot{x},x,t)$ is linear in $\dot{x}$, then the above
 expressions can be used to implement the original DAE model.
 
