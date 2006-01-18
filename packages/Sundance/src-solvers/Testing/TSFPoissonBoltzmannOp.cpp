@@ -77,9 +77,6 @@ Vector<double> PoissonBoltzmannOp::getInitialGuess() const
 LinearOperator<double> 
 PoissonBoltzmannOp::computeJacobianAndFunction(Vector<double>& functionValue) const 
 {
-  int rank = MPISession::getRank();
-  int nProc = MPISession::getNProc();
-
   J_.setEvalPoint(currentEvalPt());
 
   RefCountPtr<GhostView<double> > u;
