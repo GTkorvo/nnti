@@ -74,12 +74,12 @@ Ken Stanley: Department of Computer Science, Oberlin College, Oberlin, Ohio, USA
 
 This paper describes the design and the implementation of 
 interfaces to serial and parallel direct solution libraries for
-sparse linear systems of type
+linear systems of type
 \begin{equation}
   \label{eq:linear_system}
   A x = b,
 \end{equation}
-where $A \in \mathbb{R}^{n \times n}$ is a real, square matrix, 
+where $A \in \mathbb{R}^{n \times n}$ is a real and sparse square matrix, 
   and $x, b \in \mathbb{R}^{n}$ are the solution and
 the right-hand side vectors, respectively. 
 
@@ -141,7 +141,7 @@ Application developers, instead, are usually not experts in the domain, and do
 not aim to become such. They often choose the code that looks easier to use and
 seems to perform in a reasonable way. This difference of views creates a gap between
 the actual and potential use of mathematical software.
-Of course, a simple but inefficient library is of no use; therefore the
+Of course, a simple but inefficient library is of no interest; therefore the
 ``optimal'' library will exhibit a mixture of the features outlined above.
 
 Once a library has been chosen, the application developers have to
@@ -187,8 +187,8 @@ distribution, or a new calling convention, users may simply decide to continue
 using the interface already developed.
 \end{itemize}
 
-This article shows that it is possible to overcome all these problems by using
-modern software techniques and resorting to object-oriented (OO) design and
+This article shows that it is possible to overcome all these problems by 
+resorting to object-oriented (OO) design and
 programming.  We propose a set of clean, consistent and easy-to-use interfaces
 between the application and the direct solver libraries.  Each interface takes
 care of dealing with the direct solver library, in a manner that is
@@ -245,6 +245,10 @@ Section~\ref{sec:conclusions} outlines the conclusions.
 
 This section gives a broad view of the problematics of Gaussian elimination
 algorithms for distributed sparse linear systems. 
+For more details on the subject, the interested reader should
+consult the specialized literature, for
+example~\cite{duff86direct,duff97sparse} and the references therein. 
+
 Following~\cite[Chapter 6]{dongarra98numerical}, a direct solution algorithm
 for sparse matrices can be divided in the following phases:
 \begin{itemize}
@@ -256,9 +260,10 @@ suitable ordering and data structures for efficient factorization;
 forward and backward substitution.
 \end{itemize}
 Some codes combine phases (S1) and (S2). Phase (S2) usually requires the most
-computing time, while phase (S3) is generally one order of magnitude faster.
+computing time, while phase (S3) is generally one order of magnitude faster
+than (S2).
 Phase (S0) is typical of sparse matrices:
-since $A$ is sparse, $L$ and $U$ are typically sparse, though they may have some
+since $A$ is sparse, $L$ and $U$ are still sparse, though they may have some
 fill-in, i.e. non-zero entries which are zero in $PAQ$.  
 In a typical solver for an unsymmetric matrix, the column permutation,
 $Q$ is chosen to minimize fill-in, while $P$, the row permutation, is
@@ -290,16 +295,14 @@ consider only rows and columns that are identical, or accept minor differences
 in the rows and columns that they treat as blocks.  Such blocking can reduce
 the cost of symbolic factorization as well~\cite{amestoy01analysis}.
 
-The performance of a sparse direct solver depends on the underlying
+We have just mentioned few reasons that explained why
+the performance of a sparse direct solver depends on the underlying
 matrix, computer, application, algorithms, and libraries as well as
 the code and how it is compiled.  
 Given the differences in matrix, computer, application, algorithms,
 and libraries, it is unlikely that a single sparse direct solver will 
 outperform all others across all usages.  
 
-For more details on the subject, the interested reader should
-consult the specialized literature, for
-example~\cite{duff86direct,duff97sparse} and the references therein. 
 
 
 %Although a solver designed for an
@@ -458,7 +461,8 @@ computer architectures.
 
 \end{itemize}
 
-Despite these differences, all solvers are accessed with a sequence of
+Despite these differences, all solvers are accessed within 
+a given application by using a sequence of
 steps similar to steps (S0)--(S1) of Section~\ref{sec:overview}:
 \begin{enumerate}
 \item[(A1)] Definition of the sparsity pattern of the linear system matrix;
@@ -472,11 +476,11 @@ of the entries of the factored terms;
 \item[(A3)] Definition of the right-hand side;
 \item[(S3)] Solution of the linear system for given $x$ and $b$.
 \end{enumerate}
-Steps (A1), (A2) and (A3) are application-dependent; 
-our aim is to standardize steps (S0/1), (S2)
-and (S3) to allow a transparent and consistent usage of all libraries. This
-can be done by adding an intermediate layer between the application and the
-libraries. This layer will be defined in terms of an abstract framework, that
+Steps (A1), (A2) and (A3) are application-dependent and will not be discussed
+here; instead
+steps (S0/1), (S2) and (S3)  can be standardized by
+adding an intermediate layer between the application and the
+direct solver libraries. This layer will be defined in terms of an abstract framework, that
 satisfies the following requirements:
 \begin{itemize}
 
@@ -511,7 +515,9 @@ The {\tt Map} class will contain the following methods:
 \end{interface}
 A {\tt Map} defines the local-to-global numbering. We require that any global
 ID is assigned to exactly one processor. {\tt Map}'s are used to define the
-layout of distributed vectors and matrices. The next class is the {\tt Vector}
+layout of distributed vectors and matrices. 
+
+The next class is the {\tt Vector}
 class, which specifies the interfaces for
 distributed vectors\footnote{
 For the sake of simplicity, this paper focuses on vectors and not on
@@ -568,7 +574,7 @@ column IDs and values of all nonzero elements of the locally hosted row {\tt
   ID} in the user's allocated arrays (of length {\tt Length}). The output
   variable {\tt NumEntries} returns the number of nonzeros in the row;
 \item \verb!const Map& GetRowMap()! returns a reference to the map;
-\item \verb!bool IsSymmetric()! returns {\tt true} is only the upper
+\item \verb!bool IsSymmetric()! returns {\tt true} if only the upper
 triangular part of the matrix is accessed through {\tt GetMyRow()}, {\tt
   false} otherwise.
 \end{itemize}
@@ -626,7 +632,7 @@ is, it computes the matrices $L$, $D$ and $U$ by accessing the matrix values.
 Both the solution and the right-hand side vectors are not required in this phase;
 \item \verb!int Solve()! solves the linear system. This phase requires the
 solution and the right-hand side vectors.
-\item \verb!void GetParameters(List)! returns a list of output parameters, to
+\item \verb!List GetParameters()! returns a list of output parameters, to
 provide feedback from the supported library.
 \end{itemize}
 \end{interface}
@@ -661,7 +667,7 @@ the {\sl \amesos}\footnote{
 \amesos\ is a Greek term that loosely translated means ``direct.''} package~\cite{Amesos-Reference-Guide}.
 \amesos,
 developed by (in alphabetical order) T.~Davis, M.~Heroux, R.~Hoekstra, 
-M.~Sala, and K.~Stanley. \amesos\ is distributed within the
+M.~Sala, and K.~Stanley, is distributed within the
 Trilinos project~\cite{heroux05trilinos}.
 To increase portability, \amesos\ is configured using autoconf and autotools;
 each solver can be enabled or disabled at configure time. Users can take
@@ -768,7 +774,7 @@ solvers are available only when compiled with MPI support.) The only
 the supported library. The required interface is specified by the string
 variable \verb!SolverType!, and is created by using the
 factory class \verb!Amesos!. Factory classes are a programming
-tool~\cite{alexandrescu01modern} that implement a sort of ``virtual
+tool~\cite{alexandrescu01modern} that implements a sort of ``virtual
 constructor,'' in the sense that one can instantiate a derived (concrete) object
 while still working with abstract data types. 
 The example reported in Figure~\ref{fig:example} adopts UMFPACK as a solver; 
@@ -790,7 +796,7 @@ interfaces can be created by simply changing the parameter
 
 A generic interface between an application code and \amesos\ is as represented
 in Figure~\ref{fig:app}: Once $A$, $x$ and $b$ of (\ref{eq:linear_system}) are
-available, the application can use the factory class to access the supported
+available, the application can use the factory class to access any of the supported
 libraries.
 
 Each \amesos\ interface automatically selects the default parameters defined by
@@ -823,7 +829,7 @@ As expected, for small matrices (for example \verb!FIDAP005! or \verb!FIDAPM05!,
 27 and 42, respectively) 
 the overhead is considerable. When considering bigger matrices ($n > 3000$),
 then the overhead is  always below 5\%. All the overhead is spent in
-converting the matrix to the abstract format of Interface~\ref{int:ami} to the
+converting the matrix from the abstract format of Interface~\ref{int:ami} to the
 format required by the library, and performing additional safety checks.
 Note that this overhead can indeed be reduced by adding specialized classes,
      that satisfies Interface~\ref{int:ami} but internally stores the matrix
@@ -964,7 +970,7 @@ The advantages of this model are the following:
 
 \item The actual data storage used to store the linear system matrix becomes inessential.
 Each concrete implementation will take care, if necessary, to convert the
-input matrix into the required data format. This means that the
+input matrix to the required data format. This means that the
 application can choose {\sl any} matrix format that can be wrapped by the
 abstract matrix interface.
 
@@ -1095,11 +1101,12 @@ effort required to use direct solver libraries. We feel that this objective
 has been achieved, and the performance penalty is very limited in most cases.
 In our opinion, the only limitation of \amesos\ is that it supports double
 precision only, while most direct solvers allows the solution in single
-precision and complex arithmetics.  Although the model could in principle
+precision and complex arithmetics.  
+Our model can 
 support single precision and complex arithmetics (by using templates, for
-                                                  example), no code that
-implements Interface~\ref{int:asi} has been written yet. A templated version
-of Interfaces~\ref{int:map}--\ref{int:lp} are under development.
+                                                  example), and a templated
+version of
+of Interfaces~\ref{int:map}--\ref{int:asi} is under development.
 
 %-----------------------------------------------------------------------------%
 \section*{Acknowledgments}
