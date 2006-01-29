@@ -322,13 +322,22 @@ namespace TSFExtended
     /** \name Element access interface */
     //@{
     /** get the element at the given global index */
-    const Scalar& getElement(Index globalIndex) const 
-    {return castToAccessible()->getElement(globalIndex);}
+    const Scalar& getElement(Index globalIndex) const ;
+    //{return castToAccessible()->getElement(globalIndex);}
 
     /** Get a batch of elements */
     void getElements(const Index* globalIndices, int numElems,
                      vector<Scalar>& elems) const 
     {castToAccessible()->getElements(globalIndices, numElems, elems);}
+
+    /** const bracket operator  */
+    const Scalar& operator[](Index globalIndex) const
+//     {cerr << "const bracket[" << globalIndex << "]" << endl; return getElement(globalIndex);}
+    {return getElement(globalIndex);}
+    
+    /** non - const bracket operator  */
+    Scalar& operator[](Index globalIndex);
+
     //@}
 
     /** \name Raw data access interface */
@@ -405,6 +414,8 @@ namespace TSFExtended
 
     /** Cross-cast vector to a raw data accessible vector */
     RawDataAccessibleVector<Scalar>* castToRawDataAccessible();
+
+  
 
       
       

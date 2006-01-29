@@ -31,6 +31,7 @@
 #define TSF_VECTORTESTER_HPP
 
 #include "TSFVector.hpp"
+#include "TSFProductVectorSpace.hpp"
 #include "Thyra_TestSpecifier.hpp"
 #include "Thyra_SUNDIALS_Ops.hpp"
 #include "Teuchos_ScalarTraits.hpp"
@@ -69,6 +70,9 @@ namespace TSFExtended
     bool setElementTest() const ;
 
     /** */
+    bool setElementUsingBracketTest() const ;
+
+    /** */
     bool dotStarTest() const ;
 
     /** */
@@ -94,6 +98,9 @@ namespace TSFExtended
 
     /** */
     bool constraintMaskTest() const ;
+
+    /** */
+    bool indexTest() const ;
 
   private:
 
@@ -124,6 +131,7 @@ namespace TSFExtended
 
     pass = sumTest() && pass;
     pass = setElementTest() && pass;
+    pass = setElementUsingBracketTest() && pass;
     pass = dotStarTest() && pass;
     pass = dotSlashTest() && pass;
     pass = scalarMultTest() && pass;
@@ -132,6 +140,7 @@ namespace TSFExtended
     pass = minQuotientTest() && pass;
     pass = constraintMaskTest() && pass;
     pass = compareToScalarTest() && pass;
+    pass = indexTest() && pass;
 
     return pass;
   }
@@ -268,6 +277,117 @@ namespace TSFExtended
          << spec_.errorTol() << endl;
     return true;
   }
+
+
+  template <class Scalar> 
+  inline bool VectorTester<Scalar>
+  ::setElementUsingBracketTest() const 
+  {
+    if (spec_.doTest())
+      {
+        cerr << "running setElementUsingBracket test..." << endl;
+
+        Vector<Scalar> a = space_.createMember();
+	Vector<Scalar> ab = space_.createMember();
+	VectorSpace<Scalar> prodSp = 
+	  productSpace(tuple(space_, space_));
+	Vector<Scalar> prod = prodSp.createMember();
+	
+        /* we will load a vector with a_i = i, and then do
+         * the sum of all elements. If done correctly, the sum will equal 
+         * N*(N+1)*(2N+1)/6.
+         */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
+
+        for (int i=low; i<high; i++)
+          {
+            //a.setElement(i, i);
+	    a[i] = i;
+	    ab[i] = i;
+// 	    prod[i] = i;
+// 	    prod[i + space_.dim()] = i + space_.dim();
+          }
+	prod.setBlock(0, a);
+	prod.setBlock(1, ab);
+        cerr << "a = " << endl << a << endl;
+        cerr << "ab = " << endl << ab << endl;
+	cerr << "prod = " << endl << prod.getBlock(0) << prod.getBlock(1) << endl;
+        Vector<double> b = a.copy();
+	Vector<double> prodB = prod.copy();
+        b = b.dotStar(a);
+	prodB = prodB.dotStar(prod);
+
+        double sum = 0.0;
+	double sumP = 0.0;
+        for (int i=low; i<high; i++)
+          {
+             cerr << i << " " << prod.getElement(i) << " " << i*prod.getElement(i)
+                  << endl;
+            cerr << i << " " << a[i] << " " << i*a[i]
+                 << endl;
+            cerr << i << " " << prod[i] << " " << i*prod[i] << " "
+                 << prod[i + space_.dim()] << endl;
+            //sum += i * a.getElement(i);
+	    sum += i * a[i];
+	    sumP += i * prod[i] + (i) * prod[i + space_.dim()];
+          }
+
+#ifdef HAVE_MPI
+        Scalar localSum = sum;
+        MPI_Allreduce( (void*) &localSum, (void*) &sum, 
+                       1, MPI_DOUBLE, MPI_SUM, comm_.getComm());
+        Scalar localSumP = sumP;
+        MPI_Allreduce( (void*) &localSumP, (void*) &sumP, 
+                       1, MPI_DOUBLE, MPI_SUM, comm_.getComm());
+#endif
+	
+        double thyraSum = Thyra::sum(*(b.ptr()));
+        cerr << "elemwise sum = " << sum << endl;
+        cerr << "thyra sum = " << thyraSum << endl;
+        double thyraSumP = Thyra::sum(*(prodB.ptr()));
+        cerr << "elemwise sum = " << sumP << endl;
+        cerr << "thyra sum = " << thyraSumP << endl;
+
+        double err = ::fabs(sum - thyraSum);
+	double errP = ::fabs(sumP - thyraSumP);
+
+        cerr << "|setElement error|=" << err << endl;
+        if (err > spec_.errorTol())
+          {
+            cerr << "vector setElement test FAILED: tol = " 
+                 << spec_.errorTol() << endl;
+            return false;
+          }
+        else if (err > spec_.warningTol())
+          {
+            cerr << "WARNING: vector setElementUsingBracket test could not beat tol = " 
+                 << spec_.warningTol() << endl;
+          }
+
+        cerr << "|setElement errorP|=" << errP << endl;
+        if (errP > spec_.errorTol())
+          {
+            cerr << "product vector setElement test FAILED: tol = " 
+                 << spec_.errorTol() << endl;
+            return false;
+          }
+        else if (errP > spec_.warningTol())
+          {
+            cerr << "WARNING: product vector setElementUsingBracket test could not beat tol = " 
+                 << spec_.warningTol() << endl;
+          }
+	
+      }
+    else
+      {
+        cerr << "skipping vector setElementUsingBracket test..." << endl;
+      }
+    cerr << "vector setElementUsingBracket test PASSED: tol = " 
+         << spec_.errorTol() << endl;
+    return true;
+  }
+
 
   
 
@@ -765,5 +885,61 @@ namespace TSFExtended
          << spec_.errorTol() << endl;
     return true;
   }
+
+
+  template <class Scalar> 
+  inline bool VectorTester<Scalar>
+  ::indexTest() const 
+  {
+    if (spec_.doTest())
+      {
+        cerr << "running vector index test..." << endl;
+        Vector<Scalar> a = space_.createMember();
+        Vector<Scalar> x = space_.createMember();
+        Vector<Scalar> y = space_.createMember();
+        randomizeVec(a);
+        /* do the operation with member functions */
+        Scalar s = 0.5;
+        Thyra::VCompare(s, *(a.ptr()), x.ptr().get());
+
+        /* do the operation elementwise */
+        int low = space_.lowestLocallyOwnedIndex();
+        int high = low + space_.numLocalElements();
+
+        for (int i=low; i<high; i++)
+          {
+            //double a_i = a.getElement(i);
+	    double a_i = a[i];
+	    y[i] =  fabs(a_i) >= s;
+            //y.setElement(i, fabs(a_i) >= s );
+          }
+	
+        double err = (x-y).normInf();
+
+        cerr << "|index error|=" << err << endl;
+        if (err > spec_.errorTol())
+          {
+            cerr << "vector index test FAILED: tol = " 
+                 << spec_.errorTol() << endl;
+            return false;
+          }
+        else if (err > spec_.warningTol())
+          {
+            cerr << "WARNING: vector index test could not beat tol = " 
+                 << spec_.warningTol() << endl;
+          }
+	
+      }
+    else
+      {
+        cerr << "skipping vector index test..." << endl;
+      }
+    cerr << "vector index test PASSED: tol = " 
+         << spec_.errorTol() << endl;
+    return true;
+  }
+  
+
+
 }
 #endif

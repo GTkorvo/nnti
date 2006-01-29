@@ -32,6 +32,7 @@
 
 #include "TSFVectorSpaceDecl.hpp"
 #include "Thyra_SUNDIALS_Ops.hpp"
+#include "TSFIndexableVector.hpp"
 
 using namespace TSFExtended;
 
@@ -70,7 +71,7 @@ const AccessibleVector<Scalar>* Vector<Scalar>::castToAccessible() const
     = dynamic_cast<const AccessibleVector<Scalar>*>(this->ptr().get());
   TEST_FOR_EXCEPTION(av==0, std::runtime_error,
                      "Attempted to cast non-accessible vector "
-                     << *this << " to an AccessibleVector");
+		     << this->description() << " to an AccessibleVector");
   return av;
 }
 
@@ -82,7 +83,7 @@ LoadableVector<Scalar>* Vector<Scalar>::castToLoadable()
     = dynamic_cast<LoadableVector<Scalar>*>(this->ptr().get());
   TEST_FOR_EXCEPTION(lv==0, std::runtime_error,
                      "Attempted to cast non-loadable vector "
-                     << *this << " to a LoadableVector");
+                     << this->description() << " to a LoadableVector");
   return lv;
 }
 
@@ -95,7 +96,8 @@ const RawDataAccessibleVector<Scalar>* Vector<Scalar>::castToRawDataAccessible()
     = dynamic_cast<const RawDataAccessibleVector<Scalar>*>(this->ptr().get());
   TEST_FOR_EXCEPTION(av==0, std::runtime_error,
                      "Attempted to cast non-accessible vector "
-                     << *this << " to an RawDataAccessibleVector");
+                     << this->description() 
+		     << " to an RawDataAccessibleVector");
   return av;
 }
 
@@ -107,9 +109,11 @@ RawDataAccessibleVector<Scalar>* Vector<Scalar>::castToRawDataAccessible()
     = dynamic_cast<RawDataAccessibleVector<Scalar>*>(this->ptr().get());
   TEST_FOR_EXCEPTION(av==0, std::runtime_error,
                      "Attempted to cast non-accessible vector "
-                     << *this << " to an RawDataAccessibleVector");
+                     << this->description() 
+		     << " to an RawDataAccessibleVector");
   return av;
 }
+
 
 
 
@@ -495,10 +499,48 @@ Scalar Vector<Scalar>::min(const Scalar& bound, int& index)const
   return minEl;
 }
 
+
+//===========================================================================
+template <class Scalar> inline 
+const Scalar& Vector<Scalar>::getElement(Index globalIndex) const
+{ 
+  int d = space().dim();
+  TEST_FOR_EXCEPTION(globalIndex < 0 || globalIndex >= d, runtime_error,
+		     "operator[]: index out of range " << globalIndex);
+  
+  Thyra::ProductVector<Scalar>* p 
+    = dynamic_cast<Thyra::ProductVector<Scalar>*>(this->ptr().get());
+  if (p != 0)
+    {
+      RefCountPtr<const Thyra::ProductVectorSpaceBase<Scalar> > ps
+        = p->productSpace();
+      int k = 0;
+      for (int i = 0; i < ps->numBlocks(); i++)
+        {
+          RefCountPtr<Thyra::VectorBase<Scalar> > vec_i = p->getBlock(i);
+          RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > vs_i 
+            = p->productSpace()->getBlock(i);
+          int len = vec_i->space()->dim();
+          if (globalIndex < k + len )
+            {
+              Vector<Scalar> vv(vec_i);
+              int globalIndexWithinBlock = globalIndex - k;
+              return vv.getElement(globalIndexWithinBlock);
+            }
+          k += len;
+        }
+    }
+  return castToAccessible()->getElement(globalIndex);
+}
+
 //===========================================================================
 template <class Scalar> inline 
 void Vector<Scalar>::setElement(Index globalIndex, const Scalar& value)
 { 
+  int d = space().dim();
+      TEST_FOR_EXCEPTION(globalIndex < 0 || globalIndex >= d, runtime_error,
+			 "operator[]: index out of range " << globalIndex);
+
   Thyra::ProductVector<Scalar>* p 
     = dynamic_cast<Thyra::ProductVector<Scalar>*>(this->ptr().get());
   if (p != 0)
@@ -527,6 +569,57 @@ void Vector<Scalar>::setElement(Index globalIndex, const Scalar& value)
       castToLoadable()->setElement(globalIndex, value);
     }
 }
+
+
+
+//===========================================================================
+template <class Scalar> inline 
+Scalar& Vector<Scalar>::operator[](Index globalIndex)
+{
+  IndexableVector<Scalar>* indVec = 
+    dynamic_cast<IndexableVector<Scalar>*>(this->ptr().get());
+  if (indVec != 0)
+    {
+      return indVec->operator[](globalIndex);
+    }
+  Thyra::ProductVector<Scalar>* p = 
+    dynamic_cast <Thyra::ProductVector<Scalar>* >(this->ptr().get());
+
+  if (p != 0)
+    {
+      RefCountPtr<const Thyra::ProductVectorSpaceBase<Scalar> > ps
+        = p->productSpace();
+      int k = 0;
+      for (int i = 0; i < ps->numBlocks(); i++)
+        {
+          RefCountPtr<Thyra::VectorBase<Scalar> > vec_i = p->getBlock(i);
+          RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > vs_i 
+            = p->productSpace()->getBlock(i);
+          int len = vec_i->space()->dim();
+          if (globalIndex < k + len )
+            {
+              Vector<Scalar> vv(vec_i);
+              int globalIndexWithinBlock = globalIndex - k;
+              return vv.operator[](globalIndexWithinBlock);
+	    }
+	  k += len;
+	}
+      TEST_FOR_EXCEPTION(true, runtime_error,
+			 "operator[]: index out of range " << globalIndex);
+      return indVec->operator[](0); // -Wall
+    }
+  else
+    {
+      TEST_FOR_EXCEPTION(true, runtime_error,
+			 "operator[] called on a Vector that is neither "
+			 "indexable nor a product vector");
+      return indVec->operator[](0); // -Wall
+    }
+} 
+
+
+
+
 
 //===========================================================================
 template <class Scalar> inline 
