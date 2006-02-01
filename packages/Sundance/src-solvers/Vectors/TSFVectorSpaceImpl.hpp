@@ -133,9 +133,11 @@ int VectorSpace<Scalar>::numBlocks() const
 {
   const Thyra::ProductVectorSpaceBase<Scalar>* pvs = 
     dynamic_cast<const Thyra::ProductVectorSpaceBase<Scalar>* > (this->ptr().get());
-  TEST_FOR_EXCEPTION(pvs == 0, runtime_error,
-		     "Space not a ProductVectorSpace" << endl);
-  return pvs->numBlocks();
+  if (pvs != 0)
+    {
+      return pvs->numBlocks();
+    }
+  return 1;
 }
 
 
@@ -146,9 +148,13 @@ VectorSpace<Scalar> VectorSpace<Scalar>::getBlock(const int i) const
 {
   const Thyra::ProductVectorSpaceBase<Scalar>* pvs = 
     dynamic_cast<const Thyra::ProductVectorSpaceBase<Scalar>* > (this->ptr().get());
-  TEST_FOR_EXCEPTION(pvs == 0, runtime_error,
+  TEST_FOR_EXCEPTION(pvs == 0 && numBlocks()!=1, runtime_error,
 		     "Space not a ProductVectorSpace" << endl);
-  return pvs->getBlock(i);
+  if (pvs != 0)
+    {
+      return pvs->getBlock(i);
+    }
+  return *this;
 }
 
 

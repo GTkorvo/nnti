@@ -39,7 +39,7 @@
 #include "TSFComposedOperator.hpp"
 #include "TSFSumOperator.hpp"
 #include "TSFScaledOperator.hpp"
-#include "TSFBlockOperatorDecl.hpp"
+#include "TSFBlockOperator.hpp"
 #include "TSFVectorType.hpp"
 
 
@@ -238,8 +238,13 @@ LinearOperator<Scalar> LinearOperator<Scalar>::getBlock(const int &i,
   BlockOperator<Scalar>* b = 
     dynamic_cast<BlockOperator<Scalar>* >(this->ptr().get());
   
-  TEST_FOR_EXCEPTION(b == 0, runtime_error, 
-		     "Can't call getblock since operator not BlockOperator");
+  if (b==0)
+    {
+      TEST_FOR_EXCEPTION(i != 0 || j != 0, runtime_error, 
+                         "nonzero block index (" << i << "," << j << ") into "
+                         "non-block operator");
+      return *this;
+    }
   RefCountPtr<LinearOpBase<Scalar, Scalar> > block = b->getBlock(i, j);
   return rcp_dynamic_cast<SingleScalarTypeOpBase<Scalar> >(block);
 }

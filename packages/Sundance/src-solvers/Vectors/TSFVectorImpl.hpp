@@ -55,8 +55,13 @@ Vector<Scalar> Vector<Scalar>::getBlock(int i) const
 {
   Thyra::ProductVector<Scalar>* pv = 
     dynamic_cast <Thyra::ProductVector<Scalar>* >(this->ptr().get());
-  TEST_FOR_EXCEPTION(pv == 0, runtime_error,
-                     "vector is not a product vector");
+  if (pv==0) 
+    {
+      TEST_FOR_EXCEPTION(i != 0, runtime_error,
+                         "Nonzero block index " << i << " into a vector that is not "
+                         "a product vector");
+      return *this;
+    }
   return pv->getBlock(i);
 }
 
