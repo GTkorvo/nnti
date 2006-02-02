@@ -31,6 +31,7 @@
 #include "TSFAztecSolver.hpp"
 #include "TSFBICGSTABSolver.hpp"
 #include "TSFGMRESSolver.hpp"
+#include "TSFBlockTriangularSolver.hpp"
 #include "Teuchos_XMLParameterListReader.hpp"
 
 using namespace TSFExtended;
@@ -80,6 +81,15 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const XMLObject& xml)
     {
       return new AmesosSolver();
     }
+  else if (solverType=="Block Triangular")
+    {
+      Array<LinearSolver<double> > subSolvers(xml.numChildren());
+      for (int i=0; i<xml.numChildren(); i++)
+        {
+          subSolvers[i] = createSolver(xml.getChild(i));
+        }
+      return new BlockTriangularSolver<double>(subSolvers);
+    }
 
   TEST_FOR_EXCEPTION(true, runtime_error, 
                      "Could not create a solver from XML object " 
@@ -97,6 +107,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
   ParameterList solverSublist = params.sublist("Linear Solver");
 
   const string& solverType = getParameter<string>(solverSublist, "Type");
+  cout << "solver type = " << solverType << endl;
 
   if (solverType=="Aztec")
     {
@@ -117,6 +128,12 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
   else if (solverType=="Amesos")
     {
       return new AmesosSolver();
+    }
+  else if (solverType=="Block Triangular")
+    {
+      ParameterList subSolverParams = solverSublist.sublist("Sub Solver");
+      LinearSolver<double> subSolver = createSolver(subSolverParams);
+      return new BlockTriangularSolver<double>(subSolver);
     }
 
   TEST_FOR_EXCEPTION(true, runtime_error, 

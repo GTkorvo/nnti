@@ -146,20 +146,20 @@ namespace TSFExtended
     //@{
       
     /** return number of block rows */
-    int numBlockRows() const;
+    int numBlockRows() const ;
       
 
     /** return number of block cols */
-    int numBlockCols() const;
+    int numBlockCols() const ;
       
 
     /** get the (i,j)-th block */
     LinearOperator<Scalar> getBlock(const int &i, const int &j) const ;
 
     /** set the (i,j)-th block 
-	If the domain and/or the range are not set, then we
-	are building the operator
-    */
+     *  If the domain and/or the range are not set, then we
+     *  are building the operator
+     */
     void setBlock(int i, int j, 
 		  const LinearOperator<Scalar>& sub);
 

@@ -190,11 +190,18 @@ void LinearOperator<Scalar>::getRow(const int& row,
 template <class Scalar>
 int LinearOperator<Scalar>::numBlockRows() const
 {
-  BlockOperator<Scalar>* b = dynamic_cast<BlockOperator<Scalar>* >(this->ptr().get());
-  TEST_FOR_EXCEPTION(b == 0, runtime_error, 
-		     "LinearOperator<Scalar> not Block Operator.");
-  
+  const BlockOperator<Scalar>* b = dynamic_cast<const BlockOperator<Scalar>* >(this->ptr().get());
+  if (b==0) return 1;
   return b->numBlockRows(); 
+}
+
+//=============================================================================
+template <class Scalar>
+int LinearOperator<Scalar>::numBlockCols() const
+{
+  const BlockOperator<Scalar>* b = dynamic_cast<const BlockOperator<Scalar>* >(this->ptr().get());
+  if (b==0) return 1;
+  return b->numBlockCols(); 
 }
 
 

@@ -61,6 +61,9 @@ namespace TSFExtended
     {;}
 
     /** */
+    SolverState() {;}
+
+    /** */
     const Scalar& finalResid() const {return finalResid_;}
 
     /** */
