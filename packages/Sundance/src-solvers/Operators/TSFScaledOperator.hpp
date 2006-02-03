@@ -38,7 +38,7 @@
 #include "Teuchos_RefCountPtr.hpp"
  //#include "TSFExplicitlyTransposeableOp.hpp"
 #include "TSFRowAccessibleOp.hpp"
-#include "TSFLinearOperator.hpp"
+#include "TSFLinearOperatorDecl.hpp"
 #include "TSFHandleable.hpp"
 
 
