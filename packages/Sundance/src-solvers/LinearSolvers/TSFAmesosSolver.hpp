@@ -53,7 +53,7 @@ namespace TSFExtended
   {
   public:
     /** */
-    AmesosSolver();
+    AmesosSolver(const ParameterList& params);
 
     /** */
     virtual ~AmesosSolver(){;}
@@ -70,7 +70,7 @@ namespace TSFExtended
     /** \name Describable interface */
     //@{
     /** Write a brief description */
-    string description() const {return "AmesosSolver";}
+    string description() const {return "AmesosSolver[" + kernel_ + "]";}
     //@}
 
     
@@ -91,7 +91,7 @@ namespace TSFExtended
   protected:
 
   private:
-    
+    string kernel_;
   };
   
 }

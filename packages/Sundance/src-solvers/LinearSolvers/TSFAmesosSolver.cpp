@@ -9,9 +9,19 @@ using namespace TSFExtended;
 using namespace Teuchos;
 
 
-AmesosSolver::AmesosSolver()
-  : LinearSolverBase<double>(ParameterList())
-{}
+AmesosSolver::AmesosSolver(const ParameterList& params)
+  : LinearSolverBase<double>(params),
+    kernel_()
+{
+  if (parameters().isParameter("Kernel"))
+    {
+      kernel_ = getParameter<string>(parameters(), "Kernel");
+    }
+  else
+    {
+      kernel_ = "Klu";
+    }
+}
 
 
 
@@ -30,10 +40,11 @@ SolverState<double> AmesosSolver::solve(const LinearOperator<double>& op,
   Epetra_LinearProblem prob(&A, x, b);
 
   Amesos amFactory;
-  RefCountPtr<Amesos_BaseSolver> solver = rcp(amFactory.Create("Amesos_Umfpack", prob));
+  RefCountPtr<Amesos_BaseSolver> solver 
+    = rcp(amFactory.Create("Amesos_" + kernel_, prob));
   TEST_FOR_EXCEPTION(solver.get()==0, runtime_error, 
-                     "AmesosSolver::solve() failed to instantiate Umfpack "
-                     "solver");
+                     "AmesosSolver::solve() failed to instantiate "
+                     << kernel_ << "solver kernel");
 
   int ierr = solver->Solve();
   

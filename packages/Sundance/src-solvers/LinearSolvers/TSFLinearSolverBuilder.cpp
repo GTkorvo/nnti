@@ -79,7 +79,9 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const XMLObject& xml)
     }
   else if (solverType=="Amesos")
     {
-      return new AmesosSolver();
+      XMLParameterListReader reader;
+      ParameterList params = reader.toParameterList(xml);
+      return new AmesosSolver(params);
     }
   else if (solverType=="Block Triangular")
     {
@@ -127,7 +129,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
     }
   else if (solverType=="Amesos")
     {
-      return new AmesosSolver();
+      return new AmesosSolver(solverSublist);
     }
   else if (solverType=="Block Triangular")
     {
