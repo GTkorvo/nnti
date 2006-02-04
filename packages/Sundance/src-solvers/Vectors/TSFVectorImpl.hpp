@@ -53,8 +53,8 @@ void Vector<Scalar>::setBlock(int i, const Vector<Scalar>& v)
 template <class Scalar> 
 Vector<Scalar> Vector<Scalar>::getBlock(int i) const
 {
-  Thyra::ProductVector<Scalar>* pv = 
-    dynamic_cast <Thyra::ProductVector<Scalar>* >(this->ptr().get());
+  const Thyra::ProductVector<Scalar>* pv = 
+    dynamic_cast <const Thyra::ProductVector<Scalar>* >(this->ptr().get());
   if (pv==0) 
     {
       TEST_FOR_EXCEPTION(i != 0, runtime_error,
@@ -62,7 +62,37 @@ Vector<Scalar> Vector<Scalar>::getBlock(int i) const
                          "a product vector");
       return *this;
     }
-  return pv->getBlock(i);
+  Teuchos::RefCountPtr<const Thyra::VectorBase<Scalar> > b = pv->getBlock(i);
+  Teuchos::RefCountPtr<Thyra::VectorBase<Scalar> > bb 
+    = rcp_const_cast<Thyra::VectorBase<Scalar> >(b);
+  return bb;
+}
+
+//===========================================================================
+
+template <class Scalar> 
+void Vector<Scalar>::print(std::ostream& os) const 
+{
+  const Thyra::ProductVector<Scalar>* pv = 
+    dynamic_cast <const Thyra::ProductVector<Scalar>* >(this->ptr().get());
+  if (pv != 0)
+    {
+      os << "ProductVector[" << endl;
+      for (int i=0; i<this->space().numBlocks(); i++)
+        {
+          os << "block=" << i << endl;
+          os << this->getBlock(i) << endl;
+        }
+      os << "]" << endl;
+      return;
+    }
+  
+  const Printable* p 
+    = dynamic_cast<const Printable* >(this->ptr().get());
+  TEST_FOR_EXCEPTION(p==0, std::runtime_error,
+                     "Attempted to cast non-printable "
+                     "pointer to a Printable");
+  p->print(os);
 }
 
   
@@ -76,7 +106,7 @@ const AccessibleVector<Scalar>* Vector<Scalar>::castToAccessible() const
     = dynamic_cast<const AccessibleVector<Scalar>*>(this->ptr().get());
   TEST_FOR_EXCEPTION(av==0, std::runtime_error,
                      "Attempted to cast non-accessible vector "
-		     << this->description() << " to an AccessibleVector");
+                     << this->description() << " to an AccessibleVector");
   return av;
 }
 
@@ -102,7 +132,7 @@ const RawDataAccessibleVector<Scalar>* Vector<Scalar>::castToRawDataAccessible()
   TEST_FOR_EXCEPTION(av==0, std::runtime_error,
                      "Attempted to cast non-accessible vector "
                      << this->description() 
-		     << " to an RawDataAccessibleVector");
+                     << " to an RawDataAccessibleVector");
   return av;
 }
 
@@ -115,7 +145,7 @@ RawDataAccessibleVector<Scalar>* Vector<Scalar>::castToRawDataAccessible()
   TEST_FOR_EXCEPTION(av==0, std::runtime_error,
                      "Attempted to cast non-accessible vector "
                      << this->description() 
-		     << " to an RawDataAccessibleVector");
+                     << " to an RawDataAccessibleVector");
   return av;
 }
 
@@ -511,7 +541,7 @@ const Scalar& Vector<Scalar>::getElement(Index globalIndex) const
 { 
   int d = space().dim();
   TEST_FOR_EXCEPTION(globalIndex < 0 || globalIndex >= d, runtime_error,
-		     "operator[]: index out of range " << globalIndex);
+                     "operator[]: index out of range " << globalIndex);
   
   Thyra::ProductVector<Scalar>* p 
     = dynamic_cast<Thyra::ProductVector<Scalar>*>(this->ptr().get());
@@ -543,8 +573,8 @@ template <class Scalar> inline
 void Vector<Scalar>::setElement(Index globalIndex, const Scalar& value)
 { 
   int d = space().dim();
-      TEST_FOR_EXCEPTION(globalIndex < 0 || globalIndex >= d, runtime_error,
-			 "operator[]: index out of range " << globalIndex);
+  TEST_FOR_EXCEPTION(globalIndex < 0 || globalIndex >= d, runtime_error,
+                     "operator[]: index out of range " << globalIndex);
 
   Thyra::ProductVector<Scalar>* p 
     = dynamic_cast<Thyra::ProductVector<Scalar>*>(this->ptr().get());
@@ -606,18 +636,18 @@ Scalar& Vector<Scalar>::operator[](Index globalIndex)
               Vector<Scalar> vv(vec_i);
               int globalIndexWithinBlock = globalIndex - k;
               return vv.operator[](globalIndexWithinBlock);
-	    }
-	  k += len;
-	}
+            }
+          k += len;
+        }
       TEST_FOR_EXCEPTION(true, runtime_error,
-			 "operator[]: index out of range " << globalIndex);
+                         "operator[]: index out of range " << globalIndex);
       return indVec->operator[](0); // -Wall
     }
   else
     {
       TEST_FOR_EXCEPTION(true, runtime_error,
-			 "operator[] called on a Vector that is neither "
-			 "indexable nor a product vector");
+                         "operator[] called on a Vector that is neither "
+                         "indexable nor a product vector");
       return indVec->operator[](0); // -Wall
     }
 } 

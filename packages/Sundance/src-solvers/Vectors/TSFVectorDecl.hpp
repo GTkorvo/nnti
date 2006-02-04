@@ -398,7 +398,8 @@ namespace TSFExtended
       return "Vector not describable";
     }
       
-      
+    void print(std::ostream& os) const ;
+    
 
   private:
 
