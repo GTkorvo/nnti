@@ -53,6 +53,10 @@ namespace TSFExtended
     /** */
     GMRESSolver(const ParameterList& params = ParameterList())
       : KrylovSolver<Scalar>(params) {;}
+    /** */
+    GMRESSolver(const ParameterList& params,
+                const PreconditionerFactory<Scalar>& precond)
+      : KrylovSolver<Scalar>(params, precond) {;}
 
     /** */
     virtual ~GMRESSolver(){;}

@@ -47,6 +47,9 @@ namespace TSFExtended
   public:
     /** */
     KrylovSolver(const ParameterList& params);
+    /** */
+    KrylovSolver(const ParameterList& params,
+                 const PreconditionerFactory<Scalar>& precond);
 
     /** */
     virtual ~KrylovSolver(){;}
@@ -79,6 +82,19 @@ namespace TSFExtended
       {
         precond_ = new ILUKPreconditionerFactory<Scalar>(params);
       }
+  }
+
+  template <class Scalar> inline
+  KrylovSolver<Scalar>::KrylovSolver(const ParameterList& params,
+                                     const PreconditionerFactory<Scalar>& precond)
+    : IterativeSolver<Scalar>(params), precond_(precond)
+  {
+    TEST_FOR_EXCEPTION(params.isParameter("Precond"), runtime_error,
+                       "ambiguous preconditioner specification in "
+                       "KrylovSolver ctor: parameters specify "
+                       << params.template get<string>("Precond") 
+                       << " but preconditioner argument is " 
+                       << precond);
   }
 
   template <class Scalar> inline
