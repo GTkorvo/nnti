@@ -33,25 +33,28 @@ r & = & r - \alpha q.
 Just as with linear CG, many numerical algorithms expressed in Euclidean form
 with dot products and Euclidean norms $||.||_2$ (such as various optimization
 algorithms, stability analysis methods, time integration methods, etc.) have
-strightforward extentions to non-Euclidean vectors and vector spaces.  What we
+straightforward extensions to non-Euclidean vectors and vector spaces.  What we
 would like is to have a straightforward process by which we can analyze many
 different types of existing numerical algorithms expressed in Euclidean form
 and then write out, if possible, the more general non-Euclidean form of these
-algorithms.  We also want to do this in such a way that we don't have to
+algorithms.  We also want to do this in such a way that we do not have to
 revisit all of the mathematical assumptions and theorems that went into the
 development of the algorithm.
 
 One might ask the following questions.  What's the big deal in replacing dot
 products with scalar products?  What is this scalar product $<.,.>$ and what
-does this mean? By what justification can one just replace dot products like
-$p^H q$ with scalar products $<p,q>$?  What other changes do we need to make
-due to this subtle change of replacing dot products with scalar products?
-What does all of this buy you?  Here we seek to answer all of these questions
-in a way that a person without knowledge of functional analysis or other
-advanced mathematics can understand and appreciate.  All that we assume is
-that the reader has a basic understanding of linear algebra and a familiarity
-with multi-variable numerical algorithms like Newton's method [???] for
-nonlinear equations.
+does this mean?  What is the relationship between vectors $p$ and $q$ for
+algorithms stated in Euclidean form and in non-Euclidean form?  By what
+justification can one just replace dot products like $p^H q$ with scalar
+products $<p,q>$?  What other changes do we need to make due to this subtle
+change of replacing dot products with scalar products?  How is the definition
+of linear operators and other objects affected by the introduction of
+non-Euclidean scalar products?  What does all of this buy you?  Here we seek
+to answer all of these questions in a way that a person without knowledge of
+functional analysis or other advanced mathematics can understand and
+appreciate.  All that we assume is that the reader has a basic understanding
+of linear algebra and a familiarity with multi-variable numerical algorithms
+like Newton's method [???] for nonlinear equations.
 
 Here we present a linear algebra interpretation of finite dimensional
 non-Euclidean inner product spaces and how they influence numerical algorithms
@@ -75,10 +78,11 @@ transformation at the model level which has many different advantages.
 
 In this section, we provide a quick overview of the concepts of
 finite-dimensional vector spaces, vector basis and coefficient
-representations, scalar products, and norms.  We do so by showing
-straightforward connections between Euclidean and non-Euclidean
-representations of the same vectors.  In this introductory material, we deal
-with vectors in a complex space $\CPLX^n$ with complex scalar elements.
+representations, scalar products, and norms.  The mathematical system
+described here is that of finite-dimensional Hilbert spaces [???].  Here we
+show straightforward connections between Euclidean and non-Euclidean
+representations of vectors.  In this introductory material, we deal with
+general vectors in a complex space $\CPLX^n$ with complex scalar elements.
 
 \subsubsection{Basis and coefficient representations of vectors and vector spaces}
 
@@ -117,6 +121,10 @@ E = {\bmat{cccc} e_1 & e_2 & {}\ldots & e_m {}\emat}.
 The basis matrix form (\ref{eqn:x_basis_matrix}) will allow us to use standard
 linear algebra notation later in various types of derivations and
 manipulations.
+
+The choice of which of the two different representations of a vector $x$ or
+$\tilde{x}$ has a dramatic impact on the interpretation of the operations in
+a numerical algorithm.
 
 \subsubsection{Standard {}\textit{vector} operations}
 
@@ -162,51 +170,41 @@ Now consider the dot inner product of any two vectors $x,y\in\mathcal{S}$
 which takes the well known form
 %
 \begin{equation}
-x^H y = \sum_{i=1}^n \mbox{conjugate}(x_i) y_i.
+x^H y = \sum_{i=1}^n \mbox{conjugate}(x_i) y_i,
 \label{eqn:inner_x_y_sum}
 \end{equation}
 %
-Using the substitution $x = E {}\tilde{x}$ and $y = E {}\tilde{y}$, the inner
-product in (\ref{eqn:inner_x_y_sum}) can be represented as
+where $x^H$ is the conjugate transpose of $x$.  Using the substitution $x = E
+{}\tilde{x}$ and $y = E {}\tilde{y}$, the inner product in
+(\ref{eqn:inner_x_y_sum}) can be represented as
 %
 \begin{equation}
-x^H y = ( \tilde{x}^H E^H ) ( E \tilde{y} ) = \tilde{x}^H Q \tilde{y}
+x^H y = ( \tilde{x}^H E^H ) ( E \tilde{y} ) = \tilde{x}^H Q \tilde{y},
 \label{eqn:inner_x_y_E_prod}
 \end{equation}
 %
-where $Q = E^H E$ is a symmetric positive-definite matrix.  It
-is this matrix $Q$ that is said to define the scalar (or inner)
-product of two vectors $x,y\in\mathcal{S}$ in terms of their coefficients
-$\tilde{x}$ and $\tilde{y}$ as
+where $Q = E^H E$ is a symmetric positive-definite matrix.  It is this matrix
+$Q$ that is said to define the scalar (or inner) product of two vectors
+$x,y\in\mathcal{S}$ in terms of their coefficients $\tilde{x}$ and $\tilde{y}$
+as
 %
 \begin{equation}
-<x,y>_{\mathcal{S}} = \tilde{x}^H Q \tilde{y}.
+x^H y = <\tilde{x},\tilde{y}>_{\mathcal{S}} = \tilde{x}^H Q \tilde{y}.
 \label{eqn:inner_prod_defined}
 \end{equation}
 %
-
-Other authors tend to use $<x,y>_{\mathcal{S}}$ to stress that the scalar
-product is not simply a dot product involving the vector coefficients.
-However, in our interpretation here, we explicitly differentiate between the
-``real'' vector itself $x$ and its corresponding coefficient vector
-$\tilde{x}$.  Therefore, in our notation, we define $x^H y$ to mean the exact
-same thing as $<x,y>_{\mathcal{S}}$ which is different than $\tilde{x}^H
-{}\tilde{y}$.  In our notation, we do not write the scalar product as
-$<\tilde{x},{}\tilde{y}>$ which some other authors seem to do [???].  This
-treatment takes a more consistent view of these objects which facilitates a
-more consistent treatment later.
 
 \subsubsection{Definition of the natural norm for a vector space}
 
 The natural norm $||.||_{\mathcal{S}}$ of a vector space is defined as
 %
 \begin{equation}
-||x||_{\mathcal{S}} = \sqrt{<x,x>_{\mathcal{S}}}
+||x||_{\mathcal{S}} = \sqrt{x^H x} = \sqrt{<\tilde{x},\tilde{y}>_{\mathcal{S}}}
 \label{eqn:natural_norm_defined}
 \end{equation}
 %
-where $<x,x>_{\mathcal{S}}$ is defined in (\ref{eqn:inner_prod_defined}) in
-terms of the coefficients $\tilde{x}$ and the scalar product matrix $Q$.
+where $<\tilde{x},\tilde{x}>_{\mathcal{S}}$ is defined in
+(\ref{eqn:inner_prod_defined}) in terms of the scalar product matrix $Q$.
 
 \subsubsection{Orthonormal and orthogonal basis representations}
 
@@ -214,7 +212,7 @@ Note that all orthonormal sets of basis vectors, i.e.
 \[
 e_i^H e_j = \left\{ \begin{array}{ll} 1 & \mbox{if} \; i = j \\ 0 & \mbox{if} \; i \ne j \end{array}  \right.
 \]
-result in an orthogonal matrix\footnote{
+result in an \textit{orthogonal matrix}\footnote{
 %
 In most linear algebra text books and
 literature, the term {}\textit{orthogonal matrix} is used to denote a matrix
@@ -289,7 +287,7 @@ z = A(\alpha u + \beta v) = \alpha A u + \beta A v
 %
 for all $\alpha,\beta\in\CPLX$ and $u,v\in\mathcal{D}$.
 
-For very linear operator $A$ it is possible to define another linear operator
+For every linear operator $A$ it is possible to define another linear operator
 object associated with it called the {}\textit{adjoint}, denoted
 $A^H\in\mathcal{D}|\mathcal{R}$, which maps vectors from the spaces
 $\mathcal{R}$ to $\mathcal{D}$ as
@@ -299,12 +297,40 @@ y = A^H x
 \label{eqn:adjoint_op_apply}
 \end{equation}
 %
-where $x\in\mathcal{R}$ and $y\in\mathcal{D}$.  The forward and adjoint linear
-operators $A$ and $A^H$, respectively, are related to each other through the
-adjoint relationship
+where $x\in\mathcal{R}$ and $y\in\mathcal{D}$.
+
+Here it is critical to recognize that there are two forms of a linear
+operator: a Euclidean form and {}\textit{non-Euclidean coefficient} form.
+
+According to our notation, the Euclidean operator application is shown in
+(\ref{eqn:fwd_op_apply}).  The {}\textit{non-Euclidean coefficient linear
+operator} application is written as
 %
 \begin{equation}
-<A u, v>_{\mathcal{R}} = <u,A^H v>_{\mathcal{D}}
+\tilde{y} = \tilde{A} \tilde{x},
+\label{eqn:fwd_op_apply_euclidean}
+\end{equation}
+%
+where the two are related as $\tilde{A} = E_{\mathcal{R}}^{-1} A
+E_{\mathcal{D}}$ and $A = E_{\mathcal{R}} {}\tilde{A} E_{\mathcal{D}}^{-1}$.
+
+{}\begin{dumb_fact} A linear operator is not the same thing as a matrix when
+dealing with non-Euclidean vector spaces.
+{}\end{dumb_fact}
+
+In other words, while the adjoint of the Euclidean linear operator $A^H$ is
+equal to the Hermitian transpose of the forward Euclidean operator $A$, this is
+not generally true for non-Euclidean linear operators.
+
+The forward and adjoint non-Euclidean coefficient linear operators
+$\tilde{A}$ and $\tilde{A}^H$, respectively, are related to each other with
+respect to the scalar products through the adjoint relationship
+%
+\begin{equation}
+v^H (A u)
+= <\tilde{v},\tilde{A} \tilde{u}>_{\mathcal{R}}
+= (A^H v)^H u
+= <\tilde{A}^H \tilde{v},\tilde{u}>_{\mathcal{D}}
 \label{eqn:adjoint_relation}
 \end{equation}
 %
@@ -329,6 +355,10 @@ A^{-H} A^H = A^H A^{-H} = I.
 \]
 %
 
+While the adjoint of a non-Euclidean coefficient linear operator is not
+generally equal to the Hermitian transpose of the forward linear operator, the
+inverse does have the same relationship as in the Euclidean case.
+
 Linear operators are used to represent a variety of different types of objects
 in a numerical algorithm.  Even vectors $x\in\mathcal{S}$ can be viewed as a
 linear operator $x\in\mathcal{S}|\CPLX$ where the domain space for the forward
@@ -340,7 +370,7 @@ $v\in\mathcal{S}$ and $y\in\CPLX$ ).
 
 It is important to recognize that both a vector $x$ and its corresponding
 coefficient vector $\tilde{x}$ (where $x = E\tilde{x}$) can be represented as
-arrays of scalar data in a computer program.  However, our goal is to go about
+arrays of scalars in a computer program.  However, our goal is to go about
 formulating and implementing numerical algorithms and applications so as to
 only manipulate arrays of the natural coefficient vectors $\tilde{x}$ and
 never manipulate the coefficients of the Euclidean representation of the
@@ -349,38 +379,47 @@ natural coefficients of the vectors in a vector space and the scalar product
 is that it may be inconvenient and/or very expensive to build a set of basis
 vectors so that the Euclidean form of the vectors themselves can be formed and
 manipulated directly.  This is the case, for example, in many different
-finite-element discretization methods for PDEs.
+finite-element discretization methods for PDEs [???].
 
 \subsection{Impact of non-Euclidean scalar products on matrix representations of linear operators}
 \label{sec:matrix_representations_of_linear_operators}
 
-Now let's consider the impact that non-Euclidean vector spaces and scalar
-products have on linear operators $A\in\mathcal{R}|\mathcal{D}$ and their
-matrix representations $\tilde{A}$.  Every finite dimensional linear operator
-has some matrix representation with respect to some basis.  We consider two
-such representations in the following two subsections.
+As stated above, for every linear operator $A$ there is a corresponding
+{}\textit{non-Euclidean coefficient linear operator} $\tilde{A}$.  In
+addition, every finite-dimensional linear operator has one of several
+potential matrix representations $\hat{A}$.  The different representations
+depend on how the domain's and range's spaces relate to the matrix
+representation.
+
+Here we consider the impact that non-Euclidean vector spaces and scalar
+products have on linear operators $A\in\mathcal{R}|\mathcal{D}$, their
+non-Euclidean coefficient forms $\tilde{A}$, and their matrix
+representations $\hat{A}$.  We consider two such representations in the
+following two subsections.
 
 \subsubsection{The ``natural'' matrix representation of a linear operator}
 
-First, lets consider the ``natural'' matrix representation $\tilde{A}$ of a
+First, lets consider the ``natural'' matrix representation $\hat{A}$ of a
 linear operator $A$ in terms of the basis vectors for the spaces $\mathcal{D}$
 and $\mathcal{R}$ which takes the form
 %
 \begin{equation}
-A = E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^H.
+A = E_{\mathcal{R}} \hat{A} E_{\mathcal{D}}^H.
 \label{eqn:A_coeff_natural}
 \end{equation}
 %
-Given this matrix form of $A$, the linear operator application becomes
+Given this matrix form of $A$, the non-Euclidean coefficient form of the
+linear operator is
 %
 \begin{eqnarray}
 y
 & = & E_{\mathcal{R}} \tilde{y} \nonumber \\
 & = & A x \nonumber \\
-& = & ( E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^H ) ( E_{\mathcal{D}} \tilde{x} ) \nonumber \\
-& = & E_{\mathcal{R}} ( \tilde{A} Q_{\mathcal{D}}^H \tilde{x} ) \nonumber \\
+& = & ( E_{\mathcal{R}} \hat{A} E_{\mathcal{D}}^H ) ( E_{\mathcal{D}} \tilde{x} ) \nonumber \\
+& = & E_{\mathcal{R}} ( \hat{A} Q_{\mathcal{D}}^H \tilde{x} ) \nonumber \\
+& = & E_{\mathcal{R}} ( \hat{A} Q_{\mathcal{D}}^H ) \tilde{x} \nonumber \\
 &  & \Rightarrow \nonumber \\
-\tilde{y} & = & \tilde{A} Q_{\mathcal{D}} \tilde{x}
+\tilde{A} & = & \hat{A} Q_{\mathcal{D}}
 \label{eqn:A_natural_apply}
 \end{eqnarray}
 %
@@ -388,7 +427,10 @@ where $Q_{\mathcal{D}}^H = E_{\mathcal{D}}^H E_{\mathcal{D}}$ is the scalar
 product matrix for the space $\mathcal{D}$.  Hence, we see that applying the
 operator $A$ using (\ref{eqn:A_coeff_natural}) to transform the vector
 coefficients $\tilde{x}$ to $\tilde{y}$ involves injecting the scalar product
-matrix $Q_{\mathcal{D}}$.
+matrix $Q_{\mathcal{D}}$ before multiplying by the coefficient matrix
+$\hat{A}$.  Using this notation, we differentiate between the adjoint operator
+denoted $\tilde{A}^H$ and the Hermitian transpose of the forward operator
+denoted $(\tilde{A}^H)$.
 
 Now lets consider the definition of the adjoint using (\ref{eqn:A_coeff_natural}) which is
 %
@@ -396,10 +438,11 @@ Now lets consider the definition of the adjoint using (\ref{eqn:A_coeff_natural}
 v
 & = & E_{\mathcal{D}} \tilde{v} \nonumber \\
 & = & A^H u \nonumber \\
-& = & ( E_{\mathcal{D}} \tilde{A}^H E_{\mathcal{R}}^H ) ( E_{\mathcal{R}} \tilde{u} ) \nonumber \\
-& = & E_{\mathcal{D}} ( \tilde{A}^H Q_{\mathcal{R}}^H \tilde{u} ) \nonumber \\
+& = & ( E_{\mathcal{D}} \hat{A}^H E_{\mathcal{R}}^H ) ( E_{\mathcal{R}} \tilde{u} ) \nonumber \\
+& = & E_{\mathcal{D}} ( \hat{A}^H Q_{\mathcal{R}}^H \tilde{u} ) \nonumber \\
+& = & E_{\mathcal{D}} ( \hat{A}^H Q_{\mathcal{R}}^H ) \tilde{u} \nonumber \\
 &  & \Rightarrow \nonumber \\
-\tilde{v} & = & \tilde{A}^H Q_{\mathcal{R}} \tilde{u}
+\tilde{A}^H & = & \hat{A}^H Q_{\mathcal{R}}
 \label{eqn:A_natural_apply_adjoint}
 \end{eqnarray}
 %
@@ -408,63 +451,93 @@ product matrix for the space $\mathcal{R}$.  This time, the application of the
 adjoint requires the injection of the the scalar product matrix
 $Q_{\mathcal{R}}$.
 
+Here we see the definition of the adjoint non-Euclidean coefficient linear
+operator $\tilde{A}^H=\hat{A}^H Q_{\mathcal{R}}$ is not equal to the Hermitian
+transpose of the forward non-Euclidean coefficient linear operator
+$(\tilde{A})^H = Q_{\mathcal{D}}^H {}\hat{A}^H$.  Here we now see the critical
+difference between a linear operator and a matrix when dealing with linear
+operators that operate on the vector coefficients of vectors with
+non-Euclidean basis representations.
+
+\begin{dumb_fact}
+When writing algorithms in vector coefficient form with non-Euclidean scalar
+products, the adjoint non-Euclidean coefficient linear operator $\tilde{A}^H$
+is not the same as the matrix conjugate transpose of the forward non-Euclidean
+coefficient linear operator $\tilde{A}$.  In other words, using our notation,
+$\tilde{A}^H {}\ne (\tilde{A})^H$ in general.
+\end{dumb_fact}
+
 It is easy to show that (\ref{eqn:A_natural_apply}) and
 (\ref{eqn:A_natural_apply_adjoint}) satisfy the adjoint relationship
 (\ref{eqn:adjoint_relation}) as
 %
 \begin{eqnarray}
-<A u, v>_{\mathcal{R}}
-& = & (\tilde{A} Q_{\mathcal{D}} \tilde{u} )^H Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
-& = & ( \tilde{u}^H Q_{\mathcal{D}} \tilde{A}^H ) Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
-& = & (\tilde{u}^H ) Q_{\mathcal{D}} ( \tilde{A}^H Q_{\mathcal{R}} \tilde{v}) \nonumber \\
-& = & <u, A^H v>_{\mathcal{D}} \Box
+<\tilde{A} \tilde{u}, \tilde{v}>_{\mathcal{R}}
+& = & (\hat{A} Q_{\mathcal{D}} \tilde{u} )^H Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
+& = & ( \tilde{u}^H Q_{\mathcal{D}} \hat{A}^H ) Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
+& = & (\tilde{u}^H ) Q_{\mathcal{D}} ( \hat{A}^H Q_{\mathcal{R}} \tilde{v}) \nonumber \\
+& = & <\tilde{u}, \tilde{A}^H \tilde{v}>_{\mathcal{D}} \Box
 \label{eqn:adjoint_relation_proved}
 \end{eqnarray}
 %
 
 If the linear operator $A\in\mathcal{R}|\mathcal{D}$ is invertible such that
-$A^{-1}\in\mathcal{D}|\mathcal{R}$ exists, then the application of the inverse
-linear operator $y = A^{-1} x$ is given by
+$A^{-1}\in\mathcal{D}|\mathcal{R}$ exists, then the inverse non-Euclidean
+coefficient linear operation $\tilde{A}^{-1}$ is given by
 %
 \begin{eqnarray}
 y
 & = & E_{\mathcal{D}} \tilde{y} \nonumber \\
 & = & A^{-1} x \nonumber \\
-& = & (E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^T)^{-1} (E_{\mathcal{R}} \tilde{x}) \nonumber \\
-& = & E_{\mathcal{D}}^{-T} \tilde{A}^{-1} (E_{\mathcal{R}}^{-1} E_{\mathcal{R}}) \tilde{x}  \nonumber \\
-& = & ( E_{\mathcal{D}} E_{\mathcal{D}}^{-1} ) E_{\mathcal{D}}^{-T} \tilde{A}^{-1} \tilde{x}  \nonumber \\
-& = & E_{\mathcal{D}} (E_{\mathcal{D}}^{-1} E_{\mathcal{D}}^{-T}) \tilde{A}^{-1} \tilde{x}  \nonumber \\
-& = & E_{\mathcal{D}} ( Q_{\mathcal{D}}^{-1} \tilde{A}^{-1} \tilde{x} ) \nonumber \\
+& = & (E_{\mathcal{R}} \hat{A} E_{\mathcal{D}}^T)^{-1} (E_{\mathcal{R}} \tilde{x}) \nonumber \\
+& = & E_{\mathcal{D}}^{-H} \hat{A}^{-1} (E_{\mathcal{R}}^{-1} E_{\mathcal{R}}) \tilde{x}  \nonumber \\
+& = & ( E_{\mathcal{D}} E_{\mathcal{D}}^{-1} ) E_{\mathcal{D}}^{-H} \hat{A}^{-1} \tilde{x}  \nonumber \\
+& = & E_{\mathcal{D}} (E_{\mathcal{D}}^{-1} E_{\mathcal{D}}^{-H}) \hat{A}^{-1} \tilde{x}  \nonumber \\
+& = & E_{\mathcal{D}} ( Q_{\mathcal{D}}^{-1} \hat{A}^{-1} \tilde{x} ) \nonumber \\
+& = & E_{\mathcal{D}} ( Q_{\mathcal{D}}^{-1} \hat{A}^{-1} ) \tilde{x} \nonumber \\
 & \Rightarrow &  \nonumber \\
-\tilde{y} & = & Q_{\mathcal{D}}^{-1} \tilde{A}^{-1} \tilde{x}.
+\tilde{A}^{-1} & = & Q_{\mathcal{D}}^{-1} \hat{A}^{-1}.
 \label{eqn:A_natural_matrix_inverse_apply}
 \end{eqnarray}
 %
 Therefore, applying the inverse of the natural coefficient representation of
-linear operator involves applying the inverse of the scalar product matrix
-$Q_{\mathcal{D}}^{-1}$.
+linear operator to the vector coefficients involves applying the inverse of
+the scalar product matrix $Q_{\mathcal{D}}^{-1}$.
 
-The action of the adjoint inverse linear operator
-$A^{-H}\in\mathcal{R}|\mathcal{D}$ of the form $y = A^{-H} x$ is also easy to
-derive and is given by
+The adjoint inverse non-Euclidean coefficient linear operator
+$\tilde{A}^{-H}\in\mathcal{R}|\mathcal{D}$ is also easy to derive and is given
+by
 %
 \begin{eqnarray}
 y
 & = & E_{\mathcal{R}} \tilde{y} \nonumber \\
 & = & A^{-H} x \nonumber \\
-& = & (E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^H)^{-H} (E_{\mathcal{D}} \tilde{x}) \nonumber \\
-& = & E_{\mathcal{R}}^{-H} \tilde{A}^{-H} E_{\mathcal{D}}^{-1} E_{\mathcal{D}} \tilde{x}  \nonumber \\
-& = & ( E_{\mathcal{R}} E_{\mathcal{R}}^{-1} ) E_{\mathcal{R}}^{-H} \tilde{A}^{-H} \tilde{x}  \nonumber \\
-& = & E_{\mathcal{R}} (E_{\mathcal{R}}^{-1} E_{\mathcal{R}}^{-H}) \tilde{A}^{-H} \tilde{x}  \nonumber \\
-& = & E_{\mathcal{R}} ( Q_{\mathcal{R}}^{-1} \tilde{A}^{-H} \tilde{x} ) \nonumber \\
+& = & (E_{\mathcal{R}} \hat{A} E_{\mathcal{D}}^H)^{-H} (E_{\mathcal{D}} \tilde{x}) \nonumber \\
+& = & E_{\mathcal{R}}^{-H} \hat{A}^{-H} E_{\mathcal{D}}^{-1} E_{\mathcal{D}} \tilde{x}  \nonumber \\
+& = & ( E_{\mathcal{R}} E_{\mathcal{R}}^{-1} ) E_{\mathcal{R}}^{-H} \hat{A}^{-H} \tilde{x}  \nonumber \\
+& = & E_{\mathcal{R}} (E_{\mathcal{R}}^{-1} E_{\mathcal{R}}^{-H}) \hat{A}^{-H} \tilde{x}  \nonumber \\
+& = & E_{\mathcal{R}} ( Q_{\mathcal{R}}^{-1} \hat{A}^{-H} \tilde{x} ) \nonumber \\
+& = & E_{\mathcal{R}} ( Q_{\mathcal{R}}^{-1} \hat{A}^{-H} ) \tilde{x} \nonumber \\
 & \Rightarrow &  \nonumber \\
-\tilde{y} & = & Q_{\mathcal{R}}^{-1} \tilde{A}^{-H} \tilde{x}.
+\tilde{A}^{-H} & = & Q_{\mathcal{R}}^{-1} \hat{A}^{-H}.
 \label{eqn:A_natural_matrix_adjoint_inverse_apply}
 \end{eqnarray}
 %
 Therefore, applying the adjoint inverse of the natural coefficient
-representation of linear operator involves applying the inverse of the scalar
-product matrix $Q_{\mathcal{R}}^{-1}$.
+representation of linear operator to the vector coefficients involves applying
+the inverse of the scalar product matrix $Q_{\mathcal{R}}^{-1}$.
+
+Here we see that the inverse non-Euclidean coefficient forward and adjoint
+linear operators $\tilde{A}^{-1} $ and $\tilde{A}^{-H}$, respectively,
+actually are to the simple inverses of the non-Euclidean coefficient forward
+and adjoint linear operators $\tilde{A} $ and $\tilde{A}^H$, respectively.
+
+\begin{dumb_fact}
+The inverse non-Euclidean coefficient linear operator $\tilde{A}^{-1}$
+actually is the same as the matrix inverse of the forward non-Euclidean
+coefficient linear operator $\tilde{A}$.  In other words, using our notation,
+$\tilde{A}^{-1} = (\tilde{A})^{-1}$.
+\end{dumb_fact}
 
 \subsubsection{The ``Euclidean'' matrix representation of a linear operator}
 \label{sec:Euclidean_matrix_rep_linear_operator}
@@ -473,7 +546,7 @@ Now consider another matrix representation of a linear operator where the
 forward operator application (\ref{eqn:fwd_op_apply}) is implemented as
 %
 \begin{equation}
-\tilde{y} = \tilde{A} \tilde{x}
+\tilde{y} = \tilde{A} \tilde{x} = \hat{A} \tilde{x}
 \label{eqn:Euclidean_forward_op_apply}
 \end{equation}
 %
@@ -486,27 +559,23 @@ Given the matrix representation of the forward operator application in
 from the adjoint relationship as
 %
 \begin{eqnarray}
-<A u, v>_{\mathcal{R}}
-& = & ( \tilde{A} \tilde{u} )^H Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
-& = & ( \tilde{u}^H \tilde{A}^H ) Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
-& = & \tilde{u}^H ( Q_{\mathcal{D}} Q_{\mathcal{D}}^{-1} ) \tilde{A}^H Q_{\mathcal{R}} \tilde{v} \nonumber \\
-& = & ( \tilde{u}^H ) Q_{\mathcal{D}} ( Q_{\mathcal{D}}^{-1} \tilde{A}^H Q_{\mathcal{R}} \tilde{v} ) \nonumber \\
-& = & <u, A^H v>_{\mathcal{D}}.
+<\tilde{A} \tilde{u}, \tilde{v}>_{\mathcal{R}}
+& = & ( \hat{A} \tilde{u} )^H Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
+& = & ( \tilde{u}^H \hat{A}^H ) Q_{\mathcal{R}} (\tilde{v}) \nonumber \\
+& = & \tilde{u}^H ( Q_{\mathcal{D}} Q_{\mathcal{D}}^{-1} ) \hat{A}^H Q_{\mathcal{R}} \tilde{v} \nonumber \\
+& = & ( \tilde{u}^H ) Q_{\mathcal{D}} ( Q_{\mathcal{D}}^{-1} \hat{A}^H Q_{\mathcal{R}} \tilde{v} ) \nonumber \\
+& = & <\tilde{u}, \tilde{A}^H \tilde{v}>_{\mathcal{D}} \nonumber \\
+&  & \Rightarrow \nonumber \\
+\tilde{A}^H & = & Q_{\mathcal{D}}^{-1} \hat{A}^H Q_{\mathcal{R}}
 \label{eqn:A_adjoint_Euclidean_defined}
 \end{eqnarray}
 %
 From (\ref{eqn:A_adjoint_Euclidean_defined}) we can see that applying the
 adjoint in this case requires that the inverse of the scalar product matrix
-$Q_{\mathcal{D}}^{-1}$ be applied and therefore the implementation of $y=A^H
-x$ is given by
-%
-\begin{equation}
-\tilde{y} = Q_{\mathcal{D}}^{-1} \tilde{A}^H Q_{\mathcal{R}} \tilde{x}.
-\label{eqn:Euclidean_adjoint_op_apply}
-\end{equation}
-%
+$Q_{\mathcal{D}}^{-1}$ be applied.
+
 From (\ref{eqn:Euclidean_forward_op_apply}) or
-(\ref{eqn:Euclidean_adjoint_op_apply}), one can derive the exact
+(\ref{eqn:A_adjoint_Euclidean_defined}), one can derive the exact
 representation of the operator $A$ that is consistent with this matrix
 representation.
 
@@ -515,38 +584,38 @@ First, from (\ref{eqn:Euclidean_forward_op_apply}) we see that
 \begin{eqnarray}
 y
 & = & E_{\mathcal{R}} \tilde{y} \nonumber \\
-& = & E_{\mathcal{R}} ( \tilde{A} \tilde{x} ) \nonumber \\
-& = & E_{\mathcal{R}} \tilde{A} ( E_{\mathcal{D}}^{-1} E_{\mathcal{D}} ) \tilde{x} \nonumber \\
-& = & ( E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^{-1} ) ( E_{\mathcal{D}} \tilde{x} ) \nonumber \\
+& = & E_{\mathcal{R}} ( \hat{A} \tilde{x} ) \nonumber \\
+& = & E_{\mathcal{R}} \hat{A} ( E_{\mathcal{D}}^{-1} E_{\mathcal{D}} ) \tilde{x} \nonumber \\
+& = & ( E_{\mathcal{R}} \hat{A} E_{\mathcal{D}}^{-1} ) ( E_{\mathcal{D}} \tilde{x} ) \nonumber \\
 & = & A x \nonumber \\
 &  & \Rightarrow \nonumber \\
-A & = & E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^{-1}
+A & = & E_{\mathcal{R}} \hat{A} E_{\mathcal{D}}^{-1}
 \label{eqn:A_Euclidean}
 \end{eqnarray}
 %
 
 We can also derive the representation of $A$ from
-(\ref{eqn:Euclidean_adjoint_op_apply}) as
+(\ref{eqn:A_adjoint_Euclidean_defined}) as
 %
 \begin{eqnarray}
 y
 & = & E_{\mathcal{D}} \tilde{y} \nonumber \\
-& = & E_{\mathcal{D}} ( Q_{\mathcal{D}}^{-1} \tilde{A}^H Q_{\mathcal{R}} \tilde{x} ) \nonumber \\
-& = & E_{\mathcal{D}} ( E_{\mathcal{D}}^H E_{\mathcal{D}} )^{-1} \tilde{A}^H ( E_{\mathcal{R}}^H E_{\mathcal{R}} ) \tilde{x} \nonumber \\
-& = & E_{\mathcal{D}} ( E_{\mathcal{D}}^{-1} E_{\mathcal{D}} ^{-H} ) \tilde{A}^H ( E_{\mathcal{R}}^H E_{\mathcal{R}} ) \tilde{x} \nonumber \\
-& = & ( E_{\mathcal{D}} E_{\mathcal{D}}^{-1} ) ( E_{\mathcal{D}} ^{-H} \tilde{A}^H E_{\mathcal{R}}^H ) ( E_{\mathcal{R}} \tilde{x} ) \nonumber \\
+& = & E_{\mathcal{D}} ( Q_{\mathcal{D}}^{-1} \hat{A}^H Q_{\mathcal{R}} \tilde{x} ) \nonumber \\
+& = & E_{\mathcal{D}} ( E_{\mathcal{D}}^H E_{\mathcal{D}} )^{-1} \hat{A}^H ( E_{\mathcal{R}}^H E_{\mathcal{R}} ) \tilde{x} \nonumber \\
+& = & E_{\mathcal{D}} ( E_{\mathcal{D}}^{-1} E_{\mathcal{D}} ^{-H} ) \hat{A}^H ( E_{\mathcal{R}}^H E_{\mathcal{R}} ) \tilde{x} \nonumber \\
+& = & ( E_{\mathcal{D}} E_{\mathcal{D}}^{-1} ) ( E_{\mathcal{D}} ^{-H} \hat{A}^H E_{\mathcal{R}}^H ) ( E_{\mathcal{R}} \tilde{x} ) \nonumber \\
 & = & A^H x \nonumber \\
 &  & \Rightarrow \nonumber \\
-A^H & = & E_{\mathcal{D}}^{-H} \tilde{A}^H E_{\mathcal{R}}^H  \nonumber \\
+A^H & = & E_{\mathcal{D}}^{-H} \hat{A}^H E_{\mathcal{R}}^H  \nonumber \\
 \label{eqn:A_Euclidean_adjoint} 
 &  & \Rightarrow \nonumber \\
-A & = & E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^{-1}
+A & = & E_{\mathcal{R}} \hat{A} E_{\mathcal{D}}^{-1}
 \label{eqn:A_Euclidean_again}
 \end{eqnarray}
 %
 Note that we already know that $A$ in (\ref{eqn:A_Euclidean}) and
 (\ref{eqn:A_Euclidean_again}) satisfies the adjoint relationship, since
-(\ref{eqn:Euclidean_adjoint_op_apply}) was derived from the adjoint
+(\ref{eqn:A_adjoint_Euclidean_defined}) was derived from the adjoint
 relationship.
 
 Given the ``Euclidean'' form of $A$ in (\ref{eqn:A_Euclidean}), the action of
@@ -557,11 +626,11 @@ exist) in the operation $y = A^{-1} x$ is given by
 y
 & = & E_{\mathcal{D}} \tilde{y} \nonumber \\
 & = & A^{-1} x \nonumber \\
-& = & (E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^{-1})^{-1} (E_{\mathcal{R}} \tilde{x}) \nonumber \\
-& = & E_{\mathcal{D}} \tilde{A}^{-1} (E_{\mathcal{R}}^{-1} E_{\mathcal{R}}) \tilde{x}  \nonumber \\
-& = & E_{\mathcal{D}} ( \tilde{A}^{-1} \tilde{x} ) \nonumber \\
+& = & (E_{\mathcal{R}} \hat{A} E_{\mathcal{D}}^{-1})^{-1} (E_{\mathcal{R}} \tilde{x}) \nonumber \\
+& = & E_{\mathcal{D}} \hat{A}^{-1} (E_{\mathcal{R}}^{-1} E_{\mathcal{R}}) \tilde{x}  \nonumber \\
+& = & E_{\mathcal{D}} ( \hat{A}^{-1} \tilde{x} ) \nonumber \\
 & \Rightarrow &  \nonumber \\
-\tilde{y} & = & \tilde{A}^{-1} \tilde{x}.
+\tilde{y} & = & \hat{A}^{-1} \tilde{x}.
 \label{eqn:A_Euclidean_matrix_inverse_apply}
 \end{eqnarray}
 %
@@ -574,12 +643,12 @@ derive and is given by
 y
 & = & E_{\mathcal{R}} \tilde{y} \nonumber \\
 & = & A^{-H} x \nonumber \\
-& = & (E_{\mathcal{R}} \tilde{A} E_{\mathcal{D}}^{-1})^{-H} (E_{\mathcal{D}} \tilde{x}) \nonumber \\
-& = & E_{\mathcal{R}}^{-H} \tilde{A}^{-H} E_{\mathcal{D}}^H E_{\mathcal{D}} \tilde{x}  \nonumber \\
-& = & ( E_{\mathcal{R}} E_{\mathcal{R}}^{-1} ) E_{\mathcal{R}}^{-H} \tilde{A}^{-H} ( E_{\mathcal{D}}^H E_{\mathcal{D}} ) \tilde{x}  \nonumber \\
-& = & E_{\mathcal{R}} ( Q_{\mathcal{R}}^{-1} \tilde{A}^{-H} Q_{\mathcal{D}} \tilde{x} ) \nonumber \\
+& = & (E_{\mathcal{R}} \hat{A} E_{\mathcal{D}}^{-1})^{-H} (E_{\mathcal{D}} \tilde{x}) \nonumber \\
+& = & E_{\mathcal{R}}^{-H} \hat{A}^{-H} E_{\mathcal{D}}^H E_{\mathcal{D}} \tilde{x}  \nonumber \\
+& = & ( E_{\mathcal{R}} E_{\mathcal{R}}^{-1} ) E_{\mathcal{R}}^{-H} \hat{A}^{-H} ( E_{\mathcal{D}}^H E_{\mathcal{D}} ) \tilde{x}  \nonumber \\
+& = & E_{\mathcal{R}} ( Q_{\mathcal{R}}^{-1} \hat{A}^{-H} Q_{\mathcal{D}} \tilde{x} ) \nonumber \\
 & \Rightarrow &  \nonumber \\
-\tilde{y} & = & Q_{\mathcal{R}}^{-1} \tilde{A}^{-H} Q_{\mathcal{D}} \tilde{x}.
+\tilde{y} & = & Q_{\mathcal{R}}^{-1} \hat{A}^{-H} Q_{\mathcal{D}} \tilde{x}.
 \label{eqn:A_Euclidean_matrix_adjoint_inverse_apply}
 \end{eqnarray}
 %
@@ -706,7 +775,7 @@ E {}\tilde{\nabla f}$, where $\tilde{\nabla f} = {Q}^{-1}
 linear operator $\nabla f\in\mathcal{X}|\RE$.
 
 {}\textbf{ToDo:} Derive and describe the impact of the scalar product on the
-Hessian matrix for $f(x)$.  I don't know what this is exactly but I need to
+Hessian matrix for $f(x)$.  I do not know what this is exactly but I need to
 derive this so that I can determine that the Newton step for the minimization
 algorithm is not effected!  In think the Hessian operator is $\nabla^2 f =
 Q^{-1} {}\, {}\nabla^2 g {}\, Q^{-1}$ but In need to verify this for sure.
@@ -780,19 +849,19 @@ y = {\Jac{f}{x}}^T x \; \Rightarrow \;
 \label{eqn:Euclidean_adjoint_jac_apply}
 \end{equation}
 %
-as shown in (\ref{eqn:Euclidean_adjoint_op_apply}), which requires the
+as shown in (\ref{eqn:A_adjoint_Euclidean_defined}), which requires the
 application of the inverse of the scalar product matrix
 ${Q_{\mathcal{X}}}^{-1}$ with each application of the adjoint.
 
 The other option for a matrix representation is to compute and store
-$\tilde{A} = (\jac{g}{\tilde{x}}) {Q_{\mathcal{X}}}^{-1}$ and this gives the ``natural''
+$\hat{A} = (\jac{g}{\tilde{x}}) {Q_{\mathcal{X}}}^{-1}$ and this gives the ``natural''
 representation
 %
 \begin{equation}
 \Jac{f}{x} = E_{\mathcal{F}} \Jac{g}{\tilde{x}} E_{\mathcal{X}}^{-1}
 = E_{\mathcal{F}} \Jac{g}{\tilde{x}} E_{\mathcal{X}}^{-1} ( E_{\mathcal{X}}^{-T} E_{\mathcal{X}}^T ) 
 = E_{\mathcal{F}} \Jac{g}{\tilde{x}} ( E_{\mathcal{X}}^T E_{\mathcal{X}} )^{-1} E_{\mathcal{X}}^T 
-= E_{\mathcal{F}} \tilde{A} E_{\mathcal{X}}^T
+= E_{\mathcal{F}} \hat{A} E_{\mathcal{X}}^T
 \label{eqn:d_f_d_x_natural_rep}
 \end{equation}
 %
@@ -819,27 +888,73 @@ form of the basis representation (i.e.\ the basis $E_{\mathcal{X}}$ should not
 appear in any final form of the coefficient expressions).
 
 The general approach is summarized as:
-
+%
 \begin{enumerate}
-
+%
 {}\item State the algorithm in Euclidean form using vectors with respect to a
 Euclidean basis (e.g.\ $x$) with simple dot products (e.g.\ $x^H y$) etc.
-
+%
 {}\item Substitute the basis representations for all vectors (e.g.\ $x = E
 {}\tilde{x}$) in all expressions.
-
+%
 {}\item Manipulate the expressions and try to decompose all operations into
 coefficient form involving only the vector coefficients (e.g.\ $\tilde{x}$),
 scalar product matrices (e.g.\ $Q_{\mathcal{X}}$), and other model-defined
 linear operators if needed.
-
+%
 \end{enumerate}
-
-If after the above process, we can manipulate the expressions such that the
-coefficient forms of the expressions do not explicitly involve the basis
-matrix $E$ but only the scalar product matrix $Q = E^H E$, then we have
-succeeded in deriving a general form of the algorithm that will work for all
-non-Euclidean vector spaces.
+%
+To demonstrate the process, consider the Euclidean form of the inner CG
+iteration
+%
+\begin{eqnarray*}
+\rho_k & = & r^H r, \\
+p & = & r + \frac{\rho_k}{\rho_{k-1}} p, \\
+q & = & A p, \\
+\alpha & = & \frac{\rho_k}{p^H q}, \\
+x & = & x + \alpha p, \\
+r & = & r - \alpha q.
+\end{eqnarray*}
+%
+In this algorithm, the linear operator $A\in\mathcal{S}|\mathcal{S}$ is
+symmetric so we are dealing with just one vector space $\mathcal{S}$ with
+scalar product $Q$.  Let $E\in\CPLX^{n\times{}n}$ be any basis representation
+such that $Q=E^H E$.  Substituting $r=E\tilde{r}$, $p=E\tilde{p}$,
+$q=E\tilde{q}$, and $x=E\tilde{x}$ in the above inner loop expressions yields
+%
+\begin{eqnarray*}
+\rho_k & = & \tilde{r}^H E^H E \tilde{r}, \\
+E \tilde{p} & = & E \tilde{r} + \frac{\rho_k}{\rho_{k-1}} E \tilde{p}, \\
+E \tilde{q} & = & ( E \tilde{A} E^{-1} ) E \tilde{p}, \\
+\alpha & = & \frac{\rho_k}{\tilde{p}^H E^H E \tilde{q}}, \\
+E \tilde{x} & = & E \tilde{x} + \alpha E \tilde{p}, \\
+E \tilde{r} & = & E \tilde{r} - \alpha E \tilde{q}, \\
+\\
+\Rightarrow \\
+\\
+\rho_k & = & \tilde{r}^H Q \tilde{r}, \\
+E \tilde{p} & = & E ( \tilde{r} + \frac{\rho_k}{\rho_{k-1}} \tilde{p} ), \\
+E \tilde{q} & = & E ( \tilde{A} \tilde{p} ), \\
+\alpha & = & \frac{\rho_k}{\tilde{p}^H Q \tilde{q}}, \\
+E \tilde{x} & = & E ( \tilde{x} + \alpha \tilde{p}), \\
+E \tilde{r} & = & E ( \tilde{r} - \alpha \tilde{q}), \\
+\\
+\Rightarrow \\
+\\
+\rho_k & = & <\tilde{r},\tilde{r}>, \\
+\tilde{p} & = & \tilde{r} + \frac{\rho_k}{\rho_{k-1}} \tilde{p}, \\
+\tilde{q} & = & \tilde{A} \tilde{p}, \\
+\alpha & = & \frac{\rho_k}{<\tilde{p},\tilde{q}>}, \\
+\tilde{x} & = & \tilde{x} + \alpha \tilde{p}, \\
+\tilde{r} & = & \tilde{r} - \alpha \tilde{q}.
+\end{eqnarray*}
+%
+As seen in the above example, if after this transformation we can manipulate
+the expressions such that the coefficient forms do not explicitly involve the
+basis matrix $E$ but instead only involve the scalar product matrix $Q = E^H
+E$ and the non-Euclidean coefficient forms of the linear operators, then we
+have succeeded in deriving a general form of the algorithm that will work for
+all non-Euclidean vector spaces.
 
 It is critical to note that when the selection of the scalar products affects
 an algorithm then a good selection for the scalar products can positively
@@ -1151,42 +1266,42 @@ implementation.
 \subsubsection*{Explicit BFGS matrix representation}
 
 For the explicit matrix representation we will assume that $B$ and $B_+$ are
-being stored in the ``natural'' coefficient forms of $B = E {}\tilde{B} E^T$
-and $B_+ = E {}\tilde{B}_+ E^T$.  Note that the basis matrix $E$ is generally
+being stored in the ``natural'' coefficient forms of $B = E {}\hat{B} E^T$
+and $B_+ = E {}\hat{B}_+ E^T$.  Note that the basis matrix $E$ is generally
 not given explicitly and a unique choice is not known; only the scalar product
 matrix $Q = E^T E$ is known.  By substituting in the coefficient forms of $B =
-E {}\tilde{B} E^T$, $B_+ = E {}\tilde{B}_+ E^T$, $y = E {}\tilde{y}$, and $s =
+E {}\hat{B} E^T$, $B_+ = E {}\hat{B}_+ E^T$, $y = E {}\tilde{y}$, and $s =
 E {}\tilde{s}$ into (\ref{eqn:bfgs_update}) and performing some manipulation
 we obtain
 %
 \begin{eqnarray}
-E \tilde{B}_+ E^T
-& = & E \tilde{B} E^T
-  - \frac{[(E \tilde{B} E^T)(E \tilde{s})][(E \tilde{B} E^T)(E \tilde{s})]^T}{(E \tilde{s})^T(E \tilde{B} E^T)(E \tilde{s})}
+E \hat{B}_+ E^T
+& = & E \hat{B} E^T
+  - \frac{[(E \hat{B} E^T)(E \tilde{s})][(E \hat{B} E^T)(E \tilde{s})]^T}{(E \tilde{s})^T(E \hat{B} E^T)(E \tilde{s})}
   + \frac{(E \tilde{y})(E \tilde{y})^T}{(E \tilde{y})^T (E \tilde{s})} \nonumber \\
-& = & E \tilde{B} E^T
-  - \frac{E(\tilde{B} Q \tilde{s})(\tilde{B} Q \tilde{s})^T E^T}{\tilde{s}^T Q (\tilde{B} Q \tilde{s})}
+& = & E \hat{B} E^T
+  - \frac{E(\hat{B} Q \tilde{s})(\hat{B} Q \tilde{s})^T E^T}{\tilde{s}^T Q (\hat{B} Q \tilde{s})}
   + \frac{E \tilde{y} \tilde{y}^T E^T}{\tilde{y}^T Q \tilde{s}} \nonumber \\
 & = & E \left[
-  \tilde{B}
-  - \frac{(\tilde{B} Q \tilde{s})(\tilde{B} Q \tilde{s})^T}{\tilde{s}^T Q (\tilde{B} Q \tilde{s})}
+  \hat{B}
+  - \frac{(\hat{B} Q \tilde{s})(\hat{B} Q \tilde{s})^T}{\tilde{s}^T Q (\hat{B} Q \tilde{s})}
   + \frac{\tilde{y} \tilde{y}^T}{\tilde{y}^T Q \tilde{s}}
   \right] E^T \nonumber \\
 & \Rightarrow & \nonumber \\
-\tilde{B}_+
-& = & \tilde{B}
-  - \frac{(\tilde{B} Q \tilde{s})(\tilde{B} Q \tilde{s})^T}{\tilde{s}^T Q (\tilde{B} Q \tilde{s})}
+\hat{B}_+
+& = & \hat{B}
+  - \frac{(\hat{B} Q \tilde{s})(\hat{B} Q \tilde{s})^T}{\tilde{s}^T Q (\hat{B} Q \tilde{s})}
   + \frac{\tilde{y} \tilde{y}^T}{\tilde{y}^T Q \tilde{s}}.
 \label{eqn:explicit_bfgs_update}
 \end{eqnarray}
 %
 What (\ref{eqn:explicit_bfgs_update}) shows is that the ``natural'' matrix
 representation of $B$ can be updated to $B_+$ by using the coefficients of the
-vectors $\tilde{s}$ and $\tilde{y}$, the matrix coefficients $\tilde{B}$
+vectors $\tilde{s}$ and $\tilde{y}$, the matrix coefficients $\hat{B}$
 themselves, and the action of the scalar product matrix $Q$.  Note that the
 final expressions for the update do not contain the basis matrix $E$ itself
 since this matrix is not known in general.  Also note that $\tilde{q} =
-{}\tilde{B}Q\tilde{s}$ is just the coefficient vector from the output of the
+{}\hat{B}Q\tilde{s}$ is just the coefficient vector from the output of the
 action of $q = B s$ and the remaining operations involving $Q$ which are
 $\tilde{s}^T Q\tilde{q}$ and $\tilde{s}^T Q\tilde{q}$ are simply applications
 of the scalar products $<s,q>$ and $<y,y>$ and therefore no direct access the
@@ -1198,7 +1313,7 @@ What all this means is that code that currently implements an explicit BFGS
 update assuming for a Euclidean basis should only need minor modifications in
 order to work correctly for non-Euclidean scalar products.
 
-Note that applying the inverse of $B = E {}\tilde{B} E^T$ for $v = B^{-1} u$
+Note that applying the inverse of $B = E {}\hat{B} E^T$ for $v = B^{-1} u$
 is simply a special case of (\ref{eqn:A_natural_matrix_adjoint_inverse_apply})
 and is given as
 %
@@ -1206,10 +1321,10 @@ and is given as
 v
 & = & E \tilde{v} \nonumber \\
 & = & B^{-1} u \nonumber \\
-& = & (E \tilde{B} E^T)^{-1} (E \tilde{u}) \nonumber \\
-& = & E ( Q^{-1} \tilde{B}^{-1} \tilde{u}) \nonumber \\
+& = & (E \hat{B} E^T)^{-1} (E \tilde{u}) \nonumber \\
+& = & E ( Q^{-1} \hat{B}^{-1} \tilde{u}) \nonumber \\
 & \Rightarrow &  \nonumber \\
-\tilde{v} & = & Q^{-1} \tilde{B}^{-1} \tilde{u}.
+\tilde{v} & = & Q^{-1} \hat{B}^{-1} \tilde{u}.
 \label{eqn:B_inverse}
 \end{eqnarray}
 %
@@ -1239,40 +1354,39 @@ inverse approximation $H_0 = B_0^{-1}$ to give $H$ after the $m$ updates (see
 $v = H u$ is provided by a simple two-loop algorithm involving only simple
 vector operations like dot products, vector scalings, vector additions, and
 the application of the linear operator $H_0$.  Therefore, we will go and skip
-ahead and write the general non-Euclidean form of this algorithm by
-substituting the scalar product notation $<a,b>$ for $a^T b$ just to make it
-clear that we are dealing with non-Euclidean scalar products in general.  This
-simple algorithm is called the two-loop recursion [???] which is stated as
+ahead and write the general non-Euclidean coefficient form of this algorithm.
+This simple algorithm is called the two-loop recursion [???] which is stated
+as
 
 \bifthen
-\textbf{L-BFGS two-loop recursion for computing $v = H u$} \\
+\textbf{L-BFGS two-loop recursion for computing $\tilde{v} = \tilde{H} \tilde{u}$} \\
 \\
-$q = u$ \\
+$\tilde{q} = \tilde{u}$ \\
 \textbf{for} $i = k-1, \ldots , k-m$ \\
-\> $\alpha_i = \rho_i <s_i,q>$ \\
-\> $q = q - \alpha_i y_i$ \\
+\> $\alpha_i = \rho_i <\tilde{s}_i,\tilde{q}>$ \\
+\> $\tilde{q} = \tilde{q} - \alpha_i \tilde{y}_i$ \\
 \textbf{end} \\
-$r = H_0 q$ \\
+$\tilde{r} = \tilde{H}_0 \tilde{q}$ \\
 \textbf{for} $i = k-m, \ldots , k-1$ \\
-\> $\beta = \rho_i <y_i,r>$ \\
-\> $r = r + (\alpha_i - \beta) s_i$ \\
+\> $\beta = \rho_i <\tilde{y}_i,\tilde{r}>$ \\
+\> $\tilde{r} = \tilde{r} + (\alpha_i - \beta) \tilde{s}_i$ \\
 \textbf{end} \\
-$v = r$
+$\tilde{v} = \tilde{r}$
 \eifthen
 
-While it is subtle, the insertion of the general scalar products $<s_i,q>$ and
-$<y_i,r>$ can result in a dramatic improvement in the performance of
-minimization methods that use it and it has been shown to have
-mesh-independent convergence properties (i.e.\ the number of iterations does
-not increase as the mesh is refined) for some classes of PDE-constrained
-optimization problems [???].
+While it is subtle, the insertion of the general scalar products
+$<\tilde{s}_i,\tilde{q}>$ and $<\tilde{y}_i,\tilde{r}>$ can result in a
+dramatic improvement in the performance of minimization methods that use it
+and it has been shown to have mesh-independent convergence properties (i.e.\
+the number of iterations does not increase as the mesh is refined) for some
+classes of PDE-constrained optimization problems [???].
 
 \subsubsection{Inequality constraints}
 
 Consider a simple set of bound inequality constraints of the form
 %
 \begin{equation}
-x \ge a
+a \le x
 \label{eqn:bound_inequlity}
 \end{equation}
 %
@@ -1283,7 +1397,7 @@ inequality constraint in (\ref{eqn:bound_inequlity}) is really a set of
 element-wise constraints
 %
 \begin{equation}
-x_i \ge a_i, \; \mbox{for} \; i=1 \ldots n.
+a_i \le x_i , \; \mbox{for} \; i=1 \ldots n.
 \label{eqn:bound_inequlity_elementwise}
 \end{equation}
 %
@@ -1293,7 +1407,7 @@ and $\tilde{a}_i$ in for $x_i$ and $a_i$.  One could, however, simply
 substitute in the coefficient vector components and have the algorithm enforce
 %
 \begin{equation}
-\tilde{x}_i \ge \tilde{a}_i, \; \mbox{for} \; i=1 \ldots n,
+\tilde{a}_i \le \tilde{x}_i , \; \mbox{for} \; i=1 \ldots n,
 \label{eqn:bound_inequlity_coefficients_elementwise}
 \end{equation}
 %
@@ -1305,12 +1419,77 @@ discretizations of PDEs, the vector coefficients directly correspond to
 physical quantities such as temperature, stress, and velocity at the mesh
 nodes.  Therefore bounding these types of coefficients may be very reasonable
 even through a non-Euclidean scalar product is desirable in order to introduce
-mesh-dependent scaling into other parts of the algorithm.
+mesh-dependent scaling into other parts of the algorithm.  In other types of
+discretizations, such as those that use a spectral basis, there is no physical
+meaning to the coefficients so inequalities involving these are meaningless.
+Note that imposing the inequality constraints in non-Euclidean coefficient
+form as in (\ref{eqn:bound_inequlity_coefficients_elementwise}) is equivalent
+to imposing the inequalities in Euclidean form as
+%
+\begin{equation}
+E^{-1} a \le E^{-1} x
+\label{eqn:bound_inequlity_with_basis_inverses}
+\end{equation}
+%
+which is important when performing the initial transformation from the
+Euclidean form (i.e.\ using dot products $x^H y$) to the non-Euclidean
+coefficient form (i.e.\ using scalar products $<\tilde{x},\tilde{y}>$).  Here,
+we hope that in doing the transformation of the entire algorithm that we can
+remove any explicit mention of the basis matrix $E$ itself.
+
+In cases where component-wise inequalities on vector coefficients is not
+useful, one has no choice but to form an explicit basis and to pose these
+constraints as general linear inequality constraints of the form
+%
+\[
+\tilde{b} \le E \tilde{x},
+\]
+%
+where $\tilde{b} = E\tilde{a}$.  Even if an explicit basis must be formed in
+order to preserve the meaning of the inequality constraints, there is still
+utility in expressing an algorithm in general non-Euclidean coefficient form
+since it avoids having to convert all vectors back and forth using the basis
+representation or having to invert the basis matrix.
 
 Therefore, if it is reasonable to impose inequality constraints on the
 coefficient vectors themselves, then ANAs involving inequalities with
 non-Euclidean scalar products can be very reasonable and straightforward to
-implement.
+implement.  When replacing the Euclidean inequalities with the vector
+coefficients is not reasonable, then the an explicit basis representation is
+required to express the constraints.
+
+\subsection{Vector Coefficient Forms of Numerical Algorithms}
+
+Here we finally come to reality.  Up to this point in the discussion we have
+been very careful to differentiate the vector $x$ from the vector coefficients
+$\tilde{x}$ related by the equation $x = E\tilde{x}$.  We have viewed
+algorithms in Euclidean form using the vectors $x$ and $y$ and simple
+Euclidean dot products $x^H y$ and then in non-Euclidean coefficient form
+using coefficient vectors $\tilde{x}$ and $\tilde{y}$ and scalar products
+$<\tilde{x},\tilde{y}>$.  When mathematicians write numerical algorithms in
+coefficient form, however, they do not typically use math accents like
+$\tilde{x}$ and $\tilde{A}$ or acknowledge the related Euclidean forms.
+Instead, they use non-accented identifiers and often the only clue that we
+are dealing with non-Euclidean vectors, vector spaces, and linear operators
+expressed in vector coefficient form is that simple dot products like $x^H y$
+are replaced with $<x,y>$.  As we have show above, expressing algorithms in
+vector coefficient form with non-Euclidean scalar products has a dramatic
+impact on the definition linear operators, derivative computations, and the
+meaning of certain types constructs line inequality constraints.  For example,
+we showed in Section ??? that the adjoint non-Euclidean coefficient linear
+operator $\tilde{A}^H$ is not the same thing as the matrix conjugate transpose
+of the forward non-Euclidean coefficient linear operator $\tilde{A}$.
+
+\begin{dumb_fact}
+When most mathematicians writes a numerical algorithm using the scalar product
+notation $<x,y>$, the vectors $x$ and $y$ are the {}\textit{coefficients} of
+the vectors and all of the linear operators become non-Euclidean coefficient
+operators which are {}\textbf{not} equivalent to matrices!
+\end{dumb_fact}
+
+However, using the approach outlined above, one can comfortably go between the
+Euclidean dot product form (i.e.\ $x^H y$) and the non-Euclidean scalar
+product form (i.e.\ $<x,y>$).
 
 \subsection{Summary}
 
