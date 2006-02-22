@@ -32,6 +32,7 @@
 
 #include "NOX_TSF_StatusTestBuilder.H"         
 #include "NOX_StatusTest_NormF.H"         
+#include "NOX_StatusTest_NormUpdate.H"         
 #include "NOX_StatusTest_SafeCombo.H"         
 #include "NOX_StatusTest_MaxIters.H"         
 #include "Teuchos_TestForException.hpp"   
@@ -48,21 +49,37 @@ StatusTestBuilder::makeStatusTest(const ParameterList& params)
 
   ParameterList testSublist = params.sublist("Status Test");
 
-  double tol = 1.0e-12;
+  double fTol = 1.0e-15;
+  double dxTol = 1.0e-15;
   int maxiters = 20;
   if (testSublist.isParameter("Tolerance"))
     {
-      tol = getParameter<double>(testSublist, "Tolerance");
+      fTol = getParameter<double>(testSublist, "Tolerance");
     }
+  if (testSublist.isParameter("Residual Tolerance"))
+    {
+      fTol = getParameter<double>(testSublist, "Residual Tolerance");
+    }
+  if (testSublist.isParameter("Step Tolerance"))
+    {
+      dxTol = getParameter<double>(testSublist, "Step Tolerance");
+    }
+  cout << "func tol = " << fTol << endl;
+  cout << "step tol = " << dxTol << endl;
   if (testSublist.isParameter("Max Iterations"))
     {
       maxiters = getParameter<int>(testSublist, "Max Iterations");
     }
 
-  RefCountPtr<StatusTest::Generic> A = rcp(new StatusTest::NormF(tol));
+  RefCountPtr<StatusTest::Generic> A = rcp(new StatusTest::NormF(fTol));
   RefCountPtr<StatusTest::Generic> B = rcp(new StatusTest::MaxIters(maxiters));
-  return rcp(new StatusTest::SafeCombo(StatusTest::SafeCombo::OR, A, B));
+  RefCountPtr<StatusTest::Generic> C = rcp(new StatusTest::NormUpdate(dxTol));
+  RefCountPtr<StatusTest::Generic> AB 
+    = rcp(new StatusTest::SafeCombo(StatusTest::SafeCombo::OR, A, B));
+  RefCountPtr<StatusTest::Generic> ABC 
+    = rcp(new StatusTest::SafeCombo(StatusTest::SafeCombo::OR, AB, C));
   
+  return ABC;
 }
 
 
