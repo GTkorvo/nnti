@@ -75,10 +75,12 @@ NOXSolver::NOXSolver(const ParameterList& params,
     {
       linSolver_ = LinearSolverBuilder::createSolver(solverSublist);
     }
-  else
-    {
-      
-    }
+
+  TEST_FOR_EXCEPTION(linSolver_.ptr().get()==0, runtime_error,
+                     "null linear solver object in NOXSolver ctor");
+
+  TEST_FOR_EXCEPTION(statusTest_.get()==0, runtime_error,
+                     "null status test object in NOXSolver ctor");
 
 }
 
