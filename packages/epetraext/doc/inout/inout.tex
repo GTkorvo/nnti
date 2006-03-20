@@ -1,0 +1,703 @@
+% @HEADER
+% ***********************************************************************
+%
+%            Trilinos: An Object-Oriented Solver Framework
+%                 Copyright (2001) Sandia Corporation
+%
+% Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+% license for use of this work by or on behalf of the U.S. Government.
+%
+% This library is free software; you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as
+% published by the Free Software Foundation; either version 2.1 of the
+% License, or (at your option) any later version.
+%
+% This library is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+% Lesser General Public License for more details.
+%
+% You should have received a copy of the GNU Lesser General Public
+% License along with this library; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+% USA
+% Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+%
+% ***********************************************************************
+% @HEADER
+
+\documentclass[11pt,relax]{SANDreport}
+\usepackage{graphicx}
+\usepackage{amsmath,amsfonts,amsthm}
+\usepackage{amssymb}
+\usepackage{enumerate}
+\usepackage{rotating}
+\usepackage{times}
+
+\def\choicebox#1#2{\noindent$\hphantom{th}$\parbox[t]{1.8in}{\sf
+#1}\parbox[t]{4.5in}{#2}\\[0.8em]}
+
+\author{Robert Hoekstra, Alan Williams, Michael Heroux\\
+Computational Mathematics and Algorithms Department \\
+Sandia National Laboratories \\
+P.O. Box 5800 \\
+Albuquerque, NM 87185-1110 \\[1cm]
+Marzio Sala \\
+Institute of Computational Science, \\
+ETH Zurich, Switzerland}
+
+\title{Serialization Tools for Distributed Linear Algebra Objects}
+\SANDnum{SAND2006-XXXX}
+\SANDauthor{
+Robert Hoekstra, Alan Williams, Michael Heroux, and Marzio Sala}
+
+\SANDprintDate{April 2006}
+\SANDreleaseType{Unlimited Release}
+
+\newcommand{\Trilinos}{Trilinos}
+\newcommand{\TrilinosTM}{Trilinos \copyright}
+\newcommand{\trilinos}{{\sc Trilinos}}
+\newcommand{\ifpack}{{\sc Ifpack}}
+\newcommand{\aztecoo}{{\sc AztecOO}}
+\newcommand{\amesos}{{\sc Amesos}}
+\newcommand{\epetra}{{\sc Epetra}}
+\newcommand{\ml}{{\sc ML}}
+\newcommand{\mb}[1]{{\mathbf {#1} }}
+\newcommand{\teuchos}{{\sc Teuchos}}
+\newcommand{\triutils}{{\sc Triutils}}
+\newcommand{\metis}{{\sc METIS}}
+
+\newcommand{\ie}{i.e., }
+\newtheorem{remark}{Remark}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We describe  the I/O tools available in the EpetraExt package of Trilinos~\cite{trilinos-home-page}
+\end{abstract}
+
+\SANDmain
+
+\tableofcontents
+
+\newpage
+
+% ============================================================================
+\section{Introduction}
+\label{sec:introduction}
+% ============================================================================
+
+In the modern computer science context, {\sl serialization} refers to
+converting an object's detailed state data into a single byte stream to
+transmit the object from its current location to a new location.  The most
+important goal of serialization is to re-create an object that is identical to
+the original object. This type of serialization is used mostly to transport an
+object across a network, to persist objects to a file or database, or to
+distribute identical objects to several applications or locations.
+Serialization can also be used to transform an object into a human-readable
+state. 
+The processing of serializing an object is also known are {\sl deflating} or
+{\sl marshalling} an object. The opposite operation of extracting a data
+structure from a series of bytes, is called {\sl deserialization}, or {\sl
+  unmarshalling} or {\sl inflating}. 
+
+\smallskip
+
+In this document, we are interested in tool to serialize and deserialize
+distributed linear algebra objects, internally defined as Epetra
+object~\cite{Epetra-Users-Guide}.  The serialization techniques we consider in
+this document aim to define flexible file data formats. The Epetra objects we
+will consider in this document are reported in Table \ref{tab:supported}.
+These objects are characterized by the
+following proporties:
+\begin{itemize}
+\item they are distributed across multiple processors, and therefore some for
+of parallel I/O is required;
+\item their data layout is determined by Epetra\_Map objects. The I/O should
+be flexible enough to allow the clone object to have a different (tough
+                                                                  compatible)
+Epetra\_Map;
+\item they are memory-intensive;
+\item the serialization and deserializaton process should allow I/O from
+well-known formats, like MATLAB, MatrixMarket~\cite{boisvert97matrix}, and
+Harwell/Boeing~\cite{duff89sparse}.
+\end{itemize}
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l | c | c | c |}
+\hline
+object type           & H/B       & MM        & HDF5 \\
+\hline
+Epetra\_BlockMap      & O  & I/O & I/O \\
+Epetra\_Map           & O  & I/O & I/O \\
+Epetra\_IntVector     & -- & --  & I/O \\
+Epetra\_Vector        & O  & I/O & I/O \\
+Epetra\_MultiVector   & O  & I/O & I/O \\
+Epetra\_CrsGraph      & -- & --  & I/O \\
+Epetra\_RowMatrix     & O  &   O &   O \\
+Epetra\_CrsMatrix     & O  & I/O & I/O \\
+Epetra\_VbrMatrix     & O  &   O &   O \\
+Teuchos::ParameterList& -- & --  & I/O \\
+int                   & -- & --  & I/O \\
+double                & -- & --  & I/O \\
+void* array           & -- & --  & I/O \\
+\hline
+\end{tabular}
+\caption{List of objects supported by the various I/O tools. ``H/B'' refers to
+  the Harwell/Boeing format, ``MM'' to the MatrixMarket format, and ``HDF5''
+    to the HDF5 format. `I/O' means that both input and output are supported,
+       while `O' that only output, `--' means no support.}
+\label{tab:supported}
+\end{center}
+\end{table}
+
+Probably, the most critical aspect is the distributed nature of the object,
+  which calls for efficient parallel I/O.
+Parallel I/O is a mechanism that allow many
+processors to perform I/O at the same time, with the goal of exploring
+parallelism in the parallel computer's communication network and I/O system.
+
+The parallel programmer can take two different approaches to achieving
+concurrency I/O operations. One approach is for each process to perform read
+and write operations to a distinct file. While simple, this approach has
+significant disadvantages: programs cannot easily be restarted on different
+number of processors, the underlying file system has little information on
+which to base optimization decisions, and files are not easily shared with
+other programs. We decided to generate one single file, containing the entire
+object. This is accomplished with different technical tools, depending on the
+I/O format. For example, one can first reproduce the whole object on one
+processor, then perform serial I/O, or let each processor write its part of
+the object on the file. 
+
+Another design choice is  on the storage type of the resulting file, which 
+can be either human-readable (ASCII) or binary.
+Human-readable objects are convenient when dealing with small objects.
+Besides, they can easily edited or created with simple text editors, and at
+least two formats have already been proposed in the literature: the
+Harwell/Boeing file format, and the MatrixMarket file format. The
+disadvantage of human-readable file formats is that their ASCII content is not
+space-efficient, and the I/O is typically much slower than binary I/O. To 
+avoid these problems,
+one can consider binary serialization. In order to make the
+resulting files portable across different architectures, it is convenient to
+perform all the binary I/O through some kind of library, and use some form of
+parallel I/O techniques based on the 
+widely available MPI-IO library.
+
+Finally, it is convenient to store {\sl metadata} together with the input and
+output of a simulation. The simplest metadata is, for example, the name of the
+object, or the class it belongs to. More sophisticated metadata can include 
+details on the procedure used to build the object, like for instance the
+quadrature formula used to assemble the matrix, or the parameters used to
+generate the preconditioner.
+
+\smallskip
+
+This manuscript outlines the serialization and deserialization tools available
+within the EpetraExt package of Trilinos. Section~\ref{sec:hb} describes the
+Harwell/Boeing I/O; section~\ref{sec:mm} presents the MatrixMarket I/O;
+section~\ref{sec:hdf5} outlines the design and the implementation of the
+EpetraExt::HDF5 I/O. 
+
+% ============================================================================
+\section{The Harwell-Boeing I/O}
+\label{sec:hb}
+% ============================================================================
+
+Harwell-Boeing files containing real matrices can be read using the following
+sequence of commands:
+\begin{verbatim}
+Epetra_Map* readMap;
+Epetra_CrsMatrix* readA; 
+Epetra_Vector* readx; 
+Epetra_Vector* readb;
+Epetra_Vector* readxexact;
+
+Trilinos_Util_ReadHb2Epetra((char*)FileName_.c_str(), *comm_, readMap,
+                            readA, readx, readb, readxexact);
+\end{verbatim}
+This I/O function is located in the Triutils package; the header file
+\verb!Trilinos_Util.h! contains the signature of the function. Note that this
+reader is only serial, and the objects have to be exported to distributed maps
+in order to perform parallel computations.
+
+% ============================================================================
+\section{The Matrix-Market I/O}
+\label{sec:mm}
+% ============================================================================
+
+EpetraExt offers a variety of Matrix-Market I/O tools.
+The Matrix Market format is a simple, portable and human-readable (ASCII) 
+format. The
+specifications to create the corresponding ASCII files can be found at
+\begin{verbatim}
+http://math.nist.gov/MatrixMarket/
+\end{verbatim}
+where MATLAB files to perform I/O can be downloaded. 
+The header files to be includes are
+\begin{verbatim}
+#include "EpetraExt_BlockMapIn.h"
+#include "EpetraExt_BlockMapOut.h"
+#include "EpetraExt_VectorIn.h"
+#include "EpetraExt_VectorOut.h"
+#include "EpetraExt_MultiVectorIn.h"
+#include "EpetraExt_MultiVectorOut.h"
+#include "EpetraExt_CrsMatrixIn.h"
+#include "EpetraExt_RowMatrixOut.h"
+\end{verbatim}
+All classes offer both serial and parallel support.
+To show the usage, let us consider for example the following objects:
+\begin{verbatim}
+Epetra_Map Map(10, 0, Comm);
+Epetra_MultiVector X(Map, 2);
+Epetra_MultiVector B(Map, 2);
+Epetra_CrsMatrix A(Copy, Map, 0);  // create a simple diagonal matrix  
+for (int i = 0 ; i < NumMyElements ; ++i)  
+{
+  int j = Map.GID(i);
+  double value = 1.0;    
+  EPETRA_CHK_ERR(A.InsertGlobalValues(j, 1, &value, &j));
+}
+A.FillComplete();
+\end{verbatim}
+These objects can be saved on file
+in both serial and parallel computations by using the commands
+\begin{verbatim}
+EpetraExt::MapToMatrixMarketFile("Map.mm", Map);
+EpetraExt::MultiVectorToMatrixMarketFile("X.mm", X);
+EpetraExt::MultiVectorToMatrixMarketFile("B.mm", B);
+EpetraExt::RowMatrixToMatrixMarketFile("A.mm", A);
+\end{verbatim}
+By using the \verb!mmread.m! MATLAB
+script available at the Matrix Market web site, one can type within MATLAB
+\begin{verbatim}
+>> X = mmread('X.mm');
+>> A = mmread('A.mm')                                       
+
+A =
+
+   (1,1)        1
+   (2,2)        1
+   (3,3)        1
+   (4,4)        1
+   (5,5)        1
+\end{verbatim}
+Alternatively, one can read the
+previous files within Trilinos as follows:
+\begin{verbatim}
+Epetra_Map* newMap;
+Epetra_MultiVector* newX;
+Epetra_MultiVector* newB;
+Epetra_CrsMatrix* newA;
+
+EpetraExt::MatrixMarketFileToMap("Map.mm", Comm, newMap);
+EpetraExt::MatrixMarketFileToMultiVector("X.mm", *newMap, newX);
+EpetraExt::MatrixMarketFileToMultiVector("B.mm", *newMap, newB);
+EpetraExt::MatrixMarketFileToCrsMatrix("A.mm", *newMap, newA);
+\end{verbatim}
+Note that one has to call method {\tt FillComplete()} to finalize the
+structure of the Epetra\_CrsMatrix read by MatrixMarketFileToCrsMatrix.
+
+% ============================================================================
+\subsection{The Python Interface}
+\label{sec:mm:python}
+% ============================================================================
+
+EpetraExt offers a Python interface to the MatrixMarket reader through the
+PyTrilinos project~\cite{pytrilinos-la-guide,sala05pytrilinos}.  Example of
+I/O using the Python interface is reported in Figure~\ref{fig:python}.
+
+\begin{sidewaystable}
+\begin{center}
+\begin{tabular}{| c |}
+\hline
+\begin{minipage}{17cm}
+\begin{verbatim}
+
+from PyTrilinos import EpetraExt, Epetra
+# Build a global communicator
+comm    = Epetra.PyComm()
+# Construct a vector x and populate with random values
+n       = 10 * numProc
+map     = Epetra.Map(n, 0, comm)
+x       = Epetra.Vector(map)
+x.Random()
+
+# create a matrix and store it on file
+A       = Epetra.CrsMatrix(Epetra.Copy, map2, 0)
+Indices = Epetra.IntSerialDenseVector(1)
+Values  = Epetra.SerialDenseVector(1)
+for lrid in range(A.NumMyRows()):
+  grid = A.GRID(lrid)
+  Indices[0] = grid
+  Values[0]  = grid
+  A.InsertGlobalValues(grid, 1, Values, Indices)
+A.FillComplete()
+
+# Part I: writing
+
+EpetraExt.BlockMapToMatrixMarketFile("map.mm", map)
+EpetraExt.MultiVectorToMatrixMarketFile("x.mm", x)
+EpetraExt.RowMatrixToMatrixMarketFile("A.mm", A)
+
+# Part II: reading
+
+(ierr, map2) = EpetraExt.MatrixMarketFileToMap("map.mm", comm)
+(ierr, y) = EpetraExt.MatrixMarketFileToMultiVector("x.mm", map2)
+(ierr, B) = EpetraExt.MatrixMarketFileToCrsMatrix("A.mm", map2)
+
+\end{verbatim}
+\end{minipage} \\
+    \hline
+\end{tabular}
+\caption{Example of Python code using the EpetraExt MatrixMarket
+  capabilities.}
+\label{fig:python}
+\end{center}
+\end{sidewaystable}
+
+% ============================================================================
+\section{HDF5 I/O}
+\label{sec:hdf5}
+% ============================================================================
+
+Matrix-Market files have several advantages, but their usage for large-scale
+problems is limited by their size. Also, there is no read parallel I/O in the
+Matrix-Market tools, and therefore a non-negligible performance penalty may
+occur when large number of processors are involved. In this cases, it is
+convenient to adopt a fully-parallel, binary reader, as done by the HDF5 class
+or EpetraExt. This class performs I/O by adopting the HDF5
+library~\cite{hdf5}. Note that this library is not distribute within Trilinos,
+  and it can be downloaded  at the web address:
+\begin{verbatim}
+http://hdf.ncsa.uiuc.edu/HDF5/
+\end{verbatim}
+HDF5 is a general purpose library and file format for storing scientific data.
+HDF5 can store two primary objects: datasets and groups. A dataset is
+essentially a multidimensional array of data elements, and a group is a
+structure for organizing objects in an HDF5 file. Using these two basic
+objects, one can create and store almost any kind of scientific data
+structure, such as images, arrays of vectors, and structured and unstructured
+grids. 
+
+While building Trilinos, it should be enough to specify the location of the
+header files using \verb!--with-incdirs!, the location of the library using
+\verb!--with-ldflags!, and the HDF5 library using \verb!--with-libs!. Note
+that one might need to add \verb!-lz! to the list of linked libraries; this library
+is typically already installed on all system;
+
+The HDF5 class of EpetraExt has the following advantages:
+\begin{itemize}
+\item The file format is binary and portable;
+\item The file format can be read and written in parallel;
+HDF5 is based on MPI-IO, and allows for true parallel I/O;
+\item MATLAB contains a built-in HDF5 data reader, making it easy to interface
+Trilinos application with MATLAB, and vice-versa;
+\item The number of processors reading a given
+data does not have to coincide with that used to write the data.
+\end{itemize}
+
+
+The HDF5 class has the following limitations:
+\begin{enumerate}
+\item Objects stored in a file cannot be deleted; if you want to do that, you should read the 
+  content of the file, then create a new file and store on it the information to keep;
+\item it is not possible to overwrite distributed objects.
+\end{enumerate}
+
+
+% ============================================================================
+\subsection{An Example of Usage}
+\label{sec:hdf5:example}
+% ============================================================================
+
+This section reports several examples of usage of the EpetraExt::HDF5 class. 
+First, one has to create an HDF5 class, then either {\tt Open()} or 
+{\tt Create()} the file:
+\begin{verbatim}
+EpetraExt::HDF5 HDF5(Comm);
+HDF5.Create("myfile.h5");
+\end{verbatim}
+Let us consider that {\tt Map} is an Epetra\_Map object, {\tt BlockMap} an
+Epetra\_BlockMap object, {\tt LHS} and {\tt RHS} two Epetra\_MultiVector
+objects, and {\tt Matrix} an Epetra\_RowMatrix. To write these objects on a
+file, simply do
+\begin{verbatim}
+HDF5.Write("map-" + toString(Comm.NumProc()), *Map);
+HDF5.Write("matrix", *Matrix);
+HDF5.Write("solution vector", LHS);
+HDF5.Write("right-hand side", RHS);
+\end{verbatim}
+The HDF5 class also offers I/O for Teuchos::ParameterList objects. Types
+within the list that are not {\tt
+  int}, {\tt double} and {\tt string} types or sublists are ignored.
+
+In all the above instructions, the first input variable is a user-defined name
+that identifies the object. Note that the {\sl same} file can contain an
+arbitrary number of objects, of the same type or of different type, as long as
+the associated names differ. It is therefore possible, for example, to store
+all the Jacobians and the associated right-hand sides in a Newton-type
+procedures.
+
+An advantage of the HDF5 file format is that 
+it is very easy to add "meta-data" to your data.
+HDF5 naturally stores
+datatype information and ``metadata'' describing the rank, dimension, and
+other data properties. Data are stored in datasets which can be queried by
+names to find out the size, layout, and other properties.
+For example, a string
+containing information about the machine where the code was executed, the
+parameter list used for the preconditioner or the nonlinear solver, the
+convergence history, can all be save in the same file;
+In fact, the HDF5 library itself can be used to define very general data
+formats; this class, instead, is only structured around the concept of {\sl
+  groups}. 
+A {\sl group}
+is an entity, like for example a scalar value, an Epetra\_Map, or a
+Teuchos::ParameterList. Within each group, different datasets describe the
+content of the group. Class EpetraExt::HDF5 serializes each Epetra object by
+writing all the required data, plus other metadata that can be useful to query
+the object properties without reading (and therefore building) the object
+itself. The list of metadata is reported in Table~\ref{tab:metadata}.
+For example, an Epetra\_MultiVector is specified by
+datasets {\tt NumVectors} and {\tt Values}, which contain the number of vectors, and
+the numerical values, respectively. The {\tt comment} field of each group is a
+character string that must match the class name. A snippet of code reading the
+metadata of a Epetra\_CrsMatrix is as follows:
+\begin{verbatim}
+int NumGlobalRows, NumGlobalCols, NumGlobalNonzeros;
+int NumGlobalDiagonals, MaxNumEntries;
+double NormOne, NormInf;
+
+ReadCrsMatrixProperties(GroupName, NumGlobalRows, NumGlobalCols,
+                        NumGlobalNonzeros, NumGlobalDiagonals, 
+                        MaxNumEntries, NormOne, NormInf);
+\end{verbatim}
+We refer to the up-to-date Doxygen documentation of the EpetraExt::HDF5 class
+for more details on the property reading methods.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l | p{10cm} |}
+\hline
+Epetra object & Associated metadata \\
+\hline
+Epetra\_BlockMap & NumGlobalElements,
+                   NumGlobalPoints,
+                   IndexBase,
+                   NumProc \\
+\hline
+Epetra\_Map & NumGlobalElements,
+              IndexBase,
+              NumProc \\
+\hline
+Epetra\_IntVector & GlobalLength \\
+    \hline
+Epetra\_MultiVector & GlobalLength,
+                      NumVectors \\
+\hline
+Epetra\_CrsGraph & NumGlobalRows,
+                   NumGlobalCols,
+                   NumGlobalNonzeros,
+                   NumGlobalDiagonals,
+                   MaxNumIndices\\
+\hline
+Epetra\_CrsMatrix & NumGlobalRows,
+                    NumGlobalCols,
+                    NumGlobalNonzeros,
+                    NumGlobalDiagonals,
+                    MaxNumEntries,
+                    NormOne,
+                    NormInf \\
+\hline
+\end{tabular}
+\caption{Metadata associated with each  Epetra object. These metadata can be
+  queries by using the appropriate read method.}
+\label{tab:metadata}
+\end{center}
+\end{table}
+
+The metadata reported in Table~\ref{tab:metadata} are a subset of what is
+stored in the HDF5 file. The actual content of the file can be visualized by
+using the command
+\begin{verbatim}
+$ h5dump filename.h5
+\end{verbatim}
+distributed within the HDF5 library. Note also that an arbitrary number of
+metadata can be associated with any group in the file.  A group can contain
+more than one dataset, and can be a new group or an already existing group.
+For example, to specify the numerical quadrature formula used to assemble the
+matrix, one can do as follows:
+\begin{verbatim}
+HDF5.Write("matrix", "quadrature order", 3);
+\end{verbatim}
+In this case, dataset {\tt quadrature order} is associated to group {\tt
+  matrix}, which already contains an Epetra\_CrsMatrix object. 
+Alternatively, datasets can be assigned to a new group, in this case
+{\tt my parameters}:
+\begin{verbatim}
+HDF5.Write("my parameters", "latitude", 12);
+HDF5.Write("my parameters", "longitude", 67);
+HDF5.Write("my parameters", "angle", 12.3);
+\end{verbatim}
+Another data type can be stored on file are arrays. The type of the array is
+specified using native HDF5 datatypes. Two important types are {\tt
+  H5T\_NATIVE\_INT} and {\tt H5T\_NATIVE\_DOUBLE}. For example:
+\begin{verbatim}
+vector<int> iarray(3); 
+iarray[0] = 0, iarray[1] = 1; iarray[2] = 2;
+HDF5.Write("my parameters", "int array", H5T_NATIVE_INT, 
+           3, &iarray[0]);
+\end{verbatim}
+Note that all non-distributed data are supposed to be in the same state on all
+processors. Without considering Epetra ojbects, EpetraExt::HDF5 allows only
+one type of distributed object, as detailed in section \ref{sec:hdf5:arrays}.
+
+\smallskip
+
+Reading data is as easy as writing them. For example, to read an
+Epetra\_CrsMatrix one can do as follows:
+\begin{verbatim}
+Epetra_CrsMatrix* NewMatrix = 0;
+HDF5.Read("matrix", NewMatrix);
+\end{verbatim}
+Since no Epetra\_Map has been specified, 
+the newly created object {\tt NewMatrix} is based on a linear map. If the DomainMap() and RangeMap() are
+known and non-trivial, one can use
+\begin{verbatim}
+HDF5.Read("matrix", DomainMap, RangeMap, NewMatrix);
+\end{verbatim}
+Reading meta-data looks like:
+\begin{verbatim}
+HDF5.Read("my parameters", "latitude", new_latitude);
+HDF5.Read("my parameters", "longitude", new_longitude);
+HDF5.Read("my parameters", "int array", H5T_NATIVE_INT, 
+          3, &new_iarray[0]);
+\end{verbatim}
+
+Class EpetraExt::HDF5 has few other public methods that can be used to
+manipulate directly the HDF5 file. Method
+{\tt CreateGroup()} creates the specified group in the file;
+{\tt IsContained()} returns {\tt true} is the specified group is already 
+contained in the file;
+{\tt WriteComment()} allows to write any string as comment for a group.
+
+Finally, when an error arised, an EpetraExt::Exception object is thrown.
+Method Print() of the Exception class gives a description of what went wrong.
+
+% ============================================================================
+\subsection{I/O for Distributed Arrays}
+\label{sec:hdf5:arrays}
+% ============================================================================
+
+EpetraExt::HDF5 allows to perform I/O on distributed arrays, that is, for an
+array of global length {\tt GlobalLength} and local size {\tt MyLength}, where
+this latter value can assume a different value on each processor. The
+following example, to be executed on two processors, writes an array on
+integers, which has 3 elements on processor 0 and 2 on processor 1.
+\begin{verbatim}
+Epetra_MpiComm Comm(MPI_COMM_WORLD);
+int MyLength, GlobalLength = 5;
+if (Comm.MyPID() == 0) MyLength = 3;
+else                   MyLength = 2;
+std::vector<int> data(MyLength); // populate the vector
+
+EpetraExt::HDF5 HDF5(Comm);
+HDF5.Create("myfile.h5");
+HDF5.Write("my-array", "values", MyLength, GlobalLength,
+           H5T_NATIVE_INT, &data[0]);
+HDF5.Close();
+\end{verbatim}
+In the above example, the distributed data is saved in group {\tt my-array},
+   using the dataset {\tt values}. The reading might be as follows, when using
+   5 processors:
+\begin{verbatim}
+int data;
+HDF5.Open("myfile.h5");
+HDF5.Read("my-array", "values", 1, 5, H5T_NATIVE_INT, &data);
+HDF5.Close();
+\end{verbatim}
+
+% ============================================================================
+\subsection{The MATLAB Interface}
+\label{sec:hdf5:matlab}
+% ============================================================================
+
+The build-in functions {\tt hdf5read, hdf5write, hdf5info} can be used to read
+or write EpetraExt-compatible HDF5 files from MATLAB. Figure \ref{fig:matlab}
+reports two sets of MATLAB commands. The first set shows how to read an 
+Epetra\_CrsMatrix stored in the group {\tt matrix}, while the second present
+a typical procedure to write on file a MATLAB sparse matrix
+(in this case, a diagonal matrix of size 10). This matrix will be saved within
+the group {\tt speye}.
+
+\begin{sidewaystable}
+\begin{tabular}{| c |}
+\hline
+\begin{minipage}{22cm}
+\begin{verbatim}
+
+>> % Part I: reading data
+>> NumGlobalRows = double(hdf5read('myfile.h5', '/matrix/NumGlobalRows/'));
+>> NumGlobalCols = double(hdf5read('myfile.h5', '/matrix/NumGlobalCols/'));
+>> ROW = double(hdf5read('myfile.h5', '/matrix/ROW/'));
+>> COL = double(hdf5read('myfile.h5', '/matrix/COL/'));
+>> VAL = hdf5read('myfile.h5', '/matrix/VAL/');
+>> matrix = sparse(ROW + 1, COL + 1, VAL, NumGlobalRows, NumGlobalCols);
+>>
+>> % Part II: writing data
+>> n = 10;
+>> A = speye(n, n);
+>> [ROW,COL,VAL] = find(A);
+>> hdf5write('matlab.h5', '/speye/NumGlobalRows',      int32(n));
+>> hdf5write('matlab.h5', '/speye/NumGlobalCols',      int32(n), 'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/NumGlobalNonzeros',  int32(n), 'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/NumGlobalDiagonals', int32(n), 'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/MaxNumEntries', 1,   'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/NormOne', 1.0,       'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/NormInf', 1.0,       'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/ROW', int32(ROW - 1),   'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/COL', int32(COL - 1),   'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/VAL', VAL, 'WriteMode', 'append');
+
+\end{verbatim}
+\end{minipage} \\
+\hline
+\end{tabular}
+\caption{Example of input/output for HDF5 from MATLAB.
+The use of {\tt double()} is required by sparse, which does not accept {\tt
+  int32} data.  }
+\label{fig:matlab}
+\end{sidewaystable}
+
+% ============================================================================
+\section*{Acknowledgments}
+% ============================================================================
+
+The authors would like to acknowledge the support of the ASCI and LDRD programs
+that funded development of Trilinos.
+
+\medskip
+
+% ============================================================================
+\bibliographystyle{plain}
+\bibliography{biblio,../../../../doc/CommonFiles/TrilinosBibliography}
+% ============================================================================
+
+\newpage
+
+\noindent
+{\bf
+Distribution List for ``Serialization Tools for Distributed Linear Algebra Objects:''
+}
+
+\begin{itemize}
+\item MS 9018 Central Technical Files, 8945-1
+\item MS 0899 Technical Library, 9616
+\item MS 0123 LDRD Donna Chavez, 1011
+\end{itemize}
+
+\end{document}
