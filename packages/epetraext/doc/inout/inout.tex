@@ -89,7 +89,27 @@ We describe  the I/O tools available in the EpetraExt package of Trilinos~\cite{
 \label{sec:introduction}
 % ============================================================================
 
-In the modern computer science context, {\sl serialization} refers to
+Consider the following scenarios: 
+\begin{enumerate}
+\item A programmer is experiencing convergence
+problems within his/her Newton-like nonlinear solver, because the
+preconditioner does not yield convergence as expected. The application is
+non-standard, custom-made, proprietary, and the source codes cannot be
+distributed. 
+\item During a time-dependent
+simulation, a particular linear system solve phase does not behave as expected. 
+This occurs after several
+hours of computations, on a quite large problem, running on distributed memory
+machines.
+\end{enumerate}
+Developers of both scenarios will benefit from being able to reproduce their
+linear algebra objects {\sl outside} their codes, in a much simpler
+environment, that does not exhibit
+all the additional complexity typical of large application
+codes. The process of moving objects from one application to the next is
+typically called {\sl serialization}.
+
+In the modern computer science context, serialization refers to
 converting an object's detailed state data into a single byte stream to
 transmit the object from its current location to a new location.  The most
 important goal of serialization is to re-create an object that is identical to
@@ -105,6 +125,17 @@ structure from a series of bytes, is called {\sl deserialization}, or {\sl
 
 \smallskip
 
+Tools for serialization/deserialization are important because they can
+provide:
+\begin{itemize}
+\item A simple and robust way to make objects persistent;
+\item A method for distributing objects across the network (e.g., with MPI);
+\item An easy and convenient way to store or access standard problems for particular algorithms or techniques. 
+\item A mechanism to send and receive objects from other nodes in the Grid;
+\item A convenient format to upload or download linear algebra objects for
+web-based solvers;
+\item A tool to restart a simulation.
+\end{itemize}
 In this document, we are interested in tool to serialize and deserialize
 distributed linear algebra objects, internally defined as Epetra
 object~\cite{Epetra-Users-Guide}.  The serialization techniques we consider in
@@ -119,11 +150,19 @@ of parallel I/O is required;
 be flexible enough to allow the clone object to have a different (tough
                                                                   compatible)
 Epetra\_Map;
-\item they are memory-intensive;
+\item they require large chunks of memory;
 \item the serialization and deserializaton process should allow I/O from
 well-known formats, like MATLAB, MatrixMarket~\cite{boisvert97matrix}, and
 Harwell/Boeing~\cite{duff89sparse}.
 \end{itemize}
+All the above objects
+contain several pointers, which are too fragile to be saved. Therefore,
+        the serialization process
+must include procedures to convert the pointed memory into a local state, then
+save this state into the final media. This means that the object has to be
+converted into an intermediate state, which will be used to perform the
+serialization itself. An analogous procedure occurs for deserialization. This
+process is sometimes referred to as {\sl pointer unswizzling}.
 
 \begin{table}
 \begin{center}
@@ -154,6 +193,61 @@ void* array           & -- & --  & I/O \\
 \end{center}
 \end{table}
 
+\smallskip
+
+This manuscript outlines the serialization and deserialization tools available
+within the EpetraExt package of Trilinos. The design requirements are outlined
+in Section~\ref{sec:design}.
+Section~\ref{sec:hb} describes the
+Harwell/Boeing I/O; section~\ref{sec:mm} presents the MatrixMarket I/O;
+section~\ref{sec:hdf5} outlines the design and the implementation of the
+EpetraExt::HDF5 I/O. 
+
+% ============================================================================
+\section{Design Overview}
+\label{sec:design}
+% ============================================================================
+
+% ============================================================================
+\subsection{Requirements}
+% ============================================================================
+
+The serialization techniques considered in this report aim to satisfy the
+following requirements:
+\begin{itemize}
+\item 
+{\sl Code portability}: the ASCII serialization only depends on ANSI
+C/C++ capabilities; the binary serialization has a dependency on a well-know
+library, based on the widely-available MPI-IO;
+\item 
+{\sl Deep copy behavior}: all data required to reconstruct the object is
+serialized;
+\item 
+{\sl Data Portability}: ASCII and binary streams of bytes created on one
+platform are readable on any other;
+\item
+{\sl Non-intrusive}: Serialization tools can be applied to unaltered classes,
+  that is, to classes developed independently of the serialization tools.
+        That is, it is not required for the classes to be serialized to be
+        derived from a specific base class or implement specified member
+        functions. 
+\item
+{\sl Simplicity}: The archive interface is simple enough to easily permit
+creation of a new type of archive.
+\item
+{\sl Meta-data storage}
+It is convenient to store {\sl metadata} together with the input and
+output of a simulation. The simplest metadata is, for example, the name of the
+object, or the class it belongs to. More sophisticated metadata can include 
+details on the procedure used to build the object, like for instance the
+quadrature formula used to assemble the matrix, or the parameters used to
+generate the preconditioner.
+\end{itemize}
+
+% ============================================================================
+\subsection{Implementation}
+% ============================================================================
+
 Probably, the most critical aspect is the distributed nature of the object,
   which calls for efficient parallel I/O.
 Parallel I/O is a mechanism that allow many
@@ -177,30 +271,28 @@ can be either human-readable (ASCII) or binary.
 Human-readable objects are convenient when dealing with small objects.
 Besides, they can easily edited or created with simple text editors, and at
 least two formats have already been proposed in the literature: the
-Harwell/Boeing file format, and the MatrixMarket file format. The
+Harwell/Boeing file format, and the MatrixMarket file format. Another common
+format, XML, is not considered here. The
 disadvantage of human-readable file formats is that their ASCII content is not
 space-efficient, and the I/O is typically much slower than binary I/O. To 
 avoid these problems,
-one can consider binary serialization. In order to make the
-resulting files portable across different architectures, it is convenient to
-perform all the binary I/O through some kind of library, and use some form of
-parallel I/O techniques based on the 
-widely available MPI-IO library.
+one can consider binary serialization. In order to make the resulting files
+portable across different architectures, it is convenient to perform all the
+binary I/O through some kind of library, and use some form of parallel I/O
+techniques based on the widely available MPI-IO library.  This means that the
+simple and fast procedure of directly copying the memory layout of the data
+structure cannot work reliably for all architectures, and should instead be
+replaced by more advanced techniques.
 
-Finally, it is convenient to store {\sl metadata} together with the input and
-output of a simulation. The simplest metadata is, for example, the name of the
-object, or the class it belongs to. More sophisticated metadata can include 
-details on the procedure used to build the object, like for instance the
-quadrature formula used to assemble the matrix, or the parameters used to
-generate the preconditioner.
-
-\smallskip
-
-This manuscript outlines the serialization and deserialization tools available
-within the EpetraExt package of Trilinos. Section~\ref{sec:hb} describes the
-Harwell/Boeing I/O; section~\ref{sec:mm} presents the MatrixMarket I/O;
-section~\ref{sec:hdf5} outlines the design and the implementation of the
-EpetraExt::HDF5 I/O. 
+Another design choices must be considered.
+The standard encoding method uses a simple translation of the field into a
+byte steam, which contains all members of the object. This stream might
+include other objects, referenced by the object currently under serialization;
+all these objects must be in a serializable state as well. Alternatively, the
+serialization must record enough information to instantiate these reference
+objects without storing them in the stream. This process is sometimes refer to
+as {\sl truncation}. We use truncation for all serialization tools presented in this
+document.
 
 % ============================================================================
 \section{The Harwell-Boeing I/O}
@@ -370,8 +462,7 @@ Matrix-Market tools, and therefore a non-negligible performance penalty may
 occur when large number of processors are involved. In this cases, it is
 convenient to adopt a fully-parallel, binary reader, as done by the HDF5 class
 or EpetraExt. This class performs I/O by adopting the HDF5
-library~\cite{hdf5}. Note that this library is not distribute within Trilinos,
-  and it can be downloaded  at the web address:
+library, which can be downloaded  at the web address:
 \begin{verbatim}
 http://hdf.ncsa.uiuc.edu/HDF5/
 \end{verbatim}
@@ -405,7 +496,7 @@ The HDF5 class has the following limitations:
 \begin{enumerate}
 \item Objects stored in a file cannot be deleted; if you want to do that, you should read the 
   content of the file, then create a new file and store on it the information to keep;
-\item it is not possible to overwrite distributed objects.
+\item It is not possible to overwrite distributed objects.
 \end{enumerate}
 
 
@@ -652,17 +743,17 @@ the group {\tt speye}.
 >> n = 10;
 >> A = speye(n, n);
 >> [ROW,COL,VAL] = find(A);
->> hdf5write('matlab.h5', '/speye/NumGlobalRows',      int32(n));
+>> hdf5write('matlab.h5', '/speye/__type__',           'Epetra_RowMatrix');
+>> hdf5write('matlab.h5', '/speye/NumGlobalRows',      int32(n), 'WriteMode', 'append');
 >> hdf5write('matlab.h5', '/speye/NumGlobalCols',      int32(n), 'WriteMode', 'append');
 >> hdf5write('matlab.h5', '/speye/NumGlobalNonzeros',  int32(n), 'WriteMode', 'append');
 >> hdf5write('matlab.h5', '/speye/NumGlobalDiagonals', int32(n), 'WriteMode', 'append');
->> hdf5write('matlab.h5', '/speye/MaxNumEntries', 1,   'WriteMode', 'append');
->> hdf5write('matlab.h5', '/speye/NormOne', 1.0,       'WriteMode', 'append');
->> hdf5write('matlab.h5', '/speye/NormInf', 1.0,       'WriteMode', 'append');
->> hdf5write('matlab.h5', '/speye/ROW', int32(ROW - 1),   'WriteMode', 'append');
->> hdf5write('matlab.h5', '/speye/COL', int32(COL - 1),   'WriteMode', 'append');
->> hdf5write('matlab.h5', '/speye/VAL', VAL, 'WriteMode', 'append');
-
+>> hdf5write('matlab.h5', '/speye/MaxNumEntries',      int32(1), 'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/NormOne',            1.0,      'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/NormInf',            1.0,      'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/ROW', int32(ROW - 1), 'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/COL', int32(COL - 1), 'WriteMode', 'append');
+>> hdf5write('matlab.h5', '/speye/VAL', VAL,            'WriteMode', 'append');
 \end{verbatim}
 \end{minipage} \\
 \hline
@@ -678,7 +769,8 @@ The use of {\tt double()} is required by sparse, which does not accept {\tt
 % ============================================================================
 
 The authors would like to acknowledge the support of the ASCI and LDRD programs
-that funded development of Trilinos.
+that funded development of Trilinos. John Shadid, Prof. Peter Arbenz and Prof.
+Petros Koumoutsakos are acknowledged for part of the financial coverage.
 
 \medskip
 
