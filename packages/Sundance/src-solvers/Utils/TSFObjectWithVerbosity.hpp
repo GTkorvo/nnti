@@ -53,7 +53,7 @@ namespace TSFExtended
   {
   public:
     /** Construct, starting silent */
-    ObjectWithVerbosity() : verbosity_(VerbSilent), setLocally_(false) {;}
+    ObjectWithVerbosity() : verbosity_(classVerbosity()), setLocally_(false) {;}
 
     /** Read-only access to the verbosity */
     VerbositySetting verbosity() const 
