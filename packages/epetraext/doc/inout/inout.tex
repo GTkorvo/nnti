@@ -37,19 +37,19 @@
 \def\choicebox#1#2{\noindent$\hphantom{th}$\parbox[t]{1.8in}{\sf
 #1}\parbox[t]{4.5in}{#2}\\[0.8em]}
 
-\author{Robert Hoekstra, Alan Williams, Michael Heroux\\
+\author{Marzio Sala \\
+Institute of Computational Science, \\
+ETH Zurich, Switzerland \\[1cm]
+Michael Heroux,   Robert Hoekstra, Alan Williams\\
 Computational Mathematics and Algorithms Department \\
 Sandia National Laboratories \\
 P.O. Box 5800 \\
-Albuquerque, NM 87185-1110 \\[1cm]
-Marzio Sala \\
-Institute of Computational Science, \\
-ETH Zurich, Switzerland}
+Albuquerque, NM 87185-1110 \\
+}
 
-\title{Serialization Tools for Distributed Linear Algebra Objects}
+\title{Serialization and Deserialization Tools for Distributed Linear Algebra Objects}
 \SANDnum{SAND2006-XXXX}
-\SANDauthor{
-Robert Hoekstra, Alan Williams, Michael Heroux, and Marzio Sala}
+\SANDauthor{Marzio Sala, Michael Heroux, Robert Hoekstra, and Alan Williams}
 
 \SANDprintDate{April 2006}
 \SANDreleaseType{Unlimited Release}
@@ -75,7 +75,13 @@ Robert Hoekstra, Alan Williams, Michael Heroux, and Marzio Sala}
 \maketitle
 
 \begin{abstract}
-We describe  the I/O tools available in the EpetraExt package of Trilinos~\cite{trilinos-home-page}
+We describe the design and usage of the serialization and deserialization
+tools contained in the EpetraExt package of
+Trilinos~\cite{trilinos-home-page}. This tools allows to perform I/O for most
+of the distributed linear algebra objects defined by the Epetra package. A
+reader for the popular Harwell/Boeing format and a collection of readers and
+writers for the MatrixMarket format are presented. The report also describe a
+binary, portable and parallel class, based on the HDF5 file format.
 \end{abstract}
 
 \SANDmain
@@ -103,12 +109,15 @@ hours of computations, on a quite large problem, running on distributed memory
 machines.
 \end{enumerate}
 Developers of both scenarios will benefit from being able to reproduce their
-linear algebra objects {\sl outside} their codes, in a much simpler
-environment, that does not exhibit
-all the additional complexity typical of large application
-codes. The process of moving objects from one application to the next is
-typically called {\sl serialization}.
+linear algebra objects {\sl outside} their codes, in a testing environment that
+can be made simpler and more compact to use, without all the complexity
+typical of large application codes. If the testing environment  can
+reproduce the particular phase where problems are experienced, then it will be
+possibly to analyze in detail the behavior of the algorithm, possibly with the
+help of experts in the field.
 
+The process of moving objects from one application to the next is
+typically called {\sl serialization}.
 In the modern computer science context, serialization refers to
 converting an object's detailed state data into a single byte stream to
 transmit the object from its current location to a new location.  The most
@@ -128,17 +137,20 @@ structure from a series of bytes, is called {\sl deserialization}, or {\sl
 Tools for serialization/deserialization are important because they can
 provide:
 \begin{itemize}
-\item A simple and robust way to make objects persistent;
+\item A simple and robust way to make objects persistent, so that they can be
+later reused as reference, or collected to define standard problems;
 \item A method for distributing objects across the network (e.g., with MPI);
 \item An easy and convenient way to store or access standard problems for particular algorithms or techniques. 
 \item A mechanism to send and receive objects from other nodes in the Grid;
 \item A convenient format to upload or download linear algebra objects for
-web-based solvers;
+web-based solvers (Web-IO);
 \item A tool to restart a simulation.
 \end{itemize}
 In this document, we are interested in tool to serialize and deserialize
 distributed linear algebra objects, internally defined as Epetra
-object~\cite{Epetra-Users-Guide}.  The serialization techniques we consider in
+object~\cite{Epetra-Users-Guide}. Our goal is to transmit objects to and from
+storage media (files).
+The serialization techniques we consider in
 this document aim to define flexible file data formats. The Epetra objects we
 will consider in this document are reported in Table \ref{tab:supported}.
 These objects are characterized by the
@@ -212,7 +224,38 @@ EpetraExt::HDF5 I/O.
 \subsection{Requirements}
 % ============================================================================
 
-The serialization techniques considered in this report aim to satisfy the
+For the scientific computing applications considered in this paper, I/O
+requirements fail into the following categories:
+\begin{enumerate}
+\item initial/intermediate/final I/O. Most programs need to read some data to
+initialize a computation. PDE-based applications, for example, must read the
+grid data structures. Typically, each processor only needs a part of the
+complete data set. Output must often be generated for use on sequential
+computers, for example to compare with earlier results, or to visualize or
+analyze the results of the simulation;
+\item out-of-core computations. A technique to lower the memory requirements
+of an application is to hold on files all data structures containing
+intermediate calculations that do not fit into main memory. These data
+structures are called out-of-core structures, and they are brought into the
+main memory in parts; 
+\item checkpointing and restart. For long-running production codes, it is
+convenient to have the ability to save the state of the computation, in order
+to continue computing from that point at a later date. 
+\item real-time I/O.
+\end{enumerate}
+We will consider only requirements (1) and (3), and we will focus on
+flexibility and portability. Performances are addressed by the binary reader
+only; however, even for the binary reader we never consider techniques to
+overlap I/O and computations, which
+might be of advantage for very intensive I/O applications. Note that for
+requirements (1) and (3) a key question is whether the two phases of I/O occur
+with the same number of processors. 
+
+% ============================================================================
+\subsection{Requirements}
+% ============================================================================
+
+The serialization techniques considered in this report satisfy the
 following requirements:
 \begin{itemize}
 \item 
@@ -228,7 +271,7 @@ platform are readable on any other;
 \item
 {\sl Non-intrusive}: Serialization tools can be applied to unaltered classes,
   that is, to classes developed independently of the serialization tools.
-        That is, it is not required for the classes to be serialized to be
+        Therefore, it is not required for the classes to be serialized to be
         derived from a specific base class or implement specified member
         functions. 
 \item
@@ -253,6 +296,8 @@ Probably, the most critical aspect is the distributed nature of the object,
 Parallel I/O is a mechanism that allow many
 processors to perform I/O at the same time, with the goal of exploring
 parallelism in the parallel computer's communication network and I/O system.
+Parallel I/O on a shared file is possible only if the file is opened in
+parallel by the participating processors.
 
 The parallel programmer can take two different approaches to achieving
 concurrency I/O operations. One approach is for each process to perform read
@@ -291,8 +336,8 @@ include other objects, referenced by the object currently under serialization;
 all these objects must be in a serializable state as well. Alternatively, the
 serialization must record enough information to instantiate these reference
 objects without storing them in the stream. This process is sometimes refer to
-as {\sl truncation}. We use truncation for all serialization tools presented in this
-document.
+as {\sl truncation}. We use truncation for all serialization tools presented
+in this document, by serializing only those data that cannot be reproduced.
 
 % ============================================================================
 \section{The Harwell-Boeing I/O}
@@ -300,21 +345,56 @@ document.
 % ============================================================================
 
 Harwell-Boeing files containing real matrices can be read using the following
-sequence of commands:
+the I/O function located in the Triutils package. The header file
+\verb!Trilinos_Util.h! contains the signature of the function. Note that this
+reader is only serial, and the objects have to be exported to distributed maps
+in order to perform parallel computations. A typical usage for parallel runs
+is reported below. The H/B reader operates on processor 0 only; therefore, if
+more than one processor is considered in the computation, one need to declare
+the following auxiliary objects:
 \begin{verbatim}
+string FileName = "my-file.rsa";
 Epetra_Map* readMap;
 Epetra_CrsMatrix* readA; 
 Epetra_Vector* readx; 
 Epetra_Vector* readb;
 Epetra_Vector* readxexact;
-
-Trilinos_Util_ReadHb2Epetra((char*)FileName_.c_str(), *comm_, readMap,
+\end{verbatim}
+The read is performed by
+\begin{verbatim}
+Trilinos_Util_ReadHb2Epetra((char*)FileName_.c_str(), Comm, readMap,
                             readA, readx, readb, readxexact);
 \end{verbatim}
-This I/O function is located in the Triutils package; the header file
-\verb!Trilinos_Util.h! contains the signature of the function. Note that this
-reader is only serial, and the objects have to be exported to distributed maps
-in order to perform parallel computations.
+At this point one can create a distributed map, for example
+\begin{verbatim}
+Epetra_Map map(readMap->NumGlobalElements(), 0, Comm);
+\end{verbatim}
+and allocate the final objects using this map,
+\begin{verbatim}
+Epetra_CrsMatrix A(Copy, map, 0);
+Epetra_Vector x(map);          // distributed solution
+Epetra_Vector b(map);          // distributed rhs
+Epetra_Vector xexact(map);     // distributed exact solution
+\end{verbatim}
+Finally, one can export from the original map to the final map as follows:
+\begin{verbatim}
+const Epetra_Map &OriginalMap = readA->RowMatrixRowMap() ; 
+assert (OriginalMap.SameAs(*readMap)); 
+Epetra_Export exporter(OriginalMap, map);
+
+x.Export(*readx, exporter, Add);
+b.Export(*readb, exporter, Add);
+xexact.Export(*readxexact, exporter, Add);
+A.Export(*readA, exporter, Add);
+A.FillComplete();
+    
+// deletes memory
+delete readMap;
+delete readA; 
+delete readx; 
+delete readb;
+delete readxexact;
+\end{verbatim}
 
 % ============================================================================
 \section{The Matrix-Market I/O}
@@ -355,6 +435,7 @@ for (int i = 0 ; i < NumMyElements ; ++i)
 }
 A.FillComplete();
 \end{verbatim}
+where \verb!Comm! is an Epetra\_Comm object.
 These objects can be saved on file
 in both serial and parallel computations by using the commands
 \begin{verbatim}
@@ -378,7 +459,7 @@ A =
    (5,5)        1
 \end{verbatim}
 Alternatively, one can read the
-previous files within Trilinos as follows:
+previous files within a C++ code as follows:
 \begin{verbatim}
 Epetra_Map* newMap;
 Epetra_MultiVector* newX;
@@ -460,12 +541,23 @@ Matrix-Market files have several advantages, but their usage for large-scale
 problems is limited by their size. Also, there is no read parallel I/O in the
 Matrix-Market tools, and therefore a non-negligible performance penalty may
 occur when large number of processors are involved. In this cases, it is
-convenient to adopt a fully-parallel, binary reader, as done by the HDF5 class
-or EpetraExt. This class performs I/O by adopting the HDF5
-library, which can be downloaded  at the web address:
+convenient to adopt a fully-parallel, binary reader, based on the MPI-IO
+library. MPI-IO derives must of its philosophy and interface from the MPI
+standard. In MPI-IO, file I/O is modeled as message passing. This is, reading
+from a file is analogous to receiving a message and writing to a file is
+analogous to sending a message. MPI-IO benefits from its association with MPI,
+which is the de-facto standard for parallel computations, and provides a
+common interface with optimized implementations across many different
+platforms. The primary disadvantage of MPI-IO, instead, is the difficulty to
+use. As such, it is more convenient to adopt libraries like HDF5, that offer
+an intermediate layer between the MPI-IO implementation and user's data. This
+library can be downloaded  at the web address:
 \begin{verbatim}
 http://hdf.ncsa.uiuc.edu/HDF5/
 \end{verbatim}
+An interface between HDF5 and Epetra objects is provided by the
+EpetraExt::HDF5 class.
+
 HDF5 is a general purpose library and file format for storing scientific data.
 HDF5 can store two primary objects: datasets and groups. A dataset is
 essentially a multidimensional array of data elements, and a group is a
@@ -506,8 +598,10 @@ The HDF5 class has the following limitations:
 % ============================================================================
 
 This section reports several examples of usage of the EpetraExt::HDF5 class. 
-First, one has to create an HDF5 class, then either {\tt Open()} or 
-{\tt Create()} the file:
+First, one has to create an HDF5 class, then either {\tt Open()} 
+(for reading or appending to an already existing file) or 
+{\tt Create()} (to generate a new file, or delete all the contents of an
+                already existing one) the file:
 \begin{verbatim}
 EpetraExt::HDF5 HDF5(Comm);
 HDF5.Create("myfile.h5");
@@ -517,13 +611,21 @@ Epetra\_BlockMap object, {\tt LHS} and {\tt RHS} two Epetra\_MultiVector
 objects, and {\tt Matrix} an Epetra\_RowMatrix. To write these objects on a
 file, simply do
 \begin{verbatim}
-HDF5.Write("map-" + toString(Comm.NumProc()), *Map);
+HDF5.Write("map", *Map);
 HDF5.Write("matrix", *Matrix);
 HDF5.Write("solution vector", LHS);
 HDF5.Write("right-hand side", RHS);
 \end{verbatim}
+Epetra\_Map and Epetra\_BlockMap objects are the only Epetra objects
+that can be read only with the same number of processors used for writing.
+Therefore, these types of object require an additional care. One can, for
+example, define the number of processors as part of the name:
+\begin{verbatim}
+HDF5.Write("map-" + toString(Comm.NumProc()), *Map);
+\end{verbatim}
+
 The HDF5 class also offers I/O for Teuchos::ParameterList objects. Types
-within the list that are not {\tt
+within the list that are not {\tt bool}, {\tt
   int}, {\tt double} and {\tt string} types or sublists are ignored.
 
 In all the above instructions, the first input variable is a user-defined name
@@ -531,7 +633,7 @@ that identifies the object. Note that the {\sl same} file can contain an
 arbitrary number of objects, of the same type or of different type, as long as
 the associated names differ. It is therefore possible, for example, to store
 all the Jacobians and the associated right-hand sides in a Newton-type
-procedures.
+procedures in the same file.
 
 An advantage of the HDF5 file format is that 
 it is very easy to add "meta-data" to your data.
@@ -557,15 +659,28 @@ For example, an Epetra\_MultiVector is specified by
 datasets {\tt NumVectors} and {\tt Values}, which contain the number of vectors, and
 the numerical values, respectively. The {\tt comment} field of each group is a
 character string that must match the class name. A snippet of code reading the
+metadata of an Epetra\_Map is as follows:
+\begin{verbatim}
+int NumGlobalElements, IndexBase, NumProc;
+HDF5.ReadMapProperties("map", NumGlobalElements, IndexBase, NumProc);
+if (NumProc != Comm.NumProc()) {
+  // build a linear map
+  Map = new Epetra_Map(NumGlobalRows, IndexBase, NumProc);
+} else {
+  HDF5.Read("map", Map);
+}
+\end{verbatim}
+
+A snippet of code reading the
 metadata of a Epetra\_CrsMatrix is as follows:
 \begin{verbatim}
 int NumGlobalRows, NumGlobalCols, NumGlobalNonzeros;
 int NumGlobalDiagonals, MaxNumEntries;
 double NormOne, NormInf;
 
-ReadCrsMatrixProperties(GroupName, NumGlobalRows, NumGlobalCols,
-                        NumGlobalNonzeros, NumGlobalDiagonals, 
-                        MaxNumEntries, NormOne, NormInf);
+HDF5.ReadCrsMatrixProperties(GroupName, NumGlobalRows, NumGlobalCols,
+                             NumGlobalNonzeros, NumGlobalDiagonals, 
+                             MaxNumEntries, NormOne, NormInf);
 \end{verbatim}
 We refer to the up-to-date Doxygen documentation of the EpetraExt::HDF5 class
 for more details on the property reading methods.
@@ -644,7 +759,7 @@ HDF5.Write("my parameters", "int array", H5T_NATIVE_INT,
            3, &iarray[0]);
 \end{verbatim}
 Note that all non-distributed data are supposed to be in the same state on all
-processors. Without considering Epetra ojbects, EpetraExt::HDF5 allows only
+processors. Without considering Epetra objects, EpetraExt::HDF5 allows only
 one type of distributed object, as detailed in section \ref{sec:hdf5:arrays}.
 
 \smallskip
@@ -754,6 +869,7 @@ the group {\tt speye}.
 >> hdf5write('matlab.h5', '/speye/ROW', int32(ROW - 1), 'WriteMode', 'append');
 >> hdf5write('matlab.h5', '/speye/COL', int32(COL - 1), 'WriteMode', 'append');
 >> hdf5write('matlab.h5', '/speye/VAL', VAL,            'WriteMode', 'append');
+
 \end{verbatim}
 \end{minipage} \\
 \hline
