@@ -34,6 +34,13 @@
 #include "Thyra_SUNDIALS_Ops.hpp"
 #include "TSFIndexableVector.hpp"
 
+#ifdef TRILINOS_6
+#include "Thyra_ProductVector.hpp"
+#else
+#include "Thyra_DefaultProductVector.hpp"
+#define ProductVector DefaultProductVector
+#endif
+
 using namespace TSFExtended;
 
 //===========================================================================
@@ -688,7 +695,7 @@ void Vector<Scalar>::addToElement(Index globalIndex, const Scalar& value)
 }
 
 
-
+#undef ProductVector
 
 
 #endif

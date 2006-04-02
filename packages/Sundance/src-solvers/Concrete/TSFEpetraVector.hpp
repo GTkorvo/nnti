@@ -29,13 +29,18 @@
 
 #include "TSFConfigDefs.hpp"
 #include "TSFPrintable.hpp"
-#include "Thyra_MPIVectorStdDecl.hpp"
 #include "TSFIndexableVector.hpp"
 #include "TSFRawDataAccessibleVector.hpp"
 #include "TSFVectorDecl.hpp"
 #include "Epetra_FEVector.h"
 #include "Epetra_Vector.h"
 
+#ifdef TRILINOS_6
+#include "Thyra_MPIVectorStdDecl.hpp"
+#else
+#define MPIVectorStd DefaultMPIVector
+#include "Thyra_DefaultMPIVectorDecl.hpp"
+#endif
 
 namespace TSFExtended
 {

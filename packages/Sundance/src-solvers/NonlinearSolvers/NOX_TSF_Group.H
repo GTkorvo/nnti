@@ -210,7 +210,11 @@ namespace NOX {
 
       //@}
 
+#ifdef TRILINOS_6
       virtual NOX::Abstract::Group* clone(NOX::CopyType type = NOX::DeepCopy) const;
+#else
+      virtual RefCountPtr<NOX::Abstract::Group> clone(NOX::CopyType type = NOX::DeepCopy) const;
+#endif
 
       //! Print out the group
       void print() const;

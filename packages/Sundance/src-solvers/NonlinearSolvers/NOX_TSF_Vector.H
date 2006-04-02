@@ -150,7 +150,11 @@ namespace NOX
       //@{ \name Creating new Vectors. 
   
       // derived
+#ifdef TRILINOS_6
       NOX::Abstract::Vector* clone(NOX::CopyType type = NOX::DeepCopy) const;
+#else
+      RefCountPtr<NOX::Abstract::Vector> clone(NOX::CopyType type = NOX::DeepCopy) const ;
+#endif
   
       //@}
   
@@ -170,6 +174,7 @@ namespace NOX
       // derived
       double dot(const NOX::TSF::Vector& y) const;
       double dot(const NOX::Abstract::Vector& y) const;
+      double innerProduct(const NOX::Abstract::Vector& y) const;
   
       //@}
   

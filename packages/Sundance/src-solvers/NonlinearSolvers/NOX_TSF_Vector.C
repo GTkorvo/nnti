@@ -251,10 +251,17 @@ NOX::Abstract::Vector& NOX::TSF::Vector::scale(const NOX::TSF::Vector& a)
   return *this;
 }
 
+#ifdef TRILINOS_6
 NOX::Abstract::Vector* NOX::TSF::Vector::clone(NOX::CopyType type) const
 {
   return new NOX::TSF::Vector(*this, type);
 }
+#else
+RefCountPtr<NOX::Abstract::Vector> NOX::TSF::Vector::clone(NOX::CopyType type) const
+{
+  return rcp(new NOX::TSF::Vector(*this, type));
+}
+#endif
 
 double NOX::TSF::Vector::norm(NOX::Abstract::Vector::NormType type) const
 {
@@ -297,6 +304,11 @@ double NOX::TSF::Vector::norm(const NOX::TSF::Vector& weights) const
 }
 
 double NOX::TSF::Vector::dot(const NOX::Abstract::Vector& y) const
+{
+  return dot(y);
+}
+
+double NOX::TSF::Vector::innerProduct(const NOX::Abstract::Vector& y) const
 {
   return dot(dynamic_cast<const NOX::TSF::Vector&>(y));
 }

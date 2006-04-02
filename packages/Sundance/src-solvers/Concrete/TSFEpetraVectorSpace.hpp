@@ -31,8 +31,13 @@
 #include "Epetra_Map.h"
 #include "TSFHandleable.hpp"
 #include "Thyra_ScalarProdVectorSpaceBase.hpp"
-#include "Thyra_MPIVectorSpaceBase.hpp"
 
+#ifdef TRILINOS_6
+#include "Thyra_MPIVectorSpaceBase.hpp"
+#else
+#include "Thyra_MPIVectorSpaceDefaultBase.hpp"
+#define MPIVectorSpaceBase MPIVectorSpaceDefaultBase 
+#endif
 
 namespace TSFExtended
 {
@@ -97,5 +102,8 @@ namespace TSFExtended
   };
   
 }
+
+
+#undef MPIVectorSpaceBase
 
 #endif

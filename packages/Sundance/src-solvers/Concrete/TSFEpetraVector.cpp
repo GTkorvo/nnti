@@ -32,8 +32,13 @@
 #include "Teuchos_Workspace.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_dyn_cast.hpp"
-#include "Thyra_MPIVectorStd.hpp"
 
+#ifdef TRILINOS_6
+#include "Thyra_MPIVectorStdDecl.hpp"
+#else
+#define MPIVectorStd DefaultMPIVector
+#include "Thyra_DefaultMPIVectorDecl.hpp"
+#endif
 
 
 using namespace Teuchos;
@@ -172,5 +177,9 @@ Epetra_Vector* EpetraVector::getConcretePtr(TSFExtended::Vector<double>& tsfVec)
                      "could not be cast to an EpetraVector");
   return epv->epetraVec().get();
 }
+
+
+
+#undef MPIVectorStd
 
 

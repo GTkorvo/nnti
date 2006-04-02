@@ -5,6 +5,8 @@
 using namespace TSFExtended;
 using namespace TSFExtendedOps;
 
+#ifdef TRILINOS_6
+
 #ifdef HAVE_SUNDIALS
 #include "sundialsmath.h"
 #include "sundialstypes.h"
@@ -256,4 +258,5 @@ extern "C"
 
 }
 
+#endif
 #endif

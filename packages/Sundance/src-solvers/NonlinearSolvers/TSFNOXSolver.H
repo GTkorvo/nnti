@@ -70,8 +70,11 @@ namespace TSFExtended
     mutable RefCountPtr<NOX::Solver::Manager> solver_;
     mutable RefCountPtr<NOX::StatusTest::Generic> statusTest_;
     ParameterList params_;
-    //mutable RefCountPtr<NOX::Parameter::List> noxParams_;
+#ifdef TRILINOS_6
     mutable NOX::Parameter::List noxParams_;
+#else
+    mutable RefCountPtr<NOX::Parameter::List> noxParams_;
+#endif
   };
 }
 

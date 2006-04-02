@@ -30,8 +30,10 @@
 #ifndef THYRA_SUNDIALS_OPS_HPP
 #define THYRA_SUNDIALS_OPS_HPP
 
-#include "RTOpPack_SUNDIALS_Ops.hpp"
 
+#ifdef TRILINOS_6
+
+#include "RTOpPack_SUNDIALS_Ops.hpp"
 
 namespace Thyra
 { 
@@ -196,5 +198,7 @@ namespace Thyra
     applyOp<Scalar>(op,1,vecs,1,targ_vecs,(RTOpPack::ReductTarget*)NULL);
   }
 } 
+
+#endif
 
 #endif 

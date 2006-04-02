@@ -91,7 +91,11 @@ void NOXSolver::reset() const
   NOX::Parameter::Teuchos2NOX converter;
   noxParams_ = converter.toNOX(params_);
 
+#ifdef TRILINOS_6
   solver_ = rcp(new NOX::Solver::Manager(*grp_, *statusTest_, noxParams_));
+#else
+  solver_ = rcp(new NOX::Solver::Manager(grp_, statusTest_, noxParams_));
+#endif
 }
 
 

@@ -30,6 +30,7 @@
 // ************************************************************************
 //@HEADER
 
+#include "TSFConfigDefs.hpp"
 #include "NOX_StatusTest_SafeCombo.H"
 #include "NOX_Utils.H"
 
@@ -102,11 +103,22 @@ NOX::StatusTest::SafeCombo::~SafeCombo()
 
 NOX::StatusTest::StatusType NOX::StatusTest::SafeCombo::checkStatus(const Solver::Generic& problem)
 {
+#ifdef TRILINOS_6
   return checkStatusEfficiently(problem, NOX::StatusTest::Minimal);
+#else
+  return checkStatus(problem, NOX::StatusTest::Minimal);
+#endif
 }
 
-NOX::StatusTest::StatusType NOX::StatusTest::SafeCombo::checkStatusEfficiently(const Solver::Generic& problem, 
-					       NOX::StatusTest::CheckType checkType)
+#ifdef TRILINOS_6
+NOX::StatusTest::StatusType NOX::StatusTest::SafeCombo
+::checkStatusEfficiently(const Solver::Generic& problem, 
+                         NOX::StatusTest::CheckType checkType)
+#else
+NOX::StatusTest::StatusType NOX::StatusTest::SafeCombo
+::checkStatus(const Solver::Generic& problem, 
+              NOX::StatusTest::CheckType checkType)
+#endif
 {
   if (type == OR)
     orOp(problem, checkType);
@@ -132,8 +144,11 @@ void NOX::StatusTest::SafeCombo::orOp(const Solver::Generic& problem, NOX::Statu
   // any, that is unconverged is the status that it sets itself too.
   for (vector<Teuchos::RefCountPtr<Generic> >::const_iterator i = tests.begin(); i != tests.end(); ++i) 
   {
+#ifdef TRILINOS_6
     NOX::StatusTest::StatusType s = (*i)->checkStatusEfficiently(problem, checkType);
-
+#else
+    NOX::StatusTest::StatusType s = (*i)->checkStatus(problem, checkType);
+#endif
     if ((status == Unconverged) && (s != Unconverged)) 
     {
       status = s;
@@ -159,7 +174,12 @@ void NOX::StatusTest::SafeCombo::andOp(const Solver::Generic& problem, NOX::Stat
 
   for (vector<Teuchos::RefCountPtr<Generic> >::const_iterator i = tests.begin(); i != tests.end(); ++i) {
 
+
+#ifdef TRILINOS_6
     NOX::StatusTest::StatusType s = (*i)->checkStatusEfficiently(problem, checkType);
+#else
+    NOX::StatusTest::StatusType s = (*i)->checkStatus(problem, checkType);
+#endif
 
     // If any of the tests are unconverged, then the AND test is
     // unconverged.

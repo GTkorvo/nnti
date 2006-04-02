@@ -30,8 +30,12 @@
 #ifndef RTOPPACK_SUNDIALS_OPS_HPP
 #define RTOPPACK_SUNDIALS_OPS_HPP
 
+
+
 #include "RTOpPack_SUNDIALS_Helpers.hpp"
 #include "Thyra_VectorStdOps.hpp"
+
+#ifdef TRILINOS_6
 
 namespace RTOpPack 
 {
@@ -625,6 +629,6 @@ namespace RTOpPack
 
 }
 
-
+#endif /* TRILINOS_6 */
 
 #endif 

@@ -158,10 +158,17 @@ void NOX::TSF::Group::resetIsValid() //private
   isValidNewton = false;
 }
 
+#ifdef TRILINOS_6
 NOX::Abstract::Group* NOX::TSF::Group::clone(NOX::CopyType type) const 
 {
   return new NOX::TSF::Group(*this, type);
 }
+#else
+RefCountPtr<NOX::Abstract::Group> NOX::TSF::Group::clone(NOX::CopyType type) const 
+{
+  return rcp(new NOX::TSF::Group(*this, type));
+}
+#endif
 
 NOX::Abstract::Group& NOX::TSF::Group::operator=(const NOX::Abstract::Group& source)
 {

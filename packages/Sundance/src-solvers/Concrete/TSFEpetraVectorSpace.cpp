@@ -31,6 +31,14 @@
 #include "Epetra_MpiComm.h"
 #endif
 
+
+#ifdef TRILINOS_6
+#include "Thyra_MPIVectorSpaceBase.hpp"
+#else
+#include "Thyra_MPIVectorSpaceDefaultBase.hpp"
+#define MPIVectorSpaceBase MPIVectorSpaceDefaultBase
+#endif
+
 using namespace TSFExtended;
 using namespace Teuchos;
 using namespace Thyra;
@@ -79,6 +87,8 @@ string EpetraVectorSpace::description() const
   return "EpetraVectorSpace[dim=" + Teuchos::toString(dim()) + ", local="
     + Teuchos::toString(localSubDim()) + "]";
 }
+
+#undef MPIVectorSpaceBase 
 
 
 

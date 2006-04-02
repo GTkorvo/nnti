@@ -39,7 +39,12 @@
 #include "TSFRawDataAccessibleVector.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Teuchos_TimeMonitor.hpp"
+
+#ifdef TRILINOS_6
 #include "Thyra_ProductVector.hpp"
+#else
+#include "Thyra_DefaultProductVector.hpp"
+#endif
 
 namespace TSFExtendedOps
 {

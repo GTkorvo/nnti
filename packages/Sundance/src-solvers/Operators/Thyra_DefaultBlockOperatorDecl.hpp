@@ -35,6 +35,11 @@
 #include "Thyra_SetableBlockOperatorBase.hpp"
 #include "Teuchos_Array.hpp"
 
+#ifndef TRILINOS_6
+#include "Thyra_ProductMultiVectorBase.hpp"
+#endif
+
+
 namespace Thyra
 {
   /**

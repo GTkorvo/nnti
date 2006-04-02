@@ -35,6 +35,10 @@ using namespace TSFExtended;
 using namespace Teuchos;
 using std::ostream;
 
+#ifndef TRILINOS_6
+#define ProductVectorSpace DefaultProductVectorSpace
+#endif
+
 namespace TSFExtended
 {
   using Teuchos::Array;
@@ -83,6 +87,9 @@ namespace TSFExtended
 } 
 
 
+
+
+#undef ProductVectorSpace
 
 
 #endif

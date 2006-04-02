@@ -30,7 +30,7 @@
 #define TSFLOADABLEVECTOR_HPP
 
 #include "TSFConfigDefs.hpp"
-
+#include "Thyra_VectorBaseDecl.hpp"
 
 #ifndef DOXYGEN_DEVELOPER_ONLY
 
