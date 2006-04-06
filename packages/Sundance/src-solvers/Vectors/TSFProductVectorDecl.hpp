@@ -193,7 +193,8 @@ namespace TSFExtended
 
     Scalar getElement(int n) const;
 
-    const Scalar getElement(int n) const;
+//bvbw not legal code,  previous implementation should take care of this....  
+//  const Scalar getElement(int n) const;
 
     void setElement(int n, const Scalar& val);
 
