@@ -73,7 +73,7 @@ namespace TSFExtended
     int nCols = op.numBlockCols();
 
     soln = op.domain().createMember();
-    bool converged = false;
+    //    bool converged = false;
 
     TEST_FOR_EXCEPTION(nRows != rhs.space().numBlocks(), runtime_error,
                        "number of rows in operator " << op

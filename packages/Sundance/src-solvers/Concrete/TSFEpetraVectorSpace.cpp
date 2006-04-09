@@ -66,6 +66,8 @@ EpetraVectorSpace::EpetraVectorSpace(const RefCountPtr<const Epetra_Map>& m)
   updateState(epetraMap_->NumGlobalElements());
 }
 
+
+
 // Overridden from VectorSpace
 
 Teuchos::RefCountPtr<VectorBase<double> >
@@ -73,6 +75,19 @@ EpetraVectorSpace::createMember() const
 {
   return rcp(new EpetraVector(rcp(this, false)));
 }
+
+
+
+Teuchos::RefCountPtr<MultiVectorBase<double> >
+EpetraVectorSpace::createMembers(int n) const
+{
+  TEST_FOR_EXCEPTION(true, runtime_error, "not ready!");
+  return 
+    Teuchos::RefCountPtr<MultiVectorBase<double> >();
+  //  return rcp(new EpetraMultiVector(rcp(this, false), n));
+}
+
+
 
 Teuchos::RefCountPtr< const VectorSpaceBase<double> >
 EpetraVectorSpace::clone() const

@@ -305,7 +305,7 @@ double NOX::TSF::Vector::norm(const NOX::TSF::Vector& weights) const
 
 double NOX::TSF::Vector::dot(const NOX::Abstract::Vector& y) const
 {
-  return dot(y);
+  return dot(dynamic_cast<const NOX::TSF::Vector&>(y));
 }
 
 double NOX::TSF::Vector::innerProduct(const NOX::Abstract::Vector& y) const

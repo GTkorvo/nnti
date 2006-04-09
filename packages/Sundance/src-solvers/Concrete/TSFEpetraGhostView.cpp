@@ -33,8 +33,7 @@ using namespace TSFExtended;
 const double& EpetraGhostView::getElement(int globalIndex) const 
 {
   const Epetra_BlockMap& myMap = ghostView_->Map();
-  double rtn = (*ghostView_)[myMap.LID(globalIndex)];
-  return rtn;
+  return (*ghostView_)[myMap.LID(globalIndex)];
 }
 
 void EpetraGhostView::getElements(const int* globalIndices, int numElems,

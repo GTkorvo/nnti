@@ -89,6 +89,8 @@ namespace TSFExtended
     //@{
     /** \brief create a vector */
     RefCountPtr<VectorBase<double> > createMember() const;
+    /** \brief create a multivector */
+    RefCountPtr<MultiVectorBase<double> > createMembers(int numVecs) const;
 
     //@}
   private:

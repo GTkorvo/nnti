@@ -49,19 +49,19 @@ NOXSolver::NOXSolver(const ParameterList& params,
     grp_(),
     solver_(),
     statusTest_(),
-    params_(params),
+    params_(),
     noxParams_()
 {
-  TEST_FOR_EXCEPTION(!params_.isSublist("NOX Solver"), runtime_error,
-                     "did not find NOX Solver sublist in " << params_);
+  TEST_FOR_EXCEPTION(!params.isSublist("NOX Solver"), runtime_error,
+                     "did not find NOX Solver sublist in " << params);
   
-  ParameterList solverSublist = params_.sublist("NOX Solver");
+  params_ = params.sublist("NOX Solver");
+  /* NOX wants to have the process ID in a parameter list???? */
+  params_.sublist("Printing").set("MyPID", MPIComm::world().getRank());
 
-  cerr << "solver sublist = " << solverSublist << endl;
-
-  if (solverSublist.isSublist("Status Test"))
+  if (params_.isSublist("Status Test"))
     {
-      statusTest_ = StatusTestBuilder::makeStatusTest(solverSublist);
+      statusTest_ = StatusTestBuilder::makeStatusTest(params_);
     }
   else
     {
@@ -71,9 +71,9 @@ NOXSolver::NOXSolver(const ParameterList& params,
         rcp(new StatusTest::SafeCombo(StatusTest::SafeCombo::OR, A, B));
     }
   
-  if (solverSublist.isSublist("Linear Solver"))
+  if (params_.isSublist("Linear Solver"))
     {
-      linSolver_ = LinearSolverBuilder::createSolver(solverSublist);
+      linSolver_ = LinearSolverBuilder::createSolver(params_);
     }
 
   TEST_FOR_EXCEPTION(linSolver_.ptr().get()==0, runtime_error,

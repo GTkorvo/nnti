@@ -109,7 +109,6 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
   ParameterList solverSublist = params.sublist("Linear Solver");
 
   const string& solverType = getParameter<string>(solverSublist, "Type");
-  cout << "solver type = " << solverType << endl;
 
   if (solverType=="Aztec")
     {
