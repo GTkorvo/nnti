@@ -614,6 +614,7 @@ namespace TSFExtended
   inline bool VectorTester<Scalar>
   ::reciprocalTest() const 
   {
+#ifdef TRILINOS_6
     if (spec_.doTest())
       {
         cerr << "running vector reciprocal test..." << endl;
@@ -677,6 +678,7 @@ namespace TSFExtended
       }
     cerr << "vector reciprocal test PASSED: tol = " 
          << spec_.errorTol() << endl;
+#endif
     return true;
   }
 
@@ -684,6 +686,7 @@ namespace TSFExtended
   inline bool VectorTester<Scalar>
   ::minQuotientTest() const 
   {
+#ifdef TRILINOS_6
     if (spec_.doTest())
       {
         cerr << "running vector minQuotient test..." << endl;
@@ -739,6 +742,7 @@ namespace TSFExtended
       }
     cerr << "min quotient test PASSED: tol = " 
          << spec_.errorTol() << endl;
+#endif
     return true;
   }
 
@@ -748,6 +752,7 @@ namespace TSFExtended
   inline bool VectorTester<Scalar>
   ::constraintMaskTest() const 
   {
+#ifdef TRILINOS_6
     if (spec_.doTest())
       {
         cerr << "running vector constraintMask test..." << endl;
@@ -830,6 +835,7 @@ namespace TSFExtended
       }
     cerr << "vector constraintMask test PASSED: tol = " 
          << spec_.errorTol() << endl;
+#endif
     return true;
   }
   
@@ -838,6 +844,7 @@ namespace TSFExtended
   inline bool VectorTester<Scalar>
   ::compareToScalarTest() const 
   {
+#ifdef TRILINOS_6
     if (spec_.doTest())
       {
         cerr << "running vector compare-to-scalar test..." << endl;
@@ -883,6 +890,7 @@ namespace TSFExtended
       }
     cerr << "vector compare-to-scalar test PASSED: tol = " 
          << spec_.errorTol() << endl;
+#endif
     return true;
   }
 
@@ -891,6 +899,7 @@ namespace TSFExtended
   inline bool VectorTester<Scalar>
   ::indexTest() const 
   {
+#ifdef TRILINOS_6
     if (spec_.doTest())
       {
         cerr << "running vector index test..." << endl;
@@ -936,6 +945,7 @@ namespace TSFExtended
       }
     cerr << "vector index test PASSED: tol = " 
          << spec_.errorTol() << endl;
+#endif
     return true;
   }
   
