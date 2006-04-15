@@ -41,6 +41,10 @@
 #include "TSFILUFactorizableOp.hpp"
 #include "Epetra_CrsMatrix.h"
 
+#ifdef HAVE_EPETRA_THYRA
+#include "Thyra_EpetraLinearOpBase.hpp"
+#endif
+
 namespace TSFExtended
 {
   using namespace Teuchos;
@@ -54,6 +58,9 @@ namespace TSFExtended
                        // public ExplicitlyTransposeableOp<double>,
                        public Printable,
                        public ILUFactorizableOp<double>
+#ifdef HAVE_EPETRA_THYRA
+                     , public EpetraLinearOpBase
+#endif
   {
   public:
     GET_RCP(SingleScalarTypeOpBase<double>);
@@ -82,8 +89,48 @@ namespace TSFExtended
                               Thyra::VectorBase<double>          *y,
                               const double            alpha,
                               const double            beta) const ;
-    
-    
+
+
+    virtual bool applyTransposeSupports(const Thyra::EConj conj) const
+    {
+      if (conj==Thyra::NONCONJ_ELE) return true;
+      return false;
+    }
+
+
+#ifdef HAVE_EPETRA_THYRA
+    /** \name Epetra-Thyra adapter interface */
+    //@{
+
+    /** */
+    void getEpetraOpView(RefCountPtr<Epetra_Operator> *epetraOp,
+                         Thyra::ETransp *epetraOpTransp,
+                         Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
+                         Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) ;
+
+    /** */
+    void getEpetraOpView(RefCountPtr<const Epetra_Operator> *epetraOp,
+                         Thyra::ETransp *epetraOpTransp,
+                         Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
+                         Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) const ;
+
+
+    /// Returns <tt>this->mpiRange()</tt>
+    Teuchos::RefCountPtr< const ScalarProdVectorSpaceBase<double> > rangeScalarProdVecSpc() const;
+    /// Returns <tt>this->mpiDomain()</tt>
+    Teuchos::RefCountPtr< const ScalarProdVectorSpaceBase<double> > domainScalarProdVecSpc() const;
+    /** \brief . */
+    void euclideanApply(const Thyra::ETransp              M_trans
+                        ,const MultiVectorBase<double>    &X
+                        ,MultiVectorBase<double>          *Y
+                        ,const double                     alpha
+                        ,const double                     beta
+                        ) const;
+    //@}
+
+    /** \brief . */
+	bool opSupported(Thyra::ETransp M_trans) const;
+#endif
 
     /** Insert a set of elements in a row, adding to any previously
      * existing values. 
@@ -174,6 +221,9 @@ namespace TSFExtended
     RefCountPtr<const VectorSpaceBase<double> > range_;
 
     RefCountPtr<const VectorSpaceBase<double> > domain_;
+
+    const Epetra_Map& getRangeMap() const;
+    const Epetra_Map& getDomainMap() const;
   };
 }
 

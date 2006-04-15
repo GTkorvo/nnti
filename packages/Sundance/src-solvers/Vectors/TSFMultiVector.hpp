@@ -27,7 +27,7 @@
 /* @HEADER@ */
 
 #ifndef TSFMULTIVECTOR_HPP
-#define TSFMULYIVECTOR_HPP
+#define TSFMULTIVECTOR_HPP
 
 #include "TSFConfigDefs.hpp"
 #include "TSFHandle.hpp"

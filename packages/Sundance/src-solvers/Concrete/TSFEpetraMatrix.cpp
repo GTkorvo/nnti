@@ -37,6 +37,12 @@
 #include "TSFIfpackOperator.hpp"
 #include "TSFGenericLeftPreconditioner.hpp"
 #include "TSFGenericRightPreconditioner.hpp"
+#include "Teuchos_dyn_cast.hpp"
+#include "Teuchos_getConst.hpp"
+
+#ifdef HAVE_EPETRA_THYRA
+#include "Thyra_EpetraThyraWrappers.hpp"
+#endif
 
 using namespace TSFExtended;
 using namespace Teuchos;
@@ -108,6 +114,147 @@ void EpetraMatrix::generalApply(const Thyra::ETransp M_trans,
 }
 
 
+#ifdef HAVE_EPETRA_THYRA
+
+
+void EpetraMatrix::euclideanApply(
+                                  const Thyra::ETransp                     M_trans
+                                  ,const MultiVectorBase<double>    &X_in
+                                  ,MultiVectorBase<double>          *Y_inout
+                                  ,const double                    alpha
+                                  ,const double                     beta
+                                  ) const
+{
+  const Thyra::ETransp real_M_trans = real_trans(M_trans);
+#ifdef _DEBUG
+	// ToDo: Assert vector spaces!
+	TEST_FOR_EXCEPTION(
+		real_M_trans==TRANS && adjointSupport_==EPETRA_OP_ADJOINT_UNSUPPORTED
+		,Exceptions::OpNotSupported
+		,"EpetraLinearOp::apply(...): *this was informed that adjoints are not supported when initialized." 
+		);
+#endif
+	//
+	// Get Epetra_MultiVector objects for the arguments
+	//
+	Teuchos::RefCountPtr<const Epetra_MultiVector>
+		X = get_Epetra_MultiVector(real_M_trans==NOTRANS ? getDomainMap() 
+                               : getRangeMap()
+                               ,Teuchos::rcp(&X_in,false)
+                               );
+	Teuchos::RefCountPtr<Epetra_MultiVector>
+		Y;
+	if( beta == 0 ) {
+		Y = get_Epetra_MultiVector(
+			real_M_trans==NOTRANS ? getRangeMap() : getDomainMap()
+			,Teuchos::rcp(Y_inout,false)
+			);
+	}
+	//
+	// Set the operator mode
+	//
+	/* We need to save the transpose state here, and then reset it after 
+	 * application. The reason for this is that if we later apply the 
+	 * operator outside Thyra (in Aztec, for instance), it will remember
+	 * the transpose flag set here. */
+	bool oldState = matrix_->UseTranspose();
+	matrix_->SetUseTranspose( real_trans(trans_trans(NOTRANS,M_trans)) == NOTRANS ? false : true );
+	//
+	// Perform the operation
+	//
+	if( beta == 0.0 ) {
+		// Y = M * X
+    matrix_->Apply( *X, *Y );
+		// Y = alpha * Y
+		if( alpha != 1.0 ) Y->Scale(alpha);
+	}
+	else {
+		// Y_inout = beta * Y_inout
+		if(beta != 0.0) scale( beta, Y_inout );
+		else assign( Y_inout, 0.0 );
+		// T = M * X
+		Epetra_MultiVector T(real_M_trans == NOTRANS ? matrix_->OperatorRangeMap() 
+                         : matrix_->OperatorDomainMap()
+                         ,X_in.domain()->dim()
+                         ,false
+                         );
+    matrix_->Apply( *X, T );
+		// Y_inout += alpha * T
+		update(
+			alpha
+			,*create_MPIMultiVectorBase(
+				Teuchos::rcp(&Teuchos::getConst(T),false)
+				,Teuchos::rcp_dynamic_cast<const MPIVectorSpaceBase<double> >(Y_inout->range(),true)
+				,Teuchos::rcp_dynamic_cast<const ScalarProdVectorSpaceBase<double> >(Y_inout->domain(),true)
+				)
+			,Y_inout
+			);
+	}
+	// Reset the transpose state
+	matrix_->SetUseTranspose(oldState);
+}
+
+
+void EpetraMatrix::getEpetraOpView(RefCountPtr<Epetra_Operator> *epetraOp,
+                                   Thyra::ETransp *epetraOpTransp,
+                                   Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
+                                   Thyra::EAdjointEpetraOp *epetraOpAdjointSupport)
+{
+  cout << "calling non-const getEpetraOpView()" << endl;
+  TEST_FOR_EXCEPT(epetraOp==NULL);
+  TEST_FOR_EXCEPT(epetraOpTransp==NULL);
+  TEST_FOR_EXCEPT(epetraOpApplyAs==NULL);
+  TEST_FOR_EXCEPT(epetraOpAdjointSupport==NULL);
+
+  *epetraOp = rcp_dynamic_cast<Epetra_Operator>(matrix_);
+  *epetraOpTransp = NOTRANS;
+  *epetraOpApplyAs = EPETRA_OP_APPLY_APPLY;
+  *epetraOpAdjointSupport = EPETRA_OP_ADJOINT_SUPPORTED;
+
+  TEST_FOR_EXCEPTION(epetraOp->get()==0, runtime_error,
+                     "null operator in getEpetraOpView()");
+  
+}
+
+void EpetraMatrix::getEpetraOpView(RefCountPtr<const Epetra_Operator> *epetraOp,
+                                   Thyra::ETransp *epetraOpTransp,
+                                   Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
+                                   Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) const 
+{
+  cout << "calling non-const getEpetraOpView()" << endl;
+  TEST_FOR_EXCEPT(epetraOp==NULL);
+  TEST_FOR_EXCEPT(epetraOpTransp==NULL);
+  TEST_FOR_EXCEPT(epetraOpApplyAs==NULL);
+  TEST_FOR_EXCEPT(epetraOpAdjointSupport==NULL);
+
+  *epetraOp = rcp_dynamic_cast<const Epetra_Operator>(matrix_);
+  *epetraOpTransp = NOTRANS;
+  *epetraOpApplyAs = EPETRA_OP_APPLY_APPLY;
+  *epetraOpAdjointSupport = EPETRA_OP_ADJOINT_SUPPORTED;
+
+  TEST_FOR_EXCEPTION(epetraOp->get()==0, runtime_error,
+                     "null operator in getEpetraOpView()");
+}
+
+
+RefCountPtr<const ScalarProdVectorSpaceBase<double> >
+EpetraMatrix::rangeScalarProdVecSpc() const
+{
+  return rcp_dynamic_cast<const ScalarProdVectorSpaceBase<double> >(range_);
+}
+
+RefCountPtr<const ScalarProdVectorSpaceBase<double> >
+EpetraMatrix::domainScalarProdVecSpc() const
+{
+  return rcp_dynamic_cast<const ScalarProdVectorSpaceBase<double> >(domain_);
+}
+
+bool EpetraMatrix::opSupported(Thyra::ETransp M_trans) const
+{
+  return true;
+}
+
+#endif
 
 
 void EpetraMatrix::addToRow(int globalRowIndex,
@@ -263,4 +410,15 @@ void EpetraMatrix::getRow(const int& row,
       epIndices++;
       epValues++;
     }
+}
+
+
+const Epetra_Map& EpetraMatrix::getRangeMap() const
+{
+	return matrix_->OperatorRangeMap();
+}
+
+const Epetra_Map& EpetraMatrix::getDomainMap() const
+{
+	return matrix_->OperatorDomainMap();
 }

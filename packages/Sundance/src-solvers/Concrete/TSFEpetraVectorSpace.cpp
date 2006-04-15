@@ -31,11 +31,13 @@
 #include "Epetra_MpiComm.h"
 #endif
 
+#include "Thyra_DefaultColumnwiseMultiVector.hpp"
 
 #ifdef TRILINOS_6
 #include "Thyra_MPIVectorSpaceBase.hpp"
 #else
 #include "Thyra_MPIVectorSpaceDefaultBase.hpp"
+
 #define MPIVectorSpaceBase MPIVectorSpaceDefaultBase
 #endif
 
@@ -81,10 +83,15 @@ EpetraVectorSpace::createMember() const
 Teuchos::RefCountPtr<MultiVectorBase<double> >
 EpetraVectorSpace::createMembers(int n) const
 {
-  TEST_FOR_EXCEPTION(true, runtime_error, "not ready!");
-  return 
-    Teuchos::RefCountPtr<MultiVectorBase<double> >();
-  //  return rcp(new EpetraMultiVector(rcp(this, false), n));
+  RefCountPtr<const VectorSpaceBase<double> > self = rcp(this, false);
+  RefCountPtr<const VectorSpaceBase<double> > small 
+    = rcp(new DefaultSerialVectorSpace<double>(n));
+  Array<RefCountPtr<VectorBase<double> > > vecs(n);
+  for (unsigned int i=0; i<vecs.size(); i++)
+    {
+      vecs[i] = createMember();
+    }
+  return rcp(new Thyra::DefaultColumnwiseMultiVector<double>(self, small, &(vecs[0])));
 }
 
 
