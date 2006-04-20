@@ -31,13 +31,17 @@
 #include "Epetra_MpiComm.h"
 #endif
 
-#include "Thyra_DefaultColumnwiseMultiVector.hpp"
 
 #ifdef TRILINOS_6
+#include "Thyra_MultiVectorCols.hpp"
 #include "Thyra_MPIVectorSpaceBase.hpp"
+#include "Thyra_SerialVectorSpaceStd.hpp"
+#define DefaultSerialVectorSpace SerialVectorSpaceStd
+#define DefaultColumnwiseMultiVector MultiVectorCols
 #else
+#include "Thyra_DefaultSerialVector.hpp"
 #include "Thyra_MPIVectorSpaceDefaultBase.hpp"
-
+#include "Thyra_DefaultColumnwiseMultiVector.hpp"
 #define MPIVectorSpaceBase MPIVectorSpaceDefaultBase
 #endif
 

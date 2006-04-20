@@ -200,7 +200,6 @@ void EpetraMatrix::getEpetraOpView(RefCountPtr<Epetra_Operator> *epetraOp,
                                    Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
                                    Thyra::EAdjointEpetraOp *epetraOpAdjointSupport)
 {
-  cout << "calling non-const getEpetraOpView()" << endl;
   TEST_FOR_EXCEPT(epetraOp==NULL);
   TEST_FOR_EXCEPT(epetraOpTransp==NULL);
   TEST_FOR_EXCEPT(epetraOpApplyAs==NULL);
@@ -221,7 +220,6 @@ void EpetraMatrix::getEpetraOpView(RefCountPtr<const Epetra_Operator> *epetraOp,
                                    Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
                                    Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) const 
 {
-  cout << "calling non-const getEpetraOpView()" << endl;
   TEST_FOR_EXCEPT(epetraOp==NULL);
   TEST_FOR_EXCEPT(epetraOpTransp==NULL);
   TEST_FOR_EXCEPT(epetraOpApplyAs==NULL);

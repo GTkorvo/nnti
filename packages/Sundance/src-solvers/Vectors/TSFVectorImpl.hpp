@@ -34,9 +34,13 @@
 #include "Thyra_SUNDIALS_Ops.hpp"
 #include "TSFIndexableVector.hpp"
 
+
 #ifdef TRILINOS_6
 #include "Thyra_ProductVector.hpp"
+#include "Thyra_SerialVectorStd.hpp"
+#define DefaultSerialVector SerialVectorStd
 #else
+#include "Thyra_DefaultSerialVector.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #define ProductVector DefaultProductVector
 #endif
@@ -572,6 +576,18 @@ const Scalar& Vector<Scalar>::getElement(Index globalIndex) const
           k += len;
         }
     }
+
+  const Thyra::DefaultSerialVector<Scalar>* dsv
+    = dynamic_cast<const Thyra::DefaultSerialVector<Scalar>* >(this->ptr().get());
+  
+  if (dsv != 0)
+    {
+      int dim = dsv->getDim();
+      int stride = dsv->getStride();
+      boundscheck(globalIndex, dim);
+      return dsv->getPtr()[stride*globalIndex];
+    }
+
   return castToAccessible()->getElement(globalIndex);
 }
 
@@ -608,7 +624,19 @@ void Vector<Scalar>::setElement(Index globalIndex, const Scalar& value)
     }
   else
     {
-      castToLoadable()->setElement(globalIndex, value);
+      Thyra::DefaultSerialVector<Scalar>* dsv
+        = dynamic_cast<Thyra::DefaultSerialVector<Scalar>* >(this->ptr().get());
+      if (dsv != 0)
+        {
+          int dim = dsv->getDim();
+          int stride = dsv->getStride();
+          boundscheck(globalIndex, dim);
+          dsv->getPtr()[stride*globalIndex] = value;
+        }
+      else
+        {
+          castToLoadable()->setElement(globalIndex, value);
+        }
     }
 }
 
@@ -652,6 +680,15 @@ Scalar& Vector<Scalar>::operator[](Index globalIndex)
     }
   else
     {
+      Thyra::DefaultSerialVector<Scalar>* dsv
+        = dynamic_cast<Thyra::DefaultSerialVector<Scalar>* >(this->ptr().get());
+      if (dsv != 0)
+        {
+          int dim = dsv->getDim();
+          int stride = dsv->getStride();
+          boundscheck(globalIndex, dim);
+          return dsv->getPtr()[stride*globalIndex];
+        }
       TEST_FOR_EXCEPTION(true, runtime_error,
                          "operator[] called on a Vector that is neither "
                          "indexable nor a product vector");
@@ -690,12 +727,35 @@ void Vector<Scalar>::addToElement(Index globalIndex, const Scalar& value)
     }
   else
     {
-      castToLoadable()->addToElement(globalIndex, value);
+      Thyra::DefaultSerialVector<Scalar>* dsv
+        = dynamic_cast<Thyra::DefaultSerialVector<Scalar>* >(this->ptr().get());
+      if (dsv != 0)
+        {
+          int dim = dsv->getDim();
+          int stride = dsv->getStride();
+          boundscheck(globalIndex, dim);
+          dsv->getPtr()[stride*globalIndex] += value;
+        }
+      else
+        {
+          castToLoadable()->addToElement(globalIndex, value);
+        }
     }
 }
 
+template <class Scalar> inline 
+void Vector<Scalar>::boundscheck(Index i, int dim) const
+{
+  TEST_FOR_EXCEPTION( i < 0 || i >= dim, runtime_error,
+                      "Bounds violation: " << i << "is out of range [0" 
+                      << ", " << dim << "]");
+}
 
+
+#ifdef TRILINOS_6
+#undef DefaultSerialVector
+#else
 #undef ProductVector
-
+#endif
 
 #endif

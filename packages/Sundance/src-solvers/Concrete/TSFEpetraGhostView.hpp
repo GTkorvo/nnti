@@ -68,6 +68,9 @@ namespace TSFExtended
       /** */
       void import(const Epetra_Import& importer,
                   const Epetra_Vector& srcObject);
+
+      /** */
+      void print(ostream& os) const ;
     private:
       RefCountPtr<Epetra_Vector> ghostView_;
     };

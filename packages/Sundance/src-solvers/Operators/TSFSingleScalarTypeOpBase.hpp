@@ -37,6 +37,12 @@
 #include "Teuchos_RefCountPtr.hpp"
 #include "TSFDescribable.hpp"
 
+#ifdef TRILINOS_6
+#include "Thyra_MultiVectorCols.hpp"
+#define DefaultColumnwiseMultiVector MultiVectorCols
+#else
+#include "Thyra_DefaultColumnwiseMultiVector.hpp"
+#endif
 
 namespace TSFExtended
 {
@@ -66,9 +72,56 @@ namespace TSFExtended
                               const Scalar alpha = Teuchos::ScalarTraits<Scalar>::one(),
                               const Scalar beta  = Teuchos::ScalarTraits<Scalar>::zero()) const = 0;
 
+    /** 
+     * generalApply() applies to a multivector 
+     * either the operator or the transpose
+     * according to the value of the transpose flag. This method is
+     * backwards compatible with TSFCore-based code.
+     */
+    virtual void generalApply(const Thyra::ETransp M_trans,
+                              const Thyra::MultiVectorBase<Scalar>    &x,
+                              Thyra::MultiVectorBase<Scalar>* y,
+                              const Scalar alpha = Teuchos::ScalarTraits<Scalar>::one(),
+                              const Scalar beta  = Teuchos::ScalarTraits<Scalar>::zero()) const 
+    {
+      const Thyra::DefaultColumnwiseMultiVector<Scalar>* xVec 
+        = dynamic_cast<const Thyra::DefaultColumnwiseMultiVector<Scalar>*>(&x);
+
+      Thyra::DefaultColumnwiseMultiVector<Scalar>* yVec 
+        = dynamic_cast<Thyra::DefaultColumnwiseMultiVector<Scalar>*>(y);
+
+      TEST_FOR_EXCEPTION(xVec==0, runtime_error, 
+                         "default implementation of "
+                         "SingleScalarTypeOpBase::generalApply() requires a "
+                         "DefaultColumnwiseMultiVector");
+
+      TEST_FOR_EXCEPTION(yVec==0, runtime_error, 
+                         "default implementation of "
+                         "SingleScalarTypeOpBase::generalApply() requires a "
+                         "DefaultColumnwiseMultiVector");
+
+      int nXCols = x.domain()->dim();
+      int nYCols = y->domain()->dim();
+
+      TEST_FOR_EXCEPTION(nXCols != nYCols, runtime_error, 
+                         "mismatched multivector sizes nX=" << nXCols 
+                         << " and nY=" << nYCols);
+
+      for (int i=0; i<nXCols; i++)
+        {
+          generalApply(M_trans, *(xVec->col(i).get()), 
+                       (yVec->col(i).get()), alpha, beta);
+        }
+    }
+
 
 
   };
 }
+
+
+#ifdef TRILINOS_6
+#undef DefaultColumnwiseMultiVector
+#endif
 
 #endif

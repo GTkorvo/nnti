@@ -421,7 +421,8 @@ namespace TSFExtended
     /** Cross-cast vector to a raw data accessible vector */
     RawDataAccessibleVector<Scalar>* castToRawDataAccessible();
 
-  
+    /** Test for valid index */
+    void boundscheck(Index i, int dim) const ;
 
       
       

@@ -41,7 +41,8 @@ namespace TSFExtended
    * should be constructed using the importView() method of GhostImporter.
    */
   template <class Scalar>
-  class GhostView : public AccessibleVector<Scalar>
+  class GhostView : public AccessibleVector<Scalar>,
+    public Printable
   {
   public:
     /** Virtual dtor */
@@ -50,6 +51,9 @@ namespace TSFExtended
     /** Indicate whether the value at the given global index is accessible
      * in this view. */
     virtual bool isAccessible(int globalIndex) const = 0 ;
+    
+    /**  */
+    virtual void print(ostream& os) const = 0 ;
 
   private:
   };

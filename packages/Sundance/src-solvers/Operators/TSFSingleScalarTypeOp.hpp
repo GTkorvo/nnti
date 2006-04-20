@@ -64,17 +64,34 @@ namespace TSFExtended
     {
       const Thyra::VectorBase<Scalar>* xVec 
         = dynamic_cast<const Thyra::VectorBase<Scalar>*>(&X);
-      TEST_FOR_EXCEPTION(xVec==0, runtime_error, 
-                         "could not cast multivector argument to vector "
-                         "in SingleScalarTypeOp::apply()");
 
       Thyra::VectorBase<Scalar>* yVec 
         = dynamic_cast<Thyra::VectorBase<Scalar>*>(Y);
       
-      TEST_FOR_EXCEPTION(yVec==0, runtime_error, 
-                         "could not cast multivector argument to vector "
-                         "in SingleScalarTypeOp::apply()");
-      generalApply(applyConjToTrans(conj), *xVec, yVec, alpha, beta);
+      if (xVec != 0 && yVec != 0)
+        {
+          generalApply(applyConjToTrans(conj), *xVec, yVec, alpha, beta);
+        }
+      else if (xVec == 0 && yVec == 0)
+        {
+          generalApply(applyConjToTrans(conj), X, Y, alpha, beta);
+        }
+      else if (X.domain()->dim()==1 && yVec != 0)
+        {
+          generalApply(applyConjToTrans(conj), *(X.col(0)), yVec, alpha, beta);
+        }
+      else if (xVec != 0 && Y->domain()->dim()==1)
+        {
+          generalApply(applyConjToTrans(conj), *xVec, Y->col(0).get(), alpha, beta);
+        }
+      else
+        {
+          cout << "nX=" << X.domain()->dim()
+               << ", nY=" << Y->domain()->dim() << endl;
+          TEST_FOR_EXCEPTION(true, runtime_error,
+                             "mix of vectors and multivectors in "
+                             "SingleScalarTypeOp::apply()");
+        }
     }
 
     /** Thyra apply transpose method */
@@ -88,16 +105,35 @@ namespace TSFExtended
     {
       const Thyra::VectorBase<Scalar>* xVec 
         = dynamic_cast<const Thyra::VectorBase<Scalar>*>(&X);
-      TEST_FOR_EXCEPTION(xVec==0, runtime_error, 
-                         "could not cast multivector argument to vector "
-                         "in SingleScalarTypeOp::apply()");
 
       Thyra::VectorBase<Scalar>* yVec 
         = dynamic_cast<Thyra::VectorBase<Scalar>*>(Y);
-      TEST_FOR_EXCEPTION(yVec==0, runtime_error, 
-                         "could not cast multivector argument to vector "
-                         "in SingleScalarTypeOp::apply()");
-      generalApply(applyTransposeConjToTrans(conj), *xVec, yVec, alpha, beta);
+
+      if (xVec != 0 && yVec != 0)
+        {
+          generalApply(applyTransposeConjToTrans(conj), *xVec, yVec, alpha, beta);
+        }
+      else if (xVec == 0 && yVec == 0)
+        {
+          generalApply(applyTransposeConjToTrans(conj), X, Y, alpha, beta);
+        }
+      else if (X.domain()->dim()==1 && yVec != 0)
+        {
+          generalApply(applyTransposeConjToTrans(conj), *(X.col(0)), yVec, alpha, beta);
+        }
+      else if (xVec != 0 && Y->domain()->dim()==1)
+        {
+          generalApply(applyTransposeConjToTrans(conj), *xVec, Y->col(0).get(), 
+                       alpha, beta);
+        }
+      else
+        {
+          cout << "nX=" << X.domain()->dim()
+               << ", nY=" << Y->domain()->dim() << endl;
+          TEST_FOR_EXCEPTION(true, runtime_error,
+                             "mix of vectors and multivectors in "
+                             "SingleScalarTypeOp::applyTranspose()");
+        }
     }
 
     
