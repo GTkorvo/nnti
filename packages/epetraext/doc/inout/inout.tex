@@ -95,15 +95,15 @@ binary, portable and parallel class, based on the HDF5 file format.
 \label{sec:introduction}
 % ============================================================================
 
-Consider the following scenarios: 
+Consider the following scenarios:
 \begin{enumerate}
 \item A programmer is experiencing convergence
 problems within his/her Newton-like nonlinear solver, because the
 preconditioner does not yield convergence as expected. The application is
 non-standard, custom-made, proprietary, and the source codes cannot be
-distributed. 
+distributed.
 \item During a time-dependent
-simulation, a particular linear system solve phase does not behave as expected. 
+simulation, a particular linear system solve phase does not behave as expected.
 This occurs after several
 hours of computations, on a quite large problem, running on distributed memory
 machines.
@@ -126,11 +126,11 @@ the original object. This type of serialization is used mostly to transport an
 object across a network, to persist objects to a file or database, or to
 distribute identical objects to several applications or locations.
 Serialization can also be used to transform an object into a human-readable
-state. 
+state.
 The processing of serializing an object is also known are {\sl deflating} or
 {\sl marshalling} an object. The opposite operation of extracting a data
 structure from a series of bytes, is called {\sl deserialization}, or {\sl
-  unmarshalling} or {\sl inflating}. 
+  unmarshalling} or {\sl inflating}.
 
 \smallskip
 
@@ -140,21 +140,20 @@ provide:
 \item A simple and robust way to make objects persistent, so that they can be
 later reused as reference, or collected to define standard problems;
 \item A method for distributing objects across the network (e.g., with MPI);
-\item An easy and convenient way to store or access standard problems for particular algorithms or techniques. 
+\item An easy and convenient way to store or access standard problems for particular algorithms or techniques.
 \item A mechanism to send and receive objects from other nodes in the Grid;
 \item A convenient format to upload or download linear algebra objects for
 web-based solvers (Web-IO);
 \item A tool to restart a simulation.
 \end{itemize}
-In this document, we are interested in tool to serialize and deserialize
-distributed linear algebra objects, internally defined as Epetra
-object~\cite{Epetra-Users-Guide}. Our goal is to transmit objects to and from
-storage media (files).
-The serialization techniques we consider in
-this document aim to define flexible file data formats. The Epetra objects we
-will consider in this document are reported in Table \ref{tab:supported}.
-These objects are characterized by the
-following proporties:
+In this document, we are interested in tool to serialize and
+deserialize distributed linear algebra objects, internally defined
+as Epetra object~\cite{Epetra-Users-Guide}. Our goal is to transmit
+objects to and from storage media (files). The serialization
+techniques we consider in this document aim to define flexible file
+data formats. The Epetra objects we will consider in this document
+are reported in Table \ref{tab:supported}. These objects are
+characterized by the following properties:
 \begin{itemize}
 \item they are distributed across multiple processors, and therefore some for
 of parallel I/O is required;
@@ -213,7 +212,7 @@ in Section~\ref{sec:design}.
 Section~\ref{sec:hb} describes the
 Harwell/Boeing I/O; section~\ref{sec:mm} presents the MatrixMarket I/O;
 section~\ref{sec:hdf5} outlines the design and the implementation of the
-EpetraExt::HDF5 I/O. 
+EpetraExt::HDF5 I/O.
 
 % ============================================================================
 \section{Design Overview}
@@ -237,10 +236,10 @@ analyze the results of the simulation;
 of an application is to hold on files all data structures containing
 intermediate calculations that do not fit into main memory. These data
 structures are called out-of-core structures, and they are brought into the
-main memory in parts; 
+main memory in parts;
 \item checkpointing and restart. For long-running production codes, it is
 convenient to have the ability to save the state of the computation, in order
-to continue computing from that point at a later date. 
+to continue computing from that point at a later date.
 \item real-time I/O.
 \end{enumerate}
 We will consider only requirements (1) and (3), and we will focus on
@@ -249,7 +248,7 @@ only; however, even for the binary reader we never consider techniques to
 overlap I/O and computations, which
 might be of advantage for very intensive I/O applications. Note that for
 requirements (1) and (3) a key question is whether the two phases of I/O occur
-with the same number of processors. 
+with the same number of processors.
 
 % ============================================================================
 \subsection{Requirements}
@@ -258,14 +257,14 @@ with the same number of processors.
 The serialization techniques considered in this report satisfy the
 following requirements:
 \begin{itemize}
-\item 
+\item
 {\sl Code portability}: the ASCII serialization only depends on ANSI
 C/C++ capabilities; the binary serialization has a dependency on a well-know
 library, based on the widely-available MPI-IO;
-\item 
+\item
 {\sl Deep copy behavior}: all data required to reconstruct the object is
 serialized;
-\item 
+\item
 {\sl Data Portability}: ASCII and binary streams of bytes created on one
 platform are readable on any other;
 \item
@@ -273,7 +272,7 @@ platform are readable on any other;
   that is, to classes developed independently of the serialization tools.
         Therefore, it is not required for the classes to be serialized to be
         derived from a specific base class or implement specified member
-        functions. 
+        functions.
 \item
 {\sl Simplicity}: The archive interface is simple enough to easily permit
 creation of a new type of archive.
@@ -281,7 +280,7 @@ creation of a new type of archive.
 {\sl Meta-data storage}
 It is convenient to store {\sl metadata} together with the input and
 output of a simulation. The simplest metadata is, for example, the name of the
-object, or the class it belongs to. More sophisticated metadata can include 
+object, or the class it belongs to. More sophisticated metadata can include
 details on the procedure used to build the object, like for instance the
 quadrature formula used to assemble the matrix, or the parameters used to
 generate the preconditioner.
@@ -309,9 +308,9 @@ other programs. We decided to generate one single file, containing the entire
 object. This is accomplished with different technical tools, depending on the
 I/O format. For example, one can first reproduce the whole object on one
 processor, then perform serial I/O, or let each processor write its part of
-the object on the file. 
+the object on the file.
 
-Another design choice is  on the storage type of the resulting file, which 
+Another design choice is  on the storage type of the resulting file, which
 can be either human-readable (ASCII) or binary.
 Human-readable objects are convenient when dealing with small objects.
 Besides, they can easily edited or created with simple text editors, and at
@@ -319,7 +318,7 @@ least two formats have already been proposed in the literature: the
 Harwell/Boeing file format, and the MatrixMarket file format. Another common
 format, XML, is not considered here. The
 disadvantage of human-readable file formats is that their ASCII content is not
-space-efficient, and the I/O is typically much slower than binary I/O. To 
+space-efficient, and the I/O is typically much slower than binary I/O. To
 avoid these problems,
 one can consider binary serialization. In order to make the resulting files
 portable across different architectures, it is convenient to perform all the
@@ -355,8 +354,8 @@ the following auxiliary objects:
 \begin{verbatim}
 string FileName = "my-file.rsa";
 Epetra_Map* readMap;
-Epetra_CrsMatrix* readA; 
-Epetra_Vector* readx; 
+Epetra_CrsMatrix* readA;
+Epetra_Vector* readx;
 Epetra_Vector* readb;
 Epetra_Vector* readxexact;
 \end{verbatim}
@@ -378,8 +377,8 @@ Epetra_Vector xexact(map);     // distributed exact solution
 \end{verbatim}
 Finally, one can export from the original map to the final map as follows:
 \begin{verbatim}
-const Epetra_Map &OriginalMap = readA->RowMatrixRowMap() ; 
-assert (OriginalMap.SameAs(*readMap)); 
+const Epetra_Map &OriginalMap = readA->RowMatrixRowMap() ;
+assert (OriginalMap.SameAs(*readMap));
 Epetra_Export exporter(OriginalMap, map);
 
 x.Export(*readx, exporter, Add);
@@ -387,11 +386,11 @@ b.Export(*readb, exporter, Add);
 xexact.Export(*readxexact, exporter, Add);
 A.Export(*readA, exporter, Add);
 A.FillComplete();
-    
+
 // deletes memory
 delete readMap;
-delete readA; 
-delete readx; 
+delete readA;
+delete readx;
 delete readb;
 delete readxexact;
 \end{verbatim}
@@ -402,13 +401,13 @@ delete readxexact;
 % ============================================================================
 
 EpetraExt offers a variety of Matrix-Market I/O tools.
-The Matrix Market format is a simple, portable and human-readable (ASCII) 
+The Matrix Market format is a simple, portable and human-readable (ASCII)
 format. The
 specifications to create the corresponding ASCII files can be found at
 \begin{verbatim}
 http://math.nist.gov/MatrixMarket/
 \end{verbatim}
-where MATLAB files to perform I/O can be downloaded. 
+where MATLAB files to perform I/O can be downloaded.
 The header files to be includes are
 \begin{verbatim}
 #include "EpetraExt_BlockMapIn.h"
@@ -426,11 +425,11 @@ To show the usage, let us consider for example the following objects:
 Epetra_Map Map(10, 0, Comm);
 Epetra_MultiVector X(Map, 2);
 Epetra_MultiVector B(Map, 2);
-Epetra_CrsMatrix A(Copy, Map, 0);  // create a simple diagonal matrix  
-for (int i = 0 ; i < NumMyElements ; ++i)  
+Epetra_CrsMatrix A(Copy, Map, 0);  // create a simple diagonal matrix
+for (int i = 0 ; i < NumMyElements ; ++i)
 {
   int j = Map.GID(i);
-  double value = 1.0;    
+  double value = 1.0;
   EPETRA_CHK_ERR(A.InsertGlobalValues(j, 1, &value, &j));
 }
 A.FillComplete();
@@ -448,7 +447,7 @@ By using the \verb!mmread.m! MATLAB
 script available at the Matrix Market web site, one can type within MATLAB
 \begin{verbatim}
 >> X = mmread('X.mm');
->> A = mmread('A.mm')                                       
+>> A = mmread('A.mm')
 
 A =
 
@@ -564,7 +563,7 @@ essentially a multidimensional array of data elements, and a group is a
 structure for organizing objects in an HDF5 file. Using these two basic
 objects, one can create and store almost any kind of scientific data
 structure, such as images, arrays of vectors, and structured and unstructured
-grids. 
+grids.
 
 While building Trilinos, it should be enough to specify the location of the
 header files using \verb!--with-incdirs!, the location of the library using
@@ -586,7 +585,7 @@ data does not have to coincide with that used to write the data.
 
 The HDF5 class has the following limitations:
 \begin{enumerate}
-\item Objects stored in a file cannot be deleted; if you want to do that, you should read the 
+\item Objects stored in a file cannot be deleted; if you want to do that, you should read the
   content of the file, then create a new file and store on it the information to keep;
 \item It is not possible to overwrite distributed objects.
 \end{enumerate}
@@ -597,9 +596,9 @@ The HDF5 class has the following limitations:
 \label{sec:hdf5:example}
 % ============================================================================
 
-This section reports several examples of usage of the EpetraExt::HDF5 class. 
-First, one has to create an HDF5 class, then either {\tt Open()} 
-(for reading or appending to an already existing file) or 
+This section reports several examples of usage of the EpetraExt::HDF5 class.
+First, one has to create an HDF5 class, then either {\tt Open()}
+(for reading or appending to an already existing file) or
 {\tt Create()} (to generate a new file, or delete all the contents of an
                 already existing one) the file:
 \begin{verbatim}
@@ -635,7 +634,7 @@ the associated names differ. It is therefore possible, for example, to store
 all the Jacobians and the associated right-hand sides in a Newton-type
 procedures in the same file.
 
-An advantage of the HDF5 file format is that 
+An advantage of the HDF5 file format is that
 it is very easy to add "meta-data" to your data.
 HDF5 naturally stores
 datatype information and ``metadata'' describing the rank, dimension, and
@@ -647,7 +646,7 @@ parameter list used for the preconditioner or the nonlinear solver, the
 convergence history, can all be save in the same file;
 In fact, the HDF5 library itself can be used to define very general data
 formats; this class, instead, is only structured around the concept of {\sl
-  groups}. 
+  groups}.
 A {\sl group}
 is an entity, like for example a scalar value, an Epetra\_Map, or a
 Teuchos::ParameterList. Within each group, different datasets describe the
@@ -679,7 +678,7 @@ int NumGlobalDiagonals, MaxNumEntries;
 double NormOne, NormInf;
 
 HDF5.ReadCrsMatrixProperties(GroupName, NumGlobalRows, NumGlobalCols,
-                             NumGlobalNonzeros, NumGlobalDiagonals, 
+                             NumGlobalNonzeros, NumGlobalDiagonals,
                              MaxNumEntries, NormOne, NormInf);
 \end{verbatim}
 We refer to the up-to-date Doxygen documentation of the EpetraExt::HDF5 class
@@ -741,7 +740,7 @@ matrix, one can do as follows:
 HDF5.Write("matrix", "quadrature order", 3);
 \end{verbatim}
 In this case, dataset {\tt quadrature order} is associated to group {\tt
-  matrix}, which already contains an Epetra\_CrsMatrix object. 
+  matrix}, which already contains an Epetra\_CrsMatrix object.
 Alternatively, datasets can be assigned to a new group, in this case
 {\tt my parameters}:
 \begin{verbatim}
@@ -753,9 +752,9 @@ Another data type can be stored on file are arrays. The type of the array is
 specified using native HDF5 datatypes. Two important types are {\tt
   H5T\_NATIVE\_INT} and {\tt H5T\_NATIVE\_DOUBLE}. For example:
 \begin{verbatim}
-vector<int> iarray(3); 
+vector<int> iarray(3);
 iarray[0] = 0, iarray[1] = 1; iarray[2] = 2;
-HDF5.Write("my parameters", "int array", H5T_NATIVE_INT, 
+HDF5.Write("my parameters", "int array", H5T_NATIVE_INT,
            3, &iarray[0]);
 \end{verbatim}
 Note that all non-distributed data are supposed to be in the same state on all
@@ -770,7 +769,7 @@ Epetra\_CrsMatrix one can do as follows:
 Epetra_CrsMatrix* NewMatrix = 0;
 HDF5.Read("matrix", NewMatrix);
 \end{verbatim}
-Since no Epetra\_Map has been specified, 
+Since no Epetra\_Map has been specified,
 the newly created object {\tt NewMatrix} is based on a linear map. If the DomainMap() and RangeMap() are
 known and non-trivial, one can use
 \begin{verbatim}
@@ -780,19 +779,20 @@ Reading meta-data looks like:
 \begin{verbatim}
 HDF5.Read("my parameters", "latitude", new_latitude);
 HDF5.Read("my parameters", "longitude", new_longitude);
-HDF5.Read("my parameters", "int array", H5T_NATIVE_INT, 
+HDF5.Read("my parameters", "int array", H5T_NATIVE_INT,
           3, &new_iarray[0]);
 \end{verbatim}
 
 Class EpetraExt::HDF5 has few other public methods that can be used to
 manipulate directly the HDF5 file. Method
 {\tt CreateGroup()} creates the specified group in the file;
-{\tt IsContained()} returns {\tt true} is the specified group is already 
+{\tt IsContained()} returns {\tt true} is the specified group is already
 contained in the file;
 {\tt WriteComment()} allows to write any string as comment for a group.
 
-Finally, when an error arised, an EpetraExt::Exception object is thrown.
-Method Print() of the Exception class gives a description of what went wrong.
+Finally, when an error arises, an EpetraExt::Exception object is
+thrown. Method Print() of the Exception class gives a description of
+what went wrong.
 
 % ============================================================================
 \subsection{I/O for Distributed Arrays}
@@ -834,7 +834,7 @@ HDF5.Close();
 
 The build-in functions {\tt hdf5read, hdf5write, hdf5info} can be used to read
 or write EpetraExt-compatible HDF5 files from MATLAB. Figure \ref{fig:matlab}
-reports two sets of MATLAB commands. The first set shows how to read an 
+reports two sets of MATLAB commands. The first set shows how to read an
 Epetra\_CrsMatrix stored in the group {\tt matrix}, while the second present
 a typical procedure to write on file a MATLAB sparse matrix
 (in this case, a diagonal matrix of size 10). This matrix will be saved within
