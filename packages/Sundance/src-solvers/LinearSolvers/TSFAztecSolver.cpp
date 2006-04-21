@@ -7,11 +7,21 @@
 #include "ml_epetra_utils.h"
 #include "ml_epetra_operator.h"
 #include "ml_aztec_utils.h"
+#include "ml_MultiLevelPreconditioner.h"
 using namespace ML_Epetra;
+#else
+#error blarf
 #endif
 
 using namespace TSFExtended;
 using namespace Teuchos;
+
+static Time& mlSetupTimer() 
+{
+  static RefCountPtr<Time> rtn 
+    = TimeMonitor::getNewTimer("ML setup"); 
+  return *rtn;
+}
 
 
 AztecSolver::AztecSolver(const ParameterList& params)
@@ -130,7 +140,6 @@ AztecSolver::AztecSolver(const Teuchos::map<int, int>& aztecOptions,
     {
       useML_ = true;
     }
-
   if (aztecOptions.find(AZ_recursive_iterate) != aztecOptions.end()) 
     {
       aztec_recursive_iterate_ = true;
@@ -193,6 +202,7 @@ AztecSolver::AztecSolver(const Teuchos::map<int, int>& aztecOptions,
 void AztecSolver::setupML(Epetra_RowMatrix* F) const
 {
 #ifdef HAVE_ML
+  TimeMonitor timer(mlSetupTimer());
   ML* ml_handle;
   ML_Aggregate* agg_object;
 
@@ -256,14 +266,27 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
       setupML(&A);
     }
 
-
   AztecOO aztec(&A, x, b);
 
 
   aztec.SetAllAztecOptions((int*) &(options_[0]));
   aztec.SetAllAztecParams((double*) &(parameters_[0]));
 
-  aztec.CheckInput();
+  
+  //  ML_Epetra::MultiLevelPreconditioner * MLPrec = 0;
+  //  if (useML_)
+  //    {
+  //      MLPrec = new ML_Epetra::MultiLevelPreconditioner(A, true);
+  //    }
+
+  //  if (MLPrec != 0)
+  //  {
+  //    aztec.SetPrecOperator(MLPrec);
+  //  }
+  //else if (prec_.get() != 0)
+  //  aztec.SetPrecOperator(prec_.get());
+
+
   
   int maxIters = options_[AZ_max_iter];
   double tol = parameters_[AZ_tol];
@@ -273,6 +296,8 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
    * the parameter aztec_recursive_iterate to true */
   if (prec_.get() != 0)
     aztec.SetPrecOperator(prec_.get());
+
+  aztec.CheckInput();
   
   /* VEH/RST Parameter to check if we are calling aztec recursively.
    * If so, need to set parameter aztec_recursive_iterate to true. */

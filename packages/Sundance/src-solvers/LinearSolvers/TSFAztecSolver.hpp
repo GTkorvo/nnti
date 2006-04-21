@@ -42,6 +42,8 @@
 
 #include "AztecOO.h"
 
+#define HAVE_ML
+
 #define AZ_ml           101
 #define AZ_ml_levels    102
 #define AZ_ml_sym       103
