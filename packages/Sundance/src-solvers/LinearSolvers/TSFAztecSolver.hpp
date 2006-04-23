@@ -73,6 +73,9 @@ namespace TSFExtended
     /** */
     virtual ~AztecSolver(){;}
 
+    /** Change the convergence tolerance. */
+    virtual void updateTolerance(const double& tol);
+
     /** \name Printable interface */
     //@{
     /** Write to a stream  */

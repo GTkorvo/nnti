@@ -249,6 +249,11 @@ void AztecSolver::setupML(Epetra_RowMatrix* F) const
 #endif
 }
 
+void AztecSolver::updateTolerance(const double& tol)
+{
+  parameters_[AZ_tol] = tol;
+}
+
 SolverState<double> AztecSolver::solve(const LinearOperator<double>& op, 
                                        const Vector<double>& rhs, 
                                        Vector<double>& soln) const

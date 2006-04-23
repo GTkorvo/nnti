@@ -58,6 +58,9 @@ namespace TSFExtended
                                       const Vector<Scalar>& rhs,
                                       Vector<Scalar>& soln) const = 0;
 
+    /** Change the convergence tolerance. Default does nothing. */
+    virtual void updateTolerance(const double& tol) {;}
+
     /** */
     const ParameterList& parameters() const ;
 

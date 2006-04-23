@@ -57,6 +57,10 @@ namespace TSFExtended
     Scalar getTol() const 
     {return this->parameters().template get<double>(tolParam());}
 
+    /** Change the convergence tolerance. */
+    virtual void updateTolerance(const double& tol)
+    {this->parameters().template set<double>(tolParam(), tol);}
+
     /** */
     static string maxitersParam() {return "Max Iterations";}
 

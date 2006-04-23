@@ -59,8 +59,13 @@ namespace TSFExtended
     /** */
     LinearSolver(const RefCountPtr<LinearSolverBase<Scalar> >& smartPtr)
       : Handle<LinearSolverBase<Scalar> >(smartPtr) {;}
-    /** */
 
+
+    /** Change the convergence tolerance. Default does nothing. */
+    void updateTolerance(const double& tol) {this->ptr()->updateTolerance(tol);}
+
+
+    /** */
     SolverState<Scalar> solve(const LinearOperator<Scalar>& op,
                               const Vector<Scalar>& rhs,
                               Vector<Scalar>& soln) const ;

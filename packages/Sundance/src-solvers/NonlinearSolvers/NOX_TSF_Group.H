@@ -34,6 +34,7 @@
 #define NOX_TSF_GROUP_H
 
 #include "NOX_Abstract_Group.H"	// base class
+#include "NOX_Parameter_List.H"	// base class
 
 #include "NOX_Common.H"             // class data element (string)
 #include "NOX_TSF_Vector.H"	    // class data element
@@ -242,7 +243,7 @@ namespace NOX {
       //@}
 
       //! Linear solver that will be used to solve J*step = resid
-      TSFExtended::LinearSolver<double> solver;
+      mutable TSFExtended::LinearSolver<double> solver;
 
       //! Linear solver that will be used to solve J*step = resid
       TSFExtended::LinearOperator<double> jacobian;

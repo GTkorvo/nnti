@@ -348,6 +348,13 @@ NOX::TSF::Group::computeNewton(NOX::Parameter::List& p)
           cerr << "ERROR: NOX::Example::Group::computeNewton() - invalid Jacobian" << endl;
           throw "NOX Error";
         }
+      cerr << "newton params" << endl;
+      p.print(cerr);
+      if (p.isParameter("Tolerance"))
+        {
+          double tol = p.getParameter("Tolerance", tol);
+          solver.updateTolerance(tol);
+        }
 
       NOX::Abstract::Group::ReturnType status 
         = applyJacobianInverse(p, fVector, newtonVector);
@@ -442,8 +449,14 @@ NOX::TSF::Group::applyJacobianInverse(NOX::Parameter::List& p,
     throw "NOX Error";
 
   }
- 
-  if (verbosity() > TSFExtended::VerbMedium)
+  cerr << "newton params" << endl;
+  p.print(cerr);
+  if (p.isParameter("Tolerance"))
+    {
+      double tol = p.getParameter("Tolerance", tol);
+      solver.updateTolerance(tol);
+    }
+  if (verbosity() > TSFExtended::VerbHigh)
     {
       cerr << "---------------- applying J^-1 ------------------" << endl;
       cerr << "J=" << endl;
