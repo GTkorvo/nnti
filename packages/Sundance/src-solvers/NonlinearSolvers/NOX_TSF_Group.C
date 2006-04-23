@@ -348,8 +348,7 @@ NOX::TSF::Group::computeNewton(NOX::Parameter::List& p)
           cerr << "ERROR: NOX::Example::Group::computeNewton() - invalid Jacobian" << endl;
           throw "NOX Error";
         }
-      cerr << "newton params" << endl;
-      p.print(cerr);
+
       if (p.isParameter("Tolerance"))
         {
           double tol = p.getParameter("Tolerance", tol);
