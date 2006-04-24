@@ -30,6 +30,9 @@
 #ifndef THYRA_LOWSFACTORYBUILDER_HPP
 #define THYRA_LOWSFACTORYBUILDER_HPP
 
+#include "TSFConfigDefs.hpp"
+
+#ifndef TRILINOS_6
 #include "Thyra_LinearOpWithSolveFactoryBase.hpp"
 #include "Teuchos_ParameterList.hpp"
 
@@ -51,5 +54,6 @@ namespace Thyra
   };
 }  
 
+#endif
 
 #endif // THYRA_LOWSFACTORYBUILDER_HPP

@@ -28,6 +28,9 @@
 */
 
 #include "Thyra_MLPreconditionerFactory.hpp"
+
+#ifndef TRILINOS_6
+
 #include "Thyra_EpetraOperatorViewExtractorStd.hpp"
 #include "Thyra_EpetraLinearOp.hpp"
 #include "Thyra_DefaultPreconditioner.hpp"
@@ -337,3 +340,5 @@ RefCountPtr<ParameterList> MLPreconditionerFactory
     }
   return rtn;
 }
+
+#endif

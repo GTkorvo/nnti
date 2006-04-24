@@ -1,4 +1,7 @@
 #include "Thyra_LOWSFactoryBuilder.hpp"
+
+#ifndef TRILINOS_6
+
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_AmesosLinearOpWithSolveFactory.hpp"
 #include "Thyra_BelosLinearOpWithSolveFactory.hpp"
@@ -75,3 +78,6 @@ LOWSFactoryBuilder::createLOWSFactory(const ParameterList& params)
   return rtn;
   
 }
+
+
+#endif

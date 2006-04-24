@@ -30,6 +30,10 @@
 #ifndef THYRA_ML_PRECONDITIONER_FACTORY_DECL_HPP
 #define THYRA_ML_PRECONDITIONER_FACTORY_DECL_HPP
 
+#include "TSFConfigDefs.hpp"
+
+#ifndef TRILINOS_6
+
 #include "Thyra_PreconditionerFactoryBase.hpp"
 #include "Thyra_EpetraOperatorViewExtractorBase.hpp"
 #include "Teuchos_StandardCompositionMacros.hpp"
@@ -150,4 +154,5 @@ private:
 
 } // namespace Thyra
 
+#endif
 #endif // THYRA_ML_PRECONDITIONER_FACTORY_DECL_HPP

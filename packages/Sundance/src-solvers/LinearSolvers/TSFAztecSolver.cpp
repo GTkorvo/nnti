@@ -53,7 +53,7 @@ AztecSolver::AztecSolver(const ParameterList& params)
 
       if (name=="ML Verbosity")
         {
-          mlVerb_ = getParameter<int>(params, "ML Verbosity");
+          mlVerb_ = params.get<int>("ML Verbosity");
           continue;
         }
       //   cerr << "Found parameter " << name << " = " << entry << endl;
