@@ -142,6 +142,7 @@ OPERATORS_H = \
 OPERATORS =
 
 LINEARSOLVERS_H = \
+	$(srcdir)/LinearSolvers/Thyra_LOWSFactoryBuilder.hpp \
 	$(srcdir)/LinearSolvers/TSFAmesosSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFAztecSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFAztecSolver.hpp \
@@ -158,9 +159,11 @@ LINEARSOLVERS_H = \
 	$(srcdir)/LinearSolvers/TSFSolverState.hpp 
 
 LINEARSOLVERS = \
+	$(srcdir)/LinearSolvers/Thyra_LOWSFactoryBuilder.cpp \
 	$(srcdir)/LinearSolvers/TSFAmesosSolver.cpp \
 	$(srcdir)/LinearSolvers/TSFAztecSolver.cpp \
 	$(srcdir)/LinearSolvers/TSFLinearSolverBuilder.cpp 
+
 
 NONLINEARSOLVERS_H = \
 	$(srcdir)/NonlinearSolvers/NOX_StatusTest_SafeCombo.H \
@@ -215,6 +218,7 @@ ADAPTORS = \
 
 PRECONDITIONERS_H = \
 	$(srcdir)/Preconditioners/TSFGenericLeftPreconditioner.hpp \
+	$(srcdir)/Preconditioners/Thyra_MLPreconditionerFactory.hpp \
 	$(srcdir)/Preconditioners/TSFGenericRightPreconditioner.hpp \
 	$(srcdir)/Preconditioners/TSFILUKPreconditionerFactory.hpp \
 	$(srcdir)/Preconditioners/TSFPreconditioner.hpp \
@@ -223,8 +227,8 @@ PRECONDITIONERS_H = \
 	$(srcdir)/Preconditioners/TSFPreconditionerFactoryBase.hpp 
 
 
-PRECONDITIONERS = 
-
+PRECONDITIONERS = \
+	$(srcdir)/Preconditioners/Thyra_MLPreconditionerFactory.cpp 
 
 #
 # Read macros that are common to building source and tests. We define these

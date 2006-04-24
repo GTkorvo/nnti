@@ -448,8 +448,6 @@ NOX::TSF::Group::applyJacobianInverse(NOX::Parameter::List& p,
     throw "NOX Error";
 
   }
-  cerr << "newton params" << endl;
-  p.print(cerr);
   if (p.isParameter("Tolerance"))
     {
       double tol = p.getParameter("Tolerance", tol);

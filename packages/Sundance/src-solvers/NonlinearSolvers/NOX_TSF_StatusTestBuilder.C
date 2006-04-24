@@ -64,8 +64,6 @@ StatusTestBuilder::makeStatusTest(const ParameterList& params)
     {
       dxTol = getParameter<double>(testSublist, "Step Tolerance");
     }
-  cout << "func tol = " << fTol << endl;
-  cout << "step tol = " << dxTol << endl;
   if (testSublist.isParameter("Max Iterations"))
     {
       maxiters = getParameter<int>(testSublist, "Max Iterations");

@@ -137,6 +137,9 @@ namespace TSFExtended
     /** damping factor for ML */
     double mlDamping_;
 
+    /** verbosity for ML */
+    int mlVerb_;
+
     /** ML preconditioner object */
     mutable RefCountPtr<Epetra_Operator> prec_;
 

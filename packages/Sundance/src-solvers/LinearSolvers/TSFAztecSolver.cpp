@@ -34,6 +34,7 @@ AztecSolver::AztecSolver(const ParameterList& params)
     mlSymmetric_(false),
     mlUseDamping_(false),
     mlDamping_(0.0),
+    mlVerb_(8),
     prec_(),
     aztec_status(AZ_STATUS_SIZE),
     aztec_proc_config(AZ_PROC_SIZE)
@@ -49,6 +50,12 @@ AztecSolver::AztecSolver(const ParameterList& params)
     {
       const string& name = params.name(iter);
       const ParameterEntry& entry = params.entry(iter);
+
+      if (name=="ML Verbosity")
+        {
+          mlVerb_ = getParameter<int>(params, "ML Verbosity");
+          continue;
+        }
       //   cerr << "Found parameter " << name << " = " << entry << endl;
       /* Check that the param name appears in the table of Aztec params */
       if (paramMap().find(name) == paramMap().end()) continue;
@@ -132,6 +139,7 @@ AztecSolver::AztecSolver(const Teuchos::map<int, int>& aztecOptions,
     mlSymmetric_(false),
     mlUseDamping_(false),
     mlDamping_(0.0),
+    mlVerb_(8),
     prec_(),
     aztec_status(AZ_STATUS_SIZE),
     aztec_proc_config(AZ_PROC_SIZE)
@@ -206,7 +214,7 @@ void AztecSolver::setupML(Epetra_RowMatrix* F) const
   ML* ml_handle;
   ML_Aggregate* agg_object;
 
-  ML_Set_PrintLevel(10);
+  ML_Set_PrintLevel(mlVerb_);
   ML_Create(&ml_handle, mlLevels_);
   
   EpetraMatrix2MLMatrix(ml_handle, 0, F);
