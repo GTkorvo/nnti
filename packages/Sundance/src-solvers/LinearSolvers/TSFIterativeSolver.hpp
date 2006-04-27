@@ -59,7 +59,7 @@ namespace TSFExtended
 
     /** Change the convergence tolerance. */
     virtual void updateTolerance(const double& tol)
-    {this->parameters().template set<double>(tolParam(), tol);}
+    {getParameter<double>(this->parameters(), tolParam())=tol;}
 
     /** */
     static string maxitersParam() {return "Max Iterations";}
