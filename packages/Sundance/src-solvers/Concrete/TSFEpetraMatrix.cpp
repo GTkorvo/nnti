@@ -125,15 +125,9 @@ void EpetraMatrix::euclideanApply(
                                   ,const double                     beta
                                   ) const
 {
+  using Thyra::NOTRANS;
+  using Thyra::TRANS;
   const Thyra::ETransp real_M_trans = real_trans(M_trans);
-#ifdef _DEBUG
-	// ToDo: Assert vector spaces!
-	TEST_FOR_EXCEPTION(
-		real_M_trans==TRANS && adjointSupport_==EPETRA_OP_ADJOINT_UNSUPPORTED
-		,Exceptions::OpNotSupported
-		,"EpetraLinearOp::apply(...): *this was informed that adjoints are not supported when initialized." 
-		);
-#endif
 	//
 	// Get Epetra_MultiVector objects for the arguments
 	//

@@ -109,7 +109,7 @@ namespace TSFExtended
                     const VectorSpace<Scalar>& range,
                     const VectorType<Scalar>& vecType)
     : vecType_(vecType), domain_(domain), range_(range)
-  {};
+  {}
 
 }
 
