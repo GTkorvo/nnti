@@ -77,11 +77,12 @@ Albuquerque, NM 87185-1110 \\
 \begin{abstract}
 We describe the design and usage of the serialization and deserialization
 tools contained in the EpetraExt package of
-Trilinos~\cite{trilinos-home-page}. This tools allows to perform I/O for most
+Trilinos~\cite{trilinos-home-page}. These offer (parallel) I/O for most
 of the distributed linear algebra objects defined by the Epetra package. A
 reader for the popular Harwell/Boeing format and a collection of readers and
 writers for the MatrixMarket format are presented. The report also describe a
-binary, portable and parallel class, based on the HDF5 file format.
+binary, portable and parallel class, based on the HDF5 file format. Finally,
+  an XML-compatible file format is described. 
 \end{abstract}
 
 \SANDmain
@@ -177,28 +178,29 @@ process is sometimes referred to as {\sl pointer unswizzling}.
 
 \begin{table}
 \begin{center}
-\begin{tabular}{|l | c | c | c |}
+\begin{tabular}{|l | c | c | c | c |}
 \hline
-object type           & H/B       & MM        & HDF5 \\
+object type           & H/B       & MM        & HDF5  & XML\\
 \hline
-Epetra\_BlockMap      & O  & I/O & I/O \\
-Epetra\_Map           & O  & I/O & I/O \\
-Epetra\_IntVector     & -- & --  & I/O \\
-Epetra\_Vector        & O  & I/O & I/O \\
-Epetra\_MultiVector   & O  & I/O & I/O \\
-Epetra\_CrsGraph      & -- & --  & I/O \\
-Epetra\_RowMatrix     & O  &   O &   O \\
-Epetra\_CrsMatrix     & O  & I/O & I/O \\
-Epetra\_VbrMatrix     & O  &   O &   O \\
-Teuchos::ParameterList& -- & --  & I/O \\
-int                   & -- & --  & I/O \\
-double                & -- & --  & I/O \\
-void* array           & -- & --  & I/O \\
+Epetra\_BlockMap      & O  & I/O & I/O & --  \\
+Epetra\_Map           & O  & I/O & I/O & I/O \\
+Epetra\_IntVector     & -- & --  & I/O & --  \\
+Epetra\_Vector        & O  & I/O & I/O & --  \\
+Epetra\_MultiVector   & O  & I/O & I/O & I/O \\
+Epetra\_CrsGraph      & -- & --  & I/O & I/O \\
+Epetra\_RowMatrix     & O  &   O &   O &   O \\
+Epetra\_CrsMatrix     & O  & I/O & I/O & I/O \\
+Epetra\_VbrMatrix     & O  &   O &   O &   O \\
+Teuchos::ParameterList& -- & --  & I/O & I/O \\
+int                   & -- & --  & I/O & I/O \\
+double                & -- & --  & I/O & I/O \\
+void* array           & -- & --  & I/O &  -- \\
 \hline
 \end{tabular}
 \caption{List of objects supported by the various I/O tools. ``H/B'' refers to
-  the Harwell/Boeing format, ``MM'' to the MatrixMarket format, and ``HDF5''
-    to the HDF5 format. `I/O' means that both input and output are supported,
+  the Harwell/Boeing format, ``MM'' to the MatrixMarket format, ``HDF5''
+    to the HDF5 format, and ``XML'' to the XML-compatible format. 
+    `I/O' means that both input and output are supported,
        while `O' that only output, `--' means no support.}
 \label{tab:supported}
 \end{center}
@@ -212,7 +214,8 @@ in Section~\ref{sec:design}.
 Section~\ref{sec:hb} describes the
 Harwell/Boeing I/O; section~\ref{sec:mm} presents the MatrixMarket I/O;
 section~\ref{sec:hdf5} outlines the design and the implementation of the
-EpetraExt::HDF5 I/O.
+EpetraExt::HDF5 I/O. Finally, section~\ref{sec:xml} outlines the
+XML-compatible format.
 
 % ============================================================================
 \section{Design Overview}
@@ -879,6 +882,160 @@ The use of {\tt double()} is required by sparse, which does not accept {\tt
   int32} data.  }
 \label{fig:matlab}
 \end{sidewaystable}
+
+% ============================================================================
+\section{XML I/O}
+\label{sec:xml}
+% ============================================================================
+
+We now describe the XML-compatible file format. XML is a specification of the
+the World Wide Web Consortium (W3C) for document representation. Initially, it
+was designed to represent text documents. Technically, XML is a meta-language,
+that is, a language that describes how to specify languages. 
+XML files are made up by {\sl tags} that can be arbitrarily defined. Tags are
+defined by {\sl tagsets} called document type definitions (DTDs). DTDs can be used
+to represent any kind of document; here, we investigate how to use them to
+store Trilinos objects.
+
+XML I/O in EpetraExt is performed by classes XMLWriter and XMLReader. This
+latter class requires Teuchos to be configured with the option 
+\verb!--enable-teuchos-expat!.
+
+\smallskip
+
+Writing objects goes as follows. Let \verb!Map!, \verb!Matrix!, \verb!LHS! and
+\verb!RHS! an 
+Epetra\_Map, Epetra\_CrsMatrix, and two Epetra\_MultiVector's, respectively.
+To write these objects to file \verb!data.xml!, one first has to define an
+XMLWriter object,
+\begin{verbatim}
+EpetraExt::XMLWriter XMLWriter(Comm, "data.xml");
+\end{verbatim}
+then open the file using \verb!MyProblem! as label:
+\begin{verbatim}
+XMLWriter.Create("MyProblem");
+\end{verbatim}
+Writing objects simply goes as
+\begin{verbatim}
+XMLWriter.Write("MyMap", Map);
+XMLWriter.Write("MyMatrix", Matrix);
+XMLWriter.Write("MyLHS", LHS);
+XMLWriter.Write("MyRHS", RHS);
+\end{verbatim}
+A Teuchos::ParameterList, a \verb!string!, and a \verb!vector<string>! can be written as
+\begin{verbatim}
+XMLWriter.Write("MyParameters", List);
+XMLWriter.Write("Author", "myself and others");
+vector<string> Content;
+Content.push_back("first line");
+Content.push_back("second line");
+XMLWriter.Write("MyContent", Content);
+\end{verbatim}
+Note that all serial objects (strings and Teuchos::ParameterList's) are
+written by processor 0 only.
+
+The output file is closed using
+\begin{verbatim}
+XMLWriter.Close();
+\end{verbatim}
+File \verb!data.xml! is reported in Figure~\ref{fig:xml}.
+
+\begin{table}
+\begin{tabular}{| c |}
+\hline
+\small
+\begin{minipage}{16cm}
+\begin{verbatim}
+
+<ObjectCollection Label="MyProblem">
+<Text Label="Author">
+myself and others
+</Text>
+<Text Label="Date">
+May 2006
+</Text>
+<Map Label="MyMap" NumElements="4" IndexBase="0" NumProc="1" 
+ ElementsOnProc0="4">
+<Proc ID="0">
+0
+1
+2
+3
+</Proc>
+</Map>
+<PointMatrix Label="MyMatrix" Rows="4" Columns="4" Nonzeros="4" 
+ Type="double" StartingIndex="0">
+0 0 1
+1 1 1
+2 2 1
+3 3 1
+</PointMatrix>
+<MultiVector Label="MyLHS" Length="4" NumVectors="2" Type="double">
+-0.232996 -0.893077 
+0.0388327 0.0594004 
+0.661931 0.342299 
+-0.930856 -0.984604 
+</MultiVector>
+<MultiVector Label="MyRHS" Length="4" NumVectors="2" Type="double">
+0 0 
+0 0 
+0 0 
+0 0 
+</MultiVector>
+<Text Label="MyContent">
+This is an example of description
+The description is as long as desired,
+just put it in a vector of strings.
+</Text>
+<List Label="MyParameters">
+<ParameterList>
+<Parameter name="double parameter" type="double" value="10"/>
+<Parameter name="int parameter" type="int" value="10"/>
+<Parameter name="string parameter" type="string" value="string"/>
+</ParameterList>
+</List>
+</ObjectCollection>
+
+\end{verbatim}
+\end{minipage} \\
+\hline
+\end{tabular}
+\caption{Example of file format using XML.}
+\label{fig:xml}
+\end{table}
+
+Reading objects is even easier. First, one has to define an XMLReader object
+and a set of pointers for the objects to be read,
+\begin{verbatim}
+EpetraExt::XMLReader XMLReader(Comm, "data.xml");
+Epetra_Map* MyMap;
+Epetra_CrsMatrix* MyMatrix;
+Epetra_MultiVector* MyLHS;
+Epetra_MultiVector* MyRHS;
+Teuchos::ParameterList MyParameters;
+vector<string> Author;
+vector<string> Date;
+vector<string> MyContent;
+\end{verbatim}
+Reading simply goes as follows:
+\begin{verbatim}
+XMLReader.Read("Author", Author);
+XMLReader.Read("Date", Date);
+XMLReader.Read("MyMap", MyMap);
+XMLReader.Read("MyMatrix", MyMatrix);
+XMLReader.Read("MyLHS", MyLHS);
+XMLReader.Read("MyRHS", MyRHS);
+XMLReader.Read("MyContent", MyContent);
+XMLReader.Read("MyParameters", MyParameters);
+\end{verbatim} 
+If an object is not found, the null pointer is returned.
+All the created objects must be deleted from the user using \c delete. 
+
+The XML file format can be used in serial and parallel environments. While
+Epetra\_Map objects can be read only when  using the same number of processors
+used for writing, all the other distributed objects can be read with any
+number of processors.  Note that the reader for Epetra\_MultiVector,
+Epetra\_CrsGraph and Epetra\_CrsMatrix assumes a linear distribution. 
 
 % ============================================================================
 \section*{Acknowledgments}
