@@ -337,11 +337,7 @@ void EpetraMatrix::print(ostream& os) const
 {
   int nProc = MPISession::getNProc();
   int rank = MPISession::getRank();
-  for (int i=0; i<nProc; i++)
-    {
-      MPIComm::world().synchronize();
-      if (i==rank) crsMatrix()->Print(os);
-    }
+  crsMatrix()->Print(os);
 }
 
 string EpetraMatrix::description() const 

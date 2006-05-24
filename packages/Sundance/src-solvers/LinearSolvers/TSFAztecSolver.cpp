@@ -1,6 +1,8 @@
 #include "TSFAztecSolver.hpp"
 #include "TSFEpetraVector.hpp"
 #include "TSFEpetraMatrix.hpp"
+#include "Ifpack_Preconditioner.h"
+#include "Ifpack.h"
 
 #ifdef HAVE_ML
 #include "ml_include.h"
@@ -16,30 +18,22 @@ using namespace ML_Epetra;
 using namespace TSFExtended;
 using namespace Teuchos;
 
-static Time& mlSetupTimer() 
-{
-  static RefCountPtr<Time> rtn 
-    = TimeMonitor::getNewTimer("ML setup"); 
-  return *rtn;
-}
-
 
 AztecSolver::AztecSolver(const ParameterList& params)
   : LinearSolverBase<double>(ParameterList()),
 		options_(AZ_OPTIONS_SIZE),
 		parameters_(AZ_PARAMS_SIZE),
     useML_(false),
+    useIfpack_(false),
     aztec_recursive_iterate_(false),
-    mlLevels_(2),
-    mlSymmetric_(false),
-    mlUseDamping_(false),
-    mlDamping_(0.0),
-    mlVerb_(8),
+    precParams_(),
     prec_(),
     aztec_status(AZ_STATUS_SIZE),
     aztec_proc_config(AZ_PROC_SIZE)
 {
   initParamMap();
+
+  cerr << "parameters = " << params << endl;
 
   /* initialize the options and parameters with Aztec's defaults */
 	AZ_defaults((int*) &(options_[0]), (double*) &(parameters_[0]));
@@ -51,52 +45,37 @@ AztecSolver::AztecSolver(const ParameterList& params)
       const string& name = params.name(iter);
       const ParameterEntry& entry = params.entry(iter);
 
-      if (name=="ML Verbosity")
+      if (entry.isList())
         {
-          mlVerb_ = params.get<int>("ML Verbosity");
-          continue;
+          if (name=="Preconditioner")
+            {
+              precParams_ = params.sublist("Preconditioner");
+              TEST_FOR_EXCEPTION(!precParams_.isParameter("Type"), runtime_error,
+                                 "preconditioner type not specified in parameter list "
+                                 << precParams_);
+              if (precParams_.get<string>("Type") == "ML")
+                {
+                  useML_ = true;
+                }
+              else if (precParams_.get<string>("Type") == "Ifpack")
+                {
+                  useIfpack_ = true;
+                }
+              cerr << "precond = " << precParams_ << endl;
+              continue;
+            }
         }
-      //   cerr << "Found parameter " << name << " = " << entry << endl;
+
       /* Check that the param name appears in the table of Aztec params */
       if (paramMap().find(name) == paramMap().end()) continue;
 
       /* find the integer ID used by Aztec to identify this parameter */
       int aztecCode = paramMap()[name];
 
-      /* ML parameters aren't handled through the standard Aztec
-       * params system. Check for an ML option, and if found, handle
-       * it specially. */
-      if (aztecCode == AZ_precond && getValue<string>(entry)=="ML")
-        {
-          useML_ = true;
-          continue;
-        }
-      if (aztecCode == AZ_ml_levels)
-        {
-          mlLevels_ = getValue<int>(entry);
-          continue;
-        }
-      if (aztecCode == AZ_ml_sym)
-        {
-          mlSymmetric_ = getValue<bool>(entry);
-          continue;
-        }
-      if (aztecCode == AZ_ml_damping)
-        {
-          mlUseDamping_ = true;
-          mlDamping_ = getValue<double>(entry);
-          continue;
-        }
-      if (aztecCode == AZ_recursive_iterate)
-        {
-          aztec_recursive_iterate_ = getValue<bool>(entry);
-          continue;
-        }
-      
-      
+      cout << "name=" << name << " code=" << aztecCode << " val=" << entry
+           << endl;
       
 
-      
 
       /* We now need to figure out what to do with the value of the
        * parameter. If it is a string, then it corresponds to a
@@ -130,132 +109,46 @@ AztecSolver::AztecSolver(const ParameterList& params)
 
 AztecSolver::AztecSolver(const Teuchos::map<int, int>& aztecOptions,
                          const Teuchos::map<int, double>& aztecParameters)
-	: LinearSolverBase<double>(ParameterList()),
-		options_(AZ_OPTIONS_SIZE),
-		parameters_(AZ_PARAMS_SIZE),
+  : LinearSolverBase<double>(ParameterList()),
+    options_(AZ_OPTIONS_SIZE),
+    parameters_(AZ_PARAMS_SIZE),
     useML_(false),
+    useIfpack_(false),
     aztec_recursive_iterate_(false),
-    mlLevels_(0),
-    mlSymmetric_(false),
-    mlUseDamping_(false),
-    mlDamping_(0.0),
-    mlVerb_(8),
+    precParams_(),
     prec_(),
     aztec_status(AZ_STATUS_SIZE),
     aztec_proc_config(AZ_PROC_SIZE)
 {
-  if (aztecOptions.find(AZ_ml) != aztecOptions.end()) 
-    {
-      useML_ = true;
-    }
-  if (aztecOptions.find(AZ_recursive_iterate) != aztecOptions.end()) 
+  if (aztecOptions.find(AZ_recursive_iterate) != aztecOptions.end())
     {
       aztec_recursive_iterate_ = true;
     }
 
-#ifndef HAVE_ML
-  TEST_FOR_EXCEPTION(useML_==true, runtime_error,
-                     "ML is not supported in this build of TSF. "
-                     "To use ML, reconfigure Trilinos with --enable-ml");
-#endif
+  /* initialize the options and parameters with Aztec's defaults */
+  AZ_defaults((int*) &(options_[0]), (double*) &(parameters_[0]));
 
-  if (aztecOptions.find(AZ_ml_levels) != aztecOptions.end()) 
-    {
-      mlLevels_ = aztecOptions.find(AZ_ml_levels)->second;
-    }
-  else
-    {
-      mlLevels_ = 2;
-    }
-  
-  if (aztecOptions.find(AZ_ml_sym) != aztecOptions.end()) 
-    {
-      mlSymmetric_ = true;
-    }
-
-  if (aztecOptions.find(AZ_ml_damping) != aztecOptions.end()) 
-    {
-      mlUseDamping_ = true;
-      mlDamping_ = aztecParameters.find(AZ_ml_damping)->second;
-    }
-
-  
-	/* initialize the options and parameters with Aztec's defaults */
-	AZ_defaults((int*) &(options_[0]), (double*) &(parameters_[0]));
-
-	/* set user-specified options  */
+  /* set user-specified options  */
   map<int, int>::const_iterator opIter;
   for (opIter=aztecOptions.begin(); opIter!=aztecOptions.end(); opIter++)
-		{
+    {
       int opKey = opIter->first;
+      if (opKey==AZ_recursive_iterate) continue;
       int opValue = opIter->second;
-			options_[opKey] = opValue;
-		}
-	
-	/* set user-specified params  */
+      options_[opKey] = opValue;
+    }
+
+  /* set user-specified params  */
   map<int, double>::const_iterator parIter;
-  for (parIter=aztecParameters.begin(); parIter!=aztecParameters.end(); 
+  for (parIter=aztecParameters.begin(); parIter!=aztecParameters.end();
        parIter++)
-		{
+    {
       int parKey = parIter->first;
       double parValue = parIter->second;
-			parameters_[parKey] = parValue;
-		}
-	
+      parameters_[parKey] = parValue;
+    }
 }
 
-
-
-
-void AztecSolver::setupML(Epetra_RowMatrix* F) const
-{
-#ifdef HAVE_ML
-  TimeMonitor timer(mlSetupTimer());
-  ML* ml_handle;
-  ML_Aggregate* agg_object;
-
-  ML_Set_PrintLevel(mlVerb_);
-  ML_Create(&ml_handle, mlLevels_);
-  
-  EpetraMatrix2MLMatrix(ml_handle, 0, F);
-
-  ML_Aggregate_Create(&agg_object);
-  ML_Aggregate_Set_MaxCoarseSize(agg_object,30);
-  ML_Aggregate_Set_Threshold(agg_object,0.0);
-
-  if (mlSymmetric_ != true) 
-    {
-      ML_Aggregate_Set_DampingFactor(agg_object,0.);
-    }
-  mlLevels_ = ML_Gen_MGHierarchy_UsingAggregation(ml_handle, 0,
-                                                  ML_INCREASING, agg_object);
-  if (mlSymmetric_ != true) 
-    {
-#ifdef EPETRA_MPI
-      AZ_set_proc_config(&(aztec_proc_config[0]), MPI_COMM_WORLD);
-#else
-      AZ_set_proc_config(&(aztec_proc_config[0]), AZ_NOT_MPI);
-#endif 
-      
-      ML_Gen_Smoother_SymGaussSeidel(ml_handle, ML_ALL_LEVELS, ML_BOTH, 1, 1);
-    }
-  else 
-    {
-      ML_Gen_Smoother_SymGaussSeidel(ml_handle, ML_ALL_LEVELS, ML_BOTH, 1, 1);
-    }
-  
-  ML_Gen_Solver    (ml_handle, ML_MGV, 0, mlLevels_-1);
-  
-  MultiLevelOperator  *MLop = new MultiLevelOperator(ml_handle,
-                                                     (F->OperatorDomainMap().Comm()),
-                                                     (F->OperatorDomainMap()),
-                                                     (F->OperatorDomainMap()));
-  MLop->SetOwnership(true);
-  ML_Aggregate_Destroy(&agg_object);
-
-  prec_ = RefCountPtr<Epetra_Operator>(MLop, true);
-#endif
-}
 
 void AztecSolver::updateTolerance(const double& tol)
 {
@@ -266,6 +159,9 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
                                        const Vector<double>& rhs, 
                                        Vector<double>& soln) const
 {
+  RefCountPtr<MultiLevelPreconditioner> mlPrec;
+  RefCountPtr<Ifpack_Preconditioner> ifpackPrec;
+
 	TSFExtended::Vector<double> bCopy = rhs.copy();
 	TSFExtended::Vector<double> xCopy = rhs.copy();
 
@@ -274,11 +170,6 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
 
 	Epetra_CrsMatrix& A = EpetraMatrix::getConcrete(op);
 
-  if (useML_) 
-    {
-      setupML(&A);
-    }
-
   AztecOO aztec(&A, x, b);
 
 
@@ -286,30 +177,49 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   aztec.SetAllAztecParams((double*) &(parameters_[0]));
 
   
-  //  ML_Epetra::MultiLevelPreconditioner * MLPrec = 0;
-  //  if (useML_)
-  //    {
-  //      MLPrec = new ML_Epetra::MultiLevelPreconditioner(A, true);
-  //    }
-
-  //  if (MLPrec != 0)
-  //  {
-  //    aztec.SetPrecOperator(MLPrec);
-  //  }
-  //else if (prec_.get() != 0)
-  //  aztec.SetPrecOperator(prec_.get());
-
-
-  
   int maxIters = options_[AZ_max_iter];
   double tol = parameters_[AZ_tol];
-  
-  /* VEH/RST - check if we are using an Epetra_Operator as 
-   * a preconditioner. Note that in this case user must set
-   * the parameter aztec_recursive_iterate to true */
-  if (prec_.get() != 0)
-    aztec.SetPrecOperator(prec_.get());
 
+
+  if (useML_)
+    {
+      string precType = precParams_.get<string>("Problem Type");
+      ParameterList mlParams;
+      ML_Epetra::SetDefaults(precType, mlParams);
+      //#ifndef TRILINOS_6
+      //      mlParams.setParameters(precParams_.sublist("ML Settings"));
+      //#else
+      ParameterList::ConstIterator iter;
+      ParameterList mlSettings = precParams_.sublist("ML Settings");
+      for (iter=mlSettings.begin(); iter!=mlSettings.end(); ++iter)
+        {
+          const string& name = mlSettings.name(iter);
+          const ParameterEntry& entry = mlSettings.entry(iter);
+          mlParams.setEntry(name, entry);
+        }
+      //#endif
+      cout << "params going into ML = " << mlParams << endl;
+      mlPrec = rcp(new ML_Epetra::MultiLevelPreconditioner(A, mlParams));
+      prec_ = rcp_dynamic_cast<Epetra_Operator>(mlPrec);
+    }
+  else if (useIfpack_)
+    {
+      Ifpack precFactory;
+      int overlap = precParams_.get<int>("Overlap");
+      string precType = precParams_.get<string>("Prec Type");
+
+      ParameterList ifpackParams = precParams_.sublist("Ifpack Settings");
+
+      ifpackPrec = rcp(precFactory.Create(precType, &A, overlap));
+      prec_ = rcp_dynamic_cast<Epetra_Operator>(ifpackPrec);
+      ifpackPrec->SetParameters(ifpackParams);
+      ifpackPrec->Initialize();
+      ifpackPrec->Compute();
+    }
+  
+  
+  if (prec_.get() != 0) aztec.SetPrecOperator(prec_.get());  
+  
   aztec.CheckInput();
   
   /* VEH/RST Parameter to check if we are calling aztec recursively.
@@ -377,11 +287,7 @@ void AztecSolver::initParamMap()
       paramMap()["Neumann Series"]=AZ_Neumann;
       paramMap()["Symmetric Gauss-Seidel"]=AZ_sym_GS;
       paramMap()["Least-Squares Polynomial"]=AZ_ls;
-      paramMap()["Algebraic Multigrid"]=AZ_ml;
-      paramMap()["ML Levels"]=AZ_ml_levels;
-      paramMap()["ML Damping"]=AZ_ml_damping;
       paramMap()["Recursive Iterate"]=AZ_recursive_iterate;
-      paramMap()["ML Symmetric"]=AZ_ml_sym;
       paramMap()["Domain Decomposition"]=AZ_dom_decomp;
       paramMap()["Subdomain Solver"]=AZ_subdomain_solve;
       paramMap()["Approximate Sparse LU"]=AZ_lu;

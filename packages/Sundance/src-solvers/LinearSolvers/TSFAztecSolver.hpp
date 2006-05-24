@@ -42,13 +42,10 @@
 
 #include "AztecOO.h"
 
+#define AZ_recursive_iterate 10001
+
 #define HAVE_ML
 
-#define AZ_ml           101
-#define AZ_ml_levels    102
-#define AZ_ml_sym       103
-#define AZ_ml_damping   104
-#define AZ_recursive_iterate 105
 
 namespace TSFExtended
 {
@@ -121,24 +118,15 @@ namespace TSFExtended
     /** Flag indicating whether we are using ML preconditioning */
     bool useML_;
 
+    /** Flag indicating whether we are using Ifpack preconditioning */
+    bool useIfpack_;
+
     /** Flag indicating whether we are doing a recursive solve
      *  with aztec (i.e., using recursiveIterate) */
     bool aztec_recursive_iterate_;
 
-    /** Number of ML levels to use */
-    mutable int mlLevels_;
-
-    /** whether ML should assume symmetric system */
-    bool mlSymmetric_;
-
-    /** whether ML should use damping */
-    bool mlUseDamping_;
-
-    /** damping factor for ML */
-    double mlDamping_;
-
-    /** verbosity for ML */
-    int mlVerb_;
+    /** Parameter list for preconditioner */
+    mutable ParameterList precParams_;
 
     /** ML preconditioner object */
     mutable RefCountPtr<Epetra_Operator> prec_;

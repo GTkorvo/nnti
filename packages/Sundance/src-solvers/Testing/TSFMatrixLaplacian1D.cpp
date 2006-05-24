@@ -34,7 +34,7 @@ using namespace Teuchos;
 using std::ostream;
 
 MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows, 
-                                     const VectorType<double>& type)
+                                     const VectorType<double>& type, bool symBC)
   : OperatorBuilder<double>(nLocalRows, type), op_()
 {
   int rank = MPISession::getRank();
@@ -53,6 +53,14 @@ MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows,
       if ((rank==0 && i==0) || (rank==nProc-1 && i==nLocalRows-1))
         {
           colIndices = tuple(row);
+        }
+      else if (symBC && rank==0 && i==1)
+        {
+          colIndices = tuple(row, row+1);
+        }
+      else if (symBC && rank==nProc-1 && i==nLocalRows-2)
+        {
+          colIndices = tuple(row-1, row);
         }
       else
         {
@@ -77,6 +85,16 @@ MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows,
         {
           colIndices = tuple(row);
           colVals = tuple(1.0);
+        }
+      else if (symBC && rank==0 && i==1)
+        {
+          colIndices = tuple(row, row+1);
+          colVals = tuple(2.0, -1.0);
+        }
+      else if (symBC && rank==nProc-1 && i==nLocalRows-2)
+        {
+          colIndices = tuple(row-1, row);
+          colVals = tuple(-1.0, 2.0);
         }
       else
         {

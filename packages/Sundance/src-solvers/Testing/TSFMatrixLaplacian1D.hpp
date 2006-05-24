@@ -44,7 +44,8 @@ namespace TSFExtended
   public:
     
     /** */
-    MatrixLaplacian1D(int nLocal, const VectorType<double>& vecType);
+    MatrixLaplacian1D(int nLocal, const VectorType<double>& vecType,
+                      bool symBC=false);
 
     /** */
     LinearOperator<double> getOp() const {return op_;}
