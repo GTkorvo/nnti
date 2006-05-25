@@ -51,17 +51,29 @@ LOWSFactoryBuilder::createLOWSFactory(const ParameterList& params)
                          "Belos]");
     }
 
-  if (params.isSublist("ML"))
+  if (params.isSublist("Preconditioner"))
     {
-      RefCountPtr<ParameterList> p = rcp(new ParameterList(params.sublist("ML")));
-      string probType = getParameter<string>(*p, "Problem Type");
-      prec = rcp(new MLPreconditionerFactory(p));
-    }
-  else if (params.isSublist("Ifpack"))
-    {
-      RefCountPtr<ParameterList> p = rcp(new ParameterList(params.sublist("Ifpack")));
-      prec = rcp(new IfpackPreconditionerFactory());
-      prec->setParameterList(p);
+      ParameterList precParams = params.sublist("Preconditioner");
+      string precType = precParams.get<string>("Type");
+      if (precType=="ML")
+        {
+          string probType = getParameter<string>(precParams, "Problem Type");
+          ParameterList mlParams = precParams.sublist("ML Settings");
+          prec = rcp(new MLPreconditionerFactory(probType, mlParams));
+        }
+      else if (precType=="Ifpack")
+        {
+          string probType = getParameter<string>(precParams, "Prec Type");
+          RefCountPtr<ParameterList> ifpackParams 
+            = rcp(new ParameterList(precParams.sublist("Ifpack")));
+          prec = rcp(new IfpackPreconditionerFactory());
+          prec->setParameterList(ifpackParams);
+        }
+      else
+        {
+          TEST_FOR_EXCEPTION(true, runtime_error,
+                             "Preconditioner type [" << precType << "] not recognized");
+        }
     }
 
   TEST_FOR_EXCEPTION(prec.get() != 0 && !rtn->acceptsPreconditionerFactory(),
