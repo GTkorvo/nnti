@@ -51,8 +51,7 @@ namespace TSFExtended
     HANDLE_CTORS(VectorSpace<Scalar>, const Thyra::VectorSpaceBase<Scalar>);
     
     /** Create a new element of this vector space */
-    Vector<Scalar>  createMember() const 
-    {return Thyra::createMember(this->ptr());}
+    Vector<Scalar>  createMember() const ;
 
     /** Return the dimension of the space */
     int dim() const {return this->ptr()->dim();}

@@ -33,8 +33,6 @@ AztecSolver::AztecSolver(const ParameterList& params)
 {
   initParamMap();
 
-  cerr << "parameters = " << params << endl;
-
   /* initialize the options and parameters with Aztec's defaults */
 	AZ_defaults((int*) &(options_[0]), (double*) &(parameters_[0]));
 
@@ -61,7 +59,6 @@ AztecSolver::AztecSolver(const ParameterList& params)
                 {
                   useIfpack_ = true;
                 }
-              cerr << "precond = " << precParams_ << endl;
               continue;
             }
         }
@@ -71,10 +68,6 @@ AztecSolver::AztecSolver(const ParameterList& params)
 
       /* find the integer ID used by Aztec to identify this parameter */
       int aztecCode = paramMap()[name];
-
-      cout << "name=" << name << " code=" << aztecCode << " val=" << entry
-           << endl;
-      
 
 
       /* We now need to figure out what to do with the value of the
@@ -198,7 +191,6 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
           mlParams.setEntry(name, entry);
         }
       //#endif
-      cout << "params going into ML = " << mlParams << endl;
       mlPrec = rcp(new ML_Epetra::MultiLevelPreconditioner(A, mlParams));
       prec_ = rcp_dynamic_cast<Epetra_Operator>(mlPrec);
     }

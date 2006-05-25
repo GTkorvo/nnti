@@ -40,6 +40,12 @@ using namespace TSFExtended;
 using namespace Teuchos;
 using std::ostream;
 
+static inline Time& createVecTimer() 
+{
+  static RefCountPtr<Time> rtn 
+    = TimeMonitor::getNewTimer("vector allocation"); 
+  return *rtn;
+}
 
  
 //========================================================================
@@ -55,6 +61,16 @@ template <class Scalar>
 bool VectorSpace<Scalar>::operator!=(const VectorSpace<Scalar>& other) const 
 {
   return !(operator==(other));
+}
+    
+
+
+//========================================================================
+template <class Scalar>
+Vector<Scalar> VectorSpace<Scalar>::createMember() const 
+{
+  TimeMonitor timer(createVecTimer());
+  return Thyra::createMember(this->ptr());
 }
     
 

@@ -34,11 +34,22 @@
 #include "NOX_StatusTest_SafeCombo.H"         
 #include "NOX_Parameter_Teuchos2NOX.H"         
 #include "TSFLinearSolverBuilder.hpp"
+#include "Teuchos_Time.hpp"
+#include "Teuchos_TimeMonitor.hpp"
+
 
 using namespace NOX;
 using namespace NOX::TSF;
 using namespace Teuchos;
 using namespace TSFExtended;
+
+
+static Time& noxSolverTimer() 
+{
+  static RefCountPtr<Time> rtn 
+    = TimeMonitor::getNewTimer("NOX solve"); 
+  return *rtn;
+}
 
 NOXSolver::NOXSolver(const ParameterList& params,
                      const NonlinearOperator<double>& F)
@@ -101,6 +112,7 @@ void NOXSolver::reset() const
 
 NOX::StatusTest::StatusType NOXSolver::solve() const 
 {
+  TimeMonitor timer(noxSolverTimer());
   reset();
 
   NOX::StatusTest::StatusType rtn = solver_->solve();
