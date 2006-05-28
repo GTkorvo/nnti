@@ -335,8 +335,6 @@ void EpetraMatrix::getILUKPreconditioner(int fillLevels,
 
 void EpetraMatrix::print(ostream& os) const 
 {
-  int nProc = MPISession::getNProc();
-  int rank = MPISession::getRank();
   crsMatrix()->Print(os);
 }
 
