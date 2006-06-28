@@ -199,7 +199,7 @@ the best library for a given application. In some cases, a
 theoretical analysis of the problem at hand can suggest the right
 algorithm. Alternatively, one can consider numerical comparisons on
 test matrices available in the literature, see for instance
-\cite{amestoy01analysis,gupta01recent} and the references therein.
+\cite{amestoy01analysis,gupta01recent,golub05numerical} and the references therein.
 Often, however, one has to validate a given library on the
 application, architecture, and data set of interest, and this can be
 done only if the interface is already available;
@@ -232,9 +232,10 @@ matrix formats, data layout, and calling conventions. Our design is
 based on the following requirements:
 \begin{enumerate}
 
-\item {\sl Simplicity of usage:} Solving linear system (\ref{eq:linear_system}) in a language
-like MATLAB is very easy, i.e.~one just writes \verb!x = A \ b!. It should not be much
-more difficult in a production code;
+\item {\sl Simplicity of usage:} Solving linear system
+(\ref{eq:linear_system}) in a language like MATLAB is very easy, i.e.~one just
+writes \verb!x = A \ b!. It should not be much different in a non-MATLAB
+code;
 
 \item {\sl Flexibility:} More than one algorithm/library must be available,
   for both serial and parallel architectures;
@@ -321,7 +322,7 @@ computers, the wall-clock time of this phase will improve greatly,
 relative to other phases.  However, it is rare to see more that a
 factor of 50 times speedup, even on hundreds of processors.
 \item[(S3)] Forward/Back solve:  This phase finds a solution $x$ given $b$.
-Compared to the factorization, the serial cost of this a solve phase
+Compared to the factorization, the serial cost of this phase
 is low, perhaps by a factor of 10--100 or more.  However, this phase
 tends to have poor parallel scaling and does not perform as well as
 the factorization phases on modern processors.  Therefore, the cost
@@ -364,7 +365,7 @@ consider only rows and columns that are identical, or accept minor differences
 in the rows and columns that they treat as blocks.  Such blocking can reduce
 the cost of symbolic factorization as well~\cite{amestoy01analysis}.
 
-We have just mentioned few reasons that explained why
+We have just mentioned a few reasons that explained why
 the performance of a sparse direct solver depends on the underlying
 matrix, computer, application, algorithms, and libraries as well as
 the code and how it is compiled.
@@ -546,7 +547,7 @@ of the entries of the factored terms;
 \item[(S3)] Solution of the linear system, that is, computation of $x$.
 \end{enumerate}
 Steps (A1)--(A3) are application-dependent and will not be discussed
-here; instead, our aim is to standardized steps (S0/1), (S2) and
+here; instead, our aim is to standardize steps (S0/1), (S2) and
 (S3)  by adding an intermediate layer between the application and
 the direct solver libraries.  The design discussed below uses
 several common design patterns~\cite{Gamma}.  The first is the
@@ -557,15 +558,25 @@ represents the \textit{Strategy Pattern}. Finally, we use the
 \textit{Factory Pattern} as a means of selecting a specific concrete
 solver instance by use of a string argument.
 
-Presently we introduce a set of abstract classes, which will be used
-to define interfaces to the data layout of distributed objects,
-vectors, matrices, linear system, and the solver. The design is
-reported here as a set of C++ classes, but the concepts are more
-general and the discussion is largely language-independent.
+Presently we introduce a set of abstract classes, which will be used to define
+interfaces to the data layout of distributed objects, vectors, matrices,
+linear system, and the solver. The design is reported here as a set of C++
+classes, but the concepts are more general and the discussion is largely
+language-independent. We only consider {\tt int} and {\tt double} data types
+because our concrete implementation of the presented design, described in
+Section~\ref{sec:concrete}, currently does not support templates. However, one
+could easily exploit the C++ support for genericity, and replace {\tt int} and
+{\tt double} with templated data types, for example \verb!float! or
+\verb!complex<double>!.
 
 \smallskip
 
-The first class that we need to introduce is a {\tt Map}, defined by
+The first class that we need to introduce is a {\tt Map}, which defines the
+data layout of the elements contained in vectors and matrices\footnote{This
+class should not be confused with the STL {\tt map} class.} {\tt Map}'s
+are also used to specify the local-to-global numbering, and the global and
+local number of elements. We require that any global ID is assigned to exactly
+one processor.  The {\tt Map} class is defined by
 \begin{interface}
 \label{int:map}
 The {\tt Map} class will contain the following methods:
@@ -576,9 +587,6 @@ The {\tt Map} class will contain the following methods:
 \item {\tt int GetGID(const int LID) const} returns the global ID of the local node {\tt ID}.
 \end{itemize}
 \end{interface}
-A {\tt Map} defines the local-to-global numbering. We require that any global
-ID is assigned to exactly one processor. {\tt Map}'s are used to define the
-layout of distributed vectors and matrices.
 
 The next class is the {\tt Vector}
 class, which specifies the interfaces for
@@ -595,20 +603,21 @@ The {\tt Vector} class will contain the following methods:
 
 \begin{itemize}
 \item {\tt double* GetValues()} returns a pointer to the local array of values;
+\item {\tt const double* GetValues() const} returns a pointer to the local
+array of values for constant objects;
 \item {\tt const Map\& GetMap() const} returns a reference to the underlying Map object.
 \end{itemize}
 \end{interface}
 
 As regards the linear system matrix $A$, we do not impose any matrix format,
 rather we specify an abstract interface to {\sl query} for matrix elements.
-The only assumption is
-that the storage format adopted by the application allows a fast access to all
-the nonzero elements in a given (locally owned) row.
-This class, called {\tt RowMatrix}, is a fairly general sparse matrix
-interface. For
-distributed matrices, we assume that each row is owned by exactly
-one processor; rows can be distributed in arbitrary ways among the available
-processors. As such, the locally owned matrix can be decomposed as
+The only assumption is that the storage format adopted by the application
+allows a fast access to all the nonzero elements in a given (locally owned)
+row. For examples, all variants of compresses row storage formats can easily
+be wrapped to satify this fairly general sparse interface, called {\tt
+RowMatrix}. For distributed matrices, we assume that each row is owned by
+exactly one processor; rows can be distributed in arbitrary ways among the
+available processors. As such, the locally owned matrix can be decomposed as
 \begin{equation}
 A^{(loc)}_i + A^{(ext)}_i,
 \end{equation}
@@ -665,8 +674,12 @@ will contain the following methods:
 \item \verb!void SetB(Vector* b)! sets the right-hand side vector;
 \end{itemize}
 \end{interface}
-Interface~\ref{int:lp} can be easily extended to standardize
-operations like scaling or reordering.
+The objects \verb!A!, \verb!x! and \verb!b! must be compatible, that is, the
+global number of elements of the underlying {\tt Map}'s must be the same.
+However, the data layout can differ. Note also that
+Interface~\ref{int:lp} could be easily extended to standardize
+operations like scaling or reordering by adding methods like
+\verb!LeftScale()!, \verb!RightScale()!.
 
 %\smallskip
 
@@ -769,24 +782,39 @@ sparse libraries are much more complicated than libraries for dense systems,
 \begin{minipage}{12cm}
 \begin{verbatim}
 #include "Amesos.h"
+#ifdef HAVE_MPI
 #include "mpi.h"
 #include "Epetra_MpiComm.h"
-...
+#else
+#include "Epetra_SerialComm.h"
+#endif
+#include "Epetra_Vector.h"
+#include "Epetra_CrsMatrix.h"
 
 int main(int argc, char *argv[])
 {
   MPI_Init(&argc, &argv);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
+  int IndexBase = 0; // indices start from 0
 
-  Epetra_Map* Map = <create map here, Interface 3.1>;
-  Epetra_MultiVector* x = <create solution vector here, Interface 3.2>;
-  Epetra_MultiVector* b = <create right-hand side here, Interface 3.2>;
-  Epetra_CrsMatrix* A = <create matrix here, Interface 3.3>;
+  // specifies the global size of the problem
+  int NumGlobalElements n = 5 * Comm.NumProc();
+  // creates map, Interface 3.1, then the solution vector x and the
+  // right-hand side b (Interface 3.2), and the linear system matrix, Int. 3.3
+  Epetra_Map Map(NumGlobalElements, IndexBase, Comm);
+  Epetra_Vector x(Map); x.PutScalar(0.0);
+  Epetra_Vector b(Map); x.Random(0.0);
+  Epetra_CrsMatrix A(Copy, Map, 0);
+  for (int LID = 0; LID < Map.NumMyElements(); ++LID) {
+    int GID = map.GID(LID); // global ID of local ID
+    A.InsertGlobalElements(GID, 1, 1.0, GID);
+  }
+  A.FillComplete();
 
   Epetra_LinearProblem Problem(A, x, b); // Interface 3.4
 
   Amesos Factory;                  // create a factory class
-  string SolverType = "Umfpack";   // selected interface
+  string SolverType = argv[1];     // selected interface, for ex. "Umfpack"
   Amesos_BaseSolver* Solver;       // generic solver object, Int. 3.5
   Solver = Factory.Create(SolverType, Problem); // create solver
 
@@ -807,9 +835,12 @@ int main(int argc, char *argv[])
  \\
  \hline
 \end{tabular}
-\caption{Example of code using \amesos. The code uses the \amesos\ interface to
-  UMFPACK to solve the linear system. The creation of the matrix, solution and
-    right-hand side are not reported.}
+\caption{Compilable example of code using the \amesos\ interface to
+  to solve a linear system. The solver is specified run-time as first
+argument of the command line. The map contains
+{\tt NumGlobalElements} elements, in this case distributed linearly. The
+right-hand side is a random vector, and the matrix is a simple diagonal
+matrix, stored using the {\tt Epetra\_CrsMatrix} format. }
 \label{fig:example}
 \end{center}
 \end{figure}
@@ -822,7 +853,7 @@ provide feedback or request improvements.
 
 \medskip
 
-\amesos\ provides and abstraction for Interface~\ref{int:asi}, as
+\amesos\ provides an abstraction for Interface~\ref{int:asi}, as
 well as all its concrete implementations (for a little more than
 13,000 code lines, including comments and Doxygen
 documentation), and it takes advantage of the {\sc Epetra}
@@ -839,10 +870,28 @@ and {\tt PrintTiming()} that offer a standard way to access various
 statistics and timings for all packages.
 
 An example of usage of \amesos\ is reported in
-Figure~\ref{fig:example}. Although this particular example requires
-MPI, \amesos\ can be compiled with or without support for MPI.
-(Clearly, distributed solvers are available only when compiled with
-MPI support.) The only \amesos\ include file is \verb!Amesos.h!,
+Figure~\ref{fig:example}. This simple example shows how to define a
+distributed linear system. For the sake of simplicity, the linear system
+matrix is diagonal; however it is easy to modify the code for more general
+cases. Note that a basic usage of \amesos\ only requires a basic knowledge of
+the Epetra and Teuchos packages of Trilinos; see for
+example~cite{Trilinos-Tutorial}. The example can be compiled with or without
+MPI by defining \verb!HAVE_MPI!. 
+(\amesos\ itself can be compiled with or without support for MPI.
+Clearly, distributed solvers are available only when compiled with
+MPI support.) When compiled with MPI support and a serial solver (e.g.,
+UMFPACK) is selected, then \amesos\ will take care of gathering the
+distributed linear system to processor 0 and perform the required actions.
+Although the example uses the \verb!Epetra_CrsMatrix! to define the matrix,
+any class that satifies Interface~\ref{int:ami} can indeed be used. It is
+indeed quite easy to write wrappers for matrices that have quick access to row
+entries. Note that \verb!IndexBase! variable, which defines the base index.
+This value is typically set to 0, but it can  be 1 when FORTRAN arrays 
+are to be used and one seeks to minimize the index conversion\footnote{{\tt
+IndexBase} refers to the base index for the global numbering; the local
+numbering is always set to 0.}.
+
+The only \amesos\ include file is \verb!Amesos.h!,
 which does not include the header files of the supported library.
 The required interface is specified by the string variable
 \verb!SolverType!, and is created by using the factory class
@@ -885,17 +934,17 @@ parameters is reported in~\cite{Amesos-Reference-Guide}.
 The example code of Figure~\ref{fig:example} has shown the facility of usage
 of \amesos; this section, instead, aims to quantify its overhead.
 
-Figure~\ref{fig:results} reports the percentage of CPU time required by the
-\amesos\ interface with respect to the time required by the underlying
-library. We have considered the SuperLU and UMFPACK interface for the solution
-of all matrices in the FIDAP collection, available
-at~\cite{boisvert97matrix}. The matrix sizes range from 27
-({\tt FIDAP005}) to 22294 ({\tt FIDAPM11}). All problems are solved using a
-1.67 GHz G4 processor with 1024 Mbytes of RAM, running MAC OS X 10.4 and gcc
-4.0.0. The table reports the percentage of the CPU time required by the
-interface with respect to the time required by the considered solver, and
-quantifies the overhead required by \amesos. We have used the default set of
-parameters for both solvers.
+Figures~\ref{fig:results1} and \ref{fig:results2} reports the percentage of
+CPU time required by the \amesos\ interface with respect to the time required
+by the underlying library. We have considered the SuperLU and UMFPACK
+interface for the solution of all matrices in the FIDAP collection, available
+at~\cite{boisvert97matrix}. The matrix sizes range from 27 ({\tt FIDAP005}) to
+22294 ({\tt FIDAPM11}). All problems are solved using a 1.67 GHz G4 processor
+with 1024 Mbytes of RAM, running MAC OS X 10.4 and gcc 4.0.0. The table
+reports the percentage of the CPU time required by the interface with respect
+to the time required by the considered solver, and quantifies the overhead
+required by \amesos. We have used the default set of parameters for both
+solvers.
 
 As expected, for small matrices (for example \verb!FIDAP005! or \verb!FIDAPM05!, of size
 27 and 42, respectively)
@@ -917,12 +966,23 @@ Note that this overhead can indeed be reduced by adding specialized classes,
 
 \begin{figure}
 \begin{center}
-\includegraphics[angle=90,width=12cm]{interface_time.pdf}
+\includegraphics[width=12cm]{superlu_time.pdf}
 \caption{Additional time required by the \amesos\ interface with respect to the
-time required by the solver, for different matrices and solvers. $n$
-  represents the size of the matrix, and $nnz$ the total number of nonzeros.
+time required by the SuperLU solver as a
+  function of the matrix size $n$. 
 The results were obtained on a G4 1.67 GHz with 1 GByte of RAM.}
-\label{fig:results}
+\label{fig:results1}
+\end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=12cm]{umfpack_time.pdf}
+\caption{Additional time required by the \amesos\ interface with respect to the
+time required by the UMFPACK solver,  as a function of the matrix
+  nonzeros $nnz$.
+The results were obtained on a G4 1.67 GHz with 1 GByte of RAM.}
+\label{fig:results2}
 \end{center}
 \end{figure}
 
@@ -1102,11 +1162,11 @@ insight on the choice of parameters.
   impossible to perform such a task. Some hacks may be required.
 
 \item
-It is almost impossible to support different releases of a given
-software library, because function names usually do not change from
-one version to the next, making it impossible for the linker to
-select the
-  appropriate version of the library.
+It is almost impossible to support different releases of a given software
+library, since new functionalities are often made available behind the same
+function names. Besides, often a given function change the required arguments
+from one version to the next, making it impossible for the linker to select
+the appropriate version of the library.
 
 %
 %  This bug has been resolved.   I see no reason to mention it at this point.  Ken
@@ -1135,10 +1195,16 @@ library-independent by working on Interfaces~\ref{int:ami} and \ref{int:lp}.
 Problematic user-package communications. Because of the high-level view, the
 code is safer: it is more difficult to make errors or call the solver with the
 wrong set of parameters. \amesos\ classes automatically perform safety checks,
-      and return an error code when something goes wrong. However,
-it is often difficult to abstract the error
-messages from all supported libraries and report them in a uniform fashion.
-Users still need to consult the library's manual to decode the error messages.
+and return an error code when something goes wrong. However, it is often
+difficult to abstract the error messages from all supported libraries and
+report them in a uniform fashion.  \amesos\ tries to return an error code
+related to the error type, and print a few information on screen. However,
+users still need to consult the library's manual to decode the error messages.
+
+\item FORTRAN wrappers are not available. Our design is based on a set of C++
+classes, which are difficult or impossible to translate to FORTRAN77 or
+FORTRAN90. However, custom interfaces can be made available for specific
+concrete implementations of the presented interfaces.
 \end{itemize}
 
 %The reader might wonder why we have limited our attention to direct methods only, and
@@ -1164,15 +1230,13 @@ libraries' developers  writing one interface for their own solver
 can help to make it applicable and testable to a vast range of
 applications.
 
-One of our goal in the design of \amesos\ was to reduce the intellectual
+One of our goals in the design of \amesos\ was to reduce the intellectual
 effort required to use direct solver libraries. We feel that this objective
 has been achieved, and the performance penalty is very limited in most cases.
 In our opinion, the only limitation of \amesos\ is that it supports double
 precision only, while most direct solvers allows the solution in single
-precision and complex arithmetics.
-Our model can
-support single precision and complex arithmetics (by using templates, for
-                                                  example), and a templated
+precision and complex arithmetics.  Our model can support single precision and
+complex arithmetics (by using templates, for example), and a templated
 version of Interfaces~\ref{int:map}--\ref{int:asi} is under
 development.
 
@@ -1180,12 +1244,12 @@ development.
 \section*{Acknowledgments}
 %-----------------------------------------------------------------------------%
 
-The authors wish to thank R.~Hoekstra, T.~Davis and I. Duff for
-fruitful discussions and suggestions about the organization of the \amesos\
-           project. We thank Oscar Chinellato for several suggestions that
-           helped to improved this document.  Part of the work has been
-           conducted under the financial support of the Sandia National
-           Laboratories.
+The authors wish to thank R.~Hoekstra, T.~Davis and I. Duff for fruitful
+discussions and suggestions about the organization of the \amesos\ project. We
+thank Oscar Chinellato for several suggestions that helped to improved this
+document, and the anonymous referees for their helpful comments.  Part of the
+work has been conducted under the financial support of the Sandia National
+Laboratories.
 
 %-----------------------------------------------------------------------------%
 \bibliographystyle{acmtrans}
