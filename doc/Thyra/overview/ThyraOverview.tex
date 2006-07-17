@@ -185,8 +185,8 @@ to interior-point methods for optimization.  At the core, we define a set of
 basic operator/vector interfaces that form the the foundation for (i) ANA
 development, (ii) the integration of an ANA into an application (APP) and
 (iii) providing services to the ANA from a linear algebra library (LAL).  By
-agreeing on a simple minimal common interface layer such as the foundational
-Thyra operator/vector interfaces, we eliminate the many-to-many dependency
+agreeing on a simple minimal common interface layer such as the Fundamental
+Thyra ANA Operator/Vector Interfaces, we eliminate the many-to-many dependency
 problem of ANA/APP interfaces.
 
 While these Thyra interfaces provide a mechanism to express all of the
@@ -216,23 +216,6 @@ Unified Modeling Language (UML) {}\cite{ref:uml_distilled_2nd_ed}
 class diagrams.  We also assume that the reader has some background in
 large-scale numerics and will therefore be able to appreciate the
 challenges that are addressed by Thyra.
-
-%To motivate the fundamental Thyra operator/vector interfaces, we discuss the
-%context for Thyra in large-scale (both in lines of code and in problem
-%dimensionality) numerical software in
-%Section~\ref{thyra:sec:classification_of_lin_alg_itfc}.  The major
-%requirements for Thyra are spelled out in
-%Section~\ref{thyra:sec:Thyra_requirements}.  This is followed by an overview
-%of the Thyra linear algebra interfaces in
-%Section~\ref{thyra:sec:Thyra_core_overview} and a detailed discussion of the
-%design of the Thyra linear algebra interfaces in
-%Section~\ref{thyra:sec:Thyra_Details} including numerous examples.  A
-%discussion of some of the object-oriented and other general software design
-%concepts and principles that have gone into the development of Thyra is
-%deferred to Section~\ref{thyra:sec:general_software_concepts}.  Some of the
-%nonessential but convenient functionality that is useful to direct ANA
-%developers that is missing in Thyra is described in
-%Section~\ref{thyra:sec:convenience_functionality}.
 
 Note that the online documentation for Thyra at
 
@@ -352,8 +335,8 @@ stated.
 \begin{enumerate}
 
 {}\item Thyra interfaces should be portable to all the ASC
-{}\cite{ref:doe_asci} platforms where SIERRA {}\cite{ref:SIERRA} and other ASC
-applications might run.
+{}\cite{ref:doe_asci} platforms where ASC applications might run and to other
+important platforms.
 
 {}\item Thyra interfaces should provide for stable and accurate numerical
 computations at a fundamental level.
@@ -369,10 +352,10 @@ mentioned ANA algorithms that use these objects.
 %not be addressed by Thyra.  This extra functionality can be built on top the
 %basic Thyra abstractions (e.g.~using TSF).
 
-{}\item ANAs developed with Thyra should be able to transparently utilize
-different types of computing environments such as SPMD\footnote{Single Program
-Multiple Data (SPMD): A single program running in a distributed-memory
-environment on multiple parallel processors},
+{}\item Maximally general ANAs developed with Thyra should be able to
+transparently utilize different types of computing environments such as
+SPMD\footnote{Single Program Multiple Data (SPMD): A single program running in
+a distributed-memory environment on multiple parallel processors},
 client/server\footnote{Client/Server: The ANA runs in a process on a client
 computer and the APP and LAL run in processors on a server},
 out-of-core\footnote{Out-of-core: The data for the problem is stored on disk
@@ -397,6 +380,93 @@ Gaussian Elimination) and therefore Thyra and like abstract interfaces should
 not be used for such algorithms.
 
 %
+\section{Mathematical Foundation for Fundamental Thyra ANA Operator/Vector Interfaces}
+\label{thyra:sec:Thyra_math_foundation}
+%
+
+Before describing the {}\textit{Thyra Fundamental ANA Operator/Vector
+Interfaces} that form the foundation for all of the Thyra ANA interfaces in
+more detail, we must first clearly define the mathematical foundation for the
+abstractions of vectors, vector spaces, and linear operators.
+
+All Thyra vectors belonging to a vector space are representable as an array of
+scalar coefficents $\tilde{x}\in\RE^n$ and a (non-unique) basis
+$E\in\RE^{n\times{}n}$ of the form
+%
+\begin{equation}
+x = E \tilde{x}.
+\end{equation}
+%
+For a given Thyra vector space, the basis representation
+$E\in\RE^{n\times{}n}$ is non-unique but the symmetric positive definite
+scalar (inner) product matrix
+%
+\begin{equation}
+Q = E^H E
+\end{equation}
+%
+where $Q\in\RE^{n\times{}n}$ is unique.  Given $Q\in\RE^{n\times{}n}$, the scalar product
+is defined as
+%
+\begin{equation}
+x^H y = \tilde{x}^H Q \tilde{y} = <\tilde{x},\tilde{y}>.
+\end{equation}
+%
+For $Q\in\RE^{n\times{}n}$ to be full rank, $E\in\RE^{n\times{}n}$ must be full
+rank.  Here we define a Euclidean vector space as one where
+$Q=E=I\in\RE^{n\times{}n}$.
+
+In Thyra, vector spaces and vectors are abstracted using the C++ base
+interface classes {}\texttt{Thyra::\-Vector\-Space\-Base} and
+{}\texttt{Thyra::\-Vector\-Base}.  Vectors are created from the vector space
+using the ``Abstract Factory'' design pattern.
+
+Thyra also defines linear operators which linearly map vectors from one vector
+space to another.  The defintion of a linear operator is strongly influenced
+by the defintion of the scalar product associated with a vector space and
+whether the mapping is between Euclidean vectors $y = A x$ or between
+coefficient vector $\tilde{y} = \tilde{A} {}\tilde{x}$ (see [???] for more
+details).  In Thyra, vectors are a specialization of linear operators and
+therefore every vector is also a linear operator.  Therefore, when one writes
+%
+\begin{equation}
+z = x^H y
+\end{equation}
+%
+then $x^H$ must be interpreted to be the adjoint linear operator of $x$.
+
+Given this notation, the vector $x$ would be considered to live an Euclidean
+vector space $x\in\RE^n$ while the vector $\tilde{x}$ would be considered to
+live in the non-Euclidean vector space $\tilde{x}\in\mathcal{X}$ which is
+defined by the scalar product matrix $Q\in\RE^{n\times{}n}$.  In Thyra, it is
+actually not clear whether an abstract vector object represents the Euclidean
+vector $x\in\RE^n$ which just happens to be stored as a set of coefficients
+$\tilde{x}\in\mathcal{X}$ or if it represents the coefficient vectors
+$\tilde{x}\in\mathcal{X}$ themselves.  This ambiguity of the interpretation of
+vectors and linear operators also results from the ambiguity of interpretation
+of the vectors in that they can be through of as the Eucliean linear operators
+that only update the coefficient vectors or as linear operators that act
+directly on vector coefficinets.
+
+The Fundamental Thyra ANA Operator/Vector Interfaces require that every Thyra
+vector be represented as a finite-dimensional set of scalar coefficents and
+that the scalar product $<\tilde{x},\tilde{y}>$ be equivalent to the two-sided
+application some finite-dimensional symmetic positive definite matrix
+$Q\in\RE^{n\times{}n}$ such that $<\tilde{x},\tilde{y}> = \tilde{x}^H Q
+{}\tilde{y}$.  The Thyra interfaces do not try to pretend that its vectors are
+infinite dimensional or that they admit more general implementations as it
+allowed by infinite dimensional Hilbert spaces [???].  While every Thyra
+vector must be stored as a set of scalar coefficients the interfaces make no
+assumptions about where or how those coefficients are stored.  A fully general
+ANA can make no assumptions about how vectors are stored or layed out in
+memory, only that those coefficients do exist and that these coefficients can
+be exposed to reduction and transformation operators (see [???]).  While
+accessing the elements of a vector is ill advised in a general ANA, the Thyra
+vector interface supports acquiring direct views of any range of vector
+coefficient data (see
+{}\texttt{Thyra::\-Vector\-Base\-::\-acquireDetachedView(...)}).
+
+%
 \section{Overview of Fundamental Thyra ANA Operator/Vector Interfaces}
 \label{thyra:sec:Thyra_core_overview}
 %
@@ -418,7 +488,7 @@ UML class diagram : The fundamental Thyra ANA operator/vector interfaces }
 \end{figure}
 \esinglespace}
 
-The foundational Thyra operator/vector interfaces are shown in Figure
+The Fundamental Thyra ANA Operator/Vector Interfaces are shown in Figure
 {}\ref{thyra:fig:basic_op_vec_itfc}.  Complete C++ class declarations for
 these interfaces are given in Appendix {}\ref{app:thyra_classes}.  The key
 abstractions include vectors, vector spaces, and linear operators.  All of the
@@ -439,8 +509,8 @@ defines one nontrivial function {}\texttt{\textit{applyOp(\-...)}}.  The
 (i.e.~ANA-defined) reduction/transformation operator (RTOp) objects through
 the templated RTOp C++ interface {}\texttt{\textit{RTOpPack::RTOpT}}.  An ever
 increasing set of concrete implementations of RTOps is provided along with
-wrapper convenient function in the ANA support code collection (see ???).  The
-set of operations is also easily extensible.  Every
+wrapper convenience function in the ANA support code collection (see ???).
+The set of operations is also easily extensible.  Every
 {}\texttt{\textit{Vector\-Base}} object provides access to its
 {}\texttt{\textit{Vector\-Space\-Base}} (that was used to create the
 {}\texttt{\textit{Vector\-Base}} object) through the function
@@ -582,7 +652,6 @@ becomes automatic to a large extent.
 %
 \appendix
 %\input{apdx_ThyraOperatorVectorClassDecl}
-\input{InterpretationOfScalarProducts}
 
 %\begin{SANDdistribution}
 %\end{SANDdistribution}
