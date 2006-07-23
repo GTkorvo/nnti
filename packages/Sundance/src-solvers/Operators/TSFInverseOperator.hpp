@@ -104,42 +104,26 @@ namespace TSFExtended
 	  applyOp = op_.transpose();
 	}
 
-      Vector<Scalar> temp;
 
-      if (beta == 0.0)
+
+
+      if (alpha==Teuchos::ScalarTraits<Scalar>::zero())
 	{
-	  assign(temp.ptr().get(), x);
-	  Vt_S(temp.ptr().get(), alpha);
+	  Vt_S(y, beta);
 	}
       else
 	{
+	  Vector<Scalar> temp;
+	  Vector<Scalar> result;
 	  assign(temp.ptr().get(), x);
-	  applyOp.ptr()->generalApply(Thyra::NOTRANS, *y, temp.ptr().get(), beta, alpha);
-	}
-      
-      /* Must cover other cases....later.
-	 right now this only does the identity */
-      DiagonalOperator<Scalar>* val2 = 
-	dynamic_cast<DiagonalOperator<Scalar>* >(op_.ptr().get());
-      IdentityOperator<Scalar>* val1 = 
-	dynamic_cast<IdentityOperator<Scalar>* >(op_.ptr().get());
-      Vector<Scalar>* yTSFExt = dynamic_cast<Vector<Scalar>* >(y);
-      TEST_FOR_EXCEPTION(yTSFExt != 0, runtime_error,
-			 "InverseOperator<Scalar>::apply():  Invalid cast to a TSFExtended::Vector<Scalar>.");
-      if (val1 != 0)
-	{
-	  applyOp.generalApply(temp, *yTSFExt, 
-			       Teuchos::ScalarTraits<Scalar>::one(), 
-			       Teuchos::ScalarTraits<Scalar>::zero());
-// 	  haveSoln = applyOp.ptr()->applyInverse(x, y);
-	}      
-      else
-	{
-	  SolverState<Scalar> haveSoln = solver_.solve(applyOp, temp, *yTSFExt);
-	  TEST_FOR_EXCEPTION(haveSoln.finalState() != SolveConverged, runtime_error,
+	  SolverState<Scalar> haveSoln = solver_.solve(applyOp, temp, result);
+	  TEST_FOR_EXCEPTION(haveSoln.finalState() != SolveConverged, 
+			     runtime_error,
 			     "InverseOperator<Scalar>::apply() " 
 			     << haveSoln.stateDescription());
-	}
+	  Vt_S(result.ptr().get(), alpha);
+	  Vp_StV(y, beta, *result.ptr().get());
+	}      
     }
 
 
