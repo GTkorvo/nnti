@@ -273,6 +273,7 @@ NOX::Abstract::Group::ReturnType NOX::TSF::Group::computeF()
 
 NOX::Abstract::Group::ReturnType NOX::TSF::Group::computeJacobian() 
 {
+
   if (verbosity() > TSFExtended::VerbMedium)
     {
       cerr << "calling computeJ()" << endl;
@@ -287,6 +288,7 @@ NOX::Abstract::Group::ReturnType NOX::TSF::Group::computeJacobian()
     {
       nonlinearOp.setEvalPt(xVector.getTSFVector());
       jacobian = nonlinearOp.getJacobian();
+
       isValidJacobian = true;
     }
   return (isValidJacobian) ? (NOX::Abstract::Group::Ok) : (NOX::Abstract::Group::Failed);
@@ -361,7 +363,7 @@ NOX::TSF::Group::computeNewton(NOX::Parameter::List& p)
 
       // Scale soln by -1
       newtonVector.scale(-1.0);
-      
+
       if (verbosity() > TSFExtended::VerbLow)
         {
           cerr << "newton step" << endl;
