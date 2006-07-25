@@ -113,7 +113,7 @@ namespace TSFExtended
 	}
       else
 	{
-	  Vector<Scalar> temp;
+	  Vector<Scalar> temp = createMember(*(x.space()));
 	  Vector<Scalar> result;
 	  assign(temp.ptr().get(), x);
 	  SolverState<Scalar> haveSoln = solver_.solve(applyOp, temp, result);
