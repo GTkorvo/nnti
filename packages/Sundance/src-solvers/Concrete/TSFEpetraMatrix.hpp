@@ -51,7 +51,7 @@ namespace TSFExtended
   using namespace Thyra;
 
   /** */
-  class EpetraMatrix : public SingleScalarTypeOp<double>,
+  class EpetraMatrix : virtual public SingleScalarTypeOp<double>,
                        public Handleable<SingleScalarTypeOpBase<double> >,
                        public LoadableMatrix<double>,
                        public RowAccessibleOp<double>,
@@ -59,7 +59,7 @@ namespace TSFExtended
                        public Printable,
                        public ILUFactorizableOp<double>
 #ifdef HAVE_EPETRA_THYRA
-                     , public EpetraLinearOpBase
+                     , virtual public EpetraLinearOpBase
 #endif
   {
   public:
@@ -190,9 +190,24 @@ namespace TSFExtended
     virtual void print(ostream& os) const ;
 
 
+    /** */
+    std::ostream& describe(
+			   std::ostream                         &out
+			   ,const Teuchos::EVerbosityLevel      verbLevel
+			   ,const std::string                   leadingIndent
+			   , const std::string                   indentSpacer
+			   ) const 
+    {
+      out << leadingIndent << indentSpacer << this->description() << std::endl;
+      return out;
+    }
+    
 
     /** */
     string description() const ;
+
+    
+    
 
 
 
