@@ -58,6 +58,7 @@ EpetraVectorType::createSpace(int /*dimension*/,
                               int nLocal,
                               const int* localIndices) const
 {
+  TEST_FOR_EXCEPTION(nLocal < 0, runtime_error, "negative vector size n=" << nLocal);
 	RefCountPtr<Epetra_Map> map = rcp(new Epetra_Map(-1, nLocal,
                                                    (int*) localIndices,
                                                    0, *epetraComm()));

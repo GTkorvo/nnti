@@ -50,7 +50,8 @@ namespace Thyra
   class BlockOperatorBase 
   {
   public:
-
+    /** */
+    virtual ~BlockOperatorBase() {;}
     /** Returns a product vector view of the domain space */
     virtual Teuchos::RefCountPtr<const Thyra::ProductVectorSpaceBase<DomainScalar> > domainProductSpace() const = 0 ;
     

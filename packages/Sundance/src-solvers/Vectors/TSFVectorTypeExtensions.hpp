@@ -67,6 +67,8 @@ namespace TSFExtended
   class VectorTypeExtensions 
   {
   public:
+    /** */
+    virtual ~VectorTypeExtensions() {;}
 
     /** create a distributed vector space.
      * @param dimension the dimension of the space 

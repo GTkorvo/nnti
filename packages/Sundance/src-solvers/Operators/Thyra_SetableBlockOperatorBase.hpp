@@ -50,7 +50,8 @@ namespace Thyra
   class SetableBlockOperatorBase 
   {
   public:
-
+    /** */
+    virtual ~SetableBlockOperatorBase() {;}
     /** Sets the (i,j)-th block */
     virtual void setBlock(int i, int j, 
                   const Teuchos::RefCountPtr<LinearOpBase<RangeScalar, DomainScalar> >& block ) = 0 ;
