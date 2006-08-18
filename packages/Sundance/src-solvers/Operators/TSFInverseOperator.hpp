@@ -24,7 +24,7 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
-/* @HEADER@ */
+ /* @HEADER@ */
 
 #ifndef TSFINVERSEOPERATOR_HPP
 #define TSFINVERSEOPERATOR_HPP
@@ -83,15 +83,15 @@ namespace TSFExtended
      * @param beta    scalar multiplying y (default is 0.0)
      */
     virtual void generalApply(
-			      const Thyra::ETransp            M_trans
-			      ,const Thyra::VectorBase<Scalar>    &x
-			      ,Thyra::VectorBase<Scalar>          *y
-			      ,const Scalar            alpha = 1.0
-			      ,const Scalar            beta  = 0.0
-			      ) const 
+                              const Thyra::ETransp            M_trans
+                              ,const Thyra::VectorBase<Scalar>    &x
+                              ,Thyra::VectorBase<Scalar>          *y
+                              ,const Scalar            alpha = 1.0
+                              ,const Scalar            beta  = 0.0
+                              ) const 
     {
       TEST_FOR_EXCEPTION(dynamic_cast<ZeroOperator<Scalar>* >(op_.ptr().get()) != 0, runtime_error,
-			 "InverseOperator<Scalar>::apply() called on a ZeroOperator.");
+                         "InverseOperator<Scalar>::apply() called on a ZeroOperator.");
       TEST_FOR_EXCEPTION(op_.domain().dim() != op_.range().dim(), runtime_error,
                          "InverseOperator<Scalar>::apply() called on a non-square operator.");
       LinearOperator<Scalar> applyOp;      
@@ -100,30 +100,30 @@ namespace TSFExtended
           applyOp = op_;
         }
       else
-	{
-	  applyOp = op_.transpose();
-	}
+        {
+          applyOp = op_.transpose();
+        }
 
 
 
 
       if (alpha==Teuchos::ScalarTraits<Scalar>::zero())
-	{
-	  Vt_S(y, beta);
-	}
+        {
+          Vt_S(y, beta);
+        }
       else
-	{
-	  Vector<Scalar> temp = createMember(*(x.space()));
-	  Vector<Scalar> result;
-	  assign(temp.ptr().get(), x);
-	  SolverState<Scalar> haveSoln = solver_.solve(applyOp, temp, result);
-	  TEST_FOR_EXCEPTION(haveSoln.finalState() != SolveConverged, 
-			     runtime_error,
-			     "InverseOperator<Scalar>::apply() " 
-			     << haveSoln.stateDescription());
-	  Vt_S(result.ptr().get(), alpha);
-	  Vp_StV(y, beta, *result.ptr().get());
-	}      
+        {
+          Vector<Scalar> temp = createMember(*(x.space()));
+          Vector<Scalar> result;
+          assign(temp.ptr().get(), x);
+          SolverState<Scalar> haveSoln = solver_.solve(applyOp, temp, result);
+          TEST_FOR_EXCEPTION(haveSoln.finalState() != SolveConverged, 
+                             runtime_error,
+                             "InverseOperator<Scalar>::apply() " 
+                             << haveSoln.stateDescription());
+          Vt_S(result.ptr().get(), alpha);
+          V_StVpV(y, beta, *y, *result.ptr().get());
+        }      
     }
 
 
