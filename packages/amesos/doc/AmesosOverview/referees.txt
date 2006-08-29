@@ -15,7 +15,7 @@ Done.
 > something similar.  MATLAB is used in many production settings, and x=A\b also
 > has little overhead compared with the sparse solvers.
 
-Done
+Done.
 
 > page 13, figure 4.  I don't think this figure is useful in its current state.
 > What if one solver, for one particular matrix, is twice as slow as the other,
@@ -27,11 +27,11 @@ Done
 
 We split the data in two figures: one with SuperLU, showing the dependence of
 the matrix size n, and another one for UMFPACK, with respect to the number of
-nonzeros nnz. This should avoid (implicit) comparisons between the two solvers
-from the reader. Note that we did not report the absolute timings exactly not
-to suggest that this solver is better than another one --- the goal of Amesos
-is to let users decide on their problems.  We also briefly discuss the nnz 
-properties of the matrices.
+nonzeros nnz. This should avoid (implicit) comparisons between the two
+solvers. Note that we did not report the absolute timings exactly to
+avoid implicit suggestions that one solver is better than another one --- the
+goal of Amesos is to let users decide on their problems.  We also briefly
+discuss the nnz properties of the matrices in the text.
 
 > Regarding overhead for the solvers, it would be very interesting to compare
 > the overhead with x=A\b in MATLAB.  That comparison would be slightly unfair,
@@ -40,10 +40,10 @@ properties of the matrices.
 > But it would be very interesting, particularly since you state as one of your
 > goals the simplicity of x=A\b.  This is an optional suggestion.
 
-This suggestion is difficult address without getting into the details of Matlab. 
-Also Matlab's overhead is due to algorithm selection, not data copying as in Amesos.
-Therefore we did not address this point.
-
+We agree with the referee that a comparison with MATLAB would be interesting;
+however an exhaustive comparison would require a good knowledge of MATLAB's
+overhead due to algorithm selection, and it is a bit outside the goal of this
+paper, which is more targeted to FORTRAN/C/C++ developers.
 
 > A more important question I have is extensiblity.  How easy is it to extend
 > the interface, particularly for exploiting features unique to particular
@@ -61,8 +61,8 @@ Therefore we did not address this point.
 > how extensible this software architecture is.  You do state on page 4 that
 > extensibility is a benefit of abstraction.
 
-Please see the final paragraphs of Section 4 for several paragraphs of this 
-discussion.
+Please see the final paragraphs of Section 4 for extensive discussions on this
+topic.
 
 -------------------------------------------------------------------------------
 
@@ -97,7 +97,7 @@ discussion.
 We replaced the data in the figure with two figures: one contains the
 dependency on the matrix size n, and the other on the nonzeros nnz. This also
 avoids comparisons between UMFPACK and SuperLU, that are not the goal of this
-paper, and should be conducted by the authors of these packages.
+paper, and should be conducted elsewhere, for example by the authors of these packages.
 
 About the compilers, we don't have quantitative data on the overhead. However,
 Trilinos (and therefore Amesos) is compiled every night during the test
@@ -125,7 +125,9 @@ the most difficult and important part.
 > of the time) from the fill-in process, which is not (very) dependent on the
 > initial storage choice. Whether or not this is acceptable in  a given
 > application is something beyond the library control.
-> 
+
+We agree with this.
+
 > 5. Again with respect to space, the situation mentioned in the paper  in sec.
 > 6.1 of using a sparse factorization in a multilevel preconditioner is in some
 > ways the best possible scenario, in that the complete factorization is only
@@ -186,11 +188,14 @@ to time. We are trying to understand what's happening...
 > understand.   If this is the example used to convince programmers to use this
 > interface,  it may not be the most effective.
 
-We replaced the code with a compilable example, now included in the
-distribution. The linear system matrix is very simple, only diagonal, because
-anything more advanced would be too long to be published. Indeed, the Amesos
-distribution contains several working examples, for example to read an
-Harwell/Boeing matrix, or to generate matrices. 
+We replaced the non-compilable example code with a compilable example, which
+is actually now included in the distribution. The linear system matrix is very
+simple, only diagonal, because anything more "advanced" would be too long to
+be published in a journal paper. Indeed, the Amesos distribution already contains
+several working examples, that allow to easily read a matrix from file in
+Harwell/Boeing or MatrixMarket format, or to use a matrix generator quite
+similar to MATLAB's gallery() function. See discussion for the next point for
+more comments.
 
 > Any complex application can be made to look simple just replacing the code
 > with ?init() / solve()? rouitnes that merely move the code complexity
@@ -211,11 +216,15 @@ Harwell/Boeing matrix, or to generate matrices.
 > general, wouldn't make more sense to specify this at link time?
 
 The new example has been improved following your suggestions. The solver is
-specified from the command line (error checks are skipped), so any supported
-solver can be used. The index values begin at 0, and a short description has
-been added on this subject. The code is both serial and parallel, depending on
-the variable HAVE_MPI. For parallel codes, the matrix is distributed, as
-specified by Interface 3.3.
+specified from the command line (error checks are skipped but can be easily
+added by the reader), so that any Amesos supported solver can be used. The
+index values begin at 0, and a short description has been added on this
+subject. The code is both serial and parallel, depending on the variable
+HAVE_MPI. For parallel codes, the matrix is distributed, as specified by
+Interface 3.3. The caption tells that the matrix is diagonal. The Trilinos'
+notation "GID" to indentify the global ID of a locally owned ID is explained
+in the example as comment. The diagonal matrix has 5 rows on each processor,
+and a linear distribution.
 
 >  I would suggest the authors pick a simple example (say a small 5x5  matrix
 > and its right-hand side) and show the **complete**  code used to solve this
@@ -234,7 +243,10 @@ Since we'd like to have a serial/parallel example running with any number of
 processors, we opted for a diagonal matrix. Changing this code for a more
 general matrix is not difficult, and referenced to the Trilinos tutorial are
 now provided in the text. Umfpack could be replaced by LAPACK or ScaLAPACK at
-the command line.
+the command line: the source code is exactly the same. We do not report the
+C/FORTRAN equivalent of this example to save space, and also because it is not
+obvious which matrix format to use to store distributed sparse matrices and
+vectors.
 
 > One point that was rather confusing was the format of the matrix used in the
 > linear solver. It was repeatedly stated as completely ?general? without any
@@ -249,12 +261,15 @@ the command line.
 We clarified the discussion before Interface 3.3. It is there clearly stated
 that any matrix format that provides a quick access to row elements can be
 wrapped to satisfy Int 3.3. This requirement is followed by most
-high-performance linear algebra packages and matrix formats, and it should be
+high-performance linear algebra packages and matrix formats, and it should not be
 too restrictive. In our opinion, it is a good compromise between the
 generality of the approach and its performances. Note also that the GetRow()
 function should be written by the user, so no matrix storage is forced by the
 package.
 
+In fact, *any* matrix format can be used; however, only matrix formats that
+allow quick access to row entries are conveniently wrapped by the proposed matrix
+interface.
 
 > Minor Editorial Notes:
 
@@ -291,9 +306,9 @@ that is very readable for those who are first encountering Design Patterns.
 
 As suggested, we changed the description of the Map class, by first describing
 what it does, then listing the methods. A footnote is added to warn the reader
-that a Map has nothing or few in common with std::map. It is difficult to
-describe distributed vectors and matrices without having Map's, and this is
-why Map is the first object.
+that a Map has nothing or few in common with std::map. It is unfortunately
+quite difficult to describe distributed vectors and matrices without having
+Map's, and this is why Map is the first object.
 
 We cannot report constructors, since these classes are pure virtual. A
 description of their implementation would be in our opinion outside the main
@@ -313,21 +328,31 @@ support for float, complex or a type T is here given.
 >        (*)  are GetValues() and GetMap() the only methods available for Vector
 > objects? What about a const version of GetValues()?
 
-We added the const version. 
+A const version of these methods has been added.
 
 > (*) Section 3, Interface 3.5: The ?Solver? interface description needs to
 > greatly expanded.  ?void SetParamers(List) // specifies all the parameters for
 > the solver? yields little insight into how this is actually used.  Some
 > examples here would be useful.
 
-Ken, could you add something here?
+Examples of the usage of SetParameters() are reported on the Amesos' Users
+Guide. We do not report them here because the goal of the paper is to present
+the design, more than suggesting how to set this or that parameters. 
+A reference to the freely downloadable Amesos' UG suggests the intersted
+readers where to find more information on generic and solver-dependent
+parameters.
 
 >        (*) How does one solve A'x = b using this interface?
 
-Ken, could you add something here?
+Solving the linear system A'x = b simply requires to set
+setUseTranspose(true). A note on this method and the corresponding
+setUseTranspose() has been added to the Solver class.
 
 >  (*) Section 6.1, Figure 2: the labels are not readable in the pdf file I
 > looked at.  Please check this.
+
+The graph was produced with OmniGraffle, and sometime strange occurs from time
+to time. We are trying to understand what's happening...
 
 > -----------------------------------------------------------------------------
 
@@ -375,7 +400,8 @@ A comment has been added at page 17. Currently, there are no FORTRAN wrappers
 because it is not straighforward to derive pure virtual classes from C++ in
 FORTRAN and vice-versa. Most of Trilinos is in C++ (with Python wrappers), and
 there are no plans at this point to push the FORTRAN wrappers. Said that, we
-agree that it would be great to have FORTRAN interfaces.
+agree that it would be great to have FORTRAN interfaces: the only problem is
+to find the time for writing them.
 
 > 4. P.5, line 12, "this a solve phase" -> "this phase".
 > 
