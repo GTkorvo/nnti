@@ -1,0 +1,24 @@
+include @abs_top_builddir@/../teuchos/Makefile.export.teuchos
+
+# Optional dependencies on epetra, epetraext, and anasazi
+@BUILD_RBGEN_EPETRA_TRUE@include @abs_top_builddir@/../epetra/Makefile.export.epetra
+@BUILD_RBGEN_EPETRAEXT_TRUE@include @abs_top_builddir@/../epetraext/Makefile.export.epetraext
+@BUILD_RBGEN_ANASAZI_TRUE@include @abs_top_builddir@/../anasazi/Makefile.export.anasazi
+
+_RBGEN_INCLUDES = -I@abs_top_srcdir@/src -I@abs_top_builddir@/src \
+			$(TEUCHOS_INCLUDES) \
+			$(EPETRA_INCLUDES) \
+			$(EPETRAEXT_INCLUDES) \
+			$(ANASAZI_INCLUDES)
+
+_RBGEN_LIBS     = @LDFLAGS@ -L@abs_top_builddir@/src -lrbgen \
+			$(TEUCHOS_LIBS) \
+			$(EPETRA_LIBS) \
+			$(EPETRAEXT_LIBS) \
+			$(ANASAZI_LIBS)
+
+@USING_GNUMAKE_TRUE@RBGEN_INCLUDES  = $(shell @PERL_EXE@ @abs_top_srcdir@/config/strip_dup_incl_paths.pl $(_RBGEN_INCLUDES))
+@USING_GNUMAKE_TRUE@RBGEN_LIBS      = $(shell @PERL_EXE@ @abs_top_srcdir@/config/strip_dup_libs.pl $(_RBGEN_LIBS))
+
+@USING_GNUMAKE_FALSE@RBGEN_INCLUDES = $(_RBGEN_INCLUDES)
+@USING_GNUMAKE_FALSE@RBGEN_LIBS     = $(_RBGEN_LIBS)
