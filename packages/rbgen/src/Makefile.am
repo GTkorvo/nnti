@@ -321,10 +321,12 @@ lib_LIBRARIES = $(RBGEN_LIB)
 # ------------------------------------------------------------------------
 
 if BUILD_RBGEN_DRIVERS
+if BUILD_RBGEN_EPETRA
 bin_PROGRAMS = RBGenDriver_EpetraMV
 RBGenDriver_EpetraMV_SOURCES = $(srcdir)/RBGenDriver_EpetraMV.cpp
 RBGenDriver_EpetraMV_LDADD = $(RBGEN_LIB) $(RBGEN_LIBS)
 RBGenDriver_EpetraMV_LDFLAGS = 
+endif
 endif
 
 # ------------------------------------------------------------------------

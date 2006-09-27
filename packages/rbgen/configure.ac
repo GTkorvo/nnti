@@ -228,7 +228,7 @@ TAC_ARG_ENABLE_EXPORT_MAKEFILES(yes)
 # AM_CONDITIONAL makes HAVE_NEWP_SWAHILI available for use in Makefile.am
 # ------------------------------------------------------------------------
 #
-TAC_ARG_ENABLE_OPTION(drivers, [Build RBGen drivers (binaries)], DRIVERS, no)
+TAC_ARG_ENABLE_OPTION(drivers, [Build RBGen drivers (binaries)], DRIVERS, yes)
 AM_CONDITIONAL(BUILD_RBGEN_DRIVERS, [test "X$ac_cv_use_drivers" != "Xno"])
 
 TAC_ARG_ENABLE_OPTION(netcdf, [Enable netcdf support], NETCDF, no)
