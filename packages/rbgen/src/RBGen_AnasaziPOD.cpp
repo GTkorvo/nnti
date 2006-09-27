@@ -7,9 +7,7 @@
 
 #include "AnasaziEpetraAdapter.hpp"
 #include "AnasaziBasicEigenproblem.hpp"
-#include "AnasaziBasicSort.hpp"
-#include "AnasaziOutputManager.hpp"
-#include "AnasaziBlockKrylovSchur.hpp"
+#include "AnasaziBlockKrylovSchurSolMgr.hpp"
 
 #ifdef EPETRA_MPI
 #include "Epetra_MpiComm.h"
@@ -70,18 +68,21 @@ namespace RBGen {
     int i, blockSize = 1;
     int nev = basis_size_;
     int maxBlocks = 2*basis_size_;
+    int maxRestarts = 300;
+    int verbosity = Anasazi::FinalSummary;
     double tol = 1e-14;
     string which="LM";
-    int maxRestarts = 300;
     //
     // Create parameter list to pass into solver
     //
     Teuchos::ParameterList MyPL;
+    MyPL.set( "Verbosity", verbosity );
     MyPL.set( "Block Size", blockSize );
-    MyPL.set( "Max Blocks", maxBlocks );
-    MyPL.set( "Max Restarts", maxRestarts );
+    MyPL.set( "Num Blocks", maxBlocks );
+    MyPL.set( "Maximum Restarts", maxRestarts );
+    MyPL.set( "Which", which );	
     MyPL.set( "Step Size", step );
-    MyPL.set( "Tol", tol );
+    MyPL.set( "Convergence Tolerance", tol );
     //
     //  Typedefs for Anasazi solvers
     //
@@ -107,111 +108,112 @@ namespace RBGen {
       Teuchos::rcp( new Anasazi::BasicEigenproblem<double,MV,OP>(Amat, ivec) );
     
     // Inform the eigenproblem that the operator A is symmetric
-    MyProblem->SetSymmetric( true ); 
+    MyProblem->setHermitian( true ); 
     
     // Set the number of eigenvalues requested
-    MyProblem->SetNEV( nev );
+    MyProblem->setNEV( nev );
     
     // Inform the eigenproblem that you are finishing passing it information
-    assert( MyProblem->SetProblem() == 0 );
-    
-    // Create a sorting manager to handle the sorting of eigenvalues in the solver
-    Teuchos::RefCountPtr<Anasazi::BasicSort<double, MV, OP> > MySort = 
-      Teuchos::rcp( new Anasazi::BasicSort<double, MV, OP>(which) );
-    
-    // Create an output manager to handle the I/O from the solver
-    Teuchos::RefCountPtr<Anasazi::OutputManager<double> > MyOM =
-      Teuchos::rcp( new Anasazi::OutputManager<double>( MyPID ) );
-    //MyOM->SetVerbosity( Anasazi::FinalSummary );
+    bool boolret = MyProblem->setProblem();
+    if (boolret != true) {
+      if (MyPID == 0) {
+	cout << "Anasazi::BasicEigenproblem::setProblem() returned with error." << endl;
+      }
+    }
     
     // Initialize the Block Arnoldi solver
-    Anasazi::BlockKrylovSchur<double,MV,OP> MyBlockKrylovSchur(MyProblem, MySort, MyOM, MyPL);
+    Anasazi::BlockKrylovSchurSolMgr<double,MV,OP> MySolverMgr(MyProblem, MyPL);
     
     timer.ResetStartTime();
 
     // Solve the problem to the specified tolerances or length
-    MyBlockKrylovSchur.solve();
+    Anasazi::ReturnType returnCode = MySolverMgr.solve();
+    if (returnCode != Anasazi::Converged && MyPID==0) {
+      cout << "Anasazi::EigensolverMgr::solve() returned unconverged." << endl;
+    }
 
     comp_time_ = timer.ElapsedTime();
-    //MyBlockKrylovSchur.currentStatus();
 
-    // Obtain results directly
-    Teuchos::RefCountPtr<std::vector<double> > evalr = MyProblem->GetEvals();
+    // Get the eigenvalues and eigenvectors from the eigenproblem
+    Anasazi::Eigensolution<double,MV> sol = MyProblem->getSolution();
+    std::vector<Anasazi::Value<double> > evals = sol.Evals;
+    int numev = sol.numVecs;
     
-    // Retrieve eigenvectors
-    Teuchos::RefCountPtr<Anasazi::EpetraMultiVec> evecr = 
-      Teuchos::rcp_dynamic_cast<Anasazi::EpetraMultiVec>( MyProblem->GetEvecs() );
+    if (numev > 0) {
 
-    // Compute singular values/vectors and direct residuals.
-    //
-    // Compute singular values which are the square root of the eigenvalues
-    //
-    for (i=0; i<nev; i++) { sv_[i] = Teuchos::ScalarTraits<double>::squareroot( (*evalr)[i] ); }
-    //
-    // If we are using inner product formulation, 
-    // then we must compute left singular vectors:
-    //             u = Av/sigma
-    //
-    int info = 0;
-    std::vector<double> tempnrm( nev );
-    if (inner_prod) {
-      basis_ = Teuchos::rcp( new Epetra_MultiVector(ss_->Map(), nev) );
-      Epetra_MultiVector AV( ss_->Map(),nev );
-      
-      /* A*V */   
-      info = AV.Multiply( 'N', 'N', 1.0, *ss_, *evecr, 0.0 );
-      AV.Norm2( &tempnrm[0] );
-      
-      /* U = A*V(i)/S(i) */
-      Epetra_LocalMap localMap2( nev, 0, ss_->Map().Comm() );
-      Epetra_MultiVector S( localMap2, nev );
-      for( i=0; i<nev; i++ ) { S[i][i] = 1.0/tempnrm[i]; }
-      info = basis_->Multiply( 'N', 'N', 1.0, AV, S, 0.0 );
-
-      /* Compute direct residuals : || Av - sigma*u ||
-	 for (i=0; i<nev; i++) { S[i][i] = sv_[i]; }
-	 info = AV.Multiply( 'N', 'N', -1.0, *basis_, S, 1.0 );
-	 AV.Norm2( &tempnrm[0] );
-	 if (MyPID == 0) {
-	 cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<endl;
-	 cout<<"------------------------------------------------------"<<endl;
-	 for (i=0; i<nev; i++) {
-	 cout<< sv_[i] << "\t\t\t" << tempnrm[i] << endl;
-	 }
-	 cout<<"------------------------------------------------------"<<endl;
-         }
-      */
-    } else {
-      basis_ = Teuchos::rcp( new Epetra_MultiVector( Copy, *evecr, 0, nev ) );
-      Epetra_MultiVector ATU( localMap, nev );
-      Epetra_MultiVector V( localMap, nev );      
-      
-      /* A^T*U */   
-      info = ATU.Multiply( 'T', 'N', 1.0, *ss_, *evecr, 0.0 );
-      ATU.Norm2( &tempnrm[0] );
-      
-      /* V = A^T*U(i)/S(i) */
-      Epetra_LocalMap localMap2( nev, 0, ss_->Map().Comm() );
-      Epetra_MultiVector S( localMap2, nev );
-      for( i=0; i<nev; i++ ) { S[i][i] = 1.0/tempnrm[i]; }
-      info = V.Multiply( 'N', 'N', 1.0, ATU, S, 0.0 );
-
-      /* Compute direct residuals : || (A^T)u - sigma*v ||     
-      for (i=0; i<nev; i++) { S[i][i] = sv_[i]; }
-      info = ATU.Multiply( 'N', 'N', -1.0, V, S, 1.0 );
-      ATU.Norm2( tempnrm );
-      if (comm.MyPID() == 0) {
-	cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<endl;
-	cout<<"------------------------------------------------------"<<endl;
-	for (i=0; i<nev; i++) {
-	  cout<< sv_[i] << "\t\t\t" << tempnrm[i] << endl;
-	}
-	cout<<"------------------------------------------------------"<<endl;
+      // Retrieve eigenvectors
+      std::vector<int> index(numev);
+      for (i=0; i<numev; i++) { index[i] = i; }
+      Anasazi::EpetraMultiVec* evecs = dynamic_cast<Anasazi::EpetraMultiVec* >(sol.Evecs->CloneView( index )); 
+      //
+      // Compute singular values which are the square root of the eigenvalues
+      //
+      for (i=0; i<nev; i++) { sv_[i] = Teuchos::ScalarTraits<double>::squareroot( evals[i].realpart ); }
+      //
+      // If we are using inner product formulation, 
+      // then we must compute left singular vectors:
+      //             u = Av/sigma
+      //
+      int info = 0;
+      std::vector<double> tempnrm( nev );
+      if (inner_prod) {
+	basis_ = Teuchos::rcp( new Epetra_MultiVector(ss_->Map(), nev) );
+	Epetra_MultiVector AV( ss_->Map(),nev );
+	
+	/* A*V */   
+	info = AV.Multiply( 'N', 'N', 1.0, *ss_, *evecs, 0.0 );
+	AV.Norm2( &tempnrm[0] );
+	
+	/* U = A*V(i)/S(i) */
+	Epetra_LocalMap localMap2( nev, 0, ss_->Map().Comm() );
+	Epetra_MultiVector S( localMap2, nev );
+	for( i=0; i<nev; i++ ) { S[i][i] = 1.0/tempnrm[i]; }
+	info = basis_->Multiply( 'N', 'N', 1.0, AV, S, 0.0 );
+	
+	/* Compute direct residuals : || Av - sigma*u ||
+	   for (i=0; i<nev; i++) { S[i][i] = sv_[i]; }
+	   info = AV.Multiply( 'N', 'N', -1.0, *basis_, S, 1.0 );
+	   AV.Norm2( &tempnrm[0] );
+	   if (MyPID == 0) {
+	   cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<endl;
+	   cout<<"------------------------------------------------------"<<endl;
+	   for (i=0; i<nev; i++) {
+	   cout<< sv_[i] << "\t\t\t" << tempnrm[i] << endl;
+	   }
+	   cout<<"------------------------------------------------------"<<endl;
+	   }
+	*/
+      } else {
+	basis_ = Teuchos::rcp( new Epetra_MultiVector( Copy, *evecs, 0, nev ) );
+	Epetra_MultiVector ATU( localMap, nev );
+	Epetra_MultiVector V( localMap, nev );      
+	
+	/* A^T*U */   
+	info = ATU.Multiply( 'T', 'N', 1.0, *ss_, *evecs, 0.0 );
+	ATU.Norm2( &tempnrm[0] );
+	
+	/* V = A^T*U(i)/S(i) */
+	Epetra_LocalMap localMap2( nev, 0, ss_->Map().Comm() );
+	Epetra_MultiVector S( localMap2, nev );
+	for( i=0; i<nev; i++ ) { S[i][i] = 1.0/tempnrm[i]; }
+	info = V.Multiply( 'N', 'N', 1.0, ATU, S, 0.0 );
+	
+	/* Compute direct residuals : || (A^T)u - sigma*v ||     
+	   for (i=0; i<nev; i++) { S[i][i] = sv_[i]; }
+	   info = ATU.Multiply( 'N', 'N', -1.0, V, S, 1.0 );
+	   ATU.Norm2( tempnrm );
+	   if (comm.MyPID() == 0) {
+	   cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<endl;
+	   cout<<"------------------------------------------------------"<<endl;
+	   for (i=0; i<nev; i++) {
+	   cout<< sv_[i] << "\t\t\t" << tempnrm[i] << endl;
+	   }
+	   cout<<"------------------------------------------------------"<<endl;
+	   }
+	*/
       }
-      */
     }
   }
-  
 } // end of RBGen namespace
 
 
