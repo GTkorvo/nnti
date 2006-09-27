@@ -10,7 +10,7 @@
 #include "RBGen_MatrixMarketFileIOHandler.h"
 #endif
 
-#ifdef HAVE_NETCDF
+#ifdef HAVE_RBGEN_NETCDF
 #include "RBGen_netCDFFileIOHandler.h"
 #endif
 

@@ -228,12 +228,6 @@ TAC_ARG_ENABLE_EXPORT_MAKEFILES(yes)
 # AM_CONDITIONAL makes HAVE_NEWP_SWAHILI available for use in Makefile.am
 # ------------------------------------------------------------------------
 #
-TAC_ARG_ENABLE_OPTION(drivers, [Build RBGen drivers (binaries)], DRIVERS, yes)
-AM_CONDITIONAL(BUILD_RBGEN_DRIVERS, [test "X$ac_cv_use_drivers" != "Xno"])
-
-TAC_ARG_ENABLE_OPTION(netcdf, [Enable netcdf support], NETCDF, no)
-AM_CONDITIONAL(BUILD_RBGEN_NETCDF, [test "X$ac_cv_use_netcdf" != "Xno"])
-
 # ------------------------------------------------------------------------
 # Checks for special package flags
 # ------------------------------------------------------------------------
@@ -257,6 +251,51 @@ AM_CONDITIONAL(BUILD_RBGEN_NETCDF, [test "X$ac_cv_use_netcdf" != "Xno"])
 #         specific name such as 'rbgen-zoltan', rather than 'zoltan'.
 # TAC_ARG_WITH_PACKAGE(zoltan, [Enable Zoltan interface support], ZOLTAN, no)
 # TAC_ARG_WITH_PACKAGE(rtop, [Enable RTOp interface support], RTOP, no)
+
+# ------------------------------------------------------------------------
+# Checks if the rbgen drivers should be built
+# ------------------------------------------------------------------------
+
+TAC_ARG_ENABLE_FEATURE_SUB( rbgen, drivers, [Build RBGen drivers (binaries)], RBGEN_DRIVERS, yes)
+AM_CONDITIONAL(BUILD_RBGEN_DRIVERS, [test "X$ac_cv_use_rbgen_drivers" != "Xno"])
+
+TAC_ARG_ENABLE_FEATURE_SUB( rbgen, netcdf, [Enable NetCDF support], RBGEN_NETCDF, no)
+AM_CONDITIONAL(BUILD_RBGEN_NETCDF, [test "X$ac_cv_use_rbgen_netcdf" != "Xno"])
+
+if test "X$ac_cv_use_rbgen_netcdf" != "Xno"; then
+#
+#  Check for NetCDF headers.
+#
+     AC_MSG_CHECKING(for netCDF headers (netcdf.h) ) 
+     AC_TRY_CPP([#include "netcdf.h"],
+	[AC_MSG_RESULT(yes)],  
+	[
+	 AC_MSG_RESULT(no)
+	 echo "-----"
+     	 echo "Cannot find NetCDF headers."
+     	 echo "Use --with-incdirs to specify NetCDF include directory."
+     	 echo "-----"
+     	 AC_MSG_ERROR(NetCDF headers cannot be found)
+     	])
+#
+#  Check for NetCDF library.
+#
+     AC_MSG_CHECKING(for GNU MP library (libnetcdf.a) )
+     AC_LANG_SAVE
+     AC_LANG_CPLUSPLUS
+     AC_LINK_IFELSE([ AC_LANG_PROGRAM([[#include "netcdf.h"]], 
+					[[int ncid=0; int status = nc_open("temp.file",NC_NOWRITE,&ncid);]]) ],
+	[AC_MSG_RESULT(yes)],
+	[AC_MSG_RESULT(no)
+		 echo "-----"
+	     	 echo "Cannot find NetCDF library."
+     		 echo "Use --with-ldflags to specify NetCDF library directory."
+	     	 echo "Use --with-libs to specify NetCDF library (-lnetcdf)."
+	     	 echo "-----"
+	     	 AC_MSG_ERROR(NetCDF test cannot link)])
+     AC_LANG_RESTORE
+
+fi
 
 # ------------------------------------------------------------------------
 # Checks if tests and examples should be built

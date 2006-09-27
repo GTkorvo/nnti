@@ -883,8 +883,8 @@ Optional Features:
                           change the paths. (default is yes)
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
-  --enable-drivers        Build RBGen drivers (binaries) (default is yes)
-  --enable-netcdf         Enable netcdf support (default is no)
+  --enable-rbgen-drivers  Build RBGen drivers (binaries) (default is yes)
+  --enable-rbgen-netcdf   Enable NetCDF support (default is no)
   --enable-tests          Build tests for all Trilinos packages (not all
                           packages are sensitive to this option) (default is
                           yes)
@@ -6361,78 +6361,6 @@ fi
 # AM_CONDITIONAL makes HAVE_NEWP_SWAHILI available for use in Makefile.am
 # ------------------------------------------------------------------------
 #
-
-# Check whether --enable-drivers or --disable-drivers was given.
-if test "${enable_drivers+set}" = set; then
-  enableval="$enable_drivers"
-  ac_cv_use_drivers=$enableval
-else
-  ac_cv_use_drivers=yes
-fi;
-
-echo "$as_me:$LINENO: checking whether to use drivers" >&5
-echo $ECHO_N "checking whether to use drivers... $ECHO_C" >&6
-
-if test "X$ac_cv_use_drivers" != "Xno"; then
-  echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_DRIVERS 1
-_ACEOF
-
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-
-
-if test "X$ac_cv_use_drivers" != "Xno"; then
-  BUILD_RBGEN_DRIVERS_TRUE=
-  BUILD_RBGEN_DRIVERS_FALSE='#'
-else
-  BUILD_RBGEN_DRIVERS_TRUE='#'
-  BUILD_RBGEN_DRIVERS_FALSE=
-fi
-
-
-
-# Check whether --enable-netcdf or --disable-netcdf was given.
-if test "${enable_netcdf+set}" = set; then
-  enableval="$enable_netcdf"
-  ac_cv_use_netcdf=$enableval
-else
-  ac_cv_use_netcdf=no
-fi;
-
-echo "$as_me:$LINENO: checking whether to use netcdf" >&5
-echo $ECHO_N "checking whether to use netcdf... $ECHO_C" >&6
-
-if test "X$ac_cv_use_netcdf" != "Xno"; then
-  echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_NETCDF 1
-_ACEOF
-
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-
-
-if test "X$ac_cv_use_netcdf" != "Xno"; then
-  BUILD_RBGEN_NETCDF_TRUE=
-  BUILD_RBGEN_NETCDF_FALSE='#'
-else
-  BUILD_RBGEN_NETCDF_TRUE='#'
-  BUILD_RBGEN_NETCDF_FALSE=
-fi
-
-
 # ------------------------------------------------------------------------
 # Checks for special package flags
 # ------------------------------------------------------------------------
@@ -6456,6 +6384,211 @@ fi
 #         specific name such as 'rbgen-zoltan', rather than 'zoltan'.
 # TAC_ARG_WITH_PACKAGE(zoltan, [Enable Zoltan interface support], ZOLTAN, no)
 # TAC_ARG_WITH_PACKAGE(rtop, [Enable RTOp interface support], RTOP, no)
+
+# ------------------------------------------------------------------------
+# Checks if the rbgen drivers should be built
+# ------------------------------------------------------------------------
+
+
+# Check whether --enable-rbgen-drivers or --disable-rbgen-drivers was given.
+if test "${enable_rbgen_drivers+set}" = set; then
+  enableval="$enable_rbgen_drivers"
+  ac_cv_use_rbgen_drivers=$enableval
+else
+  ac_cv_use_rbgen_drivers=yes
+fi;
+
+echo "$as_me:$LINENO: checking whether to use rbgen-drivers" >&5
+echo $ECHO_N "checking whether to use rbgen-drivers... $ECHO_C" >&6
+
+if test "X$ac_cv_use_rbgen_drivers" != "Xno"; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_RBGEN_DRIVERS
+_ACEOF
+
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+
+if test "X$ac_cv_use_rbgen_drivers" != "Xno"; then
+  BUILD_RBGEN_DRIVERS_TRUE=
+  BUILD_RBGEN_DRIVERS_FALSE='#'
+else
+  BUILD_RBGEN_DRIVERS_TRUE='#'
+  BUILD_RBGEN_DRIVERS_FALSE=
+fi
+
+
+
+# Check whether --enable-rbgen-netcdf or --disable-rbgen-netcdf was given.
+if test "${enable_rbgen_netcdf+set}" = set; then
+  enableval="$enable_rbgen_netcdf"
+  ac_cv_use_rbgen_netcdf=$enableval
+else
+  ac_cv_use_rbgen_netcdf=no
+fi;
+
+echo "$as_me:$LINENO: checking whether to use rbgen-netcdf" >&5
+echo $ECHO_N "checking whether to use rbgen-netcdf... $ECHO_C" >&6
+
+if test "X$ac_cv_use_rbgen_netcdf" != "Xno"; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_RBGEN_NETCDF
+_ACEOF
+
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+
+if test "X$ac_cv_use_rbgen_netcdf" != "Xno"; then
+  BUILD_RBGEN_NETCDF_TRUE=
+  BUILD_RBGEN_NETCDF_FALSE='#'
+else
+  BUILD_RBGEN_NETCDF_TRUE='#'
+  BUILD_RBGEN_NETCDF_FALSE=
+fi
+
+
+if test "X$ac_cv_use_rbgen_netcdf" != "Xno"; then
+#
+#  Check for NetCDF headers.
+#
+     echo "$as_me:$LINENO: checking for netCDF headers (netcdf.h) " >&5
+echo $ECHO_N "checking for netCDF headers (netcdf.h) ... $ECHO_C" >&6
+     cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include "netcdf.h"
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_cxx_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_cxx_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+	 echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+	 echo "-----"
+     	 echo "Cannot find NetCDF headers."
+     	 echo "Use --with-incdirs to specify NetCDF include directory."
+     	 echo "-----"
+     	 { { echo "$as_me:$LINENO: error: NetCDF headers cannot be found" >&5
+echo "$as_me: error: NetCDF headers cannot be found" >&2;}
+   { (exit 1); exit 1; }; }
+
+fi
+rm -f conftest.err conftest.$ac_ext
+#
+#  Check for NetCDF library.
+#
+     echo "$as_me:$LINENO: checking for GNU MP library (libnetcdf.a) " >&5
+echo $ECHO_N "checking for GNU MP library (libnetcdf.a) ... $ECHO_C" >&6
+
+
+     ac_ext=cc
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+     cat >conftest.$ac_ext <<_ACEOF
+ /* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include "netcdf.h"
+int
+main ()
+{
+int ncid=0; int status = nc_open("temp.file",NC_NOWRITE,&ncid);
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+		 echo "-----"
+	     	 echo "Cannot find NetCDF library."
+     		 echo "Use --with-ldflags to specify NetCDF library directory."
+	     	 echo "Use --with-libs to specify NetCDF library (-lnetcdf)."
+	     	 echo "-----"
+	     	 { { echo "$as_me:$LINENO: error: NetCDF test cannot link" >&5
+echo "$as_me: error: NetCDF test cannot link" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+     ac_ext=cc
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+fi
 
 # ------------------------------------------------------------------------
 # Checks if tests and examples should be built
@@ -6899,7 +7032,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_verb"
-(eval echo $as_me:6902: \"$ac_link\") >&5
+(eval echo $as_me:7035: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -6977,7 +7110,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_cv_prog_f77_v"
-(eval echo $as_me:6980: \"$ac_link\") >&5
+(eval echo $as_me:7113: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -9835,7 +9968,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_verb"
-(eval echo $as_me:9838: \"$ac_link\") >&5
+(eval echo $as_me:9971: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -9913,7 +10046,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_cv_prog_f77_v"
-(eval echo $as_me:9916: \"$ac_link\") >&5
+(eval echo $as_me:10049: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS

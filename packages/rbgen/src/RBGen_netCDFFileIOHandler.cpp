@@ -16,6 +16,8 @@
 #include "Epetra_SerialComm.h"
 #endif
 
+#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 namespace RBGen {
   
@@ -49,12 +51,14 @@ namespace RBGen {
     bool createSSIdx = false;
     std::vector< std::pair<int,int> > scaling_idx;
     std::pair<int, int> idx_pair;
+    /*
     try {
       scaling_idx = Teuchos::getParameter< std::vector< std::pair<int,int> > >( *params_, "Snapshot Scaling Indices" );
     }
     catch (std::exception &e) {
       createSSIdx = true;
     }    
+    */
     //
     // Open all the files and check that the snapshots have the same dimensions.
     //
@@ -65,7 +69,7 @@ namespace RBGen {
       if (status != NC_NOERR) handle_error(status);
       //
       // If the scaling index vector is needed we can create it here.
-      //
+      //	
       if (createSSIdx) {
 	idx_pair.first = total_rows;
       }
@@ -217,7 +221,7 @@ namespace RBGen {
 	comm.Broadcast( &scaling_idx[i].second, 1, 0 );
       }
       // Set the scaling index vector
-      params_->set("Snapshot Scaling Indices", scaling_idx);   
+      //params_->set("Snapshot Scaling Indices", scaling_idx);   
     }
     //
     // Create maps for new Epetra_MultiVector to hold the snapshots and 
