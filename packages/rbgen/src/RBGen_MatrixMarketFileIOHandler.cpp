@@ -1,5 +1,6 @@
 
 #include "RBGen_MatrixMarketFileIOHandler.h"
+#include "RBGen_ConfigDefs.h"
 
 #include "Epetra_BLAS.h"
 #include "Epetra_Export.h"
@@ -12,9 +13,6 @@
 #include "EpetraExt_MultiVectorOut.h"	
 
 #include "Teuchos_Utils.hpp"
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #ifdef EPETRA_MPI
 #include "Epetra_MpiComm.h"

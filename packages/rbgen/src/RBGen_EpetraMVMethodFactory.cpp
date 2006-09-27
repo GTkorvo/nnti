@@ -1,7 +1,9 @@
 #include "RBGen_EpetraMVMethodFactory.h"
 #include "RBGen_LapackPOD.h"
+
+#if HAVE_RBGEN_ANASAZI
 #include "RBGen_AnasaziPOD.h"
-#include <string>
+#endif
 
 namespace RBGen {
   
@@ -18,12 +20,18 @@ namespace RBGen {
     Teuchos::RefCountPtr< Method<Epetra_MultiVector> > RBMethod;
 
     // POD computed using exact SVD through LAPACK
-    if ( method == "LAPACK POD" )
+    if ( method == "LAPACK POD" ) {
       RBMethod = Teuchos::rcp( new LapackPOD() );
-    
+    } else
     // Inexact POD computed using inexact SVD through Anasazi
-    if ( method == "Anasazi POD" )
+#if HAVE_RBGEN_ANASAZI
+    if ( method == "Anasazi POD" ) {
       RBMethod = Teuchos::rcp( new AnasaziPOD() );
+    } else 
+#endif
+    {
+	// TO DO:  Throw exception because method was not valid
+    }
     //
     // Return the method created
     //

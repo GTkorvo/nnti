@@ -5,6 +5,7 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "RBGen_MethodFactory.hpp"
+#include "RBGen_ConfigDefs.h"
 
 // Forward declaration of Epetra_Multivector
 class Epetra_MultiVector;

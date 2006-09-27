@@ -9,7 +9,9 @@ namespace RBGen {
 #ifdef HAVE_NETCDF
      file_formats.push_back("netCDF");
 #endif
+#ifdef HAVE_RBGEN_EPETRAEXT
      file_formats.push_back("Matrix Market");
+#endif
   }
 
   Teuchos::RefCountPtr< FileIOHandler< Epetra_MultiVector > >
@@ -36,9 +38,12 @@ namespace RBGen {
     } else
 #endif
     // File input format for Matrix Market files
+#ifdef HAVE_RBGEN_EPETRAEXT
     if ( file_format == "Matrix Market" ) {
       RBFileIO = Teuchos::rcp( new MatrixMarketFileIOHandler() );
-    } else {
+    } else 
+#endif
+    {
 	// Throw and exception because the format type is not recognized by this factory
     }
     //

@@ -3,7 +3,7 @@
 /*
 ************************************************************************
 
-                   RBGen Package
+                         RBGen Package
                Copyright (2004) Sandia Corporation
 
 Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -89,12 +89,6 @@ Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 #include <stdio.h>
 #endif
 
-#ifdef HAVE_CASSERT
-#include <cassert>
-#else
-#include <assert.h>
-#endif
-
 #ifdef HAVE_STRING
 #include <string>
 #else
@@ -105,6 +99,18 @@ Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 #include <iostream>
 #else
 #include <iostream.h>
+#endif
+
+#ifdef HAVE_VECTOR
+#include <vector>
+#else
+#include <vector.h>
+#endif
+
+#ifdef HAVE_STDEXCEPT
+#include <stdexcept>
+#else
+#include <stdexcept.h>
 #endif
 
 /* Every line that begins with 'using' should eventually be dependent

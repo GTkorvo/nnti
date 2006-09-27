@@ -3,7 +3,8 @@
 #ifndef RBGEN_FILE_IO_HANDLER_HPP
 #define RBGEN_FILE_IO_HANDLER_HPP
 
-#include <string>
+#include "RBGen_ConfigDefs.h"
+
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 

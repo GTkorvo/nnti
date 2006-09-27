@@ -1,9 +1,10 @@
-#ifndef RBGEN_EPETRAMV_PREPROCESSOR_FACTORY_HPP
-#define RBGEN_EPETRAMV_PREPROCESSOR_FACTORY_HPP
+#ifndef RBGEN_EPETRAMV_PREPROCESSOR_FACTORY_H
+#define RBGEN_EPETRAMV_PREPROCESSOR_FACTORY_H
 
 #include "RBGen_PreprocessorFactory.hpp"
 #include "RBGen_NoPreprocessor.hpp"
 #include "RBGen_MSPreprocessor.h"
+#include "RBGen_ConfigDefs.h"
 
 // Forward declaration of Epetra_MultiVector.
 class Epetra_MultiVector;

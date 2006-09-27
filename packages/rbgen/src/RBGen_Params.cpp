@@ -1,9 +1,8 @@
 #include "RBGen_Params.h"
+#include "RBGen_ConfigDefs.h"
+
 #include "Teuchos_CommandLineProcessor.hpp"
 #include "Teuchos_Utils.hpp"
-#include <string>
-#include <vector>
-#include <iostream>
 
 Teuchos::RefCountPtr<Teuchos::ParameterList> RBGen::createParams( int argc, char* argv[] )
 {

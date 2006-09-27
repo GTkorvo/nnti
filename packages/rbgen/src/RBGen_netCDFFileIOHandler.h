@@ -5,9 +5,9 @@
 
 
 #include "RBGen_FileIOHandler.hpp"
+#include "RBGen_ConfigDefs.h"
+
 #include <netcdf.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 // Forward declaration of Epetra_MultiVector class
 class Epetra_MultiVector;
