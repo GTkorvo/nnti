@@ -6,7 +6,9 @@ namespace RBGen {
   { 
      // Insert the acceptable input file types for this factory
      file_formats.push_back("Burkardt");
+#ifdef HAVE_NETCDF
      file_formats.push_back("netCDF");
+#endif
      file_formats.push_back("Matrix Market");
   }
 
@@ -28,9 +30,11 @@ namespace RBGen {
       RBFileIO = Teuchos::rcp( new BurkardtFileIOHandler() );
     } else
     // File input format for netCDF files
+#ifdef HAVE_NETCDF
     if ( file_format == "netCDF" ) {
       RBFileIO = Teuchos::rcp( new netCDFFileIOHandler() );
     } else
+#endif
     // File input format for Matrix Market files
     if ( file_format == "Matrix Market" ) {
       RBFileIO = Teuchos::rcp( new MatrixMarketFileIOHandler() );

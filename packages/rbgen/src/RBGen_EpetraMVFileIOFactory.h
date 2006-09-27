@@ -5,7 +5,10 @@
 #include "RBGen_FileIOFactory.hpp"
 #include "RBGen_BurkardtFileIOHandler.h"
 #include "RBGen_MatrixMarketFileIOHandler.h"
+
+#ifdef HAVE_NETCDF
 #include "RBGen_netCDFFileIOHandler.h"
+#endif
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RefCountPtr.hpp"
@@ -60,8 +63,14 @@ namespace RBGen {
       RBFileIO = Teuchos::rcp( new BurkardtFileIOHandler() );
     
     // File input format for netCDF files
-    if ( file_format == "netCDF" )
+    if ( file_format == "netCDF" ) {
+#ifdef HAVE_NETCDF
       RBFileIO = Teuchos::rcp( new netCDFFileIOHandler() );
+#else
+      //  TO DO:  THROW EXCEPTION!!!! 
+      RBFileIO = Teuchos::null;
+#endif
+    }
     
     // File input format for Matrix Market files
     if ( file_format == "Matrix Market" )
