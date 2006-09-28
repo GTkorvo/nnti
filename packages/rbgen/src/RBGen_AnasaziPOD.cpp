@@ -19,6 +19,7 @@ namespace RBGen {
   
   AnasaziPOD::AnasaziPOD() :
     isInitialized_( false ),
+    isInner_( true ),
     basis_size_( 16 ),
     comp_time_( 0.0 ) 
   {
@@ -33,6 +34,9 @@ namespace RBGen {
     else { 
       basis_size_ = ss->NumVectors();
     }
+    // Get the inner / outer product form of the operator
+    isInner_ = ( params->get("Anasazi POD Operator Form","Inner")=="Inner"? true : false );
+
     // Resize the singular value vector 
     sv_.resize( basis_size_ );    
 
@@ -54,7 +58,6 @@ namespace RBGen {
     //
     int step = 5;
     int num_vecs = ss_->NumVectors();
-    bool inner_prod = true;
     //
     //  If the user is requesting more basis vectors than there are snapshots,
     //  compute the basis vectors using an outer product formulation.
@@ -62,7 +65,7 @@ namespace RBGen {
     if (basis_size_ > num_vecs) {
        step = 1;
        basis_size_ = num_vecs;
-       inner_prod = false;
+       isInner_ = false;
     }
     Epetra_Time timer( comm );
     int i, blockSize = 1;
@@ -96,14 +99,14 @@ namespace RBGen {
     // Create the initial vector and randomize it.
     //
     Teuchos::RefCountPtr<Anasazi::EpetraMultiVec> ivec;
-    if (inner_prod)
+    if (isInner_)
       ivec = Teuchos::rcp( new Anasazi::EpetraMultiVec( localMap, blockSize ) );
     else
       ivec = Teuchos::rcp( new Anasazi::EpetraMultiVec( ss_->Map(), blockSize ) );
     ivec->MvRandom();
     //
     // Call the constructor for the (A^T*A) operator
-    Teuchos::RefCountPtr<Anasazi::EpetraSymMVOp> Amat = Teuchos::rcp( new Anasazi::EpetraSymMVOp(ss_, !inner_prod) );
+    Teuchos::RefCountPtr<Anasazi::EpetraSymMVOp> Amat = Teuchos::rcp( new Anasazi::EpetraSymMVOp(ss_, !isInner_) );
     Teuchos::RefCountPtr<Anasazi::BasicEigenproblem<double,MV,OP> > MyProblem =
       Teuchos::rcp( new Anasazi::BasicEigenproblem<double,MV,OP>(Amat, ivec) );
     
@@ -156,7 +159,7 @@ namespace RBGen {
       //
       int info = 0;
       std::vector<double> tempnrm( nev );
-      if (inner_prod) {
+      if (isInner_) {
 	basis_ = Teuchos::rcp( new Epetra_MultiVector(ss_->Map(), nev) );
 	Epetra_MultiVector AV( ss_->Map(),nev );
 	

@@ -60,6 +60,9 @@ namespace RBGen {
     // Is this object initialized.
     bool isInitialized_;
 
+    // Is the inner (A'*A) or outer (A*A') product being used for the SVD computation
+    bool isInner_;
+
     // Size of the basis that this method will compute.
     int basis_size_;
 
