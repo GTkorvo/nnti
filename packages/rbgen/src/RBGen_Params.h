@@ -6,7 +6,9 @@
 
 namespace RBGen {
 
-Teuchos::RefCountPtr<Teuchos::ParameterList> createParams( int argc, char* argv[] );
+Teuchos::RefCountPtr<Teuchos::ParameterList> createParams( const std::string& filename );
+
+Teuchos::RefCountPtr<std::vector<std::string> > genFileList( const Teuchos::ParameterList& params );
 
 }
 #endif

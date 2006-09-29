@@ -2,13 +2,20 @@
 #include "RBGen_ConfigDefs.h"
 
 #include "Teuchos_CommandLineProcessor.hpp"
+#include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_Utils.hpp"
 
-Teuchos::RefCountPtr<Teuchos::ParameterList> RBGen::createParams( int argc, char* argv[] )
+Teuchos::RefCountPtr<Teuchos::ParameterList> RBGen::createParams( const std::string& filename )
 {
   // Create initial empty parameter list
   Teuchos::RefCountPtr<Teuchos::ParameterList> params = Teuchos::rcp( new Teuchos::ParameterList() );
-/*
+
+  // Read in parameter list from XML file
+  Teuchos::updateParametersFromXmlFile( filename, &*params );
+
+  cout << *params << endl;
+
+  /*
   //
   // --------------------------------------------------------------
   //  This function scans the input arguments for relevant information
@@ -33,9 +40,9 @@ Teuchos::RefCountPtr<Teuchos::ParameterList> RBGen::createParams( int argc, char
   params->set( "Data Output Path", out_path );
   //
   // Input / Output file format type
-  // Choices:  "Matrix Market", "Burkardt", or "netCDF"
+  // Choices:  "Matrix Market", "Burkardt", or "NetCDF"
   //
-  params->set( "File IO Type", "netCDF" );
+  params->set( "File IO Type", "NetCDF" );
   // 
   // Name of nodal file (containing XY coordinates)
   // Note:  Only needed if the file IO type is "Burkardt"
@@ -106,12 +113,12 @@ Teuchos::RefCountPtr<Teuchos::ParameterList> RBGen::createParams( int argc, char
   // if the preprocessing method is "ModifiedSS".
   // List as many scalings as needed for all snapshots
   //
-  std::vector< double > scalings;
+  //std::vector< double > scalings;
   //scalings.push_back( 1.0/3.0 );
   //scalings.push_back( 5.0/3.0 );
-  scalings.push_back( 1.0 );
+  //scalings.push_back( 1.0 );
   //
-  params->set("Snapshot Scaling", scalings);
+  //params->set("Snapshot Scaling", scalings);
   // 
   // Index vector for subtracting steady state from solutions given in the snapshot files
   // if the preprocessing method is "ModifiedSS".
@@ -145,11 +152,114 @@ Teuchos::RefCountPtr<Teuchos::ParameterList> RBGen::createParams( int argc, char
   //
   params->set( "Basis Size", 64 );  // Any size of basis you'd like
   //
-*/
+  */
+  //Teuchos::writeParameterListToXmlFile( *params, "rbGenInput_new.xml" );
+
   return params;
 }
 
+Teuchos::RefCountPtr< std::vector<std::string> > RBGen::genFileList( const Teuchos::ParameterList& params )
+{
+  Teuchos::RefCountPtr< std::vector< std::string > > filenames = Teuchos::rcp( new std::vector< std::string >() ); 
 
+  // See if the "File I/O" sublist exists
+  if ( !params.isSublist( "File IO" ) ) {
+    //  TO DO:  THROW EXCEPTION!!!!
+  }
+  
+  // Get the "File I/O" sublist.
+  Teuchos::ParameterList& fileio_params = const_cast<Teuchos::ParameterList&>(params.sublist( "File IO" ) );
+  
+  // See if the "Data File Format" sublist exists 
+  if ( !fileio_params.isSublist( "Data File Format" ) ) {
+    //  TO DO:  THROW EXCEPTION!!!!
+  }
+  
+  // Get the input path.
+  std::string in_path = "";
+  if ( fileio_params.isParameter( "Data Input Path" ) ) {
+    in_path = Teuchos::getParameter<std::string>( fileio_params, "Data Input Path" );
+  }
+ 
+  // Get the "File I/O" sublist.
+  Teuchos::ParameterList& fileformat_params = fileio_params.sublist( "Data File Format" );
+  
+  // Get the string prepended to the numeric characters.
+  std::string prepend = "";
+  if ( fileformat_params.isParameter( "Prepend" ) ) {
+    prepend = Teuchos::getParameter<std::string>( fileformat_params, "Prepend" );
+  }
 
+  // Get the string postpended to the numeric characters.
+  std::string postpend = "";
+  if ( fileformat_params.isParameter( "Postpend" ) ) {
+    postpend = Teuchos::getParameter<std::string>( fileformat_params, "Postpend" );
+  }
+
+  // Get the string prepended to the numeric characters.
+  std::string extension = "";
+  if ( fileformat_params.isParameter( "Extension" ) ) {
+    extension = Teuchos::getParameter<std::string>( fileformat_params, "Extension" );
+  }
+  
+    // Get the base for the numeric count
+  int base_num = 0;
+  if ( fileformat_params.isParameter( "File Number Base" ) ) {
+    base_num = Teuchos::getParameter<int>( fileformat_params, "File Number Base" );
+  }
+
+  std::string format_type = Teuchos::getParameter<std::string>( fileformat_params, "Type" );
+
+  if ( format_type == "Single file" ) {
+
+    // Get the file to process
+    filenames->push_back( in_path + Teuchos::getParameter<std::string>( fileformat_params, "Data File" ) );
+   
+  } else
+
+  if ( format_type == "Fixed length numeric" ) {
+    
+    // Get the number of files to process
+    int num_files = Teuchos::getParameter<int>( fileformat_params, "Number of Files" );
+    int max_num = base_num + num_files;
+    int num_places = (int)::ceil( ::log10( (double)(max_num) ) );
+
+    for (int i=base_num; i<max_num; i++) {
+
+      // Generate the current filename
+      std::string curr_filename = in_path + prepend;
+
+      // Get the number of places needed for the current file number
+      int curr_places = (int)::ceil( ::log10( (double)(i+1) ) );
+      
+      // Add zeros to pad the file number
+      for (int j=curr_places; j<num_places; j++) {
+	curr_filename += "0";
+      }
+	
+      // Now add on the current file number, postpend string and extension
+      filenames->push_back( curr_filename + Teuchos::Utils::toString( i ) + postpend + extension );
+    }
+    
+  } else 
+
+  if ( format_type == "Variable length numeric" ) {
+
+    // Get the number of files to process
+    int num_files = Teuchos::getParameter<int>( fileformat_params, "Number of Files" );
+    int max_num = base_num + num_files;
+
+    for (int i=base_num; i<max_num; i++) {
+      filenames->push_back( in_path + prepend + Teuchos::Utils::toString( i ) + postpend + extension );
+    }    
+  } 
+
+  else {
+    // TO DO:  Throw exception, format_type is not recognized
+  }
+  
+  return filenames;
+
+}
 
 

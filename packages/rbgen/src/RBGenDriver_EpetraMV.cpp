@@ -21,6 +21,7 @@
 #include "Teuchos_Time.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_CommandLineProcessor.hpp"
 	
 int main( int argc, char* argv[] )
 {
@@ -33,13 +34,45 @@ int main( int argc, char* argv[] )
   Epetra_SerialComm Comm;
 #endif
 
+  // Create command line processor
+  Teuchos::CommandLineProcessor RBGen_CLP;
+  RBGen_CLP.recogniseAllOptions( false );
+  RBGen_CLP.throwExceptions( false );
+
+  // Generate list of acceptable command line options
+  std::string xml_file = "";
+  RBGen_CLP.setOption("xml-file", &xml_file, "XML Input File");
+
+  // Process command line.
+  Teuchos::CommandLineProcessor::EParseCommandLineReturn
+    parseReturn= RBGen_CLP.parse( argc, argv );
+  if( parseReturn == Teuchos::CommandLineProcessor::PARSE_HELP_PRINTED ) {
+    return 0;
+  }
+  if( parseReturn != Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL   ) {
+#ifdef EPETRA_MPI
+    MPI_Finalize();
+#endif
+    return -1; // Error!
+  }
+
+  // Check to make sure an XML input file was provided
+  if (xml_file == "") {
+    std::cerr << "ERROR:  An XML file was not provided; use --xml-file to provide an XML input file for this RBGen driver." << std::endl;
+    // TO DO: THROW EXCEPTION!!!!
+#ifdef EPETRA_MPI
+    MPI_Finalize();
+#endif
+    return -1; // Error!    
+  }
+
   Teuchos::Array<Teuchos::RefCountPtr<Teuchos::Time> > timersRBGen;
   //
   // ---------------------------------------------------------------
-  //  CREATE THE INITIAL PARAMETER LIST FROM THE COMMAND LINE OPTIONS
+  //  CREATE THE INITIAL PARAMETER LIST FROM THE INPUT XML FILE
   // ---------------------------------------------------------------
   //
-  Teuchos::RefCountPtr<Teuchos::ParameterList> BasisParams = RBGen::createParams( argc, argv );
+  Teuchos::RefCountPtr<Teuchos::ParameterList> BasisParams = RBGen::createParams( xml_file );
   //
   // ---------------------------------------------------------------
   //  CREATE THE FILE I/O HANDLER
@@ -65,18 +98,18 @@ int main( int argc, char* argv[] )
   }    
   //
   // ---------------------------------------------------------------
-  //  RETRIEVE THE DATA SET / SNAPSHOT SET & PREPROCESS
+  //  READ IN THE DATA SET / SNAPSHOT SET & PREPROCESS
   //  ( this will be a separate abstract class type )
   // ---------------------------------------------------------------
   //
-  std::vector<std::string> filenames = Teuchos::getParameter<std::vector<std::string> >( *BasisParams, "Snapshot Files");
+  Teuchos::RefCountPtr<std::vector<std::string> > filenames = RBGen::genFileList( *BasisParams );
   Teuchos::RefCountPtr<Teuchos::Time> timerSnapshotIn = Teuchos::rcp( new Teuchos::Time("Reading in Snapshot Set") );
   timersRBGen.push_back( timerSnapshotIn );
   //
   Teuchos::RefCountPtr<Epetra_MultiVector> testMV;
   {
     Teuchos::TimeMonitor lcltimer( *timerSnapshotIn );
-    testMV = fileio->Read( filenames );
+    testMV = fileio->Read( *filenames );
   } 
 
   RBGen::EpetraMVPreprocessorFactory preprocess_factory;
