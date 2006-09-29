@@ -14,16 +14,16 @@ class Epetra_MultiVector;
 
 namespace RBGen {
  
-  class netCDFFileIOHandler : public virtual FileIOHandler< Epetra_MultiVector > 
+  class NetCDFFileIOHandler : public virtual FileIOHandler< Epetra_MultiVector > 
   {  
   public:
     //@{ @name Constructor/Destructor.
     
     //! Default constructor.
-    netCDFFileIOHandler();
+    NetCDFFileIOHandler();
     
     //! Destructor.
-    virtual ~netCDFFileIOHandler();
+    virtual ~NetCDFFileIOHandler();
     
     //@}
     
@@ -63,7 +63,7 @@ namespace RBGen {
     char **var_name;
     Teuchos::RefCountPtr< Teuchos::ParameterList > params_;
 
-    // Method for handling error from netCDF.
+    // Method for handling error from NetCDF.
     void handle_error( int status ) {
       if (status != NC_NOERR) {
 	fprintf(stderr,"%s\n", nc_strerror(status));

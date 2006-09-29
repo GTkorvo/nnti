@@ -141,10 +141,10 @@ endif
 #-----------------------------------------------------
 
 EXTRA_NETCDF_H = \
-        $(srcdir)/RBGen_netCDFFileIOHandler.h
+        $(srcdir)/RBGen_NetCDFFileIOHandler.h
 
 EXTRA_NETCDF = \
-        $(srcdir)/RBGen_netCDFFileIOHandler.cpp
+        $(srcdir)/RBGen_NetCDFFileIOHandler.cpp
 
 if BUILD_RBGEN_NETCDF
 if BUILD_RBGEN_EPETRA

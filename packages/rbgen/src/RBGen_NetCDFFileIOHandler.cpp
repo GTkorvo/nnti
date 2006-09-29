@@ -1,5 +1,5 @@
 
-#include "RBGen_netCDFFileIOHandler.h"
+#include "RBGen_NetCDFFileIOHandler.h"
 
 #include "Epetra_BLAS.h"
 #include "Epetra_Export.h"
@@ -21,19 +21,19 @@
 
 namespace RBGen {
   
-  netCDFFileIOHandler::netCDFFileIOHandler() 
+  NetCDFFileIOHandler::NetCDFFileIOHandler() 
     : isInitialized_(false), num_nodes(0), num_nod_var(0), len_string(0), var_name(0)
   {
   }
 
-  netCDFFileIOHandler::~netCDFFileIOHandler() 
+  NetCDFFileIOHandler::~NetCDFFileIOHandler() 
   {
     for (int i=0; i<num_nod_var; i++)
       delete [] var_name[i];
     if (var_name) delete [] var_name;
   }
 
-  Teuchos::RefCountPtr<Epetra_MultiVector> netCDFFileIOHandler::Read( const std::vector<std::string>& filenames )
+  Teuchos::RefCountPtr<Epetra_MultiVector> NetCDFFileIOHandler::Read( const std::vector<std::string>& filenames )
   {
 #ifdef EPETRA_MPI
     Epetra_MpiComm comm( MPI_COMM_WORLD );
@@ -293,7 +293,7 @@ namespace RBGen {
 	//
 	if ( comm.MyPID() == 0 ) {
 	  //
-	  // Read in next snapshot, set pointer to next row containing snapshot in netCDF file.
+	  // Read in next snapshot, set pointer to next row containing snapshot in NetCDF file.
 	  //
 	  start2[0]=j;
 	  status=nc_get_vara_float(ncid,ss_id,start2,count2,temp_vec_f);
@@ -332,7 +332,7 @@ namespace RBGen {
     return newMV;
   }
   
-  void netCDFFileIOHandler::Write( Teuchos::RefCountPtr<const Epetra_MultiVector> MV, const std::string& filename )
+  void NetCDFFileIOHandler::Write( Teuchos::RefCountPtr<const Epetra_MultiVector> MV, const std::string& filename )
   {
 #ifdef EPETRA_MPI
     Epetra_MpiComm comm( MPI_COMM_WORLD );
@@ -340,7 +340,7 @@ namespace RBGen {
     Epetra_SerialComm comm;
 #endif
     //
-    // Variables for netCDF
+    // Variables for NetCDF
     //
     int status;
     int ncid, len_string_id, num_nodes_id, num_nod_var_id, row_id, col_id, ss_id, name_nod_var_id;
@@ -437,7 +437,7 @@ namespace RBGen {
       }
     }     
     
-    // Write the list of names of the nodal variables to the netcdf file */
+    // Write the list of names of the nodal variables to the Netcdf file */
     if ( comm.MyPID() == 0 ) {
       for(i=0; i<num_nod_var; ++i) {
 	start2[0] = i;

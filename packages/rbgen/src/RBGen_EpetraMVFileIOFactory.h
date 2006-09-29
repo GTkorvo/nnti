@@ -11,7 +11,7 @@
 #endif
 
 #ifdef HAVE_RBGEN_NETCDF
-#include "RBGen_netCDFFileIOHandler.h"
+#include "RBGen_NetCDFFileIOHandler.h"
 #endif
 
 #include "Teuchos_ParameterList.hpp"
