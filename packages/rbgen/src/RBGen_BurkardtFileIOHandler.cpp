@@ -33,16 +33,13 @@ namespace RBGen {
 #else
     Epetra_SerialComm comm;
 #endif
+
+    // Get the "File I/O" sublist.
+    Teuchos::ParameterList& fileio_params = params->sublist( "File IO" );
     
-    if ( params->isParameter("Data Size") ) 
-      {
-	num_nodes = Teuchos::getParameter<int>( *params, "Data Size" );
-	// if (!num_nodes) { TO DO:  THROW EXCEPTION! }
-	isInit = true;
-      } 
-    else if( params->isParameter("Data Format File") ) 
+    if( fileio_params.isParameter("Data Format File") ) 
       {      
-	std::string format_file = Teuchos::getParameter<std::string>( *params, "Data Format File" );
+	std::string format_file = Teuchos::getParameter<std::string>( fileio_params, "Data Format File" );
 	//
 	// The first processor get the number of nodes from the data format file and then broadcasts it.
 	//
