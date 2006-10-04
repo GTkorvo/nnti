@@ -37,10 +37,10 @@ namespace RBGen {
 /*    try {
       scaling_idx_ = Teuchos::getParameter< std::vector< std::pair<int,int> > >( *params, "Snapshot Scaling Indices" );
     }
-*/
     catch (std::exception &e) {
       cout<<"The snapshot scaling indices have not been specified in the input!"<<endl;
     }      
+*/
     if ( scalings_.size() != scaling_idx_.size() ) {
       cout<<"The scaling vector is not the same size as the number of index pairs!"<< endl;
     }
