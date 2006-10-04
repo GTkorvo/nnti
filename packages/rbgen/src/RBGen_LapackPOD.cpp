@@ -25,8 +25,11 @@ namespace RBGen {
   void LapackPOD::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
                              const Teuchos::RefCountPtr< Epetra_MultiVector >& ss )
   {
-    if ( params->get("Basis Size", 16) < ss->NumVectors() ) {
-      basis_size_ = params->get("Basis Size", 16);
+    // Get the "Reduced Basis Method" sublist.
+    Teuchos::ParameterList& rbmethod_params = params->sublist( "Reduced Basis Method" );
+
+    if ( rbmethod_params.get("Basis Size", 16) < ss->NumVectors() ) {
+      basis_size_ = rbmethod_params.get("Basis Size", 16);
     }
     else {
       basis_size_ = ss->NumVectors();

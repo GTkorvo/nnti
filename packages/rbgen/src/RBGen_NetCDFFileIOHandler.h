@@ -29,7 +29,7 @@ namespace RBGen {
     
     //@{ @name Initialization/Reset Methods
     
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params ) { params_ = params; }
+    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params );
     
     void Reset();
     
@@ -61,6 +61,7 @@ namespace RBGen {
     bool isInitialized_;
     int num_nodes, num_nod_var, len_string;
     char **var_name;
+    string in_path, out_path;
     Teuchos::RefCountPtr< Teuchos::ParameterList > params_;
 
     // Method for handling error from NetCDF.

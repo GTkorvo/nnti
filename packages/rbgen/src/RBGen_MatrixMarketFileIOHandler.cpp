@@ -28,6 +28,24 @@ namespace RBGen {
   {
   }
 
+  void MatrixMarketFileIOHandler::Initialize( const Teuchos::RefCountPtr<Teuchos::ParameterList>& params )
+  {
+    // Get the "File I/O" sublist.
+    Teuchos::ParameterList& fileio_params = params->sublist( "File IO" );
+
+    // Get the input path.
+    in_path = "";
+    if ( fileio_params.isParameter( "Data Input Path" ) ) {
+      in_path = Teuchos::getParameter<std::string>( fileio_params, "Data Input Path" );
+    }
+
+    // Get the output path.
+    out_path = "";
+    if ( fileio_params.isParameter( "Data Output Path" ) ) {
+      out_path = Teuchos::getParameter<std::string>( fileio_params, "Data Output Path" );
+    }
+  }
+
   Teuchos::RefCountPtr<Epetra_MultiVector> MatrixMarketFileIOHandler::Read( const std::vector<std::string>& filenames )
   {
 
@@ -50,7 +68,8 @@ namespace RBGen {
 	int info = 0, rows_i = 0;
 
 	// Open the data file
-	handle = fopen(filenames[i].c_str(), "r");
+        std::string temp_filename = in_path + filenames[i];
+	handle = fopen(temp_filename.c_str(), "r");
 	if (handle == 0) {
 	  // TO DO:  THROW EXCEPTION!
 	}
@@ -88,7 +107,8 @@ namespace RBGen {
 	//
 	//  Read in Epetra_MultiVector from file.
 	//
-	int info = EpetraExt::MatrixMarketFileToMultiVector( filenames[i].c_str(), Map, fileMV );
+	std::string curr_filename = in_path + filenames[i];
+        int info = EpetraExt::MatrixMarketFileToMultiVector( curr_filename.c_str(), Map, fileMV );
 	if (info != 0) {
 	  // TO DO:  THROW EXCEPTION!
 	}
@@ -118,7 +138,8 @@ namespace RBGen {
   {
     if (isInit) {
 
-      EpetraExt::MultiVectorToMatrixMarketFile( filename.c_str(), *MV );
+      std::string temp_filename = out_path + filename;
+      EpetraExt::MultiVectorToMatrixMarketFile( temp_filename.c_str(), *MV );
 
     }
     else {

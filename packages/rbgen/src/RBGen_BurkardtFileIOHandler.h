@@ -59,6 +59,9 @@ namespace RBGen {
     // Whether or not we know the file format.
     bool isInit;
 
+    // File input / output paths
+    std::string in_path, out_path;
+
     // Method for getting the number of nodes in the data from a format file.
     int data_size( const std::string filename );
 

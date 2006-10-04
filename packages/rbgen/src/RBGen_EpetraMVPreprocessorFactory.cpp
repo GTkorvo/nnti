@@ -13,25 +13,32 @@ namespace RBGen {
   Teuchos::RefCountPtr<Preprocessor<Epetra_MultiVector> >
   EpetraMVPreprocessorFactory::create( const Teuchos::ParameterList& params )
   {
-
-    if (!params.isParameter( "Preprocessing" ) ) {
+    // See if the "Preprocessing" sublist exists
+    if (!params.isSublist( "Preprocessing Method" ) ) {
       // TO DO:  THROW EXCEPTION!!!
     }
 
+    // Get the preprocessing method sublist.
+    const Teuchos::ParameterList& preproc_params = params.sublist( "Preprocessing Method" );
+
     // Get the preprocessing parameter.
-    std::string preproc = Teuchos::getParameter<std::string>( const_cast<Teuchos::ParameterList&>(params),
-                                                              "Preprocessing" );
+    std::string method = Teuchos::getParameter<std::string>( const_cast<Teuchos::ParameterList&>(preproc_params),
+                                                             "Method" );
 
     // Create the preprocessor.
     Teuchos::RefCountPtr<Preprocessor< Epetra_MultiVector > > RBPreprocessor;
 
     // Basic preprocessor does nothing
-    if ( preproc == "none" )
+    if ( method == "none" ) {
       RBPreprocessor = Teuchos::rcp( new NoPreprocessor<Epetra_MultiVector>() );
-
+    } else
     // Modified snapshot preprocessor
-    if ( preproc == "ModifiedSS" )
+    if ( method == "ModifiedSS" ) {
       RBPreprocessor = Teuchos::rcp( new MSPreprocessor() );
+    } else
+    {
+       // Throw an exception because the preprocessing method was not recognized by this factory.
+    }
     //
     // Return the preprocessor created
     //

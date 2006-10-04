@@ -175,13 +175,7 @@ Teuchos::RefCountPtr< std::vector<std::string> > RBGen::genFileList( const Teuch
     //  TO DO:  THROW EXCEPTION!!!!
   }
   
-  // Get the input path.
-  std::string in_path = "";
-  if ( fileio_params.isParameter( "Data Input Path" ) ) {
-    in_path = Teuchos::getParameter<std::string>( fileio_params, "Data Input Path" );
-  }
- 
-  // Get the "File I/O" sublist.
+  // Get the "Data File Format" sublist.
   Teuchos::ParameterList& fileformat_params = fileio_params.sublist( "Data File Format" );
   
   // Get the string prepended to the numeric characters.
@@ -213,7 +207,7 @@ Teuchos::RefCountPtr< std::vector<std::string> > RBGen::genFileList( const Teuch
   if ( format_type == "Single file" ) {
 
     // Get the file to process
-    filenames->push_back( in_path + Teuchos::getParameter<std::string>( fileformat_params, "Data File" ) );
+    filenames->push_back( Teuchos::getParameter<std::string>( fileformat_params, "Data File" ) );
    
   } else
 
@@ -227,7 +221,7 @@ Teuchos::RefCountPtr< std::vector<std::string> > RBGen::genFileList( const Teuch
     for (int i=base_num; i<max_num; i++) {
 
       // Generate the current filename
-      std::string curr_filename = in_path + prepend;
+      std::string curr_filename = prepend;
 
       // Get the number of places needed for the current file number
       int curr_places = (int)::ceil( ::log10( (double)(i+1) ) );
@@ -250,7 +244,7 @@ Teuchos::RefCountPtr< std::vector<std::string> > RBGen::genFileList( const Teuch
     int max_num = base_num + num_files;
 
     for (int i=base_num; i<max_num; i++) {
-      filenames->push_back( in_path + prepend + Teuchos::Utils::toString( i ) + postpend + extension );
+      filenames->push_back( prepend + Teuchos::Utils::toString( i ) + postpend + extension );
     }    
   } 
 

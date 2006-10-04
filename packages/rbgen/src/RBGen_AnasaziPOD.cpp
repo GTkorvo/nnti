@@ -28,14 +28,18 @@ namespace RBGen {
   void AnasaziPOD::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
                                const Teuchos::RefCountPtr< Epetra_MultiVector >& ss )
   {
-    if ( params->get("Basis Size", 16) < ss->NumVectors() ) {
-      basis_size_ = params->get("Basis Size", 16);
+
+   // Get the "Reduced Basis Method" sublist.
+    Teuchos::ParameterList& rbmethod_params = params->sublist( "Reduced Basis Method" );
+
+    if ( rbmethod_params.get("Basis Size", 16) < ss->NumVectors() ) {
+      basis_size_ = rbmethod_params.get("Basis Size", 16);
     } 
     else { 
       basis_size_ = ss->NumVectors();
     }
     // Get the inner / outer product form of the operator
-    isInner_ = ( params->get("Anasazi POD Operator Form","Inner")=="Inner"? true : false );
+    isInner_ = ( rbmethod_params.get("Anasazi POD Operator Form","Inner")=="Inner"? true : false );
 
     // Resize the singular value vector 
     sv_.resize( basis_size_ );    

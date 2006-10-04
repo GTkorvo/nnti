@@ -33,6 +33,29 @@ namespace RBGen {
     if (var_name) delete [] var_name;
   }
 
+  void NetCDFFileIOHandler::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params )
+  {
+    
+    // Save the parameter list.
+    params_ = params;
+
+    // Get the "File I/O" sublist.
+    const Teuchos::ParameterList& fileio_params = params->sublist( "File IO" );
+
+    // Get the input path.
+    in_path = "";
+    if ( fileio_params.isParameter( "Data Input Path" ) ) {
+      in_path = Teuchos::getParameter<std::string>( fileio_params, "Data Input Path" );
+    }
+
+    // Get the output path.
+    out_path = "";
+    if ( fileio_params.isParameter( "Data Output Path" ) ) {
+      out_path = Teuchos::getParameter<std::string>( fileio_params, "Data Output Path" );
+    }
+
+  }
+
   Teuchos::RefCountPtr<Epetra_MultiVector> NetCDFFileIOHandler::Read( const std::vector<std::string>& filenames )
   {
 #ifdef EPETRA_MPI
@@ -65,7 +88,8 @@ namespace RBGen {
     if ( comm.MyPID() == 0 ) {	
       size_t rows0=0, cols0=0, cols_t=0, total_rows=0;
 
-      status = nc_open(filenames[0].c_str(),NC_NOWRITE,&ncid);
+      std::string temp_filename = in_path + filenames[0];
+      status = nc_open(temp_filename.c_str(),NC_NOWRITE,&ncid);
       if (status != NC_NOERR) handle_error(status);
       //
       // If the scaling index vector is needed we can create it here.
@@ -156,7 +180,8 @@ namespace RBGen {
       if (status != NC_NOERR) handle_error(status);
       //
       for (i=1; i<(int)filenames.size(); i++) {
-	status = nc_open(filenames[i].c_str(),NC_NOWRITE,&ncid);
+        std::string temp_filename = in_path + filenames[i];
+	status = nc_open(temp_filename.c_str(),NC_NOWRITE,&ncid);
 	if (status != NC_NOERR) handle_error(status);
 	//
 	// If the scaling index vector is needed we can create it here.
@@ -265,7 +290,8 @@ namespace RBGen {
 
       if ( comm.MyPID() == 0 ) {
 	// Open the next snapshot file;
-	status = nc_open(filenames[i].c_str(),NC_NOWRITE,&ncid);
+        std::string temp_filename = in_path + filenames[i];
+	status = nc_open(temp_filename.c_str(),NC_NOWRITE,&ncid);
 	if (status != NC_NOERR) handle_error(status);
 	//
 	// Get information on the number of snapshots in the file.
@@ -375,7 +401,8 @@ namespace RBGen {
       //
       // Open basis output file and define output variables going into the file.
       //
-      status=nc_create(filename.c_str(),NC_CLOBBER,&ncid);
+      std::string temp_filename = out_path + filename;
+      status=nc_create(temp_filename.c_str(),NC_CLOBBER,&ncid);
       if (status != NC_NOERR) handle_error(status);
       
       status=nc_def_dim(ncid,"len_string",(long)len_string,&len_string_id);

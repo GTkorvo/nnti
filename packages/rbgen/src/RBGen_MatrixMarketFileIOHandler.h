@@ -26,7 +26,7 @@ namespace RBGen {
 
     //@{ @name Initialization/Reset Methods
 
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params ) { params_ = params; }
+    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params );
 
     void Reset() { num_nodes = 0; isInit = false; };
 
@@ -58,6 +58,9 @@ namespace RBGen {
 
     // Whether or not we know the file format.
     bool isInit;
+
+    // File input / output paths
+    std::string in_path, out_path;
 
     // ParameterList that this file handler was initialized with.
     Teuchos::RefCountPtr< Teuchos::ParameterList > params_;

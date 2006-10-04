@@ -55,9 +55,21 @@ namespace RBGen {
 	isInit = false;
 	// TO DO:  THROW EXCEPTION!
       }
+
+    // Get the input path.
+    in_path = "";
+    if ( fileio_params.isParameter( "Data Input Path" ) ) {       
+      in_path = Teuchos::getParameter<std::string>( fileio_params, "Data Input Path" );
+    }
+
+    // Get the output path.
+    out_path = "";
+    if ( fileio_params.isParameter( "Data Output Path" ) ) {
+      out_path = Teuchos::getParameter<std::string>( fileio_params, "Data Output Path" );
+    }
+
   }
   
-
   Teuchos::RefCountPtr<Epetra_MultiVector> BurkardtFileIOHandler::Read( const std::vector<std::string>& filenames )
   {
 
@@ -110,7 +122,8 @@ namespace RBGen {
 	  //
 	  // Read in vectors from the next file.
 	  //
-	  read_vec( filenames[i].c_str(), num_nodes, u, v );
+          std::string temp_filename = in_path + filenames[i];
+	  read_vec( temp_filename.c_str(), num_nodes, u, v );
 	  //
 	  // The storage of the velocity vectors is interleaved.
 	  //
@@ -163,6 +176,7 @@ namespace RBGen {
       Epetra_BLAS blas;
       const Epetra_Vector* col_newMV;
       std::string out_file;
+      int num_places = (int)::ceil( ::log10( (double)(num_vecs) ) );
       //
       // Create map putting all elements of vector on Processor 0.
       //
@@ -198,19 +212,17 @@ namespace RBGen {
 	  //
 	  // Determine next filename.
 	  //
-	  out_file = filename;
-	  if( i < 10 ) {
-	    out_file += "00";
-	    out_file += Teuchos::Utils::toString( i );
-	    out_file += ".txt";
-	  } else if ( i < 100 ) {
-	    out_file += "0";
-	    out_file += Teuchos::Utils::toString( i );
-	    out_file += ".txt";
-	  } else {
-	    out_file += Teuchos::Utils::toString( i );
-	    out_file += ".txt";
-	  }
+	  out_file = out_path + filename;
+          int curr_places = (int)::ceil( ::log10( (double)(i) ) );
+
+          // Put in the right number of zeros.
+          for (int j=curr_places; j<num_places; j++) {
+            out_file += "0";
+          }
+ 
+          // Add the file number.
+          out_file += Teuchos::Utils::toString( i );
+
 	  //
 	  // Write out.
 	  //
