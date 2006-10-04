@@ -25,7 +25,7 @@ namespace RBGen {
     //
     // Try to get the snapshot scaling vector
     //
-    try {
+/*    try {
       scalings_ = Teuchos::getParameter< std::vector< double > >( *params, "Snapshot Scaling" );
     }
     catch (std::exception &e) {
@@ -34,7 +34,7 @@ namespace RBGen {
     //
     // Try to get the snapshot scaling indices vector
     //
-/*    try {
+    try {
       scaling_idx_ = Teuchos::getParameter< std::vector< std::pair<int,int> > >( *params, "Snapshot Scaling Indices" );
     }
     catch (std::exception &e) {
