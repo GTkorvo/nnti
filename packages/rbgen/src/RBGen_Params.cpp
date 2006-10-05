@@ -13,8 +13,6 @@ Teuchos::RefCountPtr<Teuchos::ParameterList> RBGen::createParams( const std::str
   // Read in parameter list from XML file
   Teuchos::updateParametersFromXmlFile( filename, &*params );
 
-  cout << *params << endl;
-
   /*
   //
   // --------------------------------------------------------------
