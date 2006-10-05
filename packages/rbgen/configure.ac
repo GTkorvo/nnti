@@ -433,6 +433,11 @@ AC_CONFIG_FILES([
 		Makefile
 		Makefile.export.rbgen
 		src/Makefile
+		example/Makefile
+		example/Drivers/Makefile
+		example/Drivers/Epetra/Makefile
+		example/Drivers/Epetra/Lena/Makefile
+		example/Drivers/Epetra/Moon/Makefile
 		])
 
 AC_OUTPUT()

@@ -44,6 +44,7 @@ namespace RBGen {
     // File input format for Matrix Market files
 #ifdef HAVE_RBGEN_EPETRAEXT
     if ( file_format == "Matrix Market" ) {
+      cout << "Making Matrix Market File IO Handler" << endl;
       RBFileIO = Teuchos::rcp( new MatrixMarketFileIOHandler() );
     } else 
 #endif

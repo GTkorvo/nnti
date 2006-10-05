@@ -44,6 +44,9 @@ namespace RBGen {
     if ( fileio_params.isParameter( "Data Output Path" ) ) {
       out_path = Teuchos::getParameter<std::string>( fileio_params, "Data Output Path" );
     }
+
+    // This file i/o handler is now initialized.
+    isInit = true;
   }
 
   Teuchos::RefCountPtr<Epetra_MultiVector> MatrixMarketFileIOHandler::Read( const std::vector<std::string>& filenames )
@@ -77,7 +80,7 @@ namespace RBGen {
 	// Get the array dimensions
 	info = EpetraExt::mm_read_mtx_array_size( handle, &rows_i, &cols[i] );
 	if (info != 0) {
-	  // TO DO:  THROW EXCEPTION!
+          // TO DO:  THROW EXCEPTION!
 	}
 	if (i==0) {
 	  rows = rows_i;  // Get the number of rows from the first file

@@ -111,6 +111,9 @@ int main( int argc, char* argv[] )
     Teuchos::TimeMonitor lcltimer( *timerSnapshotIn );
     testMV = fileio->Read( *filenames );
   } 
+  if (testMV == Teuchos::null) {
+    cout << "The multivector returned from the read in as null!" << endl;
+  }
 
   RBGen::EpetraMVPreprocessorFactory preprocess_factory;
 

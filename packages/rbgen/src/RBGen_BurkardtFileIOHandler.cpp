@@ -68,6 +68,8 @@ namespace RBGen {
       out_path = Teuchos::getParameter<std::string>( fileio_params, "Data Output Path" );
     }
 
+    // This file i/o handler is not initialized.
+    isInit = true;
   }
   
   Teuchos::RefCountPtr<Epetra_MultiVector> BurkardtFileIOHandler::Read( const std::vector<std::string>& filenames )

@@ -33,4 +33,8 @@ all-local:
 	@echo "Trilinos package rbgen subdirectory example built successfully."
 	@echo ""
 
-SUBDIRS = Drivers
+if BUILD_RBGEN_EPETRA
+EPETRA_DRIVER_SUBDIR = Epetra
+endif
+
+SUBDIRS = $(EPETRA_DRIVER_SUBDIR)

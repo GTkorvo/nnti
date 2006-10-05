@@ -52,13 +52,13 @@ namespace RBGen {
     //@{ @name Handler Status Methods
 
     //! Return initialized status of the handler
-    bool isInitialized() const { return true; };
+    bool isInitialized() const { return isInit; };
 
     //@}
 
   private:
 
-    bool isInitialized_;
+    bool isInit;
     int num_nodes, num_nod_var, len_string;
     char **var_name;
     string in_path, out_path;

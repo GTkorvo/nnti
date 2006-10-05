@@ -33,4 +33,4 @@ all-local:
 	@echo "Trilinos package rbgen subdirectory example built successfully."
 	@echo ""
 
-SUBDIRS = Drivers
+SUBDIRS =  Lena Moon

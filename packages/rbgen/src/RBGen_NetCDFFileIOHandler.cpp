@@ -22,7 +22,7 @@
 namespace RBGen {
   
   NetCDFFileIOHandler::NetCDFFileIOHandler() 
-    : isInitialized_(false), num_nodes(0), num_nod_var(0), len_string(0), var_name(0)
+    : isInit(false), num_nodes(0), num_nod_var(0), len_string(0), var_name(0)
   {
   }
 
@@ -54,6 +54,8 @@ namespace RBGen {
       out_path = Teuchos::getParameter<std::string>( fileio_params, "Data Output Path" );
     }
 
+    // This file i/o handler is now initialized.
+    isInit = true;
   }
 
   Teuchos::RefCountPtr<Epetra_MultiVector> NetCDFFileIOHandler::Read( const std::vector<std::string>& filenames )
@@ -111,7 +113,7 @@ namespace RBGen {
       status = nc_inq_dimlen(ncid,col_id, &cols0);
       if (status != NC_NOERR) handle_error(status);
       //
-      if (!isInitialized_) {
+      if (!isInit) {
 	int len_string_id, num_nodes_id, name_nod_var_id;
 	size_t len_string_t, num_nodes_t;
 
@@ -163,7 +165,7 @@ namespace RBGen {
 	}
 
 	// Now we are initialized!
-	isInitialized_ = true;
+	isInit = true;
 	
 	// Output information.
 	cout<<"len_string = "<<len_string<<endl;
