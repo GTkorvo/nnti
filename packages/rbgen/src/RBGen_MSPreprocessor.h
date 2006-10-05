@@ -53,6 +53,9 @@ namespace RBGen {
     //! Steady state filename.
     std::string steady_file_;
 
+    //! Steady state scaling.
+    double steady_scale_;
+
     //! Scaling vector for the snapshots.
     std::vector< double > scalings_;
     

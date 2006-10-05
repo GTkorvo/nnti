@@ -33,7 +33,7 @@ namespace RBGen {
       RBPreprocessor = Teuchos::rcp( new NoPreprocessor<Epetra_MultiVector>() );
     } else
     // Modified snapshot preprocessor
-    if ( method == "ModifiedSS" ) {
+    if ( method == "Modified Snapshot" ) {
       RBPreprocessor = Teuchos::rcp( new MSPreprocessor() );
     } else
     {

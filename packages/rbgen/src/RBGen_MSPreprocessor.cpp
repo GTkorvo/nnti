@@ -5,26 +5,37 @@
 
 namespace RBGen {
 
-  MSPreprocessor::MSPreprocessor(): isInitialized_(false)
+  MSPreprocessor::MSPreprocessor(): isInitialized_(false), steady_scale_(1.0)
   {
   }
 
   void MSPreprocessor::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params, 
                                    const Teuchos::RefCountPtr< FileIOHandler<Epetra_MultiVector> >& fileio )
   {
+    // Save the file i/o handler.
     fileio_ = fileio;
+
+    // Get the preprocessing method sublist.
+    const Teuchos::ParameterList& preproc_params = params->sublist( "Preprocessing Method" );
+
     //
     // Try to get the steady state file from the parameter list
     //
     try {
-      steady_file_ = Teuchos::getParameter< std::string >( *params, "Steady State File" );
+      steady_file_ = Teuchos::getParameter< std::string >( preproc_params, "Steady State File" );
     }
     catch (std::exception &e) {
       cout<<"The steady state file has not been specified"<<endl;
     }
+
     //
-    // Try to get the snapshot scaling vector
+    // Check if there is a scaling factor on the steady state vector
     //
+    steady_scale_ = 1.0;
+    if ( preproc_params.isParameter("Steady State Scaling Factor") ) {
+      steady_scale_ = Teuchos::getParameter< double >( preproc_params, "Steady State Scaling Factor" );
+    }
+
 /*    try {
       scalings_ = Teuchos::getParameter< std::vector< double > >( *params, "Snapshot Scaling" );
     }
@@ -59,20 +70,14 @@ namespace RBGen {
       std::vector< std::string > steady_file( 1, steady_file_ );
       Teuchos::RefCountPtr<Epetra_MultiVector> steadyMV = fileio_->Read( steady_file );
       Epetra_MultiVector* colMV = 0;
-      double scale, one = 1.0;
       // 
-      // Go through each scaling index pair and remove the scaled steady state vector.
+      // Remove the scaled steady state vector.
       //
-      for (unsigned int i=0; i<scalings_.size(); i++) 
-	{
-	  scale = scalings_[i];
-	  for (int j = scaling_idx_[i].first; j <= scaling_idx_[i].second; j++) 
-	    {   
-	      colMV = new Epetra_MultiVector( View, *ss, j, 1 );
-	      colMV->Update( -1.0*scale, *steadyMV, one );
-	      delete colMV;
-	    }
-	}
+      for (int i=0; i<ss->NumVectors(); i++) {
+	colMV = new Epetra_MultiVector( View, *ss, i, 1 );
+	colMV->Update( -1.0*steady_scale_, *steadyMV, 1.0 );
+	delete colMV;
+      }
     }
     else {
       // Throw error here!

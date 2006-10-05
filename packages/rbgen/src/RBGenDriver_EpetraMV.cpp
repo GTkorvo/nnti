@@ -199,9 +199,12 @@ int main( int argc, char* argv[] )
   //  WRITE OUT THE REDUCED BASIS
   // ---------------------------------------------------------------
   //
-  if ( BasisParams->isParameter( "Reduced Basis Output File" ) ) {
-    std::string outfile = Teuchos::getParameter<std::string>( *BasisParams, "Reduced Basis Output File" );
-    fileio->Write( basisMV, outfile );
+  if ( BasisParams->isSublist( "File IO" ) ) {
+    Teuchos::ParameterList fileio_params = BasisParams->sublist( "File IO" );
+    if ( fileio_params.isParameter( "Reduced Basis Output File" ) ) {
+      std::string outfile = Teuchos::getParameter<std::string>( fileio_params, "Reduced Basis Output File" );
+      fileio->Write( basisMV, outfile );
+    }
   }
   //
 #ifdef EPETRA_MPI
