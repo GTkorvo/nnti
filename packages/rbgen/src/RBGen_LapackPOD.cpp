@@ -35,7 +35,7 @@ namespace RBGen {
       basis_size_ = ss->NumVectors();
     }
     // Resize the singular value vector
-    sv_.resize( basis_size_ );
+    sv_.resize( ss->NumVectors() );
 
     // Set the snapshot set
     ss_ = ss;
@@ -88,7 +88,7 @@ namespace RBGen {
 	//
 	int info, lwork;
 	double U[ 1 ], Vt[ 1 ];
-	lwork = 3*num_vecs*dim;
+	lwork = EPETRA_MAX( 3*num_vecs + dim, 5*num_vecs );
 	std::vector<double> work( lwork );
 	Epetra_LAPACK lapack;
 	//
@@ -114,7 +114,7 @@ namespace RBGen {
       //
       // Create a view into the MultiVector for the basis.
       //
-      basis_ = Teuchos::rcp( new Epetra_MultiVector( View, *ss_, 0, basis_size_ ) );
+      basis_ = Teuchos::rcp( new Epetra_MultiVector( Copy, *ss_, 0, basis_size_ ) );
       //
       // Clean up
       //
@@ -128,7 +128,7 @@ namespace RBGen {
       //
       int info, lwork;
       double U[ 1 ], Vt[ 1 ];
-      lwork = 3*num_vecs*dim;
+      lwork = EPETRA_MAX( 3*num_vecs + dim, 5*num_vecs );
       std::vector<double> work( lwork );
       Epetra_LAPACK lapack;
       //
@@ -141,7 +141,8 @@ namespace RBGen {
 	// THROW AN EXCEPTION HERE!
 	cout<< "The return value of the SVD is not 0!"<< endl;
       }
-      basis_ = Teuchos::rcp( new Epetra_MultiVector( View, *ss_, 0, basis_size_ ) );
+      
+      basis_ = Teuchos::rcp( new Epetra_MultiVector( Copy, *ss_, 0, basis_size_ ) );
       //
     }
   }

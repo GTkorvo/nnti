@@ -9,6 +9,7 @@
 #include "Epetra_Map.h"
 #include "Epetra_LocalMap.h"
 #include "Epetra_LAPACK.h"
+#include "Epetra_MultiVector.h"
 
 #ifdef EPETRA_MPI
 #include "Epetra_MpiComm.h"
@@ -111,9 +112,6 @@ int main( int argc, char* argv[] )
     Teuchos::TimeMonitor lcltimer( *timerSnapshotIn );
     testMV = fileio->Read( *filenames );
   } 
-  if (testMV == Teuchos::null) {
-    cout << "The multivector returned from the read in as null!" << endl;
-  }
 
   RBGen::EpetraMVPreprocessorFactory preprocess_factory;
 

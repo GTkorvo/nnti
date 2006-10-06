@@ -24,7 +24,7 @@ namespace RBGen {
     Teuchos::RefCountPtr< Method<Epetra_MultiVector> > RBMethod;
 
     // POD computed using exact SVD through LAPACK
-    if ( method == "LAPACK POD" ) {
+    if ( method == "Lapack POD" ) {
       RBMethod = Teuchos::rcp( new LapackPOD() );
     } else
     // Inexact POD computed using inexact SVD through Anasazi
