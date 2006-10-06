@@ -141,7 +141,7 @@ namespace RBGen {
 	// THROW AN EXCEPTION HERE!
 	cout<< "The return value of the SVD is not 0!"<< endl;
       }
-      
+      sv_.resize( basis_size_ );     
       basis_ = Teuchos::rcp( new Epetra_MultiVector( Copy, *ss_, 0, basis_size_ ) );
       //
     }

@@ -41,7 +41,9 @@ int main( int argc, char* argv[] )
   RBGen_CLP.throwExceptions( false );
 
   // Generate list of acceptable command line options
+  bool verbose = false;
   std::string xml_file = "";
+  RBGen_CLP.setOption("verbose", "quiet", &verbose, "Print messages and results.");
   RBGen_CLP.setOption("xml-file", &xml_file, "XML Input File");
 
   // Process command line.
@@ -174,13 +176,13 @@ int main( int argc, char* argv[] )
   Teuchos::RefCountPtr<RBGen::PODMethod<double> > pod_method = Teuchos::rcp_dynamic_cast<RBGen::PODMethod<double> >( method );
   const std::vector<double> sv = pod_method->getSingularValues();
   //
-  /*if (Comm.MyPID() == 0) {
+  if (verbose && Comm.MyPID() == 0) {
     cout<<"-------------------------------------------------------"<<endl;
     cout<<"Computed Singular Values : "<<endl;
     cout<<"-------------------------------------------------------"<<endl;
     for (unsigned int i=0; i<sv.size(); ++i) { cout << sv[i] << endl; }
   }      
-  */
+  
   if (Comm.MyPID() == 0) {
     cout<<"-------------------------------------------------------"<<endl;
     cout<<"RBGen Computation Time Breakdown (seconds) : "<<endl;
