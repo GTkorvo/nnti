@@ -262,41 +262,6 @@ AM_CONDITIONAL(BUILD_RBGEN_DRIVERS, [test "X$ac_cv_use_rbgen_drivers" != "Xno"])
 TAC_ARG_ENABLE_FEATURE_SUB( rbgen, netcdf, [Enable NetCDF support], RBGEN_NETCDF, no)
 AM_CONDITIONAL(BUILD_RBGEN_NETCDF, [test "X$ac_cv_use_rbgen_netcdf" != "Xno"])
 
-if test "X$ac_cv_use_rbgen_netcdf" != "Xno"; then
-#
-#  Check for NetCDF headers.
-#
-     AC_MSG_CHECKING(for netCDF headers (netcdf.h) ) 
-     AC_TRY_CPP([#include "netcdf.h"],
-	[AC_MSG_RESULT(yes)],  
-	[
-	 AC_MSG_RESULT(no)
-	 echo "-----"
-     	 echo "Cannot find NetCDF headers."
-     	 echo "Use --with-incdirs to specify NetCDF include directory."
-     	 echo "-----"
-     	 AC_MSG_ERROR(NetCDF headers cannot be found)
-     	])
-#
-#  Check for NetCDF library.
-#
-     AC_MSG_CHECKING(for GNU MP library (libnetcdf.a) )
-     AC_LANG_SAVE
-     AC_LANG_CPLUSPLUS
-     AC_LINK_IFELSE([ AC_LANG_PROGRAM([[#include "netcdf.h"]], 
-					[[int ncid=0; int status = nc_open("temp.file",NC_NOWRITE,&ncid);]]) ],
-	[AC_MSG_RESULT(yes)],
-	[AC_MSG_RESULT(no)
-		 echo "-----"
-	     	 echo "Cannot find NetCDF library."
-     		 echo "Use --with-ldflags to specify NetCDF library directory."
-	     	 echo "Use --with-libs to specify NetCDF library (-lnetcdf)."
-	     	 echo "-----"
-	     	 AC_MSG_ERROR(NetCDF test cannot link)])
-     AC_LANG_RESTORE
-
-fi
-
 # ------------------------------------------------------------------------
 # Checks if tests and examples should be built
 # ------------------------------------------------------------------------
@@ -351,6 +316,43 @@ AC_F77_WRAPPERS
 # ------------------------------------------------------------------------
 # Checks for libraries
 # ------------------------------------------------------------------------
+
+if test "X$ac_cv_use_rbgen_netcdf" != "Xno"; then
+#
+#  Check for NetCDF headers.
+#
+     AC_MSG_CHECKING(for netCDF headers (netcdf.h) ) 
+     AC_TRY_CPP([#include "netcdf.h"],
+	[AC_MSG_RESULT(yes)],  
+	[
+	 AC_MSG_RESULT(no)
+	 echo "-----"
+     	 echo "Cannot find NetCDF headers."
+     	 echo "Use --with-incdirs to specify NetCDF include directory."
+     	 echo "-----"
+     	 AC_MSG_ERROR(NetCDF headers cannot be found)
+     	])
+#
+#  Check for NetCDF library.
+#
+     AC_MSG_CHECKING(for netDF library (libnetcdf.a) )
+     AC_LANG_SAVE
+     AC_LANG_CPLUSPLUS
+     AC_LINK_IFELSE([ AC_LANG_PROGRAM([[#include "netcdf.h"]], 
+					[[int ncid=0; int status = nc_open("temp.file",NC_NOWRITE,&ncid);]]) ],
+	[AC_MSG_RESULT(yes)],
+	[AC_MSG_RESULT(no)
+		 echo "-----"
+	     	 echo "Cannot find NetCDF library."
+     		 echo "Use --with-ldflags to specify NetCDF library directory."
+	     	 echo "Use --with-libs to specify NetCDF library (-lnetcdf)."
+	     	 echo "-----"
+	     	 AC_MSG_ERROR(NetCDF test cannot link)])
+     AC_LANG_RESTORE
+
+fi
+
+
 
 # If tests, examples and libcheck are disabled, we don't have to check
 # for these libraries.

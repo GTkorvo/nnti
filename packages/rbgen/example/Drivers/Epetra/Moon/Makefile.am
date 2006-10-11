@@ -47,7 +47,7 @@ endif
 noinst_PROGRAMS = $(RBGEN_MOON_EX)
 
 moonDummy$(EXEEXT): $(srcdir)/Dummy
-	ln -s $(top_builddir)/src/RBGenDriver_EpetraMV .
+	ln -fs $(top_builddir)/src/RBGenDriver_EpetraMV .
 	cp  $(srcdir)/moon.mtx  moon.mtx
 	cp  $(srcdir)/moonInput.xml  moonInput.xml
 	cp  $(srcdir)/README README
