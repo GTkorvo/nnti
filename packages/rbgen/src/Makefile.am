@@ -50,19 +50,22 @@ all-local:
 #
 #np# Make sure to list all source files in one of the following categories.
 CORE_H = \
-	$(srcdir)/RBGen_ConfigDefs.h \
-	$(srcdir)/RBGen_FileIOFactory.hpp \
+        $(srcdir)/RBGen_ConfigDefs.h \
+        $(srcdir)/RBGen_FileIOFactory.hpp \
         $(srcdir)/RBGen_FileIOHandler.hpp \
-	$(srcdir)/RBGen_MethodFactory.hpp \
-	$(srcdir)/RBGen_Method.hpp \
-	$(srcdir)/RBGen_NoPreprocessor.hpp \
+		  $(srcdir)/RBGen_Filter.hpp \
+		  $(srcdir)/RBGen_IncSVDPOD.h \
+        $(srcdir)/RBGen_MethodFactory.hpp \
+        $(srcdir)/RBGen_Method.hpp \
+        $(srcdir)/RBGen_NoPreprocessor.hpp \
         $(srcdir)/RBGen_Params.h \
-	$(srcdir)/RBGen_PODMethod.hpp \
-	$(srcdir)/RBGen_PreprocessorFactory.hpp \
+        $(srcdir)/RBGen_PODMethod.hpp \
+        $(srcdir)/RBGen_PreprocessorFactory.hpp \
         $(srcdir)/RBGen_Preprocessor.hpp
 
 
 CORE = \
+		  $(srcdir)/RBGen_IncSVDPOD.cpp \
         $(srcdir)/RBGen_Params.cpp
 
 #-----------------------------------------------------
@@ -72,7 +75,7 @@ EXTRA_EPETRA_H = \
         $(srcdir)/RBGen_EpetraMVFileIOFactory.h \
         $(srcdir)/RBGen_EpetraMVMethodFactory.h \
         $(srcdir)/RBGen_EpetraMVPreprocessorFactory.h \
-	$(srcdir)/RBGen_LapackPOD.h \
+        $(srcdir)/RBGen_LapackPOD.h \
         $(srcdir)/RBGen_MSPreprocessor.h \
         $(srcdir)/RBGen_Utils.h
 
@@ -81,7 +84,7 @@ EXTRA_EPETRA = \
         $(srcdir)/RBGen_EpetraMVFileIOFactory.cpp \
         $(srcdir)/RBGen_EpetraMVMethodFactory.cpp \
         $(srcdir)/RBGen_EpetraMVPreprocessorFactory.cpp \
-	$(srcdir)/RBGen_LapackPOD.cpp \
+        $(srcdir)/RBGen_LapackPOD.cpp \
         $(srcdir)/RBGen_MSPreprocessor.cpp \
         $(srcdir)/RBGen_Utils.cpp
 	

@@ -101,7 +101,8 @@ am__installdirs = $(DESTDIR)$(libdir) $(DESTDIR)$(bindir) $(DESTDIR)$(includedir
 libLIBRARIES_INSTALL = $(INSTALL_DATA)
 LIBRARIES = $(lib_LIBRARIES)
 librbgen_a_DEPENDENCIES =
-am__librbgen_a_SOURCES_DIST = $(srcdir)/RBGen_Params.cpp \
+am__librbgen_a_SOURCES_DIST = $(srcdir)/RBGen_IncSVDPOD.cpp \
+	$(srcdir)/RBGen_Params.cpp \
 	$(srcdir)/RBGen_BurkardtFileIOHandler.cpp \
 	$(srcdir)/RBGen_EpetraMVFileIOFactory.cpp \
 	$(srcdir)/RBGen_EpetraMVMethodFactory.cpp \
@@ -111,7 +112,7 @@ am__librbgen_a_SOURCES_DIST = $(srcdir)/RBGen_Params.cpp \
 	$(srcdir)/RBGen_MatrixMarketFileIOHandler.cpp \
 	$(srcdir)/RBGen_AnasaziPOD.cpp \
 	$(srcdir)/RBGen_NetCDFFileIOHandler.cpp
-am__objects_1 = RBGen_Params.$(OBJEXT)
+am__objects_1 = RBGen_IncSVDPOD.$(OBJEXT) RBGen_Params.$(OBJEXT)
 am__objects_2 =
 @HAVE_MPI_TRUE@am__objects_3 = $(am__objects_2)
 am__objects_4 = RBGen_BurkardtFileIOHandler.$(OBJEXT) \
@@ -149,6 +150,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/RBGen_EpetraMVFileIOFactory.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/RBGen_EpetraMVMethodFactory.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/RBGen_EpetraMVPreprocessorFactory.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/RBGen_IncSVDPOD.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/RBGen_LapackPOD.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/RBGen_MSPreprocessor.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/RBGen_MatrixMarketFileIOHandler.Po \
@@ -167,10 +169,10 @@ DIST_SOURCES = $(am__librbgen_a_SOURCES_DIST) \
 	$(am__RBGenDriver_EpetraMV_SOURCES_DIST)
 am__include_HEADERS_DIST = $(srcdir)/RBGen_ConfigDefs.h \
 	$(srcdir)/RBGen_FileIOFactory.hpp \
-	$(srcdir)/RBGen_FileIOHandler.hpp \
-	$(srcdir)/RBGen_MethodFactory.hpp $(srcdir)/RBGen_Method.hpp \
-	$(srcdir)/RBGen_NoPreprocessor.hpp $(srcdir)/RBGen_Params.h \
-	$(srcdir)/RBGen_PODMethod.hpp \
+	$(srcdir)/RBGen_FileIOHandler.hpp $(srcdir)/RBGen_Filter.hpp \
+	$(srcdir)/RBGen_IncSVDPOD.h $(srcdir)/RBGen_MethodFactory.hpp \
+	$(srcdir)/RBGen_Method.hpp $(srcdir)/RBGen_NoPreprocessor.hpp \
+	$(srcdir)/RBGen_Params.h $(srcdir)/RBGen_PODMethod.hpp \
 	$(srcdir)/RBGen_PreprocessorFactory.hpp \
 	$(srcdir)/RBGen_Preprocessor.hpp $(srcdir)/RBGen_Version.h \
 	$(srcdir)/RBGen_MatrixMarketFileIOHandler.h \
@@ -331,18 +333,21 @@ target_vendor = @target_vendor@
 #
 #np# Make sure to list all source files in one of the following categories.
 CORE_H = \
-	$(srcdir)/RBGen_ConfigDefs.h \
-	$(srcdir)/RBGen_FileIOFactory.hpp \
+        $(srcdir)/RBGen_ConfigDefs.h \
+        $(srcdir)/RBGen_FileIOFactory.hpp \
         $(srcdir)/RBGen_FileIOHandler.hpp \
-	$(srcdir)/RBGen_MethodFactory.hpp \
-	$(srcdir)/RBGen_Method.hpp \
-	$(srcdir)/RBGen_NoPreprocessor.hpp \
+		  $(srcdir)/RBGen_Filter.hpp \
+		  $(srcdir)/RBGen_IncSVDPOD.h \
+        $(srcdir)/RBGen_MethodFactory.hpp \
+        $(srcdir)/RBGen_Method.hpp \
+        $(srcdir)/RBGen_NoPreprocessor.hpp \
         $(srcdir)/RBGen_Params.h \
-	$(srcdir)/RBGen_PODMethod.hpp \
-	$(srcdir)/RBGen_PreprocessorFactory.hpp \
+        $(srcdir)/RBGen_PODMethod.hpp \
+        $(srcdir)/RBGen_PreprocessorFactory.hpp \
         $(srcdir)/RBGen_Preprocessor.hpp
 
 CORE = \
+		  $(srcdir)/RBGen_IncSVDPOD.cpp \
         $(srcdir)/RBGen_Params.cpp
 
 
@@ -352,7 +357,7 @@ EXTRA_EPETRA_H = \
         $(srcdir)/RBGen_EpetraMVFileIOFactory.h \
         $(srcdir)/RBGen_EpetraMVMethodFactory.h \
         $(srcdir)/RBGen_EpetraMVPreprocessorFactory.h \
-	$(srcdir)/RBGen_LapackPOD.h \
+        $(srcdir)/RBGen_LapackPOD.h \
         $(srcdir)/RBGen_MSPreprocessor.h \
         $(srcdir)/RBGen_Utils.h
 
@@ -361,7 +366,7 @@ EXTRA_EPETRA = \
         $(srcdir)/RBGen_EpetraMVFileIOFactory.cpp \
         $(srcdir)/RBGen_EpetraMVMethodFactory.cpp \
         $(srcdir)/RBGen_EpetraMVPreprocessorFactory.cpp \
-	$(srcdir)/RBGen_LapackPOD.cpp \
+        $(srcdir)/RBGen_LapackPOD.cpp \
         $(srcdir)/RBGen_MSPreprocessor.cpp \
         $(srcdir)/RBGen_Utils.cpp
 
@@ -677,6 +682,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RBGen_EpetraMVFileIOFactory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RBGen_EpetraMVMethodFactory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RBGen_EpetraMVPreprocessorFactory.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RBGen_IncSVDPOD.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RBGen_LapackPOD.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RBGen_MSPreprocessor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RBGen_MatrixMarketFileIOHandler.Po@am__quote@
@@ -699,6 +705,22 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+RBGen_IncSVDPOD.o: $(srcdir)/RBGen_IncSVDPOD.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT RBGen_IncSVDPOD.o -MD -MP -MF "$(DEPDIR)/RBGen_IncSVDPOD.Tpo" -c -o RBGen_IncSVDPOD.o `test -f '$(srcdir)/RBGen_IncSVDPOD.cpp' || echo '$(srcdir)/'`$(srcdir)/RBGen_IncSVDPOD.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/RBGen_IncSVDPOD.Tpo" "$(DEPDIR)/RBGen_IncSVDPOD.Po"; else rm -f "$(DEPDIR)/RBGen_IncSVDPOD.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/RBGen_IncSVDPOD.cpp' object='RBGen_IncSVDPOD.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	depfile='$(DEPDIR)/RBGen_IncSVDPOD.Po' tmpdepfile='$(DEPDIR)/RBGen_IncSVDPOD.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o RBGen_IncSVDPOD.o `test -f '$(srcdir)/RBGen_IncSVDPOD.cpp' || echo '$(srcdir)/'`$(srcdir)/RBGen_IncSVDPOD.cpp
+
+RBGen_IncSVDPOD.obj: $(srcdir)/RBGen_IncSVDPOD.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT RBGen_IncSVDPOD.obj -MD -MP -MF "$(DEPDIR)/RBGen_IncSVDPOD.Tpo" -c -o RBGen_IncSVDPOD.obj `if test -f '$(srcdir)/RBGen_IncSVDPOD.cpp'; then $(CYGPATH_W) '$(srcdir)/RBGen_IncSVDPOD.cpp'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/RBGen_IncSVDPOD.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/RBGen_IncSVDPOD.Tpo" "$(DEPDIR)/RBGen_IncSVDPOD.Po"; else rm -f "$(DEPDIR)/RBGen_IncSVDPOD.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/RBGen_IncSVDPOD.cpp' object='RBGen_IncSVDPOD.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	depfile='$(DEPDIR)/RBGen_IncSVDPOD.Po' tmpdepfile='$(DEPDIR)/RBGen_IncSVDPOD.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o RBGen_IncSVDPOD.obj `if test -f '$(srcdir)/RBGen_IncSVDPOD.cpp'; then $(CYGPATH_W) '$(srcdir)/RBGen_IncSVDPOD.cpp'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/RBGen_IncSVDPOD.cpp'; fi`
 
 RBGen_Params.o: $(srcdir)/RBGen_Params.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT RBGen_Params.o -MD -MP -MF "$(DEPDIR)/RBGen_Params.Tpo" -c -o RBGen_Params.o `test -f '$(srcdir)/RBGen_Params.cpp' || echo '$(srcdir)/'`$(srcdir)/RBGen_Params.cpp; \
