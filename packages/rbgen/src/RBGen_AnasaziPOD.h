@@ -34,7 +34,7 @@ namespace RBGen {
     
     Teuchos::RefCountPtr<const Epetra_MultiVector> getBasis() const { return basis_; }
 
-    const std::vector<double> getSingularValues() const { return sv_; }
+    std::vector<double> getSingularValues() const { return sv_; }
 
     double getCompTime() const { return comp_time_; }
     //@}

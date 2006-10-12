@@ -53,8 +53,7 @@ CORE_H = \
         $(srcdir)/RBGen_ConfigDefs.h \
         $(srcdir)/RBGen_FileIOFactory.hpp \
         $(srcdir)/RBGen_FileIOHandler.hpp \
-		  $(srcdir)/RBGen_Filter.hpp \
-		  $(srcdir)/RBGen_IncSVDPOD.h \
+        $(srcdir)/RBGen_Filter.hpp \
         $(srcdir)/RBGen_MethodFactory.hpp \
         $(srcdir)/RBGen_Method.hpp \
         $(srcdir)/RBGen_NoPreprocessor.hpp \
@@ -65,7 +64,6 @@ CORE_H = \
 
 
 CORE = \
-		  $(srcdir)/RBGen_IncSVDPOD.cpp \
         $(srcdir)/RBGen_Params.cpp
 
 #-----------------------------------------------------
@@ -123,10 +121,12 @@ endif
 #-----------------------------------------------------
 
 EXTRA_ANASAZI_EPETRA_H = \
-	$(srcdir)/RBGen_AnasaziPOD.h
+        $(srcdir)/RBGen_AnasaziPOD.h \
+        $(srcdir)/RBGen_IncSVDPOD.h 
 
 EXTRA_ANASAZI_EPETRA = \
-	$(srcdir)/RBGen_AnasaziPOD.cpp
+        $(srcdir)/RBGen_AnasaziPOD.cpp \
+        $(srcdir)/RBGen_IncSVDPOD.cpp
 
 if BUILD_RBGEN_ANASAZI
 

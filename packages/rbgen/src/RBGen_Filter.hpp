@@ -26,6 +26,11 @@ namespace RBGen {
     //@}
 
     //@{ @name Filter Method
+
+    //! \brief This method accepts a list of singular values (in decreasing order) and 
+    //         returns a list of indices consisting of the values
+    //         allowed through the filter. These indices are in ascending order
+    //         and employ zero-based indexing.
     virtual vector<int> filter(const vector<ScalarType> &svals) = 0;
     //@}
   };
@@ -39,8 +44,8 @@ namespace RBGen {
     //! Default constructor.
     RangeFilter(SortType which, int minRank = 1, int maxRank = 1) 
       : which_(which) {
-      TEST_FOR_EXCEPTION(minRank < 1,logic_error,"RangeFilter: minRank must be > 1");
-      TEST_FOR_EXCEPTION(maxRank < 1,logic_error,"RangeFilter: maxRank must be > 1");
+      TEST_FOR_EXCEPTION(minRank < 1,invalid_argument,"RangeFilter: minRank must be > 1");
+      TEST_FOR_EXCEPTION(maxRank < 1,invalid_argument,"RangeFilter: maxRank must be > 1");
       minRank_ = minRank;
       maxRank_ = maxRank;
     };
@@ -56,15 +61,16 @@ namespace RBGen {
       int n = (unsigned int)svals.size();
       if      (n > maxRank_) n = maxRank_;
       else if (minRank_ < n) n = minRank_;
-      vector<int> ret(n);
+      vector<int> ret;
+      ret.reserve(n);
       if (LARGEST == which_) {
         for (int i=0; i<n; ++i) {
-          ret[i] = i;
+          ret.push_back(i);
         }
       }
       else if (SMALLEST == which_) {
-        for (int i=svals.size()-1; i>svals.size()-n-1; --i) {
-          ret[i] = i;
+        for (int i=svals.size()-n; i<svals.size(); ++i) {
+          ret.push_back(i);
         }
       }
       return ret;
@@ -88,7 +94,7 @@ namespace RBGen {
                  typename Teuchos::ScalarTraits<ScalarType>::magnitudeType thresh)
       : which_(which), absthresh_(absthresh) {
       TEST_FOR_EXCEPTION(thresh < Teuchos::ScalarTraits<ScalarType>::zero(),
-                         logic_error,"ThreshFilter: minRank must be > 1");
+                         invalid_argument,"ThreshFilter: minRank must be > 1");
       thresh_ = thresh;
     };
 
@@ -131,14 +137,14 @@ namespace RBGen {
         int num = find(svals.begin(),svals.end(),bind2nd(less<ScalarType>,tval)) - svals.begin();
         ret.resize(num);
         for (int i=0; i<num; ++i) {
-          ret[i] = i;
+          ret.push_back(i);
         }
       }
       else if (SMALLEST == which_) {
         int num = svals.end() - find(svals.begin(),svals.end(),bind2nd(less<ScalarType>,tval)) + 1;
         ret.resize(num);
-        for (int i=last; i>last-n; --i) {
-          ret[i] = i;
+        for (int i=last-1last; i>last-n; --i) {
+          ret.push_back(i);
         }
       }
       return ret;
@@ -169,7 +175,7 @@ namespace RBGen {
                  const Teuchos::RefCountPtr<Filter<ScalarType> > &f2 ) 
       : andor_(andor), f1_(f1), f2_(f2) {
       TEST_FOR_EXCEPTION(f1_ == Teuchos::null || f2_ == Teuchos::null,
-                         logic_error,"CompFilter: Component filters must be non-null.");
+                         invalid_argument,"CompFilter: Component filters must be non-null.");
     };
 
     //! Destructor.

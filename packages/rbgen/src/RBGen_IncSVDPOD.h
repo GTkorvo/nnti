@@ -4,8 +4,12 @@
 #include "RBGen_PODMethod.hpp"
 #include "RBGen_Method.hpp"
 #include "RBGen_Filter.hpp"
+#include "AnasaziEpetraAdapter.hpp"
+#include "AnasaziOrthoManager.hpp"
 #include "Epetra_MultiVector.h"
+#include "Epetra_Operator.h"
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_Time.hpp"
 
 namespace RBGen {
 
@@ -35,11 +39,11 @@ namespace RBGen {
 
     Teuchos::RefCountPtr<const Epetra_MultiVector> getRightBasis() const;
 
-    const std::vector<double> getSingularValues() const { return sigma_; }
+    std::vector<double> getSingularValues() const;
 
-    double getCompTime() const { return comp_time_; }
+    double getCompTime() const { return timerComp_.totalElapsedTime(); }
 
-    int numSnapshots() const { return num_proc_; }
+    int numSnapshots() const { return numProc_; }
 
     //@}
     
@@ -61,6 +65,9 @@ namespace RBGen {
 
   private:
 
+    // private member for performing inc steps
+    void incStep(const Teuchos::RefCountPtr<const Epetra_MultiVector> &Aplus);
+
     // Is this object initialized?
     bool isInitialized_;
 
@@ -69,17 +76,14 @@ namespace RBGen {
 
     // Max allocation size.
     // The maximum rank DURING any step:
-    //    lup <= max_basis_size_ - cur_rank_
-    int max_basis_size_;
+    //    lup <= maxBasisSize_ - curRank_
+    int maxBasisSize_;
 
     // Current rank of the factorization
-    int cur_rank_;
-
-    // Computational time (in seconds, using wall clock).
-    double comp_time_;
+    int curRank_;
 
     // Pointers to the snapshots and reduced basis.
-    Teuchos::RefCountPtr<Epetra_MultiVector> U_, V_;
+    Teuchos::RefCountPtr<Epetra_MultiVector> A_, U_, V_, workU_;
 
     // Vector holding singular values.
     std::vector<double> sigma_;
@@ -88,8 +92,18 @@ namespace RBGen {
     bool twoSided_;
 
     // Number of snapshots processed thus far
-    int num_proc_;
+    int numProc_;
 
+    // min,max number of update vectors
+    int lmin_;
+    int lmax_;
+    int startRank_;
+
+    // ortho manager
+    Teuchos::RefCountPtr< Anasazi::OrthoManager<double,Epetra_MultiVector> > ortho_;
+
+    // timer
+    Teuchos::Time timerComp_;
   };
   
 } // end of RBGen namespace

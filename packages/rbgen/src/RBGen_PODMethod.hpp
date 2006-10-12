@@ -23,7 +23,7 @@ namespace RBGen {
     //@{ @name Get methods
     
     //! Returns the singular values computed corresponding to the reduced basis.
-    virtual const std::vector<ScalarType> getSingularValues() const = 0;
+    virtual std::vector<ScalarType> getSingularValues() const = 0;
 
     //@}
     
