@@ -41,8 +41,8 @@
 \title{PyTrilinos: High-Performance Distributed-Memory Solvers for
        Python}
 
-\author{Marzio Sala, W. F. Spotz and M. A. Heroux \\
-        Sandia National Laboratories}
+\author{Marzio Sala                       \\ ETH Zurich
+        \and W. F. Spotz and M. A. Heroux \\ Sandia National Laboratories}
 
 \begin{abstract}
 \PyTrilinos\ is a collection of Python modules that are useful for
@@ -95,7 +95,7 @@ identical.
 \setcounter{page}{1}
 
 \begin{bottomstuff}
-Authors' address: PO Box 5800 MS 1110, Albuquerque, NM 87185-1110,
+Authors' address: PO Box 5800 MS 0370, Albuquerque, NM 87185-0370,
 U.S.A.\newline
 ASCI program and the DOE Office of Science MICS program at Sandia
 National Laboratory.  Sandia is a multiprogram laboratory operated by
@@ -171,15 +171,15 @@ This article describes a collection of numerical linear algebra and
 solver libraries, called \PyTrilinos, built on top of the Trilinos
 project~\cite{Trilinos-home-page,Heroux:2005:OTP}.  It adds
 significant power to the interactive Python session by providing
-high-level commands and classes for the creation and usage of serial
-and distributed, dense and sparse linear algebra objects.  Using
+high-level commands and classes for the creation and use of serial and
+distributed, dense and sparse linear algebra objects.  Using
 \PyTrilinos, an interactive Python session becomes a powerful
 data-processing and system-prototyping environment that can be used to
 test, validate, use and extend serial and parallel numerical
 algorithms.  In our opinion, Python naturally complements languages
 like C, C++ and FORTRAN as opposed to competing with them.  Similarly,
-\PyTrilinos\ complements Trilinos by offering interactive and rapid
-development.
+\PyTrilinos\ complements Trilinos by adding interactive and rapid
+development capabilities.
 
 \smallskip
 
@@ -218,10 +218,10 @@ as a ``glue'' language between a large and diverse collection of
 software packages---a common need in the scientific arena.
 
 The Simple Wrapper and Interface Generator (SWIG)~\cite{swig} is a
-utility that facilitates access to C and C++ code from Python. SWIG
-will automatically generate complete Python interfaces (and other
-languages) for existing C and C++ code.  It also supports multiple
-inheritance and flexible extensions of the generated Python
+utility that facilitates access to C and C++ code from Python and
+other scripting languages. SWIG will automatically generate complete
+Python interfaces for existing C and C++ code.  It also supports
+multiple inheritance and flexible extensions of the generated Python
 interfaces.  Using these features, we can construct Python classes
 that derive from two or more disjoint classes and we can provide
 custom methods in the Python interface that were not part of the
@@ -314,24 +314,25 @@ The key components are:
 \begin{enumerate}
 
 \item {\bf Trilinos}, a set of numerical solver packages in active
-  development at Sandia National Laboratories that allows
-  high-performance scalable linear algebra operations for large
-  systems of equations.  Trilinos contains more than half a million
-  lines of code, and it can interface with many third-party libraries.  The
+  development at Sandia National Laboratories that provides
+  high-performance scalable linear algebra objects for large systems
+  of equations.  Trilinos contains more than half a million lines of
+  code, and it can interface with many third-party libraries.  The
   source code of the current Trilinos public release accounts for
-  about 300,000 code lines, divided in about 67,000 code lines for
-  distributed linear algebra objects and utilities, 20,000 code lines
-  for direct solvers and interfaces to third-party direct solvers,
-  128,000 code lines for multilevel preconditioners, and 76,000 code
-  lines for other algebraic preconditioners and Krylov accelerators.
+  about 300,000 code lines, divided among approximately 67,000 code
+  lines for distributed linear algebra objects and utilities, 20,000
+  code lines for direct solvers and interfaces to third-party direct
+  solvers, 128,000 code lines for multilevel preconditioners, and
+  76,000 code lines for other algebraic preconditioners and Krylov
+  accelerators.
 
 \item {\bf NumPy}, a well-established Python module to handle
   multi-dimensional arrays including vectors and
   matrices~\cite{numpy}.  A large number of scientific packages and
-  tools have been written in or wrapped for Python that utilize
-  NumPy for representing fundamental linear algebra objects.  By
-  integrating with NumPy, \PyTrilinos\ also integrates with this
-  sizeable collection of packages.
+  tools have been written in or wrapped for Python that utilize NumPy
+  for representing fundamental linear algebra objects.  By integrating
+  with NumPy, \PyTrilinos\ is compatible with this sizeable collection
+  of packages.
 
 \item {\bf SWIG}, the Simplified Wrapper and Interface Generator,
   which is a preprocessor that turns ANSI C/C++ declarations into
@@ -352,9 +353,9 @@ Figure~\ref{fig:organization}.
 \begin{figure}
   \begin{center}
     \includegraphics[width=12cm]{organization}
-    \caption{Organization of the \PyTrilinos\ modules.  Not represented
-      in the picture are the interaction among Trilinos modules and
-      with NumPy.}
+    \caption{Organization of the most important \PyTrilinos\ modules.
+      Not represented in the picture are the interaction among
+      Trilinos modules and with NumPy.}
     \label{fig:organization}
   \end{center}
 \end{figure}
@@ -378,7 +379,7 @@ At present, the modules of \PyTrilinos\ are:
 
 \item {\bf Epetra}, a collection of concrete classes to support the
   construction and use of vectors, sparse distributed graphs, and
-  dense and distributed sparse matrices.  It provides serial, parallel
+  distributed sparse or dense matrices.  It provides serial, parallel
   and distributed memory linear algebra objects.  Epetra supports
   double-precision floating point data only (no single-precision or
   complex), and uses BLAS and LAPACK where possible, and as a result
@@ -389,8 +390,21 @@ At present, the modules of \PyTrilinos\ are:
   the Epetra package, such as input/output and coloring algorithms.
   The I/O capabilities make it possible to read and write generic
   Epetra objects (like maps, matrices and vectors) or import and
-  export data from and to other formats, such as ASCII, MATLAB, XML or the 
-  binary and parallel HDF5 format~\cite{epetraext_io,hdf5-sc}.
+  export data from and to other formats, such as ASCII, MATLAB, XML or
+  the binary and parallel HDF5 format~\cite{epetraext_io,hdf5-sc}.
+
+\item {\bf Teuchos} provides a suite of utilities commonly needed by
+  Trilinos developers.  Many of these utilities are irrelevant to
+  Python programmers, such as reference-counted pointers (provided by
+  Python ``under the covers'') or command-line argument parsing
+  (provided by built-in Python modules).  The primary exception to
+  this is the ParameterList class, used by several Trilinos packages
+  as a way of setting and retrieving arbitrarily-typed parameters,
+  such as convergence tolerances (double precision), maximum
+  iterations (integer) or preconditioner names (string).  The Teuchos
+  Python modules allows ParameterLists to be built directly, as well
+  as support for seamless conversion between ParameterLists and Python
+  dictionaries.
 
 \item {\bf Triutils} and {\bf Galeri}~\cite{Galeri-home-page}
   allow the creation of several matrices, like the
@@ -452,10 +466,10 @@ At present, the modules of \PyTrilinos\ are:
 \item {\bf New\_Package} is a parallel ``Hello World'' code whose
   primary function is to serve as a template for Trilinos developers
   for how to establish package interoperability and apply standard
-  utilities such as auto-tooling and
-  automatic documentation to their own packages.  For the purposes of
-  \PyTrilinos, it provides an example of how to wrap a Trilinos
-  package.
+  utilities such as auto-tooling and automatic documentation to their
+  own packages.  For the purposes of \PyTrilinos, it provides an
+  example of how to wrap a Trilinos package to provide a Python
+  interface.
 
 \end{enumerate}
 
@@ -632,6 +646,52 @@ Several other functionalities are offered by Epetra:
 \end{itemize}
 
 %-----------------------------------------------------------------------------
+\subsection{The EpetraExt Module}
+\label{subsec:epetraext}
+%-----------------------------------------------------------------------------
+
+The EpetraExt module offers a variety of extension to the Epetra
+module, such as matrix-matrix operations (addition, multiplication and
+transformation), graph coloring algorithms and I/O for important
+Epetra objects.  For example, to read a vector and a matrix stored in
+Matrix-Market format, one simply has to write:
+\begin{verbatim}
+    >>> (ierr, X) = EpetraExt.MatrixMarketFileToMultiVector("x.mm", Map)
+    >>> (ierr, A) = EpetraExt.MatrixMarketFileToCrsMatrix("A.mm", Map)
+\end{verbatim}
+EpetraExt defines a powerful tool for exchanging data between C++
+codes written with Trilinos and Python codes written with \PyTrilinos.
+Users can load distributed Trilinos objects, obtained with production
+codes and stored in a file using the EpetraExt package, then use
+Python to validate the code, perform fine-tuning of numerical
+algorithms, or post-processing.
+
+%-----------------------------------------------------------------------------
+\subsection{The Teuchos Module}
+\label{subsec:teuchos}
+%-----------------------------------------------------------------------------
+
+The Teuchos module provides seamless conversions between
+Teuchos::ParameterList objects and Python dictionaries.  Typically,
+the user will not even have to import the Teuchos module, but rather
+import some other module (Amesos, AztecOO, ML, etc.) that uses Teuchos
+ParameterLists, and the Teuchos module will be imported automatically.
+Wherever a ParameterList is expected, a Python dictionary can be
+provided by the user in its place.  The dictionary keys must all be
+strings, preferably ones recognized by the parent package, and the
+corresponding value can be an int, float, string or dictionary (which
+is interpreted as a sublist).
+
+Alternatively, the user can import the Teuchos module directly and
+create and manipulate ParameterLists using the same methods as the C++
+version supports.  These objects are also accepted wherever a
+ParameterList is expected.
+
+If a Trilinos method returns a ParameterList, the user will actually
+receive a PyDictParameterList, a hybrid object that behaves like a
+Python dictionary and a ParameterList.
+
+%-----------------------------------------------------------------------------
 \subsection{The Triutils Module}
 \label{subsec:triutils}
 %-----------------------------------------------------------------------------
@@ -692,12 +752,13 @@ enabled at configuration time) by simply changing an input parameter.
 An example of a script reading the linear system stored in the
 Harwell/Boeing format, then solving the problem using SuperLU is shown
 in Figure~\ref{fig:amesos}.  Several parameters, specified using a
-Python dictionary, are available to control the selected Amesos
-solver.  These parameters share the same names used by Trilinos; a
-list of valid parameter names can be found in the Amesos
-manual~\cite{Amesos-Reference-Guide}.  Note that just by changing the
-value of {\tt SolverType}, the {\sl same} script can be used to
-experiment with all the solvers supported by Amesos.
+Teuchos ParameterList (or equivalently, a Python dictionary), are
+available to control the selected Amesos solver.  These parameters
+share the same names used by Trilinos; a list of valid parameter names
+can be found in the Amesos manual~\cite{Amesos-Reference-Guide}.  Note
+that just by changing the value of {\tt SolverType}, the {\sl same}
+script can be used to experiment with all the solvers supported by
+Amesos.
 
 \begin{figure}
   \begin{center}
@@ -894,32 +955,11 @@ The AMG module of \PyTrilinos\ is ML.  Using this module, the user can
 easily create black-box two-level and multilevel preconditioners based
 on smoothed aggregation procedures (see
 \cite{sala04analysis,brezina97robust} and the references therein).
-Parameters are specified using a Python dictionary, as in the Amesos
-module of Section~\ref{subsec:amesos}; the list of accepted parameter
-names is given in~\cite{ml-guide}.  Applications using ML
-preconditioners have been proved to be scalable up to thousands of
-processors~\cite{ijnme,shadid-jcp-dd-precond}.
-
-%-----------------------------------------------------------------------------
-\subsection{The EpetraExt Module}
-\label{subsec:epetraext}
-%-----------------------------------------------------------------------------
-
-The EpetraExt module offers a variety of extension to the Epetra
-module, such as matrix-matrix operations (addition, multiplication and
-transformation), graph coloring algorithms and I/O for important
-Epetra objects.  For example, to read a vector and a matrix stored in
-Matrix-Market format, one simply has to write:
-\begin{verbatim}
-    >>> (ierr, X) = EpetraExt.MatrixMarketFileToMultiVector("x.mm", Map)
-    >>> (ierr, A) = EpetraExt.MatrixMarketFileToCrsMatrix("A.mm", Map)
-\end{verbatim}
-EpetraExt defines a powerful tool for exchanging data between C++
-codes written with Trilinos and Python codes written with \PyTrilinos.
-Users can load distributed Trilinos objects, obtained with production
-codes and stored in a file using the EpetraExt package, then use
-Python to validate the code, perform fine-tuning of numerical
-algorithms, or post-processing.
+Parameters are specified using a Teuchos ParameterList or a Python
+dictionary, as in the Amesos module of Section~\ref{subsec:amesos};
+the list of accepted parameter names is given in~\cite{ml-guide}.
+Applications using ML preconditioners have been proved to be scalable
+up to thousands of processors~\cite{ijnme,shadid-jcp-dd-precond}.
 
 %-----------------------------------------------------------------------------
 \subsection{The NOX and LOCA Modules}
@@ -992,9 +1032,9 @@ can be sped up considerably by using the {\tt
   NOX.Epetra.FiniteDifferenceColoring} operator instead, along with
 the graph coloring algorithms provided in {\tt EpetraExt}.
 
-NOX provides mechanisms for creating parameter lists, status test
-objects for specifying stopping criteria, and finally a solver
-manager object.  See~\cite{NOX-home-page} for details.
+NOX provides mechanisms for creating customized status test objects
+for specifying stopping criteria, and a solver manager object.
+See~\cite{NOX-home-page} for details.
 
 The LOCA package is a layer on top of NOX that provides a number of
 continuation algorithms for stepping through a series of solutions
@@ -1012,73 +1052,82 @@ related Python projects:
 \begin{itemize}
 
 \item {\bf Numeric.} The Python Numeric module adds a fast, compact,
-  multidimensional array language facility to Python.   This package is no
-  longer developer, and is now
-  superseded by the NumArray and NumPy packages described below.
+  multidimensional array language facility to Python.  This package is
+  now officially obsolete, succeeded by the NumPy package described
+  below.
 
-\item {\bf NumArray.}  NumArray is a reimplementation of Numeric which
-  adds the ability to efficiently manipulate large contiguous-data
-  arrays in ways similar to MATLAB.  Many scientific Python packages
-  have begun the migration from Numeric to NumArray;
-  \PyTrilinos\ developers are currently exploring the possibility.
+\item {\bf Numarray.}  Numarray is an incomplete reimplementation of
+  Numeric which adds the ability to efficiently manipulate large
+  contiguous-data arrays in ways similar to MATLAB.  Numarray is also
+  to be replaced by NumPy.
 
-\item {\bf NumPy.} NumPy derives from the old Numeric code base and can be
-  used as a replacement for Numeric.   It also adds the features introduced by
-  Numarray and can also be used to replace Numarray. NumPy contains, among
-  others, a powerful N-dimensional array object, 
-  basic linear algebra functions, basic Fourier transforms,
-  sophisticated random number capabilities, and tools for integrating Fortran
-  code. Although NumPy is a relatively new package with respect the Numeric
-  and NumArray, it is considered the successor of both Numeric and NumArray.
-  Many existing
-  scientific software packages for Python (plotting packages, for
-  example) accept or expect NumPy arrays as arguments.  To increase
-  the compatibility of \PyTrilinos\ with this large collection of
-  packages, the fundamental \PyTrilinos\ vector class, {\tt
-    Epetra.Vector}, inherits from both the C++ {\tt Epetra\_Vector}
-  and the Python NumPy array class.  Thus an {\tt
-    Epetra.Vector} {\sl is} a NumPy array, and can be treated as
-  such with other Python modules.  However, note that a NumPy array
-  is {\sl not} recognized as a {\tt Epetra\_Vector}, since all
-  distributed Epetra objects requires an underlying communicator and
-  map (not supported by NumPy).
+\item {\bf NumPy.} NumPy derives from the old Numeric code base and
+  can be used as a replacement for Numeric.  It also adds the features
+  introduced by Numarray and can also be used to replace Numarray.
+  NumPy provides a powerful $n$-dimensional array object, basic linear
+  algebra functions, basic Fourier transforms, sophisticated random
+  number capabilities, and tools for integrating FORTRAN
+  code. Although NumPy is a relatively new package with respect the
+  Numeric and Numarray, it is considered the successor of both
+  packages.  Many existing scientific software packages for Python
+  (plotting packages, for example) accept or expect NumPy arrays as
+  arguments.  To increase the compatibility of \PyTrilinos\ with this
+  large collection of packages, those classes that represent
+  contiguous arrays of data,
+
+  \begin{itemize}
+    \item {\tt Epetra.IntVector}
+    \item {\tt Epetra.MultiVector}
+    \item {\tt Epetra.Vector}
+    \item {\tt Epetra.IntSerialDenseMatrix}
+    \item {\tt Epetra.IntSerialDenseVector}
+    \item {\tt Epetra.SerialDenseMatrix}
+    \item {\tt Epetra.SerialDenseVector}
+  \end{itemize}
+
+  inherit from both the corresponding C++ Epetra class and the NumPy
+  user\_array.container class.  Thus, these classes {\sl are} NumPy
+  arrays, and can be treated as such by other Python modules.  Special
+  constructors are provided that ensure that the buffer pointers for
+  the Epetra object and NumPy array both point to the same block of
+  data.
 
 \item {\bf ScientificPython.}  ScientificPython is a collection of
   Python modules that are useful for scientific computing.  It
-  supports special functions, interpolation, 3D vectors and tensors,
-  automatic derivatives, nonlinear least-square fits, polynomials,
-  elementary statistics, physical constants and units, signal
-  processing and other scientific utilities.  Several modules are
-  dedicated to 3D visualization; There are also interfaces to the
-  netCDF library (portable structured binary files), to MPI (Message
-  Passing Interface), and to BSPlib (Bulk Synchronous Parallel
-  programming).  In our opinion ScientificPython and \PyTrilinos\ are
-  not competitors, since their numerical algorithms are targeted to
-  different kinds of problems.
+  supports linear interpolation, 3D vectors and tensors, automatic
+  derivatives, nonlinear least-square fits, polynomials, elementary
+  statistics, physical constants and unit conversions, quaternions and
+  other scientific utilities.  Several modules are dedicated to 3D
+  visualization; There are also interfaces to the netCDF library
+  (portable structured binary files), to MPI (Message Passing
+  Interface), and to BSPlib (Bulk Synchronous Parallel programming).
+  In our opinion ScientificPython and \PyTrilinos\ are not
+  competitors, since their numerical algorithms are targeted to
+  different kinds of problems and are therefore complementary.
 
 \item {\bf SciPy.} SciPy is a much larger project, and provides its
-  own version of much (but not all) of what ScientificPython does.
+  own version of some (but not all) of what ScientificPython does.
   SciPy can be seen as an attempt to provide Python wrappers for much
   of the most popular numerical software offered by netlib.org.  SciPy
-  also supplements the popular Numeric module, gathering a variety of
-  high level science and engineering modules together as a single
-  collection of packages.  SciPy includes modules for graphics and
-  plotting, optimization, integration, special functions, signal and
-  image processing, genetic algorithms, ODE solvers, and more.
+  is strongly tied to the NumPy module, which provides a common data
+  structure for a variety of high level science and engineering
+  modules, provided as a single collection of packages.  SciPy
+  includes modules for optimization, integration, special functions,
+  signal and image processing, genetic algorithms, ODE solvers, and
+  more.
 
   Regarding the serial dense linear algebra modules, both SciPy and
   \PyTrilinos\ define interfaces to optimized LAPACK and BLAS
   routines. However, \PyTrilinos\ offers a wide variety of tools to
   create and use distributed sparse matrices and vectors not supported
-  by SciPy.  In our experience, the SciPy capabilities to manage
-  sparse matrices are quite limited.  For example, SciPy offers a
-  wrapper for one sparse serial direct solver, SuperLU, while
-  \PyTrilinos\ can interface with several serial and parallel direct
-  solvers through the Amesos module.  In our experience, the nonlinear
-  module of SciPy can be used to solve only limited-size problems,
-  while the algorithms provided by the NOX modules have been used to
-  solve nonlinear PDE problems with up to hundreds of millions of
-  unknowns.
+  by SciPy.  In our opinion, the SciPy capabilities to manage sparse
+  matrices are quite limited.  For example, SciPy offers a wrapper for
+  one sparse serial direct solver, SuperLU, while \PyTrilinos\ can
+  interface with several serial and parallel direct solvers through
+  the Amesos module.  In our experience, the nonlinear module of SciPy
+  can be used to solve only limited-size problems, while the
+  algorithms provided by the NOX modules have been used to solve
+  nonlinear PDE problems with up to hundreds of millions of unknowns.
 
 \item {\bf PySparse.}  PySparse~\cite{broker05using} can handle
   symmetric and non-symmetric serial sparse matrices, and contains a
@@ -1087,7 +1136,7 @@ related Python projects:
   and an eigenvalue solver for the symmetric, generalized matrix
   eigenvalue problem.  PySparse is probably the first successful
   public-domain software that offers efficient sparse matrix
-  capabilities in Python.  However, in our opinion \PyTrilinos\ allows
+  capabilities in Python.  However, \PyTrilinos\ allows
   the user to access a much larger set of well-tested algorithms
   (including nonlinear solvers) in a more modular way.  Also, PySparse
   cannot be used in a parallel environments like \PyTrilinos.
@@ -1139,7 +1188,7 @@ while the \PyTrilinos\ code is:
         A[i,j] = 1.0 / (i + j + 2)
 \end{verbatim}
 From Table~\ref{tab:matlab_dense}, it is evident that MATLAB is more
-efficient than \PyTrilinos\ in the handling of dense matrices.
+efficient than \PyTrilinos\ in the generation of dense matrices.
 
 The second test creates a sparse diagonal matrix, setting one element
 at a time.  The MATLAB code reads:
@@ -1159,8 +1208,8 @@ while the \PyTrilinos\ code contains the instructions:
 Clearly, other techniques exist to create in MATLAB and in
 \PyTrilinos\ sparse diagonal matrices.  However, the presented example
 is representative of several real applications, which often have the
-need of setting the elements of a matrix one (or a few) at a time.
-Numerical results for this test case are reported in
+need of setting the elements of a matrix one element (or a few) at a
+time.  Numerical results for this test case are reported in
 Table~\ref{tab:matlab_sparse}.  Even for mid-sized sparse matrices,
 \PyTrilinos\ is much faster than MATLAB's built-in sparse matrix
 capabilities.  Table~\ref{tab:matlab_matvec} reports the CPU required
@@ -1249,10 +1298,10 @@ It is important to position \PyTrilinos\ with respect to Trilinos
 itself.  You can think of \PyTrilinos\ as a Python interface to the
 most successful and stable Trilinos algorithms.  Hence, not all the
 algorithms and the tools of Trilinos are (or will) be ported to
-\PyTrilinos, even if there is an on-going effort to wrap all unique
-Trilinos functionality under the \PyTrilinos\ package.  Although
-\PyTrilinos\ mimics Trilinos very closely, there is not a one-to-one
-map.  The most important differences are:
+\PyTrilinos, even though there is an on-going effort to wrap all
+unique Trilinos functionality under the \PyTrilinos\ package.
+Although \PyTrilinos\ mimics Trilinos very closely, there is not a
+one-to-one map.  The most important differences are:
 
 \begin{itemize}
 
@@ -1262,17 +1311,19 @@ map.  The most important differences are:
 \item No header files are required by \PyTrilinos.
 
 \item No {\tt int*} or {\tt double*} arrays are used by \PyTrilinos,
-  replaced instead by Python containers.  Since Python containers know
+  replaced instead by NumPy arrays or python sequences that can be
+  converted to NumPy arrays.  Since Python containers know
   their length, the need to pass the array size in an argument list is
   generally lifted.
 
 \item Printing generally follows the Python model of defining a {\tt
   \_\_str\_\_()} method for returning a string representation of an
   object.  Thus, in Python, {\tt print Object} usually yields the same
-  result as {\tt Object.Print(std::cout)} in C++.  One exception to
-  this is the {\tt Epetra.Vector}, for which {\tt print vector} will
-  yield the Numeric array result (but the {\tt Print()} method works
-  as expected).
+  result as {\tt Object.Print(std::cout)} in C++.  One category of
+  exceptions to this is the array-like classes such as {\tt
+    Epetra.Vector}, for which {\tt print vector} will yield the NumPy
+  array result (but the {\tt Print()} method produces the Epetra
+  output).
 
 \end{itemize}
 
@@ -1869,10 +1920,12 @@ the method we keep in the code.
 Lines 4 and 5 refer to solving the stream function
 equation~(\ref{eq:streamfunction}) with slice syntax and weave,
 respectively.  In this case, weave is slightly faster, and that is the
-version we keep, for an additional savings of about 7 seconds.  We
-postulate that for ``small'' array sizes (1D boundaries in this case),
-slice syntax is the most efficient approach, while for ``larger''
-arrays (2D in this case), {\tt weave} will generally perform better.
+version we keep, for an additional savings of about 7 seconds.  The
+question of when weave will produce faster code than slice syntax has
+been the topic of conference discussions~\cite{Jones_Weave}.  The
+answer depends on the overhead of weave converting data types versus
+the amount of work being done, and the creation of temporary arrays
+with slice syntax.
 
 For the vorticity equation~(\ref{eq:vorticity}) at line 6, we assume
 this trend will hold and only implement the {\tt weave} approach,
@@ -1979,7 +2032,7 @@ the most significant impact of \PyTrilinos\ is in the following areas:
   well-supported and stable module, users can develop their applications based
   on \PyTrilinos\ with no need to change or update them in the near future. Note
   also that the NumPy interfaces of \PyTrilinos\ are all located in the Epetra
-  module, and therefore other Python packages like Numeric and NumArray could be
+  module, and therefore other Python packages like Numeric and Numarray could be
   easily supported with a few, localized changes.
 
 \item {\bf Data Input.} All scientific applications require data to be
@@ -2003,11 +2056,22 @@ we have encountered are:
 
 \begin{itemize}
 
-\item {\bf Portability.} \PyTrilinos\ is developed concurrently on
-  both Linux and Mac OS X, and it should port successfully to most
-  other platforms where Trilinos, Python, NumPy and SWIG are
-  available.  However, configuring Trilinos, and thus \PyTrilinos, for
-  a new platform can be a non-trivial exercise.
+\item {\bf Portability.} There are two layers of support for
+  portability in \PyTrilinos.  The top layer is Trilinos itself, which
+  is based on autotools/autoconf/automake, which results in a
+  configure script that the user can invoke that generates Makefiles
+  which should produce working libraries when the user calls make.  At
+  the \PyTrilinos\ level, the Makefiles associated with python
+  interfaces execute setup.py scripts that import the distutils module
+  to provide portability.
+
+  The top layer of portability is the more restrictive.  For example,
+  it is often necessary to tell configure several details about the
+  compiler in order to get Trilinos to compile properly or at all.
+  The lower layer of portability is more stable.  For example,
+  Trilinos supports cygwin, but not Windows.  If Trilinos were ever to
+  support Windows, the distutils module ensures that
+  \PyTrilinos\ would automatically be supported.
 
 \item {\bf Shared Libraries on Massively Parallel Computers.} Another
   problem is related to the shared library approach, the
@@ -2017,12 +2081,12 @@ we have encountered are:
   computations.
 
 \item {\bf Lack of Compile-time Checks.} In Python all checks must be
-  performed at run-time.    Although compile-time checks could be added using
-  decorators, recently introduced in Python 2.4, Python does not support strong
-  typing of variables, so user mistakes related to incorrect variable types can
-  be a challenge to find and correct, where these types of mistakes would be
-  caught quickly by a strongly-typed language and compiling system such as C++
-  and Java.
+  performed at run-time.  Although compile-time checks could be added
+  using decorators, recently introduced in Python 2.4, Python does not
+  support type-checking of function arguments, so user mistakes
+  related to incorrect variable types can be a challenge to find and
+  correct, where these types of mistakes would be caught quickly by a
+  strongly-typed language and compiling system such as C++ and Java.
 
 \item {\bf Performance Considerations.}  By using a Python wrapper, a
   performance penalty is introduced due to decoding of Python code,
@@ -2030,10 +2094,10 @@ we have encountered are:
   Python-compliant format.  These tasks may require thousands of CPU
   cycles, therefore it is important to recognize this situation when
   it occurs.  The performance penalty is small if the C/C++ function
-  does a lot of work.  Therefore, for rarely called functions, this
-  penalty is negligible.  All performance critical kernels should be
-  written in C, C++, or Fortran, and everything else can be in Python,
-  as we have shown for model problems in
+  does a lot of work.  Therefore, for infrequently called functions,
+  this penalty is negligible.  All performance-critical kernels should
+  be written in C, C++, or Fortran, and everything else can be in
+  Python, as we have shown for model problems in
   Sections~\ref{sec:comparison_python}, \ref{sec:comparison_matlab}
   and \ref{sec:comparison_trilinos}.
 
@@ -2045,15 +2109,16 @@ we have encountered are:
   arrays can result in non-intuitive code, or memory leaks.
 
 \item {\bf Limited Templated Code.} Many object-oriented C++ numerical
-  libraries are adopting template support, but
-  templates support is not in Python.  Thus, the interface
+  libraries, including Trilinos, are adopting template support, but
+  Python does not support templates explicitely.  Thus, the interface
   writer has to select {\sl a-priori} which instances of the templated
   class will be included.  This is somewhat ironic, because pure
   Python code can be viewed as ``automatically'' templated, since
   rigorous type checking is not performed and expressions simply
   require that the specified operators and methods exist for any given
   object.  However, wrapped code must be type-checked ``under the
-  covers.'' 
+  covers,'' to ensure that compiled code {\sl is} called with
+  appropriately typed arguments.
 
 \end{itemize}
 
