@@ -143,7 +143,7 @@ namespace RBGen {
       else if (SMALLEST == which_) {
         int num = svals.end() - find(svals.begin(),svals.end(),bind2nd(less<ScalarType>,tval)) + 1;
         ret.resize(num);
-        for (int i=last-1last; i>last-n; --i) {
+        for (int i=last; i>last-num; --i) {
           ret.push_back(i);
         }
       }
@@ -186,8 +186,8 @@ namespace RBGen {
     //! \brief 
     //  \note It is assumed that svals are sorted in decreasing order.
     vector<int> filter(const vector<ScalarType> &svals) {
-      vector<int> ind1 = f1->filter(svals);
-      vector<int> ind2 = f2->filter(svals);
+      vector<int> ind1 = f1_->filter(svals);
+      vector<int> ind2 = f2_->filter(svals);
       vector<int> ret;
       if (AND == andor_) {
         set_intersection(ind1.begin(),ind1.end(),ind2.begin(),ind2.end());
