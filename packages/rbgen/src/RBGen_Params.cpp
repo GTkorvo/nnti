@@ -168,13 +168,13 @@ Teuchos::RefCountPtr< std::vector<std::string> > RBGen::genFileList( const Teuch
   // Get the "File I/O" sublist.
   Teuchos::ParameterList& fileio_params = const_cast<Teuchos::ParameterList&>(params.sublist( "File IO" ) );
   
-  // See if the "Data File Format" sublist exists 
-  if ( !fileio_params.isSublist( "Data File Format" ) ) {
+  // See if the "Data Filename Format" sublist exists 
+  if ( !fileio_params.isSublist( "Data Filename Format" ) ) {
     //  TO DO:  THROW EXCEPTION!!!!
   }
   
-  // Get the "Data File Format" sublist.
-  Teuchos::ParameterList& fileformat_params = fileio_params.sublist( "Data File Format" );
+  // Get the "Data Filename Format" sublist.
+  Teuchos::ParameterList& fileformat_params = fileio_params.sublist( "Data Filename Format" );
   
   // Get the string prepended to the numeric characters.
   std::string prepend = "";

@@ -442,6 +442,7 @@ AC_CONFIG_FILES([
 		example/Drivers/Epetra/Makefile
 		example/Drivers/Epetra/Lena/Makefile
 		example/Drivers/Epetra/Moon/Makefile
+		example/Drivers/Epetra/sampleXML/Makefile
 		])
 
 AC_OUTPUT()

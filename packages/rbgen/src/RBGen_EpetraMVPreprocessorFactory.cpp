@@ -6,8 +6,8 @@ namespace RBGen {
 
   EpetraMVPreprocessorFactory::EpetraMVPreprocessorFactory()
   {
-    preproc_types.push_back("none");
-    preproc_types.push_back("ModifiedSS");
+    preproc_types.push_back("None");
+    preproc_types.push_back("Modified Snapshot");
   }
 
   Teuchos::RefCountPtr<Preprocessor<Epetra_MultiVector> >
@@ -29,7 +29,7 @@ namespace RBGen {
     Teuchos::RefCountPtr<Preprocessor< Epetra_MultiVector > > RBPreprocessor;
 
     // Basic preprocessor does nothing
-    if ( method == "none" ) {
+    if ( method == "None" ) {
       RBPreprocessor = Teuchos::rcp( new NoPreprocessor<Epetra_MultiVector>() );
     } else
     // Modified snapshot preprocessor
