@@ -69,7 +69,7 @@ namespace RBGen {
         }
       }
       else if (SMALLEST == which_) {
-        for (int i=svals.size()-num; i<svals.size(); ++i) {
+        for (unsigned int i=svals.size()-num; i<svals.size(); ++i) {
           ret.push_back(i);
         }
       }
