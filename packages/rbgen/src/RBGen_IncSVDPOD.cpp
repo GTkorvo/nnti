@@ -72,11 +72,11 @@ namespace RBGen {
       TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,invalid_argument,"User specified null ortho manager.");
     }
     else {
-      string omstr = rbmethod_params.get("Ortho Manager","DKGS");
+      string omstr = rbmethod_params.get("Ortho Manager","DGKS");
       if (omstr == "SVQB") {
         ortho_ = Teuchos::rcp( new Anasazi::SVQBOrthoManager<double,Epetra_MultiVector,Epetra_Operator>() );
       }
-      else { // if omstr == "DKGS"
+      else { // if omstr == "DGKS"
         ortho_ = Teuchos::rcp( new Anasazi::BasicOrthoManager<double,Epetra_MultiVector,Epetra_Operator>() );
       }
     }
