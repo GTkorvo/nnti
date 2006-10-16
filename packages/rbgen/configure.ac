@@ -173,7 +173,9 @@ AC_CHECK_HEADERS([iostream iostream.h], [break],)
 AC_CHECK_HEADERS([string string.h], [break],)
 AC_CHECK_HEADERS([vector vector.h], [break],)
 AC_CHECK_HEADERS([stdexcept stdexcept.h], [break],)
-
+AC_CHECK_HEADERS([algorithm algo.h algorithm.h], [break],)
+AC_CHECK_HEADERS([iterator iterator.h], [break],)
+AC_CHECK_HEADERS([functional function.h], [break],)
 
 if test "X$ac_cv_header_cstdlib" != "Xyes" && test "X$ac_cv_header_stdlib_h" != "Xyes"; then
   AC_MSG_ERROR([[Cannot find cstdlib or stdlib.h.  RBGen requires at least one or the other.]])

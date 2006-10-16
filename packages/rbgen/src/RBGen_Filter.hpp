@@ -58,18 +58,18 @@ namespace RBGen {
     //! \brief Pass at most maxRank and at most minRank values through the filter.
     //  \note It is assumed that svals are sorted in decreasing order.
     vector<int> filter(const vector<ScalarType> &svals) {
-      int n = (unsigned int)svals.size();
-      if      (n > maxRank_) n = maxRank_;
-      else if (minRank_ < n) n = minRank_;
+      int num = (unsigned int)svals.size();
+      if      (num > maxRank_) num = maxRank_;
+      else if (minRank_ < num) num = minRank_;
       vector<int> ret;
-      ret.reserve(n);
+      ret.reserve(num);
       if (LARGEST == which_) {
-        for (int i=0; i<n; ++i) {
+        for (int i=0; i<num; ++i) {
           ret.push_back(i);
         }
       }
       else if (SMALLEST == which_) {
-        for (int i=svals.size()-n; i<svals.size(); ++i) {
+        for (int i=svals.size()-num; i<svals.size(); ++i) {
           ret.push_back(i);
         }
       }
@@ -134,16 +134,16 @@ namespace RBGen {
 
       vector<int> ret;
       if (LARGEST == which_) {
-        int num = find(svals.begin(),svals.end(),bind2nd(less<ScalarType>,tval)) - svals.begin();
+        int num = find(svals.begin(),svals.end(),bind2nd(less<ScalarType>(),tval)) - svals.begin();
         ret.resize(num);
         for (int i=0; i<num; ++i) {
           ret.push_back(i);
         }
       }
       else if (SMALLEST == which_) {
-        int num = svals.end() - find(svals.begin(),svals.end(),bind2nd(less<ScalarType>,tval)) + 1;
+        int num = svals.end() - find(svals.begin(),svals.end(),bind2nd(less<ScalarType>(),tval)) + 1;
         ret.resize(num);
-        for (int i=last; i>last-num; --i) {
+        for (int i=last-num+1; i<last; ++i) {
           ret.push_back(i);
         }
       }
@@ -190,10 +190,10 @@ namespace RBGen {
       vector<int> ind2 = f2_->filter(svals);
       vector<int> ret;
       if (AND == andor_) {
-        set_intersection(ind1.begin(),ind1.end(),ind2.begin(),ind2.end());
+        set_intersection(ind1.begin(),ind1.end(),ind2.begin(),ind2.end(),ret.begin());
       }
       else if (OR == andor_) {
-        set_union(ind1.begin(),ind1.end(),ind2.begin(),ind2.end());
+        set_union(ind1.begin(),ind1.end(),ind2.begin(),ind2.end(),ret.begin());
       }
       return ret;
     }
