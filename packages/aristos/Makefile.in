@@ -14,35 +14,36 @@
 
 @SET_MAKE@
 
+#np# Typically the only line that needs to be edited in this file is the last 
+#np# line.  Set 'SUBDIRS= (list all subdirectories that are autotool'ed here)'
+#np# List all subdirectories even if one or more are configured/built only
+#np# conditionally.
+
 # @HEADER
 # ************************************************************************
-#
-#            Trilinos: An Object-Oriented Solver Framework
-#                 Copyright (2001) Sandia Corporation
-#
-
-# Copyright (2001) Sandia Corportation. Under the terms of Contract
-# DE-AC04-94AL85000, there is a non-exclusive license for use of this
-# work by or on behalf of the U.S. Government.  Export of this program
-# may require a license from the United States Government.
-#
-# NOTICE:  The United States Government is granted for itself and others
-# acting on its behalf a paid-up, nonexclusive, irrevocable worldwide
-# license in ths data to reproduce, prepare derivative works, and
-# perform publicly and display publicly.  Beginning five (5) years from
-# July 25, 2001, the United States Government is granted for itself and
-# others acting on its behalf a paid-up, nonexclusive, irrevocable
-# worldwide license in this data to reproduce, prepare derivative works,
-# distribute copies to the public, perform publicly and display
-# publicly, and to permit others to do so.
-#
-# NEITHER THE UNITED STATES GOVERNMENT, NOR THE UNITED STATES DEPARTMENT
-# OF ENERGY, NOR SANDIA CORPORATION, NOR ANY OF THEIR EMPLOYEES, MAKES
-# ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL LIABILITY OR
-# RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY
-# INFORMATION, APPARATUS, PRODUCT, OR PROCESS DISCLOSED, OR REPRESENTS
-# THAT ITS USE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS.
-#
+# 
+#                     Aristos Package
+#                 Copyright (2004) Sandia Corporation
+# 
+# Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+# license for use of this work by or on behalf of the U.S. Government.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#  
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA
+# Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+# 
 # ************************************************************************
 # @HEADER
 srcdir = @srcdir@
@@ -65,25 +66,34 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-subdir = .
+host_triplet = @host@
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.export.trilinos.in $(srcdir)/Makefile.in \
-	$(srcdir)/Trilinos_config.h.in $(top_srcdir)/configure \
-	install-sh missing mkinstalldirs
+	$(srcdir)/Makefile.export.aristos.in $(srcdir)/Makefile.in \
+	$(top_srcdir)/configure config/config.guess config/config.sub \
+	config/depcomp config/install-sh config/missing \
+	config/mkinstalldirs
+subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps =  \
-	$(top_srcdir)/config/tac_arg_enable_default_feature.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/config/tac_arg_check_mpi.m4 \
+	$(top_srcdir)/config/tac_arg_config_mpi.m4 \
+	$(top_srcdir)/config/tac_arg_enable_can_use_package.m4 \
+	$(top_srcdir)/config/tac_arg_enable_export-makefiles.m4 \
 	$(top_srcdir)/config/tac_arg_enable_feature.m4 \
-	$(top_srcdir)/config/tac_arg_enable_feature_sub.m4 \
-	$(top_srcdir)/config/tac_arg_with_package.m4 \
+	$(top_srcdir)/config/tac_arg_enable_feature_sub_check.m4 \
+	$(top_srcdir)/config/tac_arg_with_ar.m4 \
+	$(top_srcdir)/config/tac_arg_with_flags.m4 \
+	$(top_srcdir)/config/tac_arg_with_incdirs.m4 \
+	$(top_srcdir)/config/tac_arg_with_libdirs.m4 \
+	$(top_srcdir)/config/tac_arg_with_libs.m4 \
+	$(top_srcdir)/config/tac_arg_with_perl.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno configure.status.lineno
-mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
-CONFIG_HEADER = Trilinos_config.h
-CONFIG_CLEAN_FILES = Makefile.export.trilinos
+mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
+CONFIG_HEADER = $(top_builddir)/src/Aristos_config.h
+CONFIG_CLEAN_FILES = Makefile.export.aristos
 SOURCES =
 DIST_SOURCES =
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
@@ -94,7 +104,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = src example
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -107,6 +117,9 @@ GZIP_ENV = --best
 distuninstallcheck_listfiles = find . -type f -print
 distcleancheck_listfiles = find . -type f -print
 ACLOCAL = aclocal -I config
+ALTERNATE_AR = @ALTERNATE_AR@
+AMDEP_FALSE = @AMDEP_FALSE@
+AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -114,81 +127,45 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BUILD_AMESOS_FALSE = @BUILD_AMESOS_FALSE@
 BUILD_AMESOS_TRUE = @BUILD_AMESOS_TRUE@
-BUILD_ANASAZI_FALSE = @BUILD_ANASAZI_FALSE@
-BUILD_ANASAZI_TRUE = @BUILD_ANASAZI_TRUE@
-BUILD_ARISTOS_FALSE = @BUILD_ARISTOS_FALSE@
-BUILD_ARISTOS_TRUE = @BUILD_ARISTOS_TRUE@
 BUILD_AZTECOO_FALSE = @BUILD_AZTECOO_FALSE@
 BUILD_AZTECOO_TRUE = @BUILD_AZTECOO_TRUE@
-BUILD_BELOS_FALSE = @BUILD_BELOS_FALSE@
-BUILD_BELOS_TRUE = @BUILD_BELOS_TRUE@
-BUILD_CAPO_FALSE = @BUILD_CAPO_FALSE@
-BUILD_CAPO_TRUE = @BUILD_CAPO_TRUE@
-BUILD_CLAPS_FALSE = @BUILD_CLAPS_FALSE@
-BUILD_CLAPS_TRUE = @BUILD_CLAPS_TRUE@
-BUILD_DIDASKO_FALSE = @BUILD_DIDASKO_FALSE@
-BUILD_DIDASKO_TRUE = @BUILD_DIDASKO_TRUE@
 BUILD_EPETRAEXT_FALSE = @BUILD_EPETRAEXT_FALSE@
 BUILD_EPETRAEXT_TRUE = @BUILD_EPETRAEXT_TRUE@
-BUILD_EPETRA_FALSE = @BUILD_EPETRA_FALSE@
-BUILD_EPETRA_TRUE = @BUILD_EPETRA_TRUE@
-BUILD_EXTERNAL_FALSE = @BUILD_EXTERNAL_FALSE@
-BUILD_EXTERNAL_TRUE = @BUILD_EXTERNAL_TRUE@
-BUILD_GALERI_FALSE = @BUILD_GALERI_FALSE@
-BUILD_GALERI_TRUE = @BUILD_GALERI_TRUE@
+BUILD_EXAMPLES_FALSE = @BUILD_EXAMPLES_FALSE@
+BUILD_EXAMPLES_TRUE = @BUILD_EXAMPLES_TRUE@
 BUILD_IFPACK_FALSE = @BUILD_IFPACK_FALSE@
 BUILD_IFPACK_TRUE = @BUILD_IFPACK_TRUE@
-BUILD_ISORROPIA_FALSE = @BUILD_ISORROPIA_FALSE@
-BUILD_ISORROPIA_TRUE = @BUILD_ISORROPIA_TRUE@
-BUILD_KOKKOS_FALSE = @BUILD_KOKKOS_FALSE@
-BUILD_KOKKOS_TRUE = @BUILD_KOKKOS_TRUE@
-BUILD_KOMPLEX_FALSE = @BUILD_KOMPLEX_FALSE@
-BUILD_KOMPLEX_TRUE = @BUILD_KOMPLEX_TRUE@
-BUILD_MEROS_FALSE = @BUILD_MEROS_FALSE@
-BUILD_MEROS_TRUE = @BUILD_MEROS_TRUE@
 BUILD_ML_FALSE = @BUILD_ML_FALSE@
 BUILD_ML_TRUE = @BUILD_ML_TRUE@
-BUILD_MOERTEL_FALSE = @BUILD_MOERTEL_FALSE@
-BUILD_MOERTEL_TRUE = @BUILD_MOERTEL_TRUE@
-BUILD_MOOCHO_FALSE = @BUILD_MOOCHO_FALSE@
-BUILD_MOOCHO_TRUE = @BUILD_MOOCHO_TRUE@
-BUILD_NEW_PACKAGE_FALSE = @BUILD_NEW_PACKAGE_FALSE@
-BUILD_NEW_PACKAGE_TRUE = @BUILD_NEW_PACKAGE_TRUE@
-BUILD_NOX_FALSE = @BUILD_NOX_FALSE@
-BUILD_NOX_TRUE = @BUILD_NOX_TRUE@
-BUILD_PLIRIS_FALSE = @BUILD_PLIRIS_FALSE@
-BUILD_PLIRIS_TRUE = @BUILD_PLIRIS_TRUE@
-BUILD_PYTRILINOS_FALSE = @BUILD_PYTRILINOS_FALSE@
-BUILD_PYTRILINOS_TRUE = @BUILD_PYTRILINOS_TRUE@
-BUILD_RBGEN_FALSE = @BUILD_RBGEN_FALSE@
-BUILD_RBGEN_TRUE = @BUILD_RBGEN_TRUE@
-BUILD_RTOP_FALSE = @BUILD_RTOP_FALSE@
-BUILD_RTOP_TRUE = @BUILD_RTOP_TRUE@
-BUILD_RYTHMOS_FALSE = @BUILD_RYTHMOS_FALSE@
-BUILD_RYTHMOS_TRUE = @BUILD_RYTHMOS_TRUE@
-BUILD_SACADO_FALSE = @BUILD_SACADO_FALSE@
-BUILD_SACADO_TRUE = @BUILD_SACADO_TRUE@
-BUILD_STRATIMIKOS_FALSE = @BUILD_STRATIMIKOS_FALSE@
-BUILD_STRATIMIKOS_TRUE = @BUILD_STRATIMIKOS_TRUE@
-BUILD_TEUCHOS_FALSE = @BUILD_TEUCHOS_FALSE@
-BUILD_TEUCHOS_TRUE = @BUILD_TEUCHOS_TRUE@
-BUILD_THYRA_FALSE = @BUILD_THYRA_FALSE@
-BUILD_THYRA_TRUE = @BUILD_THYRA_TRUE@
-BUILD_TPETRA_FALSE = @BUILD_TPETRA_FALSE@
-BUILD_TPETRA_TRUE = @BUILD_TPETRA_TRUE@
-BUILD_TRIUTILS_FALSE = @BUILD_TRIUTILS_FALSE@
-BUILD_TRIUTILS_TRUE = @BUILD_TRIUTILS_TRUE@
-BUILD_WEBTRILINOS_FALSE = @BUILD_WEBTRILINOS_FALSE@
-BUILD_WEBTRILINOS_TRUE = @BUILD_WEBTRILINOS_TRUE@
+BUILD_TESTS_FALSE = @BUILD_TESTS_FALSE@
+BUILD_TESTS_TRUE = @BUILD_TESTS_TRUE@
+CC = @CC@
+CCDEPMODE = @CCDEPMODE@
+CFLAGS = @CFLAGS@
+CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+CXXDEPMODE = @CXXDEPMODE@
+CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
+DEPDIR = @DEPDIR@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
+EGREP = @EGREP@
+EXEEXT = @EXEEXT@
+F77 = @F77@
+FFLAGS = @FFLAGS@
+FLIBS = @FLIBS@
+HAVE_MPI_FALSE = @HAVE_MPI_FALSE@
+HAVE_MPI_TRUE = @HAVE_MPI_TRUE@
+HAVE_PERL = @HAVE_PERL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
@@ -196,6 +173,12 @@ MAINT = @MAINT@
 MAINTAINER_MODE_FALSE = @MAINTAINER_MODE_FALSE@
 MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
+MPI_CC_EXISTS = @MPI_CC_EXISTS@
+MPI_CXX = @MPI_CXX@
+MPI_CXX_EXISTS = @MPI_CXX_EXISTS@
+MPI_F77_EXISTS = @MPI_F77_EXISTS@
+MPI_TEMP_CXX = @MPI_TEMP_CXX@
+OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -203,17 +186,46 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PERL_EXE = @PERL_EXE@
+RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+USE_ALTERNATE_AR_FALSE = @USE_ALTERNATE_AR_FALSE@
+USE_ALTERNATE_AR_TRUE = @USE_ALTERNATE_AR_TRUE@
+USING_EXPORT_MAKEFILES_FALSE = @USING_EXPORT_MAKEFILES_FALSE@
+USING_EXPORT_MAKEFILES_TRUE = @USING_EXPORT_MAKEFILES_TRUE@
+USING_GNUMAKE_FALSE = @USING_GNUMAKE_FALSE@
+USING_GNUMAKE_TRUE = @USING_GNUMAKE_TRUE@
+USING_PERL_FALSE = @USING_PERL_FALSE@
+USING_PERL_TRUE = @USING_PERL_TRUE@
 VERSION = @VERSION@
+ac_aux_dir = @ac_aux_dir@
+ac_ct_CC = @ac_ct_CC@
+ac_ct_CXX = @ac_ct_CXX@
+ac_ct_F77 = @ac_ct_F77@
+ac_ct_RANLIB = @ac_ct_RANLIB@
 ac_ct_STRIP = @ac_ct_STRIP@
+am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
+am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
+am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
+am__fastdepCXX_TRUE = @am__fastdepCXX_TRUE@
+am__include = @am__include@
 am__leading_dot = @am__leading_dot@
+am__quote = @am__quote@
 bindir = @bindir@
+build = @build@
 build_alias = @build_alias@
+build_cpu = @build_cpu@
+build_os = @build_os@
+build_vendor = @build_vendor@
 datadir = @datadir@
 exec_prefix = @exec_prefix@
+host = @host@
 host_alias = @host_alias@
+host_cpu = @host_cpu@
+host_os = @host_os@
+host_vendor = @host_vendor@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
@@ -227,76 +239,72 @@ prefix = @prefix@
 program_transform_name = @program_transform_name@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
-subdirs = @subdirs@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 AUTOMAKE_OPTIONS = foreign
-EXTRA_DIST = \
-	commonTools/buildTools/MakefileVariables.py \
-	commonTools/buildTools/strip_dup_incl_paths.pl \
-	commonTools/buildTools/strip_dup_libs.pl \
-	commonTools/test/coverage/README \
-	commonTools/test/coverage/gcovmerge \
-	commonTools/test/harness/config \
-	commonTools/test/harness/README \
-	commonTools/test/harness/runharness \
-	commonTools/test/harness/invoke-configures/linux-beowulf \
-	commonTools/test/harness/invoke-configures/linux-beowulf-mpi \
-	commonTools/test/utilities/compareTestOutput \
-	commonTools/test/utilities/dependencies \
-	commonTools/test/utilities/packages \
-	commonTools/test/utilities/README \
-	commonTools/test/utilities/report \
-	commonTools/test/utilities/runbuild \
-	commonTools/test/utilities/runconfigure \
-	commonTools/test/utilities/runmake \
-	commonTools/test/utilities/runtests \
-	sampleScripts/aix_mpi_xlC sampleScripts/aix_mpi_xlC2 \
-	sampleScripts/compaqCluster_mpi_stratus \
-	sampleScripts/compaqCluster_serial_stratus sampleScripts/cplant_mpi_ross \
-	sampleScripts/cplant_serial_ross \
-	sampleScripts/cygwin_mpi sampleScripts/cygwin_serial_gcc \
-	sampleScripts/cygwin_serial_icl sampleScripts/cygwingcc_amesos \
-	sampleScripts/irix_mpi_sierra sampleScripts/janus_mpi \
-	sampleScripts/janus_mpi_stlport \
-	sampleScripts/linux_mpi_codecov \
-	sampleScripts/linux_mpi_herouxsmp sampleScripts/linux_mpi_instCluster \
-	sampleScripts/linux_serial_codecov \
-	sampleScripts/macosx_mpi_paul sampleScripts/macosx_serial_paul \
-	sampleScripts/macosx_serial_samt5980 \
-	sampleScripts/macosx_mpi_marzio \
-	sampleScripts/macosx_serial_marzio \
-	sampleScripts/linux_mpi_marzio \
-	sampleScripts/kythira_serial_marzio \
-	sampleScripts/dec_mpi_marzio \
-	sampleScripts/cray_xt3_marzio \
-	sampleScripts/scyld_mpi_beowulf sampleScripts/sgi64_mpi_atlantis \
-	sampleScripts/sgi64_serial_atlantis \
-	sampleScripts/solaris_mpi_conejo sampleScripts/solaris_serial_paul \
-	sampleScripts/README config/AutotoolsVersionInfo \
-	sampleScripts/cygwin_icl.pl sampleScripts/stratus_ar.pl \
-	doc/Tutorial/README RELEASE_NOTES \
-	doc/build_docs.pl \
-	doc/check_installation.txt
 
-AUX_DIST = config/install-sh config/missing config/mkinstalldirs
+#
+#       I believe that by switching to AUX_DIR(../../config) one 
+#       could get rid of these.
+#
+#np# For a typical package, there is no reason to distribute these files
+#np# because users should not have to bootstrap.  We distribute them with
+#np# new package so that the files can be used in creating the 
+#np# configure script for other packages. 
+EXTRA_DIST = \
+config/depcomp \
+config/ac_cxx_have_std.m4                 config/install-sh \
+config/missing 				  config/mkinstalldirs \
+config/tac_arg_check_mpi.m4 		  config/tac_arg_config_mpi.m4 \
+config/ac_cxx_reinterpret_cast.m4         config/generate-makeoptions.pl \
+config/replace-install-prefix.pl          config/tac_arg_enable_can_use_package.m4 \
+config/tac_arg_enable_compiler_options.m4 config/tac_arg_enable_export-makefiles.m4 \
+config/tac_arg_enable_feature.m4  	  config/tac_arg_enable_option.m4 \
+config/ac_prompt_user.m4                  config/tac_arg_with_ar.m4 \
+config/ac_prompt_user_no_define.m4        config/tac_arg_with_blaslib.m4 \
+config/acx_blas.m4                        config/tac_arg_with_compiler.m4 \
+config/acx_check_dos_filesys.m4           config/tac_arg_with_flags.m4 \
+config/acx_lapack.m4                      config/tac_arg_with_incdirs.m4 \
+config/acx_pthread.m4                     config/tac_arg_with_lapacklib.m4 \
+config/config.guess                       config/tac_arg_with_libdirs.m4 \
+config/config.sub                         config/tac_arg_with_package.m4 \
+config/strip_dup_incl_paths.pl            config/strip_dup_libs.pl \
+config/tac_arg_with_perl.m4 		  config/string-replace.pl \
+bootstrap 
+
+#
+#       I believe that by switching to AUX_DIR(../../config) one 
+#       could get rid of these.
+#
+AUX_DIST = config/install-sh config/missing config/mkinstalldirs 
+#
+#  Again, I hope that AUX_DIR(../../config) eliminates these
+#  config/install-sh config/missing config/mkinstalldirs 
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 autom4te.cache/* \
 	configure config.status config.log \
 	src/common/config-h.in src/common/stamp-h.in \
 	$(AUX_DIST) 
 
-SUBDIRS = packages
 
-#
-# The below targets allow you to use the new
-# testharness to run the test suite as make targets
-#
-TRILINOS_HOME_DIR = @abs_top_srcdir@
-TRILINOS_BUILD_DIR = @abs_top_builddir@
-TRILINOS_MPI_MAX_PROC = 4
+#  #np# - Most packages should have an example and a full suite 
+#  of tests.  At present, aristos only offers src and example.
+#  BUILD_TESTS and BUILD_EXAMPLES are defined through the configure.ac file.
+
+#if BUILD_TESTS
+#TEST_SUBDIR=test
+#endif
+@BUILD_EXAMPLES_TRUE@EXAMPLE_SUBDIR = example
+SUBDIRS = src $(TEST_SUBDIR) $(EXAMPLE_SUBDIR)
+TRILINOS_HOME_DIR = @abs_top_srcdir@/../..
+TRILINOS_BUILD_DIR = @abs_top_builddir@/../..
 TRILINOS_TEST_CATEGORY = INSTALL
-all: Trilinos_config.h
-	$(MAKE) $(AM_MAKEFLAGS) all-recursive
+@HAVE_MPI_FALSE@ARISTOS_CHECK_COMM = serial
+@HAVE_MPI_TRUE@ARISTOS_CHECK_COMM = mpi
+all: all-recursive
 
 .SUFFIXES:
 am--refresh:
@@ -332,24 +340,7 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(srcdir) && $(AUTOCONF)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
-
-Trilinos_config.h: stamp-h1
-	@if test ! -f $@; then \
-	  rm -f stamp-h1; \
-	  $(MAKE) stamp-h1; \
-	else :; fi
-
-stamp-h1: $(srcdir)/Trilinos_config.h.in $(top_builddir)/config.status
-	@rm -f stamp-h1
-	cd $(top_builddir) && $(SHELL) ./config.status Trilinos_config.h
-$(srcdir)/Trilinos_config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps) 
-	cd $(top_srcdir) && $(AUTOHEADER)
-	rm -f stamp-h1
-	touch $@
-
-distclean-hdr:
-	-rm -f Trilinos_config.h stamp-h1
-Makefile.export.trilinos: $(top_builddir)/config.status $(srcdir)/Makefile.export.trilinos.in
+Makefile.export.aristos: $(top_builddir)/config.status $(srcdir)/Makefile.export.aristos.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 uninstall-info-am:
 
@@ -422,7 +413,7 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	mkid -fID $$unique
 tags: TAGS
 
-TAGS: tags-recursive $(HEADERS) $(SOURCES) Trilinos_config.h.in $(TAGS_DEPENDENCIES) \
+TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
@@ -437,7 +428,7 @@ TAGS: tags-recursive $(HEADERS) $(SOURCES) Trilinos_config.h.in $(TAGS_DEPENDENC
 	      tags="$$tags $$include_option=$$here/$$subdir/TAGS"; \
 	  fi; \
 	done; \
-	list='$(SOURCES) $(HEADERS) Trilinos_config.h.in $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -447,11 +438,11 @@ TAGS: tags-recursive $(HEADERS) $(SOURCES) Trilinos_config.h.in $(TAGS_DEPENDENC
 	  || $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
 	     $$tags $$unique
 ctags: CTAGS
-CTAGS: ctags-recursive $(HEADERS) $(SOURCES) Trilinos_config.h.in $(TAGS_DEPENDENCIES) \
+CTAGS: ctags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
-	list='$(SOURCES) $(HEADERS) Trilinos_config.h.in $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -472,7 +463,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/. $(distdir)/commonTools/buildTools $(distdir)/commonTools/test/coverage $(distdir)/commonTools/test/harness $(distdir)/commonTools/test/harness/invoke-configures $(distdir)/commonTools/test/utilities $(distdir)/config $(distdir)/doc $(distdir)/doc/Tutorial $(distdir)/sampleScripts
+	$(mkdir_p) $(distdir)/. $(distdir)/config
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
@@ -499,7 +490,7 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
-	list='$(SUBDIRS)'; for subdir in $$list; do \
+	list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
 	  if test "$$subdir" = .; then :; else \
 	    test -d "$(distdir)/$$subdir" \
 	    || mkdir "$(distdir)/$$subdir" \
@@ -611,7 +602,7 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile Trilinos_config.h
+all-am: Makefile all-local
 installdirs: installdirs-recursive
 installdirs-am:
 install: install-recursive
@@ -646,7 +637,7 @@ clean-am: clean-generic mostlyclean-am
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -f Makefile
-distclean-am: clean-am distclean-generic distclean-hdr distclean-tags
+distclean-am: clean-am distclean-generic distclean-tags
 
 dvi: dvi-recursive
 
@@ -694,11 +685,11 @@ uninstall-am: uninstall-info-am
 
 uninstall-info: uninstall-info-recursive
 
-.PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am am--refresh check \
-	check-am clean clean-generic clean-recursive ctags \
-	ctags-recursive dist dist-all dist-bzip2 dist-gzip dist-shar \
-	dist-tarZ dist-zip distcheck distclean distclean-generic \
-	distclean-hdr distclean-recursive distclean-tags \
+.PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am all-local \
+	am--refresh check check-am clean clean-generic clean-recursive \
+	ctags ctags-recursive dist dist-all dist-bzip2 dist-gzip \
+	dist-shar dist-tarZ dist-zip distcheck distclean \
+	distclean-generic distclean-recursive distclean-tags \
 	distcleancheck distdir distuninstallcheck dvi dvi-am html \
 	html-am info info-am install install-am install-data \
 	install-data-am install-exec install-exec-am install-info \
@@ -710,19 +701,36 @@ uninstall-info: uninstall-info-recursive
 	uninstall-info-am
 
 
+#The following line helps the test harness recover from build errors.
+
+all-local:
+	@echo "Trilinos package aristos built successfully"
+
 all-libs:
-	cd $(top_builddir)/packages ; $(MAKE) all-libs
+	cd src ; make all-libs
 
 libs:
-	cd $(top_builddir)/packages ; $(MAKE) libs
+	cd src ; make
 
-install-exec-hook:	
-	cp $(top_srcdir)/commonTools/buildTools/strip_dup_incl_paths.pl $(exec_prefix)/include/. ;
-	cp $(top_srcdir)/commonTools/buildTools/strip_dup_libs.pl $(exec_prefix)/include/.
+@USING_EXPORT_MAKEFILES_TRUE@install-exec-hook:
+@USING_EXPORT_MAKEFILES_TRUE@	cp $(top_builddir)/Makefile.export.aristos $(exec_prefix)/include/.
+@USING_EXPORT_MAKEFILES_TRUE@	$(PERL_EXE) $(top_srcdir)/config/replace-install-prefix.pl \
+@USING_EXPORT_MAKEFILES_TRUE@		--exec-prefix=$(exec_prefix) \
+@USING_EXPORT_MAKEFILES_TRUE@		--my-export-makefile=Makefile.export.aristos \
+@USING_EXPORT_MAKEFILES_TRUE@		--my-abs-top-srcdir=@abs_top_srcdir@ \
+@USING_EXPORT_MAKEFILES_TRUE@		--my-abs-incl-dirs=@abs_top_builddir@/src:@abs_top_srcdir@/src \
+@USING_EXPORT_MAKEFILES_TRUE@		--my-abs-lib-dirs=@abs_top_builddir@/src \
+@USING_EXPORT_MAKEFILES_TRUE@		--dep-package-abs-builddirs=@abs_top_builddir@/../epetra
+@USING_EXPORT_MAKEFILES_TRUE@	$(PERL_EXE) $(top_srcdir)/config/generate-makeoptions.pl $(top_builddir)/src/Makefile \
+@USING_EXPORT_MAKEFILES_TRUE@		ARISTOS > $(exec_prefix)/include/Makefile.export.aristos.macros
 
-uninstall-hook:
-	rm -f $(exec_prefix)/include/strip_dup_incl_paths.pl
-	rm -f $(exec_prefix)/include/strip_dup_libs.pl
+@USING_EXPORT_MAKEFILES_TRUE@uninstall-hook:
+@USING_EXPORT_MAKEFILES_TRUE@	rm -f $(exec_prefix)/include/Makefile.export.aristos
+@USING_EXPORT_MAKEFILES_TRUE@	rm -f $(exec_prefix)/include/Makefile.export.aristos.macros
+
+@USING_EXPORT_MAKEFILES_FALSE@install-exec-hook:
+
+@USING_EXPORT_MAKEFILES_FALSE@uninstall-hook:
 
 runtests-serial :
 	$(PERL_EXE) $(TRILINOS_HOME_DIR)/commonTools/test/utilities/runtests \
@@ -730,83 +738,56 @@ runtests-serial :
   --comm=serial \
   --build-dir=$(TRILINOS_BUILD_DIR) \
   --category=$(TRILINOS_TEST_CATEGORY) \
-  --output-dir=@abs_top_builddir@/runtests-results
+  --output-dir=@abs_top_builddir@/test/runtests-results \
+  --verbosity=1 \
+  --packages=aristos
 
 runtests-mpi :
 	$(PERL_EXE) $(TRILINOS_HOME_DIR)/commonTools/test/utilities/runtests \
   --trilinos-dir=$(TRILINOS_HOME_DIR) \
   --comm=mpi \
   --mpi-go=$(TRILINOS_MPI_GO) \
-  --max-proc=$(TRILINOS_MPI_MAX_PROC) \
   --build-dir=$(TRILINOS_BUILD_DIR) \
   --category=$(TRILINOS_TEST_CATEGORY) \
-  --output-dir=@abs_top_builddir@/runtests-results
+  --output-dir=@abs_top_builddir@/test/runtests-results \
+  --verbosity=1 \
+  --packages=aristos
 
-run-examples: all-am
-	@if [ -d packages/epetra    ]; then cd packages/epetra;    $(MAKE) run-examples; fi
-	@if [ -d packages/epetraext ]; then cd packages/epetraext; $(MAKE) run-examples; fi
-	@if [ -d packages/aztecoo   ]; then cd packages/aztecoo;   $(MAKE) run-examples; fi
-	@if [ -d packages/ifpack    ]; then cd packages/ifpack;    $(MAKE) run-examples; fi
-	@if [ -d packages/amesos    ]; then cd packages/amesos;    $(MAKE) run-examples; fi
-	@if [ -d packages/ml        ]; then cd packages/ml;        $(MAKE) run-examples; fi
-	@if [ -d packages/nox       ]; then cd packages/nox;       $(MAKE) run-examples; fi
-	@if [ -d packages/didasko   ]; then cd packages/didasko;   $(MAKE) run-examples; fi
+# run-examples:
+# 	@echo
+# 	@echo "==================================="
+# 	@echo "Running the Aristos examples..."
+# 	@echo "==================================="
+# 	@echo
+# 	@echo "For more details, please refer to Trilinos/doc/check_installation.txt"
+# 	@echo
+# 	@$(PERL_EXE) $(TRILINOS_HOME_DIR)/commonTools/test/utilities/runtests \
+# 	--trilinos-dir=$(TRILINOS_HOME_DIR) \
+# 	--comm=$(ARISTOS_CHECK_COMM) \
+# 	--mpi-go="$(TRILINOS_MPI_GO)" \
+# 	--build-dir=$(TRILINOS_BUILD_DIR) \
+# 	--category=AristosExamples \
+# 	--output-dir=@abs_top_builddir@/test/runtests-results \
+# 	--verbosity=1 \
+# 	--packages=aristos
 
-run-tests: all-am
-	@if [ -d packages/epetra    ]; then cd packages/epetra;    $(MAKE) run-tests; fi
-	@if [ -d packages/epetraext ]; then cd packages/epetraext; $(MAKE) run-tests; fi
-	@if [ -d packages/aztecoo   ]; then cd packages/aztecoo;   $(MAKE) run-tests; fi
-	@if [ -d packages/ifpack    ]; then cd packages/ifpack;    $(MAKE) run-tests; fi
-	@if [ -d packages/amesos    ]; then cd packages/amesos;    $(MAKE) run-tests; fi
-	@if [ -d packages/ml        ]; then cd packages/ml;        $(MAKE) run-tests; fi
-	@if [ -d packages/nox       ]; then cd packages/nox;       $(MAKE) run-tests; fi
-	@if [ -d packages/didasko   ]; then cd packages/didasko;   $(MAKE) run-tests; fi
-
-run-pytests: all-am
-	@if [ -d packages/teuchos     ]; then cd packages/teuchos;     $(MAKE) run-pytests; fi
-	@if [ -d packages/thyra       ]; then cd packages/thyra;       $(MAKE) run-pytests; fi
-	@if [ -d packages/epetra      ]; then cd packages/epetra;      $(MAKE) run-pytests; fi
-	@if [ -d packages/triutils    ]; then cd packages/triutils;    $(MAKE) run-pytests; fi
-	@if [ -d packages/epetraext   ]; then cd packages/epetraext;   $(MAKE) run-pytests; fi
-	@if [ -d packages/aztecoo     ]; then cd packages/aztecoo;     $(MAKE) run-pytests; fi
-	@if [ -d packages/galeri      ]; then cd packages/galeri;      $(MAKE) run-pytests; fi
-	@if [ -d packages/amesos      ]; then cd packages/amesos;      $(MAKE) run-pytests; fi
-	@if [ -d packages/ifpack      ]; then cd packages/ifpack;      $(MAKE) run-pytests; fi
-	@if [ -d packages/anasazi     ]; then cd packages/anasazi;     $(MAKE) run-pytests; fi
-	@if [ -d packages/ml          ]; then cd packages/ml;          $(MAKE) run-pytests; fi
-	@if [ -d packages/nox         ]; then cd packages/nox;         $(MAKE) run-pytests; fi
-	@if [ -d packages/new_package ]; then cd packages/new_package; $(MAKE) run-pytests; fi
-
-run-pyexamples: all-am
-	@if [ -d packages/teuchos     ]; then cd packages/teuchos;     $(MAKE) run-pyexamples; fi
-	@if [ -d packages/thyra       ]; then cd packages/thyra;       $(MAKE) run-pyexamples; fi
-	@if [ -d packages/epetra      ]; then cd packages/epetra;      $(MAKE) run-pyexamples; fi
-	@if [ -d packages/triutils    ]; then cd packages/triutils;    $(MAKE) run-pyexamples; fi
-	@if [ -d packages/epetraext   ]; then cd packages/epetraext;   $(MAKE) run-pyexamples; fi
-	@if [ -d packages/aztecoo     ]; then cd packages/aztecoo;     $(MAKE) run-pyexamples; fi
-	@if [ -d packages/galeri      ]; then cd packages/galeri;      $(MAKE) run-pyexamples; fi
-	@if [ -d packages/amesos      ]; then cd packages/amesos;      $(MAKE) run-pyexamples; fi
-	@if [ -d packages/ifpack      ]; then cd packages/ifpack;      $(MAKE) run-pyexamples; fi
-	@if [ -d packages/anasazi     ]; then cd packages/anasazi;     $(MAKE) run-pyexamples; fi
-	@if [ -d packages/ml          ]; then cd packages/ml;          $(MAKE) run-pyexamples; fi
-	@if [ -d packages/nox         ]; then cd packages/nox;         $(MAKE) run-pyexamples; fi
-	@if [ -d packages/new_package ]; then cd packages/new_package; $(MAKE) run-pyexamples; fi
-
-clean-python: all-am
-	@if [ -d packages/PyTrilinos         ]; then cd packages/PyTrilinos;         $(MAKE) clean; fi
-	@if [ -d packages/teuchos/python     ]; then cd packages/teuchos/python;     $(MAKE) clean; fi
-	@if [ -d packages/thyra/python       ]; then cd packages/thyra/python;       $(MAKE) clean; fi
-	@if [ -d packages/epetra/python      ]; then cd packages/epetra/python;      $(MAKE) clean; fi
-	@if [ -d packages/triutils/python    ]; then cd packages/triutils/python;    $(MAKE) clean; fi
-	@if [ -d packages/epetraext/python   ]; then cd packages/epetraext/python;   $(MAKE) clean; fi
-	@if [ -d packages/aztecoo/python     ]; then cd packages/aztecoo/python;     $(MAKE) clean; fi
-	@if [ -d packages/galeri/python      ]; then cd packages/galeri/python;      $(MAKE) clean; fi
-	@if [ -d packages/amesos/python      ]; then cd packages/amesos/python;      $(MAKE) clean; fi
-	@if [ -d packages/ifpack/python      ]; then cd packages/ifpack/python;      $(MAKE) clean; fi
-	@if [ -d packages/anasazi/python     ]; then cd packages/anasazi/python;     $(MAKE) clean; fi
-	@if [ -d packages/ml/python          ]; then cd packages/ml/python;          $(MAKE) clean; fi
-	@if [ -d packages/nox/python         ]; then cd packages/nox/python;         $(MAKE) clean; fi
-	@if [ -d packages/new_package/python ]; then cd packages/new_package/python; $(MAKE) clean; fi
+# run-tests:
+# 	@echo
+# 	@echo "================================"
+# 	@echo "Running the Aristos tests..."
+# 	@echo "================================"
+# 	@echo
+# 	@echo "For more details, please refer to Trilinos/doc/check_installation.txt"
+# 	@echo
+# 	@$(PERL_EXE) $(TRILINOS_HOME_DIR)/commonTools/test/utilities/runtests \
+# 	--trilinos-dir=$(TRILINOS_HOME_DIR) \
+# 	--comm=$(ARISTOS_CHECK_COMM) \
+# 	--mpi-go="$(TRILINOS_MPI_GO)" \
+# 	--build-dir=$(TRILINOS_BUILD_DIR) \
+# 	--category=FRAMEWORK \
+# 	--output-dir=@abs_top_builddir@/test/runtests-results \
+# 	--verbosity=1 \
+# 	--packages=aristos
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

@@ -1,0 +1,45 @@
+include @abs_top_builddir@/../teuchos/Makefile.export.teuchos
+include @abs_top_builddir@/../epetra/Makefile.export.epetra
+
+# Optional dependencies on aztecoo, amesos, and ml are for
+# examples only.  We add them ONLY to the test target.
+@BUILD_AMESOS_TRUE@include @abs_top_builddir@/../amesos/Makefile.export.amesos
+@BUILD_AZTECOO_TRUE@include @abs_top_builddir@/../aztecoo/Makefile.export.aztecoo
+@BUILD_ML_TRUE@include @abs_top_builddir@/../ml/Makefile.export.ml
+@BUILD_EPETRAEXT_TRUE@include @abs_top_builddir@/../epetraext/Makefile.export.epetraext
+@BUILD_IFPACK_TRUE@include @abs_top_builddir@/../ifpack/Makefile.export.ifpack
+
+_ARISTOS_INCLUDES = -I@abs_top_srcdir@/src -I@abs_top_builddir@/src \
+			$(EPETRA_INCLUDES) $(TEUCHOS_INCLUDES)
+
+_ARISTOS_LIBS     = @LDFLAGS@ -L@abs_top_builddir@/src -laristos \
+			$(EPETRA_LIBS) $(TEUCHOS_LIBS)
+
+@USING_GNUMAKE_TRUE@ARISTOS_INCLUDES  = $(shell @PERL_EXE@ @abs_top_srcdir@/config/strip_dup_incl_paths.pl $(_ARISTOS_INCLUDES))
+@USING_GNUMAKE_TRUE@ARISTOS_LIBS      = $(shell @PERL_EXE@ @abs_top_srcdir@/config/strip_dup_libs.pl $(_ARISTOS_LIBS))
+
+@USING_GNUMAKE_FALSE@ARISTOS_INCLUDES = $(_ARISTOS_INCLUDES)
+@USING_GNUMAKE_FALSE@ARISTOS_LIBS     = $(_ARISTOS_LIBS)
+
+# These variables define the include path and libraries that can be used in
+# the examples and tests, but that are not required to compile or link
+# against the library itself.
+
+_ARISTOS_TEST_INCLUDES = \
+        -I@abs_top_srcdir@/src \
+        -I@abs_top_builddir@/src \
+        $(ML_INCLUDES) \
+        $(AMESOS_INCLUDES) \
+        $(AZTECOO_INCLUDE) \
+        $(IFPACK_INCLUDES) \
+        $(EPETRAEXT_INCLUDES) \
+        $(EPETRA_INCLUDES) \
+        $(TEUCHOS_INCLUDES)
+
+_ARISTOS_TEST_LIBS = @LDFLAGS@ -L@abs_top_builddir@/src -laristos $(ML_LIBS) $(AMESOS_LIBS) $(AZTECOO_LIBS) $(IFPACK_LIBS) $(EPETRAEXT_LIBS) $(EPETRA_LIBS) $(TEUCHOS_LIBS) @LIBS@ @FLIBS@
+
+@USING_GNUMAKE_TRUE@ARISTOS_TEST_INCLUDES  = $(shell @PERL_EXE@ @abs_top_srcdir@/config/strip_dup_incl_paths.pl $(_ARISTOS_TEST_INCLUDES))
+@USING_GNUMAKE_TRUE@ARISTOS_TEST_LIBS      = $(shell @PERL_EXE@ @abs_top_srcdir@/config/strip_dup_libs.pl $(_ARISTOS_TEST_LIBS))
+@USING_GNUMAKE_FALSE@ARISTOS_TEST_INCLUDES = $(_ARISTOS_TEST_INCLUDES)
+@USING_GNUMAKE_FALSE@ARISTOS_TEST_LIBS     = $(_ARISTOS_TEST_LIBS)
+
