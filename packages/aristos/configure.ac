@@ -382,6 +382,7 @@ AC_CONFIG_FILES([
 		src/Makefile
 		example/Makefile
 		example/simple/Makefile
+		example/ginzburglandau_dist/Makefile
 		])
 
 AC_OUTPUT()

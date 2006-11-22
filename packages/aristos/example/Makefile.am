@@ -41,4 +41,15 @@ else
   SIMPLE_EX =
 endif
 
-SUBDIRS = $(SIMPLE_EX)
+if BUILD_AMESOS 
+if BUILD_AZTECOO 
+if BUILD_IFPACK 
+if BUILD_EPETRAEXT 
+  GLDIST_EX = ginzburglandau_dist
+endif
+endif
+endif
+endif
+
+
+SUBDIRS = $(SIMPLE_EX) $(GLDIST_EX)
