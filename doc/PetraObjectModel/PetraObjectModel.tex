@@ -1,4 +1,8 @@
 \documentclass[10pt,relax]{PetraObjectModel}
+
+\newcommand{\pom}{Petra Object Model}
+\newcommand{\POM}{POM}
+
 % ---------------------------------------------------------------------------- %
 %
 % Set the title, author, and date
@@ -68,8 +72,9 @@ that funded development of Trilinos.
 \section*{Nomenclature}
 \begin{itemize}
 \item[Processor] A computing element that can execute compiled
-code and directly access some physical memory resource.  Typically
-a processor is one of the commonly available commodity microprocessors.
+code and directly access some physical memory resource.  Typically a
+processor is one of the commonly available commodity
+microprocessors, or one core of a multi-core design.
 
 \item[Process] An executable file submitted to the operating system.
 A process must be assigned to a processor in order to execute.  At
@@ -136,6 +141,8 @@ the classes, followed by a UML object model, in the next section.
 In subsequent sections we present a collection of pure virtual
 classes, two C++ implementations of this model and a Java
 implementation.
+
+
 
 \section{Sample Use Cases}
 
@@ -373,6 +380,7 @@ occurred.
 
 
 \section{Overview of Primary Petra Classes}
+\label{sect:summary}
 
 In this section we present in logical order the basic object classes
 needed for parallel vectors and matrices.  Each of the object
@@ -448,7 +456,7 @@ matrix. In a practical implementation, one should note that the
 Vector class can usually be implemented as a specialization of the
 MultiVector class (a MultiVector with one Vector).
 
-\paragraph{Compressed-Index Graph (CISGraph) Class:  Connectivity Graph Object}
+\paragraph{Compressed-Index-Storage Graph (CISGraph) Class:  Connectivity Graph Object}
 
 A graph object specifies a set of vertices and the connecting edge
 pairs.  It can also be represented as a binary-valued matrix where
@@ -476,39 +484,53 @@ Algorithms which are written to use these abstract Operators rather
 than specific matrix class types may make use of any matrix type
 that implements the Operator interface.
 
-\paragraph{Compressed-Index Matrix (CISMatrix) Class: Sparse Matrix Object}
+\paragraph{Compressed-Index-Access (CIAMatrix): Linear Operator with Coefficients Object}
 
-A compressed-index matrix is very similar to a compressed-index
-graph. Additionally it contains matrix values and has methods to
-compute matrix-vector and matrix-multivector multiplications.  It
-has methods to provide certain matrix norms and scalings.  It can
-also be queried for matrix entries, which are usually returned a row
-at a time or a column at a time. As will be discussed in a later
-section, Petra implementations include both point-entry and
-block-entry matrix classes.
+CIAMatrix extends the Operator interface to include method
+prototypes for accessing matrix coefficients either by row or column
+compressed index requests.  All distributed matrix classes implement
+this interface.  This interface is useful to any algorithm that
+needs access to matrix coefficients.  In particular, most algebraic
+preconditioners need coefficient information and use CIAMatrix as a
+single interface to all \POM\ matrix objects.
+
+\paragraph{Compressed-Index-Storage Matrix (CISMatrix) Class: Sparse Matrix Object}
+
+A compressed-index-storage matrix is very similar to a
+compressed-index-storage graph. Additionally it contains matrix
+values and has methods to compute matrix-vector and
+matrix-multivector multiplications.  It has methods to provide
+certain matrix norms and scalings.  It can also be queried for
+matrix entries, which are usually returned a row at a time or a
+column at a time. As will be discussed in a later section, Petra
+implementations include both point-entry and block-entry matrix
+classes.
 
 
-\paragraph{Import and Export Classes:  Parallel Data Redistribution}
+\paragraph{Import, Export and DistObject Classes:  Parallel Data Redistribution}
 
-Given a vector, multivector, graph or matrix distributed across processors
-via an ElementSpace (call it a source ElementSpace), it is possible to
-redistribute any of these
-objects by creating a new ElementSpace (a target ElementSpace) and then
-creating an import or
-an export object to redistribute the object to the layout specified by the
-target ElementSpace.
+Given a vector, multivector, graph or matrix distributed across
+processors via an ElementSpace (call it a source ElementSpace), it
+is possible to redistribute any of these objects by creating a new
+ElementSpace (a target ElementSpace) and then creating an import or
+an export object to redistribute the object to the layout specified
+by the target ElementSpace.
 
-An import object is used in the situation where a target ElementSpace is
- constructed
-using GIDs that the calling processor wants to obtain from the source
- ElementSpace
-layout.  An export object is used when the target ElementSpace is constructed
-so that each GID in the source ElementSpace is uniquely owned by one processor
- in the target ElementSpace, effectively asserting that each calling processor
- wants to export anything
-that is in its source ElementSpace but not in its target ElementSpace.
-  Import and export
-objects form the basis for all data communication on the parallel machine.
+An import object is used in the situation where a target
+ElementSpace is constructed using GIDs that the calling processor
+wants to obtain from the source ElementSpace layout.  An export
+object is used when the target ElementSpace is constructed so that
+each GID in the source ElementSpace is uniquely owned by one
+processor in the target ElementSpace, effectively asserting that
+each calling processor wants to export anything that is in its
+source ElementSpace but not in its target ElementSpace.  Import and
+export objects form the basis for all data communication on the
+parallel machine.
+
+Import and Export work on DistObject instances.  DistObject is a
+base class for any distributed object.  Therefore, a single import
+or export instance can be used to redistribute any kind of
+compatible DistObject instance.
 
 \paragraph{Serial Dense Matrix and Vector Classes:  Serial Dense Linear Algebra Objects}
 
@@ -522,15 +544,17 @@ libraries.
 
 \paragraph{Linear Problem Class:  Composite Class for Defining a Linear Problem}
 
-One of the most common uses for matrix and vector classes is solving a linear
-system of equations, $AX = B$, where $A$ is a known (sparse) matrix, $B$ is a
-known set of one or more right hand side vectors and $X$ is the corresponding
-set of initial solution guesses (if any).  To facilitate this process, we
-define a composite linear problem class that contains an abstract matrix object
-(the base class of our compressed-index and block compressed-index matrix
-classes), a multivector (which could be a vector since multivector is the base
-class for vectors) containing the right hand side and another multivector
-containing the initial guess.
+One of the most common uses for matrix and vector classes is solving
+a linear system of equations, $AX = B$, where $A$ is a known
+(sparse) matrix, $B$ is a known set of one or more right hand side
+vectors and $X$ is the corresponding set of initial solution guesses
+(if any).  To facilitate this process, we define a composite linear
+problem class that contains an abstract matrix object (the base
+class of our compressed-index-storage and block
+compressed-index-storage matrix classes), a multivector (which could
+be a vector since multivector is the base class for vectors)
+containing the right hand side and another multivector containing
+the initial guess.
 
 \subsection{UML Depiction of Petra Object Model}
 
@@ -564,7 +588,129 @@ methods, and declares other methods that are implemented by derived classes for
 packing and unpacking data which is communicated among processors. Parallel
 data redistribution will be discussed in more detail in a later section.
 
-\section{Parallel Machine Interfaces and Implementations}
+\section{Important Requirements for Parallel Basic Linear Algebra Software}
+
+Any software product has a set of requirements that it intends to
+satisfy, even if these requirements are never formally stated.  In
+this section we highlight the primary requirements that drive the
+analysis and design of the \pom\ (\POM) and its implementation in
+the Epetra and Tpetra packages in Trilinos.
+
+Major algorithmic requirements include:
+\begin{itemize}
+\item[A1] Support sparse and dense matrix construction, use and reuse in scientific and engineering applications.
+\item[A2] Support for advanced numerical algorithms.
+\item[A3] Abstractions of basic linear algebra objects for efficiency and
+extensibility.
+\end{itemize}
+Major software design requirements include:
+\begin{itemize}
+\item[S1] Efficient execution on parallel computers.
+\item[S2] Portability of libraries on current and future serial and parallel computers.
+\item[S3] Utilize existing software capabilities for performance and
+functionality.
+\end{itemize}
+Two usability requirements, that are not entirely compatible, are:
+\begin{itemize}
+\item[U1] Accessible to C and Fortran applications and users.
+\item[U2] Support of multiple data types including 32 or 64-bit floating
+point, complex numbers and large integer types.
+\end{itemize}
+
+In Tables~\ref{table:ClassesVsAlgRequirements}
+and~\ref{table:ClassesVsSWRequirements} we summarize how the classes
+in Section~\ref{sect:Summary} address the requirements listed above.
+\begin{table}
+  \centering
+  \scriptsize
+  \begin{tabular}{|p{0.8in}||p{1.5in}|p{1.5in}|p{1.5in}|}
+    \hline
+    \multicolumn{1}{|c|}{Classes} & \multicolumn{1}{|c|}{Requirement A1} &
+    \multicolumn{1}{|c|}{Requirement A2} & \multicolumn{1}{|c|}{Requirement A3} \\\hline
+    Comm, Distributor, Directory & & & \\\hline\hline
+    ElementSpace, BlockElementSpace & & BlockElementSpace: Supports
+    efficient sparse-dense algorithms for problems with multiple
+    degrees of freedom per node on a mesh or other discrete
+    structure. & \\\hline
+    VectorSpace & An intuitive concept for instantiating any kind of matrix and vector object.& &
+    VectorSpace adapters can be written to support other underlying concrete vector types.\\\hline
+    Vector & Basic class for constructing and manipulating vectors.
+    Very flexible construction and post-construction modification capabilities& & \\\hline
+    MultiVector & & Provides support for block iterative methods, multi-right-hand-side
+    solvers, storage of coordinate information, etc. & \\\hline
+    CISGraph& Supports the reuse a matrix graph across a family of matrices. &
+    Supports graph analysis algorithms for efficient and robust precondition. & \\\hline
+    Operator & & Allows use of a minimal abstraction for algorithms that only need
+    the action of a linear operator on a vector or multivector. &
+    Allows users to develop their own adapters for special-purpose linear operators.\\\hline
+    CIAMatrix& & Provides minimal interface for algorithms needing access to matrix
+    coefficients, in particular algebraic preconditioners. &
+    Allows users to develop their own adapters for special-purpose matrix classes. \\\hline
+    CISMatrix & Supports flexible piece-by-piece construction of distributed sparse matrices.&
+    Provides adapters for both Operator and CIAMatrix. & \\\hline
+    Import, Export and DistObject & Preconditioners are typically the only part of a solver
+    that are algorithmically sensitive to data distribution.
+    Import and Export allow a preconditioner to easily redistribute matrix data for the purposes
+    of more robust preconditioning. &
+    New distributed linear algebra objects can be easily added to
+    the \POM\ by implementing the DistObject base class.& \\\hline
+    Serial Dense Matrix, Vector & Supports construction of local dense matrices and vectors.&
+    Provides access to robust LAPACK factorizations for sparse-dense preconditioners on multi-DOF problems. & \\\hline
+    Linear Problem & & & Aggregating the triplet ($A$,$x$,$b$) for solving the system $Ax=b$ makes scaling of the system easier
+    and more flexible. \\\hline
+
+  \end{tabular}
+  \caption{Summary of Classes vs. Algorithmic Requirements}\label{Table:ClassesVsAlgRequirements}
+\end{table}
+%\item[S1] Efficient execution on parallel computers.
+%\item[S2] Portability of libraries on current and future serial and parallel computers.
+%\item[S3] Utilize existing software capabilities for performance and
+% functionality.
+\begin{table}
+  \centering
+  \scriptsize
+  \begin{tabular}{|p{0.8in}||p{1.5in}|p{1.5in}|p{1.5in}|}
+    \hline
+    \multicolumn{1}{|c|}{Classes} & \multicolumn{1}{|c|}{Requirement S1} &
+    \multicolumn{1}{|c|}{Requirement S2} & \multicolumn{1}{|c|}{Requirement S3} \\\hline
+    Comm, Distributor, Directory & These classes provide a high-level abstract description of parallel machine,
+    giving great flexibility in how the operations can be optimally performed.  Furthermore the
+    Distributor is a static record of data-dependent communications that can be reused many times.
+    & Since all of these classes are abstract, we can provide multiple impementations, including MPI and serial, without
+    widespread dependence on MPI.  We can also develop adapters for other parallel libraries and languages.
+    & We utilize MPI as the primary adapter for these base classes and provide trivial serial adapters. \\\hline\hline
+    ElementSpace, BlockElementSpace & These classes are critical to efficient parallel execution by  providing a way
+    for (i) generating families of compatible objects, (ii) quickly testing if two object have a compatible layout and (iii)
+    redistributing objects to make a compatible layout (using Import/Export). &  & \\\hline
+    VectorSpace & & & \\\hline
+    Vector & & Vector is a general concept that can be portable to many parallel environments.
+    & Implementation of local computations in Vector are done using BLAS kernels.\\\hline
+    MultiVector & & MultiVector operations typically have much better performance characteristics for
+    both computation and communication. & MultiVector utilizes BLAS and LAPACK kernesl for local computations. \\\hline
+    CISGraph& Determining the communication pattern for unstructured sparse matrices can be very expensive, but depends only
+    on the matrix graph.  CISGraph retains this communication information, which can be used by multiple matrices. & & \\\hline
+    Operator & & & Any external preconditioner or solver can be wrapped as an Operator, making it compatible with the \POM.\\\hline
+    CIAMatrix& & & Existing preconditioners can be used within the \POM\ by making them CIAMatrix-aware. \\\hline
+    CISMatrix & CISMatrix functions for sparse matrix-vector multiple, forward-back solve, etc. are the most important kernels
+    in the entire \POM.  Any improvement to the implementation of these kernels improves the performance of the entire \POM.&
+    & \\\hline
+    Import, Export and DistObject & Abstraction of these operations to classes allows optimal implementation and reuse of complex
+    parallel data redistribution. &
+    Because these operation are at a high-level of abstraction, optimal implementations are possible on any parallel machine.
+    Most of the complexity of parallel data redistribution algorithms is embodied in the DistObject base class.  Derived
+    classes will benefit directly from DistObject functionality. & \\\hline
+    Serial Dense Matrix, Vector &  &
+    & Optimal BLAS implementations will directly impact the overall performance of \POM\ implementations.\\\hline
+    Linear Problem & & & \\\hline
+
+  \end{tabular}
+  \caption{Summary of Classes vs. Software Design Requirements}\label{Table:ClassesVsSWRequirements}
+\end{table}
+
+
+
+\section{Parallel Machine Interfaces and
+Implementations}
 
 \subsection{The Comm and Related Interface}
 
