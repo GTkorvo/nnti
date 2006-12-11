@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
   bool derchk = false;
 
   bool wantstats = false;   // choose true if output of solver and timing info in file stats.txt is desired
-                                                                                                                             
+
   int mypid = Comm.MyPID();
 
   ofstream outfile("stats.txt", ios_base::app);
