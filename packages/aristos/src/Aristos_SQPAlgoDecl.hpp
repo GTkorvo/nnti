@@ -250,21 +250,29 @@ public:
   /** \brief Computes the tangential step using the inexact CG algorithm with full orthogonalization
              and inexactness control.
 
-      \param x [in]        - Current SQP iterate.
-      \param g [in]        - Current gradient of the objective vector.
-      \param v [in]        - Current quasi-normal step.
-      \param l [in]        - Current Lagrange multiplier estimate.
-      \param s [out]       - The computed tangential step vector.
-      \param delta [in]    - Trust-region radius.
-      \param cgitmax [in]  - Maximum number of conjugate gradient iterations (internal use only).
-      \param cgtol [in]    - Stopping tolerance for the conjugate gradient method (internal use only).
-      \param tol [in]      - Tolerance for inexact computations.
-      \param cgiter [out]  - Required number of conjugate gradient iterations.
-      \param iflag [out]   - Return flag:
-                             0 - normal convergence
-                             1 - negative curvature detected
-                             2 - trust-region radius active
-                             3 - maximum number of conjugate gradient iterations exceeded
+      \param x [in]          - Current SQP iterate.
+      \param g [in]          - Current gradient of the objective vector.
+      \param v [in]          - Current quasi-normal step.
+      \param l [in]          - Current Lagrange multiplier estimate.
+      \param s [out]         - The computed tangential step vector.
+      \param delta [in]      - Trust-region radius.
+      \param cgitmax [in]    - Maximum number of conjugate gradient iterations (internal use only).
+      \param cgtol [in]      - Stopping tolerance for the conjugate gradient method (internal use only).
+      \param fixedtol [in]   - Tolerance for inexact computations.
+      \param istolfixed [in] - true, if fixed inexact solver tolerances are desired
+                               false, if the SQP algorithm is managing inexactness
+      \param fullortho [in]  - true, if full orthogonalization of search directions is desired
+                               false, if standard CG 2-vector orthogonalization is sufficient
+      \param orthocheck [in] - true, if orthoganality of projected residuals is to be verified
+                               false, otherwise
+      \param fcdcheck [in]   - true, if the fraction of Cauchy decrease condition is to be verified
+                               false, otherwise
+      \param cgiter [out]    - Returns the required number of conjugate gradient iterations.
+      \param iflag [out]     - Return flag:
+                               0 - normal convergence
+                               1 - negative curvature detected
+                               2 - trust-region radius active
+                               3 - maximum number of conjugate gradient iterations exceeded
 
       \return <tt>true</tt> upon successful termination (not the same as convergence!) of runTangentialStep.
 
@@ -298,8 +306,10 @@ public:
       iterative linear system solver that applies the projection operator \f$P_k\f$.
       
   */
-  bool runTangentialStepInx(const Vector &x, const Vector &g, const Vector &v, const Vector &l, Vector &s,
-                            double delta, int cgitmax, double cgtol, double tol, int &cgiter, int &iflag);
+  bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vector &v, const Vector &l, Vector &s,
+                                     double delta, int cgitmax, double cgtol, double fixedtol,
+                                     bool istolfixed, bool fullortho, bool orthocheck, bool fcdcheck,
+                                     int &cgiter, int &iflag);
   
 
 

@@ -1,4 +1,5 @@
-
+#include "Teuchos_SerialDenseMatrix.hpp"
+#include "Teuchos_LAPACK.hpp"
 #include "Aristos_SQPAlgoDecl.hpp"
 
 namespace Aristos {
@@ -83,7 +84,13 @@ bool SQPAlgo::run(Vector &x, Vector &c, Vector &l, int &iter, int &iflag, Teucho
          int flg;                   // return flag for tangential step computation
          int cgitmax  = 100;        // set maximum number of CG iterations
          double cgtol = 1.e-2;      // set CG relative tolerance
-         runTangentialStepInx(x, *gl, *v, l, *w, Delta, cgitmax, cgtol, tol, itcg, flg);
+         double fixedtol = 1.e-12;   // set fixed inexact solver tolerance, if desired
+         bool istolfixed = false;   // is tolerance fixed, or is SQP algo managing it?
+         bool fullortho  = true;    // is full orthogonalization of search direction desired?
+         bool orthocheck = true;    // should an orthogonality check be performed?
+         bool fcdcheck   = true;    // should the fraction of Cauchy decrease condition be verified? 
+         runTangentialStepInx(x, *gl, *v, l, *w, Delta, cgitmax, cgtol, fixedtol,
+                              istolfixed, fullortho, orthocheck, fcdcheck, itcg, flg);
 
          // Check step, adjust trust-region radius and parameter.
          runAcceptStep(x, l, f, *g, c, *v, *w, Delta, nu, tol, iaccept);
@@ -190,7 +197,7 @@ bool SQPAlgo::runTangentialStep(const Vector &x, const Vector &g, const Vector &
                                 double delta, int cgitmax, double cgtol, double tol, int &cgiter, int &iflag)
 {
   bool iprint = true;  // print flag  = true print output;
-                        // otherwise no output is generated
+                       // otherwise no output is generated
 
   // Create necessary vectors.
   VectorPtr r    = x.createVector();
@@ -294,38 +301,51 @@ bool SQPAlgo::runTangentialStep(const Vector &x, const Vector &g, const Vector &
 
 
 bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vector &v, const Vector &l, Vector &s,
-                                   double delta, int cgitmax, double cgtol, double tol, int &cgiter, int &iflag)
+                                   double delta, int cgitmax, double cgtol, double fixedtol,
+                                   bool istolfixed, bool fullortho, bool orthocheck, bool fcdcheck,
+                                   int &cgiter, int &iflag)
 {
   bool iprint = false;  // print flag  = true print output;
                         // otherwise no output is generated
-  bool ifixed = false;  // inner solver tolerance flag: if == true use fixed tolerance
-                        //                              otherwise use SQP dynamic criteria
 
   // Create necessary vectors.
-  VectorPtr r    = x.createVector();
-  VectorPtr z    = x.createVector();
+  VectorPtr r     = x.createVector();
+  VectorPtr z     = x.createVector();
+  VectorPtr p     = x.createVector();
+  VectorPtr pdesc = x.createVector();
+  VectorPtr Hp    = x.createVector();
+  VectorPtr Hpj   = x.createVector();
+  VectorPtr Hs    = x.createVector();
+  VectorPtr Hwr   = x.createVector();
+  VectorPtr stmp  = x.createVector();
+  VectorPtr vtmp1 = x.createVector();
+  VectorPtr vtmp2 = x.createVector();
   vector<VectorPtr> pvecs;
-  //pvecs.push_back(x.createVector());
-  VectorPtr p    = x.createVector();
-  VectorPtr d    = x.createVector();
-  VectorPtr Hp   = x.createVector();
-  VectorPtr stmp = x.createVector();
+  vector<VectorPtr> rvecs;
+  vector<VectorPtr> Wrvecs;
 
 
   // Initialization of the CG step.
   cgiter = 0;
   s.Set(0.0);
-  d->Set(0.0);
   hessvec_->getValue(x, l, v, *r);
   r->linComb(1.0, g, 1.0);
 
-  double normg  = sqrt(r->innerProd(*r)); // norm of g = (grad of Lagr) + Hessian*(quasi-normal step)
   double normWr[cgitmax+1];     // will keep track of norms of projected residuals
-         normWr[0] = 1e0;
-  double normWg = 0.0;          // norm of inexact reduced gradient
+  double normWg = 0.0;          // norm of inexact reduced gradient, to be computed
   double smallc = 1e-2*cgtol;   // small heuristic constant
-  double fixedtol = 1e-12;      // fixed tolerance, used if ifixed==true
-  double vartols[4];
+  double rptol = 1e-12;         // another small constant
+  double fcd_const = 1.0;       // constant used to verify fraction of Cauchy decrease condition
+                                // to relax the FCD requirement, use smaller fcd_const
+  double S_max = 10.0;          // norm(WR*R/diag^2 - I) needs to be bounded by a modest constant,
+                                // it is small if the approx. of the null space projection is good
+  double vartols[4];            // used to pass parameters to null space projection
+  double normg  = sqrt(r->innerProd(*r)); // norm of g = (grad of Lagr) + Hessian*(quasi-normal step)
+
+  if (orthocheck) {
+    rvecs.push_back(x.createVector());
+    rvecs[0]->Set(1.0, *r);
+  }
 
   if (iprint) {
     printf("\n SQP_horizontal_step \n");
@@ -337,16 +357,24 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
   for (cgiter=1; cgiter<=cgitmax; cgiter++) { 
 
     // Compute (inexact) projection z=W*r
-    if (ifixed) {
+    if (istolfixed) {
       vartols[0] = fixedtol;
       vartols[1] = 0.0;     // if 1.0 solver will use relative residuals, if 0.0 absolute
       constr_->applyNullSp(false, x, *r, *z, vartols);
+      if (orthocheck) {
+        Wrvecs.push_back(x.createVector());
+        (Wrvecs[cgiter-1])->Set(1.0, *z);
+      }
     }
     else {
       if (cgiter == 1) {
-        vartols[0] = -1.0; // will be determined later
+        vartols[0] = -1.0; // tolerance will be determined later
         vartols[1] = normg; vartols[2] = delta; vartols[3] = 1e-1*smallc;
         constr_->applyNullSp(false, x, *r, *z, vartols);
+        if (orthocheck) {
+          Wrvecs.push_back(x.createVector());
+          (Wrvecs[cgiter-1])->Set(1.0, *z);
+        }
         normWg = sqrt(z->innerProd(*z));
       }
       else {
@@ -355,16 +383,20 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
         vartols[0] = vartols[0] * min(normWr[cgiter-1], 1.0);
         vartols[1] = 0.0;     // solver will use absolute residuals
         constr_->applyNullSp(false, x, *r, *z, vartols);
+        if (orthocheck) {
+          Wrvecs.push_back(x.createVector());
+          (Wrvecs[cgiter-1])->Set(1.0, *z);
+        }
       }
     }
-    normWr[cgiter] = sqrt(z->innerProd(*z));
+    normWr[cgiter-1] = sqrt(z->innerProd(*z));
 
     if (iprint)
        printf("%5d     %12.5e     %12.5e  %12.5e  \n",
-              cgiter-1, normWr[cgiter]/normWr[1], sqrt(s.innerProd(s)), delta);
+              cgiter-1, normWr[cgiter-1]/normWr[0], sqrt(s.innerProd(s)), delta);
 
     // Check if done.
-    if (normWr[cgiter]/normWr[1] < cgtol) {
+    if (normWr[cgiter-1]/normWr[0] < cgtol) {
         iflag = 0;
         cgiter = cgiter-1;
         if (iprint)
@@ -372,30 +404,78 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
         return true;
     }
 
-    // orthogonalize
-    d->Set(0.0);
-    for (int j=0; j < cgiter-1; j++) {
-    //for (int j=max(0,cgiter-2); j < cgiter-1; j++)  {  // use this to simulate true CG
-      hessvec_->getValue(x, l, *pvecs[j], *Hp);
-      d->linComb( (z->innerProd(*Hp)) / ((pvecs[j])->innerProd(*Hp)), *pvecs[j], 1.0);
+
+    ////////////////// check nonorthogonality, one-norm of (WR*R/diag^2 - I)
+    if (orthocheck) {
+      Teuchos::SerialDenseMatrix<int,double> Wrr(cgiter,cgiter);  // holds matrix Wrvecs'*rvecs
+      Teuchos::SerialDenseMatrix<int,double> T(cgiter,cgiter);    // holds matrix T=(1/diag)*Wrvecs'*rvecs*(1/diag)
+      Teuchos::SerialDenseMatrix<int,double> Tm1(cgiter,cgiter);  // holds matrix Tm1=T-I
+      for (int i=0; i<cgiter; i++) {
+        for (int j=0; j<cgiter; j++) {
+          Wrr(i,j)  = (Wrvecs[i])->innerProd(*rvecs[j]);
+          T(i,j)    = Wrr(i,j)/(normWr[i]*normWr[j]);
+          Tm1(i,j)  = T(i,j);
+          if (i==j)
+            Tm1(i,j) = Tm1(i,j) - 1.0;
+        }
+      }
+      if (Tm1.normOne() >= 0.5) {
+        Teuchos::LAPACK<int,double> lapack;
+        int ipiv[cgiter], info;
+        double work[3*cgiter];
+        // compute inverse of T
+        lapack.GETRF(cgiter, cgiter, T.values(), T.stride(), ipiv, &info);
+        lapack.GETRI(cgiter, T.values(), T.stride(), ipiv, work, 3*cgiter, &info);
+        Tm1 = T;
+        for (int i=0; i<cgiter; i++)
+          Tm1(i,i) = Tm1(i,i) - 1.0;
+        if (Tm1.normOne() > S_max) {
+          if (iprint)
+            printf(" large nonorthogonality in W(R)'*R detected \n");
+          return true;
+        }        
+      }
     }
+
+
+    // orthogonalize
     pvecs.push_back(x.createVector());
     (pvecs[cgiter-1])->Set(-1.0, *z);
-    (pvecs[cgiter-1])->linComb(1.0, *d, 1.0);
-    // set temporary p, simplifies things later
-    p = pvecs[cgiter-1];
+    if (fullortho) {
+      for (int j=0; j < cgiter-1; j++) {
+        hessvec_->getValue(x, l, *pvecs[j], *Hpj);
+        double scal = ((pvecs[cgiter-1])->innerProd(*Hpj)) / ((pvecs[j])->innerProd(*Hpj));
+        (pvecs[cgiter-1])->linComb( -scal, *pvecs[j], 1.0 );
+      }
+    }
+    else {
+      for (int j=max(0,cgiter-2); j < cgiter-1; j++)  {  // use this to simulate true CG
+        hessvec_->getValue(x, l, *pvecs[j], *Hpj);
+        double scal = ((pvecs[cgiter-1])->innerProd(*Hpj)) / ((pvecs[j])->innerProd(*Hpj));
+        (pvecs[cgiter-1])->linComb( -scal, *pvecs[j], 1.0 );
+      }
+    }
+
+    p = pvecs[cgiter-1];      // set temporary p, simplifies notation
     hessvec_->getValue(x, l, *p, *Hp);
+    double pHp = p->innerProd(*Hp);
+    double rp  = p->innerProd(*r);
+
+    double normp = sqrt(p->innerProd(*p));
+    double normr = sqrt(r->innerProd(*r));
 
     ////////////////////////////////// negative curvature stopping condition
-    double pHp = p->innerProd(*Hp);
     if (pHp <= 0.0) {
-        // p is a direction of negative/zero curvature.
-        // compute theta > 0 such that || s + theta*p || = delta
+        if ((fabs(rp) >= rptol*normp*normr) && (rp > 0))
+          pdesc->Set(-1.0, *p);
+        else
+          pdesc->Set(1.0, *p);
         
         iflag = 1;
-        double a     = p->innerProd(*p);
-        double b     = s.innerProd(*p);
-        double theta = (-b + sqrt(b*b - a*(s.innerProd(s)-delta*delta))) / a;
+        double a     = pdesc->innerProd(*pdesc);
+        double b     = s.innerProd(*pdesc);
+        double c     = s.innerProd(s) - delta*delta;
+        double theta = (-b + sqrt(b*b - a*c)) / a;
         s.linComb(theta, *p, 1.0);
         if (iprint)
            printf(" negative curvature detected \n");
@@ -403,40 +483,64 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
     }
 
     /////////////////////////////////////// want to enforce positive alpha's
-    if (r->innerProd(*p) >= 0.0) {
+    if (fabs(rp) < rptol*normp*normr) {
         iflag = 4;
-        double a     = p->innerProd(*p);
-        double b     = s.innerProd(*p);
-        double theta = (-b + sqrt(b*b - a*(s.innerProd(s)-delta*delta))) / a;
-        s.linComb(theta, *p, 1.0);
         if (iprint)
-           printf(" negative search direction coefficient \n");
+           printf(" zero alpha due to inexactness \n");
         return true;
     }
   
-    double alpha = - (r->innerProd(*p))/pHp;
+    double alpha = - rp/pHp;
 
     ///////////////////////////////////////////////////////// iterate update
     stmp->Set(1.0, s);
-    stmp->linComb(alpha, *p, 1.0);
-    double norms = sqrt(stmp->innerProd(*stmp));
-    if (norms > delta) {
-        // compute theta > 0 such that || s + theta*p || = delta
+    s.linComb(alpha, *p, 1.0);
+
+
+    ////////////////////////////////// fraction of Cauchy decrease condition
+    if ((cgiter==1) && (fcdcheck)) {
+       hessvec_->getValue(x, l, s, *Hs);
+       hessvec_->getValue(x, l, *Wrvecs[0], *Hwr);
+       double sHs   = s.innerProd(*Hs);
+       double wrHwr = (Wrvecs[0])->innerProd(*Hwr);
+       double qval  = 0.5 * sHs + (rvecs[0])->innerProd(s);
+       double fcd   = 0.5 * normWr[0] * min( normWr[0]/(1.0 + wrHwr/(normWr[0]*normWr[0])) ,  delta);
+       if (-qval < fcd_const*fcd) {
+         printf("\n Fraction of Cauchy decrease condition violated in tangential step. \n");
+         printf(" Check accuracy of iterative linear system solver in the first null-space projection. \n");
+         printf(" Terminate and repeat this run. \n");
+         return true;
+       }
+    }
+
+
+    ////////////////////////////////////////////////// TR stopping condition
+    double norms = sqrt(s.innerProd(s));
+    if (norms >= delta) {
+        if (rp > 0)
+          pdesc->Set(-1.0, *p);
+        else
+          pdesc->Set(1.0, *p);
         
-        iflag = 2;
-        double a     = p->innerProd(*p);
-        double b     = s.innerProd(*p);
-        double theta = (-b + sqrt(b*b - a*(s.innerProd(s)-delta*delta))) / a;
+        double a     = pdesc->innerProd(*pdesc);
+        double b     = stmp->innerProd(*pdesc);
+        double c     = stmp->innerProd(*stmp) - delta*delta;
+        double theta = (-b + sqrt(b*b - a*c)) / a;
+        s.Set(1.0, *stmp);
         s.linComb(theta, *p, 1.0);
+        iflag = 2;
         if (iprint)
            printf(" TR-radius active \n");
         return true;
     }
-    s.Set(1.0, *stmp);
-
     
     ///////////////////////////////////////////////////////// residual update
     r->linComb(alpha, *Hp, 1.0);
+    if (orthocheck) {
+      rvecs.push_back(x.createVector());
+      (rvecs[cgiter])->Set(1.0, *r);
+    }
+
   } // End CG loop.
 
   iflag = 3;
@@ -565,7 +669,7 @@ bool SQPAlgo::runDerivativeCheck(const Vector &x, const Vector &l, const Vector 
     dat_->computeAll(*xdd);
     f1 = obj_->getValue(*xdd);
     printf(" %12.6e   %12.6e    %12.6e  %12.6e  \n",
-            delta, g->innerProd(dir), (f1-f)/delta, abs(g->innerProd(dir) - (f1-f)/delta) );
+            delta, g->innerProd(dir), (f1-f)/delta, fabs(g->innerProd(dir) - (f1-f)/delta) );
   }
 
   // Check the computation of the Jacobian of the constraints.

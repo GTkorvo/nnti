@@ -50,4 +50,5 @@ Teuchos::RefCountPtr<const Epetra_Vector> EpetraVector::getVector() const
   return epetra_vec_;
 }
 
+
 } // namespace Aristos
