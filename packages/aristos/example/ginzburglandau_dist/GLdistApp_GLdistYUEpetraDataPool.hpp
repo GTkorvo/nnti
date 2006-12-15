@@ -98,6 +98,9 @@ private:
   /** \brief Regularization parameter.*/
   double beta_;
 
+  /** \brief Base geometry file name.*/
+  char geomfile_[120];
+
 public:
 
   GLdistYUEpetraDataPool( Epetra_Comm * commptr, double beta, char * myfile );
@@ -159,8 +162,11 @@ public:
 
   double getbeta();
   
-  /** \brief Outputs the solution vector to files.*/
-  void PrintVec( const Teuchos::RefCountPtr<const Epetra_Vector> & x );
+  /** \brief Outputs the solution vector to Matlab files.*/
+  void PrintSolutionMatlab( const Teuchos::RefCountPtr<const Epetra_Vector> & x );
+
+  /** \brief Outputs the solution vector to VTK files.*/
+  void PrintSolutionVTK( const Teuchos::RefCountPtr<const Epetra_Vector> & y );
 };
 
 } // namespace GLdistApp

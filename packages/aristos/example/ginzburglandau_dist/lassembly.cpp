@@ -79,7 +79,7 @@ int lassembly(const Epetra_SerialDenseMatrix & vertices,
     B(i,1) = vertices(2,i)-vertices(0,i);
   }
   dB  = determinant(B);
-  adB = abs(dB);
+  adB = fabs(dB);
 
   // Compute matrix C = inv(B'*B).
   BtB.Multiply('T', 'N', 1.0, B, B, 0.0);
@@ -126,7 +126,7 @@ int lassembly(const Epetra_SerialDenseMatrix & vertices,
   At += M3;
 
   bt.Multiply('T', 'N', adB, usr_par.NNw, f, 0.0);  
-  
+
   return(0);
 }
 

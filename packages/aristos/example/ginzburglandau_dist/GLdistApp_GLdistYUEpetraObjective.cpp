@@ -27,6 +27,7 @@ double GLdistYUEpetraObjective::getValue( const Aristos::Vector &x ) const
   yq.Update(-1.0, *q, 1.0);
   H->Multiply(false, yq, Hyq);
   R->Multiply(false, *eu, Ru);
+
   
   double doty[1];
   double dotu[1];

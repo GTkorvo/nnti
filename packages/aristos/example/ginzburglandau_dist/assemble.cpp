@@ -156,6 +156,7 @@ int assemble(const Epetra_Comm & Comm,
 
   // MAKE ADJUSTMENTS TO A and b TO ACCOUNT FOR BOUNDARY CONDITIONS.
 
+/* NOT NECESSARY FOR GINZBURG-LANDAU
   // Get Neumann boundary edges.
   Epetra_IntSerialDenseMatrix neumann(e.M(),2);
   j = 0;
@@ -303,6 +304,7 @@ int assemble(const Epetra_Comm & Comm,
   }
   dirichlet.Reshape(j,2);
   // DIRICHLET NOT DONE! DO THIS LATER!!!!
+*/
 
   /* ************************  Done building A and b.  ************************ */
 

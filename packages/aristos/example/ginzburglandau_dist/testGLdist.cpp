@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
   // Want derivative check?
   bool derchk = false;
 
-  bool wantstats = false;   // choose true if output of solver and timing info in file stats.txt is desired
+  bool wantstats = true;   // choose true if output of solver and timing info in file stats.txt is desired
 
   int mypid = Comm.MyPID();
 
@@ -100,8 +100,8 @@ int main(int argc, char *argv[])
   parlist.set("Max Number of SQP Iterations", 50);
 
   int iter, iflag;
-  exy->PutScalar(10.0);
-  exu->PutScalar(10.0);
+  exy->PutScalar(1.0);
+  exu->PutScalar(1.0);
 
   if ((mypid==0) && wantstats)
     outfile << "Geometry: " << argv[1] << " , Subdomains: " << argv[2] << "   *************************" << endl;
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
     outfile << endl << "Elapsed Time: " << timer.ElapsedTime() << "   *************************" << "\n\n";
 
   outfile.close();
-  
-  //dat.PrintVec(exy);
+
+  dat.PrintSolutionVTK(exy);
 
 }

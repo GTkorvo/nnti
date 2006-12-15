@@ -24,7 +24,9 @@ GLdistYUEpetraDataPool::GLdistYUEpetraDataPool( Epetra_Comm * commptr, double be
   pindx_ = Teuchos::rcp( new Epetra_IntSerialDenseVector() );
   t_ = Teuchos::rcp( new Epetra_IntSerialDenseMatrix() );
   e_ = Teuchos::rcp( new Epetra_IntSerialDenseMatrix() );
-  
+
+  strcpy(geomfile_, myfile);  
+
   // Read subdomain info.
   meshreader(*commptr_, *ipindx_, *ipcoords_, *pindx_, *pcoords_, *t_, *e_, myfile);
 
@@ -277,7 +279,7 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
   int    maxit        = 200;    // maximum number of Krylov solver iterations
   int    innerit      = 20;     // number of Krylov solver iterations, per restart, for the first dynamic solve
   int    numcycles    = 4;      // number of restarts for first dynamic solve
-  bool   wantstats    = false;   // choose true if output of solver info in file stats.txt is desired
+  bool   wantstats    = false;  // choose true if output of solver info in file stats.txt is desired
   int mypid = y->Comm().MyPID();
 
   ofstream outfile("stats.txt", ios_base::app);
@@ -427,7 +429,7 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
   if ((mypid==0) && wantstats)
     outfile << "TOL: " << tolerance << endl;
 
-  if (abs(tolerance) < minthreshold) {
+  if (fabs(tolerance) < minthreshold) {
 
     // Almost zero tolerance.
     kktsolver.SetAztecOption(AZ_conv,AZ_r0);
@@ -791,9 +793,127 @@ int GLdistYUEpetraDataPool::computePrec()
 
 
 
-void GLdistYUEpetraDataPool::PrintVec( const Teuchos::RefCountPtr<const Epetra_Vector> & x )
+void GLdistYUEpetraDataPool::PrintSolutionMatlab( const Teuchos::RefCountPtr<const Epetra_Vector> & x )
 {
   Vector2MATLAB(*x, cout);
 }  
+
+
+void GLdistYUEpetraDataPool::PrintSolutionVTK( const Teuchos::RefCountPtr<const Epetra_Vector> & y )
+{
+  Epetra_Map standardmap(A_->DomainMap());
+  int numstates = standardmap.NumGlobalElements();
+  int nummystates = standardmap.NumMyElements();
+  int IndexBase = 1;
+
+  Teuchos::RefCountPtr<Epetra_Map> printmap;
+
+  if (commptr_->MyPID() == 0)
+    printmap = Teuchos::rcp(new Epetra_Map(numstates, numstates, IndexBase, *commptr_));
+  else
+    printmap = Teuchos::rcp(new Epetra_Map(numstates, 0, IndexBase, *commptr_));
+
+  Epetra_Import importer(*printmap, standardmap);
+
+  Epetra_Vector yprint(*printmap);
+
+  yprint.Import(*y, importer, Insert);
+
+  char FileStates[120];
+
+  if (commptr_->MyPID() == 0) {
+    Epetra_SerialDenseMatrix ipcoords;
+    Epetra_IntSerialDenseMatrix t;
+    int numip = 0, numelems = 0;
+
+    char FileNode[120];
+    sprintf(FileNode, "%s.node", geomfile_);
+    char FileEle[120];
+    sprintf(FileEle, "%s.ele", geomfile_);
+
+    FILE* nodefile = fopen(FileNode, "r");
+    if (!nodefile)
+      cerr << "cannot open input file " << FileNode << endl;
+    fscanf(nodefile, "%d", &numip);
+    fscanf(nodefile, "%*[^\n]");   // Skip to the End of the Line 
+    fscanf(nodefile, "%*1[\n]");   // Skip One Newline 
+    ipcoords.Shape(numip, 2);
+
+    for (int i=0; i<numip; i++) {
+      fscanf(nodefile, "%*d %lf %lf", &ipcoords(i,0), &ipcoords(i,1));
+      fscanf(nodefile, "%*[^\n]");   // Skip to the End of the Line
+      fscanf(nodefile, "%*1[\n]");   // Skip One Newline
+    }
+
+    fclose(nodefile);
+
+    FILE* elefile = fopen(FileEle, "r");
+    if (!elefile)
+      cerr << "cannot open input file " << FileEle << endl;
+    fscanf(elefile, "%d", &numelems);
+    fscanf(elefile, "%*[^\n]");   // Skip to the End of the Line
+    fscanf(elefile, "%*1[\n]");   // Skip One Newline
+    t.Shape(numelems, 3);
+
+    for (int i=0; i<numelems; i++) {
+      fscanf(elefile, "%*d %d %d %d", &t(i,0), &t(i,1), &t(i,2));
+      // Vtk starts at zero.
+      t(i,0)--; t(i,1)--; t(i,2)--;
+      fscanf(elefile, "%*[^\n]");   // Skip to the End of the Line
+      fscanf(elefile, "%*1[\n]");   // Skip One Newline
+    }
+
+    fclose(elefile);
+
+    sprintf(FileStates,   "%s%04d.vtk", "./states",   0);
+
+    // Open files for writing.
+    FILE* statefile = fopen(FileStates, "w");
+    if (!statefile)
+      cerr << "cannot open output file " << FileStates << endl;
+
+    // Write headers.
+    fprintf(statefile,   "# vtk DataFile Version 2\nHeatApp States\nASCII\nDATASET UNSTRUCTURED_GRID\n\n");
+
+    // Write POINTS headers.
+    fprintf(statefile,   "POINTS %d double\n", numip);
+
+    // Write POINTS data, including the z-coordinate.
+    for (int Row=0; Row<numip; Row++) {
+      fprintf(statefile,   "%16.14e %16.14e %16.14e\n", ipcoords(Row,0), ipcoords(Row,1),
+              yprint[Row]);
+    }
+    fprintf(statefile,   "\n");
+
+    // Write CELL headers.
+    fprintf(statefile,   "CELLS %d %d\n", numelems, 4*numelems);
+
+    // Write CELL data.
+    for (int Row=0; Row<numelems; Row++) {
+      fprintf(statefile,   "%d %d %d %d\n", 3, t(Row,0), t(Row,1), t(Row,2));
+    }
+    fprintf(statefile,   "\n");
+
+    // Write CELL_TYPES headers.
+    fprintf(statefile,   "CELL_TYPES %d\n", numelems);
+    for (int Row=0; Row<numelems; Row++) {
+      fprintf(statefile,   "%d\n", 5);
+    }
+    fprintf(statefile,   "\n");
+
+    // Write POINT_DATA headers.
+    fprintf(statefile,   "POINT_DATA %d\nSCALARS scalars double 1\nLOOKUP_TABLE default\n", numip);
+
+    // Write state snapshot.
+    for(int Row=0; Row < numstates; Row++ )
+      fprintf(statefile, "%16.14e\n", yprint[Row]);
+
+    // Close files.
+    fclose(statefile);
+
+  }
+
+}
+
 
 } //namespace GLdistApp
