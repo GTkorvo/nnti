@@ -36,8 +36,8 @@
 #ifdef TRILINOS_6
 #include "Thyra_MPIVectorStdDecl.hpp"
 #else
-#define MPIVectorStd DefaultMPIVector
-#include "Thyra_DefaultMPIVectorDecl.hpp"
+#define MPIVectorStd DefaultSpmdVector
+#include "Thyra_DefaultSpmdVectorDecl.hpp"
 #endif
 
 
@@ -57,7 +57,7 @@ EpetraVector
                      "could not cast vector space to EpetraVectorSpace in "
                      "EpetraVector ctor");
 
-  mpiVecSpace_ = rcp_dynamic_cast<const MPIVectorSpaceBase<double> >(vs);
+  mpiVecSpace_ = rcp_dynamic_cast<const SpmdVectorSpaceBase<double> >(vs);
 
   epetraMap_ = epvs->epetraMap();
   epetraVec_ = rcp(new Epetra_Vector(*epetraMap_, true));
@@ -77,7 +77,7 @@ EpetraVector
                      "could not cast vector space to EpetraVectorSpace in "
                      "EpetraVector ctor");
 
-  mpiVecSpace_ = rcp_dynamic_cast<const MPIVectorSpaceBase<double> >(vs);
+  mpiVecSpace_ = rcp_dynamic_cast<const SpmdVectorSpaceBase<double> >(vs);
 
   epetraMap_ = epvs->epetraMap();
 

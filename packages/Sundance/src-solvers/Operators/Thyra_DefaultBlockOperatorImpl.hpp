@@ -143,7 +143,7 @@ namespace Thyra
           {
             if (blocks_[i][j].get() == 0) continue;
             rowHasNonzeroBlock = true;
-            blocks_[i][j]->apply(conj, *(X.getBlock(j)),
+            blocks_[i][j]->apply(conj, *(X.getMultiVectorBlock(j)),
                                  tmp.get(), ScalarTraits<RangeScalar>::one(),
                                  ScalarTraits<RangeScalar>::one());
           }
@@ -152,15 +152,15 @@ namespace Thyra
             Thyra::scale(alpha, tmp.get());
             if (beta != ScalarTraits<RangeScalar>::zero())
               {
-                Thyra::update(beta, *(Y->getBlock(i)), tmp.get());
+                Thyra::update(beta, *(Y->getMultiVectorBlock(i)), tmp.get());
               }
-            Teuchos::RefCountPtr<Thyra::VectorBase<RangeScalar> > outBlock 
-              = Y->getBlock(i);
+            Teuchos::RefCountPtr<Thyra::MultiVectorBase<RangeScalar> > outBlock 
+              = Y->getNonconstMultiVectorBlock(i);
             Thyra::assign(outBlock.get(), *tmp);
           }
         else
           {
-            Thyra::assign(Y->getBlock(i).get(), ScalarTraits<RangeScalar>::one());
+            Thyra::assign(Y->getNonconstMultiVectorBlock(i).get(), ScalarTraits<RangeScalar>::one());
           }
       }
   }
@@ -186,7 +186,7 @@ namespace Thyra
           {
             if (blocks_[j][i].get() == 0) continue;
             colHasNonzeroBlock = true;
-            blocks_[j][i]->applyTranspose(conj, *(X.getBlock(j).get()),
+            blocks_[j][i]->applyTranspose(conj, *(X.getMultiVectorBlock(j).get()),
                                           tmp.get(), 
                                           ScalarTraits<DomainScalar>::one(),
                                           ScalarTraits<DomainScalar>::one());
@@ -196,15 +196,15 @@ namespace Thyra
             Thyra::scale(alpha, tmp.get());
             if (beta != ScalarTraits<DomainScalar>::zero())
               {
-                Thyra::update(beta, *(Y->getBlock(i)), tmp.get());
+                Thyra::update(beta, *(Y->getMultiVectorBlock(i)), tmp.get());
               }
             Teuchos::RefCountPtr<Thyra::MultiVectorBase<DomainScalar> > outBlock 
-              = Y->getBlock(i);
+              = Y->getNonconstMultiVectorBlock(i);
             Thyra::assign(outBlock.get(), *tmp);
           }
         else
           {
-            Thyra::assign(Y->getBlock(i).get(), ScalarTraits<DomainScalar>::zero());
+            Thyra::assign(Y->getNonconstMultiVectorBlock(i).get(), ScalarTraits<DomainScalar>::zero());
           }
       }
   }
@@ -235,7 +235,7 @@ namespace Thyra
           {
             if (blocks_[i][j].get() == 0) continue;
             rowHasNonzeroBlock = true;
-            blocks_[i][j]->apply(conj, *(X.getBlock(j).get()),
+            blocks_[i][j]->apply(conj, *(X.getMultiVectorBlock(j).get()),
                                  tmp.get(), ScalarTraits<RangeScalar>::one(),
                                  ScalarTraits<RangeScalar>::one());
           }
@@ -244,15 +244,15 @@ namespace Thyra
             Thyra::scale(alpha, tmp.get());
             if (beta != ScalarTraits<RangeScalar>::zero())
               {
-                Thyra::update(beta, *(Y->getBlock(i)), tmp.get());
+                Thyra::update(beta, *(Y->getMultiVectorBlock(i)), tmp.get());
               }
             Teuchos::RefCountPtr<Thyra::MultiVectorBase<RangeScalar> > outBlock 
-              = Y->getBlock(i);
+              = Y->getNonconstMultiVectorBlock(i);
             Thyra::assign(outBlock.get(), *tmp);
           }
         else
           {
-            Thyra::assign(Y->getBlock(i).get(), ScalarTraits<RangeScalar>::zero());
+            Thyra::assign(Y->getNonconstMultiVectorBlock(i).get(), ScalarTraits<RangeScalar>::zero());
           }
       }
   }
@@ -280,7 +280,7 @@ namespace Thyra
           {
             if (blocks_[j][i].get() == 0) continue;
             colHasNonzeroBlock = true;
-            blocks_[j][i]->applyTranspose(conj, *(X.getBlock(j).get()),
+            blocks_[j][i]->applyTranspose(conj, *(X.getMultiVectorBlock(j).get()),
                                           tmp.get(), 
                                           ScalarTraits<DomainScalar>::one(),
                                           ScalarTraits<DomainScalar>::one());
@@ -290,15 +290,15 @@ namespace Thyra
             Thyra::scale(alpha, tmp.get());
             if (beta != ScalarTraits<DomainScalar>::zero())
               {
-                Thyra::update(beta, *(Y->getBlock(i)), tmp.get());
+                Thyra::update(beta, *(Y->getNonconstMultiVectorBlock(i)), tmp.get());
               }
             Teuchos::RefCountPtr<Thyra::MultiVectorBase<DomainScalar> > outBlock 
-              = Y->getBlock(i);
+              = Y->getNonconstMultiVectorBlock(i);
             Thyra::assign(outBlock.get(), *tmp);
           }
         else
           {
-            Thyra::assign(Y->getBlock(i).get(), 
+            Thyra::assign(Y->getNonconstMultiVectorBlock(i).get(), 
                           ScalarTraits<DomainScalar>::zero());
           }
       }

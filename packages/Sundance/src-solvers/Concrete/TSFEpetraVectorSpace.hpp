@@ -31,12 +31,13 @@
 #include "Epetra_Map.h"
 #include "TSFHandleable.hpp"
 #include "Thyra_ScalarProdVectorSpaceBase.hpp"
+#include "Thyra_EpetraThyraWrappers.hpp"
 
 #ifdef TRILINOS_6
 #include "Thyra_MPIVectorSpaceBase.hpp"
 #else
-#include "Thyra_MPIVectorSpaceDefaultBase.hpp"
-#define MPIVectorSpaceBase MPIVectorSpaceDefaultBase 
+#include "Thyra_SpmdVectorSpaceDefaultBase.hpp"
+#define MPIVectorSpaceBase SpmdVectorSpaceDefaultBase 
 #endif
 
 namespace TSFExtended
@@ -71,14 +72,13 @@ namespace TSFExtended
     /** \brief clone the space */
     Teuchos::RefCountPtr< const VectorSpaceBase<double> > clone() const;
 
-    
-
     /** */
     const RefCountPtr<const Epetra_Map>& epetraMap() const 
     {return epetraMap_;}
 
     /** */
-    MPI_Comm mpiComm() const {return mpiComm_;}
+    Teuchos::RefCountPtr<const Teuchos::Comm<Index> > getComm() const
+    {return comm_;}
 
     /** */
     Index localSubDim() const {return localSubDim_;}
@@ -97,7 +97,7 @@ namespace TSFExtended
     /** */
     RefCountPtr<const Epetra_Map> epetraMap_;
 
-    MPI_Comm mpiComm_;
+    Teuchos::RefCountPtr<const Teuchos::Comm<Index> > comm_;
 
     Index localSubDim_;
       

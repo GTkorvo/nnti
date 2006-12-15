@@ -31,7 +31,6 @@
 #include "TSFVectorTypeExtensions.hpp"
 #include "TSFVectorSpaceDecl.hpp"
 #include "TSFGhostImporter.hpp"
-#include "Teuchos_MPISession.hpp"
 
 namespace TSFExtended
 {
@@ -54,7 +53,8 @@ namespace TSFExtended
    
 
     /** create a vector space having nLocal elements on each processor */
-    VectorSpace<Scalar> createEvenlyPartitionedSpace(int nLocal) const ;
+    VectorSpace<Scalar> createEvenlyPartitionedSpace(const MPIComm& comm,
+                                                     int nLocal) const ;
 
     /** create a distributed vector space.
      * @param dimension the dimension of the space
@@ -110,10 +110,11 @@ namespace TSFExtended
 
   template <class Scalar> inline 
   VectorSpace<Scalar> VectorType<Scalar>
-  ::createEvenlyPartitionedSpace(int nLocal) const
+  ::createEvenlyPartitionedSpace(const MPIComm& comm,
+                                 int nLocal) const
   {
-    int rank = MPISession::getRank();
-    int nProc = MPISession::getNProc();
+    int rank = comm.getRank();
+    int nProc = comm.getNProc();
     int dimension = nLocal * nProc;
     Array<int> locallyOwnedIndices(nLocal);
     int lowestLocalRow = rank*nLocal;

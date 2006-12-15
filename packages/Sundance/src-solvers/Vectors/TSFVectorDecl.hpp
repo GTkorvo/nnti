@@ -44,6 +44,7 @@
 #include "Thyra_ProductVector.hpp"
 #else
 #include "Thyra_DefaultProductVector.hpp"
+#include "Thyra_VectorStdOps.hpp"
 #endif
 
 namespace TSFExtendedOps
@@ -327,7 +328,7 @@ namespace TSFExtended
     /** \name Element access interface */
     //@{
     /** get the element at the given global index */
-    const Scalar& getElement(Index globalIndex) const ;
+    Scalar getElement(Index globalIndex) const ;
     //{return castToAccessible()->getElement(globalIndex);}
 
     /** Get a batch of elements */
@@ -336,7 +337,7 @@ namespace TSFExtended
     {castToAccessible()->getElements(globalIndices, numElems, elems);}
 
     /** const bracket operator  */
-    const Scalar& operator[](Index globalIndex) const
+    Scalar operator[](Index globalIndex) const
 //     {cerr << "const bracket[" << globalIndex << "]" << endl; return getElement(globalIndex);}
     {return getElement(globalIndex);}
     

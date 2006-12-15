@@ -41,8 +41,8 @@ HeatOperator1D::HeatOperator1D(int nLocalRows, const VectorType<double>& type)
     nLocalRows_(nLocalRows),
     lowestLocalRow_(0)
 {
-  int rank = MPISession::getRank();
-  int nProc = MPISession::getNProc();
+  int rank = MPIComm::world().getRank();
+  int nProc = MPIComm::world().getNProc();
   matrixFactory_ = vecType().createMatrixFactory(domain(), range());
 
   int n = domain().dim();
@@ -74,9 +74,9 @@ HeatOperator1D::HeatOperator1D(int nLocalRows, const VectorType<double>& type)
 
 LinearOperator<double> HeatOperator1D::getOp() const  
 {
-  int rank = MPISession::getRank();
-  int nProc = MPISession::getNProc();
 
+  int rank = MPIComm::world().getRank();
+  int nProc = MPIComm::world().getNProc();
   LinearOperator<double> rtn = matrixFactory_->createMatrix();
       
   RefCountPtr<LoadableMatrix<double> > mat = rtn.matrix();

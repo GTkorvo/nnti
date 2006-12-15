@@ -39,7 +39,7 @@
 #include "Thyra_MPIVectorStdDecl.hpp"
 #else
 #define MPIVectorStd DefaultMPIVector
-#include "Thyra_DefaultMPIVectorDecl.hpp"
+#include "Thyra_DefaultSpmdVectorDecl.hpp"
 #endif
 
 namespace TSFExtended
@@ -52,7 +52,7 @@ namespace TSFExtended
    * from Thyra::EpetraVector, so it can be used seamlessly in any 
    * Thyra-based code.
    */
-  class EpetraVector : public MPIVectorStd<double>,
+  class EpetraVector : public DefaultSpmdVector<double>,
                        public Handleable<VectorBase<double> >,
                        public IndexableVector<double>,
                        public RawDataAccessibleVector<double>,
@@ -152,7 +152,7 @@ namespace TSFExtended
 
     RefCountPtr<Epetra_Vector> epetraVec_;
 
-    RefCountPtr<const MPIVectorSpaceBase<double> > mpiVecSpace_;
+    RefCountPtr<const SpmdVectorSpaceBase<double> > mpiVecSpace_;
 
     RefCountPtr<const Epetra_Map> epetraMap_;
   };

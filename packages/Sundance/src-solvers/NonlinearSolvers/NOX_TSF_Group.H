@@ -34,7 +34,7 @@
 #define NOX_TSF_GROUP_H
 
 #include "NOX_Abstract_Group.H"	// base class
-#include "NOX_Parameter_List.H"	// base class
+#include "Teuchos_ParameterList.hpp"	// base class
 
 #include "NOX_Common.H"             // class data element (string)
 #include "NOX_TSF_Vector.H"	    // class data element
@@ -46,7 +46,7 @@
 #include "TSFNonlinearOperator.hpp" // nonlinear operator
 
 // Forward declares
-namespace NOX 
+namespace Teuchos 
 {
   namespace Parameter 
   {
@@ -137,7 +137,7 @@ namespace NOX {
 
       NOX::Abstract::Group::ReturnType computeGradient();
 
-      NOX::Abstract::Group::ReturnType computeNewton(NOX::Parameter::List& params);
+      NOX::Abstract::Group::ReturnType computeNewton(Teuchos::ParameterList& params);
 
       //@}
 
@@ -167,12 +167,12 @@ namespace NOX {
                              NOX::Abstract::Vector& result) const;
 
       NOX::Abstract::Group::ReturnType 
-      applyJacobianInverse(NOX::Parameter::List& params, 
+      applyJacobianInverse(Teuchos::ParameterList& params, 
                            const NOX::TSF::Vector& input, 
                            NOX::TSF::Vector& result) const;
 
       NOX::Abstract::Group::ReturnType 
-      applyJacobianInverse(NOX::Parameter::List& params, 
+      applyJacobianInverse(Teuchos::ParameterList& params, 
                            const NOX::Abstract::Vector& input, 
                            NOX::Abstract::Vector& result) const;
   

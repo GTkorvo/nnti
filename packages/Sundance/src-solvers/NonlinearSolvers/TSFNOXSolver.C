@@ -32,7 +32,7 @@
 
 #include "TSFNOXSolver.H"         
 #include "NOX_StatusTest_SafeCombo.H"         
-#include "NOX_Parameter_Teuchos2NOX.H"         
+//#include "NOX_Parameter_Teuchos2NOX.H"         
 #include "TSFLinearSolverBuilder.hpp"
 #include "Teuchos_Time.hpp"
 #include "Teuchos_TimeMonitor.hpp"
@@ -98,13 +98,15 @@ NOXSolver::NOXSolver(const ParameterList& params,
 void NOXSolver::reset() const 
 {
   grp_ = rcp(new NOX::TSF::Group(x0_, F_, linSolver_));
-
+#ifdef TRILINOS_6
   NOX::Parameter::Teuchos2NOX converter;
   noxParams_ = converter.toNOX(params_);
+#endif
 
 #ifdef TRILINOS_6
   solver_ = rcp(new NOX::Solver::Manager(*grp_, *statusTest_, noxParams_));
 #else
+  noxParams_ = Teuchos::rcp(&params_, false);
   solver_ = rcp(new NOX::Solver::Manager(grp_, statusTest_, noxParams_));
 #endif
 }

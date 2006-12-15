@@ -176,9 +176,9 @@ void EpetraMatrix::euclideanApply(
 		// Y_inout += alpha * T
 		update(
 			alpha
-			,*create_MPIMultiVectorBase(
+			,*create_MultiVector(
 				Teuchos::rcp(&Teuchos::getConst(T),false)
-				,Teuchos::rcp_dynamic_cast<const MPIVectorSpaceBase<double> >(Y_inout->range(),true)
+				,Teuchos::rcp_dynamic_cast<const SpmdVectorSpaceBase<double> >(Y_inout->range(),true)
 				,Teuchos::rcp_dynamic_cast<const ScalarProdVectorSpaceBase<double> >(Y_inout->domain(),true)
 				)
 			,Y_inout

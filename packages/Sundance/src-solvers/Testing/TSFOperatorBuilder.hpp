@@ -35,7 +35,7 @@
 #include "TSFVectorType.hpp"
 #include "TSFVectorSpace.hpp"
 #include "Teuchos_Array.hpp"
-#include "Teuchos_MPISession.hpp"
+#include "Teuchos_GlobalMPISession.hpp"
 
 using namespace TSFExtended;
 using namespace Teuchos;
@@ -87,7 +87,7 @@ namespace TSFExtended
   ::OperatorBuilder(int nLocalRows, const VectorType<Scalar>& vecType)
     : vecType_(vecType), domain_(), range_()
   {
-    range_ = vecType_.createEvenlyPartitionedSpace(nLocalRows);
+    range_ = vecType_.createEvenlyPartitionedSpace(MPIComm::world(), nLocalRows);
     domain_ = range_;
   }
 
@@ -97,8 +97,8 @@ namespace TSFExtended
                     const VectorType<Scalar>& vecType)
     : vecType_(vecType), domain_(), range_()
   {
-    range_ = vecType_.createEvenlyPartitionedSpace(nLocalRange);
-    domain_ = vecType_.createEvenlyPartitionedSpace(nLocalDomain);
+    range_ = vecType_.createEvenlyPartitionedSpace(MPIComm::world(), nLocalRange);
+    domain_ = vecType_.createEvenlyPartitionedSpace(MPIComm::world(), nLocalDomain);
   }
 
   

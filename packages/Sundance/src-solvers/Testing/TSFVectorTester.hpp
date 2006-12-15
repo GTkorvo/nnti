@@ -130,9 +130,14 @@ namespace TSFExtended
     bool pass = true;
 
     pass = sumTest() && pass;
+
     pass = setElementTest() && pass;
+
+#ifdef TRILINOS_6
     pass = setElementUsingBracketTest() && pass;
+#endif
     pass = dotStarTest() && pass;
+    //#ifdef BLAH
     pass = dotSlashTest() && pass;
     pass = scalarMultTest() && pass;
     pass = overloadedUpdateTest() && pass;
@@ -141,7 +146,7 @@ namespace TSFExtended
     pass = constraintMaskTest() && pass;
     pass = compareToScalarTest() && pass;
     pass = indexTest() && pass;
-
+    //#endif
     return pass;
   }
 
@@ -150,7 +155,17 @@ namespace TSFExtended
   ::randomizeVec(Vector<Scalar>& x) const
   {
     typedef Teuchos::ScalarTraits<Scalar> ST;
-    Thyra::randomize(Scalar(-ST::one()),Scalar(+ST::one()),x.ptr().get());
+
+    /* do the operation elementwise */
+    int low = space_.lowestLocallyOwnedIndex();
+    int high = low + space_.numLocalElements();
+    
+    for (int i=low; i<high; i++)
+      {
+        x.setElement(i, 2.0*(drand48()-0.5));
+      }
+
+    //    Thyra::randomize(Scalar(-ST::one()),Scalar(+ST::one()),x.ptr().get());
     
   }
 
@@ -169,21 +184,43 @@ namespace TSFExtended
         randomizeVec(a);
         randomizeVec(b);
 
-        /* do the operation with member functions */
-        x = a + b ;
+        cout << "a=" << endl << a << endl;
+        MPIComm::world().synchronize();
+        MPIComm::world().synchronize();        
+        MPIComm::world().synchronize();        
+        MPIComm::world().synchronize();      
 
-        /* do the operation with member functions */
+        cout << "b=" << endl << b << endl;
+        MPIComm::world().synchronize();
+        MPIComm::world().synchronize();        
+        MPIComm::world().synchronize();        
+        MPIComm::world().synchronize();      
+
+
 
         /* do the operation elementwise */
         int low = space_.lowestLocallyOwnedIndex();
         int high = low + space_.numLocalElements();
 
-        for (int i=low; i<high; i++)
+        for (int i=0; i<space_.dim(); i++)
           {
             double a_i = a.getElement(i);
+            cout << "i=" << i << " a_i=" << a_i << endl;
             double b_i = b.getElement(i);
+            cout << "i=" << i << " b_i=" << b_i << endl;
             y.setElement(i, a_i + b_i );
           }
+     
+
+        /* do the operation with member functions */
+        x = a + b ;
+        cout << "x=" << endl << x << endl;
+        MPIComm::world().synchronize();
+        MPIComm::world().synchronize();        
+        MPIComm::world().synchronize();        
+        MPIComm::world().synchronize();        
+
+        cout << "y=" << endl << y << endl;
 	
         double err = (x-y).normInf();
 
@@ -216,10 +253,16 @@ namespace TSFExtended
   {
     if (spec_.doTest())
       {
+
+        int np = MPIComm::world().getNProc();
         cerr << "running setElement test..." << endl;
 
         Vector<Scalar> a = space_.createMember();
-	
+
+        MPIComm::world().synchronize();
+        MPIComm::world().synchronize();        
+        MPIComm::world().synchronize();        
+        MPIComm::world().synchronize();      	
         /* we will load a vector with a_i = i, and then do
          * the sum of all elements. If done correctly, the sum will equal 
          * N*(N+1)*(2N+1)/6.
@@ -227,7 +270,8 @@ namespace TSFExtended
         int low = space_.lowestLocallyOwnedIndex();
         int high = low + space_.numLocalElements();
 
-        for (int i=low; i<high; i++)
+        for (int i=0; i<space_.dim(); i++)
+	  //bvbw        for (int i=low; i<high; i++)
           {
             a.setElement(i, i);
           }
@@ -236,7 +280,8 @@ namespace TSFExtended
         b = b.dotStar(a);
 
         double sum = 0.0;
-        for (int i=low; i<high; i++)
+        for (int i=0; i<space_.dim(); i++)
+	  //bvbw        for (int i=low; i<high; i++)
           {
             cerr << i << " " << a.getElement(i) << " " << i*a.getElement(i)
                  << endl;
@@ -248,8 +293,9 @@ namespace TSFExtended
         MPI_Allreduce( (void*) &localSum, (void*) &sum, 
                        1, MPI_DOUBLE, MPI_SUM, comm_.getComm());
 #endif
-	
-        double thyraSum = Thyra::sum(*(b.ptr()));
+
+        double thyraSumPerNode = Thyra::sum(*(b.ptr()));
+	double thyraSum = thyraSumPerNode * np;
         cerr << "elemwise sum = " << sum << endl;
         cerr << "thyra sum = " << thyraSum << endl;
 
@@ -278,7 +324,7 @@ namespace TSFExtended
     return true;
   }
 
-
+#ifdef TRILINOS_6
   template <class Scalar> 
   inline bool VectorTester<Scalar>
   ::setElementUsingBracketTest() const 
@@ -387,7 +433,7 @@ namespace TSFExtended
          << spec_.errorTol() << endl;
     return true;
   }
-
+#endif
 
   
 
@@ -414,7 +460,8 @@ namespace TSFExtended
         int low = space_.lowestLocallyOwnedIndex();
         int high = low + space_.numLocalElements();
 
-        for (int i=low; i<high; i++)
+        for (int i=0; i<space_.dim(); i++)
+	  //bvbw        for (int i=low; i<high; i++)
           {
             double a_i = a.getElement(i);
             double b_i = b.getElement(i);
@@ -470,7 +517,8 @@ namespace TSFExtended
         int low = space_.lowestLocallyOwnedIndex();
         int high = low + space_.numLocalElements();
 
-        for (int i=low; i<high; i++)
+        for (int i=0; i<space_.dim(); i++)
+	  //bvbw        for (int i=low; i<high; i++)
           {
             double a_i = a.getElement(i);
             double b_i = b.getElement(i);
@@ -524,7 +572,8 @@ namespace TSFExtended
         int low = space_.lowestLocallyOwnedIndex();
         int high = low + space_.numLocalElements();
 
-        for (int i=low; i<high; i++)
+        for (int i=0; i<space_.dim(); i++)
+	  //bvbw        for (int i=low; i<high; i++)
           {
             double a_i = a.getElement(i);
             y.setElement(i, 3.14*a_i);
@@ -578,7 +627,8 @@ namespace TSFExtended
         int low = space_.lowestLocallyOwnedIndex();
         int high = low + space_.numLocalElements();
 
-        for (int i=low; i<high; i++)
+        for (int i=0; i<space_.dim(); i++)
+	  //bvbw        for (int i=low; i<high; i++)
           {
             double a_i = a.getElement(i);
             double b_i = b.getElement(i);
@@ -629,7 +679,7 @@ namespace TSFExtended
         int high = low + space_.numLocalElements();
 
         int denomsAreOK = true;
-        for (int i=low; i<high; i++)
+	for (int i=low; i<high; i++)
           {
             double a_i = a.getElement(i);
             if (a_i != Teuchos::ScalarTraits<Scalar>::zero()) 
@@ -702,7 +752,7 @@ namespace TSFExtended
         int high = low + space_.numLocalElements();
 
         double minQLocal = Teuchos::ScalarTraits<Scalar>::rmax();
-        for (int i=low; i<high; i++)
+	for (int i=low; i<high; i++)
           {
             double a_i = a.getElement(i);
             double b_i = b.getElement(i);
@@ -769,7 +819,7 @@ namespace TSFExtended
         int high = low + space_.numLocalElements();
 
         int allFeasible = true;
-        for (int i=low; i<high; i++)
+	for (int i=low; i<high; i++)
           {
             int feasible = true;
             double a_i = a.getElement(i);
@@ -862,7 +912,7 @@ namespace TSFExtended
         int low = space_.lowestLocallyOwnedIndex();
         int high = low + space_.numLocalElements();
 
-        for (int i=low; i<high; i++)
+	for (int i=low; i<high; i++)
           {
             double a_i = a.getElement(i);
             y.setElement(i, fabs(a_i) >= s );

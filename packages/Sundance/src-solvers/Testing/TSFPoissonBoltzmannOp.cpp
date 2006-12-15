@@ -39,9 +39,8 @@ PoissonBoltzmannOp::PoissonBoltzmannOp(int nLocal, const VectorType<double>& vec
 {
   setDomainAndRange(J_.domain(), J_.range());
 
-  int rank = MPISession::getRank();
-  int nProc = MPISession::getNProc();
-
+  int rank = MPIComm::world().getRank();
+  int nProc = MPIComm::world().getNProc();
   if (nProc > 1)
     {
       Array<int> ghosts;

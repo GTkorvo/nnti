@@ -44,8 +44,9 @@ PoissonBoltzmannJacobian
 
 void PoissonBoltzmannJacobian::setEvalPoint(const Vector<double>& x)
 {
-  int rank = MPISession::getRank();
-  int nProc = MPISession::getNProc();
+  
+  int rank = MPIComm::world().getRank();
+  int nProc = MPIComm::world().getNProc();
   RefCountPtr<MatrixFactory<double> > mFact 
     = vecType().createMatrixFactory(domain(), range());
   

@@ -99,8 +99,9 @@ namespace TSFExtended
   ::initOp(double onProcDensity,
            double offProcDensity)
   {
-    int rank = MPISession::getRank();
-    int nProc = MPISession::getNProc();
+    int rank = MPIComm::world().getRank();
+    int nProc = MPIComm::world().getNProc();
+
     RefCountPtr<MatrixFactory<double> > mFact 
       = this->vecType().createMatrixFactory(this->domain(), this->range());
 
@@ -120,6 +121,7 @@ namespace TSFExtended
     for (int i=0; i<numLocalRows; i++)
       {
         int row = lowestLocalRow + i;
+        cout << "p=" << rank << " row=" << row << endl;
         Array<int>& cols = colIndices[i];
         for (int j=0; j<colDimension; j++)
           {

@@ -32,8 +32,7 @@
 
 #include "Thyra_ProductVectorSpaceBase.hpp"
 #include "TSFVectorSpaceDecl.hpp"
-#include "Thyra_MPIVectorSpaceBase.hpp"
-#include "Thyra_SerialVectorSpaceBase.hpp"
+#include "Thyra_SpmdVectorSpaceBase.hpp"
 #include "TSFDescribable.hpp"
 
 using namespace TSFExtended;
@@ -79,14 +78,14 @@ Vector<Scalar> VectorSpace<Scalar>::createMember() const
 template <class Scalar>
 int VectorSpace<Scalar>::lowestLocallyOwnedIndex() const
 {
-  const Thyra::MPIVectorSpaceBase<Scalar>* mpiSpace 
-    = dynamic_cast<const Thyra::MPIVectorSpaceBase<Scalar>*>(this->ptr().get());
+  const Thyra::SpmdVectorSpaceBase<Scalar>* mpiSpace 
+    = dynamic_cast<const Thyra::SpmdVectorSpaceBase<Scalar>*>(this->ptr().get());
   if (mpiSpace != 0)
     {
       return mpiSpace->localOffset();
     }
-  const Thyra::SerialVectorSpaceBase<Scalar>* serialSpace 
-    = dynamic_cast<const Thyra::SerialVectorSpaceBase<Scalar>*>(this->ptr().get());
+  const Thyra::SpmdVectorSpaceBase<Scalar>* serialSpace 
+    = dynamic_cast<const Thyra::SpmdVectorSpaceBase<Scalar>*>(this->ptr().get());
    if (serialSpace != 0)
      {
        return 0;
@@ -101,14 +100,14 @@ int VectorSpace<Scalar>::lowestLocallyOwnedIndex() const
 template <class Scalar>
 int VectorSpace<Scalar>::numLocalElements() const
 {
-  const Thyra::MPIVectorSpaceBase<Scalar>* mpiSpace 
-    = dynamic_cast<const Thyra::MPIVectorSpaceBase<Scalar>*>(this->ptr().get());
+  const Thyra::SpmdVectorSpaceBase<Scalar>* mpiSpace 
+    = dynamic_cast<const Thyra::SpmdVectorSpaceBase<Scalar>*>(this->ptr().get());
   if (mpiSpace != 0)
     {
       return mpiSpace->localSubDim();
     }
-   const Thyra::SerialVectorSpaceBase<Scalar>* serialSpace 
-    = dynamic_cast<const Thyra::SerialVectorSpaceBase<Scalar>*>(this->ptr().get());
+   const Thyra::SpmdVectorSpaceBase<Scalar>* serialSpace 
+    = dynamic_cast<const Thyra::SpmdVectorSpaceBase<Scalar>*>(this->ptr().get());
    if (serialSpace != 0)
      {
        return dim();

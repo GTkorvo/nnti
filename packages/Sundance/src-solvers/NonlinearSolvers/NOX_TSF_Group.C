@@ -330,7 +330,7 @@ NOX::Abstract::Group::ReturnType NOX::TSF::Group::computeGradient()
 }
 
 NOX::Abstract::Group::ReturnType 
-NOX::TSF::Group::computeNewton(NOX::Parameter::List& p) 
+NOX::TSF::Group::computeNewton(Teuchos::ParameterList& p) 
 {
   if (isNewton())
     {
@@ -353,7 +353,7 @@ NOX::TSF::Group::computeNewton(NOX::Parameter::List& p)
 
       if (p.isParameter("Tolerance"))
         {
-          double tol = p.getParameter("Tolerance", tol);
+          double tol = p.get("Tolerance", tol);
           solver.updateTolerance(tol);
         }
 
@@ -429,7 +429,7 @@ NOX::TSF::Group::applyJacobianTranspose(const NOX::TSF::Vector& input, NOX::TSF:
 }
 
 NOX::Abstract::Group::ReturnType 
-NOX::TSF::Group::applyJacobianInverse(NOX::Parameter::List& p, 
+NOX::TSF::Group::applyJacobianInverse(Teuchos::ParameterList& p, 
 					 const Abstract::Vector& input, 
 					 NOX::Abstract::Vector& result) const 
 {
@@ -439,7 +439,7 @@ NOX::TSF::Group::applyJacobianInverse(NOX::Parameter::List& p,
 }
 
 NOX::Abstract::Group::ReturnType 
-NOX::TSF::Group::applyJacobianInverse(NOX::Parameter::List& p, 
+NOX::TSF::Group::applyJacobianInverse(Teuchos::ParameterList& p, 
 					 const NOX::TSF::Vector& input, 
 					 NOX::TSF::Vector& result) const 
 {
@@ -452,7 +452,7 @@ NOX::TSF::Group::applyJacobianInverse(NOX::Parameter::List& p,
   }
   if (p.isParameter("Tolerance"))
     {
-      double tol = p.getParameter("Tolerance", tol);
+      double tol = p.get("Tolerance", tol);
       solver.updateTolerance(tol);
     }
   if (verbosity() > TSFExtended::VerbHigh)

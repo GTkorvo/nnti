@@ -39,11 +39,13 @@ namespace RTOpPack
   /**
    *
    */
+#ifdef TRILINOS_6.0
+
   template<class Scalar>
   class RTOpBoolReduceAndTransform 
     : public ROpIndexReductionBase<Scalar>,
       public ROpScalarTransformationBase<Scalar>
-  {
+{
 
   public:
     typedef typename RTOpT<Scalar>::primitive_value_type primitive_value_type;
@@ -73,9 +75,9 @@ namespace RTOpPack
 
   };
 
+#endif /* TRILINOS_6 */
 
 }
-
 
 /** \brief Use within an apply_op(...) function implementation where num_vecs==3, num_targ_vecs==0.
  *

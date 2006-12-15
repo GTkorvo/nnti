@@ -36,6 +36,7 @@
 #include "NOX_TSF_Group.H"
 #include "NOX_TSF_StatusTestBuilder.H"
 #include "Teuchos_TestForException.hpp"   
+#include "Teuchos_ParameterList.hpp"
 
 namespace TSFExtended
 {
@@ -69,11 +70,11 @@ namespace TSFExtended
     mutable RefCountPtr<NOX::TSF::Group> grp_;
     mutable RefCountPtr<NOX::Solver::Manager> solver_;
     mutable RefCountPtr<NOX::StatusTest::Generic> statusTest_;
-    ParameterList params_;
+    mutable ParameterList params_;
 #ifdef TRILINOS_6
     mutable NOX::Parameter::List noxParams_;
 #else
-    mutable RefCountPtr<NOX::Parameter::List> noxParams_;
+    mutable RefCountPtr<Teuchos::ParameterList> noxParams_;
 #endif
   };
 }

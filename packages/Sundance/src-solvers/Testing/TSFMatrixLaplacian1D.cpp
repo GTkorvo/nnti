@@ -37,8 +37,9 @@ MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows,
                                      const VectorType<double>& type, bool symBC)
   : OperatorBuilder<double>(nLocalRows, type), op_()
 {
-  int rank = MPISession::getRank();
-  int nProc = MPISession::getNProc();
+
+  int rank = MPIComm::world().getRank();
+  int nProc = MPIComm::world().getNProc();
   RefCountPtr<MatrixFactory<double> > mFact 
     = vecType().createMatrixFactory(domain(), range());
 

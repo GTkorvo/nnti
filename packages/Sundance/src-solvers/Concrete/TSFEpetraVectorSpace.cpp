@@ -39,10 +39,10 @@
 #define DefaultSerialVectorSpace SerialVectorSpaceStd
 #define DefaultColumnwiseMultiVector MultiVectorCols
 #else
-#include "Thyra_DefaultSerialVector.hpp"
-#include "Thyra_MPIVectorSpaceDefaultBase.hpp"
+#include "Thyra_DefaultSpmdVector.hpp"
+#include "Thyra_SpmdVectorSpaceDefaultBase.hpp"
 #include "Thyra_DefaultColumnwiseMultiVector.hpp"
-#define MPIVectorSpaceBase MPIVectorSpaceDefaultBase
+#define MPIVectorSpaceBase SpmdVectorSpaceDefaultBase
 #endif
 
 using namespace TSFExtended;
@@ -50,28 +50,16 @@ using namespace Teuchos;
 using namespace Thyra;
 
 EpetraVectorSpace::EpetraVectorSpace(const RefCountPtr<const Epetra_Map>& m)
-  : MPIVectorSpaceBase<double>(),
+  : SpmdVectorSpaceBase<double>(),
     Handleable<const VectorSpaceBase<double> >(), 
     epetraMap_(m),
-    mpiComm_(MPI_COMM_NULL),
+    comm_(Thyra::create_Comm(Teuchos::rcp(&m->Comm(),false))),
     localSubDim_(epetraMap_->NumMyElements())
 {
-#ifdef HAVE_MPI
-  const Epetra_Comm& comm = epetraMap_->Comm();
-  const Epetra_MpiComm* epMPIComm = dynamic_cast<const Epetra_MpiComm*>(&comm);
-  if (epMPIComm != 0) 
-    {
-      mpiComm_ = epMPIComm->GetMpiComm();
-    }
-  else
-    {
-      mpiComm_ = MPI_COMM_NULL;
-    }
-#endif
-
+  Array<int> elems(epetraMap_->NumMyElements());
+  epetraMap_->MyGlobalElements(&(elems[0]));
   updateState(epetraMap_->NumGlobalElements());
 }
-
 
 
 // Overridden from VectorSpace
@@ -89,7 +77,7 @@ EpetraVectorSpace::createMembers(int n) const
 {
   RefCountPtr<const VectorSpaceBase<double> > self = rcp(this, false);
   RefCountPtr<const VectorSpaceBase<double> > small 
-    = rcp(new DefaultSerialVectorSpace<double>(n));
+    = rcp(new DefaultSpmdVectorSpace<double>(n));
   Array<RefCountPtr<VectorBase<double> > > vecs(n);
   for (unsigned int i=0; i<vecs.size(); i++)
     {
