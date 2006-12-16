@@ -151,20 +151,23 @@ library that meets their needs. This search is affected by the
 following questions:
 \begin{enumerate}
 \item[(Q1)] Software ease-of-use and availability: Is the software library easy to use,
-stable, well-documented and actively supported?  Is it portable to
-all required platforms and have an acceptable licensing agreement?
+stable, well-documented and actively supported?  
+Is it portable to all required platforms and 
+does it have an acceptable licensing agreement?
 \item[(Q2)] Special numerical properties:  Does the solver support the special properties of my problems?
 For example, does the solver support symmetric matrices, reuse of
 matrix patterns, robust pivoting, etc.?
 \item[(Q3)] Time-to-solution: Is the solver efficient in terms of CPU time?
 \item[(Q4)] Memory use: How much storage does the solver require?
 \end{enumerate}
-The relative importance of these aspects is usually subjective. For
-relatively simple problems, (Q3) is usually the key point, followed
+The relative importance of these aspects is usually subjective. For small
+problems Q1 and Q2 are critical, since both time-to-solution and memory use
+will be irrelevant.
+For possibly large but relatively well-conditioned problems, (Q3) is usually the key point, followed
 by (Q4). For complicated problems, and especially in industrial
 applications, (Q2) is of paramount importance. (Q1) is often
 considered part of the ``technical details'' of minor importance,
-even if they truly important.  At this time there are many viable
+even if they are truly important.  At this time there are many viable
 direct sparse solvers, each of which has a special ``niche'' in the
 user community because it addresses the above questions
 appropriately for some users.
@@ -254,7 +257,7 @@ supported libraries. The interfaces are presented and implemented as
 a set of C++ classes using several well-known design
 patterns~\cite{Gamma}. C++~\cite{cppbook} supports object-oriented
 programming, and it is relatively easy to interface FORTRAN77,
-FORTRAN90 and C libraries with C++ code. C++ supports abstraction
+FORTRAN95 and C libraries with C++ code. C++ supports abstraction
 through classes, inheritance and polymorphism. For application
 developers, abstraction is important because it enhances simplicity,
 by providing components with a minimal interface. It also ensures
@@ -262,7 +265,7 @@ flexibility because it decouples the different algorithmic phases
 from the data structures. Finally, abstraction allows extensibility
 in the sense that new (yet to be developed) libraries can be easily
 added, at almost no cost to the application developer. Another
-candidate language could have been FORTRAN90, but it does not have
+candidate language could have been FORTRAN95, but it does not have
 inheritance and polymorphism.
 
 %
@@ -581,8 +584,8 @@ class that is also adapted to behave like a common generic base
 class. In our context the factory can produce a specific solver
 instance for any of the supported solvers, e.g., UMFPACK, SuperLU,
 etc.  In addition, the factory passes the solver instance back as a
-generic Amesos solver. In this way, regardless of which specific
-solver was created, it is treated as a generic Amesos solver.
+generic \amesos\ solver. In this way, regardless of which specific
+solver was created, it is treated as a generic \amesos\ solver.
 
 Presently we introduce a set of abstract classes that will be used
 to define interfaces to the data layout of distributed objects,
@@ -603,8 +606,7 @@ The first class that we need to introduce is a {\tt Map}, which defines the
 data layout of the elements contained in vectors and matrices\footnote{This
 class should not be confused with the STL {\tt map} class.} {\tt Map}'s
 are also used to specify the local-to-global numbering, and the global and
-local number of elements. We require that any global ID is assigned to exactly
-one processor.  The {\tt Map} class is defined by
+local number of elements.  The {\tt Map} class is defined by
 \begin{interface}
 \label{int:map}
 The {\tt Map} class will contain the following methods:
@@ -615,6 +617,10 @@ The {\tt Map} class will contain the following methods:
 \item {\tt int getGID(const int LID) const} returns the global ID of the local node {\tt ID}.
 \end{itemize}
 \end{interface}
+
+Note that it is trivial to implement the {\tt Map} class when working on
+serial architectures. For parallel architectures, the {\tt Map} class
+only requires that any global ID is assigned to exactly one processor.
 
 The next class is the {\tt Vector}
 class, which specifies the interfaces for
@@ -637,12 +643,16 @@ array of values for constant objects;
 \end{itemize}
 \end{interface}
 
+Methods {\tt getValues()} return {\tt Vector}'s internal raw
+{\tt double*} pointer. This makes it easier to interface {\tt Vector} objects
+with other codes, for example BLAS routines.
+
 Next we discuss the linear system matrix $A$, keeping with our
 theme, we do not impose any matrix format, rather we specify an
 abstract interface to {\sl query} for matrix elements. The only
 assumption is that the storage format adopted by the application
 allows a fast access to all the nonzero elements in a given (locally
-owned) row. For examples, all variants of compresses row storage
+owned) row. For examples, all variants of compressed row storage
 formats can easily be wrapped to satisfy this fairly general sparse
 interface, called {\tt RowMatrix}. For distributed matrices, we
 assume that each row is owned by exactly one processor; rows can be
@@ -667,10 +677,10 @@ will contain the following methods:
 \item \verb!int getNumGhostNodes() const! returns the number of ghost nodes;
 \item \verb!void updateMyGhostNodes(Vector& x) const! updates the values of ghost nodes
  in the input vector {\tt x};
-\item {\tt int getNumMyRowEntries(const int ID)} returns the number of nonzero of
+\item {\tt int getNumMyRowEntries(const int ID) const} returns the number of nonzero of
 the (locally owned) row {\tt ID};
 \item {\tt int getMyRow(const int ID, const int length, int\& numEntries, int* indices, double*
-                             values)} copies the
+                             values) const} copies the
 column IDs and values of all nonzero elements of the locally hosted row {\tt
   ID} in the user's allocated arrays (of length {\tt Length}). The output
   variable {\tt numEntries} returns the number of nonzeros in the row. If {\tt
@@ -702,13 +712,18 @@ The {\tt LinearProblem} interface
 will contain the following methods:
 \begin{itemize}
 \item \verb!void setMatrix(RowMatrix* A)! sets the linear system matrix;
+\item \verb!void RowMatrix* getMatrix()! returns a pointer to the
+linear system matrix;
 \item \verb!void setX(Vector* x)! sets the solution vector;
+\item \verb!void Vector* getX()! returns a pointer to the solution vector;
 \item \verb!void setB(Vector* b)! sets the right-hand side vector;
+\item \verb!void Vector* getB()! returns a pointer to the right-hand side vector;
 \end{itemize}
 \end{interface}
 The objects \verb!A!, \verb!x! and \verb!b! must be compatible, that
 is, the global number of elements of the underlying {\tt Map}'s must
-be the same. However, the data layout can differ. Note also that
+be the same. However, the data layout can differ; in this case, an automatic
+data redistribution may occur. Note also that
 Interface~\ref{int:lp} could be easily extended to standardize
 operations like scaling or reordering by adding methods like
 \verb!leftScale()!, \verb!rightScale()!.
@@ -732,6 +747,8 @@ will contain the following methods:
 \begin{itemize}
 \item \verb!void setLinearProblem(LinearProblem* LP)! sets the linear problem
 to solve;
+\item \verb!void LinearProblem* getLinearProblem()! returns the linear problem
+to solver;
 \item \verb!void setParameters(List)! specifies all the parameters for the solver;
 \item \verb!int symbolicFactorization()! performs the symbolic factorization, that
 is, all the operations that only require the matrix graph and not
@@ -751,7 +768,9 @@ b$ if \verb!flag == true!, or (\ref{eq:linear_system}) is \verb!flag == false!. 
 \end{itemize}
 \end{interface}
 In the above interface, {\tt list} is any container that can be used
-to specify parameters. A flowchart of the factorization processes
+to specify parameters\footnote{The current \amesos\ implementation uses the
+{\tt Teuchos::ParameterList} class; see~\cite{Teuchos-Home-Page}.}. 
+A flowchart of the factorization processes
 within a typical application is reported in
 Figure~\ref{fig:flowchart}.
 \begin{figure}
@@ -842,9 +861,9 @@ int main(int argc, char *argv[])
   Epetra_Vector x(map); x.PutScalar(0.0);
   Epetra_Vector b(map); x.Random(0.0);
   Epetra_CrsMatrix A(Copy, map, 0);
-  for (int LID = 0; LID < map.NumMyElements(); ++LID) {
-    int GID = map.GID(LID); // global ID of local ID
-    A.InsertGlobalElements(GID, 1, 1.0, GID);
+  for (int LocalRow = 0; LocalRow < map.NumMyElements(); ++LocalRow) {
+    int GlobalRow = map.GID(LocalRow); // local-to-global mapping
+    A.InsertGlobalElements(GlobalRow, 1, 1.0, GlobalRow);
   }
   A.FillComplete();
 
@@ -877,7 +896,9 @@ int main(int argc, char *argv[])
 argument of the command line. The map contains {\tt
 numGlobalElements} elements, in this case distributed linearly. The
 right-hand side is a random vector, and the matrix is a simple
-diagonal matrix, stored using the {\tt Epetra\_CrsMatrix} format. }
+diagonal matrix, stored using the {\tt Epetra\_CrsMatrix} format. Note that the {\tt
+Epetra} implementation of Interface \ref{int:map} uses {\tt NumMyElements()}
+instead of {\tt getNumMyElements()} and {\tt GID()} instead of {\tt getGID()}.}
 \label{fig:example}
 \end{center}
 \end{figure}
@@ -929,22 +950,19 @@ FORTRAN arrays are to be used and one seeks to minimize the index
 conversion\footnote{{\tt indexBase} refers to the base index for the
 global numbering; the local numbering is always set to 0.}.
 
-The only \amesos\ include file is \verb!Amesos.h!, which does not
-include the header files of the supported library. The required
-interface is specified by the string variable \verb!SolverType!, and
-is created by using the factory class \verb!Amesos!. Factory classes
-are a programming tool~\cite{alexandrescu01modern} that implements a
-sort of ``virtual constructor,'' in the sense that one can
-instantiate a derived (concrete) object while still working with
-abstract data types. The example reported in
-Figure~\ref{fig:example} adopts UMFPACK as a solver; however by
-using the factory class, other interfaces can be created by simply
-changing the parameter {\tt solverType}. Note that the supported
-solver can be serial or parallel,
-  dense or sparse: the user code still remains the same, except for the name
-  of the solver;
-  \amesos\ will take care of data redistribution if required by the selected
-  solver.
+The only \amesos\ include file is \verb!Amesos.h!, which does not include the
+header files of the supported library. The required interface is specified by
+the string variable \verb!SolverType!, and is created by using the factory
+class \verb!Amesos!. Factory classes are a programming
+tool~\cite{alexandrescu01modern} that implements a sort of ``virtual
+constructor,'' in the sense that one can instantiate a derived (concrete)
+object while still working with abstract data types. The example reported in
+Figure~\ref{fig:example} adopts UMFPACK as a solver; however by using the
+factory class, other interfaces can be created by simply changing the
+parameter {\tt solverType}. Note that the supported solver can be serial or
+parallel, dense or sparse: the user code still remains the same, except for
+the name of the solver; \amesos\ will take care of data redistribution if
+required by the selected solver.
 
 \begin{figure}
 \begin{center}
@@ -1234,7 +1252,7 @@ insight on the choice of parameters.
 \item There
   is no standard way to
   convert MPI communicators defined in C to MPI communicators defined
-  in FORTRAN90. On some architectures it is difficult or even
+  in FORTRAN90/FORTRAN95. On some architectures it is difficult or even
   impossible to perform such a task. Some hacks may be required.
 
 \item
@@ -1279,8 +1297,10 @@ users still need to consult the library's manual to decode the error messages.
 
 \item FORTRAN wrappers are not available. Our design is based on a set of C++
 classes, which are difficult or impossible to translate to FORTRAN77 or
-FORTRAN90. However, custom interfaces can be made available for specific
-concrete implementations of the presented interfaces.
+FORTRAN95. However, custom interfaces can be made available for specific
+concrete implementations of the presented interfaces. The status of FORTRAN
+wrappers may change
+with future implementation of the FORTRAN2003 standard.
 \end{itemize}
 
 %The reader might wonder why we have limited our attention to direct methods only, and
