@@ -32,6 +32,10 @@ bool SQPAlgo::run(Vector &x, Vector &c, Vector &l, int &iter, int &iflag, Teucho
   double ctol = parlist.get("Constraints Tolerance", 1.0e-6);
   double stol = parlist.get("Min TR Radius", 1.0e-5);
 
+  // Other misc. tol's, flags, etc.
+  bool   addproj = parlist.get("Additional Projection", true);
+  double projtol = parlist.get("Tolerance for Additional Projection", 1.0e-4);
+
   // Maximum number of outer SQP iterations.
   int maxiter = parlist.get("Max Number of SQP Iterations", 100);
 
@@ -93,7 +97,8 @@ bool SQPAlgo::run(Vector &x, Vector &c, Vector &l, int &iter, int &iflag, Teucho
                               istolfixed, fullortho, orthocheck, fcdcheck, itcg, flg);
 
          // Check step, adjust trust-region radius and parameter.
-         runAcceptStep(x, l, f, *g, c, *v, *w, Delta, nu, tol, iaccept);
+         //runAcceptStep(x, l, f, *g, c, *v, *w, Delta, nu, tol, iaccept);
+         runAcceptStepInx(x, l, f, *g, c, *v, *w, Delta, nu, addproj, projtol, tol, iaccept);
 
         if ( iaccept == 0 ) {
             // Reset DataPool to old values.
@@ -633,7 +638,139 @@ bool SQPAlgo::runAcceptStep(Vector &x, const Vector &l, double f, const Vector &
     
   return true;
 
-}
+}  // End runAcceptStep.
+
+
+bool SQPAlgo::runAcceptStepInx(Vector &x, const Vector &l, double f, const Vector &g, const Vector &c,
+                               const Vector &v, Vector &w, double &delta, double &rho,
+                               bool addproj, double &projtol, double tol, int &iaccept)
+{
+  bool iprint = true;  // print flag  = true print output
+                       // otherwise no output is generated
+
+  double eta  = 1e-8;     // actual/predicted-reduction parameter
+  double beta = 1e-8;     // predicted reduction parameter
+  // determines the max value of |rpred|/pred
+  double rpred_over_pred = 0.5*(1-eta); 
+
+  iaccept = 0;
+
+  // Create necessary vectors.
+  VectorPtr s      = x.createVector();
+  VectorPtr Jl     = x.createVector();
+  VectorPtr Jvc    = c.createVector();
+  VectorPtr tryx   = x.createVector();
+  VectorPtr g_new  = x.createVector();
+  VectorPtr c_new  = c.createVector();
+  VectorPtr l_new  = c.createVector();
+  VectorPtr gJl    = x.createVector();
+  VectorPtr gJlHv  = x.createVector();
+  VectorPtr dl     = c.createVector();
+  VectorPtr Hv     = x.createVector();
+  VectorPtr Hw     = x.createVector();
+  VectorPtr w_orig = x.createVector();
+  VectorPtr rt     = c.createVector();
+
+  double vartols[4];  // used to pass parameters to null space projection
+  double f_new    = 0.0;
+  double rho_orig = rho;
+  w_orig->Set(1.0, w);
+  double pred     = 1.0;
+  double rpred    = 2.0*rpred_over_pred*pred;
+  bool   flag     = 0;
+
+  while ( (fabs(rpred)/pred) > rpred_over_pred) {
+
+    /*** Compute tangential step projection. ***/
+    if (flag) {
+      projtol = 1.0e-4*projtol;
+      if (projtol < 1.0e-16) {
+        printf("\n The projection of the tangential step cannot be done with sufficient precision.\n");
+        printf(" Is the quasi-normal step very small? Continuing with no global convergence guarantees.\n");
+      }
+    }
+    // Project tangential step.
+    if (addproj) {
+      vartols[0] = projtol;
+      vartols[1] = 0.0; vartols[2] = 0.0; vartols[3] = 0.0;
+      constr_->applyNullSp(false, x, *w_orig, w, vartols);
+    }
+ 
+    // rt computation
+    constr_->applyJacobian(false, x, w, *rt);
+
+    // Compute composite step.
+    s->Set(1.0, v);
+    s->linComb(1.0, w, 1.0);
+
+    // Compute and store some quantities for later use. Necessary
+    // because dat_->updateAll updates the constraint derivatives.
+    constr_->applyJacobian(true, x, l, *Jl);
+    constr_->applyJacobian(false, x, v, *Jvc);
+    Jvc->linComb(1.0, c, 1.0);
+    double Jvc_nrm2  = Jvc->innerProd(*Jvc);
+
+    // Compute objective, constraint, etc. values at the trial point.
+    tryx->Set(1.0, x);
+    tryx->linComb(1.0, *s, 1.0);
+    dat_->computeAll(*tryx);
+    f_new = obj_->getValue(*tryx);
+    obj_->getGradient(*tryx, *g_new);
+    constr_->getValue(*tryx, *c_new);
+    runMultiplierEst(*tryx, *g_new, *l_new, tol);
+
+    // Penalty parameter update.
+    double part_pred;
+    hessvec_->getValue(x, l, v, *Hv);
+    hessvec_->getValue(x, l, *w_orig, *Hw);
+    dl->Set(1.0, l);
+    dl->linComb(1.0, *l_new, -1.0);
+    gJl->Set(1.0, g);
+    gJl->linComb(1.0, *Jl, 1.0);
+    gJlHv->Set(1.0, *gJl);
+    gJlHv->linComb(1.0, *Hv, 1.0);
+    part_pred = - 1.0 * gJlHv->innerProd(*w_orig)
+                - 1.0 * gJl->innerProd(v)
+                - 0.5 * v.innerProd(*Hv)
+                - 0.5 * w_orig->innerProd(*Hw)
+                - 1.0 * dl->innerProd(*Jvc);
+    if ( part_pred < -0.5*rho*(c.innerProd(c)-Jvc_nrm2) )
+      rho = 2.0 * (-1.0*part_pred) / (c.innerProd(c) - Jvc_nrm2) + beta;
+
+    // Compute predicted reduction.
+    pred = part_pred + rho * (c.innerProd(c) - Jvc_nrm2);
+
+    // rpred computation
+    rpred = - dl->innerProd(*rt) - rho_orig * sqrt(rt->innerProd(*rt))
+            - 2.0 * rho * rt->innerProd(*Jvc);
+    if (!addproj)
+      rpred = 0.0;
+
+    flag = true;
+  }
+
+  // Compute actual reduction.
+  double ared = (f + l.innerProd(c) + rho*c.innerProd(c)) -
+                (f_new + l_new->innerProd(*c_new) + rho*c_new->innerProd(*c_new));
+
+  // Determine if the step gives sufficient reduction in the merit function,
+  // update the trust-region radius.
+  double r  = ared/pred;
+  double ns = sqrt(s->innerProd(*s));
+  if (r >= eta) {
+    x.linComb(1.0, *s, 1.0);
+    if (r >= 0.9)
+        delta = max(7*ns, delta);
+    else if (r >= 0.3)
+        delta = max(2*ns, delta);
+    iaccept = 1;
+  }
+  else
+    delta = 0.5*max( sqrt(v.innerProd(v)), sqrt(w.innerProd(w)) );
+    
+  return true;
+
+}  // End runAcceptStepInx.
 
 
 bool SQPAlgo::runDerivativeCheck(const Vector &x, const Vector &l, const Vector &dir) {

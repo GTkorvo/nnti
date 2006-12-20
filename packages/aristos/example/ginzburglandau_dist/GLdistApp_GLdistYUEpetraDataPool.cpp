@@ -277,7 +277,7 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
   double minthreshold = 1e-20;  // tolerance threshold for "exact" solves, anything below is computed w/ minprecision
   double minprecision = 1e-12;  // relative tolerance for "exact" solves
   int    maxit        = 200;    // maximum number of Krylov solver iterations
-  int    innerit      = 20;     // number of Krylov solver iterations, per restart, for the first dynamic solve
+  int    innerit      = 50;     // number of Krylov solver iterations, per restart, for the first dynamic solve
   int    numcycles    = 4;      // number of restarts for first dynamic solve
   bool   wantstats    = false;  // choose true if output of solver info in file stats.txt is desired
   int mypid = y->Comm().MyPID();
@@ -285,7 +285,6 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
   ofstream outfile("stats.txt", ios_base::app);
 
   double tolerance = tol[0];
-
 
   // will need to set up state-control-adjoint splitting and corresponding maps
 

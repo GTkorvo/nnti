@@ -401,6 +401,98 @@ public:
 
 
 
+  /** \brief Checks whether the computed step is acceptable, and accordingly updates the trust-region
+             radius and the merit function penalty parameter. Should be used whenever the SQP algorithm
+             manages inexactness in linear system solves.
+
+      \param x [in,out]      - SQP iterate.
+      \param l [in]          - Current Lagrange multiplier estimate.
+      \param f [in]          - Current value of the objective.
+      \param g [in]          - Current gradient of the objective vector.
+      \param c [in]          - The vector of constraint values.
+      \param v [in]          - Current quasi-normal step.
+      \param w [in]          - Current tangential step.
+      \param s [out]         - The computed tangential step vector.
+      \param delta [in,out]  - Trust-region radius.
+      \param rho [in,out]    - Penalty parameter.
+      \param addproj[in]     - if <tt>true</tt>, run an additional null-space projection
+      \param projtol[in,out] - Tolerance for inexact null-space projections.
+      \param tol [in]        - Tolerance for inexact derivative, etc computations.
+      \param iaccept [out]   - Integer return code:
+                               0 - step rejected
+                               1 - step accepted
+
+      \return <tt>true</tt> if runTangentialStepInx terminates successfully.
+
+      \par Detailed Description:
+
+      Global convergence in trust-region SQP methods is usually ensured through the use of a merit
+      function, which helps us determine whether a step is acceptable and whether the trust-region
+      radius needs to be modified. We use the augmented Lagrangian merit function
+  
+      \f{equation*}
+      \phi(x,\lambda;\rho) = f(x) + \langle \lambda, c(x) \rangle_{\mathcal{Y}} +
+                             \rho \|c(x)\|^2_{\mathcal{Y}} =
+                             \mathcal{L}(x,\lambda) + \rho \|c(x)\|^2_{\mathcal{Y}}.
+      \f}
+      
+      Let \f$s_k^x=n_k+t_k\f$ be a trial step where \f$n_k\f$ is the computed quasi-normal step, and \f$t_k\f$
+      is the computed tangential step, and let \f$\lambda_{k+1} = \lambda_{k} + \Delta\lambda_k\f$ be an updated
+      Lagrange multiplier.
+      To measure the improvement in the merit function \f$\phi\f$, we compare the \it actual \it reduction and
+      the \it predicted \it reduction in moving from the current iterate \f$x_k\f$ to the trial iterate
+      \f$x_k+s_k^x\f$. The actual reduction is defined by
+      
+      \f{equation*}
+        ared(s_k^x; \rho_k) = \phi(x_k,\lambda_k;\rho_k) - \phi(x_k+s_k,\lambda_{k+1};\rho_k),
+      \f}
+      
+      and the predicted reduction is given by
+
+      \f{equation*}
+        pred(s_k^x; \rho_k) = \phi(x_k,\lambda_k;\rho_k) - \widetilde{\phi}(x_k,\Delta\lambda_k;\rho_k),
+      \f}
+
+      where
+      \f{equation*}
+               \widetilde{\phi}(x_k,\Delta\lambda_k;\rho_k) =
+               \frac{1}{2} \langle H_k s_k^x, s_k^x \rangle_{\mathcal{X}} +
+                 \langle \nabla_x \mathcal{L}(x_k,\lambda_k), s_k^x \rangle_{\mathcal{X}} +
+               \langle \Delta\lambda_k, c_x(x_k)s_k^x+c(x_k) \rangle_{\mathcal{Y}} +
+               \rho_k \|c_x(x_k)s_k^x+c(x_k)\|^2_{\mathcal{Y}} .
+      \f}
+
+      The following decision procedure is then used (we leave out the details of the penalty parameter update):
+      \f{enumerate}
+        \addtocounter{enumi}{-1}
+        \item Assume $0 < \eta_1 < \eta_2 < 1$, $0 < \gamma_1 < \gamma_2 < 1$.
+        \item Acceptance Test.
+              \begin{enumerate}
+              \item Update penalty parameter $\rho_k$ (details omitted).
+              \item Compute actual reduction $ared(s_k^x; \rho_k)$ and predicted reduction $pred(s_k^x; \rho_k)$,
+                    and their ratio $\theta_k=\frac{ared(s_k^x; \rho_k)}{pred(s_k^x; \rho_k)}$.
+              \item If $\theta_k \ge \eta_1$, set $x_{k+1} = x_k+s_k$,
+                    otherwise set $x_{k+1} = x_k$ and reset $\lambda_{k+1} = \lambda_k$.
+              \end{enumerate}
+        \item Trust-Region Radius Update. Set
+              \[
+                \Delta_{k+1}  \in
+                                  \begin{cases}
+                                    [ \Delta_k, \infty] & \mbox{ if } \; \theta_k \ge \eta_2, \\
+                                    [ \gamma_2 \Delta_k, \Delta_k ] & \mbox{ if } \;
+                                                               \theta_k \in [\eta_1, \eta_2), \\
+                                    [ \gamma_1 \Delta_k, \gamma_2 \Delta_k ] & \mbox{ if } \; \theta_k < \eta_1.
+                                  \end{cases}
+              \]
+      \f}
+
+  */
+  bool runAcceptStepInx(Vector &x, const Vector &l, double f, const Vector &g, const Vector &c,
+                        const Vector &v, Vector &w, double &delta, double &rho, bool addproj,
+                        double &projtol, double tol, int &iaccept);
+
+
+
   /** \brief Derivative checks..
 
       \param x [in]         - Iterate vector.
