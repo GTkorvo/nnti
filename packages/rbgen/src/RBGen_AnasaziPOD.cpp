@@ -155,7 +155,9 @@ namespace RBGen {
       //
       // Compute singular values which are the square root of the eigenvalues
       //
-      for (i=0; i<nev; i++) { sv_[i] = Teuchos::ScalarTraits<double>::squareroot( evals[i].realpart ); }
+      for (i=0; i<nev; i++) { 
+	sv_[i] = Teuchos::ScalarTraits<double>::squareroot( Teuchos::ScalarTraits<double>::magnitude(evals[i].realpart) ); 
+      }
       //
       // If we are using inner product formulation, 
       // then we must compute left singular vectors:
