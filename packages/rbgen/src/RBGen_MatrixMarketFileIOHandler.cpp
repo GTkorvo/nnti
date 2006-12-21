@@ -124,6 +124,10 @@ namespace RBGen {
 	//
 	subMV.Update( 1.0, *fileMV, 0.0 );
 	//
+	//  Update the column pointer
+	//
+	col_ptr += cols[i];
+	//
 	//  Clean up the multivector
 	//
 	if (fileMV) { delete fileMV; fileMV=0; }

@@ -114,6 +114,10 @@ int main( int argc, char* argv[] )
     Teuchos::TimeMonitor lcltimer( *timerSnapshotIn );
     testMV = fileio->Read( *filenames );
   } 
+  //std::vector<double> normMV(testMV->NumVectors());
+  //testMV->Norm2( &normMV[0] );
+  //testMV->Scale( 1.0/normMV[0] );
+  //cout << normMV[0] << endl;
 
   RBGen::EpetraMVPreprocessorFactory preprocess_factory;
 
