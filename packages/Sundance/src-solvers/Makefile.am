@@ -74,6 +74,7 @@ VECTORS_H = \
 VECTORS =
 
 UTILS_H = \
+	$(srcdir)/Utils/SundancePathUtils.hpp \
 	$(srcdir)/Utils/TSFConfigDefs.hpp \
 	$(srcdir)/Utils/TSFDescribable.hpp \
 	$(srcdir)/Utils/TSFDouble.hpp \
@@ -82,7 +83,8 @@ UTILS_H = \
 	$(srcdir)/Utils/TSFObjectWithVerbosity.hpp \
 	$(srcdir)/Utils/TSFPrintable.hpp
 
-UTILS = 
+UTILS = \
+	$(srcdir)/Utils/SundancePathUtils.cpp 
 
 CONCRETE_H = \
 	$(srcdir)/Concrete/TSFDenseSerialVector.hpp\
