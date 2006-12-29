@@ -12,6 +12,8 @@
 \pagestyle{headings} 
 \mainmatter              % start of the contributions
 
+\markboth{M. Sala, K. Stanley and M. Heroux}{A Set of Interfaces to Sparse Direct Solvers}
+
 \title{\amesos: A Set of General Interfaces to Sparse Direct Solver Libraries}
 %
 \titlerunning{Interfaces to Direct Solvers}  % abbreviated title (for running head)
@@ -48,9 +50,9 @@ contract DE-AC04-94AL85000.}
 We present the \amesos\ project, which aims to define a set of general,
 flexible, consistent, reusable and efficient interfaces to direct solution
 software libraries for systems of linear equations on both serial and
-distributed memory architectures. \amesos\ is composed by a collection of pure
+distributed memory architectures. \amesos\ is composed of a collection of pure
 virtual classes, as well as several concrete implementations in the C++
-language. These classes allow to access the linear system matrix and vector
+language. These classes allow access to the linear system matrix and vector
 elements and their distribution, and control the solution of the linear
 system. We report numerical results that show that the overhead induced by the
 object-oriented design is negligible under typical conditions of usage. We
@@ -95,7 +97,7 @@ interfacing} one or more of these libraries with the application code of
 interest.  This usually involves the following steps. First, a library is chosen
 because of its robustness, performances in terms of CPU time and memory,
 documentation, usage, availability. Then, an interface between the application
-code and the library is written, and this usually requires storing the linear
+code and the library is written, and this may require storing the linear
 system matrix $A$ using the storage format required by the library. Finally, 
 the calling sequence is hard-wired in the final application code.
 The outlined process is typically repeated every time a new application is
@@ -104,7 +106,7 @@ developed, and every time a new solver is under consideration.
 \smallskip
 
 Note that,
-for distributed sparse solvers, no
+for both serial and distributed sparse solvers, no
 ``gold standard'' exists. Therefore, application developers aiming to solve
 (\ref{eq:linear_system}) generally have to look for a suitable
 library that meets their needs. The choice is affected by several criteria,
@@ -116,11 +118,13 @@ relatively simple problems, the performance is usually the key point, followed
 by memory usage. For complicated problems, and especially in industrial
 applications, reliability is of paramount importance.
 
-Once a library has been chosen, the application developers have to write a
-custom-made interface between the selected library and the application. This
-usually requires storing the linear system matrix $A$ using the storage format
-required by the library, then calling the correct sequence of instructions to
-factor the matrix and solve the linear system.  In our opinion, the approach
+% Once a library has been chosen, the application developers have to write a
+% custom-made interface between the selected library and the application. This
+% usually requires storing the linear system matrix $A$ using the storage format
+% required by the library, then calling the correct sequence of instructions to
+% factor the matrix and solve the linear system.  
+
+In our opinion, writing a custom interface between the selected library and the application
 is sub-optimal for both application and library developers because it:
 \begin{enumerate}
 
@@ -139,8 +143,8 @@ done only if the interface is already available;
 \item
 {\bf Produces maintenance problems}. Including the interfaces within
 the application code requires the application developers to
-manipulate the matrix format, the memory management, the calling
-conventions, and others, that can vary from one library to the
+manipulate the matrix format, the memory management, and the calling
+conventions, that can vary from one library to the
 following. Although not necessary difficult, these activities are
 usually time-consuming;
 
@@ -182,7 +186,7 @@ The \amesos\ design is based on the following requirements:
 %
 \item {\bf Simplicity of usage}. Solving linear system (\ref{eq:linear_system}) in a language
 like MATLAB is very easy, i.e.~one just writes \verb!x = A \ b!. It should not be much
-more difficult in a production code;
+more difficult in a non-MATLAB code;
 %
 \item {\bf Flexibility}. More than one algorithm/library must be available,
   for both serial and parallel architectures;
@@ -264,7 +268,9 @@ a {\tt Matrix} class which offers a standard calling sequence to access
 matrix elements. We suppose that each matrix row is assigned to exactly one
 processor, and it is easy to access all nonzero elements
 of any locally owned row by calling a {\tt GetRow()} method which returns the
-nonzero indices and values for the specified (local) row;
+nonzero indices and values for the specified (local) row\footnote{A row-based
+approach is adopted or supported by most parallel linear algebra libraries, like PETSc,
+AztecOO, Epetra and HYPRE.};
 a {\tt LinearProblem} class which contains the linear system matrix, the
 solution and the right-hand side vectors;
 a {\tt Solver} class that manages the underlying solver library. 
@@ -290,6 +296,11 @@ Both the solution and the right-hand side vectors are not required in this phase
 \verb!int Solve()! solves the linear system. This phase requires the
 solution and the right-hand side vectors.
 \end{itemize}
+Note that a concrete implementation may decide to skip the symbolic
+factorization (that is, the method returns without doing nothing) and perform
+the entire factorization within \verb!NumericFactorization()!. Equivalently,
+one can implement both factorization and solution within \verb!Solve()!, and
+let both factorization phases are no-operation methods.
 
 The design is organized
 as follows: each interface is defined by a class, derived from the
@@ -325,7 +336,7 @@ page
 \verb!http://software.sandia.gov/trilinos/packages/amesos!. More details on
 the usage of \amesos\ can found in~\cite{Amesos-Reference-Guide} and the
 on-line documentation, while the
-design is presented in great details in \cite{sala06design}.
+design is presented in greater details in \cite{sala06design}.
 
 %------------------------------------------------------------------------- 
 \section{Example of Usage and Numerical Results}
@@ -337,14 +348,13 @@ Although this particular example requires MPI, \amesos\ can be compiled with
 or without support for MPI.  (Clearly, distributed solvers are available only
 when compiled with MPI support.) The only \amesos\ include file is
 \verb!Amesos.h!, which does not include the header files of the supported
-library.  The required interface is specified by the string variable
-\verb!SolverType!, and is created by using the factory class \verb!Amesos!.
+library.  The required interface is created by using the factory class \verb!Amesos!.
 Factory classes are a programming tool that implements a sort of ``virtual
 constructor,'' in the sense that one can instantiate a derived (concrete)
 object while still working with abstract data types. The example reported in
 Figure~\ref{fig:example} adopts UMFPACK as a solver; however by using the
 factory class, other interfaces can be created by simply changing the
-parameter {\tt SolverType}. Note that the supported solver can be serial or
+input string. Note that the supported solver can be serial or
 parallel, dense or sparse: the user code still remains the same, except for
 the name of the solver; \amesos\ will take care of data redistribution if
 required by the selected solver.
@@ -360,23 +370,17 @@ required by the selected solver.
 #include "mpi.h"
 #include "Epetra_MpiComm.h"
 ...
-
 int main(int argc, char *argv[])
 {
   MPI_Init(&argc, &argv);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 
-  Epetra_Map* Map = <create map here, Interface 3.1>;
-  Epetra_MultiVector* x = <create solution vector here, Interface 3.2>;
-  Epetra_MultiVector* b = <create right-hand side here, Interface 3.2>;
-  Epetra_CrsMatrix* A = <create matrix here, Interface 3.3>;
+  <define Map, x, b, A>
 
   Epetra_LinearProblem Problem(A, x, b); // Interface 3.4
 
   Amesos Factory;                  // create a factory class
-  string SolverType = "Umfpack";   // selected interface
-  Amesos_BaseSolver* Solver;       // generic solver object, Int. 3.5
-  Solver = Factory.Create(SolverType, Problem); // create solver
+  Amesos_BaseSolver* Solver = Factory.Create("Umfpack", Problem);
 
   Teuchos::ParameterList List;     // allocate container for params,
   List.set("PrintTiming", true);   // set one in the container, then
@@ -395,8 +399,10 @@ int main(int argc, char *argv[])
  \\
  \hline
 \end{tabular}
-\caption{Example of code using \amesos. The code uses the \amesos\ interface to
-  UMFPACK to solve the linear system. The creation of the matrix, solution and
+\caption{Example of code using \amesos. The parallel code uses the \amesos\ interface to
+  the serial UMFPACK library to solve the linear system. \amesos\ takes care
+  of gathering the matrix and vectors on processor 0 and scattering the
+  solution as required. The creation of the matrix, solution and
     right-hand side are not reported.}
 \label{fig:example}
 \end{center}
@@ -404,12 +410,12 @@ int main(int argc, char *argv[])
 
 The example code of Figure~\ref{fig:example} has shown the facility of usage
 of \amesos. We now address the effectiveness of the interface.
-Figure~\ref{fig:results} reports the percentage of CPU time required by the
+Table~\ref{fig:results} reports the percentage of CPU time required by the
 \amesos\ interface with respect to the time required by the underlying
-library. We have considered the SuperLU and UMFPACK interface for the solution
-of all matrices in the FIDAP collection, available
-at~\cite{boisvert97matrix}. The matrix sizes range from 27
-({\tt FIDAP005}) to 22294 ({\tt FIDAPM11}). All problems are solved using a
+library. We have considered the SuperLU interface for the solution
+of some of the matrices in the FIDAP collection, available
+at~\cite{boisvert97matrix}. The matrix sizes range from 1159
+({\tt FIDAP032}) to 22294 ({\tt FIDAPM11}). All problems are solved using a
 1.67 GHz G4 processor with 1024 Mbytes of RAM, running MAC OS X 10.4 and gcc
 4.0.0. The table reports the percentage of the CPU time required by the
 interface with respect to the time required by the considered solver, and
@@ -430,16 +436,35 @@ structure containing the matrix. This solution is inelegant and requires
 knowledge of derived classes in the solver interface, but could greatly
 increase performance. 
 
-\begin{figure}
+\begin{table}
 \begin{center}
-\includegraphics[angle=90,width=12cm]{../AmesosOverview/interface_time.pdf}
+\begin{tabular}{p{5cm} r r r r}
+\hline
+Name  & $n$   & $nnz$  & $nnz / n$  & $\delta$ \\
+\hline
+\tt FIDAP015 & 6867  & 96421  & 14.04 &  2.89  \\
+\tt FIDAP018 & 5773  & 69335  & 12.01 &  2.14  \\
+\tt FIDAP019 & 12005 & 259863 & 21.64 &  3.34  \\
+\tt FIDAP020 & 2203  & 69579  & 31.58 &  1.77  \\
+\tt FIDAP031 & 3909  & 115299 & 29.49 &  3.51  \\
+\tt FIDAP032 & 1159  & 11343  & 9.786 &  4.84  \\
+\tt FIDAP033 & 1733  & 20315  & 11.72 &  13.1   \\
+\tt FIDAP035 & 19716 & 218308 & 11.07 &  2.53  \\
+\tt FIDAPM03 & 2532  & 50380  & 19.89 &  1.61  \\
+\tt FIDAPM11 & 22294 & 623554 & 27.96 &  0.403 \\
+\tt FIDAPM29 & 13668 & 186294 & 13.62 &  1.57  \\
+\hline
+\end{tabular}
 \caption{Additional time required by the \amesos\ interface with respect to the
-time required by the solver, for different matrices and solvers. $n$
-  represents the size of the matrix, and $nnz$ the total number of nonzeros.
+time required by the solver for different matrices. $n$
+  represents the size of the matrix, $nnz$ the total number of nonzeros, and
+$\delta$ is defined as (additional \amesos\ time)/(time spent within
+SuperLU)* 100.
 The results were obtained on a G4 1.67 GHz with 1 GByte of RAM.}
 \label{fig:results}
+
 \end{center}
-\end{figure}
+\end{table}
 
 %-----------------------------------------------------------------------------
 \section{Concluding Remarks}
@@ -511,6 +536,8 @@ MPI communicators defined in FORTRAN90. On some architectures it is difficult
 or even impossible to perform such a task. Some hacks may be required.
 %
 \item
+No support is offered for matrices in elemental format.
+\item
 It is almost impossible to support different releases of a given
 software library, because function names usually do not change from
 one version to the next, making it impossible for the linker to
@@ -526,7 +553,7 @@ by the presented design, but it could be easily added.
 There are no capabilities to obtain the $L$, $D$ and $U$ factors, or the
 reorderings $P$ and $Q$. This is because each supported package uses a
 different storage format and distribution. Reordering and scaling can be made
-library-independent by working the presented abstract interfaces.
+library-independent by extending the presented abstract interfaces.
 %
 \item
 Problematic user-package communications. Because of the high-level view, the
@@ -536,6 +563,12 @@ wrong set of parameters. \amesos\ classes automatically perform safety checks,
 it is often difficult to abstract the error
 messages from all supported libraries and report them in a uniform fashion.
 Users still need to consult the library's manual to decode the error messages.
+\item
+Finally, adding support for new direct
+solvers, or updating to newer versions of already supported libraries
+depends on the reactivity of the \amesos\ developers. The \amesos\ web page
+reports several mailing lists that can be used to communicate with developers.
+%
 \end{itemize}
 
 Despite these issues, we find that the presented set of interfaces
@@ -545,8 +578,8 @@ codes) can be used to easily connect intricate applications with
 state-of-the-art linear solver libraries, in a simple and
 easy-to-maintain way. From the point of view of application
 developers, the small amount of required code makes it very
-convenient to adopt a project like \amesos. For linear solver
-libraries' developers  writing one interface for their own solver
+convenient to adopt a project like \amesos. For the developers of linear solver
+libraries,  writing one interface for their own solver
 can help to make it applicable and testable to a vast range of
 applications.
 
