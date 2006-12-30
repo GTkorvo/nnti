@@ -516,7 +516,7 @@ outperform all others across all usages.
 %\end{table}
 
 An analysis of currently available direct solver libraries can be found
-in \cite{davis05summary}; see also~\cite[Section 6.7]{dongarra98numerical}.
+in \cite[Section 8.6]{davis06direct}; see also~\cite[Section 6.7]{dongarra98numerical}.
 A closer look at these solvers reveals the following major
 differences:
 \begin{enumerate}
@@ -846,46 +846,45 @@ sparse libraries are much more complicated than libraries for dense systems,
 #endif
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
-
 int main(int argc, char *argv[])
 {
+#ifdef HAVE_MPI
   MPI_Init(&argc, &argv);
-  Epetra_MpiComm comm(MPI_COMM_WORLD);
-  int indexBase = 0; // indices start from 0
+  Epetra_MpiComm Comm(MPI_COMM_WORLD);
+#else
+  Epetra_SerialComm Comm;
+#endif
 
-  // specifies the global size of the problem
-  int numGlobalElements n = 5 * Comm.NumProc();
-  // creates map, Interface 3.1, then the solution vector x and the
-  // right-hand side b (Interface 3.2), and the linear system matrix, Int. 3.3
-  Epetra_Map map(numGlobalElements, indexBase, comm);
-  Epetra_Vector x(map); x.PutScalar(0.0);
-  Epetra_Vector b(map); x.Random(0.0);
+  int n = 5 * Comm.NumProc(); // global size of problem
+  Epetra_Map map(n, 0, Comm);
+  Epetra_Vector x(map), b(map); b.Random();
   Epetra_CrsMatrix A(Copy, map, 0);
-  for (int LocalRow = 0; LocalRow < map.NumMyElements(); ++LocalRow) {
-    int GlobalRow = map.GID(LocalRow); // local-to-global mapping
-    A.InsertGlobalElements(GlobalRow, 1, 1.0, GlobalRow);
+
+  // loop over all local rows and insert nonzero elements
+  for (int LocalRow = 0; LocalRow < map.NumMyElements(); ++LocalRow) 
+  {
+    int    i   = map.GID(LocalRow); // global row ID
+    int    j   = i;                 // global col ID
+    double val = 1.0;               // value of (i, j) element
+    A.InsertGlobalValues(i, 1, &val, &j);
   }
   A.FillComplete();
 
-  Epetra_LinearProblem problem(A, x, b); // Interface 3.4
+  Epetra_LinearProblem problem(&A, &x, &b); 
 
   Amesos factory;                  // create a factory class
-  string solverType = argv[1];     // selected interface, for ex. "Umfpack"
-  Amesos_BaseSolver* solver;       // generic solver object, Int. 3.5
-  solver = factory.create(solverType, problem); // create solver
+  Amesos_BaseSolver* Solver = factory.Create(argv[1], problem);
 
-  Teuchos::ParameterList list;     // allocate container for params,
-  list.set("PrintTiming", true);   // set one in the container, then
-  solver->setParameters(list);     // pass the container to the solver
+  Solver->SymbolicFactorization(); // symbolic factorization
+  Solver->NumericFactorization();  // numeric factorization
+  Solver->Solve();                 // linear system solution
+  delete Solver;
 
-  solver->symbolicFactorization(); // symbolic factorization
-  solver->numericFactorization();  // numeric factorization
-  solver->solve();                 // linear system solution
-  delete solver;
-
+#ifdef HAVE_MPI
   MPI_Finalize();
+#endif
   return(EXIT_SUCCESS);
-} // end of main()
+} 
 \end{verbatim}
 \end{minipage} \\
  \\
@@ -893,10 +892,13 @@ int main(int argc, char *argv[])
 \end{tabular}
 \caption{Compilable example of code using the \amesos\ interface
   to solve a linear system. The solver is specified run-time as first
-argument of the command line. The map contains {\tt
-numGlobalElements} elements, in this case distributed linearly. The
+argument of the command line ({\tt argv[1]}). The map contains {\tt
+n} elements, in this case distributed linearly. The
 right-hand side is a random vector, and the matrix is a simple
-diagonal matrix, stored using the {\tt Epetra\_CrsMatrix} format. Note that the {\tt
+diagonal matrix, stored using the {\tt Epetra\_CrsMatrix} format. 
+The reader can create different matrices by changing the definition of the
+$(i,j)$ elements to be inserted.
+Note that the {\tt
 Epetra} implementation of Interface \ref{int:map} uses {\tt NumMyElements()}
 instead of {\tt getNumMyElements()} and {\tt GID()} instead of {\tt getGID()}.}
 \label{fig:example}
@@ -928,11 +930,13 @@ and {\tt PrintTiming()} that offer a standard way to access various
 statistics and timings for all packages.
 
 An example of usage of \amesos\ is reported in
-Figure~\ref{fig:example}. This simple example shows how to define a
-distributed linear system. For the sake of simplicity, the linear
-system matrix is diagonal; however it is easy to modify the code for
-more general cases. Note that a basic usage of \amesos\ only
-requires a basic knowledge of the Epetra and Teuchos packages of
+Figure~\ref{fig:example}, that shows how to define a
+serial or distributed linear system. For the sake of simplicity, the linear
+system matrix is diagonal; custom matrices can be easily produced by
+changing the \verb!for! loop, with the only constrain that each processor
+must insert matrix elements belonging to locally owned rows.
+Note that a basic usage of \amesos\ only
+requires a basic knowledge of the Epetra package of
 Trilinos; see for example~\cite{Trilinos-Tutorial}. The example can
 be compiled with or without MPI by properly defining \verb!HAVE_MPI!.
 (\amesos\ itself can be compiled with or without support for MPI.
@@ -944,15 +948,11 @@ the required actions. Although the example uses the
 \verb!Epetra_CrsMatrix! to define the matrix, any class that
 satisfies Interface~\ref{int:ami} can indeed be used. It is indeed
 quite easy to write wrappers for matrices that have quick access to
-row entries. Note that \verb!IndexBase! variable, which defines the
-base index. This value is typically set to 0, but it can  be 1 when
-FORTRAN arrays are to be used and one seeks to minimize the index
-conversion\footnote{{\tt indexBase} refers to the base index for the
-global numbering; the local numbering is always set to 0.}.
+row entries.
 
 The only \amesos\ include file is \verb!Amesos.h!, which does not include the
 header files of the supported library. The required interface is specified by
-the string variable \verb!SolverType!, and is created by using the factory
+\verb!argv[1]!, and is created by using the factory
 class \verb!Amesos!. Factory classes are a programming
 tool~\cite{alexandrescu01modern} that implements a sort of ``virtual
 constructor,'' in the sense that one can instantiate a derived (concrete)
