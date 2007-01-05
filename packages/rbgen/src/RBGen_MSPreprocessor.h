@@ -28,9 +28,9 @@ namespace RBGen {
 
     //! Initialize preprocessor
     void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params, 
-                     const Teuchos::RefCountPtr< FileIOHandler <Epetra_MultiVector> >& fileio );
+                     const Teuchos::RefCountPtr< FileIOHandler <Epetra_MultiVector> >& fileio = Teuchos::null );
 
-    void Reset() { isInitialized_ = false; };
+    void Reset() { isInitialized_ = false; }
     //@}
 
     //@{ @name Preprocess Methods
@@ -39,10 +39,15 @@ namespace RBGen {
     void Preprocess( Teuchos::RefCountPtr<Epetra_MultiVector>& ss );
     //@}
 
+    //@{ @name Return Methods
+
+    //! Return the multivector used to modify the snapshot set
+    Teuchos::RefCountPtr< Epetra_MultiVector > getMSVector() const { return msVector_; }
+
     //@{ @name Status Methods
 
     //! Return initialized status of the preprocessor
-    bool isInitialized() const { return isInitialized_; };
+    bool isInitialized() const { return isInitialized_; }
 
     //@}
   private:
@@ -50,17 +55,26 @@ namespace RBGen {
     //! Initialization flag.
     bool isInitialized_;
 
-    //! Steady state filename.
-    std::string steady_file_;
+    //! Preprocessing type
+    std::string preprocType_;
 
-    //! Steady state scaling.
-    double steady_scale_;
+    //! Input filename.
+    std::string input_file_;
+
+    //! Scalar Scaling.
+    double scale_;
 
     //! Scaling vector for the snapshots.
     std::vector< double > scalings_;
     
     //! Scaling indices for the snapshots.
     std::vector< std::pair<int,int> > scaling_idx_;
+	
+    //! Available preprocessing types
+    std::vector< std::string > preproc_types_;
+
+    //! Pointer to the multivector used to modify the snapshot set
+    Teuchos::RefCountPtr< Epetra_MultiVector > msVector_;
 
     //! Pointer to the File I/O Handler object.
     Teuchos::RefCountPtr< FileIOHandler< Epetra_MultiVector > > fileio_;
