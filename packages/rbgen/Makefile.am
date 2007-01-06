@@ -224,39 +224,3 @@ endif
 # 	--output-dir=@abs_top_builddir@/test/runtests-results \
 # 	--verbosity=1 \
 # 	--packages=rbgen
-
-#run-pyexamples:
-#	@echo
-#	@echo "=========================================="
-#	@echo "Running the Python/RBGen examples..."
-#	@echo "=========================================="
-#	@echo
-#	@echo "For more details, please refer to Trilinos/doc/check_installation.txt"
-#	@echo
-#	@$(PERL_EXE) $(TRILINOS_HOME_DIR)/commonTools/test/utilities/runtests \
-#	--trilinos-dir=$(TRILINOS_HOME_DIR) \
-#	--comm=$(RBGEN_CHECK_COMM) \
-#	--mpi-go="$(TRILINOS_MPI_GO)" \
-#	--build-dir=$(TRILINOS_BUILD_DIR) \
-#	--category=RBGenPyExamples \
-#	--output-dir=@abs_top_builddir@/test/runtests-results \
-#	--verbosity=1 \
-#	--packages=rbgen
-
-#run-pytests:
-#	@echo
-#	@echo "======================================="
-#	@echo "Running the Python/RBGen tests..."
-#	@echo "======================================="
-#	@echo
-#	@echo "For more details, please refer to Trilinos/doc/check_installation.txt"
-#	@echo
-#	@$(PERL_EXE) $(TRILINOS_HOME_DIR)/commonTools/test/utilities/runtests \
-#	--trilinos-dir=$(TRILINOS_HOME_DIR) \
-#	--comm=$(RBGEN_CHECK_COMM) \
-#	--mpi-go="$(TRILINOS_MPI_GO)" \
-#	--build-dir=$(TRILINOS_BUILD_DIR) \
-#	--category=RBGenPyTests \
-#	--output-dir=@abs_top_builddir@/test/runtests-results \
-#	--verbosity=1 \
-#	--packages=rbgen
