@@ -4,18 +4,26 @@
 
 Any successful collaborative software project (or any other type of
 collaborative project for that matter) is benefited by some degree of
-uniformity while still allowing for individuals to express there individuality
-and apply their personal preferences.  This document deals with C++ coding
-style and guidelines that is based primarily on the book ``C++ Coding
-Standards'' by Sutter and Alexandrescu {}\cite{C++CodingStandards05}.  The
-goal of this document is not to restate what is in this book but instead to
-fill in some gaps intentionally left by the authors and to provide exceptions
-and amendments to specific items in the book.
+uniformity while still allowing individuals to express there individuality and
+apply their personal preferences.  This document deals with C++ coding style
+and guidelines that is based primarily on the book ``C++ Coding Standards'' by
+Sutter and Alexandrescu {}\cite{C++CodingStandards05}.  These guidelines are
+specifically designed to address the development of object-oriented numerical
+libraries and to utilize the tools in the Trilinos package {}\texttt{Teuchos}.
+While the main purpose of of this document is to define guidelines for Thyra
+software (for both interfaces and adapters), it is also general enough to be
+applied to many other projects that, for instance, might interact with Thyra.
+
+The goal of this document is not to restate what is in
+{}\cite{C++CodingStandards05} but instead to fill in some gaps intentionally
+left by the authors and to provide exceptions and amendments to specific items
+in the book that is more appropriate for the types of software that we create
+and the environment in which we work.
 
 The zeroth item (first item, zero based) ``Don't seat the small stuff''
-intentionally avoids specific recommendations on issues such as the conventions
-for naming identifiers and the formatting of code since these are arbitrary.
-However, in Item 0, they do state:
+intentionally avoids specific recommendations on issues such as the
+conventions for naming identifiers and the formatting of code since these are
+arbitrary.  However, in Item 0, the authors do state:
 
 \begin{quote}
 
@@ -25,31 +33,47 @@ code.
 
 \end{quote}
 
-Therefore, the main purpose of this document is to define reasonable and
+In {}\cite{CodeComplete2nd04}, Steve McConnell makes a strong argument for
+groups to adopt a consistent coding standard, which includes reasonable
+guidelines for the formatting of source code.
+
+Therefore, one of the purpose of this document is to suggest reasonable and
 minimal guidelines for ``consistent formatting'' for C++ code that can
-facilitate collaborative code development and maintenance.  Consistent code
-formatting in a team of developers a feature of the Extreme Programming (XP)
-approach to software development {}\cite{ExtremeProgramming}.  In addition to
-code formatting, a consistent set of naming conventions for C++ classes,
-functions, variables, and other entities also helps to improve collaborative
-software development and quality.  Lastly, more important C++ coding
-guidelines are covered that append and amend to those described in
-{}\cite{C++CodingStandards05}.  While formatting recommendations that do not
-affect the meaning of C++ code will not be enforced, coding guidelines that do
-should be taken much more seriously.
+facilitate collaborative code development and maintenance.
 
 %
-\section{C++ Naming Conventions}
+% RAB: This needs to be discussed and I need to look more into this once
+% I get my XP book, 2nd edition.
+%
+% Consistent code
+% formatting in a team of developers is a feature of the Extreme Programming
+% (XP) approach to software development {}\cite{ExtremeProgramming}.
+
+Even more important that code formatting, a consistent set of naming
+conventions for C++ classes, functions, variables, and other entities also
+helps to improve collaborative software development and quality.  Also, since
+clients of the software must interact with these names, it is even more
+important that a set of naming conventions be used as consistently as makes
+sense.
+
+Lastly, more important C++ coding guidelines are covered that append and amend
+to those described in {}\cite{C++CodingStandards05}.  While formatting and
+naming recommendations do not affect the meaning of C++ code, other coding
+guidelines do and therefore they will recieve more attention and should be
+taken more seriously.
+
+%
+\section{Naming conventions}
 %
 
-Classes, functions, variables, data members etc. should be named and used in a
-consistent way.  The following guidelines are consistent with accepted
-practice as exemplified in [???,???,???,???].
+C++ classes, functions, variables, data members etc. should be named and used
+in a fairly consistent manner.  The following guidelines are consistent with
+accepted practice as exemplified in [???,???,???,???].
 
 \begin{enumerate}
 
 {}\item\textit{C++ class and struct names}: Names for C++ classes and structs
-should generally be capitalized and words should be concatenated and
+should generally be capitalized and seperate words should be concatenated and
 capitalized.  For example:
 
 {\small\begin{verbatim}
@@ -58,7 +82,7 @@ capitalized.  For example:
 
 {}\item\textit{C++ namespace names}: C++ namespaces should follow the same
 naming convention as C++ classes and namespace names should not contain too
-many acronyms and should not be too short.  For example:
+many acronyms and should not be too short or too common.  For example:
 
 {\small\begin{verbatim}
   namespace MyNameSpace {
@@ -88,6 +112,11 @@ definition of other types with the same basic name that contain other data.
 For example, {}\texttt{ESolveStatus} in an {}\texttt{enum} enumerating the
 different types of solve status and {}\texttt{SolveStatus} is a C++ struct
 that contains an {}\texttt{ESolveStatus} member along with some other data.
+
+{}\textit{rabartl note:} This convention is what is used in Thyra currently but it
+is somewhat unconventional.  This can be changed pretty easily but the
+quasi-namespacing aspect is very useful in general and should be kept in my
+opinion.
 
 {}\item\textit{C++ object instance identifier names}: Formal function
 arguments and other object identifiers should, in general, start with a
@@ -132,13 +161,13 @@ top-level C++ base class for some abstraction, such as a vector, should use
 the postfix {}\texttt{Base} appended to the class name (e.g.\
 {}\texttt{Vector\-Base}) and the base class should contain (almost) no
 implementations and certainly no object data (see Item 36 in
-{}\cite{C++CodingStandards05}).  If default implementations are desired to make
-it easer to define concrete subclasses, then they should be put in a node
-subclass with the postfix {}\texttt{DefaultBase} (e.g.\
-{}\texttt{Vector\-Default\-Base}).  Any default concrete implementations of an
-abstraction should generally use the prefix {}\texttt{Default} appended to the
-beginning of the name along with any other important prefixes (e.g.\
-{}\texttt{DefaultSpmdVector}).  For example:
+{}\cite{C++CodingStandards05}).  If a default implementation of some of the
+aspects of the base class are desired (to make it easer to define concrete
+subclasses), then they should be put in a derived node subclass with the
+postfix {}\texttt{DefaultBase} (e.g.\ {}\texttt{Vector\-Default\-Base}).  Any
+default concrete implementation of an abstraction should generally use the
+prefix {}\texttt{Default} appended to the beginning of the name along with any
+other important prefixes (e.g.\ {}\texttt{DefaultSpmdVector}).  For example:
 
 {\small\begin{verbatim}
   // Pure virtual base class 
@@ -178,19 +207,19 @@ beginning of the name along with any other important prefixes (e.g.\
 \end{enumerate}
 
 %
-\section{Naming and Organization of Source Files}
+\section{Naming and organization of source files}
 %
 
 Since most C++ code is organized around classes, the file structure should
 also primarily be organized around classes and the nonmember functions that
-interact with these classes.  The primary goal of the file naming guidelines
+interact with these classes.  The primary goal of these file naming guidelines
 is to create file names that are globally unique and will therefore facilitate
 {}\texttt{\#include}s without need for directory paths in the
-{}\texttt{\#include} statement.  The basic idea is that a source file should be
-named based on what it has, not where it is.  The following guidelines help to
-determine how to organize code into source files and how to name those source
-files.  The directory structure of source files is beyond the scope of this
-document.
+{}\texttt{\#include} statement.  The basic idea is that a source file should
+be named based on what it has, not where it is.  The following guidelines help
+to determine how to organize code into source files and how to name those
+source files.  The directory structure of source files is beyond the scope of
+this document.
 
 \begin{enumerate}
 
@@ -200,9 +229,9 @@ for C header files, {}\texttt{*.c} for C source files, and {}\texttt{*.f} for
 Fortran 77 source files.  These file names avoid common problems with
 portability to various Unix and Windows platforms.
 
-{}\item\textit{One major class and supporting code per header and source
-file}: As a general rule of thumb, assign the source code for any major C++
-class and supporting code to a single set of header and source files.  The
+{}\item\textit{Only one major C++ class and supporting code per header and
+source file}: As a general rule of thumb, assign the source code for any major
+C++ class and supporting code to a single set of header and source files.  The
 file name should be composed out of the namespace names enclosing the classes
 and other code along with the class name itself.  For instance, for the class
 {}\texttt{NameSpaceA\-::InnerNamespace\-::SomeClass}, the header and source
@@ -240,64 +269,279 @@ This is a amendment to Item 24 in {}\cite{C++CodingStandards05}
 \end{enumerate}
 
 %
-\section{Formating of Source Code}
+\section{Nonsytle coding guidelines}
+\label{thyracodingguidelines:codingguidelines:sec}
+%
+
+Coding guidelines, unlike formatting guidelines, do change the meaning of C++
+programs and therefore require a high level of priority.  The book ``C++
+Coding Standards'' {}\cite{C++CodingStandards05} that this document is
+primarily based on provides many good and important coding guidelines that
+should be followed and by default all of the items in this book are assumed in
+this document.  Here, we provide additional coding guidelines and, in some
+cases, amend items in {}\cite{C++CodingStandards05}.  Where this document is
+silent, {}\cite{C++CodingStandards05} is to be considered the authoritative
+source for guidance.
+
+%
+\subsection{General coding guidelines}
+%
+
+Below several different general coding guidelines are discussed.  These
+guidelines affect software quality in a major way and are not just a matter of
+personal preferences and styles.
+
+\begin{enumerate}
+
+{}\item\textit{Use the macro TEST\-\_FOR\-\_EXCEPTION(...) and its related
+macros for reporting all errors, even programming errors}: For developer
+errors, prefer to throw exceptions drived from
+{}\texttt{std\-::logic\-\_error} instead of using the {}\texttt{assert(...)}
+macro as recommended in {}\cite[Item 68]{C++CodingStandards05}.  A ``logic
+error'' would be treated differently from a real runtime error and would
+therefore come with different assumptions about the state of the object after
+the exception was thrown.  In particular, a ``real error'' (i.e. not just an
+internal developer error) should always provide the basic guarantee to leave
+the object in a valid state {}\cite[Item 71]{C++CodingStandards05}, while code
+that throws a ``logic error'' can not make any such guarantees in general.
+Therefore, objects that throw exceptions derived from
+{}\texttt{std\-::logic\-\_error} should generally be viewed as unusable and
+should be deleted immediately.  To enable debugging, a breakpoint can always
+be placed on function {}\texttt{Test\-For\-Exception\-\_break()}\footnote{In
+{}\texttt{gdb}, a breakpoint would be set as {}\texttt{b
+Test\-For\-Exception\-\_break()}.} which will be called just before an
+exception is thrown through these macros.  In the future, more sophisticated
+features like automatically attaching a debugger or printing the call stack
+may be added for some systems.  Therefore throwing an exception derived from
+{}\texttt{std\-::logic\-\_error} should be preferred to using
+{}\texttt{assert(...)} macro as it gives us more control over what happens
+when one of these types of programming errors occurs.
+
+{}\item\textit{Avoid the use of raw C++ pointers in all but the lowest level
+code}: The tools mentioned below which include {}\texttt{Teuchos::\-Ptr},
+{}\texttt{Teuchos::\-Ref\-Count\-Ptr}, {}\texttt{Teuchos::\-Array},
+{}\texttt{Teuchos::\-Array\-Ref\-Count\-Ptr}, and
+{}\texttt{Teuchos::\-Array\-View} allow most code to be written without any
+explicit raw C++ pointers.  Also, in general, perfer to use
+{}\texttt{std\-::string} instead of {}\texttt{char*} or {}\texttt{const
+char*}.  In debug mode, these classes allow for full runtime checking that
+result in exceptions being thrown and excellent error messages (i.e.\ instead
+of segfaults).  Indexing and other unchecked operations with
+{}\texttt{std\-::string} objects is much less common in numerical code and
+therefore is less likely to produce error inside of numerical code.
+
+{}\item\textit{Use Teuchos::Ptr as function arguments in the place of raw C++
+pointers to single objects where no persisting association exists}: ???
+
+{}\item\textit{Use Teuchos::ArrayView as function arguments in the place of
+pointers into raw arrays where no persisting association exists}: ???
+
+{}\item\textit{Prefer Teuchos::Array to std::vector as a contiguous general
+purpose data container}: While {}\texttt{Teuchos::\-Array} gets all of its
+real functionality from {}\texttt{std::\-vector}, prefer to use
+{}\texttt{Teuchos::\-Array} as we can provide more capabilities and built-in
+optional checking.  For instance {}\texttt{Teuchos::\-Array::\-operator[]} is
+range checked in debug mode regardless whether there is an underling checked
+STL implementation or not (see {}\cite[Item 83]{C++CodingStandards05}).  In
+addition, {}\texttt{Teuchos\-::Array} will automatically convert into an
+{}\texttt{Teuchos\-::ArrayView} object safely when used in function calls.
+
+{}\item\textit{Use Teuchos::RefCountPtr for memory management of single
+dynamically allocated objects and for handling persisting
+{}\cite{RefCountPtrBeginnersGuide} associations}: Replace all references to
+the class {}\texttt{boost::\-shared\_ptr} in all items in
+{}\cite{C++CodingStandards05} with {}\texttt{Teuchos::\-RefCountPtr}.
+
+{}\item\textit{Use Teuchos::ArrayRefCountPtr for memory management of
+dynamically allocated objects stored in contiguous arrays of data and for
+persisting associations involving contiguous arrays}: Note that
+{}\texttt{Teuchos::ArrayRefCountPtr} does {}\underline{not} take the place of
+a contiguous container class such as {}\texttt{Teuchos::\-Array} or
+{}\texttt{std::\-vector}.  A {}\texttt{Teuchos::ArrayRefCountPtr} object can
+not change the size of the array, it can only provide for reference counted
+sharing of an array of data of fixed size.
+
+{}\item\textit{Use namespace enclosure for the definition of member functions
+of a C++ class}: The member functions of a class should be defined in the same
+order as their declarations and should generally be defined within a namespace
+enclosure.  For example, given the declaration of
+
+{\small\begin{verbatim}
+  ----------------------------------
+  // SomeNamespace_SomeClass.hpp
+
+  namespace SomeNamespace {
+
+  class SomeClass {
+  public:
+    void someFunc();
+    ...
+  };
+
+  } // namespace SomeNamespace
+  ----------------------------------
+\end{verbatim}}
+
+the safest and one of the tersest ways to define the member functions in the
+source file is
+
+{\small\begin{verbatim}
+  ----------------------------------
+  // SomeNamespace_SomeClass.cpp
+
+  namespace SomeNamespace {
+
+  void SomeClass::someFunc()
+  {
+    ...
+  }
+
+  } // namespace SomeNamespace
+  ----------------------------------
+\end{verbatim}}
+
+{}\textit{Justification}: Using the namespace enclosure instead of a
+{}\texttt{using namespace SomeNamesapce} directive insures that you can never
+accidentally provide another definition for some other class member function
+in another namespace.  Explicit namespace qualification is not needed since if
+one misspells any part of the prototype, then the compiler will issue an error
+message.
+
+{}\item\textit{Use explicit namespace qualification for the definition of all
+nonmember C++ functions}: For example, for the nonmember function prototype
+
+{\small\begin{verbatim}
+  ----------------------------------
+  // SomeNamespace_someFunc.hpp
+
+  namespace SomeNamespace {
+
+  void someFunc( const int data );
+
+  } // namespace SomeNamespace
+  ----------------------------------
+\end{verbatim}}
+
+the safest way to define the nonmember function is
+
+{\small\begin{verbatim}
+  ----------------------------------
+  // SomeNamespace_someFunc.cpp
+
+  void Thyra::someFunc( const int data )
+  {
+    ...
+  }
+
+  ----------------------------------
+\end{verbatim}}
+
+{}\textit{Justification}: Using explicit namespace qualification avoids
+problems of spelling and other mistakes that can accidentally result in the
+definition of a new function {}\cite[Section 8.2]{stroustrup00}.  Such a
+mistake is caught at link time but can be very hard to figure out the root
+cause of the problem.
+
+%
+\subsection{Specification of formal arguments for C++ member and nonmember functions}
+%
+
+Here a convention for the specification of the formation arguments for C++
+member or nonmember functions is defined that leads to C++ code that is
+consistent looking, maximizes compile-time and run-time checking, and is as
+auto-documenting as possible.
+
+ToDo: Fill this in once I have written and tested Teuchos::ArrayView and
+Teuchos::Ptr classes.  No raw pointers!
+
+\end{enumerate}
+%
+\section{Formating of source code}
 \label{thyracodingguidelines:formatting:sec}
 %
 
 At the minimum, source code should be formatted consistently within a single
 file or a set of tightly coupled files {}\cite[Item 0]{C++CodingStandards05}.
 Ideally, source code should be formatted consistently enough across a code
-project so as not to cause undue difficultly in the share maintenance
-responsibilities and in performing code reviews.  Some consistency in
+project so as not to cause undue difficultly in shared maintenance and in
+performing code reviews {}\cite{CodeComplete2nd04}.  Some consistency in
 formatting helps and to facilitate multiple ownership and shared development
 of a collection of software, such as in Extreme Programming (XP)
 {}\cite{ExtremeProgramming}.  By ``formatting'' we generally refer to the use
 of whitespace in the line-to-line formating of the program or in the ordering
 of lines of code such that the meaning of the program to the compiler is
-unchanged\footnote{While technically changing the name of a class, function
-or variable changes the meaning of a program, if name changes are done in such
-a way as to avoid name collisions, then naming conventions also do not affect
+unchanged\footnote{While technically changing the name of a class, function or
+variable changes the meaning of a program, if name changes are done in such a
+way as to avoid name collisions, then naming conventions also do not affect
 the meaning of the program and are therefore very much related to other
-formatting issues such as the treatment of ``whitespace''.}  While handling of
-indentation styles can largely be automated {}\cite{ArtisticStyle} and
-therefore allow individual developers to work with any style they would like
-locally, there are other style issues that are not so easily amiable to
-tools.  Later, coding guidelines that do affect the meaning of a program are
-described in Section {}\ref{thyracodingguidelines:codingguidelines:sec}.
+formatting issues such as the treatment of ``whitespace''.}  The handling of
+indentation styles can largely be automated\footnote{Emacs supports multiple
+file-specific formatting styles for C++ and tools like Artistic Style
+{}\cite{ArtisticStyle} can format source files from the command line.  A
+flavor of the {}\texttt{vi} editor may also support indentation styles. } 
+which allows individual developers to work with any style they would like like
+for files that they create but also makes it easy for developers to edits
+files created by other developers and keep to their styles as well.  Later,
+coding guidelines that do affect the meaning of a program are described in
+Section {}\ref{thyracodingguidelines:codingguidelines:sec}.
 
 Our main goal in this section is to try to provide reasonable recommendations
-and preferences for those formating issues that are largely a matter of style
-and personal preference but at the same time affect the overall readability of
-the code and promote pair programming and joint ownership of the code
+for those formating issues that are largely a matter of style and personal
+preference but at the same time affect the overall readability of the code and
+promote pair programming and joint ownership of the code
 {}\cite{ExtremeProgramming}.  The formatting and indentation guidelines
-presented here try to reduce the amount of ``right drift'' that can occur with
-some common formatting and indentation styles.
+presented here are largely consistent with the recommendations in
+{}\cite[Chapter 31]{CodeComplete2nd04} and try to reduce the amount of ``right
+drift'' that can occur with some common formatting and indentation styles.
 
 These indentation guidelines outlined below can be largely automatically
-supported by Emacs by setting the following set of options in the
-{}\texttt{.emacs} initialization file:
-%
-{\small\begin{verbatim}
-  (custom-set-variables
-   '(c-basic-offset 2)
-   '(c-default-style "stroustrup")
-   '(c-label-minimum-indentation 0)
-   '(c-offsets-alist (quote ((case-label . +)
-      (inextern-lang . 0) (innamespace . 0))))
-   '(c-tab-always-indent t)
-   '(fill-column 78)
-   '(indent-tabs-mode nil)
-  )
-\end{verbatim}}
-%
-However, other formatting sytles are also possible.  In order to minimize the
-inconvenience
+supported by Emacs and are used by the custom style ``thyra'' defined in the
+emacs package file cc-thyra-styles.el\footnote{See
+{}\texttt{Trilinos/packages/thyra/emacs/README} for a description of the
+``thyra'' Emacs style}.  Other custom sytles can also be added to this file
+and used as well.  Any of these styles can be listed in each source file and
+therefore anyone using Emacs can automatically use a particular indentation
+style without having to fight the editor and manually reformat code.
 
-
-Below, specific recommendations are spelled out that try to conform to common
-practices but also try to avoid ``right drift'':
+Some general principles of good formatting, as described in {}\cite[Section
+31.1]{CodeComplete2nd04}, are:
 
 \begin{enumerate}
+
+{}\item\textit{Formatting should accurately and consistently show the logical
+structure of the code}: It is somewhat subjective what formatting sytles
+``show the logical structure'' of code but McConnell makes some good argments
+for some styles over others.  However, it is up the group of programmers to
+decide as a group what style items ``show the logical structure''.
+
+{}\item\textit{Formatting should improve the readability of the code for most
+people}: There are specific studies cited in {}\cite[Chapter
+31]{CodeComplete2nd04} that provide good evidience to prefer some styles over
+others.
+
+{}\item\textit{Formatted code should retain its formatting well in the face of
+modification; especially those performed by automatic tools}: Changing one
+line of code should not require changes to other lines of code to maintain the
+formatting style.
+
+{}\item\textit{Formatting style should follow the most most typical idioms
+unless one of the above principles are broken}: Where there is no good
+technical argument for one formatting sytle item over another, then the one
+that is ``more common'' should be chosen.  This is not advocated per-say
+in{}\cite[Chapter 31]{CodeComplete2nd04} but it is good idea to follow popular
+idioms in general where there are several equally good choices and therefore
+the decision is arbitrary of which to chose from.
+
+\end{enumerate}
+
+Below, specific recommendations are spelled out that try to conform to common
+practices but also try to avoid excessive ``right drift'':
+
+\begin{enumerate}
+
+{}\item\textit{The formatting style in any single file or group of closely
+related files should be the same}: This is recommended in {}\cite[Item
+0]{C++CodingStandards05}.
 
 {}\item\textit{Try to keep all text within the first 80 character columns}:
 Keeping most of the source code within the first 80 character columns helps to
@@ -311,22 +555,28 @@ column wide terminals.
 
 {}\item\textit{Indent with spaces and not tabs}: The amount of spaces to use
 per indentation level is up to the individual developer but an indentation of
-only {}\textit{two spaces} is recommended (and is set in the above
-{}\texttt{.emacs} initialization file options).  Whatever indentation amount
-is used, it should be consistent in at least each source and header file
-{}\cite[Item 0]{C++CodingStandards05}.  Emacs by default will put in a tab
-when the tab-width is equal to the number of indentation spaces.  Emacs can be
-told to always use spaces instead of tabs by setting:
+only {}\textit{two spaces} is recommended (and is set in the `Emacs `thyra''
+indentation style).  A study showed that an indentation offset of two-to-four
+spaces was optimal for code reading comprehension {}\cite[Section
+31.2]{CodeComplete2nd04}.  Whatever indentation amount is used, it should be
+consistent in at least each source and header file {}\cite[Item
+0]{C++CodingStandards05} (which can be enforced using a custom Emacs
+indentation style).  Emacs by default will put in a tab when the tab-width is
+equal to the number of indentation spaces.  Emacs can be told to always use
+spaces instead of tabs by setting:
 
 {\small\begin{verbatim}
-  (indent-tabs-mode nil)
+  (setq indent-tabs-mode nil)
 \end{verbatim}}
 
-in the {}\texttt{.emacs} file as shown above.
+in the in the indentation style (as is done in the ``thyra'' style).  However,
+it is easy to support different preferences for the amount of spaces to indent
+by using a user-defined indentation style for Emacs (sorry {}\texttt{vi}
+users).
 
 {}\textit{Justification}: ``Some teams legitimately choose to ban tabs
 ... when misused, turn indenting into out-denting and non-denting.''
-{}\cite{C++CodingStandards05}.
+{}\cite[Item 0]{C++CodingStandards05}.
 
 {}\item\textit{Do not indent source code inside of namespace enclosures,
 instead use commented end brackets}: Indenting for namespace enclosures
@@ -344,16 +594,15 @@ results unnecessary, and in some cases excessive, indentation.  Instead use,
   } // namespace MyNameSpace
 \end{verbatim}}
 
-{}\textit{Justification}: While indentation within namespaces is
-helpful in small example code fragments, it provides little help in
-showing namespace structure in more realistic code.  The use of
-commented end blocks is generally sufficient to show namespace
-structure and will not result in excessively indented code.  In
-addition, typically, each file will only contain code from one (or
-more nested) namespace and therefore indenting for namespaces provides
-no useful information.  Not indenting for namespace enclosures is also
-consistent with the ``ansi'', the ``kr'' and the ``linux'' styles as
-defined by Artistic Style [???].
+{}\textit{Justification}: While indentation within namespaces is helpful in
+small example code fragments, it provides little help in showing namespace
+structure in more realistic code.  The use of commented end blocks is
+generally sufficient to show namespace structure and will not result in
+excessively indented code.  In addition, typically, each file will only
+contain code from one (or more nested) namespace and therefore indenting for
+namespaces provides no useful information.  Not indenting for namespace
+enclosures is also consistent with the ``ansi'', the ``kr'' and the ``linux''
+styles as defined by Artistic Style {}\cite{ArtisticStyle}.
 
 {}\item\textit{C++ class and struct declaration indentation and layout}: C++
 class declarations should generally be laid out with {}\texttt{public}
@@ -397,8 +646,8 @@ should) also be applied to function definitions and function calls.
 
   \begin{enumerate}
 
-  {}\item\textit{Short prototypes}: Short function prototypes can be listed
-  on a single line.  For example,
+  {}\item\textit{List short function prototypes on one line if possible}: For
+  example,
 
   {\small\begin{verbatim}
   ReturnType someFunction( int arg = 0 );
@@ -413,35 +662,13 @@ should) also be applied to function definitions and function calls.
   or some other style for whitespace within '(...)' but the opening '(' should
   come directly after the function name in all cases.
 
-  {}\item\textit{Longer prototypes}: Function prototypes that can not
-  approximately fit on a single line in the first 80 character columns should
-  have the function arguments listed starting on the second line with one unit
-  of indentation (i.e. two spaces) from the function return type and function
-  name line.  For example, several different valid formats for a longer
-  function prototype are:
+  {}\item\textit{Indent arguments on continuation lines one offset for longer
+  prototypes}: Function prototypes that can not approximately fit on a single
+  line in the first 80 character columns should have the function arguments
+  listed starting on the second line with one unit of indentation (e.g. two
+  spaces) from the function return type and function name line.  For example,
+  several different valid formats for a longer function prototype are:
 
-  {\small\begin{verbatim}
-  ReturnType someFunction(
-    int                  arg1
-    ,bool                arg2
-    ,double*             arg3[]
-    ,const std::string   &arg4  = ""
-    );
-  \end{verbatim}}
-  
-  or
-  
-  {\small\begin{verbatim}
-  ReturnType someFunction(
-    int arg1
-    ,bool arg2
-    ,double* arg3[]
-    ,const std::string &arg4  = ""
-    );
-  \end{verbatim}}
-  
-  or
-  
   {\small\begin{verbatim}
   ReturnType someFunction(
     int arg1,
@@ -455,8 +682,8 @@ should) also be applied to function definitions and function calls.
   
   {\small\begin{verbatim}
   ReturnType someFunction(
-    int arg1, bool arg2, double* arg3[]
-    ,const std::string &arg4  = ""
+    int arg1, bool arg2, double* arg3[],
+    const std::string &arg4  = ""
     );
   \end{verbatim}}
   
@@ -464,64 +691,28 @@ should) also be applied to function definitions and function calls.
   
   {\small\begin{verbatim}
   ReturnType someFunction(
-    int arg1, bool arg2, double* arg3[]
-    ,const std::string &arg4 = "" );
+    int arg1, bool arg2, double* arg3[],
+    const std::string &arg4 = "" );
+  \end{verbatim}}
+  
+  or
+  
+  {\small\begin{verbatim}
+  ReturnType someFunction( int arg1, bool arg2,
+    double* arg3[], const std::string &arg4 = "" );
   \end{verbatim}}
 
   As shown above, the function arguments can be listed separately on different
-  lines, or in groups on sets of lines.  Comas separating function arguments
-  can appear at the end of the argument names or at the beginning of new
-  lines.  The ending parenthesis ')' can appear on the same line as the last
-  line of arguments or can appear alone on the last line.  Other formats are
-  possible also and can be appropriate in different situations.
+  lines, or in groups on sets of lines.  The arguments can begin on the same
+  line as the type + function name line on can start on the next line.  The
+  ending parenthesis ')' can appear on the same line as the last line of
+  arguments or can appear alone on the last line.  Other formats are possible
+  also and can be appropriate in different situations.
 
-  {}\textit{Justification}: The formatting of longer function prototypes shown
-  above differs from the most typical formatting which is to put at least the
-  first function argument on the same line as the function name and to align
-  other arguments up to the function opening '(' (see
-  {}\cite{JointStrikeFighterC++CodingStandard}) which looks like:
+  {}\textit{Justification}: See {}\cite[Section 31.1]{CodeComplete2nd04}.
   
-  {\small\begin{verbatim}
-  ReturnType someFunction( int arg1,
-                           bool arg2,
-                           double* arg3[],
-                           const std::string &arg4  = "" );
-  \end{verbatim}}
-  
-  The problem with the above indentation style is that is naturally leads to
-  lots of right drift, extending well past the 80th column in many cases.
-  This is especially apparent in class member function definitions that use
-  this same formatting style.  For example, if you have templated code, avoid
-  {}\textbf{using} directives {}\cite[Item 59]{C++CodingStandards05}, and have
-  any kind of long function name then you can end up with definitions that
-  look like:
-  
-  {\small\begin{verbatim}
-
-  void MultiVectorBase<Scalar>::acquireDetachedView( const Range1D& rowRng,  
-                                                     const Range1D& colRng,  
-                                                     RTOpPack::ConstSubMultiVectorView< Scalar >* sub_mv ) const
-  {
-    ...
-  }
-  \end{verbatim}}
-  
-  which leads to very long lines while the above proposed indentation style
-  leads to:
-  
-  {\small\begin{verbatim}
-  void MultiVectorBase<Scalar>::acquireDetachedView(
-    const Range1D& rowRng,  
-    const Range1D& colRng,  
-    RTOpPack::ConstSubMultiVectorView< Scalar >* sub_mv
-    ) const
-  {
-    ...
-  }
-  \end{verbatim}}
-  
-  The indentation style for function arguments recommended above helps to
-  avoid massive ``right drift'' in many types of cases.
+  This indentation style for function argumentshelps to avoid massive ``right
+  drift'' in many types of cases and simplifies maintenance.
 
   {}\item\textit{Return types can be listed on same line as the function name
   unless the line is too long}: A function prototype's return type should
@@ -549,200 +740,19 @@ definitions of a set of member functions the same as the ordering of there
 declarations in the class definition.  Maintaining the ordering of definitions
 and declarations makes the code more readable and more maintainable.  For
 example, if the function definitions are ordered the same as the declarations,
-it can be easy to see if a function definition is missing (i.e. that could be
-the cause of the link error that you are seeing).
+it can be easy to see if a function definition is missing (i.e.\ which could
+be the cause of the link error that you are seeing).
 
-{}\item\textit{Formatting of code blocks}: ???
+{}\item\textit{Formatting if/else if/else statements}: ???
 
-\end{enumerate}
+{}\item\textit{Formatting switch/case statements}: ???
 
-%
-\section{C++ Coding Guidelines}
-\label{thyracodingguidelines:codingguidelines:sec}
-%
-
-Coding guidelines, unlike formatting guidelines, do change the meaning of C++
-programs and therefore require a high level of priority.  The book ``C++
-Coding Standards'' {}\cite{C++CodingStandards05} that this document is
-primarily based on provides many good and important coding guidelines that
-should be followed and by default all of the items in this book are assumed in
-this document.  Here, we provide additional coding guidelines and, in some
-cases, amend items in {}\cite{C++CodingStandards05}.  There, where this
-document is silent, {}\cite{C++CodingStandards05} is to be considered the
-authoritative source for guidance.
-
-%
-\subsection{General Coding Guidelines}
-%
-
-Below several different general coding guidelines are discussed.  These
-guidelines are more a matter of real measures of software quality and less a
-matter of simply different personal preferences of style.
-
-\begin{enumerate}
-
-{}\item\textit{Use the macro TEST\-\_FOR\-\_EXCEPTION(...) and its related
-macros for reporting all errors, even programming errors}: For developer
-errors, prefer to derive the exception class thrown from
-{}\texttt{std\-::logic\-\_error} instead of using the {}\texttt{assert(...)}
-macro as recommended in {}\cite[Item 68]{C++CodingStandards05}.  A ``logic
-error'' would be treated differently from a real runtime error and would
-therefore come with different assumptions about the state of the object after
-the exception was thrown.  In particular, a ``real error'' (i.e. not just an
-internal developer error) should always provide the basic guarantee to leave
-the object in a valid state {}\cite[Item 71]{C++CodingStandards05}, while code
-that throws a ``logic error'' can not make any such guarantees in general.
-Therefore, objects that throw exceptions derived from
-{}\texttt{std\-::logic\-\_error} should generally be viewed as unusable and
-should be thrown away.  To enable debugging, a breakpoint can always be placed
-on {}\texttt{Test\-For\-Exception\-\_break()} which will be called just before
-an exception is thrown through these macros.  In the future, more
-sophisticated features like automatically attaching a debugger or printing
-the call stack may be added for some systems.  Therefore throwing an exception
-derived from {}\texttt{std\-::logic\-\_error} should be preferred to using
-{}\texttt{assert(...)} macro as it gives us more control over what happens
-when one of these types of programming errors occurs.
-
-{}\item\textit{Avoid the use of raw C++ pointers in all but the lowest level
-code}: The tools mentioned below which include {}\texttt{Teuchos::\-Ptr},
-{}\texttt{Teuchos::\-Ref\-Count\-Ptr}, {}\texttt{Teuchos::\-Array},
-{}\texttt{Teuchos::\-Array\-Ref\-Count\-Ptr}, and
-{}\texttt{Teuchos::\-Array\-View} allow most code to be written without any
-explicit raw C++ pointers.  Also, use {}\texttt{std\-::string} instead of
-{}\texttt{char*} or {}\texttt{const char*}.  In debug mode, these classes
-allow for full runtime checking that result in exceptions being thrown and
-excellent error messages (i.e.\ instead of segfaults).  Indexing and other
-unchecked operations with {}\texttt{std\-::string} objects is much less common
-in numerical code and therefore is less of an issue for numerical libraries.
-
-{}\item\textit{Use Teuchos::Ptr as function arguments in the place of raw C++
-pointers to single objects where no persisting association exists}: ???
-
-{}\item\textit{Use Teuchos::ArrayView as function arguments in the place of
-pointers into raw arrays where no persisting association exists}: ???
-
-{}\item\textit{Prefer Teuchos::Array to std::vector}: While
-{}\texttt{Teuchos::\-Array} gets all of its real functionality from
-{}\texttt{std::\-vector}, prefer to use {}\texttt{Teuchos::\-Array} as we can
-provide more capabilities and built-in optional checking.  For instance
-{}\texttt{Teuchos::\-Array::\-operator[]} is range checked in debug mode
-regardless whether there is an underling checked STL implementation or not
-(see {}\cite[Item 83]{C++CodingStandards05}).  In addition,
-{}\texttt{Teuchos\-::Array} will automatically convert into an
-{}\texttt{Teuchos\-::ArrayView} object safely when used in function call.
-
-{}\item\textit{Use Teuchos::RefCountPtr for memory management of single
-dynamically allocated objects and for handling persisting associations}:
-Replace all references to the class {}\texttt{boost::\-shared\_ptr} in all
-items in {}\cite{C++CodingStandards05} with {}\texttt{Teuchos::\-RefCountPtr}.
-
-{}\item\textit{Use Teuchos::ArrayRefCountPtr for memory management of
-dynamically allocated arrays objects stored in contiguous arrays of data for
-persisting associations involving these arrays}: Note that
-{}\texttt{Teuchos::ArrayRefCountPtr} does {}\underline{not} take the place of
-a contiguous container class such as {}\texttt{Teuchos::\-Array} or
-{}\texttt{std::\-vector}.  A {}\texttt{Teuchos::ArrayRefCountPtr} object can
-not change the size of the container, it can only provide for reference
-counted sharing of an array of data of fixed size.
-
-{}\item\textit{Definition of member functions of a C++ class}: The member
-functions of a class should be defined in the same order as their declarations
-and should generally use namespace enclosure.  For example, given the
-declaration of
-
-{\small\begin{verbatim}
-  ----------------------------------
-  // SomeNamespace_SomeClass.hpp
-
-  namespace SomeNamespace {
-
-  class SomeClass {
-  public:
-    void someFunc();
-    ...
-  };
-
-  } // namespace SomeNamespace
-  ----------------------------------
-\end{verbatim}}
-
-the safest and one of the tersest ways to define the member functions in the
-source file is
-
-{\small\begin{verbatim}
-  ----------------------------------
-  // SomeNamespace_SomeClass.cpp
-
-  namespace SomeNamespace {
-
-  void SomeClass::someFunc()
-  {
-    ...
-  }
-
-  } // namespace SomeNamespace
-  ----------------------------------
-\end{verbatim}}
-
-{}\textit{Justification}: Using the namespace enclosure instead of a
-{}\texttt{using namespace SomeNamesapce} directive insures that you can never
-accidentally provide another definition for some other class member function
-in another namespace.  Explicit namespace qualification is not needed since if
-one misspells any part of the prototype, then the compiler will issue an error
-message.
-
-{}\item\textit{Definition of nonmember C++ functions}: All nonmember
-functions should be defined using explicit namespace qualification.  For
-example, for the nonmember function prototype
-
-{\small\begin{verbatim}
-  ----------------------------------
-  // SomeNamespace_someFunc.hpp
-
-  namespace SomeNamespace {
-
-  void someFunc( const int data );
-
-  } // namespace SomeNamespace
-  ----------------------------------
-\end{verbatim}}
-
-the safest way to define the nonmember function is
-
-{\small\begin{verbatim}
-  ----------------------------------
-  // SomeNamespace_someFunc.cpp
-
-  void Thyra::someFunc( const int data )
-  {
-    ...
-  }
-
-  ----------------------------------
-\end{verbatim}}
-
-{}\textit{Justification}: Using explicit namespace qualification avoids
-problems of spelling and other mistakes that can result in the definition of a
-new function accidentally {}\cite[Section 8.2]{stroustrup00}.  Such a mistake
-is caught at link time but can be very hard to figure out the root cause of
-the problem.
-
-%
-\subsection{Specification of formal arguments for C++ member and nonmember functions}
-%
-
-Here a convention for the specification of the formation arguments for C++
-member or nonmember function is defined that leads to C++ code that is
-consistent looking, maximizes compile-time checking, and is as
-auto-documenting as possible.
-
-ToDo: Fill this in once I have written and tested Teuchos::ArrayView and
-Teuchos::Ptr classes.  No raw pointers!
+{}\item\textit{Formatting for and while loops}: ???
 
 \end{enumerate}
 
 %
-\section{Doxygen Documentation Guidelines}
+\section{Doxygen documentation guidelines}
 %
 
 Here a set of reasonable guidelines is stated for writing Doxygen (and plain
@@ -812,7 +822,7 @@ help verify at least parts of our documentation.
 \end{enumerate}
 
 %
-\subsection{General Doxygen Documentation Principles}
+\subsection{General doxygen documentation principles}
 %
 
 Now that some of the general goals for our Doxygen documentation have been
