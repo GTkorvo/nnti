@@ -35,11 +35,17 @@ code.
 
 In {}\cite{CodeComplete2nd04}, Steve McConnell makes a strong argument for
 groups to adopt a consistent coding standard, which includes reasonable
-guidelines for the formatting of source code.
+guidelines for the formatting of source code.  The arguments for adopting a
+consistent coding style are outlined in Appendix
+{}\ref{sec:arguments-for-consistent-style}.
 
 Therefore, one of the purpose of this document is to suggest reasonable and
 minimal guidelines for ``consistent formatting'' for C++ code that can
-facilitate collaborative code development and maintenance.
+facilitate collaborative code development and maintenance.  However, if
+multiple code formatting styles are to be used, then Appendix
+{}\ref{sec:reformatting-guidelines} gives guidelines for how developers are
+expected to conduct themselves when modifying and potentially reformatting
+each other's source files.
 
 %
 % RAB: This needs to be discussed and I need to look more into this once
@@ -202,7 +208,30 @@ other important prefixes (e.g.\ {}\texttt{DefaultSpmdVector}).  For example:
   };
 \end{verbatim}}
 
+{}\item\textit{Naming of const and non-const access functions}: In general,
+functions that return objects that are contained within the wrapper object
+should have the prefix {}\texttt{nonconst} added to the function that returns
+the non-const reference (or pointer) to the contained object.  For example,
 
+{\small\begin{verbatim}
+  class SomeClass {
+  public:
+    RefCountPtr<Part> getNonconstPart();
+    RefCountPtr<const Part> getPart() const;
+    ...
+  };
+\end{verbatim}}
+
+{}\textit{Justification}: The choice to name the access functions
+{}\texttt{getNonconstPart()} and {}\texttt{getPart()} as opposed to
+{}\texttt{getPart()} and {}\texttt{getConstPart()} is somewhat arbitrary.
+However, the former recommended convention of using {}\texttt{nonconst} should
+be preferred since access to parts is typically through constant objects which
+will therefore give access constant parts.  Also, a constant view of a part of
+an object is always cheaper that returning a non-constant view of the part
+(see the discussion of the ``generalized view'' idiom) and therefore to be
+safe and error on the side of efficiency, the non-constant access function
+should be harder to call than the constant access function.
 
 \end{enumerate}
 
@@ -269,7 +298,7 @@ This is a amendment to Item 24 in {}\cite{C++CodingStandards05}
 \end{enumerate}
 
 %
-\section{Nonsytle coding guidelines}
+\section{Coding guidelines}
 \label{thyracodingguidelines:codingguidelines:sec}
 %
 
@@ -467,21 +496,29 @@ project so as not to cause undue difficultly in shared maintenance and in
 performing code reviews {}\cite{CodeComplete2nd04}.  Some consistency in
 formatting helps and to facilitate multiple ownership and shared development
 of a collection of software, such as in Extreme Programming (XP)
-{}\cite{ExtremeProgramming}.  By ``formatting'' we generally refer to the use
-of whitespace in the line-to-line formating of the program or in the ordering
-of lines of code such that the meaning of the program to the compiler is
-unchanged\footnote{While technically changing the name of a class, function or
-variable changes the meaning of a program, if name changes are done in such a
-way as to avoid name collisions, then naming conventions also do not affect
-the meaning of the program and are therefore very much related to other
-formatting issues such as the treatment of ``whitespace''.}  The handling of
-indentation styles can largely be automated\footnote{Emacs supports multiple
-file-specific formatting styles for C++ and tools like Artistic Style
-{}\cite{ArtisticStyle} can format source files from the command line.  A
-flavor of the {}\texttt{vi} editor may also support indentation styles. } 
-which allows individual developers to work with any style they would like like
-for files that they create but also makes it easy for developers to edits
-files created by other developers and keep to their styles as well.  Later,
+{}\cite{ExtremeProgramming} (see Appendix
+{}\ref{sec:arguments-for-consistent-style} for an outline of the arguments for
+adopting a consistent code formatting style).  By ``formatting'' we generally
+refer to the use of whitespace in the line-to-line formating of the program or
+in the ordering of lines of code such that the meaning of the program to the
+compiler is unchanged\footnote{While technically changing the name of a class,
+function or variable changes the meaning of a program, if name changes are
+done in such a way as to avoid name collisions, then naming conventions also
+do not affect the meaning of the program and are therefore very much related
+to other formatting issues such as the treatment of ``whitespace''.}  The
+handling of indentation styles can largely be automated\footnote{Emacs
+supports multiple file-specific formatting styles for C++ and tools like
+Artistic Style {}\cite{ArtisticStyle} can format source files from the command
+line.  A flavor of the {}\texttt{vi} editor may also support indentation
+styles. } which allows individual developers to work with any style they would
+like like for files that they create but also makes it easy for developers to
+edits files created by other developers and keep to their styles as well.
+
+Appendix
+{}\ref{sec:reformatting-guidelines}
+
+
+  Later,
 coding guidelines that do affect the meaning of a program are described in
 Section {}\ref{thyracodingguidelines:codingguidelines:sec}.
 
@@ -525,12 +562,12 @@ line of code should not require changes to other lines of code to maintain the
 formatting style.
 
 {}\item\textit{Formatting style should follow the most most typical idioms
-unless one of the above principles are broken}: Where there is no good
+unless one of the above principles are broken}: When there is no good
 technical argument for one formatting sytle item over another, then the one
-that is ``more common'' should be chosen.  This is not advocated per-say
-in{}\cite[Chapter 31]{CodeComplete2nd04} but it is good idea to follow popular
-idioms in general where there are several equally good choices and therefore
-the decision is arbitrary of which to chose from.
+that is ``more common'' should be chosen.  This is not advocated per-say in
+{}\cite[Chapter 31]{CodeComplete2nd04} but it is a good idea in general to
+follow popular idioms when there are several equally good choices and
+therefore the decision is arbitrary.
 
 \end{enumerate}
 
@@ -540,8 +577,9 @@ practices but also try to avoid excessive ``right drift'':
 \begin{enumerate}
 
 {}\item\textit{The formatting style in any single file or group of closely
-related files should be the same}: This is recommended in {}\cite[Item
-0]{C++CodingStandards05}.
+related files should be the same}: Consistent formatting includes the placment
+of braces, the number spaces to indent etc.  {}\textit{Justification}: This is
+recommended in {}\cite[Item 0]{C++CodingStandards05}.
 
 {}\item\textit{Try to keep all text within the first 80 character columns}:
 Keeping most of the source code within the first 80 character columns helps to
