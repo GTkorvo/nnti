@@ -47,7 +47,6 @@ namespace SundanceUtils
     for (unsigned int i=0; i<path.size(); i++)
       {
         ifstream fileToTry((path[i] + pathSep + name).c_str());
-        cout << "looking at " << path[i] + pathSep + name << endl;
         if (!fileToTry) continue;
         return path[i] + pathSep + name;
       }
