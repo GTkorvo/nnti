@@ -1,0 +1,531 @@
+\documentclass[pdf,ps2pdf,11pt]{SANDreport}
+\usepackage{pslatex}
+
+%Local stuff
+\usepackage{graphicx}
+\usepackage{latexsym}
+\input{rab_commands}
+
+% If you want to relax some of the SAND98-0730 requirements, use the "relax"
+% option. It adds spaces and boldface in the table of contents, and does not
+% force the page layout sizes.
+% e.g. \documentclass[relax,12pt]{SANDreport}
+%
+% You can also use the "strict" option, which applies even more of the
+% SAND98-0730 guidelines. It gets rid of section numbers which are often
+% useful; e.g. \documentclass[strict]{SANDreport}
+
+% ---------------------------------------------------------------------------- %
+%
+% Set the title, author, and date
+%
+
+\title{\center
+Pure Nonmember Function Interfaces to Abstract C++ Classes}
+\author{
+Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\ Sandia National
+Laboratories\footnote{ Sandia is a multiprogram laboratory operated by Sandia
+Corporation, a Lockheed-Martin Company, for the United States Department of
+Energy under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA, \\ }
+\date{}
+
+% ---------------------------------------------------------------------------- %
+% Set some things we need for SAND reports. These are mandatory
+%
+\SANDnum{SAND2007-xxx}
+\SANDprintDate{??? 2007}
+\SANDauthor{
+Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
+}
+
+% ---------------------------------------------------------------------------- %
+% The following definitions are optional. The values shown are the default
+% ones provided by SANDreport.cls
+%
+\SANDreleaseType{Unlimited Release}
+%\SANDreleaseType{Not approved for general release}
+
+% ---------------------------------------------------------------------------- %
+% The following definition does not have a default value and will not
+% print anything, if not defined
+%
+%\SANDsupersed{SAND1901-0001}{January 1901}
+
+% ---------------------------------------------------------------------------- %
+%
+% Start the document
+%
+\begin{document}
+
+\maketitle
+
+% ------------------------------------------------------------------------ %
+% An Abstract is required for SAND reports
+%
+
+%
+\begin{abstract}
+%
+A pure nonmember function interface to an abstract C++ class might provide the
+best approach for keeping clean minimal interfaces, insulating client code
+from changes to the interface, and providing a uniform interface when other
+nonmember nonfriend functions are used.
+%
+\end{abstract}
+%
+
+% ------------------------------------------------------------------------ %
+% An Acknowledgement section is optional but important, if someone made
+% contributions or helped beyond the normal part of a work assignment.
+% Use \section* since we don't want it in the table of context
+%
+%\clearpage
+%\section*{Acknowledgment}
+%
+%
+%The format of this report is based on information found
+%in~\cite{Sand98-0730}.
+
+% ------------------------------------------------------------------------ %
+% The table of contents and list of figures and tables
+% Comment out \listoffigures and \listoftables if there are no
+% figures or tables. Make sure this starts on an odd numbered page
+%
+\clearpage
+\tableofcontents
+%\listoffigures
+%\listoftables
+
+% ---------------------------------------------------------------------- %
+% An optional preface or Foreword
+%\clearpage
+%\section{Preface}
+%Although muggles usually have only limited experience with
+%magic, and many even dispute its existence, it is worthwhile
+%to be open minded and explore the possibilities.
+
+% ---------------------------------------------------------------------- %
+% An optional executive summary
+%\clearpage
+%\section{Summary}
+%Once a certain level of mistrust and scepticism has
+%been overcome, magic finds many uses in todays science
+%and engineering. In this report we explain some of the
+%fundamental spells and instruments of magic and wizardry. We
+%then conclude with a few examples on how they can be used
+%in daily activities at national Laboratories.
+
+% ---------------------------------------------------------------------- %
+% An optional glossary. We don't want it to be numbered
+%\clearpage
+%\section*{Nomenclature}
+%\addcontentsline{toc}{section}{Nomenclature}
+%\begin{itemize}
+%\item[alohomora]
+%spell to open locked doors and containers
+%\end{itemize}
+
+% ---------------------------------------------------------------------- %
+% This is where the body of the report begins; usually with an Introduction
+%
+\SANDmain % Start the main part of the report
+
+%
+\section{Introduction}
+%
+
+Object-oriented programming has been used and refined for many decades in a
+variety of programming languages.  Some of the most basic descriptions of
+object orientation speak of {}\textit{programming with objects} and refer to
+such concepts as {}\textit{object methods}, {}\textit{polymorphism}, and
+{}\textit{encapsulation}.  These concepts can be expressed in different ways
+in different programming languages and each language lends itself to different
+idioms for how object orientation is to be used to its fullest.  Here we focus
+on the C++ language and combine some of the more modern idioms being advocated
+in C++ to propose an extension involving the consistent use of nonmember
+functions to encapsulate external clients of an abstract interfaces from the
+details and changes to the interface.  Here we will draw on the advice of
+several respected authors on C++ programming
+{}\cite{C++CodingStandards05,EffectiveC++3rd??}.
+
+The focus here is on issues related to object-oriented programming in the C++
+language and specifically the interaction between an abstract interface
+(consisting of pure virtual functions), clients that use objects through the
+interface, and subclasses of the interface that provide concrete
+implementations of all of the member functions.
+
+Our main goal here is to describe an approach for developing C++ interfaces
+and encapsulation mechanisms which protect clients of an abstract C++
+interface from changes to the interface's virtual functions.  This is
+especially critical when the interface represents an important
+interoperability mechanism and is part of a library which may have many
+diverse and unaccessible external clients which the library developers can not
+directly change.
+
+What we want is to have an approach to developing, maintaining, and using
+abstract C++ interfaces that:
+
+\begin{itemize}
+
+{}\item\textit{Provides for the absolute minimal abstract C++ interfaces}: An
+abstract C++ interface is the critical specification of the capabilities of an
+object which must be able to cover the needs of a large set of potential
+clients and allow great flexibility and efficiency in the implemenation of
+subclasses.  The more minimal an interface is, the more likely it will be
+adopted for a larger community and the easier it will be to develop powerful
+``Decorator'', ``Composite'' and other such general subclasses.  Minimal and
+efficient interfaces are especially critical for interoperability.  The
+integrity and the quality of the interface should suffer from having been
+developed and used for many different clients which resulted in poor quality
+maintaince.
+
+{}\item\textit{Maintains a uniform, consistent, and convenient interface for
+the clients of the abstract interface}: We want clients to be able to access
+the capabilities of the object in a clean way that is robust to changes in the
+interface.
+
+{}\item\textit{Avoids many of the Gotchas associated with object oriented
+programming in C++}: In particualar, we want to avoid problems associated with
+overloaded virtual functions {}\cite[Item ???]{C++Gotchas???}, virtual
+functions with default arguments {}\cite[Item ???]{C++Gotchas???}, and other
+such problems.
+
+{}\item\textit{Allows for changes to an abstract interface's virtual function
+set in such as way consistent with the above goals}: As requirements become
+more clear or change over the life cycle of a piece of software, changes to
+the specification of the virtual function set will be inevitable in order to
+satisfy the new requirements in an efficient an safe way, and to maintain a
+minimal interface.  We want to avoid a sub-standard abstract interface that is
+cluttered with backward-compatiable functions for older clients.
+
+\end{itemize}
+
+In particular, two idoms have been advocated that are designed to address many
+of the above issues: The Nonvirtual Interface (NVI) idiom {}\cite[Item
+39]{C++CodingStandards05}, and the non-member function idiom {}\cite[Item
+44]{C++CodingStandards05}.  Other guidelines that are pertinent to our
+discussion are ``perfer minimal classes to monolithic classes'' {}\cite[Item
+33]{C++CodingStandards05}, ``perfer providing abstract interfaces''
+{}\cite[Item 36]{C++CodingStandards05}, ``practice safe overridding''
+{}\cite[Item 38]{C++CodingStandards05} {}\cite[Gotcha 74]{C++Gotchas03}, and
+``avoid overloading virtual functions'' {}\cite[Gotcha 73]{C++Gotchas03}.
+
+The Nonvirtual Interface (NIV) idiom [???] advocates making all virtual
+functions non-public (i.e.\ either private or protected) and making all public
+functions nonvirtual.  For example, we might have an interface that looks like:
+
+{\small\begin{verbatim}
+  class BlobBase {
+  public:
+    // Non-virtual public interface
+    void foo(int a=0) { implNonconstFoo(a); }
+    void foo(int a=0) const { implFoo(a); }
+  protected: // or private:
+    // Pure virtual non-public functions to be overridden
+    virtual void implNonconstFoo(int a) = 0;
+    virtual void implFoo(int a) const = 0;
+  };
+\end{verbatim}}
+
+The details of the NVI idiom are given in {}\cite[Item
+???]{C++CodingStandards05} and {}\cite[Item ???]{EffectiveC++3rd??} but
+basically the idiom allows clients to call regular member functions and
+overloaded member function on the object without the problems associated with
+overloaded virtual functions and it also avoids problems with default function
+arguments since the default values are only defined in the non-public,
+nonvirtual function interface.
+
+Another idiom that is advocated in {}\cite[Item 44]{C++CodingStandards05} and
+{}\cite[Item ???]{EffectiveC++3rd??} is to perfer writing a function as a
+nonmember function unless it needs access to private data.  This increases
+encapsulation and improves modularity.  Typically, this idiom is described in
+the context of concrete classes which actually have private data, but it is
+applicable for abstract interfaces as well.  If some capability can be
+performed just using the existing public interface, then that capability
+should be implemented as a nonmember function.  Adding another nonvirtual
+function to the interface (or worse making the new function virtual with a
+default implementation) mostly just clutters up the abstract interface and
+complicates maintenance.  For example, some function {}\texttt{goo(...)} could
+be implemented in terms of {}\texttt{BlobBase\-::foo(int)} as:
+
+{\small\begin{verbatim}
+  void goo( BlobBase &obj ) {
+    obj.foo(0);
+    obj.foo(1);
+  }
+\end{verbatim}}
+
+The NVI idiom and ``nonmember function'' idiom, can and should be used
+together, but they are also somewhat at odds with each other.  The NVI idiom
+means that all operations that are directly implemented as a virtual function
+on the abstract interface would be accessed using the corresponding public
+nonvirtual member function.  The ``nonmember function'' idiom means that all
+other functions would be implemented as nonmember nonfriend functions.
+However, the straigtforward combination of these two idiom has several
+disadvantages:
+
+\begin{itemize}
+
+{}\item\textit{Client interface is a mix of member and nonmember functions}:
+The most obvious disadvantage of having an interface composed of both
+nonmember and member functions is that it can be hard for the developers of
+client code to remember how to call an operation.  Is it
+{}\texttt{obj.foo(i)}, or it is {}\texttt{foo(obj,i)}?
+
+{}\item\textit{Changes the virtual function structure in the abstract
+interface are difficult for clients to handle}: A change to the virtual
+function structure requires that either clients be changed or that the
+interface be polluted with public functions that no longer need direct access
+to the nonpublic virtual functions.  For example, what if requirements for the
+abstract interface change such that it would be beneficial, from a design
+point of view, to change the specification of a virtual function.  The change
+might involve a modification to the signiture and/or the behavior of the
+function.  Such a change in the virtual function would naturally involve a
+similar change in the corresponding public nonvirtual member function that
+calls the virtual function.  Let's also assume that the current capability of
+the function in question can be maintained through a simple function that
+calls the newly updated function.  Now the problem; how do we implement this
+change without impacting the current clients of the interface?  There are one
+of two possibilities: a) move the function from a member function to a
+nonmember function, or b) leave the current public nonvirtual member function
+in the abstract interface and make it call the newly updated member function.
+Both of these chocies are fraught with problems.
+
+\end{itemize}
+
+Let's examine the two possibilities for handling changes to the virtual
+function structure of the abstract interface mentioned above.
+
+First, if we want to keep the abstract interface minimal, then we want to
+choose option 'a' which involves moving the old public nonvirtual member
+function out of the interface nad making it a nonmember nonfriend function.
+However, that would require changing the syntax by which all clients that
+currently call the function.  This change is simple to make since one just
+needs to replace {}\texttt{obj.foo(...)} with {}\texttt{foo(obj,...)} and one
+could almost write a script to perform the refactoring.  However, this type of
+automated refactoring could never be performed 100\% correctly and preexisting
+clients outside of our control (i.e.\ clients of our libraries) could not be
+changed easily.
+
+Second, if we want to minimize the impact on existing clients (i.e.\ if our
+library is widely used by external clients out of our control), then we wnat
+to choose optioion 'b' to leave the old public nonvirtual function in the
+abstract interface and to augment the interface with the new public nonvirtual
+function corresponding to the refactored nonpublic virtual function.  The
+problem with this approch of course is that it no longer maintains a minimal
+clean interface.  Over time, such refactorings will result in a bloat of the
+abstract interface which is discouraged by many experts in object-oriented
+programming in C++ {}\cite[Item 33]{C++CodingStandards05}.
+
+In the next section, an approach for addressing the problems of combining
+these two idioms is presented which involves the adoption of a pure nonmember
+function interface.
+
+%
+\section{The Pure Nonmember Function Interface Idiom}
+%
+
+Here we present an variation of the NVI idiom that is more complementary with
+the ``nonmember function'' idiom.  The idea is the replace the pubic
+nonvirtual member functions in the abstract interface with nonmember friend
+functions.  Therefore, a simple interface using the ``pure nonmember function
+interface'' idiom would look like:
+
+{\small\begin{verbatim}
+  namespace SomeNamespace {
+
+  class class BlobBase;
+
+  // Forward prototypes for nonmember functions that
+  // will directly call virtual functions
+  void foo( BlobBase & obj, int a=0);
+  void foo( const BlobBase & obj, int a=0);
+
+  class BlobBase {
+    friend void foo( BlobBase & obj, int a);
+    friend void foo( const BlobBase & obj, int a);
+  protected: // or private:
+    // Pure virtual non-public functions to be overridden
+    virtual void implNonconstFoo(int a) = 0;
+    virtual void implFoo(int a) const = 0;
+  };
+
+  } // namespace SomeNamespace
+\end{verbatim}}
+
+{}\noindent{}and the nonmember friend functions would be implemented as:
+
+{\small\begin{verbatim}
+  void SomeNamespace::foo( BlobBase & obj, int a)
+  {
+    foo.implNonconstFoo(a);
+  }
+
+  void SomeNamespace::foo( const BlobBase & obj, int a)
+  {
+    foo.implFoo(a);
+  }
+\end{verbatim}}
+
+Other functions that can be implemented in terms of the existing capabilities
+on the object without requiring special access would be implemented as
+nonmember nonfriend functions such as:
+
+{\small\begin{verbatim}
+  void goo( BlobBase &obj ) {
+    foo(obj,0);
+    foo(obj,1);
+  }
+\end{verbatim}}
+
+This appraoch has all of the same advantages of the NIV idiom with respect to
+allowing for overloading without problems and for allowing for a single
+defintion of default parameter values.  Note that it is critical that the
+virtual functions themselves must remain non-public since we can't allow
+clients to be calling these directly (for lots of reasons) and therefore,
+these special nonmember functions must be friends.  Even through at first
+sight replacing the public nonvirtual member functions with corresponding
+nonmember friend functions looks to be more completed, there are several
+advantages to doing this:
+
+\begin{itemize}
+
+{}\item\textit{The client accesses capabilities in a more consistent way}: For
+example, a client would invoke every operation on an object using a nonmember
+function, independent of how that function was treated.  For example, the
+client would call {}\texttt{foo(obj)} or {}\texttt{goo(obj)} consistently as
+nonmember functions without having to worry how these are implemented now or
+in the future.
+
+{}\item\textit{Changes to the structure of the virtual function set can be
+handed without affecting clients and without cluttering the abstract
+interface}: If a virtual function needs to be modified in some significant
+way, the nonmember function that calls that virtual function can be changed,
+and the old nonmember friend function can be turned into a plain nonmember
+nonfriend function and removed from the abstract interface.
+
+\end{itemize}
+
+To see how changes to the virtual function structure can be handled without
+impacting clients (other than require that they be recompiled), consider a new
+set of requirements where the {}\texttt{foo()} functions need to be changed to
+accept a {}\texttt{Bar} object (represented through its own abstract
+interface) instead of just an integer, and also needs to accept an extra
+boolean argument.  The update to the virtual functions and the direct
+nonmember friend functions would look something like:
+
+{\small\begin{verbatim}
+  namespace SomeNamespace {
+
+  class Bar;
+  class BlobBase;
+
+  // Forward prototypes for nonmember functions that
+  // will directly call virtual functions
+  void foo( BlobBase& obj, const Bar &bar, bool useDog = false );
+  void foo( const BlobBase& obj, const Bar &bar, bool useDog = false );
+
+  class BlobBase {
+    friend void implNonconstFoo( BlobBase& obj, const Bar &bar, bool useDog );
+    friend void implFoo( const BlobBase& obj, const Bar &bar, bool useDog );
+  protected: // or private:
+    // Pure virtual non-public functions to be overridden
+    virtual void implNonconstFoo( const Bar &bar, bool useDog ) = 0;
+    virtual void implFoo( const Bar &bar, bool useDog ) const = 0;
+  };
+
+  } // namespace SomeNamespace
+\end{verbatim}}
+
+{}\noindent{}where the direct nonmember friend functions now have the
+implementation:
+
+{\small\begin{verbatim}
+  void SomeNamespace::foo( BlobBase & obj, const Bar &bar, bool useDog )
+  {
+    foo.implNonconstFoo(bar,useDog);
+  }
+
+  void SomeNamespace::foo( const BlobBase & obj,  const Bar &bar, bool useDog )
+  {
+    foo.implFoo(bar,useDog);
+  }
+\end{verbatim}}
+
+Now, what about all of the clients that relied on the old definition of the
+{}\texttt{foo()} functions?  In this case, let's assume that the old meaning
+and behavior of the {}\texttt{foo()} functions can be retained by using a
+default implementation of {}\texttt{Bar} called {}\texttt{DefaultBar} and a
+value of {}\texttt{useDog=false} which gives the following nonmember nonfriend
+functions:
+
+{\small\begin{verbatim}
+  void SomeNamespace::foo( BlobBase & obj, int a)
+  {
+    foo(obj,DefaultBar(a),false);
+  }
+
+  void SomeNamespace::foo( const BlobBase & obj, int a)
+  {
+    foo(obj,DefaultBar(a),false);
+  }
+\end{verbatim}}
+
+The above new nonmember nonfriend {}\texttt{foo()} function overloads could
+then be included in the same file as the other ``standard'' nonmember
+functions where {}\texttt{goo()}, for instance, is also declared and defined.
+After this refactoring, clients that currently use expressions like
+{}\texttt{foo(obj,0)} now just need to be recompiled and that is it!
+
+%
+\section{The Full Impact of Changing Virtual Functions}
+%
+
+As mentioned eariler, there are clarifications, changes, and augmentations to
+requirements for software that beg for changes in the structure and behavior
+of the virtual funtions on an abstract interface.  The ``pure nonmember
+function interface'' idiom described above takes care of insulating clients
+from most types of changes to the virtual function set, but how do these
+changes affect subclasses of the abstract C++ interface that override virtual
+functions?  There are two main categories of subclasses of abstract C++
+interfaces that are most important: a) those that are owned and controled by
+the library, and b) those that are developed but external users out of the
+control of the library.  Subclasses can also be classified as i) those that
+are direct subclasses of the base abstract interface (e.g.\ such as
+``Decorator'' and ``Composite'' subclasses), and ii) those that are indirect
+subclasses of the base abstract interface.  Any subclasses that are owned by
+or accessible by the library developers can be easily changed is most cases.
+Also, indirect subclasses can also largely be insulated from changes to the
+base abstract interface in many cases if the intermediate subclasses are
+designed well.  The key then is to create a set of appropriate intermediate
+subclasses, tailored to specific types of use cases, owned by the library,
+that most external subclass will derive from.  The remaining stumbling block
+are those inaccessible external subclasses that directly derive from the base
+abstract interface (i.e.\ type 'b.i' subclasses as defined above).
+
+Graphically, the impact of changing the virtual functions in a base interface
+class are shown in Figure ???
+
+ToDo: Give some good examples of this!
+
+ToDo: Show the class digram mentioned above!
+
+% ---------------------------------------------------------------------- %
+% References
+%
+\clearpage
+\bibliographystyle{plain}
+\bibliography{references}
+\addcontentsline{toc}{section}{References}
+
+% ---------------------------------------------------------------------- %
+% Appendices should be stand-alone for SAND reports. If there is only
+% one appendix, put \setcounter{secnumdepth}{0} after \appendix
+%
+%\appendix
+%\input{apdx_CodeReformattingGuidelines.tex}
+
+%\begin{SANDdistribution}
+%\end{SANDdistribution}
+
+\end{document}
