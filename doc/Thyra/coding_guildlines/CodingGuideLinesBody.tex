@@ -2,71 +2,48 @@
 \section{Introduction}
 %
 
-Any successful collaborative software project (or any other type of
-collaborative project for that matter) is benefited by some degree of
-uniformity while still allowing individuals to express there individuality and
-apply their personal preferences.  This document deals with C++ coding style
-and guidelines that is based primarily on the book ``C++ Coding Standards'' by
-Sutter and Alexandrescu {}\cite{C++CodingStandards05}.  These guidelines are
-specifically designed to address the development of object-oriented numerical
-libraries and to utilize the tools in the Trilinos package {}\texttt{Teuchos}.
-While the main purpose of of this document is to define guidelines for Thyra
-software (for both interfaces and adapters), it is also general enough to be
-applied to many other projects that, for instance, might interact with Thyra.
+This document deals with C++ coding guidelines that are based primarily on the
+book ``C++ Coding Standards'' by Sutter and Alexandrescu
+{}\cite{C++CodingStandards05}.  These guidelines are specifically designed to
+address the development of object-oriented numerical libraries and to utilize
+the tools in the Trilinos package {}\texttt{Teuchos}.  While the main purpose
+of of this document is to define guidelines for Thyra software (for both
+interfaces and adapters), it is also general enough to be applied to many
+other projects that, for instance, might interact with Thyra.
 
 The goal of this document is not to restate what is in
 {}\cite{C++CodingStandards05} but instead to fill in some gaps intentionally
 left by the authors and to provide exceptions and amendments to specific items
-in the book that is more appropriate for the types of software that we create
-and the environment in which we work.
+in the book and tailor them for numerical libraries.  The zeroth item (first
+item, zero based) ``Don't seat the small stuff'' intentionally avoids specific
+recommendations on issues such as the conventions for naming identifiers and
+the formatting of code since these are arbitrary.  While issues related to
+coding style are much less important that other issues, there are arguments
+for adopting consistent coding style and some of these are outlined in
+Appendix {}\ref{sec:arguments-for-consistent-style}.  Therefore, one of the
+purposes of this document is to suggest reasonable and minimal guidelines for
+naming conventions and code formatting that provide for code uniformity and
+facilitate collaborative code development and maintenance.
 
-The zeroth item (first item, zero based) ``Don't seat the small stuff''
-intentionally avoids specific recommendations on issues such as the
-conventions for naming identifiers and the formatting of code since these are
-arbitrary.  However, in Item 0, the authors do state:
+More important that code formatting, a consistent set of naming conventions
+for C++ classes, functions, variables, and other entities also helps to
+improve collaborative software development and quality.  Also, since clients
+of the software must interact with these names, it is even more important that
+a set of naming conventions be used as consistently as makes sense.
 
-\begin{quote}
+Lastly, more important general C++ coding guidelines are covered that append
+and amend to those described in {}\cite{C++CodingStandards05}.  While
+formatting and naming recommendations do not affect the meaning of C++ code,
+other coding guidelines do and therefore they will recieve more attention and
+should be taken more seriously.
 
-Do use consistent formatting within each source file or even each project,
-because it's jarring to jump around among several styles in the same piece of
-code.
-
-\end{quote}
-
-In {}\cite{CodeComplete2nd04}, Steve McConnell makes a strong argument for
-groups to adopt a consistent coding standard, which includes reasonable
-guidelines for the formatting of source code.  The arguments for adopting a
-consistent coding style are outlined in Appendix
-{}\ref{sec:arguments-for-consistent-style}.
-
-Therefore, one of the purpose of this document is to suggest reasonable and
-minimal guidelines for ``consistent formatting'' for C++ code that can
-facilitate collaborative code development and maintenance.  However, if
-multiple code formatting styles are to be used, then Appendix
-{}\ref{sec:reformatting-guidelines} gives guidelines for how developers are
-expected to conduct themselves when modifying and potentially reformatting
-each other's source files.
-
-%
-% RAB: This needs to be discussed and I need to look more into this once
-% I get my XP book, 2nd edition.
-%
-% Consistent code
-% formatting in a team of developers is a feature of the Extreme Programming
-% (XP) approach to software development {}\cite{ExtremeProgramming}.
-
-Even more important that code formatting, a consistent set of naming
-conventions for C++ classes, functions, variables, and other entities also
-helps to improve collaborative software development and quality.  Also, since
-clients of the software must interact with these names, it is even more
-important that a set of naming conventions be used as consistently as makes
-sense.
-
-Lastly, more important C++ coding guidelines are covered that append and amend
-to those described in {}\cite{C++CodingStandards05}.  While formatting and
-naming recommendations do not affect the meaning of C++ code, other coding
-guidelines do and therefore they will recieve more attention and should be
-taken more seriously.
+In rest of this document is organized as follows.  First, naming conventions
+are presented since they help provide a context for code examples later.
+Next, important general C++ coding guidelines are described that affect
+software quality in critical and nontrivial ways.  Unlike naming conventions
+and code formatting, these guidelines are difficult to follow after a
+significant piece of code has been developed.  Lastly, reasonable and minimal
+formatting guidelines are covered.
 
 %
 \section{Naming conventions}
@@ -100,10 +77,10 @@ many acronyms and should not be too short or too common.  For example:
 should follow the same convention as for class and struct names but they
 should also begin with the capital letter 'E' to signify that this type is an
 enum.  Enumeration values should be all upper-case with underscores between
-words and should use a common prefix for semi-namespacing with the enum type.
-Also, enum values should use the default value assignment defined by the
-compiler in general as this aids their use as indexes into zero-based arrays.
-For example:
+words and should use a common prefix for scoping within the enum type.  Also,
+enum values should use the default value assignment defined by the compiler in
+general as this aids their use as indexes into zero-based arrays.  For
+example:
 
 {\small\begin{verbatim}
   enum ESolveStatus {
@@ -118,11 +95,12 @@ definition of other types with the same basic name that contain other data.
 For example, {}\texttt{ESolveStatus} in an {}\texttt{enum} enumerating the
 different types of solve status and {}\texttt{SolveStatus} is a C++ struct
 that contains an {}\texttt{ESolveStatus} member along with some other data.
+The use of the scoping prefix (i.e.\ {}\texttt{SOLVE\-\_STATUS\_} above) is
+also recommended in {}\cite[Section 11.4]{CodeComplete2nd04}.
 
-{}\textit{rabartl note:} This convention is what is used in Thyra currently but it
-is somewhat unconventional.  This can be changed pretty easily but the
-quasi-namespacing aspect is very useful in general and should be kept in my
-opinion.
+{}\textit{rabartl note:} This convention is what is used in Thyra currently
+but it is somewhat unconventional.  This can be changed pretty easily but the
+scoping aspect is very useful in general and should be kept in my opinion.
 
 {}\item\textit{C++ object instance identifier names}: Formal function
 arguments and other object identifiers should, in general, start with a
@@ -148,9 +126,9 @@ identifier names but should end with an underscore.  For example:
   };
 \end{verbatim}}
 
-{}\textit{Exception}: Simple C++ structs with public data members and no
-member functions (other than constructors) should not contain an underscore.
-For example:
+{}\textit{Exception}: Simple C++ structs that do not need to maintain an
+invariant with public data members and no member functions (other than
+constructors) should not contain underscores.  For example:
 
 {\small\begin{verbatim}
   struct SolveStatus {
@@ -163,17 +141,17 @@ For example:
 
 {}\item\textit{Naming of C++ pure abstract base classes, default
 implementation bases, and default implementation classes}: In general, the
-top-level C++ base class for some abstraction, such as a vector, should use
-the postfix {}\texttt{Base} appended to the class name (e.g.\
-{}\texttt{Vector\-Base}) and the base class should contain (almost) no
-implementations and certainly no object data (see Item 36 in
-{}\cite{C++CodingStandards05}).  If a default implementation of some of the
-aspects of the base class are desired (to make it easer to define concrete
-subclasses), then they should be put in a derived node subclass with the
-postfix {}\texttt{DefaultBase} (e.g.\ {}\texttt{Vector\-Default\-Base}).  Any
-default concrete implementation of an abstraction should generally use the
-prefix {}\texttt{Default} appended to the beginning of the name along with any
-other important prefixes (e.g.\ {}\texttt{DefaultSpmdVector}).  For example:
+top-level C++ base class for some abstraction should use the postfix
+{}\texttt{Base} appended to the class name (e.g.\ {}\texttt{Vector\-Base}) and
+the base class should contain (almost) no implementations and certainly no
+object data (see Item 36 in {}\cite{C++CodingStandards05}).  If a default
+implementation of some of the aspects of the base class are desired (to make
+it easer to define concrete subclasses), then they should be put in a derived
+node subclass with the postfix {}\texttt{DefaultBase} (e.g.\
+{}\texttt{Vector\-Default\-Base}).  Any default concrete implementation of an
+abstraction should generally use the prefix {}\texttt{Default} appended to the
+beginning of the name along with any other important prefixes (e.g.\
+{}\texttt{DefaultSpmdVector}).  For example:
 
 {\small\begin{verbatim}
   // Pure virtual base class 
@@ -209,7 +187,7 @@ other important prefixes (e.g.\ {}\texttt{DefaultSpmdVector}).  For example:
 \end{verbatim}}
 
 {}\item\textit{Naming of const and non-const access functions}: In general,
-functions that return objects that are contained within the wrapper object
+functions that return objects that are contained within a wrapper object
 should have the prefix {}\texttt{nonconst} added to the function that returns
 the non-const reference (or pointer) to the contained object.  For example,
 
@@ -227,11 +205,12 @@ the non-const reference (or pointer) to the contained object.  For example,
 {}\texttt{getPart()} and {}\texttt{getConstPart()} is somewhat arbitrary.
 However, the former recommended convention of using {}\texttt{nonconst} should
 be preferred since access to parts is typically through constant objects which
-will therefore give access constant parts.  Also, a constant view of a part of
-an object is always cheaper that returning a non-constant view of the part
-(see the discussion of the ``generalized view'' idiom) and therefore to be
-safe and error on the side of efficiency, the non-constant access function
-should be harder to call than the constant access function.
+will therefore give access constant parts and having a shorter function name
+is advantageous.  Also, a constant view of a part of an object is always
+cheaper that returning a non-constant view of the part (see the discussion of
+the ``generalized view'' idiom) and therefore to be safe and error on the side
+of efficiency, the non-constant access function should be harder to call than
+the constant access function.
 
 \end{enumerate}
 
@@ -254,18 +233,18 @@ this document.
 
 {}\item\textit{File extension names}: Use the file extensions {}\texttt{*.hpp}
 for C++ header files, {}\texttt{*.cpp} for C++ source files, {}\texttt{*.h}
-for C header files, {}\texttt{*.c} for C source files, and {}\texttt{*.f} for
-Fortran 77 source files.  These file names avoid common problems with
-portability to various Unix and Windows platforms.
+for C header files, and {}\texttt{*.c} for C source files.  These file names
+avoid common problems with portability to various Unix and Windows platforms.
 
-{}\item\textit{Only one major C++ class and supporting code per header and
+{}\item\textit{Only one major C++ class with supporting code per header and
 source file}: As a general rule of thumb, assign the source code for any major
 C++ class and supporting code to a single set of header and source files.  The
 file name should be composed out of the namespace names enclosing the classes
 and other code along with the class name itself.  For instance, for the class
 {}\texttt{NameSpaceA\-::InnerNamespace\-::SomeClass}, the header and source
 files would be named
-{}\texttt{NameSpaceA\-\_InnerNamespace\-\_SomeClass.[hpp,cpp]}.
+{}\texttt{NameSpaceA\-\_InnerNamespace\-\_SomeClass.[hpp,cpp]}.  This
+convention assures that the file names will be globally unique.
 
 {}\item\textit{Use include guards in all header files}: All header files,
 without exception, should use include guards [???].  For example, the file
@@ -293,7 +272,10 @@ NAMESPACEA\-\_INNERNAMESPACE\-\_SOMECLASS\-\_HPP} after the final
 helpful in cases where other {}\texttt{\#ifdef} or {}\texttt{\#if} structures
 are used.
 
-This is a amendment to Item 24 in {}\cite{C++CodingStandards05}
+This is a amendment to Item 24 in {}\cite{C++CodingStandards05}.
+
+{}\item\textit{Partition template code into different files to allow for both
+implicit and explicit instantiation}: ???
 
 \end{enumerate}
 
@@ -302,15 +284,17 @@ This is a amendment to Item 24 in {}\cite{C++CodingStandards05}
 \label{thyracodingguidelines:codingguidelines:sec}
 %
 
-Coding guidelines, unlike formatting guidelines, do change the meaning of C++
-programs and therefore require a high level of priority.  The book ``C++
+Coding guidelines, unlike formatting guidelines, greatly influence the meaning
+of C++ programs and therefore require a high priority level.  The book ``C++
 Coding Standards'' {}\cite{C++CodingStandards05} that this document is
 primarily based on provides many good and important coding guidelines that
 should be followed and by default all of the items in this book are assumed in
 this document.  Here, we provide additional coding guidelines and, in some
 cases, amend items in {}\cite{C++CodingStandards05}.  Where this document is
 silent, {}\cite{C++CodingStandards05} is to be considered the authoritative
-source for guidance.
+source for guidance.  Some miscellaneous amendments to the items in
+{}\cite{C++CodingStandards05} are given in Appendix ???.
+%ToDo: Write an appendix of ammendments to some of the items in ``C++ Coding Standards''.
 
 %
 \subsection{General coding guidelines}
@@ -318,13 +302,13 @@ source for guidance.
 
 Below several different general coding guidelines are discussed.  These
 guidelines affect software quality in a major way and are not just a matter of
-personal preferences and styles.
+personal preference or style.
 
 \begin{enumerate}
 
 {}\item\textit{Use the macro TEST\-\_FOR\-\_EXCEPTION(...) and its related
-macros for reporting all errors, even programming errors}: For developer
-errors, prefer to throw exceptions drived from
+macros for reporting all errors, even developer programming errors}: For
+developer errors, prefer to throw exceptions drived from
 {}\texttt{std\-::logic\-\_error} instead of using the {}\texttt{assert(...)}
 macro as recommended in {}\cite[Item 68]{C++CodingStandards05}.  A ``logic
 error'' would be treated differently from a real runtime error and would
@@ -342,9 +326,11 @@ Test\-For\-Exception\-\_break()}.} which will be called just before an
 exception is thrown through these macros.  In the future, more sophisticated
 features like automatically attaching a debugger or printing the call stack
 may be added for some systems.  Therefore throwing an exception derived from
-{}\texttt{std\-::logic\-\_error} should be preferred to using
-{}\texttt{assert(...)} macro as it gives us more control over what happens
-when one of these types of programming errors occurs.
+{}\texttt{std\-::logic\-\_error} using these macros should be preferred to
+using the {}\texttt{assert(...)} macro as it gives us more control over what
+happens when one of these types of programming errors occurs.  Also, these
+exception macros make it much easier to generate good error messages that you
+would get from a simple use of the {}\texttt{assert(...)} macro.
 
 {}\item\textit{Avoid the use of raw C++ pointers in all but the lowest level
 code}: The tools mentioned below which include {}\texttt{Teuchos::\-Ptr},
@@ -362,6 +348,12 @@ therefore is less likely to produce error inside of numerical code.
 {}\item\textit{Use Teuchos::Ptr as function arguments in the place of raw C++
 pointers to single objects where no persisting association exists}: ???
 
+{}\item\textit{Use Teuchos::RefCountPtr for memory management of single
+dynamically allocated objects and for handling persisting
+{}\cite{RefCountPtrBeginnersGuide} associations}: Replace all references to
+the class {}\texttt{boost::\-shared\_ptr} in all items in
+{}\cite{C++CodingStandards05} with {}\texttt{Teuchos::\-RefCountPtr}.
+
 {}\item\textit{Use Teuchos::ArrayView as function arguments in the place of
 pointers into raw arrays where no persisting association exists}: ???
 
@@ -375,12 +367,6 @@ STL implementation or not (see {}\cite[Item 83]{C++CodingStandards05}).  In
 addition, {}\texttt{Teuchos\-::Array} will automatically convert into an
 {}\texttt{Teuchos\-::ArrayView} object safely when used in function calls.
 
-{}\item\textit{Use Teuchos::RefCountPtr for memory management of single
-dynamically allocated objects and for handling persisting
-{}\cite{RefCountPtrBeginnersGuide} associations}: Replace all references to
-the class {}\texttt{boost::\-shared\_ptr} in all items in
-{}\cite{C++CodingStandards05} with {}\texttt{Teuchos::\-RefCountPtr}.
-
 {}\item\textit{Use Teuchos::ArrayRefCountPtr for memory management of
 dynamically allocated objects stored in contiguous arrays of data and for
 persisting associations involving contiguous arrays}: Note that
@@ -388,7 +374,29 @@ persisting associations involving contiguous arrays}: Note that
 a contiguous container class such as {}\texttt{Teuchos::\-Array} or
 {}\texttt{std::\-vector}.  A {}\texttt{Teuchos::ArrayRefCountPtr} object can
 not change the size of the array, it can only provide for reference counted
-sharing of an array of data of fixed size.
+sharing of an array of data of fixed size and provide subviews of contiguous
+parts of the managed array.
+
+{}\item\textit{Use the template function
+{}\texttt{Teuchos::as<T\_to>(T\_from)} for all conversion of data types that
+may result in loss of precision or in an incorrect conversion}: The templated
+C++ function {}\texttt{Teuchos::as<T\_to>(T\_from)} and its specializations
+will contain runtime tests, in debug mode, for the results of a conversion to
+ensure correctness.  This inclucdes the conversion of strings into numbers
+(i.e.\ replacing {}\texttt{atof()} and {}\texttt{atoi()}) as well as
+conversions that can result in loss of precision or meaning (such as
+{}\texttt{double} to {}\texttt{int}, {}\texttt{long int} to {}\texttt{int},
+{}\texttt{int} to {}\texttt{char}, {}\texttt{unsigned int} to {}\texttt{int},
+etc.).  The optimized versions of these conversion functions could be
+unchecked conversions.  In addition an always checked version like
+{}\texttt{Teuchos\-::safeAs\-<\-T\_to\->\-(\-T\_from\-)} is available as well
+in order to validate user data.  {}\textit{Justification}: Unchecked
+conversions are the result of many different types of errors and a fully safe
+program needs to be able to check all such potentially unsafe conversions at
+runtime.  The implicit conversion rules allowed in C which where carried over
+to C++ can result in very unsafe code.  ToDo: This function has not be
+implemented yet and it could be a good deal of work to write all of the needed
+implementations but this is needed for safe code.
 
 {}\item\textit{Use namespace enclosure for the definition of member functions
 of a C++ class}: The member functions of a class should be defined in the same
@@ -468,22 +476,25 @@ the safest way to define the nonmember function is
 {}\textit{Justification}: Using explicit namespace qualification avoids
 problems of spelling and other mistakes that can accidentally result in the
 definition of a new function {}\cite[Section 8.2]{stroustrup00}.  Such a
-mistake is caught at link time but can be very hard to figure out the root
-cause of the problem.
+mistake is caught at link time but it can be very hard to figure out the root
+cause of the problem when this happens.
+
+{}\item\textit{Structure the includes in template header files to avoid
+problems in mutually dependent code}: ??? ToDo: Merge this with the above item
+on layout of files for implicit and explicit template instantiation.
+
+\end{enumerate}
 
 %
 \subsection{Specification of formal arguments for C++ member and nonmember functions}
 %
 
-Here a convention for the specification of the formation arguments for C++
-member or nonmember functions is defined that leads to C++ code that is
-consistent looking, maximizes compile-time and run-time checking, and is as
-auto-documenting as possible.
+Here we describe a convention for the specification of the formation arguments
+for C++ functions that leads to C++ code that is consistent looking, maximizes
+compile-time and run-time checking, and is as auto-documenting as possible.
 
 ToDo: Fill this in once I have written and tested Teuchos::ArrayView and
 Teuchos::Ptr classes.  No raw pointers!
-
-\end{enumerate}
 %
 \section{Formating of source code}
 \label{thyracodingguidelines:formatting:sec}
@@ -513,14 +524,9 @@ line.  A flavor of the {}\texttt{vi} editor may also support indentation
 styles. } which allows individual developers to work with any style they would
 like like for files that they create but also makes it easy for developers to
 edits files created by other developers and keep to their styles as well.
-
-Appendix
-{}\ref{sec:reformatting-guidelines}
-
-
-  Later,
-coding guidelines that do affect the meaning of a program are described in
-Section {}\ref{thyracodingguidelines:codingguidelines:sec}.
+Appendix {}\ref{sec:reformatting-guidelines} gives some guidelines for how
+individuals should conduct themselves where more than one coding formatting
+style is in use within a project.
 
 Our main goal in this section is to try to provide reasonable recommendations
 for those formating issues that are largely a matter of style and personal
@@ -538,10 +544,11 @@ emacs package file cc-thyra-styles.el\footnote{See
 ``thyra'' Emacs style}.  Other custom sytles can also be added to this file
 and used as well.  Any of these styles can be listed in each source file and
 therefore anyone using Emacs can automatically use a particular indentation
-style without having to fight the editor and manually reformat code.
+style without having to fight the editor to manually reformat code to abide by
+a foreign style.
 
-Some general principles of good formatting, as described in {}\cite[Section
-31.1]{CodeComplete2nd04}, are:
+Some general principles of good formatting, based on the discussion in
+{}\cite[Section 31.1]{CodeComplete2nd04}, are:
 
 \begin{enumerate}
 
@@ -561,13 +568,15 @@ modification; especially those performed by automatic tools}: Changing one
 line of code should not require changes to other lines of code to maintain the
 formatting style.
 
-{}\item\textit{Formatting style should follow the most most typical idioms
-unless one of the above principles are broken}: When there is no good
-technical argument for one formatting sytle item over another, then the one
-that is ``more common'' should be chosen.  This is not advocated per-say in
-{}\cite[Chapter 31]{CodeComplete2nd04} but it is a good idea in general to
-follow popular idioms when there are several equally good choices and
-therefore the decision is arbitrary.
+{}\item\textit{Formatting style should follow the most common idiom unless one
+of the above principles are violated}: When there is no good technical
+argument for one formatting sytle item over another, then the style that is
+the most common\footnote{The measure of the commonality of a particular style
+element can be chosen according to a local software development community or
+the larger developer community.} should be chosen.  This is not advocated
+per-say in {}\cite[Chapter 31]{CodeComplete2nd04} but it is a good idea in
+general to follow popular idioms when there are several equally good choices
+and therefore the decision is arbitrary.
 
 \end{enumerate}
 
@@ -607,18 +616,18 @@ spaces instead of tabs by setting:
   (setq indent-tabs-mode nil)
 \end{verbatim}}
 
-in the in the indentation style (as is done in the ``thyra'' style).  However,
-it is easy to support different preferences for the amount of spaces to indent
-by using a user-defined indentation style for Emacs (sorry {}\texttt{vi}
-users).
+in the indentation style (as is done in the ``thyra'' style).  However, it is
+easy to support different preferences for the amount of spaces to indent by
+using a user-defined indentation style for Emacs (sorry {}\texttt{vi} users).
 
 {}\textit{Justification}: ``Some teams legitimately choose to ban tabs
 ... when misused, turn indenting into out-denting and non-denting.''
 {}\cite[Item 0]{C++CodingStandards05}.
 
 {}\item\textit{Do not indent source code inside of namespace enclosures,
-instead use commented end brackets}: Indenting for namespace enclosures
-results unnecessary, and in some cases excessive, indentation.  Instead use,
+instead use commented end braces}: Indenting for namespace enclosures results
+unnecessary, and in some cases excessive, indentation.  Instead, for example,
+use:
 
 {\small\begin{verbatim}
   namespace MyNameSpace {
@@ -634,12 +643,12 @@ results unnecessary, and in some cases excessive, indentation.  Instead use,
 
 {}\textit{Justification}: While indentation within namespaces is helpful in
 small example code fragments, it provides little help in showing namespace
-structure in more realistic code.  The use of commented end blocks is
+structure in more realistic code.  The use of commented end braces is
 generally sufficient to show namespace structure and will not result in
 excessively indented code.  In addition, typically, each file will only
 contain code from one (or more nested) namespace and therefore indenting for
 namespaces provides no useful information.  Not indenting for namespace
-enclosures is also consistent with the ``ansi'', the ``kr'' and the ``linux''
+enclosures is also consistent with the ``ansi'', the ``kr'', and the ``linux''
 styles as defined by Artistic Style {}\cite{ArtisticStyle}.
 
 {}\item\textit{C++ class and struct declaration indentation and layout}: C++
@@ -677,10 +686,11 @@ before the public member functions that use them.
 
 {}\item\textit{Formating of function prototypes, function definitions and
 function calls}: Below, guidelines for formatting short function prototypes
-and long prototypes are given.  These guidelines seek to result in prototypes
-that are fairly tight (i.e. not too much whitespace explosion) while still
-keeping code inside of 80 character columns.  This indentation style can (and
-should) also be applied to function definitions and function calls.
+and long prototypes are given.  These guidelines seek to produce function
+prototypes that are fairly tight (i.e. not too much whitespace explosion), are
+robust to modifications, and keep code inside of the 80th character column.
+This indentation style can (and should) also be applied to function
+definitions and function calls.
 
   \begin{enumerate}
 
@@ -742,22 +752,19 @@ should) also be applied to function definitions and function calls.
 
   As shown above, the function arguments can be listed separately on different
   lines, or in groups on sets of lines.  The arguments can begin on the same
-  line as the type + function name line on can start on the next line.  The
+  line as the type + function name line or can start on the next line.  The
   ending parenthesis ')' can appear on the same line as the last line of
   arguments or can appear alone on the last line.  Other formats are possible
   also and can be appropriate in different situations.
 
   {}\textit{Justification}: See {}\cite[Section 31.1]{CodeComplete2nd04}.
   
-  This indentation style for function argumentshelps to avoid massive ``right
-  drift'' in many types of cases and simplifies maintenance.
-
   {}\item\textit{Return types can be listed on same line as the function name
   unless the line is too long}: A function prototype's return type should
   appear on the same line as the function name unless it is excessively long
   and would result in the return type + function name line to extend past the
-  80th column.  When the return type + function name is too long, then it can
-  be listed on separate lines with no indent, for example, as:
+  80th character column.  When the return type + function name is too long,
+  then it can be listed on separate lines with no indent, for example, as:
   
   {\small\begin{verbatim}
   Teuchos::RefCountPtr<ReturnType>
@@ -768,7 +775,7 @@ should) also be applied to function definitions and function calls.
   \end{verbatim}}
 
   However, listing the function return type an a separate line even in cases
-  of shorter prototypes is just fine too.
+  of shorter prototypes is also okay.
 
   \end{enumerate}
 
@@ -797,7 +804,7 @@ Here a set of reasonable guidelines is stated for writing Doxygen (and plain
 old) documentation for classes, functions, etc.\ that makes the specification
 clear but is not too verbose or hard to maintain.  Other types of higher-level
 documentation are also needed such as design documents and tutorials but
-guidelines for these are not covered here.
+guidelines for these higher-level types of documentation are not covered here.
 
 %
 \subsection{Goals for function and class level documentation}
@@ -817,18 +824,18 @@ non-Doxygen) documentation to describe the basics of what is going on.
 {}\item\textit{Important abstract interfaces must be fully specified
 independent of any single concrete implementation}: In the case of important
 abstract interfaces, the full specification of behavior for the compliant
-objects (i.e. asserts, preconditions, postconditions) must be clearly stated
-{}\cite[Item 69]{C++CodingStandards05}.  In some cases, this must be done
-completely within the Doxygen documentation.  In other cases, a standard unit
-testing function or class can be used to help specify the behavior of the
+objects (i.e. invariants, preconditions, postconditions) must be clearly
+stated {}\cite[Item 69]{C++CodingStandards05}.  In some cases, this must be
+done completely within the Doxygen documentation.  In other cases, a standard
+unit testing function or class can be used to help specify the behavior of the
 interface.  In fact, compiled and verified unit testing code may be superior
 to standard Doxygen documentation since it can't ignored or become invalid.
 On the other hand, it may be difficult for readers to wade through unit
 testing code to find the specification of behavior and therefore both Doxygen
-documentation and unit testing code should be used to provide for the fully
+documentation and unit testing code should be used to provide the fullest
 benefit.  Also, Doxygen documentation can automatically include bits and
 pieces of compiled and tested code using the
-{}\texttt{$\backslash$dontinclude} commands.
+{}\texttt{$\backslash$dontinclude} Doxygen commands.
 
 {}\item\textit{Behavior of "user level" interfaces must be completely
 specified by the Doxygen documentation and/or higher-level documentation}:
@@ -840,14 +847,14 @@ preconditions and/or postconditions for a function call.
 
 {}\item\textit{Wrong documentation is (almost) worse than no documentation at
 all}: Documentation must be maintained as code is changed and therefore
-excessive or unnecessary documentation degrades the quality of a code.
-However, some documentation with some small errors/omissions is better than no
-documentation at all.
+excessive or unnecessary documentation degrades the quality of code.  However,
+documentation with small errors is generally better than no documentation at
+all.
 
 {}\item\textit{The same documentation should not be repeated if possible}: We
-should strive for a single source for documentation and not repeat the same
-documentation over and over again.  This is critical to insure that the
-documentation can be successfully maintained.
+should strive for a single source for documentation for an entity and not
+repeat the same documentation over and over again.  This is critical to insure
+that the documentation can be successfully maintained.
 
 {}\item\textit{The documentation should maintain itself as much as possible
 and be testable as much as possible}: Any significant fragments of code that
@@ -855,7 +862,7 @@ are shown in the Doxygen-generated HTML documentation should come from
 compiled and tested code.  This can be accomplished by using the
 {}\texttt{$\backslash$dontinclude} Doxygen command to read in code fragments
 automatically.  In this way, the compiler and our test suite can be used to
-help verify at least parts of our documentation.
+help verify the code fragments in our Doxygen documentation.
 
 \end{enumerate}
 
@@ -874,8 +881,8 @@ to the classes, functions and other entities to make the documentation as
 tightly tied to the code as possible.  This has the unfortunate side-effect of
 requiring complete recompilations whenever documentation is modified but the
 overall benefit should be worth the downsides.  Note that the Doxygen
-documentation can be stripped out of Doxygen-generated hyper-linked versions of
-the code, leaving clean C++-only code without the extra clutter of detailed
+documentation can be stripped out of Doxygen-generated hyper-linked versions
+of the code, leaving clean C++ code without the clutter of detailed
 documentation.  Therefore, developers should browse Doxygen-generated source
 code instead of the source code directly when looking at the code and
 performing code reviews.
@@ -887,29 +894,30 @@ sense) and provide a centralized definition of these arguments if possible to
 avoid repeating detailed definitions in each individual function's
 documentation.  This helps to avoid duplicate documentation that is likely not
 to be maintained correctly.  In the case of classes, this means providing some
-common definitions in the main ``detailed'' documentation section.  In the
-case of nonmember functions, this might involve a common Doxygen group (i.e.\
-{}\texttt{$\backslash$defgroup}) for the set of functions.  In the case of
-collections of nonmember functions, it may be difficult to expect readers to
-find the common definitions but links to the common documentation are possible
-using a variety of approaches.
+common definitions in the main ``detailed'' documentation section for the
+class.  In the case of nonmember functions, this might involve a common
+Doxygen group or module (i.e.\ using the {}\texttt{$\backslash$defgroup}
+command) for the set of functions.  In the case of collections of nonmember
+functions, it may be difficult to expect readers to find the common
+definitions, but links to the common documentation are possible using a
+variety of approaches.
 
 {}\item\textit{Provide common preconditions/postconditions along with the
 common documentation for common arguments when possible}: For common arguments
 that are shared among many functions, define the most common preconditions for
 them in a central place and avoid listing them on a function-by-function basis
-unless they change for that function.  For a C++ class, place these common
-arguments in the main documentation section under a
-{}\texttt{$\backslash$section} named ``Common Function Arguments and
+unless they change for an individual function.  For a C++ class, place
+descriptions for these common arguments in the main class documentation under
+a {}\texttt{$\backslash$section} named ``Common Function Arguments and
 Pre/Post-Conditions''.  Only include preconditions for these arguments in
 specific function documentation sections if it is different from the most
 common preconditions.
 
 {}\item\textit{Add a {}\texttt{$\backslash$brief} description for every entity
-that is documented}: The {}\texttt{$\backslash$brief} field is used to provide
-the short one-line documentation string that is included in the function
-summary section of classes, groups, namespaces etc.  Even if no text
-documentation is needed/wanted, add an empty
+that should be seen by the user}: The {}\texttt{$\backslash$brief} field is
+used to provide the short one-line documentation string that is included in
+the function summary section of classes, groups, namespaces etc.  Even if no
+text documentation is needed/wanted, add an empty
 %
 {\small\begin{verbatim}
   /** \brief . */
@@ -917,41 +925,45 @@ documentation is needed/wanted, add an empty
 \end{verbatim}}
 %
 comment so that Doxygen will include the class, function, or other entity in
-the HTML documentation.
+the HTML documentation.  Note that this is important when the Doxygen
+configuration option {}\texttt{EXTRACT\-\_ALL} is set to {}\texttt{NO}.
 
-{}\item\textit{Add {}\texttt{$\backslash$param} field for all arguments or
-none of the arguments in a function; no partial {}\texttt{$\backslash$param}
-field lists}: All arguments should be listed in {}\texttt{$\backslash$param}
-fields with at least the [in], [out], or [in/out] specifications and these
-should have at least a very short description.  Or, if the function arguments
-are clear and trivial (and/or have already been defined in the common
-documentation section), then no {}\texttt{$\backslash$param} fields should be
-included at all.  If any of the arguments are listed in
+{}\item\textit{Add a {}\texttt{$\backslash$param} field for all of the
+arguments or none of the the arguments in a function; do not define partial
+{}\texttt{$\backslash$param} field lists}: All arguments should be listed in
+{}\texttt{$\backslash$param} fields with at least the [in], [out], or [in/out]
+specifications and these should have at least a very short description.  Or,
+if the function arguments are clear and trivial (and/or have already been
+defined in the common documentation section), then no
+{}\texttt{$\backslash$param} fields should be included at all.  If any of the
+arguments in a function's documentation are listed in
 {}\texttt{$\backslash$param} fields then all arguments should be listed in
 {}\texttt{$\backslash$param} fields.
 
-{}\item\textit{Only add a {}\texttt{$\backslash$returns} field only if
-necessary}: Don't add a {}\texttt{$\backslash$returns} description of the
-return value if it is already clearly specified in the
-{}\texttt{$\backslash$brief} description of the function.  However, if the
-nature of the return value is at all complex, then include a
-{}\texttt{$\backslash$returns} field to describe it.  When referring to the
-return argument, refer to it as {}\texttt{returnVal}.
+{}\item\textit{Only add a {}\texttt{$\backslash$returns} field if necessary}:
+Don't add a {}\texttt{$\backslash$returns} description of the return value if
+it is already clearly specified in the {}\texttt{$\backslash$brief}
+description of the function.  However, if the nature of the return value is at
+all complex, then include a {}\texttt{$\backslash$returns} field to describe
+it.  When referring to the return argument, refer to it as
+{}\texttt{returnVal}.  By consistently using the identifier
+{}\texttt{returnVal} for the return value, user's will immediately know what
+this is referring to.
 
 {}\item\textit{Prefer specifying postconditions for output arguments in their
-{}\texttt{$\backslash$param} field in general, and otherwise list them in the
-'Postconditions' list}: The postconditions for output arguments can be listed
-directly in the {}\texttt{$\backslash$param} field for the argument if they
-only involve just that argument in a fairly simple way.  Otherwise, if the
-postconditions are more complex or involve multiple arguments in order to
+{}\texttt{$\backslash$param} field; otherwise specify their postconditions in
+the 'Postconditions' list}: The postconditions for output arguments can be
+listed directly in the {}\texttt{$\backslash$param} field for the argument if
+they only involve just that argument in a fairly simple way.  Otherwise, if
+the postconditions are more complex or involve multiple arguments in order to
 specify, then they can be listed in the Postconditions list.  It may be
-difficult to objectively determine where to list the postconditions for output
-arguments.
+difficult to objectively determine the best place to list the postconditions
+for an output argument.
 
-{}\item\textit{Order the documentation fields as {}\texttt{$\backslash$brief},
-{}\texttt{$\backslash$param}, Preconditions, Postconditions, then
-{}\texttt{$\backslash$returns}; omitting those that do not apply}: A
-consistent ordering of sections of documentation for a class and within a
+{}\item\textit{Order the documentation fields in function documentation as
+{}\texttt{$\backslash$brief}, {}\texttt{$\backslash$param}, Preconditions,
+Postconditions, then {}\texttt{$\backslash$returns}; omitting those that do
+not apply}: A consistent ordering of sections of documentation within a
 function makes it easier for readers to find what they are looking for.
 
 {}\item\textit{If possible, try to use {}\texttt{$\backslash$relates} to
@@ -1017,18 +1029,18 @@ for the {}\texttt{Teuchos\-::Parameter\-List\-Acceptor} would look like:
 
 {}\item\textit{Example source code used in Doxygen-generated and other forms
 of documentation should be extracted automatically from code that is compiled
-and tested nightly}: Any significant fragment of code example that is shown in
+and tested nightly}: Any significant fragment of example code that is shown in
 Doxygen HTML documentation or a latex document needs to come from compiled and
 tested code that can be updated automatically.  These C++ code fragments can
 be selectively inserted automatically into Doxygen documentation using the
-Doxygen {}\texttt{$\backslash$dontinclude} command.
+{}\texttt{$\backslash$dontinclude} Doxygen command.
 
 {}\item\textit{Sample output should be generated automatically from compiled
 and tested code}: Sample output included in Doxygen documentation should be
 generated automatically by the test harness code and should be written to
-files that included in the source directory.  The sample output in these files
-can then be inserted into the Doxygen HTML documentation automatically using
-the Doxygen {}\texttt{$\backslash$verbinclude} command.  Similar approaches
-can also be used for latex documentation.
+files that are included in the source directory.  The sample output in these
+files can then be inserted into the Doxygen HTML documentation automatically
+using the {}\texttt{$\backslash$verbinclude} Doxygen command.  Similar
+approaches can also be used for latex documentation.
 
 \end{enumerate}
