@@ -6,10 +6,11 @@
 #include "RBGen_PODMethod.hpp"
 #include "RBGen_Method.hpp"
 #include "Epetra_MultiVector.h"
+#include "Epetra_CrsMatrix.h"
 
 namespace RBGen {
   
-  class LapackPOD : public virtual Method<Epetra_MultiVector>, public virtual PODMethod<double> {
+  class LapackPOD : public virtual Method<Epetra_MultiVector,Epetra_CrsMatrix>, public virtual PODMethod<double> {
     
   public:
     //@{ @name Constructor/Destructor.
@@ -42,7 +43,8 @@ namespace RBGen {
     
         //! Initialize the method with the given parameter list and snapshot set.
     void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                     const Teuchos::RefCountPtr< Epetra_MultiVector >& ss );
+                     const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
+		     const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
 
     void Reset( const Teuchos::RefCountPtr<Epetra_MultiVector>& new_ss ) { ss_ = new_ss;  }
 

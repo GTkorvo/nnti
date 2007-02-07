@@ -8,7 +8,7 @@
 
 namespace RBGen {
  
-  template< class DataSetType > 
+  template< class DataSetType, class OperatorType > 
   class MethodFactory {
     
   public:
@@ -23,7 +23,7 @@ namespace RBGen {
 
     //@{ @name Factory methods
 
-    virtual Teuchos::RefCountPtr<Method< DataSetType > > create( const Teuchos::ParameterList& params ) = 0;
+    virtual Teuchos::RefCountPtr<Method< DataSetType, OperatorType > > create( const Teuchos::ParameterList& params ) = 0;
     
     //@}
 

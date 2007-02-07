@@ -32,13 +32,14 @@ namespace RBGen {
     
     //@{ @name File Reading Methods
     
-    //! Method for reading multiple files and putting them into an Epetra_MultiVector.
+    //! Method for reading multiple files and putting them into an data set.
     virtual Teuchos::RefCountPtr< DataSetType > Read( const std::vector<std::string>& filenames ) = 0;
+
     //@}
 
     //@{ @name Writing Methods
 
-    //! Method for writing one Epetra_MultiVector into a file.
+    //! Method for writing one data set into a file.
     virtual void Write( Teuchos::RefCountPtr< const DataSetType > MV, const std::string& filename ) = 0;
 
     //@}

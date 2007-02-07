@@ -3,12 +3,13 @@
 #ifndef RBGEN_METHOD_HPP
 #define RBGEN_METHOD_HPP
 
+#include "RBGen_FileIOHandler.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 namespace RBGen {
   
-  template<class DataSetType>
+  template<class DataSetType, class OperatorType>
   class Method {
     
   public:
@@ -44,7 +45,8 @@ namespace RBGen {
 
     //! Initialize the method with the given parameter list and snapshot set.
     virtual void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                             const Teuchos::RefCountPtr< DataSetType >& ss ) = 0;
+                             const Teuchos::RefCountPtr< DataSetType >& ss,
+			     const Teuchos::RefCountPtr< RBGen::FileIOHandler< OperatorType > >& fileio = Teuchos::null ) = 0;
     
     //! Reset the snapshot set used to compute the reduced basis.
     virtual void Reset( const Teuchos::RefCountPtr< DataSetType >& new_ss ) = 0;

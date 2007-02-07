@@ -4,6 +4,7 @@
 #include "RBGen_EpetraMVFileIOFactory.h"
 #include "RBGen_EpetraMVMethodFactory.h"
 #include "RBGen_EpetraMVPreprocessorFactory.h"
+#include "RBGen_EpetraCrsMatrixFileIOHandler.h"
 #include "RBGen_PODMethod.hpp"
 
 #include "Epetra_Map.h"
@@ -90,14 +91,17 @@ int main( int argc, char* argv[] )
   Teuchos::RefCountPtr<Teuchos::Time> timerFileIO = Teuchos::rcp( new Teuchos::Time("Create File I/O Handler") );
   timersRBGen.push_back( timerFileIO );
   //
-  Teuchos::RefCountPtr< RBGen::FileIOHandler<Epetra_MultiVector> > fileio;
+  Teuchos::RefCountPtr< RBGen::FileIOHandler<Epetra_MultiVector> > mvFileIO;
+  Teuchos::RefCountPtr< RBGen::FileIOHandler<Epetra_CrsMatrix> > opFileIO =
+    Teuchos::rcp( new RBGen::EpetraCrsMatrixFileIOHandler() ); 
   {
     Teuchos::TimeMonitor lcltimer( *timerFileIO );
-    fileio = fio_factory.create( *BasisParams );
+    mvFileIO = fio_factory.create( *BasisParams );
     //					    
-    // Initialize file IO handler
+    // Initialize file IO handlers
     //
-    fileio->Initialize( BasisParams );
+    mvFileIO->Initialize( BasisParams );
+    opFileIO->Initialize( BasisParams );
   }    
   //
   // ---------------------------------------------------------------
@@ -112,7 +116,7 @@ int main( int argc, char* argv[] )
   Teuchos::RefCountPtr<Epetra_MultiVector> testMV;
   {
     Teuchos::TimeMonitor lcltimer( *timerSnapshotIn );
-    testMV = fileio->Read( *filenames );
+    testMV = mvFileIO->Read( *filenames );
   } 
 
   RBGen::EpetraMVPreprocessorFactory preprocess_factory;
@@ -126,7 +130,7 @@ int main( int argc, char* argv[] )
     //
     // Initialize preprocessor.
     //
-    prep->Initialize( BasisParams, fileio );
+    prep->Initialize( BasisParams, mvFileIO );
   }
 
   Teuchos::RefCountPtr<Teuchos::Time> timerPreprocess = Teuchos::rcp( new Teuchos::Time("Preprocess Snapshot Set") );  
@@ -148,14 +152,14 @@ int main( int argc, char* argv[] )
   //
   Teuchos::RefCountPtr<Teuchos::Time> timerCreateMethod = Teuchos::rcp( new Teuchos::Time("Create Reduced Basis Method") );
   timersRBGen.push_back( timerCreateMethod );
-  Teuchos::RefCountPtr<RBGen::Method<Epetra_MultiVector> > method;
+  Teuchos::RefCountPtr<RBGen::Method<Epetra_MultiVector,Epetra_CrsMatrix> > method;
   {
     Teuchos::TimeMonitor lcltimer( *timerCreateMethod );  
     method = mthd_factory.create( *BasisParams );
     //
     // Initialize reduced basis method.
     //
-    method->Initialize( BasisParams, testMV );
+    method->Initialize( BasisParams, testMV, opFileIO );
   }
   //
   //  - Call the computeBasis method on the reduced basis method object.
@@ -206,7 +210,7 @@ int main( int argc, char* argv[] )
     Teuchos::ParameterList fileio_params = BasisParams->sublist( "File IO" );
     if ( fileio_params.isParameter( "Reduced Basis Output File" ) ) {
       std::string outfile = Teuchos::getParameter<std::string>( fileio_params, "Reduced Basis Output File" );
-      fileio->Write( basisMV, outfile );
+      mvFileIO->Write( basisMV, outfile );
     }
   }
   //

@@ -26,7 +26,8 @@ namespace RBGen {
   }
 
   void AnasaziPOD::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                               const Teuchos::RefCountPtr< Epetra_MultiVector >& ss )
+                               const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
+			       const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio )
   {
 
    // Get the "Reduced Basis Method" sublist.
@@ -41,6 +42,13 @@ namespace RBGen {
     // Get the inner / outer product form of the operator
     isInner_ = ( rbmethod_params.get("Anasazi POD Operator Form","Inner")=="Inner"? true : false );
 
+    // See if there is a matrix to be used for an inner-product in the orthogonal basis construction
+    if (rbmethod_params.isParameter( "Inner Product Weighting Matrix" )) {
+      string matFile = Teuchos::getParameter<string>( rbmethod_params, "Inner Product Weighting Matrix" );
+      std::vector<std::string> filename(1,matFile);
+      op_ = fileio->Read( filename );
+    }
+    
     // Resize the singular value vector 
     sv_.resize( basis_size_ );    
 
@@ -76,7 +84,7 @@ namespace RBGen {
     int nev = basis_size_;
     int maxBlocks = 2*basis_size_;
     int maxRestarts = 300;
-    int verbosity = Anasazi::FinalSummary;
+    int verbosity = Anasazi::Warnings + Anasazi::Errors;
     double tol = 1e-14;
     string which="LM";
     //
@@ -109,11 +117,21 @@ namespace RBGen {
       ivec = Teuchos::rcp( new Anasazi::EpetraMultiVec( ss_->Map(), blockSize ) );
     ivec->MvRandom();
     //
-    // Call the constructor for the (A^T*A) operator
-    Teuchos::RefCountPtr<Anasazi::EpetraSymMVOp> Amat = Teuchos::rcp( new Anasazi::EpetraSymMVOp(ss_, !isInner_) );
+    Teuchos::RefCountPtr<OP> Amat;
+
+    if (op_ != Teuchos::null) {
+      // Call the constructor for the (WA)^T*WA operator
+      Amat = Teuchos::rcp( new Anasazi::EpetraWSymMVOp( ss_, op_ ) );
+    }
+    else {
+      // Call the constructor for the (A^T*A) operator
+      Amat = Teuchos::rcp( new Anasazi::EpetraSymMVOp(ss_, !isInner_) );
+    }
+ 
+    // Create the eigenproblem
     Teuchos::RefCountPtr<Anasazi::BasicEigenproblem<double,MV,OP> > MyProblem =
       Teuchos::rcp( new Anasazi::BasicEigenproblem<double,MV,OP>(Amat, ivec) );
-    
+  
     // Inform the eigenproblem that the operator A is symmetric
     MyProblem->setHermitian( true ); 
     

@@ -40,7 +40,8 @@ namespace RBGen {
   }
 
   void IncSVDPOD::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                              const Teuchos::RefCountPtr< Epetra_MultiVector >& ss        ) {
+                              const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
+			      const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio ) {
 
     // Get the "Reduced Basis Method" sublist.
     Teuchos::ParameterList rbmethod_params = params->sublist( "Reduced Basis Method" );

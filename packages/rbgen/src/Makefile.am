@@ -101,9 +101,11 @@ endif
 #-----------------------------------------------------
 
 EXTRA_EPETRAEXT_H = \
+        $(srcdir)/RBGen_EpetraCrsMatrixFileIOHandler.h \
         $(srcdir)/RBGen_MatrixMarketFileIOHandler.h
 
 EXTRA_EPETRAEXT = \
+        $(srcdir)/RBGen_EpetraCrsMatrixFileIOHandler.cpp \
         $(srcdir)/RBGen_MatrixMarketFileIOHandler.cpp
 
 if BUILD_RBGEN_EPETRAEXT
