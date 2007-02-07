@@ -51,7 +51,7 @@ formatting guidelines are covered.
 
 C++ classes, functions, variables, data members etc. should be named and used
 in a fairly consistent manner.  The following guidelines are consistent with
-accepted practice as exemplified in [???,???,???,???].
+common practice as exemplified in {}\cite{EffectiveC++3rd05}.
 
 \begin{enumerate}
 
@@ -60,7 +60,7 @@ should generally be capitalized and seperate words should be concatenated and
 capitalized.  For example:
 
 {\small\begin{verbatim}
-  class SomeClassName {...};
+  class SomeClass {...};
 \end{verbatim}}
 
 {}\item\textit{C++ namespace names}: C++ namespaces should follow the same
@@ -247,7 +247,8 @@ files would be named
 convention assures that the file names will be globally unique.
 
 {}\item\textit{Use include guards in all header files}: All header files,
-without exception, should use include guards [???].  For example, the file
+without exception, should use include guards {}\cite[Item
+24]{C++CodingStandards05}.  For example, the file
 {}\texttt{NameSpaceA\-\_InnerNamespace\-\_SomeClass.hpp} would have the basic
 structure:
 
@@ -275,7 +276,8 @@ are used.
 This is a amendment to Item 24 in {}\cite{C++CodingStandards05}.
 
 {}\item\textit{Partition template code into different files to allow for both
-implicit and explicit instantiation}: ???
+implicit and explicit instantiation}: ??? ToDo: Fill this in once we do
+explicit instantiation and figure this out ???
 
 \end{enumerate}
 
@@ -293,7 +295,8 @@ this document.  Here, we provide additional coding guidelines and, in some
 cases, amend items in {}\cite{C++CodingStandards05}.  Where this document is
 silent, {}\cite{C++CodingStandards05} is to be considered the authoritative
 source for guidance.  Some miscellaneous amendments to the items in
-{}\cite{C++CodingStandards05} are given in Appendix ???.
+{}\cite{C++CodingStandards05} are given in Appendix
+{}\ref{sec:misc_amendments}.
 %ToDo: Write an appendix of ammendments to some of the items in ``C++ Coding Standards''.
 
 %
@@ -346,7 +349,12 @@ of segfaults).  Indexing and other unchecked operations with
 therefore is less likely to produce error inside of numerical code.
 
 {}\item\textit{Use Teuchos::Ptr as function arguments in the place of raw C++
-pointers to single objects where no persisting association exists}: ???
+pointers to single objects where no persisting association exists}: The class
+{}\texttt{Teuchos\-::Ptr} simply takes the place of a raw point to a single
+object but in debug mode, it initalized to NUL by default and throws
+exceptions when trying to dereference a null pointer.  Using this class helps
+to eliminate all needs for checking for NULL to avoid undefined behavior when
+one dereferences a NULL pointer.
 
 {}\item\textit{Use Teuchos::RefCountPtr for memory management of single
 dynamically allocated objects and for handling persisting
@@ -355,7 +363,12 @@ the class {}\texttt{boost::\-shared\_ptr} in all items in
 {}\cite{C++CodingStandards05} with {}\texttt{Teuchos::\-RefCountPtr}.
 
 {}\item\textit{Use Teuchos::ArrayView as function arguments in the place of
-pointers into raw arrays where no persisting association exists}: ???
+pointers into raw arrays or other container classes where no persisting
+association exists and the array does not need to be resized}: This class
+allows all of the useful capabilities of a {}\texttt{std::vector} which do not
+include adding or removing entries.  In debug mode, all of the access
+functions (including iterators) are fully checked.  In optimized mode,
+unchecked raw pointers are used.
 
 {}\item\textit{Prefer Teuchos::Array to std::vector as a contiguous general
 purpose data container}: While {}\texttt{Teuchos::\-Array} gets all of its
@@ -376,6 +389,14 @@ a contiguous container class such as {}\texttt{Teuchos::\-Array} or
 not change the size of the array, it can only provide for reference counted
 sharing of an array of data of fixed size and provide subviews of contiguous
 parts of the managed array.
+
+{}\item\textit{Prefer Teuchos::Map to std::map as a general associative
+container}: While in optimized mode, {}\texttt{Teuchos\-::Map} is equivalent
+to {}\texttt{std\-::map}, in debug mode {}\texttt{Teuchos\-::Map} uses a
+simplified data-structure with fully checking of access and iterators.  This
+class uses {}\texttt{Teuchos\-::Array},
+{}\texttt{Teuchos\-::Array\-Ref\-Count\-Ptr} and others to build a fully
+checked (but slower) implementation.
 
 {}\item\textit{Use the template function
 {}\texttt{Teuchos::as<T\_to>(T\_from)} for all conversion of data types that
@@ -475,13 +496,37 @@ the safest way to define the nonmember function is
 
 {}\textit{Justification}: Using explicit namespace qualification avoids
 problems of spelling and other mistakes that can accidentally result in the
-definition of a new function {}\cite[Section 8.2]{stroustrup00}.  Such a
+definition of a new function {}\cite[Section 8.2]{stroustrup97}.  Such a
 mistake is caught at link time but it can be very hard to figure out the root
 cause of the problem when this happens.
 
+{}\item\textit{Prefer enum arguments to bool objects as formal function
+arguments when convertion mistakes are likely}: While the built-in type
+{}\texttt{bool} is very convenient to use as a formal function argument, it
+also allows for conversions from every built-in type and every pointer type.
+While using an enumeration type and its values is more verbose, it is also
+self documenting and is safer.  For example, what does the third argument mean
+in the following example?
+
+{\small\begin{verbatim}
+  apply( A, 2.0, true, x, y );
+\end{verbatim}}
+
+When the {}\texttt{bool} argument is changed to an enum, the function call
+becomes:
+
+{\small\begin{verbatim}
+  apply( A, 2.0, USE_TRANSPOSE, x, y );
+\end{verbatim}}
+
+the meaning is much more clear.  Therefore, when self documentation and
+compile-time safety are important, perfer to define and use {}\texttt{enum}s
+over {}\texttt{bool}s as formal function arguments.
+
 {}\item\textit{Structure the includes in template header files to avoid
 problems in mutually dependent code}: ??? ToDo: Merge this with the above item
-on layout of files for implicit and explicit template instantiation.
+on layout of files for implicit and explicit template instantiation once we
+figure out how to do this with explicit and implicit instantiation ???
 
 \end{enumerate}
 
@@ -507,7 +552,7 @@ project so as not to cause undue difficultly in shared maintenance and in
 performing code reviews {}\cite{CodeComplete2nd04}.  Some consistency in
 formatting helps and to facilitate multiple ownership and shared development
 of a collection of software, such as in Extreme Programming (XP)
-{}\cite{ExtremeProgramming} (see Appendix
+{}\cite{ExtremeProgrammingExplained99} (see Appendix
 {}\ref{sec:arguments-for-consistent-style} for an outline of the arguments for
 adopting a consistent code formatting style).  By ``formatting'' we generally
 refer to the use of whitespace in the line-to-line formating of the program or
@@ -532,8 +577,8 @@ Our main goal in this section is to try to provide reasonable recommendations
 for those formating issues that are largely a matter of style and personal
 preference but at the same time affect the overall readability of the code and
 promote pair programming and joint ownership of the code
-{}\cite{ExtremeProgramming}.  The formatting and indentation guidelines
-presented here are largely consistent with the recommendations in
+{}\cite{ExtremeProgrammingExplained99}.  The formatting and indentation
+guidelines presented here are largely consistent with the recommendations in
 {}\cite[Chapter 31]{CodeComplete2nd04} and try to reduce the amount of ``right
 drift'' that can occur with some common formatting and indentation styles.
 
@@ -676,13 +721,14 @@ members coming before {}\texttt{protected} members coming before
 \end{verbatim}}
 
 {}\textit{Justification}: This ordering of sections and data members is quite
-common [???,???].  Above, we show private member functions after private data
-members since private data members are more prominent and more common in the
-class implementations than are private member functions.  Also, private types
-(where typedefs are most common) must be listed before they are used in the
-declaration of the private data members.  Note that public types used in
-public member functions must be listed above (or at least forward declared)
-before the public member functions that use them.
+common {}\cite[Section 31.8]{CodeComplete2nd04}.  Above, we show private
+member functions after private data members since private data members are
+more prominent and more common in the class implementations than are private
+member functions.  Also, private types (where typedefs are most common) must
+be listed before they are used in the declaration of the private data members.
+Note that public types used in public member functions must be listed above
+(or at least forward declared) before the public member functions that use
+them.
 
 {}\item\textit{Formating of function prototypes, function definitions and
 function calls}: Below, guidelines for formatting short function prototypes
@@ -788,11 +834,276 @@ example, if the function definitions are ordered the same as the declarations,
 it can be easy to see if a function definition is missing (i.e.\ which could
 be the cause of the link error that you are seeing).
 
-{}\item\textit{Formatting if/else if/else statements}: ???
+{}\item\textit{Placement of braces and indentation of control structures}: Two
+basic styles of brace placement and indentation in control structures are
+recommend here.  The first general style is a modification of the K\&R
+style{}\cite{ArtisticStyle} where the brace comes immediately after the
+control statement on the same line shown as:
 
-{}\item\textit{Formatting switch/case statements}: ???
+{\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  if(someCondition) {
+    ...
+  }
+  else {
+    ...
+  }
+\end{verbatim}}
 
-{}\item\textit{Formatting for and while loops}: ???
+Note that the pure K\&R style (for example, as defined by Artistic Style
+{}\cite{ArtisticStyle}) shown as:
+
+{\small\begin{verbatim}
+  // Pure K&R Style (*not* recommended)
+  if(someCondition) {
+    ...
+  } else {
+    ...
+  }
+\end{verbatim}}
+
+is not recommended.  Even through pure K\&R style meets McConnell's strict
+pictorial definition of ``emulation of pure block style'' (i.e.\ the
+equivalent to pure block format such as in Visual Basic) which he says is
+good, he actually recommends the above modified K\&R style (as do we since we
+feel it is more readable).
+
+The second general style that is recommended is the ``ANSI''
+style{}\cite{ArtisticStyle} where the opening brace begins flush on the next
+line from the control statement shown as:
+
+{\small\begin{verbatim}
+  // ANSI Style (recommended)
+  if(someCondition)
+  {
+    ...
+  }
+  else
+  {
+    ...
+  }
+\end{verbatim}}
+
+Both the modified K\&R and the ANSI styles help to avoid right drift.  The
+modified K\&R style creates tighter code vertically and seems to be preferred
+by many communities and authors but variations of the ANSI style are also very
+common.  Note that the ANSI style seems to have a distinct advantage in cases
+where the control statement is continued over multiple lines.  For example,
+the modified K\&R style with line continuations looks like:
+
+{\small\begin{verbatim}
+  // Modified K&R Style with line continuations (*not* recommended)
+  if( someLongCondition &&
+    anotherVeryLongCondition &&
+    theLongestConditionThatWillFitOnOneLine ) {
+    // Statements
+    ...
+  }
+\end{verbatim}}
+
+{}\noindent{}and it is hard to argue that this shows the logical structure of
+code.  One could argue that the ANSI style which looks like:
+
+{\small\begin{verbatim}
+  // ANSI Style with line continuations (recommended)
+  if( someLongCondition &&
+    anotherVeryLongCondition &&
+    theLongestConditionThatWillFitOnOneLine )
+  {
+    // Statements
+    ...
+  }
+\end{verbatim}}
+
+better shows the logical structure of the code in clearly separating the
+control structure logic from the inner block of code.
+
+Note that while the modified K\&R style meets McConnell's blessing of
+``showing the logical structure of code'' where he refers to it as ``emulating
+pure block'' format that he sites the ANSI styles as violating this principle
+{}\cite[Section 31.1]{CodeComplete2nd04}.  However, it is somewhat subjective
+what styles ``show the logical structure'' and McConnell himself seems to
+contradict himself at times (see the formatting of if/else statements below).
+
+When choosing between one of these to styles try to be consistent at least
+within a single file.  However, for control statements that extend over a
+single line, prefer the ``Linux'' style.
+
+Below, the application of the modified K\&R style and the Linux styles are
+shown in the context of several different types of C++ loop and control
+structures.
+
+  \begin{enumerate}
+
+  {}\item\textit{Formatting if/else if/else statements}: When applied to if
+  statements, the two recommended styles are:
+
+  {\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  if(someCondition) {
+    ...
+  }
+  else if(someOtherCondition) {
+    ...
+  }
+  else {
+    ...
+  }
+  \end{verbatim}}
+  
+  {}\noindent{}and:
+  
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  if(someCondition)
+  {
+    ...
+  }
+  else if(someOtherCondition)
+  {
+    ...
+  }
+  else
+  {
+    ...
+  }
+  \end{verbatim}}
+
+  {}\item\textit{Formatting switch/case statements}: The two recommended
+  formats for switch/case statements are:
+
+  {\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  switch(someEnumValue) {
+    case ENUM_VALUE1:
+      ...
+      break;
+    case ENUM_VALUE2:
+      ...
+      break;
+    default:
+      TEST_FOR_EXCEPT("Should never get there!");
+  }
+  \end{verbatim}}
+
+  {}\noindent{}and
+
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  switch(someEnumValue)
+  {
+    case ENUM_VALUE1:
+      ...
+      break;
+    case ENUM_VALUE2:
+      ...
+      break;
+    default:
+      TEST_FOR_EXCEPT("Should never get there!");
+  }
+  \end{verbatim}}
+
+  As shown above, every switch structure should have a {}\texttt{default} case
+  that throws an exception (see ``use the default clause to detect errors''
+  in {}\cite[Section 15.1]{CodeComplete2nd04}).
+
+  Also, if needed, the case blocks can be wrapped in braces as:
+
+  {\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  switch(someEnumValue) {
+    case ENUM_VALUE1: {
+      ...
+      break;
+    }
+    case ENUM_VALUE2: {
+      ...
+      break;
+    }    
+    default: {
+      TEST_FOR_EXCEPT("Should never get there!");
+    }
+  }
+  \end{verbatim}}
+
+  {}\noindent{}and
+
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  switch(someEnumValue)
+  {
+    case ENUM_VALUE1:
+    {
+      ...
+      break;
+    }
+    case ENUM_VALUE2:
+    {
+      ...
+      break;
+    }    
+    default:
+    {
+      TEST_FOR_EXCEPT("Should never get there!");
+    }
+  }
+  \end{verbatim}}
+
+  {}\item\textit{Formatting for and while loops}: The two recommended styles
+  for formatting for loops are:
+
+  {\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  for ( int i = 0; i < size; ++i ) {
+    ...
+  }
+  \end{verbatim}}
+
+  {}\noindent{}and:
+
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  for ( int i = 0; i < size; ++i )
+  {
+    ...
+  }
+  \end{verbatim}}
+
+  Note that line continuations are often needed for a for loops control
+  structure, especially if long type names or variable names are used.  In
+  these cases, the ANSI style is recommended as:
+
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  for (
+    std::vector<SomeVeryLongClassName>::const_iterator itr = longVarName.begin();
+    itr != someLongVariableName.end();
+    ++itr )
+  {
+    ...
+  }
+  \end{verbatim}}
+
+  Similarly, while loops should be formatted as:
+
+  {\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  while ( someCondition ) {
+    ...
+  }
+  \end{verbatim}}
+
+  {}\noindent{}and:
+
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  while ( someCondition )
+  {
+    ...
+  }
+  \end{verbatim}}
+
+  \end{enumerate}
 
 \end{enumerate}
 

@@ -1,0 +1,61 @@
+%
+\section{Miscellaneous amendments to ``C++ Coding Standards''}
+\label{sec:misc_amendments}
+%
+
+In this appendix, we provide amendments to some of the items in
+{}\cite{C++CodingStandards05} that we feel are inappropriate for our domain.
+
+%
+\subsection{Amendments to items related to compiler/linker incompatibilities}
+%
+
+There are three items in {}\cite{C++CodingStandards05} that relate to
+portability problems associated with mixing and matching code in different
+binary libraries compiled with different C++ compilers or with different
+compiler options.  In this context, the authors use the term ``module'' to
+mean a single library or a set of libraries containing binary object code that
+defines the ``module''.
+
+In general, one can not assume that object code compiled by two or more
+different C++ compilers will work together since the name-mangling needed for
+type-safe linkage is not even specified by the ISO C++ standard.  A more
+typical problem is when the same compiler is used, but different compiler
+and/or linker options are used.  For example, some compilers allow you to turn
+support for exception handling on and off and if an exception is thrown by one
+module it will not be handled correctly by another module that has exception
+handling support turned off.  A similar problem can happen when mixing static
+and shared libraries, in Linux for example, where RTTI is handled differently
+and can result in dynamic casting failures in cases where it would otherwise
+succeed.
+
+In our model of software deployment, we distribute source code an a build
+process that users can manipulate in order to set the exact compiler and
+linker options to match what is used by other libraries and the application
+code that uses the libraries.  Because we develop class libraries, it is
+simply not realistic to isolate this type of code into libraries with small
+``Facade''type interfaces.
+
+The specific items that we consider inappropriate are:
+
+\begin{itemize}
+
+{}\item\textit{Item 60: Avoid allocating and deallocating memory in different
+modules}:
+
+{}\item\textit{Item 62: Don't allow exceptions to propagate across module
+boundaries}:
+
+{}\item\textit{Item 63: Use sufficiently portable types in a module's
+interface}:
+
+\end{itemize}
+
+All three of these items are related to the problem of mixing code created by
+different compiler and/or linker options.  however, they may also be related
+to mixed language programming.  For example, in order to ensure that your
+module is the most reusable, you might create a C-compatible interface that
+allows clients coding in C (and even Fortran 77 in some cases) to call and by
+called your module.  If mixed language programming is the issue, then a
+special {}\texttt{extern `"C"} interface should be created for the module
+which will automatically satisfy Items 60, 62, and 63.
