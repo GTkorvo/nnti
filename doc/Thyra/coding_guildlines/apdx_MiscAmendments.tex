@@ -59,3 +59,302 @@ allows clients coding in C (and even Fortran 77 in some cases) to call and by
 called your module.  If mixed language programming is the issue, then a
 special {}\texttt{extern `"C"} interface should be created for the module
 which will automatically satisfy Items 60, 62, and 63.
+
+%
+\subsection{Amendments 'using' declarations and directives}
+%
+
+In {}\cite[Item 59]{C++CodingStandards05}, the authors say to never put
+'using' declarations into header files or before {}\texttt{\#include}s and
+that 'using namespace SomeNamespace' directives are perfectly safe for code in
+source files after all {}\texttt{\#include}s.  However, we will argue that:
+
+\begin{itemize}
+
+{}\item{}employing {}\texttt{using} declarations to inject names of C++
+classes or enums from one namespace into another is a safe as can be, and that
+
+{}\item{}any type of {}\texttt{using namespace ...} directive is harmful and
+should be avoided.
+
+\end{itemize}
+
+{}\noindent{}However, we agree that employing {}\texttt{using} declarations
+for nonmember functions is dangerous and is to be avoided because of problems
+related to overloading.
+
+Are all using declarations employed in header files dangerous?  In
+{}\cite[Item 59]{C++CodingStandards05}, the authors clearly show that
+employing 'using' declarations for nonmember functions is dangerous.  But what
+about empolying 'using' declarations for C++ classes?
+
+To investigate the issues involved, consider the following toy C++ program (in
+the file NamespaceClassUsingIssues.cpp):
+
+{\small\begin{verbatim}
+    //
+    // Header-like declarations
+    //
+    
+    #include <iostream>
+    
+    namespace NamespaceA {
+    
+    template<class T>
+    class A {
+    public:
+      explicit A( const T& a ) : a_(a) {}
+      void print( std::ostream &os ) const
+        { os << "\na="<<a_<<"\n"; }
+    private:
+      T a_;
+    };
+    
+    } // namespace NamespaceA
+    
+    // Add a using declaration to inject 'A' into another namespace
+    namespace NamespaceB {
+    
+    using NamespaceA::A;
+    
+    } // namespace NamespaceB
+    
+    // Now use the A class without the namespace qualification
+    namespace NamespaceB {
+    
+    A<double> foo( std::ostream &os, const A<int> &aa );
+    // NOTE: Above, we do not need namespace qualification for 'A'
+    
+    } // namespace NamespaceB
+    
+    
+    //
+    // Implementations
+    //
+    
+    // Create another A class in the global namespace.  With care, we should not
+    // have any problems with this and our code should not be affected by the
+    // presence of this class.
+    template<class T>
+    class A {
+    public:
+      explicit A( const T& a ) : a_(a) 
+        { std::cerr << "\nOh no, called ::A::A(...)!\n"; exit(1); }
+      void print( std::ostream &os ) { os << "\na="<<a_<<"\n"; }
+    private:
+      T a_;
+    };
+    
+    // See what happens when you define another class A in NamespaceB which
+    // conflicts with the using declaration!  This should not be allowed and
+    // should be caught by the compiler!
+    
+    #ifdef SHOW_DUPLICATE_CLASS_A
+    
+    namespace NamespaceB {
+    
+    template<class T>
+    class A {
+    public:
+      explicit A( const T& a ) : a_(a) 
+        { std::cerr << "\nOh no, called ::A::A(...)!\n"; exit(1); }
+      void print( std::ostream &os ) { os << "\na="<<a_<<"\n"; }
+    private:
+      T a_;
+    };
+    
+    } // namespace NamespaceB
+    
+    #endif // SHOW_DUPLICATE_CLASS_A
+    
+    
+    // Define function in NamespaceB without namespace qualification for class A
+    NamespaceB::A<double>
+    NamespaceB::foo( std::ostream &os, const A<int> &aa )
+    {
+      A<double> ab(2.0);
+      aa.print(std::cout);
+      ab.print(std::cout);
+      return ab;
+    }
+    // NOTE: Above, we need explicit namespace qualification for the return type
+    // 'NamespaceB::A<double>' since we use namespace qualification to define
+    // nonmember functions (see Thyra coding guidelines).  Without this namespace
+    // qualification, the global class '::A' would be assumed and you would get a
+    // compilation error.  However, within the function, which is in the scope of
+    // NamespaceB, we don't need namespace qualifications!
+    
+    
+    //
+    // User's code.  This code does not typically live an a namespace (or is in
+    // another unrelated namespace).  Here, some explicit namespace qualification
+    // and using declarations will be required to avoid ambiguities.
+    //
+    
+    int main()
+    {
+    
+    #if defined(SHOW_MISSING_USING_DECL)
+      // Here, no using declaration is provided.  This will result in the global
+      // class '::A' being used below which will result in a compiler error when
+      // the NamespaceB::foo(...) function is called.  This is a feature!
+    #elif defined(SHOW_ERRONEOUS_USING_DIRECTIVE)
+      // Here we try to just inject all of the names from NamespaceA into the
+      // local scope.  However, this will result in the names 'NamespaceA::A' and
+      // '::A' being equally visible which will result in a compiler error when
+      // the first unqualified 'A' object is created below!
+      using namespace NamespaceA;
+    #else
+      // Inject the class name 'A' into the local scope and will override any
+      // (sloppy) names polluting the global namespace.  This will cause the global
+      // '::A' class to be sort of hidden (which is good!).
+      using NamespaceA::A;
+    #endif
+    
+      A<int> aa(5);
+      A<double> ab = NamespaceB::foo(std::cout,aa);
+      ab.print(std::cout);
+      
+      return 0;
+      
+    }
+\end{verbatim}}
+
+The above program defines a templated class {}\texttt{A} in namespace
+{}\texttt{NamespaceA} and then does a {}\texttt{using NamespaceA::A} to inject
+this class name into {}\texttt{NamespaceB}.
+
+When the program is compiled and run, one gets:
+
+{\small\begin{verbatim}
+    $ g++ -ansi -pedantic -Wall -o NamespaceClassUsingIssues.exe
+    NamespaceClassUsingIssues.cpp
+    
+    $ ./NamespaceClassUsingIssues.exe 
+    
+    a=5
+    
+    a=2
+    
+    a=2
+\end{verbatim}}
+
+This program has a few different ifdefs to show different types of errors that
+a compiler will detect.
+
+\begin{enumerate}
+
+{}\item\textit{What happens if you try to define another class ~A~ in
+namespace ~NamespaceB~?}
+
+In the case of nonmember functions, overloads of a function exhibit strange
+and non-intuitive behavior when one employs 'using' declarations.  However,
+what happens with classes?
+
+In the above program, when ones defines the macro
+{}\texttt{SHOW\-\_DUPLICATE\-\_CLASS\-\_A} when compiling, one will get:
+
+{\small\begin{verbatim}
+    $ g++ -ansi -pedantic -Wall -DSHOW_DUPLICATE_CLASS_A \
+       -o NamespaceClassUsingIssues.exe NamespaceClassUsingIssues.cpp             
+
+    NamespaceClassUsingIssues.cpp:63: error: declaration of `class 
+       NamespaceA::A<T>' in `NamespaceB' which does not enclose `NamespaceA'
+    NamespaceClassUsingIssues.cpp:63: confused by earlier errors, bailing out
+\end{verbatim}}
+
+Above, the error message generated by g++ is not very good but at least the
+compiler will not allow this code to compile.  This is in stark contrast to
+what happens when you have overloaded member functions which {}\cite[Item
+59]{C++CodingStandards05} complains about.
+
+{}\textbf{Takehome Message}: Employing {}\texttt{using
+SomeNamespace::SomeClass} declarations to inject names from one namespace into
+another seems to be safe and does not suffer from the gotchas associated with
+{}\texttt{using} declarations for nonmember functions.
+
+{}\item\textit{What happens when the user's code that does not have an
+appropriate using declaration?}
+
+While the {}\texttt{using NamespaceA::A} declaration in {}\texttt{NamespaceB}
+allows the code in {}\texttt{NamespaceB} to avoid having to explicitly qualify
+{}\texttt{NamespaceA::A} all the time, this does not automatically mean that
+user code that does not live in {}\texttt{NamespaceB} will not have to do
+something to get at the name {}\texttt{A}.  The user can either do explicit
+qualification {}\texttt{Namespace::A} or can put a {}\texttt{using
+NamespaceA::A} declaration at the top of their namespace or in each function
+that they have (as is done in the {}\texttt{main()} function above).
+
+In the above program, if you define the macro
+{}\texttt{SHOW\-\_MISSING\-\_USING\-\_DECL}, the {}\texttt{using Namespace::A}
+declaration will be missing in {}\texttt{main()} and this will result in the
+compiler finding the global {}\texttt{::A} class which will cause a compiler
+error when {}\texttt{NamespaceB::foo(...)} gets called.  Here is what one gets
+when compiling:
+
+{\small\begin{verbatim}
+    $ g++ -ansi -pedantic -Wall -DSHOW_MISSING_USING_DECL \
+      -o NamespaceClassUsingIssues.exe NamespaceClassUsingIssues.cpp 
+
+    NamespaceClassUsingIssues.cpp: In function `int main()':
+    NamespaceClassUsingIssues.cpp:121: error: invalid initialization of 
+       reference of type 'const NamespaceA::A<int>&' from expression of type '
+       A<int>'
+    NamespaceClassUsingIssues.cpp:80: error: in passing argument 2 of `
+       NamespaceA::A<double> NamespaceB::foo(std::ostream&, const 
+       NamespaceA::A<int>&)'
+\end{verbatim}}
+
+While the above error message generated by g++ here is not all that great, at
+least the compiler catches the mistake.
+
+{}\textbf{Takehome Message}: Always do {}\texttt{using
+SomeNamespace::SomeClass} to inject the names from other namespaces that you
+want to use to protect yourself from others who pollute the global namespace.
+
+{}\item\textit{What happens when user code employs a {}\texttt{using
+NamespaceA} directive where there are conflicting global names?}
+
+Since there is a global class {}\texttt{::A}, the user can not simply employ a
+{}\texttt{using namespace NamespaceA} directive or the compiler will complain
+that it does not know which class to use.
+
+In the above program, when one defines the macro
+{}\texttt{SHOW\-\_ERRONEOUS\-\_USING\-\_DIRECTIVE} when compiling one gets:
+
+{\small\begin{verbatim}
+    $ g++ -ansi -pedantic -Wall -DSHOW_ERRONEOUS_USING_DIRECTIVE \
+      -o NamespaceClassUsingIssues.exe NamespaceClassUsingIssues.cpp 
+
+    NamespaceClassUsingIssues.cpp: In function `int main()':
+    NamespaceClassUsingIssues.cpp:120: error: use of `A' is ambiguous
+    NamespaceClassUsingIssues.cpp:45: error:   first declared as `
+       template<class T> class A' here
+    NamespaceClassUsingIssues.cpp:10: error:   also declared as `
+       template<class T> class NamespaceA::A' here
+    NamespaceClassUsingIssues.cpp:120: error: parse error before `>' token
+    NamespaceClassUsingIssues.cpp:121: error: use of `A' is ambiguous
+    NamespaceClassUsingIssues.cpp:45: error:   first declared as `
+       template<class T> class A' here
+    NamespaceClassUsingIssues.cpp:10: error:   also declared as `
+       template<class T> class NamespaceA::A' here
+    NamespaceClassUsingIssues.cpp:121: error: parse error before `>' token
+    NamespaceClassUsingIssues.cpp:122: error: `ab' undeclared (first use 
+       this function)
+    NamespaceClassUsingIssues.cpp:122: error: (Each undeclared identifier 
+       is reported only once for each function it appears in.)
+\end{verbatim}}
+
+Note that this type of example goes against the advise in {}\cite[Item
+59]{C++CodingStandards05} where they say that it is safe to employ
+{}\texttt{using namespace SomeNamespace} directives in {}\texttt{*.cpp} source
+files.  This example shows that this does not protect you from others that
+pollute the global namespace.  Note that code that is written this way might
+compile one day and not the next as it is fragile and can be broken by other
+people that pollute the global namespace.
+
+{}\textbf{Takehome Message}: Never employ {}\texttt{using namespace
+AnyNamespace} as you cannot guarantee the integrity of your code since people
+outside of your namespace can cause your code to not compile.
+
+\end{enumerate}
