@@ -61,7 +61,7 @@ special {}\texttt{extern `"C"} interface should be created for the module
 which will automatically satisfy Items 60, 62, and 63.
 
 %
-\subsection{Amendments 'using' declarations and directives}
+\subsection{Amendments for 'using' declarations and directives}
 %
 
 In {}\cite[Item 59]{C++CodingStandards05}, the authors say to never put
@@ -72,7 +72,7 @@ source files after all {}\texttt{\#include}s.  However, we will argue that:
 \begin{itemize}
 
 {}\item{}employing {}\texttt{using} declarations to inject names of C++
-classes or enums from one namespace into another is a safe as can be, and that
+classes or enums from one namespace into another is fairly safe
 
 {}\item{}any type of {}\texttt{using namespace ...} directive is harmful and
 should be avoided.
@@ -81,12 +81,12 @@ should be avoided.
 
 {}\noindent{}However, we agree that employing {}\texttt{using} declarations
 for nonmember functions is dangerous and is to be avoided because of problems
-related to overloading.
+related to overloading and when overload are declared.
 
 Are all using declarations employed in header files dangerous?  In
 {}\cite[Item 59]{C++CodingStandards05}, the authors clearly show that
-employing 'using' declarations for nonmember functions is dangerous.  But what
-about empolying 'using' declarations for C++ classes?
+employing 'using' declarations for nonmember functions is dangerous because of
+overloading.  But what about empolying 'using' declarations for C++ classes?
 
 To investigate the issues involved, consider the following toy C++ program (in
 the file NamespaceClassUsingIssues.cpp):
@@ -186,7 +186,7 @@ the file NamespaceClassUsingIssues.cpp):
     
     
     //
-    // User's code.  This code does not typically live an a namespace (or is in
+    // User's code.  This code does not typically live in a namespace (or is in
     // another unrelated namespace).  Here, some explicit namespace qualification
     // and using declarations will be required to avoid ambiguities.
     //
@@ -271,7 +271,7 @@ what happens when you have overloaded member functions which {}\cite[Item
 {}\textbf{Takehome Message}: Employing {}\texttt{using
 SomeNamespace::SomeClass} declarations to inject names from one namespace into
 another seems to be safe and does not suffer from the gotchas associated with
-{}\texttt{using} declarations for nonmember functions.
+{}\texttt{using} declarations for (overloaded) nonmember functions.
 
 {}\item\textit{What happens when the user's code that does not have an
 appropriate using declaration?}
@@ -312,8 +312,8 @@ least the compiler catches the mistake.
 SomeNamespace::SomeClass} to inject the names from other namespaces that you
 want to use to protect yourself from others who pollute the global namespace.
 
-{}\item\textit{What happens when user code employs a {}\texttt{using
-NamespaceA} directive where there are conflicting global names?}
+{}\item\textit{What happens when the user code employs a {}\texttt{using
+namespace NamespaceA} directive where there are conflicting global names?}
 
 Since there is a global class {}\texttt{::A}, the user can not simply employ a
 {}\texttt{using namespace NamespaceA} directive or the compiler will complain

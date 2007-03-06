@@ -13,17 +13,17 @@ other projects that, for instance, might interact with Thyra.
 
 The goal of this document is not to restate what is in
 {}\cite{C++CodingStandards05} but instead to fill in some gaps intentionally
-left by the authors and to provide exceptions and amendments to specific items
-in the book and tailor them for numerical libraries.  The zeroth item (first
-item, zero based) ``Don't seat the small stuff'' intentionally avoids specific
+left by the authors and to provide amendments to specific items in the book
+and tailor them for numerical libraries.  The zeroth item (first item, zero
+based) ``Don't seat the small stuff'' intentionally avoids specific
 recommendations on issues such as the conventions for naming identifiers and
 the formatting of code since these are arbitrary.  While issues related to
 coding style are much less important that other issues, there are arguments
-for adopting consistent coding style and some of these are outlined in
-Appendix {}\ref{sec:arguments-for-consistent-style}.  Therefore, one of the
+for adopting consistent coding style and some of these arguments are outlined
+in Appendix {}\ref{sec:arguments-for-consistent-style}.  Therefore, one of the
 purposes of this document is to suggest reasonable and minimal guidelines for
-naming conventions and code formatting that provide for code uniformity and
-facilitate collaborative code development and maintenance.
+naming conventions and code formatting that provide for enough code uniformity
+to facilitate collaborative code development and maintenance.
 
 More important that code formatting, a consistent set of naming conventions
 for C++ classes, functions, variables, and other entities also helps to
@@ -246,8 +246,8 @@ files would be named
 {}\texttt{NameSpaceA\-\_InnerNamespace\-\_SomeClass.[hpp,cpp]}.  This
 convention assures that the file names will be globally unique.
 
-{}\item\textit{Use include guards in all header files}: All header files,
-without exception, should use include guards {}\cite[Item
+{}\item\textit{Use internal include guards in all header files}: All header
+files, without exception, should use include guards {}\cite[Item
 24]{C++CodingStandards05}.  For example, the file
 {}\texttt{NameSpaceA\-\_InnerNamespace\-\_SomeClass.hpp} would have the basic
 structure:
@@ -273,7 +273,7 @@ NAMESPACEA\-\_INNERNAMESPACE\-\_SOMECLASS\-\_HPP} after the final
 helpful in cases where other {}\texttt{\#ifdef} or {}\texttt{\#if} structures
 are used.
 
-This is a amendment to Item 24 in {}\cite{C++CodingStandards05}.
+This is a very minor amendment to Item 24 in {}\cite{C++CodingStandards05}.
 
 {}\item\textit{Partition template code into different files to allow for both
 implicit and explicit instantiation}: ??? ToDo: Fill this in once we do
@@ -500,7 +500,7 @@ definition of a new function {}\cite[Section 8.2]{stroustrup97}.  Such a
 mistake is caught at link time but it can be very hard to figure out the root
 cause of the problem when this happens.
 
-{}\item\textit{Prefer enum arguments to bool objects as formal function
+{}\item\textit{Prefer {}\texttt{enum}s to {}\texttt{bool}s as formal function
 arguments when convertion mistakes are likely}: While the built-in type
 {}\texttt{bool} is very convenient to use as a formal function argument, it
 also allows for conversions from every built-in type and every pointer type.
@@ -524,9 +524,10 @@ compile-time safety are important, perfer to define and use {}\texttt{enum}s
 over {}\texttt{bool}s as formal function arguments.
 
 {}\item\textit{Structure the includes in template header files to avoid
-problems in mutually dependent code}: ??? ToDo: Merge this with the above item
-on layout of files for implicit and explicit template instantiation once we
-figure out how to do this with explicit and implicit instantiation ???
+problems in mutually dependent (i.e. circular)code}: ??? ToDo: Merge this with
+the above item on layout of files for implicit and explicit template
+instantiation once we figure out how to do this with explicit and implicit
+instantiation ???
 
 \end{enumerate}
 
@@ -696,10 +697,9 @@ namespaces provides no useful information.  Not indenting for namespace
 enclosures is also consistent with the ``ansi'', the ``kr'', and the ``linux''
 styles as defined by Artistic Style {}\cite{ArtisticStyle}.
 
-{}\item\textit{C++ class and struct declaration indentation and layout}: C++
-class declarations should generally be laid out with {}\texttt{public}
-members coming before {}\texttt{protected} members coming before
-{}\texttt{private} members and indented as:
+{}\item\textit{C++ class declarations should generally be laid out with
+{}\texttt{public} members coming before {}\texttt{protected} members coming
+before {}\texttt{private} members and indented as:}
 
 {\small\begin{verbatim}
   class SomeClass {
@@ -730,13 +730,13 @@ Note that public types used in public member functions must be listed above
 (or at least forward declared) before the public member functions that use
 them.
 
-{}\item\textit{Formating of function prototypes, function definitions and
-function calls}: Below, guidelines for formatting short function prototypes
-and long prototypes are given.  These guidelines seek to produce function
-prototypes that are fairly tight (i.e. not too much whitespace explosion), are
-robust to modifications, and keep code inside of the 80th character column.
-This indentation style can (and should) also be applied to function
-definitions and function calls.
+{}\item\textit{List sort function prototypes on one line and longer protypes
+on multiple lines, indenting arguments one unit}: Below, guidelines for
+formatting short function prototypes and long prototypes are given.  These
+guidelines seek to produce function prototypes that are fairly tight (i.e. not
+too much whitespace explosion), are robust to modifications, and keep code
+inside of the 80th character column.  This indentation style can (and should)
+also be applied to function definitions and function calls.
 
   \begin{enumerate}
 
@@ -756,8 +756,8 @@ definitions and function calls.
   or some other style for whitespace within '(...)' but the opening '(' should
   come directly after the function name in all cases.
 
-  {}\item\textit{Indent arguments on continuation lines one offset for longer
-  prototypes}: Function prototypes that can not approximately fit on a single
+  {}\item\textit{For longer prototypes, indent arguments on continuation lines
+  one unit}: Function prototypes that can not approximately fit on a single
   line in the first 80 character columns should have the function arguments
   listed starting on the second line with one unit of indentation (e.g. two
   spaces) from the function return type and function name line.  For example,
@@ -834,11 +834,12 @@ example, if the function definitions are ordered the same as the declarations,
 it can be easy to see if a function definition is missing (i.e.\ which could
 be the cause of the link error that you are seeing).
 
-{}\item\textit{Placement of braces and indentation of control structures}: Two
-basic styles of brace placement and indentation in control structures are
-recommend here.  The first general style is a modification of the K\&R
-style{}\cite{ArtisticStyle} where the brace comes immediately after the
-control statement on the same line shown as:
+{}\item\textit{Use ``modified K\&R'' or ``ANSI'' style for the lacement of
+braces and indentation of control structures}: Two basic styles of brace
+placement and indentation in control structures are recommend here.  The first
+general style is a modification of the K\&R style{}\cite{ArtisticStyle} where
+the brace comes immediately after the control statement on the same line shown
+as:
 
 {\small\begin{verbatim}
   // Modified K&R Style (recommended)
@@ -920,16 +921,16 @@ control structure logic from the inner block of code.
 
 Note that while the modified K\&R style meets McConnell's blessing of
 ``showing the logical structure of code'' where he refers to it as ``emulating
-pure block'' format that he sites the ANSI styles as violating this principle
+pure block'' format that he cites the ANSI styles as violating this principle
 {}\cite[Section 31.1]{CodeComplete2nd04}.  However, it is somewhat subjective
 what styles ``show the logical structure'' and McConnell himself seems to
 contradict himself at times (see the formatting of if/else statements below).
 
-When choosing between one of these to styles try to be consistent at least
+When choosing between one of these to styles, try to be consistent at least
 within a single file.  However, for control statements that extend over a
-single line, prefer the ``Linux'' style.
+single line, prefer the ``ANSI'' style.
 
-Below, the application of the modified K\&R style and the Linux styles are
+Below, the application of the modified K\&R style and the ANSI styles are
 shown in the context of several different types of C++ loop and control
 structures.
 
