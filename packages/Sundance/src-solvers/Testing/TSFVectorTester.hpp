@@ -199,8 +199,8 @@ namespace TSFExtended
 
 
         /* do the operation elementwise */
-        int low = space_.lowestLocallyOwnedIndex();
-        int high = low + space_.numLocalElements();
+//       int low = space_.lowestLocallyOwnedIndex();
+//        int high = low + space_.numLocalElements();
 
         for (int i=0; i<space_.dim(); i++)
           {
@@ -267,8 +267,8 @@ namespace TSFExtended
          * the sum of all elements. If done correctly, the sum will equal 
          * N*(N+1)*(2N+1)/6.
          */
-        int low = space_.lowestLocallyOwnedIndex();
-        int high = low + space_.numLocalElements();
+//        int low = space_.lowestLocallyOwnedIndex();
+//        int high = low + space_.numLocalElements();
 
         for (int i=0; i<space_.dim(); i++)
 	  //bvbw        for (int i=low; i<high; i++)
@@ -457,8 +457,8 @@ namespace TSFExtended
         x = a.dotStar(b);
 
         /* do the operation elementwise */
-        int low = space_.lowestLocallyOwnedIndex();
-        int high = low + space_.numLocalElements();
+//        int low = space_.lowestLocallyOwnedIndex();
+//        int high = low + space_.numLocalElements();
 
         for (int i=0; i<space_.dim(); i++)
 	  //bvbw        for (int i=low; i<high; i++)
@@ -514,8 +514,8 @@ namespace TSFExtended
         x = a.dotSlash(b);
 
         /* do the operation elementwise */
-        int low = space_.lowestLocallyOwnedIndex();
-        int high = low + space_.numLocalElements();
+//        int low = space_.lowestLocallyOwnedIndex();
+//        int high = low + space_.numLocalElements();
 
         for (int i=0; i<space_.dim(); i++)
 	  //bvbw        for (int i=low; i<high; i++)
@@ -569,8 +569,8 @@ namespace TSFExtended
         x = 3.14*a;
 
         /* do the operation elementwise */
-        int low = space_.lowestLocallyOwnedIndex();
-        int high = low + space_.numLocalElements();
+//        int low = space_.lowestLocallyOwnedIndex();
+//        int high = low + space_.numLocalElements();
 
         for (int i=0; i<space_.dim(); i++)
 	  //bvbw        for (int i=low; i<high; i++)
@@ -624,8 +624,8 @@ namespace TSFExtended
         x = 3.14*a + 1.4*b;
 
         /* do the operation elementwise */
-        int low = space_.lowestLocallyOwnedIndex();
-        int high = low + space_.numLocalElements();
+//        int low = space_.lowestLocallyOwnedIndex();
+//        int high = low + space_.numLocalElements();
 
         for (int i=0; i<space_.dim(); i++)
 	  //bvbw        for (int i=low; i<high; i++)

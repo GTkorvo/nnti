@@ -56,8 +56,9 @@ namespace TSFExtended
    * TSFCore-based code to Thyra.
    */
   template <class Scalar> 
-  class SingleScalarTypeOpBase : public Thyra::LinearOpBase<Scalar, Scalar>,
-                                 virtual public PTBDescribable
+  class SingleScalarTypeOpBase 
+    : public Thyra::LinearOpBase<Scalar, Scalar>,
+      virtual public PTBDescribable
   {
   public:
 
