@@ -223,7 +223,7 @@ protected:
       Array<VectorSpace<Scalar> > r(n, C.range());
       LinearOperator<Scalar> rtn = new BlockOperator<Scalar>(productSpace(d), productSpace(r));
       for (int i=0; i<n; i++) rtn.setBlock(i, i, C);
-      return C;
+      return rtn;
     }
   //@}
   

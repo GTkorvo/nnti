@@ -66,8 +66,10 @@ namespace TSFExtended
         range_(left.range())
     {
       TEST_FOR_EXCEPTION(left_.domain() != right_.range(), runtime_error,
-                         "Operators used to construct CompsedOperator are "
-                         << " not compatible");
+        "Operators used to construct CompsedOperator are "
+        << " not compatible. Left domain dim is "
+        << left_.domain().dim() 
+        << ", right domain dim is " << right_.range().dim());
     }
 
     /** Virtual dtor */
