@@ -10,10 +10,12 @@
 
 namespace RBGen {
   
+  //! Class for producing a basis using LAPACK
   class LapackPOD : public virtual Method<Epetra_MultiVector,Epetra_CrsMatrix>, public virtual PODMethod<double> {
     
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     LapackPOD();
@@ -22,7 +24,8 @@ namespace RBGen {
     virtual ~LapackPOD() {};
     //@}
 
-    //@{ @name Computation Methods
+    //! @name Computation Methods
+    //@{
 
     void computeBasis();
    
@@ -30,7 +33,8 @@ namespace RBGen {
  
     //@}
 
-    //@{ @name Get Methods
+    //! @name Get Methods
+    //@{
     
     Teuchos::RefCountPtr<const Epetra_MultiVector> getBasis() const { return basis_; }
 
@@ -39,7 +43,8 @@ namespace RBGen {
     double getCompTime() const { return comp_time_; }
     //@}
     
-    //@{ @name Set Methods
+    //! @name Set Methods
+    //@{
     
         //! Initialize the method with the given parameter list and snapshot set.
     void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
@@ -50,7 +55,8 @@ namespace RBGen {
 
     //@}
 
-    //@{ @name Status Methods
+    //! @name Status Methods
+    //@{
 
     bool isInitialized() { return isInitialized_; }
 

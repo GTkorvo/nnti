@@ -17,7 +17,7 @@ namespace RBGen {
     U_(Teuchos::null),
     V_(Teuchos::null),
     sigma_(0),
-    twoSided_(false),
+    twoSided_(true),
     numProc_(0),
     timerComp_("Total Elapsed Time")
   {}
@@ -41,7 +41,7 @@ namespace RBGen {
 
   void IncSVDPOD::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
                               const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-			      const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio ) {
+                              const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio ) {
 
     // Get the "Reduced Basis Method" sublist.
     Teuchos::ParameterList rbmethod_params = params->sublist( "Reduced Basis Method" );
@@ -56,10 +56,6 @@ namespace RBGen {
       int k = rbmethod_params.get("Rank",(int)5);
       filter_ = Teuchos::rcp( new RangeFilter<double>(LARGEST,k,k) );
     }
-    /*
-    TEST_FOR_EXCEPTION(filter_ == Teuchos::null,invalid_argument,
-                       "User must specify a non-null ""Filter"" parameter.");
-    */
 
     // Get an Anasazi orthomanager
     if (rbmethod_params.isType<
@@ -82,8 +78,8 @@ namespace RBGen {
       }
     }
 
-    // Are we two-sided? Not support right now.
-    twoSided_ = false;
+    // Are we two-sided?
+    twoSided_ = rbmethod_params.get("Two Sided",twoSided_);
 
     // Lmin,Lmax
     lmin_ = rbmethod_params.get("Min Update Size",1);
@@ -176,7 +172,7 @@ namespace RBGen {
 
     Teuchos::TimeMonitor lcltimer(timerComp_);
 
-    TEST_FOR_EXCEPTION(update_ss == Teuchos::null,logic_error,
+    TEST_FOR_EXCEPTION(update_ss == Teuchos::null,invalid_argument,
                        "updateBasis() requires non-null snapshot set.");
 
     const int numCols = update_ss->NumVectors();

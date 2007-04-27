@@ -9,11 +9,13 @@
 
 namespace RBGen {
   
+  //! Abstract base class for reduced basis methods
   template<class DataSetType, class OperatorType>
   class Method {
     
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     Method() {};
@@ -23,7 +25,8 @@ namespace RBGen {
     virtual ~Method() {};
     //@}
 
-    //@{ @name Computation Methods
+    //! @name Computation Methods
+    //@{
 
     virtual void computeBasis() = 0;
 
@@ -31,7 +34,8 @@ namespace RBGen {
     
     //@}
 
-    //@{ @name Get Methods
+    //! @name Get Methods
+    //@{
     
     //! Get the basis computed by the reduced basis method.
     virtual Teuchos::RefCountPtr<const DataSetType> getBasis() const = 0;
@@ -41,7 +45,8 @@ namespace RBGen {
 
     //@}
     
-    //@{ @name Set Methods
+    //! @name Set Methods
+    //@{
 
     //! Initialize the method with the given parameter list and snapshot set.
     virtual void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
@@ -53,7 +58,8 @@ namespace RBGen {
 
     //@}
 
-    //@{ @name Status Methods
+    //! @name Status Methods
+    //@{
 
     virtual bool isInitialized() = 0;
 

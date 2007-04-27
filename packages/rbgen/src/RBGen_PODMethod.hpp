@@ -7,11 +7,13 @@
 
 namespace RBGen {
 
+  //! Abstract base class for reduced basis POD methods
   template<class ScalarType>  
   class PODMethod {
     
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     PODMethod() {};
@@ -20,7 +22,8 @@ namespace RBGen {
     virtual ~PODMethod() {};
     //@}
 
-    //@{ @name Get methods
+    //! @name Get methods
+    //@{
     
     //! Returns the singular values computed corresponding to the reduced basis.
     virtual std::vector<ScalarType> getSingularValues() const = 0;
