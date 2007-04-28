@@ -13,12 +13,14 @@ namespace RBGen {
     filter_(Teuchos::null),
     maxBasisSize_(0),
     curRank_(0),
-    A_(Teuchos::null),
-    U_(Teuchos::null),
-    V_(Teuchos::null),
     sigma_(0),
-    twoSided_(true),
     numProc_(0),
+    maxNumPasses_(-1),
+    curNumPasses_(0),
+    tol_(1e-14),
+    lmin_(0),
+    lmax_(0),
+    startRank_(0),
     timerComp_("Total Elapsed Time")
   {}
 
@@ -29,19 +31,23 @@ namespace RBGen {
     return Teuchos::rcp( new Epetra_MultiVector(::View,*U_,0,curRank_) );
   }
 
+  Teuchos::RefCountPtr<const Epetra_MultiVector> IncSVDPOD::getRightBasis() const {
+    if (curRank_ == 0 || isInitialized_ == false) {
+      return Teuchos::null;
+    }
+    return Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_) );
+  }
+
   std::vector<double> IncSVDPOD::getSingularValues() const { 
     vector<double> ret(sigma_.begin(),sigma_.begin()+curRank_);
     return ret;
   }
 
-  Teuchos::RefCountPtr<const Epetra_MultiVector> IncSVDPOD::getRightBasis() const {
-    // not yet supported
-    return Teuchos::null;
-  }
-
   void IncSVDPOD::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
                               const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
                               const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio ) {
+
+    using Teuchos::rcp;
 
     // Get the "Reduced Basis Method" sublist.
     Teuchos::ParameterList rbmethod_params = params->sublist( "Reduced Basis Method" );
@@ -54,8 +60,11 @@ namespace RBGen {
     filter_ = rbmethod_params.get<Teuchos::RefCountPtr<Filter<double> > >("Filter",Teuchos::null);
     if (filter_ == Teuchos::null) {
       int k = rbmethod_params.get("Rank",(int)5);
-      filter_ = Teuchos::rcp( new RangeFilter<double>(LARGEST,k,k) );
+      filter_ = rcp( new RangeFilter<double>(LARGEST,k,k) );
     }
+
+    // Get convergence tolerance
+    tol_ = rbmethod_params.get<int>("Converence Tolerance",tol_);
 
     // Get an Anasazi orthomanager
     if (rbmethod_params.isType<
@@ -71,17 +80,14 @@ namespace RBGen {
     else {
       string omstr = rbmethod_params.get("Ortho Manager","DGKS");
       if (omstr == "SVQB") {
-        ortho_ = Teuchos::rcp( new Anasazi::SVQBOrthoManager<double,Epetra_MultiVector,Epetra_Operator>() );
+        ortho_ = rcp( new Anasazi::SVQBOrthoManager<double,Epetra_MultiVector,Epetra_Operator>() );
       }
       else { // if omstr == "DGKS"
-        ortho_ = Teuchos::rcp( new Anasazi::BasicOrthoManager<double,Epetra_MultiVector,Epetra_Operator>() );
+        ortho_ = rcp( new Anasazi::BasicOrthoManager<double,Epetra_MultiVector,Epetra_Operator>() );
       }
     }
 
-    // Are we two-sided?
-    twoSided_ = rbmethod_params.get("Two Sided",twoSided_);
-
-    // Lmin,Lmax
+    // Lmin,Lmax,Kstart
     lmin_ = rbmethod_params.get("Min Update Size",1);
     TEST_FOR_EXCEPTION(lmin_ < 1 || lmin_ >= maxBasisSize_,invalid_argument,
                        "Method requires 1 <= min update size < max basis size.");
@@ -91,6 +97,10 @@ namespace RBGen {
     startRank_ = rbmethod_params.get("Start Rank",lmin_);
     TEST_FOR_EXCEPTION(startRank_ < 1 || startRank_ > maxBasisSize_,invalid_argument,
                        "Starting rank must be in [1,maxBasisSize_)");
+    // MaxNumPasses
+    maxNumPasses_ = rbmethod_params.get("Maximum Number Passes",maxNumPasses_);
+    TEST_FOR_EXCEPTION(maxNumPasses_ != -1 && maxNumPasses_ <= 0, invalid_argument,
+                       "Maximum number passes must be -1 or > 0.");
 
     // Save the pointer to the snapshot matrix
     TEST_FOR_EXCEPTION(ss == Teuchos::null,invalid_argument,"Input snapshot matrix cannot be null.");
@@ -98,9 +108,16 @@ namespace RBGen {
 
     // Allocate space for the factorization
     sigma_.reserve( maxBasisSize_ );
-    U_ = Teuchos::rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );
-    workU_ = Teuchos::rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );
+    U_ = Teuchos::null;
     V_ = Teuchos::null;
+    U_ = rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );
+    Epetra_LocalMap lclmap(ss->NumVectors(),0,ss->Comm());
+    V_ = rcp( new Epetra_MultiVector(lclmap,maxBasisSize_,false) );
+    B_ = rcp( new Epetra_SerialDenseMatrix(maxBasisSize_,maxBasisSize_) );
+
+    // clear counters
+    numProc_ = 0;
+    curNumPasses_ = 0;
 
     // we are now initialized, albeit with null rank
     isInitialized_ = true;
@@ -114,23 +131,30 @@ namespace RBGen {
   }
 
   void IncSVDPOD::computeBasis() {
+
+    //
     // perform enough incremental updates to consume the entire snapshot set
-
-    typedef Teuchos::ScalarTraits<double> SCT;
-
     Teuchos::TimeMonitor lcltimer(timerComp_);
 
-    // check that we have a valid snapshot set: user may have cleared it using
-    // Reset()
+    // check that we have a valid snapshot set: user may have cleared 
+    // it using Reset()
     TEST_FOR_EXCEPTION(A_ == Teuchos::null,logic_error,
                        "computeBasis() requires non-null snapshot set.");
 
     // reset state
     curRank_ = 0;    
     numProc_ = 0;
+    curNumPasses_ = 0;
 
-    const int numCols = A_->NumVectors();
+    while (makePass() == 0) {
+      // i'm making a pass.
+      // FINISH: check convergence
+    }
+  }
 
+
+  /*
+  // old stuff from computeBasis... will go into makePass for ISVDSingle
     while (numProc_ < numCols) {
       // determine lup
       int lup;
@@ -162,12 +186,13 @@ namespace RBGen {
       // increment the column pointer
       numProc_ += lup;
     }
+    */
 
-  }
   
   void IncSVDPOD::updateBasis( const Teuchos::RefCountPtr< Epetra_MultiVector >& update_ss ) {
     // perform enough incremental updates to consume the new snapshots
 
+    /*
     typedef Teuchos::ScalarTraits<double> SCT;
 
     Teuchos::TimeMonitor lcltimer(timerComp_);
@@ -203,18 +228,15 @@ namespace RBGen {
       i += lup;
       numProc_ += lup;
     }
+    */
 
   }
 
-  void IncSVDPOD::incStep( const Teuchos::RefCountPtr<const Epetra_MultiVector> &Aplus) {
+  void IncSVDPOD::incStep(int lup) {
 
-    const int lup = Aplus->NumVectors();
+    /*
     typedef Teuchos::SerialDenseMatrix<int,double> TSDM;
     int newRank;
-
-
-    TEST_FOR_EXCEPTION(twoSided_ == true,logic_error,
-                       "IncSVDPOD::incStep(): Two-sided factorization currently not supported.");
 
     //
     // store new vectors in U
@@ -297,6 +319,7 @@ namespace RBGen {
     newU = Teuchos::null;
     newwU = Teuchos::null;
     curRank_ = newRank;
+    */
   }
 
   

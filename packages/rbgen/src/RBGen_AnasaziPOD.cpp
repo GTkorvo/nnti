@@ -27,7 +27,7 @@ namespace RBGen {
 
   void AnasaziPOD::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
                                const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-			       const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio )
+                               const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio )
   {
 
    // Get the "Reduced Basis Method" sublist.
@@ -95,7 +95,7 @@ namespace RBGen {
     MyPL.set( "Block Size", blockSize );
     MyPL.set( "Num Blocks", maxBlocks );
     MyPL.set( "Maximum Restarts", maxRestarts );
-    MyPL.set( "Which", which );	
+    MyPL.set( "Which", which );        
     MyPL.set( "Step Size", step );
     MyPL.set( "Convergence Tolerance", tol );
     //
@@ -142,7 +142,7 @@ namespace RBGen {
     bool boolret = MyProblem->setProblem();
     if (boolret != true) {
       if (MyPID == 0) {
-	cout << "Anasazi::BasicEigenproblem::setProblem() returned with error." << endl;
+        cout << "Anasazi::BasicEigenproblem::setProblem() returned with error." << endl;
       }
     }
     
@@ -174,7 +174,7 @@ namespace RBGen {
       // Compute singular values which are the square root of the eigenvalues
       //
       for (i=0; i<nev; i++) { 
-	sv_[i] = Teuchos::ScalarTraits<double>::squareroot( Teuchos::ScalarTraits<double>::magnitude(evals[i].realpart) ); 
+        sv_[i] = Teuchos::ScalarTraits<double>::squareroot( Teuchos::ScalarTraits<double>::magnitude(evals[i].realpart) ); 
       }
       //
       // If we are using inner product formulation, 
@@ -184,60 +184,60 @@ namespace RBGen {
       int info = 0;
       std::vector<double> tempnrm( nev );
       if (isInner_) {
-	basis_ = Teuchos::rcp( new Epetra_MultiVector(ss_->Map(), nev) );
-	Epetra_MultiVector AV( ss_->Map(),nev );
-	
-	/* A*V */   
-	info = AV.Multiply( 'N', 'N', 1.0, *ss_, *evecs, 0.0 );
-	AV.Norm2( &tempnrm[0] );
-	
-	/* U = A*V(i)/S(i) */
-	Epetra_LocalMap localMap2( nev, 0, ss_->Map().Comm() );
-	Epetra_MultiVector S( localMap2, nev );
-	for( i=0; i<nev; i++ ) { S[i][i] = 1.0/tempnrm[i]; }
-	info = basis_->Multiply( 'N', 'N', 1.0, AV, S, 0.0 );
-	
-	/* Compute direct residuals : || Av - sigma*u ||
-	   for (i=0; i<nev; i++) { S[i][i] = sv_[i]; }
-	   info = AV.Multiply( 'N', 'N', -1.0, *basis_, S, 1.0 );
-	   AV.Norm2( &tempnrm[0] );
-	   if (MyPID == 0) {
-	   cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<endl;
-	   cout<<"------------------------------------------------------"<<endl;
-	   for (i=0; i<nev; i++) {
-	   cout<< sv_[i] << "\t\t\t" << tempnrm[i] << endl;
-	   }
-	   cout<<"------------------------------------------------------"<<endl;
-	   }
-	*/
+        basis_ = Teuchos::rcp( new Epetra_MultiVector(ss_->Map(), nev) );
+        Epetra_MultiVector AV( ss_->Map(),nev );
+        
+        /* A*V */   
+        info = AV.Multiply( 'N', 'N', 1.0, *ss_, *evecs, 0.0 );
+        AV.Norm2( &tempnrm[0] );
+        
+        /* U = A*V(i)/S(i) */
+        Epetra_LocalMap localMap2( nev, 0, ss_->Map().Comm() );
+        Epetra_MultiVector S( localMap2, nev );
+        for( i=0; i<nev; i++ ) { S[i][i] = 1.0/tempnrm[i]; }
+        info = basis_->Multiply( 'N', 'N', 1.0, AV, S, 0.0 );
+        
+        /* Compute direct residuals : || Av - sigma*u ||
+           for (i=0; i<nev; i++) { S[i][i] = sv_[i]; }
+           info = AV.Multiply( 'N', 'N', -1.0, *basis_, S, 1.0 );
+           AV.Norm2( &tempnrm[0] );
+           if (MyPID == 0) {
+           cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<endl;
+           cout<<"------------------------------------------------------"<<endl;
+           for (i=0; i<nev; i++) {
+           cout<< sv_[i] << "\t\t\t" << tempnrm[i] << endl;
+           }
+           cout<<"------------------------------------------------------"<<endl;
+           }
+        */
       } else {
-	basis_ = Teuchos::rcp( new Epetra_MultiVector( Copy, *evecs, 0, nev ) );
-	Epetra_MultiVector ATU( localMap, nev );
-	Epetra_MultiVector V( localMap, nev );      
-	
-	/* A^T*U */   
-	info = ATU.Multiply( 'T', 'N', 1.0, *ss_, *evecs, 0.0 );
-	ATU.Norm2( &tempnrm[0] );
-	
-	/* V = A^T*U(i)/S(i) */
-	Epetra_LocalMap localMap2( nev, 0, ss_->Map().Comm() );
-	Epetra_MultiVector S( localMap2, nev );
-	for( i=0; i<nev; i++ ) { S[i][i] = 1.0/tempnrm[i]; }
-	info = V.Multiply( 'N', 'N', 1.0, ATU, S, 0.0 );
-	
-	/* Compute direct residuals : || (A^T)u - sigma*v ||     
-	   for (i=0; i<nev; i++) { S[i][i] = sv_[i]; }
-	   info = ATU.Multiply( 'N', 'N', -1.0, V, S, 1.0 );
-	   ATU.Norm2( tempnrm );
-	   if (comm.MyPID() == 0) {
-	   cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<endl;
-	   cout<<"------------------------------------------------------"<<endl;
-	   for (i=0; i<nev; i++) {
-	   cout<< sv_[i] << "\t\t\t" << tempnrm[i] << endl;
-	   }
-	   cout<<"------------------------------------------------------"<<endl;
-	   }
-	*/
+        basis_ = Teuchos::rcp( new Epetra_MultiVector( Copy, *evecs, 0, nev ) );
+        Epetra_MultiVector ATU( localMap, nev );
+        Epetra_MultiVector V( localMap, nev );      
+        
+        /* A^T*U */   
+        info = ATU.Multiply( 'T', 'N', 1.0, *ss_, *evecs, 0.0 );
+        ATU.Norm2( &tempnrm[0] );
+        
+        /* V = A^T*U(i)/S(i) */
+        Epetra_LocalMap localMap2( nev, 0, ss_->Map().Comm() );
+        Epetra_MultiVector S( localMap2, nev );
+        for( i=0; i<nev; i++ ) { S[i][i] = 1.0/tempnrm[i]; }
+        info = V.Multiply( 'N', 'N', 1.0, ATU, S, 0.0 );
+        
+        /* Compute direct residuals : || (A^T)u - sigma*v ||     
+           for (i=0; i<nev; i++) { S[i][i] = sv_[i]; }
+           info = ATU.Multiply( 'N', 'N', -1.0, V, S, 1.0 );
+           ATU.Norm2( tempnrm );
+           if (comm.MyPID() == 0) {
+           cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<endl;
+           cout<<"------------------------------------------------------"<<endl;
+           for (i=0; i<nev; i++) {
+           cout<< sv_[i] << "\t\t\t" << tempnrm[i] << endl;
+           }
+           cout<<"------------------------------------------------------"<<endl;
+           }
+        */
       }
     }
   }

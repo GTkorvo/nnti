@@ -27,18 +27,21 @@ namespace RBGen {
     // POD computed using exact SVD through LAPACK
     if ( method == "Lapack POD" ) {
       RBMethod = Teuchos::rcp( new LapackPOD() );
-    } else
+    } 
     // Inexact POD computed using inexact SVD through Anasazi
+    // IncSVDPOD uses Anasazi utility classes, while AnasaziPOD uses Anasazi for the solution
 #if HAVE_RBGEN_ANASAZI
-    if ( method == "IncSVD POD" ) {
+    /*
+    else if ( method == "IncSVD POD" ) {
       RBMethod = Teuchos::rcp( new IncSVDPOD() );
-    } else 
-    if ( method == "Anasazi POD" ) {
+    } 
+    */
+    else if ( method == "Anasazi POD" ) {
       RBMethod = Teuchos::rcp( new AnasaziPOD() );
     } else 
 #endif
     {
-	// TO DO:  Throw exception because method was not valid
+    // TO DO:  Throw exception because method was not valid
     }
     //
     // Return the method created

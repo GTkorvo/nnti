@@ -9,6 +9,7 @@
 #include "Epetra_MultiVector.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Operator.h"
+#include "Epetra_SerialDenseMatrix.h"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_Time.hpp"
 
@@ -19,16 +20,23 @@
 //   makePass()     ___
 //   while () {    /    expand()
 //      incStep()  ---- SVD()
-//   }             \___ contract()
+//   }             \___ shrink()
 //
-// makePass(), expand() and contract() are pure virtual
+// makePass(), expand() and shrink() are pure virtual
 //
-// expand(),contract() are implemented in a base class that 
-// decides the representation: UDV, QRW, QBW
-// 
 // makePass() is implemented in a base class that decides 
 // if a method is Multipass, and if so, in what manner
+// makePass() puts the data for the next pass into the proper columns
+// of U_, then calls incstep (telling it how many new columns)
 //
+// incstep calls expand to construct expanded U_ and V_, and B_
+// it computes the SVD of B_
+// it passes this data to shrink(), which shrink according to the 
+// base class.
+//
+// expand(),shrink() are implemented in a base class that 
+// decides the representation: UDV, QRW, QBW
+// 
 //                                   IncSVDPOD
 //                                       |
 //      -------------------------------------------------------------------
@@ -107,13 +115,16 @@ namespace RBGen {
     //@{
 
     bool isInitialized() { return isInitialized_; }
- 
+
     //@}
 
-  private:
+  protected:
 
     // private member for performing inc steps
-    void incStep(const Teuchos::RefCountPtr<const Epetra_MultiVector> &Aplus);
+    void incStep(int lup);
+    virtual int makePass() = 0;
+    virtual void expand() = 0;
+    virtual void shrink() = 0;
 
     // Is this object initialized?
     bool isInitialized_;
@@ -130,16 +141,13 @@ namespace RBGen {
     int curRank_;
 
     // Pointers to the snapshots and reduced basis.
-    Teuchos::RefCountPtr<Epetra_MultiVector> A_, U_, V_, workU_;
+    Teuchos::RefCountPtr<Epetra_MultiVector> A_, U_, V_;
 
     // SerialDenseMatrix holding current core matrix B
     Teuchos::RefCountPtr<Epetra_SerialDenseMatrix> B_;
 
     // Vector holding singular values.
     std::vector<double> sigma_;
-
-    // Are we two-sided or left-sided?
-    bool twoSided_;
 
     // Number of snapshots processed thus far
     int numProc_;
