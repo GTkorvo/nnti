@@ -4,6 +4,8 @@
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 
+// finish: amend filter() to take a pointer to the IncSVDPOD object
+
 namespace RBGen {
 
   enum SortType {

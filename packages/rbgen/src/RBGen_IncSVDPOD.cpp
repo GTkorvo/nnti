@@ -128,6 +128,7 @@ namespace RBGen {
     // Note: We will not assume that it is non-null; user could be resetting our
     // pointer in order to delete the original snapshot set
     A_ = new_ss;
+    isInitialized_ = false;
   }
 
   void IncSVDPOD::computeBasis() {
@@ -229,27 +230,63 @@ namespace RBGen {
       numProc_ += lup;
     }
     */
-
   }
 
   void IncSVDPOD::incStep(int lup) {
 
-    /*
-    typedef Teuchos::SerialDenseMatrix<int,double> TSDM;
-    int newRank;
+    Epetra_LAPACK lapack;
 
-    //
-    // store new vectors in U
-    Teuchos::RefCountPtr< Epetra_MultiVector > U2; 
-    Teuchos::RefCountPtr< const Epetra_MultiVector > curU;
-    if (curRank_ > 0) {
-      curU = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,0       ,curRank_) );
+    // perform gram-schmidt expansion
+    this->expand(lup);
+    const int lwork = 5*curRank_;
+    int info;
+    Epetra_SerialDenseMatrix Uhat(curRank_,curRank_), Vhat(curRank_,curRank_);
+    std::vector<double> Shat(curRank_), work(lwork);
+
+    // compute the SVD of B
+    // Note: this destroys B and actually stores Vhat^T (we remedy this below)
+    lapack.GESVD('A','A',curRank_,curRank_,B_->A(),B_->LDA(),&Shat[0],Uhat.A(),Uhat.LDA(),Vhat.A(),Vhat.LDA(),&work[0],&lwork,&info);
+    TEST_FOR_EXCEPTION(info!=0,std::logic_error,"RBGen::IncSVDPOD::incStep(): GESVD return info != 0");
+
+    // use filter to determine new rank
+    std::vector<int> keepind = filter_->filter(Shat);
+    std::vector<int> truncind(curRank_-keepind.size());
+    {
+      std::vector<int> allind(curRank_);
+      for (int i=0; i<curRank_; i++) {
+        allind[i] = i;
+      }
+      set_difference(allind.begin(),allind.end(),keepind.begin(),keepind.end(),truncind.begin());
+      
+      // Vhat actually contains Vhat^T; correct this here
+      Epetra_SerialDenseMatrix Ucopy(Uhat), Vcopy(curRank_,curRank_); 
+      std::vector<double> Scopy(Shat);
+      for (int j=0; j<curRank_; j++) {
+        for (int i=0; i<curRank_; i++) {
+          Vcopy(i,j) = Vhat(j,i);
+        }
+      }
+      // put the desired sigmas at the front of Uhat, Vhat
+      for (int j=0; j<keepind.size(); j++) {
+        std::copy(&Ucopy(0,keepind[j]),&Ucopy(curRank_,keepind[j]),&Uhat(0,j));
+        std::copy(&Vcopy(0,keepind[j]),&Vcopy(curRank_,keepind[j]),&Vhat(0,j));
+        Shat[j] = Scopy[keepind[j]];
+      }
+      for (int j=0; j<truncind.size(); j++) {
+        std::copy(&Ucopy(0,truncind[j]),&Ucopy(curRank_,truncind[j]),&Uhat(0,keepind.size()+j));
+        std::copy(&Vcopy(0,truncind[j]),&Vcopy(curRank_,truncind[j]),&Vhat(0,keepind.size()+j));
+        Shat[keepind.size()+j] = Scopy[truncind[j]];
+      }
     }
-    U2   = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,curRank_,lup     ) );
-    *U2 = *Aplus;
 
+    // shrink back down again
+    this->shrink(truncind.size(),Shat,Uhat,Vhat);
+
+
+    /*
+    // this is old expand/shrink for UDV
     //
-    // build R and perform gram-schmidt expansion
+    // build B and perform gram-schmidt expansion
     //
     //      k l
     // R = [S C] k
@@ -267,7 +304,7 @@ namespace RBGen {
     B = Teuchos::rcp( new TSDM(Teuchos::View, &R(curRank_,curRank_), R.LDA(), lup,      lup) );
     // perform Grams-Schmidt expansion
     if (curRank_ > 0) {
-      newRank = ortho_->projectAndNormalize(*U2,Teuchos::tuple(C),B,Teuchos::tuple(curU));
+      newRank = ortho_->projectAndNormalize(*U2,Teuchos::tuple(C),B,Teuchos::tuple(U1));
     }
     else {
       newRank = ortho_->normalize(*U2,B);
@@ -277,7 +314,7 @@ namespace RBGen {
     C = Teuchos::null;
     B = Teuchos::null;
     U2 = Teuchos::null;
-    curU = Teuchos::null;
+    U1 = Teuchos::null;
 
     //
     // compute SVD of R

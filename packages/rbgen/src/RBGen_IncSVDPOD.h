@@ -123,8 +123,8 @@ namespace RBGen {
     // private member for performing inc steps
     void incStep(int lup);
     virtual int makePass() = 0;
-    virtual void expand() = 0;
-    virtual void shrink() = 0;
+    virtual void expand(int lup) = 0;
+    virtual void shrink(int down, std::vector<double> &S, Epetra_SerialDenseMatrix &U, Epetra_SerialDenseMatrix &V) = 0;
 
     // Is this object initialized?
     bool isInitialized_;
