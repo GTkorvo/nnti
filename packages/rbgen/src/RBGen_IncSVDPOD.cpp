@@ -142,6 +142,10 @@ namespace RBGen {
     TEST_FOR_EXCEPTION(A_ == Teuchos::null,logic_error,
                        "computeBasis() requires non-null snapshot set.");
 
+    // check that we are initialized, i.e., data structures match the data set
+    TEST_FOR_EXCEPTION(isInitialized_==false,std::logic_error,
+        "RBGen::IncSVDPOD::computeBasis(): Solver must be initialized.");
+
     // reset state
     curRank_ = 0;    
     numProc_ = 0;
@@ -149,7 +153,7 @@ namespace RBGen {
 
     while (makePass() == 0) {
       // i'm making a pass.
-      // FINISH: check convergence
+      // FINISH: add convergence check
     }
   }
 
@@ -230,6 +234,8 @@ namespace RBGen {
       numProc_ += lup;
     }
     */
+    TEST_FOR_EXCEPTION(true,std::logic_error,
+        "RBGen::IncSVDPOD::updateBasis(): this routine not yet supported.");
   }
 
   void IncSVDPOD::incStep(int lup) {
@@ -280,84 +286,8 @@ namespace RBGen {
     }
 
     // shrink back down again
+    // shrink() will update bases U_ and V_, as well as singular values sigma_ and curReank_
     this->shrink(truncind.size(),Shat,Uhat,Vhat);
-
-
-    /*
-    // this is old expand/shrink for UDV
-    //
-    // build B and perform gram-schmidt expansion
-    //
-    //      k l
-    // R = [S C] k
-    //     [  B] l
-    //
-    Epetra_SerialDenseMatrix R(curRank_+lup,curRank_+lup);
-    for (int i=0; i<curRank_; ++i) {
-      R(i,i) = sigma_[i];
-    }
-    // get pointer for C,B inside of R, as Teuchos::SerialDenseMatrix objects
-    Teuchos::RefCountPtr<TSDM> C, B;
-    if (curRank_ > 0) {
-      C = Teuchos::rcp( new TSDM(Teuchos::View, &R(0,curRank_), R.LDA(), curRank_, lup) );
-    }
-    B = Teuchos::rcp( new TSDM(Teuchos::View, &R(curRank_,curRank_), R.LDA(), lup,      lup) );
-    // perform Grams-Schmidt expansion
-    if (curRank_ > 0) {
-      newRank = ortho_->projectAndNormalize(*U2,Teuchos::tuple(C),B,Teuchos::tuple(U1));
-    }
-    else {
-      newRank = ortho_->normalize(*U2,B);
-    }
-    TEST_FOR_EXCEPTION(newRank != lup,logic_error,
-                       "IncSVDPOD::incStep(): Couldn't recover full rank basis.");
-    C = Teuchos::null;
-    B = Teuchos::null;
-    U2 = Teuchos::null;
-    U1 = Teuchos::null;
-
-    //
-    // compute SVD of R
-    vector<double> newsig(R.M());
-    Epetra_LAPACK lapack;
-    vector<double> work(5*R.M());
-    int lwork = work.size();
-    int info;
-    lapack.GESVD('O','N',R.M(),R.N(),R.A(),R.LDA(),
-                 &newsig[0],(double*)NULL,1,(double*)NULL,1,
-                 &(work[0]),&lwork,&info);
-    TEST_FOR_EXCEPTION(info != 0,logic_error,"IncSVDPOD::incStep(): Error calling DGESVD.");
-
-    //
-    // filter desired sigmas
-    vector<int> f = filter_->filter(newsig);
-    newRank = f.size();
-    sigma_.resize(newRank);
-    Epetra_SerialDenseMatrix RU1(curRank_+lup,newRank);
-    for (int i=0; i<newRank; i++) {
-      sigma_[i] = newsig[f[i]];
-      copy(R[f[i]],R[f[i]]+R.M(),RU1[i]);
-    }
-    // put RU1 into an Epetra MultiVector
-    Epetra_LocalMap LocalMap(RU1.M(), 0, U_->Map().Comm());
-    Epetra_MultiVector RU1_Pvec(::Copy, LocalMap, RU1.A(), RU1.LDA(), RU1.N());
-
-    //
-    // update bases
-    Teuchos::RefCountPtr<Epetra_MultiVector> newwU, fullU, newU;
-    fullU = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,0,curRank_+lup) );
-    newwU = Teuchos::rcp( new Epetra_MultiVector(::View,*workU_,0,newRank) );
-    // multiply by RU1
-    info = newwU->Multiply('N','N',1.0,*fullU,RU1_Pvec,0.0);
-    TEST_FOR_EXCEPTION(info != 0,logic_error,"IncSVDPOD::incStep(): Error calling EMV::Multiply.");
-    fullU = Teuchos::null;
-    newU = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,0,newRank) );
-    *newU = *newwU;
-    newU = Teuchos::null;
-    newwU = Teuchos::null;
-    curRank_ = newRank;
-    */
   }
-
-  
+    
 } // end of RBGen namespace
