@@ -124,11 +124,17 @@ endif
 
 EXTRA_ANASAZI_EPETRA_H = \
         $(srcdir)/RBGen_AnasaziPOD.h \
-        $(srcdir)/RBGen_IncSVDPOD.h 
+        $(srcdir)/RBGen_IncSVDPOD.h \
+		$(srcdir)/RBGen_ISVDSingle.h \
+		$(srcdir)/RBGen_ISVDUDV.h \
+		$(srcdir)/RBGen_ISVD_SingleUDV.h 
 
 EXTRA_ANASAZI_EPETRA = \
         $(srcdir)/RBGen_AnasaziPOD.cpp \
-        $(srcdir)/RBGen_IncSVDPOD.cpp
+        $(srcdir)/RBGen_IncSVDPOD.cpp \
+		$(srcdir)/RBGen_ISVDSingle.cpp \
+		$(srcdir)/RBGen_ISVDUDV.cpp \
+		$(srcdir)/RBGen_ISVD_SingleUDV.cpp 
 
 if BUILD_RBGEN_ANASAZI
 

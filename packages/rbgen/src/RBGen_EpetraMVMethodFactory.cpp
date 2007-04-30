@@ -3,7 +3,7 @@
 
 #if HAVE_RBGEN_ANASAZI
 #include "RBGen_AnasaziPOD.h"
-#include "RBGen_IncSVDPOD.h"
+#include "RBGen_ISVD_SingleUDV.h"
 #endif
 
 namespace RBGen {
@@ -31,11 +31,9 @@ namespace RBGen {
     // Inexact POD computed using inexact SVD through Anasazi
     // IncSVDPOD uses Anasazi utility classes, while AnasaziPOD uses Anasazi for the solution
 #if HAVE_RBGEN_ANASAZI
-    /*
     else if ( method == "IncSVD POD" ) {
-      RBMethod = Teuchos::rcp( new IncSVDPOD() );
+      RBMethod = Teuchos::rcp( new ISVD_SingleUDV() );
     } 
-    */
     else if ( method == "Anasazi POD" ) {
       RBMethod = Teuchos::rcp( new AnasaziPOD() );
     } else 

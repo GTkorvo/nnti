@@ -1,5 +1,5 @@
-#ifndef RBGEN_ISVDUDV_H
-#define RBGEN_ISVDUDV_H
+#ifndef RBGEN_ISVDSINGLE_H
+#define RBGEN_ISVDSINGLE_H
 
 #include "RBGen_IncSVDPOD.h"
 
@@ -46,41 +46,27 @@
 
 namespace RBGen {
 
-  //! Class for producing a basis using the Incremental SVD
-  class ISVDUDV : public virtual IncSVDPOD {
+  //! Class for producing a basis using the Incremental SVD in a single pass
+  class ISVDSingle : public virtual IncSVDPOD {
 
   public:
     //! @name Constructor/Destructor.
     //@{
 
     //! Default constructor.
-    ISVDUDV();
+    ISVDSingle();
 
     //! Destructor.
-    virtual ~ISVDUDV() {};
-    //@}
-
-    //! @name Set Methods
-    //@{
-
-    //! Initialize the method with the given parameter list and snapshot set.
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                     const Teuchos::RefCountPtr< Epetra_MultiVector >& init,
-                     const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
-
+    virtual ~ISVDSingle() {};
     //@}
 
   protected:
 
     // private member for performing inc steps
-    void expand(int lup);
-    void shrink(int down, std::vector<double> &S, Epetra_SerialDenseMatrix &U, Epetra_SerialDenseMatrix &V);
+    virtual int makePass();
 
-    // workspace for U_*U1
-    Teuchos::RefCountPtr<Epetra_MultiVector> workU_, workV_;
   };
 
 } // end of RBGen namespace
 
-#endif // RBGEN_ISVDUDV_H
-
+#endif // RBGEN_ISVDSINGLE_H

@@ -157,83 +157,9 @@ namespace RBGen {
     }
   }
 
-
-  /*
-  // old stuff from computeBasis... will go into makePass for ISVDSingle
-    while (numProc_ < numCols) {
-      // determine lup
-      int lup;
-      if (curRank_ == 0) {
-        // first step
-        lup = startRank_;
-      }
-      else {
-        // this value minimizes overall complexity, assuming fixed rank
-        lup = (int)(curRank_ / SCT::squareroot(2.0));
-      }
-      // now cap lup via lmin,lmax,maxBasisSize
-      // want lup >= lmin
-      // need lup <= numCols - numProc
-      //      lup <= lmax
-      //      lup <= maxBasisSize - curRank
-      lup = (lup < lmin_ ? lmin_ : lup);
-      lup = (lup > numCols - numProc_ ? numCols - numProc_ : lup);
-      lup = (lup > lmax_ ? lmax_ : lup);
-      lup = (lup > maxBasisSize_ - curRank_ ? maxBasisSize_ - curRank_ : lup);
-
-      // get view up new vectors
-      Teuchos::RefCountPtr<const Epetra_MultiVector> Aplus = 
-        Teuchos::rcp( new Epetra_MultiVector(::View,*A_,numProc_,lup));
-
-      // perform the incremental step
-      incStep(Aplus);
-  
-      // increment the column pointer
-      numProc_ += lup;
-    }
-    */
-
   
   void IncSVDPOD::updateBasis( const Teuchos::RefCountPtr< Epetra_MultiVector >& update_ss ) {
     // perform enough incremental updates to consume the new snapshots
-
-    /*
-    typedef Teuchos::ScalarTraits<double> SCT;
-
-    Teuchos::TimeMonitor lcltimer(timerComp_);
-
-    TEST_FOR_EXCEPTION(update_ss == Teuchos::null,invalid_argument,
-                       "updateBasis() requires non-null snapshot set.");
-
-    const int numCols = update_ss->NumVectors();
-
-    int i = 0;
-    while (i < numCols) {
-      // determine lup
-      // this value minimizes overall complexity, assuming fixed rank
-      int lup = (int)(curRank_ / SCT::squareroot(2.0));
-      // now cap lup via lmin,lmax,maxBasisSize
-      // want lup >= lmin
-      // need lup <= numCols - i
-      //      lup <= lmax
-      //      lup <= maxBasisSize - curRank
-      lup = (lup > numCols - i ? numCols - i : lup);
-      lup = (lup < lmin_ ? lmin_ : lup);
-      lup = (lup > lmax_ ? lmax_ : lup);
-      lup = (lup > maxBasisSize_ - curRank_ ? maxBasisSize_ - curRank_ : lup);
-
-      // get view up new vectors
-      Teuchos::RefCountPtr<const Epetra_MultiVector> Aplus = 
-        Teuchos::rcp( new Epetra_MultiVector(::View,*update_ss,i,lup));
-
-      // perform the incremental step
-      incStep(Aplus);
-  
-      // increment the column pointer
-      i += lup;
-      numProc_ += lup;
-    }
-    */
     TEST_FOR_EXCEPTION(true,std::logic_error,
         "RBGen::IncSVDPOD::updateBasis(): this routine not yet supported.");
   }
@@ -291,3 +217,5 @@ namespace RBGen {
   }
     
 } // end of RBGen namespace
+
+
