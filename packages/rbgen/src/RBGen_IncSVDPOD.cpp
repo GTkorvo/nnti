@@ -199,12 +199,12 @@ namespace RBGen {
         }
       }
       // put the desired sigmas at the front of Uhat, Vhat
-      for (int j=0; j<keepind.size(); j++) {
+      for (unsigned int j=0; j<keepind.size(); j++) {
         std::copy(&Ucopy(0,keepind[j]),&Ucopy(curRank_,keepind[j]),&Uhat(0,j));
         std::copy(&Vcopy(0,keepind[j]),&Vcopy(curRank_,keepind[j]),&Vhat(0,j));
         Shat[j] = Scopy[keepind[j]];
       }
-      for (int j=0; j<truncind.size(); j++) {
+      for (unsigned int j=0; j<truncind.size(); j++) {
         std::copy(&Ucopy(0,truncind[j]),&Ucopy(curRank_,truncind[j]),&Uhat(0,keepind.size()+j));
         std::copy(&Vcopy(0,truncind[j]),&Vcopy(curRank_,truncind[j]),&Vhat(0,keepind.size()+j));
         Shat[keepind.size()+j] = Scopy[truncind[j]];

@@ -48,6 +48,37 @@ namespace RBGen {
     Z = Teuchos::null;
     U2 = Teuchos::null;
     U1 = Teuchos::null;
+    // augment V with I:
+    // Vnew = [V 0]
+    //        [0 I]
+    //
+    // Set V(0:numProc+lup-1,curRank:curRank+lup-1) = 0
+    //
+    // Vnew = [* 0]
+    //        [* 0]
+    for (int j=curRank_; j<curRank_+lup; j++) {
+      for (int i=0; i<numProc_+lup; i++) {
+        V_->ReplaceGlobalValue(i,j,0.0);
+      }
+    }
+    //
+    // Set V(numProc:numProc+lup-1,0:curRank-1) = 0
+    // 
+    // Vnew = [* *]
+    //        [0 *]
+    for (int j=0; j<curRank_; j++) {
+      for (int i=numProc_; i<numProc_+lup; i++) {
+        V_->ReplaceGlobalValue(i,j,0.0);
+      }
+    }
+    //
+    // Set V(numProc:numProc+lup-1,curRank:curRank+lup-1) = I
+    //
+    // Vnew = [*    *   ]
+    //        [* diag(I)]
+    for (int j=0; j<lup; j++) {
+      V_->ReplaceGlobalValue(curRank_+j,numProc_+j,1.0);
+    }
     
     curRank_ += lup;
   }
