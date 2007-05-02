@@ -5,6 +5,7 @@
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_LAPACK.h"
 #include "Epetra_LocalMap.h"
+#include "Epetra_Comm.h"
 
 namespace RBGen {
 
@@ -21,7 +22,8 @@ namespace RBGen {
     lmin_(0),
     lmax_(0),
     startRank_(0),
-    timerComp_("Total Elapsed Time")
+    timerComp_("Total Elapsed Time"),
+    debug_(false)
   {}
 
   Teuchos::RefCountPtr<const Epetra_MultiVector> IncSVDPOD::getBasis() const {
@@ -65,6 +67,9 @@ namespace RBGen {
 
     // Get convergence tolerance
     tol_ = rbmethod_params.get<int>("Converence Tolerance",tol_);
+
+    // Get debugging flag
+    debug_ = rbmethod_params.get<bool>("IncSVD Debug",debug_);
 
     // Get an Anasazi orthomanager
     if (rbmethod_params.isType<
@@ -214,6 +219,22 @@ namespace RBGen {
     // shrink back down again
     // shrink() will update bases U_ and V_, as well as singular values sigma_ and curReank_
     this->shrink(truncind.size(),Shat,Uhat,Vhat);
+
+    // print out some info
+    const Epetra_Comm *comm = &A_->Comm();
+    if (comm->MyPID() == 0) {
+      cout 
+        << "------------- IncSVDPOD::incStep() --------------" << endl
+        << "| Cols Processed: " << numProc_+lup << endl
+        << "|    Current lup: " << lup << endl
+        << "|  Current ldown: " << truncind.size() << endl
+        << "|   Current rank: " << curRank_ << endl
+        << "| Current sigmas: " << endl;
+      for (int i=0; i<curRank_; i++) {
+        cout << "|                   " << sigma_[i] << endl;
+      }
+    }
+
   }
     
 } // end of RBGen namespace

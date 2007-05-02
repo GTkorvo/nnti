@@ -4,7 +4,7 @@ namespace RBGen {
 
   ISVDUDV::ISVDUDV() : IncSVDPOD() {}
 
-  void ISVDUDV::expand(int lup) 
+  void ISVDUDV::expand(const int lup) 
   {
     //
     // build B and perform gram-schmidt expansion
@@ -58,7 +58,8 @@ namespace RBGen {
     //        [* 0]
     for (int j=curRank_; j<curRank_+lup; j++) {
       for (int i=0; i<numProc_+lup; i++) {
-        V_->ReplaceGlobalValue(i,j,0.0);
+        (*V_)[j][i] = 0.0;
+        // V_->ReplaceGlobalValue(i,j,0.0);
       }
     }
     //
@@ -68,7 +69,8 @@ namespace RBGen {
     //        [0 *]
     for (int j=0; j<curRank_; j++) {
       for (int i=numProc_; i<numProc_+lup; i++) {
-        V_->ReplaceGlobalValue(i,j,0.0);
+        (*V_)[j][i] = 0.0;
+        // V_->ReplaceGlobalValue(i,j,0.0);
       }
     }
     //
@@ -77,14 +79,15 @@ namespace RBGen {
     // Vnew = [*    *   ]
     //        [* diag(I)]
     for (int j=0; j<lup; j++) {
-      V_->ReplaceGlobalValue(curRank_+j,numProc_+j,1.0);
+      (*V_)[curRank_+j][numProc_+j] = 1.0;
+      // V_->ReplaceGlobalValue(numProc_+j,curRank_+j,1.0);
     }
     
     curRank_ += lup;
   }
 
 
-  void ISVDUDV::shrink(int down, std::vector<double> &S, Epetra_SerialDenseMatrix &U, Epetra_SerialDenseMatrix &V) 
+  void ISVDUDV::shrink(const int down, std::vector<double> &S, Epetra_SerialDenseMatrix &U, Epetra_SerialDenseMatrix &V) 
   {
     //
     // put RU1 into an Epetra MultiVector
@@ -96,9 +99,7 @@ namespace RBGen {
     // update bases
     Teuchos::RefCountPtr<Epetra_MultiVector> newwU, fullU, newU, newwV, fullV, newV;
     fullU = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,0,curRank_) );
-    fullV = Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_) );
     newwU = Teuchos::rcp( new Epetra_MultiVector(::View,*workU_,0,curRank_-down) );
-    newwV = Teuchos::rcp( new Epetra_MultiVector(::View,*workV_,0,curRank_-down) );
     // multiply by U1
     int info = newwU->Multiply('N','N',1.0,*fullU,Uh1,0.0);
     TEST_FOR_EXCEPTION(info != 0,logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(U).");
@@ -109,6 +110,8 @@ namespace RBGen {
     newwU = Teuchos::null;
 
     // multiply by V1
+    fullV = Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_) );
+    newwV = Teuchos::rcp( new Epetra_MultiVector(::View,*workV_,0,curRank_-down) );
     info = newwV->Multiply('N','N',1.0,*fullV,Vh1,0.0);
     TEST_FOR_EXCEPTION(info != 0,logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(V).");
     fullV = Teuchos::null;
@@ -130,7 +133,6 @@ namespace RBGen {
                             const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
                             const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio) 
   {
-    IncSVDPOD::Initialize(params,ss,fileio);
     workU_ = Teuchos::rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );
     Epetra_LocalMap lclmap(ss->NumVectors(),0,ss->Comm());
     workV_ = Teuchos::rcp( new Epetra_MultiVector(lclmap,maxBasisSize_,false) );

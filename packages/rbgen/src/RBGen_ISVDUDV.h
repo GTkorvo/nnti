@@ -73,8 +73,8 @@ namespace RBGen {
   protected:
 
     // private member for performing inc steps
-    void expand(int lup);
-    void shrink(int down, std::vector<double> &S, Epetra_SerialDenseMatrix &U, Epetra_SerialDenseMatrix &V);
+    void expand(const int lup);
+    void shrink(const int down, std::vector<double> &S, Epetra_SerialDenseMatrix &U, Epetra_SerialDenseMatrix &V);
 
     // workspace for U_*U1
     Teuchos::RefCountPtr<Epetra_MultiVector> workU_, workV_;

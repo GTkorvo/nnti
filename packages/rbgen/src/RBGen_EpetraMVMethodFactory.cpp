@@ -4,6 +4,7 @@
 #if HAVE_RBGEN_ANASAZI
 #include "RBGen_AnasaziPOD.h"
 #include "RBGen_ISVD_SingleUDV.h"
+#include "RBGen_ISVD_MultiCDUDV.h"
 #endif
 
 namespace RBGen {
@@ -32,7 +33,13 @@ namespace RBGen {
     // IncSVDPOD uses Anasazi utility classes, while AnasaziPOD uses Anasazi for the solution
 #if HAVE_RBGEN_ANASAZI
     else if ( method == "IncSVD POD" ) {
-      RBMethod = Teuchos::rcp( new ISVD_SingleUDV() );
+      std::string incsvdmethod = rbmethod_params.get<std::string>("IncSVD Method");
+      if ( incsvdmethod == "Single/UDV" ) {
+        RBMethod = Teuchos::rcp( new ISVD_SingleUDV() );
+      }
+      else if ( incsvdmethod == "MultiCD/UDV" ) {
+        RBMethod = Teuchos::rcp( new ISVD_MultiCDUDV() );
+      }
     } 
     else if ( method == "Anasazi POD" ) {
       RBMethod = Teuchos::rcp( new AnasaziPOD() );
