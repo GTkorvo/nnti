@@ -1,12 +1,16 @@
 #include "RBGen_ISVDMultiCD.h"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Epetra_LAPACK.h"
+#include "Epetra_BLAS.h"
 
 namespace RBGen {
 
   ISVDMultiCD::ISVDMultiCD() : IncSVDPOD() {}
 
   int ISVDMultiCD::makePass() {
+    Epetra_LAPACK lapack;
+    Epetra_BLAS   blas;
+
     bool firstPass = (curRank_ == 0);
     if (firstPass) {
       if (curNumPasses_ + 1 > maxNumPasses_) return -1;
@@ -18,30 +22,31 @@ namespace RBGen {
     numProc_ = 0;
 
     // compute W = I - Z T Z^T from current V_
+    Teuchos::RefCountPtr<Epetra_MultiVector> lclAZT, lclZ;
+    double *Z_A, *AZT_A;
+    int Z_LDA, AZT_LDA;
+    int oldRank = 0;
     if (!firstPass) {
-      Epetra_LAPACK lapack;
       // copy V_ into workZ_
-      Teuchos::RefCountPtr<Epetra_MultiVector> lclHV 
-        = Teuchos::rcp( new Epetra_MultiVector(::View,*workZ_,0,curRank_) );
-      Teuchos::RefCountPtr<Epetra_MultiVector> lclV 
-        = Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_) );
-      *lclHV = *lclV;
+      lclAZT = Teuchos::rcp( new Epetra_MultiVector(::View,*workAZT_,0,curRank_) );
+      lclZ   = Teuchos::rcp( new Epetra_MultiVector(::View,*workZ_,0,curRank_) );
+      Teuchos::RefCountPtr<Epetra_MultiVector> lclV;
+      lclV = Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_) );
+      *lclZ = *lclV;
       lclV = Teuchos::null;
       // compute the Householder QR factorization of the current right basis
       // Vhat = W*R
-      double *VA; 
-      int VLDA, info;
-      int lwork = curRank_;
+      int info, lwork = curRank_;
       std::vector<double> tau(curRank_), work(lwork);
-      info = lclHV->ExtractView(&VA,&VLDA);
+      info = lclZ->ExtractView(&Z_A,&Z_LDA);
       TEST_FOR_EXCEPTION(info != 0, std::logic_error,
-          "RBGen::ISVDMultiCD::makePass(): error calling ExtractView on Epetra_MultiVector.");
-      lapack.GEQRF(numProc_,curRank_,VA,VLDA,&tau[0],&work[0],lwork,&info);
+          "RBGen::ISVDMultiCD::makePass(): error calling ExtractView on Epetra_MultiVector Z.");
+      lapack.GEQRF(numProc_,curRank_,Z_A,Z_LDA,&tau[0],&work[0],lwork,&info);
       TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiCD::makePass(): error calling GEQRF on current right basis while constructing next pass coefficients.");
       // compute the block representation
       // W = I - Z T Z^T
-      lapack.LARFT('F','C',numProc_,curRank_,VA,VLDA,&tau[0],workT_->A(),workT_->LDA());
+      lapack.LARFT('F','C',numProc_,curRank_,Z_A,Z_LDA,&tau[0],workT_->A(),workT_->LDA());
       // LARFT left upper tri block of Z unchanged
       // note: it should currently contain R factor of V_, which is very close to
       //   diag(\pm 1, ..., \pm 1)
@@ -54,20 +59,23 @@ namespace RBGen {
       //
       // see documentation for LARFT
       for (int j=0; j<curRank_; j++) {
-        VA[j*VLDA+j] = 1.0;
+        Z_A[j*Z_LDA+j] = 1.0;
         for (int i=0; i<j; i++) {
-          VA[j*VLDA+i] = 0.0;
+          Z_A[j*Z_LDA+i] = 0.0;
         }
       }
       // compute part of A W:  A Z T
-      // put this in workAZ_
+      // put this in workAZT_
       // first, A Z (this consumes a pass through A)
-      // finish
+      lclAZT->Multiply('N','N',1.0,*A_,*lclZ,0.0);
       curNumPasses_++;
       // second, (A Z) T (in situ, as T is upper triangular)
-      // finish
-
+      info = lclAZT->ExtractView(&AZT_A,&AZT_LDA);
+      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+          "RBGen::ISVDMultiCD::makePass(): error calling ExtractView on Epetra_MultiVector AZ.");
+      blas.TRMM('R','U','N','N',numProc_,curRank_,1.0,workT_->A(),workT_->LDA(),AZT_A,AZT_LDA);
       // set curRank_ = 0
+      oldRank  = 0;
       curRank_ = 0;
     }
 
@@ -104,6 +112,8 @@ namespace RBGen {
       }
       else {
         // new vectors are Aplus - (A Z T) Z_i^T
+        // specifically, Aplus - (A Z T) Z(numProc:numProc+lup-1,1:oldRank)^T
+        // we will do this using blas
         // finish
       }
       Unew = Teuchos::null;
@@ -116,9 +126,31 @@ namespace RBGen {
       numProc_ += lup;
     }
 
-
-    // compute W V_ = V_ - Z T Z^T V_
-    // finish
+    // compute W V = V - Z T Z^T V
+    // Z^T V is oldRank x curRank
+    // T Z^T V is oldRank x curRank
+    // we need T Z^T V in a local Epetra_MultiVector
+    if (!firstPass) {
+      Teuchos::RefCountPtr<Epetra_MultiVector> lclV;
+      double *TZTV_A;
+      int TZTV_LDA;
+      int info;
+      Epetra_LocalMap lclmap(oldRank,0,A_->Comm());
+      // get pointer to current V
+      lclV = Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_) );
+      // create space for T Z^T V
+      Epetra_MultiVector TZTV(lclmap,curRank_,false);
+      // multiply Z^T V
+      TZTV.Multiply('T','N',1.0,*lclZ,*lclV,0.0);
+      // get pointer to data in Z^T V
+      info = TZTV.ExtractView(&TZTV_A,&TZTV_LDA);
+      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+          "RBGen::ISVDMultiCD::makePass(): error calling ExtractView on Epetra_MultiVector TZTV.");
+      // multiply T (Z^T V)
+      blas.TRMM('L','U','N','N',oldRank,curRank_,1.0,workT_->A(),workT_->LDA(),TZTV_A,TZTV_LDA);
+      // multiply V - Z (T Z^T V)
+      lclV->Multiply('N','N',-1.0,*lclZ,TZTV,1.0);
+    }
 
     // update pass counter
     curNumPasses_++;
@@ -133,9 +165,12 @@ namespace RBGen {
       ) 
   {
     IncSVDPOD::Initialize(params,ss,fileio);
-    workAZ_ = Teuchos::rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );
+
+    workAZT_ = Teuchos::rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );
+
     Epetra_LocalMap lclmap(ss->NumVectors(),0,ss->Comm());
     workZ_ = Teuchos::rcp( new Epetra_MultiVector(lclmap,maxBasisSize_,false) );
+
     workT_  = Teuchos::rcp( new Epetra_SerialDenseMatrix(maxBasisSize_,maxBasisSize_) );
   }
 

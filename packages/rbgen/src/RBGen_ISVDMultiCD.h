@@ -78,7 +78,7 @@ namespace RBGen {
     // will need workspace for A*W = A - A Z T Z^T
     // * local multivector for Z
     // * dist multivector for A*Z
-    Teuchos::RefCountPtr<Epetra_MultiVector> workAZ_, workZ_;
+    Teuchos::RefCountPtr<Epetra_MultiVector> workAZT_, workZ_;
     Teuchos::RefCountPtr<Epetra_SerialDenseMatrix> workT_;
 
   };
