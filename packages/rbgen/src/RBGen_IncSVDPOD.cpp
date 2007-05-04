@@ -202,15 +202,17 @@ namespace RBGen {
     Epetra_LAPACK lapack;
 
     // perform gram-schmidt expansion
+    // expand() will update bases U_ and V_, factor B_, as well as counters curRank_ and numProc_
     this->expand(lup);
-    const int lwork = 5*curRank_;
-    int info;
-    Epetra_SerialDenseMatrix Uhat(curRank_,curRank_), Vhat(curRank_,curRank_);
-    std::vector<double> Shat(curRank_), work(lwork);
 
     // compute the SVD of B
-    // Note: this destroys B and actually stores Vhat^T (we remedy this below)
-    lapack.GESVD('A','A',curRank_,curRank_,B_->A(),B_->LDA(),&Shat[0],Uhat.A(),Uhat.LDA(),Vhat.A(),Vhat.LDA(),&work[0],&lwork,&info);
+    const int lwork = 5*curRank_;
+    int info;
+    Epetra_SerialDenseMatrix Uhat(::Copy,B_->A(),B_->LDA(),curRank_,curRank_), Vhat(curRank_,curRank_);
+    std::vector<double> Shat(curRank_), work(lwork);
+
+    // Note: this actually stores Vhat^T (we remedy this below)
+    lapack.GESVD('O','A',curRank_,curRank_,Uhat.A(),Uhat.LDA(),&Shat[0],Uhat.A(),Uhat.LDA(),Vhat.A(),Vhat.LDA(),&work[0],&lwork,&info);
     TEST_FOR_EXCEPTION(info!=0,std::logic_error,"RBGen::IncSVDPOD::incStep(): GESVD return info != 0");
 
     // use filter to determine new rank
@@ -245,7 +247,7 @@ namespace RBGen {
     }
 
     // shrink back down again
-    // shrink() will update bases U_ and V_, as well as singular values sigma_ and curReank_
+    // shrink() will update bases U_ and V_, as well as singular values sigma_ and curRank_
     this->shrink(truncind.size(),Shat,Uhat,Vhat);
 
     // print out some info
@@ -253,7 +255,7 @@ namespace RBGen {
     if (comm->MyPID() == 0 && verbLevel_ >= 2) {
       cout 
         << "------------- IncSVDPOD::incStep() --------------" << endl
-        << "| Cols Processed: " << numProc_+lup << endl
+        << "| Cols Processed: " << numProc_ << endl
         << "|    Current lup: " << lup << endl
         << "|  Current ldown: " << truncind.size() << endl
         << "|   Current rank: " << curRank_ << endl

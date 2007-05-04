@@ -46,9 +46,6 @@ namespace RBGen {
 
       // perform the incremental step
       incStep(lup);
-  
-      // increment the column pointer
-      numProc_ += lup;
     }
 
     //

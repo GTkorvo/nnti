@@ -83,6 +83,7 @@ namespace RBGen {
       // V_->ReplaceGlobalValue(numProc_+j,curRank_+j,1.0);
     }
     
+    numProc_ += lup;
     curRank_ += lup;
   }
 
@@ -100,7 +101,7 @@ namespace RBGen {
     Teuchos::RefCountPtr<Epetra_MultiVector> newwU, fullU, newU, newwV, fullV, newV;
     fullU = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,0,curRank_) );
     newwU = Teuchos::rcp( new Epetra_MultiVector(::View,*workU_,0,curRank_-down) );
-    // multiply by U1
+    // multiply by Uh1
     int info = newwU->Multiply('N','N',1.0,*fullU,Uh1,0.0);
     TEST_FOR_EXCEPTION(info != 0,logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(U).");
     fullU = Teuchos::null;
@@ -109,13 +110,25 @@ namespace RBGen {
     newU = Teuchos::null;
     newwU = Teuchos::null;
 
-    // multiply by V1
-    fullV = Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_) );
-    newwV = Teuchos::rcp( new Epetra_MultiVector(::View,*workV_,0,curRank_-down) );
+    // multiply by Vh1
+    // get multivector views of V(1:numProc,1:curRank) and workV(1:numProc,1:curRank-down)
+    double *V_A, *workV_A;
+    int V_LDA, workV_LDA;
+    info = V_->ExtractView(&V_A,&V_LDA);
+    TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+        "RBGen::ISVDUDV::shrink(): Error calling Epetra_MultiVector::ExtractView() on V_.");
+    info = workV_->ExtractView(&workV_A,&workV_LDA);
+    TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+        "RBGen::ISVDUDV::shrink(): Error calling Epetra_MultiVector::ExtractView() on workV_.");
+    Epetra_LocalMap lclmap(numProc_,0,A_->Comm());
+    fullV = Teuchos::rcp( new Epetra_MultiVector(::View,lclmap,    V_A,    V_LDA,curRank_     ) );
+    newwV = Teuchos::rcp( new Epetra_MultiVector(::View,lclmap,workV_A,workV_LDA,curRank_-down) );
+    // multiply workV = fullV * Vh1
     info = newwV->Multiply('N','N',1.0,*fullV,Vh1,0.0);
     TEST_FOR_EXCEPTION(info != 0,logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(V).");
     fullV = Teuchos::null;
-    newV = Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_-down) );
+    // now set newV = workV
+    newV = Teuchos::rcp( new Epetra_MultiVector(::View,lclmap, V_A, V_LDA, curRank_-down) );
     *newV = *newwV;
     newV = Teuchos::null;
     newwV = Teuchos::null;

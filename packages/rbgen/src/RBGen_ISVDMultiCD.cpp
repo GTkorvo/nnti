@@ -27,10 +27,10 @@ namespace RBGen {
       // copy V_ into workZ_
       lclAZT = Teuchos::rcp( new Epetra_MultiVector(::View,*workAZT_,0,curRank_) );
       lclZ   = Teuchos::rcp( new Epetra_MultiVector(::View,*workZ_,0,curRank_) );
-      Teuchos::RefCountPtr<Epetra_MultiVector> lclV;
-      lclV = Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_) );
-      *lclZ = *lclV;
-      lclV = Teuchos::null;
+      {
+        Epetra_MultiVector lclV(::View,*V_,0,curRank_);
+        *lclZ = lclV;
+      }
       // compute the Householder QR factorization of the current right basis
       // Vhat = W*R
       int info, lwork = curRank_;
@@ -67,6 +67,7 @@ namespace RBGen {
       //   [          1]
       //
       // see documentation for LARFT
+      //
       for (int j=0; j<curRank_; j++) {
         Z_A[j*Z_LDA+j] = 1.0;
         for (int i=0; i<j; i++) {
@@ -84,12 +85,17 @@ namespace RBGen {
       TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiCD::makePass(): error calling ExtractView on Epetra_MultiVector AZ.");
       blas.TRMM('R','U','N','N',numCols,curRank_,1.0,workT_->A(),workT_->LDA(),AZT_A,AZT_LDA);
-      // set curRank_ = 0
+      // save oldRank: it tells us the width of Z
       oldRank  = curRank_;
+
       curRank_ = 0;
+      numProc_ = 0;
+    }
+    else { // firstPass == true
+      curRank_ = 0;
+      numProc_ = 0;
     }
 
-    numProc_ = 0;
     while (numProc_ < numCols) {
       //
       // determine lup
@@ -122,33 +128,28 @@ namespace RBGen {
       lup = (lup > maxBasisSize_ - curRank_ ? maxBasisSize_ - curRank_ : lup);
 
       // get view of new vectors
-      Teuchos::RefCountPtr<const Epetra_MultiVector> Aplus;
-      Teuchos::RefCountPtr<Epetra_MultiVector> Unew;
-      Aplus = Teuchos::rcp( new Epetra_MultiVector(::View,*A_,numProc_,lup));
-      Unew = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,curRank_,lup));
-      // put them in U
-      if (firstPass) {
-        // new vectors are just Aplus
-        *Unew = *Aplus;
+      {
+        const Epetra_MultiVector Aplus(::View,*A_,numProc_,lup);
+        Epetra_MultiVector        Unew(::View,*U_,curRank_,lup);
+        // put them in U
+        if (firstPass) {
+          // new vectors are just Aplus
+          Unew = Aplus;
+        }
+        else {
+          // new vectors are Aplus - (A Z T) Z_i^T
+          // specifically, Aplus - (A Z T) Z(numProc:numProc+lup-1,1:oldRank)^T
+          Epetra_LocalMap lclmap(lup,0,A_->Comm());
+          Epetra_MultiVector Zi(::View,lclmap,&Z_A[numProc_],Z_LDA,oldRank);
+          Unew = Aplus;
+          int info = Unew.Multiply('N','T',-1.0,*lclAZT,Zi,1.0);
+          TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+              "RBGen::ISVDMultiCD::makePass(): Error calling Epetra_MultiVector::Multiply() for A*Wi");
+        }
       }
-      else {
-        // new vectors are Aplus - (A Z T) Z_i^T
-        // specifically, Aplus - (A Z T) Z(numProc:numProc+lup-1,1:oldRank)^T
-        Epetra_LocalMap lclmap(lup,0,A_->Comm());
-        Epetra_MultiVector Zi(::View,lclmap,&Z_A[numProc_],Z_LDA,oldRank);
-        *Unew = *Aplus;
-        int info = Unew->Multiply('N','T',-1.0,*lclAZT,Zi,1.0);
-        TEST_FOR_EXCEPTION(info != 0,std::logic_error,
-            "RBGen::ISVDMultiCD::makePass(): Error calling Epetra_MultiVector::Multiply() for A*Wi");
-      }
-      Unew = Teuchos::null;
-      Aplus = Teuchos::null;
 
       // perform the incremental step
       incStep(lup);
-
-      // increment the column pointer
-      numProc_ += lup;
     }
 
     // compute W V = V - Z T Z^T V
