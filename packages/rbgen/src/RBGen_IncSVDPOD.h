@@ -98,7 +98,7 @@ namespace RBGen {
     double getCompTime() const { return timerComp_.totalElapsedTime(); }
 
     //! Return the scaled residual norms.
-    virtual std::vector<double> getResNorms();
+    const std::vector<double> & getResNorms();
 
     //@}
 
@@ -125,7 +125,7 @@ namespace RBGen {
 
     // private member for performing inc steps
     void incStep(int lup);
-    virtual int makePass() = 0;
+    virtual void makePass() = 0;
     virtual void expand(const int lup) = 0;
     virtual void shrink(const int down, std::vector<double> &S, Epetra_SerialDenseMatrix &U, Epetra_SerialDenseMatrix &V) = 0;
 
@@ -177,6 +177,12 @@ namespace RBGen {
 
     // debug flag
     bool debug_;
+
+    // verb level
+    int verbLevel_;
+
+    // residual norms
+    std::vector<double> resNorms_;
   };
 
 } // end of RBGen namespace

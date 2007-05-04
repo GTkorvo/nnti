@@ -5,6 +5,7 @@
 #include "RBGen_AnasaziPOD.h"
 #include "RBGen_ISVD_SingleUDV.h"
 #include "RBGen_ISVD_MultiCDUDV.h"
+#include "RBGen_ISVD_MultiSDAUDV.h"
 #endif
 
 namespace RBGen {
@@ -39,6 +40,9 @@ namespace RBGen {
       }
       else if ( incsvdmethod == "MultiCD/UDV" ) {
         RBMethod = Teuchos::rcp( new ISVD_MultiCDUDV() );
+      }
+      else if ( incsvdmethod == "MultiSDA/UDV" ) {
+        RBMethod = Teuchos::rcp( new ISVD_MultiSDAUDV() );
       }
     } 
     else if ( method == "Anasazi POD" ) {

@@ -127,18 +127,22 @@ EXTRA_ANASAZI_EPETRA_H = \
         $(srcdir)/RBGen_IncSVDPOD.h \
 		$(srcdir)/RBGen_ISVDSingle.h \
 		$(srcdir)/RBGen_ISVDMultiCD.h \
+		$(srcdir)/RBGen_ISVDMultiSDA.h \
 		$(srcdir)/RBGen_ISVDUDV.h \
 		$(srcdir)/RBGen_ISVD_SingleUDV.h \
-		$(srcdir)/RBGen_ISVD_MultiCDUDV.h 
+		$(srcdir)/RBGen_ISVD_MultiCDUDV.h \
+		$(srcdir)/RBGen_ISVD_MultiSDAUDV.h 
 
 EXTRA_ANASAZI_EPETRA = \
         $(srcdir)/RBGen_AnasaziPOD.cpp \
         $(srcdir)/RBGen_IncSVDPOD.cpp \
 		$(srcdir)/RBGen_ISVDSingle.cpp \
 		$(srcdir)/RBGen_ISVDMultiCD.cpp \
+		$(srcdir)/RBGen_ISVDMultiSDA.cpp \
 		$(srcdir)/RBGen_ISVDUDV.cpp \
 		$(srcdir)/RBGen_ISVD_SingleUDV.cpp \
-		$(srcdir)/RBGen_ISVD_MultiCDUDV.cpp 
+		$(srcdir)/RBGen_ISVD_MultiCDUDV.cpp \
+		$(srcdir)/RBGen_ISVD_MultiSDAUDV.cpp 
 
 if BUILD_RBGEN_ANASAZI
 

@@ -23,7 +23,9 @@ namespace RBGen {
     lmax_(0),
     startRank_(0),
     timerComp_("Total Elapsed Time"),
-    debug_(false)
+    debug_(false),
+    verbLevel_(0),
+    resNorms_(0)
   {}
 
   Teuchos::RefCountPtr<const Epetra_MultiVector> IncSVDPOD::getBasis() const {
@@ -70,6 +72,9 @@ namespace RBGen {
 
     // Get debugging flag
     debug_ = rbmethod_params.get<bool>("IncSVD Debug",debug_);
+
+    // Get verbosity level
+    verbLevel_ = rbmethod_params.get<int>("IncSVD Verbosity Level",verbLevel_);
 
     // Get an Anasazi orthomanager
     if (rbmethod_params.isType<
@@ -119,6 +124,7 @@ namespace RBGen {
     Epetra_LocalMap lclmap(ss->NumVectors(),0,ss->Comm());
     V_ = rcp( new Epetra_MultiVector(lclmap,maxBasisSize_,false) );
     B_ = rcp( new Epetra_SerialDenseMatrix(maxBasisSize_,maxBasisSize_) );
+    resNorms_.reserve(maxBasisSize_);
 
     // clear counters
     numProc_ = 0;
@@ -158,23 +164,22 @@ namespace RBGen {
 
     // print out some info
     const Epetra_Comm *comm = &A_->Comm();
-    while (makePass() == 0) {
-      // makePass() did not signal that it is time to quit (due to maxNumPasses)
-      // compute residuals, if we can afford the passes.
-      // otherwise, quit
-      if (curNumPasses_ == maxNumPasses_) {
-        break;
-      }
+    while (curNumPasses_ < maxNumPasses_) {
 
+      // make pass
+      makePass();
+
+      // get residuals
       std::vector<double> resnorms = this->getResNorms();
 
+      // check residuals for convergence
       int numConverged = 0;
       for (int i=0; i<curRank_; i++) {
         if (resnorms[i] <= tol_) {
           numConverged++;
         }
       }
-      if (comm->MyPID() == 0) {
+      if (comm->MyPID() == 0 && verbLevel_ >= 1) {
         cout << "|  Num converged: " << numConverged << endl
              << "|    Resid norms: " << endl;
         for (int i=0; i<curRank_; i++) {
@@ -182,9 +187,6 @@ namespace RBGen {
         }
       }
       if (numConverged == curRank_) break;
-
-      // increment pass counter 
-      curNumPasses_++;
     }
   }
 
@@ -248,7 +250,7 @@ namespace RBGen {
 
     // print out some info
     const Epetra_Comm *comm = &A_->Comm();
-    if (comm->MyPID() == 0) {
+    if (comm->MyPID() == 0 && verbLevel_ >= 2) {
       cout 
         << "------------- IncSVDPOD::incStep() --------------" << endl
         << "| Cols Processed: " << numProc_+lup << endl
@@ -263,42 +265,10 @@ namespace RBGen {
 
   }
 
-  std::vector<double> IncSVDPOD::getResNorms() {
-    static Epetra_LocalMap lclmap(A_->NumVectors(),0,A_->Comm());
-    static Epetra_MultiVector ATU(lclmap,maxBasisSize_,false);
-
-    // we know that A V = U S
-    // if, in addition, A^T U = V S, then have singular subspaces
-    // check residuals A^T U - V S, scaling the i-th column by sigma[i]
-    Epetra_MultiVector ATUlcl(::View,ATU,0,curRank_);
-    Epetra_MultiVector Ulcl(::View,*U_,0,curRank_);
-    Epetra_MultiVector Vlcl(::View,*V_,0,curRank_);
-    // compute A^T U
-    int info = ATUlcl.Multiply('T','N',1.0,*A_,Ulcl,0.0);
-    TEST_FOR_EXCEPTION(info != 0, std::logic_error,
-        "RBGen::IncSVD::computeBasis(): Error calling Epetra_MultiVector::Multiply for A^T U.");
-    Epetra_LocalMap rankmap(curRank_,0,A_->Comm());
-    Epetra_MultiVector S(rankmap,curRank_,true);
-    for (int i=0; i<curRank_; i++) {
-      S[i][i] = sigma_[i];
-    }
-    // subtract V S from A^T U
-    info = ATUlcl.Multiply('N','N',-1.0,Vlcl,S,1.0);
-    TEST_FOR_EXCEPTION(info != 0, std::logic_error,
-        "RBGen::IncSVD::computeBasis(): Error calling Epetra_MultiVector::Multiply for V S.");
-    std::vector<double> resnorms(curRank_);
-    ATUlcl.Norm2(&resnorms[0]);
-    // scale by sigmas
-    int numConverged = 0;
-    for (int i=0; i<curRank_; i++) {
-      if (sigma_[i] != 0.0) {
-        resnorms[i] /= sigma_[i];
-      }
-      if (resnorms[i] <= tol_) {
-        numConverged++;
-      }
-    }
+  const std::vector<double> & IncSVDPOD::getResNorms() {
+    return resNorms_;
   }
+    
     
 } // end of RBGen namespace
 

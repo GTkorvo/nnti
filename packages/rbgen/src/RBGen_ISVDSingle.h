@@ -60,10 +60,20 @@ namespace RBGen {
     virtual ~ISVDSingle() {};
     //@}
 
+    //! @name Set Methods
+    //@{
+
+    //! Initialize the method with the given parameter list and snapshot set.
+    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
+                     const Teuchos::RefCountPtr< Epetra_MultiVector >& init,
+                     const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
+
+    //@}
+
   protected:
 
     // private member for performing inc steps
-    virtual int makePass();
+    virtual void makePass();
 
   };
 

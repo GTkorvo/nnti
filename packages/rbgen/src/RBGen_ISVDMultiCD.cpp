@@ -8,22 +8,11 @@ namespace RBGen {
 
   ISVDMultiCD::ISVDMultiCD() {}
 
-  int ISVDMultiCD::makePass() {
+  void ISVDMultiCD::makePass() {
     Epetra_LAPACK lapack;
     Epetra_BLAS   blas;
 
     bool firstPass = (curRank_ == 0);
-    // if maxNumPasses == -1, we get infinite passes
-    if (maxNumPasses_ != -1) {
-      if (firstPass) {
-        // we need only one: passing through A
-        if (curNumPasses_ + 1 > maxNumPasses_) return -1;
-      }
-      else {
-        // we need two: one for A V T and one for passing through A - (A V T) V^T
-        if (curNumPasses_ + 2 > maxNumPasses_) return -1;
-      }
-    }
     const int numCols = A_->NumVectors();
     TEST_FOR_EXCEPTION( !firstPass && (numProc_ != numCols), std::logic_error,
         "RBGen::ISVDMultiCD::makePass(): after first pass, numProc should be numCols");
@@ -41,8 +30,6 @@ namespace RBGen {
       Teuchos::RefCountPtr<Epetra_MultiVector> lclV;
       lclV = Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_) );
       *lclZ = *lclV;
-      //DBG cout << "V (right hand basis)" << endl;
-      //DBG lclV->Print(cout);
       lclV = Teuchos::null;
       // compute the Householder QR factorization of the current right basis
       // Vhat = W*R
@@ -65,8 +52,6 @@ namespace RBGen {
           }
           Rerr += abs(abs(Z_A[j*Z_LDA+j]) - 1.0);
         }
-        //DBG cout << "Compressed QR of V (right hand basis)" << endl;
-        //DBG lclZ->Print(cout);
       }
       // compute the block representation
       // W = I - Z T Z^T
@@ -90,11 +75,10 @@ namespace RBGen {
       }
       // compute part of A W:  A Z T
       // put this in workAZT_
-      // first, A Z (this consumes a pass through A)
+      // first, A Z
       info = lclAZT->Multiply('N','N',1.0,*A_,*lclZ,0.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiCD::makePass(): Error calling Epetra_MultiVector::Multiply() for A*Z");
-      curNumPasses_++;
       // second, (A Z) T (in situ, as T is upper triangular)
       info = lclAZT->ExtractView(&AZT_A,&AZT_LDA);
       TEST_FOR_EXCEPTION(info != 0, std::logic_error,
@@ -197,6 +181,46 @@ namespace RBGen {
           "RBGen::ISVDMultiCD::makePass(): Error calling Epetra_MultiVector::Multiply() for W V.");
     }
 
+    //
+    // compute the new residuals
+    // we know that A V = U S
+    // if, in addition, A^T U = V S, then have singular subspaces
+    // check residuals A^T U - V S, scaling the i-th column by sigma[i]
+    //
+    {
+      // make these static, because makePass() will be likely be called again
+      static Epetra_LocalMap lclmap(A_->NumVectors(),0,A_->Comm());
+      static Epetra_MultiVector ATU(lclmap,maxBasisSize_,false);
+
+      // we know that A V = U S
+      // if, in addition, A^T U = V S, then have singular subspaces
+      // check residuals A^T U - V S, scaling the i-th column by sigma[i]
+      Epetra_MultiVector ATUlcl(::View,ATU,0,curRank_);
+      Epetra_MultiVector Ulcl(::View,*U_,0,curRank_);
+      Epetra_MultiVector Vlcl(::View,*V_,0,curRank_);
+      // compute A^T U
+      int info = ATUlcl.Multiply('T','N',1.0,*A_,Ulcl,0.0);
+      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+          "RBGen::ISVDMultiCD::makePass(): Error calling Epetra_MultiVector::Multiply for A^T U.");
+      Epetra_LocalMap rankmap(curRank_,0,A_->Comm());
+      Epetra_MultiVector S(rankmap,curRank_,true);
+      for (int i=0; i<curRank_; i++) {
+        S[i][i] = sigma_[i];
+      }
+      // subtract V S from A^T U
+      info = ATUlcl.Multiply('N','N',-1.0,Vlcl,S,1.0);
+      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+          "RBGen::ISVDMultiCD::computeBasis(): Error calling Epetra_MultiVector::Multiply for V S.");
+      resNorms_.resize(curRank_);
+      ATUlcl.Norm2(&resNorms_[0]);
+      // scale by sigmas
+      for (int i=0; i<curRank_; i++) {
+        if (sigma_[i] != 0.0) {
+          resNorms_[i] /= sigma_[i];
+        }
+      }
+    }
+
     // debugging checks
     std::vector<double> errnorms(curRank_);
     if (debug_) {
@@ -231,7 +255,7 @@ namespace RBGen {
 
     // print out some info
     const Epetra_Comm *comm = &A_->Comm();
-    if (comm->MyPID() == 0) {
+    if (comm->MyPID() == 0 && verbLevel_ >= 1) {
       cout 
         << "------------- ISVDMultiCD::makePass() -----------" << endl
         << "| Number of passes: " << curNumPasses_ << endl
@@ -251,7 +275,7 @@ namespace RBGen {
       }
     }
 
-    return 0;
+    return;
   }
 
   void ISVDMultiCD::Initialize( 

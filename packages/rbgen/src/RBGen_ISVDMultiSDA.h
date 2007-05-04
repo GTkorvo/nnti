@@ -60,15 +60,6 @@ namespace RBGen {
     virtual ~ISVDMultiSDA() {};
     //@}
 
-
-    //! @name Get Methods
-    //@{
-
-    //! Return the scaled residual norms.
-    virtual std::vector<double> getResNorms();
-
-    //@}
-
     //! @name Set Methods
     //@{
 
@@ -82,7 +73,7 @@ namespace RBGen {
   protected:
 
     // private member for performing inc steps
-    virtual int makePass();
+    virtual void makePass();
 
     // will need workspace for A*W = A - A Z T Z^T
     // W will be defined as [V G ...], so the Z matrix will be rank 2*maxBasisSize
@@ -90,7 +81,6 @@ namespace RBGen {
     // * dist multivector for A*Z
     Teuchos::RefCountPtr<Epetra_MultiVector> workAZT_, workZ_;
     Teuchos::RefCountPtr<Epetra_SerialDenseMatrix> workT_;
-    bool gradCurrent_;
   };
 
 } // end of RBGen namespace

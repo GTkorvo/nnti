@@ -73,7 +73,7 @@ namespace RBGen {
   protected:
 
     // private member for performing inc steps
-    virtual int makePass();
+    virtual void makePass();
 
     // will need workspace for A*W = A - A Z T Z^T
     // * local multivector for Z

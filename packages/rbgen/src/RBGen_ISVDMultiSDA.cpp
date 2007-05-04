@@ -8,22 +8,11 @@ namespace RBGen {
 
   ISVDMultiSDA::ISVDMultiSDA() {}
 
-  int ISVDMultiSDA::makePass() {
+  void ISVDMultiSDA::makePass() {
     Epetra_LAPACK lapack;
     Epetra_BLAS   blas;
 
     bool firstPass = (curRank_ == 0);
-    // if maxNumPasses == -1, we get infinite passes
-    if (maxNumPasses_ != -1) {
-      if (firstPass) {
-        // we need only one: passing through A
-        if (curNumPasses_ + 1 > maxNumPasses_) return -1;
-      }
-      else {
-        // we need two: one for A V T and one for passing through A - (A V T) V^T
-        if (curNumPasses_ + 2 > maxNumPasses_) return -1;
-      }
-    }
     const int numCols = A_->NumVectors();
     TEST_FOR_EXCEPTION( !firstPass && (numProc_ != numCols), std::logic_error,
         "RBGen::ISVDMultiSDA::makePass(): after first pass, numProc should be numCols");
@@ -35,28 +24,33 @@ namespace RBGen {
     int oldRank = 0;
     double Rerr;
     if (!firstPass) {
-      // copy V_ into workZ_
-      lclAZT = Teuchos::rcp( new Epetra_MultiVector(::View,*workAZT_,0,curRank_) );
-      lclZ   = Teuchos::rcp( new Epetra_MultiVector(::View,*workZ_,0,curRank_) );
-      Teuchos::RefCountPtr<Epetra_MultiVector> lclV;
-      lclV = Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_) );
-      *lclZ = *lclV;
-      //DBG cout << "V (right hand basis)" << endl;
-      //DBG lclV->Print(cout);
-      lclV = Teuchos::null;
+      // we want Z = [Z1 Z2] = [V G]
+      // second block == G is already achieved from previous pass
+      // we need to put V in the first block
+      {
+        Epetra_MultiVector Z1(::View,*workZ_,0,curRank_);
+        Epetra_MultiVector lclV(::View,*V_,0,curRank_);
+        Z1 = lclV;
+      }
+      // get a pointer to [Z1 Z2]
+      lclZ = Teuchos::rcp( new Epetra_MultiVector(::View,*workZ_,0,2*curRank_) );
+
+      //
       // compute the Householder QR factorization of the current right basis
-      // Vhat = W*R
-      int info, lwork = curRank_;
-      std::vector<double> tau(curRank_), work(lwork);
+      // [V G] = W*[R,0]'
+      //
+      int info, lwork = 2*curRank_;
+      std::vector<double> tau(2*curRank_), work(lwork);
       info = lclZ->ExtractView(&Z_A,&Z_LDA);
       TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): error calling ExtractView on Epetra_MultiVector Z.");
-      lapack.GEQRF(numCols,curRank_,Z_A,Z_LDA,&tau[0],&work[0],lwork,&info);
+      lapack.GEQRF(numCols,2*curRank_,Z_A,Z_LDA,&tau[0],&work[0],lwork,&info);
       TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): error calling GEQRF on current right basis while constructing next pass coefficients.");
       if (debug_) {
-        // we just took the QR factorization of a set of orthonormal vectors
-        // they should have an R factor which is diagonal, with unit elements (\pm 1)
+        // we just took the QR factorization of [V G]
+        // V is has orthonormal columns, so that the leading part of R should 
+        // be diagonal, with unit elements (\pm 1)
         // check it
         Rerr = 0;
         for (int j=0; j<curRank_; j++) {
@@ -65,15 +59,12 @@ namespace RBGen {
           }
           Rerr += abs(abs(Z_A[j*Z_LDA+j]) - 1.0);
         }
-        //DBG cout << "Compressed QR of V (right hand basis)" << endl;
-        //DBG lclZ->Print(cout);
       }
       // compute the block representation
       // W = I - Z T Z^T
-      lapack.LARFT('F','C',numCols,curRank_,Z_A,Z_LDA,&tau[0],workT_->A(),workT_->LDA());
+      lapack.LARFT('F','C',numCols,2*curRank_,Z_A,Z_LDA,&tau[0],workT_->A(),workT_->LDA());
       // LARFT left upper tri block of Z unchanged
-      // note: it should currently contain R factor of V_, which is very close to
-      //   diag(\pm 1, ..., \pm 1)
+      // note: it should currently contain R factor of [V G]
       //
       // we need to set it to:
       //   [1 0 0 ... 0]
@@ -82,7 +73,7 @@ namespace RBGen {
       //   [          1]
       //
       // see documentation for LARFT
-      for (int j=0; j<curRank_; j++) {
+      for (int j=0; j<2*curRank_; j++) {
         Z_A[j*Z_LDA+j] = 1.0;
         for (int i=0; i<j; i++) {
           Z_A[j*Z_LDA+i] = 0.0;
@@ -91,15 +82,15 @@ namespace RBGen {
       // compute part of A W:  A Z T
       // put this in workAZT_
       // first, A Z (this consumes a pass through A)
+      lclAZT = Teuchos::rcp( new Epetra_MultiVector(::View,*workAZT_,0,2*curRank_) );
       info = lclAZT->Multiply('N','N',1.0,*A_,*lclZ,0.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): Error calling Epetra_MultiVector::Multiply() for A*Z");
-      curNumPasses_++;
       // second, (A Z) T (in situ, as T is upper triangular)
       info = lclAZT->ExtractView(&AZT_A,&AZT_LDA);
       TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): error calling ExtractView on Epetra_MultiVector AZ.");
-      blas.TRMM('R','U','N','N',numCols,curRank_,1.0,workT_->A(),workT_->LDA(),AZT_A,AZT_LDA);
+      blas.TRMM('R','U','N','N',numCols,2*curRank_,1.0,workT_->A(),workT_->LDA(),AZT_A,AZT_LDA);
       // set curRank_ = 0
       oldRank  = curRank_;
       curRank_ = 0;
@@ -138,27 +129,25 @@ namespace RBGen {
       lup = (lup > maxBasisSize_ - curRank_ ? maxBasisSize_ - curRank_ : lup);
 
       // get view of new vectors
-      Teuchos::RefCountPtr<const Epetra_MultiVector> Aplus;
-      Teuchos::RefCountPtr<Epetra_MultiVector> Unew;
-      Aplus = Teuchos::rcp( new Epetra_MultiVector(::View,*A_,numProc_,lup));
-      Unew = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,curRank_,lup));
-      // put them in U
-      if (firstPass) {
-        // new vectors are just Aplus
-        *Unew = *Aplus;
+      {
+        const Epetra_MultiVector Aplus(::View,*A_,numProc_,lup);
+        Epetra_MultiVector Unew(::View,*U_,curRank_,lup);
+        // put them in U
+        if (firstPass) {
+          // new vectors are just Aplus
+          Unew = Aplus;
+        }
+        else {
+          // new vectors are Aplus - (A Z T) Z_i^T
+          // specifically, Aplus - (A Z T) Z(numProc:numProc+lup-1,1:2*oldRank)^T
+          Epetra_LocalMap lclmap(lup,0,A_->Comm());
+          Epetra_MultiVector Zi(::View,lclmap,&Z_A[numProc_],Z_LDA,2*oldRank);
+          Unew = Aplus;
+          int info = Unew.Multiply('N','T',-1.0,*lclAZT,Zi,1.0);
+          TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+              "RBGen::ISVDMultiSDA::makePass(): Error calling Epetra_MultiVector::Multiply() for A*Wi");
+        }
       }
-      else {
-        // new vectors are Aplus - (A Z T) Z_i^T
-        // specifically, Aplus - (A Z T) Z(numProc:numProc+lup-1,1:oldRank)^T
-        Epetra_LocalMap lclmap(lup,0,A_->Comm());
-        Epetra_MultiVector Zi(::View,lclmap,&Z_A[numProc_],Z_LDA,oldRank);
-        *Unew = *Aplus;
-        int info = Unew->Multiply('N','T',-1.0,*lclAZT,Zi,1.0);
-        TEST_FOR_EXCEPTION(info != 0,std::logic_error,
-            "RBGen::ISVDMultiSDA::makePass(): Error calling Epetra_MultiVector::Multiply() for A*Wi");
-      }
-      Unew = Teuchos::null;
-      Aplus = Teuchos::null;
 
       // perform the incremental step
       incStep(lup);
@@ -168,21 +157,20 @@ namespace RBGen {
     }
 
     // compute W V = V - Z T Z^T V
-    // Z^T V is oldRank x curRank
-    // T Z^T V is oldRank x curRank
+    // Z^T V is 2*oldRank x curRank
+    // T Z^T V is 2*oldRank x curRank
     // we need T Z^T V in a local Epetra_MultiVector
     if (!firstPass) {
-      Teuchos::RefCountPtr<Epetra_MultiVector> lclV;
       double *TZTV_A;
       int TZTV_LDA;
       int info;
-      Epetra_LocalMap lclmap(oldRank,0,A_->Comm());
       // get pointer to current V
-      lclV = Teuchos::rcp( new Epetra_MultiVector(::View,*V_,0,curRank_) );
-      // create space for T Z^T V
+      Epetra_MultiVector lclV(::View,*V_,0,curRank_);
+      // create (local) multivector for T Z^T V
+      Epetra_LocalMap lclmap(2*oldRank,0,A_->Comm());
       Epetra_MultiVector TZTV(lclmap,curRank_,false);
       // multiply Z^T V
-      info = TZTV.Multiply('T','N',1.0,*lclZ,*lclV,0.0);
+      info = TZTV.Multiply('T','N',1.0,*lclZ,lclV,0.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): Error calling Epetra_MultiVector::Multiply() for Z^T V.");
       // get pointer to data in Z^T V
@@ -190,13 +178,53 @@ namespace RBGen {
       TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): error calling ExtractView on Epetra_MultiVector TZTV.");
       // multiply T (Z^T V)
-      blas.TRMM('L','U','N','N',oldRank,curRank_,1.0,workT_->A(),workT_->LDA(),TZTV_A,TZTV_LDA);
+      blas.TRMM('L','U','N','N',2*oldRank,curRank_,1.0,workT_->A(),workT_->LDA(),TZTV_A,TZTV_LDA);
       // multiply V - Z (T Z^T V)
-      info = lclV->Multiply('N','N',-1.0,*lclZ,TZTV,1.0);
+      info = lclV.Multiply('N','N',-1.0,*lclZ,TZTV,1.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): Error calling Epetra_MultiVector::Multiply() for W V.");
     }
 
+    //
+    // compute the new residuals
+    // we know that A V = U S
+    // if, in addition, A^T U = V S, then have singular subspaces
+    // check residuals A^T U - V S, scaling the i-th column by sigma[i]
+    //
+    // store A^T U - V S into the second block of workZ_
+    // we will need it on the next pass 
+    //
+    {
+      Epetra_MultiVector Z2(::View,*workZ_,curRank_,curRank_);
+      Epetra_MultiVector Ulcl(::View,*U_,0,curRank_);
+      Epetra_MultiVector Vlcl(::View,*V_,0,curRank_);
+      // compute A^T U
+      int info = Z2.Multiply('T','N',1.0,*A_,Ulcl,0.0);
+      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+          "RBGen::IncSVD::computeBasis(): Error calling Epetra_MultiVector::Multiply for A^T U.");
+      Epetra_LocalMap Smap(curRank_,0,A_->Comm());
+      Epetra_MultiVector S(Smap,curRank_,true); // "true" inits to zero
+      for (int i=0; i<curRank_; i++) {
+        S[i][i] = sigma_[i];
+      }
+      // subtract V S from A^T U
+      info = Z2.Multiply('N','N',-1.0,Vlcl,S,1.0);
+      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+          "RBGen::IncSVD::computeBasis(): Error calling Epetra_MultiVector::Multiply for V S.");
+
+      //
+      // compute residual norms
+      resNorms_.resize(curRank_);
+      Z2.Norm2(&resNorms_[0]);
+      // scale by sigmas
+      for (int i=0; i<curRank_; i++) {
+        if (sigma_[i] != 0.0) {
+          resNorms_[i] /= sigma_[i];
+        }
+      }
+    }
+
+    //
     // debugging checks
     std::vector<double> errnorms(curRank_);
     if (debug_) {
@@ -231,7 +259,7 @@ namespace RBGen {
 
     // print out some info
     const Epetra_Comm *comm = &A_->Comm();
-    if (comm->MyPID() == 0) {
+    if (comm->MyPID() == 0 && verbLevel_ >= 1) {
       cout 
         << "------------- ISVDMultiSDA::makePass() -----------" << endl
         << "| Number of passes: " << curNumPasses_ << endl
@@ -251,7 +279,7 @@ namespace RBGen {
       }
     }
 
-    return 0;
+    return;
   }
 
   void ISVDMultiSDA::Initialize( 
@@ -260,59 +288,21 @@ namespace RBGen {
       const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio
       ) 
   {
-    workAZT_ = Teuchos::rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );
+    // workAZT has room for A * Z * T, where Z * T has 2*maxBasisSize vectors
+    // ergo, workAZT has 2*maxBasisSize vectors
+    workAZT_ = Teuchos::rcp( new Epetra_MultiVector(ss->Map(),2*maxBasisSize_,false) );
 
+    // workZ = [V G],
+    // where V is the current right basis and G is the gradient A^T U - V S
+    // ergo, workZ has 2*maxBasisSize_ vectors
     Epetra_LocalMap lclmap(ss->NumVectors(),0,ss->Comm());
     workZ_ = Teuchos::rcp( new Epetra_MultiVector(lclmap,2*maxBasisSize_,false) );
 
-    workT_  = Teuchos::rcp( new Epetra_SerialDenseMatrix(maxBasisSize_,maxBasisSize_) );
+    // workT contains the T factor:
+    //  W R = [V G] 
+    //  W = I - V T V^T
+    // Ergo, workT is 2*maxBasisSize by 2*maxBasisSize
+    workT_  = Teuchos::rcp( new Epetra_SerialDenseMatrix(2*maxBasisSize_,2*maxBasisSize_) );
   }
-
-  std::vector<double> ISVDMultiSDA::getResNorms() {
-
-    /*
-     * finish: 
-     * we need a flag to determine if G is current in second block of workZ_
-     * we need to determine if second block of workZ_ is actually residual, or just part of it
-     * we need to write makepass for this class
-     * we need to rewrite all IncSVD methods so that passes are not passes through A, but calls to makePass
-     *    this will make counting a lot easier, entirely in computeBasis()
-     * check memory allocation for this class 
-    gradCurrent_;
-
-    // we know that A V = U S
-    // if, in addition, A^T U = V S, then have singular subspaces
-    // check residuals A^T U - V S, scaling the i-th column by sigma[i]
-    Epetra_MultiVector ATUlcl(::View,ATU,0,curRank_);
-    Epetra_MultiVector Ulcl(::View,*U_,0,curRank_);
-    Epetra_MultiVector Vlcl(::View,*V_,0,curRank_);
-    // compute A^T U
-    int info = ATUlcl.Multiply('T','N',1.0,*A_,Ulcl,0.0);
-    TEST_FOR_EXCEPTION(info != 0, std::logic_error,
-        "RBGen::IncSVD::computeBasis(): Error calling Epetra_MultiVector::Multiply for A^T U.");
-    Epetra_LocalMap rankmap(curRank_,0,A_->Comm());
-    Epetra_MultiVector S(rankmap,curRank_,true);
-    for (int i=0; i<curRank_; i++) {
-      S[i][i] = sigma_[i];
-    }
-    // subtract V S from A^T U
-    info = ATUlcl.Multiply('N','N',-1.0,Vlcl,S,1.0);
-    TEST_FOR_EXCEPTION(info != 0, std::logic_error,
-        "RBGen::IncSVD::computeBasis(): Error calling Epetra_MultiVector::Multiply for V S.");
-    std::vector<double> resnorms(curRank_);
-    ATUlcl.Norm2(&resnorms[0]);
-    // scale by sigmas
-    int numConverged = 0;
-    for (int i=0; i<curRank_; i++) {
-      if (sigma_[i] != 0.0) {
-        resnorms[i] /= sigma_[i];
-      }
-    }
-
-    return resnorms;
-    */
-  }
-    
-
 
 } // end of RBGen namespace
