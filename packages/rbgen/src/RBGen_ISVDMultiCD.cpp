@@ -6,7 +6,7 @@
 
 namespace RBGen {
 
-  ISVDMultiCD::ISVDMultiCD() : IncSVDPOD() {}
+  ISVDMultiCD::ISVDMultiCD() {}
 
   int ISVDMultiCD::makePass() {
     Epetra_LAPACK lapack;

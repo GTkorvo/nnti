@@ -2,7 +2,7 @@
 
 namespace RBGen {
 
-  ISVDUDV::ISVDUDV() : IncSVDPOD() {}
+  ISVDUDV::ISVDUDV() {}
 
   void ISVDUDV::expand(const int lup) 
   {

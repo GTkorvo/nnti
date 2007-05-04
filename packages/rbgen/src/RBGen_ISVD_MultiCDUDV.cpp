@@ -2,7 +2,7 @@
 
 namespace RBGen {
 
-  ISVD_MultiCDUDV::ISVD_MultiCDUDV() : ISVDUDV(), ISVDMultiCD() {}
+  ISVD_MultiCDUDV::ISVD_MultiCDUDV() : IncSVDPOD(), ISVDUDV(), ISVDMultiCD() {}
 
   void ISVD_MultiCDUDV::Initialize( 
       const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,

@@ -3,7 +3,7 @@
 
 namespace RBGen {
 
-  ISVDSingle::ISVDSingle() : IncSVDPOD() {
+  ISVDSingle::ISVDSingle() {
     maxNumPasses_ = 1;
   }
                                           

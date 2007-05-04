@@ -2,7 +2,7 @@
 
 namespace RBGen {
 
-  ISVD_SingleUDV::ISVD_SingleUDV() : ISVDUDV(), ISVDSingle() {}
+  ISVD_SingleUDV::ISVD_SingleUDV() : IncSVDPOD(), ISVDUDV(), ISVDSingle() {}
 
   void ISVD_SingleUDV::Initialize( 
       const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
