@@ -97,6 +97,9 @@ namespace RBGen {
     //! Return the cummulative wall-clock time.
     double getCompTime() const { return timerComp_.totalElapsedTime(); }
 
+    //! Return the scaled residual norms.
+    virtual std::vector<double> getResNorms();
+
     //@}
 
     //! @name Set Methods
