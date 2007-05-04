@@ -8,7 +8,11 @@ namespace RBGen {
   }
                                           
   int ISVDSingle::makePass() {
-    if (curNumPasses_ >= maxNumPasses_) return -1;
+    // ISVDSingle only makes a single pass
+    TEST_FOR_EXCEPTION(maxNumPasses_ != 1,std::logic_error,
+        "RBGen::ISVDSingle::makePass(): Max Num Passes should be 1, but is not.");
+    // did we already make our one pass?
+    if (curNumPasses_ > 0) return -1;
     const int numCols = A_->NumVectors();
     while (numProc_ < numCols) {
       // determine lup

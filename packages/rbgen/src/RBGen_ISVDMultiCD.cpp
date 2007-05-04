@@ -13,11 +13,16 @@ namespace RBGen {
     Epetra_BLAS   blas;
 
     bool firstPass = (curRank_ == 0);
-    if (firstPass) {
-      if (curNumPasses_ + 1 > maxNumPasses_) return -1;
-    }
-    else {
-      if (curNumPasses_ + 2 > maxNumPasses_) return -1;
+    // if maxNumPasses == -1, we get infinite passes
+    if (maxNumPasses_ != -1) {
+      if (firstPass) {
+        // we need only one: passing through A
+        if (curNumPasses_ + 1 > maxNumPasses_) return -1;
+      }
+      else {
+        // we need two: one for A V T and one for passing through A - (A V T) V^T
+        if (curNumPasses_ + 2 > maxNumPasses_) return -1;
+      }
     }
     const int numCols = A_->NumVectors();
     TEST_FOR_EXCEPTION( !firstPass && (numProc_ != numCols), std::logic_error,
