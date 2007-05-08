@@ -1,5 +1,7 @@
+%\documentclass[11pt]{SANDreport}
 \documentclass[pdf,ps2pdf,11pt]{SANDreport}
-\usepackage{pslatex}
+%\usepackage{pslatex}
+\usepackage{psfig}
 
 %Local stuff
 \usepackage{graphicx}
@@ -320,7 +322,7 @@ functions.  In this case, the updated class interface {}\texttt{BlobBase}
 would look like:
 
 {\small\begin{verbatim}
-  namespace SomeNamespace {
+  namespace BlobPack {
 
   class Bar;
 
@@ -336,19 +338,19 @@ would look like:
     virtual void implFoo( const Bar &bar, bool useDog ) const = 0;
   };
 
-  } // namespace SomeNamespace
+  } // namespace BlobPack
 \end{verbatim}}
 
 {}\noindent{}and the nonmember form of the old {}\texttt{foo()} functions
 would look like:
 
 {\small\begin{verbatim}
-  void SomeNamespace::foo( BlobBase & obj, int a)
+  void BlobPack::foo( BlobBase & obj, int a)
   {
     obj.foo(DefaultBar(a),false);
   }
 
-  void SomeNamespace::foo( const BlobBase & obj, int a)
+  void BlobPack::foo( const BlobBase & obj, int a)
   {
     obj.foo(DefaultBar(a),false);
   }
@@ -377,7 +379,7 @@ like:
 {\small\begin{verbatim}
   #include ``DefaultBar.hpp''
 
-  namespace SomeNamespace {
+  namespace BlobPack {
 
   class BlobBase;
 
@@ -399,7 +401,7 @@ like:
     virtual void implFoo( const Bar &bar, bool useDog ) const = 0;
   };
 
-  } // namespace SomeNamespace
+  } // namespace BlobPack
 \end{verbatim}}
 
 The refactoring shown above has the advantage that the clients don't need to
@@ -425,7 +427,7 @@ functions.  Therefore, a simple interface using the ``pure nonmember function
 interface'' idiom would look like:
 
 {\small\begin{verbatim}
-  namespace SomeNamespace {
+  namespace BlobPack {
 
   class BlobBase;
 
@@ -444,18 +446,18 @@ interface'' idiom would look like:
     virtual void implFoo(int a) const = 0;
   };
 
-  } // namespace SomeNamespace
+  } // namespace BlobPack
 \end{verbatim}}
 
 {}\noindent{}and the nonmember friend functions would be implemented as:
 
 {\small\begin{verbatim}
-  void SomeNamespace::foo( BlobBase & obj, int a)
+  void BlobPack::foo( BlobBase & obj, int a)
   {
     foo.implNonconstFoo(a);
   }
 
-  void SomeNamespace::foo( const BlobBase & obj, int a)
+  void BlobPack::foo( const BlobBase & obj, int a)
   {
     foo.implFoo(a);
   }
@@ -512,7 +514,7 @@ function interface'' idiom, the refactored interface and supporting code would
 look something like:
 
 {\small\begin{verbatim}
-  namespace SomeNamespace {
+  namespace BlobPack {
 
   class Bar;
 
@@ -530,19 +532,19 @@ look something like:
     virtual void implFoo( const Bar &bar, bool useDog ) const = 0;
   };
 
-  } // namespace SomeNamespace
+  } // namespace BlobPack
 \end{verbatim}}
 
 {}\noindent{}where the direct nonmember friend functions now have the
 implementation:
 
 {\small\begin{verbatim}
-  void SomeNamespace::foo( BlobBase & obj, const Bar &bar, bool useDog )
+  void BlobPack::foo( BlobBase & obj, const Bar &bar, bool useDog )
   {
     foo.implNonconstFoo(bar,useDog);
   }
 
-  void SomeNamespace::foo( const BlobBase & obj,  const Bar &bar, bool useDog )
+  void BlobPack::foo( const BlobBase & obj,  const Bar &bar, bool useDog )
   {
     foo.implFoo(bar,useDog);
   }
@@ -556,12 +558,12 @@ and a value of {}\texttt{useDog=false} which gives the following nonmember
 nonfriend functions:
 
 {\small\begin{verbatim}
-  void SomeNamespace::foo( BlobBase & obj, int a )
+  void BlobPack::foo( BlobBase & obj, int a )
   {
     foo(obj,DefaultBar(a),false);
   }
 
-  void SomeNamespace::foo( const BlobBase & obj, int a )
+  void BlobPack::foo( const BlobBase & obj, int a )
   {
     foo(obj,DefaultBar(a),false);
   }
@@ -594,24 +596,78 @@ function interface'' idiom described above takes care of insulating clients
 from most types of changes to the virtual function set, but how do these
 changes affect subclasses of the abstract C++ interface that override virtual
 functions?  There are two main categories of subclasses of abstract C++
-interfaces that are most important: a) those that are owned and controlled by
-the library, and b) those that are developed but external users out of the
-control of the library.  Subclasses can also be classified as i) those that
+interfaces to consider: a) those that are owned and controlled by the library,
+and b) those that are developed by external users and are out of the control
+of the library developers.  Subclasses can also be classified as i) those that
 are direct subclasses of the base abstract interface (e.g.\ such as
 ``Decorator'' and ``Composite'' subclasses), and ii) those that are indirect
 subclasses of the base abstract interface and don't directly override any of
-the top-level virtual functions.  Any subclasses that are owned by or
-accessible by the library developers can be changed at a reasonable cost in
-most cases.  Also, indirect subclasses can also largely be insulated from
-changes to the base abstract interface in many cases if the intermediate
-subclasses are designed well.  The key to insulating most concrete subclasses
-from changes to the top-level virtual functions is then is to create a set of
-appropriate intermediate subclasses, tailored to specific types of use cases,
-which are owned by the library and define all of the virtual functions on the
-base class interface and translate these to the more specific use cases with
-other virtual functions.  Specific categories of clients can then drive from
-these tailored intermediate subclasses and not have to directly implement an
-of the virtual functions in the base class interface.
+the top-level virtual functions.
+
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.55
+]{BlobBaseBeforeRefactoring}
+%}
+\end{center}
+\caption{
+\label{fig:BlobBaseBeforeRefactoring}
+UML class diagram : Blob software before refactoring.  }
+\end{figure}
+\esinglespace}
+
+Consider the simplified {}\texttt{Blob\-Base} interface and some of its
+subclasses shown in Figure {}\ref{fig:BlobBaseBeforeRefactoring}.  This
+example is provided to illuminate the issues involved when refactoring the
+virtual functions in a base class interface.  In this example diagram, we show
+several different categories of subclasses mentioned above.  The intermediate
+subclasses {}\texttt{Type\-A\-Blob\-Base} and {}\texttt{Type\-B\-Blob\-Base}
+are designed to provide support for implementing the {}\texttt{Blob\-Base}
+interface for two different general types subclasses for more specific types
+of use cases.  For instance, {}\texttt{Type\-A\-Blob\-Base\-::foo(...)} is an
+implementation of {}\texttt{Blob\-Base\-::foo(...)} that provides most of the
+needed behavor for ``type A'' blobs and defers the rest of the more specific
+behavior to the pure virtual function
+{}\texttt{Type\-A\-Blob\-Base\-::typeAFoo(...)} to be implemented by
+subclasses.  These kinds of intermediate type 'a.i' subclasses are very common
+in object oriented class hierarchies.  The type 'a.ii' concrete subclasses
+{}\texttt{Internal\-Default\-Type\-A\-Blob} and
+{}\texttt{Internal\-Default\-Type\-B\-Blob} provided by the library give good
+default implementations of ``type A'' and ``type B'' Blob subclasses.  The
+classes {}\texttt{External\-Type\-A\-Blob} and
+{}\texttt{External\-Type\-A\-Blob} are type 'b.ii' subcalsses and are
+implemented by external code developers to satisfy some more specific needs
+than are provided by the library.  The subclass
+{}\texttt{Internal\-Decorator\-Blob} is provided by the library to support a
+common type of Blob decorator and represents a type 'a.i' subclass.  The
+subclass {}\texttt{External\-Decorator\-Blob} is a more specialized decorator
+implementation that is created and lives outside of the control of the
+``BlobPack'' library develoeprs and is therefore a type 'b.i' subclass.
+
+With this example Blob class hierarchy in place, now consider the impact of
+refactoring the virtual function in a base interface
+{}\texttt{Blobl\-Base\-::foo(...)} as described above.  Any subclasses that
+are owned by or accessible by the library developers can be changed at a
+reasonable cost in most cases.  In our example in Figure
+{}\ref{fig:BlobBaseBeforeRefactoring}, this means tha all of the classes in
+the ``BlobPack'' package can reasonably be refactored since they are under the
+``BlockPack'' library developer's control.  Also, as will be shown, indirect
+subclasses can also largely be insulated from changes to the base abstract
+interface in many cases if they are derived from well-designed intermediate
+subclasses which live in the library.
+
+The key to insulating most concrete subclasses from changes to the top-level
+virtual functions is then is to create a set of appropriate intermediate
+subclasses, tailored to specific types of use cases, which are owned by the
+library and define all of the virtual functions on the base class interface
+and translate these to the more specific use cases with other virtual
+functions.  This is the role of the {}\texttt{Type\-A\-Blob\-Base} and
+{}\texttt{Type\-B\-Blob\-Base} subclasses shown in our example.  Specific
+categories of clients can then drive from these tailored intermediate
+subclasses and not have to directly implement any of the virtual functions in
+the base class interface.
 
 While the development and use of tailored intermediate subclasses can insulate
 most types of derived subclasses from changes to the higher level virtual
@@ -619,16 +675,68 @@ functions, a remaining stumbling block are those inaccessible external
 subclasses that directly derive from the base abstract interface (i.e.\ type
 'b.i' subclasses as defined above).  Examples of these types of direct
 subclasses would be classic ``Composite'' or ``Decorator'' subclasses that use
-some form of direct delegation on subordinate objects.
+some form of direct delegation on subordinate objects, such as the
+{}\texttt{External\-Decorator\-Blob} subclass shown in Figure
+{}\ref{fig:BlobBaseBeforeRefactoring}.
 
-{}\textbf{TODO: I Have edited to here (2007/05/01)!}
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.55
+]{BlobBaseAfterRefactoring}
+%}
+\end{center}
+\caption{
+\label{fig:BlobBaseAfterRefactoring}
+UML class diagram : Blob software after refactoring.  }
+\end{figure}
+\esinglespace}
 
-Graphically, the impact of changing the virtual functions in a base interface
-class are shown in Figure ???.
+To expand on this discussion, consider the refactored {}\texttt{Blob\-Base}
+interface and subclasses shown in Figure {}\ref{fig:BlobBaseAfterRefactoring}.
+Here, the refactored {}\texttt{Type\-A\-Blob\-Base} and
+{}\texttt{Type\-B\-Blob\-Base} intermediate subclasses insulate the concrete
+subclasses {}\texttt{Internal\-Default\-Type\-A\-Blob},
+{}\texttt{Internal\-Default\-Type\-A\-Blob},
+{}\texttt{External\-Type\-A\-Blob}, and {}\texttt{External\-Type\-A\-Blob}
+from changes to the base interface and they only need to be recompiled.  The
+situration for the necessarily direct concrete dectorator subclasses
+{}\texttt{Internal\-Decorator\-Blob} and {}\texttt{External\-Decorator\-Blob}
+is a little different in that they must be refactored as well in order to
+remain 100 \% general decorator classes.  The
+{}\texttt{Internal\-Decorator\-Blob} subclass is not much of a problem since
+it is maintained by the ``BlobPack'' library developers and it's current
+(nonmember) public interface will likely not be broken due to the refactoring.
+The problematic subclasses are those external type 'b.i' subclasses that
+directly derive from the base interface such as
+{}\texttt{External\-Decorator\-Blob} that are out of the control of the
+library developers.  In the most general case, these type 'b.i' subclasses
+will have to be manually refactored by the external developers.  There are
+strategies where the cost of performing such external refactorings can be
+lessened but avoiding a refactoring altogether is usually not possible.  We
+will not discuss specific strategies for minimizing the cost of such
+refactorings any further here.
 
-ToDo: Give some good examples of this!
+The point of this section was to really round out the discussion of the full
+impact of changing the virtual function set in a base class interface in how
+such a refactoring can be absorbed in the subclasses of the interface and at
+what cost.  As described above, in many cases, intermedate subclasses can
+insulate many different types of concrete subclasses from significant changes
+to the base classes virtual functions and can therefore make such refactorings
+reasonable and affordable.  However, in the absents of very sophisticated
+refactoring tools for C++ (which simply do not exist at the time of this
+writting and may never exist), we can not fully protect external subclass
+developers for such refactorings.  It should be noted, however, that for many
+types of more mature class libraries, that there should be relatively few
+examples of direct external ``Composite'' or ``Decorator'' subclasses such as
+{}\texttt{External\-Decorator\-Blob} which are the most significant problem
+from a refactoring standpoint.  Note however, that modern Agile software
+engineering methodologies really mandate the need for refactoring and
+therefore we must actively plan for change and the refactorings that are
+needed to manage complexity.
 
-ToDo: Show the class digram mentioned above!
+{}\textbf{TODO: I Have edited to here (2007/05/07)!}
 
 %
 \section{Nonmember Function Interfaces to Concrete Classes}
@@ -819,6 +927,63 @@ as a convenience can tolerate refactorings better.  However, since the member
 functions on a handle class never need privileged access to the underlying
 object, there will never need to be any changes to the handle classes
 interface, only augmentations.
+
+%
+\section{Summary}
+%
+
+Here we have presented an sort of composite C++ idiom called the ``pure
+nonmember function interface'' idiom which is composed out of two other
+idioms, the non-virtual interface (NVI) idiom {}\cite[Item
+39]{C++CodingStandards05} and the ``nonmember nonfriend function'' idiom
+{}\cite[Item 44]{C++CodingStandards05}.  We argue that the proposed ``pure
+nonmember function interface'' idiom is the logical union of these two other
+idioms when issues of code evolution and refactoring are considered.
+
+The ``nonmember nonfriend function'' idiom:
+
+\begin{itemize}
+
+{}\item results in maximum code encapsulation,
+
+{}\item provides a uniform (nonmmeber) client interface,
+
+{}\item insulates clients from refactorings to the virtual function structure
+of abstract interfaces (and therefore makes such refactorings reasonable and
+affordable), and
+
+{}\item preserves the minimality and integrity of abstract interface even
+after numerious changes in requirements and subsequent refactorings.
+
+\end{itemize}
+
+Where there are many advantages to the ``pure nonmember function interface''
+idiom, it is not without cost.
+
+Some of the potential disadvantages of a nonmember interface are given below.
+
+\begin{itemize}
+
+{}\item Calling the nonmember function may require explicit namespace
+qualification (or a using declaration) and/or explicit template arguments in
+order to get the right function to be called where a nonmember function call
+never requires this.
+
+{}\item The nonmember function interface requires a little more typing in that
+the prototype for the friend function.
+
+\end{itemize}
+
+Since there are some disadvantages to developing and using a pure nonmember
+function interface for an abstract or concrete class, one should not
+automatically choose it over the more canonical member function interface.  If
+a particular class is not widely used, is not widely accessible to clients,
+and/or is unlikely to change, then developing a pure nonmember function
+interface may be overkill and not worth the (all be it small) extra work.
+However, if the face of uncertainty, one should lean toward using the pure
+nonmember function interface since it allows great freedom in refactoring code
+with minimal impact on clients.
+
 
 % ---------------------------------------------------------------------- %
 % References
