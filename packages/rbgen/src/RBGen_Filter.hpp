@@ -8,17 +8,22 @@
 
 namespace RBGen {
 
+  //! \brief Enumerated type to list the selection criteria for singular value filters.
   enum SortType {
-    LARGEST,
-    SMALLEST
+    LARGEST,   /*!< Select the largest singular values */
+    SMALLEST   /*!< Select the smallest singular values */
   };
 
   //! Class for selecting desired singular values
+  /*!
+   *
+   */
   template <class ScalarType>
   class Filter {
     public: 
 
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     Filter(SortType which = LARGEST) {};
@@ -27,12 +32,20 @@ namespace RBGen {
     virtual ~Filter() {};
     //@}
 
-    //@{ @name Filter Method
+    //! @name Filter Method
+    //@{
 
-    //! \brief This method accepts a list of singular values (in decreasing order) and 
-    //         returns a list of indices consisting of the values
-    //         allowed through the filter. These indices are in ascending order
-    //         and employ zero-based indexing.
+    //! Selects targetted singular values.
+
+    /*!
+     * This method accepts a list of singular values (in decreasing order, as returned by GESVD) and 
+     * returns a list of indices consisting of the values
+     * allowed through the filter. 
+     *
+     * @param svals  [in] Singular values under consideration by the filter.
+     * \returns A vector of ints, corresponding to the indices of the targetted singular values.
+     * The indices are in ascending order and employ zero-based indexing.
+     */
     virtual vector<int> filter(const vector<ScalarType> &svals) = 0;
     //@}
   };
@@ -41,7 +54,8 @@ namespace RBGen {
   template <class ScalarType>
   class RangeFilter : public Filter<ScalarType> {
     public: 
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     RangeFilter(SortType which, int minRank = 1, int maxRank = 1) 
@@ -56,9 +70,13 @@ namespace RBGen {
     virtual ~RangeFilter() {};
     //@}
 
-    //@{ @name Filter Method
-    //! \brief Pass at most maxRank and at most minRank values through the filter.
-    //  \note It is assumed that svals are sorted in decreasing order.
+    //! @name Filter Method
+    //@{
+
+    //! Pass at most maxRank and at most minRank values through the filter.
+    /*!
+     * \note It is assumed that svals are sorted in decreasing order.
+     */
     vector<int> filter(const vector<ScalarType> &svals) {
       int num = (unsigned int)svals.size();
       if      (num > maxRank_) num = maxRank_;
@@ -89,9 +107,20 @@ namespace RBGen {
   template <class ScalarType>
   class ThreshFilter : public Filter<ScalarType> {
     public: 
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
+    /*!
+     *   The threshold definition depends on \c which:
+     *     - ::LARGEST: value \c cand passes the filter if \f$cand \geq tval\f$
+     *     - ::SMALLEST: value \c cand passes the filter if \f$cand \leq tval\f$
+     *   where \c tval depends on \c absthresh:
+     *     - \c false: 
+     *        - \f$tval \doteq thresh \cdot max(svals)\f$
+     *        - \f$tval \doteq thresh \cdot min(svals)\f$
+     *     - \c true: \f$tval \doteq thresh\f$
+     */
     ThreshFilter(SortType which, bool absthresh, 
                  typename Teuchos::ScalarTraits<ScalarType>::magnitudeType thresh)
       : which_(which), absthresh_(absthresh) {
@@ -104,21 +133,15 @@ namespace RBGen {
     virtual ~ThreshFilter() {};
     //@}
 
-    //@{ @name Filter Method
-    //! \brief Return an index for the singular values falling within the
-    //   threshold.
-    //
-    //   The threshold definition depends on \c which:
-    //     - ::LARGEST: value \c cand passes the filter if \f$cand \geq tval\f$
-    //     - ::SMALLEST: value \c cand passes the filter if \f$cand \leq tval\f$
-    //   where \c tval depends on \c absthresh:
-    //     - \c false: 
-    //        - \f$tval \doteq thresh \cdot max(svals)\f$
-    //        - \f$tval \doteq thresh \cdot min(svals)\f$
-    //     - \c true: \f$tval \doteq thresh\f$
-    //
-    //  \note It is assumed that svals are sorted in decreasing order.
-    vector<int> filter(const vector<ScalarType> &svals) {
+    //! @name Filter Method
+    //@{
+
+    //! Return an index for the singular values falling within the threshold.
+
+    /*!
+     *  \note It is assumed that svals are sorted in decreasing order.
+     */
+     vector<int> filter(const vector<ScalarType> &svals) {
       const int last = (unsigned int)svals.size() - 1;
 
       typename Teuchos::ScalarTraits<ScalarType>::magnitudeType tval;
@@ -169,7 +192,8 @@ namespace RBGen {
       OR
     };
 
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     CompFilter(CompType andor, 
@@ -184,9 +208,12 @@ namespace RBGen {
     virtual ~CompFilter() {};
     //@}
 
-    //@{ @name Filter Method
+    //! @name Filter Method
+    //@{
+
     //! \brief 
-    //  \note It is assumed that svals are sorted in decreasing order.
+    /*!  \note It is assumed that svals are sorted in decreasing order.
+     */
     vector<int> filter(const vector<ScalarType> &svals) {
       vector<int> ind1 = f1_->filter(svals);
       vector<int> ind2 = f2_->filter(svals);

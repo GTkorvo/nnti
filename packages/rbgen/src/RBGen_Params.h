@@ -6,9 +6,15 @@
 
 namespace RBGen {
 
-Teuchos::RefCountPtr<Teuchos::ParameterList> createParams( const std::string& filename );
+  //! Create a Teuchos::ParameterList from an XML file.
+  /*!
+   */
+  Teuchos::RefCountPtr<Teuchos::ParameterList> createParams( const std::string& filename );
 
-Teuchos::RefCountPtr<std::vector<std::string> > genFileList( const Teuchos::ParameterList& params );
+  //! Extract the filename list from a Teuchos::ParameterList.
+  /*!
+   */
+  Teuchos::RefCountPtr<std::vector<std::string> > genFileList( const Teuchos::ParameterList& params );
 
 }
 #endif

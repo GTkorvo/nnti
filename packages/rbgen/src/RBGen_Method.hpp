@@ -1,5 +1,3 @@
-
-
 #ifndef RBGEN_METHOD_HPP
 #define RBGEN_METHOD_HPP
 
@@ -8,11 +6,11 @@
 #include "Teuchos_ParameterList.hpp"
 
 namespace RBGen {
-  
-  //! Abstract base class for reduced basis methods
+
+  //! Abstract base class for reduced basis methods.
   template<class DataSetType, class OperatorType>
   class Method {
-    
+
   public:
     //! @name Constructor/Destructor.
     //@{
@@ -31,12 +29,12 @@ namespace RBGen {
     virtual void computeBasis() = 0;
 
     virtual void updateBasis( const Teuchos::RefCountPtr< DataSetType >& update_ss ) = 0;
-    
+
     //@}
 
     //! @name Get Methods
     //@{
-    
+
     //! Get the basis computed by the reduced basis method.
     virtual Teuchos::RefCountPtr<const DataSetType> getBasis() const = 0;
 
@@ -44,7 +42,7 @@ namespace RBGen {
     virtual double getCompTime() const = 0;
 
     //@}
-    
+
     //! @name Set Methods
     //@{
 
@@ -65,7 +63,7 @@ namespace RBGen {
 
     //@}
   };
-  
+
 } // end of RBGen namespace
 
 #endif // RBGEN_METHOD_HPP

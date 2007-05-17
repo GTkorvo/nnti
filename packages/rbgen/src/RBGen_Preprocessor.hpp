@@ -1,5 +1,3 @@
-
-
 #ifndef RBGEN_PREPROCESSOR_HPP
 #define RBGEN_PREPROCESSOR_HPP
 
@@ -11,11 +9,13 @@ namespace RBGen {
   template< class DataSetType > 
   class FileIOHandler;
 
+  //! Abstract base class for encapsulating dataset preprocessing.
   template< class DataSetType >
   class Preprocessor {
     
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     Preprocessor() {};
@@ -24,7 +24,8 @@ namespace RBGen {
     virtual ~Preprocessor() {};
     //@}
 
-    //@{ @name Initialization/Reset Methods
+    //! @name Initialization/Reset Methods
+    //@{
 
     //! Initialize preprocessor
     virtual void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params, 
@@ -34,13 +35,15 @@ namespace RBGen {
     virtual void Reset() = 0;
     //@}
 
-    //@{ @name Preprocess Methods
+    //! @name Preprocess Methods
+    //@{
 
     //! Preprocess the snapshot set passed in
     virtual void Preprocess( Teuchos::RefCountPtr< DataSetType >& ss ) = 0;
     //@}
 
-    //@{ @name Status Methods
+    //! @name Status Methods
+    //@{
 
     //! Return initialized status of the preprocessor
     virtual bool isInitialized() const = 0;

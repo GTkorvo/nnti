@@ -11,10 +11,12 @@ class Epetra_MultiVector;
 
 namespace RBGen {
 
+  //! Specialization of a PreprocessorFactor for Epetra_MultiVector datasets.
   class EpetraMVPreprocessorFactory : public virtual PreprocessorFactory<Epetra_MultiVector> {
 
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     EpetraMVPreprocessorFactory();
@@ -23,7 +25,8 @@ namespace RBGen {
     virtual ~EpetraMVPreprocessorFactory() {};
     //@}
 
-    //@{ @name Factory methods
+    //! @name Factory methods
+    //@{
 
     Teuchos::RefCountPtr<Preprocessor<Epetra_MultiVector> > create( const Teuchos::ParameterList& params );
 

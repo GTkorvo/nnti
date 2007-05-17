@@ -13,10 +13,12 @@ class Epetra_CrsMatrix;
 
 namespace RBGen {
  
+  //! Specialization of MethodFactory for Epetra_MultiVector datasets.
   class EpetraMVMethodFactory : public virtual MethodFactory<Epetra_MultiVector,Epetra_CrsMatrix> {
     
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     EpetraMVMethodFactory() {};
@@ -25,7 +27,8 @@ namespace RBGen {
     virtual ~EpetraMVMethodFactory() {};
     //@}
 
-    //@{ @name Factory methods
+    //! @name Factory methods
+    //@{
 
     Teuchos::RefCountPtr<Method< Epetra_MultiVector,Epetra_CrsMatrix > > create( const Teuchos::ParameterList& params );
     

@@ -60,9 +60,9 @@ namespace RBGen {
 #endif
 
       if (filenames.size() > 1) {
-	  // TO DO:  THROW EXCEPTION!
+        // TO DO:  THROW EXCEPTION!
       }
-	
+
       // Open the data file
       std::string temp_filename = in_path + filenames[0];
 

@@ -11,10 +11,12 @@ class Epetra_MultiVector;
 
 namespace RBGen {
   
+  //! FileIOHandler for reading an Epetra_MultiVector from a Matrix Market file.
   class MatrixMarketFileIOHandler : public virtual FileIOHandler< Epetra_MultiVector > {
     
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     MatrixMarketFileIOHandler();
@@ -24,7 +26,8 @@ namespace RBGen {
 
     //@}
 
-    //@{ @name Initialization/Reset Methods
+    //! @name Initialization/Reset Methods
+    //@{
 
     void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params );
 
@@ -32,20 +35,23 @@ namespace RBGen {
 
     //@}
 
-    //@{ @name File Reading Methods
+    //! @name File Reading Methods
+    //@{
 
     //! Method for reading multiple files and putting them into an Epetra_MultiVector.
     Teuchos::RefCountPtr<Epetra_MultiVector> Read( const std::vector<std::string>& filenames );
 
     //@}
 
-    //@{ @name Writing Methods
+    //! @name Writing Methods
+    //@{
 
     //! Method for writing one Epetra_MultiVector into a file.
     void Write( Teuchos::RefCountPtr<const Epetra_MultiVector> MV, const std::string& filename );
 
     //@}
-    //@{ @name Handler Status Methods
+    //! @name Handler Status Methods
+    //@{
 
     //! Return initialized status of the handler
     bool isInitialized() const { return isInit; };

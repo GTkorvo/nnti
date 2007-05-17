@@ -1,5 +1,3 @@
-
-
 #ifndef RBGEN_MS_PREPROCESSOR_H
 #define RBGEN_MS_PREPROCESSOR_H
 
@@ -12,10 +10,12 @@ class Epetra_MultiVector;
 
 namespace RBGen {
   
+  //! Specialization for Preprocessor using Epetra_MultiVector.
   class MSPreprocessor : public Preprocessor< Epetra_MultiVector > {
     
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     MSPreprocessor();
@@ -24,7 +24,8 @@ namespace RBGen {
     virtual ~MSPreprocessor() {};
     //@}
 
-    //@{ @name Initialization/Reset Methods
+    //! @name Initialization/Reset Methods
+    //@{
 
     //! Initialize preprocessor
     void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params, 
@@ -33,18 +34,21 @@ namespace RBGen {
     void Reset() { isInitialized_ = false; }
     //@}
 
-    //@{ @name Preprocess Methods
+    //! @name Preprocess Methods
+    //@{
 
     //! Preprocess the snapshot set passed in
     void Preprocess( Teuchos::RefCountPtr<Epetra_MultiVector>& ss );
     //@}
 
-    //@{ @name Return Methods
+    //! @name Return Methods
+    //@{
 
     //! Return the multivector used to modify the snapshot set
     Teuchos::RefCountPtr< Epetra_MultiVector > getMSVector() const { return msVector_; }
 
-    //@{ @name Status Methods
+    //! @name Status Methods
+    //@{
 
     //! Return initialized status of the preprocessor
     bool isInitialized() const { return isInitialized_; }

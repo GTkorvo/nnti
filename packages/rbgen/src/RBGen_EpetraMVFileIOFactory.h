@@ -1,4 +1,3 @@
-
 #ifndef RBGEN_EPETRAMV_FILEIO_FACTORY_HPP
 #define RBGEN_EPETRAMV_FILEIO_FACTORY_HPP
 
@@ -19,10 +18,12 @@
 
 namespace RBGen {
 
+  //! Abstract factory for creating a concrete FileIOFactory for reading an Epetra_MultiVector.
   class EpetraMVFileIOFactory : public virtual FileIOFactory<Epetra_MultiVector> {
  
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     EpetraMVFileIOFactory();
@@ -31,7 +32,8 @@ namespace RBGen {
     virtual ~EpetraMVFileIOFactory() {};
     //@}
 
-    //@{ @name Factory methods
+    //! @name Factory methods
+    //@{
 
     Teuchos::RefCountPtr< FileIOHandler< Epetra_MultiVector > > create( const Teuchos::ParameterList& params );
 

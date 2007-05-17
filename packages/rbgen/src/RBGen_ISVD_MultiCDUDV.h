@@ -6,6 +6,7 @@
 
 namespace RBGen {
 
+  //! IncSVD method implementing UDV storage with multiple coordinate descent passes.
   class ISVD_MultiCDUDV : public virtual ISVDUDV, public virtual ISVDMultiCD {
     public:
       //! @name Constructor/Destructor.

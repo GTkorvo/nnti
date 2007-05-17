@@ -164,7 +164,7 @@ namespace RBGen {
 
     // print out some info
     const Epetra_Comm *comm = &A_->Comm();
-    while (curNumPasses_ < maxNumPasses_) {
+    while (curNumPasses_ < maxNumPasses_ || maxNumPasses_ == -1) {
 
       // make pass
       makePass();

@@ -11,11 +11,13 @@ namespace RBGen {
   template< class DataSetType >
   class Preprocessor;
 
+  //! Abstract factory for instantiating Preprocessor concrete classes.
   template< class DataSetType >
   class PreprocessorFactory {
     
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     PreprocessorFactory() {};
@@ -24,7 +26,8 @@ namespace RBGen {
     virtual ~PreprocessorFactory() {};
     //@}
 
-    //@{ @name Factory methods
+    //! @name Factory methods
+    //@{
 
     virtual Teuchos::RefCountPtr<Preprocessor<DataSetType> > create( const Teuchos::ParameterList& params ) = 0;
     

@@ -6,6 +6,7 @@
 
 namespace RBGen {
 
+  //! IncSVD method implementing UDV storage with multiple steepest descent (variant A) passes.
   class ISVD_MultiSDAUDV : public virtual ISVDUDV, public virtual ISVDMultiSDA {
     public:
       //! @name Constructor/Destructor.

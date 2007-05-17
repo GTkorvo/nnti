@@ -31,6 +31,7 @@
 
 #include "RBGen_ConfigDefs.h"
 
+//! Method specifying RBGen version number and date information.
 string RBGen_Version() { 
   return("RBGen Version 0.1d - 09/25/2006"); 
 }

@@ -1,5 +1,3 @@
-
-
 #ifndef RBGEN_ANASAZI_POD_H
 #define RBGEN_ANASAZI_POD_H
 

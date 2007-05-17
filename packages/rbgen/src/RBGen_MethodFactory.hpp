@@ -1,5 +1,3 @@
-
-
 #ifndef RBGEN_METHOD_FACTORY_HPP
 #define RBGEN_METHOD_FACTORY_HPP
 
@@ -7,12 +5,14 @@
 #include "RBGen_Method.hpp"
 
 namespace RBGen {
- 
+
+  //! Abstract factory for creating basis generation methods.
   template< class DataSetType, class OperatorType > 
   class MethodFactory {
-    
+
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     MethodFactory() {};
@@ -21,14 +21,15 @@ namespace RBGen {
     virtual ~MethodFactory() {};
     //@}
 
-    //@{ @name Factory methods
+    //! @name Factory methods
+    //@{
 
     virtual Teuchos::RefCountPtr<Method< DataSetType, OperatorType > > create( const Teuchos::ParameterList& params ) = 0;
-    
+
     //@}
 
   };
-  
+
 } // end of RBGen namespace
 
 #endif // RBGEN_METHOD_FACTORY_HPP

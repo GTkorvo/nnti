@@ -1,5 +1,3 @@
-
-
 #ifndef EPETRA_CRSMATRIX_FILE_IO_HANDLER_H
 #define EPETRA_CRSMATRIX_FILE_IO_HANDLER_H
 
@@ -11,10 +9,12 @@ class Epetra_CrsMatrix;
 
 namespace RBGen {
   
+  //! FileIOHandler for reading EpetraCrsMatrix data from a file using EpetraExt.
   class EpetraCrsMatrixFileIOHandler : public virtual FileIOHandler< Epetra_CrsMatrix > {
     
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     EpetraCrsMatrixFileIOHandler();
@@ -24,7 +24,8 @@ namespace RBGen {
 
     //@}
 
-    //@{ @name Initialization/Reset Methods
+    //! @name Initialization/Reset Methods
+    //@{
 
     void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params );
 
@@ -32,20 +33,23 @@ namespace RBGen {
 
     //@}
 
-    //@{ @name File Reading Methods
+    //! @name File Reading Methods
+    //@{
 
     //! Method for reading a file and constructing an Epetra_CrsMatrix.
     Teuchos::RefCountPtr<Epetra_CrsMatrix> Read( const std::vector<std::string>& filenames );
 
     //@}
 
-    //@{ @name Writing Methods
+    //! @name Writing Methods
+    //@{
 
     //! Method for writing one Epetra_CrsMatrix into a file using the same type as was.
     void Write( Teuchos::RefCountPtr<const Epetra_CrsMatrix> MTX, const std::string& filename );
 
     //@}
-    //@{ @name Handler Status Methods
+    //! @name Handler Status Methods
+    //@{
 
     //! Return initialized status of the handler
     bool isInitialized() const { return isInit; };

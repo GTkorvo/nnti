@@ -48,7 +48,7 @@ namespace RBGen {
     } else 
 #endif
     {
-	// Throw an exception because the format type is not recognized by this factory
+    // Throw an exception because the format type is not recognized by this factory
     }
     //
     // Return the method created

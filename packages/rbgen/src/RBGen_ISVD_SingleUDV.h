@@ -6,6 +6,7 @@
 
 namespace RBGen {
 
+  //! IncSVD method implementing UDV storage with a single coordinate descent pass.
   class ISVD_SingleUDV : public virtual ISVDUDV, public virtual ISVDSingle {
     public:
 

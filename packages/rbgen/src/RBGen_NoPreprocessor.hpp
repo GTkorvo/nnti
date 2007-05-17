@@ -1,17 +1,17 @@
-
-
 #ifndef RBGEN_NO_PREPROCESSOR_HPP
 #define RBGEN_NO_PREPROCESSOR_HPP
 
 #include "RBGen_Preprocessor.hpp"
 
 namespace RBGen {
- 
+
+  //! Null preprocessor concrete class.
   template< class DataSetType > 
   class NoPreprocessor : public Preprocessor< DataSetType > {
-    
+
   public:
-    //@{ @name Constructor/Destructor.
+    //! @name Constructor/Destructor.
+    //@{
 
     //! Default constructor.
     NoPreprocessor() {};
@@ -20,7 +20,8 @@ namespace RBGen {
     virtual ~NoPreprocessor() {};
     //@}
 
-    //@{ @name Initialization/Reset Methods
+    //! @name Initialization/Reset Methods
+    //@{
 
     //! Initialize preprocessor
     void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params, 
@@ -30,19 +31,21 @@ namespace RBGen {
     void Reset() {};
     //@}
 
-    //@{ @name Preprocess Methods
+    //! @name Preprocess Methods
+    //@{
 
     //! Preprocess the snapshot set passed in
     void Preprocess( Teuchos::RefCountPtr<DataSetType>& ss ) {};
     //@}
 
-    //@{ @name Status Methods
+    //! @name Status Methods
+    //@{
 
     //! Return initialized status of the preprocessor
     bool isInitialized() const { return true; };
     //@}
   };
-  
+
 } // end of RBGen namespace
 
 #endif // RBGEN_NO_PREPROCESSOR_HPP
