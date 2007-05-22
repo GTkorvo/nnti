@@ -231,7 +231,7 @@ protected:
   //@{
   /** */
   virtual LinearOperator<Scalar> createBigAInv() const 
-    {return new InverseLTIOp<Scalar>(nSteps_, getA());}
+    {return new InverseLTIOp<Scalar>(nSteps_, getA(), getAt());}
 
   /** */
   virtual LinearOperator<Scalar> createBigC() const 
@@ -253,7 +253,11 @@ protected:
       return rtn;
     }
 
-  /** */
+  /** By default, we create an implicit transpose of A. However, when
+   * a transpose solver is unavailable, we should override this
+   * function with one that returns an explicit transpose
+   * of A. See the class ExplicitlyTransposedLTIProblemFactory for
+   * a simple implementation of this. */
   virtual LinearOperator<Scalar> createAt() const 
     {return this->getA().transpose();}
 

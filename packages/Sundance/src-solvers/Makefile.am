@@ -122,6 +122,7 @@ OPERATORS_H = \
 	$(srcdir)/Operators/TSFComposedOperator.hpp \
 	$(srcdir)/Operators/TSFDiagonalOperator.hpp\
 	$(srcdir)/Operators/TSFExplicitlyTransposeableOp.hpp\
+	$(srcdir)/Operators/TSFExplicitlyTransposedLTIProblemFactory.hpp\
 	$(srcdir)/Operators/TSFHomogeneouslyBlockedLinearOp.hpp \
 	$(srcdir)/Operators/TSFIdentityOperator.hpp \
 	$(srcdir)/Operators/TSFILUFactorizableOp.hpp \

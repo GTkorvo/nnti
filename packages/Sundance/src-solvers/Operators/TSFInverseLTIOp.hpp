@@ -79,11 +79,12 @@ public:
    * Construct a InverseLTIOp that takes <t>numTimesteps</t> steps
    * with the operator \f$ A\f$.
    */
-  InverseLTIOp(int numTimesteps, const LinearOperator<Scalar>& A)
+  InverseLTIOp(int numTimesteps, const LinearOperator<Scalar>& A,
+    const LinearOperator<Scalar>& At)
     : HomogeneouslyBlockedLinearOp<Scalar>(
       A.domain(), numTimesteps,
       A.range(), numTimesteps),
-      A_(A)
+      A_(A), At_(At)
     {}
 
   /** 
@@ -122,7 +123,6 @@ public:
       }
       else if (M_trans==Thyra::TRANS)
       {
-        LinearOperator<Scalar> At = A_.transpose();
         for (int i=this->numBlockCols()-1; i>=0; i--)
         {
           if (i==this->numBlockCols()-1)
@@ -133,7 +133,7 @@ public:
           {
             Vector<Scalar> bi = in.getBlock(i);
             Vector<Scalar> xi1 = out.getBlock(i+1);
-            out.setBlock(i, bi + At*xi1);
+            out.setBlock(i, bi + At_*xi1);
           }
         }
       }
@@ -146,6 +146,7 @@ public:
 
 private:
   LinearOperator<Scalar> A_;
+  LinearOperator<Scalar> At_;
 
 };
 }
