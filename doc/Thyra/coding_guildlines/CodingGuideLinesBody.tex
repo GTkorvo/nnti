@@ -52,9 +52,9 @@ Several appendicies are included that deal with a number of topics.
 %
 
 Specific items in the document are to be refereed to starting with the acronym
-{}\textbf{TCDDG}.  For example, the first naming convention guideline can be
-refereed to as {}\textbf{TCDDG NC 1}.  In this way, these short precise
-alpha-numeric designation such as {}\textbf{TCDDG NC 3} can be used in code
+{}\textbf{TCDG}.  For example, the first naming convention guideline can be
+refereed to as {}\textbf{TCDG NC 1}.  In this way, these short precise
+alpha-numeric designation such as {}\textbf{TCDG NC 3} can be used in code
 reviews as short-hand references to specific items.
 
 It is an express goal that this document only be modified in such a way so to
@@ -231,14 +231,13 @@ the non-const reference (or pointer) to the contained object.  For example,
 {}\textit{Justification}: The choice to name the access functions
 {}\texttt{getNonconstPart()} and {}\texttt{getPart()} as opposed to
 {}\texttt{getPart()} and {}\texttt{getConstPart()} is somewhat arbitrary.
-However, the former recommended convention of using {}\texttt{nonconst} should
-be preferred since access to parts is typically through constant objects which
-will therefore give access constant parts and having a shorter function name
-is advantageous.  Also, a constant view of a part of an object is always
-cheaper that returning a non-constant view of the part (see the discussion of
-the ``generalized view'' idiom) and therefore to be safe and error on the side
-of efficiency, the non-constant access function should be harder to call than
-the constant access function.
+However, using {}\texttt{nonconst} should be preferred in order to make it
+more explicit that a non-const object reference is bing requested.  Also, a
+constant view of a part of an object is always cheaper that returning a
+non-constant view of the part (see the discussion of the ``generalized view''
+idiom) and therefore to be safe and error on the side of efficiency, the
+non-constant access function should be harder to call than the constant access
+function.
 
 \end{enumerate}
 
@@ -584,8 +583,7 @@ SPMD programs.  Instead, produce output using one of the following approaches.
 
 \begin{itemize}
 
-{}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
-{}\textit{Prefer to print output through a
+{}\item\textit{Prefer to print output through a
 {}\texttt{Teuchos\-::Fancy\-OStream} object instead of a bare
 {}\texttt{std\-::ostream} objects to more easily produce formatted output}: A
 {}\texttt{Teuchos\-::Fancy\-OStream} class object can wrap any
@@ -593,15 +591,13 @@ SPMD programs.  Instead, produce output using one of the following approaches.
 more readable output in an SPMD program (even when every processor produces
 output).
 
-{}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
-{}\textit{Derive from {}\texttt{Teuchos\-::Describable} and implement the
+{}\item\textit{Derive from {}\texttt{Teuchos\-::Describable} and implement the
 {}\texttt{description()} and {}\texttt{describe()} to allow clients to print
 the current state of an object}: The {}\texttt{Teuchos\-::Describable} is the
 appropriate way to allow clients to print the current state of an object in a
 flexible way.  The verbosity of the output is controlled by an enum parameter.
 
-{}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
-{}\textit{Derive from {}\texttt{Teuchos\-::Verbose\-Object} and print to
+{}\item\textit{Derive from {}\texttt{Teuchos\-::Verbose\-Object} and print to
 {}\texttt{*this->getOStream()} to give information about what an object is
 doing}: Clients can set the output stream and the verbosity level through a
 parameter list (see the {}\texttt{Teuchos\-::ParameterListAcceptor} interface
@@ -610,8 +606,7 @@ set, then
 {}\texttt{Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()} will be
 used.
 
-{}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
-{}\textit{As a last resort, always prefer printing to
+{}\item\textit{As a last resort, always prefer printing to
 {}\texttt{*Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()}
 instead of {}\texttt{std\-::cout} or {}\texttt{std\-::cerr}}: The stream
 provided by
@@ -813,11 +808,16 @@ before {}\texttt{private} members and indented as:}
 
 {\small\begin{verbatim}
   class SomeClass {
+    // Friends
+    friend void foo();
+    friend class SomeOtherClass;
   public:
+    // Public types
+    typedef int integral_type;
     // Public member functions
     void func1();
   protected:
-    // Public member functions
+    // Protected member functions
     void func2();
   private:
     // Private types
@@ -841,7 +841,7 @@ Note that public types used in public member functions must be listed above
 them.
 
 {}\item\stepcounter{Thyra_FSC_counter}\textbf{FSC \arabic{Thyra_FSC_counter}}:
-{}\textit{List sort function prototypes on one line and longer protypes
+{}\textit{List short function prototypes on one line and longer protypes
 on multiple lines, indenting arguments one unit}: Below, guidelines for
 formatting short function prototypes and long prototypes are given.  These
 guidelines seek to produce function prototypes that are fairly tight (i.e. not
@@ -851,8 +851,7 @@ also be applied to function definitions and function calls.
 
   \begin{enumerate}
 
-  {}\item\stepcounter{Thyra_FSC_counter}\textbf{FSC \arabic{Thyra_FSC_counter}}:
-{}\textit{List short function prototypes on one line if possible}: For
+  {}\item\textit{List short function prototypes on one line if possible}: For
   example,
 
   {\small\begin{verbatim}
@@ -868,8 +867,7 @@ also be applied to function definitions and function calls.
   or some other style for whitespace within '(...)' but the opening '(' should
   come directly after the function name in all cases.
 
-  {}\item\stepcounter{Thyra_FSC_counter}\textbf{FSC \arabic{Thyra_FSC_counter}}:
-{}\textit{For longer prototypes, indent arguments on continuation lines
+  {}\item\textit{For longer prototypes, indent arguments on continuation lines
   one unit}: Function prototypes that can not approximately fit on a single
   line in the first 80 character columns should have the function arguments
   listed starting on the second line with one unit of indentation (e.g. two
@@ -918,8 +916,7 @@ also be applied to function definitions and function calls.
 
   {}\textit{Justification}: See {}\cite[Section 31.1]{CodeComplete2nd04}.
   
-  {}\item\stepcounter{Thyra_FSC_counter}\textbf{FSC \arabic{Thyra_FSC_counter}}:
-{}\textit{Return types can be listed on same line as the function name
+  {}\item\textit{Return types can be listed on same line as the function name
   unless the line is too long}: A function prototype's return type should
   appear on the same line as the function name unless it is excessively long
   and would result in the return type + function name line to extend past the
@@ -1052,8 +1049,7 @@ structures.
 
   \begin{enumerate}
 
-  {}\item\stepcounter{Thyra_FSC_counter}\textbf{FSC
-  \arabic{Thyra_FSC_counter}}: {}\textit{Formatting if/else if/else
+  {}\item\textit{Formatting if/else if/else
   statements}: When applied to if statements, the two recommended styles are:
 
   {\small\begin{verbatim}
@@ -1087,8 +1083,7 @@ structures.
   }
   \end{verbatim}}
 
-  {}\item\stepcounter{Thyra_FSC_counter}\textbf{FSC
-  \arabic{Thyra_FSC_counter}}: {}\textit{Formatting switch/case statements}:
+  {}\item\textit{Formatting switch/case statements}:
   The two recommended formats for switch/case statements are:
 
   {\small\begin{verbatim}
@@ -1168,8 +1163,7 @@ structures.
   }
   \end{verbatim}}
 
-  {}\item\stepcounter{Thyra_FSC_counter}\textbf{FSC \arabic{Thyra_FSC_counter}}:
-{}\textit{Formatting for and while loops}: The two recommended styles
+  {}\item\textit{Formatting for and while loops}: The two recommended styles
   for formatting for loops are:
 
   {\small\begin{verbatim}

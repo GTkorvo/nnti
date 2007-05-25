@@ -7,6 +7,8 @@
 \input{rab_commands}
 \newtheorem{dumb_fact}{Dumb Fact}[section]
 
+\raggedright
+
 % If you want to relax some of the SAND98-0730 requirements, use the "relax"
 % option. It adds spaces and boldface in the table of contents, and does not
 % force the page layout sizes.
@@ -412,22 +414,23 @@ is defined as
 x^H y = \tilde{x}^H Q \tilde{y} = <\tilde{x},\tilde{y}>.
 \end{equation}
 %
-For $Q\in\RE^{n\times{}n}$ to be full rank, $E\in\RE^{n\times{}n}$ must be full
-rank.  Here we define a Euclidean vector space as one where
-$Q=E=I\in\RE^{n\times{}n}$.
+For $Q\in\RE^{n\times{}n}$ to be full rank, $E\in\RE^{n\times{}n}$ must be
+full rank.  Here we define a Euclidean vector space as one where
+$E=I\in\RE^{n\times{}n}$ and $Q=E^H E=I\in\RE^{n\times{}n}$.
 
 In Thyra, vector spaces and vectors are abstracted using the C++ base
 interface classes {}\texttt{Thyra::\-Vector\-Space\-Base} and
 {}\texttt{Thyra::\-Vector\-Base}.  Vectors are created from the vector space
 using the ``Abstract Factory'' design pattern.
 
-Thyra also defines linear operators which linearly map vectors from one vector
-space to another.  The defintion of a linear operator is strongly influenced
-by the defintion of the scalar product associated with a vector space and
-whether the mapping is between Euclidean vectors $y = A x$ or between
-coefficient vector $\tilde{y} = \tilde{A} {}\tilde{x}$ (see [???] for more
-details).  In Thyra, vectors are a specialization of linear operators and
-therefore every vector is also a linear operator.  Therefore, when one writes
+In addition to vectors and vector spaces, Thyra also defines linear operators
+which linearly map vectors from one vector space to another.  The defintion of
+a linear operator is strongly influenced by the defintion of the scalar
+product associated with a vector space and whether the mapping is between
+Euclidean vectors $y = A x$ or between coefficient vector $\tilde{y} =
+\tilde{A} {}\tilde{x}$ (see [???] for more details).  In Thyra, vectors are a
+specialization of linear operators and therefore every vector is also a linear
+operator.  Therefore, when one writes
 %
 \begin{equation}
 z = x^H y
@@ -444,7 +447,7 @@ vector $x\in\RE^n$ which just happens to be stored as a set of coefficients
 $\tilde{x}\in\mathcal{X}$ or if it represents the coefficient vectors
 $\tilde{x}\in\mathcal{X}$ themselves.  This ambiguity of the interpretation of
 vectors and linear operators also results from the ambiguity of interpretation
-of the vectors in that they can be through of as the Eucliean linear operators
+of the vectors in that they can be thought of as the Eucliean linear operators
 that only update the coefficient vectors or as linear operators that act
 directly on vector coefficinets.
 
@@ -457,14 +460,38 @@ $Q\in\RE^{n\times{}n}$ such that $<\tilde{x},\tilde{y}> = \tilde{x}^H Q
 infinite dimensional or that they admit more general implementations as it
 allowed by infinite dimensional Hilbert spaces [???].  While every Thyra
 vector must be stored as a set of scalar coefficients the interfaces make no
-assumptions about where or how those coefficients are stored.  A fully general
-ANA can make no assumptions about how vectors are stored or layed out in
-memory, only that those coefficients do exist and that these coefficients can
-be exposed to reduction and transformation operators (see [???]).  While
-accessing the elements of a vector is ill advised in a general ANA, the Thyra
-vector interface supports acquiring direct views of any range of vector
+assumptions whatsoever about where or how those coefficients are stored.  A
+fully general ANA can make no assumptions about how vectors are stored or
+layed out in memory, only that those coefficients do exist and that these
+coefficients can be exposed to reduction and transformation operators (see
+[???]).
+
+While accessing the elements of a vector is ill advised in a general ANA, the
+Thyra vector interface supports acquiring direct views of any range of vector
 coefficient data (see
 {}\texttt{Thyra::\-Vector\-Base\-::\-acquireDetachedView(...)}).
+
+Again, thyra does not try to hide that a vector is simply a set of scalar
+coefficients associated with some basis.  Thyra does not even really try to
+keep the client from accessing the actual coefficients of the vectors since it
+can access them with an RTOp object anyway.  What Thyra does do is to abstract
+where the vector coefficients live and what native data structure is used to
+hold the coefficients.  None of vector coefficients may even be directly be
+head in main memory in the process where the ANA is running but there is aways
+a (perhaps very inefficient) mechanism to get a view of them.  However, ANAs
+that want to be maximally general and efficient should not try to access the
+vector elements explicitly through and many ANAs do not.  However, there are
+perfectly reasonable ANAs that do need to access the explicit vector
+coefficients for vectors from certain vector spaces (such as vectors in the
+design space in some reduced-space optimization algorithms) and Thyra provides
+efficient and yet 100\% general ways to access these coefficients.  Every
+Thyra vector space also has a finite dimension that is accessible as a
+property of the vector space.
+
+While Thyra requires vectors to be finite dimensional and the coefficients of
+vectors must be accessible (if to none other than to RTOps), it does allow
+complete freedom in the implementation of scalar products of general linear
+operators that map vectors from one vector space to another.
 
 %
 \section{Overview of Fundamental Thyra ANA Operator/Vector Interfaces}

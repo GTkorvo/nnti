@@ -23,7 +23,7 @@
 %
 
 \title{\center
-Pure Nonmember Function Interfaces to C++ Classes}
+The Pure Nonmember Function Interface Idiom for C++ Classes}
 \author{
 Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\ Sandia National
 Laboratories\footnote{ Sandia is a multiprogram laboratory operated by Sandia
@@ -70,8 +70,10 @@ Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
 %
 A pure nonmember function interface to an abstract C++ class might provide the
 best approach for keeping clean minimal interfaces, insulating client code
-from changes to the interface, and providing a uniform interface when other
-nonmember nonfriend functions are used.
+from changes to an interface, and providing a uniform interface when other
+nonmember nonfriend functions are used.  The idiom also applies equally well
+to concrete C++ classes and can even be used with great advantages for
+constructors as well.
 %
 \end{abstract}
 %
@@ -144,19 +146,20 @@ such concepts as {}\textit{object methods}, {}\textit{polymorphism}, and
 in different programming languages and each language lends itself to different
 idioms for how object orientation is to be used to its fullest.  Here we focus
 on the C++ language and combine some of the more modern idioms being advocated
-in C++ to propose an extension involving the consistent use of nonmember
+in C++ to propose a unifying idiom involving the consistent use of nonmember
 functions to encapsulate external clients of abstract interfaces and concrete
 classes from the details and changes to the public interfaces of these
 classes.  Here we will draw on the advice of several respected authors on C++
 programming {}\cite{C++CodingStandards05,EffectiveC++3rd}.
 
-The primary focus here is on issues related to object-oriented programming in
-the C++ language and specifically the interaction between an abstract
-interface (consisting of pure virtual functions), clients that use objects
-through the interface, and subclasses of the interface that provide concrete
+Our primary focus is on issues related to object-oriented programming in the
+C++ language and specifically the interaction between an abstract interface
+(consisting of pure virtual functions), clients that use objects through the
+interface, and subclasses of the interface that provide concrete
 implementations of all of the member functions.  A secondary focus of this
 discussion addresses how nonmember functions can also be used as the interface
-to concrete classes and describe the benefits of such an approach.
+to concrete classes and even for constructors and describe the benefits of
+such an approach.
 
 With respect to abstract interfaces, our main goal here is to describe an
 approach for developing C++ interfaces and encapsulation mechanisms which
@@ -187,7 +190,7 @@ the clients of the abstract interface}: We want clients to be able to access
 the capabilities of the object in a clean way that is robust to changes in the
 interface.
 
-{}\item\textit{Avoids many of the Gotchas associated with object oriented
+{}\item\textit{Avoids many of the ``gotchas'' associated with object oriented
 programming in C++}: In particular, we want to avoid difficulties associated
 with overloaded virtual functions {}\cite[Item 73]{C++Gotchas03}, virtual
 functions with default arguments {}\cite[Item 37]{EffectiveC++3rd}, and other
@@ -417,7 +420,7 @@ these two idioms is presented which involves the adoption of a pure nonmember
 function interface.
 
 %
-\section{The Pure Nonmember Function Interface Idiom}
+\section{Pure Nonmember Function Interface Idiom}
 %
 
 Here we present an variation of the NVI idiom that is more complementary with
@@ -429,15 +432,10 @@ interface'' idiom would look like:
 {\small\begin{verbatim}
   namespace BlobPack {
 
-  class BlobBase;
-
-  // Forward prototypes for nonmember functions that
-  // will directly call virtual functions.  Note that default
-  // argument values are defined here and here only.
-  void foo( BlobBase & obj, int a=0);
-  void foo( const BlobBase & obj, int a=0);
-
   class BlobBase {
+    // Forward prototypes for nonmember friend functions that
+    // will directly call virtual functions.  Note that default
+    // argument values are defined here and here only.
     friend void foo( BlobBase & obj, int a);
     friend void foo( const BlobBase & obj, int a);
   protected: // or private:
@@ -463,8 +461,12 @@ interface'' idiom would look like:
   }
 \end{verbatim}}
 
+Note that the C++ standard allows friend functions to be declared directly
+within a C++ class declaration.  Therefore, declaring a nonmember friend
+function is not much more verbose than declaring a member function.
+
 Other functions that can be implemented in terms of the existing capabilities
-on the object without requiring special access would be implemented as
+on the object without requiring privileged access would be implemented as
 nonmember nonfriend functions such as:
 
 {\small\begin{verbatim}
@@ -518,14 +520,12 @@ look something like:
 
   class Bar;
 
-  // Forward prototypes for nonmember functions that
-  // will directly call virtual functions
-  void foo( BlobBase& obj, const Bar &bar, bool useDog = false );
-  void foo( const BlobBase& obj, const Bar &bar, bool useDog = false );
 
   class BlobBase {
-    friend void foo( BlobBase& obj, const Bar &bar, bool useDog );
-    friend void foo( const BlobBase& obj, const Bar &bar, bool useDog );
+    // Forward prototypes for nonmember friend functions that
+    // will directly call virtual functions
+    friend void foo( BlobBase& obj, const Bar &bar, bool useDog = false );
+    friend void foo( const BlobBase& obj, const Bar &bar, bool useDog = false );
   protected: // or private:
     // Pure virtual non-public functions to be overridden
     virtual void implNonconstFoo( const Bar &bar, bool useDog ) = 0;
@@ -586,7 +586,7 @@ section describes how changes to an interface's virtual function set affects
 subclasses.
 
 %
-\section{The Full Impact of Changing Virtual Functions}
+\section{Full Impact of Changing Virtual Functions}
 %
 
 As mentioned earlier, there are clarifications, changes, and augmentations to
@@ -736,20 +736,315 @@ engineering methodologies really mandate the need for refactoring and
 therefore we must actively plan for change and the refactorings that are
 needed to manage complexity.
 
-{}\textbf{TODO: I Have edited to here (2007/05/07)!}
+%{}\textbf{TODO: I Have edited to here (2007/05/07)!}
 
 %
 \section{Nonmember Function Interfaces to Concrete Classes}
 %
 
-???
+While the key focus of the ``pure nonmember function interface'' idiom
+described here is in connection with abstract C++ classes, it is also of
+course applicable to concrete classes as well.  In fact, the discussion in
+{}\cite[Item 23]{EffectiveC++3rd} primarily deals with nonmember functions
+used with concrete classes.  In the context of abstract classes, the ``pure
+nonmember function interface'' idiom helps to encapsulate the virtual
+functions.  In the context of concrete classes, the ``pure nonmember function
+interface'' idiom helps to better encapsulate private members.  For most
+practical purposes, clients do not really need to differentate between
+concrete and abstract classes when reference semantics are being used for the
+objects in question.
+
+However, the one major difference between an abstract class and a concrete
+class is that you can construct an object for a concrete class but not for an
+abstract class (unless you construct an object from a concrete subclass of the
+abstract class of course in which case we are back to talking about concrete
+classes).  Therefore, constructors are one of the major details that
+differentiate concrete classes and abstract classes.  It turns out that there
+are many good arguments for defining and using nonmember constructor functions
+as well over member constructor functions and the concept of nonmember
+function constructors is discussed in the next section.
 
 %
-\subsection{Nonmember Function Constructors}
+\subsection{Nonmember Constructor Functions}
 %
 
-???
+Nonmeber constructor functions can be defined to create and return objects by
+value (i.e. to construct objects on the stack) or to return (smart) pointers
+to dynamically allocated objects.  Both types of nonmember constructor
+functions are useful in different contexts.  Typically, small objects that are
+manipulated with value semantics will be given nonmember constructor functions
+that return the created objects by value (and typically use the return-value
+optimization to achieve good performance).  On the other hand, larger objects
+that are manipulated through reference or pointer sementics well be given
+nonmember constructor functions that return (smart) pointers to allocated
+objects.  Experienced C++ developers typically manage these dynamically
+allocated objects with some type of smart pointer class {}\cite[Item
+13]{C++CodingStandards05}.  Here, we will refer to a smart pointer class that
+exists in the Trilinos Teuchos package called {}\texttt{Teuchos\-::RCP}
+{}\cite{RefCountPtrBeginnersGuide} which uses a nonember constructor function
+{}\texttt{Teuchos\-::rcp(rawPtr)}.  Any other high quality smart pointer class
+such {}\texttt{boost\-::shared\_ptr} could be used as well as part of this
+discussion.
 
+The nommeber constructor function idom that creates dynamically allocated
+objects takes the form:
+
+{\small\begin{verbatim}
+  class Widget {
+    // Declaration of nonmember constructor function
+    friend RCP<Widget> widget();
+  public:
+    // Public interface
+    void display(std::ostream&);
+  private:
+    // Private constructor
+    Widget();
+  };
+
+  // Definition of nonmember constructor function
+  inline
+  RCP<Widget> widget()
+  {
+    return rcp(new Widget());
+  }
+\end{verbatim}}
+
+The above nonmember constructor function ensures that every {}\texttt{Widget}
+object that is created is dynamcially allocated and wrapped in an
+{}\texttt{RCP} object.  The convention estabilished here is to typically use a
+function name with a lower case letter (e.g.\ {}\texttt{widget(...)}) which
+corresponds to the class name which begins with an upper-case letter (e.g.\
+{}\texttt{Widget}).  This naming convention for nonmeber constructor functions
+is short and makes for well documented client code.
+
+Using this nonmember constructor function, client code can then create and use
+{}\texttt{Widget} objects as follows:
+
+{\small\begin{verbatim}
+  RCP<Widget> w = widget();
+  w->display(std:cout);
+\end{verbatim}}
+
+There are sevaral advantages to the nonmember constructor function idiom
+applied to dynamcially allocated objects over raw calls to {}\texttt{new
+Type(...)}:
+
+\begin{itemize}
+
+{}\item\textit{Nonmember constructor functions can be overloaded or can be
+given different names to make the result of the construction more clear.}
+While member constructor functions must always be overloaded (i.e.\ taking
+different argument lits) to handle different construction states, nonmember
+constructor functions can actually use different names to make them more
+clear.  For example, the nonmeber constructor functions {}\texttt{ovalShape(
+height, width )} and {}\texttt{roundShape( diameter )} may be more clear than
+using the direct overloaded constructors {}\texttt{Shape( height, width )} and
+{}\texttt{Shape( diameter, diameter )} or {}\texttt{Shape( diameter )}.
+
+{}\item\textit{Nonmember constructor functions can directly return smart
+pointer wrapped objects.}  This avoids having to call an extra function to
+create the wrapped pointer.  For example, compare:
+
+{\small\begin{verbatim}
+  RCP<Widget> w = Teuchos::rcp(new Widget(...));
+\end{verbatim}}
+
+to
+
+{\small\begin{verbatim}
+  RCP<Widget> w = widget(...);
+\end{verbatim}}
+
+{}\item\textit{The template argument(s) in a templated nonmember constructor
+function can be figured out automatically by the compiler in many cases.}
+This avoids having to provide template arguments need not be specified
+explicitly.  If you allocate a templated class directly, you must always give
+the template arguments explicitly which allows you to replace:
+
+{\small\begin{verbatim}
+   new GenericWidget<VeryLongAndUglyInputType>(input)
+\end{verbatim}}
+
+with
+
+{\small\begin{verbatim}
+  genericWidget(input)
+\end{verbatim}}
+
+in many situations.
+
+{}\item\textit{Nonmember constructor functions help to avoid memory leaks when
+exceptions are thrown}.  For example, the statement:
+
+{\small\begin{verbatim}
+  WidgetC wc( rcp(new WidgetA(...)), rcp(new WidgetB(...)) );
+\end{verbatim}}
+
+might create a memory leak when if an exception is thrown by one of the
+constructors (see {}\cite[Item 13]{C++CodingStandards05}).  The reason that a
+memory leak might occur is that a C++ compiler is allowed to evaluate
+{}\texttt{new WidgetA(...)} and {}\texttt{new WidgetB(...)} before calling the
+{}\texttt{rcp(...)} functions.  If the constructor {}\texttt{WidgetB(...)} 
+throws an exception after the {}\texttt{WidgetA(...)} constructor has been
+invoked but before the {}\texttt{RCP} object wrapping the {}\texttt{WidgetA}
+object is constructed, then the memory created by {}\texttt{new WidgetA(...)} 
+will never be reclaimed.  If you use nonmember constructor functions, other
+other hand, then you would have:
+
+{\small\begin{verbatim}
+  WidgetC wc( widgetA(...), widgetB(...) );
+\end{verbatim}}
+
+and no memory leaks will be created if an exception is thrown since each
+argument is returned as a fully formed {}\texttt{RCP} object which will clean
+up memory if any exception is thrown.
+
+{}\item\textit{Nonmember constructor functions increase the encapsulation of
+your classes by not requiring direct access to private data (see {}\cite[Item
+44]{C++CodingStandards05}) and allowing less duplication of default member
+values}.  You can provide lots of special case constructors without cluttering
+up the class which can just have a general purpose constructor and or a set of
+post-construction intialization functions.  This also helps to improve
+maintaince by only having a single default constructor that sets default
+member values only once.
+
+
+% RAB: 2007/05/25: This example is a bit to verbose to be worth keeping in the main text.
+%  Perhaps this could go into an appendix or something.
+% 
+% For example, the following class will be much easier to maintain because it
+% only has one constructor:
+% 
+% {\small\begin{verbatim}
+% 
+%   // Class with lots of data members and lots of 
+%   // possible inital states
+%   class ClassWithLotsOfMembers {
+%     // Nonmember constructor
+%     fried RCP<ClassWithLotsOfMembers> classWithLotsOfMembers1(...);
+%     fried RCP<ClassWithLotsOfMembers> classWithLotsOfMembers2(...);
+%     fried RCP<ClassWithLotsOfMembers> classWithLotsOfMembers3(...);
+%     ...
+%   public:
+%     // Public initalization functions
+%     void intialize1(...);
+%     void intialize2(...);
+%     void intialize3(...);
+%     ...
+%   private:
+%     // private member data
+%     Type1 member1_;
+%     Type2 member2_;
+%     Type3 member3_;
+%     ...
+%     // Single default constructor
+%     ClassWithLotsOfMembers();
+%   };
+% 
+%   // The only constructor that sets default values
+%   // which may include cache data etc.
+%   ClassWithLotsOfMembers::ClassWithLotsOfMembers()
+%     : member1_(...), member2_(...), member3_(...), ... {}
+% 
+%   // Initalization functions for different types of intial state
+%   // that resset certain data members
+%   
+%   void ClassWithLotsOfMembers::intialize1(...) { ... }
+%   
+%   void ClassWithLotsOfMembers::intialize2(...) { ... }
+%   
+%   void ClassWithLotsOfMembers::intialize3(...) { ... }
+% 
+%   // Nonmeber constructor functions
+%   
+%   RCP<ClassWithLotsOfMembers> classWithLotsOfMembers1(...)
+%   {
+%     RCP<ClassWithLotsOfMembers> cwlom(new ClassWithLotsOfMembers);
+%     cwlom->initalize1(...); 
+%     return cwlom;
+%   }
+%   
+%   RCP<ClassWithLotsOfMembers> classWithLotsOfMembers2(...)
+%   {
+%     RCP<ClassWithLotsOfMembers> cwlom(new ClassWithLotsOfMembers);
+%     cwlom->initalize2(...); 
+%     return cwlom;
+%   }
+%   
+%   RCP<ClassWithLotsOfMembers> classWithLotsOfMembers3(...)
+%   {
+%     RCP<ClassWithLotsOfMembers> cwlom(new ClassWithLotsOfMembers);
+%     cwlom->initalize3(...); 
+%     return cwlom;
+%   }
+% 
+% \end{verbatim}}
+% 
+% The adavantage with the use of the nonmember constructor function idiom in the
+% case where there are many data members and lots of valid intial states is that
+% there only needs to be one definition for the initial values of the data
+% mebmers, may of which may be cached data that may or may not be set latter
+% depending on the way the object is used.  The approach of course is (slightly)
+% less efficient than the approach of providing direct constructors this this
+% will only be a significant issue of lots of objects are created and destoried
+% and the objects do very little work.  In cases where the objects are larger
+% and longer lasting, the performance advantage of using direct constructors
+% with direct member initialization as apposed to the nonmember constructor
+% functions with default initialization and selective reinitialization will be
+% diminished.  When the construction performance differences are insignificant,
+% the large maintanace advantage of using a single default constructor that sets
+% default values makes the nonmember constructor function a great advantage.
+
+{}\item\textit{Nonmember constructor functions that return smart pointer
+wrapped objects avoids raw pointers at the application programming level}.
+Raw pointers are the root cause of segfaults and memory leaks in C++ and as a
+C++ community we should move to the development of an environment where we can
+avoid them in high-level code (see ``Hide pointer operations'' in
+{}\cite[Section 7.1]{CodeComplete2nd04}).
+
+{}\item\textit{Nonmember constructor functions allow a single simply written
+class to create const and non-const encapsulations of other objects}.  For
+example, the following class and nonmember constructor functions allow clients
+to safely wrap contained objects:
+
+{\small\begin{verbatim}
+  class Wrapper {
+    friend RCP<Wrapper> nonconstWrapper(const RCP<Contained> &contained);
+    friend RCP<const Wrapper> wrapper(const RCP<const Contained> &contained);
+  public:
+    RCP<Wrapper> getContained() { return contained_; }
+    RCP<const Wrapper> getContained() const { return contained_; }
+  private:
+    RCP<Contained> contained_;
+    Wrapper(const RCP<Contained> &contained)
+      {  contained_ = contained; }
+  };
+
+  RCP<Wrapper> nonconstWrapper(const RCP<Contained> &contained)
+  {
+    return rcp(new Wrapper(contained));
+  }
+
+  RCP<const Wrapper> wrapper(const RCP<const Contained> &contained)
+  {
+    return rcp(new Wrapper(rcp_const_cast<Contained>(contained)));
+    // Note: This const_cast is safe since the const Wrapper
+    // object that is returned will provide only give
+    // clients an RCP to a const Contained object.  However, this
+    // assumes that the Wrapper class will be written carefully
+    // to protect const of the wrapped object in non-const member
+    // functions.
+  }
+
+\end{verbatim}}
+
+There are many other alternative ways to develop wrapper classes that protect
+const of contained objects but a more detained discussion about how to write
+wrapper classes that protect the const-ness of contained objects in a
+maintainable and safe way is beyond the scope of the ``pure nommeber function
+interface'' idiom which is our main focus here.
+
+\end{itemize}
 
 %
 \section{Member verses Nonmember Functions in C++}
@@ -765,11 +1060,15 @@ C++ and Java, the set of member functions that are callable on a class object
 like {}\texttt{BlobBase} is known before the program even starts to execute.
 In fact, all of the member functions on a C++ and Java class must be declared
 in a single header file within a single class declaration (e.g.\
-{}\texttt{class BlobBase \{ ... \};}).  In Python, however, a member function
-can be added to an object at any time while a Python program is executing.  As
-for member and nonmember functions, Python and C++ can have nonmember
-functions while Java can not.  Therefore, when one talks about member and
-nonmember functions, conventions used in Java are mostly meaningless.
+{}\texttt{class BlobBase \{ ... \};})\footnote{Some of the functions callable
+on a class object can of course be defined in base classes but that does not
+change the point of the discussion here.}.  In Python, however, a member
+function can be added to an object at any time while a Python program is
+executing and therefore calling an operation on an object through member
+function results in no lack of flexibility like it does in C++.  As for member
+and nonmember functions, Python and C++ can have nonmember functions while
+Java can not.  Therefore, when one talks about member and nonmember functions,
+conventions used in Java are mostly meaningless.
 
 Okay, so C++ and Python both allow member and nonmember functions. So why is
 there not a ``nonfriend nonmember function'' idiom for Python like there is
@@ -783,13 +1082,14 @@ any time.  Therefore, Python code that uses the member function syntax
 {}\texttt{obj.foo()} to invoke some operation is no less flexible then using a
 nonmember function syntax like {}\texttt{foo(obj)}.  Therefore, since many
 programmers think that object orientation means calling member functions such
-as {}\texttt{obj.foo()}, there is no disadvantage to allowing them to do so.
+as {}\texttt{obj.foo()}, there is no disadvantage to allowing them to do so in
+a language like Python.
 
-The situation for C++ is quite different.  By allowing a client to use the
-member function syntax such as {}\texttt{obj.foo()}, one is already placing
-several restrictions on how that operation is implemented and gets invoked.
-In particular, having a client use a member function (e.g.\
-{}\texttt{obj.foo()}) to invoke an operation requires that:
+The situation for C++ is quite different.  By having the client insist on
+using the member function syntax such as {}\texttt{obj.foo()}, one is already
+placing several restrictions on how that operation is implemented and gets
+invoked.  In particular, having a client use a member function (e.g.\
+{}\texttt{obj.foo()}) to invoke an operation on a C++ object requires that:
 
 \begin{enumerate}
 
@@ -810,13 +1110,14 @@ implementation of a nonmember function are:
 
 \begin{enumerate}
 
-{}\item{}The nonmember function could be a direct call to the member function on an
-object (e.g.\ {}\texttt{foo(obj)} means the same thing as
+{}\item{}The nonmember function could be a direct call to the member function
+on an object (e.g.\ {}\texttt{foo(obj)} means the same thing as
 {}\texttt{obj.foo()}).  Therefore, the use of the nonmember function is as
 least a flexible as directly calling a member function.  In addition, the
 nonmember function syntax almost always uses less ASCII characters.  For
 example, writing {}\texttt{foo(obj)} only takes eight ASCII characters to
-write, while {}\texttt{obj.foo()}) takes nine ASCII characters.
+write, while {}\texttt{obj.foo()} takes nine ASCII characters.  This is a
+trival difference but the point is made.
 
 {}\item{}The nonmember function could perform a few different types of tasks
 before calling the member function on some object.  With this approach, we can
@@ -836,21 +1137,52 @@ the types of the objects in their argument lists will be automatically looked
 up and called without requiring namespace qualification\footnote{In some types
 of templated code, calling a nonmember function without namespace
 qualification does not always work but there are usually various work arounds
-to make this manageable}.
+to make this manageable.}.
+
+But does not object-oriented programming mean that all operations on objects
+are called through member functions?  Some programmings (and users) might
+currently expect and even insist on this but many current object-oriented C++
+experts would not agree.  For example, Scott Meyers in {}\cite[Item
+23]{EffectiveC++3rd} states:
+
+\begin{quote}
+
+Object-oriented principles dictate that data and the functions that operate on
+them should be bundled together, and that suggests that the member function is
+a better choice.  Unfortunately, this suggestion is incorrect.  It's based on
+a misunderstanding of what object-orientation means.
+
+\end{quote}
 
 If nonmember functions are so less flexible than member functions, then why
 even bother using member functions at all?  Why not just use nonmember friend
 functions in the place of member functions as is advocated in the ``pure
 nonmember function interface'' idiom for all C++ classes?  Well, there are a
-few reasons that you have to use member functions declared and defined within
-the object.  First, some functions like constructors and the assignment
-operator, are required to be member functions as are a few other operator
-functions.  Second, if the C++ classes you are writing are expected to be very
-stable or if changes to these classes can be easily propagated to all clients
-using the class, then using member functions is attractive since it just
-involves less typing.
+few reasons that you would want to just use member functions declared and
+defined within the class.  First, some functions like the assignment operator
+are required to be member functions as are a few other operator functions.  In
+these cases, you have not choice but the use public member functions.  Second,
+if the C++ classes you are writing are expected to be very stable or if
+changes to these classes can be easily propagated to all clients using the
+class, then using member functions is attractive since it just involves less
+typing, uses less ASCII characters and may be easier to follow.
 
-However, other than for a bit of laziness and personal preference for writing
+Friends and member functions are a fundamental part of the implementation of
+true encapsulation in C++.  They help to provide a system by which we can
+enforce encapsulation while still allowing programs to be written to do
+things.  By requiring that friends and member functions be declared right in a
+class declaration, one can easily enumerate and track down all code that has
+access to private members which facilitates safe code refactorings which is
+the whole reason for encapsulation in the first place\footnote{If code never
+changed then why would anyone care about encapulation?}.  Therefore, we should
+think about friends and member functions in C++ as the basic tools for
+implementing encapsulation and not primarily as interfaces for clients.  By
+adopting the ``pure nonmember function interface'' idiom, we relieve clients
+from having to worry about whether a function needs to acces encapsulated data
+(in which case it needs to either be a friend) or not (in which case it does
+not need to be a friend), which is not really any of their business anyway.
+
+Other than for a bit of laziness and personal preference for writing
 {}\texttt{obj.foo()} as apposed to {}\texttt{foo(obj)}, there really is not a
 strong argument for not using the ``pure nonmember function interface'' idiom
 described above.
@@ -859,12 +1191,13 @@ Since Java does not have the concept of nonmember functions, once could use a
 separate static class to declare these non-privileged functions and one could
 therefore have the same benefits as in C++ when using the ``pure nonmember
 function interface'' idiom.  However, since there would no longer be any
-namespace lookup, client would have to explicitly qualify the class name when
-calling the functions.  Also, there are many high-quality refactoring tools
-for Java that make it much easier to propagate refactorings to client code.
-Therefore, the lack of good refactoring tools, the convenience of automatic
-namespace lookup, and other issues make the ``nonmember function interface''
-more attractive for C++ than for Java or other object-oriented languages.
+namespace lookup, clients would have to explicitly qualify the static class's
+name when calling the functions.  Also, there are many high-quality
+refactoring tools for Java that make it much easier to propagate refactorings
+to client code.  Therefore, the lack of good refactoring tools, the
+convenience of automatic namespace lookup, and other issues make the
+``nonmember function interface'' more attractive for C++ than for Java or
+other object-oriented languages.
 
 %
 \section{Relationship between the Pure Nonmember Function Interface Idiom and Handle Classes in C++}
@@ -876,7 +1209,20 @@ wrap an object that uses reference or pointer semantics, such as objects
 represented through an abstract interface.  For example, a simple handle class
 for a {}\texttt{BlobBase} object might look like:
 
-ToDo: Show a Blob handle class.
+{\small\begin{verbatim}
+  namespace BlobPack {
+
+  class Blob {
+  public:
+    Blob( RCP<BlobBase> &blob ) : blob_(blob) {}
+    void foo( const Bar &bar, bool useDog ) { foo(*blob_,bar,useDog); }
+    void foo( const Bar &bar, bool useDog ) const { foo(*blob_,bar,useDog); }
+  private:
+    RCP<BlobBase> blob_;
+  };
+
+  } // namespace BlobPack
+\end{verbatim}}
 
 The above handle class allows for multiple handle objects to reference the
 same underlying {}\texttt{BlobBase} object and a handle object can be
@@ -885,10 +1231,12 @@ develops a handle class.  However, a detailed treatment of handle classes is
 beyond the scope of this discussion.
 
 The ``pure nonmember function interface'' idiom and the ``handle'' idiom are
-similar in several ways ... ToDo: finish this ...
+similar in that both provide a layer of indirection between clients and the
+specification of the virtual function set which insulates clients from changes
+to the abstract interface.
 
 However, the pure nonmember function interface idiom offers some potential
-benefits over a strict handle interface:
+benefits over a strict handle interface that uses member functions:
 
 \begin{enumerate}
 
@@ -897,7 +1245,10 @@ member functions on a handle class can not}: Splitting capabilities across
 multiple files allows for greater segmentation in the capability set for a set
 of objects, it reduces unnecessary dependences and allows for growth in the
 set of capabilities without impacting current clients (or even require them to
-be recompiled).
+be recompiled) (see {}\cite[Item 23]{EffectiveC++3rd} a specific discussion of
+this issue).  However, if most functions defined on the handle object are
+expressed as nonmember functions, then this would allow for the same
+flexibility to segment capabilities and this problem is eliminated.
 
 {}\item{}\textit{Nonmember functions do not suffer from some of the more
 confusing aspects of handle classes}.  For example, a semantics of a handle
@@ -908,45 +1259,49 @@ Nonmember functions do not have to deal with any of these issues.
 \end{enumerate}
 
 On the other hand, if extra state needs to be added to the object in order to
-perform extended operations, then using a handle class might seem attractive.
-However, if the handle class allows multiple handle objects or other clients
-to point to the same underlying object, then allowing for extra data in the
-handle object can be risky since that data could be easily invalidated.
+perform extended operations, then using a handle class might be an attractive
+approach.  However, if the handle class allows multiple handle objects or
+other clients to point to the same underlying object, then allowing for extra
+data in the handle object can be risky since that data can easily be
+invalidated in many cases.
 
-There are cases, however, where the syntactic advantages of using a handle
-class are compelling and therefore handles should be used.  Even if a handle
-class is to be used, most operations performed with handle objects should be
-implemented as nonmember functions for reasons of avoiding bloat of the handle
-class and allowing for incremental and distributed capabilities.  Of course,
-if one allows for both the use of member functions on the handle class and
-nonmember functions, then this brings up all of the same issues as it did for
-the interface class itself.  However, since a handle class should almost never
-be used as a means of interoperability, one can be more lenient about what
-functions are added as member functions and can therefore handle classes used
-as a convenience can tolerate refactorings better.  However, since the member
-functions on a handle class never need privileged access to the underlying
-object, there will never need to be any changes to the handle classes
-interface, only augmentations.
+There are cases where the syntactic advantages of using a handle class are
+compelling and therefore handles should be used in these cases.  Even if a
+handle class is to be used, most operations performed with handle objects
+should be implemented as nonmember functions for reasons of avoiding bloat of
+the handle class and allowing for incremental and distributed capabilities.
+Of course, if one allows for both the use of member functions on the handle
+class and nonmember functions, then this brings up all of the same issues as
+it did for the interface class itself.  However, since a handle class should
+almost never be used as a means of interoperability, one can be more lenient
+about what functions are added as member functions and can therefore handle
+classes used as a convenience can tolerate refactorings better and tolerate
+more bloat.  Additionally, since the member functions on a handle class should
+never need privileged access to the underlying object, there will never need
+to change the handle class's interface; only augmentations will be required.
+Therefore, the handle idiom and the pure nommember function idiom can be used
+together and complement each other.
 
 %
 \section{Summary}
 %
 
-Here we have presented an sort of composite C++ idiom called the ``pure
+Here we have presented a sort of composite C++ idiom called the ``pure
 nonmember function interface'' idiom which is composed out of two other
 idioms, the non-virtual interface (NVI) idiom {}\cite[Item
 39]{C++CodingStandards05} and the ``nonmember nonfriend function'' idiom
 {}\cite[Item 44]{C++CodingStandards05}.  We argue that the proposed ``pure
 nonmember function interface'' idiom is the logical union of these two other
-idioms when issues of code evolution and refactoring are considered.
+idioms when issues of code evolution and refactoring are considered in an
+environment where refactoring tools are absent or impractical to use.
 
-The ``nonmember nonfriend function'' idiom:
+In summary, the ``nonmember nonfriend function'' idiom:
 
 \begin{itemize}
 
 {}\item results in maximum code encapsulation,
 
-{}\item provides a uniform (nonmmeber) client interface,
+{}\item provides a uniform (nonmmeber function) client interface,
 
 {}\item insulates clients from refactorings to the virtual function structure
 of abstract interfaces (and therefore makes such refactorings reasonable and
@@ -958,31 +1313,41 @@ after numerious changes in requirements and subsequent refactorings.
 \end{itemize}
 
 Where there are many advantages to the ``pure nonmember function interface''
-idiom, it is not without cost.
-
-Some of the potential disadvantages of a nonmember interface are given below.
+idiom, it is not without some cost.  Some of the potential disadvantages of a
+pure nonmember function interface are:
 
 \begin{itemize}
 
 {}\item Calling the nonmember function may require explicit namespace
 qualification (or a using declaration) and/or explicit template arguments in
-order to get the right function to be called where a nonmember function call
-never requires this.
+order to get the right function to be called which is almost ever the case for
+a non-template member function call.
 
-{}\item The nonmember function interface requires a little more typing in that
-the prototype for the friend function.
+{}\item The implementations of nonmember friend functions are a little more
+verbose than member functions.  For example, one has to explicitly qualify the
+object argument (i.e.\ {}\texttt{blob}) instead of an implicit
+{}\texttt{this->}.  Some programmers may consider this an advantage to be more
+explicit however and some languages like Python always require explicit
+qualification to the object in member function implementations.
+
+{}\item Documentation may become more complicated to develop and access since
+it is not clear where to document the behavior of a function.  Should the
+documentation be in the public nonmember function (better for the client) or
+should it be in the declaration of the protected/private virtual function
+(better for subclass implementors)?  Clearly some documentation guidelines
+need to be worked out in order to address these issues.
 
 \end{itemize}
 
 Since there are some disadvantages to developing and using a pure nonmember
 function interface for an abstract or concrete class, one should not
-automatically choose it over the more canonical member function interface.  If
-a particular class is not widely used, is not widely accessible to clients,
+automatically choose it over the more common member function interface.  If a
+particular class is not widely used, is not widely accessible to clients,
 and/or is unlikely to change, then developing a pure nonmember function
 interface may be overkill and not worth the (all be it small) extra work.
-However, if the face of uncertainty, one should lean toward using the pure
-nonmember function interface since it allows great freedom in refactoring code
-with minimal impact on clients.
+However, in the face of uncertainty one should lean toward using the pure
+nonmember function interface idiom since it allows great freedom in
+refactoring code with minimal impact on clients.
 
 
 % ---------------------------------------------------------------------- %
