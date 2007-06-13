@@ -70,7 +70,7 @@ config/acx_pthread.m4                     config/tac_arg_with_lapacklib.m4 \
 config/config.guess                       config/tac_arg_with_libdirs.m4 \
 config/config.sub                         config/tac_arg_with_package.m4 \
 config/strip_dup_incl_paths.pl            config/strip_dup_libs.pl \
-config/tac_arg_with_perl.pl \
+config/tac_arg_with_perl.m4 \
 bootstrap 
 #
 #       I believe that by switching to AUX_DIR(../../config) one 
