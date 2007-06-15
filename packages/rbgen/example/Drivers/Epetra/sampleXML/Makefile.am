@@ -48,8 +48,7 @@ noinst_PROGRAMS = $(RBGEN_LENA_EX)
 
 lenaDummy$(EXEEXT): $(srcdir)/Dummy
 	ln -fs $(top_builddir)/src/RBGenDriver_EpetraMV .
-	cp  $(srcdir)/sampleInput.xml sampleInput.xml
-	cp  $(srcdir)/README README
+	@if [ $(srcdir) != '.' ]; then cp  $(srcdir)/sampleInput.xml sampleInput.xml; cp  $(srcdir)/README README; fi
 
 lenaDummy_SOURCES = Dummy
 
