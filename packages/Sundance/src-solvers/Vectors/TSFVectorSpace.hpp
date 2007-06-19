@@ -32,5 +32,6 @@
 
 #include "TSFVectorSpaceDecl.hpp"
 #include "TSFVectorSpaceImpl.hpp"
+#include "TSFSequentialIteratorImpl.hpp"
 
 #endif

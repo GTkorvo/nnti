@@ -62,6 +62,8 @@ VECTORS_H = \
 	$(srcdir)/Vectors/TSFProductVectorDecl.hpp\
 	$(srcdir)/Vectors/TSFProductVectorImpl.hpp\
 	$(srcdir)/Vectors/TSFRawDataAccessibleVector.hpp\
+	$(srcdir)/Vectors/TSFSequentialIteratorDecl.hpp \
+	$(srcdir)/Vectors/TSFSequentialIteratorImpl.hpp \
 	$(srcdir)/Vectors/TSFVector.hpp \
 	$(srcdir)/Vectors/TSFVectorDecl.hpp \
 	$(srcdir)/Vectors/TSFVectorImpl.hpp \

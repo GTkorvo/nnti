@@ -55,8 +55,7 @@ namespace TSFExtended
   class EpetraVector : public DefaultSpmdVector<double>,
                        public Handleable<VectorBase<double> >,
                        public IndexableVector<double>,
-                       public RawDataAccessibleVector<double>,
-                       public Printable
+                       public RawDataAccessibleVector<double>
   {
   public:
     GET_RCP(VectorBase<double>);
@@ -119,14 +118,6 @@ namespace TSFExtended
     //@}
       
 
-    /** \name Printable interface */
-    //@{
-    /** Write to a stream  */
-    void print(ostream& os) const 
-    {
-      epetraVec()->Print(os);
-    }
-    //@}
 
     /** Get a read-only Epetra_Vector */
     static const Epetra_Vector& getConcrete(const TSFExtended::Vector<double>& tsfVec);

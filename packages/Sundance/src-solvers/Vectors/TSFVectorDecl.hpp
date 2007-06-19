@@ -300,6 +300,7 @@ namespace TSFExtended
 
     //@}
 
+
     /** \name Element loading interface */
     //@{
     /** set a single element at the given global index */
@@ -336,13 +337,12 @@ namespace TSFExtended
                      vector<Scalar>& elems) const 
     {castToAccessible()->getElements(globalIndices, numElems, elems);}
 
+
     /** const bracket operator  */
-    Scalar operator[](Index globalIndex) const
-//     {cerr << "const bracket[" << globalIndex << "]" << endl; return getElement(globalIndex);}
-    {return getElement(globalIndex);}
+    const Scalar& operator[](const SequentialIterator<Scalar>& index) const ;
     
     /** non - const bracket operator  */
-    Scalar& operator[](Index globalIndex);
+    Scalar& operator[](const SequentialIterator<Scalar>& index);
 
     //@}
 
@@ -425,10 +425,22 @@ namespace TSFExtended
     /** Test for valid index */
     void boundscheck(Index i, int dim) const ;
 
+    /** */
+    const Scalar& localElement(const Index& blockIndex, const Index& indexInBlock) const ;
+
+    /** */
+    Scalar& localElement(const Index& blockIndex, const Index& indexInBlock) ;
       
       
 #endif
   };
+}
+
+template <class Scalar> inline
+std::ostream& operator<<(std::ostream& os, const TSFExtended::Vector<Scalar>& x) 
+{
+  x.print(os);
+  return os;
 }
 
 

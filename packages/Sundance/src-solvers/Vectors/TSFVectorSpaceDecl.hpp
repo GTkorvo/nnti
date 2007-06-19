@@ -32,6 +32,7 @@
 #include "TSFConfigDefs.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 #include "TSFHandle.hpp"
+#include "TSFSequentialIteratorDecl.hpp"
 
 
 
@@ -102,6 +103,15 @@ namespace TSFExtended
     /** set the i-th subblock */
     void setBlock(int i, const VectorSpace<Scalar>& space);
 
+
+    /** */
+    SequentialIterator<Scalar> begin() const ;
+
+    /** */
+    SequentialIterator<Scalar> end() const ;
+
+    /** */
+    bool advanceIndex(int& blockIndex, int& indexInCurrentBlock, int& globalIndex) const ;
   };
 
 }

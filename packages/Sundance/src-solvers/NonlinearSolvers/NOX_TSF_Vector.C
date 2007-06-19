@@ -331,13 +331,7 @@ int NOX::TSF::Vector::length() const
 
 ostream& NOX::TSF::Vector::leftshift(ostream& stream) const
 {
-  int numdigits = this->getPrecision();
-  //if (numdigits==0)
-  //  numdigits=3;
-  stream << "[ ";
-  for (int i = 0; i < this->length(); i ++) 
-    stream << NOX::Utils::sciformat(x.getElement(i),numdigits)<< " ";
-  stream << "]";
+  x.print(stream);
   return stream;
 }
 
