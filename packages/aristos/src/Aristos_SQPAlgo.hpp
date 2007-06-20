@@ -364,15 +364,15 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
   hessvec_->getValue(x, l, v, *r);
   r->linComb(1.0, g, 1.0);
 
-  double normWr[cgitmax+1];     // will keep track of norms of projected residuals
-  double normWg = 0.0;          // norm of inexact reduced gradient, to be computed
-  double smallc = 1e-2*cgtol;   // small heuristic constant
-  double rptol = 1e-12;         // another small constant
-  double fcd_const = 1.0;       // constant used to verify fraction of Cauchy decrease condition
-                                // to relax the FCD requirement, use smaller fcd_const
-  double S_max = 10.0;          // norm(WR*R/diag^2 - I) needs to be bounded by a modest constant,
-                                // it is small if the approx. of the null space projection is good
-  double vartols[4];            // used to pass parameters to null space projection
+  vector<double> normWr(cgitmax+1);  // will keep track of norms of projected residuals
+  double normWg = 0.0;               // norm of inexact reduced gradient, to be computed
+  double smallc = 1e-2*cgtol;        // small heuristic constant
+  double rptol = 1e-12;              // another small constant
+  double fcd_const = 1.0;            // constant used to verify fraction of Cauchy decrease condition
+                                     // to relax the FCD requirement, use smaller fcd_const
+  double S_max = 10.0;               // norm(WR*R/diag^2 - I) needs to be bounded by a modest constant,
+                                     // it is small if the approx. of the null space projection is good
+  double vartols[4];                 // used to pass parameters to null space projection
   double normg  = sqrt(r->innerProd(*r)); // norm of g = (grad of Lagr) + Hessian*(quasi-normal step)
 
   if (orthocheck) {
@@ -426,7 +426,7 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
 
     if (iprint)
        printf("%5d     %12.5e     %12.5e  %12.5e  \n",
-              cgiter-1, normWr[cgiter-1]/normWr[0], sqrt(s.innerProd(s)), delta);
+              cgiter-1, (normWr[cgiter-1] / normWr[0]), sqrt(s.innerProd(s)), delta);
 
     // Check if done.
     if (normWr[cgiter-1]/normWr[0] < cgtol) {
@@ -454,11 +454,12 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
       }
       if (Tm1.normOne() >= 0.5) {
         Teuchos::LAPACK<int,double> lapack;
-        int ipiv[cgiter], info;
-        double work[3*cgiter];
+        vector<int>    ipiv(cgiter);
+        int            info;
+        vector<double> work(3*cgiter);
         // compute inverse of T
-        lapack.GETRF(cgiter, cgiter, T.values(), T.stride(), ipiv, &info);
-        lapack.GETRI(cgiter, T.values(), T.stride(), ipiv, work, 3*cgiter, &info);
+        lapack.GETRF(cgiter, cgiter, T.values(), T.stride(), &ipiv[0], &info);
+        lapack.GETRI(cgiter, T.values(), T.stride(), &ipiv[0], &work[0], 3*cgiter, &info);
         Tm1 = T;
         for (int i=0; i<cgiter; i++)
           Tm1(i,i) = Tm1(i,i) - 1.0;
