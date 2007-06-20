@@ -334,7 +334,7 @@ public:
       iterative linear system solver that applies the projection operator \f$P_k\f$.
       
   */
-  bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vector &v, const Vector &l, Vector &s,
+  bool runTangentialStepInx(const Vector &x, const Vector &g, const Vector &v, const Vector &l, Vector &s,
                                      double delta, int cgitmax, double cgtol, double fixedtol,
                                      bool istolfixed, bool fullortho, bool orthocheck, bool fcdcheck,
                                      int &cgiter, int &iflag);
