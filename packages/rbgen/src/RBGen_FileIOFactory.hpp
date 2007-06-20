@@ -1,12 +1,11 @@
 #ifndef RBGEN_FILEIO_FACTORY_HPP
 #define RBGEN_FILEIO_FACTORY_HPP
 
+#include "Teuchos_RefCountPtr.hpp"
+
 // Forward declarations for Teuchos.
 namespace Teuchos {
   class ParameterList;
-
-  template <class T>
-  class RefCountPtr;
 }
 
 namespace RBGen {
