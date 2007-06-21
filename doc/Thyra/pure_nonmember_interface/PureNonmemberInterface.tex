@@ -7,6 +7,7 @@
 \usepackage{graphicx}
 \usepackage{latexsym}
 \input{rab_commands}
+\raggedright
 
 % If you want to relax some of the SAND98-0730 requirements, use the "relax"
 % option. It adds spaces and boldface in the table of contents, and does not
@@ -71,9 +72,11 @@ Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
 A pure nonmember function interface to an abstract C++ class might provide the
 best approach for keeping clean minimal interfaces, insulating client code
 from changes to an interface, and providing a uniform interface when other
-nonmember nonfriend functions are used.  The idiom also applies equally well
-to concrete C++ classes and can even be used with great advantages for
-constructors as well.
+nonmember nonfriend functions are used.  The proposed idiom is the logcial
+combination of the Nonvirual Interface (NVI) idiom and and the Nonmember
+Nonfriend Function idiom.  This idiom also applies equally well to concrete
+C++ classes and can even be used with great advantages for constructors as
+well.
 %
 \end{abstract}
 %
@@ -144,7 +147,7 @@ object orientation speak of {}\textit{programming with objects} and refer to
 such concepts as {}\textit{object methods}, {}\textit{polymorphism}, and
 {}\textit{encapsulation}.  These concepts can be expressed in different ways
 in different programming languages and each language lends itself to different
-idioms for how object orientation is to be used to its fullest.  Here we focus
+idioms for how object orientation can be used to its fullest.  Here we focus
 on the C++ language and combine some of the more modern idioms being advocated
 in C++ to propose a unifying idiom involving the consistent use of nonmember
 functions to decouple external clients of abstract interfaces and concrete
@@ -156,20 +159,23 @@ Our primary focus is on issues related to object-oriented programming in the
 C++ language and specifically the interaction between an abstract interface
 (consisting of pure virtual functions), clients that use objects through the
 interface, and subclasses of the interface that provide concrete
-implementations of all of the member functions.  A secondary focus of this
+implementations of the virtual functions.  A secondary focus of this
 discussion addresses how nonmember functions can also be used as the interface
 to concrete classes and even for constructors and describes the benefits of
 such an approach.
 
-With respect to abstract interfaces, our main goal here is to describe an
-approach for developing C++ interfaces and encapsulation mechanisms which
-protect clients of an abstract C++ interface from changes to the specification
-of the interface's virtual functions.  This is especially critical when the
-interface represents an important interoperability mechanism and is part of a
-library which may have many diverse and unaccessible external clients which
-the library developers can not directly change.  Minimizing the impact of code
-refactorings is even more important in C++ than in other languages because of
-the lack of good quality refactoring tools for C++ code.
+With respect to abstract interfaces, our main goal here is to describe a light
+weight approach for developing C++ interfaces and encapsulation mechanisms
+which protect clients of an abstract C++ interface from changes to the
+specification of the interface's virtual functions.  This is especially
+critical when the interface represents an important interoperability mechanism
+and is part of a library which may have many diverse and unaccessible external
+clients which the library developers can not directly access to change.
+Minimizing the impact of code refactorings is even more important in C++ than
+in other languages because of the lack of good quality refactoring tools for
+C++ code.  Even when you have good refactoring tools, it is nontrivial to push
+refactorings out to external clients of your class library and few if any
+tools for any language support this feature currently.
 
 What we want is to have an approach to developing, maintaining, and using
 abstract C++ interfaces that:
@@ -181,7 +187,7 @@ abstract C++ interface is the critical specification of the capabilities of an
 object which must be able to cover the needs of a large set of potential
 clients and allow great flexibility and efficiency in the implementation of
 subclasses.  The more minimal an interface is, the more likely it will be
-adopted for a larger community and the easier it will be to develop powerful
+adopted by a larger community and the easier it will be to develop powerful
 ``Decorator'', ``Composite'' and other such general subclasses.  Minimal and
 efficient interfaces are especially critical for interoperability.
 
@@ -197,17 +203,17 @@ functions with default arguments {}\cite[Item 37]{EffectiveC++3rd}, and other
 such problems.
 
 {}\item\textit{Allows for changes to an abstract interface's virtual function
-set in such as way consistent with the above goals}: As requirements become
+set in a way this is consistent with the above goals}: As requirements become
 more clear or change over the life of a piece of software, changes to the
 specification of the virtual function set for an interface will be inevitable
-in order to satisfy the new requirements in an efficient an safe way, and to
+in order to satisfy the new requirements in an efficient and safe way, and to
 maintain a minimal interface.  We want to avoid a sub-standard abstract
 interface that is cluttered with backward-compatible functions for older
 clients.  Ideally, the integrity and the quality of the current incarnation of
 an interface should not suffer from having been incrementally developed where
-compromises where made to support current clients and use cases at the expense
-of the interface.  We want the interface to be the same quality as if it were
-nearly totally redesigned after the fact.
+compromises where made to support older clients at the expense of the
+interface.  We want the interface to be the same quality as if it were nearly
+totally redesigned after the fact.
 
 \end{itemize}
 
@@ -217,14 +223,14 @@ nearly totally redesigned after the fact.
 
 In particular, two idioms have been advocated that are designed to address
 many of the issues raised above: The Nonvirtual Interface (NVI) idiom
-{}\cite[Item 39]{C++CodingStandards05}, and the nonmember function idiom
-{}\cite[Item 44]{C++CodingStandards05}.  Other guidelines that are pertinent
-to our discussion are ``prefer minimal classes to monolithic classes''
-{}\cite[Item 33]{C++CodingStandards05}, ``prefer providing abstract
-interfaces'' {}\cite[Item 36]{C++CodingStandards05}, ``practice safe
-overriding'' {}\cite[Item 38]{C++CodingStandards05} {}\cite[Gotcha
-74]{C++Gotchas03}, and ``avoid overloading virtual functions'' {}\cite[Gotcha
-73]{C++Gotchas03}.
+{}\cite[Item 39]{C++CodingStandards05}, and the ``nonmember nonfriend
+function'' idiom {}\cite[Item 44]{C++CodingStandards05}.  Other guidelines
+that are pertinent to our discussion are ``prefer minimal classes to
+monolithic classes'' {}\cite[Item 33]{C++CodingStandards05}, ``prefer
+providing abstract interfaces'' {}\cite[Item 36]{C++CodingStandards05},
+``practice safe overriding'' {}\cite[Item 38]{C++CodingStandards05}
+{}\cite[Gotcha 74]{C++Gotchas03}, and ``avoid overloading virtual functions''
+{}\cite[Gotcha 73]{C++Gotchas03}.
 
 The Nonvirtual Interface (NVI) idiom {}\cite[Item 35]{EffectiveC++3rd}
 advocates making all virtual functions non-public (i.e.\ either private or
@@ -234,7 +240,8 @@ have an interface that looks like:
 {\small\begin{verbatim}
   class BlobBase {
   public:
-    // Non-virtual public interface
+    // Non-virtual public interface.
+    // Note: Default argument values are defined here and here only!
     void foo(int a=0) { implNonconstFoo(a); }
     void foo(int a=0) const { implFoo(a); }
   protected: // or private:
@@ -267,17 +274,18 @@ abstract interface and complicates maintenance.  For example, some function
 {}\texttt{BlobBase\-::foo(int)} as:
 
 {\small\begin{verbatim}
-  void goo( BlobBase &obj ) {
+  void goo( BlobBase &obj )
+  {
     obj.foo(0);
     obj.foo(1);
   }
 \end{verbatim}}
 
-The NVI idiom and ``nonmember nonfrind function'' idiom, can and should be
+The NVI idiom and ``nonmember nonfriend function'' idiom, can and should be
 used together, but they are also somewhat at odds with each other.  The NVI
 idiom implies that all operations that are directly implemented as virtual
 functions on the abstract interface would be accessed using corresponding
-public nonvirtual member functions.  The ``nonmember nonfrind function'' idiom
+public nonvirtual member functions.  The ``nonmember nonfriend function'' idiom
 dictates that all other functions would be implemented as nonmember nonfriend
 functions.  However, the straightforward combination of these two idioms has
 several disadvantages:
@@ -320,32 +328,31 @@ own abstract interface) instead of just an integer, and the functions also
 need to accept an extra boolean argument.  In addition, let's assume that the
 old meaning and behavior of the {}\texttt{foo()} functions can be retained by
 using a default implementation of {}\texttt{Bar} called {}\texttt{DefaultBar}.
-We consider two approaches for dealing with such a change below.
+We consider the two approaches for dealing with such a change below.
 
-First, if we want to keep the abstract interface minimal and be consistent
-with the ``nonmember nonfriend function'' idiom, then we want to choose option
-'a' which involves moving the old public nonvirtual member {}\texttt{foo()}
+a) If we want to keep the abstract interface minimal and be consistent with
+the ``nonmember nonfriend function'' idiom, then we want to choose option 'a'
+which involves moving the old public nonvirtual member {}\texttt{foo()}
 functions out of the interface and making them new nonmember nonfriend
 functions.  In this case, the updated class interface {}\texttt{BlobBase}
 would look like:
 
 {\small\begin{verbatim}
-  #include "DefaultBar.hpp"
-
   namespace BlobPack {
 
   class Bar;
 
   class BlobBase {
   public:
-    void foo( const Bar &bar, bool useDog = false )
-      { implNonconstFoo(bar,useDog); }
-    void foo( const Bar &bar, bool useDog = false ) const
-      { implFoo(bar,useDog); }
+    // Public non-virtual client interface
+    void foo( const Bar &bar, bool flag = false )
+      { implNonconstFoo(bar,flag); }
+    void foo( const Bar &bar, bool flag = false ) const
+      { implFoo(bar,flag); }
   protected: // or private:
     // Pure virtual non-public functions to be overridden
-    virtual void implNonconstFoo( const Bar &bar, bool useDog ) = 0;
-    virtual void implFoo( const Bar &bar, bool useDog ) const = 0;
+    virtual void implNonconstFoo( const Bar &bar, bool flag ) = 0;
+    virtual void implFoo( const Bar &bar, bool flag ) const = 0;
   };
 
   } // namespace BlobPack
@@ -376,15 +383,15 @@ clients outside of the library developer's control (i.e.\ clients of our
 libraries) could not be changed easily.  While this approach maintains a clean
 abstract interface and is consistent with both the NVI and the ``nonmember
 nonfriend function'' idioms, is has the disadvantage of requiring clients to
-change their code, which is undesirable, impractical, or too expensive.
+change their code, which may be undesirable, impractical, and/or too
+expensive.
 
-Second, if we want to minimize the impact on existing clients (i.e.\ if our
-library is widely used by external clients out of our control), then we might
-want to to choose option 'b' to leave the old public nonvirtual functions in
-the abstract interface and to augment the interface with the new public
-nonvirtual functions corresponding to the refactored nonpublic virtual
-functions.  The refactored class interface in this case would look something
-like:
+b) If we want to minimize the impact on existing clients (i.e.\ if our library
+is widely used by external clients out of our control), then we might want to
+to choose option 'b' to leave the old public nonvirtual functions in the
+abstract interface and to augment the interface with the new public nonvirtual
+functions corresponding to the refactored nonpublic virtual functions.  The
+refactored class interface in this case would look something like:
 
 {\small\begin{verbatim}
   #include "DefaultBar.hpp"
@@ -394,19 +401,19 @@ like:
   class BlobBase {
   public:
     // Old public nonvirtual functions that do not need direct access
-    void foo( int a)
+    void foo(int a = 0)
       { foo(DefaultBar(a),false); }
-    void foo( int a) const
+    void foo(int a = 0) const
       { foo(DefaultBar(a),false); }
     // Public nonvirtual functions that need direct access
-    void foo( const Bar &bar, bool useDog = false )
-      { implNonconstFoo(bar,useDog); }
-    void foo( const Bar &bar, bool useDog = false ) const
-      { implFoo(bar,useDog); }
+    void foo( const Bar &bar, bool flag = false )
+      { implNonconstFoo(bar,flag); }
+    void foo( const Bar &bar, bool flag = false ) const
+      { implFoo(bar,flag); }
   protected: // or private:
     // Pure virtual non-public functions to be overridden
-    virtual void implNonconstFoo( const Bar &bar, bool useDog ) = 0;
-    virtual void implFoo( const Bar &bar, bool useDog ) const = 0;
+    virtual void implNonconstFoo( const Bar &bar, bool flag ) = 0;
+    virtual void implFoo( const Bar &bar, bool flag ) const = 0;
   };
 
   } // namespace BlobPack
@@ -428,21 +435,21 @@ function interface.
 \section{The Pure Nonmember Function Interface Idiom for Abstract Classes}
 %
 
-Here we present an variation of the NVI idiom that is more complementary with
+Here we present a variation of the NVI idiom that is more complementary with
 the ``nonmember nonfriend function'' idiom.  The idea is the replace the pubic
 nonvirtual member functions in the abstract interface with nonmember friend
-functions.  Therefore, a simple interface using the ``pure nonmember function
-interface'' idiom would look like:
+functions.  A simple interface using the ``pure nonmember function interface''
+idiom would look like:
 
 {\small\begin{verbatim}
   namespace BlobPack {
 
   class BlobBase {
-    // Forward prototypes for nonmember friend functions that
+    // Prototypes for nonmember friend functions that
     // will directly call virtual functions.  Note that default
     // argument values are defined here and here only.
-    friend void foo( BlobBase & obj, int a);
-    friend void foo( const BlobBase & obj, int a);
+    friend void foo( BlobBase & obj, int a = 0 );
+    friend void foo( const BlobBase & obj, int a = 0 );
   protected: // or private:
     // Pure virtual non-public functions to be overridden
     virtual void implNonconstFoo(int a) = 0;
@@ -455,12 +462,12 @@ interface'' idiom would look like:
 {}\noindent{}and the nonmember friend functions would be implemented as:
 
 {\small\begin{verbatim}
-  void BlobPack::foo( BlobBase & obj, int a)
+  void BlobPack::foo( BlobBase & obj, int a )
   {
     foo.implNonconstFoo(a);
   }
 
-  void BlobPack::foo( const BlobBase & obj, int a)
+  void BlobPack::foo( const BlobBase & obj, int a )
   {
     foo.implFoo(a);
   }
@@ -475,18 +482,20 @@ on the object without requiring privileged access would be implemented as
 nonmember nonfriend functions such as:
 
 {\small\begin{verbatim}
-  void goo( BlobBase &obj ) {
+  void goo( BlobBase &obj )
+ {
     foo(obj,0);
     foo(obj,1);
   }
 \end{verbatim}}
 
 This approach has all of the same advantages of the NVI idiom with respect to
-allowing for function overloading without problems and for allowing
-for a single definition of default parameter values.  Note that it is critical
-that the virtual functions themselves must remain non-public since we can't
-allow clients to be calling these directly (for lots of reasons) and therefore
-these special nonmember functions must be friends.
+allowing for function overloading without problems and for allowing for a
+single definition of default parameter values.  Note that it is critical that
+the virtual functions themselves must remain non-public since we can't allow
+clients to be calling these directly (for lots of reasons).  Therefore, these
+special nonmember functions must be friends in order to call the non-public
+virtual functions.
 
 Even through at first sight replacing the public nonvirtual member functions
 with corresponding nonmember friend functions looks to be more complicated,
@@ -494,19 +503,20 @@ there are several advantages to doing this:
 
 \begin{itemize}
 
-{}\item\textit{The client accesses capabilities in a more consistent way}: For
-example, a client would invoke every operation on an object using a nonmember
-function, independent of how that function was treated.  For example, the
-client would call {}\texttt{foo(obj,i)} or {}\texttt{goo(obj)} consistently as
-nonmember functions without having to worry how these are implemented now or
-in the future.
+{}\item\textit{The client accesses capabilities in a more consistent way}: A
+client invokes every operation on an object using a nonmember function,
+independent of how that function was treated.  For example, the client would
+call {}\texttt{foo(obj,i)} or {}\texttt{goo(obj)} consistently as nonmember
+functions without having to worry how these are implemented now or in the
+future.
 
 {}\item\textit{Changes to the structure of the virtual function set can be
 handed without affecting clients and without cluttering the abstract
-interface}: If a virtual function needs to be modified in some significant
-way, then the nonmember function that calls that virtual function can be
-changed and the old nonmember friend function can be turned into a plain
-nonmember nonfriend function and removed from the abstract interface.
+interface}: If a virtual function needs to be modified in some way, then the
+nonmember function that calls that virtual function can be changed and the old
+nonmember friend function can be turned into a plain nonmember nonfriend
+function which calls the new friend function and can be removed from the
+abstract interface.
 
 \end{itemize}
 
@@ -514,11 +524,11 @@ To see how changes to the virtual function structure can be handled without
 impacting clients (other than require that they be recompiled), let's consider
 the same refactoring scenario described above where a new set of requirements
 are introduced where the {}\texttt{foo()} functions need to be changed to
-accept a {}\texttt{Bar} object (represented through its own abstract
-interface) instead of just an integer, and the new {}\texttt{foo()} functions
-also need to accept an extra boolean argument.  Using the ``pure nonmember
-function interface'' idiom, the refactored interface and supporting code would
-look something like:
+accept a {}\texttt{Bar} object (represented through its own abstract interface
+{}\texttt{Bar\-Base}) instead of just an integer, and the new {}\texttt{foo()}
+functions also need to accept an extra boolean argument.  Using the ``pure
+nonmember function interface'' idiom, the refactored interface and supporting
+code would look something like:
 
 {\small\begin{verbatim}
   namespace BlobPack {
@@ -528,12 +538,12 @@ look something like:
   class BlobBase {
     // Forward prototypes for nonmember friend functions that
     // will directly call virtual functions
-    friend void foo( BlobBase& obj, const Bar &bar, bool useDog = false );
-    friend void foo( const BlobBase& obj, const Bar &bar, bool useDog = false );
+    friend void foo( BlobBase& obj, const Bar &bar, bool flag = false );
+    friend void foo( const BlobBase& obj, const Bar &bar, bool flag = false );
   protected: // or private:
     // Pure virtual non-public functions to be overridden
-    virtual void implNonconstFoo( const Bar &bar, bool useDog ) = 0;
-    virtual void implFoo( const Bar &bar, bool useDog ) const = 0;
+    virtual void implNonconstFoo( const Bar &bar, bool flag ) = 0;
+    virtual void implFoo( const Bar &bar, bool flag ) const = 0;
   };
 
   } // namespace BlobPack
@@ -543,14 +553,14 @@ look something like:
 implementations:
 
 {\small\begin{verbatim}
-  void BlobPack::foo( BlobBase & obj, const Bar &bar, bool useDog )
+  void BlobPack::foo( BlobBase & obj, const Bar &bar, bool flag )
   {
-    foo.implNonconstFoo(bar,useDog);
+    foo.implNonconstFoo(bar,flag);
   }
 
-  void BlobPack::foo( const BlobBase & obj,  const Bar &bar, bool useDog )
+  void BlobPack::foo( const BlobBase & obj,  const Bar &bar, bool flag )
   {
-    foo.implFoo(bar,useDog);
+    foo.implFoo(bar,flag);
   }
 \end{verbatim}}
 
@@ -558,7 +568,7 @@ Now, what about all of the clients that relied on the old definition of the
 {}\texttt{foo()} functions?  As was stated above, let's assume that the old
 meaning and behavior of the {}\texttt{foo()} functions can be retained by
 using a default implementation of {}\texttt{Bar} called {}\texttt{DefaultBar}
-and a value of {}\texttt{useDog=false} which gives the following nonmember
+and a value of {}\texttt{flag=false} which gives the following nonmember
 nonfriend functions:
 
 {\small\begin{verbatim}
@@ -574,7 +584,7 @@ nonfriend functions:
 \end{verbatim}}
 
 The above new nonmember nonfriend {}\texttt{foo()} function overloads could
-then be included in the same files as the other ``standard'' nonmember
+then be included in the same file as the other ``standard'' nonmember
 functions where {}\texttt{goo()}, for instance, is also declared and defined.
 After this refactoring, clients that currently use expressions like
 {}\texttt{foo(obj,0)} now just need to be recompiled and that is it!
@@ -587,7 +597,10 @@ interface'' idiom solves the problem of having to refactor client code when an
 interface changes, it does not address how changes to the virtual function set
 affects subclasses that implement the interface's virtual functions.  The next
 section describes how changes to an interface's virtual function set affects
-subclasses.
+subclasses.  As more refactorings are performed over time, older functions for
+different types of clients can be partitioned into different files to manage
+complexity.  It is much easier to change a few {}\texttt{\#include}s than to
+change actual source code.
 
 %
 \section{The Full Impact of Changing Virtual Functions on Abstract Classes}
@@ -605,14 +618,14 @@ library, and b) those that are developed by external users and are out of the
 control of the library developers.  Subclasses can also be classified as i)
 those that are direct subclasses of the base abstract interface (e.g.\ such as
 ``Decorator'' and ``Composite'' subclasses), and ii) those that are indirect
-subclasses of the base abstract interface and don't directly override any of
-the top-level virtual functions.
+subclasses of the base abstract interface and don't directly override the
+top-level virtual functions.
 
 {\bsinglespace
-\begin{figure}
+\begin{figure}[p]
 \begin{center}
 %\fbox{
-\includegraphics*[angle=270,scale=0.55
+\includegraphics*[scale=0.75
 ]{BlobBaseBeforeRefactoring}
 %}
 \end{center}
@@ -626,18 +639,18 @@ Consider the simplified {}\texttt{Blob\-Base} interface and some of its
 subclasses shown in Figure {}\ref{fig:BlobBaseBeforeRefactoring}.  This
 example is provided to illuminate the issues involved when refactoring the
 virtual functions in a base class interface.  In this example diagram, we show
-several different categories of subclasses mentioned above.  The intermediate
-subclasses {}\texttt{Type\-A\-Blob\-Base} and {}\texttt{Type\-B\-Blob\-Base}
-are designed to provide support for implementing the {}\texttt{Blob\-Base}
-interface for two different general types subclasses for more specific types
-of use cases.  For instance, {}\texttt{Type\-A\-Blob\-Base\-::foo(...)} is an
-implementation of {}\texttt{Blob\-Base\-::foo(...)} that provides most of the
-needed behavor for ``type A'' blobs and defers the rest of the more specific
-behavior to the pure virtual function
-{}\texttt{Type\-A\-Blob\-Base\-::typeAFoo(...)} to be implemented by
-subclasses.  These kinds of intermediate type 'a.i' subclasses are very common
-in object oriented class hierarchies.  The type 'a.ii' concrete subclasses
-{}\texttt{Internal\-Default\-Type\-A\-Blob} and
+several of the different categories of subclasses mentioned above.  The
+intermediate subclasses {}\texttt{Type\-A\-Blob\-Base} and
+{}\texttt{Type\-B\-Blob\-Base} are designed to provide support for
+implementing the {}\texttt{Blob\-Base} interface for two different general
+types of subclasses for more specific types of use cases.  For instance,
+{}\texttt{Type\-A\-Blob\-Base\-::foo(...)} is an implementation of
+{}\texttt{Blob\-Base\-::foo(...)} that provides most of the needed behavor for
+``type A'' blobs and defers the rest of the more specific behavior to the pure
+virtual function {}\texttt{Type\-A\-Blob\-Base\-::typeAFoo(...)} to be
+implemented by subclasses.  These kinds of intermediate type 'a.i' subclasses
+are very common in object oriented class hierarchies.  The type 'a.ii'
+concrete subclasses {}\texttt{Internal\-Default\-Type\-A\-Blob} and
 {}\texttt{Internal\-Default\-Type\-B\-Blob} provided by the library give good
 default implementations of ``type A'' and ``type B'' Blob subclasses.  The
 classes {}\texttt{External\-Type\-A\-Blob} and
@@ -656,9 +669,9 @@ refactoring the virtual function in a base interface
 are owned by or accessible by the library developers can be changed at a
 reasonable cost in most cases.  In our example in Figure
 {}\ref{fig:BlobBaseBeforeRefactoring}, this means tha all of the classes in
-the ``BlobPack'' package can reasonably be refactored since they are under the
-``BlockPack'' library developer's control.  Also, as will be shown, indirect
-subclasses can also largely be insulated from changes to the base abstract
+the ``BlobPack'' package can be refactored at a reasonable cost since they are
+under the ``BlockPack'' library developer's control.  Also, as will be shown,
+indirect subclasses can largely be insulated from changes to the base abstract
 interface in many cases if they are derived from well-designed intermediate
 subclasses which live in the library.
 
@@ -671,23 +684,23 @@ functions.  This is the role of the {}\texttt{Type\-A\-Blob\-Base} and
 {}\texttt{Type\-B\-Blob\-Base} subclasses shown in our example.  Specific
 categories of clients can then drive from these tailored intermediate
 subclasses and not have to directly implement any of the virtual functions in
-the base class interface.
+the base class interface in most cases.
 
 While the development and use of tailored intermediate subclasses can insulate
 most types of derived subclasses from changes to the higher-level virtual
 functions, a remaining stumbling block are those inaccessible external
 subclasses that directly derive from the base abstract interface (i.e.\ type
-'b.i' subclasses as defined above).  Examples of these types of direct
-subclasses would be classic ``Composite'' or ``Decorator'' subclasses that use
-some form of direct delegation on subordinate objects, such as the
+'b.i' subclasses as defined above) such as the
 {}\texttt{External\-Decorator\-Blob} subclass shown in Figure
-{}\ref{fig:BlobBaseBeforeRefactoring}.
+{}\ref{fig:BlobBaseBeforeRefactoring}.  Examples of these types of direct
+subclasses would be classic ``Composite'' or ``Decorator'' subclasses that use
+some form of direct delegation on subordinate objects.
 
 {\bsinglespace
-\begin{figure}
+\begin{figure}[p]
 \begin{center}
 %\fbox{
-\includegraphics*[angle=270,scale=0.55
+\includegraphics*[scale=0.75
 ]{BlobBaseAfterRefactoring}
 %}
 \end{center}
@@ -702,8 +715,8 @@ shown in Figure {}\ref{fig:BlobBaseAfterRefactoring}.  Here, the refactored
 {}\texttt{Type\-A\-Blob\-Base} and {}\texttt{Type\-B\-Blob\-Base} intermediate
 subclasses insulate the concrete subclasses
 {}\texttt{Internal\-Default\-Type\-A\-Blob},
-{}\texttt{Internal\-Default\-Type\-A\-Blob},
-{}\texttt{External\-Type\-A\-Blob}, and {}\texttt{External\-Type\-A\-Blob}
+{}\texttt{Internal\-Default\-Type\-B\-Blob},
+{}\texttt{External\-Type\-A\-Blob}, and {}\texttt{External\-Type\-B\-Blob}
 from changes to the base interface and they only need to be recompiled.  The
 situation for the necessarily direct concrete dectorator subclasses
 {}\texttt{Internal\-Decorator\-Blob} and {}\texttt{External\-Decorator\-Blob}
@@ -721,12 +734,12 @@ performing such external refactorings can be lessened but avoiding a
 refactoring altogether is usually not possible.  We will not discuss specific
 strategies for minimizing the cost of such refactorings any further here.
 
-The point of this section was to really round out the discussion of the full
-impact of changing the virtual function set in a base class interface in how
-such a refactoring can be absorbed in the subclasses of the interface and at
-what cost.  As described above, in many cases, intermedate subclasses can
-insulate many different types of concrete subclasses from significant changes
-to the base classes virtual functions and can therefore make such refactorings
+The goal of this section was to round out the discussion of the full impact of
+changing the virtual function set in a base class interface in how such a
+refactoring can be absorbed in the subclasses of the interface and at what
+cost.  As described above, in many cases, intermedate subclasses can insulate
+many different types of concrete subclasses from significant changes to the
+base class's virtual functions and can therefore make such refactorings
 reasonable and affordable.  However, in the absents of very sophisticated
 refactoring tools for C++ (which simply do not exist at the time of this
 writting and may never exist), we can not fully protect external subclass
@@ -760,10 +773,9 @@ class is that you can construct an object for a concrete class but not for an
 abstract class (unless you construct an object from a concrete subclass of the
 abstract class of course in which case we are back to talking about concrete
 classes).  Therefore, constructors are one of the major details that
-differentiate concrete classes and abstract classes.  It turns out that there
-are many good arguments for defining and and have users call nonmember
-constructor functions as well over member constructor functions and the
-concept of nonmember function constructors is discussed next.
+differentiate concrete classes and abstract classes.  There are many good
+arguments for defining and having users call nonmember constructor functions
+as apposed to directly calling member constructor functions.
 
 Nonmeber constructor functions can be defined to create and return objects by
 value (i.e. to construct objects on the stack) or to return (smart) pointers
@@ -772,7 +784,7 @@ functions are useful in different contexts.  Typically, small objects that are
 manipulated with value semantics will be given nonmember constructor functions
 that return the created objects by value (and typically use the return-value
 optimization to achieve good performance).  On the other hand, larger objects
-that are manipulated through reference or pointer sementics well be given
+that are manipulated through reference or pointer sementics will be given
 nonmember constructor functions that return (smart) pointers to allocated
 objects.  Experienced C++ developers typically manage these dynamically
 allocated objects with some type of smart pointer class {}\cite[Item
@@ -793,8 +805,8 @@ objects takes the form:
   public:
     // Public interface
     void display(std::ostream&);
-  private:
-    // Private constructor
+  private: // or protected
+    // Non-public constructor
     Widget();
   };
 
@@ -832,7 +844,7 @@ Type(...)}:
 {}\item\textit{Nonmember constructor functions can be overloaded or can be
 given different names to make the result of the construction more clear.}
 While member constructor functions must always be overloaded (i.e.\ taking
-different argument lits) to handle different construction states, nonmember
+different argument lists) to handle different construction states, nonmember
 constructor functions can actually use different names to make them more
 clear.  For example, the nonmeber constructor functions {}\texttt{ovalShape(
 height, width )} and {}\texttt{roundShape( diameter )} may be more clear than
@@ -879,7 +891,7 @@ exceptions are thrown}.  For example, the statement:
   WidgetC wc( rcp(new WidgetA(...)), rcp(new WidgetB(...)) );
 \end{verbatim}}
 
-might create a memory leak when if an exception is thrown by one of the
+might create a memory leak if an exception is thrown by one of the
 constructors (see {}\cite[Item 13]{C++CodingStandards05}).  The reason that a
 memory leak might occur is that a C++ compiler is allowed to evaluate
 {}\texttt{new WidgetA(...)} and {}\texttt{new WidgetB(...)} before calling the
@@ -901,11 +913,11 @@ up memory if any exception is thrown.
 {}\item\textit{Nonmember constructor functions increase the encapsulation of
 your classes by not requiring direct access to private data (see {}\cite[Item
 44]{C++CodingStandards05}) and allowing less duplication of default member
-values}.  You can provide lots of special case constructors without cluttering
-up the class which can just have a general purpose constructor and or a set of
-post-construction intialization functions.  This also helps to improve
-maintaince by only having a single default constructor that sets default
-member values only once.
+values}.  You can provide many different special case constructors without
+cluttering up the class which can just have a general purpose constructor and
+or a set of post-construction initialization functions.  This also helps to
+improve maintaince by only having a single default constructor that sets
+default member values only once.
 
 
 % RAB: 2007/05/25: This example is a bit to verbose to be worth keeping in the main text.
@@ -1037,8 +1049,8 @@ to safely wrap contained objects:
 \end{verbatim}}
 
 There are many other alternative ways to develop wrapper classes that protect
-const of contained objects but a more detained discussion about how to write
-wrapper classes that protect the const-ness of contained objects in a
+const of contained objects.  However, a more detained discussion about how to
+write wrapper classes that protect the const-ness of contained objects in a
 maintainable and safe way is beyond the scope of the ``pure nommeber function
 interface'' idiom which is our main focus here.
 
@@ -1078,21 +1090,21 @@ after numerious changes in requirements and subsequent refactorings.
 
 \end{itemize}
 
-Where there are many advantages to the ``pure nonmember function interface''
+While there are many advantages to the ``pure nonmember function interface''
 idiom, it is not without some cost.  Some of the potential disadvantages of a
 pure nonmember function interface are:
 
 \begin{itemize}
 
-{}\item Calling the nonmember function may require explicit namespace
+{}\item Calling a nonmember function may require explicit namespace
 qualification (or a using declaration) and/or explicit template arguments in
-order to get the right function to be called which is almost ever the case for
+order to get the right function to be called which is almost never needed for
 a non-template member function call.
 
 {}\item The implementations of nonmember friend functions are a little more
 verbose than member functions.  For example, one has to explicitly qualify the
 object argument (i.e.\ {}\texttt{blob}) instead of an implicit
-{}\texttt{this->}.  Some programmers may consider this an advantage to be more
+{}\texttt{this->}.  Some programmers may consider it an advantage to be more
 explicit however and some languages (e.g.\ Python and Perl) always require
 explicit qualification to the object in member function implementations.
 
@@ -1107,7 +1119,7 @@ need to be worked out in order to address these issues.
 
 Since there are some disadvantages to developing and using a pure nonmember
 function interface for an abstract or concrete class, one should not
-automatically choose it over the more common member function interface.  If a
+automatically choose it over a more common member function interface.  If a
 particular class is not widely used, is not widely accessible to clients,
 and/or is unlikely to change, then developing a pure nonmember function
 interface may be overkill and not worth the (all be it small) extra work.
@@ -1136,8 +1148,8 @@ refactoring code with minimal impact on clients.
 %
 
 It is instructive to consider the implications of member and nonmember
-functions in C++ and how these differ with other object oriented languages.
-Specifically, we will consider three different object oriented languages: C++,
+functions in C++ and how these differ with other object-oriented languages.
+Specifically, we will consider three different object-oriented languages: C++,
 Java, and Python.  We can broadly classify languages as more strongly typed
 and less strongly typed.  In a stronger typed language such as C++ and Java,
 the semantics of an object are determined at compile time.  For example, in
@@ -1165,13 +1177,13 @@ Python without encapsulation.  Another difference between C++ and Python is
 that in Python, any code can add a new member function to any Python object at
 any time dynamically at runtime.  Therefore, Python code that uses the member
 function syntax {}\texttt{obj.foo()} to invoke some operation is no less
-flexible then using a nonmember function syntax like {}\texttt{foo(obj)}.
+flexible then using nonmember function syntax like {}\texttt{foo(obj)}.
 Therefore, since many programmers think that object orientation means calling
 member functions such as {}\texttt{obj.foo()}, there is no disadvantage to
 allowing them to do so in a language like Python.
 
 The situation for C++ is quite different.  By having the client insist on
-using the member function syntax such as {}\texttt{obj.foo()}, one is already
+using member function syntax such as {}\texttt{obj.foo()}, one is already
 placing several restrictions on how that operation is implemented and gets
 invoked.  In particular, having a client use a member function (e.g.\
 {}\texttt{obj.foo()}) to invoke an operation on a C++ object requires that:
@@ -1185,6 +1197,12 @@ subclass but the object itself must determine how to perform the operation.
 
 {}\item{}The function must be set at compile time and can not changed
 dynamically.
+
+{}\item{}A member function can access private and producted members and
+therefore errodes encapsulation, even if none of the non-public members are
+accessed initially.  If encapsulation by gentleman's agreement is sufficient
+for you then you are working with the wrong programming language and perhaps
+Perl or Python might be more to your liking.
 
 \end{enumerate}
 
@@ -1212,17 +1230,17 @@ add different layers of capabilities in a distributed way.
 type of multi-dispatch system where the exact operation to call would be
 determined by the traits of the objects involved at runtime.  For example, a
 nonmember function using multi-dispatch like {}\texttt{foo(objA,objB)} could
-call one of a number of different types of operations based on the types or
-properties of the objects {}\texttt{objA} and {}\texttt{objB}.
+call one of a number of different operations based on the types or properties
+of the objects {}\texttt{objA} and {}\texttt{objB}.
 
 \end{enumerate}
 
 In addition, nonmember functions that are declared in the same namespace as
 the types of the objects in their argument lists will be automatically looked
-up and called without requiring namespace qualification\footnote{In some types
-of templated code, calling a nonmember function without namespace
-qualification does not always work but there are usually various work arounds
-to make this manageable.}.
+up and called without requiring namespace qualification (this is know as
+Argument Dependent Lookup (ADL))\footnote{In some types of templated code,
+calling a nonmember function without namespace qualification does not always
+work but there are usually various work arounds to make this manageable.}.
 
 But does not object-oriented programming mean that all operations on objects
 are called through member functions?  Some programmings (and users) might
@@ -1269,10 +1287,9 @@ to be a friend), which is not really any of their business anyway.
 
 Other than for a bit of laziness and personal preference for writing
 {}\texttt{obj.foo()} as apposed to {}\texttt{foo(obj)}, there really is not a
-strong argument against using the ``pure nonmember function interface'' idiom
-described above.
+strong argument against using the ``pure nonmember function interface'' idiom.
 
-Since Java does not have the concept of nonmember functions, once could use a
+Since Java does not have the concept of nonmember functions, one could use a
 separate static class to declare these non-privileged functions and one could
 therefore have the same benefits as in C++ when using the ``pure nonmember
 function interface'' idiom.  However, since there would no longer be any
@@ -1300,8 +1317,8 @@ for a {}\texttt{BlobBase} object might look like:
   class Blob {
   public:
     Blob( RCP<BlobBase> &blob ) : blob_(blob) {}
-    void foo( const Bar &bar, bool useDog ) { foo(*blob_,bar,useDog); }
-    void foo( const Bar &bar, bool useDog ) const { foo(*blob_,bar,useDog); }
+    void foo( const Bar &bar, bool flag ) { foo(*blob_,bar,flag); }
+    void foo( const Bar &bar, bool flag ) const { foo(*blob_,bar,flag); }
   private:
     RCP<BlobBase> blob_;
   };
@@ -1360,7 +1377,7 @@ Of course, if one allows for both the use of member functions on the handle
 class and nonmember functions, then this brings up all of the same issues as
 it did for the interface class itself.  However, since a handle class should
 almost never be used as a means of interoperability, one can be more lenient
-about what functions are added as member functions and can therefore handle
+about what functions are added as member functions and therefore handle
 classes used as a convenience can tolerate refactorings better and tolerate
 more bloat.  Additionally, since the member functions on a handle class should
 never need privileged access to the underlying object, there will never need
