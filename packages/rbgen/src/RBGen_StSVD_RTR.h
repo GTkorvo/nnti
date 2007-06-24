@@ -56,7 +56,7 @@ namespace RBGen {
     void computeBasis();
 
     //! Update the current basis using a new set of snapshots.
-    void updateBasis( const Teuchos::RefCountPtr< Epetra_MultiVector >& update_ss );
+    void updateBasis( const Teuchos::RCP< Epetra_MultiVector >& update_ss );
 
     //@}
 
@@ -64,10 +64,10 @@ namespace RBGen {
     //@{
 
     //! Return a basis for the left singular subspace.
-    Teuchos::RefCountPtr<const Epetra_MultiVector> getBasis() const;
+    Teuchos::RCP<const Epetra_MultiVector> getBasis() const;
 
     //! Return a basis for the right singular subspace.
-    Teuchos::RefCountPtr<const Epetra_MultiVector> getRightBasis() const;
+    Teuchos::RCP<const Epetra_MultiVector> getRightBasis() const;
 
     //! Return the singular values.
     std::vector<double> getSingularValues() const;
@@ -84,11 +84,11 @@ namespace RBGen {
     //@{
 
     //! Initialize the method with the given parameter list and snapshot set.
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                     const Teuchos::RefCountPtr< Epetra_MultiVector >& init,
-                     const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
+    void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
+                     const Teuchos::RCP< Epetra_MultiVector >& init,
+                     const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
 
-    void Reset( const Teuchos::RefCountPtr<Epetra_MultiVector>& new_ss );
+    void Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss );
 
     //@}
 
@@ -110,37 +110,40 @@ namespace RBGen {
       KAPPA_CONVERGENCE,
       THETA_CONVERGENCE
     };
+    typedef Teuchos::ScalarTraits<double> SCT;
 
     // private members 
     // Riemannian metric
     // g(eta,eta)
-    double innerProduct( Teuchos::RefCountPtr< Epetra_MultiVector > etaU, 
-                         Teuchos::RefCountPtr< Epetra_MultiVector > etaV );
+    double innerProduct( const Epetra_MultiVector &etaU, 
+                         const Epetra_MultiVector &etaV );
     // g(eta,zeta)
-    double innerProduct( Teuchos::RefCountPtr< Epetra_MultiVector > etaU, 
-                         Teuchos::RefCountPtr< Epetra_MultiVector > etaV, 
-                         Teuchos::RefCountPtr< Epetra_MultiVector > zetaU, 
-                         Teuchos::RefCountPtr< Epetra_MultiVector > zetaV );
+    double innerProduct( const Epetra_MultiVector &etaU, 
+                         const Epetra_MultiVector &etaV, 
+                         const Epetra_MultiVector &zetaU, 
+                         const Epetra_MultiVector &zetaV );
     // Retraction, in situ
-    void retract( Teuchos::RefCountPtr< Epetra_MultiVector > xU, 
-                  Teuchos::RefCountPtr< Epetra_MultiVector > xV, 
-                  Teuchos::RefCountPtr< Epetra_MultiVector > etaU, 
-                  Teuchos::RefCountPtr< Epetra_MultiVector > etaV );
+    void retract( const Epetra_MultiVector &xU, 
+                  const Epetra_MultiVector &xV, 
+                  Epetra_MultiVector &etaU, 
+                  Epetra_MultiVector &etaV );
     // Compute gradient
-    void grad( Teuchos::RefCountPtr< Epetra_MultiVector > xU, 
-               Teuchos::RefCountPtr< Epetra_MultiVector > xV, 
-               Teuchos::RefCountPtr< Epetra_MultiVector > gradU, 
-               Teuchos::RefCountPtr< Epetra_MultiVector > gradV );
+    void grad( const Epetra_MultiVector &xU, 
+               const Epetra_MultiVector &xV, 
+               Epetra_MultiVector &gradU, 
+               Epetra_MultiVector &gradV );
     // Apply Hessian
-    void Hess( Teuchos::RefCountPtr< Epetra_MultiVector > xU, 
-               Teuchos::RefCountPtr< Epetra_MultiVector > xV, 
-               Teuchos::RefCountPtr< Epetra_MultiVector > etaU, 
-               Teuchos::RefCountPtr< Epetra_MultiVector > etaV );
+    void Hess( const Epetra_MultiVector &xU, 
+               const Epetra_MultiVector &xV, 
+               const Epetra_MultiVector &etaU, 
+               const Epetra_MultiVector &etaV,
+                     Epetra_MultiVector &HetaU,
+                     Epetra_MultiVector &HetaV );
     // Project back to tangent plane
-    void Proj( Teuchos::RefCountPtr< Epetra_MultiVector > xU, 
-               Teuchos::RefCountPtr< Epetra_MultiVector > xV, 
-               Teuchos::RefCountPtr< Epetra_MultiVector > etaU, 
-               Teuchos::RefCountPtr< Epetra_MultiVector > etaV );
+    void Proj( const Epetra_MultiVector &xU, 
+               const Epetra_MultiVector &xV, 
+               Epetra_MultiVector &etaU, 
+               Epetra_MultiVector &etaV );
     // solve the trust-region subproblem
     void solveTRSubproblem();
 
@@ -152,12 +155,16 @@ namespace RBGen {
     std::vector<double> N_;
 
     // Pointer to the snapshots
-    Teuchos::RefCountPtr<Epetra_MultiVector> A_;
+    Teuchos::RCP<Epetra_MultiVector> A_;
     // state multivecs
-    Teuchos::RefCountPtr<Epetra_MultiVector> U_, V_,           // current iterate
-                                             RU_, RV_,         // residual, gradient and residual of model minimization
-                                             etaU_, etaV_,     // subproblem solution
-                                             deltaU_, deltaV_; // search directions
+    Teuchos::RCP<Epetra_MultiVector> U_, V_,           // current iterate
+                                     RU_, RV_,         // residual, gradient and residual of model minimization
+                                     etaU_, etaV_,     // subproblem solution
+                                     HeU_, HeV_,       // eta under Hessian
+                                     deltaU_, deltaV_, // search directions
+                                     HdU_, HdV_;       // search directions under Hessian
+    // finish: what else? A'*U or A*V ???
+    Teuchos::RCP<Teuchos::SerialDenseMatrix<int,double> > B_; // U'*A*V
 
     // Vector holding singular values.
     std::vector<double> sigma_;
@@ -166,7 +173,7 @@ namespace RBGen {
     double tol_;
 
     // ortho manager: need this for qf()
-    Teuchos::RefCountPtr< Anasazi::OrthoManager<double,Epetra_MultiVector> > ortho_;
+    Teuchos::RCP< Anasazi::OrthoManager<double,Epetra_MultiVector> > ortho_;
 
     // cummulative timer
     Teuchos::Time timerComp_;

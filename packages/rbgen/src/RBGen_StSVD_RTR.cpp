@@ -7,6 +7,8 @@
 #include "Epetra_LocalMap.h"
 #include "Epetra_Comm.h"
 
+#define STSVD_DEBUG 1
+
 namespace RBGen {
 
   StSVDRTR::StSVDRTR() : 
@@ -92,6 +94,18 @@ namespace RBGen {
     V_ = rcp( new Epetra_MultiVector(lclmap,rank_,false) );
     resNorms_.resize(rank_);
 
+    // Perform initial factorization
+    // Make U,V orthonormal
+    int ret = ortho_->normalize(*U_,Teuchos::null);
+    TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial U basis construction failed.");
+    ret = ortho_->normalize(*U_,Teuchos::null);
+    TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial V basis construction failed.");
+    // Compute initial singular values
+    // finish: compute U'*A*V, compute its singular values
+    // finish: retain parts that we need
+    // finish: compute residuals: RU = A *V - U*S
+    //                            RV = A'*U - V*S
+
     // we are now initialized, albeit with null rank
     isInitialized_ = true;
   }
@@ -176,155 +190,102 @@ namespace RBGen {
     const int d = (n-k)*k + (m-k)*k + (k-1)*k;
     const double D2 = Delta_*Delta_;
 
-    double d_Hd, alpha, beta, z_r, zold_rold;
+    // CG terms
+    double d_Hd, alpha, beta, r_r, rold_rold; 
+    // terms for monitoring the norm of eta
+    double e_e, e_d, d_d, e_e_new;
+    // initial residual norm, used for stopping criteria
     double r0_norm;
 
     // set eta to zero
-    MVT::MvInit(*this->eta_);
+    etaU_->PutScalar(0.0);
+    etaV_->PutScalar(0.0);
+    HeU_->PutScalar(0.0);
+    HeV_->PutScalar(0.0);
+    e_e = 0.0;
 
     //
-    // R_ is A X_ - B X_ diag(theta_)
+    // We have two residuals: RU = A *V - U*S
+    //                    and RV = A'*U - V*S
     //
-    // r0 = grad f(X) = 2 P_BX A X = 2 P_BX (A X - B X diag(theta_) = 2 proj(R_)
+    // Note that grad(U,V) = {proj(A *V*N)} = {proj(RU*N)}
+    //                       {proj(A'*U*N)} = {proj(RV*N)}
+    // 
+    // Project the residuals in RU_ and RV_ to yield the gradient
+    //
+    // r0 = grad f(X) = Proj R_
     // We will do this in place.
     //
-    {
-      Teuchos::TimeMonitor lcltimer( *this->timerOrtho_ );
-      this->orthman_->project(*this->R_,Teuchos::null,
-                              Teuchos::tuple<Teuchos::RefCountPtr<Teuchos::SerialDenseMatrix<int,ScalarType> > >(Teuchos::null),
-                              Teuchos::tuple<Teuchos::RefCountPtr<const MV> >(this->X_),
-                              Teuchos::tuple<Teuchos::RefCountPtr<const MV> >(this->BX_));
-      MVT::MvScale(*this->R_,2.0);
-    }
-    r0_norm = MAT::squareroot( ginner(*this->R_) );
-
-    // z = Prec^-1 r
-    // this must be in the tangent space
-    if (this->hasPrec_) {
-      Teuchos::TimeMonitor lcltimer( *this->timerPrec_ );
-      OPT::Apply(*this->Prec_,*this->R_,*this->Z_);
-      // the orthogonalization time counts under Ortho and under Preconditioning
-      {
-        Teuchos::TimeMonitor lcltimer( *this->timerOrtho_ );
-        this->orthman_->project(*this->Z_,Teuchos::null,
-                                Teuchos::tuple<Teuchos::RefCountPtr<Teuchos::SerialDenseMatrix<int,ScalarType> > >(Teuchos::null),
-                                Teuchos::tuple<Teuchos::RefCountPtr<const MV> >(this->X_),
-                                Teuchos::tuple<Teuchos::RefCountPtr<const MV> >(this->BX_));
-      }
-      z_r = SCT::real( ginner(*this->R_,*this->Z_) );
-    }
-    else {
-      z_r = SCT::real( ginner(*this->R_) );
-    }
-    // initial value of <delta,delta>_P
-    d_Pd = z_r;
+    Proj(U_,V_,RU_,RV_);
+    r_r = innerProduct(*RU_,*RV_);
+    d_d = r_r;
+    r0_norm = SCT::squareroot(r_r);
 
     // delta = -z
-    MVT::MvAddMv(-ONE,*this->Z_,ZERO,*this->Z_,*this->delta_);
+    deltaU_->Update(0.0,*RU_,-1.0);
+    deltaV_->Update(0.0,*RV_,-1.0);
+    e_d = 0.0;  // because eta = 0
 
     // the loop
-    for (int i=0; i<d; i++) {
+    for (int i=0; i<d; ++i) {
 
-      // 
-      // print some debugging info
-      if (this->om_->isVerbosity(Debug)) {
-        this->om_->stream(Debug) 
-          << " Debugging checks: RTR inner iteration " << i << endl
-          << " >> (eta  ,eta  )_Prec : " << e_Pe << endl
-          << " >> (eta  ,delta)_Prec : " << e_Pd << endl
-          << " >> (delta,delta)_Prec : " << d_Pd << endl;
-      }
-
-      // [Hdelta,Adelta,Bdelta] = Hess*d = 2 Proj(A*d - B*d*x'*A*x)
-      {
-        Teuchos::TimeMonitor lcltimer( *this->timerAOp_ );
-        OPT::Apply(*this->AOp_,*this->delta_,*this->Adelta_);
-        this->counterAOp_ += this->blockSize_;
-      }
-      if (this->hasBOp_) {
-        Teuchos::TimeMonitor lcltimer( *this->timerBOp_ );
-        OPT::Apply(*this->BOp_,*this->delta_,*this->Bdelta_);
-        this->counterBOp_ += this->blockSize_;
-      }
-      // put 2*A*d - 2*B*d*theta --> Hd
-      MVT::MvAddMv(ONE,*this->Bdelta_,ZERO,*this->Bdelta_,*this->Hdelta_);
-      MVT::MvScale(*this->Hdelta_,this->theta_);
-      MVT::MvAddMv(2.0,*this->Adelta_,-2.0,*this->Hdelta_,*this->Hdelta_);
-      // apply projector
-      {
-        Teuchos::TimeMonitor lcltimer( *this->timerOrtho_ );
-        this->orthman_->project(*this->Hdelta_,Teuchos::null,
-                                Teuchos::tuple<Teuchos::RefCountPtr<Teuchos::SerialDenseMatrix<int,ScalarType> > >(Teuchos::null),
-                                Teuchos::tuple<Teuchos::RefCountPtr<const MV> >(this->X_),
-                                Teuchos::tuple<Teuchos::RefCountPtr<const MV> >(this->BX_));
-      }
-      d_Hd = SCT::real( ginner(*this->delta_,*this->Hdelta_) );
+      // Hdelta = Hess*d 
+      Hess(*U_,*V_,*deltaU_,*deltaV_,*HdU_,*HdV_);
+      d_Hd = ginner(*deltaU_,*deltaV_,*HdU_,*HdV_);
 
       // compute update step
-      alpha = z_r/d_Hd;
+      alpha = r_r/d_Hd;
 
-      if (this->om_->isVerbosity(Debug)) {
-        this->om_->stream(Debug) 
-          << " >> (z,r)  : " << z_r  << endl
-                                << " >> (d,Hd) : " << d_Hd << endl
-                                                      << " >> alpha  : " << alpha << endl;
-      }
+#ifdef STSVD_DEBUG
+        cout << " >> (r,r)  : " << r_r  << endl
+             << " >> (d,Hd) : " << d_Hd << endl
+             << " >> alpha  : " << alpha << endl;
+#endif
 
-      // <neweta,neweta>_P = <eta,eta>_P + 2*alpha*<eta,delta>_P + alpha*alpha*<delta,delta>_P
-      e_Pe_new = e_Pe + 2.0*alpha*e_Pd + alpha*alpha*d_Pd;
+      // <neweta,neweta> = <eta,eta> + 2*alpha*<eta,delta> + alpha*alpha*<delta,delta>
+      e_e_new = e_e + 2.0*alpha*e_d + alpha*alpha*d_d;
 
       // check truncation criteria: negative curvature or exceeded trust-region
-      if (d_Hd <= 0 || e_Pe_new >= D2) {
-        double tau = (-e_Pd + MAT::squareroot(e_Pd*e_Pd + d_Pd*(D2-e_Pe))) / d_Pd;
-        if (this->om_->isVerbosity(Debug)) {
-          this->om_->stream(Debug) 
-            << " >> tau  : " << tau << endl;
-        }
-        MVT::MvAddMv(tau,*this->delta_ ,ONE,*this->eta_ ,*this->eta_);
-        MVT::MvAddMv(tau,*this->Adelta_,ONE,*this->Aeta_,*this->Aeta_);
-        if (this->hasBOp_) {
-          MVT::MvAddMv(tau,*this->Bdelta_,ONE,*this->Beta_,*this->Beta_);
-        }
-        MVT::MvAddMv(tau,*this->Hdelta_,ONE,*this->Heta_,*this->Heta_);
+      if (d_Hd <= 0 || e_e_new >= D2) {
+        double tau = (-e_d + SCT::squareroot(e_d*e_d + d_d*(D2-e_e))) / d_d;
+#ifdef STSVD_DEBUG
+        cout << " >> tau  : " << tau << endl;
+#endif
+        // eta = eta + tau*delta
+        etaU_->Update(1.0,tau,*deltaU_);
+        etaV_->Update(1.0,tau,*deltaV_);
+        HeU_->Update(1.0,tau,*HdU_);
+        HeV_->Update(1.0,tau,*HdV_);
         if (d_Hd <= 0) {
           innerStop_ = NEGATIVE_CURVATURE;
         }
         else {
           innerStop_ = EXCEEDED_TR;
         }
-        if (this->om_->isVerbosity(Debug)) {
-          e_Pe_new = e_Pe + 2.0*tau*e_Pd + tau*tau*d_Pd;
-          this->om_->stream(Debug) 
-            << " >> new (eta,eta)_Prec : " << e_Pe_new << endl
-            << " >> (eta,eta)          : " << ginner(*this->eta_) << endl;
-        }
+#ifdef STSVD_DEBUG
+        e_e_new = e_e + 2.0*tau*e_d + tau*tau*d_d;
+        cout << " >> predicted  (eta,eta) : " << e_e_new << endl
+             << " >> actual (eta,eta)     : " << innerProduct(*etaU_,*etaV_) << endl;
+#endif
         break;
       }
 
       // compute new eta == eta + alpha*delta
-      MVT::MvAddMv(alpha,*this->delta_ ,ONE,*this->eta_ ,*this->eta_);
-      MVT::MvAddMv(alpha,*this->Adelta_,ONE,*this->Aeta_,*this->Aeta_);
-      if (this->hasBOp_) {
-        MVT::MvAddMv(alpha,*this->Bdelta_,ONE,*this->Beta_,*this->Beta_);
-      }
-      MVT::MvAddMv(alpha,*this->Hdelta_,ONE,*this->Heta_,*this->Heta_);
-      // update its P-length
-      e_Pe = e_Pe_new;
+      etaU_->Update(1.0,alpha,*deltaU_);
+      etaV_->Update(1.0,alpha,*deltaV_);
+      HeU_->Update(1.0,alpha,*HdU_);
+      HeV_->Update(1.0,alpha,*HdV_);
+      // update its length
+      e_e = e_e_new;
 
       // update gradient of m
-      MVT::MvAddMv(alpha,*this->Hdelta_,ONE,*this->R_,*this->R_);
-      {
-        // re-tangentialize r
-        Teuchos::TimeMonitor lcltimer( *this->timerOrtho_ );
-        this->orthman_->project(*this->R_,Teuchos::null,
-                                Teuchos::tuple<Teuchos::RefCountPtr<Teuchos::SerialDenseMatrix<int,ScalarType> > >(Teuchos::null),
-                                Teuchos::tuple<Teuchos::RefCountPtr<const MV> >(this->X_),
-                                Teuchos::tuple<Teuchos::RefCountPtr<const MV> >(this->BX_));
-      }
+      RU_->Update(1.0,alpha,*HdU_);
+      RV_->Update(1.0,alpha,*HdV_);
+      Project(*U_,*V_,*RU_,*RV_);
 
-      //
-      // check convergence
-      double r_norm = MAT::squareroot(SCT::real(ginner(*this->R_,*this->R_)));
+      rold_rold = r_r;
+      r_r = innerProduct(*RU_,*RV_);
+      double r_norm = SCT::squareroot(r_r);
 
       //
       // check local convergece 
@@ -332,12 +293,13 @@ namespace RBGen {
       // kappa (linear) convergence
       // theta (superlinear) convergence
       //
-      double kconv = r0_norm * this->conv_kappa_;
+      double kconv = r0_norm * conv_kappa_;
       // insert some scaling here
-      // double tconv = r0_norm * MAT::pow(r0_norm/normgradf0_,this->conv_theta_);
-      double tconv = MAT::pow(r0_norm,this->conv_theta_+ONE);
-      if ( r_norm <= ANASAZI_MIN(tconv,kconv) ) {
-        if (tconv <= kconv) {
+      // double tconv = r0_norm * SCT::pow(r0_norm/normgradf0_,this->conv_theta_);
+      double tconv = SCT::pow(r0_norm,conv_theta_+1.0);
+      double conv = kconv < tconv ? kconv : tconv;
+      if ( r_norm <= conv ) {
+        if (conv == tconv) {
           innerStop_ = THETA_CONVERGENCE;
         }
         else {
@@ -346,44 +308,22 @@ namespace RBGen {
         break;
       }
 
-      // z = Prec^-1 r
-      // this must be in the tangent space
-      zold_rold = z_r;
-      if (this->hasPrec_) {
-        Teuchos::TimeMonitor lcltimer( *this->timerPrec_ );
-        OPT::Apply(*this->Prec_,*this->R_,*this->Z_);
-        // the orthogonalization time counts under Ortho and under Preconditioning
-        {
-          Teuchos::TimeMonitor lcltimer( *this->timerOrtho_ );
-          this->orthman_->project(*this->Z_,Teuchos::null,
-                                  Teuchos::tuple<Teuchos::RefCountPtr<Teuchos::SerialDenseMatrix<int,ScalarType> > >(Teuchos::null),
-                                  Teuchos::tuple<Teuchos::RefCountPtr<const MV> >(this->X_),
-                                  Teuchos::tuple<Teuchos::RefCountPtr<const MV> >(this->BX_));
-        }
-        z_r = SCT::real( ginner(*this->R_,*this->Z_) );
-      }
-      else {
-        z_r = SCT::real( ginner(*this->R_) );
-      }
-
       // compute new search direction
-      beta = z_r/zold_rold;
-      MVT::MvAddMv(-ONE,*this->Z_,beta,*this->delta_,*this->delta_);
-      // update new P-norms and P-dots
-      e_Pd = beta*(e_Pd + alpha*d_Pd);
-      d_Pd = z_r + beta*beta*d_Pd;
+      beta = r_r/rold_rold;
+      deltaU_->Update(beta,-1.0,*RU_);
+      deltaV_->Update(beta,-1.0,*RV_);
+      // update new norms and dots
+      e_d = beta*(e_d + alpha*d_d);
+      d_d = r_r + beta*beta*d_d;
 
     } // end of the inner iteration loop
 
-    if (this->om_->isVerbosity(Debug)) {
-      this->om_->stream(Debug) 
-        << " >> stop reason is " << stopReasons_[innerStop_] << endl
-        << endl;
-    }
+#ifdef STSVD_DEBUG
+    cout << " >> stop reason is " << stopReasons_[innerStop_] << endl
+          << endl;
+#endif
 
   } // end of solveTRSubproblem
 
     
 } // end of RBGen namespace
-
-
