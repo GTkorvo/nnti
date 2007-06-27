@@ -125,46 +125,46 @@ int main(int argc, char *argv[])
   double tol = 1.0e-10;
 
   // Create problem
-  Teuchos::RefCountPtr<ModalProblem> testCase = 
+  Teuchos::RCP<ModalProblem> testCase = 
     Teuchos::rcp( new ModeLaplace1DQ1(Comm, brick_dim[0], elements[0]) );
 
   // Get the stiffness and mass matrices
-  Teuchos::RefCountPtr<Epetra_Operator> e_K = 
+  Teuchos::RCP<Epetra_Operator> e_K = 
     Teuchos::rcp( const_cast<Epetra_Operator *>(testCase->getStiffness()), false );
-  Teuchos::RefCountPtr<Epetra_Operator> e_M = 
+  Teuchos::RCP<Epetra_Operator> e_M = 
     Teuchos::rcp( const_cast<Epetra_Operator *>(testCase->getMass()), false );
 
   // Get a pointer to the Epetra_Map
-  Teuchos::RefCountPtr<const Epetra_Map> Map =  
+  Teuchos::RCP<const Epetra_Map> Map =  
     Teuchos::rcp( &e_K->OperatorDomainMap(), false );
 
 
   /********************* Create wrapped Epetra multivector ********************/
   // create an epetra multivector
-  Teuchos::RefCountPtr<Epetra_MultiVector> e_ivec = 
+  Teuchos::RCP<Epetra_MultiVector> e_ivec = 
       Teuchos::rcp( new Epetra_MultiVector(e_K->OperatorDomainMap(), blockSize) );
   e_ivec->Random();
 
   // create a thyra vectorspacebase from the epetra map
-  Teuchos::RefCountPtr<const Thyra::MPIVectorSpaceBase<double> > e_vs = 
+  Teuchos::RCP<const Thyra::MPIVectorSpaceBase<double> > e_vs = 
     Thyra::create_MPIVectorSpaceBase(Map);
 
   // then, a ScalarProdVectorSpaceBase
-  Teuchos::RefCountPtr<const Thyra::ScalarProdVectorSpaceBase<double> > sp_domain = 
+  Teuchos::RCP<const Thyra::ScalarProdVectorSpaceBase<double> > sp_domain = 
     Teuchos::rcp_dynamic_cast<const Thyra::ScalarProdVectorSpaceBase<double> >(
       e_vs->smallVecSpcFcty()->createVecSpc(e_ivec->NumVectors())
     );
 
   // create a MultiVectorBase (from the Epetra_MultiVector)
-  Teuchos::RefCountPtr<Thyra::MultiVectorBase<double> > te_ivec = 
+  Teuchos::RCP<Thyra::MultiVectorBase<double> > te_ivec = 
     Thyra::create_MPIMultiVectorBase(Teuchos::rcp_implicit_cast<Epetra_MultiVector>(e_ivec), 
                                      e_vs,sp_domain);
 
 
   // Create Thyra LinearOpBase objects from the Epetra_Operator objects
-  Teuchos::RefCountPtr<Thyra::LinearOpBase<double> > te_K = 
+  Teuchos::RCP<Thyra::LinearOpBase<double> > te_K = 
     Teuchos::rcp( new Thyra::EpetraLinearOp(e_K) );
-  Teuchos::RefCountPtr<Thyra::LinearOpBase<double> > te_M = 
+  Teuchos::RCP<Thyra::LinearOpBase<double> > te_M = 
     Teuchos::rcp( new Thyra::EpetraLinearOp(e_M) );
 
   // Create parameter list to pass into solver
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
   MyPL.set( "Restart Timers", true);
 
   // Create default output manager 
-  Teuchos::RefCountPtr<Anasazi::OutputManager<double> > MyOM = Teuchos::rcp( new Anasazi::OutputManager<double>( MyPID ) );
+  Teuchos::RCP<Anasazi::OutputManager<double> > MyOM = Teuchos::rcp( new Anasazi::OutputManager<double>( MyPID ) );
 
   // Set verbosity level
   if (verbose) {
@@ -184,10 +184,10 @@ int main(int argc, char *argv[])
   }
 
   // Create the sort manager
-  Teuchos::RefCountPtr<Anasazi::BasicSort<double, MV, OP> > MySM = 
+  Teuchos::RCP<Anasazi::BasicSort<double, MV, OP> > MySM = 
      Teuchos::rcp( new Anasazi::BasicSort<double, MV, OP>(which) );
 
-  Teuchos::RefCountPtr<Anasazi::BasicEigenproblem<double, MV, OP> > te_Problem =
+  Teuchos::RCP<Anasazi::BasicEigenproblem<double, MV, OP> > te_Problem =
     Teuchos::rcp( 
       new Anasazi::BasicEigenproblem<double, MV, OP>(te_K, te_M, te_ivec) 
     );
@@ -212,11 +212,11 @@ int main(int argc, char *argv[])
   }
   if (!testFailed) {
     // Get the eigenvalues and eigenvectors from the eigenproblem
-    Teuchos::RefCountPtr<std::vector<double> > evals = te_Problem->GetEvals();
-    Teuchos::RefCountPtr<MV> evecs = te_Problem->GetEvecs();
+    Teuchos::RCP<std::vector<double> > evals = te_Problem->GetEvals();
+    Teuchos::RCP<MV> evecs = te_Problem->GetEvecs();
     
     // Compute the direct residual
-    Teuchos::RefCountPtr<MV> Kvec, Mvec; 
+    Teuchos::RCP<MV> Kvec, Mvec; 
     int numVecs = MVT::GetNumberVecs(*evecs);
     std::vector<double> normV( numVecs );
     Teuchos::SerialDenseMatrix<int,double> T(numVecs,numVecs);

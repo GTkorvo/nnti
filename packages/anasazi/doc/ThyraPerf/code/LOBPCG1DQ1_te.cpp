@@ -124,43 +124,43 @@ int main(int argc, char *argv[])
   double tol = 1.0e-10;
 
   // Create problem
-  Teuchos::RefCountPtr<ModalProblem> testCase = 
+  Teuchos::RCP<ModalProblem> testCase = 
     Teuchos::rcp( new ModeLaplace1DQ1(Comm, brick_dim[0], elements[0]) );
 
   // Get the stiffness and mass matrices
-  Teuchos::RefCountPtr<Epetra_Operator> K = 
+  Teuchos::RCP<Epetra_Operator> K = 
     Teuchos::rcp( const_cast<Epetra_Operator *>(testCase->getStiffness()), false );
-  Teuchos::RefCountPtr<Epetra_Operator> M = 
+  Teuchos::RCP<Epetra_Operator> M = 
     Teuchos::rcp( const_cast<Epetra_Operator *>(testCase->getMass()), false );
 
   // Get a pointer to the Epetra_Map
-  Teuchos::RefCountPtr<const Epetra_Map> Map =  
+  Teuchos::RCP<const Epetra_Map> Map =  
     Teuchos::rcp( &K->OperatorDomainMap(), false );
 
   // create an epetra multivector
-  Teuchos::RefCountPtr<Epetra_MultiVector> ivec = 
+  Teuchos::RCP<Epetra_MultiVector> ivec = 
       Teuchos::rcp( new Epetra_MultiVector(K->OperatorDomainMap(), blockSize) );
   ivec->Random();
 
   // create a Thyra::VectorSpaceBase
-  Teuchos::RefCountPtr<const Thyra::MPIVectorSpaceBase<double> > epetra_vs = 
+  Teuchos::RCP<const Thyra::MPIVectorSpaceBase<double> > epetra_vs = 
     Thyra::create_MPIVectorSpaceBase(Map);
 
   // then, a ScalarProdVectorSpaceBase
-  Teuchos::RefCountPtr<const Thyra::ScalarProdVectorSpaceBase<double> > sp_domain = 
+  Teuchos::RCP<const Thyra::ScalarProdVectorSpaceBase<double> > sp_domain = 
     Teuchos::rcp_dynamic_cast<const Thyra::ScalarProdVectorSpaceBase<double> >(
       epetra_vs->smallVecSpcFcty()->createVecSpc(ivec->NumVectors())
     );
 
   // create a MultiVectorBase (from the Epetra_MultiVector)
-  Teuchos::RefCountPtr<Thyra::MultiVectorBase<double> > thyra_ivec = 
+  Teuchos::RCP<Thyra::MultiVectorBase<double> > thyra_ivec = 
     Thyra::create_MPIMultiVectorBase(Teuchos::rcp_implicit_cast<Epetra_MultiVector>(ivec), 
                                      epetra_vs,sp_domain);
 
   // Create Thyra LinearOpBase objects from the Epetra_Operator objects
-  Teuchos::RefCountPtr<Thyra::LinearOpBase<double> > thyra_K = 
+  Teuchos::RCP<Thyra::LinearOpBase<double> > thyra_K = 
     Teuchos::rcp( new Thyra::EpetraLinearOp(K) );
-  Teuchos::RefCountPtr<Thyra::LinearOpBase<double> > thyra_M = 
+  Teuchos::RCP<Thyra::LinearOpBase<double> > thyra_M = 
     Teuchos::rcp( new Thyra::EpetraLinearOp(M) );
 
   // Create parameter list to pass into solver
@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
   MyPL.set( "Tol", tol );
 
   // Create default output manager 
-  Teuchos::RefCountPtr<Anasazi::OutputManager<double> > MyOM = Teuchos::rcp( new Anasazi::OutputManager<double>( MyPID ) );
+  Teuchos::RCP<Anasazi::OutputManager<double> > MyOM = Teuchos::rcp( new Anasazi::OutputManager<double>( MyPID ) );
 
   // Set verbosity level
   if (verbose) {
@@ -178,12 +178,12 @@ int main(int argc, char *argv[])
   }
 
   // Create the sort manager
-  Teuchos::RefCountPtr<Anasazi::BasicSort<double, MV, OP> > MySM = 
+  Teuchos::RCP<Anasazi::BasicSort<double, MV, OP> > MySM = 
      Teuchos::rcp( new Anasazi::BasicSort<double, MV, OP>(which) );
 
   // Create eigenproblem
 
-  Teuchos::RefCountPtr<Anasazi::BasicEigenproblem<double, MV, OP> > MyProblem =
+  Teuchos::RCP<Anasazi::BasicEigenproblem<double, MV, OP> > MyProblem =
     Teuchos::rcp( 
       new Anasazi::BasicEigenproblem<double, MV, OP>(thyra_K, thyra_M, thyra_ivec) 
     );
@@ -213,11 +213,11 @@ int main(int argc, char *argv[])
 
   if (!testFailed) {
     // Get the eigenvalues and eigenvectors from the eigenproblem
-    Teuchos::RefCountPtr<std::vector<double> > evals = MyProblem->GetEvals();
-    Teuchos::RefCountPtr<MV> evecs = MyProblem->GetEvecs();
+    Teuchos::RCP<std::vector<double> > evals = MyProblem->GetEvals();
+    Teuchos::RCP<MV> evecs = MyProblem->GetEvecs();
     
     // Compute the direct residual
-    Teuchos::RefCountPtr<MV> Kvec, Mvec; 
+    Teuchos::RCP<MV> Kvec, Mvec; 
     int numVecs = MVT::GetNumberVecs(*evecs);
     std::vector<double> normV( numVecs );
     Teuchos::SerialDenseMatrix<int,double> T(numVecs,numVecs);
