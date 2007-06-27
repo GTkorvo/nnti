@@ -588,7 +588,8 @@ Scalar Vector<Scalar>::getElement(Index globalIndex) const
         k += len;
       }
     }
-
+    TEST_FOR_EXCEPT(true); // should never happen
+    return 0.0; // -Wall
   }
   else
   {
@@ -720,9 +721,13 @@ const Scalar& Vector<Scalar>::localElement(const Index& blockIndex, const Index&
   {
     vec = this->ptr();
   }
-  const TSFExtended::RawDataAccessibleVector<Scalar>* d 
-    = this->castToRawDataAccessible();
-  return d->dataPtr()[indexInBlock];
+  const Thyra::DefaultSpmdVector<Scalar>* dsv 
+    = dynamic_cast<const Thyra::DefaultSpmdVector<Scalar>*>(this->ptr().get());
+  if (dsv != 0)
+  {
+    return dsv->getPtr()[indexInBlock*dsv->getStride()];
+  }
+  return castToRawDataAccessible()->dataPtr()[indexInBlock];
 } 
 
 
@@ -741,6 +746,13 @@ Scalar& Vector<Scalar>::localElement(const Index& blockIndex, const Index& index
   else
   {
     vec = this->ptr();
+  }
+  
+  Thyra::DefaultSpmdVector<Scalar>* dsv 
+    = dynamic_cast<Thyra::DefaultSpmdVector<Scalar>*>(this->ptr().get());
+  if (dsv != 0)
+  {
+    return dsv->getPtr()[indexInBlock*dsv->getStride()];
   }
   TSFExtended::RawDataAccessibleVector<Scalar>* d 
     = this->castToRawDataAccessible();

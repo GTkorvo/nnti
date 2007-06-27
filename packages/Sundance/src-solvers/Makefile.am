@@ -137,6 +137,7 @@ OPERATORS_H = \
 	$(srcdir)/Operators/TSFLoadableMatrix.hpp\
 	$(srcdir)/Operators/TSFLTIProblemFactoryBase.hpp\
 	$(srcdir)/Operators/TSFMatrixFactory.hpp\
+	$(srcdir)/Operators/TSFMultiVectorOperator.hpp\
 	$(srcdir)/Operators/TSFNonlinearOperator.hpp\
 	$(srcdir)/Operators/TSFNonlinearOperatorBase.hpp\
 	$(srcdir)/Operators/TSFRowAccessibleOp.hpp \
