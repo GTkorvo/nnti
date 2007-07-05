@@ -138,18 +138,57 @@ endif
 ## #######################################################################
 ## Subdirectories to be make'd recursively
 ## #######################################################################
-#  #np# - Most packages should have an example and a full suite 
-#  of tests.  At present, rbgen only offers src and example.
-#  BUILD_TESTS and BUILD_EXAMPLES are defined through the configure.ac file.
+
+#We now build tests and examples through separate make targets, rather than
+#during "make".  We still need to conditionally include the test and example
+#in SUBDIRS, even though BUILD_TESTS and BUILD_EXAMPLES will never be
+#defined, so that the tests and examples are included in the distribution
+#tarball.
+
+if SUB_TEST
+TEST_SUBDIR=test
+endif
+
+if SUB_EXAMPLE
+EXAMPLE_SUBDIR=example
+endif
 
 if BUILD_TESTS
-#TEST_SUBDIR=test
-TEST_SUBDIR=
+tests:
+	cd $(top_builddir)/test; $(MAKE)
+else
+tests:
+	@echo "rbgen tests were disabled at configure time"
 endif
 
 if BUILD_EXAMPLES
-EXAMPLE_SUBDIR=example
+examples:
+	cd $(top_builddir)/example ; $(MAKE)
+
+install-examples:
+	cd $(top_builddir)/example ; $(MAKE) install
+else
+examples:
+	@echo "rbgen examples were disabled at configure time"
+
+install-examples:
+	@echo "rbgen examples were disabled at configure time"
 endif
+
+clean-tests:
+	cd $(top_builddir)/test ; $(MAKE) clean
+
+clean-examples:
+	cd $(top_builddir)/example ; $(MAKE) clean
+
+everything:
+	$(MAKE) ; $(MAKE) examples ; $(MAKE) tests
+
+clean-everything:
+	$(MAKE) clean-examples ; $(MAKE) clean-tests ; $(MAKE) clean
+
+install-everything:
+	$(MAKE) install ; $(MAKE) install-examples
 
 SUBDIRS = src $(TEST_SUBDIR) $(EXAMPLE_SUBDIR) 
 
