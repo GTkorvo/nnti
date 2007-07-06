@@ -98,15 +98,6 @@ all-local:
 	@echo "Trilinos package aristos built successfully"
 
 ## #######################################################################
-## Target for circular dependencies
-## #######################################################################
-all-libs:
-	cd src ; make all-libs
-
-libs:
-	cd src ; make
-
-## #######################################################################
 ## Export Makefile Installation
 ## #######################################################################
 if USING_EXPORT_MAKEFILES
