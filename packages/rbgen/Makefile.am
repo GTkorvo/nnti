@@ -145,9 +145,9 @@ endif
 #defined, so that the tests and examples are included in the distribution
 #tarball.
 
-if SUB_TEST
-TEST_SUBDIR=test
-endif
+#if SUB_TEST
+#TEST_SUBDIR=test
+#endif
 
 if SUB_EXAMPLE
 EXAMPLE_SUBDIR=example
@@ -155,7 +155,8 @@ endif
 
 if BUILD_TESTS
 tests:
-	cd $(top_builddir)/test; $(MAKE)
+	@echo "rbgen does not have tests at this time"
+#	cd $(top_builddir)/test; $(MAKE)
 else
 tests:
 	@echo "rbgen tests were disabled at configure time"
@@ -176,7 +177,7 @@ install-examples:
 endif
 
 clean-tests:
-	cd $(top_builddir)/test ; $(MAKE) clean
+#	cd $(top_builddir)/test ; $(MAKE) clean
 
 clean-examples:
 	cd $(top_builddir)/example ; $(MAKE) clean
@@ -190,7 +191,8 @@ clean-everything:
 install-everything:
 	$(MAKE) install ; $(MAKE) install-examples
 
-SUBDIRS = src $(TEST_SUBDIR) $(EXAMPLE_SUBDIR) 
+#SUBDIRS = src $(TEST_SUBDIR) $(EXAMPLE_SUBDIR) 
+SUBDIRS = src $(EXAMPLE_SUBDIR) 
 
 ## #######################################################################
 ## The below targets allow you to use the new
