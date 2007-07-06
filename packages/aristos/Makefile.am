@@ -138,17 +138,53 @@ endif
 ## #######################################################################
 ## Subdirectories to be make'd recursively
 ## #######################################################################
-#  #np# - Most packages should have an example and a full suite 
-#  of tests.  At present, aristos only offers src and example.
-#  BUILD_TESTS and BUILD_EXAMPLES are defined through the configure.ac file.
 
-#if BUILD_TESTS
+#We now build tests and examples through separate make targets, rather than
+#during "make".  We still need to conditionally include the test and example
+#in SUBDIRS, even though BUILD_TESTS and BUILD_EXAMPLES will never be
+#defined, so that the tests and examples are included in the distribution
+#tarball.
+
+#(Aristos does not yet have tests.)
+#if SUB_TEST
 #TEST_SUBDIR=test
 #endif
 
-if BUILD_EXAMPLES
+if SUB_EXAMPLE
 EXAMPLE_SUBDIR=example
 endif
+
+tests:
+	@echo "aristos does not yet have any tests"
+
+if BUILD_EXAMPLES
+examples:
+	cd $(top_builddir)/example ; $(MAKE)
+
+install-examples:
+	cd $(top_builddir)/example ; $(MAKE) install
+else
+examples:
+	@echo "aristos examples were disabled at configure time"
+
+install-examples:
+	@echo "aristos examples were disabled at configure time"
+endif
+
+clean-tests:
+	cd $(top_builddir)/test ; $(MAKE) clean
+
+clean-examples:
+	cd $(top_builddir)/example ; $(MAKE) clean
+
+everything:
+	$(MAKE) ; $(MAKE) examples ; $(MAKE) tests
+
+clean-everything:
+	$(MAKE) clean-examples ; $(MAKE) clean-tests ; $(MAKE) clean
+
+install-everything:
+	$(MAKE) install ; $(MAKE) install-examples
 
 SUBDIRS = src $(TEST_SUBDIR) $(EXAMPLE_SUBDIR)
 
