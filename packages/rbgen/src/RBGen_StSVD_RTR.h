@@ -13,14 +13,14 @@
 
 
 //
-// This class encapsulates a dominant SVD computation via manifold
+// This class encapsulates a dominant SVD computation via Riemannian Trust-Region manifold
 // optimization.
 // 
 // We are given a snapshot matrix A of dimension m by n. We wish to find the rank-k 
 // dominant SVD.
 //
 // The manifold is M = St(k,m) x St(k,n), where St(k,p) is the manifold of rank-k orthonormal
-// bases of R^p (the compact Stiefel manifold).
+// bases of R^p (the orthogonal Stiefel manifold).
 //
 // The objective function is
 // f : M --> R 
@@ -28,6 +28,9 @@
 // where N is a diagonal matrix with distinct, ascending (or descending) strictly positive elements.
 // For example, N = diag(5,4,3,2,1)
 // N serves to order the singular vectors in U and V
+// In the case where the dominant singular values are distinct, this function has a unique global maximizer,
+// which is a strict global maximizer. Otherwise, there is a unique region where the global maximum is reached, 
+// which corresponds to rotations of the singular vectors corresponding to the non-distinct singular values.
 //
 // This solver applies the Riemannian Trust-Region method (Absil, Baker and Gallivan) to maximize f 
 // over M.
@@ -127,11 +130,6 @@ namespace RBGen {
                   const Epetra_MultiVector &xV, 
                   Epetra_MultiVector &etaU, 
                   Epetra_MultiVector &etaV );
-    // Compute gradient
-    void grad( const Epetra_MultiVector &xU, 
-               const Epetra_MultiVector &xV, 
-               Epetra_MultiVector &gradU, 
-               Epetra_MultiVector &gradV );
     // Apply Hessian
     void Hess( const Epetra_MultiVector &xU, 
                const Epetra_MultiVector &xV, 
@@ -146,6 +144,8 @@ namespace RBGen {
                Epetra_MultiVector &etaV );
     // solve the trust-region subproblem
     void solveTRSubproblem();
+    // private initialize routine
+    void initialize();
 
 
     // Is this object initialized?
@@ -184,8 +184,10 @@ namespace RBGen {
     // verb level
     int verbLevel_;
 
-    // residual norms
+    // residual norms: individual and combined
     std::vector<double> resNorms_;
+    std::vector<double> resUNorms_, resVNorms_;
+    double maxScaledNorm_;
 
     // trust-region state
     // initial and current trust-region radius
@@ -206,6 +208,13 @@ namespace RBGen {
     int innerStop_;
     // dimensions of problem
     int m_, n_;
+    // is V local or distributed
+    bool localV_;
+
+    // DGESVD workspace
+    Teuchos::LAPACK<int,double> lapack;
+    Teuchos::RCP<Epetra_MultiVector> dgesvd_A_;
+    std::vector<double> dgesvd_work_;
   };
 
 } // end of RBGen namespace

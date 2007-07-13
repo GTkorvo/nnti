@@ -18,7 +18,7 @@ namespace RBGen {
     timerComp_("Total Elapsed Time"),
     debug_(false),
     verbLevel_(0),
-    resNorms_(0)
+    localV_(true)
   {}
 
   Teuchos::RefCountPtr<const Epetra_MultiVector> StSVDRTR::getBasis() const {
@@ -55,10 +55,13 @@ namespace RBGen {
     tol_ = rbmethod_params.get<double>("Convergence Tolerance",tol_);
 
     // Get debugging flag
-    debug_ = rbmethod_params.get<bool>("IncSVD Debug",debug_);
+    debug_ = rbmethod_params.get<bool>("StSVD Debug",debug_);
 
     // Get verbosity level
-    verbLevel_ = rbmethod_params.get<int>("IncSVD Verbosity Level",verbLevel_);
+    verbLevel_ = rbmethod_params.get<int>("StSVD Verbosity Level",verbLevel_);
+
+    // Is V local or distributed
+    localV_ = rbmethod_params.get<bool>("StSVD Local V",localV_);
 
     // Get an Anasazi orthomanager
     if (rbmethod_params.isType<
@@ -85,26 +88,112 @@ namespace RBGen {
     TEST_FOR_EXCEPTION(ss == Teuchos::null,invalid_argument,"Input snapshot matrix cannot be null.");
     A_ = ss;
 
+    // initialize data structures
+    initialize();
+  }
+
+  // private initialize
+  void StSVDRTR::initialize() {
+    if (isInitialized_) return;
+
     // Allocate space for the factorization
     sigma_.resize( rank_ );
     U_ = Teuchos::null;
     V_ = Teuchos::null;
     U_ = rcp( new Epetra_MultiVector(ss->Map(),rank_,false) );
-    Epetra_LocalMap lclmap(ss->NumVectors(),0,ss->Comm());
-    V_ = rcp( new Epetra_MultiVector(lclmap,rank_,false) );
+    if (localV_) {
+      Epetra_LocalMap lclmap(ss->NumVectors(),0,ss->Comm());
+      V_ = rcp( new Epetra_MultiVector(lclmap,rank_,false) );
+    }
+    else {
+      Epetra_Map vmap(ss->NumVectors(),0,ss->Comm());
+      V_ = rcp( new Epetra_MultiVector(vmap,rank_,false) );
+    }
     resNorms_.resize(rank_);
+    resUNorms_.resize(rank_);
+    resVNorms_.resize(rank_);
+
+    // allocate working multivectors
+    RU_     = rcp( new Epetra_MultiVector(*U_) );
+    etaU    = rcp( new Epetra_MultiVector(*U_) );_
+    HeU_    = rcp( new Epetra_MultiVector(*U_) );
+    deltaU_ = rcp( new Epetra_MultiVector(*U_) );
+    HdU_    = rcp( new Epetra_MultiVector(*U_) );
+    RV_     = rcp( new Epetra_MultiVector(*V_) );
+    etaV_   = rcp( new Epetra_MultiVector(*V_) );     
+    HeV_    = rcp( new Epetra_MultiVector(*V_) );
+    deltaV_ = rcp( new Epetra_MultiVector(*V_) );
+    HdV_    = rcp( new Epetra_MultiVector(*V_) );
+    // allocate working space for DGESVD
+    {
+      Epetra_LocalMap lclmap(rank_,0,ss->Comm());
+      dgesvd_A_ = rcp( new Epetra_MultiVector(lclap,rank_,false) );
+      TEST_FOR_EXCEPTION(dgesvd_A_->ConstantStride() == false,std::logic_error,
+                         "RBGen::StSVD::initialize(): DGESVD Workspace A was not generated with constant stride!");
+    }
+    dgesvd_work_.resize(5*rank_);
 
     // Perform initial factorization
     // Make U,V orthonormal
-    int ret = ortho_->normalize(*U_,Teuchos::null);
+    int ret = ortho_->normalize(*U_);
     TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial U basis construction failed.");
-    ret = ortho_->normalize(*U_,Teuchos::null);
+    ret = ortho_->normalize(*V_);
     TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial V basis construction failed.");
     // Compute initial singular values
-    // finish: compute U'*A*V, compute its singular values
-    // finish: retain parts that we need
-    // finish: compute residuals: RU = A *V - U*S
-    //                            RV = A'*U - V*S
+    // compute A*V and A'*U
+    {
+      int info;
+      info = RU_->Multiply('N','N',1.0,*ss,*V_,0.0);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
+    }
+    {
+      int info;
+      info = RV_->Multiply('T','N',1.0,*ss,*U_,0.0);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
+    }
+    // compute (U'*A)*V==RV'*V, compute its singular values
+    {
+      int info;
+      info = dgesvd_A_->Multiply('T','N',1.0,*RV_,*V_,0.0);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
+    }
+    {
+      int info;
+      lapack.GESVD('N','N',rank_,rank_,dgesvd_A_->Values(),dgesvd_A_->Stride(),&sigma_[0],
+                   NULL,0,NULL,0,&dgesvd_work[0],dgesvd_lwork_.size(),&info);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
+    }
+    // compute residuals: RU = A *V - U*S
+    //                    RV = A'*U - V*S
+    for (int i=0; i<rank_; i++) {
+      (*RU_)(i)->Update( *U(i), sigma_[i], 1.0 );
+      (*RV_)(i)->Update( *V(i), sigma_[i], 1.0 );
+    }
+    // compute residual norms
+    // for each singular value, we have two residuals:
+    //   ru_i = A v_i - u_i s_i 
+    // and 
+    //   rv_i = A' u_i - v_i s_i 
+    // If we have a singular value, these will both be zero
+    // We will take the norm of the i-th residual to be
+    //   |r_i| = sqrt(|ru_i|^2 + |rv_i|^2)
+    // We will scale it by the i-th singular value
+    RU_->Norm2(&resUNorms_[0]);
+    RV_->Norm2(&resVNorms_[0]);
+    for (int i=0; i<rank_; i++) {
+      resNorms_[i] = std::sqrt(resUNorms_[i]*resUNorms_[i] + resVNorms_[i]*resVNorms_[i]);
+      // sigma_ must be >= 0, because it is a singular value
+      // check sigma_ > 0 instead of sigma_ != 0, so the compiler won't complain
+      maxScaledNorm_ = 0;
+      if (sigma_[i] > 0.0) {
+        resNorms_[i] /= sigma_[i];
+        maxScaledNorm_ = EPETRA_MAX(resNorms_[i],maxScaledNorm_);
+      }
+    }
 
     // we are now initialized, albeit with null rank
     isInitialized_ = true;
@@ -129,31 +218,52 @@ namespace RBGen {
     TEST_FOR_EXCEPTION(A_ == Teuchos::null,logic_error,
                        "computeBasis() requires non-null snapshot set.");
 
-    // check that we are initialized, i.e., data structures match the data set
-    TEST_FOR_EXCEPTION(isInitialized_==false,std::logic_error,
-        "RBGen::StSVDRTR::computeBasis(): Solver must be initialized.");
-
     //
-    // reset state: finish
+    // check that we are initialized, i.e., data structures match the data set
+    initialize();
 
     //
     // print out some info
     const Epetra_Comm *comm = &A_->Comm();
-    while (true) {  // not converged: finish
+    while (maxScaledNorm_ > tol_) {
 
-      // compute gradient: finish
+      // status printing: finish
 
-      // check convergence: finish
+      // compute gradient
+      // this is the projected residuals
+      Proj(*U_,*V_,*RU_,*RV_);
 
-      // minimize model subproblem: finish
+      // minimize model subproblem
+      solveTRSubproblem();
 
-      // compute proposed point: finish
+      // compute proposed point
+      // R_U(eta) = qf(U+eta)
+      // we will store this in eta
+      {
+        int ret;
+        // U
+        ret = etaU_->Update(1.0,*U_,1.0);
+        TEST_FOR_EXCEPTION(ret != 0,std::logic_error,
+            "RBGen::StSVD::computeBasis(): error calling Epetra_MultiVector::Update.");
+        ret = ortho_->normalize(*etaU_);
+        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaU failed.");
+        // V
+        ret = etaV_->Update(1.0,*V_,1.0);
+        TEST_FOR_EXCEPTION(ret != 0,std::logic_error,
+            "RBGen::StSVD::computeBasis(): error calling Epetra_MultiVector::Update.");
+        ret = ortho_->normalize(*etaV_);
+        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaV failed.");
+      }
 
       // evaluate rho: finish
 
       // accept/reject and adjust trust-region radius: finish
 
-    }
+      // compute new residuals and norms: finish
+
+    } // while (not converged)
+
+    // finish
   }
 
   
@@ -169,7 +279,12 @@ namespace RBGen {
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // return residual norms
   const std::vector<double> & StSVDRTR::getResNorms() {
-    return resNorms_;
+    if (isInitialized_) {
+      return resNorms_;
+    }
+    else {
+      return std::vector(rank_,nan);
+    }
   }
 
     
@@ -320,10 +435,69 @@ namespace RBGen {
 
 #ifdef STSVD_DEBUG
     cout << " >> stop reason is " << stopReasons_[innerStop_] << endl
-          << endl;
+         << endl;
 #endif
 
   } // end of solveTRSubproblem
 
-    
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Projection onto tangent plane
+  void StSVDRTR::Proj( const Epetra_MultiVector &xU, 
+                       const Epetra_MultiVector &xV, 
+                       Epetra_MultiVector &etaU, 
+                       Epetra_MultiVector &etaV ) {
+    // Proj_U E = (I - U U') E + U skew(U' E)
+    // perform etaU = Proj_U etaU
+    // and     etaV = Proj_V etaV
+    // finish
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // g(eta,eta)
+  double StSVDRTR::innerProduct( 
+      const Epetra_MultiVector &etaU, 
+      const Epetra_MultiVector &etaV ) 
+  {
+    // finish
+    return 0.0;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // g(eta,zeta)
+  double StSVDRTR::innerProduct( 
+      const Epetra_MultiVector &etaU, 
+      const Epetra_MultiVector &etaV, 
+      const Epetra_MultiVector &zetaU, 
+      const Epetra_MultiVector &zetaV ) 
+  {
+    // finish
+    return 0.0;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Retraction, in situ
+  void StSVDRTR::retract( 
+      const Epetra_MultiVector &xU, 
+      const Epetra_MultiVector &xV, 
+      Epetra_MultiVector &etaU, 
+      Epetra_MultiVector &etaV ) 
+  {
+    // finish
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Apply Hessian
+  void StSVDRTR::Hess( 
+      const Epetra_MultiVector &xU, 
+      const Epetra_MultiVector &xV, 
+      const Epetra_MultiVector &etaU, 
+      const Epetra_MultiVector &etaV,
+      Epetra_MultiVector &HetaU,
+      Epetra_MultiVector &HetaV ) 
+  {
+    // finish
+  }
+
+
 } // end of RBGen namespace
