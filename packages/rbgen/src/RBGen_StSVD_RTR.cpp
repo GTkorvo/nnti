@@ -447,10 +447,45 @@ namespace RBGen {
                        const Epetra_MultiVector &xV, 
                        Epetra_MultiVector &etaU, 
                        Epetra_MultiVector &etaV ) {
-    // Proj_U E = (I - U U') E + U skew(U' E)
     // perform etaU = Proj_U etaU
     // and     etaV = Proj_V etaV
-    // finish
+    // Proj_U E = (I - U U') E + U skew(U' E)
+    //          = E - U (U' E) + .5 U (U' E - E' U)
+    //          = E - .5 U (S + S')
+    // where S = U' E
+    static Epetra_LocalMap lclmap(rank_,0,A_->Comm());
+    static Epetra_MultiVector S(lclmap,rank_);
+    S.Multiply('T','N',1.0,xU,etaU,0.0);
+    // set upper tri part of S to S+S'
+    for (int j=0; j < rank_; j++) {
+      for (int i=0; i <= j; i++) {
+        S[j][i] += S[i][j];
+      }
+    }
+    // set lower tri part of S to upper tri part of S
+    for (int j=0; j < rank_-1; j++) {
+      for (int i=j+1; i < rank_; i++) {
+        S[j][i] = S[i][j];
+      }
+    }
+    // E = E - .5 U S
+    etaU.Multiply(-0.5,xU,E,1.0);
+
+    S.Multiply('T','N',1.0,xV,etaV,0.0);
+    // set upper tri part of S to S+S'
+    for (int j=0; j < rank_; j++) {
+      for (int i=0; i <= j; i++) {
+        S[j][i] += S[i][j];
+      }
+    }
+    // set lower tri part of S to upper tri part of S
+    for (int j=0; j < rank_-1; j++) {
+      for (int i=j+1; i < rank_; i++) {
+        S[j][i] = S[i][j];
+      }
+    }
+    // E = E - .5 V S
+    etaV.Multiply(-0.5,xV,E,1.0);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -459,8 +494,14 @@ namespace RBGen {
       const Epetra_MultiVector &etaU, 
       const Epetra_MultiVector &etaV ) 
   {
-    // finish
-    return 0.0;
+    // g( (etaU,etaV), (etaU,etaV) ) = trace(etaU'*etaU) + trace(etaV'*etaV)
+    std::vector<double> norms(rank_);
+    double ip = 0.0;
+    etaU.Norm2(&norms);
+    for (int i=0; i<rank_; i++) ip += norms[i]*norms[i];
+    etaV.Norm2(&norms);
+    for (int i=0; i<rank_; i++) ip += norms[i]*norms[i];
+    return ip;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -471,8 +512,14 @@ namespace RBGen {
       const Epetra_MultiVector &zetaU, 
       const Epetra_MultiVector &zetaV ) 
   {
-    // finish
-    return 0.0;
+    // g( (etaU,etaV), (etaU,etaV) ) = trace(etaU'*etaU) + trace(etaV'*etaV)
+    std::vector<double> ips(rank_);
+    double ip = 0.0;
+    etaU.Dot(zetaU,&ips);
+    for (int i=0; i<rank_; i++) ip += ips[i];
+    etaV.Dot(zetaV,&ips);
+    for (int i=0; i<rank_; i++) ip += ips[i];
+    return ip;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -483,7 +530,16 @@ namespace RBGen {
       Epetra_MultiVector &etaU, 
       Epetra_MultiVector &etaV ) 
   {
-    // finish
+    int ret;
+    // R_U(E) = qf(U+E)
+    etaU.Update(1.0,xU,1.0);
+    ret = ortho_->normalize(etaU);
+    TEST_FOR_EXCEPTION(ret != rank_,std::exception,
+        "RBGen::StSVD::retract(): Ortho failure in retraction.");
+    etaV.Update(1.0,xV,1.0);
+    ret = ortho_->normalize(etaV);
+    TEST_FOR_EXCEPTION(ret != rank_,std::exception,
+        "RBGen::StSVD::retract(): Ortho failure in retraction.");
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
