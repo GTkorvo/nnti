@@ -175,7 +175,7 @@ namespace TSFExtended
   inline void DenseSerialVector::checkLength(const DenseSerialVector& other, 
                                              const string& funcName) const
   {
-    TEST_FOR_EXCEPTION(size() != other.size(), runtime_error,
+    TEST_FOR_EXCEPTION(size() != other.size(), std::runtime_error,
                        "mismatch between operands " 
                        << summary() << " and " << other.summary()
                        << " in method " << funcName);
