@@ -25,7 +25,7 @@ namespace RBGen {
   {
   }
 
-  void EpetraCrsMatrixFileIOHandler::Initialize( const Teuchos::RefCountPtr<Teuchos::ParameterList>& params )
+  void EpetraCrsMatrixFileIOHandler::Initialize( const Teuchos::RCP<Teuchos::ParameterList>& params )
   {
     // Get the "File I/O" sublist.
     Teuchos::ParameterList& fileio_params = params->sublist( "File IO" );
@@ -46,10 +46,10 @@ namespace RBGen {
     isInit = true;
   }
 
-  Teuchos::RefCountPtr<Epetra_CrsMatrix> EpetraCrsMatrixFileIOHandler::Read( const std::vector<std::string>& filenames )
+  Teuchos::RCP<Epetra_CrsMatrix> EpetraCrsMatrixFileIOHandler::Read( const std::vector<std::string>& filenames )
   {
 
-    Teuchos::RefCountPtr<Epetra_CrsMatrix> newMTX;
+    Teuchos::RCP<Epetra_CrsMatrix> newMTX;
 
     if (isInit) {
 
@@ -67,7 +67,7 @@ namespace RBGen {
       std::string temp_filename = in_path + filenames[0];
 
       // Create a null pointer to the Epetra_Map
-      Teuchos::RefCountPtr<Epetra_Map> Map;
+      Teuchos::RCP<Epetra_Map> Map;
 
       // Read in the matrix from file
       EpetraExt::readEpetraLinearSystem( temp_filename, comm, &newMTX, &Map );
@@ -80,7 +80,7 @@ namespace RBGen {
     return newMTX;
   }
   
-  void EpetraCrsMatrixFileIOHandler::Write( Teuchos::RefCountPtr<const Epetra_CrsMatrix> MTX, const std::string& filename )
+  void EpetraCrsMatrixFileIOHandler::Write( Teuchos::RCP<const Epetra_CrsMatrix> MTX, const std::string& filename )
   {
     if (isInit) {
 

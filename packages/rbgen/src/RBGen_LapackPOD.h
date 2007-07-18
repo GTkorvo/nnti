@@ -29,14 +29,14 @@ namespace RBGen {
 
     void computeBasis();
    
-    void updateBasis( const Teuchos::RefCountPtr< Epetra_MultiVector >& update_ss ) {};
+    void updateBasis( const Teuchos::RCP< Epetra_MultiVector >& update_ss ) {};
  
     //@}
 
     //! @name Get Methods
     //@{
     
-    Teuchos::RefCountPtr<const Epetra_MultiVector> getBasis() const { return basis_; }
+    Teuchos::RCP<const Epetra_MultiVector> getBasis() const { return basis_; }
 
     std::vector<double> getSingularValues() const { return sv_; }
 
@@ -47,11 +47,11 @@ namespace RBGen {
     //@{
     
         //! Initialize the method with the given parameter list and snapshot set.
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                     const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-		     const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
+    void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
+                     const Teuchos::RCP< Epetra_MultiVector >& ss,
+		     const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
 
-    void Reset( const Teuchos::RefCountPtr<Epetra_MultiVector>& new_ss ) { ss_ = new_ss;  }
+    void Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss ) { ss_ = new_ss;  }
 
     //@}
 
@@ -74,7 +74,7 @@ namespace RBGen {
     double comp_time_;
 
     // Pointers to the snapshots and reduced basis.
-    Teuchos::RefCountPtr<Epetra_MultiVector> ss_, basis_;
+    Teuchos::RCP<Epetra_MultiVector> ss_, basis_;
 
     // Vector holding singular values.
     std::vector<double> sv_;

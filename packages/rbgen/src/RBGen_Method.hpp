@@ -2,7 +2,7 @@
 #define RBGEN_METHOD_HPP
 
 #include "RBGen_FileIOHandler.hpp"
-#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 namespace RBGen {
@@ -28,7 +28,7 @@ namespace RBGen {
 
     virtual void computeBasis() = 0;
 
-    virtual void updateBasis( const Teuchos::RefCountPtr< DataSetType >& update_ss ) = 0;
+    virtual void updateBasis( const Teuchos::RCP< DataSetType >& update_ss ) = 0;
 
     //@}
 
@@ -36,7 +36,7 @@ namespace RBGen {
     //@{
 
     //! Get the basis computed by the reduced basis method.
-    virtual Teuchos::RefCountPtr<const DataSetType> getBasis() const = 0;
+    virtual Teuchos::RCP<const DataSetType> getBasis() const = 0;
 
     //! Returns the computational time taken to compute the reduced basis.
     virtual double getCompTime() const = 0;
@@ -47,12 +47,12 @@ namespace RBGen {
     //@{
 
     //! Initialize the method with the given parameter list and snapshot set.
-    virtual void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                             const Teuchos::RefCountPtr< DataSetType >& ss,
-			     const Teuchos::RefCountPtr< RBGen::FileIOHandler< OperatorType > >& fileio = Teuchos::null ) = 0;
+    virtual void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
+                             const Teuchos::RCP< DataSetType >& ss,
+			     const Teuchos::RCP< RBGen::FileIOHandler< OperatorType > >& fileio = Teuchos::null ) = 0;
     
     //! Reset the snapshot set used to compute the reduced basis.
-    virtual void Reset( const Teuchos::RefCountPtr< DataSetType >& new_ss ) = 0;
+    virtual void Reset( const Teuchos::RCP< DataSetType >& new_ss ) = 0;
 
     //@}
 

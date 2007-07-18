@@ -11,7 +11,7 @@
 
 namespace RBGen {
   
-  Teuchos::RefCountPtr<Method<Epetra_MultiVector,Epetra_CrsMatrix> > EpetraMVMethodFactory::create( const Teuchos::ParameterList& params )
+  Teuchos::RCP<Method<Epetra_MultiVector,Epetra_CrsMatrix> > EpetraMVMethodFactory::create( const Teuchos::ParameterList& params )
   {
      // See if the "Reduced Basis Method" sublist exists
     if ( !params.isSublist( "Reduced Basis Method" ) ) {
@@ -25,7 +25,7 @@ namespace RBGen {
     std::string method = Teuchos::getParameter<std::string>( const_cast<Teuchos::ParameterList&>(rbmethod_params),
                                                              "Method" );
 
-    Teuchos::RefCountPtr< Method<Epetra_MultiVector,Epetra_CrsMatrix> > RBMethod;
+    Teuchos::RCP< Method<Epetra_MultiVector,Epetra_CrsMatrix> > RBMethod;
 
     // POD computed using exact SVD through LAPACK
     if ( method == "Lapack POD" ) {

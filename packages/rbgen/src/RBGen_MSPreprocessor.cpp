@@ -14,8 +14,8 @@ namespace RBGen {
     preproc_types_.push_back("Arithmetic Mean");
   }
 
-  void MSPreprocessor::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params, 
-                                   const Teuchos::RefCountPtr< FileIOHandler<Epetra_MultiVector> >& fileio )
+  void MSPreprocessor::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params, 
+                                   const Teuchos::RCP< FileIOHandler<Epetra_MultiVector> >& fileio )
   {
     // Save the file i/o handler.
     fileio_ = fileio;
@@ -84,7 +84,7 @@ namespace RBGen {
     isInitialized_ = true;
   }
   
-  void MSPreprocessor::Preprocess( Teuchos::RefCountPtr<Epetra_MultiVector>& ss )
+  void MSPreprocessor::Preprocess( Teuchos::RCP<Epetra_MultiVector>& ss )
   {
     if (isInitialized_) {      
   

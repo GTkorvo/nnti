@@ -5,10 +5,10 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_Utils.hpp"
 
-Teuchos::RefCountPtr<Teuchos::ParameterList> RBGen::createParams( const std::string& filename )
+Teuchos::RCP<Teuchos::ParameterList> RBGen::createParams( const std::string& filename )
 {
   // Create initial empty parameter list
-  Teuchos::RefCountPtr<Teuchos::ParameterList> params = Teuchos::rcp( new Teuchos::ParameterList() );
+  Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp( new Teuchos::ParameterList() );
 
   // Read in parameter list from XML file
   Teuchos::updateParametersFromXmlFile( filename, &*params );
@@ -156,9 +156,9 @@ Teuchos::RefCountPtr<Teuchos::ParameterList> RBGen::createParams( const std::str
   return params;
 }
 
-Teuchos::RefCountPtr< std::vector<std::string> > RBGen::genFileList( const Teuchos::ParameterList& params )
+Teuchos::RCP< std::vector<std::string> > RBGen::genFileList( const Teuchos::ParameterList& params )
 {
-  Teuchos::RefCountPtr< std::vector< std::string > > filenames = Teuchos::rcp( new std::vector< std::string >() ); 
+  Teuchos::RCP< std::vector< std::string > > filenames = Teuchos::rcp( new std::vector< std::string >() ); 
 
   // See if the "File I/O" sublist exists
   if ( !params.isSublist( "File IO" ) ) {

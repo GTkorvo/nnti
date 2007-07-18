@@ -24,7 +24,7 @@ namespace RBGen {
     //! @name Factory methods
     //@{
 
-    virtual Teuchos::RefCountPtr<Method< DataSetType, OperatorType > > create( const Teuchos::ParameterList& params ) = 0;
+    virtual Teuchos::RCP<Method< DataSetType, OperatorType > > create( const Teuchos::ParameterList& params ) = 0;
 
     //@}
 

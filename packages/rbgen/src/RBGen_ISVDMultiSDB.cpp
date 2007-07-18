@@ -9,6 +9,10 @@ namespace RBGen {
 
   ISVDMultiSDB::ISVDMultiSDB() {}
 
+  void ISVDMultiSDB::updateBasis(const Teuchos::RCP< Epetra_MultiVector >& update_ss ) {
+    TEST_FOR_EXCEPTION(true,std::logic_error,
+        "RBGen::ISVDMultiSDB::updateBasis(): this routine not supported.");
+  }
   void ISVDMultiSDB::makePass() {
     Epetra_LAPACK lapack;
     Epetra_BLAS   blas;
@@ -246,9 +250,9 @@ namespace RBGen {
   }
 
   void ISVDMultiSDB::Initialize( 
-      const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-      const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-      const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio
+      const Teuchos::RCP< Teuchos::ParameterList >& params,
+      const Teuchos::RCP< Epetra_MultiVector >& ss,
+      const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio
       ) 
   {
     // workAW has room for A * [V G], where each has maxBasisSize vectors

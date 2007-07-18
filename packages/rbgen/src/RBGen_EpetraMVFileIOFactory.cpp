@@ -14,7 +14,7 @@ namespace RBGen {
 #endif
   }
 
-  Teuchos::RefCountPtr< FileIOHandler< Epetra_MultiVector > >
+  Teuchos::RCP< FileIOHandler< Epetra_MultiVector > >
   EpetraMVFileIOFactory::create( const Teuchos::ParameterList& params )
   {
     // See if the "File I/O" sublist exists
@@ -29,7 +29,7 @@ namespace RBGen {
     std::string file_format = Teuchos::getParameter<std::string>( const_cast<Teuchos::ParameterList&>(fileio_params),
                                                                   "Type" );
 
-    Teuchos::RefCountPtr< FileIOHandler< Epetra_MultiVector > > RBFileIO;
+    Teuchos::RCP< FileIOHandler< Epetra_MultiVector > > RBFileIO;
 
     // File input format based on Burkardt's input files
     if ( file_format == "Burkardt" ) {

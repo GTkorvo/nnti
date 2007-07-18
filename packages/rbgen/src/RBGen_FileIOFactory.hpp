@@ -1,7 +1,7 @@
 #ifndef RBGEN_FILEIO_FACTORY_HPP
 #define RBGEN_FILEIO_FACTORY_HPP
 
-#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_RCP.hpp"
 
 // Forward declarations for Teuchos.
 namespace Teuchos {
@@ -34,7 +34,7 @@ namespace RBGen {
     //! @name Factory methods
     //@{
 
-    virtual Teuchos::RefCountPtr< FileIOHandler< DataSetType > > create( const Teuchos::ParameterList& params ) = 0;
+    virtual Teuchos::RCP< FileIOHandler< DataSetType > > create( const Teuchos::ParameterList& params ) = 0;
 
     //@}
 

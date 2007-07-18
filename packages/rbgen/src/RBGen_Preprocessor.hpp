@@ -2,7 +2,7 @@
 #define RBGEN_PREPROCESSOR_HPP
 
 #include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_RCP.hpp"
 
 namespace RBGen {
  
@@ -28,8 +28,8 @@ namespace RBGen {
     //@{
 
     //! Initialize preprocessor
-    virtual void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params, 
-			     const Teuchos::RefCountPtr<FileIOHandler<DataSetType> >& fileio ) = 0;
+    virtual void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params, 
+			     const Teuchos::RCP<FileIOHandler<DataSetType> >& fileio ) = 0;
     
     //! Reset preprocessor
     virtual void Reset() = 0;
@@ -39,7 +39,7 @@ namespace RBGen {
     //@{
 
     //! Preprocess the snapshot set passed in
-    virtual void Preprocess( Teuchos::RefCountPtr< DataSetType >& ss ) = 0;
+    virtual void Preprocess( Teuchos::RCP< DataSetType >& ss ) = 0;
     //@}
 
     //! @name Status Methods

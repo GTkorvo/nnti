@@ -1,4 +1,3 @@
-
 #include "RBGen_NetCDFFileIOHandler.h"
 
 #include "Epetra_BLAS.h"
@@ -16,7 +15,7 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 namespace RBGen {
@@ -33,7 +32,7 @@ namespace RBGen {
     if (var_name) delete [] var_name;
   }
 
-  void NetCDFFileIOHandler::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params )
+  void NetCDFFileIOHandler::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params )
   {
     
     // Save the parameter list.
@@ -58,7 +57,7 @@ namespace RBGen {
     isInit = true;
   }
 
-  Teuchos::RefCountPtr<Epetra_MultiVector> NetCDFFileIOHandler::Read( const std::vector<std::string>& filenames )
+  Teuchos::RCP<Epetra_MultiVector> NetCDFFileIOHandler::Read( const std::vector<std::string>& filenames )
   {
 #ifdef EPETRA_MPI
     Epetra_MpiComm comm( MPI_COMM_WORLD );
@@ -255,7 +254,7 @@ namespace RBGen {
     // temporary Epetra_Vector used by processor 0 to import the information.
     //
     Epetra_Map Map( num_vars, 0, comm );
-    Teuchos::RefCountPtr<Epetra_MultiVector> newMV = Teuchos::rcp( new Epetra_MultiVector( Map, num_ss ) );
+    Teuchos::RCP<Epetra_MultiVector> newMV = Teuchos::rcp( new Epetra_MultiVector( Map, num_ss ) );
     Epetra_Vector *col_newMV = 0;
     Epetra_Map *Proc0Map = 0;
     int *index = 0;
@@ -360,7 +359,7 @@ namespace RBGen {
     return newMV;
   }
   
-  void NetCDFFileIOHandler::Write( Teuchos::RefCountPtr<const Epetra_MultiVector> MV, const std::string& filename )
+  void NetCDFFileIOHandler::Write( Teuchos::RCP<const Epetra_MultiVector> MV, const std::string& filename )
   {
 #ifdef EPETRA_MPI
     Epetra_MpiComm comm( MPI_COMM_WORLD );

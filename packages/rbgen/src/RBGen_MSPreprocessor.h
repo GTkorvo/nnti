@@ -28,8 +28,8 @@ namespace RBGen {
     //@{
 
     //! Initialize preprocessor
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params, 
-                     const Teuchos::RefCountPtr< FileIOHandler <Epetra_MultiVector> >& fileio = Teuchos::null );
+    void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params, 
+                     const Teuchos::RCP< FileIOHandler <Epetra_MultiVector> >& fileio = Teuchos::null );
 
     void Reset() { isInitialized_ = false; }
     //@}
@@ -38,14 +38,14 @@ namespace RBGen {
     //@{
 
     //! Preprocess the snapshot set passed in
-    void Preprocess( Teuchos::RefCountPtr<Epetra_MultiVector>& ss );
+    void Preprocess( Teuchos::RCP<Epetra_MultiVector>& ss );
     //@}
 
     //! @name Return Methods
     //@{
 
     //! Return the multivector used to modify the snapshot set
-    Teuchos::RefCountPtr< Epetra_MultiVector > getMSVector() const { return msVector_; }
+    Teuchos::RCP< Epetra_MultiVector > getMSVector() const { return msVector_; }
 
     //! @name Status Methods
     //@{
@@ -78,10 +78,10 @@ namespace RBGen {
     std::vector< std::string > preproc_types_;
 
     //! Pointer to the multivector used to modify the snapshot set
-    Teuchos::RefCountPtr< Epetra_MultiVector > msVector_;
+    Teuchos::RCP< Epetra_MultiVector > msVector_;
 
     //! Pointer to the File I/O Handler object.
-    Teuchos::RefCountPtr< FileIOHandler< Epetra_MultiVector > > fileio_;
+    Teuchos::RCP< FileIOHandler< Epetra_MultiVector > > fileio_;
   };
   
 } // end of RBGen namespace

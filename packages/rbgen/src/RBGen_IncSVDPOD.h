@@ -34,6 +34,13 @@
 // it passes this data to shrink(), which shrink according to the 
 // base class.
 //
+// updateBasis() allows the current factorization to be updated
+// by appending new snapshots. This allows a truly incremental 
+// factorization. It is also pure virtual, and is implemented
+// along side makePass(). It may not be implemented in all 
+// IncSVDPOD methods; in fact, it is currently implemented 
+// only by derived classes of ISVDSingle
+//
 // expand(),shrink() are implemented in a base class that 
 // decides the representation: UDV, QRW, QBW
 // 
@@ -51,7 +58,7 @@
 //                  \                               /
 //                   \---  Concrete Base Class ----/
 //
-// Then a concrete base class (one of 3x4==12 varieties) is formed simply through
+// Then a concrete base class (one of 3x4==12 varieties) is formed through
 // inheritence. This is the Template Pattern type of Design Pattern.
 //
 
@@ -77,8 +84,8 @@ namespace RBGen {
     //! Computes bases for the left and (optionally) right singular subspaces, along with singular vaues.
     void computeBasis();
 
-    //! Update the current basis using a new set of snapshots.
-    void updateBasis( const Teuchos::RefCountPtr< Epetra_MultiVector >& update_ss );
+    //! Update the current basis by appending new snapshots.
+    virtual void updateBasis( const Teuchos::RCP< Epetra_MultiVector >& update_ss ) = 0;
 
     //@}
 
@@ -86,10 +93,10 @@ namespace RBGen {
     //@{
 
     //! Return a basis for the left singular subspace.
-    Teuchos::RefCountPtr<const Epetra_MultiVector> getBasis() const;
+    Teuchos::RCP<const Epetra_MultiVector> getBasis() const;
 
     //! Return a basis for the right singular subspace.
-    Teuchos::RefCountPtr<const Epetra_MultiVector> getRightBasis() const;
+    Teuchos::RCP<const Epetra_MultiVector> getRightBasis() const;
 
     //! Return the singular values.
     std::vector<double> getSingularValues() const;
@@ -106,11 +113,11 @@ namespace RBGen {
     //@{
 
     //! Initialize the method with the given parameter list and snapshot set.
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                     const Teuchos::RefCountPtr< Epetra_MultiVector >& init,
-                     const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
+    void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
+                     const Teuchos::RCP< Epetra_MultiVector >& init,
+                     const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
 
-    void Reset( const Teuchos::RefCountPtr<Epetra_MultiVector>& new_ss );
+    void Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss );
 
     //@}
 
@@ -133,7 +140,7 @@ namespace RBGen {
     bool isInitialized_;
 
     // Singular value filter
-    Teuchos::RefCountPtr< Filter<double> > filter_;
+    Teuchos::RCP< Filter<double> > filter_;
 
     // Max allocation size.
     // The maximum rank DURING any step:
@@ -144,10 +151,10 @@ namespace RBGen {
     int curRank_;
 
     // Pointers to the snapshots and reduced basis.
-    Teuchos::RefCountPtr<Epetra_MultiVector> A_, U_, V_;
+    Teuchos::RCP<Epetra_MultiVector> A_, U_, V_;
 
     // SerialDenseMatrix holding current core matrix B
-    Teuchos::RefCountPtr<Epetra_SerialDenseMatrix> B_;
+    Teuchos::RCP<Epetra_SerialDenseMatrix> B_;
 
     // Vector holding singular values.
     std::vector<double> sigma_;
@@ -170,7 +177,7 @@ namespace RBGen {
     int startRank_;
 
     // ortho manager
-    Teuchos::RefCountPtr< Anasazi::OrthoManager<double,Epetra_MultiVector> > ortho_;
+    Teuchos::RCP< Anasazi::OrthoManager<double,Epetra_MultiVector> > ortho_;
 
     // cummulative timer
     Teuchos::Time timerComp_;
@@ -183,6 +190,13 @@ namespace RBGen {
 
     // residual norms
     std::vector<double> resNorms_;
+
+    // maximum number of data set columns
+    // i.e., maximum number of rows in V
+    int maxNumCols_;
+
+    // is V locally replicated or globally distributed?
+    bool Vlocal_;
   };
 
 } // end of RBGen namespace

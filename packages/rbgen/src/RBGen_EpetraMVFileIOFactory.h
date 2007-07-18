@@ -14,7 +14,7 @@
 #endif
 
 #include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_RCP.hpp"
 
 namespace RBGen {
 
@@ -35,7 +35,7 @@ namespace RBGen {
     //! @name Factory methods
     //@{
 
-    Teuchos::RefCountPtr< FileIOHandler< Epetra_MultiVector > > create( const Teuchos::ParameterList& params );
+    Teuchos::RCP< FileIOHandler< Epetra_MultiVector > > create( const Teuchos::ParameterList& params );
 
     //@}
 

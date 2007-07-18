@@ -5,7 +5,77 @@
 namespace RBGen {
 
   ISVDSingle::ISVDSingle() {}
-                                          
+
+  void ISVDSingle::updateBasis(const Teuchos::RCP< Epetra_MultiVector >& update_ss ) {
+    // free pointer to original data set
+    // switch it to new data set, momentarily
+    A_ = update_ss;
+
+    // we may be calling update basis from the beginning
+    // we hope that V_ (if it exists) is tall enough, we will check this
+
+    // starting with the current factorization, make a single pass
+    const int oldNumCols = numProc_;
+    const int newNumCols = A_->NumVectors();
+    TEST_FOR_EXCEPTION(oldNumCols+newNumCols > maxNumCols_, invalid_argument,
+                       "RBGen::ISVSingle::updateBasis(): number of snapshots to process has exceeded specified maximum humber of columns.");
+    while (numProc_ < oldNumCols+newNumCols) {
+      // determine lup
+      int lup;
+      if (curRank_ == 0) {
+        // first step
+        lup = startRank_;
+      }
+      else {
+        // this value minimizes overall complexity for a UDV factorization, assuming fixed rank
+        lup = (int)(curRank_ / Teuchos::ScalarTraits<double>::squareroot(2.0));
+      }
+      // now cap lup via lmin,lmax,maxBasisSize
+      // want lup >= lmin
+      // need lup <= numCols - numProc
+      //      lup <= lmax
+      //      lup <= maxBasisSize - curRank
+      lup = (lup < lmin_ ? lmin_ : lup);
+      lup = (lup > oldNumCols+newNumCols - numProc_ ? oldNumCols+newNumCols - numProc_ : lup);
+      lup = (lup > lmax_ ? lmax_ : lup);
+      lup = (lup > maxBasisSize_ - curRank_ ? maxBasisSize_ - curRank_ : lup);
+
+      // get view of new vectors
+      Teuchos::RCP<const Epetra_MultiVector> Aplus;
+      Teuchos::RCP<Epetra_MultiVector> Unew;
+      Aplus = Teuchos::rcp( new Epetra_MultiVector(::View,*A_,numProc_-oldNumCols,lup));
+      Unew = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,curRank_,lup));
+      // put them in U
+      *Unew = *Aplus;
+      // clear the views
+      Unew = Teuchos::null;
+      Aplus = Teuchos::null;
+
+      // perform the incremental step
+      incStep(lup);
+    }
+
+    //
+    // we can't compute residuals, because we don't have old and new snapshots
+    for (int i=0; i<curRank_; i++) {
+      resNorms_[i] = 0;
+    }
+
+    // print out some info
+    const Epetra_Comm *comm = &A_->Comm();
+    if (comm->MyPID() == 0 && verbLevel_ >= 1) {
+      cout 
+        << "------------- ISVDSingle::updateBasis() -----------" << endl
+        << "|     Current rank: " << curRank_ << endl
+        << "|   Current sigmas: " << endl;
+      for (int i=0; i<curRank_; i++) {
+        cout << "|             " << sigma_[i] << endl;
+      }
+    }
+
+    return;
+  }
+
   void ISVDSingle::makePass() {
     // ISVDSingle only makes a single pass
     TEST_FOR_EXCEPTION(maxNumPasses_ != 1,std::logic_error,
@@ -35,8 +105,8 @@ namespace RBGen {
       lup = (lup > maxBasisSize_ - curRank_ ? maxBasisSize_ - curRank_ : lup);
 
       // get view of new vectors
-      Teuchos::RefCountPtr<const Epetra_MultiVector> Aplus;
-      Teuchos::RefCountPtr<Epetra_MultiVector> Unew;
+      Teuchos::RCP<const Epetra_MultiVector> Aplus;
+      Teuchos::RCP<Epetra_MultiVector> Unew;
       Aplus = Teuchos::rcp( new Epetra_MultiVector(::View,*A_,numProc_,lup));
       Unew = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,curRank_,lup));
       // put them in U
@@ -145,9 +215,9 @@ namespace RBGen {
   }
     
   void ISVDSingle::Initialize( 
-      const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-      const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-      const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio
+      const Teuchos::RCP< Teuchos::ParameterList >& params,
+      const Teuchos::RCP< Epetra_MultiVector >& ss,
+      const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio
       ) 
   {
     maxNumPasses_ = 1;

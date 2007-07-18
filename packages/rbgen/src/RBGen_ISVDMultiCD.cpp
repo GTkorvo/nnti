@@ -8,6 +8,11 @@ namespace RBGen {
 
   ISVDMultiCD::ISVDMultiCD() {}
 
+  void ISVDMultiCD::updateBasis(const Teuchos::RCP< Epetra_MultiVector >& update_ss ) {
+    TEST_FOR_EXCEPTION(true,std::logic_error,
+        "RBGen::ISVDMultiCD::updateBasis(): this routine not supported.");
+  }
+
   void ISVDMultiCD::makePass() {
     Epetra_LAPACK lapack;
     Epetra_BLAS   blas;
@@ -18,7 +23,7 @@ namespace RBGen {
         "RBGen::ISVDMultiCD::makePass(): after first pass, numProc should be numCols");
 
     // compute W = I - Z T Z^T from current V_
-    Teuchos::RefCountPtr<Epetra_MultiVector> lclAZT, lclZ;
+    Teuchos::RCP<Epetra_MultiVector> lclAZT, lclZ;
     double *Z_A, *AZT_A;
     int Z_LDA, AZT_LDA;
     int oldRank = 0;
@@ -157,7 +162,7 @@ namespace RBGen {
     // T Z^T V is oldRank x curRank
     // we need T Z^T V in a local Epetra_MultiVector
     if (!firstPass) {
-      Teuchos::RefCountPtr<Epetra_MultiVector> lclV;
+      Teuchos::RCP<Epetra_MultiVector> lclV;
       double *TZTV_A;
       int TZTV_LDA;
       int info;
@@ -280,9 +285,9 @@ namespace RBGen {
   }
 
   void ISVDMultiCD::Initialize( 
-      const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-      const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-      const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio
+      const Teuchos::RCP< Teuchos::ParameterList >& params,
+      const Teuchos::RCP< Epetra_MultiVector >& ss,
+      const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio
       ) 
   {
     workAZT_ = Teuchos::rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );

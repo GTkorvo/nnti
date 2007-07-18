@@ -13,8 +13,8 @@ namespace RBGen {
     // B = [S C] k
     //     [  Z] l
     //
-    Teuchos::RefCountPtr<const Epetra_MultiVector> U1;
-    Teuchos::RefCountPtr<Epetra_MultiVector> U2;
+    Teuchos::RCP<const Epetra_MultiVector> U1;
+    Teuchos::RCP<Epetra_MultiVector> U2;
     U2 = Teuchos::rcp( new Epetra_MultiVector(View,*U_,curRank_,lup) );
     int info = (*B_).Scale(0.0);
     TEST_FOR_EXCEPTION(info != 0,std::logic_error,
@@ -23,8 +23,8 @@ namespace RBGen {
       (*B_)(i,i) = sigma_[i];
     }
     // get pointer for C,B inside of B, as Teuchos::SerialDenseMatrix objects
-    Teuchos::RefCountPtr<Epetra_SerialDenseMatrix> C, Z;
-    Teuchos::RefCountPtr<Teuchos::SerialDenseMatrix<int,double> > Cteuchos, Zteuchos;
+    Teuchos::RCP<Epetra_SerialDenseMatrix> C, Z;
+    Teuchos::RCP<Teuchos::SerialDenseMatrix<int,double> > Cteuchos, Zteuchos;
     if (curRank_ > 0) {
       U1 = Teuchos::rcp( new Epetra_MultiVector(View,*U_,0,curRank_) );
       C = Teuchos::rcp( new Epetra_SerialDenseMatrix(View, &((*B_)(0,curRank_)), B_->LDA(), curRank_, lup) );
@@ -98,7 +98,7 @@ namespace RBGen {
 
     //
     // update bases
-    Teuchos::RefCountPtr<Epetra_MultiVector> newwU, fullU, newU, newwV, fullV, newV;
+    Teuchos::RCP<Epetra_MultiVector> newwU, fullU, newU, newwV, fullV, newV;
     fullU = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,0,curRank_) );
     newwU = Teuchos::rcp( new Epetra_MultiVector(::View,*workU_,0,curRank_-down) );
     // multiply by Uh1
@@ -142,9 +142,9 @@ namespace RBGen {
   }
 
 
-  void ISVDUDV::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                            const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-                            const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio) 
+  void ISVDUDV::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
+                            const Teuchos::RCP< Epetra_MultiVector >& ss,
+                            const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio) 
   {
     workU_ = Teuchos::rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );
     Epetra_LocalMap lclmap(ss->NumVectors(),0,ss->Comm());

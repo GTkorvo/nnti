@@ -21,14 +21,14 @@ namespace RBGen {
     localV_(true)
   {}
 
-  Teuchos::RefCountPtr<const Epetra_MultiVector> StSVDRTR::getBasis() const {
+  Teuchos::RCP<const Epetra_MultiVector> StSVDRTR::getBasis() const {
     if (isInitialized_ == false) {
       return Teuchos::null;
     }
     return U_;
   }
 
-  Teuchos::RefCountPtr<const Epetra_MultiVector> StSVDRTR::getRightBasis() const {
+  Teuchos::RCP<const Epetra_MultiVector> StSVDRTR::getRightBasis() const {
     if (isInitialized_ == false) {
       return Teuchos::null;
     }
@@ -39,9 +39,9 @@ namespace RBGen {
     return ret;
   }
 
-  void StSVDRTR::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                             const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-                             const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio ) {
+  void StSVDRTR::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
+                             const Teuchos::RCP< Epetra_MultiVector >& ss,
+                             const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio ) {
 
     using Teuchos::rcp;
 
@@ -65,12 +65,12 @@ namespace RBGen {
 
     // Get an Anasazi orthomanager
     if (rbmethod_params.isType<
-          Teuchos::RefCountPtr< Anasazi::OrthoManager<double,Epetra_MultiVector> > 
+          Teuchos::RCP< Anasazi::OrthoManager<double,Epetra_MultiVector> > 
         >("Ortho Manager")
        ) 
     {
       ortho_ = rbmethod_params.get< 
-                Teuchos::RefCountPtr<Anasazi::OrthoManager<double,Epetra_MultiVector> >
+                Teuchos::RCP<Anasazi::OrthoManager<double,Epetra_MultiVector> >
                >("Ortho Manager");
       TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,invalid_argument,"User specified null ortho manager.");
     }
@@ -199,7 +199,7 @@ namespace RBGen {
     isInitialized_ = true;
   }
 
-  void StSVDRTR::Reset( const Teuchos::RefCountPtr<Epetra_MultiVector>& new_ss ) {
+  void StSVDRTR::Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss ) {
     // Reset the pointer for the snapshot matrix
     // Note: We will not assume that it is non-null; user could be resetting our
     // pointer in order to delete the original snapshot set
@@ -269,7 +269,7 @@ namespace RBGen {
   
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // update the basis with new snapshots: not supported
-  void StSVDRTR::updateBasis( const Teuchos::RefCountPtr< Epetra_MultiVector >& update_ss ) {
+  void StSVDRTR::updateBasis( const Teuchos::RCP< Epetra_MultiVector >& update_ss ) {
     // perform enough incremental updates to consume the new snapshots
     TEST_FOR_EXCEPTION(true,std::logic_error,
         "RBGen::StSVDRTR::updateBasis(): this routine not yet supported.");

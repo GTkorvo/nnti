@@ -29,7 +29,7 @@ namespace RBGen {
     //! @name Initialization/Reset Methods
     //@{
 
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params );
+    void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params );
 
     void Reset() { num_nodes = 0; isInit = false; };
 
@@ -39,7 +39,7 @@ namespace RBGen {
     //@{
 
     //! Method for reading multiple files and putting them into an Epetra_MultiVector.
-    Teuchos::RefCountPtr<Epetra_MultiVector> Read( const std::vector<std::string>& filenames );
+    Teuchos::RCP<Epetra_MultiVector> Read( const std::vector<std::string>& filenames );
 
     //@}
 
@@ -47,7 +47,7 @@ namespace RBGen {
     //@{
 
     //! Method for writing one Epetra_MultiVector into a file.
-    void Write( Teuchos::RefCountPtr<const Epetra_MultiVector> MV, const std::string& filename );
+    void Write( Teuchos::RCP<const Epetra_MultiVector> MV, const std::string& filename );
 
     //@}
     //! @name Handler Status Methods
@@ -69,7 +69,7 @@ namespace RBGen {
     std::string in_path, out_path;
 
     // ParameterList that this file handler was initialized with.
-    Teuchos::RefCountPtr< Teuchos::ParameterList > params_;
+    Teuchos::RCP< Teuchos::ParameterList > params_;
 
   };
   

@@ -28,7 +28,7 @@ namespace RBGen {
     {
     }
 
-  void MatrixMarketFileIOHandler::Initialize( const Teuchos::RefCountPtr<Teuchos::ParameterList>& params )
+  void MatrixMarketFileIOHandler::Initialize( const Teuchos::RCP<Teuchos::ParameterList>& params )
   {
     // Get the "File I/O" sublist.
     Teuchos::ParameterList& fileio_params = params->sublist( "File IO" );
@@ -49,10 +49,10 @@ namespace RBGen {
     isInit = true;
   }
 
-  Teuchos::RefCountPtr<Epetra_MultiVector> MatrixMarketFileIOHandler::Read( const std::vector<std::string>& filenames )
+  Teuchos::RCP<Epetra_MultiVector> MatrixMarketFileIOHandler::Read( const std::vector<std::string>& filenames )
   {
 
-    Teuchos::RefCountPtr<Epetra_MultiVector> newMV;
+    Teuchos::RCP<Epetra_MultiVector> newMV;
 
     if (isInit) {
 
@@ -141,7 +141,7 @@ namespace RBGen {
     return newMV;
   }
 
-  void MatrixMarketFileIOHandler::Write( Teuchos::RefCountPtr<const Epetra_MultiVector> MV, const std::string& filename )
+  void MatrixMarketFileIOHandler::Write( Teuchos::RCP<const Epetra_MultiVector> MV, const std::string& filename )
   {
     if (isInit) {
 

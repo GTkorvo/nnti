@@ -8,6 +8,10 @@ namespace RBGen {
 
   ISVDMultiSDA::ISVDMultiSDA() {}
 
+  void ISVDMultiSDA::updateBasis(const Teuchos::RCP< Epetra_MultiVector >& update_ss ) {
+    TEST_FOR_EXCEPTION(true,std::logic_error,
+        "RBGen::ISVDMultiSDA::updateBasis(): this routine not supported.");
+  }
   void ISVDMultiSDA::makePass() {
     Epetra_LAPACK lapack;
     Epetra_BLAS   blas;
@@ -18,7 +22,7 @@ namespace RBGen {
         "RBGen::ISVDMultiSDA::makePass(): after first pass, numProc should be numCols");
 
     // compute W = I - Z T Z^T from current V_
-    Teuchos::RefCountPtr<Epetra_MultiVector> lclAZT, lclZ;
+    Teuchos::RCP<Epetra_MultiVector> lclAZT, lclZ;
     double *Z_A, *AZT_A;
     int Z_LDA, AZT_LDA;
     int oldRank = 0;
@@ -285,9 +289,9 @@ namespace RBGen {
   }
 
   void ISVDMultiSDA::Initialize( 
-      const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-      const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-      const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio
+      const Teuchos::RCP< Teuchos::ParameterList >& params,
+      const Teuchos::RCP< Epetra_MultiVector >& ss,
+      const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio
       ) 
   {
     // workAZT has room for A * Z * T, where Z * T has 2*maxBasisSize vectors

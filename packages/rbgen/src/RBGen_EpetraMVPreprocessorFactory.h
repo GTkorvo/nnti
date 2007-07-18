@@ -28,7 +28,7 @@ namespace RBGen {
     //! @name Factory methods
     //@{
 
-    Teuchos::RefCountPtr<Preprocessor<Epetra_MultiVector> > create( const Teuchos::ParameterList& params );
+    Teuchos::RCP<Preprocessor<Epetra_MultiVector> > create( const Teuchos::ParameterList& params );
 
     //@}
 

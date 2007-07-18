@@ -27,7 +27,7 @@ namespace RBGen {
     //! @name Initialization/Reset Methods
     //@{
 
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params );
+    void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params );
 
     void Reset() { isInit = false; };
 
@@ -37,7 +37,7 @@ namespace RBGen {
     //@{
 
     //! Method for reading a file and constructing an Epetra_CrsMatrix.
-    Teuchos::RefCountPtr<Epetra_CrsMatrix> Read( const std::vector<std::string>& filenames );
+    Teuchos::RCP<Epetra_CrsMatrix> Read( const std::vector<std::string>& filenames );
 
     //@}
 
@@ -45,7 +45,7 @@ namespace RBGen {
     //@{
 
     //! Method for writing one Epetra_CrsMatrix into a file using the same type as was.
-    void Write( Teuchos::RefCountPtr<const Epetra_CrsMatrix> MTX, const std::string& filename );
+    void Write( Teuchos::RCP<const Epetra_CrsMatrix> MTX, const std::string& filename );
 
     //@}
     //! @name Handler Status Methods
@@ -65,7 +65,7 @@ namespace RBGen {
     std::string in_path, out_path;
 
     // ParameterList that this file handler was initialized with.
-    Teuchos::RefCountPtr< Teuchos::ParameterList > params_;
+    Teuchos::RCP< Teuchos::ParameterList > params_;
 
   };
   

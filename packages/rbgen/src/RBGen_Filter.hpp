@@ -2,7 +2,7 @@
 #define RBGEN_FILTER_H
 
 #include "Teuchos_ScalarTraits.hpp"
-#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_RCP.hpp"
 
 // finish: amend filter() to take a pointer to the IncSVDPOD object
 
@@ -197,8 +197,8 @@ namespace RBGen {
 
     //! Default constructor.
     CompFilter(CompType andor, 
-                 const Teuchos::RefCountPtr<Filter<ScalarType> > &f1,
-                 const Teuchos::RefCountPtr<Filter<ScalarType> > &f2 ) 
+                 const Teuchos::RCP<Filter<ScalarType> > &f1,
+                 const Teuchos::RCP<Filter<ScalarType> > &f2 ) 
       : andor_(andor), f1_(f1), f2_(f2) {
       TEST_FOR_EXCEPTION(f1_ == Teuchos::null || f2_ == Teuchos::null,
                          invalid_argument,"CompFilter: Component filters must be non-null.");
@@ -230,7 +230,7 @@ namespace RBGen {
 
     private: 
       CompType andor_;
-      Teuchos::RefCountPtr<Filter<ScalarType> > f1_, f2_;
+      Teuchos::RCP<Filter<ScalarType> > f1_, f2_;
   };
 
 }

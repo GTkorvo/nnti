@@ -30,7 +30,7 @@ namespace RBGen {
     //! @name Factory methods
     //@{
 
-    Teuchos::RefCountPtr<Method< Epetra_MultiVector,Epetra_CrsMatrix > > create( const Teuchos::ParameterList& params );
+    Teuchos::RCP<Method< Epetra_MultiVector,Epetra_CrsMatrix > > create( const Teuchos::ParameterList& params );
     
     //@}
 

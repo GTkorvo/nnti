@@ -24,8 +24,8 @@ namespace RBGen {
     //@{
 
     //! Initialize preprocessor
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params, 
-                     const Teuchos::RefCountPtr< FileIOHandler<DataSetType> >& fileio ) {};
+    void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params, 
+                     const Teuchos::RCP< FileIOHandler<DataSetType> >& fileio ) {};
 
     //! Reset preprocessor
     void Reset() {};
@@ -35,7 +35,7 @@ namespace RBGen {
     //@{
 
     //! Preprocess the snapshot set passed in
-    void Preprocess( Teuchos::RefCountPtr<DataSetType>& ss ) {};
+    void Preprocess( Teuchos::RCP<DataSetType>& ss ) {};
     //@}
 
     //! @name Status Methods

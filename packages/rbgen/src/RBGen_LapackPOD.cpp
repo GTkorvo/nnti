@@ -22,9 +22,9 @@ namespace RBGen {
   {
   }
 
-  void LapackPOD::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-			      const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-			      const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio )
+  void LapackPOD::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
+			      const Teuchos::RCP< Epetra_MultiVector >& ss,
+			      const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio )
   {
     // Get the "Reduced Basis Method" sublist.
     Teuchos::ParameterList& rbmethod_params = params->sublist( "Reduced Basis Method" );

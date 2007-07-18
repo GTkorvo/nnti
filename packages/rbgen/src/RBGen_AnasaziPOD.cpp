@@ -25,9 +25,9 @@ namespace RBGen {
   {
   }
 
-  void AnasaziPOD::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                               const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-                               const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio )
+  void AnasaziPOD::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
+                               const Teuchos::RCP< Epetra_MultiVector >& ss,
+                               const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio )
   {
 
    // Get the "Reduced Basis Method" sublist.
@@ -110,14 +110,14 @@ namespace RBGen {
     //
     // Create the initial vector and randomize it.
     //
-    Teuchos::RefCountPtr<Anasazi::EpetraMultiVec> ivec;
+    Teuchos::RCP<Anasazi::EpetraMultiVec> ivec;
     if (isInner_)
       ivec = Teuchos::rcp( new Anasazi::EpetraMultiVec( localMap, blockSize ) );
     else
       ivec = Teuchos::rcp( new Anasazi::EpetraMultiVec( ss_->Map(), blockSize ) );
     ivec->MvRandom();
     //
-    Teuchos::RefCountPtr<OP> Amat;
+    Teuchos::RCP<OP> Amat;
 
     if (op_ != Teuchos::null) {
       // Call the constructor for the (WA)^T*WA operator
@@ -129,7 +129,7 @@ namespace RBGen {
     }
  
     // Create the eigenproblem
-    Teuchos::RefCountPtr<Anasazi::BasicEigenproblem<double,MV,OP> > MyProblem =
+    Teuchos::RCP<Anasazi::BasicEigenproblem<double,MV,OP> > MyProblem =
       Teuchos::rcp( new Anasazi::BasicEigenproblem<double,MV,OP>(Amat, ivec) );
   
     // Inform the eigenproblem that the operator A is symmetric

@@ -4,7 +4,7 @@
 #include "RBGen_ConfigDefs.h"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_RCP.hpp"
 
 namespace RBGen {
 
@@ -28,7 +28,7 @@ namespace RBGen {
     //@{
 
     //! Initialize file reader using 
-    virtual void Initialize( const Teuchos::RefCountPtr<Teuchos::ParameterList>& params ) = 0;
+    virtual void Initialize( const Teuchos::RCP<Teuchos::ParameterList>& params ) = 0;
     
     void Reset() {};
     //@}
@@ -37,7 +37,7 @@ namespace RBGen {
     //@{
     
     //! Method for reading multiple files and putting them into an data set.
-    virtual Teuchos::RefCountPtr< DataSetType > Read( const std::vector<std::string>& filenames ) = 0;
+    virtual Teuchos::RCP< DataSetType > Read( const std::vector<std::string>& filenames ) = 0;
 
     //@}
 
@@ -45,7 +45,7 @@ namespace RBGen {
     //@{
 
     //! Method for writing one data set into a file.
-    virtual void Write( Teuchos::RefCountPtr< const DataSetType > MV, const std::string& filename ) = 0;
+    virtual void Write( Teuchos::RCP< const DataSetType > MV, const std::string& filename ) = 0;
 
     //@}
 

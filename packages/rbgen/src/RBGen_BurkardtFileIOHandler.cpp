@@ -25,7 +25,7 @@ namespace RBGen {
   {
   }
 
-  void BurkardtFileIOHandler::Initialize( const Teuchos::RefCountPtr<Teuchos::ParameterList>& params )
+  void BurkardtFileIOHandler::Initialize( const Teuchos::RCP<Teuchos::ParameterList>& params )
   {
 
 #ifdef EPETRA_MPI
@@ -72,10 +72,10 @@ namespace RBGen {
     isInit = true;
   }
   
-  Teuchos::RefCountPtr<Epetra_MultiVector> BurkardtFileIOHandler::Read( const std::vector<std::string>& filenames )
+  Teuchos::RCP<Epetra_MultiVector> BurkardtFileIOHandler::Read( const std::vector<std::string>& filenames )
   {
 
-    Teuchos::RefCountPtr<Epetra_MultiVector> newMV;
+    Teuchos::RCP<Epetra_MultiVector> newMV;
 
     if (isInit) {
 
@@ -159,7 +159,7 @@ namespace RBGen {
     return newMV;
   }
   
-  void BurkardtFileIOHandler::Write( Teuchos::RefCountPtr<const Epetra_MultiVector> MV, const std::string& filename )
+  void BurkardtFileIOHandler::Write( Teuchos::RCP<const Epetra_MultiVector> MV, const std::string& filename )
   {
     if (isInit) {
 

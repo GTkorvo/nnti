@@ -64,9 +64,9 @@ namespace RBGen {
     //@{
 
     //! Initialize the method with the given parameter list and snapshot set.
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                     const Teuchos::RefCountPtr< Epetra_MultiVector >& init,
-                     const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
+    void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
+                     const Teuchos::RCP< Epetra_MultiVector >& init,
+                     const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
 
     //@}
 
@@ -77,7 +77,7 @@ namespace RBGen {
     void shrink(const int down, std::vector<double> &S, Epetra_SerialDenseMatrix &U, Epetra_SerialDenseMatrix &V);
 
     // workspace for U_*U1
-    Teuchos::RefCountPtr<Epetra_MultiVector> workU_, workV_;
+    Teuchos::RCP<Epetra_MultiVector> workU_, workV_;
   };
 
 } // end of RBGen namespace

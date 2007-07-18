@@ -32,7 +32,7 @@ namespace RBGen {
     //! @name Initialization/Reset Methods
     //@{
     
-    void Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params );
+    void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params );
     
     void Reset();
     
@@ -42,7 +42,7 @@ namespace RBGen {
     //@{
     
     //! Method for reading multiple files and putting them into an Epetra_MultiVector.
-    Teuchos::RefCountPtr< Epetra_MultiVector > Read( const std::vector<std::string>& filenames );
+    Teuchos::RCP< Epetra_MultiVector > Read( const std::vector<std::string>& filenames );
 
     //@}
 
@@ -50,7 +50,7 @@ namespace RBGen {
     //@{
 
     //! Method for writing one Epetra_MultiVector into a file.
-    void Write( Teuchos::RefCountPtr< const Epetra_MultiVector > MV, const std::string& filename );
+    void Write( Teuchos::RCP< const Epetra_MultiVector > MV, const std::string& filename );
 
     //@}
 
@@ -68,7 +68,7 @@ namespace RBGen {
     int num_nodes, num_nod_var, len_string;
     char **var_name;
     string in_path, out_path;
-    Teuchos::RefCountPtr< Teuchos::ParameterList > params_;
+    Teuchos::RCP< Teuchos::ParameterList > params_;
 
     // Method for handling error from NetCDF.
     void handle_error( int status ) {

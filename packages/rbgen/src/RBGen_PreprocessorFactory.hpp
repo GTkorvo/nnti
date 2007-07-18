@@ -1,10 +1,8 @@
-
-
 #ifndef RBGEN_PREPROCESSOR_FACTORY_HPP
 #define RBGEN_PREPROCESSOR_FACTORY_HPP
 
 #include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_RCP.hpp"
 
 namespace RBGen {
 
@@ -29,7 +27,7 @@ namespace RBGen {
     //! @name Factory methods
     //@{
 
-    virtual Teuchos::RefCountPtr<Preprocessor<DataSetType> > create( const Teuchos::ParameterList& params ) = 0;
+    virtual Teuchos::RCP<Preprocessor<DataSetType> > create( const Teuchos::ParameterList& params ) = 0;
     
     //@}
 

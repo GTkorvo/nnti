@@ -10,7 +10,7 @@ namespace RBGen {
     preproc_types.push_back("Modified Snapshot");
   }
 
-  Teuchos::RefCountPtr<Preprocessor<Epetra_MultiVector> >
+  Teuchos::RCP<Preprocessor<Epetra_MultiVector> >
   EpetraMVPreprocessorFactory::create( const Teuchos::ParameterList& params )
   {
     // See if the "Preprocessing" sublist exists
@@ -26,7 +26,7 @@ namespace RBGen {
                                                              "Method" );
 
     // Create the preprocessor.
-    Teuchos::RefCountPtr<Preprocessor< Epetra_MultiVector > > RBPreprocessor;
+    Teuchos::RCP<Preprocessor< Epetra_MultiVector > > RBPreprocessor;
 
     // Basic preprocessor does nothing
     if ( method == "None" ) {

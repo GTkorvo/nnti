@@ -25,17 +25,18 @@ namespace RBGen {
     timerComp_("Total Elapsed Time"),
     debug_(false),
     verbLevel_(0),
-    resNorms_(0)
+    resNorms_(0),
+    Vlocal_(true)
   {}
 
-  Teuchos::RefCountPtr<const Epetra_MultiVector> IncSVDPOD::getBasis() const {
+  Teuchos::RCP<const Epetra_MultiVector> IncSVDPOD::getBasis() const {
     if (curRank_ == 0 || isInitialized_ == false) {
       return Teuchos::null;
     }
     return Teuchos::rcp( new Epetra_MultiVector(::View,*U_,0,curRank_) );
   }
 
-  Teuchos::RefCountPtr<const Epetra_MultiVector> IncSVDPOD::getRightBasis() const {
+  Teuchos::RCP<const Epetra_MultiVector> IncSVDPOD::getRightBasis() const {
     if (curRank_ == 0 || isInitialized_ == false) {
       return Teuchos::null;
     }
@@ -47,9 +48,9 @@ namespace RBGen {
     return ret;
   }
 
-  void IncSVDPOD::Initialize( const Teuchos::RefCountPtr< Teuchos::ParameterList >& params,
-                              const Teuchos::RefCountPtr< Epetra_MultiVector >& ss,
-                              const Teuchos::RefCountPtr< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio ) {
+  void IncSVDPOD::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
+                              const Teuchos::RCP< Epetra_MultiVector >& ss,
+                              const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio ) {
 
     using Teuchos::rcp;
 
@@ -61,7 +62,7 @@ namespace RBGen {
     TEST_FOR_EXCEPTION(maxBasisSize_ < 2,invalid_argument,"""Max Basis Size"" must be at least 2.");
 
     // Get a filter
-    filter_ = rbmethod_params.get<Teuchos::RefCountPtr<Filter<double> > >("Filter",Teuchos::null);
+    filter_ = rbmethod_params.get<Teuchos::RCP<Filter<double> > >("Filter",Teuchos::null);
     if (filter_ == Teuchos::null) {
       int k = rbmethod_params.get("Rank",(int)5);
       filter_ = rcp( new RangeFilter<double>(LARGEST,k,k) );
@@ -78,12 +79,12 @@ namespace RBGen {
 
     // Get an Anasazi orthomanager
     if (rbmethod_params.isType<
-          Teuchos::RefCountPtr< Anasazi::OrthoManager<double,Epetra_MultiVector> > 
+          Teuchos::RCP< Anasazi::OrthoManager<double,Epetra_MultiVector> > 
         >("Ortho Manager")
        ) 
     {
       ortho_ = rbmethod_params.get< 
-                Teuchos::RefCountPtr<Anasazi::OrthoManager<double,Epetra_MultiVector> >
+                Teuchos::RCP<Anasazi::OrthoManager<double,Epetra_MultiVector> >
                >("Ortho Manager");
       TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,invalid_argument,"User specified null ortho manager.");
     }
@@ -111,18 +112,33 @@ namespace RBGen {
     maxNumPasses_ = rbmethod_params.get("Maximum Number Passes",maxNumPasses_);
     TEST_FOR_EXCEPTION(maxNumPasses_ != -1 && maxNumPasses_ <= 0, invalid_argument,
                        "Maximum number passes must be -1 or > 0.");
-
     // Save the pointer to the snapshot matrix
     TEST_FOR_EXCEPTION(ss == Teuchos::null,invalid_argument,"Input snapshot matrix cannot be null.");
     A_ = ss;
+
+    // MaxNumCols
+    maxNumCols_ = A_->NumVectors();
+    maxNumCols_ = rbmethod_params.get("Maximum Number Columns",maxNumCols_);
+    TEST_FOR_EXCEPTION(maxNumCols_ < A_->NumVectors(), invalid_argument,
+                       "Maximum number of columns must be at least as many as in the initializing data set.");
+
+    // V locally replicated or globally distributed
+    // this must be true for now
+    // Vlocal_ = rbmethod_params.get("V Local",Vlocal_);
 
     // Allocate space for the factorization
     sigma_.reserve( maxBasisSize_ );
     U_ = Teuchos::null;
     V_ = Teuchos::null;
     U_ = rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );
-    Epetra_LocalMap lclmap(ss->NumVectors(),0,ss->Comm());
-    V_ = rcp( new Epetra_MultiVector(lclmap,maxBasisSize_,false) );
+    if (Vlocal_) {
+      Epetra_LocalMap lclmap(maxNumCols_,0,ss->Comm());
+      V_ = rcp( new Epetra_MultiVector(lclmap,maxBasisSize_,false) );
+    }
+    else {
+      Epetra_Map gblmap(maxNumCols_,0,ss->Comm());
+      V_ = rcp( new Epetra_MultiVector(gblmap,maxBasisSize_,false) );
+    }
     B_ = rcp( new Epetra_SerialDenseMatrix(maxBasisSize_,maxBasisSize_) );
     resNorms_.reserve(maxBasisSize_);
 
@@ -134,7 +150,7 @@ namespace RBGen {
     isInitialized_ = true;
   }
 
-  void IncSVDPOD::Reset( const Teuchos::RefCountPtr<Epetra_MultiVector>& new_ss ) {
+  void IncSVDPOD::Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss ) {
     // Reset the pointer for the snapshot matrix
     // Note: We will not assume that it is non-null; user could be resetting our
     // pointer in order to delete the original snapshot set
@@ -191,12 +207,6 @@ namespace RBGen {
   }
 
   
-  void IncSVDPOD::updateBasis( const Teuchos::RefCountPtr< Epetra_MultiVector >& update_ss ) {
-    // perform enough incremental updates to consume the new snapshots
-    TEST_FOR_EXCEPTION(true,std::logic_error,
-        "RBGen::IncSVDPOD::updateBasis(): this routine not yet supported.");
-  }
-
   void IncSVDPOD::incStep(int lup) {
 
     Epetra_LAPACK lapack;
