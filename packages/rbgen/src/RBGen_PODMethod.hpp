@@ -3,7 +3,7 @@
 #ifndef RBGEN_POD_METHOD_HPP
 #define RBGEN_POD_METHOD_HPP
 
-#include <vector>
+#include "RBGen_ConfigDefs.h" 
 
 namespace RBGen {
 

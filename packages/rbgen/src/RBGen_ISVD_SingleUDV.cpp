@@ -6,7 +6,7 @@ namespace RBGen {
 
   void ISVD_SingleUDV::Initialize( 
       const Teuchos::RCP< Teuchos::ParameterList >& params,
-      const Teuchos::RCP< Epetra_MultiVector >& init,
+      const Teuchos::RCP< const Epetra_MultiVector >& init,
       const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio) {
     IncSVDPOD::Initialize(params,init,fileio);
     ISVDUDV::Initialize(params,init,fileio);

@@ -26,7 +26,7 @@ namespace RBGen {
   }
 
   void AnasaziPOD::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
-                               const Teuchos::RCP< Epetra_MultiVector >& ss,
+                               const Teuchos::RCP< const Epetra_MultiVector >& ss,
                                const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio )
   {
 
@@ -125,7 +125,7 @@ namespace RBGen {
     }
     else {
       // Call the constructor for the (A^T*A) operator
-      Amat = Teuchos::rcp( new Anasazi::EpetraSymMVOp(ss_, !isInner_) );
+      Amat = Teuchos::rcp( new Anasazi::EpetraSymMVOp( ss_, !isInner_ ) );
     }
  
     // Create the eigenproblem
@@ -142,7 +142,7 @@ namespace RBGen {
     bool boolret = MyProblem->setProblem();
     if (boolret != true) {
       if (MyPID == 0) {
-        cout << "Anasazi::BasicEigenproblem::setProblem() returned with error." << endl;
+        std::cout << "Anasazi::BasicEigenproblem::setProblem() returned with error." << std::endl;
       }
     }
     
@@ -154,7 +154,7 @@ namespace RBGen {
     // Solve the problem to the specified tolerances or length
     Anasazi::ReturnType returnCode = MySolverMgr.solve();
     if (returnCode != Anasazi::Converged && MyPID==0) {
-      cout << "Anasazi::EigensolverMgr::solve() returned unconverged." << endl;
+      std::cout << "Anasazi::EigensolverMgr::solve() returned unconverged." << std::endl;
     }
 
     comp_time_ = timer.ElapsedTime();
@@ -202,12 +202,12 @@ namespace RBGen {
            info = AV.Multiply( 'N', 'N', -1.0, *basis_, S, 1.0 );
            AV.Norm2( &tempnrm[0] );
            if (MyPID == 0) {
-           cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<endl;
-           cout<<"------------------------------------------------------"<<endl;
+           std::cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<std::endl;
+           std::cout<<"------------------------------------------------------"<<std::endl;
            for (i=0; i<nev; i++) {
-           cout<< sv_[i] << "\t\t\t" << tempnrm[i] << endl;
+           std::cout<< sv_[i] << "\t\t\t" << tempnrm[i] << std::endl;
            }
-           cout<<"------------------------------------------------------"<<endl;
+           std::cout<<"------------------------------------------------------"<<std::endl;
            }
         */
       } else {
@@ -230,12 +230,12 @@ namespace RBGen {
            info = ATU.Multiply( 'N', 'N', -1.0, V, S, 1.0 );
            ATU.Norm2( tempnrm );
            if (comm.MyPID() == 0) {
-           cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<endl;
-           cout<<"------------------------------------------------------"<<endl;
+           std::cout<<"Singular Value"<<"\t\t"<<"Direct Residual"<<std::endl;
+           std::cout<<"------------------------------------------------------"<<std::endl;
            for (i=0; i<nev; i++) {
-           cout<< sv_[i] << "\t\t\t" << tempnrm[i] << endl;
+           std::cout<< sv_[i] << "\t\t\t" << tempnrm[i] << std::endl;
            }
-           cout<<"------------------------------------------------------"<<endl;
+           std::cout<<"------------------------------------------------------"<<std::endl;
            }
         */
       }

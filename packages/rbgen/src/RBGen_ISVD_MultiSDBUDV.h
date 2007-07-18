@@ -24,7 +24,7 @@ namespace RBGen {
 
       //! Initialize the method with the given parameter list and snapshot set.
       void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
-          const Teuchos::RCP< Epetra_MultiVector >& init,
+          const Teuchos::RCP< const Epetra_MultiVector >& init,
           const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
 
       //@}

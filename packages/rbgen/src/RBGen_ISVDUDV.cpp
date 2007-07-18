@@ -40,7 +40,7 @@ namespace RBGen {
     else {
       newRank = ortho_->normalize(*U2,Zteuchos);
     }
-    TEST_FOR_EXCEPTION(newRank != lup,logic_error,
+    TEST_FOR_EXCEPTION(newRank != lup,std::logic_error,
                        "RBGen::ISVDUDV::incStep(): Couldn't recover full rank basis.");
     Cteuchos = Teuchos::null;
     Zteuchos = Teuchos::null;
@@ -103,7 +103,7 @@ namespace RBGen {
     newwU = Teuchos::rcp( new Epetra_MultiVector(::View,*workU_,0,curRank_-down) );
     // multiply by Uh1
     int info = newwU->Multiply('N','N',1.0,*fullU,Uh1,0.0);
-    TEST_FOR_EXCEPTION(info != 0,logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(U).");
+    TEST_FOR_EXCEPTION(info != 0,std::logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(U).");
     fullU = Teuchos::null;
     newU = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,0,curRank_-down) );
     *newU = *newwU;
@@ -125,7 +125,7 @@ namespace RBGen {
     newwV = Teuchos::rcp( new Epetra_MultiVector(::View,lclmap,workV_A,workV_LDA,curRank_-down) );
     // multiply workV = fullV * Vh1
     info = newwV->Multiply('N','N',1.0,*fullV,Vh1,0.0);
-    TEST_FOR_EXCEPTION(info != 0,logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(V).");
+    TEST_FOR_EXCEPTION(info != 0,std::logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(V).");
     fullV = Teuchos::null;
     // now set newV = workV
     newV = Teuchos::rcp( new Epetra_MultiVector(::View,lclmap, V_A, V_LDA, curRank_-down) );
@@ -143,7 +143,7 @@ namespace RBGen {
 
 
   void ISVDUDV::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
-                            const Teuchos::RCP< Epetra_MultiVector >& ss,
+                            const Teuchos::RCP< const Epetra_MultiVector >& ss,
                             const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio) 
   {
     workU_ = Teuchos::rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );

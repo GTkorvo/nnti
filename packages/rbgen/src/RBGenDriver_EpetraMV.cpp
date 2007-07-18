@@ -181,20 +181,20 @@ int main( int argc, char* argv[] )
   const std::vector<double> sv = pod_method->getSingularValues();
   //
   if (verbose && Comm.MyPID() == 0) {
-    cout<<"-------------------------------------------------------"<<endl;
-    cout<<"Computed Singular Values : "<<endl;
-    cout<<"-------------------------------------------------------"<<endl;
-    for (unsigned int i=0; i<sv.size(); ++i) { cout << sv[i] << endl; }
+    std::cout<<"-------------------------------------------------------"<<std::endl;
+    std::cout<<"Computed Singular Values : "<<std::endl;
+    std::cout<<"-------------------------------------------------------"<<std::endl;
+    for (unsigned int i=0; i<sv.size(); ++i) { std::cout << sv[i] << std::endl; }
   }      
   
   if (Comm.MyPID() == 0) {
-    cout<<"-------------------------------------------------------"<<endl;
-    cout<<"RBGen Computation Time Breakdown (seconds) : "<<endl;
-    cout<<"-------------------------------------------------------"<<endl;
+    std::cout<<"-------------------------------------------------------"<<std::endl;
+    std::cout<<"RBGen Computation Time Breakdown (seconds) : "<<std::endl;
+    std::cout<<"-------------------------------------------------------"<<std::endl;
     for (unsigned int i=0; i<timersRBGen.size(); ++i)
-      cout << std::left << std::setw(40) << timersRBGen[i]->name() << " : "
-	   << std::setw(15) << timersRBGen[i]->totalElapsedTime() << endl;
-    cout<<"-------------------------------------------------------"<<endl;
+      std::cout << std::left << std::setw(40) << timersRBGen[i]->name() << " : "
+	   << std::setw(15) << timersRBGen[i]->totalElapsedTime() << std::endl;
+    std::cout<<"-------------------------------------------------------"<<std::endl;
   }
   //
   // ---------------------------------------------------------------

@@ -114,7 +114,7 @@ namespace RBGen {
 
     //! Initialize the method with the given parameter list and snapshot set.
     void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
-                     const Teuchos::RCP< Epetra_MultiVector >& init,
+                     const Teuchos::RCP< const Epetra_MultiVector >& init,
                      const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
 
     void Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss );
@@ -151,7 +151,8 @@ namespace RBGen {
     int curRank_;
 
     // Pointers to the snapshots and reduced basis.
-    Teuchos::RCP<Epetra_MultiVector> A_, U_, V_;
+    Teuchos::RCP<const Epetra_MultiVector> A_;
+    Teuchos::RCP<Epetra_MultiVector> U_, V_;
 
     // SerialDenseMatrix holding current core matrix B
     Teuchos::RCP<Epetra_SerialDenseMatrix> B_;

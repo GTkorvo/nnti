@@ -167,13 +167,13 @@ namespace RBGen {
 	isInit = true;
 	
 	// Output information.
-	cout<<"len_string = "<<len_string<<endl;
-	cout<<"num_nodes = "<<num_nodes<<endl;
-	cout<<"num_nod_var = "<<num_nod_var<<endl;
-	cout<<"var_name = ";
+	std::cout<<"len_string = "<<len_string<<std::endl;
+	std::cout<<"num_nodes = "<<num_nodes<<std::endl;
+	std::cout<<"num_nod_var = "<<num_nod_var<<std::endl;
+	std::cout<<"var_name = ";
 	for (i=0; i< num_nod_var; ++i)
-	  cout<<var_name[i]<<" ";
-	cout<<endl;
+	  std::cout<<var_name[i]<<" ";
+	std::cout<<std::endl;
       }
       
       // Close first file.
@@ -230,8 +230,8 @@ namespace RBGen {
       num_ss = total_rows;
       num_vars = cols0;
 
-      cout<<"Number of snapshots: "<< num_ss << endl;
-      cout<<"Length of snapshot : "<< num_vars << endl;
+      std::cout<<"Number of snapshots: "<< num_ss << std::endl;
+      std::cout<<"Length of snapshot : "<< num_vars << std::endl;
     }
     // Broadcast information about size of snapshot matrix.
     comm.Broadcast( &num_ss, 1, 0 );

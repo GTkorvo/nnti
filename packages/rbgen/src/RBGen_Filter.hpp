@@ -46,7 +46,7 @@ namespace RBGen {
      * \returns A vector of ints, corresponding to the indices of the targetted singular values.
      * The indices are in ascending order and employ zero-based indexing.
      */
-    virtual vector<int> filter(const vector<ScalarType> &svals) = 0;
+    virtual std::vector<int> filter(const std::vector<ScalarType> &svals) = 0;
     //@}
   };
 
@@ -60,8 +60,8 @@ namespace RBGen {
     //! Default constructor.
     RangeFilter(SortType which, int minRank = 1, int maxRank = 1) 
       : which_(which) {
-      TEST_FOR_EXCEPTION(minRank < 1,invalid_argument,"RangeFilter: minRank must be > 1");
-      TEST_FOR_EXCEPTION(maxRank < 1,invalid_argument,"RangeFilter: maxRank must be > 1");
+      TEST_FOR_EXCEPTION(minRank < 1,std::invalid_argument,"RangeFilter: minRank must be > 1");
+      TEST_FOR_EXCEPTION(maxRank < 1,std::invalid_argument,"RangeFilter: maxRank must be > 1");
       minRank_ = minRank;
       maxRank_ = maxRank;
     };
@@ -77,11 +77,11 @@ namespace RBGen {
     /*!
      * \note It is assumed that svals are sorted in decreasing order.
      */
-    vector<int> filter(const vector<ScalarType> &svals) {
+    std::vector<int> filter(const std::vector<ScalarType> &svals) {
       int num = (unsigned int)svals.size();
       if      (num > maxRank_) num = maxRank_;
       else if (minRank_ < num) num = minRank_;
-      vector<int> ret;
+      std::vector<int> ret;
       ret.reserve(num);
       if (LARGEST == which_) {
         for (int i=0; i<num; ++i) {
@@ -125,7 +125,7 @@ namespace RBGen {
                  typename Teuchos::ScalarTraits<ScalarType>::magnitudeType thresh)
       : which_(which), absthresh_(absthresh) {
       TEST_FOR_EXCEPTION(thresh < Teuchos::ScalarTraits<ScalarType>::zero(),
-                         invalid_argument,"ThreshFilter: minRank must be > 1");
+                         std::invalid_argument,"ThreshFilter: minRank must be > 1");
       thresh_ = thresh;
     };
 
@@ -141,7 +141,7 @@ namespace RBGen {
     /*!
      *  \note It is assumed that svals are sorted in decreasing order.
      */
-     vector<int> filter(const vector<ScalarType> &svals) {
+     std::vector<int> filter(const std::vector<ScalarType> &svals) {
       const int last = (unsigned int)svals.size() - 1;
 
       typename Teuchos::ScalarTraits<ScalarType>::magnitudeType tval;
@@ -157,16 +157,16 @@ namespace RBGen {
         }
       }
 
-      vector<int> ret;
+      std::vector<int> ret;
       if (LARGEST == which_) {
-        int num = find(svals.begin(),svals.end(),bind2nd(less<ScalarType>(),tval)) - svals.begin();
+        int num = find(svals.begin(),svals.end(),bind2nd(std::less<ScalarType>(),tval)) - svals.begin();
         ret.resize(num);
         for (int i=0; i<num; ++i) {
           ret.push_back(i);
         }
       }
       else if (SMALLEST == which_) {
-        int num = svals.end() - find(svals.begin(),svals.end(),bind2nd(less<ScalarType>(),tval)) + 1;
+        int num = svals.end() - find(svals.begin(),svals.end(),bind2nd(std::less<ScalarType>(),tval)) + 1;
         ret.resize(num);
         for (int i=last-num+1; i<last; ++i) {
           ret.push_back(i);
@@ -201,7 +201,7 @@ namespace RBGen {
                  const Teuchos::RCP<Filter<ScalarType> > &f2 ) 
       : andor_(andor), f1_(f1), f2_(f2) {
       TEST_FOR_EXCEPTION(f1_ == Teuchos::null || f2_ == Teuchos::null,
-                         invalid_argument,"CompFilter: Component filters must be non-null.");
+                         std::invalid_argument,"CompFilter: Component filters must be non-null.");
     };
 
     //! Destructor.
@@ -214,10 +214,10 @@ namespace RBGen {
     //! \brief 
     /*!  \note It is assumed that svals are sorted in decreasing order.
      */
-    vector<int> filter(const vector<ScalarType> &svals) {
-      vector<int> ind1 = f1_->filter(svals);
-      vector<int> ind2 = f2_->filter(svals);
-      vector<int> ret;
+      std::vector<int> filter(const std::vector<ScalarType> &svals) {
+      std::vector<int> ind1 = f1_->filter(svals);
+      std::vector<int> ind2 = f2_->filter(svals);
+      std::vector<int> ret;
       if (AND == andor_) {
         set_intersection(ind1.begin(),ind1.end(),ind2.begin(),ind2.end(),ret.begin());
       }

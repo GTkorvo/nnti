@@ -227,21 +227,21 @@ namespace RBGen {
     // print out some info
     const Epetra_Comm *comm = &A_->Comm();
     if (comm->MyPID() == 0 && verbLevel_ >= 1) {
-      cout 
-        << "------------- ISVDMultiSDB::makePass() -----------" << endl
-        << "| Number of passes: " << curNumPasses_ << endl
-        << "|     Current rank: " << curRank_ << endl
-        << "|   Current sigmas: " << endl;
+      std::cout 
+        << "------------- ISVDMultiSDB::makePass() -----------" << std::endl
+        << "| Number of passes: " << curNumPasses_ << std::endl
+        << "|     Current rank: " << curRank_ << std::endl
+        << "|   Current sigmas: " << std::endl;
       for (int i=0; i<curRank_; i++) {
-        cout << "|             " << sigma_[i] << endl;
+        std::cout << "|             " << sigma_[i] << std::endl;
       }
       if (debug_) {
-        cout << "|DBG   US-AV norms: " << endl;
+        std::cout << "|DBG   US-AV norms: " << std::endl;
         for (int i=0; i<curRank_; i++) {
-          cout << "|DBG          " << errnorms[i] << endl;
+          std::cout << "|DBG          " << errnorms[i] << std::endl;
         }
         if (!firstPass) {
-          cout << "|DBG      R-I norm: " << Rerr << endl;
+          std::cout << "|DBG      R-I norm: " << Rerr << std::endl;
         }
       }
     }
@@ -251,7 +251,7 @@ namespace RBGen {
 
   void ISVDMultiSDB::Initialize( 
       const Teuchos::RCP< Teuchos::ParameterList >& params,
-      const Teuchos::RCP< Epetra_MultiVector >& ss,
+      const Teuchos::RCP< const Epetra_MultiVector >& ss,
       const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio
       ) 
   {

@@ -48,7 +48,7 @@ namespace RBGen {
 
     //! Initialize the method with the given parameter list and snapshot set.
     virtual void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
-                             const Teuchos::RCP< DataSetType >& ss,
+                             const Teuchos::RCP< const DataSetType >& ss,
 			     const Teuchos::RCP< RBGen::FileIOHandler< OperatorType > >& fileio = Teuchos::null ) = 0;
     
     //! Reset the snapshot set used to compute the reduced basis.

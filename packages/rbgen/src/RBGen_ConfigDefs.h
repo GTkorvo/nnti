@@ -122,22 +122,11 @@ Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 #else
 #include <math.h>
 #endif
-using namespace std;
 #else /* TFLOP defined */
 #ifdef HAVE_IOMANIP
 #include <iomanip>
 #else
 #include <iomanip.h>
-#endif
-#ifdef HAVE_STRING
-using std::string;
-#endif
-#ifdef HAVE_IOSTREAM
-using std::istream;
-using std::ostream;
-using std::cerr;
-using std::cout;
-using std::endl;
 #endif
 #endif
 

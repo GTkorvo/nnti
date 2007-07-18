@@ -70,7 +70,7 @@ Teuchos::RCP<Teuchos::ParameterList> RBGen::createParams( const std::string& fil
       else if (i < 999)
 	filenames.push_back( in_path + "up" + Teuchos::Utils::toString(i + 1) + ".txt" );
       else
-	cout << "There are more than 1000 files!" << endl;
+	std::cout << "There are more than 1000 files!" << endl;
     }
     //
     // Insert the vector of snapshot filenames into the parameter list.

@@ -40,7 +40,7 @@ namespace RBGen {
   }
 
   void StSVDRTR::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
-                             const Teuchos::RCP< Epetra_MultiVector >& ss,
+                             const Teuchos::RCP< const Epetra_MultiVector >& ss,
                              const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio ) {
 
     using Teuchos::rcp;
@@ -352,9 +352,9 @@ namespace RBGen {
       alpha = r_r/d_Hd;
 
 #ifdef STSVD_DEBUG
-        cout << " >> (r,r)  : " << r_r  << endl
-             << " >> (d,Hd) : " << d_Hd << endl
-             << " >> alpha  : " << alpha << endl;
+        std::cout << " >> (r,r)  : " << r_r  << std::endl
+             << " >> (d,Hd) : " << d_Hd << std::endl
+             << " >> alpha  : " << alpha << std::endl;
 #endif
 
       // <neweta,neweta> = <eta,eta> + 2*alpha*<eta,delta> + alpha*alpha*<delta,delta>
@@ -364,7 +364,7 @@ namespace RBGen {
       if (d_Hd <= 0 || e_e_new >= D2) {
         double tau = (-e_d + SCT::squareroot(e_d*e_d + d_d*(D2-e_e))) / d_d;
 #ifdef STSVD_DEBUG
-        cout << " >> tau  : " << tau << endl;
+        std::cout << " >> tau  : " << tau << std::endl;
 #endif
         // eta = eta + tau*delta
         etaU_->Update(1.0,tau,*deltaU_);
@@ -379,8 +379,8 @@ namespace RBGen {
         }
 #ifdef STSVD_DEBUG
         e_e_new = e_e + 2.0*tau*e_d + tau*tau*d_d;
-        cout << " >> predicted  (eta,eta) : " << e_e_new << endl
-             << " >> actual (eta,eta)     : " << innerProduct(*etaU_,*etaV_) << endl;
+        std::cout << " >> predicted  (eta,eta) : " << e_e_new << std::endl
+             << " >> actual (eta,eta)     : " << innerProduct(*etaU_,*etaV_) << std::endl;
 #endif
         break;
       }
@@ -434,8 +434,8 @@ namespace RBGen {
     } // end of the inner iteration loop
 
 #ifdef STSVD_DEBUG
-    cout << " >> stop reason is " << stopReasons_[innerStop_] << endl
-         << endl;
+    std::cout << " >> stop reason is " << stopReasons_[innerStop_] << std::endl
+         << std::endl;
 #endif
 
   } // end of solveTRSubproblem

@@ -48,7 +48,7 @@ namespace RBGen {
         input_file_ = Teuchos::getParameter< std::string >( preproc_params, "Filename" );
       }
       catch (std::exception &e) {
-        cout<<"The modified snapshot input file has not been specified"<<endl;
+        std::cout<<"The modified snapshot input file has not been specified"<<std::endl;
       }
     }      
     //
@@ -63,7 +63,7 @@ namespace RBGen {
       scalings_ = Teuchos::getParameter< std::vector< double > >( *params, "Snapshot Scaling" );
       }
       catch (std::exception &e) {
-      cout<<"The snapshot scaling vector has not been specified in the input!"<<endl;
+      std::cout<<"The snapshot scaling vector has not been specified in the input!"<<std::endl;
       }
       //
       // Try to get the snapshot scaling indices vector
@@ -72,11 +72,11 @@ namespace RBGen {
       scaling_idx_ = Teuchos::getParameter< std::vector< std::pair<int,int> > >( *params, "Snapshot Scaling Indices" );
       }
       catch (std::exception &e) {
-      cout<<"The snapshot scaling indices have not been specified in the input!"<<endl;
+      std::cout<<"The snapshot scaling indices have not been specified in the input!"<<std::endl;
     }      
     */
     if ( scalings_.size() != scaling_idx_.size() ) {
-      cout<<"The scaling vector is not the same size as the number of index pairs!"<< endl;
+      std::cout<<"The scaling vector is not the same size as the number of index pairs!"<< std::endl;
     }
     //
     // We're initialized now.

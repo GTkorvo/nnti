@@ -44,12 +44,12 @@ namespace RBGen {
   }
 
   std::vector<double> IncSVDPOD::getSingularValues() const { 
-    vector<double> ret(sigma_.begin(),sigma_.begin()+curRank_);
+    std::vector<double> ret(sigma_.begin(),sigma_.begin()+curRank_);
     return ret;
   }
 
   void IncSVDPOD::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
-                              const Teuchos::RCP< Epetra_MultiVector >& ss,
+                              const Teuchos::RCP< const Epetra_MultiVector >& ss,
                               const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio ) {
 
     using Teuchos::rcp;
@@ -59,7 +59,7 @@ namespace RBGen {
 
     // Get the maximum basis size
     maxBasisSize_ = rbmethod_params.get<int>("Max Basis Size");
-    TEST_FOR_EXCEPTION(maxBasisSize_ < 2,invalid_argument,"""Max Basis Size"" must be at least 2.");
+    TEST_FOR_EXCEPTION(maxBasisSize_ < 2,std::invalid_argument,"\"Max Basis Size\" must be at least 2.");
 
     // Get a filter
     filter_ = rbmethod_params.get<Teuchos::RCP<Filter<double> > >("Filter",Teuchos::null);
@@ -86,7 +86,7 @@ namespace RBGen {
       ortho_ = rbmethod_params.get< 
                 Teuchos::RCP<Anasazi::OrthoManager<double,Epetra_MultiVector> >
                >("Ortho Manager");
-      TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,invalid_argument,"User specified null ortho manager.");
+      TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,std::invalid_argument,"User specified null ortho manager.");
     }
     else {
       string omstr = rbmethod_params.get("Ortho Manager","DGKS");
@@ -100,26 +100,26 @@ namespace RBGen {
 
     // Lmin,Lmax,Kstart
     lmin_ = rbmethod_params.get("Min Update Size",1);
-    TEST_FOR_EXCEPTION(lmin_ < 1 || lmin_ >= maxBasisSize_,invalid_argument,
+    TEST_FOR_EXCEPTION(lmin_ < 1 || lmin_ >= maxBasisSize_,std::invalid_argument,
                        "Method requires 1 <= min update size < max basis size.");
     lmax_ = rbmethod_params.get("Max Update Size",maxBasisSize_);
-    TEST_FOR_EXCEPTION(lmin_ > lmax_,invalid_argument,"Max update size must be >= min update size.");
+    TEST_FOR_EXCEPTION(lmin_ > lmax_,std::invalid_argument,"Max update size must be >= min update size.");
 
     startRank_ = rbmethod_params.get("Start Rank",lmin_);
-    TEST_FOR_EXCEPTION(startRank_ < 1 || startRank_ > maxBasisSize_,invalid_argument,
+    TEST_FOR_EXCEPTION(startRank_ < 1 || startRank_ > maxBasisSize_,std::invalid_argument,
                        "Starting rank must be in [1,maxBasisSize_)");
     // MaxNumPasses
     maxNumPasses_ = rbmethod_params.get("Maximum Number Passes",maxNumPasses_);
-    TEST_FOR_EXCEPTION(maxNumPasses_ != -1 && maxNumPasses_ <= 0, invalid_argument,
+    TEST_FOR_EXCEPTION(maxNumPasses_ != -1 && maxNumPasses_ <= 0, std::invalid_argument,
                        "Maximum number passes must be -1 or > 0.");
     // Save the pointer to the snapshot matrix
-    TEST_FOR_EXCEPTION(ss == Teuchos::null,invalid_argument,"Input snapshot matrix cannot be null.");
+    TEST_FOR_EXCEPTION(ss == Teuchos::null,std::invalid_argument,"Input snapshot matrix cannot be null.");
     A_ = ss;
 
     // MaxNumCols
     maxNumCols_ = A_->NumVectors();
     maxNumCols_ = rbmethod_params.get("Maximum Number Columns",maxNumCols_);
-    TEST_FOR_EXCEPTION(maxNumCols_ < A_->NumVectors(), invalid_argument,
+    TEST_FOR_EXCEPTION(maxNumCols_ < A_->NumVectors(), std::invalid_argument,
                        "Maximum number of columns must be at least as many as in the initializing data set.");
 
     // V locally replicated or globally distributed
@@ -166,7 +166,7 @@ namespace RBGen {
 
     // check that we have a valid snapshot set: user may have cleared 
     // it using Reset()
-    TEST_FOR_EXCEPTION(A_ == Teuchos::null,logic_error,
+    TEST_FOR_EXCEPTION(A_ == Teuchos::null,std::logic_error,
                        "computeBasis() requires non-null snapshot set.");
 
     // check that we are initialized, i.e., data structures match the data set
@@ -196,10 +196,10 @@ namespace RBGen {
         }
       }
       if (comm->MyPID() == 0 && verbLevel_ >= 1) {
-        cout << "|  Num converged: " << numConverged << endl
-             << "|    Resid norms: " << endl;
+        std::cout << "|  Num converged: " << numConverged << std::endl
+             << "|    Resid norms: " << std::endl;
         for (int i=0; i<curRank_; i++) {
-          cout << "|                   " << resnorms[i] << endl;
+          std::cout << "|                   " << resnorms[i] << std::endl;
         }
       }
       if (numConverged == curRank_) break;
@@ -263,15 +263,15 @@ namespace RBGen {
     // print out some info
     const Epetra_Comm *comm = &A_->Comm();
     if (comm->MyPID() == 0 && verbLevel_ >= 2) {
-      cout 
-        << "------------- IncSVDPOD::incStep() --------------" << endl
-        << "| Cols Processed: " << numProc_ << endl
-        << "|    Current lup: " << lup << endl
-        << "|  Current ldown: " << truncind.size() << endl
-        << "|   Current rank: " << curRank_ << endl
-        << "| Current sigmas: " << endl;
+      std::cout 
+        << "------------- IncSVDPOD::incStep() --------------" << std::endl
+        << "| Cols Processed: " << numProc_ << std::endl
+        << "|    Current lup: " << lup << std::endl
+        << "|  Current ldown: " << truncind.size() << std::endl
+        << "|   Current rank: " << curRank_ << std::endl
+        << "| Current sigmas: " << std::endl;
       for (int i=0; i<curRank_; i++) {
-        cout << "|                   " << sigma_[i] << endl;
+        std::cout << "|                   " << sigma_[i] << std::endl;
       }
     }
 

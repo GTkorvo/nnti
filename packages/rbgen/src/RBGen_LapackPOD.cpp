@@ -23,7 +23,7 @@ namespace RBGen {
   }
 
   void LapackPOD::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
-			      const Teuchos::RCP< Epetra_MultiVector >& ss,
+			      const Teuchos::RCP< const Epetra_MultiVector >& ss,
 			      const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio )
   {
     // Get the "Reduced Basis Method" sublist.
@@ -100,7 +100,7 @@ namespace RBGen {
 	comp_time_ = timer.ElapsedTime();      
 	if (info != 0) { 
 	  // THROW AN EXCEPTION HERE!
-	  cout<< "The return value of the SVD is not 0!"<< endl;
+	  std::cout<< "The return value of the SVD is not 0!"<< std::endl;
 	}
       }
       //
@@ -108,14 +108,15 @@ namespace RBGen {
       //
       comm.Broadcast( &sv_[0], basis_size_, 0 );
       //
+      // Create a MultiVector for the basis and a view of the first basis_size_ vectors of Proc0MV.
+      //
+      basis_ = Teuchos::rcp( new Epetra_MultiVector( ss_->Map(), basis_size_ ) );
+      Epetra_MultiVector Proc0MV_front( Copy, Proc0MV, 0, basis_size_ );
+      //
       // Each processor needs to import the information back.
       //
-      Epetra_Import importer( ss_->Map(), *Proc0Map );     
-      ss_->Import(Proc0MV, importer, Insert);
-      //
-      // Create a view into the MultiVector for the basis.
-      //
-      basis_ = Teuchos::rcp( new Epetra_MultiVector( Copy, *ss_, 0, basis_size_ ) );
+      Epetra_Import importer( basis_->Map(), Proc0MV_front.Map() );     
+      basis_->Import(Proc0MV_front, importer, Insert);
       //
       // Clean up
       //
@@ -140,7 +141,7 @@ namespace RBGen {
       comp_time_ = timer.ElapsedTime();      
       if (info != 0) { 
 	// THROW AN EXCEPTION HERE!
-	cout<< "The return value of the SVD is not 0!"<< endl;
+	std::cout<< "The return value of the SVD is not 0!"<< std::endl;
       }
       sv_.resize( basis_size_ );     
       basis_ = Teuchos::rcp( new Epetra_MultiVector( Copy, *ss_, 0, basis_size_ ) );

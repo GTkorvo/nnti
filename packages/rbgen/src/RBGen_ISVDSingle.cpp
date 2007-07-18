@@ -17,7 +17,7 @@ namespace RBGen {
     // starting with the current factorization, make a single pass
     const int oldNumCols = numProc_;
     const int newNumCols = A_->NumVectors();
-    TEST_FOR_EXCEPTION(oldNumCols+newNumCols > maxNumCols_, invalid_argument,
+    TEST_FOR_EXCEPTION(oldNumCols+newNumCols > maxNumCols_, std::invalid_argument,
                        "RBGen::ISVSingle::updateBasis(): number of snapshots to process has exceeded specified maximum humber of columns.");
     while (numProc_ < oldNumCols+newNumCols) {
       // determine lup
@@ -64,12 +64,12 @@ namespace RBGen {
     // print out some info
     const Epetra_Comm *comm = &A_->Comm();
     if (comm->MyPID() == 0 && verbLevel_ >= 1) {
-      cout 
-        << "------------- ISVDSingle::updateBasis() -----------" << endl
-        << "|     Current rank: " << curRank_ << endl
-        << "|   Current sigmas: " << endl;
+      std::cout 
+        << "------------- ISVDSingle::updateBasis() -----------" << std::endl
+        << "|     Current rank: " << curRank_ << std::endl
+        << "|   Current sigmas: " << std::endl;
       for (int i=0; i<curRank_; i++) {
-        cout << "|             " << sigma_[i] << endl;
+        std::cout << "|             " << sigma_[i] << std::endl;
       }
     }
 
@@ -195,18 +195,18 @@ namespace RBGen {
     // print out some info
     const Epetra_Comm *comm = &A_->Comm();
     if (comm->MyPID() == 0 && verbLevel_ >= 1) {
-      cout 
-        << "------------- ISVDSingle::makePass() -----------" << endl
-        << "| Number of passes: " << curNumPasses_ << endl
-        << "|     Current rank: " << curRank_ << endl
-        << "|   Current sigmas: " << endl;
+      std::cout 
+        << "------------- ISVDSingle::makePass() -----------" << std::endl
+        << "| Number of passes: " << curNumPasses_ << std::endl
+        << "|     Current rank: " << curRank_ << std::endl
+        << "|   Current sigmas: " << std::endl;
       for (int i=0; i<curRank_; i++) {
-        cout << "|             " << sigma_[i] << endl;
+        std::cout << "|             " << sigma_[i] << std::endl;
       }
       if (debug_) {
-        cout << "|DBG   US-AV norms: " << endl;
+        std::cout << "|DBG   US-AV norms: " << std::endl;
         for (int i=0; i<curRank_; i++) {
-          cout << "|DBG          " << errnorms[i] << endl;
+          std::cout << "|DBG          " << errnorms[i] << std::endl;
         }
       }
     }
@@ -216,7 +216,7 @@ namespace RBGen {
     
   void ISVDSingle::Initialize( 
       const Teuchos::RCP< Teuchos::ParameterList >& params,
-      const Teuchos::RCP< Epetra_MultiVector >& ss,
+      const Teuchos::RCP< const Epetra_MultiVector >& ss,
       const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio
       ) 
   {
