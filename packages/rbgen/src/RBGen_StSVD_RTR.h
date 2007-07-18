@@ -146,6 +146,8 @@ namespace RBGen {
     void solveTRSubproblem();
     // private initialize routine
     void initialize();
+    // compute 2*sym(S)
+    void Sym(Epetra_MultiVector &S);
 
 
     // Is this object initialized?
@@ -205,11 +207,16 @@ namespace RBGen {
     // current objective function
     double fx_;
     // last inner stop
-    int innerStop_;
+    trRetType innerStop_;
     // dimensions of problem
     int m_, n_;
     // is V local or distributed
     bool localV_;
+
+    // UAVNsym, VAUNsym
+    // we need sym(U'*A*V*N) and sym(V'*A'*U*N)
+    // for the Hessian
+    Teuchos::RCP<Epetra_MultiVector> UAVNsym_, VAUNsym_;
 
     // DGESVD workspace
     Teuchos::LAPACK<int,double> lapack;

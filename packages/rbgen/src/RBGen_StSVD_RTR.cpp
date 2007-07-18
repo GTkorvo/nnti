@@ -1,4 +1,4 @@
-#include "RBGen_IncSVDPOD.h"
+#include "RBGen_StSVD_RTR.h"
 #include "AnasaziSVQBOrthoManager.hpp"
 #include "AnasaziBasicOrthoManager.hpp"
 #include "Teuchos_TimeMonitor.hpp"
@@ -8,6 +8,10 @@
 #include "Epetra_Comm.h"
 
 #define STSVD_DEBUG 1
+
+// finish: check these things
+// * whenever we update U or V, we need to update UAVNsym and VAUNsym
+// * R is used to store residual, gradient, and TR residual; don't screw this up
 
 namespace RBGen {
 
@@ -124,12 +128,14 @@ namespace RBGen {
     HeV_    = rcp( new Epetra_MultiVector(*V_) );
     deltaV_ = rcp( new Epetra_MultiVector(*V_) );
     HdV_    = rcp( new Epetra_MultiVector(*V_) );
-    // allocate working space for DGESVD
+    // allocate working space for DGESVD, UAVNsym, VAUNsym
     {
       Epetra_LocalMap lclmap(rank_,0,ss->Comm());
-      dgesvd_A_ = rcp( new Epetra_MultiVector(lclap,rank_,false) );
+      dgesvd_A_ = rcp( new Epetra_MultiVector(lclmap,rank_,false) );
       TEST_FOR_EXCEPTION(dgesvd_A_->ConstantStride() == false,std::logic_error,
                          "RBGen::StSVD::initialize(): DGESVD Workspace A was not generated with constant stride!");
+      UAVNsym_ = rcp( new Epetra_MultiVector(lclmap,rank_,false) );
+      VAUNsym_ = rcp( new Epetra_MultiVector(lclmap,rank_,false) );
     }
     dgesvd_work_.resize(5*rank_);
 
@@ -153,6 +159,8 @@ namespace RBGen {
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
+
+    //
     // compute (U'*A)*V==RV'*V, compute its singular values
     {
       int info;
@@ -160,6 +168,34 @@ namespace RBGen {
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
+
+    //
+    // U'*A*V in dgesvd_A_ will be destroyed by GESVD; first, save it
+    {
+      // set UAVNsym_ = dgesvd_A_  * N
+      // set VAUNsym_ = dgesvd_A_' * N
+      for (int j=0; j<rank_; j++) {
+        for (int i=0; i<rank_; i++) {
+          (*UAVNsym_)[j][i] = (*dgesvd_A_)[j][i];
+          (*VAUNsym_)[j][i] = (*dgesvd_A_)[i][j];
+        }
+        (*UAVNsym_)(j)->Scale(N_[j]);
+        (*VAUNsym_)(j)->Scale(N_[j]);
+      }
+      // call Sym on both of these
+      Sym(*UAVNsym_);
+      Sym(*VAUNsym_);
+    }
+
+    //
+    // compute f(U,V) = trace(U'*A*V*N) before destroying dgesvd_A_
+    fx_ = 0.0;
+    for (int j=0; j<rank_; j++) {
+      fx_ += (*dgesvd_A_)[j][j]*N_[j];
+    }
+
+    //
+    // compute the singular values of U'*A*V
     {
       int info;
       lapack.GESVD('N','N',rank_,rank_,dgesvd_A_->Values(),dgesvd_A_->Stride(),&sigma_[0],
@@ -167,12 +203,15 @@ namespace RBGen {
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
+
     // compute residuals: RU = A *V - U*S
     //                    RV = A'*U - V*S
     for (int i=0; i<rank_; i++) {
       (*RU_)(i)->Update( *U(i), sigma_[i], 1.0 );
       (*RV_)(i)->Update( *V(i), sigma_[i], 1.0 );
     }
+
+    //
     // compute residual norms
     // for each singular value, we have two residuals:
     //   ru_i = A v_i - u_i s_i 
@@ -195,10 +234,16 @@ namespace RBGen {
       }
     }
 
+    //
     // we are now initialized, albeit with null rank
     isInitialized_ = true;
   }
 
+
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // reset with a new snapshot matrix
   void StSVDRTR::Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss ) {
     // Reset the pointer for the snapshot matrix
     // Note: We will not assume that it is non-null; user could be resetting our
@@ -207,6 +252,11 @@ namespace RBGen {
     isInitialized_ = false;
   }
 
+
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // main loop
   void StSVDRTR::computeBasis() {
 
     //
@@ -256,6 +306,13 @@ namespace RBGen {
       }
 
       // evaluate rho: finish
+      //       f(x) - f(R_x(eta))
+      // rho = -------------------
+      //       m_x(eta) - m_x(eta)
+      //
+      //
+      //     = ------------------
+      //
 
       // accept/reject and adjust trust-region radius: finish
 
@@ -301,7 +358,6 @@ namespace RBGen {
 
     innerStop_ = MAXIMUM_ITERATIONS;
 
-    // finish
     const int d = (n-k)*k + (m-k)*k + (k-1)*k;
     const double D2 = Delta_*Delta_;
 
@@ -442,6 +498,28 @@ namespace RBGen {
 
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
+  // routine for doing sym(S) in situ
+  //
+  // sym(S) is .5 (S + S')
+  //
+  void StSVDRTR::Sym( Epetra_MultiVector &S ) {
+    // set strictly upper tri part of S to S+S'
+    for (int j=0; j < rank_; j++) {
+      for (int i=0; i < j; i++) {
+        S[j][i] += S[i][j];
+        S[j][i] /= 2.0;
+      }
+    }
+    // set lower tri part of S to upper tri part of S
+    for (int j=0; j < rank_-1; j++) {
+      for (int i=j+1; i < rank_; i++) {
+        S[j][i] = S[i][j];
+      }
+    }
+  }
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
   // Projection onto tangent plane
   void StSVDRTR::Proj( const Epetra_MultiVector &xU, 
                        const Epetra_MultiVector &xV, 
@@ -456,36 +534,16 @@ namespace RBGen {
     static Epetra_LocalMap lclmap(rank_,0,A_->Comm());
     static Epetra_MultiVector S(lclmap,rank_);
     S.Multiply('T','N',1.0,xU,etaU,0.0);
-    // set upper tri part of S to S+S'
-    for (int j=0; j < rank_; j++) {
-      for (int i=0; i <= j; i++) {
-        S[j][i] += S[i][j];
-      }
-    }
-    // set lower tri part of S to upper tri part of S
-    for (int j=0; j < rank_-1; j++) {
-      for (int i=j+1; i < rank_; i++) {
-        S[j][i] = S[i][j];
-      }
-    }
-    // E = E - .5 U S
-    etaU.Multiply(-0.5,xU,E,1.0);
+    // set S = .5 (S + S')
+    Sym(S);
+    // E = E - .5 U (S + S')
+    etaU.Multiply(-1.0,xU,E,1.0);
 
     S.Multiply('T','N',1.0,xV,etaV,0.0);
-    // set upper tri part of S to S+S'
-    for (int j=0; j < rank_; j++) {
-      for (int i=0; i <= j; i++) {
-        S[j][i] += S[i][j];
-      }
-    }
-    // set lower tri part of S to upper tri part of S
-    for (int j=0; j < rank_-1; j++) {
-      for (int i=j+1; i < rank_; i++) {
-        S[j][i] = S[i][j];
-      }
-    }
-    // E = E - .5 V S
-    etaV.Multiply(-0.5,xV,E,1.0);
+    // set S = .5(S + S')
+    Sym(S);
+    // E = E - .5 V (S + S')
+    etaV.Multiply(-1.0,xV,E,1.0);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -544,6 +602,17 @@ namespace RBGen {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // Apply Hessian
+  //
+  // The Hessian can be applied as follows
+  //   Hess f_{U,V}(eU,eV) = Proj [ A  eV N - eU sym(U' A  V N) ]
+  //                              [ A' eU N - eV sym(V' A' U N) ]
+  //                       = Proj [ A  eV N ] - eU sym(U' A  V N)
+  //                              [ A' eU N ] - eV sym(V' A' U N)
+  // We will apply the former as follows:
+  // 1) Apply A eV into HeU and A' eU into HeV
+  // 2) Scale HeU and HeV by N
+  // 3) Compute sym(U' A V N) and sym(V' A' U N) from U' A V (
+  //
   void StSVDRTR::Hess( 
       const Epetra_MultiVector &xU, 
       const Epetra_MultiVector &xV, 
@@ -552,7 +621,20 @@ namespace RBGen {
       Epetra_MultiVector &HetaU,
       Epetra_MultiVector &HetaV ) 
   {
-    // finish
+    // HetaU = A etaV
+    HetaU.Multiply('N','N',1.0,*A_,etaV,0.0);
+    for (int i=0; i<rank_; i++) {
+      HetaU(i)->Scale(N_[i]);
+    }
+    HetaU.Multiply('N','N',-1.0,etaU,*UAVNsym_,1.0);
+    // HetaV = A' etaU
+    HetaV.Multiply('T','N',1.0,*A_,etaU,0.0);
+    for (int i=0; i<rank_; i++) {
+      HetaV(i)->Scale(N_[i]);
+    }
+    HetaV.Multiply('N','N',-1.0,etaV,*VAUNsym_,1.0);
+    // project
+    Proj(xU,xV,HetaU,HetaV);
   }
 
 
