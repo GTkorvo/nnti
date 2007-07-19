@@ -130,11 +130,13 @@ namespace RBGen {
 
     // allocate working multivectors
     RU_     = rcp( new Epetra_MultiVector(*U_) );
+    AV_     = rcp( new Epetra_MultiVector(*U_) );
     etaU_   = rcp( new Epetra_MultiVector(*U_) );
     HeU_    = rcp( new Epetra_MultiVector(*U_) );
     deltaU_ = rcp( new Epetra_MultiVector(*U_) );
     HdU_    = rcp( new Epetra_MultiVector(*U_) );
     RV_     = rcp( new Epetra_MultiVector(*V_) );
+    AU_     = rcp( new Epetra_MultiVector(*V_) );
     etaV_   = rcp( new Epetra_MultiVector(*V_) );     
     HeV_    = rcp( new Epetra_MultiVector(*V_) );
     deltaV_ = rcp( new Epetra_MultiVector(*V_) );
@@ -316,16 +318,30 @@ namespace RBGen {
         TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaV failed.");
       }
 
+      //
       // evaluate rho: finish
       //       f(x) - f(R_x(eta))
       // rho = -------------------
       //       m_x(eta) - m_x(eta)
       //
-      //
+      //       f(x) - f(R_x(eta))
       //     = ------------------
-      //
+      //        finish
 
-      // accept/reject and adjust trust-region radius: finish
+      //
+      // accept/reject: finish
+
+      //
+      // modify trust-region radius
+      tradjust_ = "unaffected";
+      if (this->rho_ < .25) {
+        Delta_ = .25 * Delta_;
+        tradjust_ = "shrunk";
+      }
+      else if (this->rho_ > .75 && (innerStop_ == NEGATIVE_CURVATURE || innerStop_ == EXCEEDED_TR)) {
+        Delta_ = 2.0*Delta_;
+        tradjust_ = "enlarged";
+      }
 
       // compute new residuals and norms: finish
 

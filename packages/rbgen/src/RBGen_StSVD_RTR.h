@@ -163,13 +163,12 @@ namespace RBGen {
     Teuchos::RCP<const Epetra_MultiVector> A_;
     // state multivecs
     Teuchos::RCP<Epetra_MultiVector> U_, V_,           // current iterate
+                                     AU_, AV_,         // A*V and A'*U
                                      RU_, RV_,         // residual, gradient and residual of model minimization
                                      etaU_, etaV_,     // subproblem solution
                                      HeU_, HeV_,       // eta under Hessian
                                      deltaU_, deltaV_, // search directions
                                      HdU_, HdV_;       // search directions under Hessian
-    // finish: what else? A'*U or A*V ???
-    Teuchos::RCP<Teuchos::SerialDenseMatrix<int,double> > B_; // U'*A*V
 
     // Vector holding singular values.
     std::vector<double> sigma_;
@@ -211,6 +210,10 @@ namespace RBGen {
     double fx_;
     // last inner stop
     trRetType innerStop_;
+    // previous update was accepted or not
+    bool accepted_;
+    // trust region adjustment
+    std::string tradjust_;
     // dimensions of problem
     int m_, n_, rank_;
     // is V local or distributed
