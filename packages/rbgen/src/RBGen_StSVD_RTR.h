@@ -10,6 +10,7 @@
 #include "Epetra_SerialDenseMatrix.h"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_Time.hpp"
+#include "Teuchos_LAPACK.hpp"
 
 
 //
@@ -38,7 +39,7 @@
 
 namespace RBGen {
 
-  //! Class for producing a basis using the Incremental SVD
+  //! Class for producing a POD basis using a trust-region optimization on the Stiefel manifold.
   class StSVDRTR : public virtual Method<Epetra_MultiVector,Epetra_CrsMatrix>, public virtual PODMethod<double> {
 
   public:
@@ -79,7 +80,7 @@ namespace RBGen {
     double getCompTime() const { return timerComp_.totalElapsedTime(); }
 
     //! Return the scaled residual norms.
-    const std::vector<double> & getResNorms();
+    std::vector<double> getResNorms();
 
     //@}
 
@@ -113,6 +114,8 @@ namespace RBGen {
       KAPPA_CONVERGENCE,
       THETA_CONVERGENCE
     };
+    // these correspond to above
+    std::vector<std::string> stopReasons_;
     typedef Teuchos::ScalarTraits<double> SCT;
 
     // private members 
@@ -157,7 +160,7 @@ namespace RBGen {
     std::vector<double> N_;
 
     // Pointer to the snapshots
-    Teuchos::RCP<Epetra_MultiVector> A_;
+    Teuchos::RCP<const Epetra_MultiVector> A_;
     // state multivecs
     Teuchos::RCP<Epetra_MultiVector> U_, V_,           // current iterate
                                      RU_, RV_,         // residual, gradient and residual of model minimization
@@ -209,7 +212,7 @@ namespace RBGen {
     // last inner stop
     trRetType innerStop_;
     // dimensions of problem
-    int m_, n_;
+    int m_, n_, rank_;
     // is V local or distributed
     bool localV_;
 

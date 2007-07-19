@@ -5,6 +5,10 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+/*! \file RBGen_Method.h
+    \brief Provides abstract base class for reduced basis methods.
+*/
+
 namespace RBGen {
 
   //! Abstract base class for reduced basis methods.
@@ -26,8 +30,10 @@ namespace RBGen {
     //! @name Computation Methods
     //@{
 
+    //! Compute a basis for the provided snapshots.
     virtual void computeBasis() = 0;
 
+    //! Append new snapshots to the set, and update the basis.
     virtual void updateBasis( const Teuchos::RCP< DataSetType >& update_ss ) = 0;
 
     //@}

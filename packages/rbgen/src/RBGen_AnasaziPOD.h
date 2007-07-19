@@ -7,6 +7,10 @@
 #include "Epetra_CrsMatrix.h"
 #include "Teuchos_ParameterList.hpp"
 
+/*! \file RBGen_AnasaziPOD.h
+    \brief Provides POD method using Anasazi eigensolvers.
+*/
+
 namespace RBGen {
   
   //! Class for producing a basis using the Anasazi eigensolver
@@ -26,8 +30,16 @@ namespace RBGen {
     //! @name Computation Methods
     //@{
 
+    //! Compute a basis for the provided snapshots.
+    /*! Computes bases for the provided snapshots using Anasazi to solve the eigenproblem defined by \f$ A^T A \f$,
+     * where \c A is the snapshot matrix.
+     */
     void computeBasis();
     
+    //! Append new snapshots to the set, and update the basis.
+    /*! \note This method is not supported by AnasaziPOD. Calling it has no effect.
+     *
+     */
     void updateBasis( const Teuchos::RCP< Epetra_MultiVector >& update_ss ) {};
 
     //@}
