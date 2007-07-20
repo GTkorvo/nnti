@@ -8,12 +8,6 @@
 #include "Epetra_Comm.h"
 #include "Epetra_Vector.h"
 
-#define STSVD_DEBUG 1
-
-// finish: check these things
-// * whenever we update U or V, we need to update UAVNsym and VAUNsym
-// * R is used to store residual, gradient, and TR residual; don't screw this up
-
 namespace RBGen {
 
   StSVDRTR::StSVDRTR() : 
@@ -23,6 +17,8 @@ namespace RBGen {
     timerComp_("Total Elapsed Time"),
     debug_(false),
     verbLevel_(0),
+    maxOuterIters_(500),
+    maxInnerIters_(-1),
     localV_(true)
   {
     // set up array of stop reasons
@@ -32,6 +28,7 @@ namespace RBGen {
     stopReasons_.push_back("exceeded TR");
     stopReasons_.push_back("kappa convergence");
     stopReasons_.push_back("theta convergence");
+    stopReasons_.push_back("");
   }
 
   Teuchos::RCP<const Epetra_MultiVector> StSVDRTR::getBasis() const {
@@ -62,7 +59,7 @@ namespace RBGen {
     Teuchos::ParameterList rbmethod_params = params->sublist( "Reduced Basis Method" );
 
     // Get rank
-    rank_ = rbmethod_params.get("Rank",(int)5);
+    rank_ = rbmethod_params.get("Basis Size",(int)5);
 
     // Get convergence tolerance
     tol_ = rbmethod_params.get<double>("Convergence Tolerance",tol_);
@@ -72,6 +69,12 @@ namespace RBGen {
 
     // Get verbosity level
     verbLevel_ = rbmethod_params.get<int>("StSVD Verbosity Level",verbLevel_);
+
+    // Get maximum number of outer iterations
+    maxOuterIters_ = rbmethod_params.get<int>("StSVD Max Outer Iters",maxOuterIters_);
+
+    // Get maximum number of inner iterations
+    maxInnerIters_ = rbmethod_params.get<int>("StSVD Max Inner Iters",maxInnerIters_);
 
     // Is V local or distributed
     localV_ = rbmethod_params.get<bool>("StSVD Local V",localV_);
@@ -158,8 +161,7 @@ namespace RBGen {
     TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial U basis construction failed.");
     ret = ortho_->normalize(*V_);
     TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial V basis construction failed.");
-    // Compute initial singular values
-    // compute A*V and A'*U
+    // Compute A*V and A'*U
     {
       int info;
       info = AV_->Multiply('N','N',1.0,*A_,*V_,0.0);
@@ -173,6 +175,276 @@ namespace RBGen {
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
 
+    // compute sigmas, f(x) and UAVNsym,VAUNsym from U,V,AU,AV
+    updateF();
+
+    // compute residuals
+    updateResiduals();
+
+
+    //
+    // we are now initialized, albeit with null rank
+    isInitialized_ = true;
+  }
+
+
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // reset with a new snapshot matrix
+  void StSVDRTR::Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss ) {
+    // Reset the pointer for the snapshot matrix
+    // Note: We will not assume that it is non-null; user could be resetting our
+    // pointer in order to delete the original snapshot set
+    A_ = new_ss;
+    isInitialized_ = false;
+  }
+
+
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // main loop
+  void StSVDRTR::computeBasis() {
+
+    using std::cout;
+    using std::setprecision;
+    using std::vector;
+    using std::scientific;
+    using std::setw;
+
+    //
+    // perform enough incremental updates to consume the entire snapshot set
+    Teuchos::TimeMonitor lcltimer(timerComp_);
+
+    // check that we have a valid snapshot set: user may have cleared 
+    // it using Reset()
+    TEST_FOR_EXCEPTION(A_ == Teuchos::null,std::logic_error,
+                       "computeBasis() requires non-null snapshot set.");
+
+    //
+    // check that we are initialized, i.e., data structures match the data set
+    initialize();
+
+    // some bools
+    bool tiny_rhonum, zero_rhoden, neg_rho;
+    double rhonum, rhoden, fxnew;
+
+    iter_ = 0;
+    numInner_ = -1;
+    innerStop_ = NOTHING;
+    while (maxScaledNorm_ > tol_ && iter_ < maxOuterIters_) {
+
+      ++iter_;
+
+      // status printing
+      if (verbLevel_ == 1) {
+        // one line
+        // acc TR+   k: %5d     num_inner: %5d     f: %e   |grad|: %e   stop_reason
+        if (iter_) {
+          cout << (accepted_ ? "accept" : "reject");
+        }
+        else {
+          cout << "<init>";
+        }
+        cout << " " << tradjust_ 
+             << "     k: " << setw(5) << iter_
+             << "     num_inner: " << setw(5) << numInner_
+             << "     f(x): " << scientific << setprecision(16) << fx_
+             << "     |res|: " << scientific << setprecision(16) << maxScaledNorm_
+             << stopReasons_[innerStop_] << endl;
+      }
+      else if (verbLevel_ > 1) {
+        // multiline
+        // 1:acc TR+   k: %5d     num_inner: %5d     stop_reason
+        if (iter_) {
+          cout << (accepted_ ? "accept" : "reject");
+        }
+        else {
+          cout << "------";
+        }
+        cout << " " << tradjust_ 
+             << "     k: " << setw(5) << iter_
+             << "     num_inner: " << setw(5) << numInner_
+             << stopReasons_[innerStop_] << endl;
+        // 2:     f(x) : %e     |res| : %e
+        cout << "     f(x) : " << scientific << setprecision(16) << fx_
+             << "     |res|: " << scientific << setprecision(16) << maxScaledNorm_ << endl;
+        // 3:    Delta : %e     |eta| : %e
+        cout << "    Delta : " << scientific << setprecision(16) << Delta_
+             << "    |eta| : " << scientific << setprecision(16) << etaLen_ << endl;
+        if (neg_rho) {
+          // 4:  NEGATIVE  rho     : %e
+          cout << "  NEGATIVE  rho     : " << scientific << setprecision(16) << rho_ << endl;
+        }
+        else if (tiny_rhonum) {
+          // 4: VERY SMALL rho_num : %e
+          cout << " VERY SMALL rho_num : " << scientific << setprecision(16) << rhonum << endl;
+        }
+        else if (zero_rhoden) {
+          // 4:    ZERO    rho_den : %e
+          cout << "    ZERO    rho_den : " << scientific << setprecision(16) << rhoden << endl;
+        }
+        else {
+          // 4:      rho : %e
+          cout << "      rho : " << scientific << setprecision(16) << rho_ << endl;
+        }
+      }
+
+
+      // compute gradient
+      // this is the projected residuals
+      Proj(*U_,*V_,*RU_,*RV_);
+
+      // minimize model subproblem
+      solveTRSubproblem();
+
+      // save length of eta
+      etaLen_ = SCT::squareroot(innerProduct(*etaU_,*etaV_));
+
+      // compute proposed point
+      // R_U(eta) = qf(U+eta)
+      // we will store this in deltaU,deltaV
+      {
+        int ret;
+        // U
+        ret = deltaU_->Update(1.0,*U_,1.0,*etaU_,0.0);
+        TEST_FOR_EXCEPTION(ret != 0,std::logic_error,
+            "RBGen::StSVD::computeBasis(): error calling Epetra_MultiVector::Update.");
+        ret = ortho_->normalize(*deltaU_);
+        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaU failed.");
+        // V
+        ret = deltaV_->Update(1.0,*V_,1.0,*etaV_,0.0);
+        TEST_FOR_EXCEPTION(ret != 0,std::logic_error,
+            "RBGen::StSVD::computeBasis(): error calling Epetra_MultiVector::Update.");
+        ret = ortho_->normalize(*deltaV_);
+        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaV failed.");
+      }
+
+      //
+      // evaluate rho
+      //       f(x) - f(R_x(eta))
+      // rho = -------------------
+      //       m_x(eta) - m_x(eta)
+      //
+      //               f(x) - f(R_x(eta))
+      //     = ------------------------------------
+      //       - <eta,Proj(AV,A'U)> - .5 <eta,Heta>
+      //
+      //               f(x) - f(R_x(eta))
+      //     = --------------------------------
+      //       - <eta,(AV,A'U)> - .5 <eta,Heta>
+      //
+      // compute A'*newU into HdV_
+      // we don't need A*newV yet
+      {
+        int info;
+        info = HdV_->Multiply('T','N',1.0,*A_,*deltaU_,0.0);
+        TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+            "RBGen::StSVD::computeBasis(): Error calling Epetra_MultiVector::Muliply.");
+      }
+      // compute fxnew and rhonum
+      // we don't need sigmas, only trace(newU'*A*newV*N)
+      // trace(newU'*A*newV*N) = sum_i (newU'*A*newV)_ii N[i]
+      //                       = sum_i <newV[i],(A'newU)[i]> N[i]
+      tiny_rhonum = neg_rho = zero_rhoden = false;
+      {
+        std::vector<double> dots(rank_);
+        // deltaV_ stores newV, HdV_ stores newU'*A
+        deltaV_->Dot(*HdV_,&dots[0]);
+        fxnew = 0.0;
+        for (int i=0; i<rank_; i++) {
+          fxnew += dots[i]*N_[i];
+        }
+      }
+      rhonum = fx_ - fxnew;
+      // tiny rhonum means small decrease in f (maybe even negative small)
+      // this usually happens near the end of convergence; 
+      // this is usually not bad; we will pretend it is very good
+      if ( abs(rhonum/fx_) < 1e-12 ) {
+        tiny_rhonum = true;
+        rho_ = 1.0;
+      }
+      else {
+        // compute rhoden
+        // - <eta,(AV,A'U)> - .5 <eta,Heta>
+        rhoden = -1.0*innerProduct(*etaU_,*etaV_,*AV_,*AU_) 
+                 -0.5*innerProduct(*etaU_,*etaV_,*HeU_,*HeV_);
+        if (rhoden == 0) {
+          // this is bad
+          zero_rhoden = true;
+          rho_ = -1.0;
+        }
+        else {
+          rho_ = rhonum / rhoden;
+        }
+      }
+      if (rho_ < 0.0) {
+        // this is also bad
+        neg_rho = true;
+      }
+
+      //
+      // accept/reject
+      if (rho_ >= rhoPrime_) {
+        accepted_ = true;
+        // put newx data into x data: U,V,AU,AV,fx,UAVNsym,VAUNsym,sigma
+
+        // etaU,etaV get thrown away
+        // deltaU_,deltaV_ go into U_,V_
+        *U_ = *deltaU_;
+        *V_ = *deltaV_;
+
+        // HdV_ goes into AU_
+        // A*V_ gets computed into AV_
+        *AU_ = *HdV_;
+        {
+          int info;
+          info = AV_->Multiply('N','N',1.0,*A_,*V_,0.0);
+          TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+              "RBGen::StSVD::computeBasis(): Error calling Epetra_MultiVector::Muliply.");
+        }
+
+        // compute new sigmas, new f(x) and UAVNsym,VAUNsym from U,V,AU,AV
+        updateF();
+
+        if (debug_) {
+          // check that new fx_ is equal to fxnew
+          cout << " DBG: new f(x): " << fx_ << "\t\tnewfx: " << fxnew << endl;
+        }
+      }
+      else {
+        accepted_ = false;
+      }
+
+      //
+      // modify trust-region radius
+      tradjust_ = "   ";
+      if (this->rho_ < .25) {
+        Delta_ = .25 * Delta_;
+        tradjust_ = "TR-";
+      }
+      else if (this->rho_ > .75 && (innerStop_ == NEGATIVE_CURVATURE || innerStop_ == EXCEEDED_TR)) {
+        Delta_ = 2.0*Delta_;
+        tradjust_ = "TR+";
+      }
+
+      //
+      // compute new residuals and norms
+      // this happens whether we accepted or not, because the trust-region solve
+      // destroyed the residual that was in RU,RV
+      updateResiduals();
+    
+    } // while (not converged)
+
+    // nothing else to do.
+  }
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // update sigmas, f(x), UAVNsym, VAUNsym
+  // this function assumes that U,V,AU,AV
+  void StSVDRTR::updateF() {
     //
     // compute (U'*A)*V==RV'*V, compute its singular values
     {
@@ -216,7 +488,14 @@ namespace RBGen {
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
+  }
 
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // update the residuals and norms
+  // this function assumes that U,V,AU,AV,sigma are all coherent
+  void StSVDRTR::updateResiduals() {
     //
     // compute residuals: RU = A *V - U*S
     //                    RV = A'*U - V*S
@@ -247,152 +526,8 @@ namespace RBGen {
         maxScaledNorm_ = EPETRA_MAX(resNorms_[i],maxScaledNorm_);
       }
     }
-
-    //
-    // we are now initialized, albeit with null rank
-    isInitialized_ = true;
   }
 
-
-
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  // reset with a new snapshot matrix
-  void StSVDRTR::Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss ) {
-    // Reset the pointer for the snapshot matrix
-    // Note: We will not assume that it is non-null; user could be resetting our
-    // pointer in order to delete the original snapshot set
-    A_ = new_ss;
-    isInitialized_ = false;
-  }
-
-
-
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  // main loop
-  void StSVDRTR::computeBasis() {
-
-    //
-    // perform enough incremental updates to consume the entire snapshot set
-    Teuchos::TimeMonitor lcltimer(timerComp_);
-
-    // check that we have a valid snapshot set: user may have cleared 
-    // it using Reset()
-    TEST_FOR_EXCEPTION(A_ == Teuchos::null,std::logic_error,
-                       "computeBasis() requires non-null snapshot set.");
-
-    //
-    // check that we are initialized, i.e., data structures match the data set
-    initialize();
-
-    //
-    // print out some info
-    while (maxScaledNorm_ > tol_) { // finish: something with iter_ and max iters
-
-      ++iter_;
-
-      // status printing: finish
-
-      // compute gradient
-      // this is the projected residuals
-      Proj(*U_,*V_,*RU_,*RV_);
-
-      // minimize model subproblem
-      solveTRSubproblem();
-
-      // compute proposed point
-      // R_U(eta) = qf(U+eta)
-      // we will store this in eta
-      {
-        int ret;
-        // U
-        ret = etaU_->Update(1.0,*U_,1.0);
-        TEST_FOR_EXCEPTION(ret != 0,std::logic_error,
-            "RBGen::StSVD::computeBasis(): error calling Epetra_MultiVector::Update.");
-        ret = ortho_->normalize(*etaU_);
-        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaU failed.");
-        // V
-        ret = etaV_->Update(1.0,*V_,1.0);
-        TEST_FOR_EXCEPTION(ret != 0,std::logic_error,
-            "RBGen::StSVD::computeBasis(): error calling Epetra_MultiVector::Update.");
-        ret = ortho_->normalize(*etaV_);
-        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaV failed.");
-      }
-
-      //
-      // evaluate rho
-      //       f(x) - f(R_x(eta))
-      // rho = -------------------
-      //       m_x(eta) - m_x(eta)
-      //
-      //               f(x) - f(R_x(eta))
-      //     = ------------------------------------
-      //       - <eta,Proj(AV,A'U)> - .5 <eta,Heta>
-      //
-      //               f(x) - f(R_x(eta))
-      //     = --------------------------------
-      //       - <eta,(AV,A'U)> - .5 <eta,Heta>
-      //
-      // compute R_x(eta) = qf(x+eta) into eta
-      etaU_->Update(1.0, *U_, 1.0);
-      etaV_->Update(1.0, *V_, 1.0);
-      {
-        int ret = ortho_->normalize(*U_);
-        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaU failed.");
-        ret = ortho_->normalize(*V_);
-        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaV failed.");
-      }
-      // compute A*newV and A'*newU into deltaU and deltaV
-      {
-        int info;
-        info = deltaU_->Multiply('N','N',1.0,*A_,*etaV_,0.0);
-        TEST_FOR_EXCEPTION(info != 0,std::logic_error,
-            "RBGen::StSVD::computeBasis(): Error calling Epetra_MultiVector::Muliply.");
-      }
-      {
-        int info;
-        info = deltaV_->Multiply('T','N',1.0,*A_,*etaU_,0.0);
-        TEST_FOR_EXCEPTION(info != 0,std::logic_error,
-            "RBGen::StSVD::computeBasis(): Error calling Epetra_MultiVector::Muliply.");
-      }
-      // FINISH: compute newf and rhonum
-      double rhonum, rhoden, newf;
-      // FINISH: compute rhoden
-      // FINISH: compute rho
-
-
-      //
-      // accept/reject: finish
-      if (this->rho_ >= this->rhoPrime_) {
-        accepted_ = true;
-        // put newx data into x data: U,V,AU,AV,fx,sigma,UAVNsym,VAUNsym
-        //
-      }
-      else {
-        accepted_ = false;
-      }
-
-      //
-      // modify trust-region radius
-      tradjust_ = "unaffected";
-      if (this->rho_ < .25) {
-        Delta_ = .25 * Delta_;
-        tradjust_ = "shrunk";
-      }
-      else if (this->rho_ > .75 && (innerStop_ == NEGATIVE_CURVATURE || innerStop_ == EXCEEDED_TR)) {
-        Delta_ = 2.0*Delta_;
-        tradjust_ = "enlarged";
-      }
-
-      // compute new residuals and norms: finish
-      // RU,RV,resnorms,resunorms,resvnorms,maxscalednorm
-      // do something with normGrad0_ or get rid of it
-
-    } // while (not converged)
-
-    // finish
-  }
 
   
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -429,7 +564,10 @@ namespace RBGen {
 
     innerStop_ = MAXIMUM_ITERATIONS;
 
-    const int d = (n_-rank_)*rank_ + (m_-rank_)*rank_ + (rank_-1)*rank_;
+    int dim = (n_-rank_)*rank_ + (m_-rank_)*rank_ + (rank_-1)*rank_;
+    if (maxInnerIters_ != -1 && maxInnerIters_ < dim) {
+      dim = maxInnerIters_;
+    }
     const double D2 = Delta_*Delta_;
 
     // CG terms
@@ -462,6 +600,10 @@ namespace RBGen {
     r_r = innerProduct(*RU_,*RV_);
     d_d = r_r;
     r0_norm = SCT::squareroot(r_r);
+    // if first outer iteration, save r0_norm as normGrad0_
+    if (iter_ == 0) {
+      normGrad0_ = r0_norm;
+    }
 
     // delta = -z
     deltaU_->Update(0.0,*RU_,-1.0);
@@ -469,7 +611,10 @@ namespace RBGen {
     e_d = 0.0;  // because eta = 0
 
     // the loop
-    for (int i=0; i<d; ++i) {
+    numInner_ = 0;
+    for (int i=0; i<dim; ++i) {
+
+      ++numInner_;
 
       // Hdelta = Hess*d 
       Hess(*U_,*V_,*deltaU_,*deltaV_,*HdU_,*HdV_);
@@ -478,11 +623,11 @@ namespace RBGen {
       // compute update step
       alpha = r_r/d_Hd;
 
-#ifdef STSVD_DEBUG
+      if (debug_) {
         std::cout << " >> (r,r)  : " << r_r  << std::endl
-             << " >> (d,Hd) : " << d_Hd << std::endl
-             << " >> alpha  : " << alpha << std::endl;
-#endif
+                  << " >> (d,Hd) : " << d_Hd << std::endl
+                  << " >> alpha  : " << alpha << std::endl;
+      }
 
       // <neweta,neweta> = <eta,eta> + 2*alpha*<eta,delta> + alpha*alpha*<delta,delta>
       e_e_new = e_e + 2.0*alpha*e_d + alpha*alpha*d_d;
@@ -490,9 +635,9 @@ namespace RBGen {
       // check truncation criteria: negative curvature or exceeded trust-region
       if (d_Hd <= 0 || e_e_new >= D2) {
         double tau = (-e_d + SCT::squareroot(e_d*e_d + d_d*(D2-e_e))) / d_d;
-#ifdef STSVD_DEBUG
-        std::cout << " >> tau  : " << tau << std::endl;
-#endif
+        if (debug_) {
+          std::cout << " >> tau  : " << tau << std::endl;
+        }
         // eta = eta + tau*delta
         etaU_->Update(tau,*deltaU_,1.0);
         etaV_->Update(tau,*deltaV_,1.0);
@@ -504,11 +649,11 @@ namespace RBGen {
         else {
           innerStop_ = EXCEEDED_TR;
         }
-#ifdef STSVD_DEBUG
-        e_e_new = e_e + 2.0*tau*e_d + tau*tau*d_d;
-        std::cout << " >> predicted  (eta,eta) : " << e_e_new << std::endl
-             << " >> actual (eta,eta)     : " << innerProduct(*etaU_,*etaV_) << std::endl;
-#endif
+        if (debug_) {
+          e_e_new = e_e + 2.0*tau*e_d + tau*tau*d_d;
+          std::cout << " >> predicted  (eta,eta) : " << e_e_new << std::endl
+                    << " >> actual (eta,eta)     : " << innerProduct(*etaU_,*etaV_) << std::endl;
+        }
         break;
       }
 
@@ -536,9 +681,9 @@ namespace RBGen {
       // theta (superlinear) convergence
       //
       double kconv = r0_norm * conv_kappa_;
-      // insert some scaling here
-      // double tconv = r0_norm * SCT::pow(r0_norm/normgradf0_,this->conv_theta_);
-      double tconv = SCT::pow(r0_norm,conv_theta_+1.0);
+      // some scaling of r0_norm so that it will be less than zero
+      // and theta convergence may actually take over from kappa convergence
+      double tconv = r0_norm * SCT::pow(r0_norm/normGrad0_,conv_theta_);
       double conv = kconv < tconv ? kconv : tconv;
       if ( r_norm <= conv ) {
         if (conv == tconv) {
@@ -559,11 +704,6 @@ namespace RBGen {
       d_d = r_r + beta*beta*d_d;
 
     } // end of the inner iteration loop
-
-#ifdef STSVD_DEBUG
-    std::cout << " >> stop reason is " << stopReasons_[innerStop_] << std::endl
-         << std::endl;
-#endif
 
   } // end of solveTRSubproblem
 
@@ -708,5 +848,16 @@ namespace RBGen {
     Proj(xU,xV,HetaU,HetaV);
   }
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Debugging checks
+  //
+  // check all code invariants
+  // this is gonna hurt.
+  // 
+  // where == 0: we are outside
+  // check that 
+  void StSVDRTR::Debug(int where) 
+  {
+  }
 
 } // end of RBGen namespace

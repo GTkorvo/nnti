@@ -112,7 +112,8 @@ namespace RBGen {
       NEGATIVE_CURVATURE,
       EXCEEDED_TR,
       KAPPA_CONVERGENCE,
-      THETA_CONVERGENCE
+      THETA_CONVERGENCE,
+      NOTHING
     };
     // these correspond to above
     std::vector<std::string> stopReasons_;
@@ -149,8 +150,14 @@ namespace RBGen {
     void solveTRSubproblem();
     // private initialize routine
     void initialize();
-    // compute 2*sym(S)
+    // compute sym(S) = 0.5*(S+S')
     void Sym(Epetra_MultiVector &S);
+    // compute f(x) and other stuff
+    void updateF();
+    // compute residuals and their norms
+    void updateResiduals();
+    // debugging checks
+    void Debug(int);
 
 
     // Is this object initialized?
@@ -196,12 +203,18 @@ namespace RBGen {
     // trust-region state
     // initial and current trust-region radius
     double Delta0_, Delta_, Delta_bar_;
+    // |eta|
+    double etaLen_;
     // acceptance parameter
     double rhoPrime_;
     // norm of the initial gradient
     double normGrad0_;
     // number of outer iterations
     int iter_;
+    // maximum number of outer iterations
+    int maxOuterIters_;
+    // maximum number of inner iterations
+    int maxInnerIters_;
     // convergence parameters
     double conv_kappa_, conv_theta_;
     // most recent rho
@@ -212,6 +225,8 @@ namespace RBGen {
     trRetType innerStop_;
     // previous update was accepted or not
     bool accepted_;
+    // num inner iterations
+    int numInner_;
     // trust region adjustment
     std::string tradjust_;
     // dimensions of problem

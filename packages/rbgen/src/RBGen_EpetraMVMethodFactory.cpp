@@ -7,6 +7,7 @@
 #include "RBGen_ISVD_MultiCDUDV.h"
 #include "RBGen_ISVD_MultiSDAUDV.h"
 #include "RBGen_ISVD_MultiSDBUDV.h"
+#include "RBGen_StSVD_RTR.h"
 #endif
 
 namespace RBGen {
@@ -49,6 +50,9 @@ namespace RBGen {
         RBMethod = Teuchos::rcp( new ISVD_MultiSDBUDV() );
       }
     } 
+    else if ( method == "StSVD/RTR") {
+      RBMethod = Teuchos::rcp( new StSVDRTR() );
+    }
     else if ( method == "Anasazi POD" ) {
       RBMethod = Teuchos::rcp( new AnasaziPOD() );
     } else 

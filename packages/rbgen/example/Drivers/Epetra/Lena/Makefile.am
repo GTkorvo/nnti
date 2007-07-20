@@ -48,7 +48,7 @@ noinst_PROGRAMS = $(RBGEN_LENA_EX)
 
 lenaDummy$(EXEEXT): $(srcdir)/Dummy
 	ln -fs $(top_builddir)/src/RBGenDriver_EpetraMV .
-	@if [ $(srcdir) != '.' ]; then cp  $(srcdir)/lena.mtx  lena.mtx; cp  $(srcdir)/lenaInput.xml lenaInput.xml; cp  $(srcdir)/lenaInputAnasazi.xml lenaInputAnasazi.xml; cp  $(srcdir)/lenaInputIncSVD.xml lenaInputIncSVD.xml; cp  $(srcdir)/README README; fi
+	@if [ $(srcdir) != '.' ]; then cp  $(srcdir)/lena.mtx  lena.mtx; cp  $(srcdir)/lenaInput.xml lenaInput.xml; cp  $(srcdir)/lenaInputAnasazi.xml lenaInputAnasazi.xml; cp  $(srcdir)/lenaInputStSVD.xml lenaInputStSVD.xml; cp  $(srcdir)/lenaInputIncSVD.xml lenaInputIncSVD.xml; cp  $(srcdir)/README README; fi
 
 lenaDummy_SOURCES = Dummy
 
