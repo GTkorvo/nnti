@@ -162,13 +162,13 @@ namespace RBGen {
     // compute A*V and A'*U
     {
       int info;
-      info = RU_->Multiply('N','N',1.0,*A_,*V_,0.0);
+      info = AV_->Multiply('N','N',1.0,*A_,*V_,0.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
     {
       int info;
-      info = RV_->Multiply('T','N',1.0,*A_,*U_,0.0);
+      info = AU_->Multiply('T','N',1.0,*A_,*U_,0.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
@@ -177,7 +177,7 @@ namespace RBGen {
     // compute (U'*A)*V==RV'*V, compute its singular values
     {
       int info;
-      info = dgesvd_A_->Multiply('T','N',1.0,*RV_,*V_,0.0);
+      info = dgesvd_A_->Multiply('T','N',1.0,*AU_,*V_,0.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
@@ -211,18 +211,18 @@ namespace RBGen {
     // compute the singular values of U'*A*V
     {
       int info;
-      // FINSIH
       lapack.GESVD('N','N',rank_,rank_,dgesvd_A_->Values(),dgesvd_A_->Stride(),&sigma_[0],
                    NULL,0,NULL,0,&dgesvd_work_[0],dgesvd_work_.size(),NULL,&info);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
 
+    //
     // compute residuals: RU = A *V - U*S
     //                    RV = A'*U - V*S
     for (int i=0; i<rank_; i++) {
-      (*RU_)(i)->Update( sigma_[i], *(*U_)(i), 1.0 );
-      (*RV_)(i)->Update( sigma_[i], *(*V_)(i), 1.0 );
+      (*RU_)(i)->Update( 1.0, *(*AV_)(i), sigma_[i], *(*U_)(i), 0.0 );
+      (*RV_)(i)->Update( 1.0, *(*AU_)(i), sigma_[i], *(*V_)(i), 0.0 );
     }
 
     //
@@ -288,7 +288,9 @@ namespace RBGen {
 
     //
     // print out some info
-    while (maxScaledNorm_ > tol_) {
+    while (maxScaledNorm_ > tol_) { // finish: something with iter_ and max iters
+
+      ++iter_;
 
       // status printing: finish
 
@@ -319,17 +321,57 @@ namespace RBGen {
       }
 
       //
-      // evaluate rho: finish
+      // evaluate rho
       //       f(x) - f(R_x(eta))
       // rho = -------------------
       //       m_x(eta) - m_x(eta)
       //
-      //       f(x) - f(R_x(eta))
-      //     = ------------------
-      //        finish
+      //               f(x) - f(R_x(eta))
+      //     = ------------------------------------
+      //       - <eta,Proj(AV,A'U)> - .5 <eta,Heta>
+      //
+      //               f(x) - f(R_x(eta))
+      //     = --------------------------------
+      //       - <eta,(AV,A'U)> - .5 <eta,Heta>
+      //
+      // compute R_x(eta) = qf(x+eta) into eta
+      etaU_->Update(1.0, *U_, 1.0);
+      etaV_->Update(1.0, *V_, 1.0);
+      {
+        int ret = ortho_->normalize(*U_);
+        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaU failed.");
+        ret = ortho_->normalize(*V_);
+        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaV failed.");
+      }
+      // compute A*newV and A'*newU into deltaU and deltaV
+      {
+        int info;
+        info = deltaU_->Multiply('N','N',1.0,*A_,*etaV_,0.0);
+        TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+            "RBGen::StSVD::computeBasis(): Error calling Epetra_MultiVector::Muliply.");
+      }
+      {
+        int info;
+        info = deltaV_->Multiply('T','N',1.0,*A_,*etaU_,0.0);
+        TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+            "RBGen::StSVD::computeBasis(): Error calling Epetra_MultiVector::Muliply.");
+      }
+      // FINISH: compute newf and rhonum
+      double rhonum, rhoden, newf;
+      // FINISH: compute rhoden
+      // FINISH: compute rho
+
 
       //
       // accept/reject: finish
+      if (this->rho_ >= this->rhoPrime_) {
+        accepted_ = true;
+        // put newx data into x data: U,V,AU,AV,fx,sigma,UAVNsym,VAUNsym
+        //
+      }
+      else {
+        accepted_ = false;
+      }
 
       //
       // modify trust-region radius
@@ -344,6 +386,8 @@ namespace RBGen {
       }
 
       // compute new residuals and norms: finish
+      // RU,RV,resnorms,resunorms,resvnorms,maxscalednorm
+      // do something with normGrad0_ or get rid of it
 
     } // while (not converged)
 
