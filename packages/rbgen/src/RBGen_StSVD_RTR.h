@@ -11,6 +11,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_Time.hpp"
 #include "Teuchos_LAPACK.hpp"
+#include "AnasaziSolverUtils.hpp"
 
 
 //
@@ -105,6 +106,35 @@ namespace RBGen {
 
   protected:
 
+    typedef Anasazi::SolverUtils<double,Epetra_MultiVector,Epetra_Operator> Utils;
+    // debugging checklist
+    struct CheckList {
+      // outer checks
+      // U,V are ortho
+      bool checkUV;
+      // R is residual
+      bool checkRes;
+      // UAVNsym, VAUNsym
+      bool checkSyms;
+      // check sigma
+      bool checkSigma;
+      // check f(U,V)
+      bool checkF;
+
+      // inner checks
+      // tangency
+      bool checkE, checkHE, checkD, checkHD, checkR;
+      // length
+      bool checkElen, checkRlen;
+      // conjugacy
+      bool checkEHR, checkDHR;
+
+      CheckList() : checkUV(false), checkRes(false), checkSyms(false), 
+                    checkSigma(false), checkF(false),
+                    checkE(false), checkHE(false), checkD(false), checkHD(false), checkR(false),
+                    checkElen(false), checkRlen(false),
+                    checkEHR(false), checkDHR(false) {};
+    };
     // subproblem return codes
     enum trRetType {
       UNINITIALIZED = 0,
@@ -123,41 +153,41 @@ namespace RBGen {
     // Riemannian metric
     // g(eta,eta)
     double innerProduct( const Epetra_MultiVector &etaU, 
-                         const Epetra_MultiVector &etaV );
+                         const Epetra_MultiVector &etaV ) const;
     // g(eta,zeta)
     double innerProduct( const Epetra_MultiVector &etaU, 
                          const Epetra_MultiVector &etaV, 
                          const Epetra_MultiVector &zetaU, 
-                         const Epetra_MultiVector &zetaV );
+                         const Epetra_MultiVector &zetaV ) const;
     // Retraction, in situ
     void retract( const Epetra_MultiVector &xU, 
                   const Epetra_MultiVector &xV, 
                   Epetra_MultiVector &etaU, 
-                  Epetra_MultiVector &etaV );
+                  Epetra_MultiVector &etaV ) const;
     // Apply Hessian
     void Hess( const Epetra_MultiVector &xU, 
                const Epetra_MultiVector &xV, 
                const Epetra_MultiVector &etaU, 
                const Epetra_MultiVector &etaV,
                      Epetra_MultiVector &HetaU,
-                     Epetra_MultiVector &HetaV );
+                     Epetra_MultiVector &HetaV ) const;
     // Project back to tangent plane
     void Proj( const Epetra_MultiVector &xU, 
                const Epetra_MultiVector &xV, 
                Epetra_MultiVector &etaU, 
-               Epetra_MultiVector &etaV );
+               Epetra_MultiVector &etaV ) const;
     // solve the trust-region subproblem
     void solveTRSubproblem();
     // private initialize routine
     void initialize();
     // compute sym(S) = 0.5*(S+S')
-    void Sym(Epetra_MultiVector &S);
+    void Sym(Epetra_MultiVector &S) const;
     // compute f(x) and other stuff
     void updateF();
     // compute residuals and their norms
     void updateResiduals();
     // debugging checks
-    void Debug(int);
+    void Debug(const CheckList &chk, std::string where) const;
 
 
     // Is this object initialized?

@@ -17,8 +17,23 @@ namespace RBGen {
     timerComp_("Total Elapsed Time"),
     debug_(false),
     verbLevel_(0),
-    maxOuterIters_(500),
+    maxScaledNorm_(0.0),
+    Delta0_(M_PI/8.0),
+    Delta_(0.0),
+    Delta_bar_(0.0),
+    etaLen_(0.0),
+    rhoPrime_(0.1),
+    normGrad0_(0.0),
+    iter_(0),
+    maxOuterIters_(10),
     maxInnerIters_(-1),
+    conv_kappa_(0.1),
+    conv_theta_(1.0),
+    rho_(0.0),
+    fx_(0.0),
+    m_(0),
+    n_(0),
+    rank_(0),
     localV_(true)
   {
     // set up array of stop reasons
@@ -76,8 +91,13 @@ namespace RBGen {
     // Get maximum number of inner iterations
     maxInnerIters_ = rbmethod_params.get<int>("StSVD Max Inner Iters",maxInnerIters_);
 
+    // Get initial trust-region radius
+    Delta0_ = rbmethod_params.get<double>("StSVD Delta0",Delta0_);
+
     // Is V local or distributed
     localV_ = rbmethod_params.get<bool>("StSVD Local V",localV_);
+
+    rhoPrime_ = rbmethod_params.get<int>("StSVD Rho Prime",rhoPrime_);
 
     // Get an Anasazi orthomanager
     if (rbmethod_params.isType<
@@ -103,6 +123,9 @@ namespace RBGen {
     // Save the pointer to the snapshot matrix
     TEST_FOR_EXCEPTION(ss == Teuchos::null,std::invalid_argument,"Input snapshot matrix cannot be null.");
     A_ = ss;
+    // Save dimensions
+    m_ = A_->GlobalLength();
+    n_ = A_->NumVectors();
 
     // initialize data structures
     initialize();
@@ -130,6 +153,12 @@ namespace RBGen {
     resNorms_.resize(rank_);
     resUNorms_.resize(rank_);
     resVNorms_.resize(rank_);
+
+    // allocate and set N_
+    N_.resize(rank_);
+    for (int i=0; i<rank_; i++) {
+      N_[i] = rank_-i;
+    }
 
     // allocate working multivectors
     RU_     = rcp( new Epetra_MultiVector(*U_) );
@@ -181,12 +210,20 @@ namespace RBGen {
     // compute residuals
     updateResiduals();
 
-
     //
     // we are now initialized, albeit with null rank
     isInitialized_ = true;
-  }
 
+    if (debug_) {
+      CheckList chk;
+      chk.checkSigma = true;
+      chk.checkUV = true;
+      chk.checkRes = true;
+      chk.checkSyms = true;
+      chk.checkF = true;
+      Debug(chk,", after updateF().");
+    }
+  }
 
 
 
@@ -227,15 +264,19 @@ namespace RBGen {
     initialize();
 
     // some bools
-    bool tiny_rhonum, zero_rhoden, neg_rho;
+    bool tiny_rhonum = false,
+         zero_rhoden = false, 
+         neg_rho = false;
     double rhonum, rhoden, fxnew;
 
+    Delta_ = Delta0_;
+    etaLen_ = 0.0;
     iter_ = 0;
     numInner_ = -1;
+    rho_ = 0.0;
     innerStop_ = NOTHING;
+    tradjust_ = "n/a";
     while (maxScaledNorm_ > tol_ && iter_ < maxOuterIters_) {
-
-      ++iter_;
 
       // status printing
       if (verbLevel_ == 1) {
@@ -249,48 +290,62 @@ namespace RBGen {
         }
         cout << " " << tradjust_ 
              << "     k: " << setw(5) << iter_
-             << "     num_inner: " << setw(5) << numInner_
-             << "     f(x): " << scientific << setprecision(16) << fx_
-             << "     |res|: " << scientific << setprecision(16) << maxScaledNorm_
-             << stopReasons_[innerStop_] << endl;
+             << "     num_inner: ";
+        if (numInner_ == -1) {
+          cout << "  n/a";
+        }
+        else {
+          cout << setw(5) << numInner_;
+        }
+        cout << "     f(x): " << setw(18) << scientific << setprecision(10) << fx_
+             << "     |res|: " << setw(18) << scientific << setprecision(10) << maxScaledNorm_
+             << "     " << stopReasons_[innerStop_] << endl;
       }
       else if (verbLevel_ > 1) {
+        cout << "----------------------------------------------------------------" << endl;
         // multiline
         // 1:acc TR+   k: %5d     num_inner: %5d     stop_reason
         if (iter_) {
           cout << (accepted_ ? "accept" : "reject");
         }
         else {
-          cout << "------";
+          cout << "<init>";
         }
         cout << " " << tradjust_ 
              << "     k: " << setw(5) << iter_
-             << "     num_inner: " << setw(5) << numInner_
-             << stopReasons_[innerStop_] << endl;
+             << "     num_inner: ";
+        if (numInner_ == -1) {
+          cout << " n/a ";
+        }
+        else {
+          cout << setw(5) << numInner_;
+        }
+        cout << "     " << stopReasons_[innerStop_] << endl;
         // 2:     f(x) : %e     |res| : %e
-        cout << "     f(x) : " << scientific << setprecision(16) << fx_
-             << "     |res|: " << scientific << setprecision(16) << maxScaledNorm_ << endl;
+        cout << "     f(x) : " << setw(18) << scientific << setprecision(10) << fx_
+             << "     |res|: " << setw(18) << scientific << setprecision(10) << maxScaledNorm_ << endl;
         // 3:    Delta : %e     |eta| : %e
-        cout << "    Delta : " << scientific << setprecision(16) << Delta_
-             << "    |eta| : " << scientific << setprecision(16) << etaLen_ << endl;
+        cout << "    Delta : " << setw(18) << scientific << setprecision(10) << Delta_
+             << "    |eta| : " << setw(18) << scientific << setprecision(10) << etaLen_ << endl;
         if (neg_rho) {
           // 4:  NEGATIVE  rho     : %e
-          cout << "  NEGATIVE  rho     : " << scientific << setprecision(16) << rho_ << endl;
+          cout << "  NEGATIVE  rho     : " << setw(18) << scientific << setprecision(10) << rho_ << endl;
         }
         else if (tiny_rhonum) {
           // 4: VERY SMALL rho_num : %e
-          cout << " VERY SMALL rho_num : " << scientific << setprecision(16) << rhonum << endl;
+          cout << " VERY SMALL rho_num : " << setw(18) << scientific << setprecision(10) << rhonum << endl;
         }
         else if (zero_rhoden) {
           // 4:    ZERO    rho_den : %e
-          cout << "    ZERO    rho_den : " << scientific << setprecision(16) << rhoden << endl;
+          cout << "    ZERO    rho_den : " << setw(18) << scientific << setprecision(10) << rhoden << endl;
         }
         else {
           // 4:      rho : %e
-          cout << "      rho : " << scientific << setprecision(16) << rho_ << endl;
+          cout << "      rho : " << setw(18) << scientific << setprecision(10) << rho_ << endl;
         }
       }
 
+      ++iter_;
 
       // compute gradient
       // this is the projected residuals
@@ -299,8 +354,17 @@ namespace RBGen {
       // minimize model subproblem
       solveTRSubproblem();
 
-      // save length of eta
-      etaLen_ = SCT::squareroot(innerProduct(*etaU_,*etaV_));
+      // debug output from tr subproblem
+      if (debug_) {
+        CheckList chk;
+        chk.checkR = true;
+        chk.checkE = true;
+        chk.checkHE = true;
+        chk.checkElen = true;
+        chk.checkRlen = true;
+        chk.checkEHR = true;
+        Debug(chk,", after call to solveTRSubproblem.");
+      }
 
       // compute proposed point
       // R_U(eta) = qf(U+eta)
@@ -410,7 +474,7 @@ namespace RBGen {
 
         if (debug_) {
           // check that new fx_ is equal to fxnew
-          cout << " DBG: new f(x): " << fx_ << "\t\tnewfx: " << fxnew << endl;
+          cout << " >> new f(x): " << fx_ << "\t\tnewfx: " << fxnew << endl;
         }
       }
       else {
@@ -435,9 +499,22 @@ namespace RBGen {
       // destroyed the residual that was in RU,RV
       updateResiduals();
     
+
+      if (debug_) {
+        CheckList chk;
+        chk.checkSigma = true;
+        chk.checkUV = true;
+        chk.checkRes = true;
+        chk.checkSyms = true;
+        chk.checkF = true;
+        Debug(chk,", in computeBasis().");
+      }
     } // while (not converged)
 
-    // nothing else to do.
+
+    if (verbLevel_ > 1) {
+      cout << "----------------------------------------------------------------" << endl;
+    }
   }
 
 
@@ -484,7 +561,7 @@ namespace RBGen {
     {
       int info;
       lapack.GESVD('N','N',rank_,rank_,dgesvd_A_->Values(),dgesvd_A_->Stride(),&sigma_[0],
-                   NULL,0,NULL,0,&dgesvd_work_[0],dgesvd_work_.size(),NULL,&info);
+                   NULL,rank_,NULL,rank_,&dgesvd_work_[0],dgesvd_work_.size(),NULL,&info);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
@@ -562,6 +639,8 @@ namespace RBGen {
     // KAPPA_CONVERGENCE
     // THETA_CONVERGENCE
 
+    using std::cout;
+    using std::endl;
     innerStop_ = MAXIMUM_ITERATIONS;
 
     int dim = (n_-rank_)*rank_ + (m_-rank_)*rank_ + (rank_-1)*rank_;
@@ -582,7 +661,7 @@ namespace RBGen {
     etaV_->PutScalar(0.0);
     HeU_->PutScalar(0.0);
     HeV_->PutScalar(0.0);
-    e_e = 0.0;
+    etaLen_ = e_e = 0.0;
 
     //
     // We have two residuals: RU = A *V - U*S
@@ -606,9 +685,20 @@ namespace RBGen {
     }
 
     // delta = -z
-    deltaU_->Update(0.0,*RU_,-1.0);
-    deltaV_->Update(0.0,*RV_,-1.0);
+    deltaU_->Update(-1.0,*RU_,0.0);
+    deltaV_->Update(-1.0,*RV_,0.0);
     e_d = 0.0;  // because eta = 0
+
+    if (debug_) {
+      CheckList chk;
+      chk.checkR = true;
+      chk.checkD = true;
+      chk.checkElen = true;
+      chk.checkRlen = true;
+      chk.checkEHR = true;
+      chk.checkDHR = true;
+      Debug(chk,", before loop in solveTRSubproblem.");
+    }
 
     // the loop
     numInner_ = 0;
@@ -624,9 +714,11 @@ namespace RBGen {
       alpha = r_r/d_Hd;
 
       if (debug_) {
-        std::cout << " >> (r,r)  : " << r_r  << std::endl
-                  << " >> (d,Hd) : " << d_Hd << std::endl
-                  << " >> alpha  : " << alpha << std::endl;
+        cout 
+          << " >> Inner iteration " << i << endl
+          << " >>     (r,r)  : " << r_r  << endl
+          << " >>     (d,Hd) : " << d_Hd << endl
+          << " >>     alpha  : " << alpha << endl;
       }
 
       // <neweta,neweta> = <eta,eta> + 2*alpha*<eta,delta> + alpha*alpha*<delta,delta>
@@ -636,7 +728,7 @@ namespace RBGen {
       if (d_Hd <= 0 || e_e_new >= D2) {
         double tau = (-e_d + SCT::squareroot(e_d*e_d + d_d*(D2-e_e))) / d_d;
         if (debug_) {
-          std::cout << " >> tau  : " << tau << std::endl;
+          cout << " >>     tau  : " << tau << endl;
         }
         // eta = eta + tau*delta
         etaU_->Update(tau,*deltaU_,1.0);
@@ -649,11 +741,7 @@ namespace RBGen {
         else {
           innerStop_ = EXCEEDED_TR;
         }
-        if (debug_) {
-          e_e_new = e_e + 2.0*tau*e_d + tau*tau*d_d;
-          std::cout << " >> predicted  (eta,eta) : " << e_e_new << std::endl
-                    << " >> actual (eta,eta)     : " << innerProduct(*etaU_,*etaV_) << std::endl;
-        }
+        etaLen_ = e_e + 2.0*tau*e_d + tau*tau*d_d;
         break;
       }
 
@@ -663,7 +751,7 @@ namespace RBGen {
       HeU_->Update(alpha,*HdU_,1.0);
       HeV_->Update(alpha,*HdV_,1.0);
       // update its length
-      e_e = e_e_new;
+      etaLen_ = e_e = e_e_new;
 
       // update gradient of model
       RU_->Update(alpha,*HdU_,1.0);
@@ -703,6 +791,19 @@ namespace RBGen {
       e_d = beta*(e_d + alpha*d_d);
       d_d = r_r + beta*beta*d_d;
 
+      if (debug_) {
+        CheckList chk;
+        chk.checkR = true;
+        chk.checkD = true;
+        chk.checkE = true;
+        chk.checkHE = true;
+        chk.checkElen = true;
+        chk.checkRlen = true;
+        chk.checkEHR = true;
+        chk.checkDHR = true;
+        Debug(chk,", end of loop in solveTRSubproblem.");
+      }
+
     } // end of the inner iteration loop
 
   } // end of solveTRSubproblem
@@ -713,7 +814,7 @@ namespace RBGen {
   //
   // sym(S) is .5 (S + S')
   //
-  void StSVDRTR::Sym( Epetra_MultiVector &S ) {
+  void StSVDRTR::Sym( Epetra_MultiVector &S ) const {
     // set strictly upper tri part of S to S+S'
     for (int j=0; j < rank_; j++) {
       for (int i=0; i < j; i++) {
@@ -735,33 +836,42 @@ namespace RBGen {
   void StSVDRTR::Proj( const Epetra_MultiVector &xU, 
                        const Epetra_MultiVector &xV, 
                        Epetra_MultiVector &etaU, 
-                       Epetra_MultiVector &etaV ) {
+                       Epetra_MultiVector &etaV ) const {
     // perform etaU = Proj_U etaU
     // and     etaV = Proj_V etaV
     // Proj_U E = (I - U U') E + U skew(U' E)
     //          = E - U (U' E) + .5 U (U' E - E' U)
     //          = E - .5 U (S + S')
     // where S = U' E
+    int info;
     static Epetra_LocalMap lclmap(rank_,0,A_->Comm());
     static Epetra_MultiVector S(lclmap,rank_);
-    S.Multiply('T','N',1.0,xU,etaU,0.0);
+    info = S.Multiply('T','N',1.0,xU,etaU,0.0);
+    TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+        "RBGen::StSVD::Proj(): Error calling Epetra_MultiVector::Muliply.");
     // set S = .5 (S + S')
     Sym(S);
     // E = E - .5 U (S + S')
-    etaU.Multiply(-1.0,xU,S,1.0);
+    info = etaU.Multiply('N','N',-1.0,xU,S,1.0);
+    TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+        "RBGen::StSVD::Proj(): Error calling Epetra_MultiVector::Muliply.");
 
-    S.Multiply('T','N',1.0,xV,etaV,0.0);
+    info = S.Multiply('T','N',1.0,xV,etaV,0.0);
+    TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+        "RBGen::StSVD::Proj(): Error calling Epetra_MultiVector::Muliply.");
     // set S = .5(S + S')
     Sym(S);
     // E = E - .5 V (S + S')
-    etaV.Multiply(-1.0,xV,S,1.0);
+    info = etaV.Multiply('N','N',-1.0,xV,S,1.0);
+    TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+        "RBGen::StSVD::Proj(): Error calling Epetra_MultiVector::Muliply.");
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // g(eta,eta)
   double StSVDRTR::innerProduct( 
       const Epetra_MultiVector &etaU, 
-      const Epetra_MultiVector &etaV ) 
+      const Epetra_MultiVector &etaV ) const
   {
     // g( (etaU,etaV), (etaU,etaV) ) = trace(etaU'*etaU) + trace(etaV'*etaV)
     std::vector<double> norms(rank_);
@@ -779,7 +889,7 @@ namespace RBGen {
       const Epetra_MultiVector &etaU, 
       const Epetra_MultiVector &etaV, 
       const Epetra_MultiVector &zetaU, 
-      const Epetra_MultiVector &zetaV ) 
+      const Epetra_MultiVector &zetaV ) const
   {
     // g( (etaU,etaV), (etaU,etaV) ) = trace(etaU'*etaU) + trace(etaV'*etaV)
     std::vector<double> ips(rank_);
@@ -797,7 +907,7 @@ namespace RBGen {
       const Epetra_MultiVector &xU, 
       const Epetra_MultiVector &xV, 
       Epetra_MultiVector &etaU, 
-      Epetra_MultiVector &etaV ) 
+      Epetra_MultiVector &etaV ) const
   {
     int ret;
     // R_U(E) = qf(U+E)
@@ -830,20 +940,36 @@ namespace RBGen {
       const Epetra_MultiVector &etaU, 
       const Epetra_MultiVector &etaV,
       Epetra_MultiVector &HetaU,
-      Epetra_MultiVector &HetaV ) 
+      Epetra_MultiVector &HetaV ) const
   {
     // HetaU = A etaV
-    HetaU.Multiply('N','N',1.0,*A_,etaV,0.0);
+    {
+      int info = HetaU.Multiply('N','N',1.0,*A_,etaV,0.0);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::Hess(): Error calling Epetra_MultiVector::Muliply.");
+    }
     for (int i=0; i<rank_; i++) {
       HetaU(i)->Scale(N_[i]);
     }
-    HetaU.Multiply('N','N',-1.0,etaU,*UAVNsym_,1.0);
+    {
+      int info = HetaU.Multiply('N','N',-1.0,etaU,*UAVNsym_,1.0);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::Hess(): Error calling Epetra_MultiVector::Muliply.");
+    }
     // HetaV = A' etaU
-    HetaV.Multiply('T','N',1.0,*A_,etaU,0.0);
+    {
+      int info = HetaV.Multiply('T','N',1.0,*A_,etaU,0.0);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::Hess(): Error calling Epetra_MultiVector::Muliply.");
+    }
     for (int i=0; i<rank_; i++) {
       HetaV(i)->Scale(N_[i]);
     }
-    HetaV.Multiply('N','N',-1.0,etaV,*VAUNsym_,1.0);
+    {
+      int info = HetaV.Multiply('N','N',-1.0,etaV,*VAUNsym_,1.0);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::Hess(): Error calling Epetra_MultiVector::Muliply.");
+    }
     // project
     Proj(xU,xV,HetaU,HetaV);
   }
@@ -854,10 +980,144 @@ namespace RBGen {
   // check all code invariants
   // this is gonna hurt.
   // 
-  // where == 0: we are outside
-  // check that 
-  void StSVDRTR::Debug(int where) 
+  // checkUV
+  //   U'*U==I,  V'*V==I
+  // checkRes
+  //   RU == A*V - U*S
+  //   RV == A'*U - V*S
+  // checkSyms
+  //   UAVNSym == sym(U'*A*V*N)
+  //   VAUNSym == sym(V'*A'*U*N)
+  // checkF
+  //   fx = trace(U'*A*V*N)
+  // checkSigma
+  //   sigma = svd(U'*A*V)
+  //
+  // checkE
+  //   Proj(E) = E
+  // checkD
+  //   Proj(E) = E
+  // checkHD
+  //   Proj(HD) = HD 
+  //   Hess(D) == HD
+  // checkR
+  //   Proj(R) = R
+  //   R == Hess(E) + Grad(E)
+  // checkElen
+  //   sqrt(innerProduct(E,E)) == etaLen
+  // checkRlen
+  //   print sqrt(innerProduct(R,R))
+  // checkEHR
+  //   0 == innerProd(E,R)
+  // checkDHR 
+  //   0 == innerProd(D,R)
+  //
+  void StSVDRTR::Debug(const CheckList &chk, std::string where) const
   {
+    using std::setw;
+    using std::setprecision;
+    std::stringstream os;
+    os.precision(2);
+    os.setf(std::ios::scientific, std::ios::floatfield);
+    double tmp;
+    int info;
+    Epetra_LocalMap lclmap(rank_,0,A_->Comm());
+    Epetra_MultiVector AU(*V_);
+    Epetra_MultiVector AV(*U_);
+
+    os << " >> Debugging checks: iteration " << iter_ << where << endl;
+
+    info = AU.Multiply('T','N',1.0,*A_,*U_,0.0);
+    TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for AU.");
+    info = AV.Multiply('N','N',1.0,*A_,*V_,0.0);
+    TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for AU.");
+
+    if (chk.checkUV) {
+      tmp = ortho_->orthonormError(*U_);
+      os << " >> Error in U^H M U == I : " << tmp << endl;
+      tmp = ortho_->orthonormError(*V_);
+      os << " >> Error in V^H M V == I : " << tmp << endl;
+    }
+
+    if (chk.checkSigma) {
+      Epetra_MultiVector S(lclmap,rank_);
+      std::vector<double> work(5*rank_), sigma(rank_);
+      info = S.Multiply('T','N',1.0,*U_,AV,0.0);
+      TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for U'*A*V.");
+      lapack.GESVD('N','N',rank_,rank_,S.Values(),S.Stride(),&sigma[0],
+                   NULL,rank_,NULL,rank_,&work[0],work.size(),NULL,&info);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,"RBGen::StSVDRTR::Debug(): error calling DGESVD.");
+      os << " >> Stored Sigma     Computed Sigma" << endl;
+      for (int i=0; i<rank_; i++) {
+        os << " >> " << setw(15) << setprecision(6) << sigma_[i] << "     "
+                     << setw(15) << setprecision(6) << sigma[i] << endl;
+      }
+    }
+
+    if (chk.checkSyms) {
+    }
+
+    if (chk.checkF) {
+    }
+
+    if (chk.checkRes) {
+    }
+
+
+    if (chk.checkE) {
+      Epetra_MultiVector PiU(*etaU_), PiV(*etaV_);
+      // check tangency
+      Proj(*U_,*V_,PiU,PiV);
+      tmp = Utils::errorEquality(*etaU_,PiU);
+      os << " >> Error in Pi E_U == E_U : " << tmp << endl;
+      tmp = Utils::errorEquality(*etaV_,PiV);
+      os << " >> Error in Pi E_V == E_V : " << tmp << endl;
+    }
+
+    if (chk.checkHE) {
+      Epetra_MultiVector PiU(*HeU_), PiV(*HeV_);
+      // check tangency
+      Proj(*U_,*V_,PiU,PiV);
+      tmp = Utils::errorEquality(*HeU_,PiU);
+      os << " >> Error in Pi H E_U == H E_U : " << tmp << endl;
+      tmp = Utils::errorEquality(*HeV_,PiV);
+      os << " >> Error in Pi H E_V == H E_V : " << tmp << endl;
+      // check value: finish
+    }
+
+    if (chk.checkD) {
+      Epetra_MultiVector PiU(*deltaU_), PiV(*deltaV_);
+      // check tangency
+      Proj(*U_,*V_,PiU,PiV);
+      tmp = Utils::errorEquality(*deltaU_,PiU);
+      os << " >> Error in Pi D_U == D_U : " << tmp << endl;
+      tmp = Utils::errorEquality(*deltaV_,PiV);
+      os << " >> Error in Pi D_V == D_V : " << tmp << endl;
+    }
+
+    if (chk.checkHD) {
+      Epetra_MultiVector PiU(*HdU_), PiV(*HdV_);
+      // check tangency
+      Proj(*U_,*V_,PiU,PiV);
+      tmp = Utils::errorEquality(*HdU_,PiU);
+      os << " >> Error in Pi H D_U == H D_U : " << tmp << endl;
+      tmp = Utils::errorEquality(*HdV_,PiV);
+      os << " >> Error in Pi H D_V == H D_V : " << tmp << endl;
+      // check value: finish
+    }
+
+    if (chk.checkR) {
+      Epetra_MultiVector PiU(*RU_), PiV(*RV_);
+      // check tangency
+      Proj(*U_,*V_,PiU,PiV);
+      tmp = Utils::errorEquality(*RU_,PiU);
+      os << " >> Error in Pi R_U == R_U : " << tmp << endl;
+      tmp = Utils::errorEquality(*RV_,PiV);
+      os << " >> Error in Pi R_V == R_V : " << tmp << endl;
+      // check value: finish
+    }
+
+    cout << os.str() << endl;
   }
 
 } // end of RBGen namespace
