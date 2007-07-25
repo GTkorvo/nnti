@@ -338,6 +338,7 @@ void EpetraMatrix::print(ostream& os) const
   crsMatrix()->Print(os);
 }
 
+
 string EpetraMatrix::description() const 
 {
   string rtn = "EpetraMatrix[nRow=" 
@@ -347,10 +348,12 @@ string EpetraMatrix::description() const
   return rtn;
 }
 
+
 Epetra_CrsMatrix* EpetraMatrix::crsMatrix()
 {
   return matrix_.get();
 }
+
 
 const Epetra_CrsMatrix* EpetraMatrix::crsMatrix() const 
 {
@@ -358,19 +361,10 @@ const Epetra_CrsMatrix* EpetraMatrix::crsMatrix() const
 }
 
 
-
 Epetra_CrsMatrix& EpetraMatrix::getConcrete(const LinearOperator<double>& A)
 {
-  EpetraMatrix* ep 
-    = dynamic_cast<EpetraMatrix*>(A.ptr().get());
-  TEST_FOR_EXCEPTION(ep==0, std::runtime_error,
-                     "EpetraMatrix::getConcrete called on a matrix that "
-                     "could not be cast to an EpetraMatrix");
-  return *(ep->crsMatrix());
+  return *Teuchos::dyn_cast<EpetraMatrix>(*A.ptr()).crsMatrix();
 }
-
-
-
 
 
 void EpetraMatrix::getRow(const int& row, 
