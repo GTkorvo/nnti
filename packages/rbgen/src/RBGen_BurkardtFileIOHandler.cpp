@@ -159,7 +159,7 @@ namespace RBGen {
     return newMV;
   }
   
-  void BurkardtFileIOHandler::Write( Teuchos::RCP<const Epetra_MultiVector> MV, const std::string& filename )
+  void BurkardtFileIOHandler::Write( const Teuchos::RCP<const Epetra_MultiVector>& MV, const std::string& filename )
   {
     if (isInit) {
 

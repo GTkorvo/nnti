@@ -9,12 +9,12 @@
 
 // Forward declaration of Epetra_Multivector
 class Epetra_MultiVector;
-class Epetra_CrsMatrix;
+class Epetra_Operator;
 
 namespace RBGen {
  
   //! Specialization of MethodFactory for Epetra_MultiVector datasets.
-  class EpetraMVMethodFactory : public virtual MethodFactory<Epetra_MultiVector,Epetra_CrsMatrix> {
+  class EpetraMVMethodFactory : public virtual MethodFactory<Epetra_MultiVector,Epetra_Operator> {
     
   public:
     //! @name Constructor/Destructor.
@@ -30,7 +30,7 @@ namespace RBGen {
     //! @name Factory methods
     //@{
 
-    Teuchos::RCP<Method< Epetra_MultiVector,Epetra_CrsMatrix > > create( const Teuchos::ParameterList& params );
+    Teuchos::RCP<Method< Epetra_MultiVector,Epetra_Operator > > create( const Teuchos::ParameterList& params );
     
     //@}
 

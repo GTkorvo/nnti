@@ -46,7 +46,7 @@ namespace RBGen {
     isInit = true;
   }
 
-  Teuchos::RCP<Epetra_CrsMatrix> EpetraCrsMatrixFileIOHandler::Read( const std::vector<std::string>& filenames )
+  Teuchos::RCP<Epetra_Operator> EpetraCrsMatrixFileIOHandler::Read( const std::vector<std::string>& filenames )
   {
 
     Teuchos::RCP<Epetra_CrsMatrix> newMTX;
@@ -80,12 +80,12 @@ namespace RBGen {
     return newMTX;
   }
   
-  void EpetraCrsMatrixFileIOHandler::Write( Teuchos::RCP<const Epetra_CrsMatrix> MTX, const std::string& filename )
+  void EpetraCrsMatrixFileIOHandler::Write( const Teuchos::RCP<const Epetra_Operator>& MTX, const std::string& filename )
   {
     if (isInit) {
 
       std::string temp_filename = out_path + filename;
-      EpetraExt::RowMatrixToMatrixMarketFile( temp_filename.c_str(), *MTX );
+      EpetraExt::RowMatrixToMatrixMarketFile( temp_filename.c_str(), *(Teuchos::rcp_dynamic_cast<const Epetra_CrsMatrix>(MTX)) );
 
     }
     else {

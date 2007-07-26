@@ -45,7 +45,7 @@ namespace RBGen {
     //@{
 
     //! Method for writing one data set into a file.
-    virtual void Write( Teuchos::RCP< const DataSetType > MV, const std::string& filename ) = 0;
+    virtual void Write( const Teuchos::RCP< const DataSetType >& MV, const std::string& filename ) = 0;
 
     //@}
 

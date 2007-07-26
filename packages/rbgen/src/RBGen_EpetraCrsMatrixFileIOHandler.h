@@ -5,12 +5,12 @@
 #include "RBGen_FileIOHandler.hpp"
 
 // Forward declaration of Epetra_MultiVector class
-class Epetra_CrsMatrix;
+class Epetra_Operator;
 
 namespace RBGen {
   
   //! FileIOHandler for reading EpetraCrsMatrix data from a file using EpetraExt.
-  class EpetraCrsMatrixFileIOHandler : public virtual FileIOHandler< Epetra_CrsMatrix > {
+  class EpetraCrsMatrixFileIOHandler : public virtual FileIOHandler< Epetra_Operator > {
     
   public:
     //! @name Constructor/Destructor.
@@ -37,7 +37,7 @@ namespace RBGen {
     //@{
 
     //! Method for reading a file and constructing an Epetra_CrsMatrix.
-    Teuchos::RCP<Epetra_CrsMatrix> Read( const std::vector<std::string>& filenames );
+    Teuchos::RCP<Epetra_Operator> Read( const std::vector<std::string>& filenames );
 
     //@}
 
@@ -45,7 +45,7 @@ namespace RBGen {
     //@{
 
     //! Method for writing one Epetra_CrsMatrix into a file using the same type as was.
-    void Write( Teuchos::RCP<const Epetra_CrsMatrix> MTX, const std::string& filename );
+    void Write( const Teuchos::RCP<const Epetra_Operator>& MTX, const std::string& filename );
 
     //@}
     //! @name Handler Status Methods

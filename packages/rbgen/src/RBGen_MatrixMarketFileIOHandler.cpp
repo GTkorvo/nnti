@@ -141,7 +141,7 @@ namespace RBGen {
     return newMV;
   }
 
-  void MatrixMarketFileIOHandler::Write( Teuchos::RCP<const Epetra_MultiVector> MV, const std::string& filename )
+  void MatrixMarketFileIOHandler::Write( const Teuchos::RCP<const Epetra_MultiVector>& MV, const std::string& filename )
   {
     if (isInit) {
 

@@ -359,7 +359,7 @@ namespace RBGen {
     return newMV;
   }
   
-  void NetCDFFileIOHandler::Write( Teuchos::RCP<const Epetra_MultiVector> MV, const std::string& filename )
+  void NetCDFFileIOHandler::Write( const Teuchos::RCP<const Epetra_MultiVector>& MV, const std::string& filename )
   {
 #ifdef EPETRA_MPI
     Epetra_MpiComm comm( MPI_COMM_WORLD );

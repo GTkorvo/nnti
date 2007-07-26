@@ -7,7 +7,6 @@
 #include "AnasaziEpetraAdapter.hpp"
 #include "AnasaziOrthoManager.hpp"
 #include "Epetra_MultiVector.h"
-#include "Epetra_CrsMatrix.h"
 #include "Epetra_Operator.h"
 #include "Epetra_SerialDenseMatrix.h"
 #include "Teuchos_ParameterList.hpp"
@@ -65,7 +64,7 @@
 namespace RBGen {
 
   //! Class for producing a basis using the Incremental SVD
-  class IncSVDPOD : public virtual Method<Epetra_MultiVector,Epetra_CrsMatrix>, public virtual PODMethod<double> {
+  class IncSVDPOD : public virtual Method<Epetra_MultiVector,Epetra_Operator>, public virtual PODMethod<double> {
 
   public:
     //! @name Constructor/Destructor.
@@ -115,7 +114,7 @@ namespace RBGen {
     //! Initialize the method with the given parameter list and snapshot set.
     void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
                      const Teuchos::RCP< const Epetra_MultiVector >& init,
-                     const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
+                     const Teuchos::RCP< RBGen::FileIOHandler< Epetra_Operator > >& fileio = Teuchos::null );
 
     void Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss );
 

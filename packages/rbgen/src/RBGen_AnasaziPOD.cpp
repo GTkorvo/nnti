@@ -27,7 +27,7 @@ namespace RBGen {
 
   void AnasaziPOD::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
                                const Teuchos::RCP< const Epetra_MultiVector >& ss,
-                               const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio )
+                               const Teuchos::RCP< RBGen::FileIOHandler< Epetra_Operator > >& fileio )
   {
 
    // Get the "Reduced Basis Method" sublist.

@@ -4,7 +4,7 @@
 #include "RBGen_PODMethod.hpp"
 #include "RBGen_Method.hpp"
 #include "Epetra_MultiVector.h"
-#include "Epetra_CrsMatrix.h"
+#include "Epetra_Operator.h"
 #include "Teuchos_ParameterList.hpp"
 
 /*! \file RBGen_AnasaziPOD.h
@@ -14,7 +14,7 @@
 namespace RBGen {
   
   //! Class for producing a basis using the Anasazi eigensolver
-  class AnasaziPOD : public virtual Method<Epetra_MultiVector,Epetra_CrsMatrix>, public virtual PODMethod<double> {
+  class AnasaziPOD : public virtual Method<Epetra_MultiVector,Epetra_Operator>, public virtual PODMethod<double> {
     
   public:
     //! @name Constructor/Destructor.
@@ -60,13 +60,13 @@ namespace RBGen {
     //! Initialize the method with the given parameter list and snapshot set.
     void Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
                      const Teuchos::RCP< const Epetra_MultiVector >& ss,
-		     const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio = Teuchos::null );
+		     const Teuchos::RCP< RBGen::FileIOHandler< Epetra_Operator > >& fileio = Teuchos::null );
 
     //! Reset the snapshot set used to compute the reduced basis.
     void Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss ) { ss_ = new_ss; }
 
     //! Reset the operator used to weight the inner product.
-    void ResetOp( const Teuchos::RCP<Epetra_CrsMatrix>& new_op ) { op_ = new_op; }
+    void ResetOp( const Teuchos::RCP<Epetra_Operator>& new_op ) { op_ = new_op; }
 
     //@}
 
@@ -96,7 +96,7 @@ namespace RBGen {
     Teuchos::RCP<Epetra_MultiVector> basis_;
 
     // Pointer to the inner product operator
-    Teuchos::RCP<Epetra_CrsMatrix> op_;
+    Teuchos::RCP<Epetra_Operator> op_;
 
     // Vector holding singular values.
     std::vector<double> sv_;

@@ -92,7 +92,7 @@ int main( int argc, char* argv[] )
   timersRBGen.push_back( timerFileIO );
   //
   Teuchos::RCP< RBGen::FileIOHandler<Epetra_MultiVector> > mvFileIO;
-  Teuchos::RCP< RBGen::FileIOHandler<Epetra_CrsMatrix> > opFileIO =
+  Teuchos::RCP< RBGen::FileIOHandler<Epetra_Operator> > opFileIO =
     Teuchos::rcp( new RBGen::EpetraCrsMatrixFileIOHandler() ); 
   {
     Teuchos::TimeMonitor lcltimer( *timerFileIO );
@@ -152,7 +152,7 @@ int main( int argc, char* argv[] )
   //
   Teuchos::RCP<Teuchos::Time> timerCreateMethod = Teuchos::rcp( new Teuchos::Time("Create Reduced Basis Method") );
   timersRBGen.push_back( timerCreateMethod );
-  Teuchos::RCP<RBGen::Method<Epetra_MultiVector,Epetra_CrsMatrix> > method;
+  Teuchos::RCP<RBGen::Method<Epetra_MultiVector,Epetra_Operator> > method;
   {
     Teuchos::TimeMonitor lcltimer( *timerCreateMethod );  
     method = mthd_factory.create( *BasisParams );

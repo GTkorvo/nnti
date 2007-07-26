@@ -144,7 +144,7 @@ namespace RBGen {
 
   void ISVDUDV::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
                             const Teuchos::RCP< const Epetra_MultiVector >& ss,
-                            const Teuchos::RCP< RBGen::FileIOHandler< Epetra_CrsMatrix > >& fileio) 
+                            const Teuchos::RCP< RBGen::FileIOHandler< Epetra_Operator > >& fileio) 
   {
     workU_ = Teuchos::rcp( new Epetra_MultiVector(ss->Map(),maxBasisSize_,false) );
     Epetra_LocalMap lclmap(ss->NumVectors(),0,ss->Comm());

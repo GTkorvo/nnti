@@ -50,7 +50,7 @@ namespace RBGen {
     //@{
 
     //! Method for writing one Epetra_MultiVector into a file.
-    void Write( Teuchos::RCP< const Epetra_MultiVector > MV, const std::string& filename );
+    void Write( const Teuchos::RCP< const Epetra_MultiVector >& MV, const std::string& filename );
 
     //@}
 
