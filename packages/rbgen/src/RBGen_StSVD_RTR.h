@@ -187,6 +187,8 @@ namespace RBGen {
     void updateResiduals();
     // debugging checks
     void Debug(const CheckList &chk, std::string where) const;
+    // print status
+    void printStatus() const;
 
 
     // Is this object initialized?
@@ -247,7 +249,8 @@ namespace RBGen {
     // convergence parameters
     double conv_kappa_, conv_theta_;
     // most recent rho
-    double rho_;
+    double rho_, rhonum_, rhoden_;
+    bool tiny_rhonum_, zero_rhoden_, neg_rho_;
     // current objective function
     double fx_;
     // last inner stop

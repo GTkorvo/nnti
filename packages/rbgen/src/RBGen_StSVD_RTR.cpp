@@ -263,12 +263,6 @@ namespace RBGen {
     // check that we are initialized, i.e., data structures match the data set
     initialize();
 
-    // some bools
-    bool tiny_rhonum = false,
-         zero_rhoden = false, 
-         neg_rho = false;
-    double rhonum, rhoden, fxnew;
-
     Delta_ = Delta0_;
     etaLen_ = 0.0;
     iter_ = 0;
@@ -276,80 +270,17 @@ namespace RBGen {
     rho_ = 0.0;
     innerStop_ = NOTHING;
     tradjust_ = "n/a";
+    tiny_rhonum_ = false;
+    zero_rhoden_ = false;
+    neg_rho_ = false;
+
+    // print initial status
+    printStatus();
+
     while (maxScaledNorm_ > tol_ && iter_ < maxOuterIters_) {
 
-      // status printing
-      if (verbLevel_ == 1) {
-        // one line
-        // acc TR+   k: %5d     num_inner: %5d     f: %e   |grad|: %e   stop_reason
-        if (iter_) {
-          cout << (accepted_ ? "accept" : "reject");
-        }
-        else {
-          cout << "<init>";
-        }
-        cout << " " << tradjust_ 
-             << "     k: " << setw(5) << iter_
-             << "     num_inner: ";
-        if (numInner_ == -1) {
-          cout << "  n/a";
-        }
-        else {
-          cout << setw(5) << numInner_;
-        }
-        cout << "     f(x): " << setw(18) << scientific << setprecision(10) << fx_
-             << "     |res|: " << setw(18) << scientific << setprecision(10) << maxScaledNorm_
-             << "     " << stopReasons_[innerStop_] << endl;
-      }
-      else if (verbLevel_ > 1) {
-        cout << "----------------------------------------------------------------" << endl;
-        // multiline
-        // 1:acc TR+   k: %5d     num_inner: %5d     stop_reason
-        if (iter_) {
-          cout << (accepted_ ? "accept" : "reject");
-        }
-        else {
-          cout << "<init>";
-        }
-        cout << " " << tradjust_ 
-             << "     k: " << setw(5) << iter_
-             << "     num_inner: ";
-        if (numInner_ == -1) {
-          cout << " n/a ";
-        }
-        else {
-          cout << setw(5) << numInner_;
-        }
-        cout << "     " << stopReasons_[innerStop_] << endl;
-        // 2:     f(x) : %e     |res| : %e
-        cout << "     f(x) : " << setw(18) << scientific << setprecision(10) << fx_
-             << "     |res|: " << setw(18) << scientific << setprecision(10) << maxScaledNorm_ << endl;
-        // 3:    Delta : %e     |eta| : %e
-        cout << "    Delta : " << setw(18) << scientific << setprecision(10) << Delta_
-             << "    |eta| : " << setw(18) << scientific << setprecision(10) << etaLen_ << endl;
-        if (neg_rho) {
-          // 4:  NEGATIVE  rho     : %e
-          cout << "  NEGATIVE  rho     : " << setw(18) << scientific << setprecision(10) << rho_ << endl;
-        }
-        else if (tiny_rhonum) {
-          // 4: VERY SMALL rho_num : %e
-          cout << " VERY SMALL rho_num : " << setw(18) << scientific << setprecision(10) << rhonum << endl;
-        }
-        else if (zero_rhoden) {
-          // 4:    ZERO    rho_den : %e
-          cout << "    ZERO    rho_den : " << setw(18) << scientific << setprecision(10) << rhoden << endl;
-        }
-        else {
-          // 4:      rho : %e
-          cout << "      rho : " << setw(18) << scientific << setprecision(10) << rho_ << endl;
-        }
-      }
-
+      // inc counter
       ++iter_;
-
-      // compute gradient
-      // this is the projected residuals
-      Proj(*U_,*V_,*RU_,*RV_);
 
       // minimize model subproblem
       solveTRSubproblem();
@@ -411,7 +342,8 @@ namespace RBGen {
       // we don't need sigmas, only trace(newU'*A*newV*N)
       // trace(newU'*A*newV*N) = sum_i (newU'*A*newV)_ii N[i]
       //                       = sum_i <newV[i],(A'newU)[i]> N[i]
-      tiny_rhonum = neg_rho = zero_rhoden = false;
+      tiny_rhonum_ = neg_rho_ = zero_rhoden_ = false;
+      double fxnew;
       {
         std::vector<double> dots(rank_);
         // deltaV_ stores newV, HdV_ stores newU'*A
@@ -421,31 +353,31 @@ namespace RBGen {
           fxnew += dots[i]*N_[i];
         }
       }
-      rhonum = fx_ - fxnew;
+      rhonum_ = fx_ - fxnew;
       // tiny rhonum means small decrease in f (maybe even negative small)
       // this usually happens near the end of convergence; 
       // this is usually not bad; we will pretend it is very good
-      if ( abs(rhonum/fx_) < 1e-12 ) {
-        tiny_rhonum = true;
+      if ( SCT::magnitude(rhonum_/fx_) < 1e-12 ) {
+        tiny_rhonum_ = true;
         rho_ = 1.0;
       }
       else {
         // compute rhoden
         // - <eta,(AV,A'U)> - .5 <eta,Heta>
-        rhoden = -1.0*innerProduct(*etaU_,*etaV_,*AV_,*AU_) 
+        rhoden_ = -1.0*innerProduct(*etaU_,*etaV_,*AV_,*AU_) 
                  -0.5*innerProduct(*etaU_,*etaV_,*HeU_,*HeV_);
-        if (rhoden == 0) {
+        if (rhoden_ == 0) {
           // this is bad
-          zero_rhoden = true;
+          zero_rhoden_ = true;
           rho_ = -1.0;
         }
         else {
-          rho_ = rhonum / rhoden;
+          rho_ = rhonum_ / rhoden_;
         }
       }
       if (rho_ < 0.0) {
         // this is also bad
-        neg_rho = true;
+        neg_rho_ = true;
       }
 
       //
@@ -474,7 +406,8 @@ namespace RBGen {
 
         if (debug_) {
           // check that new fx_ is equal to fxnew
-          cout << " >> new f(x): " << fx_ << "\t\tnewfx: " << fxnew << endl;
+          cout << " >> new f(x): " << setw(18) << scientific << setprecision(10) << fx_ 
+               << "\t\tnewfx: " << setw(18) << scientific << setprecision(10) << fxnew << endl;
         }
       }
       else {
@@ -498,8 +431,11 @@ namespace RBGen {
       // this happens whether we accepted or not, because the trust-region solve
       // destroyed the residual that was in RU,RV
       updateResiduals();
-    
 
+      // print status
+      printStatus();
+
+      // debug checking
       if (debug_) {
         CheckList chk;
         chk.checkSigma = true;
@@ -509,6 +445,7 @@ namespace RBGen {
         chk.checkF = true;
         Debug(chk,", in computeBasis().");
       }
+
     } // while (not converged)
 
 
@@ -670,11 +607,17 @@ namespace RBGen {
     // Note that grad(U,V) = {proj(A *V*N)} = {proj(RU*N)}
     //                       {proj(A'*U*N)} = {proj(RV*N)}
     // 
-    // Project the residuals in RU_ and RV_ to yield the gradient
+    // Multiply the residuals in RU and RV by N, yielding 
+    //   RU = A *V*N - U*S*N
+    //   RV = A'*U*N - V*S*N
+    // Then project RU and RV (in situ) yield the gradient
+    //   RU = Proj(A *V*N - U*S*N) = Proj(A *V*N)
+    //   RV = Proj(A'*U*N - V*S*N) = Proj(A'*U*N)
     //
-    // r0 = grad f(X) = Proj R_
-    // We will do this in place.
-    //
+    for (int j=0; j<rank_; j++) {
+      (*RU_)(j)->Scale(N_[j]);
+      (*RV_)(j)->Scale(N_[j]);
+    }
     Proj(*U_,*V_,*RU_,*RV_);
     r_r = innerProduct(*RU_,*RV_);
     d_d = r_r;
@@ -735,6 +678,12 @@ namespace RBGen {
         etaV_->Update(tau,*deltaV_,1.0);
         HeU_->Update(tau,*HdU_,1.0);
         HeV_->Update(tau,*HdV_,1.0);
+        // if debugging, go ahead and update the residual of the model
+        if (debug_) {
+          RU_->Update(tau,*HdU_,1.0);
+          RV_->Update(tau,*HdV_,1.0);
+          //Proj(*U_,*V_,*RU_,*RV_);   // finish; re-enable
+        }
         if (d_Hd <= 0) {
           innerStop_ = NEGATIVE_CURVATURE;
         }
@@ -756,7 +705,7 @@ namespace RBGen {
       // update gradient of model
       RU_->Update(alpha,*HdU_,1.0);
       RV_->Update(alpha,*HdV_,1.0);
-      Proj(*U_,*V_,*RU_,*RV_);
+      //Proj(*U_,*V_,*RU_,*RV_);   // finish; re-enable
 
       rold_rold = r_r;
       r_r = innerProduct(*RU_,*RV_);
@@ -948,9 +897,11 @@ namespace RBGen {
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::Hess(): Error calling Epetra_MultiVector::Muliply.");
     }
+    // HetaU = A etaV N
     for (int i=0; i<rank_; i++) {
       HetaU(i)->Scale(N_[i]);
     }
+    // HetaU = A etaV N - etaU sym(U' A V N)
     {
       int info = HetaU.Multiply('N','N',-1.0,etaU,*UAVNsym_,1.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
@@ -962,9 +913,11 @@ namespace RBGen {
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::Hess(): Error calling Epetra_MultiVector::Muliply.");
     }
+    // HetaV = A' etaU N
     for (int i=0; i<rank_; i++) {
       HetaV(i)->Scale(N_[i]);
     }
+    // HetaV = A' etaU N - etaV sym(V' A' U N)
     {
       int info = HetaV.Multiply('N','N',-1.0,etaV,*VAUNsym_,1.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
@@ -1022,14 +975,14 @@ namespace RBGen {
     double tmp;
     int info;
     Epetra_LocalMap lclmap(rank_,0,A_->Comm());
-    Epetra_MultiVector AU(*V_);
     Epetra_MultiVector AV(*U_);
+    Epetra_MultiVector AU(*V_);
 
     os << " >> Debugging checks: iteration " << iter_ << where << endl;
 
-    info = AU.Multiply('T','N',1.0,*A_,*U_,0.0);
-    TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for AU.");
     info = AV.Multiply('N','N',1.0,*A_,*V_,0.0);
+    TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for AU.");
+    info = AU.Multiply('T','N',1.0,*A_,*U_,0.0);
     TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for AU.");
 
     if (chk.checkUV) {
@@ -1037,6 +990,11 @@ namespace RBGen {
       os << " >> Error in U^H M U == I : " << tmp << endl;
       tmp = ortho_->orthonormError(*V_);
       os << " >> Error in V^H M V == I : " << tmp << endl;
+      // check A products
+      tmp = Utils::errorEquality(*AV_,AV);
+      os << " >> Error in A V == AV : " << tmp << endl;
+      tmp = Utils::errorEquality(*AU_,AU);
+      os << " >> Error in A' U == AU : " << tmp << endl;
     }
 
     if (chk.checkSigma) {
@@ -1058,11 +1016,28 @@ namespace RBGen {
     }
 
     if (chk.checkF) {
+      // finish
     }
 
     if (chk.checkRes) {
+      // finish
     }
 
+    if (chk.checkElen) {
+      // finish
+    }
+
+    if (chk.checkRlen) {
+      // finish
+    }
+
+    if (chk.checkEHR) {
+      // finish
+    }
+
+    if (chk.checkDHR) {
+      // finish
+    }
 
     if (chk.checkE) {
       Epetra_MultiVector PiU(*etaU_), PiV(*etaV_);
@@ -1076,13 +1051,19 @@ namespace RBGen {
 
     if (chk.checkHE) {
       Epetra_MultiVector PiU(*HeU_), PiV(*HeV_);
+      Epetra_MultiVector HU(*HeU_), HV(*HeV_);
       // check tangency
       Proj(*U_,*V_,PiU,PiV);
       tmp = Utils::errorEquality(*HeU_,PiU);
       os << " >> Error in Pi H E_U == H E_U : " << tmp << endl;
       tmp = Utils::errorEquality(*HeV_,PiV);
       os << " >> Error in Pi H E_V == H E_V : " << tmp << endl;
-      // check value: finish
+      // check value
+      Hess(*U_,*V_,*etaU_,*etaV_,HU,HV);
+      tmp = Utils::errorEquality(*HeU_,HU);
+      os << " >> Error in H D_U == HD_U : " << tmp << endl;
+      tmp = Utils::errorEquality(*HeV_,HV);
+      os << " >> Error in H D_V == HD_V : " << tmp << endl;
     }
 
     if (chk.checkD) {
@@ -1097,27 +1078,132 @@ namespace RBGen {
 
     if (chk.checkHD) {
       Epetra_MultiVector PiU(*HdU_), PiV(*HdV_);
+      Epetra_MultiVector HU(*HdU_), HV(*HdV_);
       // check tangency
       Proj(*U_,*V_,PiU,PiV);
       tmp = Utils::errorEquality(*HdU_,PiU);
       os << " >> Error in Pi H D_U == H D_U : " << tmp << endl;
       tmp = Utils::errorEquality(*HdV_,PiV);
       os << " >> Error in Pi H D_V == H D_V : " << tmp << endl;
-      // check value: finish
+      // check value
+      Hess(*U_,*V_,*deltaU_,*deltaV_,HU,HV);
+      tmp = Utils::errorEquality(*HdU_,HU);
+      os << " >> Error in H D_U == HD_U : " << tmp << endl;
+      tmp = Utils::errorEquality(*HdV_,HV);
+      os << " >> Error in H D_V == HD_V : " << tmp << endl;
+      // minor check of symmetry
+      double d_Hd, Hd_d;
+      Hd_d = innerProduct(*HdU_,*HdV_,*deltaU_,*deltaV_);
+      d_Hd = innerProduct(*deltaU_,*deltaV_,*HdU_,*HdV_);
+      os << " >> Hd_d : " << Hd_d
+         << " \t\t d_Hd : " << d_Hd << endl;
     }
 
     if (chk.checkR) {
       Epetra_MultiVector PiU(*RU_), PiV(*RV_);
+      Epetra_MultiVector GU(AV), GV(AU);
+      Epetra_MultiVector HU(*RU_), HV(*RV_);
       // check tangency
       Proj(*U_,*V_,PiU,PiV);
       tmp = Utils::errorEquality(*RU_,PiU);
       os << " >> Error in Pi R_U == R_U : " << tmp << endl;
       tmp = Utils::errorEquality(*RV_,PiV);
       os << " >> Error in Pi R_V == R_V : " << tmp << endl;
-      // check value: finish
+      // check value: R = grad + H[eta]
+      // compute H[eta]
+      Hess(*U_,*V_,*etaU_,*etaV_,HU,HV);
+      // compute grad
+      for (int j=0; j<rank_; j++) {
+        GU(j)->Scale(N_[j]);
+        GV(j)->Scale(N_[j]);
+      }
+      Proj(*U_,*V_,GU,GV);
+      // add them
+      GU.Update(1.0,HU,1.0);
+      GV.Update(1.0,HV,1.0);
+      // check against RU,RV
+      tmp = Utils::errorEquality(*RU_,GU);
+      os << " >> Error in (model res)_U == R_U : " << tmp << endl;
+      tmp = Utils::errorEquality(*RV_,GV);
+      os << " >> Error in (model res)_V == R_V : " << tmp << endl;
     }
 
     cout << os.str() << endl;
+  }
+
+  void StSVDRTR::printStatus() const {
+    using std::cout;
+    using std::setprecision;
+    using std::vector;
+    using std::scientific;
+    using std::setw;
+
+    // status printing
+    if (verbLevel_ == 1) {
+      // one line
+      // acc TR+   k: %5d     num_inner: %5d     f: %e   |grad|: %e   stop_reason
+      if (iter_) {
+        cout << (accepted_ ? "accept" : "REJECT");
+      }
+      else {
+        cout << "<init>";
+      }
+      cout << " " << tradjust_ 
+        << "     k: " << setw(5) << iter_
+        << "     num_inner: ";
+      if (numInner_ == -1) {
+        cout << "  n/a";
+      }
+      else {
+        cout << setw(5) << numInner_;
+      }
+      cout << "     f(x): " << setw(18) << scientific << setprecision(10) << fx_
+                               << "     |res|: " << setw(18) << scientific << setprecision(10) << maxScaledNorm_
+                                 << "     " << stopReasons_[innerStop_] << endl;
+    }
+    else if (verbLevel_ > 1) {
+      cout << "----------------------------------------------------------------" << endl;
+      // multiline
+      // 1:acc TR+   k: %5d     num_inner: %5d     stop_reason
+      if (iter_) {
+        cout << (accepted_ ? "accept" : "REJECT");
+      }
+      else {
+        cout << "<init>";
+      }
+      cout << " " << tradjust_ 
+        << "     k: " << setw(5) << iter_
+        << "     num_inner: ";
+      if (numInner_ == -1) {
+        cout << " n/a ";
+      }
+      else {
+        cout << setw(5) << numInner_;
+      }
+      cout << "     " << stopReasons_[innerStop_] << endl;
+      // 2:     f(x) : %e     |res| : %e
+      cout << "     f(x) : " << setw(18) << scientific << setprecision(10) << fx_
+                                << "     |res|: " << setw(18) << scientific << setprecision(10) << maxScaledNorm_ << endl;
+      // 3:    Delta : %e     |eta| : %e
+      cout << "    Delta : " << setw(18) << scientific << setprecision(10) << Delta_
+        << "    |eta| : " << setw(18) << scientific << setprecision(10) << etaLen_ << endl;
+      if (neg_rho_) {
+        // 4:  NEGATIVE  rho     : %e
+        cout << "  NEGATIVE  rho     : " << setw(18) << scientific << setprecision(10) << rho_ << endl;
+      }
+      else if (tiny_rhonum_) {
+        // 4: VERY SMALL rho_num : %e
+        cout << " VERY SMALL rho_num : " << setw(18) << scientific << setprecision(10) << rhonum_ << endl;
+      }
+      else if (zero_rhoden_) {
+        // 4:    ZERO    rho_den : %e
+        cout << "    ZERO    rho_den : " << setw(18) << scientific << setprecision(10) << rhoden_ << endl;
+      }
+      else {
+        // 4:      rho : %e
+        cout << "      rho : " << setw(18) << scientific << setprecision(10) << rho_ << endl;
+      }
+    }
   }
 
 } // end of RBGen namespace
