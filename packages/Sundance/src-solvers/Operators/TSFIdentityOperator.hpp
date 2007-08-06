@@ -118,6 +118,8 @@ namespace TSFExtended
       values[0] = 1.0;
     }
 
+
+
   private:
     /** The vector space on which this operator works. Note that the range and
      * domain spaces are identical for the identity operator */
