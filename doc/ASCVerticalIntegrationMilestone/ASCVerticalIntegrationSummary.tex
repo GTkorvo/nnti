@@ -60,6 +60,7 @@ Russell Hooper \\
 Roger Pawlowski \\
 Eric Phipps \\
 Denis Ridzal \\
+Andy Salinger\\
 Heidi Thornquist \\
 Jim Willenbring \\
 More authors ???\\ \\
@@ -411,9 +412,41 @@ methods but we could if we wanted too].  In addition, the forward sensitivity
 method using pseudo-block GMRES in Belos showed superior performance to
 AztecOO (the current production iterative linear solver in Trilinos) [ToDo:
 RAB: We need to modify the setup of this model and fix some problems in Belos
-to really show this]. The multi-point algorithm allows parameters to be matched
+to really show this]. 
+
+The multi-point algorithm allows parameters to be matched
 over the whole current-voltage curve simultaneously, with excellent scalability
 by using another dimension of parallelism over the multiple data points.
+This required development in EpetraExt and modifications to the Nevada/Charon
+code, where multiple instances of the code run simultaneously with 
+partitioned MPI Communicators, while the linear algebra and optimization
+algorithms operate on a global MPI communicator. 
+
+As seen in Figure {}\ref{fig:multiPointFit}, we were successful in having
+the multipoint algorithm find the optimal parameter value so that a curve
+of 12 points would best match the experimental data. Since the application 
+runs well in serial, this was run on 12 processors of Thunderbrid for 
+near-optimal scalability. Unfortunately, we were not able to successfully 
+perform this optimization using the most physically relevant
+parameters that govern the defect physics. The results shown were computed
+by altering the total amount of radiation damage, and then optimally
+fit using the voltage at the second contact as the optimization parameter.
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=0,scale=1.00
+]{multiPointFit}
+%}
+\end{center}
+\caption{
+\label{fig:multiPointFit}
+This figure illustrates how multipoint optimization can be used to optimize
+system parameters so that a {\em curve} of responses can best be matched. In this case,
+$12$ steady-state current predictions, running in paralllel, were fit to the
+experimental data. }
+\end{figure}
+\esinglespace}
 
 {}\noindent\textbf{Transient QASPR semiconductor forward simulation} [Rythmos,
 NOX, Stratimikos, Belos, Ifpack, Epetra]: We used a high-order
@@ -454,12 +487,35 @@ causes the beam to deflect upwards. The optimization problem was formulated
 as follows: find the value of the applied voltage parameter so that the beam 
 deflection most closely matches a design value (of $0.05$). The proof-of-concept
 was successful, with the optimization problem 
-solving to $8$ digits of accuracy. It also demonstrated the speed of the invasive
-optimization algorithms, since it solced in about double the time of a steady-state calculation.
-This work demonstrates that the algorithms and software are general and immediately 
-applicable to ASC applications other than Charon. The development of the Aria ModelEvaluator
+solving to $8$ digits of accuracy (Figure {}\ref{fig:ariaFinal}. This demonstration
+also highlights the speed of the invasive
+algorithms, as it solved the optimization problem in only twice the
+time of solving a single steady-state calculation.
+
+This Aria application demonstrates that the algorithms and software are general and immediately 
+applicable to ASC applications other than Charon. The development of the ModelEvaluator
 interface will pave the way for more Trilinos capabilities, such as Rythmos, to
-be assimilated into SIERRA. 
+be assimilated into Aria. Since the model evaluator was implemented at the Sierra 
+Solution Control level, there is a now a direct path for all Sierra applications
+(particularly implicit codes such as Sierra/Adagio) to interface to all Trilinos 
+analysis algorithms.
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=0,scale=0.50
+]{SiC_dY0.1.eps}
+%}
+\end{center}
+\caption{
+\label{fig:ariaFinal}
+Plot of the final Aria solution showing the deformed beam and Temperature
+contours. The optimization algorithm found that an applied voltage of $1.934$
+would cause the beam to exactly match the design criterion of having the 
+top corner of the beam deflect a distance of $0.05$ at steady-state.
+}
+\end{figure}
+\esinglespace}
 
 %
 \section{Conclusions}
