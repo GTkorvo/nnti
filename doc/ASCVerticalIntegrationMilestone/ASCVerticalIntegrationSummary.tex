@@ -30,6 +30,7 @@ Roscoe Bartlett (Technical PI) \\
 Scott Collis (Management PI) \\
 Todd Coffey \\
 David Day \\
+Mike Heroux \\
 Rob Hoekstra \\
 Russell Hooper \\
 Roger Pawlowski \\
@@ -56,6 +57,7 @@ Roscoe Bartlett (Technical PI) \\
 Scott Collis (Management PI) \\
 Todd Coffey \\
 David Day \\
+Mike Heroux \\
 Rob Hoekstra \\
 Russell Hooper \\
 Roger Pawlowski \\
@@ -125,8 +127,8 @@ major findings from the milestone.
 % Comment out \listoffigures and \listoftables if there are no
 % figures or tables. Make sure this starts on an odd numbered page
 %
-%\clearpage
-%\tableofcontents
+\clearpage
+\tableofcontents
 %\listoffigures
 %\listoftables
 
@@ -327,7 +329,7 @@ an inability to change an inappropriate component of a more general solver
 (there are many examples of this in production codes).
 
 % SSC:  I like this statement, but you should be able to cite particular 
-% examples (without mentioning names.
+% examples (without mentioning names).
 
 Integrating independently developed numerical algorithms and software in an
 efficient and manageable way requires the development of standard
@@ -462,26 +464,41 @@ production application codes.
 While many different numerical solver configurations where used to solve a
 variety of different numerical problems in Charon and Aria during the
 milestone work, some of the more noteworthy examples\footnote{Each of these
-examples are noteworthy for different reasons.} are given below.
+examples are noteworthy for different reasons.} are given below.  For each
+example, the list of vertically integrated algorithm packages that where
+linked together to solve the problem are given.  Note that the Thyra package
+was used in all cases as the standard interface glue to pull these algorithm
+packages together and therefore it is omitted from these lists.  Thyra does
+not provide primarily provide any significant numerical algorithms itself but
+instead provides the means by which these different numerical algorithm and
+data-structure packages are vertically linked together to build the overall
+advanced solver.
 
 % SSC:  Don't you need to include Thyra in your list of packages for each problem?
+% rabartl: See above
 
 {}\noindent\textbf{Steady-state semiconductor current-matching parameter
-estimation problems} [MOOCHO, Stratimikos, Belos, Ifpack, Epetra]: We solved
-both single-point and multi-point inverse optimization problems for the QASPR
-semiconductor model 5614.  Here, we used MOOCHO to solve a
+estimation problems} [MOOCHO, Stratimikos, Belos, Ifpack, Epetra]: We
+solved both single-point and multi-point inverse optimization problems for the
+QASPR semiconductor model 5614.  Here, we used MOOCHO to solve a
 simulation-constrained least-squares optimization problem to minimize the
 deviation between the simulated current through the device and the target
 current by manipulating the poorly know defect reaction parameters.  We showed
 significant improvement in accuracy and speedup over non-invasive block-box
 methods. [ToDo: RAB: We have not really compared to the non-invasive block-box
-methods but we could if we wanted too].  In addition, the forward sensitivity
-method using pseudo-block GMRES in Belos showed superior performance to
-AztecOO (the current production iterative linear solver in Trilinos) [ToDo:
-RAB: We need to modify the setup of this model and fix some problems in Belos
-to really show this].
+methods but we could if we wanted too].
+
+% 2007/08/22: rabartl: Right now, we can really claim any speedup using
+% Belos.  This may be fixed in the future, but for now I will ommit this.
+
+%In addition, the forward sensitivity
+%method using pseudo-block GMRES in Belos showed superior performance to
+%AztecOO (the current production iterative linear solver in Trilinos) [ToDo:
+%RAB: We need to modify the setup of this model and fix some problems in Belos
+%to really show this].
 
 % SSC:  you need to justify the assertion that you achieved significant improvements
+% rabartl:  I commented this out above
 
 The multi-point algorithm allows parameters to be matched over the whole
 current-voltage curve simultaneously, with excellent scalability by using
@@ -499,6 +516,8 @@ a global MPI communicator.
 % tooles and capabilties to now explore these questions which could not be 
 % readily done before.
 
+% rabartl: I agree, we need to add text to make these points more clear ...
+
 As seen in Figure {}\ref{fig:multiPointFit}, we were successful in having the
 multipoint algorithm find the optimal parameter value so that a curve of 12
 points would best match the experimental data. Since the application for this
@@ -512,7 +531,7 @@ the voltage at the second contact as the optimization parameter.
 \begin{figure}
 \begin{center}
 %\fbox{
-\includegraphics*[angle=0,scale=1.00,width=0.8\linewidth
+\includegraphics*[angle=0,scale=0.80,width=0.50\linewidth
 ]{multiPointFit}
 %}
 \end{center}
@@ -548,12 +567,13 @@ up to the end of the milestone].
 
 % SSC:  this should be dropped now
 
-{}\noindent\textbf{Transient parameter-estimation problem with QASPR
-semiconductor model} [MOOCHO, Rythmos, NOX, Stratimikos, Belos, Ifpack,
-Epetra]: We used the new forward sensitivity solver in Rythmos to solve
-transient parameter estimation problems using MOOCHO as the optimization
-algorithm [ToDo: RAB: There is a small chance that we could have this working
-once we have basic forward sensitivities working].
+% 2007/08/22: rabartl: I removed this based on Scott's comment
+%{}\noindent\textbf{Transient parameter-estimation problem with QASPR
+%semiconductor model} [MOOCHO, Rythmos, NOX, Stratimikos, Belos, Ifpack,
+%Epetra]: We used the new forward sensitivity solver in Rythmos to solve
+%transient parameter estimation problems using MOOCHO as the optimization
+%algorithm [ToDo: RAB: There is a small chance that we could have this working
+%once we have basic forward sensitivities working].
 
 {}\noindent\textbf{Block eigensolve for reacting flow problem} [LOCA, NOX,
 Anasazi, Stratimikos, Belos, ML, Epetra]: We solved a ??? problem for the ???
@@ -570,7 +590,7 @@ in turn causes the beam to deflect upwards. The optimization problem was
 formulated as follows: find the value of the applied voltage parameter so that
 the beam deflection most closely matches a design value (of $0.05$). The
 proof-of-concept was successful, with the optimization problem solving to $8$
-digits of accuracy (Figure {}\ref{fig:ariaFinal}. This demonstration also
+digits of accuracy (Figure {}\ref{fig:ariaFinal}). This demonstration also
 highlights the speed of the invasive algorithms, as it solved the optimization
 problem in only twice the time of solving a single steady-state calculation.
 
