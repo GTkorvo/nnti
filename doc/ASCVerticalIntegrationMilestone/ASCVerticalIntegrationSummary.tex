@@ -4,7 +4,9 @@
 %Local stuff
 \usepackage{graphicx}
 \usepackage{latexsym}
+\usepackage[all]{draftcopy}
 \input{rab_commands}
+
 
 \raggedright
 
@@ -97,18 +99,18 @@ Jim Willenbring
 \begin{abstract}
 %
 
-The FY2007 ASC Level-2 Vertical Integration Milestone developed the vertical
-integration of many new advanced Trilinos solver packages to build new
-predictive solution capabilities which were demonstrated on several relevant
-problems including QASPR-related semiconductor problems modeled in Charon and
-a MEMS design problem in Aria/SIERRA.  All of the objectives of the milestone
-have been meet and exceeded in many cases.  In addition to the
-Trilinos-specific accomplishments and the demonstration calculations in
-Charon, the milestone work has also helped us realize a new vision for a
-deeper level of collaboration between solver developers and application
-developers which benefits everyone involved.  The bridge for this deeper
-collaboration is based on the foundation of nightly building and testing of
-the development versions of Charon and Trilinos.
+The FY2007 ASC Level-2 Vertical Integration Milestone effort developed the
+vertical integration of many new advanced Trilinos solver packages to build
+new predictive solution capabilities.  These where demonstrated on several
+relevant problems including QASPR-related semiconductor problems modeled in
+Charon and a MEMS design problem in Aria/SIERRA.  All of the objectives of the
+milestone have been meet and exceeded in several cases.  In addition to the
+Trilinos-specific accomplishments and the demonstration calculations, the
+milestone work has also helped us realize a new vision for a deeper level of
+collaboration between solver developers and application developers which
+benefits everyone involved.  The bridge for this deeper collaboration is based
+on the foundation of nightly building and testing of the development versions
+of the application code (e.g.\ Charon) and Trilinos.
 
 % 2007/08/23: rabartl:  We don't need the text below and it makes the abstract
 % go past the cover page.  That is what the executive summary is for.
@@ -362,7 +364,10 @@ required for the selection of preconditioners, linear solvers, and other
 numerical algorithm components.  Without this type of flexibility, application
 developers may be justified in writing their own suboptimal algorithms due to
 an inability to change an inappropriate component of a more general solver
-(there are many examples of this in production codes).
+(there are many examples of this in production codes).  There was one example
+where a production circuit simulation application code was not able to use an
+existing well known time integration solver due to the inability to redefine
+the nonlinear solver used for the time step equation.
 
 % SSC:  I like this statement, but you should be able to cite particular 
 % examples (without mentioning names).
@@ -529,7 +534,33 @@ features\footnote{Also known as regressions}.
 % SSC:  this prior paragraph may benefit from a few more concrete examples
 % to help bolster the claims.
 
-% rabartl: Okay, I can think of a few examples that have come up ...
+% rabartl: Okay, here are a few examples ...
+
+We have seen several different scenarios where this nightly building and
+testing infrastructure would have facilitated collaboration between
+application and algorithm developers for the advantage of both.
+
+For example, suppose an application developer is running a new problem and
+discovers some strange behavor from a numerical solver.  The algrithm
+developer may look at the results and speculate what the cause of the behavior
+might be or if a few different variation of the algorithm might help.
+However, if the algorithm devleoper is stuck having to use a released version
+of Trilinos, it will be more difficult to make any major changes in order to
+investigate the behavior.  Also, there may already be improvements made to the
+algorithm in the development branch of Trilinos that may be able to address
+the problem.  Without the infrastructure of nighlty building and testing, it
+may not be cost effective or practical to bring the development versions of
+the application and Trilinos up to date in order to try the updated algorithm.
+The algorithm and application developers may have to wait until the next major
+release of Trilinos before the new algorithms can be tried.  This time delay
+works to no ones advantage and can kill the collaboration.  With nightly
+building and testing in place, an easy path for collaboration is maintained
+where the Trilinos algorithm developer can try their latest and greatest
+algorithms on these types of challenging production problems and the
+information learned from trying to solve these production problems can feed
+back into algorithm development.  To some extent, this back and forth already
+happens but without a foundational process in place to streamline it, the back
+and forth flow is restricted.
 
 Bottom line, nightly building and testing of an application code and Trilinos
 brings algorithm developers and application developers closer together --
@@ -587,9 +618,11 @@ simulation-constrained least-squares optimization problem to minimize the
 deviation between the simulated current through the device and the target
 current by manipulating the poorly know defect reaction parameters.  We showed
 significant improvement in accuracy and speedup over non-invasive block-box
-methods. [ToDo: rabartl: We have not really compared to the non-invasive
-block-box methods but we could if we wanted too ... Russell may be able to do
-such a comparison for the MOOCHO/Aria problem].
+methods.
+
+%[ToDo: rabartl: We have not really compared to the non-invasive
+%block-box methods but we could if we wanted too ... Russell may be able to do
+%such a comparison for the MOOCHO/Aria problem].
 
 % 2007/08/22: rabartl: Right now, we can't really claim any speedup using
 % Belos.  This may be fixed in time for the milestone completion, but for now
@@ -612,8 +645,8 @@ multiple instances of the code run simultaneously with partitioned MPI
 Communicators, while the linear algebra and optimization algorithms operate on
 a global MPI communicator.
 
-[ToDo: rabartl: give the form of the optimization problem and give the initial
-and final objective function values]
+%[ToDo: rabartl: give the form of the optimization problem and give the initial
+%and final objective function values]
 
 % SSC:  in the description below, more is required regarding not being able to 
 % solve this problem for the ``physically'' relevant parameters.  In particular,
@@ -680,10 +713,11 @@ Belos, Ifpack, Thyra, and Epetra
 We used a high-order accuracy-controlling implicit BDF integrator algorithm in
 Rythmos (along with other mentioned vertically integrated packages) to solve
 forward simulation problems for the QASPR 2n2222 semiconductor model on ??? 
-processors demonstrating X, Y, and/or Z [ToDo: tscoffe or etphipps or rjhoeks:
-a) Expand the description of this problem, b) create some placeholder for
-results in lue of results, c) Actually get the results and fill in what this
-demonstrates!].
+processors demonstrating X, Y, and/or Z.
+
+[ToDo: tscoffe or etphipps or rjhoeks: a) Expand the description of this
+problem, b) create some placeholder for results in lue of results, c) Actually
+get the results and fill in what this demonstrates!].
 
 % SSC:  this is very important too...
 
@@ -696,12 +730,14 @@ Belos, Ifpack, Thyra, and Epetra
 
 We used the new forward sensitivity solver in Rythmos to demonstrate the
 calculation of current sensitivities with respect to defect reaction
-parameters [ToDo: rjhoeks: Please add some detail about the nature of these
-parameters].  The Rythmos/Charon implementation produced the sensitivities
+parameters.  The Rythmos/Charon implementation produced the sensitivities
 faster with greater accuracy then was previously possible using non-invasive
-block-box finite-difference methods [ToDo: rabartl: We don't have these
-results yet but this is my number one technical goal leading up to the end of
-the milestone].
+block-box finite-difference methods.
+
+[ToDo: rjhoeks: Please add some detail about the nature of these parameters]
+
+[ToDo: rabartl: We don't have these results yet but this is my number one
+technical goal leading up to the end of the milestone].
 
 % SSC:  this should be dropped now
 
