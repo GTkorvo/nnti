@@ -435,9 +435,13 @@ using both Charon and Aria/SIERRA as shown in Figure~\ref{fig:ModelEvaluator}.
 The {}\textit{Stratimikos} component shown in Figure~\ref{fig:ModelEvaluator}
 is a Trilinos package built on the Thyra preconditioner and linear solver
 interfaces that provides unified parameter-driven access to a great number of
-preconditioner and linear solver capabilities in Trilinos.  The ModelEvaluator
-and Stratimikos approach is a clear demonstration of breaking up N-to-M
-dependencies which results in scalable 1-to-N and 1-to-M dependencies.  Adding
+preconditioner and linear solver capabilities in Trilinos.  Let $N$ be the number
+of nonlinear algorithms and $M$ be the number of applications that one wishes
+to use with each other.  Without a standard interface like the Thyra ModelEvaluator,
+it would take $N {}\times M$ different 1-to-1 interfaces to link all $M$ applications
+and $N$ nonlinear algorithms.  The ModelEvaluator
+and Stratimikos approach is a clear demonstration of breaking up these $N$-to-$M$
+dependencies which results in scalable 1-to-$N$ and 1-to-$M$ dependencies.  Adding
 a new nonlinear ANA solver only requires a single set of Thyra interfaces and
 then this solver can be used by the entire set of application codes that
 support the needed functionality.  Likewise, an application just needs to
@@ -535,9 +539,9 @@ features\footnote{Also known as regressions}.
 
 % rabartl: Okay, here are a few examples ...
 
-We have seen several different scenarios where this nightly building and
-testing infrastructure would have facilitated collaboration between
-application and algorithm developers for the advantage of both.
+We have seen several different scenarios over the years where this nightly
+building and testing infrastructure would have facilitated collaboration
+between application and algorithm developers for the advantage of both.
 
 For example, suppose an application developer is running a new problem and
 discovers some strange behavor from a numerical solver.  The algrithm
@@ -864,7 +868,17 @@ Transient current sensitivities.}
 {}\noindent\textit{Vertically integrated packages:} LOCA, NOX, Anasazi,
 Stratimikos, Belos, ML, Ifpack, Amesos, Thyra, and Epetra
 
-We successfully demonstrated large-scale eigenvalue calculations using block eigensolvers on the hydromagnetic Rayleight-Bernard (HRB) problem.  The HRB problem is important for verification of magnetohydrodynamics physics due to the existence of analytic solutions published by Chandresekhar.  The problem consists of a fluid sandwiched between two walls.  The lower wall is heated and the upper wall is cooled.  As the temperature gradient between the walls is increased (an increase in the Rayleigh number), a buoyancy driven instability occurs that transitions the fluid from a quiescent (no-flow) state to a recirculating (non-zero flow) state with repeating cells of rotating fluid.  Figure \ref{fig:hrbFlow} shows the flow solution for the recirculating state.
+We successfully demonstrated large-scale eigenvalue calculations using block
+eigensolvers on the hydromagnetic Rayleight-Bernard (HRB) problem.  The HRB
+problem is important for verification of magnetohydrodynamics physics due to
+the existence of analytic solutions published by Chandresekhar.  The problem
+consists of a fluid sandwiched between two walls.  The lower wall is heated
+and the upper wall is cooled.  As the temperature gradient between the walls
+is increased (an increase in the Rayleigh number), a buoyancy driven
+instability occurs that transitions the fluid from a quiescent (no-flow) state
+to a recirculating (non-zero flow) state with repeating cells of rotating
+fluid.  Figure \ref{fig:hrbFlow} shows the flow solution for the recirculating
+state.
 
 {\bsinglespace
 \begin{figure}
@@ -880,11 +894,18 @@ We successfully demonstrated large-scale eigenvalue calculations using block eig
 \end{center}
 \caption[Solution of the hydromagnetic Rayleigh-Bernard problem]{
 \label{fig:hrbFlow}
-Plot of the solution for a Rayleigh number of 2100 and magnetic field strength of 16 on the non-zero flow branch of the pitchfork bifurcation.}
+Plot of the solution for a Rayleigh number of 2100 and magnetic field strength
+of 16 on the non-zero flow branch of the pitchfork bifurcation.}
 \end{figure}
 \esinglespace}
  
-The onset of this instability (a pitchfork bifurcation point) can be located by monitoring the leading eigenvalues during a parameter continuation.  We continue in the Rayleigh number (Ra) with a fixed magnetic field strength.  After the bifurcation, the no-flow solution becomse unstable. Figure \ref{fig:hrbEigenvalues} shows the computed eigenvectors at a Rayleigh number of 2040, just past the bifurcation point at 2039.  This shows the perturbation to the base no-flow solution towards the recirculating cells.
+The onset of this instability (a pitchfork bifurcation point) can be located
+by monitoring the leading eigenvalues during a parameter continuation.  We
+continue in the Rayleigh number (Ra) with a fixed magnetic field strength.
+After the bifurcation, the no-flow solution becomse unstable. Figure
+\ref{fig:hrbEigenvalues} shows the computed eigenvectors at a Rayleigh number
+of 2040, just past the bifurcation point at 2039.  This shows the perturbation
+to the base no-flow solution towards the recirculating cells.
 
 {\bsinglespace
 \begin{figure}
@@ -896,13 +917,25 @@ The onset of this instability (a pitchfork bifurcation point) can be located by 
 \end{center}
 \caption[Eigenvalues for the hydromagnetic Rayleigh-Bernard problem]{
 \label{fig:hrbEigenvalues}
-Plot of the eigenvalues for the x and y velocities.  This perturbation corresponds exactly to the flow solution above.}
+Plot of the eigenvalues for the x and y velocities.  This perturbation
+corresponds exactly to the flow solution above.}
 \end{figure}
 \esinglespace}
  
-The problem was discretized into 5 million elements leading to a linear system with 5 million unknowns that was solved using 256 processors on tbird.  We used LOCA/NOX to solve the system of fully coupled nonlinear equations for a variety of Rayleigh numbers using arc-length continuation.  At the end of each continuation step, Anasazi is called to compute the eigenvalues.  The eigenvalue computation used Belos to perform Block and Pseudo-Block GMRES on the linear systems.  ML supplied the preconditioning for the linear solves.  ML internally used a 3 level V-cycle, calling IFPACK with ILU for the smoothers and Amesos (KLU) for the direct solve on the coarse grid.  
+The problem was discretized into 5 million elements leading to a linear system
+with 5 million unknowns that was solved using 256 processors on tbird.  We
+used LOCA/NOX to solve the system of fully coupled nonlinear equations for a
+variety of Rayleigh numbers using arc-length continuation.  At the end of each
+continuation step, Anasazi is called to compute the eigenvalues.  The
+eigenvalue computation used Belos to perform Block and Pseudo-Block GMRES on
+the linear systems.  ML supplied the preconditioning for the linear solves.
+ML internally used a 3 level V-cycle, calling IFPACK with ILU for the
+smoothers and Amesos (KLU) for the direct solve on the coarse grid.
 
-Teh eigenvalue calculation demonstrates a general capability through coupled Trilinos packages to perform large scale block eigenvalue calculations.  This will be a critical ASC capability for performaing stability and bifurcation analysis.
+The eigenvalue calculation demonstrates a general capability through coupled
+Trilinos packages to perform large scale block eigenvalue calculations.  This
+will be a critical ASC capability for performaing stability and bifurcation
+analysis.
 
 %
 \subsection{Design optimization problem with Aria/SIERRA}
