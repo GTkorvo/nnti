@@ -744,12 +744,10 @@ get the results and fill in what this demonstrates!].
 Belos, Ifpack, Thyra, and Epetra
 
 We used the new forward sensitivity solver in Rythmos to demonstrate the
-calculation of current sensitivities with respect to defect reaction
-parameters.  The Rythmos/Charon implementation produced the sensitivities
-faster with greater accuracy then was previously possible using non-invasive
-block-box finite-difference methods.
-
-The parameters of interest in this calculation are physics parameters associated
+calculation of transient sensitivities of the electric current in a Charon
+simulation of the bipolor junction transistor subject to radiation damage
+with respect to 40 model parameters.  The parameters of interest in this 
+calculation are physics parameters associated
 with damage mechanisms in the device which dramatically impact the transient
 electrical performance of the bipolar junction transistor.  As one of the 
 devices used in the stockpile, it is critical to characterize its performance.
@@ -765,6 +763,31 @@ facilitates gradient based optimization technology but also allows detailed
 analysis of the mechanisms and their importance in relation to the critical
 device performance metrics guiding future improvements to the model.
 
+The 40 parameters used in the sensitivity analysis are the reaction 
+cross-sections and activation energies of the radiation defect reactions
+shown in Table~\ref{table:ParameterKey}.  Sensitivities of the base current
+at several times after the radiation pulse are shown in 
+Figure~\ref{fig:SensitivitesHist}, clearly demonstrating which physics the
+current is most sensitive to.  Transients plots of the base current
+sensitivity with respect to two of these important parameters are shown in
+Figure~\ref{fig:SensitivitesFull}.
+
+The typical approach for obtaining these sensitivities is through 
+non-invasive finite-difference methods.  We compared computing 
+sensitivities using first-order finite-differencing to the instrusive method
+in Rythmos and found  several dramatic advantanges of the Rythmos approach.
+First, because perturbing parameters ultimately will cause different time
+steps to be taken, it is only possible to compute finite-difference 
+sensitivities at selected times by setting breakpoints in the time integrator.
+However the Rythmos approach provides full sensitivity values at all time
+steps as shown in Figure~\ref{fig:SensitivitesFull}.  Moreover the variation
+in step size with respect to parameter perturbation adds significant noise
+to the sensitivities computed by finite-differencing, making them quite 
+inaccurate and not suitable for gradient-based optimization.  Finally the
+transient sensitivities for all 40 parameters using Rythmos were obtained in 
+significantly less computing time, less than 1/5th of the time required by
+first-order finite-differencing.
+
 % [ToDo: rjhoeks: Please add some detail about the nature of these parameters]
 
 % [ToDo: rabartl: We don't have these results yet but this is my number one
@@ -777,17 +800,22 @@ device performance metrics guiding future improvements to the model.
 \includegraphics*[width=5in]{sensitivities_hist_report}
 %}
 \end{center}
-\caption[Transient current sensitivities at several times]{
+\caption[Scaled transient current sensitivities at selected times]{
 \label{fig:SensitivitesHist}
-Transient current sensitivities at several times.}
+Scaled transient base current sensitivities at selected times of the 
+2n2222 device.
+The parameters corresponding to each number are displayed in 
+Table~\ref{table:ParameterKey}.  Sensitivities are scaled to $(p/I)(dI/dp)$ where
+$p$ is the parameter value, $I$ is the current, and $dI/dp$ is the unscaled
+sensitivity.}
 \end{figure}
 \esinglespace}
 
 {\bsinglespace
 \begin{table}[htb]
-\label{table:ParameterKey}
-\caption[Key to transient sensitivity parameters]{
-Key to transient sensitivity parameters}
+\caption[Defect reaction parameters for transient current sensitivity analysis]{\label{table:ParameterKey}
+Defect reaction parameters for transient current sensitivity analysis of the
+2n2222 bipolar junction transistor problem}
 \begin{center}
 \begin{tabular}{|r|l|c|r|l|c|}
 \hline 
@@ -846,9 +874,10 @@ Key to transient sensitivity parameters}
 \includegraphics*[width=5in]{sensitivities_full_report_1}
 %}
 \end{center}
-\caption[Transient current sensitivities]{
+\caption[Transient history of two scaled sensitivities]{
 \label{fig:SensitivitesFull}
-Transient current sensitivities.}
+Transient history of sensitivities 3 and 23 from 
+Figure~\ref{fig:SensitivitesHist} (blue curves) and base current (green curves).}
 \end{figure}
 \esinglespace}
 
