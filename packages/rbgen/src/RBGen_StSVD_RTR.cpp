@@ -111,6 +111,7 @@ namespace RBGen {
       TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,std::invalid_argument,"User specified null ortho manager.");
     }
     else {
+      /*
       string omstr = rbmethod_params.get("Ortho Manager","DGKS");
       if (omstr == "SVQB") {
         ortho_ = rcp( new Anasazi::SVQBOrthoManager<double,Epetra_MultiVector,Epetra_Operator>() );
@@ -118,6 +119,8 @@ namespace RBGen {
       else { // if omstr == "DGKS"
         ortho_ = rcp( new Anasazi::BasicOrthoManager<double,Epetra_MultiVector,Epetra_Operator>() );
       }
+      */
+      ortho_ = rcp( new Anasazi::BasicOrthoManager<double,Epetra_MultiVector,Epetra_Operator>() );
     }
 
     // Save the pointer to the snapshot matrix
@@ -764,7 +767,7 @@ namespace RBGen {
   // sym(S) is .5 (S + S')
   //
   void StSVDRTR::Sym( Epetra_MultiVector &S ) const {
-    // set strictly upper tri part of S to S+S'
+    // set strictly upper tri part of S to 0.5*(S+S')
     for (int j=0; j < rank_; j++) {
       for (int i=0; i < j; i++) {
         S[j][i] += S[i][j];
@@ -788,10 +791,11 @@ namespace RBGen {
                        Epetra_MultiVector &etaV ) const {
     // perform etaU = Proj_U etaU
     // and     etaV = Proj_V etaV
-    // Proj_U E = (I - U U') E + U skew(U' E)
-    //          = E - U (U' E) + .5 U (U' E - E' U)
-    //          = E - .5 U (S + S')
-    // where S = U' E
+    // where
+    // Proj_X E = (I - X X') E + X skew(X' E)
+    //          = E - X (X' E) + .5 X (X' E - E' X)
+    //          = E - .5 X (S + S')
+    // and S = X' E
     int info;
     static Epetra_LocalMap lclmap(rank_,0,A_->Comm());
     static Epetra_MultiVector S(lclmap,rank_);
@@ -876,8 +880,6 @@ namespace RBGen {
   // The Hessian can be applied as follows
   //   Hess f_{U,V}(eU,eV) = Proj [ A  eV N - eU sym(U' A  V N) ]
   //                              [ A' eU N - eV sym(V' A' U N) ]
-  //                       = Proj [ A  eV N ] - eU sym(U' A  V N)
-  //                              [ A' eU N ] - eV sym(V' A' U N)
   // We will apply the former as follows:
   // 1) Apply A eV into HeU and A' eU into HeV
   // 2) Scale HeU and HeV by N
