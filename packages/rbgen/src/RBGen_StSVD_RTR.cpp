@@ -2,6 +2,7 @@
 #include "AnasaziSVQBOrthoManager.hpp"
 #include "AnasaziBasicOrthoManager.hpp"
 #include "Teuchos_TimeMonitor.hpp"
+#include "Teuchos_ScalarTraits.hpp"
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_LAPACK.h"
 #include "Epetra_LocalMap.h"
@@ -46,28 +47,31 @@ namespace RBGen {
     stopReasons_.push_back("");
   }
 
-  Teuchos::RCP<const Epetra_MultiVector> StSVDRTR::getBasis() const {
+  Teuchos::RCP<const Epetra_MultiVector> StSVDRTR::getBasis() const 
+  {
     if (isInitialized_ == false) {
       return Teuchos::null;
     }
     return U_;
   }
 
-  Teuchos::RCP<const Epetra_MultiVector> StSVDRTR::getRightBasis() const {
+  Teuchos::RCP<const Epetra_MultiVector> StSVDRTR::getRightBasis() const 
+  {
     if (isInitialized_ == false) {
       return Teuchos::null;
     }
     return V_;
   }
 
-  std::vector<double> StSVDRTR::getSingularValues() const { 
+  std::vector<double> StSVDRTR::getSingularValues() const 
+  {
     return sigma_;
   }
 
   void StSVDRTR::Initialize( const Teuchos::RCP< Teuchos::ParameterList >& params,
                              const Teuchos::RCP< const Epetra_MultiVector >& ss,
-                             const Teuchos::RCP< RBGen::FileIOHandler< Epetra_Operator > >& fileio ) {
-
+                             const Teuchos::RCP< RBGen::FileIOHandler< Epetra_Operator > >& fileio ) 
+  {
     using Teuchos::rcp;
 
     // Get the "Reduced Basis Method" sublist.
@@ -135,7 +139,8 @@ namespace RBGen {
   }
 
   // private initialize
-  void StSVDRTR::initialize() {
+  void StSVDRTR::initialize() 
+  {
     if (isInitialized_) return;
 
     using Teuchos::rcp;
@@ -159,32 +164,41 @@ namespace RBGen {
 
     // allocate and set N_
     N_.resize(rank_);
-    for (int i=0; i<rank_; i++) {
-      N_[i] = rank_-i;
+    for (int j=0; j<rank_; j++) {
+      N_[j] = rank_-j;
     }
+    /* finish: remove or something
+    if (debug_) 
+    {
+      cout << " >> N: " << endl;
+      for (int j=0; j<rank_; j++) cout << N_[j] << endl;
+    }
+    */
 
     // allocate working multivectors
-    RU_     = rcp( new Epetra_MultiVector(*U_) );
-    AV_     = rcp( new Epetra_MultiVector(*U_) );
-    etaU_   = rcp( new Epetra_MultiVector(*U_) );
-    HeU_    = rcp( new Epetra_MultiVector(*U_) );
-    deltaU_ = rcp( new Epetra_MultiVector(*U_) );
-    HdU_    = rcp( new Epetra_MultiVector(*U_) );
-    RV_     = rcp( new Epetra_MultiVector(*V_) );
-    AU_     = rcp( new Epetra_MultiVector(*V_) );
-    etaV_   = rcp( new Epetra_MultiVector(*V_) );     
-    HeV_    = rcp( new Epetra_MultiVector(*V_) );
-    deltaV_ = rcp( new Epetra_MultiVector(*V_) );
-    HdV_    = rcp( new Epetra_MultiVector(*V_) );
+    // size of U_
+    RU_     = rcp( new Epetra_MultiVector(U_->Map(),rank_,false) );
+    AV_     = rcp( new Epetra_MultiVector(U_->Map(),rank_,false) );
+    etaU_   = rcp( new Epetra_MultiVector(U_->Map(),rank_,false) );
+    HeU_    = rcp( new Epetra_MultiVector(U_->Map(),rank_,false) );
+    deltaU_ = rcp( new Epetra_MultiVector(U_->Map(),rank_,false) );
+    HdU_    = rcp( new Epetra_MultiVector(U_->Map(),rank_,false) );
+    // size of V_
+    RV_     = rcp( new Epetra_MultiVector(V_->Map(),rank_,false) );
+    AU_     = rcp( new Epetra_MultiVector(V_->Map(),rank_,false) );
+    etaV_   = rcp( new Epetra_MultiVector(V_->Map(),rank_,false) );     
+    HeV_    = rcp( new Epetra_MultiVector(V_->Map(),rank_,false) );
+    deltaV_ = rcp( new Epetra_MultiVector(V_->Map(),rank_,false) );
+    HdV_    = rcp( new Epetra_MultiVector(V_->Map(),rank_,false) );
+
     // allocate working space for DGESVD, UAVNsym, VAUNsym
     {
       Epetra_LocalMap lclmap(rank_,0,A_->Comm());
       dgesvd_A_ = rcp( new Epetra_MultiVector(lclmap,rank_,false) );
-      TEST_FOR_EXCEPTION(dgesvd_A_->ConstantStride() == false,std::logic_error,
-                         "RBGen::StSVD::initialize(): DGESVD Workspace A was not generated with constant stride!");
-      UAVNsym_ = rcp( new Epetra_MultiVector(lclmap,rank_,false) );
-      VAUNsym_ = rcp( new Epetra_MultiVector(lclmap,rank_,false) );
+      UAVNsym_  = rcp( new Epetra_MultiVector(lclmap,rank_,false) );
+      VAUNsym_  = rcp( new Epetra_MultiVector(lclmap,rank_,false) );
     }
+    // finish: get the optimal block size for this 
     dgesvd_work_.resize(5*rank_);
 
     // Perform initial factorization
@@ -196,13 +210,10 @@ namespace RBGen {
     // Compute A*V and A'*U
     {
       int info;
-      info = AV_->Multiply('N','N',1.0,*A_,*V_,0.0);
+      info = AU_->Multiply('T','N',1.0,*A_,*U_,0.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
-    }
-    {
-      int info;
-      info = AU_->Multiply('T','N',1.0,*A_,*U_,0.0);
+      info = AV_->Multiply('N','N',1.0,*A_,*V_,0.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
@@ -232,7 +243,8 @@ namespace RBGen {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // reset with a new snapshot matrix
-  void StSVDRTR::Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss ) {
+  void StSVDRTR::Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss ) 
+  {
     // Reset the pointer for the snapshot matrix
     // Note: We will not assume that it is non-null; user could be resetting our
     // pointer in order to delete the original snapshot set
@@ -245,8 +257,8 @@ namespace RBGen {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // main loop
-  void StSVDRTR::computeBasis() {
-
+  void StSVDRTR::computeBasis() 
+  {
     using std::cout;
     using std::setprecision;
     using std::vector;
@@ -280,12 +292,13 @@ namespace RBGen {
     // print initial status
     printStatus();
 
-    while (maxScaledNorm_ > tol_ && iter_ < maxOuterIters_) {
+    while ( (maxScaledNorm_ > tol_)  &&  (iter_ < maxOuterIters_) ) {
 
       // inc counter
       ++iter_;
 
       // minimize model subproblem
+      // 
       solveTRSubproblem();
 
       // debug output from tr subproblem
@@ -300,23 +313,25 @@ namespace RBGen {
         Debug(chk,", after call to solveTRSubproblem.");
       }
 
+      // some pointers to keep names friendly
+      Teuchos::RCP<Epetra_MultiVector> newU, newV, newAU;
+      // new iterates are stored in deltaU,deltaV
+      // A'*deltaU goes into HdV_
+      newU = newU;
+      newV = newV;
+      newAU = HdV_;
+
       // compute proposed point
       // R_U(eta) = qf(U+eta)
       // we will store this in deltaU,deltaV
-      {
-        int ret;
-        // U
-        ret = deltaU_->Update(1.0,*U_,1.0,*etaU_,0.0);
-        TEST_FOR_EXCEPTION(ret != 0,std::logic_error,
-            "RBGen::StSVD::computeBasis(): error calling Epetra_MultiVector::Update.");
-        ret = ortho_->normalize(*deltaU_);
-        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaU failed.");
-        // V
-        ret = deltaV_->Update(1.0,*V_,1.0,*etaV_,0.0);
-        TEST_FOR_EXCEPTION(ret != 0,std::logic_error,
-            "RBGen::StSVD::computeBasis(): error calling Epetra_MultiVector::Update.");
-        ret = ortho_->normalize(*deltaV_);
-        TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Retraction of etaV failed.");
+      *newU = *etaU_;
+      *newV = *etaV_;
+      try {
+        retract(*U_,*V_,*newU,*newV);
+      }
+      catch (std::runtime_error oops) {
+        TEST_FOR_EXCEPTION(true,std::runtime_error,
+            "RBGen::StSVD::computeBasis(): Retraction of eta failed.");
       }
 
       //
@@ -333,11 +348,11 @@ namespace RBGen {
       //     = --------------------------------
       //       - <eta,(AV,A'U)> - .5 <eta,Heta>
       //
-      // compute A'*newU into HdV_
+      // compute A'*newU into newAU
       // we don't need A*newV yet
       {
         int info;
-        info = HdV_->Multiply('T','N',1.0,*A_,*deltaU_,0.0);
+        info = newAU->Multiply('T','N',1.0,*A_,*newU,0.0);
         TEST_FOR_EXCEPTION(info != 0,std::logic_error,
             "RBGen::StSVD::computeBasis(): Error calling Epetra_MultiVector::Muliply.");
       }
@@ -349,8 +364,7 @@ namespace RBGen {
       double fxnew;
       {
         std::vector<double> dots(rank_);
-        // deltaV_ stores newV, HdV_ stores newU'*A
-        deltaV_->Dot(*HdV_,&dots[0]);
+        newV->Dot(*newAU,&dots[0]);
         fxnew = 0.0;
         for (int i=0; i<rank_; i++) {
           fxnew += dots[i]*N_[i];
@@ -390,13 +404,13 @@ namespace RBGen {
         // put newx data into x data: U,V,AU,AV,fx,UAVNsym,VAUNsym,sigma
 
         // etaU,etaV get thrown away
-        // deltaU_,deltaV_ go into U_,V_
-        *U_ = *deltaU_;
-        *V_ = *deltaV_;
+        // newU,newV go into U_,V_
+        *U_ = *newU;
+        *V_ = *newV;
 
-        // HdV_ goes into AU_
+        // newAU goes into AU_
         // A*V_ gets computed into AV_
-        *AU_ = *HdV_;
+        *AU_ = *newAU;
         {
           int info;
           info = AV_->Multiply('N','N',1.0,*A_,*V_,0.0);
@@ -412,6 +426,11 @@ namespace RBGen {
           cout << " >> new f(x): " << setw(18) << scientific << setprecision(10) << fx_ 
                << "\t\tnewfx: " << setw(18) << scientific << setprecision(10) << fxnew << endl;
         }
+
+        // clear those unneeded pointers
+        newU = Teuchos::null;
+        newV = Teuchos::null;
+        newAU = Teuchos::null;
       }
       else {
         accepted_ = false;
@@ -460,10 +479,11 @@ namespace RBGen {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // update sigmas, f(x), UAVNsym, VAUNsym
-  // this function assumes that U,V,AU,AV
-  void StSVDRTR::updateF() {
+  // this function assumes that U,V,AU,AV are correct
+  void StSVDRTR::updateF() 
+  {
     //
-    // compute (U'*A)*V==RV'*V, compute its singular values
+    // compute (U'*A)*V
     {
       int info;
       info = dgesvd_A_->Multiply('T','N',1.0,*AU_,*V_,0.0);
@@ -473,27 +493,44 @@ namespace RBGen {
 
     //
     // U'*A*V in dgesvd_A_ will be destroyed by GESVD; first, save it
+    // set UAVNsym_ = dgesvd_A_  * N
+    // set VAUNsym_ = dgesvd_A_' * N
+    for (int j=0; j<rank_; j++) 
     {
-      // set UAVNsym_ = dgesvd_A_  * N
-      // set VAUNsym_ = dgesvd_A_' * N
-      for (int j=0; j<rank_; j++) {
-        for (int i=0; i<rank_; i++) {
-          (*UAVNsym_)[j][i] = (*dgesvd_A_)[j][i];
-          (*VAUNsym_)[j][i] = (*dgesvd_A_)[i][j];
-        }
-        (*UAVNsym_)(j)->Scale(N_[j]);
-        (*VAUNsym_)(j)->Scale(N_[j]);
+      for (int i=0; i<rank_; i++) 
+      {
+        (*UAVNsym_)[j][i] = (*dgesvd_A_)[j][i];
+        (*VAUNsym_)[j][i] = (*dgesvd_A_)[i][j];
       }
-      // call Sym on both of these
-      Sym(*UAVNsym_);
-      Sym(*VAUNsym_);
+      (*UAVNsym_)(j)->Scale(N_[j]);
+      (*VAUNsym_)(j)->Scale(N_[j]);
     }
+    // call Sym on both of these
+    Sym(*UAVNsym_);
+    Sym(*VAUNsym_);
+
+    //
+    // debug printing
+    /* finish: remove or something
+    if (debug_)
+    {
+      cout << " >> U'*A*V: " << endl;
+      dgesvd_A_->Print(cout);
+
+      cout << " >> sym(U'*A*V*N): " << endl;
+      UAVNsym_->Print(cout);
+
+      cout << " >> sym(V'*A'*U*N): " << endl;
+      VAUNsym_->Print(cout);
+    }
+    */
 
     //
     // compute f(U,V) = trace(U'*A*V*N) before destroying dgesvd_A_
     fx_ = 0.0;
-    for (int j=0; j<rank_; j++) {
-      fx_ += (*dgesvd_A_)[j][j]*N_[j];
+    for (int j=0; j<rank_; j++) 
+    {
+      fx_ += (*dgesvd_A_)[j][j] * N_[j];
     }
 
     //
@@ -512,13 +549,14 @@ namespace RBGen {
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // update the residuals and norms
   // this function assumes that U,V,AU,AV,sigma are all coherent
-  void StSVDRTR::updateResiduals() {
+  void StSVDRTR::updateResiduals() 
+  {
     //
     // compute residuals: RU = A *V - U*S
     //                    RV = A'*U - V*S
     for (int i=0; i<rank_; i++) {
-      (*RU_)(i)->Update( 1.0, *(*AV_)(i), sigma_[i], *(*U_)(i), 0.0 );
-      (*RV_)(i)->Update( 1.0, *(*AU_)(i), sigma_[i], *(*V_)(i), 0.0 );
+      (*RU_)(i)->Update( 1.0, *(*AV_)(i), -sigma_[i], *(*U_)(i), 0.0 );
+      (*RV_)(i)->Update( 1.0, *(*AU_)(i), -sigma_[i], *(*V_)(i), 0.0 );
     }
 
     //
@@ -533,15 +571,16 @@ namespace RBGen {
     // We will scale it by the i-th singular value
     RU_->Norm2(&resUNorms_[0]);
     RV_->Norm2(&resVNorms_[0]);
+    maxScaledNorm_ = 0;
     for (int i=0; i<rank_; i++) {
-      resNorms_[i] = std::sqrt(resUNorms_[i]*resUNorms_[i] + resVNorms_[i]*resVNorms_[i]);
+      resNorms_[i] = SCT::squareroot(resUNorms_[i]*resUNorms_[i] + resVNorms_[i]*resVNorms_[i]);
       // sigma_ must be >= 0, because it is a singular value
+      // ergo, sigma_ != 0  is equivalent to  sigma_ > 0
       // check sigma_ > 0 instead of sigma_ != 0, so the compiler won't complain
-      maxScaledNorm_ = 0;
       if (sigma_[i] > 0.0) {
         resNorms_[i] /= sigma_[i];
-        maxScaledNorm_ = EPETRA_MAX(resNorms_[i],maxScaledNorm_);
       }
+      maxScaledNorm_ = EPETRA_MAX(resNorms_[i],maxScaledNorm_);
     }
   }
 
@@ -549,7 +588,8 @@ namespace RBGen {
   
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // update the basis with new snapshots: not supported
-  void StSVDRTR::updateBasis( const Teuchos::RCP< Epetra_MultiVector >& update_ss ) {
+  void StSVDRTR::updateBasis( const Teuchos::RCP< Epetra_MultiVector >& update_ss ) 
+  {
     // perform enough incremental updates to consume the new snapshots
     TEST_FOR_EXCEPTION(true,std::logic_error,
         "RBGen::StSVDRTR::updateBasis(): this routine not yet supported.");
@@ -558,7 +598,8 @@ namespace RBGen {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // return residual norms
-  std::vector<double> StSVDRTR::getResNorms() {
+  std::vector<double> StSVDRTR::getResNorms() 
+  {
     if (isInitialized_) {
       return resNorms_;
     }
@@ -570,8 +611,8 @@ namespace RBGen {
     
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // TR subproblem solver
-  void StSVDRTR::solveTRSubproblem() {
-
+  void StSVDRTR::solveTRSubproblem() 
+  {
     // return one of:
     // MAXIMUM_ITERATIONS
     // NEGATIVE_CURVATURE
@@ -581,6 +622,8 @@ namespace RBGen {
 
     using std::cout;
     using std::endl;
+    using std::setw;
+    using std::setprecision;
     innerStop_ = MAXIMUM_ITERATIONS;
 
     int dim = (n_-rank_)*rank_ + (m_-rank_)*rank_ + (rank_-1)*rank_;
@@ -609,7 +652,7 @@ namespace RBGen {
     //
     // Note that grad(U,V) = {proj(A *V*N)} = {proj(RU*N)}
     //                       {proj(A'*U*N)} = {proj(RV*N)}
-    // 
+    //
     // Multiply the residuals in RU and RV by N, yielding 
     //   RU = A *V*N - U*S*N
     //   RV = A'*U*N - V*S*N
@@ -617,11 +660,16 @@ namespace RBGen {
     //   RU = Proj(A *V*N - U*S*N) = Proj(A *V*N)
     //   RV = Proj(A'*U*N - V*S*N) = Proj(A'*U*N)
     //
-    for (int j=0; j<rank_; j++) {
+    // This is because proj(U*S*N) = 0, because S*N is symmetric
+    // Same for proj(V*S*N)
+    //
+    for (int j=0; j<rank_; j++) 
+    {
       (*RU_)(j)->Scale(N_[j]);
       (*RV_)(j)->Scale(N_[j]);
     }
     Proj(*U_,*V_,*RU_,*RV_);
+
     r_r = innerProduct(*RU_,*RV_);
     d_d = r_r;
     r0_norm = SCT::squareroot(r_r);
@@ -630,7 +678,7 @@ namespace RBGen {
       normGrad0_ = r0_norm;
     }
 
-    // delta = -z
+    // delta = -r
     deltaU_->Update(-1.0,*RU_,0.0);
     deltaV_->Update(-1.0,*RV_,0.0);
     e_d = 0.0;  // because eta = 0
@@ -660,10 +708,12 @@ namespace RBGen {
       alpha = r_r/d_Hd;
 
       if (debug_) {
+        double Hd_d = innerProduct(*HdU_,*HdV_,*deltaU_,*deltaV_);
         cout 
           << " >> Inner iteration " << i << endl
           << " >>     (r,r)  : " << r_r  << endl
           << " >>     (d,Hd) : " << d_Hd << endl
+          << " >>     (Hd,d) : " << Hd_d << endl
           << " >>     alpha  : " << alpha << endl;
       }
 
@@ -685,7 +735,7 @@ namespace RBGen {
         if (debug_) {
           RU_->Update(tau,*HdU_,1.0);
           RV_->Update(tau,*HdV_,1.0);
-          //Proj(*U_,*V_,*RU_,*RV_);   // finish; re-enable
+          Proj(*U_,*V_,*RU_,*RV_);
         }
         if (d_Hd <= 0) {
           innerStop_ = NEGATIVE_CURVATURE;
@@ -693,7 +743,7 @@ namespace RBGen {
         else {
           innerStop_ = EXCEEDED_TR;
         }
-        etaLen_ = e_e + 2.0*tau*e_d + tau*tau*d_d;
+        etaLen_ = SCT::squareroot(e_e + 2.0*tau*e_d + tau*tau*d_d);
         break;
       }
 
@@ -703,12 +753,13 @@ namespace RBGen {
       HeU_->Update(alpha,*HdU_,1.0);
       HeV_->Update(alpha,*HdV_,1.0);
       // update its length
-      etaLen_ = e_e = e_e_new;
+      e_e = e_e_new;
+      etaLen_ = SCT::squareroot(e_e);
 
       // update gradient of model
       RU_->Update(alpha,*HdU_,1.0);
       RV_->Update(alpha,*HdV_,1.0);
-      //Proj(*U_,*V_,*RU_,*RV_);   // finish; re-enable
+      Proj(*U_,*V_,*RU_,*RV_);
 
       rold_rold = r_r;
       r_r = innerProduct(*RU_,*RV_);
@@ -744,6 +795,12 @@ namespace RBGen {
       d_d = r_r + beta*beta*d_d;
 
       if (debug_) {
+        cout << " >> computed e_e: " << setw(15) << setprecision(6) << innerProduct(*etaU_,*etaV_)
+             <<           "   e_d: " << setw(15) << setprecision(6) << innerProduct(*etaU_,*etaV_,*deltaU_,*deltaV_)
+             <<           "   d_d: " << setw(15) << setprecision(6) << innerProduct(*deltaU_,*deltaV_) << endl;
+        cout << " >> cached   e_e: " << setw(15) << setprecision(6) << e_e 
+             <<           "   e_d: " << setw(15) << setprecision(6) << e_d 
+             <<           "   d_d: " << setw(15) << setprecision(6) << d_d << endl;
         CheckList chk;
         chk.checkR = true;
         chk.checkD = true;
@@ -766,7 +823,8 @@ namespace RBGen {
   //
   // sym(S) is .5 (S + S')
   //
-  void StSVDRTR::Sym( Epetra_MultiVector &S ) const {
+  void StSVDRTR::Sym( Epetra_MultiVector &S ) const 
+  {
     // set strictly upper tri part of S to 0.5*(S+S')
     for (int j=0; j < rank_; j++) {
       for (int i=0; i < j; i++) {
@@ -788,7 +846,8 @@ namespace RBGen {
   void StSVDRTR::Proj( const Epetra_MultiVector &xU, 
                        const Epetra_MultiVector &xV, 
                        Epetra_MultiVector &etaU, 
-                       Epetra_MultiVector &etaV ) const {
+                       Epetra_MultiVector &etaV ) const 
+  {
     // perform etaU = Proj_U etaU
     // and     etaV = Proj_V etaV
     // where
@@ -856,22 +915,78 @@ namespace RBGen {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // Retraction, in situ
+  //   R_U(E) = qf(U+E)
   void StSVDRTR::retract( 
       const Epetra_MultiVector &xU, 
       const Epetra_MultiVector &xV, 
       Epetra_MultiVector &etaU, 
       Epetra_MultiVector &etaV ) const
   {
+    Teuchos::RCP< Teuchos::SerialDenseMatrix<int,double> > UR, VR;
+    if (debug_) {
+      UR = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,double>(rank_,rank_) );
+      VR = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,double>(rank_,rank_) );
+    }
     int ret;
-    // R_U(E) = qf(U+E)
+
     etaU.Update(1.0,xU,1.0);
-    ret = ortho_->normalize(etaU);
+    ret = ortho_->normalize(etaU,UR);
     TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,
         "RBGen::StSVD::retract(): Ortho failure in retraction.");
+
     etaV.Update(1.0,xV,1.0);
-    ret = ortho_->normalize(etaV);
+    ret = ortho_->normalize(etaV,VR);
     TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,
         "RBGen::StSVD::retract(): Ortho failure in retraction.");
+
+    if (debug_) 
+    {
+      // check that this was a QR factorization, and that R has positive diagonals
+      bool positive;
+      double tril;
+
+      // check tril(UR)
+      tril = 0.0;
+      for (int j=0; j<rank_; j++) 
+      {
+        for (int i=j+1; i<rank_; i++)
+        {
+          tril += SCT::magnitude( (*UR)(i,j) );
+        }
+      }
+      cout << " >> norm(tril(UR)): " << tril << endl;
+      // check diag(UR)
+      positive = true;
+      for (int j=0; j<rank_; j++) {
+        if ( (*UR)(j,j) < 0.0 ) 
+        {
+          positive = false;
+          break;
+        }
+      }
+      cout << " >> positive(UR): " << (positive ? "yes" : "no ") << endl;
+
+      // check tril(VR)
+      tril = 0.0;
+      for (int j=0; j<rank_; j++) 
+      {
+        for (int i=j+1; i<rank_; i++)
+        {
+          tril += SCT::magnitude( (*VR)(i,j) );
+        }
+      }
+      cout << " >> norm(tril(VR)): " << tril << endl;
+      // check diag(VR)
+      positive = true;
+      for (int j=0; j<rank_; j++) {
+        if ( (*VR)(j,j) < 0.0 ) 
+        {
+          positive = false;
+          break;
+        }
+      }
+      cout << " >> positive(VR): " << (positive ? "yes" : "no ") << endl;
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1133,7 +1248,8 @@ namespace RBGen {
     cout << os.str() << endl;
   }
 
-  void StSVDRTR::printStatus() const {
+  void StSVDRTR::printStatus() const 
+  {
     using std::cout;
     using std::setprecision;
     using std::vector;
