@@ -150,7 +150,7 @@ of the application code (e.g.\ Charon) and Trilinos.
 \clearpage
 \tableofcontents
 \listoffigures
-%\listoftables
+\listoftables
 
 % ---------------------------------------------------------------------- %
 % An optional preface or Foreword
@@ -261,7 +261,7 @@ application program structuring and flexibility, and ultimately good
 object-oriented software engineering.  The FY2007 ASC Level-2 Algorithms
 Vertical Integration Milestone has addressed many of these challenges by
 demonstrating the vertical integration of many different types of numerical
-algorithms in Trilinos [???] and assimilating these algorithms with the
+algorithms in Trilinos {}\cite{ref:trilinos} and assimilating these algorithms with the
 application code Charon [???] in a way that can serve as a model for other
 algorithm-application collaborations.
 
@@ -273,7 +273,7 @@ numerical algorithm components is developed by a different team of experts to
 achieve highest level of quality in the implemented algorithms in a way that a
 single team of non-expert developers can not match.  This effort is further
 complicated by the stringent parallel scalability requirements that are part
-of capability computing [???].
+of capability computing {}\cite{book:SC}.
 
 To address the vertical integration problem, a major thrust of this milestone
 was to further develop and demonstrate the Thyra interface layer in Trilinos
@@ -404,7 +404,8 @@ Layered on top of the Thyra interfaces are Rythmos interfaces defining a
 number of higher-level abstractions for time stepping and time integration
 algorithms.  All of these interfaces are built on the concept of Abstract
 Numerical Algorithms (ANA) where only the essential mathematical properties of
-the objects are considered without any implementation specific details.  This
+the objects are considered without any implementation specific details
+{}\cite{ref:rtop_toms}.  This
 high-level ANA approach allows a for a level of generality, reuse, and
 efficiency that is not possible with other types of approaches.
 
@@ -518,9 +519,11 @@ Charon test suite has gone up from under 50 to over 100, and {\em 30 of the
 new tests are directly related to this milestone work.}
 
 In the execution of this nightly building and testing process, we have learned
-many things about how to do continuous integration [???] of application and
+many things about how to do continuous integration {}\cite{continuous-integration}
+of application and
 algorithms (Trilinos) software and we have realized many important unplanned
-benefits.  This will allow us to reap many more benefits in the future if this process is maintained
+benefits.  This will allow us to reap many more benefits in the future if this
+process is maintained
 and extended.  There are both production-related benefits and research-related
 benefits that help both the application developers and the algorithm
 developers to achieve their goals.  On the research side, this significantly
@@ -566,6 +569,21 @@ information learned from trying to solve these production problems can feed
 back into algorithm development.  To some extent, this back and forth already
 happens but without a foundational process in place to streamline it, this
 bidirectional flow is greatly restricted.
+
+Another example where nightly building and testing of the development versions
+of the application and Trilinos would ease the path for collaboration is when
+an application developers wants to try a new capability in Trilinos without a
+lot of work\footnote{This example really happened and it was the inability to
+readily access the development version of Trilinos within the application
+killed the collaboration}.  When the up-to-date development version of
+Trilinos is available from within an application, a new algorithm or
+capability from Trilinos can be accessed much more easily.  Typically, even a
+small increase in the overhead needed to try out a new Trilinos capability in
+an application can be enough to kill a potentially fruitful collaboration
+between an application and algorithm developer.  Nightly building and testing
+of the development versions of the application and Trilinos removes a
+unexciting (and therefore demoralizing) but critical obstical to collaboration
+and impact.
 
 Bottom line, nightly building and testing of an application code and Trilinos
 brings algorithm developers and application developers closer together --
@@ -1035,6 +1053,103 @@ Trilinos capabilities, such as Rythmos, to be assimilated into Aria. Since the
 model evaluator was implemented at the Sierra Solution Control level, there is
 a now a direct path for all Sierra applications (particularly implicit codes
 such as Sierra/Adagio) to interface to all Trilinos analysis algorithms.
+
+
+%
+\section{Numerical Issues}
+%
+
+In order to be able to solve several of the demonstration calculations
+(especially the optimization problems), we had to address various numerical
+issues including matrix singularities and scaling.  Without addressing all of
+these issues, many of the demonstration problems where essentially unsolvable
+with 64 bit floating point numbers.
+
+The first issue that needed to be addressed was that the semiconductor
+reaction defect physics model gave a nearly structurally singular Jacobian for
+the steady-state model.  A singular Jacobian makes the optimization problems
+unsolvable.  In order to address the singularity problem, an automated way of
+reformulating the equations involving immobile species was devised.  To
+identify the redundant equations, an SVD is performed on the reaction mechanism
+incidence matrix.  From this SVD, a new reduced reaction mechanism is produced
+which is used to build the Charon input file. [ToDo: rjhoeks or someone else,
+please make sure that this statement above is accurate].
+
+The other major numerical issue that had to be addressed was the scaling of
+all of the quantities.  The typical magnitudes of various quantities seen in
+the steady-state single-point current-matching optimization problem are shown
+in Table {}\ref{table:SemiconductorMagnitudes}.
+%
+{\bsinglespace
+\begin{table}
+\caption[Typical magnitudes of quantities in
+semiconductor optimization problem]{
+\label{table:SemiconductorMagnitudes}
+Typical magnitudes of variables and functions in the semiconductor
+optimization problem which span a range of $10^{25}$!}
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+State Variables &  $10^{0}$ to $10^{8}$ \\
+State Constraints & $10^{-4}$ to $10^{10}$ \\
+Parameters & $10^{-15}$ to $10^{0}$ \\
+Currents & $10^{-8}$ \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+\esinglespace}
+%
+% rabartl: Note, I got the scaling for the State constraints from
+% the row-sum scaling for the 5614-inv problem that I ran in:
+%
+%   ~/tests/Charon/20070906/5614-inv/test1/test/MoochoJournal.inv-an.out
+%
+% on gabriel.sandia.gov.
+%
+% The row-sum scalings where:
+%
+%   Computed inverse row sum scaling from W that will be used to scale f(...) and its derivatives:
+%    min(invRowSums) = 1.25658e-10
+%    max(invRowSums) = 89424.5
+%    avg(invRowSums) = 717.853
+%
+% That means the magnitudes of the constraints where 1e-4 to 1e+10!
+%
+The magnitudes represented in Table {}\ref{table:SemiconductorMagnitudes} span
+a range of $10^{25}$!  This range of scalings will break almost any numerical
+method implemented with 64 bit float point numbers.
+
+In order to solve the steady-state current-matching parameter-estimation
+optimization problems, we had to scale every quantity including state
+variables, state constraints, optimization parameters, and currents.  Various
+strategies where used to find reasonable scalings for each of the quantities
+and in the end we ended up with all variables and functions scaled to a size
+of about 1.0.  Even with these scalings in place, some of the intermediate
+derivatives where of size $10^{6}$ and the condition number of the state
+Jacobian was $10^{5}$.  With all of these quantities scaled, the optimization
+algorithms performed reasonably well and where able to invert for the
+parameters to a high precision (8 digits of accuracy in current and parameter
+matches in many cases).  If even one of to scalings was removed, the
+optimization algorithms failed to find the solutions.
+
+Optimization algorithms, more than any other type of algorithm, are more
+sensitive to scaling issues because they must make comparisons of quantities
+that are completely unrelated.  All-at-once optimization algorithms must
+balance feasibility against optimality and any such comparison is very much
+affected by the scaling of the various quantities.  For example, the reduced
+gradient norm is compared to the state constraint residual norm in several
+different places in the algorithm.  Such a comparison is impossible to make
+with quantities left in their original scaling.  Even though they are simpler
+algorithms, issues of scaling are also critical in several different types of
+algorithms for unconstrained optimization and nonlinear equations.  All of
+these problems are magnified in constrained optimization algorithms.  The
+theory on scaling and its impact on numerical algorithms is not very solid
+(see {}\cite{ref:dennis_schnabel_1996}) and scaling remains a necessary, but
+poorly understood, black art in numerical computing.
+
+[ToDo: tscoffe: Write a paragraph describing scaling issues of the residual of
+the timestep equations and impact on overall performance]
 
 
 %
