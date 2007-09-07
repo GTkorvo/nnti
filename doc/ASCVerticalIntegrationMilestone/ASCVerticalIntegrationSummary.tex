@@ -6,7 +6,6 @@
 \usepackage[all]{draftcopy}
 \input{rab_commands}
 
-
 \raggedright
 
 % If you want to relax some of the SAND98-0730 requirements, use the "relax"
@@ -936,17 +935,18 @@ Comparison of direct Rythmos sensitivities (blue curves) with first-order finite
 {}\noindent\textit{Vertically integrated packages:} LOCA, NOX, Anasazi,
 Stratimikos, Belos, ML, Ifpack, Amesos, Thyra, and Epetra
 
-We successfully demonstrated large-scale eigenvalue calculations using block
-eigensolvers on the hydromagnetic Rayleight-Bernard (HRB) problem.  The HRB
-problem is important for verification of magnetohydrodynamics physics due to
-the existence of analytic solutions published by Chandresekhar.  The problem
-consists of a fluid sandwiched between two walls.  The lower wall is heated
-and the upper wall is cooled.  As the temperature gradient between the walls
-is increased (an increase in the Rayleigh number), a buoyancy driven
-instability occurs that transitions the fluid from a quiescent (no-flow) state
-to a recirculating (non-zero flow) state with repeating cells of rotating
-fluid.  Figure \ref{fig:hrbFlow} shows the flow solution for the recirculating
-state.
+We successfully demonstrated large-scale eigenvalue calculations using
+block eigensolvers on the hydromagnetic Rayleight-Bernard (HRB)
+problem.  The HRB problem is important for verification of
+magnetohydrodynamics physics due to the existence of analytic
+solutions published by Chandresekhar \cite{book:HRB}.  The problem
+consists of a fluid sandwiched between upper and lower walls.  The
+lower wall is heated and the upper wall is cooled.  As the temperature
+gradient between the walls is increased (an increase in the Rayleigh
+number), a buoyancy driven instability occurs that transitions the
+fluid from a quiescent (no-flow) state to a recirculating (non-zero
+flow) state with repeating cells of rotating fluid.  Figure
+\ref{fig:hrbFlow} shows the flow solution for the recirculating state.
 
 {\bsinglespace
 \begin{figure}
@@ -967,13 +967,45 @@ of 16 on the non-zero flow branch of the pitchfork bifurcation.}
 \end{figure}
 \esinglespace}
  
-The onset of this instability (a pitchfork bifurcation point) can be located
-by monitoring the leading eigenvalues during a parameter continuation.  We
-continue in the Rayleigh number (Ra) with a fixed magnetic field strength.
-After the bifurcation, the no-flow solution becomes unstable. Figure
-\ref{fig:hrbEigenvalues} shows the computed eigenvectors at a Rayleigh number
-of 2040, just past the bifurcation point at 2039.  This shows the perturbation
-to the base no-flow solution towards the recirculating cells.
+The onset of this instability (a pitchfork bifurcation point) can be
+located by monitoring the leading eigenvalues during a parameter
+continuation.  The instability occurs when the real part of the
+leading eigenvalue crosses the imaginary axis (e.g. becomes zero).
+Therfore to locate an exchange of stability, we watch for the leading
+eigenvalue to switch from a negative value to a positive value as the
+parameter continuation is performed. The Rayleigh number (Ra) is the
+chosen continuation parameter and the magnetic field strength is fixed
+to a constant value.  After the bifurcation, the no-flow solution
+becomes unstable. Table \ref{table:hrbEigenvalues} show the leading
+two eigenvalues as a function of the Reyleigh number.  
+{\bsinglespace
+\begin{table}[p]
+\caption[Leading eigenvalues as a function of Rayleigh number]{\label{table:hrbEigenvalues}
+Leading eigenvalues as a function of Rayleigh number for Hydromagnetic Rayleigh-Bernard problem.}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline 
+\multicolumn{1}{|c|}{ } & 
+\multicolumn{4}{|c|}{Rayleigh Number} \\
+\hline
+\multicolumn{1}{|c|}{Index} & 
+\multicolumn{1}{c|}{2020} & 
+\multicolumn{1}{c|}{2030} & 
+\multicolumn{1}{c|}{2040} & 
+\multicolumn{1}{c|}{2050} \\ 
+\hline\hline
+1 & -0.0763685 & -0.00494764 & 0.0660233 &    \\
+2 & -0.0982707 & -0.0252326  & 0.0479932 &    \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+We observe that the eigenvalues flip sign between 2030 and 2040.
+Figure \ref{fig:hrbEigenvalues} shows the computed eigenvectors for
+the velocity at a Rayleigh number of 2040, just past the bifurcation
+point at 2039.  This figure depicts the perturbation to the base
+no-flow solution that forces the transition to the recirculating
+state.
 
 {\bsinglespace
 \begin{figure}
@@ -985,20 +1017,22 @@ to the base no-flow solution towards the recirculating cells.
 \end{center}
 \caption[Eigenvalues for the hydromagnetic Rayleigh-Bernard problem]{
 \label{fig:hrbEigenvalues}
-Plot of the eigenvalues for the x and y velocities.  This perturbation
+Plot of the eigenvectors for the x and y velocities.  This perturbation
 corresponds exactly to the flow solution above.}
 \end{figure}
 \esinglespace}
- 
-The problem was discretized into 5 million elements leading to a linear system
-with 5 million unknowns that was solved using 256 processors on Thunderbird.  We
-used LOCA/NOX to solve the system of fully coupled nonlinear equations for a
-variety of Rayleigh numbers using arc-length continuation.  At the end of each
-continuation step, Anasazi is called to compute the eigenvalues.  The
-eigenvalue computation used Belos to perform Block and Pseudo-Block GMRES on
-the linear systems.  ML supplied the preconditioning for the linear solves.
-ML internally used a 3 level V-cycle, calling IFPACK with ILU for the
-smoothers and Amesos (KLU) for the direct solve on the coarse grid.
+
+The problem was discretized into 5 million elements leading to a
+linear system with 5 million unknowns that was solved using 256
+processors on Thunderbird.  We used LOCA/NOX to solve the system of
+fully coupled nonlinear equations for a variety of Rayleigh numbers
+using arc-length continuation.  At the end of each continuation step,
+LOCA calls Anasazi to compute the eigenvalues and eigenvectors.  The
+eigenvalue computation used Belos to perform Block and Pseudo-Block
+GMRES on the linear systems.  ML supplied the preconditioning for the
+linear solves.  ML internally used a 3 level V-cycle, calling IFPACK
+with ILU for the smoothers and Amesos (KLU) for the direct solve on
+the coarse grid.
 
 The eigenvalue calculation demonstrates a general capability through coupled
 Trilinos packages to perform large-scale block eigenvalue calculations.  This

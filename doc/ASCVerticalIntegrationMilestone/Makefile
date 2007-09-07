@@ -1,14 +1,17 @@
 
 BASE_NAME = ASCVerticalIntegrationSummary
 LATEX_COMMAND = latex
+BIBTEX_COMMAND = bibtex
 
 SOURCEFILES= \
-            $(BASE_NAME).tex
+            $(BASE_NAME).tex \
+            references.bib
 
 default: pdf
 
 $(BASE_NAME).dvi: $(SOURCEFILES)
 	$(LATEX_COMMAND) $(BASE_NAME)
+	$(BIBTEX_COMMAND) $(BASE_NAME)
 	$(LATEX_COMMAND) $(BASE_NAME)
 	$(LATEX_COMMAND) $(BASE_NAME)
 	$(LATEX_COMMAND) $(BASE_NAME)
