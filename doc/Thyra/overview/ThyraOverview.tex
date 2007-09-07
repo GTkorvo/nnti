@@ -24,8 +24,9 @@
 %
 
 \title{\center
-Overivew of Thyra\\[2ex] Interfaces and Support Software for the Development
-and Interoperability of Abstract Numerical Algorithms}
+Thyra Linear Operators and Vectors\\[2ex]
+{\Large Overview of Interfaces and Support Software for
+the Development and Interoperability of Abstract Numerical Algorithms}}
 \author{
 Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\ Sandia National
 Laboratories\footnote{ Sandia is a multiprogram laboratory operated by Sandia
@@ -36,10 +37,10 @@ Energy under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA, \\ }
 % ---------------------------------------------------------------------------- %
 % Set some things we need for SAND reports. These are mandatory
 %
-\SANDnum{SAND2005-xxx}
-\SANDprintDate{??? 2005}
+\SANDnum{SAND2007-xxx}
+\SANDprintDate{??? 2007}
 \SANDauthor{
-Roscoe A. Bartlett \\ Optimization/Uncertainty Estim \\ \\
+Roscoe A. Bartlett \\ Optimization and Uncertainty Quantification  \\ \\
 }
 
 % ---------------------------------------------------------------------------- %
@@ -83,14 +84,16 @@ for optimization are typically mathematically sophisticated but have
 surprisingly little essential dependence on the details of what computer
 system is being used or how matrices and vectors are stored and computed.  As
 a result, using abstract interface capabilities in languages such as C++, we
-can implement ANA software such that it will work, unchanged, with a variety
-of applications and linear algebra libraries.
+can implement ANA software that it will work, unchanged, with a variety of
+applications and linear algebra libraries.
 
-In this paper, we provide an overview of the Thyra effort to define
-fundamental abstract interfaces to provide the basic functionality and
-interoperability for a broad range of ANAs.  The Trilinos package
-{}\texttt{thyra} defines different sets of C++ interface classes and provides
-optional support software.
+In this paper, we provide an overview of the Thyra effort which at its most
+basic level defines fundamental abstract linear operator and vector
+interfaces.  These linear operator/vector interfaces provide the basic
+functionality and interoperability for a broad range of ANAs.  Many other
+higher-level abstractions are built on top of the Thyra operator/vector
+interfaces. The Trilinos package {}\texttt{thyra} defines these different sets
+of C++ interfaces and provides optional support software.
 %
 \end{abstract}
 %
@@ -102,7 +105,8 @@ optional support software.
 %
 \clearpage
 \section*{Acknowledgment}
-The authors would like to thank ...
+The authors would like to thank everyone on the Trilinos team for their
+support in the Thyra effort.
 
 The format of this report is based on information found
 in~\cite{Sand98-0730}.
@@ -181,26 +185,26 @@ linear algebra libraries.
 %Such an approach is often referred to as {\it
 %generic programming}~\cite{ref:boost_generic_programming}.
 
-Here we describe a let of layers of abstract interfaces that allows the
+Here we describe a set of abstract operator/vector interfaces that allows the
 specification of ANAs from basic Krylov linear equation solvers all the way up
 to interior-point methods for optimization.  At the core, we define a set of
 basic operator/vector interfaces that form the the foundation for (i) ANA
 development, (ii) the integration of an ANA into an application (APP) and
 (iii) providing services to the ANA from a linear algebra library (LAL).  By
 agreeing on a simple minimal common interface layer such as the Fundamental
-Thyra ANA Operator/Vector Interfaces, we eliminate the many-to-many dependency
-problem of ANA/APP interfaces.
+Thyra ANA Operator/Vector Interfaces described here, we eliminate the
+many-to-many dependency problem of ANA/APP interfaces.
 
-While these Thyra interfaces provide a mechanism to express all of the
-functionality required to be directly used in ANA development it does not
-attempt to provide a full collection of methods that directly support the
-anticipated functionality needs of ANAs.  Instead they rely on a simple but
-powerful reduction and transformation operator mechanism~\cite{ref:rtop_toms}
-that can be used to express any element-wise vector reduction or
-transformation operation.  Additional functionality to support both the
-development of ANAs and the implementation of the operator/vector interfaces
-is being added to the Thyra package all the time but this is not the focus of
-this discussion.
+%While these Thyra interfaces provide a mechanism to express all of the
+%functionality required to be directly used in ANA development it does not
+%attempt to provide a full collection of methods that directly support the
+%anticipated functionality needs of ANAs.  Instead they rely on a simple but
+%powerful reduction and transformation operator mechanism~\cite{ref:rtop_toms}
+%that can be used to express any element-wise vector reduction or
+%transformation operation.  Additional functionality to support both the
+%development of ANAs and the implementation of the operator/vector interfaces
+%is being added to the Thyra package all the time but this is not the focus of
+%this discussion.
 
 It is difficult to describe a set of linear algebra interfaces outside of the
 context of some class of numerical problems.  For this purpose, we will
@@ -211,17 +215,16 @@ these.  The fundamental Thyra operator/vector interfaces described here are
 the common denominator of all abstract numerical algorithms.
 
 We assume that the reader has a basic understanding of vector
-reduction/transformation operators (RTOp) (see
-{}\cite{ref:rtop_toms}), is comfortable with object-orientation
-{}\cite{ref:gama_et_al_1995} and C++, and knows how to read basic
-Unified Modeling Language (UML) {}\cite{ref:uml_distilled_2nd_ed}
-class diagrams.  We also assume that the reader has some background in
-large-scale numerics and will therefore be able to appreciate the
-challenges that are addressed by Thyra.
+reduction/transformation operators (RTOp) {}\cite{ref:rtop_toms}, is
+comfortable with object-orientation {}\cite{ref:gama_et_al_1995} and C++, and
+knows how to read basic Unified Modeling Language (UML)
+{}\cite{ref:uml_distilled_2nd_ed} class diagrams.  We also assume that the
+reader has some background in large-scale numerics and will therefore be able
+to appreciate the challenges that are addressed by Thyra.
 
 Note that the online documentation for Thyra at
 
-\hspace{4ex}{}\texttt{http://software.sandia.gov/Trilinos/packages/thyra}
+\hspace{4ex}{}\texttt{http://trilinos.sandia.gov/packages/thyra}
 
 {}\noindent{}should be the definitive information source for Thyra.  This
 document only tries to provide an overview of Thyra and explain the philosophy
@@ -235,8 +238,8 @@ behind it.
 Although we will discuss APPs, ANAs and LALs in detail later in this section,
 we want to briefly introduce these terms here to make them clear.  Also,
 although there are certainly other types of modules in a large-scale
-application, we only focus on these three since they are the ones more
-directly related to ANAs.
+scientific/engineering application, we only focus on these three since they
+are the ones more directly related to ANAs.
 %
 \begin{itemize}
 %
@@ -310,10 +313,10 @@ a very abstract view of vectors, vector spaces and linear operators.
 An application code, however, has the responsibility of populating vector and
 matrix objects and requires the passing of explicit function and gradient
 value entries, sometimes in a distributed memory parallel environment.  This
-is the purpose of a APP/LAL interface.  This involves a very different set of
+is the purpose of an APP/LAL interface.  This involves a very different set of
 requirements than those described above for the ANA/APP and ANA/LAL
 interfaces.  Examples of APP/LAL interfaces include the FEI {}\cite{ref:fei}
-and much of the ESI [???].
+and much of the ESI {}\cite{ref:esi_2001}.
 
 Figure {}\ref{thyra:fig:ANA_LAL_APP} also shows a set of LAL/LAL interfaces
 that allows linear algebra objects from one LAL to collaborate with the
@@ -322,9 +325,9 @@ interfaces and the requirements for this type of interface is also not
 addressed by Thyra.  The ESI {}\cite{ref:esi_2001} contains examples of
 LAL/LAL interfaces.
 
-{}\textbf{ToDo:} Describe interactions between ANAs like a nonlinear equation
-solver needing linear equation solver and a nonlinear time integrator needing
-a nonlinear equation solver.
+%{}\textbf{ToDo:} Describe interactions between ANAs like a nonlinear equation
+%solver needing linear equation solver and a nonlinear time integrator needing
+%a nonlinear equation solver.
 
 %
 \section{Some Basic Requirements for Thyra}
@@ -379,7 +382,8 @@ with MPI should not be able to provide significant improvements in storage
 requirements, computational speed, or numerical stability.  There are many
 numerical algorithms can can not be considered to be ``abstract'' (e.g.\
 Gaussian Elimination) and therefore Thyra and like abstract interfaces should
-not be used for such algorithms.
+not be used for such algorithms.  However, drawly the line between an ANA and
+a non-ANA can be quite fuzzy in practice.
 
 %
 \section{Mathematical Foundation for Fundamental Thyra ANA Operator/Vector Interfaces}
@@ -391,8 +395,8 @@ Interfaces} that form the foundation for all of the Thyra ANA interfaces in
 more detail, we must first clearly define the mathematical foundation for the
 abstractions of vectors, vector spaces, and linear operators.
 
-All Thyra vectors belonging to a vector space are representable as an array of
-scalar coefficents $\tilde{x}\in\RE^n$ and a (non-unique) basis
+All Thyra vectors belong to a vector space and are representable as an array
+of scalar coefficients $\tilde{x}\in\RE^n$ and a (non-unique) basis
 $E\in\RE^{n\times{}n}$ of the form
 %
 \begin{equation}
@@ -420,17 +424,19 @@ $E=I\in\RE^{n\times{}n}$ and $Q=E^H E=I\in\RE^{n\times{}n}$.
 
 In Thyra, vector spaces and vectors are abstracted using the C++ base
 interface classes {}\texttt{Thyra::\-Vector\-Space\-Base} and
-{}\texttt{Thyra::\-Vector\-Base}.  Vectors are created from the vector space
-using the ``Abstract Factory'' design pattern.
+{}\texttt{Thyra::\-Vector\-Base} respectively.  Vectors are created from a
+vector space using the ``Abstract Factory'' design pattern using the nonmember
+function {}\texttt{create\-Member(vecSpc)}.
 
 In addition to vectors and vector spaces, Thyra also defines linear operators
-which linearly map vectors from one vector space to another.  The defintion of
-a linear operator is strongly influenced by the defintion of the scalar
-product associated with a vector space and whether the mapping is between
-Euclidean vectors $y = A x$ or between coefficient vector $\tilde{y} =
-\tilde{A} {}\tilde{x}$ (see [???] for more details).  In Thyra, vectors are a
-specialization of linear operators and therefore every vector is also a linear
-operator.  Therefore, when one writes
+which linearly map vectors from one vector space to another.  The definition of
+a linear operator is strongly influenced by the definition of the scalar
+product associated with the vector spaces and whether the mapping is between
+Euclidean vectors $y = A x$ or between coefficient vectors $\tilde{y} =
+\tilde{A} {}\tilde{x}$.
+% (see [???] for more details).
+In Thyra, vectors are a specialization of linear operators and therefore every
+vector is also a linear operator.  Therefore, when one writes
 %
 \begin{equation}
 z = x^H y
@@ -441,55 +447,56 @@ then $x^H$ must be interpreted to be the adjoint linear operator of $x$.
 Given this notation, the vector $x$ would be considered to live an Euclidean
 vector space $x\in\RE^n$ while the vector $\tilde{x}$ would be considered to
 live in the non-Euclidean vector space $\tilde{x}\in\mathcal{X}$ which is
-defined by the scalar product matrix $Q\in\RE^{n\times{}n}$.  In Thyra, it is
+defined by the scalar product matrix $Q\in\RE^{n\times{}n}$.  Therefore, it is
 actually not clear whether an abstract vector object represents the Euclidean
 vector $x\in\RE^n$ which just happens to be stored as a set of coefficients
 $\tilde{x}\in\mathcal{X}$ or if it represents the coefficient vectors
 $\tilde{x}\in\mathcal{X}$ themselves.  This ambiguity of the interpretation of
 vectors and linear operators also results from the ambiguity of interpretation
-of the vectors in that they can be thought of as the Eucliean linear operators
+of the vectors in that they can be thought of as the Euclidean linear operators
 that only update the coefficient vectors or as linear operators that act
-directly on vector coefficinets.
+directly on vector coefficients.
 
 The Fundamental Thyra ANA Operator/Vector Interfaces require that every Thyra
-vector be represented as a finite-dimensional set of scalar coefficents and
+vector be represented as a finite-dimensional set of scalar coefficients and
 that the scalar product $<\tilde{x},\tilde{y}>$ be equivalent to the two-sided
-application some finite-dimensional symmetic positive definite matrix
+application some finite-dimensional symmetric positive definite matrix
 $Q\in\RE^{n\times{}n}$ such that $<\tilde{x},\tilde{y}> = \tilde{x}^H Q
 {}\tilde{y}$.  The Thyra interfaces do not try to pretend that its vectors are
-infinite dimensional or that they admit more general implementations as it
-allowed by infinite dimensional Hilbert spaces [???].  While every Thyra
-vector must be stored as a set of scalar coefficients the interfaces make no
-assumptions whatsoever about where or how those coefficients are stored.  A
-fully general ANA can make no assumptions about how vectors are stored or
-layed out in memory, only that those coefficients do exist and that these
-coefficients can be exposed to reduction and transformation operators (see
-[???]).
+infinite dimensional or that they admit more general implementations as
+allowed by infinite dimensional Hilbert spaces.
+%[???].
+While every Thyra vector must be stored as a set of scalar coefficients the
+interfaces make no assumptions whatsoever about where or how those
+coefficients are stored.  A fully general ANA can make no assumptions about
+how vectors are stored or laid out in memory, only that those coefficients do
+exist and that the coefficients can be exposed to reduction and transformation
+operators (see {}\cite{ref:rtop_toms}).
 
 While accessing the elements of a vector is ill advised in a general ANA, the
 Thyra vector interface supports acquiring direct views of any range of vector
 coefficient data (see
 {}\texttt{Thyra::\-Vector\-Base\-::\-acquireDetachedView(...)}).
 
-Again, thyra does not try to hide that a vector is simply a set of scalar
-coefficients associated with some basis.  Thyra does not even really try to
-keep the client from accessing the actual coefficients of the vectors since it
-can access them with an RTOp object anyway.  What Thyra does do is to abstract
-where the vector coefficients live and what native data structure is used to
-hold the coefficients.  None of vector coefficients may even be directly be
-head in main memory in the process where the ANA is running but there is aways
-a (perhaps very inefficient) mechanism to get a view of them.  However, ANAs
-that want to be maximally general and efficient should not try to access the
-vector elements explicitly through and many ANAs do not.  However, there are
-perfectly reasonable ANAs that do need to access the explicit vector
-coefficients for vectors from certain vector spaces (such as vectors in the
-design space in some reduced-space optimization algorithms) and Thyra provides
-efficient and yet 100\% general ways to access these coefficients.  Every
-Thyra vector space also has a finite dimension that is accessible as a
-property of the vector space.
+Again, thyra does not try to hide the fact that a vector is simply a set of
+scalar coefficients associated with some basis.  Thyra does not even really
+try to keep the client from accessing the actual coefficients of the vectors
+since it can access them with an RTOp object if desired.  What Thyra does do
+is to abstract where the vector coefficients live and what native data
+structure is used to hold the coefficients.  None of vector coefficients may
+even be directly be head in main memory in the process where the ANA is
+running but there is aways a (perhaps very inefficient) mechanism to get a
+view of them.  ANAs that want to be maximally general and efficient should not
+try to directly access the vector elements explicitly and many ANAs do not
+need to.  However, there are perfectly reasonable ANAs that do need to access
+the explicit vector coefficients for vectors from certain vector spaces (such
+as vectors in the design space in some reduced-space optimization algorithms)
+and Thyra provides efficient and yet 100\% general ways to access these
+coefficients.  Every Thyra vector space also has a finite dimension that is
+accessible as a property of the vector space and in integer value.
 
-While Thyra requires vectors to be finite dimensional and the coefficients of
-vectors must be accessible (if to none other than to RTOps), it does allow
+While Thyra requires vectors to be finite dimensional and the vector
+coefficients must be accessible (if to none other than to RTOps), it allows
 complete freedom in the implementation of scalar products of general linear
 operators that map vectors from one vector space to another.
 
@@ -516,12 +523,13 @@ UML class diagram : The fundamental Thyra ANA operator/vector interfaces }
 \esinglespace}
 
 The Fundamental Thyra ANA Operator/Vector Interfaces are shown in Figure
-{}\ref{thyra:fig:basic_op_vec_itfc}.  Complete C++ class declarations for
-these interfaces are given in Appendix {}\ref{app:thyra_classes}.  The key
-abstractions include vectors, vector spaces, and linear operators.  All of the
-interfaces are templated on the {}\texttt{Scalar} type (the UML notation for
-templated classes is not used in the figure for the sake of improving
-readability).
+{}\ref{thyra:fig:basic_op_vec_itfc}.
+%  Complete C++ class declarations for
+%these interfaces are given in Appendix {}\ref{app:thyra_classes}.
+The key abstractions include vectors, vector spaces, and linear operators.
+All of the interfaces are templated on the {}\texttt{Scalar} type (the UML
+notation for templated classes is not used in the figure for the sake of
+improving readability).
 
 Vector space is the foundation for all other abstractions.  Vector spaces are
 abstracted through the {}\texttt{\textit{Vector\-Space\-Base}} interface.  A
@@ -536,15 +544,11 @@ defines one nontrivial function {}\texttt{\textit{applyOp(\-...)}}.  The
 (i.e.~ANA-defined) reduction/transformation operator (RTOp) objects through
 the templated RTOp C++ interface {}\texttt{\textit{RTOpPack::RTOpT}}.  An ever
 increasing set of concrete implementations of RTOps is provided along with
-wrapper convenience function in the ANA support code collection (see ???).
-The set of operations is also easily extensible.  Every
-{}\texttt{\textit{Vector\-Base}} object provides access to its
-{}\texttt{\textit{Vector\-Space\-Base}} (that was used to create the
-{}\texttt{\textit{Vector\-Base}} object) through the function
-{}\texttt{space()} (shown in Figure {}\ref{thyra:fig:basic_op_vec_itfc} as the
-role name {}\texttt{space} on the association connecting the
-{}\texttt{\textit{Vector\-Base}} and {}\texttt{\textit{Vector\-Space\-Base}}
-classes).
+wrapper convenience functions in the ANA support code collection.  The set of
+operations is also easily extensible.  Every {}\texttt{\textit{Vector\-Base}}
+object provides access to its {}\texttt{\textit{Vector\-Space\-Base}} (that
+was used to create the {}\texttt{\textit{Vector\-Base}} object) through the
+function {}\texttt{space()}.
 
 The {}\texttt{\textit{Vector\-Space\-Base}} interface also provides the
 ability to create {}\texttt{\textit{Multi\-Vector\-Base}} objects through the
@@ -562,18 +566,19 @@ types ANAs such as block Krylov methods.  The interface class
 {}\texttt{\textit{Vector\-Base}} is a {}\texttt{\textit{Multi\-Vector\-Base}}.
 This simplifies the development of ANAs in that any ANA that can handle
 {}\texttt{\textit{Multi\-Vector\-Base}} objects should automatically be able
-to handle {}\texttt{\textit{Vector\-Base}} objects as well.
+to accept {}\texttt{\textit{Vector\-Base}} objects as well.
 
-{}\texttt{\textit{Vector\-Space\-Base}} also declares a virtual function
-called {}\texttt{\textit{scalarProd(x,y)}} which computes the scalar product
-$<x,y>$ for the vector space.  There is also a
-{}\texttt{\textit{Multi\-Vector\-Base}} version
-{}\texttt{\textit{Vector\-Space\-Base\-::scalarProds(...)}}  (not shown in the
-figure) that computes the scalar products of each set of columns vectors in
-two multi-vectors.  Finally, {}\texttt{\textit{Vector\-Space\-Base}} also
-includes the ability to determine the compatibility of vectors from different
-vector spaces through the function {}\texttt{\textit{isCompatible(vecSpc)}}
-(see Section~\ref{thyra:sec:vec_spc_compatibility}).
+{}\texttt{\textit{Vector\-Space\-Base}} declares a virtual function called
+{}\texttt{\textit{scalarProd(x,y)}} which computes the scalar product $<x,y>$
+for the vector space.  There is also a {}\texttt{\textit{Multi\-Vector\-Base}}
+version {}\texttt{\textit{Vector\-Space\-Base\-::scalarProds(...)}}  (not
+shown in the figure) that computes the scalar products of each set of column
+vectors in two multi-vectors.  Finally,
+{}\texttt{\textit{Vector\-Space\-Base}} also includes the ability to determine
+the compatibility of vectors from different vector spaces through the function
+{}\texttt{\textit{isCompatible(vecSpc)}}.  This is useful primarily for error
+checking and debugging.
+%(see Section~\ref{thyra:sec:vec_spc_compatibility}).
 
 Another important type of linear algebra abstraction is a linear operator
 which is represented by the interface class
@@ -584,10 +589,8 @@ defines a linear mapping from vectors in one vector space (called the
 {}\texttt{domain}) to vectors in another vector space (called the
 {}\texttt{range}).  Every {}\texttt{\textit{Linear\-Op\-Base}} object provides
 access to these vector spaces through the functions {}\texttt{domain()} and
-{}\texttt{range()} (shown as the role names {}\texttt{domain} and
-{}\texttt{range} on the associations linking the {}\texttt{\textit{OpBase}}
-and {}\texttt{\textit{Vector\-Space\-Base}} classes).  The exact form of this
-mapping, as implemented by the function {}\texttt{\textit{apply(\-...)}}, is
+{}\texttt{range()}.  The exact form of this mapping, as implemented by the
+function {}\texttt{\textit{apply(\-...)}}, is
 %
 \begin{equation}
 Y = \alpha \, M \, X + \beta Y
@@ -615,14 +618,15 @@ determined by the $conj$ argument); $X$ and $Y$ are
 form of the transpose is not supported.
 
 If the adjoint is supported, then it must satisfy the adjoint property
-Specifically, for any two vectors $w\in\mathcal{D}$ (the domain space) and
-$u\in\mathcal{R}$ (the range space), the adjoint operation must obey the
-adjoint property
+Specifically, for any two vectors $w\in\mathcal{D}$ (domain space) and
+$u\in\mathcal{R}$ (range space), the adjoint operation must obey the adjoint
+property
 \[
   <u,A v>_{\mathcal{R}} =\!= <A^H u, v>_{\mathcal{D}}.
 \]
-The implications of allowing vector spaces with non-euclidean scalar products
-is explored more deeply in Appendix~???.
+
+%The implications of allowing vector spaces with non-euclidean scalar products
+%is explored more deeply in Appendix~???.
 
 Another important part of this design is the fact that
 {}\texttt{\textit{Multi\-Vector\-Base}} derives from
@@ -647,23 +651,23 @@ where $Y$, $X$ and $Z$ are all multi-vectors and $\alpha$ and $\beta$ are
 scalars.
 
 Also note that since {}\texttt{\textit{Multi\-Vector\-Base}} derives from
-{}\texttt{\textit{Linear\-Op\-Base}} and
-{}\texttt{\textit{Multi\-Vector\-Base}} derives from
-{}\texttt{\textit{Multi\-Vector\-Base}}, therefore, every vector object is
-also a linear operator.  While this may not be a terribly useful feature it
-does mean that one must interpret $y^H x$ to be the same as $<y,x>$ and not
-just the dot product when the space is non-euclidean.
+{}\texttt{\textit{Linear\-Op\-Base}} and {}\texttt{\textit{Vector\-Base}}
+derives from {}\texttt{\textit{Multi\-Vector\-Base}}, therefore, every vector
+object is also a linear operator.  While this may not be a terribly useful
+feature it does mean that one must interpret $y^H x$ to be the same as $<y,x>$
+and not just the dot product when the space is non-euclidean.
 
 %
 \section{Summary}
 %
 
-Thyra provides the intersection of all of the functionality required by a
-variety of abstract numerical algorithms ranging from iterative linear solvers
-all the way up to optimizers.  By adopting Thyra as a standard interface
-layer, interoperability between applications, linear algebra libraries, and
-abstract numerical algorithms in advanced scientific computing environments
-becomes automatic to a large extent.
+The Fundamental Thyra Operator/Vector Interfaces provide the intersection of
+all of the functionality required of linear operators and vectors by a variety
+of abstract numerical algorithms ranging from iterative linear solvers all the
+way up to optimizers.  By adopting Thyra as a standard interface layer,
+interoperability between applications, linear algebra libraries, and abstract
+numerical algorithms in advanced scientific computing environments becomes
+automatic to a large extent.
 
 % ---------------------------------------------------------------------- %
 % References
