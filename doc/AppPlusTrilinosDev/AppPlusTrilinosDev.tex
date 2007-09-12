@@ -214,110 +214,113 @@ production application codes.
 
 For the reminder of this paper, we will refer to the combined development
 versions of the application (e.g.\ Charon, Xyce, Alegra etc.) and Trilinos as
-APP + Trilinos Dev.
+APP \& Trilinos Dev.
 
 
 %
-{}\section{Outline of proposed APP + Trilinos Dev development and nightly
+{}\section{Outline of proposed APP \& Trilinos Dev development and nightly
 building and testing}
 %
 
 The basic idea of this new approach goes like this (which is mostly what we
-already do with Charon + Trilinos Dev right now):
+already do with Charon \& Trilinos Dev right now):
 
-{}\textit{\textbf{APP developers mainly work with APP + Trilinos Release}}: The
-developers of APP (e.g. Charon, Alegra, SIERRA) would only do their production
-development and run their production test suite against a recent stable
-released version of Trilinos.
+{}\textit{\textbf{APP developers mainly work with APP \& Trilinos Release}}:
+The developers of APP (e.g. Charon, Alegra, SIERRA) would only do their
+production development and run their production test suite against a recent
+stable released version of Trilinos.
 
-{}\textit{\textbf{Trilinos developers mainly work with Trilinos Dev}}: Most of the
-developers of Trilinos would do their development mostly just within Trilinos
-and run the Trilinos test suite.  If radical changes are make, then there
-should be a way for Trilinos developers to build and run APP + Trilinos Dev
-and it~s test suite to see if anything is broken (before a check in).  This
-will require some effort to set up and maintain for each APP (see below
+{}\textit{\textbf{Trilinos developers mainly work with Trilinos Dev}}: Most of
+the developers of Trilinos would do their development mostly just within
+Trilinos and run the Trilinos test suite.  If radical changes are make, then
+there should be a way for Trilinos developers to build and run APP \& Trilinos
+Dev and it~s test suite to see if anything is broken (before a check in).
+This will require some effort to set up and maintain for each APP (see below
 practices).
 
-{}\textit{\textbf{Hide APP + Trilinos Dev ``research'' work in APP behind
-ifdefs}}: Any ``research'' development done in APP against Trilinos Dev must be
-hidden behind {}\#ifdefs so as not to impact the other production-focused
+{}\textit{\textbf{Hide APP \& Trilinos Dev ``research'' work in APP behind
+ifdefs}}: Any ``research'' development done in APP against Trilinos Dev must
+be hidden behind {}\#ifdefs so as not to impact the other production-focused
 development work being done with APP that relies on the more stable release of
 Trilinos.
 
-{}\textit{\textbf{Nightly testing of APP + Trilinos Release and APP + Trilinos
+{}\textit{\textbf{Nightly testing of APP \& Trilinos Release and APP \& Trilinos
 Dev}}: Every night the following builds and tests would be done:
 
   \begin{itemize}
 
-  {}\item\textit{APP + Trilinos Release tested against ``production'' test
-  suite}: The Dev version of APP would be built and tested against the
+  {}\item\textit{\textbf{APP \& Trilinos Release tested against ``production''
+  test suite}}: The Dev version of APP would be built and tested against the
   static/stable current release of Trilinos.
 
     \begin{itemize}
 
-    {}\item\textit{Send ``production'' failures only to APP developers}: Test
-    failures for APP + Trilinos Release XXX are only forwarded to APP
-    developers, not Trilinos developers.  It is possible that latent defects
-    in the current release of Trilinos XXX may be the cause of the failure,
-    but this should be unlikely.
+    {}\item\textit{\textbf{Send ``production'' failures only to APP
+    developers}}: Test failures for APP \& Trilinos Release are only forwarded
+    to APP developers, not Trilinos developers.  It is possible that latent
+    defects in the current release of Trilinos may be the cause of the
+    failure, but this should be unlikely.
 
     \end{itemize}
 
-  {}\item\textit{APP + Trilinos Dev tested against ``research'' and
-  ``production'' test suites}: The combined APP + Trilinos Dev code with
+  {}\item\textit{\textbf{APP \& Trilinos Dev tested against ``research'' and
+  ``production'' test suites}}: The combined APP \& Trilinos Dev code with
   enabled {}\#ifdefs and extended ``research'' test suite would be built and
   tested (both ``production'' and ``research'' tests).
 
     \begin{itemize}
 
-    {}\item\textit{Only send ``production'' failures that did not also fail in
-    APP + Trilinos Release to Trilinos developers (representative)}: Only
-    ``production'' tests that failed in this version that did not fail in the
-    production APP version would be forwarded to Trilinos developers (e.g. to
-    the dedicated APP + Trilinos Dev representative, see below).
+    {}\item\textit{\textbf{Only send ``production'' failures that did not also
+    fail in APP \& Trilinos Release to Trilinos developers (representative)}}:
+    Only ``production'' tests that failed in this version that did not fail in
+    the production APP version would be forwarded to Trilinos developers
+    (e.g. to the dedicated APP \& Trilinos Dev representative, see below).
 
-    {}\item\textit{Send ``research'' failures only to Trilinos developers
-    (representative)}: By default, average APP developers would not see
-    (i.e. in daily emails) ``research'' these test failures (unless they
-    wanted to in which case they could be added to an email list).
+    {}\item\textit{\textbf{Send ``research'' failures only to Trilinos
+    developers (representative)}}: By default, average APP developers would
+    not see (i.e. in daily emails) these ``research'' test failures (unless
+    they wanted to in which case they could be added to an email list).
 
     \end{itemize}
 
-  {}\item\textit{Summary: Minimize unnecessary interaction APP and Trilinos
-  developer activities}: Using the policies described above, APP developers
-  are less likely to be bothered with defects introduced by Trilinos
-  developers and Trilinos developers are less likely to be bothered with
-  defects introduced by APP developers.
-
+  {}\item\textit{\textbf{Summary: Minimize unnecessary interaction between APP
+  and Trilinos development activities}}\footnote{We did not have unnecessary
+  interactions totally under control for Charon \& Trilinos Dev during the
+  milestone work and it resulted in some waisted time.  See the practices for
+  how this can be addressed.}: Using the policies Jescribed above, APP
+  developers are less likely to be bothered with defects introduced by
+  Trilinos developers and Trilinos developers are less likely to be bothered
+  with defects introduced by APP developers.
+                
   \end{itemize}
 
-{}\textit{\textbf{Release of APP + Trilinos}}: A release of the APP + Trilinos
-would go one of two routes:
+{}\textit{\textbf{Release of APP \& Trilinos together or staged }}: A release
+of the APP \& Trilinos would go one of two routes:
 
     \begin{itemize}
 
-    {}\item\textit{a) Combined tagging and release of APP + Trilinos}: Right
-    before a release of APP, the APP and Trilinos would be tagged and branched
-    at the same time to make sure both are as current as possible.  This could
-    be very challenging to pull off.
+    {}\item\textit{\textbf{a) Combined tagging and release of APP \&
+    Trilinos}}: Right before a release of APP, the APP and Trilinos would be
+    tagged and branched at the same time to make sure both are as current as
+    possible.  This could be very challenging to pull off.
 
-    {}\item\textit{b) Staggered releases of APP + Trilinos}: APP developers
-    make a decision to target a release of APP against a very recent release
-    of Trilinos.  At the point of the release of Trilinos, the Dev version of
-    APP drops support for older release of Trilinos, moves code from within
-    the protected {}\#ifdefs into main Dev build and then any new work with
-    Trilinos Dev is hidden behind new {}\#ifdefs.
+    {}\item\textit{\textbf{b) Staggered releases of APP \& Trilinos}}: APP
+    developers make a decision to target a release of APP against a very
+    recent release of Trilinos.  At the point of the release of Trilinos, the
+    Dev version of APP drops support for older release of Trilinos, moves code
+    from within the protected {}\#ifdefs into main Dev build and then any new
+    work with Trilinos Dev is hidden behind new {}\#ifdefs.
 
     \end{itemize}
 
-{}\textit{\textbf{Continue APP + Trilinos Dev nightly building and testing after
+{}\textit{\textbf{Continue APP \& Trilinos Dev nightly building and testing after
 APP release}}: After a release of APP, using any of the approach approaches,
-the nightly building of APP + Trilinos Dev continues where incompatibilities
+the nightly building of APP \& Trilinos Dev continues where incompatibilities
 between Dev versions of APP and Trilinos are hidden behind new {}\#ifdefs.
 
 
 %
-{}\section{Suggested practices to support proposed APP + Trilinos Dev
+{}\section{Suggested practices to support proposed APP \& Trilinos Dev
 development and nightly building and testing}
 %
 
@@ -333,21 +336,21 @@ This will not be full-proof in differentiating defects in APP code verses
 Trilinos code, but this will go a long way in helping to suggest where the
 problem is..
 
-{}\textit{\textbf{Maintain a dedicated machine for building and testing APP +
-Trilinos Dev}}: Having a dedicated, powerful machine for supporting APP +
+{}\textit{\textbf{Maintain a dedicated machine for building and testing APP \&
+Trilinos Dev}}: Having a dedicated, powerful machine for supporting APP \&
 Trilinos Dev would make it easy to maintain an environment to build and test
-APP + Trilinos Dev.  It would also enable Trilinos developers a quick and easy
-way to access, build and test APP + Trilinos Dev.  Issues like keeping third
+APP \& Trilinos Dev.  It would also enable Trilinos developers a quick and easy
+way to access, build and test APP \& Trilinos Dev.  Issues like keeping third
 party libraries up to date would only need to be handled on this one machine.
 Accounts would be granted as needed and would only require SRN access.  This
 would allow any Trilinos or APP developer with an SRN account to quickly log
-onto the dedicated machine, and then be able to quickly build APP + Trilinos
+onto the dedicated machine, and then be able to quickly build APP \& Trilinos
 Dev and run the ``research'' and ``production'' test suites.  Some helper
 scripts and examples also need to be in place to show how to do this.
 
-{}\textit{\textbf{Appoint a dedicated APP + Trilinos representative}}: One member
+{}\textit{\textbf{Appoint a dedicated APP \& Trilinos representative}}: One member
 of the Trilinos or APP development teams should be designated as the point
-person for the APP + Trilinos Dev effort.  This person would be responsible
+person for the APP \& Trilinos Dev effort.  This person would be responsible
 for filtering test failures and forwarding issues to APP or Trilinos
 developers.  This person must be familiar with the APP and Trilinos for this
 to be effective.  Ideally, this person will be a co-developer of APP and
@@ -355,24 +358,24 @@ Trilinos, so there would be little-to-no learning curve.  Having only one
 person be responsible (with perhaps a backup person in their absences) will
 make it clear who is responsible for making sure issues are dealt with in a
 timely manner.  This person would take the major responsibility of maintaining
-the dedicated APP + Trilinos machine described above. The goal is that this
+the dedicated APP \& Trilinos machine described above. The goal is that this
 job should not take too much effort if everyone else is doing their jobs well.
 However, this job could be a nightmare if this effort is not taken seriously
 by everyone involved (including management).
 
 {}\textit{\textbf{Provide easy access for any Trilinos or APP developer to build,
-test, and develop APP + Trilinos Dev}}: Trilinos and APP developers need a
-quick and painless way to build APP + Trilinos Dev in order to diagnose and
+test, and develop APP \& Trilinos Dev}}: Trilinos and APP developers need a
+quick and painless way to build APP \& Trilinos Dev in order to diagnose and
 fix failures.  This may include the ability to checkout and change APP code to
 fix the problem.  Of course, modified APP code would need to go through a
 thorough code review by APP developers before it was checked into APP's code
 repository.  Likewise, an APP developer should be able to change and fix
 Trilinos code if they where so motivated.  Again, a code review by Trilinos
 developers should be done before an APP developer checks in any code changes
-to Trilinos.  Having a dedicated machine maintained by the APP + Trilinos
+to Trilinos.  Having a dedicated machine maintained by the APP \& Trilinos
 representative as described above would make this easy to support.
 
-{}\textit{\textbf{Transition of ``research'' to ``production'' after each APP
+{}\textit{\textbf{Transition of ``research'' to ``production'' after Trilinos
 release}}: If a ``research'' algorithm or feature becomes stable enough and
 the software implementation is of high enough quality (i.e. ``phase 2''
 package in Trilinos), then after the next Trilinos release the ``research''
@@ -380,6 +383,24 @@ APP code and tests for that algorithm/feature should be moved to the APP's
 ``production'' code and tests.  In this way, if the test fails later, the APP
 developers will be the first to face the bug since it is most likely an APP
 developer that broke something.
+
+{}\textit{\textbf{Perform APP \& Trilinos Release and Dev nightly testing on
+same set of platforms}}\footnote{In the ASC Vertical Integration Milestone
+work with Charon \& Trilinos Dev, we did not have this in place.  As a result,
+there where several occasions that new ``production'' tests failed when run
+with Charon \& Trilinos Dev that passed with Charon \& Trilinos Release on a
+different platform.  Most of these ``production'' test failures where just due
+to minor rounding or other porting issues.  The time waisted tracking down
+these ``production'' test failures could have been avoided if we had this
+policy in place.}: The nightly building and testing of APP \& Trilinos Release
+and APP \& Trilinos Dev should be performed on the same set of platforms.  In
+this way, if a ``production'' test fails with APP \& Trilinos Dev but not with
+APP \& Trilinos Release on the same platform, then we have some assurance that
+something has been broken by in the ``research'' work and not the
+``production'' work being done by APP developer.  If testing is done on
+different platforms, then a ``production'' test failure with APP \& Trilinos
+Dev may just be do to small difference is rounding other other small issues
+that result from using different platforms.
 
 {}\textit{\textbf{Enable more communication between APP and Trilinos developers}}:
 All of this will require and foster more communication and cooperation between
@@ -400,7 +421,7 @@ also need to be changed and/or improved in how we develop Trilinos.
 
 %
 {}\section{Research and production advantages to nightly building and testing
-of APP + Trilinos Dev}
+of APP \& Trilinos Dev}
 %
 
 There are many research and production advantages to maintaining the nightly
@@ -409,7 +430,7 @@ Trilinos.
 
 
 %
-{}\subsection{Research advantages to nightly building and testing of APP +
+{}\subsection{Research advantages to nightly building and testing of APP \&
 Trilinos Dev}
 %
 
@@ -442,7 +463,7 @@ improve by running them on the same basic production physics problems.
 
 
 %
-{}\subsection{Production advantages to nightly building and testing of APP +
+{}\subsection{Production advantages to nightly building and testing of APP \&
 Trilinos Dev}
 %
 
@@ -454,7 +475,7 @@ Trilinos:
 suite represents an extended test suite for Trilinos.  In our work with
 Charon, we have already seen cases where the Charon test suite caught an error
 that the Trilinos test suite did not.  Most APPs also build against an
-installed version of Trilinos so nightly building and testing of APP +
+installed version of Trilinos so nightly building and testing of APP \&
 Trilinos Dev helps to test the installation of Trilinos which is very had to
 do currently.
 
@@ -475,11 +496,11 @@ defect later.  The cost of fixing defects increases the longer the time
 between when the defect is introduced and the time it is first detected
 {}\cite{book:code-complete-2}.  Daily testing reduces the risk that a release
 of Trilinos will regress and/or helps to contain costs and the schedule if a
-broken feature must be preserved in the next combined release of APP +
+broken feature must be preserved in the next combined release of APP \&
 Trilinos.
 
 {}\textit{\textbf{Reduces release time and effort}}: It reduces (or eliminates)
-the time needed to create a bundled release of APP + Trilinos.  This removes
+the time needed to create a bundled release of APP \& Trilinos.  This removes
 uncertainty about how long it will take to put out a release of Trilinos
 and/or APP.  What is being done right now with Trilinos is the maintenance
 version of the so called ``Big Bang'' integration approach
@@ -506,7 +527,7 @@ process, and makes Trilinos more responsive to important customers.
 
 
 %
-{}\section{Potential disadvantages to nightly building and testing of APP +
+{}\section{Potential disadvantages to nightly building and testing of APP \&
 Trilinos Dev}
 %
 
@@ -568,7 +589,7 @@ application and Trilinos:
 
 {}\item Other application projects and scientific support software projects
 should consider adopting the type of continuous integration that is used with
-Charon + Trilinos that was developed as part of this milestone work.
+Charon \& Trilinos that was developed as part of this milestone work.
 
 \end{itemize}
 
