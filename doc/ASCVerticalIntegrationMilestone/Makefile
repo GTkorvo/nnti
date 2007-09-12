@@ -23,5 +23,5 @@ pdf: $(BASE_NAME).dvi
 	dvipdf $(BASE_NAME).dvi $(BASE_NAME).pdf
 
 clean:
-	rm -f *.ps *.pdf *.dvi *.aux *.toc *.idx *.ind *.ilg *.log *.out \
-           *.bbl *.blg *.lof *.lot *.tex~ .log *~
+	rm -f *.ps $(BASE_NAME).pdf *.dvi *.aux *.toc *.idx *.ind *.ilg \
+	*.log *.out *.bbl *.blg *.lof *.lot *.tex~ .log *~
