@@ -145,24 +145,26 @@ combined Charon + Trilinos application and run a large set of regression
 tests.
 
 In the execution of this nightly building and testing process, we have learned
-many things about how to do continuous integration
-{}\cite{continuous-integration} of application and algorithms (Trilinos)
-software and we have realized many important unplanned benefits.  This will
-allow us to reap many more benefits in the future if this process is
-maintained and extended.  There are both production-related benefits and
-research-related benefits that help both the application developers and the
-algorithm developers to achieve their goals.  On the research side, this
-significantly reduces the overhead required for algorithm developers to try
-their algorithms out on production quality problems.  Developing a numerical
-solver with a production problem exposes the algorithm developer to a whole
-host of issues (e.g.\ poor scaling, ill-conditioning, difficult convergence,
-etc.) that are hard to replicate in model problems.  On the production side,
-constant integration insures that the application and Trilinos are always up
-to date and satisfying the application's requirements.  Therefore, when it is
-time for a release, only a final set of acceptance tests are required and then
-the codes can be branched and released shortly after.  This helps to reduce a
-whole host of risks such as slipped schedules and broken
-features\footnote{Also known as regressions}.
+many things about how to do quasi continuous integration {}\cite[Section
+29.4]{book:code-complete-2}\footnote{By quasi continuous integration, we mean
+that we are advocated daily integration and testing and not every few hours as
+some have advocated {}\cite{continuous-integration}.} of application and
+algorithms (Trilinos) software and we have realized many important unplanned
+benefits.  This will allow us to reap many more benefits in the future if this
+process is maintained and extended.  There are both production-related
+benefits and research-related benefits that help both the application
+developers and the algorithm developers to achieve their goals.  On the
+research side, this significantly reduces the overhead required for algorithm
+developers to try their algorithms out on production quality problems.
+Developing a numerical solver with a production problem exposes the algorithm
+developer to a whole host of issues (e.g.\ poor scaling, ill-conditioning,
+difficult convergence, etc.) that are hard to replicate in model problems.  On
+the production side, constant integration insures that the application and
+Trilinos are always up to date and satisfying the application's requirements.
+Therefore, when it is time for a release, only a final set of acceptance tests
+are required and then the codes can be branched and released shortly after.
+This helps to reduce a whole host of risks such as slipped schedules and
+broken features\footnote{Also known as regressions}.
 
 We have seen several different scenarios over the years where this nightly
 building and testing infrastructure would have facilitated collaboration
@@ -274,7 +276,7 @@ Dev}}: Every night the following builds and tests would be done:
     fail in APP + Trilinos Release to Trilinos developers (representative)}}:
     Only ``production'' tests that failed in this version that did not fail in
     the production APP version would be forwarded to Trilinos developers
-    (e.g. to the dedicated APP + Trilinos Dev representative, see below).
+    (e.g. to the dedicated APP + Trilinos Representative, see below).
 
     {}\item\textit{\textbf{Send ``research'' failures only to Trilinos
     developers (representative)}}: By default, average APP developers would
@@ -348,44 +350,128 @@ onto the dedicated machine, and then be able to quickly build APP + Trilinos
 Dev and run the ``research'' and ``production'' test suites.  Some helper
 scripts and examples also need to be in place to show how to do this.
 
-{}\textit{\textbf{Appoint a dedicated APP + Trilinos representative}}: One member
-of the Trilinos or APP development teams should be designated as the point
-person for the APP + Trilinos Dev effort.  This person would be responsible
-for filtering test failures and forwarding issues to APP or Trilinos
-developers.  This person must be familiar with the APP and Trilinos for this
-to be effective.  Ideally, this person will be a co-developer of APP and
-Trilinos, so there would be little-to-no learning curve.  Having only one
+{}\textit{\textbf{Appoint a dedicated APP + Trilinos Representative}}: One
+member of the Trilinos or APP development teams should be designated as the
+point person for the APP + Trilinos Dev effort.  This person would be
+responsible for filtering test failures and forwarding issues to APP or
+Trilinos developers.  This person must be familiar with the APP and Trilinos
+for this to be effective.  Ideally, this person will be a co-developer of APP
+and Trilinos, so there would be little-to-no learning curve.  Having only one
 person be responsible (with perhaps a backup person in their absences) will
 make it clear who is responsible for making sure issues are dealt with in a
 timely manner.  This person would take the major responsibility of maintaining
 the dedicated APP + Trilinos machine described above. The goal is that this
 job should not take too much effort if everyone else is doing their jobs well.
 However, this job could be a nightmare if this effort is not taken seriously
-by everyone involved (including management).
+by everyone involved (including management).  In addition, this responsibility
+should come with a specific project/task (P/T).  Having a specific P/T serves
+several purposes.  First, it lets the APP + Trilinos Representative know that
+this task is ordained and supported from management.  Second, it allows us to
+track how much time and expense is going into keeping the APP + Trilinos Dev
+working.
 
-{}\textit{\textbf{Provide easy access for any Trilinos or APP developer to build,
-test, and develop APP + Trilinos Dev}}: Trilinos and APP developers need a
-quick and painless way to build APP + Trilinos Dev in order to diagnose and
-fix failures.  This may include the ability to checkout and change APP code to
-fix the problem.  Of course, modified APP code would need to go through a
-thorough code review by APP developers before it was checked into APP's code
-repository.  Likewise, an APP developer should be able to change and fix
-Trilinos code if they where so motivated.  Again, a code review by Trilinos
-developers should be done before an APP developer checks in any code changes
-to Trilinos.  Having a dedicated machine maintained by the APP + Trilinos
-representative as described above would make this easy to support.
+{}\textit{\textbf{Provide easy access for any Trilinos or APP developer to
+build, test, and develop APP + Trilinos Dev}}: Trilinos and APP developers
+need a quick and painless way to build APP + Trilinos Dev in order to diagnose
+and fix failures.  This may include the ability to checkout and change APP
+code to fix the problem.  Of course, modified APP code would need to go
+through a thorough code review by APP developers before it was checked into
+APP's code repository.  Likewise, an APP developer should be able to change
+and fix Trilinos code if they where so motivated.  Again, a code review by
+Trilinos developers should be done before an APP developer checks in any code
+changes to Trilinos.  Having a dedicated machine maintained by the APP +
+Trilinos Representative as described above would make this easy to support.
 
-{}\textit{\textbf{Transition of ``research'' to ``production'' after Trilinos
-release}}: If a ``research'' algorithm or feature becomes stable enough and
-the software implementation is of high enough quality (i.e. ``phase 2''
-package in Trilinos), then after the next Trilinos release the ``research''
-APP code and tests for that algorithm/feature should be moved to the APP's
-``production'' code and tests.  In this way, if the test fails later, the APP
-developers will be the first to face the bug since it is most likely an APP
-developer that broke something.
+{}\textit{\textbf{Fix failed builds of APP + Trilinos Dev ASAP}}: It is
+critical that broken builds of APP + Trilinos Dev but given a high priority to
+be fixed immediately.  Without the software at lease building and linking, we
+can have no feedback at all about the behavior of our software and the entire
+nightly building and testing process falls apart.  There can be no exception
+to this.
+
+{}\textit{\textbf{Address failing ``research'' and ``production'' tests on a
+schedule appropriate for the APP + Trilinos collaboration}}: While fixing
+failed builds of APP + Trilinos Dev must always be given a high priority and
+fixed immediately, addressing failing ``research'' and ``production'' runtime
+tests can be done on a variety of different schedules, depending on the nature
+of the APP and/or the APP + Trilinos collaboration at any time.  We can
+imagine two extremes in how and when failing tests are addressed.
+
+One one extreme, every day, each and every failing test is given a high
+priority and fixed ASAP\footnote{This was mostly our policy on the ASC
+Vertical Integration Milestone but we did not completely keep up with this.}.
+While this approach results in the least risk of experiencing a regression, it
+can significantly harm overall productivity (especially for the APP + Trilinos
+Representative).
+
+On the other extreme, we might not address any failing tests at all between
+releases and wait until the next upcoming release before any of the failed
+tests are addressed.  While this other extreme has more risk associated with
+it as opposed to fixing failing tests instantly, it still offers significant
+advantages to not performing any daily building or testing at all.  First, by
+keeping APP + Trilinos Dev building, we can address any of the failures at any
+time we wish.  Second, knowing the exact 24 hour period when code changes
+where made that caused a failing test is a huge piece of information to help
+find the cause of a test failure.  Letting failing tests fail for long periods
+of time and only requiring that APP + Trilinos Dev keeps building should only
+impart a very minimal overhead to day-to-day development activities.
+
+In between these two extremes, the APP + Trilinos Representative would spend
+five to ten minutes every morning looking over the new failing tests and try
+to diagnose them.  If the problem can be quickly
+diagnosed\footnote{Approximately 80\% or so of the failing Charon + Trilinos
+Dev tests where diagnosed in just ten minutes or less.}, then an email can be
+sent, or a bug report can be filed, to the parties that can fix the bug.  If
+the problem can not be easily diagnosed in five to ten minutes, then the APP
++ Trilinos Representative might just make a note of this (e.g.\ file a general
+bug report, send a general email, etc.) and then move on with the day's other
+activities.  Then when time becomes available, the root causes of the failing
+tests can be diagnosed when it will not disturb the flow of other work.
+Again, knowing the exact 24 hour period when a test first failed is a huge
+piece of information in finding the root cause of the problem.
+
+In summary, depending on the nature of APP and the relationship between APP
+and Trilinos, any point between these two extremes may be acceptable and this
+will be much better than not doing any daily building or testing at all.  The
+approach taken to addressing failing tests for APP + Trilinos Dev, for any
+specific APP, will change as the collaboration goes through periods of greater
+intensity and lesser intensity.  During periods of more intense APP + Trilinos
+collaboration, we will be more aggressive about addressing failing tests.
+During periods of less intense APP + Trilinos collaboration, we can let tests
+fail for longer periods of time in many cases.
+
+{}\textit{\textbf{Archive test results for sufficiently long periods of
+time}}: Test results from APP + Trilinos Release and APP + Trilinos Dev should
+be archived for long periods of time.  Typically, only smaller output files
+are needed to diagnose most problems and therefore the largest of output files
+should typically be excluded from the test results archive.  However, all test
+output files should be archived between 24 hour periods.  Having ready access
+these test results, and being able to compare the outputs from a passing and a
+failing version of a test (separated by 24 hours) is critical in helping to
+diagnose failing tests.  Past test results should be pruned and thinned as
+needed to conserve disk space.  For example, test results from three months
+ago could be deleted except for tests on Friday (or some other day).  One
+exception would be that test results for consecutive days where a test went
+from passing to failing should be preserved for a long period of time (perhaps
+a year or more) since this is critical evidence in tracking down failing tests
+(especially in the extreme where tests are allowed to fail for very long
+periods of time).  Easy access to test results can be provided through a
+website that anyone with SRN access can access\footnote{We have provided web
+access to the test results archive for the Charon + Trilinos Dev test suite.} 
+(or limit access to those individuals with Need-to-Know in the case of more
+sensitive APPs).
+
+{}\textit{\textbf{Transition of ``research'' to ``production'' after each
+Trilinos release}}: If a ``research'' algorithm or feature becomes stable
+enough and the software implementation is of high enough quality (i.e. ``phase
+2'' package in Trilinos), then after the next Trilinos release the
+``research'' APP code and tests for that algorithm/feature should be moved to
+the APP's ``production'' code and tests.  In this way, if the test fails
+later, the APP developers will be the first to face the bug since it is most
+likely an APP developer that broke something.
 
 {}\textit{\textbf{Perform APP + Trilinos Release and Dev nightly testing on
-same set of platforms}}\footnote{In the ASC Vertical Integration Milestone
+the same set of platforms}}\footnote{In the ASC Vertical Integration Milestone
 work with Charon + Trilinos Dev, we did not have this in place.  As a result,
 there where several occasions that new ``production'' tests failed when run
 with Charon + Trilinos Dev that passed with Charon + Trilinos Release on a
@@ -535,9 +621,12 @@ Here are some of the potential disadvantages to maintaining the nightly
 building and testing of the development versions of a production application
 and Trilinos:
 
-{}\textit{\textbf{May slow down day-to-day development}}: It will slow down the
-day-to-day development of Trilinos and the APP to some extent in that problems
-are dealt with as they are uncovered by daily building and testing.
+{}\textit{\textbf{May slow down day-to-day development}}: It will slow down
+the day-to-day development of Trilinos and the APP to some extent in that
+problems are dealt with as they are uncovered by daily building and testing.
+The ammount of overhead will depend on how aggressively failing tests are
+addressed.  Just keeping APP + Trilinos Dev building should not impart much
+overhead at all is most cases.
 
 {}\textit{\textbf{Could increase overall development effort}}: It may increase the
 overall development time for Trilinos if not managed well.  However,
