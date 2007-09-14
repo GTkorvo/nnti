@@ -19,7 +19,7 @@ namespace RBGen {
     debug_(false),
     verbLevel_(0),
     maxScaledNorm_(0.0),
-    Delta0_(M_PI/8.0),
+    Delta0_(0.0),
     Delta_(0.0),
     Delta_bar_(0.0),
     etaLen_(0.0),
@@ -35,7 +35,8 @@ namespace RBGen {
     m_(0),
     n_(0),
     rank_(0),
-    localV_(true)
+    localV_(true),
+    initElem_(false)
   {
     // set up array of stop reasons
     stopReasons_.push_back("n/a");
@@ -96,12 +97,17 @@ namespace RBGen {
     maxInnerIters_ = rbmethod_params.get<int>("StSVD Max Inner Iters",maxInnerIters_);
 
     // Get initial trust-region radius
-    Delta0_ = rbmethod_params.get<double>("StSVD Delta0",Delta0_);
+    Delta0_ = rbmethod_params.get<double>("StSVD Delta0",sqrt(3.0)*rank_);
 
     // Is V local or distributed
     localV_ = rbmethod_params.get<bool>("StSVD Local V",localV_);
 
-    rhoPrime_ = rbmethod_params.get<int>("StSVD Rho Prime",rhoPrime_);
+    rhoPrime_ = rbmethod_params.get<double>("StSVD Rho Prime",rhoPrime_);
+    TEST_FOR_EXCEPTION(rhoPrime_ <= 0.0 || rhoPrime_ >= .25,
+        std::invalid_argument, 
+        "RBGen::StSVDRTR:: Rho Prime must be in (0,1/4)");
+
+    initElem_ = rbmethod_params.get<bool>("StSVD Init Elementary",initElem_);
 
     // Get an Anasazi orthomanager
     if (rbmethod_params.isType<
@@ -112,7 +118,7 @@ namespace RBGen {
       ortho_ = rbmethod_params.get< 
                 Teuchos::RCP<Anasazi::OrthoManager<double,Epetra_MultiVector> >
                >("Ortho Manager");
-      TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,std::invalid_argument,"User specified null ortho manager.");
+      TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,std::invalid_argument,"RBGen::StSVDRTR::User specified null ortho manager.");
     }
     else {
       /*
@@ -161,19 +167,39 @@ namespace RBGen {
     resNorms_.resize(rank_);
     resUNorms_.resize(rank_);
     resVNorms_.resize(rank_);
+    // initialize U,V to canonical basis vectors or to random?
+    if (initElem_) 
+    {
+      // set to zero
+      U_->PutScalar(0.0);
+      V_->PutScalar(0.0);
+      for (int j=0; j<rank_; j++) 
+      {
+        int lid;
+        // set (j,j) to 1
+        // U
+        lid = U_->Map().LID(j);
+        if (lid >= 0) {
+          (*U_)[j][lid] = 1.0;
+        }
+        // V
+        lid = V_->Map().LID(j);
+        if (lid >= 0) {
+          (*V_)[j][lid] = 1.0;
+        }
+      }
+    }
+    else 
+    {
+      U_->Random();
+      V_->Random();
+    }
 
     // allocate and set N_
     N_.resize(rank_);
     for (int j=0; j<rank_; j++) {
       N_[j] = rank_-j;
     }
-    /* finish: remove or something
-    if (debug_) 
-    {
-      cout << " >> N: " << endl;
-      for (int j=0; j<rank_; j++) cout << N_[j] << endl;
-    }
-    */
 
     // allocate working multivectors
     // size of U_
@@ -317,8 +343,8 @@ namespace RBGen {
       Teuchos::RCP<Epetra_MultiVector> newU, newV, newAU;
       // new iterates are stored in deltaU,deltaV
       // A'*deltaU goes into HdV_
-      newU = newU;
-      newV = newV;
+      newU = deltaU_;
+      newV = deltaV_;
       newAU = HdV_;
 
       // compute proposed point
@@ -370,6 +396,9 @@ namespace RBGen {
           fxnew += dots[i]*N_[i];
         }
       }
+      if (debug_) {
+        cout << " >> newfx: " << setw(18) << scientific << setprecision(10) << fxnew << endl;
+      }
       rhonum_ = fx_ - fxnew;
       // tiny rhonum means small decrease in f (maybe even negative small)
       // this usually happens near the end of convergence; 
@@ -380,9 +409,18 @@ namespace RBGen {
       }
       else {
         // compute rhoden
-        // - <eta,(AV,A'U)> - .5 <eta,Heta>
-        rhoden_ = -1.0*innerProduct(*etaU_,*etaV_,*AV_,*AU_) 
-                 -0.5*innerProduct(*etaU_,*etaV_,*HeU_,*HeV_);
+        // - <eta,(AVN,A'UN)> - .5 <eta,Heta>
+        std::vector<double> ips(rank_);
+        rhoden_ = 0.0;
+        etaU_->Dot(*AV_,&ips[0]);
+        for (int i=0; i<rank_; i++) rhoden_ += -1.0*ips[i]*N_[i];
+        etaV_->Dot(*AU_,&ips[0]);
+        for (int i=0; i<rank_; i++) rhoden_ += -1.0*ips[i]*N_[i];
+        rhoden_ = rhoden_ - 0.5*innerProduct(*etaU_,*etaV_,*HeU_,*HeV_);
+        if (debug_) {
+          cout << " >> rhonum: " << rhonum_ << endl;
+          cout << " >> rhoden: " << rhoden_ << endl;
+        }
         if (rhoden_ == 0) {
           // this is bad
           zero_rhoden_ = true;
@@ -423,8 +461,7 @@ namespace RBGen {
 
         if (debug_) {
           // check that new fx_ is equal to fxnew
-          cout << " >> new f(x): " << setw(18) << scientific << setprecision(10) << fx_ 
-               << "\t\tnewfx: " << setw(18) << scientific << setprecision(10) << fxnew << endl;
+          cout << " >> new f(x): " << setw(18) << scientific << setprecision(10) << fx_ << endl;
         }
 
         // clear those unneeded pointers
@@ -510,22 +547,6 @@ namespace RBGen {
     Sym(*VAUNsym_);
 
     //
-    // debug printing
-    /* finish: remove or something
-    if (debug_)
-    {
-      cout << " >> U'*A*V: " << endl;
-      dgesvd_A_->Print(cout);
-
-      cout << " >> sym(U'*A*V*N): " << endl;
-      UAVNsym_->Print(cout);
-
-      cout << " >> sym(V'*A'*U*N): " << endl;
-      VAUNsym_->Print(cout);
-    }
-    */
-
-    //
     // compute f(U,V) = trace(U'*A*V*N) before destroying dgesvd_A_
     fx_ = 0.0;
     for (int j=0; j<rank_; j++) 
@@ -551,35 +572,68 @@ namespace RBGen {
   // this function assumes that U,V,AU,AV,sigma are all coherent
   void StSVDRTR::updateResiduals() 
   {
-    //
-    // compute residuals: RU = A *V - U*S
-    //                    RV = A'*U - V*S
-    for (int i=0; i<rank_; i++) {
-      (*RU_)(i)->Update( 1.0, *(*AV_)(i), -sigma_[i], *(*U_)(i), 0.0 );
-      (*RV_)(i)->Update( 1.0, *(*AU_)(i), -sigma_[i], *(*V_)(i), 0.0 );
-    }
+    using std::setw;
+    using std::setprecision;
+    using std::scientific;
 
     //
-    // compute residual norms
-    // for each singular value, we have two residuals:
+    // Compute residual norms
+    //
+    // For each singular value, we have two direct residuals:
     //   ru_i = A v_i - u_i s_i 
     // and 
     //   rv_i = A' u_i - v_i s_i 
-    // If we have a singular value, these will both be zero
+    //
+    // However, recall that StSVD computes (-U,V), so that 
+    // our direct residuals are actually 
+    //   ru_i = A  v_i + u_i s_i
+    // and
+    //   rv_i = A' u_i + v_i s_i
+    //
+    // If we have a singular triplet, these will both be zero
+    //
     // We will take the norm of the i-th residual to be
     //   |r_i| = sqrt(|ru_i|^2 + |rv_i|^2)
+    //
     // We will scale it by the i-th singular value
+    //
+
+    //
+    // compute residuals: RU = A *V + U*S
+    //                    RV = A'*U + V*S
+    for (int i=0; i<rank_; i++) {
+      (*RU_)(i)->Update( 1.0, *(*AV_)(i), sigma_[i], *(*U_)(i), 0.0 );
+      (*RV_)(i)->Update( 1.0, *(*AU_)(i), sigma_[i], *(*V_)(i), 0.0 );
+    }
+    //
+    // compute 2-norms of these res. vectors
     RU_->Norm2(&resUNorms_[0]);
     RV_->Norm2(&resVNorms_[0]);
-    maxScaledNorm_ = 0;
+    //
+    // scale by sigmas
     for (int i=0; i<rank_; i++) {
-      resNorms_[i] = SCT::squareroot(resUNorms_[i]*resUNorms_[i] + resVNorms_[i]*resVNorms_[i]);
       // sigma_ must be >= 0, because it is a singular value
       // ergo, sigma_ != 0  is equivalent to  sigma_ > 0
       // check sigma_ > 0 instead of sigma_ != 0, so the compiler won't complain
+      // about floating point comparisons
       if (sigma_[i] > 0.0) {
-        resNorms_[i] /= sigma_[i];
+        resUNorms_[i] /= sigma_[i];
+        resVNorms_[i] /= sigma_[i];
       }
+    }
+    if (debug_) {
+      cout << " >> Residual norms   " << endl
+           << " >> U                V" << endl;
+      //           ---------------  ---------------
+      for (int i=0; i<rank_; i++) {
+        cout << " >> " << setw(15) << scientific << setprecision(6) << resUNorms_[i]
+             << "  " << setw(15) << scientific << setprecision(6) << resVNorms_[i]
+             << endl;
+      }
+    }
+    maxScaledNorm_ = 0;
+    for (int i=0; i<rank_; i++) {
+      resNorms_[i] = SCT::squareroot(resUNorms_[i]*resUNorms_[i] + resVNorms_[i]*resVNorms_[i]);
       maxScaledNorm_ = EPETRA_MAX(resNorms_[i],maxScaledNorm_);
     }
   }
@@ -647,21 +701,21 @@ namespace RBGen {
     etaLen_ = e_e = 0.0;
 
     //
-    // We have two residuals: RU = A *V - U*S
-    //                    and RV = A'*U - V*S
-    //
-    // Note that grad(U,V) = {proj(A *V*N)} = {proj(RU*N)}
-    //                       {proj(A'*U*N)} = {proj(RV*N)}
+    // We have two residuals: RU = A *V + U*S
+    //                    and RV = A'*U + V*S
+    // [see updateResiduals() for more info on this]
     //
     // Multiply the residuals in RU and RV by N, yielding 
-    //   RU = A *V*N - U*S*N
-    //   RV = A'*U*N - V*S*N
-    // Then project RU and RV (in situ) yield the gradient
-    //   RU = Proj(A *V*N - U*S*N) = Proj(A *V*N)
-    //   RV = Proj(A'*U*N - V*S*N) = Proj(A'*U*N)
-    //
-    // This is because proj(U*S*N) = 0, because S*N is symmetric
-    // Same for proj(V*S*N)
+    //   RU = A *V*N + U*S*N
+    //   RV = A'*U*N + V*S*N
+    // Note that grad(U,V) = {proj(A *V*N)} = {proj(RU*N)}
+    //                       {proj(A'*U*N)} = {proj(RV*N)}
+    // because
+    //    proj(U*S*N) = 0
+    //    proj(V*S*N) = 0
+    // So project RU*N and RV*N (in situ) to yield the gradient
+    //   RU = Proj(A *V*N + U*S*N) = Proj(A *V*N)
+    //   RV = Proj(A'*U*N + V*S*N) = Proj(A'*U*N)
     //
     for (int j=0; j<rank_; j++) 
     {
@@ -774,7 +828,8 @@ namespace RBGen {
       double kconv = r0_norm * conv_kappa_;
       // some scaling of r0_norm so that it will be less than zero
       // and theta convergence may actually take over from kappa convergence
-      double tconv = r0_norm * SCT::pow(r0_norm/normGrad0_,conv_theta_);
+      //double tconv = r0_norm * SCT::pow(r0_norm/normGrad0_,conv_theta_);
+      double tconv = r0_norm * SCT::pow(r0_norm,conv_theta_);
       double conv = kconv < tconv ? kconv : tconv;
       if ( r_norm <= conv ) {
         if (conv == tconv) {

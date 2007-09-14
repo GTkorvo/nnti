@@ -265,6 +265,8 @@ namespace RBGen {
     int m_, n_, rank_;
     // is V local or distributed
     bool localV_;
+    // init with elementary vectors or random
+    bool initElem_;
 
     // UAVNsym, VAUNsym
     // we need sym(U'*A*V*N) and sym(V'*A'*U*N)
