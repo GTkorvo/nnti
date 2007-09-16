@@ -233,7 +233,45 @@ namespace RBGen {
     TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial U basis construction failed.");
     ret = ortho_->normalize(*V_);
     TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial V basis construction failed.");
-    // Compute A*V and A'*U
+    //
+    // StSVD minimizers trace(U'*A*V*N)
+    // and therefore computes (-U,V), where (U,V) are 
+    // left/right singular vectors
+    // Use SVD of initial U'*A*V to compute maximal 
+    // basis for these subspaces, then flip signs of V
+    // to derive minimal bases for these subspaces
+    {
+      //
+      // Compute U'*A*V via A'*U
+      int info;
+      info = AU_->Multiply('T','N',1.0,*A_,*U_,0.0);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
+      //
+      // compute (U'*A)*V
+      info = dgesvd_A_->Multiply('T','N',1.0,*AU_,*V_,0.0);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
+      Epetra_LocalMap lclmap(rank_,0,A_->Comm());
+      Epetra_MultiVector VV(lclmap,rank_);
+      TEST_FOR_EXCEPTION(VV.ConstantStride() == false,
+          std::logic_error, "RBGen::StSVD/RTR::initialize(): VV should have constant stride.");
+      //
+      // compute the singular vectors of U'*A*V
+      lapack.GESVD('O','A',rank_,rank_,dgesvd_A_->Values(),dgesvd_A_->Stride(),&sigma_[0],
+          NULL,rank_,VV.Values(),VV.Stride(),&dgesvd_work_[0],dgesvd_work_.size(),NULL,&info);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::initialize(): Error calling GESVD.");
+      Epetra_MultiVector UCopy(*U_), VCopy(*V_);
+      info = U_->Multiply('N','N',-1.0,UCopy,*dgesvd_A_,0.0);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
+      info = V_->Multiply('N','N',1.0,VCopy,VV,0.0);
+      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
+    }
+
+    // compute proper AV and AU now
     {
       int info;
       info = AU_->Multiply('T','N',1.0,*A_,*U_,0.0);
