@@ -258,6 +258,7 @@ namespace RBGen {
           std::logic_error, "RBGen::StSVD/RTR::initialize(): VV should have constant stride.");
       //
       // compute the singular vectors of U'*A*V
+      // note, this computes U (into A) and V^T (into VV)
       lapack.GESVD('O','A',rank_,rank_,dgesvd_A_->Values(),dgesvd_A_->Stride(),&sigma_[0],
           NULL,rank_,VV.Values(),VV.Stride(),&dgesvd_work_[0],dgesvd_work_.size(),NULL,&info);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
@@ -266,7 +267,8 @@ namespace RBGen {
       info = U_->Multiply('N','N',-1.0,UCopy,*dgesvd_A_,0.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
-      info = V_->Multiply('N','N',1.0,VCopy,VV,0.0);
+      // recall, VV stores V^T, not V
+      info = V_->Multiply('N','T',1.0,VCopy,VV,0.0);
       TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
