@@ -3,6 +3,7 @@
 #include "TSFEpetraMatrix.hpp"
 #include "Ifpack_Preconditioner.h"
 #include "Ifpack.h"
+#include "EpetraTSFOperator.hpp"
 
 #ifdef HAVE_ML
 #include "ml_include.h"
@@ -25,6 +26,7 @@ AztecSolver::AztecSolver(const ParameterList& params)
 		parameters_(AZ_PARAMS_SIZE),
     useML_(false),
     useIfpack_(false),
+    useUserPrec_(false),
     aztec_recursive_iterate_(false),
     precParams_(),
     prec_(),
@@ -59,6 +61,10 @@ AztecSolver::AztecSolver(const ParameterList& params)
                 {
                   useIfpack_ = true;
                 }
+	      else if (precParams_.get<string>("Type") == "User")
+		{
+		  useUserPrec_ = true;
+		}
               continue;
             }
         }
@@ -260,6 +266,21 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   return rtn;
 }
 
+
+void AztecSolver::setUserPrec(const LinearOperator<double>& P,
+			      const LinearSolver<double>& pSolver)
+{
+  if (useUserPrec_)
+    {
+      prec_ = rcp(new Epetra::Epetra_TSFOperator(P, pSolver));
+    }
+  else
+    {
+      TEST_FOR_EXCEPTION(!useUserPrec_, runtime_error,
+			 "Attempt to set user-defined preconditioner "
+			 "after another preconditioner has been specified");
+    }
+}
 
 void AztecSolver::initParamMap()
 {

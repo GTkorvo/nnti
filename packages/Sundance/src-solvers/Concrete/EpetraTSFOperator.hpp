@@ -26,64 +26,70 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFLINEARSOLVERBASEDECL_HPP
-#define TSFLINEARSOLVERBASEDECL_HPP
+#ifndef EPETRA_TSFOPERATOR_HPP
+#define EPETRA_TSFOPERATOR_HPP
 
-#include "TSFConfigDefs.hpp"
-#include "TSFVectorDecl.hpp" 
-#include "TSFSolverState.hpp"
-#include "Teuchos_ParameterList.hpp"
- //#include "TSFLinearOperatorDecl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFLinearSolver.hpp"
+#include "Epetra_Operator.h"
+#include "TSFVectorSpace2EpetraMap.hpp"
 
-namespace TSFExtended
+namespace Epetra
 {
   using namespace Teuchos;
-  template <class Scalar>
-  class LinearOperator;
-  
+  using namespace Thyra;
+  using namespace TSFExtended;
 
   /** */
-  template <class Scalar>
-  class LinearSolverBase 
+  class Epetra_TSFOperator : public Epetra_Operator
   {
   public:
     /** */
-    LinearSolverBase(const ParameterList& params);
+    Epetra_TSFOperator(const LinearOperator<double>& A,
+		       const LinearSolver<double>& solver=LinearSolver<double>());
+    
+    /** */
+    int SetUseTranspose(bool useTrans) {useTranspose_ = useTrans; return 0;}
 
     /** */
-    virtual ~LinearSolverBase(){;}
+    int Apply(const Epetra_MultiVector& in, Epetra_MultiVector& out) const ;
 
     /** */
-    virtual SolverState<Scalar> solve(const LinearOperator<Scalar>& op,
-                                      const Vector<Scalar>& rhs,
-                                      Vector<Scalar>& soln) const = 0;
-
-    /** Change the convergence tolerance. Default does nothing. */
-    virtual void updateTolerance(const double& tol) {;}
-
-    /** Set a user-defined preconditioning operator. Default is an error. */
-    virtual void setUserPrec(const LinearOperator<Scalar>& P,
-			     const LinearSolver<double>& pSolver);
+    int ApplyInverse(const Epetra_MultiVector& in, Epetra_MultiVector& out) const ;
 
     /** */
-    const ParameterList& parameters() const ;
+    double NormInf() const ;
 
     /** */
-    ParameterList& parameters();
+    const char* Label() const ;
 
     /** */
-    int getVerbosity() const ;
+    bool UseTranspose() const {return useTranspose_;}
 
     /** */
-    static string verbosityParam();
+    bool HasNormInf() const {return false;}
 
     /** */
-    template <typename T>
-    static void setParameter(const ParameterList& params,
-                             T* valuePtr, 
-                             const string& paramName);
+    const Epetra_Comm& Comm() const {return *comm_;}
+
+    /** */
+    const Epetra_Map& OperatorDomainMap() const {return *domain_;}
+
+    /** */
+    const Epetra_Map& OperatorRangeMap() const {return *range_;}
+
+    
+
   private:
-    ParameterList params_;
+    LinearOperator<double> A_;
+    LinearSolver<double> solver_;
+    bool useTranspose_;
+    RefCountPtr<Epetra_Comm> comm_;
+    RefCountPtr<const Epetra_Map> domain_;
+    RefCountPtr<const Epetra_Map> range_;
+    bool isNativeEpetra_;
+    bool isCompoundEpetra_;
+    string label_;
   };
 }
 

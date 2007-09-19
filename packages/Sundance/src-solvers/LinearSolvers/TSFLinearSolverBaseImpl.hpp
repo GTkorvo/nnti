@@ -70,4 +70,13 @@ void LinearSolverBase<Scalar>::setParameter(const ParameterList& params,
   *dataPtr = params.template get<T>(name);
 }
 
+template <class Scalar>
+void LinearSolverBase<Scalar>::setUserPrec(const LinearOperator<Scalar>& op,
+					   const LinearSolver<double>& pSolver)
+{
+  TEST_FOR_EXCEPTION(true, runtime_error,
+                     "User-defined preconditioning not allowed for generic "
+		     "linear solver subtypes");
+}
+
 #endif

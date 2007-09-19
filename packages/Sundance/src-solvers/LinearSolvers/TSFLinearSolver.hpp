@@ -63,6 +63,10 @@ namespace TSFExtended
 
     /** Change the convergence tolerance. Default does nothing. */
     void updateTolerance(const double& tol) {this->ptr()->updateTolerance(tol);}
+    /** Set a user-defined preconditioner */
+    void setUserPrec(const LinearOperator<Scalar>& op,
+		     const LinearSolver<double>& pSolver) 
+    {this->ptr()->setUserPrec(op, pSolver);}
 
 
     /** */

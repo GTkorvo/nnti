@@ -89,6 +89,7 @@ UTILS = \
 	$(srcdir)/Utils/SundancePathUtils.cpp 
 
 CONCRETE_H = \
+	$(srcdir)/Concrete/EpetraTSFOperator.hpp\
 	$(srcdir)/Concrete/TSFDenseSerialVector.hpp\
 	$(srcdir)/Concrete/TSFEpetraGhostImporter.hpp\
 	$(srcdir)/Concrete/TSFEpetraGhostView.hpp\
@@ -98,9 +99,11 @@ CONCRETE_H = \
 	$(srcdir)/Concrete/TSFEpetraVectorSpace.hpp\
 	$(srcdir)/Concrete/TSFEpetraVectorType.hpp \
 	$(srcdir)/Concrete/TSFIfpackOperator.hpp \
-	$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.hpp
+	$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.hpp \
+	$(srcdir)/Concrete/TSFVectorSpace2EpetraMap.hpp 
 
 CONCRETE = \
+	$(srcdir)/Concrete/EpetraTSFOperator.cpp\
 	$(srcdir)/Concrete/TSFDenseSerialVector.cpp\
 	$(srcdir)/Concrete/TSFEpetraGhostImporter.cpp\
 	$(srcdir)/Concrete/TSFEpetraGhostView.cpp\
@@ -110,7 +113,8 @@ CONCRETE = \
 	$(srcdir)/Concrete/TSFEpetraVectorSpace.cpp\
 	$(srcdir)/Concrete/TSFEpetraVectorType.cpp \
 	$(srcdir)/Concrete/TSFIfpackOperator.cpp \
-	$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.cpp
+	$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.cpp \
+	$(srcdir)/Concrete/TSFVectorSpace2EpetraMap.cpp 
 
 OPERATORS_H = \
 	$(srcdir)/Operators/Thyra_BlockOperatorBase.hpp \

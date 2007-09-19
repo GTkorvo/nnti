@@ -73,6 +73,11 @@ namespace TSFExtended
     /** Change the convergence tolerance. */
     virtual void updateTolerance(const double& tol);
 
+
+    /** Set the preconditioning operator */
+    void setUserPrec(const LinearOperator<double>& P,
+		     const LinearSolver<double>& pSolver);
+
     /** \name Printable interface */
     //@{
     /** Write to a stream  */
@@ -121,6 +126,9 @@ namespace TSFExtended
     /** Flag indicating whether we are using Ifpack preconditioning */
     bool useIfpack_;
 
+    /** Flag indicating whether we are using a user-defined preconditioner */
+    bool useUserPrec_;
+
     /** Flag indicating whether we are doing a recursive solve
      *  with aztec (i.e., using recursiveIterate) */
     bool aztec_recursive_iterate_;
@@ -128,7 +136,7 @@ namespace TSFExtended
     /** Parameter list for preconditioner */
     mutable ParameterList precParams_;
 
-    /** ML preconditioner object */
+    /** Preconditioner object */
     mutable RefCountPtr<Epetra_Operator> prec_;
 
     /** Aztec status */
