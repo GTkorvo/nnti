@@ -61,8 +61,9 @@ namespace TSFExtended
 
       /** get a batch of elements. Slow default implementation loops
        * over calls to getElement(). */
+
       virtual void getElements(const Index* globalIndices, int numElems,
-                               vector<Scalar>& elems) const 
+                               std::vector<Scalar>& elems) const 
         {
           elems.resize(numElems);
           for (int i=0; i<numElems; i++)

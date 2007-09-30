@@ -142,16 +142,16 @@ namespace TSFExtended
     Vector<Scalar> u = b.space().createMember(); 
     Vector<Scalar> vrf = b.space().createMember(); 
 
-    vector<Scalar> h(kSpace+1);
-    vector<Scalar> f(kSpace+1);
-    vector<Scalar> q(kSpace+1);
-    vector<Scalar> mtmp(kSpace+1);
-    vector<Scalar> y(kSpace+1);
+    std::vector<Scalar> h(kSpace+1);
+    std::vector<Scalar> f(kSpace+1);
+    std::vector<Scalar> q(kSpace+1);
+    std::vector<Scalar> mtmp(kSpace+1);
+    std::vector<Scalar> y(kSpace+1);
 
-    vector<Vector<Scalar> > V(kSpace + 1);
-    vector<Vector<Scalar> > W(kSpace + 1);
-    vector<vector<Scalar> > QT(kSpace + 1);
-    vector<vector<Scalar> > R(kSpace + 1);
+    std::vector<Vector<Scalar> > V(kSpace + 1);
+    std::vector<Vector<Scalar> > W(kSpace + 1);
+    std::vector<std::vector<Scalar> > QT(kSpace + 1);
+    std::vector<std::vector<Scalar> > R(kSpace + 1);
 
 
 

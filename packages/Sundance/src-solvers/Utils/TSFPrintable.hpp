@@ -46,7 +46,7 @@ namespace TSFExtended
     {
     public:
       virtual ~Printable() {;}
-      virtual void print(ostream& os) const = 0 ;
+      virtual void print(std::ostream& os) const = 0 ;
     };
 }
 

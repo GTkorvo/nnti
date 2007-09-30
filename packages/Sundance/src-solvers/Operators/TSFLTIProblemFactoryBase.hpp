@@ -241,12 +241,12 @@ protected:
   virtual LinearOperator<Scalar> createBigF() const 
     {
       LinearOperator<Scalar> A = this->getA();
-      cout << "A.domain().dim() = " << A.domain().dim() << endl;
+      std::cout << "A.domain().dim() = " << A.domain().dim() << std::endl;
       VectorSpace<Scalar> littleDomain = productSpace(tuple(A.domain()));
       
       LinearOperator<Scalar> I = new IdentityOperator<Scalar>(A.domain());
       VectorSpace<Scalar> bigRange = this->blockSpace(nSteps_, A.range());
-      cout << "bigRange.dim() = " << bigRange.dim() << endl;
+      std::cout << "bigRange.dim() = " << bigRange.dim() << std::endl;
       
       LinearOperator<Scalar> rtn = new BlockOperator<Scalar>(littleDomain, bigRange);
       rtn.setBlock(0, 0, I);

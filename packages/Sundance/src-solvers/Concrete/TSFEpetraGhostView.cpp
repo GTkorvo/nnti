@@ -37,7 +37,7 @@ const double& EpetraGhostView::getElement(int globalIndex) const
 }
 
 void EpetraGhostView::getElements(const int* globalIndices, int numElems,
-                                  vector<double>& elems) const
+                                  std::vector<double>& elems) const
 {
   elems.resize(numElems);
   const Epetra_BlockMap& myMap = ghostView_->Map();
@@ -60,7 +60,7 @@ void  EpetraGhostView::import(const Epetra_Import& importer,
 
   /* do the import */
   int ierr = ghostView_->Import(srcObject, importer, Insert);
-  TEST_FOR_EXCEPTION(ierr < 0, runtime_error, "ierr=" << ierr << " in EpetraGhostView::import()");
+  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, "ierr=" << ierr << " in EpetraGhostView::import()");
 }
 
 void EpetraGhostView::print(ostream& os) const

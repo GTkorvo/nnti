@@ -100,7 +100,7 @@ void LAPACKGeneralMatrix::solve(bool transpose, const DenseSerialVector& in,
                   nRows_, pivPtr, outPtr, nRows_, &info);
 
   TEST_FOR_EXCEPTION(info != 0,
-                     runtime_error,
+                     std::runtime_error,
                      "LAPACKGeneralMatrix backsolve failed with error code"
                      << info);
 }
@@ -142,16 +142,16 @@ void LAPACKGeneralMatrix::factor() const
 
 
   TEST_FOR_EXCEPTION(info != 0,
-                     runtime_error,
+                     std::runtime_error,
                      "LAPACKGeneralMatrix factorization failed with error code"
                      << info);
 
 	isFactored_ = true;
 }
 
-void LAPACKGeneralMatrix::print(ostream& os) const
+void LAPACKGeneralMatrix::print(std::ostream& os) const
 {
-	os << "LAPACK " << nRows_ << "-by-" << nCols_ << " matrix: " << endl;
+	os << "LAPACK " << nRows_ << "-by-" << nCols_ << " matrix: " << std::endl;
 	os << "[";
 	for (int i=0; i<nRows_; i++)
 		{

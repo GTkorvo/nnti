@@ -34,10 +34,11 @@
 #include "TSFVectorSpaceDecl.hpp"
 #include "Thyra_SpmdVectorSpaceBase.hpp"
 #include "TSFDescribable.hpp"
+#include "Teuchos_Time.hpp"
+#include "Teuchos_TimeMonitor.hpp"
 
 using namespace TSFExtended;
 using namespace Teuchos;
-using std::ostream;
 
 static inline Time& createVecTimer() 
 {
@@ -90,7 +91,7 @@ int VectorSpace<Scalar>::lowestLocallyOwnedIndex() const
      {
        return 0;
      }
-   TEST_FOR_EXCEPTION(mpiSpace == 0 && serialSpace==0, runtime_error,
+   TEST_FOR_EXCEPTION(mpiSpace == 0 && serialSpace==0, std::runtime_error,
 		      "don't know how to compute lowest local index for "
 		      "a vector space that is neither MPI nor serial");
    return 0;
@@ -112,7 +113,7 @@ int VectorSpace<Scalar>::numLocalElements() const
      {
        return dim();
      }
-   TEST_FOR_EXCEPTION(mpiSpace == 0 && serialSpace==0, runtime_error,
+   TEST_FOR_EXCEPTION(mpiSpace == 0 && serialSpace==0, std::runtime_error,
 		      "don't know how to compute number of local elements for "
 		      "a vector space that is neither MPI nor serial");
    return 0;
@@ -125,7 +126,7 @@ int VectorSpace<Scalar>::numLocalElements() const
 template <class Scalar>
 bool VectorSpace<Scalar>::isCompatible(const VectorSpace<Scalar>& vecSpc) const 
 {
-  TEST_FOR_EXCEPTION(vecSpc.ptr().get() == 0, runtime_error,
+  TEST_FOR_EXCEPTION(vecSpc.ptr().get() == 0, std::runtime_error,
                      "null argument in VectorSpace<Scalar>::isCompatible()");
   return this->ptr().get()->isCompatible(*(vecSpc.ptr().get()));
 }
@@ -163,8 +164,8 @@ VectorSpace<Scalar> VectorSpace<Scalar>::getBlock(const int i) const
 {
   const Thyra::ProductVectorSpaceBase<Scalar>* pvs = 
     dynamic_cast<const Thyra::ProductVectorSpaceBase<Scalar>* > (this->ptr().get());
-  TEST_FOR_EXCEPTION(pvs == 0 && numBlocks()!=1, runtime_error,
-		     "Space not a ProductVectorSpace" << endl);
+  TEST_FOR_EXCEPTION(pvs == 0 && numBlocks()!=1, std::runtime_error,
+		     "Space not a ProductVectorSpace" << std::endl);
   if (pvs != 0)
     {
       return pvs->getBlock(i);
@@ -181,7 +182,7 @@ VectorSpace<Scalar> VectorSpace<Scalar>::getBlock(const int i) const
 //   const Thyra::ProductVectorSpace<Scalar>*  pvs = 
 //     dynamic_cast<const Thyra::ProductVectorSpace<Scalar>* >  (this->ptr().get());
 
-//   TEST_FOR_EXCEPTION(pvs == 0, runtime_error,
+//   TEST_FOR_EXCEPTION(pvs == 0, std::runtime_error,
 // 		     "Can't set block of vector space that is " <<
 // 		     "not a ProductVectorSpace.");
 

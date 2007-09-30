@@ -35,6 +35,8 @@
 
 
 using Teuchos::Array;
+using std::string;
+using std::ifstream;
 
 namespace SundanceUtils
 {
@@ -51,7 +53,7 @@ namespace SundanceUtils
         return path[i] + pathSep + name;
       }
 
-    TEST_FOR_EXCEPTION(true, runtime_error, "could not find file "
+    TEST_FOR_EXCEPTION(true, std::runtime_error, "could not find file "
                        << name << " in path " << path);
   }
 

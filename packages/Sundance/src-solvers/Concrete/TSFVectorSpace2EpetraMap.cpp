@@ -105,7 +105,7 @@ namespace TSFExtended {
 	  }
 	else
 	  {
-	    TEST_FOR_EXCEPTION(true, runtime_error, 
+	    TEST_FOR_EXCEPTION(true, std::runtime_error, 
 			       "Could not find communicator "
 			       "for vector space " << tsfSpace);
 	  }
@@ -118,10 +118,10 @@ namespace TSFExtended {
 	for (int i=1; i<tsfSpace.numBlocks(); i++)
 	  {
 	    getComm(tsfSpace.getBlock(i), comm);
-	    TEST_FOR_EXCEPTION(myRank != comm->MyPID(), runtime_error,
+	    TEST_FOR_EXCEPTION(myRank != comm->MyPID(), std::runtime_error,
 			       "inconsistent processor ranks in "
 			       "block vector space " << tsfSpace);
-	    TEST_FOR_EXCEPTION(np != comm->NumProc(), runtime_error,
+	    TEST_FOR_EXCEPTION(np != comm->NumProc(), std::runtime_error,
 			       "inconsistent processor counts in "
 			       "block vector space " << tsfSpace);
 	  }

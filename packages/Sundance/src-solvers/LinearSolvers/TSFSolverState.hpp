@@ -105,13 +105,13 @@ namespace TSFExtended
 
 
 template <class Scalar> inline
-ostream& operator<<(ostream& os, 
+std::ostream& operator<<(std::ostream& os, 
                     const TSFExtended::SolverState<Scalar>& state)
 {
-  os << "Solver final state: " << state.stateDescription() << endl;
-  os << "message: " << state.finalMsg() << endl;
-  os << "iters taken: " << state.finalIters() << endl;
-  os << "final residual: " << state.finalResid() << endl;
+  os << "Solver final state: " << state.stateDescription() << std::endl;
+  os << "message: " << state.finalMsg() << std::endl;
+  os << "iters taken: " << state.finalIters() << std::endl;
+  os << "final residual: " << state.finalResid() << std::endl;
   return os;
 }
 

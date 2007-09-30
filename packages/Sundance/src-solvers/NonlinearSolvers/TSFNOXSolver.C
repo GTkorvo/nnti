@@ -105,9 +105,14 @@ void NOXSolver::reset() const
 
 #ifdef TRILINOS_6
   solver_ = rcp(new NOX::Solver::Manager(*grp_, *statusTest_, noxParams_));
-#else
+#endif
+
+#ifdef TRILINOS_7
   noxParams_ = Teuchos::rcp(&params_, false);
   solver_ = rcp(new NOX::Solver::Manager(grp_, statusTest_, noxParams_));
+#else
+  noxParams_ = Teuchos::rcp(&params_, false);
+  solver_ = NOX::Solver::buildSolver(grp_, statusTest_, noxParams_);
 #endif
 }
 

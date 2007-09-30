@@ -53,7 +53,7 @@ EpetraVector
 {
   const EpetraVectorSpace* epvs 
     = dynamic_cast<const EpetraVectorSpace*>(vs.get());
-  TEST_FOR_EXCEPTION(epvs==0, runtime_error,
+  TEST_FOR_EXCEPTION(epvs==0, std::runtime_error,
                      "could not cast vector space to EpetraVectorSpace in "
                      "EpetraVector ctor");
 
@@ -73,7 +73,7 @@ EpetraVector
 {
   const EpetraVectorSpace* epvs 
     = dynamic_cast<const EpetraVectorSpace*>(vs.get());
-  TEST_FOR_EXCEPTION(epvs==0, runtime_error,
+  TEST_FOR_EXCEPTION(epvs==0, std::runtime_error,
                      "could not cast vector space to EpetraVectorSpace in "
                      "EpetraVector ctor");
 
@@ -111,7 +111,7 @@ const double& EpetraVector::getElement(Index index) const
 }
 
 void EpetraVector::getElements(const Index* globalIndices, int numElems,
-                               vector<double>& elems) const
+                               std::vector<double>& elems) const
 {
   elems.resize(numElems);
   const Epetra_BlockMap& myMap = epetraVec()->Map();
@@ -128,7 +128,7 @@ void EpetraVector::setElements(size_t numElems, const Index* globalIndices,
 {
   Epetra_FEVector* vec = dynamic_cast<Epetra_FEVector*>(epetraVec().get());
   int ierr = vec->ReplaceGlobalValues(numElems, globalIndices, values);
-  TEST_FOR_EXCEPTION(ierr < 0, runtime_error, "ReplaceGlobalValues returned "
+  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, "ReplaceGlobalValues returned "
                      "ierr=" << ierr << " in EpetraVector::setElements()");
 }
 
@@ -137,7 +137,7 @@ void EpetraVector::addToElements(size_t numElems, const Index* globalIndices,
 {
   Epetra_FEVector* vec = dynamic_cast<Epetra_FEVector*>(epetraVec().get());
   int ierr = vec->SumIntoGlobalValues(numElems, globalIndices, values);
-  TEST_FOR_EXCEPTION(ierr < 0, runtime_error, "SumIntoGlobalValues returned "
+  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, "SumIntoGlobalValues returned "
                      "ierr=" << ierr << " in EpetraVector::addToElements()");
 }
 

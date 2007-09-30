@@ -46,7 +46,7 @@ void Vector<Scalar>::setBlock(int i, const Vector<Scalar>& v)
 {
   Thyra::DefaultProductVector<Scalar>* pv = 
     dynamic_cast<Thyra::DefaultProductVector<Scalar>* >(this->ptr().get());
-  TEST_FOR_EXCEPTION(pv == 0, runtime_error,
+  TEST_FOR_EXCEPTION(pv == 0, std::runtime_error,
     "vector is not a product vector");
   Thyra::assign(pv->getNonconstVectorBlock(i).get(), *(v.ptr().get()));
 }  
@@ -61,7 +61,7 @@ Vector<Scalar> Vector<Scalar>::getBlock(int i) const
     dynamic_cast <const Thyra::DefaultProductVector<Scalar>* >(this->ptr().get());
   if (pv==0) 
   {
-    TEST_FOR_EXCEPTION(i != 0, runtime_error,
+    TEST_FOR_EXCEPTION(i != 0, std::runtime_error,
       "Nonzero block index " << i << " into a vector that is not "
       "a product vector");
     return *this;
@@ -81,20 +81,20 @@ void Vector<Scalar>::print(std::ostream& os) const
     dynamic_cast <const Thyra::ProductMultiVectorBase<Scalar>* >(this->ptr().get());
   if (pv != 0)
   {
-    os << "ProductVectorSpace[" << endl;
+    os << "ProductVectorSpace[" << std::endl;
     for (int i=0; i<this->space().numBlocks(); i++)
     {
-      os << "block=" << i << endl;
-      os << this->getBlock(i) << endl;
+      os << "block=" << i << std::endl;
+      os << this->getBlock(i) << std::endl;
     }
-    os << "]" << endl;
+    os << "]" << std::endl;
     return;
   }
   else
   {
     for (SequentialIterator<Scalar> i=this->space().begin(); i!=this->space().end(); i++)
     {
-      os << i.globalIndex() << '\t' << (*this)[i] << endl;
+      os << i.globalIndex() << '\t' << (*this)[i] << std::endl;
     }
 
   }
@@ -602,7 +602,7 @@ Scalar Vector<Scalar>::getElement(Index globalIndex) const
       Index low = dsv->spmdSpace()->localOffset();
       Index subdim = dsv->spmdSpace()->localSubDim();
       TEST_FOR_EXCEPTION( globalIndex < low || globalIndex >= low+subdim, 
-        runtime_error,
+        std::runtime_error,
         "Bounds violation: " << globalIndex << "is out of range [low" 
         << ", " <<  low+subdim << "]");
       return dsv->getPtr()[stride*(globalIndex - low)];
@@ -670,7 +670,7 @@ void Vector<Scalar>::setElement(Index globalIndex, const Scalar& value)
       Index low = dsv->spmdSpace()->localOffset();
       Index subdim = dsv->spmdSpace()->localSubDim();
       TEST_FOR_EXCEPTION( globalIndex < low || globalIndex >= low+subdim, 
-        runtime_error,
+        std::runtime_error,
         "Bounds violation: " << globalIndex << "is out of range [low" 
         << ", " <<  low+subdim << "]");
       dsv->getPtr()[stride*(globalIndex - low)] = value;
@@ -822,7 +822,7 @@ void Vector<Scalar>::addToElement(Index globalIndex, const Scalar& value)
       Index low = dsv->spmdSpace()->localOffset();
       Index subdim = dsv->spmdSpace()->localSubDim();
       TEST_FOR_EXCEPTION( globalIndex < low || globalIndex >= low+subdim, 
-        runtime_error,
+        std::runtime_error,
         "Bounds violation: " << globalIndex << "is out of range [low" 
         << ", " <<  low+subdim << "]");
       dsv->getPtr()[stride*(globalIndex - low)] += value;
@@ -839,7 +839,7 @@ void Vector<Scalar>::addToElement(Index globalIndex, const Scalar& value)
 template <class Scalar> inline 
 void Vector<Scalar>::boundscheck(Index i, int dim) const
 {
-  TEST_FOR_EXCEPTION( i < 0 || i >= dim, runtime_error,
+  TEST_FOR_EXCEPTION( i < 0 || i >= dim, std::runtime_error,
     "Bounds violation: " << i << "is out of range [0" 
     << ", " << dim << "]");
 }

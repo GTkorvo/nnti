@@ -128,7 +128,7 @@ namespace TSFExtended
     ) const;
 
     /** */
-    void print(ostream& os) const ;
+    void print(std::ostream& os) const ;
   private:
 
   }; 

@@ -47,10 +47,10 @@ EpetraGhostImporter
     }
   else
     {
-      int nGlobal = localMap_->NumGlobalElements();
+      //bvbw not used      int nGlobal = localMap_->NumGlobalElements();
       int nLocal = localMap_->NumMyElements();
       int nGhostView = nLocal+nGhost;
-      vector<int> globalIndices(nGhostView);
+      std::vector<int> globalIndices(nGhostView);
       for (int i=0; i<nLocal; i++) globalIndices[i] = localMap_->GID(i);
       for (int i=0; i<nGhost; i++) globalIndices[i+nLocal] = ghostElements[i];
 
@@ -77,7 +77,7 @@ void EpetraGhostImporter
   EpetraGhostView* epgv 
     = dynamic_cast<EpetraGhostView*>(ghostView.get());
 
-  TEST_FOR_EXCEPTION(epgv==0, runtime_error,
+  TEST_FOR_EXCEPTION(epgv==0, std::runtime_error,
                      "argument ghostView to EpetraGhostImporter::importView() "
                      "could not be cast to a EpetraGhostView pointer");
 

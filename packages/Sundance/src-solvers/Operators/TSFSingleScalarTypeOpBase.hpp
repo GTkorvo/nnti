@@ -48,7 +48,7 @@ namespace TSFExtended
 {
   using namespace Teuchos;
   using namespace Thyra;
-
+  using std::runtime_error;
   /** 
    * TSFSingleScalarTypeOpBase is a subtype of Thyra::LinearOpBase
    * where the domain and range spaces have the same scalar type.

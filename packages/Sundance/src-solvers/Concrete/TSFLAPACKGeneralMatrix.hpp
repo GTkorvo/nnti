@@ -77,7 +77,7 @@ namespace TSFExtended
     void factor() const ;
 
     /** write to a stream */
-    void print(ostream& os) const ;
+    void print(std::ostream& os) const ;
 
 
 

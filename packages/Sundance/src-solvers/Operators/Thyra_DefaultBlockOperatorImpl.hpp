@@ -440,7 +440,7 @@ namespace Thyra
   {
     if (verbLevel == VERB_DEFAULT)
       {
-        os << leadingIndent<< description() << endl;
+        os << leadingIndent<< description() << std::endl;
       }
     else
       {

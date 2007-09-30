@@ -61,9 +61,9 @@ namespace TSFExtended
     /** \name Printable interface */
     //@{
     /** Write to a stream  */
-    void print(ostream& os) const 
+    void print(std::ostream& os) const 
     {
-      os << description() << endl;
+      os << description() << std::endl;
     }
     //@}
     

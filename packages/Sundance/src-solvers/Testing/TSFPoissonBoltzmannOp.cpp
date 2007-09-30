@@ -123,7 +123,7 @@ Vector<double> PoissonBoltzmannOp::exactSoln() const
     {
       double x = r*h;
       double u = 2.0*log(cosh(x/sqrt(2.0)));
-      cerr << x << " " << u << endl;
+      std::cerr << x << " " << u << std::endl;
       rtn.setElement(r, u);
     }
 

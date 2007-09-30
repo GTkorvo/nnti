@@ -53,7 +53,7 @@ namespace TSFExtended
     virtual bool isAccessible(int globalIndex) const = 0 ;
     
     /**  */
-    virtual void print(ostream& os) const = 0 ;
+    virtual void print(std::ostream& os) const = 0 ;
 
   private:
   };

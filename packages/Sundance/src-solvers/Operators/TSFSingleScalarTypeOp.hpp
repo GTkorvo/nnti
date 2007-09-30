@@ -86,8 +86,8 @@ namespace TSFExtended
         }
       else
         {
-          cout << "nX=" << X.domain()->dim()
-               << ", nY=" << Y->domain()->dim() << endl;
+          std::cout << "nX=" << X.domain()->dim()
+               << ", nY=" << Y->domain()->dim() << std::endl;
           TEST_FOR_EXCEPTION(true, runtime_error,
                              "mix of vectors and multivectors in "
                              "SingleScalarTypeOp::apply()");
@@ -128,8 +128,8 @@ namespace TSFExtended
         }
       else
         {
-          cout << "nX=" << X.domain()->dim()
-               << ", nY=" << Y->domain()->dim() << endl;
+          std::cout << "nX=" << X.domain()->dim()
+               << ", nY=" << Y->domain()->dim() << std::endl;
           TEST_FOR_EXCEPTION(true, runtime_error,
                              "mix of vectors and multivectors in "
                              "SingleScalarTypeOp::applyTranspose()");

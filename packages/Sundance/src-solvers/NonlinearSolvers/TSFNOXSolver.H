@@ -35,6 +35,7 @@
 #include "NOX_Utils.H"
 #include "NOX_TSF_Group.H"
 #include "NOX_TSF_StatusTestBuilder.H"
+#include "NOX_Multiphysics_Solver_Manager.H"
 #include "Teuchos_TestForException.hpp"   
 #include "Teuchos_ParameterList.hpp"
 
@@ -68,7 +69,7 @@ namespace TSFExtended
     mutable Vector<double> x0_;
     mutable Vector<double> soln_;
     mutable RefCountPtr<NOX::TSF::Group> grp_;
-    mutable RefCountPtr<NOX::Solver::Manager> solver_;
+    mutable RefCountPtr<NOX::Solver::Generic> solver_;
     mutable RefCountPtr<NOX::StatusTest::Generic> statusTest_;
     mutable ParameterList params_;
 #ifdef TRILINOS_6

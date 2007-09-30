@@ -45,9 +45,9 @@ namespace TSFExtended
      *  depth*3 spaces 
      *  @param depth int giving the number of 3 space tabs 
      */
-    virtual string indentedDescribe(int depth) const
+    virtual std::string indentedDescribe(int depth) const
     {
-      string ret = "";
+      std::string ret = "";
       for (int i = 0; i < depth; i++)
         {
           ret.append("   ");

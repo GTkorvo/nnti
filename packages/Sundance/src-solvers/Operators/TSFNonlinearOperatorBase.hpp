@@ -85,13 +85,13 @@ namespace TSFExtended
       {
         if (this->verbosity() > VerbLow)
           {
-            cerr << "NonlinearOperatorBase Setting new eval pt";
+            std::cerr << "NonlinearOperatorBase Setting new eval pt";
             if (this->verbosity() > VerbHigh)
               {
-                cerr << " to " << endl ;
-                x.print(cerr);
+                std::cerr << " to " << std::endl ;
+                x.print(std::cerr);
               }
-            cerr << endl;
+            std::cerr << std::endl;
           }
         jacobianIsValid_ = false;
         residualIsValid_ = false;
@@ -114,13 +114,13 @@ namespace TSFExtended
       {
         if (this->verbosity() > VerbLow)
           {
-            cerr << "NonlinearOperatorBase getting Jacobian" << endl;
+            std::cerr << "NonlinearOperatorBase getting Jacobian" << std::endl;
           }
         if (!jacobianIsValid_)
           {
             if (this->verbosity() > VerbLow)
               {
-                cerr << "...computing new J and F" << endl;
+                std::cerr << "...computing new J and F" << std::endl;
               }
             currentJ_ 
               = computeJacobianAndFunction(currentFunctionValue_);
@@ -131,14 +131,14 @@ namespace TSFExtended
           {
             if (this->verbosity() > VerbLow)
               {
-                cerr << "...reusing valid J" << endl;
+                std::cerr << "...reusing valid J" << std::endl;
               }
           }
         if (this->verbosity() > VerbHigh)
           {
-            cerr << "J is " << endl;
-            currentJ_.print(cerr);
-            cerr << endl;
+            std::cerr << "J is " << std::endl;
+            currentJ_.print(std::cerr);
+            std::cerr << std::endl;
           }
         return currentJ_;
       }
@@ -150,13 +150,13 @@ namespace TSFExtended
       {
         if (this->verbosity() > VerbLow)
           {
-            cerr << "NonlinearOperatorBase getting function value" << endl;
+            std::cerr << "NonlinearOperatorBase getting function value" << std::endl;
           }
         if (!residualIsValid_)
           {
             if (this->verbosity() > VerbLow)
               {
-                cerr << "...computing new F" << endl;
+                std::cerr << "...computing new F" << std::endl;
               }
             currentFunctionValue_ = computeFunctionValue();
             residualIsValid_ = true;
@@ -165,15 +165,15 @@ namespace TSFExtended
           {
             if (this->verbosity() > VerbLow)
               {
-                cerr << "...reusing valid F" << endl;
+                std::cerr << "...reusing valid F" << std::endl;
               }
           }
 
         if (this->verbosity() > VerbHigh)
           {
-            cerr << "F is " << endl;
-            currentFunctionValue_.print(cerr);
-            cerr << endl;
+	    std::cerr << "F is " << std::endl;
+            currentFunctionValue_.print(std::cerr);
+            std::cerr << std::endl;
           }
         return currentFunctionValue_;
       }

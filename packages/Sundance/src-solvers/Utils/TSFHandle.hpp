@@ -176,7 +176,7 @@ namespace TSFExtended
 
 
 template <class PointerType> inline
-ostream& operator<<(ostream& os, const TSFExtended::Handle<PointerType>& h)
+std::ostream& operator<<(std::ostream& os, const TSFExtended::Handle<PointerType>& h)
 {
   h.print(os);
   return os;
