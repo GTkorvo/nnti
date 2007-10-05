@@ -104,6 +104,19 @@ namespace RBGen {
     typedef Anasazi::MultiVec<double> MV;
     typedef Anasazi::Operator<double> OP;
     //
+    // Create the operator.
+    //
+    Teuchos::RCP<OP> Amat;
+    if (op_ != Teuchos::null) {
+      // Call the constructor for the (WA)^T*WA operator
+      Amat = Teuchos::rcp( new Anasazi::EpetraWSymMVOp( ss_, op_ ) );
+      isInner_ = true;  // Only inner products are supported at this time.
+    }
+    else {
+      // Call the constructor for the (A^T*A) operator
+      Amat = Teuchos::rcp( new Anasazi::EpetraSymMVOp( ss_, !isInner_ ) );
+    }
+    //
     // Create a map for the columns of the snapshot set.
     //
     Epetra_LocalMap localMap(num_vecs, 0, comm);
@@ -117,17 +130,7 @@ namespace RBGen {
       ivec = Teuchos::rcp( new Anasazi::EpetraMultiVec( ss_->Map(), blockSize ) );
     ivec->MvRandom();
     //
-    Teuchos::RCP<OP> Amat;
 
-    if (op_ != Teuchos::null) {
-      // Call the constructor for the (WA)^T*WA operator
-      Amat = Teuchos::rcp( new Anasazi::EpetraWSymMVOp( ss_, op_ ) );
-    }
-    else {
-      // Call the constructor for the (A^T*A) operator
-      Amat = Teuchos::rcp( new Anasazi::EpetraSymMVOp( ss_, !isInner_ ) );
-    }
- 
     // Create the eigenproblem
     Teuchos::RCP<Anasazi::BasicEigenproblem<double,MV,OP> > MyProblem =
       Teuchos::rcp( new Anasazi::BasicEigenproblem<double,MV,OP>(Amat, ivec) );
