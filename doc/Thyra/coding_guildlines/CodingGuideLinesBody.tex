@@ -139,6 +139,29 @@ underscores between words in general.  For example:
   ClassType3   objectForYourThing;
 \end{verbatim}}
 
+{}\textit{Exception:} Indentifiers that have mathematical symbols in them such
+as {}\texttt{x}, {}\texttt{J}, and {}\texttt{alpha} should use lower case
+names separated by underscores {}\texttt{\_}.  For example:
+
+{\small\begin{verbatim}
+  Vector curr_x;
+  Matrix curr_J;
+  Scalar curr_alpha;
+\end{verbatim}}
+
+{}\textit{Justification:} The Java convention {}\texttt{objectIdentifierName}
+using capitalization with no underscores produces shorter readable identifiers
+for English names but does not work well for identifiers with math sybmols.
+With math symbols, it is important to maintain the case of the symbol as
+{}\texttt{x} and {}\texttt{X} may mean something totally different
+mathematically and it is confusing and/or ambiguous to write either
+{}\texttt{currx} or {}\texttt{currX}.  In these cases, it is far better to use
+underscores and write {}\texttt{curr\_x} as shown above.  While in it is
+considered bad practice to differentiate variable names by case alone (see
+``Don't differentiate variable names solely by capitalization'' in
+{}\cite[Section 11.7]{CodeComplete2nd04}), this is very common in math and
+mathematical software should support this.
+
 {}\item\stepcounter{Thyra_NC_counter}\textbf{NC \arabic{Thyra_NC_counter}}:
 {}\textit{C++ class/struct data member names}: Names for data members
 within a class should use the same naming convention as for other object
@@ -165,6 +188,49 @@ constructors) should not contain underscores.  For example:
     ...
   };
 \end{verbatim}}
+
+{}\textit{Exception:} Indentifiers that have mathematical symbols in them such
+as {}\texttt{x}, {}\texttt{J}, and {}\texttt{alpha} should use lower case
+names separated by underscores {}\texttt{\_}.  For example:
+
+{\small\begin{verbatim}
+  Vector curr_x_;
+  Matrix curr_J_;
+  Scalar curr_alpha_;
+\end{verbatim}}
+
+{}\textit{Justification:} See {}\textbf{NC 4} above.
+
+
+
+
+
+
+{}\item\stepcounter{Thyra_NC_counter}\textbf{NC \arabic{Thyra_NC_counter}}:
+{}\textit{C++ class member functon names}: Names for class member functions
+should use the same naming convention as for object identifier.  For example:
+
+{\small\begin{verbatim}
+  class SomeClass {
+  public:
+    void someMemberFunction(...);
+  };
+\end{verbatim}}
+
+{}\textit{Exception:} Indentifiers that have mathematical symbols in them such
+as {}\texttt{x}, {}\texttt{J}, and {}\texttt{alpha} should use lower case
+names separated by underscores {}\texttt{\_}.  For example:
+
+{\small\begin{verbatim}
+  class SomeClass {
+  public:
+    const Vector& get_x() const;
+    const Matrix& get_J() const;
+    Scalar get_alpha() const;
+  };
+\end{verbatim}}
+
+{}\textit{Justification:} See {}\textbf{NC 4} above.
 
 {}\item\stepcounter{Thyra_NC_counter}\textbf{NC \arabic{Thyra_NC_counter}}:
 {}\textit{Naming of C++ pure abstract base classes, default
@@ -223,8 +289,8 @@ the non-const reference (or pointer) to the contained object.  For example,
 {\small\begin{verbatim}
   class SomeClass {
   public:
-    RefCountPtr<Part> getNonconstPart();
-    RefCountPtr<const Part> getPart() const;
+    RCP<Part> getNonconstPart();
+    RCP<const Part> getPart() const;
     ...
   };
 \end{verbatim}}
@@ -371,8 +437,8 @@ would get from a simple use of the {}\texttt{assert(...)} macro.
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
 {}\textit{Avoid the use of raw C++ pointers in all but the lowest level
 code}: The tools mentioned below which include {}\texttt{Teuchos::\-Ptr},
-{}\texttt{Teuchos::\-Ref\-Count\-Ptr}, {}\texttt{Teuchos::\-Array},
-{}\texttt{Teuchos::\-Array\-Ref\-Count\-Ptr}, and
+{}\texttt{Teuchos::\-RCP}, {}\texttt{Teuchos::\-Array},
+{}\texttt{Teuchos::\-Array\-RCP}, and
 {}\texttt{Teuchos::\-Array\-View} allow most code to be written without any
 explicit raw C++ pointers.  Also, in general, perfer to use
 {}\texttt{std\-::string} instead of {}\texttt{char*} or {}\texttt{const
@@ -392,11 +458,11 @@ to eliminate all needs for checking for NULL to avoid undefined behavior when
 one dereferences a NULL pointer.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
-{}\textit{Use Teuchos::RefCountPtr for memory management of single
+{}\textit{Use Teuchos::RCP for memory management of single
 dynamically allocated objects and for handling persisting
-{}\cite{RefCountPtrBeginnersGuide} associations}: Replace all references to
+{}\cite{RCPBeginnersGuide} associations}: Replace all references to
 the class {}\texttt{boost::\-shared\_ptr} in all items in
-{}\cite{C++CodingStandards05} with {}\texttt{Teuchos::\-RefCountPtr}.
+{}\cite{C++CodingStandards05} with {}\texttt{Teuchos::\-RCP}.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
 {}\textit{Use Teuchos::ArrayView as function arguments in the place of
@@ -419,12 +485,12 @@ addition, {}\texttt{Teuchos\-::Array} will automatically convert into an
 {}\texttt{Teuchos\-::ArrayView} object safely when used in function calls.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
-{}\textit{Use Teuchos::ArrayRefCountPtr for memory management of
+{}\textit{Use Teuchos::ArrayRCP for memory management of
 dynamically allocated objects stored in contiguous arrays of data and for
 persisting associations involving contiguous arrays}: Note that
-{}\texttt{Teuchos::ArrayRefCountPtr} does {}\underline{not} take the place of
+{}\texttt{Teuchos::ArrayRCP} does {}\underline{not} take the place of
 a contiguous container class such as {}\texttt{Teuchos::\-Array} or
-{}\texttt{std::\-vector}.  A {}\texttt{Teuchos::ArrayRefCountPtr} object can
+{}\texttt{std::\-vector}.  A {}\texttt{Teuchos::ArrayRCP} object can
 not change the size of the array, it can only provide for reference counted
 sharing of an array of data of fixed size and provide subviews of contiguous
 parts of the managed array.
@@ -435,7 +501,7 @@ container}: While in optimized mode, {}\texttt{Teuchos\-::Map} is equivalent
 to {}\texttt{std\-::map}, in debug mode {}\texttt{Teuchos\-::Map} uses a
 simplified data-structure with fully checking of access and iterators.  This
 class uses {}\texttt{Teuchos\-::Array},
-{}\texttt{Teuchos\-::Array\-Ref\-Count\-Ptr} and others to build a fully
+{}\texttt{Teuchos\-::Array\-RCP} and others to build a fully
 checked (but slower) implementation.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
@@ -563,7 +629,8 @@ becomes:
 
 the meaning is much more clear.  Therefore, when self documentation and
 compile-time safety are important, perfer to define and use {}\texttt{enum}s
-over {}\texttt{bool}s as formal function arguments.
+over {}\texttt{bool}s as formal function arguments (see {}\cite[Section
+12.6]{CodeComplete2nd04}).
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
 {}\textit{Accept user options at runtime through a
@@ -585,19 +652,19 @@ SPMD programs.  Instead, produce output using one of the following approaches.
 \begin{itemize}
 
 {}\item\textit{Prefer to print output through a
-{}\texttt{Teuchos\-::Fancy\-OStream} object instead of a bare
-{}\texttt{std\-::ostream} objects to more easily produce formatted output}: A
+{}\texttt{Teuchos\-::Fancy\-OStream} object instead of through a bare
+{}\texttt{std\-::ostream} object to more easily produce formatted output}: A
 {}\texttt{Teuchos\-::Fancy\-OStream} class object can wrap any
-{}\texttt{std\-::ostream} and helps to produce structured indented output and
-to create more readable output in an SPMD program (even when every processor
-produces output).
+{}\texttt{std\-::ostream} object and helps to produce structured indented
+output and to create more readable output in an SPMD program (even when every
+processor produces output).
 
 {}\item\textit{Derive from {}\texttt{Teuchos\-::Describable} and implement the
-{}\texttt{description()} and {}\texttt{describe()} to allow clients to print
-the current state of an object}: The {}\texttt{Teuchos\-::Describable}
-interface is the appropriate way to allow clients to print the current state
-of an object in a flexible way.  The verbosity of the output is controlled by
-an input enum parameter.
+functions {}\texttt{description()} and {}\texttt{describe()} to allow clients
+to print the current state of an object}: The
+{}\texttt{Teuchos\-::Describable} interface is the appropriate way to allow
+clients to print the current state of an object in a flexible way.  The
+verbosity of the output is controlled by an input enum parameter.
 
 {}\item\textit{Derive from {}\texttt{Teuchos\-::Verbose\-Object} and print to
 {}\texttt{*this->getOStream()} to give information about what an object is
@@ -942,7 +1009,7 @@ also be applied to function definitions and function calls.
   then it can be listed on separate lines with no indent, for example, as:
   
   {\small\begin{verbatim}
-  Teuchos::RefCountPtr<ReturnType>
+  Teuchos::RCP<ReturnType>
   someVeryLongAndVeryImportantFunction(
     int arg1, bool arg2, double* arg3[]
     ,const std::string &arg4  = ""
@@ -986,7 +1053,7 @@ Note that the pure K\&R style (for example, as defined by Artistic Style
 {}\cite{ArtisticStyle}) shown as:
 
 {\small\begin{verbatim}
-  // Pure K&R Style (*not* recommended)
+  // Pure K&R Style (*NOT* recommended)
   if(someCondition) {
     ...
   } else {
@@ -1024,7 +1091,7 @@ where the control statement is continued over multiple lines.  For example,
 the modified K\&R style with line continuations looks like:
 
 {\small\begin{verbatim}
-  // Modified K&R Style with line continuations (*not* recommended)
+  // Modified K&R Style with line continuations (*NOT* recommended)
   if( someLongCondition &&
     anotherVeryLongCondition &&
     theLongestConditionThatWillFitOnOneLine ) {
@@ -1471,15 +1538,15 @@ would look like:
 
     /** \brief . */
     void setParameterList(
-      Teuchos::RefCountPtr<Teuchos::ParameterList> const& paramList);
+      Teuchos::RCP<Teuchos::ParameterList> const& paramList);
     /** \brief . */
-    Teuchos::RefCountPtr<Teuchos::ParameterList> getParameterList();
+    Teuchos::RCP<Teuchos::ParameterList> getParameterList();
     /** \brief . */
-    Teuchos::RefCountPtr<Teuchos::ParameterList> unsetParameterList();
+    Teuchos::RCP<Teuchos::ParameterList> unsetParameterList();
     /** \brief . */
-    Teuchos::RefCountPtr<const Teuchos::ParameterList> getParameterList() const;
+    Teuchos::RCP<const Teuchos::ParameterList> getParameterList() const;
     /** \brief . */
-    Teuchos::RefCountPtr<const Teuchos::ParameterList> getValidParameters() const;
+    Teuchos::RCP<const Teuchos::ParameterList> getValidParameters() const;
 
     //@}
 
