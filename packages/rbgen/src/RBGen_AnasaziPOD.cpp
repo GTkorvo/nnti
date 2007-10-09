@@ -108,7 +108,7 @@ namespace RBGen {
     //
     Teuchos::RCP<OP> Amat;
     if (op_ != Teuchos::null) {
-      // Call the constructor for the (WA)^T*WA operator
+      // Call the constructor for the A^T*W*A operator
       Amat = Teuchos::rcp( new Anasazi::EpetraWSymMVOp( ss_, op_ ) );
       isInner_ = true;  // Only inner products are supported at this time.
     }
