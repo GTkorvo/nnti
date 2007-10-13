@@ -28,9 +28,10 @@
 #include "TSFEpetraVectorSpace.hpp"
 #include "TSFEpetraVector.hpp"
 #include "Teuchos_Utils.hpp"
-#include "Teuchos_DefaultMpiComm.hpp"
 #include "Teuchos_DefaultSerialComm.hpp"
+
 #ifdef HAVE_MPI
+#include "Teuchos_DefaultMpiComm.hpp"
 #include "Epetra_MpiComm.h"
 #endif
 #include "Epetra_SerialComm.h"
@@ -38,7 +39,9 @@
 
 #ifdef TRILINOS_6
 #include "Thyra_MultiVectorCols.hpp"
+#ifdef HAVE_MPI
 #include "Thyra_MPIVectorSpaceBase.hpp"
+#endif
 #include "Thyra_SerialVectorSpaceStd.hpp"
 #define DefaultSerialVectorSpace SerialVectorSpaceStd
 #define DefaultColumnwiseMultiVector MultiVectorCols
