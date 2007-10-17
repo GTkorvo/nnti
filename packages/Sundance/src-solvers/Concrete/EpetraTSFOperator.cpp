@@ -43,7 +43,7 @@
 #include "Epetra_Comm.h"
 #include "Epetra_CrsMatrix.h"
 
-#ifdef HAVE_EPETRA_THYRA
+#ifdef HAVE_THYRA_EPETRA
 #include "Thyra_EpetraThyraWrappers.hpp"
 #endif
 

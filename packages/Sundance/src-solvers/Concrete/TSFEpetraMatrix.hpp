@@ -41,7 +41,8 @@
 #include "TSFILUFactorizableOp.hpp"
 #include "Epetra_CrsMatrix.h"
 
-#ifdef HAVE_EPETRA_THYRA
+#include "Thyra_ConfigDefs.hpp"
+#ifdef HAVE_THYRA_EPETRA
 #include "Thyra_EpetraLinearOpBase.hpp"
 #endif
 
@@ -58,7 +59,7 @@ namespace TSFExtended
                        // public ExplicitlyTransposeableOp<double>,
                        public Printable,
                        public ILUFactorizableOp<double>
-#ifdef HAVE_EPETRA_THYRA
+#ifdef HAVE_THYRA_EPETRA
                      , virtual public EpetraLinearOpBase
 #endif
   {
@@ -98,7 +99,7 @@ namespace TSFExtended
     }
 
 
-#ifdef HAVE_EPETRA_THYRA
+#ifdef HAVE_THYRA_EPETRA
     /** \name Epetra-Thyra adapter interface */
     //@{
 

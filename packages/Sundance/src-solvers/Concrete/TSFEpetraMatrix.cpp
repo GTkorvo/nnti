@@ -40,7 +40,7 @@
 #include "Teuchos_dyn_cast.hpp"
 #include "Teuchos_getConst.hpp"
 
-#ifdef HAVE_EPETRA_THYRA
+#ifdef HAVE_THYRA_EPETRA
 #include "Thyra_EpetraThyraWrappers.hpp"
 #endif
 
@@ -114,7 +114,7 @@ void EpetraMatrix::generalApply(const Thyra::ETransp M_trans,
 }
 
 
-#ifdef HAVE_EPETRA_THYRA
+#ifdef HAVE_THYRA_EPETRA
 
 
 void EpetraMatrix::euclideanApply(
