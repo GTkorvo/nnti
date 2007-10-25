@@ -4,7 +4,7 @@
 \usepackage{graphicx}
 \usepackage{latexsym}
 %\usepackage{color}
-\usepackage[all]{draftcopy}
+%\usepackage[all]{draftcopy}
 \input{rab_commands}
 
 \raggedright
@@ -24,7 +24,7 @@
 %
 
 \title{\center
-Nightly Building and Testing of Development Versions of Applications and
+Daily Integration and Testing of the Development Versions of Applications and
 Trilinos\\[2ex] {\Large A new foundation for enhanced collaboration in
 application and algorithm research and development}}
 \author{Roscoe A. Bartlett}
@@ -32,8 +32,8 @@ application and algorithm research and development}}
 % ---------------------------------------------------------------------------- %
 % Set some things we need for SAND reports. These are mandatory
 %
-\SANDnum{SAND2007-xxx}
-\SANDprintDate{??? 2007}
+\SANDnum{SAND2007-????}
+\SANDprintDate{October 2007}
 \SANDauthor{Roscoe A. Bartlett}
 
 % ---------------------------------------------------------------------------- %
@@ -64,13 +64,22 @@ application and algorithm research and development}}
 %\clearpage
 
 %
-%\begin{abstract}
+\begin{abstract}
 %
 
-%ToDo: Fill this in!
+Daily integration of the development versions of the application code Charon
+and the numerical solvers collection Trilinos has help us to create a new
+vision for a deeper level of collaboration between solver developers and
+application developers which benefits everyone involved.  The bridge for this
+deeper collaboration is based on the foundation of nightly building and
+testing of the combined development versions of the application code (e.g.\
+Charon) and Trilinos.  Here we outline the proposed daily integration and
+testing process, describe potential advantages and disadvantages, and describe
+our experiences with Charon + Trilinos Dev during the ASC FY07 Level-2
+Vertical Integration Milestone.
 
 %
-%\end{abstract}
+\end{abstract}
 %
 
 % ------------------------------------------------------------------------ %
@@ -83,9 +92,10 @@ application and algorithm research and development}}
 
 I would like to thank Scott Collis, Mike Heroux, Russell Hooper, Roger
 Pawlowski, Andy Salinger, Jim Willenbring and many others for helpful
-conversations that helped shape this idea.
-
-ToDo: Add more individuals that need to be acknowledged.
+conversations that helped shape this idea.  I would also like to thank all of
+the members ASC FY07 Level-2 Vertical Integration Milestone effort in helping
+to provide an environment where these ideas could be formed and take hold and
+in helping to set up and maintain Charon + Trilinos Dev.
 
 %
 %The format of this report is based on information found
@@ -156,36 +166,38 @@ several months after a Trilinos release to upgrade Trilinos versions.  What is
 being done right now with Trilinos is the maintenance version of the so called
 ``Big Bang'' integration approach which has all sorts of bad implications
 associated with it {}\cite{book:code-complete-2}.  Iterations of one year or
-even six months are too long to call ``incremental'' integration if any
-significant develop is being done in the APP or in Trilinos.  Modern trends in
-software engineering point to much more frequent integrations as a way to
-reduce risk and make the development and release process much more predictable
-[??? put in lots of references here ???].
+even six months are too long to call ``incremental'' if any significant
+develop is being done in the APP or in Trilinos.  Modern trends in software
+engineering (e.g.\ Agile methods) point to much more frequent integrations as
+a way to reduce risk and make the development and release process much more
+predictable {}\cite{book:code-complete-2, book:continuous-integration,
+book:extreme-programming-2nd, book:agile-software-development,
+book:crystal-clear}.
 
-In the execution of this nightly building and testing process, we have learned
-many things about how to do quasi-continuous integration {}\cite[Section
-29.4]{book:code-complete-2}\footnote{By quasi-continuous integration, we mean
-that we are suggesting integrating and testing once a day and not every few
-hours as some have advocated {}\cite{continuous-integration}.} of application
-and algorithms software and we have realized many important unplanned
-benefits.  This will allow us to reap many more benefits in the future if this
-process is maintained and extended.  There are both production-related
-benefits and research-related benefits that help both the application
-developers and the algorithm developers to achieve their goals.  On the
-research side, this significantly reduces the overhead required for algorithm
-developers to try their algorithms out on production quality problems.
-Developing a numerical solver with a production problem exposes the algorithm
-developer to a whole host of issues (e.g.\ poor scaling, ill-conditioning,
-convergence difficulties, etc.) that are hard to replicate with model
-problems.  On the production side, constant integration insures that the
-application and Trilinos are always up to date and satisfying the
-application's requirements.  Therefore, when it is time for a release, only a
-final set of acceptance tests are required and then the codes can be branched
-and released shortly after.  This helps to reduce a whole host of risks such
-as slipped schedules and broken features\footnote{Also known as regressions}.
+In the execution of this daily integration and testing process, we have
+learned many things about how to do quasi-continuous integration\footnote{By
+quasi-continuous integration, we mean that we are suggesting integrating and
+testing once a day and not every few hours as some have advocated
+{}\cite{book:continuous-integration}.}  of application and algorithms software
+and we have realized many important unplanned benefits.  This will allow us to
+reap many more benefits in the future if this process is maintained and
+extended.  There are both production-related benefits and research-related
+benefits to daily integration that help both the application developers and
+the algorithm developers to achieve their goals.  On the research side, this
+significantly reduces the overhead required for algorithm developers to try
+their algorithms out on production quality problems.  Developing a numerical
+solver with a production problem exposes the algorithm developer to a whole
+host of issues (e.g.\ poor scaling, ill-conditioning, convergence
+difficulties, etc.) that are hard to replicate with model problems.  On the
+production side, constant integration insures that the application and
+Trilinos are always up to date and satisfying the application's requirements.
+Therefore, when it is time for a release, only a final set of acceptance tests
+are required and then the codes can be branched and released shortly after.
+This helps to reduce a whole host of risks such as slipped schedules and
+broken features\footnote{Also known as regressions}.
 
-I have seen several different scenarios over the years where this nightly
-building and testing infrastructure would have facilitated collaboration
+I have seen several different scenarios over the years where this daily
+integration and testing infrastructure would have facilitated collaboration
 between application and algorithm developers for the advantage of both.  For
 example, suppose an application developer is running a new problem and
 discovers some strange behavior from a numerical solver.  The algorithm
@@ -195,23 +207,24 @@ the algorithm developer is stuck having to use a released version of Trilinos,
 it will be more difficult to make any major changes in order to investigate
 the behavior.  Also, there may already be improvements made to the algorithm
 in the development branch of Trilinos that may be able to address the problem.
-Without the infrastructure of nightly building and testing, it may not be cost
-effective or practical to bring the development versions of the application
-and Trilinos up to date in order to try the updated algorithm.  The algorithm
-and application developers may have to wait until the next major release of
-Trilinos before the new algorithms can be accessed.  This time delay works to
-no one's advantage and can kill the collaboration.  With nightly building and
-testing in place, an easy path for collaboration is maintained where the
-Trilinos algorithm developer can try their latest and greatest algorithms on
-these types of challenging production problems and the information learned
-from trying to solve these production problems can feed back into algorithm
-development.  To some extent, this back and forth development and integration
-already happens, but without a foundational process in place to streamline it,
-the bidirectional flow is greatly restricted.
+Without the infrastructure of daily integration and testing, it may not be
+cost effective or practical to bring the development versions of the
+application and Trilinos up to date in order to try the updated algorithm.
+The algorithm and application developers may have to wait until the next major
+release of Trilinos before the new algorithms can be accessed.  This time
+delay works to no one's advantage and can kill the collaboration.  With daily
+integration and testing in place, an easy path for collaboration is maintained
+where the Trilinos algorithm developer can try their latest and greatest
+algorithms on these types of challenging production problems and the
+information learned from trying to solve these production problems can feed
+back into algorithm development.  To some extent, this back and forth
+development and integration already happens, but without a foundational
+process in place to streamline it, the bidirectional flow is greatly
+restricted.
 
-Another example where nightly building and testing of the development versions
+Another example where daily integration and testing of the development versions
 of the application and Trilinos would ease the path for collaboration is when
-an application developers wants to try a new capability in Trilinos without a
+an application developer wants to try a new capability in Trilinos without a
 lot of work\footnote{This example really happened and it was the inability to
 readily access the development version of Trilinos within the application that
 killed the collaboration.}.  When the up-to-date development version of
@@ -219,12 +232,12 @@ Trilinos is available from within an application, a new algorithm or
 capability from Trilinos can be accessed much more easily.  Typically, even a
 small increase in the overhead needed to try out a new Trilinos capability in
 an application can be enough to kill a potentially fruitful collaboration
-between an application and algorithm developer.  Nightly building and testing
+between application and algorithm developers.  Daily integration and testing
 of the development versions of the application and Trilinos removes a
 unexciting (and therefore demoralizing) but critical obstacle to collaboration
 and impact.
 
-Nightly building and testing of an application code and Trilinos
+Daily integration and testing of an application code and Trilinos
 brings algorithm developers and application developers closer together --
 exchanging ideas and concerns -- and refocuses Trilinos developers on customer 
 efforts while still helping drive publishable numerical algorithm solver
@@ -237,20 +250,20 @@ APP + Trilinos Dev.
 
 
 %
-{}\section{Outline of proposed APP + Trilinos Dev development and nightly
-building and testing}
+{}\section{Outline of proposed APP + Trilinos Dev development and daily
+integration and testing}
 %
 
 The basic idea of this new approach goes like this (which is mostly what we
 already do with Charon + Trilinos Dev right now):
 
 {}\textit{\textbf{APP developers mainly work with APP + Trilinos Release}}:
-The developers of APP (e.g. Charon, Alegra, SIERRA) would only do their
+The developers of APP (e.g. Charon, Alegra, SIERRA) would mostly do their
 production development and run their production test suite against a stable
 released version of Trilinos.
 
 {}\textit{\textbf{Trilinos developers mainly work with Trilinos Dev}}: Most of
-the developers of Trilinos would do their development work mostly just within
+the developers of Trilinos would do their development work primarily just within
 Trilinos and run the Trilinos test suite.  If radical changes are make, then
 there should be a way for Trilinos developers to build and run APP + Trilinos
 Dev and it's test suite to see if anything will break (before a check in).
@@ -261,7 +274,8 @@ practices in Section {}\ref{sec:suggested-practices}).
 ifdefs}}: Any ``research'' development done in APP against Trilinos Dev must
 be hidden behind {}\#ifdefs so as not to impact the other production-focused
 development work being done with APP that relies on the more stable release of
-Trilinos.
+Trilinos.  Differences between Trilinos versions with respect to current APP
+code would also be handled with {}\#ifdefs.
 
 {}\textit{\textbf{Perform nightly building and testing of APP + Trilinos
 Release and APP + Trilinos Dev}}: In performing this process, it is our goal
@@ -286,11 +300,11 @@ catching APP + Trilinos Dev integration problems as efficiently as possible:
     \begin{itemize}
 
     {}\item\textit{\textbf{Send ``production'' failures only to APP
-    developers}}: Test failures for APP + Trilinos Release are only forwarded
-    to APP developers, not Trilinos developers since this these are most
-    likely caused be a defect added by an APP developer.  It is possible that
-    latent defects in the current release of Trilinos may be the cause of the
-    failure, but this should be unlikely.
+    developers}}: Test failures for APP + Trilinos Release should only be
+    forwarded to APP developers, not Trilinos developers, since these failures
+    are most likely caused by a defect added by an APP developer.  It is
+    possible that latent defects in the current release of Trilinos may be the
+    cause of the failure, but this should be less likely.
 
     \end{itemize}
 
@@ -327,26 +341,22 @@ the APP + Trilinos would go one of two routes:
     possible.  This could be very challenging to pull off since it would
     require that Trilinos be releasable at almost any time.
 
-    {}\item\textit{\textbf{b) Staggered releases of APP + Trilinos}}: APP
+    {}\item\textit{\textbf{b) Staggered releases of Trilinos and APP}}: APP
     developers make a decision to target a release of APP against a very
     recent release of Trilinos.  At the point of the release (or branch for
     the release) of Trilinos, the Dev version of APP drops support for older
     release of Trilinos, moves code from within the protected {}\#ifdefs into
     main Dev build and then any new work with Trilinos Dev is hidden behind
-    new {}\#ifdefs.  As a variation, the APP developers may not be in a
-    position to quickly transition over to the new Trilinos release so in this
-    case the APP should be temporary built and tested against all three
-    versions (the previous release, the current release, and the Dev
-    versions).  As a variation of this, the APP may not be in a position to
-    upgrade to the most recent release of Trilinos right away.  In this case,
-    the nightly test harness can be setup to build the APP against three
+    new {}\#ifdefs.  As a variation of this, the APP may not be in a position
+    to upgrade to the most recent release of Trilinos right away.  In this
+    case, the nightly test harness can be setup to build the APP against three
     versions of Trilinos: i) the old Trilinos release, ii) the new Trilinos
     release, and iii) the development version of Trilinos.  This requires a
     little more effort but it guarantees that when the APP developers decide
-    to transition the APP code base to the new Trilinos release, that this will
-    happen smoothly without any problems.  At this point, support for the old
-    Trilinos release can be dropped, and the APP developers can do a release
-    of APP at any time that is convenient.
+    to transition the APP code base to the new Trilinos release, that this
+    will happen smoothly without any problems.  At this point, support for the
+    old Trilinos release can be dropped, and the APP developers can do a
+    release of APP at any time that is convenient.
 
     \end{itemize}
 
@@ -359,22 +369,22 @@ new {}\#ifdefs.
 
 
 %
-{}\section{Advantages and disadvantages to nightly building and testing of APP
+{}\section{Advantages and disadvantages to daily integration and testing of APP
 + Trilinos Dev}
 %
 
-There are many research and production advantages to maintaining the nightly
-building and testing of the development versions of production application
+There are many research and production advantages to maintaining the daily
+integration and testing of the development versions of production application
 (APP) and Trilinos.  Some of the more significant advantages are described in
 the following sections.
 
 
 %
-{}\subsection{Research advantages to nightly building and testing of APP +
+{}\subsection{Research advantages to daily integration and testing of APP +
 Trilinos Dev}
 %
 
-Here are some of the research advantages to maintaining the nightly building
+Here are some of the research advantages to maintaining the daily integration
 and testing APP + Trilinos Dev:
 
 {}\textit{\textbf{Reduces overhead for initial algorithm integration}}: This
@@ -410,16 +420,16 @@ systems are ubiquitous in scientific computing.  Since higher-level analysis
 problems are not part of low-level modeling and forward solver work, they are
 often overlooked by APP developers and when the time comes to perform these
 higher-level analysis, the APP infrastructure to support such methods is gone.
-Nightly building and testing for these higher-level analysis problems preserves
+Daily integration and testing for these higher-level analysis problems preserves
 them for future research and future use on critical problems.
 
 
 %
-{}\subsection{Production advantages to nightly building and testing of APP +
+{}\subsection{Production advantages to daily integration and testing of APP +
 Trilinos Dev}
 %
 
-Here are some of the production advantages to maintaining the nightly building
+Here are some of the production advantages to maintaining the daily integration
 and testing of the development versions of a production application and
 Trilinos:
 
@@ -477,13 +487,13 @@ process, and makes Trilinos more responsive to important customers.
 
 
 %
-{}\subsection{Potential disadvantages to nightly building and testing of APP +
+{}\subsection{Potential disadvantages to daily integration and testing of APP +
 Trilinos Dev}
 %
 
-Here are some of the potential disadvantages to maintaining the nightly
-building and testing of the development versions of a production application
-and Trilinos:
+Here are some of the potential disadvantages to maintaining the daily
+integration and testing of the development versions of a production
+application and Trilinos:
 
 {}\textit{\textbf{Will slow down day-to-day development to varying degrees}}:
 It will slow down the day-to-day development of Trilinos and the APP to some
@@ -504,7 +514,7 @@ customer needs.  A lot of algorithm researchers don't want to sign up for that
 kind of responsibility.  However, such individuals don't have to write or
 maintain production algorithmic capabilities.  There will always be a place
 for more pure algorithms research and more theoretical (i.e.\ less applied)
-algorithm researches.
+algorithm researchers.
 
 {}\textit{\textbf{Could increase overall development effort}}: It may increase the
 overall development time for Trilinos if not managed well.  However,
@@ -515,14 +525,14 @@ should actually decrease! {}\cite{book:code-complete-2}.
 
 %
 {}\section{Suggested practices to support proposed APP + Trilinos Dev
-development and nightly building and testing}
+development and daily integration and testing}
 \label{sec:suggested-practices}
 %
 
-Successfully implementing APP + Trilinos Dev nightly building and testing will
+Successfully implementing APP + Trilinos Dev daily integration and testing will
 require, or will be made much more effective, by the adopting several
 practices.  Some of the more important practices and issues consider are
-described below (and are summarized in Appendix {}\ref{sec:checkist}).
+described below (and are summarized in the Appendix).
 
 {}\textit{\textbf{Separate ``production'' and ``research'' tests}}: Any new
 test or example added to APP's test suite based on new features in Trilinos
@@ -531,19 +541,39 @@ Dev must be added as new ``research'' tests as not to affect existing
 ``production'' regression tests and new ``research'' or ``pre-production''
 tests.  This is not full-proof in differentiating defects in APP code verses
 Trilinos code, but this will go a long way in helping to suggest where the
-problem is.
+problem is and avoid unnecessary communication between APP and Trilinos
+developers.
+
+{}\textit{\textbf{Refactor APP code to isolate and separate ifdefed code}}: In
+order improve the maintainability of the APP code to handle new features and
+changes in Trilinos Dev verses the current Trilinos release, the APP code
+should be carefully refactored to segregate and isolate ifdefed code.  As much
+as possible, developers should try to refactor code so that changes that are
+made in the APP are orthogonal to differences between Trilinos Dev and the
+current release of Trilinos.  This can be done by separating the essence of
+the differences into well defined functions where one ifdefed version contains
+code for the current Trilinos release and the other ifdefed version contains
+code for Trilinos Dev.  New features implemented against Trilinos Dev are
+typically easier to handle since these should be put into new classes and new
+functions, thereby not disturbing existing code.  This type of refactoring
+should be performed to avoid lots of ifdefs in long functions that can result
+in defects entering the code and can complicate development.  Also,
+segregating the ifdefed code for APP + Trilinos Dev is needed to remove APP +
+Trilinos Dev from the daily consciousness of the average APP developer who
+should not have to be constantly distracted by an unrelated ongoing APP +
+Trilinos Dev development efforts.
 
 {}\textit{\textbf{Maintain a dedicated machine for building and testing APP +
 Trilinos Dev}}: Having a dedicated, powerful machine for supporting APP +
 Trilinos Dev would make it easy to maintain an environment to build and test
-APP + Trilinos Dev.  It would also enable Trilinos developers a quick and easy
-way to access, build and test APP + Trilinos Dev.  Issues like keeping third
-party libraries up to date would only need to be handled on this one machine.
-Accounts would be granted as needed and would only require SRN access.  This
-would allow any Trilinos or APP developer with an SRN account to quickly log
-onto the dedicated machine, and then be able to quickly build APP + Trilinos
-Dev and run the ``research'' and ``production'' test suites.  Some helper
-scripts and examples also need to be in place to show how to do this.
+APP + Trilinos Dev.  It would also provide Trilinos developers a quick and
+easy way to access, build and test APP + Trilinos Dev.  Issues like keeping
+third party libraries up to date would only need to be handled on this one
+machine.  Accounts would be granted as needed and would only require SRN
+access.  This would allow any Trilinos or APP developer with an SRN account to
+quickly log onto the dedicated machine, and then be able to quickly build APP
++ Trilinos Dev and run the ``research'' and ``production'' test suites.  Some
+helper scripts and examples also need to be in place to show how to do this.
 
 {}\textit{\textbf{Appoint a dedicated APP + Trilinos Representative}}: One
 member of the Trilinos or APP development teams should be designated as the
@@ -556,7 +586,7 @@ person be responsible (with perhaps a backup person in their absences) will
 make it clear who is accountable for making sure issues are dealt with in a
 timely manner.  This person would take the major responsibility of maintaining
 the dedicated APP + Trilinos machine described above. The goal is that this
-job should not take too much effort if everyone else is doing their jobs well.
+job should not take too much effort if everyone else is doing their job.
 However, this job could be a nightmare if this effort is not taken seriously
 by everyone involved (including management).  In addition, this responsibility
 should come with a specific project/task (P/T).  Having a specific P/T serves
@@ -569,9 +599,9 @@ working.
 build, test, and develop APP + Trilinos Dev}}: Trilinos and APP developers
 need a quick and painless way to build APP + Trilinos Dev in order to diagnose
 and fix failures.  This may include the ability to checkout and change APP
-code to fix the problem.  Of course, modified APP code would need to go
-through a code review by APP developers before it was checked into APP's
-repository.  Likewise, an APP developer should be able to change and fix
+code and Trilinos code to fix the problem.  Of course, modified APP code would
+need to go through a code review by APP developers before it was checked into
+APP's repository.  Likewise, an APP developer should be able to change and fix
 Trilinos code if they are so motivated.  Again, a code review by Trilinos
 developers should be done before an APP developer checks in any code changes
 to Trilinos.  Having a dedicated machine maintained by the APP + Trilinos
@@ -583,9 +613,9 @@ algorithms at any time based on the most recent Trilinos code.
 {}\textit{\textbf{Fix failed builds of APP + Trilinos Dev ASAP}}: It is
 critical that fixing broken builds of APP + Trilinos Dev be given a high
 priority and be addressed immediately.  Without the software at least building
-and linking to run the tests, we can have no feedback at all about the state
-of our software and the entire nightly building and testing process falls
-apart.  There can be no exception to this.
+and linking in order to run the tests, we can have no feedback at all about
+the state of our software and the entire daily integration and testing process
+falls apart.  There can be no exception to this.
 
 {}\textit{\textbf{Address failing ``research'' and ``production'' tests on a
 schedule appropriate for the APP + Trilinos collaboration}}: While fixing
@@ -614,16 +644,16 @@ the cause of a test failure.  Letting failing tests fail for long periods of
 time and only requiring that APP + Trilinos Dev keeps building should only
 impart a very minimal overhead to day-to-day development activities.
 
-In between these two extremes, every morning one or more failed tests were
-reported, the APP + Trilinos Representative would spend five to ten minutes
-every morning looking over the new failing tests and try to diagnose them.  If
-the problem can be quickly diagnosed\footnote{Approximately 80\% or so of the
+In between these two extremes, every morning that one or more failed tests
+were reported, the APP + Trilinos Representative would spend five to ten
+minutes looking over the new failing tests and try to diagnose them.  If the
+problem can be quickly diagnosed\footnote{Approximately 80\% or so of the
 failing Charon + Trilinos Dev tests were diagnosed in just ten minutes or
 less.}, then an e-mail can be sent (or a bug report can be filed) to the
 parties that can fix the bug.  If the problem can not be easily diagnosed in
 five to ten minutes, then the APP + Trilinos Representative might just make a
-note of this (e.g.\ file a general bug report, send a general e-mail, etc.) and
-then move on with the day's other activities.  Then when time becomes
+note of this (e.g.\ file a general bug report, send a general e-mail, etc.) 
+and then move on with the day's other activities.  Then when time becomes
 available, the root causes of the failing tests can be diagnosed when it will
 not disturb the flow of other work.  Again, knowing the exact 24 hour period
 when a test first failed is a huge piece of information in finding the root
@@ -648,9 +678,9 @@ should typically be excluded from the test results archive.  However, all test
 output files should be archived between 24 hour periods.  Having ready access
 these test results, and being able to compare the outputs from a passing and a
 failing version of a test (separated by 24 hours) is critical in helping to
-diagnose failing tests.  Past test results should be pruned and thinned as
+diagnose failing tests.  Older test results should be pruned and thinned as
 needed to conserve disk space.  For example, test results from three months
-ago could be deleted except for tests on Friday (or some other day) for each
+ago could be deleted except for tests on Friday (or some other day) of each
 week.  One exception would be that test results for consecutive days where a
 test went from passing to failing should be preserved for a long period of
 time (perhaps a year or more) since this is critical evidence in tracking down
@@ -664,11 +694,13 @@ case of more sensitive APPs).
 {}\textit{\textbf{Transition ``research'' to ``production'' appropriately
 after each Trilinos release}}: If a ``research'' algorithm or feature becomes
 stable enough and the software implementation is of high enough quality (i.e.\
-a ``phase 2'' package in Trilinos), then after the next Trilinos release the
-``research'' APP code and tests for that algorithm/feature should be moved to
-the APP's ``production'' code and tests.  In this way, if the test fails
-later, the APP developers will be the first to face the bug since it is most
-likely an APP developer that broke something.
+a ``phase 2'' package in Trilinos\footnote{See The Trilinos Software Life-cycle
+Model, {}\texttt{http://www.cs.sandia.gov/\~{}maherou}}), then after the next
+Trilinos release the ``research'' APP code and tests for that
+algorithm/feature should be moved to the APP's ``production'' code and tests.
+In this way, if the test fails later, the APP developers will be the first to
+face the bug since it is most likely an APP developer that introduced a new
+defect.
 
 {}\textit{\textbf{Perform APP + Trilinos Release and APP + Trilinos Dev
 nightly testing on the same set of platforms}}: The nightly building and
@@ -686,7 +718,7 @@ have this in place.  As a result, there were several occasions that new
 with Charon + Trilinos Release on a different platform.  Most of these
 ``production'' test failures were just due to minor rounding or other porting
 issues.  The time waisted tracking down these ``production'' test failures
-could have been avoided if we had this policy in place.}.
+could have been avoided if we had had this policy in place.}.
 
 {}\textit{\textbf{Enable more communication between APP and Trilinos
 developers}}: All of this will require and foster more communication and
@@ -703,7 +735,7 @@ to various platforms where the APP runs on a frequent basis (perhaps every few
 months or less).  Also, this will require that we have completely automated
 tarball testing and installation testing.  There are other issues that would
 also need to be changed and/or improved in how we develop Trilinos.  If a
-staggered release of Trilinos and APP is performed, then the instantaneous
+staggered release of Trilinos and APP is performed, then instantaneous
 releasabiliy is not really need (but is useful as a general principle in any
 case).
 
@@ -715,32 +747,34 @@ case).
 The purpose of this section is to describe what was done in the FY07 ASC
 Level-2 Vertical Integration Milestone with Charon + Trilinos Dev.  The
 milestone work served as the inspiration for APP + Trilinos Dev and served as
-a prototype and case study for APP + Trilinos Dev integration in practice.  I
-will describe what we did, what worked well, and what needs to be improved
-this this and other such efforts.  Many of the suggested practicies given in
-Section {}\ref{sec:suggested-practices} came from feedback provided by the
-Charon + Trilinos Dev relationship conducted during the milestone.  As a
-contrast, I also describe a smaller effort that involved an integration of
-Aria/SIERRA + Trilinos Dev.
+a prototype and case study for APP + Trilinos Dev daily integration and
+testing in practice.  I will describe what we did, what worked well, and what
+needs to be improved for this and other such efforts.  Many of the suggested
+practicies given in Section {}\ref{sec:suggested-practices} came from feedback
+provided by the Charon + Trilinos Dev relationship conducted during the
+milestone.  As a contrast, I also describe a smaller effort that involved an
+integration of Aria/SIERRA + Trilinos Dev that was not supported by daily
+integration and testing.
 
 
 %
-\subsection{Charon + Trilinos Dev nightly testing building and testing}
+\subsection{Charon + Trilinos Dev daily integration and testing}
 %
 
-Here I describe the basic elements of the Charon + Trilinos Dev nightly
-building and testing process that we had in place for the milestone.  First,
-note that Charon has had its own native nightly test harness in place for many
-years.  However, the Charon test harness was only set up to checkout and build
-Charon against a static set of third party libraries (TPLs), including
-Trilinos, and it was not clear how these scripts would be updated to allow for
-building with Trilinos Dev updated daily.  Also, lack of Charon tool developer
-support made it difficult to see how to add this capability.  Therefore, the
-decision was made to develop a new minimal test harness framework specifically
-for nightly building and testing of the Dev versions of Charon and Trilinos.
-Starting in February of 2007, we set up and ran nightly building and testing
-Charon + Trilinos Dev in debug (dbg) and optimized (opt) mode on my own 64
-bit, 4-core, AMD, Linux workstation using GCC for the compiler.
+Here I describe the basic elements of the Charon + Trilinos Dev daily
+integration and testing process that we had in place for the milestone.
+First, note that Charon has had its own native nightly test harness in place
+for many years.  However, the Charon test harness was only set up to checkout
+and build Charon against a static set of third party libraries (TPLs),
+including Trilinos, and it was not clear how these scripts would be updated to
+allow for building with Trilinos Dev updated daily.  Also, lack of Charon tool
+developer support made it difficult to see how to add this capability.
+Therefore, the decision was made to develop a new minimal test harness
+framework specifically for nightly building and testing of the Dev versions of
+Charon and Trilinos.  Starting in February of 2007, we set up and ran nightly
+building and testing Charon + Trilinos Dev in debug (dbg) and optimized (opt)
+mode on my own 64 bit, 4-core, AMD, Linux workstation using GCC 3.4.6 for the
+compiler.
 
 The Charon + Trilinos Dev test harness itself used the native
 Nevada/Alegra/Charon test harness to define and run the tests.  Therefore, we
@@ -756,14 +790,15 @@ tasks of the test harness.  A top-level script was written that was directly
 invoked by a crontab job.  Every night (starting at midnight), the test
 harness script checks out the Dev versions of Charon, the Charon TPLs, and
 Trilinos (within the Charon TPL directory structure) and builds and tests
-various builds of Charon + Trilinos Dev.  These scripts were not only designed
-to be used from the automated test harness but were also designed to be used
-to document how to perform various development and testing tasks.  The scripts
-that are called are designed to show developers how to run the various tools
-to checkout, build, and test Charon with the Charon TPLs (which have Trilinos
-Dev embedded in them).  Therefore, the nightly test harness not only tests
-Charon + Trilinos Dev, but it also tests the scripts that document the various
-tasks and developers can use to perform these tasks.
+various sets of build options of Charon + Trilinos Dev.  These scripts were
+not only designed to be used from the automated test harness but were also
+designed to be used to document how to perform various development and testing
+tasks.  The scripts that are called are designed to show developers how to run
+the various tools to checkout, build, and test Charon with the Charon TPLs
+(which have Trilinos Dev embedded in them).  Therefore, the nightly test
+harness not only tests Charon + Trilinos Dev, but it also tests the scripts
+that document the various tasks and which developers can directly use to
+perform these tasks.
 
 Two directory trees were established and built from.  An {}\texttt{Updated}
 base directory was used where CVS updates were done into an existing tree for
@@ -786,28 +821,28 @@ another machine did not (and still does not at the time of this writing) build
 the Charon TPLs every day.  This delayed integration represents an increased
 risk (as all delayed integration does) which the Charon + Trilinos Dev test
 harness has addressed.  A similar delayed integration for Charon exists with
-the Nevada/Alegra framework itself but that integration risk is beyond the
-scope of this discussion.
+the Nevada/Alegra framework itself but that integration risk is owned by
+Charon is beyond the scope of this discussion.
 
 The test harness shell scripts also archive the test results to a
-web-accessible directory tree.  The links to these directories for each test
+web-accessible directory tree.  The URLs to these directories for each test
 are given in passed/failed e-mail notifications that are sent out at the end
-of each build \& test invocation for each build (i.e.\ opt vs. dbg) of Charon
-+ Trilinos Dev.  All of the test input and output files are saved in this
-archive directory tree.  However, to avoid massive increases in storage, all
-files above 1M are deleted.  This removes mostly large mesh input and exodus
-input and output files but maintains algorithm output traces which are the
-most useful in diagnosing failed tests.  The test harness output clearly
-records the exact time and date that the source code is checked out which
-allows one to check out exactly the same versions at a latter time to
-reproduce the test results.  Given that we archive all of the test results
-and a clear time stamp is given to each build, we can go back in time (months
-in some cases) to examine the behavior of a test and can then checkout the
+of build \& test invocation for each set of build options (i.e.\ opt vs.\ dbg)
+of Charon + Trilinos Dev.  All of the test input and output files are saved in
+this archive directory tree.  However, to avoid massive increases in storage,
+all files above 1M are deleted.  This removes mostly large mesh input files
+and exodus input and output files but maintains algorithm output traces which
+are the most useful in diagnosing failed tests.  The test harness output
+clearly records the exact time and date that the source code is checked out
+which allows one to check out exactly the same versions at a latter time to
+reproduce the test results.  Given that we archive all of the test results and
+a clear time stamp is given to each build, we can go back in time (months in
+some cases) to examine the behavior of a test and can then checkout the
 versions of the code for that build and should be able to more-or-less
 reproduce the test output.  Of course, many issues make it almost impossible
 to do this if too much time passes (e.g.\ the OS and other system tools on the
 test machine may be updated, the Alegra TPLs (which are not rebuilt by the
-Charon + Trilinos Dev test harness) may have changed, etc).
+Charon + Trilinos Dev test harness) may have changed, etc.).
 
 The notification e-mails sent out every night give the URL on the test machine
 running an Apache server to the archive directory that contain the test
@@ -820,15 +855,15 @@ cause of the failed Charon ``research'' test due to a change in Trilinos that
 I committed that was not verified against Charon before being checked
 in\footnote{Note that later in the milestone, I never checked in code into
 Trilinos that I did not first build and test Charon against.  This massively
-cut down on the number of failed builds and tests.}.  In these cases, I was
-responsible for addressing the failed tests.  In other cases, I sent off a
+cut down on the number of failed builds and failed tests.}.  In these cases, I
+was responsible for addressing the failed tests.  In other cases, I sent off a
 short e-mail to the person or persons that I suspected was the cause of the
 problem and gave them some tips on what I suspected the problem might be given
 my brief analysis\footnote{Adding some suggestion on what the problem might be
 proved to be a very effective catalyst for getting people to address the
 problems in a timely manner.}.
 
-All in all, the nightly building and testing process that we set up for Charon
+All in all, the daily integration and testing process that we set up for Charon
 + Trilinos Dev was very effective at keeping Charon + Trilinos Dev on track
 and avoiding backslides in functionality that we were adding during the
 milestone.  However, there were a few aspects of the process that caused some
@@ -841,11 +876,11 @@ the same platforms.  As a result, there were several instances where a new
 when run as part of Charon + Trilinos 7.0 on the 32 bit platform, where the
 same test failed or diffed on the 64 bit platform where Charon + Trilinos Dev
 was being built and tested.  As a result, I spent a fairly significant amount
-diagnosing failing ``production'' tests that were unrelated to any changes in
-Trilinos and unrelated to the milestone effort.  This has since been addressed
-by adding nightly building and testing of Charon + Trilinos 7.0 on the same 64
-bit machine where the rest of the Charon + Trilinos Dev tests are run (see the
-Section {}\ref{sec:suggested-practices} about this practice).
+of time diagnosing failing ``production'' tests that were unrelated to any
+changes in Trilinos and unrelated to the milestone effort.  This has since
+been addressed by adding nightly building and testing of Charon + Trilinos 7.0
+on the same 64 bit machine where the rest of the Charon + Trilinos Dev tests
+are run (see the Section {}\ref{sec:suggested-practices} about this practice).
 
 Another problem involved the transition to the post-milestone period.  The end
 of the milestone was marked by the release of Trilinos 8.0 which included new
@@ -864,8 +899,7 @@ Therefore, we decided to go ahead and put in place nightly testing of Charon
 against both Trilinos 8.0 and Trilinos Dev.  To accomplish this, we had to add
 a new {}\texttt{define} macro {}\texttt{CHARON\_TRI8} and a new test keyword
 {}\texttt{tri8}, and we had to add new test builds for Charon + Trilinos 8.0
-to the nightly test harness.  At the time of this writing, Xyce and Charon
-still had not been upgraded to Trilinos 8.0 and therefore my personal computer
+to the nightly test harness.  At the time of this writing my personal computer
 is still running the following five builds of Charon + Trilinos every night:
 
 \begin{enumerate}
@@ -891,14 +925,15 @@ midnight to after 6:00 AM to fully complete.  Note that the existing Charon
 test harness did not do nightly building or testing for a {}\texttt{dbg} build
 and therefore the milestone test harness actually improves their testing.  By
 performing all of these nightly builds, we will be guaranteed that when Charon
-is upgraded to Trilinos 8.0 that this will go smoothly with few if any issues.
+is upgraded to Trilinos 8.0 that this will go smoothly with few, if any,
+issues.
 
 With all of the new milestone-related ``research'' tests constantly being
 built and tested every night, these tests will be preserved such that when we
 come back to Charon to advance our work, we will be assured that we have a
 solid foundation to augment functionality.  As a result, Charon has become a
 very attractive foundation for our future algorithmic research.  Without the
-nightly building and testing in place, we could experience significant
+daily integration and testing in place, we could experience significant
 problems getting our problems running again and the difficulties that we could
 encounter would likely be enough to cause us to delay or abandon our efforts.
 This was exactly what happened in our earlier efforts (for example, with
@@ -910,43 +945,43 @@ MPSalsa).
 %
 
 To contrast our experience with Charon + Trilinos Dev, consider the auxiliary
-effort where Aria/SIERRA was updated to build against Trilinos Dev and MOOCHO
-[???] was interfaced to Aria to solve a prototype design problem.  This effort
-was meant to demonstrate that the milestone work was more general than just
-Charon and also served a number of other purposes as well.  However, while
-Charon + Trilinos Dev was supported by nightly testing and Charon + Trilinos
-Dev was (and still is) instantly available to anyone with SRN access,
-Aria/SIERRA + Trilinos Dev was only periodically built by a single developer
-and was not easily accessible to others.  The immediate impact of this
-approach was that some amount of effort was required to get Aria/SIERRA +
-Trilinos Dev to build again each time development paused for a time and then
-was continued.  Also, the combined Aria/SIERRA + Trilinos Dev application was
-not easily accessible to the MOOCHO expert on the milestone team so when
-difficulties solving one of the problems surfaced, they where not be addresses
-as well.
+effort where Aria/SIERRA was updated to build against Trilinos Dev and
+MOOCHO\footnote{{}\texttt{http://trilinos.sandia.gov/packages/moocho}} was
+interfaced to Aria to solve a prototype design problem.  This effort was meant
+to demonstrate that the milestone work was more general than just Charon and
+also served a number of other purposes as well.  However, while Charon +
+Trilinos Dev was supported by nightly testing and Charon + Trilinos Dev was
+(and still is) instantly available to anyone with SRN access, Aria/SIERRA +
+Trilinos Dev was only periodically built by a single developer and was not
+easily accessible to others.  The immediate impact of this approach was that
+some amount of effort was required to get Aria/SIERRA + Trilinos Dev to build
+again each time development paused for a time and then was continued.  Also,
+the combined Aria/SIERRA + Trilinos Dev application was not easily accessible
+to the MOOCHO expert on the milestone team so when difficulties solving one of
+the problems surfaced, they where difficult to addresses.
 
-For course, the long term implication of not having Aria/SIERRA + Trilinos Dev
+Of course, the long term implication of not having Aria/SIERRA + Trilinos Dev
 building and testing in place is that the developed capability could break
-without anyone ever knowing it.  It is very likely that the code may not even
-build by the time SIERRA upgrades to Trilinos 8.0.  Therefore, the developed
-MOOCHO/Aria capability is fragile and is susceptible to being broken and may be
-lost if too much time goes by\footnote{At the time of this writing, planning
-is under way to establish nightly building and testing of Aria/SIERRA +
-Trilinos Dev that will protect MOOCHO/Aria and other future algorithmic
-developments.}.
+without anyone ever knowing it.  It is very possible that the code may not
+even build by the time SIERRA upgrades to Trilinos 8.0.  Therefore, the
+developed MOOCHO/Aria capability is fragile and is susceptible to being broken
+and may be lost if too much time goes by\footnote{At the time of this writing,
+planning is under way to establish daily integration and testing of
+Aria/SIERRA + Trilinos Dev that will protect MOOCHO/Aria and other future
+algorithmic developments.}.
 
 
 %
 \section{Conclusions}
 %
 
-There are a number of conclusions that we have drawn as a result of this
-milestone work in relation to the proposed nightly building and testing of the
-development versions of an application and Trilinos:
+There are a number of conclusions that we have drawn for the proposed daily
+integration and testing of the development versions of an application and
+Trilinos:
 
 \begin{itemize}
 
-{}\item Nightly building and testing of the development versions of the
+{}\item Daily integration and testing of the development versions of the
 application and Trilinos:
 
   \begin{itemize}
@@ -992,8 +1027,8 @@ Milestone work.
 \label{sec:checkist}
 %
 
-$\Box$ Do you have {}\texttt{ifdef}s is in place in APP code that are needed
-to build against Trilinos Dev and against the release (or multiple releases)
+$\Box$ Do you have {}\texttt{ifdef}s in place in APP code that are needed to
+build against Trilinos Dev and against a stable release (or multiple releases)
 of Trilinos?
 
 $\Box$ Have you separated ``production'' and ``research'' tests so that you
@@ -1003,15 +1038,12 @@ $\Box$ Have you appointed an official APP + Trilinos Representative to make
 sure APP + Trilinos Dev is maintained and is responsible for making sure
 issues are forwarded to the appropriate parties?
 
-$\Box$ Have you set up a dedicated machine to do nightly building and testing
+$\Box$ Have you set up a dedicated machine to do daily integration and testing
 of APP + Trilinos Dev?
 
 $\Box$ Have you provided easy access to APP and Trilinos developers to
-immediately build a private venison of APP + Trilinos Dev to try out new
+immediately build a private version of APP + Trilinos Dev to try out new
 algorithmic capabilities?
-
-$\Box$ Do you have appropriate processes in place to avoid unnecessary cross
-communication between APP and Trilinos developers?
 
 $\Box$ Do you fix failing builds of APP + Trilinos Dev right away, with no
 exceptions?
