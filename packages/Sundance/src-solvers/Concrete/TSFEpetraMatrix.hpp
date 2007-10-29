@@ -207,29 +207,26 @@ namespace TSFExtended
     /** */
     string description() const ;
 
-    
-    
-
-
-
     /** */
     static Epetra_CrsMatrix& getConcrete(const LinearOperator<double>& A);
+
+    /** */
+    static RefCountPtr<const Epetra_CrsMatrix> getConcretePtr(const LinearOperator<double>& A);
 
     /** 
      * Read-only access to the underlying crs matrix. Needed for Ifpack.
      */
     const Epetra_CrsMatrix* crsMatrix() const ;
-  protected:
 
+  protected:
 
     /** Get the specified row as defined by RowAccessible  */
     void getRow(const int& row, 
 		Teuchos::Array<int>& indices, 
 		Teuchos::Array<double>& values) const;
-    
-
 
   private:
+
     Epetra_CrsMatrix* crsMatrix();
 
     RefCountPtr<Epetra_CrsMatrix> matrix_;

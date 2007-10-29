@@ -367,6 +367,13 @@ Epetra_CrsMatrix& EpetraMatrix::getConcrete(const LinearOperator<double>& A)
 }
 
 
+RefCountPtr<const Epetra_CrsMatrix>
+EpetraMatrix::getConcretePtr(const LinearOperator<double>& A)
+{
+  return Teuchos::rcp_dynamic_cast<EpetraMatrix>(A.ptr())->matrix_;
+}
+
+
 void EpetraMatrix::getRow(const int& row, 
                           Teuchos::Array<int>& indices, 
                           Teuchos::Array<double>& values) const
