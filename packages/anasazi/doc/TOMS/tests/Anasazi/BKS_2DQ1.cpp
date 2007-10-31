@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
     OPT::Apply( *A, *evecs, *Avecs );
     MVT::MvTimesMatAddMv( -ONE, *evecs, T, ONE, *Avecs );
     // compute norm of residuals
-    MVT::MvDot( *Avecs, *Avecs, &normV );
+    MVT::MvDot( *Avecs, *Avecs, normV );
 
     os << "Direct residual norms computed in BlockDavidson2DQ1_e.exe" << endl
        << std::setw(20) << "Eigenvalue" << std::setw(20) << "Residual(2)" << endl

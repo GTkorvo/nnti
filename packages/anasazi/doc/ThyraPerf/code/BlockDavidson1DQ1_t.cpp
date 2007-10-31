@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
     // Compute residuals: K*evecs - M*evecs*T
     MVT::MvTimesMatAddMv( -1.0, *Mvec, T, 1.0, *Kvec );
     // Compute norms of residuals
-    MVT::MvNorm( *Kvec, &normV );
+    MVT::MvNorm( *Kvec, normV );
     
     for (i=0; i<nev; i++ ) {
       if ( Teuchos::ScalarTraits<double>::magnitude(normV[i]/(*evals)[i]) > 5.0e-5) {
