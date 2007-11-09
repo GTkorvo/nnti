@@ -123,7 +123,10 @@ namespace TSFExtended
         int row = lowestLocalRow + i;
         cout << "p=" << rank << " row=" << row << endl;
         Array<int>& cols = colIndices[i];
-        for (int j=0; j<colDimension; j++)
+
+        while (cols.size() == 0U)
+        {
+          for (int j=0; j<colDimension; j++)
           {
             double acceptProb;
             if (j >= lowestLocalCol && j <= highestLocalCol)
@@ -141,11 +144,13 @@ namespace TSFExtended
                 cols.append(j);
               }
           }
-        if (cols.size()>0)
+        if (cols.size()>0U)
           {
             icmf->initializeNonzerosInRow(row, colIndices[i].size(),
                                           &(colIndices[i][0]));
           }
+        }
+        
       }
     icmf->finalize();
       

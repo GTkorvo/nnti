@@ -48,8 +48,11 @@ using Thyra::TestSpecifier;
 
 #define TESTER(form1, form2)\
   {\
+    std::cout << "testing " #form1 << std::endl;\
     Vector<Scalar> _val1 = form1;\
+    std::cout << "testing " #form2 << std::endl;\
     Vector<Scalar> _val2 = form2;\
+    std::cout << "done testing... checking error" << std::endl;\
     ScalarMag err = (_val1-_val2).norm2();\
     if (!checkTest(spec_, err, "[" #form1 "] == [" #form2 "]")) pass = false;\
   }
@@ -140,9 +143,12 @@ namespace TSFExtended
                                         onProcDensity_, offProcDensity_, 
                                         vecType_);
 
+
     LinearOperator<double> A = ABuilder.getOp();
-    LinearOperator<double> B = BBuilder.getOp();
-    LinearOperator<double> C = CBuilder.getOp();
+
+    
+    LinearOperator<Scalar> B = BBuilder.getOp();
+    LinearOperator<Scalar> C = CBuilder.getOp();
 
     Vector<Scalar> x = A.domain().createMember();
     Vector<Scalar> y = A.domain().createMember();
@@ -152,7 +158,6 @@ namespace TSFExtended
     randomizeVec(y);
     randomizeVec(z);
 
-    cerr << "starting linear combination tests" << endl;
 
     TESTER(x*2.0, 2.0*x);
 
@@ -178,9 +183,11 @@ namespace TSFExtended
 
     TESTER(3.0*(2.0*A)*x, 6.0*(A*x));
 
-    TESTER(A*x + y, y + A*x);
+    TESTER(y + A*x, A*x + y);
+
 
     TESTER(z + (A*x + B*y), (B*y + A*x) + z);
+
 
     TESTER(z - (A*x + B*y), -1.0*((B*y + A*x) - z));
 
@@ -229,6 +236,7 @@ namespace TSFExtended
 
     TESTER((A*x + B*y) + 2.0*(A*y + B*x), A*(x + 2.0*y) + B*(2.0*x + y));
     TESTER((A*x + B*y) - 2.0*(A*y + B*x), A*(x - 2.0*y) + B*(y - 2.0*x));
+
 
     return pass;
   }
