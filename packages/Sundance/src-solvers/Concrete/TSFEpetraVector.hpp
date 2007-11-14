@@ -114,7 +114,7 @@ namespace TSFExtended
 
     /** */
     void getElements(const Index* globalIndices, int numElems,
-                     std::vector<double>& elems) const ;
+      Teuchos::Array<double>& elems) const ;
     //@}
       
 

@@ -63,7 +63,7 @@ namespace TSFExtended
        * over calls to getElement(). */
 
       virtual void getElements(const Index* globalIndices, int numElems,
-                               std::vector<Scalar>& elems) const 
+        Teuchos::Array<Scalar>& elems) const 
         {
           elems.resize(numElems);
           for (int i=0; i<numElems; i++)

@@ -111,7 +111,7 @@ const double& EpetraVector::getElement(Index index) const
 }
 
 void EpetraVector::getElements(const Index* globalIndices, int numElems,
-                               std::vector<double>& elems) const
+  Teuchos::Array<double>& elems) const
 {
   elems.resize(numElems);
   const Epetra_BlockMap& myMap = epetraVec()->Map();
