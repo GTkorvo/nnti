@@ -35,7 +35,7 @@ namespace RBGen {
     // perform Grams-Schmidt expansion
     int newRank;
     if (curRank_ > 0) {
-      newRank = ortho_->projectAndNormalize(*U2,Teuchos::tuple(Cteuchos),Zteuchos,Teuchos::tuple(U1));
+      newRank = ortho_->projectAndNormalize(*U2,Teuchos::tuple(U1),Teuchos::tuple(Cteuchos),Zteuchos);
     }
     else {
       newRank = ortho_->normalize(*U2,Zteuchos);
