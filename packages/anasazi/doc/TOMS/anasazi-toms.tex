@@ -189,13 +189,16 @@ eigenproblems;
 \item
 PRIMME~\cite{primme:06} is a C library to find a number of
 eigenvalues and their corresponding eigenvectors of a real
-symmetric, or complex Hermitian matrix.
+symmetric or complex Hermitian matrix. PRIMME provides a highly
+parametrized Jacobi-Davidson~\cite{slvo:96} iteration, allowing the
+behavior of multiple eigensolvers to be obtained via the appropriate
+selection of parameters.
 \end{itemize}
-Both of these efforts use an object-based programming paradigm and
-so do not employ generic or object-oriented techniques.  We are not
-aware of any other software implementing block algorithms for
-large-scale eigenvalue problems using object-oriented or generic
-programming techniques.
+Both of these efforts use an object-based programming paradigm and so
+do not employ generic or object-oriented techniques. Aside from these
+methods, we are not aware of any other software implementing block
+algorithms for large-scale eigenvalue problems using object-oriented
+or generic programming techniques.
 
 Our paper is organized as follows. Section
 \ref{sec:algorithm-overview} describes a class of algorithms that
@@ -345,6 +348,15 @@ The algorithms that are currently available in Anasazi are:
   \item a block Davidson method as described in~\cite{Arbenz:2005:ACE},
   \item an implementation of LOBPCG as described in~\cite{Hetmaniuk:2006:BSL}.
 \end{enumerate}
+
+\cbcomm{remove the first two of these remarks; they do not add
+anything to the paper and may distract the reader. re-emphasize that
+this section was simply an exploration of one type of eigensolver
+strategy, intended to demonstrate some of the primitive operations
+which should be provided by an eigensolver framework (this should be
+said at the beginning as well). keep the third point but expand: block
+eigensolvers provide numerous benefits.}
+
 Three remarks are in order. First, all three algorithms are
 instances of the orthogonal Rayleigh-Ritz method. Therefore the
 eigen-decomposition computed in step $(3)$ of
@@ -435,16 +447,25 @@ providing linear operators used to define eigenproblems and
 preconditioners.
 \end{itemize}
 
-Templating an eigensolver on multivector and scalar types enables software reuse. For
-example, ARPACK implements the four subroutines---\texttt{SNAUPD}, \texttt{DNAUPD},
-\texttt{CNAUPD}, and \texttt{ZNAUPD}---for solving non-Hermitian eigenproblems. Four
-separate subroutines are provided for these four FORTRAN 77 floating point types (single
-and double precision real, and single and double precision complex). Moreover, four
-additional subroutines are needed for a distributed memory implementation (say using MPI).
-In contrast, templating on multivector and scalar types allows Anasazi to maintain only
-one C++ code. The multivector templating allows us to separate the eigenvalue algorithm
-from the linear algebra data structures. The operator type templating is analogous to the
-reverse communication interface used by ARPACK for providing matrix-vector products.
+\cbcomm{give small code example of template use in C++}
+
+The templating of an eigensolver on multivector and scalar types
+enables software reuse. Consider in contrast that ARPACK implements
+the four subroutines---\texttt{SNAUPD}, \texttt{DNAUPD},
+\texttt{CNAUPD}, and \texttt{ZNAUPD}---for solving non-Hermitian
+eigenproblems. Four separate subroutines are provided for these four
+FORTRAN 77 floating point types (single and double precision real, and
+single and double precision complex). Moreover, four additional
+subroutines are needed for a distributed memory implementation (say,
+using MPI). In Anasazi, templating on multivector and scalar types
+requires the maintain of a single code. The multivector templating
+allows us to separate the eigenvalue algorithm from the linear algebra
+data structures. The operator type templating is analogous to the
+reverse communication interface used by ARPACK for providing
+matrix-vector products.
+
+\cbcomm{this is an opportunity to explain why we choose templating
+over dynamic polymorphism.}
 
 Because the underlying data types are unknown to the Anasazi
 developer, algorithms are developed abstractly. Access to the
@@ -453,78 +474,85 @@ functionality of the underlying objects is provided via the classes
 implement the traits mechanism~\cite{myer:95} and specify the
 operations that the multivector and operator classes must support in
 order to be used within Anasazi. This mechanism hides the low-level
-details of the underlying data structures, allowing the same
-algorithmic implementation to be compatible with varying underlying
-linear algebra objects (e.g., serial and parallel).
+details of the underlying data structures.  As a result, a single
+eigensolver implementation in Anasazi can be exploited on a number of
+diverse computing platforms: serial, distributed memory parallel,
+multi-core shared memory parallel, graphics processing units, FPGAs,
+etc.
 
 The methods defined by these traits classes are listed in
 Table~\ref{tab:anasazi:mvt}. Most of the methods listed are
-self-explanatory. The first three \aspace{MultiVecTraits} methods
-are C++ \emph{virtual} constructors \cite[pp.~123--129]{meyers:96}
-that create multivectors from a multivector provided by the user. Deep and shallow
-copy denotes whether the object contains the storage for the
-multivector entries or not. A shallow copy is useful when only a subset
-of the columns of a multivector is required for computation.
+self-explanatory. The first three \aspace{MultiVecTraits} methods are
+C++ \emph{virtual} constructors \cite[pp.~123--129]{meyers:96} that
+create multivectors from a multivector provided by the user. Deep and
+shallow copy denotes whether the object contains the storage for the
+multivector entries or not. A shallow copy is useful when only a
+subset of the columns of a multivector is required for computation.
+This concept provides Anasazi access to the performance benefits
+previously available only to C/FORTRAN implementations.
 
 \begin{table}
 \begin{center}
-  \caption{Methods provided by the \aspace{OperatorTraits} and \aspace{MultiVecTraits} interfaces.}
+  \caption{Methods provided by the \aspace{OperatorTraits} and
+  \aspace{MultiVecTraits} interfaces. \cbcomm{fix this table}}
 \label{tab:anasazi:mvt}
-\begin{tabular}{| p{3cm} | p{8cm} |}
+\begin{tabular}{| p{4cm} | p{8cm} |}
 \hline
 %%%
-\multicolumn{2}{|c|}{\textbf{OperatorTraits}} \\\hline
+\multicolumn{2}{|c|}{\textbf{OperatorTraits$<$ST,MV,OP$>$}} \\\hline
 \emph{Method name} & \emph{Description} \\\hline
-Apply           & Applies an operator to a MultiVector, placing the
-result in another MultiVector. \\\hline\hline
+Apply($A,X,Y$) & Applies the operator A to the multivector X, placing the
+result in the multivector Y. \\\hline\hline
 %%%
-\multicolumn{2}{|c|}{\textbf{MultiVecTraits}} \\\hline
+\multicolumn{2}{|c|}{\textbf{MultiVecTraits$<$ST,MV$>$}} \\\hline
 %%%
 \emph{Method name} & \emph{Description} \\\hline
-Clone           & Creates a new multivector containing a
-specified number of columns.  \\\hline
+Clone($X,numvecs$)           & Creates a new multivector from X with
+numvecs vectors.  \\\hline
 
-CloneCopy & Creates a new multivector with a copy of the contents of
-an existing multivector (deep copy). \\\hline
+CloneCopy($X,index$) & Creates a new multivector with a copy of the contents of
+a subset of the multivector X (deep copy). \\\hline
 
-CloneView       & Creates a new multivector that shares the selected
-contents of an existing multivector (shallow copy).  \\\hline
+CloneView($X,index$) & Creates a new multivector that shares the selected
+contents of a subset of the multivector X (shallow copy).  \\\hline
 
-GetVecLength    & Returns the vector length of a multivector.
+GetVecLength($X$) & Returns the vector length of the multivector X.
 \\\hline
 
-GetNumberVecs   & Returns the number of vectors in a multivector.
+GetNumberVecs($X$)& Returns the number of vectors in the multivector X.
 \\\hline
 
-MvTimesMatAddMv & Applies a serial, dense matrix $M$ to
-multivector $A$ and accumulates into another multivector $B$:\\
+MvTimesMatAddMv($alpha,X,M,beta,B$) & Applies a serial, dense matrix $M$ to
+multivector $A$ and accumulates the result into another multivector $B$:\\
 & $B \leftarrow \alpha A M + \beta B$.
 \\\hline
 
-MvAddMv         & Performs multivector AXPBY: $ B \leftarrow \alpha A + \beta B$.
+MvAddMv($alpha,A,beta,B$)  & Performs multivector AXPBY: $ B \leftarrow \alpha A + \beta B$.
 \\\hline
 
-MvTransMv & Computes the matrix $C \leftarrow \alpha A^H B$.
+MvTransMv($alpha,A,B,C$) & Computes the serial, dense matrix $C \leftarrow \alpha A^H B$.
 \\\hline
 
-MvDot & Computes the vector $b$ where the components are the
+MvDot($A,B,c$) & Computes the vector $c$ where the components are the
 individual dot-products of the $i$-th columns of $A$ and $B$, i.e.,
-$b[i] = A[i]^H B[i]$.  \\\hline
+$c[i] = A[i]^H B[i]$.  \\\hline
 
-MvScale         & Scales the columns of a multivector. \\\hline
+MvScale($A,c$)    & Scales the columns of a multivector by the entries
+of c. \\\hline
 
-MvNorm          & Computes the 2-norm of each vector of
-$A$.  \\\hline
+MvNorm($A,c$)     & Computes the 2-norm of each vector of
+$A$: $c[i] = \|A[i]\|_2$  \\\hline
 
-SetBlock        & Copies the vectors in $A$ to a subset of vectors in
+SetBlock($A,B,index$) & Copies the vectors in $A$ to a subset of vectors in
 $B$. \\\hline
 
-MvRandom & Replaces the vectors in $A$ with random vectors.  \\\hline
+MvRandom($A$) & Replaces the entries in the multivector $A$ with random
+numbers.  \\\hline
 
-MvInit & Replaces each element of the vectors in $A$ with $\alpha$.
+MvInit($A,\alpha$) & Replaces each entry in the multivector $A$ with $\alpha$.
 \\\hline
 
-MvPrint         & Prints the Multivector to an output stream.
+MvPrint($A$)    & Prints the Multivector to an output stream.
 \\\hline \hline
 \end{tabular}
 \end{center}
@@ -538,41 +566,39 @@ specializations of these traits classes:
   \item \aspace{Epetra\_MultiVector} and \aspace{Epetra\_Operator} (with scalar type
     \aspace{double}) allow Anasazi to be used with the Epetra~\cite{Trilinos:Epetra} linear
     algebra library provided with Trilinos.
-  \item \aspace{Thyra::MultiVectorBase} and \aspace{Thyra::LinearOpBase} (with arbitrary scalar type)
-        allow Anasazi to be used with any classes that implement the abstract interfaces
-        provided by the Thyra~\cite{Trilinos:Thyra} package of Trilinos.
-  \item \aspace{MultiVec} and \aspace{Operator} (with arbitrary scalar type)
-        allow Anasazi to be used with any classes that implement
-        the Anasazi abstract base classes \aspace{MultiVec} and \aspace{Operator}.
+  \item \aspace{Thyra::MultiVectorBase<ST>} and
+    \aspace{Thyra::LinearOpBase<ST>} (with arbitrary scalar type
+    \aspace{ST}) allow Anasazi to be used with any classes that implement the abstract interfaces
+    provided by the Thyra~\cite{Trilinos:Thyra} package of Trilinos.
+  \item \aspace{MultiVec<ST>} and \aspace{Operator<ST>} (with
+    arbitrary scalar type \aspace{ST}) allow Anasazi to be used with any classes that implement
+    the Anasazi abstract base classes \aspace{MultiVec} and \aspace{Operator}.
 \end{itemize}
 
-For scalar, multivectors and operators types not covered by these, specializations of
-\aspace{MultiVecTraits} and \aspace{OperatorTraits} must be created. The benefit of the
-traits mechanism is that it does not require that the chosen types are C++ classes.
-Furthermore, it does not require rewriting the user's data types, as the traits class
-specialization occurs external to the chosen types.
+For scalar, multivectors and operators types not covered by these,
+specializations of \aspace{MultiVecTraits} and \aspace{OperatorTraits}
+must be created. The benefit of the traits mechanism is that it does
+not require that the chosen types are C++ classes.  Furthermore, it
+does not require modification to exiting data types, as the traits
+class specialization occurs external to the chosen types.
 
-%The benefit of using a templated traits class over inheritance is
-%that the latter requires the user to derive multivectors and
-%operators from Anasazi-defined abstract base classes. Inheritance
-%couples tightly Anasazi's  and the users' objects and so is a poor
-%mechanism. Templated traits, however, promote the goals of
-%extensibility and interoperability by a well-defined and narrow
-%interface.
 
 \subsection{The Anasazi Framework}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \label{subsec:anasazi:solver_framework}
 
-We explain how the Rayleigh-Ritz method of
+We explain how the example Rayleigh-Ritz method of
 Algorithm~\ref{algo:obliqueRR} and the additional steps listed in
-Algorithm~\ref{algo:eigen-iter} are implemented within the Anasazi
+Algorithm~\ref{algo:eigen-iter} may be implemented within the Anasazi
 framework.
 
-In Anasazi, eigensolvers (encapsulating an iteration and its associated
-state) are derived classes of the abstract base class
-\aspace{Eigensolver}. An inheritance relationship was chosen for the following
-reasons:
+\cbcomm{i think the list below is not necessary, at least, the latter
+two entries. be more clear.}
+In Anasazi, eigensolvers are derived classes of the abstract base
+class \aspace{Eigensolver}. The purpose of a subclass of
+\aspace{Eigensolver} is to encapsulate an eigen-iteration and
+its associated state/data. An inheritance relationship was chosen for
+the following reasons:
 \begin{itemize}
   \item the abstract base class defines an interface used for checking the
     status of a solver by a status test;
@@ -582,9 +608,13 @@ reasons:
     associated with its particular iteration.
 \end{itemize}
 
+\cbcomm{explain why we desire status tests: runtime chosen stopping
+conditions, hook for checking state of solver for numerous other logic
+(restarting, debugging, etc). contrast against ARPACK.}
+
 The class \aspace{StatusTest} is used to specify stopping conditions for an
 eigen-iteration. \aspace{Eigensolver} queries the \aspace{StatusTest} during its class
-method \aspace{iterate()} to determine whether or not to continue iterating.  Concrete
+method \aspace{iterate()} to determine whether or not to continue iterating. Concrete
 subclasses of \aspace{StatusTest} provide particular stopping criteria. A typical
 interaction between these two classes is illustrated in Figure~\ref{fig:comm}.
 
@@ -610,8 +640,13 @@ Each \aspace{StatusTest} provides a virtual method,
 \aspace{Eigensolver} and determines whether the solver meets the
 criteria defined by a particular status test. After a solver returns
 from \verb!iterate()!, the caller has the ability to access the
-solver's state and the option re-initializing the solver with
-a new state and continue iterating.
+solver's state and the option to re-initialize the solver with a new
+state and continue iterating.
+
+\cbcomm{perhaps utility classes should be introduced before discussion
+of solver managers.}
+
+\cbcomm{emphasize: solver managers driven by parameter lists.}
 
 While this approach to interfacing with the solver is powerful, it can be overwhelming. It
 requires the user to construct a number of support classes and to manage calls to
@@ -625,7 +660,8 @@ For example, the constructor of \aspace{BlockDavidsonSolMgr} accepts only two ar
 an \aspace{Eigenproblem} specifying the eigenvalue problem to be solved and a
 \texttt{ParameterList} of options specific to this solver manager. This solver manager
 instantiates a \aspace{BlockDavidson} subclass of \aspace{Eigensolver}, along with the
-status tests and other support classes needed by the eigensolver. To solve the eigenvalue
+status tests and other support classes needed by the eigensolver, as
+specified by the parameter list. To solve the eigenvalue
 problem, the user simply calls the \verb!solve()! method of \aspace{BlockDavidsonSolMgr}.
 The solver manager calls \verb!iterate()!, performs restarts and locking, and places the
 final solution into the \aspace{Eigenproblem}.
@@ -663,7 +699,7 @@ section lists and briefly describes the classes used in Anasazi.
 
 We remark that Anasazi is largely independent of Trilinos. Anasazi
 only relies on the Trilinos Teuchos package~\cite{Trilinos:Teuchos}
-that provides a common suite of tools, such as: \texttt{RefCountPtr},
+that provides a common suite of tools, such as: \texttt{RCP},
 a reference-counting smart pointer~\cite{detlefs92garbage};
 \texttt{ParameterList}, a list for algorithmic parameters of
 varying data types; and the BLAS
@@ -689,11 +725,11 @@ The \aspace{Eigensolution} class was developed in order to
 facilitate setting and retrieving of solution data. This structure
 contains the following information:
 \begin{itemize}
-  \item \verb!RefCountPtr< MV > Evecs! \\
+  \item \verb!RCP< MV > Evecs! \\
    The computed eigenvectors.
- \item \verb!RefCountPtr< MV > Espace! \\
+ \item \verb!RCP< MV > Espace! \\
    An orthonormal basis for the computed eigenspace.
- \item \verb!std::vector< Value< ScalarType > > Evals! \\
+ \item \verb!std::vector< Value< ST > > Evals! \\
    The computed eigenvalue approximations.
  \item \verb!std::vector< int > index! \\
    An index into \verb!Evecs! to enable compressed storage of eigenvectors for real, non-Hermitian problems.
@@ -819,16 +855,16 @@ arguments and returning either \aspace{Converged} or
 \begin{center}
 \begin{boxedverbatim}
 // create an eigenproblem
-RefCountPtr< Anasazi::Eigenproblem<ScalarType,MV,OP> > problem = ...;
+RCP< Anasazi::Eigenproblem<ST,MV,OP> > problem = ...;
 // create a parameter list
 ParameterList params;
 params.set(...);
 // create a solver manager
-Anasazi::BlockDavidsonSolMgr<ScalarType,MV,OP> solman(problem,params);
+Anasazi::BlockDavidsonSolMgr<ST,MV,OP> solman(problem,params);
 // solve the eigenvalue problem
 Anasazi::ReturnType ret = solman.solve();
 // get the solution from the problem
-Anasazi::Eigensolution<ScalarType,MV> sol = problem->getSolution();
+Anasazi::Eigensolution<ST,MV> sol = problem->getSolution();
 \end{boxedverbatim}
 \end{center}
 \caption{Example: Solving an eigenvalue problem using a
@@ -864,11 +900,11 @@ in Figure~\ref{fig:constructor}.
 \begin{center}
 \begin{boxedverbatim}
 Eigensolver(
-   const RefCountPtr< Eigenproblem<ST,MV,OP> > &problem,
-   const RefCountPtr< SortManager<ST,MV,OP>  > &sorter,
-   const RefCountPtr< OutputManager<ST>      > &printer,
-   const RefCountPtr< StatusTest<ST,MV,OP>   > &tester,
-   const RefCountPtr< OrthoManager<ST,OP>    > &ortho,
+   const RCP< Eigenproblem<ST,MV,OP> > &problem,
+   const RCP< SortManager<ST,MV,OP>  > &sorter,
+   const RCP< OutputManager<ST>      > &printer,
+   const RCP< StatusTest<ST,MV,OP>   > &tester,
+   const RCP< OrthoManager<ST,OP>    > &ortho,
    ParameterList                               &params
  );
 \end{boxedverbatim}
@@ -1010,7 +1046,14 @@ below the clock resolution.}
 \end{center}
 \end{table}
 
-
+The benefits of an object-oriented eigensolver framework such as
+Anasazi are manifold: modularization provides improved code reuse,
+static polymorphism via templating allows easier code maintenance and
+a larger audience, and dynamic polymorphism via inheritance allows
+flexible runtime behavior. However, none of these benefits should come
+at the expense of code performance. Concern over overhead has long
+been an inhibiting factor in the adoption of object-oriented
+programming paradigms in scientific computing scenarios. 
 
 We now discuss the important issue of comparing Anasazi and ARPACK
 on a model problem. Our interest is in accessing any overhead of
@@ -1027,6 +1070,8 @@ vectors.  The Intel 9.1 C++ and FORTRAN compilers were used with
 compiler switches ``-O2 -xP'' on an Intel Pentium D, 3GHz, 1MB L2
 cache, 2GB main, Linux/FC5 PC.
 
+\cbcomm{rewrite this operator}
+
 The operator application in Anasazi records approximately twice as much time as the ARPACK
 implementation. This is because the Anasazi code used an Epetra sparse matrix
 representation, while the ARPACK implementation applies the block tridiagonal
@@ -1034,6 +1079,16 @@ matrix via a stencil. Note that the operator application comprised only a small
 portion of the clock time in these tests. The performance of the Anasazi library in
 computing the Arnoldi vectors is similar to that of ARPACK. Our conclusion is that a
 well-designed library in C++ is as efficient as a FORTRAN 77 library.
+
+\section{Conclusion}
+
+\cbcomm{reinforce their clarity}
+
+\cbcomm{issues yet to be handled: anasazi provides only three
+eigensolvers, it also provides a framework capable of implementing
+multiple eigensolvers. for example, eigen-iterations requiring an
+iteration have been implemented using anasazi, such as RTR, TRACEMIN
+and Jacobi-Davidson.}
 
 \section{Acknowledgments}
 We thank Roscoe Bartlett, Mike Heroux, Roger Pawlowski, Eric Phipps,
