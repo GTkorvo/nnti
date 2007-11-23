@@ -412,18 +412,18 @@ In particular, for each method, we will show how to define a set of nonlinear
 equations of the form
 %
 \begin{equation}
-r(z) = 0
-\label{rythmos:eqn:r}
+\bar{f}(\bar{x}) = 0
+\label{rythmos:eqn:f_bar}
 \end{equation}
 %
 such that when solved will define an implicit time step from $t_k$ to
 $t_{k+1}$, where $\Delta t = t_{k+1} - t_k$ denotes the time-step.  In
 addition, for each method, we will show how to use the DAE residual evaluation
 $(\dot{x},x,t) {}\rightarrow f$ to define the nonlinear time step equation
-(\ref{rythmos:eqn:r}).  At the highest level, the time step method only
+(\ref{rythmos:eqn:f_bar}).  At the highest level, the time step method only
 requires very general convergence criteria for the time step equation
-(\ref{rythmos:eqn:r}) and therefore great flexibility is allowed in how the
-time step equation is solved.  In general, the system in (\ref{rythmos:eqn:r})
+(\ref{rythmos:eqn:f_bar}) and therefore great flexibility is allowed in how the
+time step equation is solved.  In general, the system in (\ref{rythmos:eqn:f_bar})
 must be solved such that $||x_{k+1} - x^*(t_{k+1})|| < \eta$, where
 $x_{k+1}\in\mathcal{X}$ is the computed step for the state,
 $x^*(t_{k+1})\in\mathcal{X}$ is the exact state solution at $t_{k+1}$, and
@@ -437,18 +437,18 @@ Newton-like methods is the ability to solve linear systems similar to the
 Newton system
 %
 \begin{equation}
-\Jac{r}{z} \Delta z = - r(z_l)
+\Jac{\bar{f}}{\bar{x}} \Delta \bar{x} = - \bar{f}(\bar{x}_l)
 \end{equation}
 %
-where $z_l$ is the current candidate solution of the nonlinear equations
-(which also defines the point where $\jac{r}{z}$ is evaluated) and $\Delta z =
-r_{l+1} - r_l$ is the update direction.  Line-search Newton methods then
-define an update to the solution along the direction $\Delta z$.  The
+where $\bar{x}_l$ is the current candidate solution of the nonlinear equations
+(which also defines the point where $\jac{\bar{f}}{\bar{x}}$ is evaluated) and $\Delta \bar{x} =
+\bar{f}_{l+1} - \bar{f}_l$ is the update direction.  Line-search Newton methods then
+define an update to the solution along the direction $\Delta \bar{x}$.  The
 essential functionality needed to perform a Newton-like method are the the
-abilities to evaluate the nonlinear residual $z {}\rightarrow r$ and to
+abilities to evaluate the nonlinear residual $\bar{x} {}\rightarrow \bar{f}$ and to
 (approximately) solve linear systems involving the Jacobian matrix
-$\jac{r}{z}$.  For each type of implicit time integration method, we will
-show, if possible, how to perform solves with $\jac{r}{z}$ by performing
+$\jac{\bar{f}}{\bar{x}}$.  For each type of implicit time integration method, we will
+show, if possible, how to perform solves with $\jac{\bar{f}}{\bar{x}}$ by performing
 solves with the matrix
 %
 \begin{equation}
@@ -459,8 +459,8 @@ W = \alpha \Jac{f}{\dot{x}} + \beta \Jac{f}{x},
 evaluated at points $(\dot{x},x,t)$ selected by the time integration method
 and where $\alpha\in\RE$ and $\beta\in\RE$ is some constants also defined by
 the time integration method.  Note that the matrix $W$ above in
-(\ref{rythmos:eqn:W_bdf}) may not necessarily exactly represent $\jac{r}{z}$
-and $z$ and $r$ may not simply lie in the vector spaces $\mathcal{X}$ and
+(\ref{rythmos:eqn:W_bdf}) may not necessarily exactly represent $\jac{\bar{f}}{\bar{x}}$
+and $\bar{x}$ and $\bar{f}$ may not simply lie in the vector spaces $\mathcal{X}$ and
 $\mathcal{F}$ respectively; but in many cases, they will.
 
 \subsubsection{Implicit multi-step BDF methods}
@@ -492,7 +492,7 @@ f\left( \frac{1}{\Delta t} \left[ \gamma_0 x_{k+1} + \sum_{j=1}^{p} \gamma_j \: 
 %
 One can immediately identify the BDF time step equations
 (\ref{rythmos:eqn:bdf_dae_ne}) with the general form of the time step
-equations (\ref{rythmos:eqn:r}) and with unknown solution variables $z =
+equations (\ref{rythmos:eqn:f_bar}) and with unknown solution variables $\bar{x} =
 x_{k+1}$.  All of the other state variables $x_{k+1-j}$, for $j = 1 {}\ldots
 p$, are given.
 
@@ -504,7 +504,7 @@ When considering a general Newton-like method for solving
 equations is
 %
 \begin{equation}
-\Jac{r}{z}
+\Jac{\bar{f}}{\bar{x}}
 = \frac{\gamma_0}{\Delta t} \Jac{f}{\dot{x}} + \Jac{f}{x},
 \label{rythmos:eqn:W_bdf}
 \end{equation}
@@ -536,10 +536,10 @@ which is then solved for the unknown state $x_{k+1}$.  The values of $\theta =
 rule, and backward Euler methods \cite{HairerWanner}.
 
 The Jacobian for the nonlinear system in (\ref{rythmos:eqn:theta_dae_ne}), with
-$z = x_{k+1}$, is
+$\bar{x} = x_{k+1}$, is
 %
 \begin{equation}
-\Jac{r}{z}
+\Jac{\bar{f}}{\bar{x}}
 = \frac{1}{\Delta t} \Jac{f}{\dot{x}} + \theta \Jac{f}{x},
 \label{rythmos:eqn:W_theta}
 \end{equation}
@@ -568,7 +568,7 @@ state variables $x_{k+1}$.  The straightforward Newton Jacobian for the
 equations in (\ref{rythmos:eqn:trap_dae_ne}) is
 %
 \begin{equation}
-\Jac{r}{z}
+\Jac{\bar{f}}{\bar{x}}
 = \frac{1}{\Delta t} \left[
 \left( \Jac{f}{\dot{x}} \right)_{k+1}
 + \left( \Jac{f}{\dot{x}} \right)_{k}
@@ -691,20 +691,20 @@ of implicit RK methods requires the simultaneous solution of $p$ sets
 of coupled nonlinear equations that take the form
 %
 \begin{equation}
-r_i(z) = f\left( \dot{x}_i, x_k + \Delta t \sum_{j=1}^{p} a_{ij} \dot{x}_j,
+\bar{f}_i(\bar{x}) = f\left( \dot{x}_i, x_k + \Delta t \sum_{j=0}^{p-1} a_{ij} \dot{x}_j,
 t_k + c_i \Delta t \right) = 0,
-\; \mbox{for} \; i = 1 \ldots p
+\; \mbox{for} \; i = 0 \ldots p-1
 \label{rythmos:eqn:irk_dae_ne}
 \end{equation}
 %
 where $\dot{x}_i$ are essentially approximations to the derivatives
-$\dot{x}(t_k + c_i \Delta t)$ called {}\textit{stage derivatives} and $z = [
-{}\dot{x}_1, {}\dot{x}_1, {}\ldots, {}\dot{x}_p ]^T$ are the unknowns in this
+$\dot{x}(t_k + c_i \Delta t)$ called {}\textit{stage derivatives} and $\bar{x} = [
+{}\dot{x}_0, {}\dot{x}_1, {}\ldots, {}\dot{x}_{p-1} ]^T$ are the unknowns in this
 set of equations.  After this set of coupled equations is solved, the state
 solution $x_{k+1}$ is given as the linear combination
 %
 \begin{equation}
-x_{k+1} = x_k + \Delta t \sum_{i=1}^{p} b_i \dot{x}_j.
+x_{k+1} = x_k + \Delta t \sum_{i=0}^{p-1} b_i \dot{x}_j.
 \end{equation}
 
 Implicit RK methods are classified by both the order $p$ and the selection of
@@ -719,19 +719,19 @@ c & A \\
 \end{array}
 \; \; = \; \;
 \begin{array}{c|cccc}
-c_1 & a_{11} & a_{12} & \cdots & a_{1p} \\
-c_2 & a_{21} & a_{22} & \cdots & a_{2p} \\
+c_0 & a_{0,0} & a_{0,1} & \cdots & a_{0,p-1} \\
+c_1 & a_{1,0} & a_{1,1} & \cdots & a_{1,p-1} \\
 \vdots & \vdots & \vdots & \ddots & \vdots \\
-c_p & a_{p1} & a_{p2} & \cdots & a_{pp} \\
+c_{p-1} & a_{p-1,0} & a_{p-1,1} & \cdots & a_{p-1,p-1} \\
 \hline
- & b_1 & b_2 & \cdots & b_p
+ & b_0 & b_1 & \cdots & b_{p-1}
 \end{array}
 \]
 %
-where $A = [a_{ij}]$, $b = [b_1, b_2, {}\ldots, b_p]^T$, and $c =
-[c_1, c_2, {}\ldots, c_p]^T$.
+where $A = [a_{ij}]$, $b = [b_0, b_1, {}\ldots, b_{p-1}]^T$, and $c =
+[c_0, c_1, {}\ldots, c_{p-1}]^T$.
 
-It is clear how to form the residual for the fully coupled system for $r(z)$ in
+It is clear how to form the residual for the fully coupled system for $\bar{f}(\bar{x})$ in
 (\ref{rythmos:eqn:irk_dae_ne}) just from individual evaluations $(\dot{x},x,t)
 {}\rightarrow f$ but how the Newton system for such a system is solved will
 vary greatly based on the structure and properties of the Butcher matrix $A$.
@@ -741,25 +741,25 @@ vary greatly based on the structure and properties of the Butcher matrix $A$.
 Fully implicit IRK methods present somewhat of a problem for developing
 general software since they involve the need to solve a fully coupled system
 of $p$ sets of equations of the form (\ref{rythmos:eqn:irk_dae_ne}).  Each
-block $\jac{r_i}{z_j} = {}\jac{r_i}{\dot{x}_j}$ of the full Jacobian
-$\jac{r}{z}$ is represented as
+block $\jac{\bar{f}_i}{\bar{x}_j} = {}\jac{\bar{f}_i}{\dot{x}_j}$ of the full Jacobian
+$\jac{\bar{f}}{\bar{x}}$ is represented as
 %
 \begin{equation}
-\Jac{r_i}{\dot{x}_j}
+\Jac{\bar{f}_i}{\dot{x}_j}
 = \Jac{f}{\dot{x}}
 + \Delta t a_{ij} \Jac{f}{x},
-\; \mbox{for} \; i = 1 \ldots p, \; j = 1 \ldots p
-\label{rythmos:eqn:dridzi_trap}
+\; \mbox{for} \; i = 0 \ldots p-1, \; j = 0 \ldots p-1
+\label{rythmos:eqn:dridzi_irk}
 \end{equation}
 %
 which is evaluated at the points $(\dot{x},x,t) = ( {}\dot{x}_i, x_k +
-{}\Delta t {}\sum_{j=1}^{p} a_{ij} {}\dot{x}_j, t_k + c_i {}\Delta t )$.  Note
-that $\jac{r_i}{z_j} = {}\jac{r_i}{\dot{x}_j}$ in
-(\ref{rythmos:eqn:dridzi_trap}) is of the same form as (\ref{rythmos:eqn:W})
+{}\Delta t {}\sum_{j=0}^{p-1} a_{ij} {}\dot{x}_j, t_k + c_i {}\Delta t )$.  Note
+that $\jac{\bar{f}_i}{\bar{x}_j} = {}\jac{\bar{f}_i}{\dot{x}_j}$ in
+(\ref{rythmos:eqn:dridzi_irk}) is of the same form as (\ref{rythmos:eqn:W})
 where $\alpha = 1$ and $\beta = \Delta t a_{ij}$.
 
 When considering a iterative method for solving systems with the block
-operator matrix $\jac{r}{z}$, it is easy to see how to use the general matrix
+operator matrix $\jac{\bar{f}}{\bar{x}}$, it is easy to see how to use the general matrix
 $W$ in (\ref{rythmos:eqn:W}) to implement a matrix-vector product, but it is
 not obvious how to precondition such a system.  Clearly a block diagonal
 preconditioner could be used but the effectiveness of such a preconditioning
@@ -768,14 +768,14 @@ possible just given the basic block operators and this is an open area of
 research.
 
 In some cases, however, it may be possible to form a full matrix object for
-$\jac{r}{z}$ but this is not something that can be expected for most
+$\jac{\bar{f}}{\bar{x}}$ but this is not something that can be expected for most
 applications.
 
 \subsubsection*{Semi-explicit IRK methods}
 
 Semi-explicit IRK methods are those IRK methods where the Butcher matrix $A$
 is lower diagonal and therefore gives rise to a block lower triangular
-Jacobian matrix $\jac{r}{z}$.  For these types of methods, the nonlinear
+Jacobian matrix $\jac{\bar{f}}{\bar{x}}$.  For these types of methods, the nonlinear
 equations in (\ref{rythmos:eqn:dridzi_trap}) can be solved one at a time for
 $i = 1 {}\ldots p$ which is easily accommodated using a Newton-type method
 where the Newton Jacobian for each $i$ is given by
@@ -786,11 +786,11 @@ where the Newton Jacobian for each $i$ is given by
 
 The next specialized class of IRK methods that we consider are
 diagonally-implicit IRK methods where the Butcher coefficients in $A$ and $c$
-give rise to a lower triangular Jacobian $\jac{r}{z}$ (and hence are also
+give rise to a lower triangular Jacobian $\jac{\bar{f}}{\bar{x}}$ (and hence are also
 semi-explicit IRK methods) that has the same nonsingular matrix block of the
 form in (\ref{rythmos:eqn:dridzi_trap}) along the diagonal.  This, of course,
-requires that $a_{11} = a_{22} = {}\ldots = a_{pp}$ and $c_{1} = c_{2} =
-{}\ldots = c_{p}$.  In this class of IRK methods, significant savings may be
+requires that $a_{0,0} = a_{1,1} = {}\ldots = a_{p-1,p-1}$ and $c_{0} = c_{1} =
+{}\ldots = c_{p-1}$.  In this class of IRK methods, significant savings may be
 achieved since a single set of linear solver objects (i.e.\ operators and
 preconditioners) can be utilized for the solution of the fully coupled system.
 In fact, it may even be possible to utilize multi-vector applications of the
@@ -889,7 +889,7 @@ and $\mathcal{X}=\mathcal{X}_1\times\mathcal{X}_2$ is a product vector space.
 The combined DAE is then solved using a single time stepper algorithm.  Many
 of the implicit time stepper methods described in
 Section~\ref{rythmos:sec:implicit-time-steppers} would then need to solve the
-implicit nonlinear system $r(z)=0$ that arises and a Newton-like method would
+implicit nonlinear system $\bar{f}(\bar{x})=0$ that arises and a Newton-like method would
 require solves with the composite matrix
 %
 \begin{equation}
@@ -1694,7 +1694,7 @@ in (\ref{rythmos:eqn:sens:c}))
 (\ref{rythmos:eqn:stag:f2}))
 %
 {}\item Continuation parameters (i.e.\ to aid in the solution of the implicit
-nonlinear time step equations $r(z)=0$ in (\ref{rythmos:eqn:r}) or in the
+nonlinear time step equations $\bar{f}(\bar{x})=0$ in (\ref{rythmos:eqn:f_bar}) or in the
 solution of initial conditions)
 %
 {}\item Uncertain parameters (i.e.\ to be manipulated in an uncertainty
@@ -3213,7 +3213,7 @@ Typically, an application code that explicitly supports only the
 backward-Euler method will implement the residual equation of the form
 %
 \[
-r(x_{k+1},x_k,t_k,\Delta t)
+\bar{f}(x_{k+1},x_k,t_k,\Delta t)
 = M(x_{k+1},t_k + \Delta t)\left(\frac{x_{k+1}-x_k}{\Delta t}\right)
 + \bar{f}(x_{k+1},t_k + \Delta t)
 \]
@@ -3230,7 +3230,7 @@ J(x_{k+1},x_k,t_k,\Delta t)
 = \frac{1}{\Delta t} M + \Jac{\bar{f}}{x}.
 \]
 %
-To see how to use $r(x_{k+1},x_k,t_k,\Delta t)$ to compute
+To see how to use $\bar{f}(x_{k+1},x_k,t_k,\Delta t)$ to compute
 $f(\dot{x},x,t)$ we start by equating
 %
 \[
@@ -3241,11 +3241,11 @@ f(\dot{x},x,t) = M(x,t) \dot(x) + \bar{f}(x,t)
 %
 where we immediately see that we must have $\dot{x} =
 (x_{k+1}-x_k)/{\Delta t}$, $x=x_{k+1}$, and $t=t_k+\Delta t$.
-These leads to the evaluation of $f(\ldots)$ in terms of $r(\ldots)$ as
+These leads to the evaluation of $f(\ldots)$ in terms of $\bar{f}(\ldots)$ as
 %
 \[
 f(\dot{x},x,t)
-= r(x, x - \Delta t \dot{x},t - \Delta t, \Delta t)
+= \bar{f}(x, x - \Delta t \dot{x},t - \Delta t, \Delta t)
 \]
 %
 where $x_{k+1} = x$, $x_k = x - {}\Delta t {}\dot{x}$, $t_k = t - {}\Delta t$,
@@ -3263,7 +3263,7 @@ W(\dot{x},x,t)
 %
 
 In summary, as long as an existing application is flexible enough in order to
-implement the functions $r(x_{k+1},x_k,t_k,\Delta t)$ and
+implement the functions $\bar{f}(x_{k+1},x_k,t_k,\Delta t)$ and
 $J(x_{k+1},x_k,t_k,\Delta t)$ using their backward Euler method
 and as long as $f(\dot{x},x,t)$ is linear in $\dot{x}$, then the above
 expressions can be used to implement the original DAE model.
