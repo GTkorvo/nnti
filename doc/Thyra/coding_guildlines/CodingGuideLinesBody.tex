@@ -52,11 +52,11 @@ Several appendicies are included that deal with a number of topics.
 \section{Alpha-numeric item designations}
 %
 
-Specific items in the document are to be refereed to starting with the acronym
-{}\textbf{TCDG}.  For example, the first naming convention guideline can be
-refereed to as {}\textbf{TCDG NC 1}.  In this way, these short precise
-alpha-numeric designation such as {}\textbf{TCDG NC 3} can be used in code
-reviews as short-hand references to specific guidelines.
+Specific items in this document are to be refereed to using numerated acronyms
+starting with {}\textbf{TCDG}.  For example, the first naming convention
+guideline can be refereed to as {}\textbf{TCDG NC 1}.  In this way, these
+short precise alpha-numeric designation such as {}\textbf{TCDG NC 3} can be
+used in code reviews as short-hand references to specific guidelines.
 
 It is an express goal that this document only be modified in such a way so to
 only add items and never remove items in order to maintain the exact matching
@@ -65,6 +65,10 @@ meaning.  If an item is to be removed, then that items designation should be
 removed and therefore the item designations may not be contiguous.  Therefore,
 the wording of a item may change, but its basic meaning and its alpha-numeric
 designation will not change.
+
+In addition, this document is based on {}\cite{C++CodingStandards05}) and
+those guildelines will be refereed to using an enumerated acronym such as
+{}\textbf{CPPCS Item 15} (for ``Use const proactively'' for instance).
 
 %
 \section{Naming conventions}
@@ -116,16 +120,17 @@ example:
 \end{verbatim}}
 
 {}\textit{Justification}: Using a capital 'E' for {}\texttt{enum}s allows the
-<definition of other types with the same basic name that contain other data.
+definition of other types with the same basic name that contain other data.
 For example, {}\texttt{ESolveStatus} in an {}\texttt{enum} enumerating the
 different types of solve status and {}\texttt{SolveStatus} is a C++ struct
 that contains an {}\texttt{ESolveStatus} member along with some other data.
 The use of the scoping prefix (i.e.\ {}\texttt{SOLVE\-\_STATUS\_} above) is
 also recommended in {}\cite[Section 11.4]{CodeComplete2nd04}.
 
-{}\textit{rabartl note:} This convention is what is used in Thyra currently
-but it is somewhat unconventional.  This can be changed pretty easily but the
-scoping aspect is very useful in general and should be kept in my opinion.
+{}\textit{rabartl note:} The convention of using the prefix 'E' is what is
+used in Thyra currently but it is somewhat unconventional.  This can be
+changed pretty easily but the scoping aspect is very useful in general and
+should be kept in my opinion.
 
 {}\item\stepcounter{Thyra_NC_counter}\textbf{NC \arabic{Thyra_NC_counter}}:
 {}\textit{C++ object instance identifier names}: Formal function
@@ -435,24 +440,24 @@ exception macros make it much easier to generate good error messages that you
 would get from a simple use of the {}\texttt{assert(...)} macro.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
-{}\textit{Avoid the use of raw C++ pointers in all but the lowest level
-code}: The tools mentioned below which include {}\texttt{Teuchos::\-Ptr},
+{}\textit{Avoid the use of raw C++ pointers in all but the lowest level code}:
+The tools mentioned below which include {}\texttt{Teuchos::\-Ptr},
 {}\texttt{Teuchos::\-RCP}, {}\texttt{Teuchos::\-Array},
-{}\texttt{Teuchos::\-Array\-RCP}, and
-{}\texttt{Teuchos::\-Array\-View} allow most code to be written without any
-explicit raw C++ pointers.  Also, in general, perfer to use
-{}\texttt{std\-::string} instead of {}\texttt{char*} or {}\texttt{const
-char*}.  In debug mode, these classes allow for full runtime checking that
-result in exceptions being thrown and excellent error messages (i.e.\ instead
-of segfaults).  Indexing and other unchecked operations with
+{}\texttt{Teuchos::\-Array\-RCP}, and {}\texttt{Teuchos::\-Array\-View} allow
+most code to be written without any explicit raw C++ pointers.  Also, in
+general, perfer to use {}\texttt{std\-::string} instead of {}\texttt{char*} or
+{}\texttt{const char*}.  In debug mode, these classes allow for full runtime
+checking that result in exceptions being thrown and excellent error messages
+(i.e.\ instead of segfaults).  Indexing and other unchecked operations with
 {}\texttt{std\-::string} objects is much less common in numerical code and
-therefore is less likely to produce error inside of numerical code.
+therefore is less likely to result in memory-usage errors inside of numerical
+code.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
 {}\textit{Use Teuchos::Ptr as function arguments in the place of raw C++
 pointers to single objects where no persisting association exists}: The class
 {}\texttt{Teuchos\-::Ptr} simply takes the place of a raw pointer to a single
-object, but in debug mode, it is initalized to NULL by default and throws
+object but is always default initialized to NULL.  In debug mode, it throws
 exceptions when trying to dereference a null pointer.  Using this class helps
 to eliminate all needs for checking for NULL to avoid undefined behavior when
 one dereferences a NULL pointer.
@@ -474,55 +479,59 @@ functions (including iterators) are fully checked.  In optimized mode,
 unchecked raw pointers are used.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
-{}\textit{Prefer Teuchos::Array to std::vector as a contiguous general
-purpose data container}: While {}\texttt{Teuchos::\-Array} gets all of its
-real functionality from {}\texttt{std::\-vector}, prefer to use
-{}\texttt{Teuchos::\-Array} as we can provide more capabilities and built-in
-optional checking.  For instance {}\texttt{Teuchos::\-Array::\-operator[]} is
-range checked in debug mode regardless whether there is an underling checked
-STL implementation or not (see {}\cite[Item 83]{C++CodingStandards05}).  In
-addition, {}\texttt{Teuchos\-::Array} will automatically convert into an
+{}\textit{Prefer Teuchos::Array to std::vector as a contiguous general purpose
+data container}: While {}\texttt{Teuchos::\-Array} gets all of its real
+functionality from {}\texttt{std::\-vector}, prefer to use
+{}\texttt{Teuchos::\-Array} as we provide more capabilities and (debug)
+checking.  For instance {}\texttt{Teuchos::\-Array::\-operator[]} is range
+checked in debug mode regardless whether there is an underling checked STL
+implementation or not (see {}\cite[Item 83]{C++CodingStandards05}).  In debug
+mode, the iterator is also runtime checked.  In addition,
+{}\texttt{Teuchos\-::Array} will automatically convert into an
 {}\texttt{Teuchos\-::ArrayView} object safely when used in function calls.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
-{}\textit{Use Teuchos::ArrayRCP for memory management of
-dynamically allocated objects stored in contiguous arrays of data and for
-persisting associations involving contiguous arrays}: Note that
-{}\texttt{Teuchos::ArrayRCP} does {}\underline{not} take the place of
-a contiguous container class such as {}\texttt{Teuchos::\-Array} or
-{}\texttt{std::\-vector}.  A {}\texttt{Teuchos::ArrayRCP} object can
-not change the size of the array, it can only provide for reference counted
+{}\textit{Use Teuchos::ArrayRCP for memory management of dynamically allocated
+objects stored in contiguous arrays of data and for persisting associations
+involving contiguous arrays}: Note that {}\texttt{Teuchos::ArrayRCP} does
+{}\underline{not} take the place of a contiguous container class such as
+{}\texttt{Teuchos::\-Array}.  A {}\texttt{Teuchos::ArrayRCP} object can not
+change the size of the array, it can only provide for reference counted
 sharing of an array of data of fixed size and provide subviews of contiguous
-parts of the managed array.
+parts of the managed array.  All access to data (both through
+{}\texttt{Teuchos::\-ArrayRCP::\-operator[]} and iterators) is runtime checked
+in a debug build.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
-{}\textit{Prefer Teuchos::Map to std::map as a general associative
-container}: While in optimized mode, {}\texttt{Teuchos\-::Map} is equivalent
-to {}\texttt{std\-::map}, in debug mode {}\texttt{Teuchos\-::Map} uses a
+{}\textit{Prefer Teuchos::Map to std::map as a general associative container}:
+While in optimized mode, {}\texttt{Teuchos\-::Map} is equivalent to
+{}\texttt{std\-::map}, in debug mode {}\texttt{Teuchos\-::Map} uses a
 simplified data-structure with fully checking of access and iterators.  This
-class uses {}\texttt{Teuchos\-::Array},
-{}\texttt{Teuchos\-::Array\-RCP} and others to build a fully
-checked (but slower) implementation.
+class uses {}\texttt{Teuchos\-::Array}, {}\texttt{Teuchos::List} and others to
+build a fully checked (but slower) implementation.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
-{}\textit{Use the template function
-{}\texttt{Teuchos::as<T\_to>(T\_from)} for all conversion of data types that
-may result in loss of precision or in an incorrect conversion}: The templated
-C++ function {}\texttt{Teuchos::as<T\_to>(T\_from)} and its specializations
-will contain runtime tests, in debug mode, for the results of a conversion to
-ensure correctness.  This includes the conversion of strings into numbers
-(i.e.\ replacing {}\texttt{atof()} and {}\texttt{atoi()}) as well as
-conversions that can result in loss of precision or meaning (such as
+{}\textit{Use the template function {}\texttt{Teuchos::as<T\_to>(T\_from)} for
+all conversion of data types that may result in loss of precision or in an
+incorrect conversion}: The templated C++ function
+{}\texttt{Teuchos::as<T\_to>(T\_from)} and the class specializations that it
+calls will contain runtime tests, in debug mode, for the results of a
+conversion to ensure correctness.  This includes the conversion of strings
+into numbers (i.e.\ replacing {}\texttt{atof()} and {}\texttt{atoi()}) as well
+as conversions that can result in loss of precision or meaning (such as
 {}\texttt{double} to {}\texttt{int}, {}\texttt{long int} to {}\texttt{int},
 {}\texttt{int} to {}\texttt{char}, {}\texttt{unsigned int} to {}\texttt{int},
-etc.).  The optimized versions of these conversion functions could be
-unchecked conversions.  An always checked version like
-{}\texttt{Teuchos\-::asSafe\-<\-T\_to\->\-(\-T\_from\-)} is available as well
-in order to validate user data.  {}\textit{Justification}: Unchecked
-conversions are the result of many different types of errors and a fully safe
-program needs to be able to check all such potentially unsafe conversions at
-runtime.  The implicit conversion rules allowed in C which where carried over
-to C++ can result in very unsafe code.
+etc.).  The optimized implementations of these conversion functions are
+typically unchecked for speed.  A version this function which always does
+runtime checking is also available called
+{}\texttt{Teuchos\-::asSafe\-<\-T\_to\->\-(\-T\_from\-)} in order to validate
+user data.
+
+{}\textit{Justification}: Unchecked conversions are the result of many
+different types of errors and a fully safe program needs to be able to check
+all such potentially unsafe conversions at runtime.  The implicit conversion
+rules allowed in C which where carried over to C++ can result in very unsafe
+code.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
 {}\textit{Use namespace enclosure for the definition of member functions
@@ -1032,12 +1041,11 @@ it can be easy to see if a function definition is missing (i.e.\ which could
 be the cause of the link error that you are seeing).
 
 {}\item\stepcounter{Thyra_FSC_counter}\textbf{FSC \arabic{Thyra_FSC_counter}}:
-{}\textit{Use ``modified K\&R'' or ``ANSI'' style for the lacement of
-braces and indentation of control structures}: Two basic styles of brace
-placement and indentation in control structures are recommend here.  The first
-general style is a modification of the K\&R style{}\cite{ArtisticStyle} where
-the brace comes immediately after the control statement on the same line shown
-as:
+{}\textit{Use ``modified K\&R'' or ``ANSI'' style for the placement of braces
+and indentation of control structures}: Two basic styles of brace placement
+and indentation in control structures are recommend here.  The first general
+style is a modification of the K\&R style{}\cite{ArtisticStyle} where the
+brace comes immediately after the control statement on the same line shown as:
 
 {\small\begin{verbatim}
   // Modified K&R Style (recommended)
