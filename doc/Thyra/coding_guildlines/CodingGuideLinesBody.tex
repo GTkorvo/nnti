@@ -66,8 +66,8 @@ removed and therefore the item designations may not be contiguous.  Therefore,
 the wording of a item may change, but its basic meaning and its alpha-numeric
 designation will not change.
 
-In addition, this document is based on {}\cite{C++CodingStandards05}) and
-those guildelines will be refereed to using an enumerated acronym such as
+In addition, this document is based on {}\cite{C++CodingStandards05} and those
+guildelines will be refereed to using an enumerated acronym such as
 {}\textbf{CPPCS Item 15} (for ``Use const proactively'' for instance).
 
 %
@@ -727,10 +727,175 @@ issue of {}\texttt{using} declarations and directives.
 
 Here we describe a convention for the specification of the formal arguments
 for C++ functions that leads to C++ code that is consistent looking, maximizes
-compile-time and run-time checking, and is as auto-documenting as possible.
+compile-time and run-time checking, and is as auto-documenting as possible.  A
+key component to this specification is that no raw C++ pointers are used.  Raw
+pointers are the cause of almost all memory usage problems in C++.  Raw C++
+references, on the other hand, are safe to use as long as the object reference
+they are being used to point to is valid and no persisting association exists.
 
-ToDo: Fill this in once I have written and tested Teuchos\-::ArrayView and
-Teuchos\-::Ptr classes.  No raw pointers!
+When passing a single object to a function, four different properties have to
+be specified: 1) does the object use value semantics or reference semantics,
+2) is the object changeable (const) or changeable (nonconst), 3) is this
+establishing a persisting or non-persisting association, and 4) is the object
+optional or required.  All of these properties are directly expressed in the
+C++ code except for whether an argument or object is required or optional and
+therefore must be documented in the function's interface specification (i.e.\
+in the doxygen documentation {}\texttt{\\param} field).
+
+An array of value objects just stores the objects themselves and passes them
+through an {}\texttt{Teuchos\-::ArrayView<T>} object.  An array of reference
+objects, however, can not directly store the objects themselves and instead
+must store an array to (smart) pointers to the reference objects.
+
+Tables {}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type}
+give conventions for passing single objects and arrays of objects for
+value-type and reference-type objects, respectively.
+
+
+\begin{table}[p]
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\begin{tabular}{|l|l|}
+%
+\hline
+Argument Purpose
+& Non-Persisting Association \\
+\hline
+\hline
+single, non-changeable object (required)
+& \begin{minipage}{12ex}
+    {\tiny .}\\
+    {}\texttt{S s} \\
+    or \\
+    {}\texttt{const S s} \\
+    or \\
+    {}\texttt{const S \&s}
+    {\tiny .}
+  \end{minipage} \\
+\hline
+single, non-changeable object (optional)
+& {}\texttt{const Ptr<const S> \&s} \\
+\hline
+single, changeable object
+& {}\texttt{const Ptr<S> \&s} \\
+\hline
+array of non-changeable objects
+& {}\texttt{const ArrayView<const S> \&s} \\
+\hline
+array of changeable objects
+& {}\texttt{const ArrayView<S> \&s} \\
+\hline
+%
+\end{tabular} \\[3ex]
+%
+\begin{tabular}{|l|l|}
+%
+\hline
+Argument Purpose
+& Persisting Association \\
+\hline
+\hline
+single, non-changeable object
+& {}\texttt{const RCP<const S> \&s} \\
+\hline
+single, changeable object
+& {}\texttt{const RCP<S> \&s} \\
+\hline
+array of non-changeable objects
+& {}\texttt{const ArrayRCP<const S> \&s} \\
+\hline
+array of changeable objects
+& {}\texttt{const ArrayRCP<<S> \&s} \\
+\hline
+\end{tabular}
+%
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{fig:func_args_value_type}
+C++ declarations for passing small concrete objects (i.e.\ with value
+semantics) to and from functions where {}\texttt{S} is a place holder for an
+actual built-in or user-defined data type.}
+%
+\end{table}
+
+
+\begin{table}[p]
+%
+%\fbox{
+\begin{center}
+%
+\begin{tabular}{|l|l|}
+\hline
+Argument Purpose
+& Non-Persisting Association \\
+\hline
+\hline
+single, non-changeable object (required)
+& {}\texttt{const A \&a} \\
+\hline
+single, non-changeable object (optional)
+& {}\texttt{const Ptr<const A> \&a} \\
+\hline
+single, changeable object
+& {}\texttt{const Ptr<A> \&a} \\
+\hline
+array of non-changeable objects (const ptr)
+& {}\texttt{const ArrayView<const Ptr<const A> > \&a} \\
+\hline
+array of non-changeable objects (nonconst ptr)
+& {}\texttt{const ArrayView<Ptr<const A> > \&a} \\
+\hline
+array of changeable objects (const ptr)
+& {}\texttt{const ArrayView<const Ptr<A> > \&a} \\
+\hline
+array of changeable objects (nonconst ptr)
+& {}\texttt{const ArrayView<Ptr<A> > \&a} \\
+\hline
+\end{tabular} \\[3ex]
+%
+\begin{tabular}{|l|l|}
+\hline
+Argument Purpose
+& Persisting Association \\
+\hline
+\hline
+single, non-changeable object
+& {}\texttt{const RCP<const A> \&a} \\
+\hline
+single, changeable object
+& {}\texttt{const RCP<A> \&a} \\
+\hline
+array of non-changeable objects (const ptr)
+& {}\texttt{const ArrayView<const RCP<const A> > \&a} \\
+\hline
+array of non-changeable objects (nonconst ptr)
+& {}\texttt{const ArrayView<RCP<const A> > \&a} \\
+\hline
+array of changeable objects (const ptr)
+& {}\texttt{const ArrayView<const RCP<A> > \&a} \\
+\hline
+array of changeable objects (nonconst ptr)
+& {}\texttt{const ArrayView<RCP<A> > \&a} \\
+\hline
+\end{tabular}
+%
+\end{center}
+\caption{\label{fig:func_args_ref_type}
+C++ declarations for passing abstract objects (i.e.\ with reference or pointer
+semantics) or large concrete objects (i.e.\ that are expensive to copy) to and
+from functions where {}\texttt{A} is a place holder for an actual C++ base
+class. }
+%} % end fbox
+\end{table}
+
+
 %
 \section{Formating of source code}
 \label{thyracodingguidelines:formatting:sec}
