@@ -52,7 +52,7 @@ National Laboratories}
 \begin{abstract}
 Anasazi is a package within the Trilinos software project. Anasazi
 uses modern software paradigms to implement algorithms for the
-numerical solution of large-scale eigenvalue problems in templated
+numerical solution of large-scale eigenvalue problems in
 ANSI C++. The purpose of our paper is to describe the design and
 development of Anasazi. Timings comparing the cost of Anasazi with
 the popular FORTRAN 77 code ARPACK are given.
@@ -87,7 +87,7 @@ Albuquerque, NM 87185-0316; email hkthorn@sandia.gov.
 Anasazi is a package within the Trilinos
 Project~\cite{Heroux:2005:OTP}. Anasazi uses modern software
 paradigms to implement algorithms for the numerical solution of
-large-scale eigenvalue problems in templated ANSI C++. We define a
+large-scale eigenvalue problems in ANSI C++. We define a
 large-scale eigenvalue problem to be one where a small number
 (relative to the dimension of the problem) of eigenvalues and the
 associated eigenspace are computed, and only knowledge of the
@@ -107,7 +107,7 @@ algorithms: a Davidson~\cite{davi:75} method, a
 Krylov-Schur~\cite{stew:01} method, and an implementation of
 LOBPCG~\cite{knya:01}.
 
-ARPACK has proved to be a popular and successful FORTRAN 77 library
+ARPACK has proven to be a popular and successful FORTRAN 77 library
 for the numerical solution of large-scale eigenvalue problems. A
 crucial reason for the popularity of ARPACK is the use of a reverse
 communication~\cite[p.~3]{lesy:98} interface for applying the
@@ -118,7 +118,7 @@ interface is cumbersome, challenging to maintain, and does not allow
 data encapsulation. Moreover, because ARPACK uses a procedural
 programming paradigm where the matrix-vector operations rely upon
 the physical representation of the data manipulated, ARPACK is
-susceptible to design changes. Hence code reuse is limited, and
+susceptible to design changes. Hence, code reuse is limited and
 software complexity and maintenance are more cumbersome.
 
 Procedural programming is often at odds with modern software
@@ -130,7 +130,7 @@ templates). One of the features of Anasazi is the use of generic
 programming via static and dynamic polymorphism~\cite[Chapter
 14]{VJ02}. Static polymorphism, via templating of the linear algebra
 objects, allows algorithms in Anasazi to be written generically
-(i.e., independent of the data). Dynamic polymorphism, via virtual
+(i.e., independent of the data types). Dynamic polymorphism, via virtual
 functions and object inheritance, allows eigensolvers to be
 decoupled from functions such as orthogonalization and stopping
 conditions; this functionality can then be decided at runtime. The
@@ -154,7 +154,7 @@ algorithmic modification.
 %developing a rich collection of eigensolvers.
 
 The result of these design choices is to make Anasazi an extensible
-and interoperable software. Extensibility is apparent in the
+and interoperable software framework. Extensibility is apparent in the
 infrastructure's support for a significant class of large-scale
 eigenvalue algorithms. Extensions can be made through the addition of
 new algorithms or through modification of existing algorithms. This is
@@ -173,7 +173,7 @@ techniques. Our approach is algorithm-oriented \cite{muov:94}
 because algorithms are front and center, followed by the software
 abstractions. Moreover, our implementations are required to be
 efficient and portable. We believe that Anasazi is the natural
-successor to ARPACK, inheriting, and extending, the quality
+successor to ARPACK, inheriting and extending the quality
 practices employed by ARPACK.
 
 Related software efforts that implement several algorithms for
@@ -211,8 +211,8 @@ provides timings comparing ARPACK and Anasazi.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \label{sec:algorithm-overview}
 
-Anasazi software provides algorithms for computing a partial
-eigen-decomposition for the generalized eigenvalue problem
+The Anasazi software framework provides algorithms for computing a 
+partial eigen-decomposition for the generalized eigenvalue problem
 \begin{equation}  \label{eq:intro.1}
   \mathbf{A} \mathbf{x} = \mathbf{B} \mathbf{x} \lambda , \qquad
   \mathbf{A}, \mathbf{B} \in \mathbb{C}^{n\times n}\ .
@@ -260,7 +260,7 @@ called oblique. Otherwise, when $\mathcal{V} = \mathcal{U}$ the
 orthogonal Rayleigh-Ritz method results. The functions $\Phi(\cdot)$
 and $\Psi(\cdot)$ are often used to improve convergence to the
 eigenvalues and eigenspace of interest. For example, a standard
-approach is to reformulate (\ref{eq:intro.1}) as
+approach is to reformulate equation (\ref{eq:intro.1}) as
 $$
 %\begin{equation}  \label{eq:si}
   \Phi(\mathbf{A}) \mathbf{x} \equiv
@@ -268,7 +268,8 @@ $$
   (\lambda-\sigma)^{-1} \equiv \Psi(\mathbf{B})\mathbf{x} \nu ,
 %\end{equation}
 $$
-where $\sigma \in \mathbb{C}$ is near the eigenvalues of interest.
+where $\nu=1/(\lambda-\sigma)$ and $\sigma \in \mathbb{C}$ is near the 
+eigenvalues of interest.
 This is an example of the shift-invert spectral transformation. The
 matrix $\mathbf{M}$ is often used to denote an inner product; for
 instance $\mathbf{M}$ can be set equal to $\mathbf{A}$ or
@@ -325,7 +326,7 @@ eigen-decomposition\\
 {\rm (3)} \>\> Deflate the accurate portions of the
 eigen-decomposition
 \\
-{\rm (4)} \>\> Terminate the Eigen-iteration
+{\rm (4)} \>\> Terminate the eigen-iteration
 \\
 \end{tabbing} }
 \end{algorithm}
@@ -867,8 +868,7 @@ Anasazi::ReturnType ret = solman.solve();
 Anasazi::Eigensolution<ST,MV> sol = problem->getSolution();
 \end{boxedverbatim}
 \end{center}
-\caption{Example: Solving an eigenvalue problem using a
-\aspace{SolverManager}}
+\caption{Sample code for solving an eigenvalue problem using a \aspace{SolverManager}}
 \label{fig:examplesolve}
 \end{figure}
 
@@ -921,7 +921,7 @@ These support classes are employed for the following purposes:
   eigenvalues of interest.
   \item \verb!printer! - the output manager dictates the verbosity level in addition to
     processing output streams.
-  \item \verb!tester! - the status tester dictates when the solver terminates
+  \item \verb!tester! - the status tester dictates the termination of the iteration
   \verb!iterate()!.
   \item \verb!ortho! - the orthogonalization manager defines the inner product
    in addition to performing orthogonalization for the solver.
@@ -1005,7 +1005,7 @@ algorithms provided by LAPACK.
 \label{sec:benchmarking}
 
 \begin{table}
-\caption{Comparing the overhead of Anasazi with ARPACK. --- denotes a measurement
+\caption{Comparing the overhead of Anasazi with ARPACK; ``---'' denotes a measurement
 below the clock resolution.}
 \label{table:timings}
 \begin{center}
@@ -1013,8 +1013,8 @@ below the clock resolution.}
        \cline{2-5} %\hline
        % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
         & \multicolumn{4}{c|}{Computing $50$ Arnoldi vectors} \\ \cline{2-5}
-        & \multicolumn{2}{c|}{Matrix-vector} &
-       \multicolumn{2}{c|}{Total}\\ \hline
+        & \multicolumn{2}{c|}{Matrix-vector time [s]} &
+       \multicolumn{2}{c|}{Total runtime [s]}\\ \hline
        Matrix size & ARPACK & Anasazi & ARPACK & Anasazi \\ \hline %\cline{2-5}
        %2500 & 0.010 & 0.018 & 0.47 & 0.54 \\
        10000 & --- & 0.01 & 0.14 & 0.15 \\
@@ -1023,8 +1023,8 @@ below the clock resolution.}
        1000000 & 0.66 & 1.23 & 19.2 & 18.8 \\
        \hline
         & \multicolumn{4}{c|}{Computing $100$ Arnoldi vectors} \\ \cline{2-5}
-        & \multicolumn{2}{c|}{Matrix-vector} &
-       \multicolumn{2}{c|}{Total}\\ \hline
+        & \multicolumn{2}{c|}{Matrix-vector time [s]} &
+       \multicolumn{2}{c|}{Total runtime [s]}\\ \hline
        Matrix size & ARPACK & Anasazi & ARPACK & Anasazi \\ \hline %\cline{2-5}
        %2500 & 0.010 & 0.018 & 0.47 & 0.54 \\
        10000 & 0.03 & 0.02 & 0.53 & 0.55 \\
@@ -1033,8 +1033,8 @@ below the clock resolution.}
        1000000 & 1.27 & 2.40 & 68.4 & 67.1 \\
        \hline
         & \multicolumn{4}{c|}{Computing $150$ Arnoldi vectors} \\ \cline{2-5}
-        & \multicolumn{2}{c|}{Matrix-vector} &
-       \multicolumn{2}{c|}{Total}\\ \hline
+        & \multicolumn{2}{c|}{Matrix-vector time [s]} &
+       \multicolumn{2}{c|}{Total runtime [s]}\\ \hline
        Matrix size & ARPACK & Anasazi & ARPACK & Anasazi \\ \hline %\cline{2-5}
        %2500 & 0.010 & 0.018 & 0.47 & 0.54 \\
        10000 & 0.03 & 0.04 & 1.15 & 1.22 \\
@@ -1056,7 +1056,7 @@ been an inhibiting factor in the adoption of object-oriented
 programming paradigms in scientific computing scenarios. 
 
 We now discuss the important issue of comparing Anasazi and ARPACK
-on a model problem. Our interest is in accessing any overhead of
+on a model problem. Our interest is in assessing any overhead of
 Anasazi and ARPACK, C++ and FORTRAN 77 software.
 
 We benchmarked Anasazi's \aspace{BlockKrylovSchurSolMgr} (with a block size
@@ -1099,7 +1099,7 @@ and Andy Salinger for many helpful discussions.
 
 
 \begin{received}
-????
+%????
 \end{received}
 
 
