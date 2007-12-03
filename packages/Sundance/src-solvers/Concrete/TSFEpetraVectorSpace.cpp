@@ -83,7 +83,16 @@ EpetraVectorSpace::createMembers(int n) const
     {
       vecs[i] = createMember();
     }
-  return rcp(new Thyra::DefaultColumnwiseMultiVector<double>(self, small, &(vecs[0])));
+  return rcp(
+    new Thyra::DefaultColumnwiseMultiVector<double>(
+      self, small,
+#ifdef TRILINOS_DEV
+      vecs
+#else
+      &(vecs[0])
+#endif
+      )
+    );
 }
 
 

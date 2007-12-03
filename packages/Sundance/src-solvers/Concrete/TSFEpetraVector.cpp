@@ -62,7 +62,13 @@ EpetraVector
   epetraMap_ = epvs->epetraMap();
   epetraVec_ = rcp(new Epetra_Vector(*epetraMap_, true));
 
-  RefCountPtr<double> data = rcp(&(epetraVec_->operator[](0)), false);
+#ifdef TRILINOS_DEV
+  Teuchos::ArrayRCP<double> data =
+    Teuchos::arcp( &(epetraVec_->operator[](0)), 0, epetraMap_->NumMyElements(), false );
+#else
+  RefCountPtr<double> data =
+    Teuchos::rcp( &(epetraVec_->operator[](0)), false );
+#endif
   initialize(mpiVecSpace_, data, 1);
 }
 
@@ -81,7 +87,13 @@ EpetraVector
 
   epetraMap_ = epvs->epetraMap();
 
-  RefCountPtr<double> data = rcp(&(epetraVec_->operator[](0)), false);
+#ifdef TRILINOS_DEV
+  Teuchos::ArrayRCP<double> data =
+    Teuchos::arcp( &(epetraVec_->operator[](0)), 0, epetraMap_->NumMyElements(), false );
+#else
+  RefCountPtr<double> data =
+    Teuchos::rcp( &(epetraVec_->operator[](0)), false );
+#endif
   initialize(mpiVecSpace_, data, 1);
 }
 
