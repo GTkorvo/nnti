@@ -50,12 +50,15 @@ U. L. Hetmaniuk and R. B. Lehoucq and H. K. Thornquist\\ Sandia
 National Laboratories}
 
 \begin{abstract}
-Anasazi is a package within the Trilinos software project. Anasazi
-uses modern software paradigms to implement algorithms for the
-numerical solution of large-scale eigenvalue problems in
-ANSI C++. The purpose of our paper is to describe the design and
-development of Anasazi. Timings comparing the cost of Anasazi with
-the popular FORTRAN 77 code ARPACK are given.
+Anasazi is a package within the Trilinos software project that
+provides a framework for the iterative, numerical solution of 
+large-scale eigenvalue problems. Anasazi is written in ANSI C++ and
+uses modern software paradigms to enable the research and development
+of eigensolver algorithms. Furthermore, Anasazi provides implementations
+for some of the most recent eigensolver methods.
+The purpose of our paper is to describe the design and
+development of the Anasazi framework. A performance comparison 
+of Anasazi and the popular FORTRAN 77 code ARPACK are given. 
 \end{abstract}
 
 \category{G.1.3}{Numerical Analysis}{Numerical Linear Algebra}
@@ -85,9 +88,9 @@ Albuquerque, NM 87185-0316; email hkthorn@sandia.gov.
 \maketitle
 
 Anasazi is a package within the Trilinos
-Project~\cite{Heroux:2005:OTP}. Anasazi uses modern software
+Project~\cite{Heroux:2005:OTP} that uses ANSI C++ and modern software
 paradigms to implement algorithms for the numerical solution of
-large-scale eigenvalue problems in ANSI C++. We define a
+large-scale eigenvalue problems. We define a
 large-scale eigenvalue problem to be one where a small number
 (relative to the dimension of the problem) of eigenvalues and the
 associated eigenspace are computed, and only knowledge of the
@@ -121,12 +124,8 @@ the physical representation of the data manipulated, ARPACK is
 susceptible to design changes. Hence, code reuse is limited and
 software complexity and maintenance are more cumbersome.
 
-Procedural programming is often at odds with modern software
-paradigms that include object-based, object-oriented, and generic
-programming methods. The C programming language only allows an
-object-based programming paradigm. In contrast, C++ supports
-object-oriented techniques and generic programming (typically via
-templates). One of the features of Anasazi is the use of generic
+The Anasazi framework employs more modern software development
+paradigms through the use of generic
 programming via static and dynamic polymorphism~\cite[Chapter
 14]{VJ02}. Static polymorphism, via templating of the linear algebra
 objects, allows algorithms in Anasazi to be written generically
@@ -268,7 +267,8 @@ $$
   (\lambda-\sigma)^{-1} \equiv \Psi(\mathbf{B})\mathbf{x} \nu ,
 %\end{equation}
 $$
-where $\nu=1/(\lambda-\sigma)$ and $\sigma \in \mathbb{C}$ is near the 
+where $\nu=1/(\lambda-\sigma)$ is the eigenvalue of the reformulated
+system and $\sigma \in \mathbb{C}$ is near the 
 eigenvalues of interest.
 This is an example of the shift-invert spectral transformation. The
 matrix $\mathbf{M}$ is often used to denote an inner product; for
@@ -450,8 +450,8 @@ preconditioners.
 
 \cbcomm{give small code example of template use in C++}
 
-The templating of an eigensolver on multivector and scalar types
-enables software reuse. Consider in contrast that ARPACK implements
+Templating an eigensolver on operator, multivector, and scalar types
+makes software reuse easier. Consider in contrast that ARPACK implements
 the four subroutines---\texttt{SNAUPD}, \texttt{DNAUPD},
 \texttt{CNAUPD}, and \texttt{ZNAUPD}---for solving non-Hermitian
 eigenproblems. Four separate subroutines are provided for these four
@@ -671,7 +671,7 @@ Under this framework, users have a number of options for performing eigenvalue
 computations with Anasazi:
 \begin{itemize}
 \item
-use an existing solver manager. In this case, the user is limited to
+Use an existing solver manager. In this case, the user is limited to
 the functionality provided by the existing solver managers.
 \item
 Develop a new solver manager for an existing eigensolver.
@@ -701,7 +701,7 @@ section lists and briefly describes the classes used in Anasazi.
 We remark that Anasazi is largely independent of Trilinos. Anasazi
 only relies on the Trilinos Teuchos package~\cite{Trilinos:Teuchos}
 that provides a common suite of tools, such as: \texttt{RCP},
-a reference-counting smart pointer~\cite{detlefs92garbage};
+a reference-counting smart pointer~\cite{Detlefs:1992:GCR};
 \texttt{ParameterList}, a list for algorithmic parameters of
 varying data types; and the BLAS
 \cite{Lawson:1979:BLA,Blackford:2002:USB} and LAPACK \cite{abbd:95}.
@@ -723,8 +723,10 @@ void Eigenproblem::setSolution(const Eigensolution & sol);
 \end{verbatim}
 
 The \aspace{Eigensolution} class was developed in order to
-facilitate setting and retrieving of solution data. This structure
-contains the following information:
+facilitate setting and retrieving the solution data from an eigenproblem.  
+Furthermore, the \aspace{Eigensolution} class was designed for storing
+solution data from both Hermitian and non-Hermitian eigenproblems. 
+This structure contains the following information:
 \begin{itemize}
   \item \verb!RCP< MV > Evecs! \\
    The computed eigenvectors.
@@ -733,10 +735,16 @@ contains the following information:
  \item \verb!std::vector< Value< ST > > Evals! \\
    The computed eigenvalue approximations.
  \item \verb!std::vector< int > index! \\
-   An index into \verb!Evecs! to enable compressed storage of eigenvectors for real, non-Hermitian problems.
+   An index into \verb!Evecs! to enable compressed storage of eigenvectors for non-Hermitian problems.
  \item \verb!int numVecs! \\
    The number of computed eigenpair approximations.
 \end{itemize}
+The \aspace{Value} structure is a simple container, templated on scalar type, that
+has two members: the real and imaginary part of an eigenvalue.  The real and imaginary
+parts are stored as the magnitude type of the scalar type.  The \aspace{Value} structure
+along with the \verb!index! vector enable the \aspace{Eigensolution} structure to 
+store the solutions from either real or complex, Hermitian or non-Hermitian eigenvalue
+problems.
 
 Anasazi solver managers are expected to place the results of their computation in the
 \aspace{Eigenproblem} class using an \aspace{Eigensolution}. However, a user working
@@ -790,25 +798,30 @@ solution directly from the eigensolver state.
 %\end{remark}
 
 The \aspace{Eigensolver} abstract base class defines the basic interface that must be met
-by any eigensolver class in Anasazi. Specific eigensolvers are implemented as derived
-classes of \aspace{Eigensolver}.
-
-\aspace{Eigensolver} defines two significant types of methods: status methods and
-solver-specific methods. The status methods are defined by the \aspace{Eigensolver}
+by any eigensolver class in Anasazi. Specific eigensolver iterations are implemented as derived
+classes of \aspace{Eigensolver}.  This class
+defines two types of methods: status methods and
+solver-specific methods. A list of these methods is given in Table~\ref{tab:anasazi:itermethods}.
+The status methods are defined by the \aspace{Eigensolver}
 abstract base class and represent the information that any status test can request from
-any eigensolver. A list of these methods is given in
-Table~\ref{tab:anasazi:genstatusmethods}.
+any eigensolver.  Each eigensolver iteration also provides low-level, 
+solver-specific methods for accessing and setting the state of the solver.
+The combination of these two types of methods, along with the flexibility
+provided by status tests, provides the user with a large degree of
+control over eigensolver iterations.
 
 % The class \aspace{Eigensolver}, like \aspace{Eigenproblem}, is
 % templated on the scalar type, multivector type and operator type.
 
 \begin{table}[htp]
 \begin{center}
-\caption{A list of generic status methods provided by
-\aspace{Eigensolver}.} \label{tab:anasazi:genstatusmethods}
+\caption{A list of methods provided by any derived
+\aspace{Eigensolver}.} \label{tab:anasazi:itermethods}
 \begin{tabular}{| p{3cm} | p{6cm} |}
 \hline
-\emph{Method} & \emph{Description} \\
+\multicolumn{2}{|c|}{\emph{Status Methods}} \\
+\hline
+\emph{Method name} & \emph{Description} \\
 \hline
 {\tt getNumIters}       & current number of iterations. \\
 {\tt getRitzValues}     & most recent Ritz values. \\
@@ -821,24 +834,18 @@ Table~\ref{tab:anasazi:genstatusmethods}.
 {\tt getMaxSubspaceDim} & maximum subspace dimension. \\
 {\tt getBlockSize}      & block size. \\
 \hline
+\multicolumn{2}{|c|}{\emph{Solver-specific Methods}} \\
+\hline
+\emph{Method name} & \emph{Description} \\
+\hline
+{\tt getState}       & returns a specific structure with read-only pointers to
+                       the current state of the solver. \\
+{\tt initialize}     & accepts a solver-specific structure enabling the user to initialize
+                       the solver with a particular state.\\
+\hline
 \end{tabular}
 \end{center}
 \end{table}
-
-One of the tenets of object-oriented programming is data
-encapsulation. This seems to contradict the need to be as efficient
-as possible in scientific computing. To this end, each eigensolver
-provides low-level methods for accessing and setting the state of
-the solver:
-\begin{itemize}
-  \item \verb!getState()! - returns a solver-specific structure with read-only pointers to
-    the current state of the solver.
-  \item \verb!initialize(...)! - accepts a solver-specific structure enabling the user to
-    initialize the solver with a particular state.
-\end{itemize}
-The combination of these two methods, along with the flexibility
-provided by status tests, provides the user with a large degree of
-control over eigensolver iterations.
 
 % Using Anasazi by interfacing directly with eigensolvers is extremely
 % powerful, but can be tedious. Solver managers provide a way for users
