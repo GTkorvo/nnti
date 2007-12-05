@@ -130,10 +130,6 @@ Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 #endif
 #endif
 
-/*-----------------------------------------------------------------------
-  Must refine the following up to #else HAVE_CONFIG_H is not defined
-  -----------------------------------------------------------------------*/
-
 // Define DefultTracebackMode (HAVE_WARNING_MESSAGES and HAVE_FATAL_MESSAGES can be defined
 // via the configure script command line)
 
