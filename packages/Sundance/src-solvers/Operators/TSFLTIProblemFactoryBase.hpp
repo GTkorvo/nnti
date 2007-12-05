@@ -242,7 +242,7 @@ protected:
     {
       LinearOperator<Scalar> A = this->getA();
       std::cout << "A.domain().dim() = " << A.domain().dim() << std::endl;
-      VectorSpace<Scalar> littleDomain = productSpace(tuple(A.domain()));
+      VectorSpace<Scalar> littleDomain = productSpace<Scalar>(tuple(A.domain()));
       
       LinearOperator<Scalar> I = new IdentityOperator<Scalar>(A.domain());
       VectorSpace<Scalar> bigRange = this->blockSpace(nSteps_, A.range());
