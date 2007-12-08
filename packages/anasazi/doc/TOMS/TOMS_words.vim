@@ -1,4 +1,7 @@
 syn case match
+syn keyword GoodWord transparent PETSc
+syn keyword GoodWord transparent SLEPc
+syn keyword GoodWord transparent PRIMME
 syn keyword GoodWord transparent Stathapoulos
 syn keyword GoodWord transparent Lockheed
 syn keyword GoodWord transparent Thornquist
@@ -15,3 +18,4 @@ syn keyword GoodWord transparent multivector
 syn keyword GoodWord transparent preconditioners
 syn keyword GoodWord transparent templated
 syn keyword GoodWord transparent multiprogram
+syn keyword GoodWord transparent metasolver
