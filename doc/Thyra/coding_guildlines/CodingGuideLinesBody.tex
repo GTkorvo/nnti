@@ -23,9 +23,9 @@ for adopting consistent coding style and some of these arguments are outlined
 in Appendix {}\ref{sec:arguments-for-consistent-style}.  Therefore, one of the
 purposes of this document is to suggest reasonable and minimal guidelines for
 naming conventions and code formatting that provide for enough code uniformity
-to facilitate collaborative code development and maintenance.
+to facilitate collaborative code development, code reviews, and maintenance.
 
-More important that code formatting, a consistent set of naming conventions
+More important than code formatting, a consistent set of naming conventions
 for C++ classes, functions, variables, and other entities also helps to
 improve collaborative software development and quality.  Also, since clients
 of the software must interact with these names, it is even more important that
@@ -53,18 +53,15 @@ Several appendicies are included that deal with a number of topics.
 %
 
 Specific items in this document are to be refereed to using numerated acronyms
-starting with {}\textbf{TCDG}.  For example, the first naming convention
-guideline can be refereed to as {}\textbf{TCDG NC 1}.  In this way, these
-short precise alpha-numeric designation such as {}\textbf{TCDG NC 3} can be
-used in code reviews as short-hand references to specific guidelines.
-
-It is an express goal that this document only be modified in such a way so to
-only add items and never remove items in order to maintain the exact matching
-of a short alpha-numeric designation (such as {}\textbf{NC 1}) with it's
-meaning.  If an item is to be removed, then that items designation should be
-removed and therefore the item designations may not be contiguous.  Therefore,
-the wording of a item may change, but its basic meaning and its alpha-numeric
-designation will not change.
+starting with {}\textbf{TCDG} and the version number (e.g.\ 1.0).  For
+example, the first naming convention guideline can be refereed to as
+{}\textbf{TCDG 1.0 NC 1}.  In this way, these short precise alpha-numeric
+designation such as {}\textbf{TCDG 1.0 NC 3} can be used in code reviews as
+short-hand references to specific guidelines.  The version number of the
+coding standard is important in order to allow changes in future coding
+guidelines and allow the numbers to change from version to version (e.g.\
+{}\textbf{NC 1} in {}\textbf{TCDG 1.0} might become {}\textbf{NC 3} in
+{}\textbf{TCDG 1.1}).
 
 In addition, this document is based on {}\cite{C++CodingStandards05} and those
 guildelines will be refereed to using an enumerated acronym such as
@@ -205,11 +202,6 @@ names separated by underscores {}\texttt{\_}.  For example:
 \end{verbatim}}
 
 {}\textit{Justification:} See {}\textbf{NC 4} above.
-
-
-
-
-
 
 {}\item\stepcounter{Thyra_NC_counter}\textbf{NC \arabic{Thyra_NC_counter}}:
 {}\textit{C++ class member functon names}: Names for class member functions
@@ -617,6 +609,52 @@ mistake is caught at link time but it can be very hard to figure out the root
 cause of the problem when this happens.
 
 {}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
+{}\textit{For general functions, list function arguments in the order of
+input, input/output, output, and finally optional arguments with default
+values}: For example:
+
+{\small\begin{verbatim}
+  void someFunc(
+    const T1 &arg1,              // Input
+    const Ptr<T2> &arg2,         // Input/Output
+    const Ptr<T3> &arg3,         // Output
+    const int arg4 = 0           // Optional input argument with defualt vlaue
+    );
+\end{verbatim}}
+
+This ordering of arguments is only a general suggestion as a different
+ordering of arguments may be chosen based on other criteria.  See Section
+{}\ref{sec:func_arguments} for a description of the use of the {}\texttt{Ptr}
+class.
+
+{}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
+{}\textit{For non-member object functions, list the object as the first
+argument passed in a const reference or non-const reference}: For example:
+
+{\small\begin{verbatim}
+  void someModifyingFunc(
+    SomeClass &obj,
+    const int arg1,
+    ...
+    );
+
+  void someNonModifyingFunc(
+    const SomeClass &obj,
+    const int arg1,
+    ...
+    );
+\end{verbatim}}
+
+Note that in the case of {}\texttt{someModifyingFunc(...)}, the output
+argument is listed first instead of after the input argument(s) which breaks
+typical convention of having input/output arguments (which all objects that
+are modified are) come after input arguments.  However, this is more
+consistent with estabilshed convention such as in Python and other languages
+where the {}\texttt{self} argument is always the first explicit (or implicit)
+argument.  Note that this is also a situation where a non-const reference
+argument makes the most sense.
+
+{}\item\stepcounter{Thyra_GCG_counter}\textbf{GCG \arabic{Thyra_GCG_counter}}:
 {}\textit{Prefer {}\texttt{enum}s to {}\texttt{bool}s as formal function
 arguments when conversion mistakes are likely}: While the built-in type
 {}\texttt{bool} is very convenient to use as a formal function argument, it
@@ -722,34 +760,67 @@ issue of {}\texttt{using} declarations and directives.
 \end{enumerate}
 
 %
-\subsection{Specification of formal arguments for C++ member and nonmember functions}
+\subsection{Specification of formal arguments for C++ functions}
+\label{sec:func_arguments}
 %
 
 Here we describe a convention for the specification of the formal arguments
 for C++ functions that leads to C++ code that is consistent looking, maximizes
-compile-time and run-time checking, and is as auto-documenting as possible.  A
-key component to this specification is that no raw C++ pointers are used.  Raw
-pointers are the cause of almost all memory usage problems in C++.  Raw C++
-references, on the other hand, are safe to use as long as the object reference
-they are being used to point to is valid and no persisting association exists.
-
-When passing a single object to a function, four different properties have to
-be specified: 1) does the object use value semantics or reference semantics,
-2) is the object changeable (const) or changeable (nonconst), 3) is this
-establishing a persisting or non-persisting association, and 4) is the object
-optional or required.  All of these properties are directly expressed in the
-C++ code except for whether an argument or object is required or optional and
-therefore must be documented in the function's interface specification (i.e.\
-in the doxygen documentation {}\texttt{\\param} field).
-
-An array of value objects just stores the objects themselves and passes them
-through an {}\texttt{Teuchos\-::ArrayView<T>} object.  An array of reference
-objects, however, can not directly store the objects themselves and instead
-must store an array to (smart) pointers to the reference objects.
+compile-time and run-time checking, yields near optimal performance, and is
+highly self documenting.  A key component to this specification is that no raw
+C++ pointers are used.  Raw pointers are the cause of almost all memory usage
+problems in C++.  Raw C++ references, on the other hand, are safe to use as
+long as the object reference they are being used to point to is valid and no
+persisting association exists.
 
 Tables {}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type}
 give conventions for passing single objects and arrays of objects for
-value-type and reference-type objects, respectively.
+value-type and reference-type objects, respectively.  In this specification,
+the classes {}\texttt{Teuchos\-::Ptr}, {}\texttt{Teuchos\-::RCP},
+{}\texttt{Teuchos\-::ArrayRCP}, and {}\texttt{Teuchos\-::ArrayView} are used
+as a means to pass objects of another type (shown as {}\texttt{S} and
+{}\texttt{A} in Tables {}\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}).  This specification addresses the four
+different properties that must be considered when passing an object to a
+function: 1) does the object use value semantics or reference semantics, 2) is
+the object changeable (const) or changeable (nonconst), 3) is this
+establishing a persisting or non-persisting association, and 4) is the object
+optional or required.  All of these properties are directly expressed in the
+C++ code in all cases shown in Tables {}\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type} except for whether an argument or object is
+required or optional and therefore must be documented in the function's
+interface specification (i.e.\ in a doxygen documentation {}\texttt{param}
+field).  Here we state that by default, an argument will be assumed to be
+required unless otherwise stated.  The only exception for this implicit
+assumption for non-null objects is {}\texttt{const Ptr<const T>\&} for single,
+non-changeable, non-persisting, objects where these always mean that the
+argument is optional.
+
+Note that an array of value objects just stores the objects themselves and
+passes them through an {}\texttt{ArrayView<S>} or {}\texttt{ArrayView<const
+S>} object.  An array of reference objects, however, can not directly store
+the objects themselves and instead must store an array to (smart) pointers to
+the objects using {}\texttt{ArrayView<const Ptr<const A> >\&} for
+non-persisting associations or {}\texttt{ArrayView<const RCP<const A> >\&} for
+persisting associations.  The {}\texttt{const} can be removed from the either
+{}\texttt{Ptr}/{}\texttt{RCP} or {}\texttt{A} depending on what is allowed to
+change or not change during the function call.
+
+Note that in the case of {}\texttt{RCP} and {}\texttt{ArrayRCP}, that these
+can be treaded as value objects in their own right.  For example, passing an
+{}\texttt{RCP<T>} object into a function to be set to point to a different
+{}\texttt{A} object would be specified in the function prototype as
+{}\texttt{const Ptr<RCP<T> >\&} or {}\texttt{RCP<T>\&} depending on
+preference.  Note that it never makes sense for {}\texttt{Ptr} or
+{}\texttt{ArrayView} to be set in this way since such a function call would
+almost always be establishing a persisting association with the embedded
+objects and therefore would require using {}\texttt{RCP} or
+{}\texttt{ArrayRCP}.
+
+{}\textbf{ToDo:} Describe why using the Ptr class for single, changeable,
+required, non-persisting objects makes sense (cite references on this).
+
+{}\textbf{ToDo:} Describe now the Array class can be used.
 
 
 \begin{table}[p]
@@ -780,8 +851,17 @@ single, non-changeable object (required)
 single, non-changeable object (optional)
 & {}\texttt{const Ptr<const S> \&s} \\
 \hline
-single, changeable object
-& {}\texttt{const Ptr<S> \&s} \\
+single, changeable object (required)
+& \begin{minipage}{20ex}
+    {\tiny .}\\
+    {}\texttt{const Ptr<S> \&s} \\
+    or \\
+    {}\texttt{S \&s} \\
+    {\tiny .}
+  \end{minipage} \\
+\hline
+single, changeable object (optional)
+& \texttt{const Ptr<S> \&s} \\
 \hline
 array of non-changeable objects
 & {}\texttt{const ArrayView<const S> \&s} \\
@@ -821,7 +901,11 @@ array of changeable objects
 \caption{\label{fig:func_args_value_type}
 C++ declarations for passing small concrete objects (i.e.\ with value
 semantics) to and from functions where {}\texttt{S} is a place holder for an
-actual built-in or user-defined data type.}
+actual built-in or user-defined data type.  By default, all objects of type
+{}\texttt{Ptr}, {}\texttt{RCP}, {}\texttt{ArrayRCP}, and {}\texttt{ArrayView}
+are assumed to be non-null unless explicitly stated in the documentation for
+the function.  In other words, documentation must be added to state that an
+argument is optional; the default is that the argument is required.}
 %
 \end{table}
 
@@ -843,8 +927,17 @@ single, non-changeable object (required)
 single, non-changeable object (optional)
 & {}\texttt{const Ptr<const A> \&a} \\
 \hline
-single, changeable object
-& {}\texttt{const Ptr<A> \&a} \\
+single, changeable object (required)
+& \begin{minipage}{20ex}
+    {\tiny .}\\
+    {}\texttt{const Ptr<A> \&a} \\
+    or \\
+    {}\texttt{A \&a} \\
+    {\tiny .}
+  \end{minipage} \\
+\hline
+single, changeable object (optional)
+& \texttt{const Ptr<A> \&a} \\
 \hline
 array of non-changeable objects (const ptr)
 & {}\texttt{const ArrayView<const Ptr<const A> > \&a} \\
@@ -891,7 +984,12 @@ array of changeable objects (nonconst ptr)
 C++ declarations for passing abstract objects (i.e.\ with reference or pointer
 semantics) or large concrete objects (i.e.\ that are expensive to copy) to and
 from functions where {}\texttt{A} is a place holder for an actual C++ base
-class. }
+class.  By default, all objects of type {}\texttt{Ptr}, {}\texttt{RCP},
+{}\texttt{ArrayRCP}, and {}\texttt{ArrayView} are assumed to be non-null
+unless explicitly stated in the documentation for the function. This includes
+{}\texttt{Ptr} and {}\texttt{RCP} objects embedded in an array.  In other
+words, documentation must be added to state that an argument is optional; the
+default is that the argument is required.}
 %} % end fbox
 \end{table}
 
@@ -966,22 +1064,24 @@ people}: There are specific studies cited in {}\cite[Chapter
 31]{CodeComplete2nd04} that provide good evidience to prefer some styles over
 others.
 
-{}\item\stepcounter{Thyra_FSCP_counter}\textbf{FSCP \arabic{Thyra_FSCP_counter}}:
-{}\textit{Formatted code should retain its formatting well in the face of
-modification; especially those performed by automatic tools}: Changing one
-line of code should not require changes to other lines of code to maintain the
-formatting style.
+{}\item\stepcounter{Thyra_FSCP_counter}\textbf{FSCP
+\arabic{Thyra_FSCP_counter}}: {}\textit{Formatted code should retain its
+formatting well modified; especially those performed by automated tools}:
+Changing one line of code should not require changes to other lines of code to
+maintain the formatting style.
 
-{}\item\stepcounter{Thyra_FSCP_counter}\textbf{FSCP \arabic{Thyra_FSCP_counter}}:
-{}\textit{Formatting style should follow the most common idiom unless one
-of the above principles are violated}: When there is no good technical
-argument for one formatting sytle item over another, then the style that is
-the most common\footnote{The measure of the commonality of a particular style
-element can be chosen according to a local software development community or
-the larger developer community.} should be chosen.  This is not advocated
-per-say in {}\cite[Chapter 31]{CodeComplete2nd04} but it is a good idea in
-general to follow popular idioms when there are several equally good choices
-and therefore the decision is arbitrary.
+{}\item\stepcounter{Thyra_FSCP_counter}\textbf{FSCP
+\arabic{Thyra_FSCP_counter}}: {}\textit{Formatting style should follow the
+most common idiom unless one of the above principles are violated}: When there
+is no good technical argument for one formatting sytle element over another,
+then the style element that is the most common should be chosen\footnote{The
+measure of the commonality of a particular style element can be chosen
+according to a local software development community or the larger developer
+community.}.  This is not advocated per-say in {}\cite[Chapter
+31]{CodeComplete2nd04} but it is a good idea in general to follow popular
+idioms when there are several equally good choices and therefore the decision
+is arbitrary.  However, not selecting a single style choice can create
+artificial complexity in the code from irregularity in formatting.
 
 \end{enumerate}
 
@@ -1033,6 +1133,16 @@ using a user-defined indentation style for Emacs (sorry {}\texttt{vi} users).
 {}\cite[Item 0]{C++CodingStandards05}.
 
 {}\item\stepcounter{Thyra_FSC_counter}\textbf{FSC \arabic{Thyra_FSC_counter}}:
+{}\textit{Use two vertical spaces to separate class declarations, function
+defintions, namespace enclosure bounds, and other such major entries in a
+file.}
+
+{}\textit{Justification}: Using two black spaces is preferable to long lines
+with some filler like '-' or '=' or other separators and they clearly separate
+the entities and are easier to maintain (see {}\cite[Section
+31.8]{CodeComplete2nd04}).
+
+{}\item\stepcounter{Thyra_FSC_counter}\textbf{FSC \arabic{Thyra_FSC_counter}}:
 {}\textit{Do not indent source code inside of namespace enclosures,
 instead use commented end braces}: Indenting for namespace enclosures results
 in unnecessary, and in some cases excessive, indentation.  Instead, for
@@ -1040,15 +1150,25 @@ example, use:
 
 {\small\begin{verbatim}
   namespace MyNameSpace {
+
+
   namespace MyInnerNamespace {
+
 
   class SomeClass {..};
 
+
   void someFunc(...) {...}
 
+
   } // namespace MyInnerNamespace
+
+
   } // namespace MyNameSpace
 \end{verbatim}}
+
+Above, note that two vertical blank lines are used between each of the major
+enteties (see above item).
 
 {}\textit{Justification}: While indentation within namespaces is helpful in
 small example code fragments, it provides little help in showing namespace
@@ -1063,31 +1183,60 @@ styles as defined by Artistic Style {}\cite{ArtisticStyle}.
 {}\item\stepcounter{Thyra_FSC_counter}\textbf{FSC \arabic{Thyra_FSC_counter}}:
 {}\textit{C++ class declarations should generally be laid out with
 {}\texttt{public} members coming before {}\texttt{protected} members coming
-before {}\texttt{private} members and indented as:}
+before {}\texttt{private} members and indented as shown in Figure
+{}\ref{fig:class_decl_layout}}
 
+\begin{figure}
+%
 {\small\begin{verbatim}
   class SomeClass {
+
     // Friends
+
     friend void foo();
+
     friend class SomeOtherClass;
+
   public:
+
     // Public types
+
     typedef int integral_type;
+
     // Public member functions
+
     void func1();
+
   protected:
+
     // Protected member functions
+
     void func2();
+
   private:
+
     // Private types
+
     typedef std::vector<int> int_array_t;
+
     // Private data members
+
     int data1_;
     int_array_t array1_;
+
     // Private member functions
+
     void func3();
+
   };
 \end{verbatim}}
+%
+\caption{\label{fig:class_decl_layout}
+Suggested layout of C++ class declaration complete with ordering of sections,
+indentation, and line spacing.}
+%
+\end{figure}
+
 
 {}\textit{Justification}: This ordering of sections and data members is quite
 common {}\cite[Section 31.8]{CodeComplete2nd04}.  Above, we show private
@@ -1522,14 +1671,14 @@ provide the fullest benefit.  Also, Doxygen documentation can automatically
 include bits and pieces of compiled and tested code using the
 {}\texttt{$\backslash$dontinclude} Doxygen commands.
 
-{}\item\stepcounter{Thyra_DOXG_counter}\textbf{DOXG \arabic{Thyra_DOXG_counter}}:
-{}\textit{Behavior of "user level" interfaces must be completely
-specified by the Doxygen documentation and/or higher-level documentation}:
-This item is an amendment to the above item as a special case for ``user''
-interfaces.  A "user" could be someone that simply writes client code to the
-interface or one that provides implementations to the interface or both.
-User's should not be expected to study unit testing code to figure out the
-preconditions and/or postconditions for a function call.
+{}\item\stepcounter{Thyra_DOXG_counter}\textbf{DOXG
+\arabic{Thyra_DOXG_counter}}: {}\textit{Behavior of "user level" interfaces
+must be completely specified by the Doxygen documentation and/or higher-level
+documentation}: This item is an amendment to the above item as a special case
+for ``user'' interfaces.  A "user" could be someone that simply writes client
+code to the interface or one that provides implementations of the interface or
+both.  User's should not be expected to study unit testing code to figure out
+the preconditions and/or postconditions for a function call.
 
 {}\item\stepcounter{Thyra_DOXG_counter}\textbf{DOXG \arabic{Thyra_DOXG_counter}}:
 {}\textit{Wrong documentation is (almost) worse than no documentation at
@@ -1595,7 +1744,7 @@ definitions, but links to the common documentation are possible using a
 variety of approaches.
 
 {}\item\stepcounter{Thyra_DOX_counter}\textbf{DOX \arabic{Thyra_DOX_counter}}:
-{}\textit{Provide typically preconditions/postconditions along with the
+{}\textit{Provide typical preconditions/postconditions along with the
 documentation for common arguments when possible}: For common arguments that
 are shared among many functions, define the most common preconditions for them
 in a central place and avoid listing them on a function-by-function basis

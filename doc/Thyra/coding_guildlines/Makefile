@@ -4,8 +4,12 @@ LATEX_COMMAND = latex
 BIBTEX_COMMAND = bibtex
 
 SOURCEFILES= \
-            $(BASE_NAME).tex \
-            references.bib
+  $(BASE_NAME).tex \
+  CodingGuideLinesBody.tex \
+  apdx_MiscAmendments.tex \
+  apdx_ArgumentsForConsistentStyle.tex \
+  apdx_CodeReformattingGuidelines.tex \
+  references.bib
 
 #
 # Shortcut targets
