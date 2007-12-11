@@ -101,7 +101,7 @@ An inspiration for Anasazi is the ARPACK~\cite{lesy:98} FORTRAN 77 software libr
 ARPACK implements one algorithm, namely an implicitly restarted Arnoldi
 method~\cite{sore:92}. In contrast, Anasazi provides a software framework, including the
 necessary infrastructure, to implement a variety of algorithms. We justify our claims by
-implementing block variants of three popular algorithms: a Davidson~\cite{davi:75} method,
+implementing block variants of three popular algorithms: a Davidson~\cite{morganscott:86} method,
 a Krylov-Schur~\cite{stew:01} method, and an implementation of LOBPCG~\cite{knya:01}.
 
 ARPACK has proven to be a popular and successful FORTRAN 77 library
@@ -127,29 +127,19 @@ from mechanisms such as orthogonalization and stopping conditions; this function
 then be decided at runtime. The upshot of this decoupling is the facilitation of code
 reuse and algorithmic flexibility.
 
-The result of these design choices is that Anasazi is an extensible and interoperable
-software framework. Extensibility is apparent in the infrastructure's support for a
-significant class of large-scale eigenvalue algorithms. Extensions can be made through the
-addition of new algorithms or through modification of existing algorithms. This is
-encouraged by promoting code modularization and multiple levels of access to solvers and
-their data. Interoperability is enabled via the treatment of both matrices and vectors as
-opaque objects---only knowledge of the matrix and vectors via elementary operations is
-necessary. This permits algorithms to be implemented in a generic manner, requiring no
-knowledge of the underlying linear algebra types or their specific implementations.
-
 We emphasize that our interest is not solely in modern software paradigms. Rather, our
 paper demonstrates that a rich collection of block eigensolvers is easily implemented
 using modern programming techniques. Our approach is algorithm-oriented \cite{muov:94}, in
 that requirements for efficient implementations of the necessary algorithms is considered
 first. This is then followed by a formulation of the software abstractions capable of
-implementing these algorithms and their constituent mechanisms in sufficiently diverse
+implementing these algorithms, and their constituent mechanisms, in sufficiently diverse
 ways. The result is a collection of implementations that are efficient and flexible. We
 believe that Anasazi is the natural successor to ARPACK, inheriting and extending the
 quality practices employed by ARPACK.
 
-Related software efforts that implement several algorithms for
-large-scale eigenvalue (the reader is referred to~\cite{slepc:05}
-for a software survey) problems are:
+There are some related software efforts that implement several algorithms for solving
+large-scale eigenvalue problems (the reader is referred to~\cite{slepc:05}
+for a software survey).  The two most advanced, comparable software efforts are:
 \begin{itemize}
 \item
 The Preconditioned Iterative Multi-Method Eigensolver (PRIMME)~\cite{primme:06} is a C
@@ -164,52 +154,47 @@ computers. SLEPc is an extension of the popular PETSc~\cite{petsc-web-page} and 
 used for either Hermitian or non-Hermitian, standard or generalized, eigenproblems.
 \end{itemize}
 
-The PRIMME software provides a flexible metasolver capable of implementing a variety of
-eigensolvers. Predefined parameters are provided to emulate a large number of powerful and
-popular eigensolvers, allowing easy use of the software by novice users. Expert users may
+PRIMME provides a flexible metasolver capable of implementing a variety of
+Hermitian eigensolvers. Predefined parameters are provided to emulate a large number of powerful 
+and popular eigensolvers, allowing easy use of the software by novice users. Expert users may
 manually specify the parameters in order to access the full flexibility available in the
 solver's behavior. Therefore, PRIMME is valuable both as a convenient eigensolver for
 practitioners and a platform for experimentation by eigensolver researchers. However,
 while parameters are provided to control mechanisms such as, e.g., stopping conditions and
-orthogonalization, the user is limited to those choices provided by the developers of
-PRIMME. Unsupported behavior requires intrusive modification to the eigensolver.
-Furthermore, the assumptions made regarding data type and storage may be prohibitive for
-some users. PRIMME provides implementations only over double precision real and complex
-fields, but no support exists for \texttt{float} or extended precision scalar fields. The
-reason for this is that the lack of generic programming ability in the C programming
-language requires a separate implementation for each desired scalar type. The metasolver
-underlying PRIMME is limited to real symmetric and complex Hermitian standard eigenvalue
-problems.
+orthogonalization, the user is limited to the implementations provided by the developers of
+PRIMME.  Furthermore, PRIMME provides implementations only over double precision real and complex
+fields.  Support for \texttt{float} or extended precision scalar fields would require a separate
+implementation due to the lack of generic programming ability in the C programming
+language.
 
-SLEPc extends the PETSc toolkit to provide a library of solver for numerous eigenvalue
-problems. The flexibility of SLEPc is illustrated by its ability to wrap other
-eigensolvers packages, most notably ARPACK and PRIMME. The use of PETSc gives SLEPc users
-access to a large library of linear and nonlinear solvers, preconditioners and matrix
-formats. PETSc uses C language features such as \texttt{typedef}s and function pointers to
-support some generic programming and object-oriented paradigms. However, SLEPc's reliance
-on PETSc requires that the user employ PETSc for vectors and matrices as well.
-Furthermore, while PETSc/SLEPc can be compiled with support for complex arithmetic, only
-one version of the library can be used at a time, and like PRIMME, the support is limited
-to only double precision real and complex scalar fields. As with PRIMME, mechanisms such
-as orthogonalization were hard-coded, allowing only parametrized control over their
-behavior. 
+SLEPc extends the PETSc toolkit to provide a library of solvers for standard or
+generalized, Hermitian or non-Hermitian eigenproblems.
+SLEPc provides wrappers for several eigensolver packages, most notably ARPACK and PRIMME,
+as well as native implementations of eigensolvers like Krylov-Schur, Arnoldi, and Lanczos.
+The use of PETSc also gives SLEPc users access to a large library of linear and nonlinear 
+solvers, preconditioners and matrix formats. PETSc uses C language features such as 
+\texttt{typedef}s and function pointers to support some generic programming and object-oriented 
+paradigms. However, SLEPc's reliance on PETSc requires that the user employ PETSc for vectors 
+and matrices. Similar to PRIMME, SLEPc can be compiled with support for double precision
+real or complex arithmetic, however only one version of the library can be used at a time.
+Furthermore, mechanisms such as orthogonalization are hard-coded allowing only parametrized 
+control over their behavior. 
 
-Anasazi was designed to include features of these and other eigensolver packages while
-avoiding some of the pitfalls mentioned above. These features include efficiency,
-portability, flexibility, ease of use, maintainability and interoperability. Anasazi
-enjoys interoperability with other Trilinos packages, providing it with a rich set of
-preconditioners, linear solvers and linear algebra libraries. Like SLEPc, the Anasazi
-framework allows the description of diverse eigensolvers, including the encapsulation of
-other eigensolver packages. Unlike SLEPc and PETSc, the eigensolvers use abstract
-interfaces to access auxiliary functionality such as orthogonalization, selecting desired eigenvalues,
-stopping conditions, etc. As a result, this auxiliary functionality can be customized by
-users without requiring modification to (unrelated) eigensolver code. Specific
-implementation choices for this functionality can even be decided at runtime. 
+The Anasazi framework was designed to include features from other eigensolver packages that
+are conducive to algorithm development, while avoiding some of the ineffective features mentioned above.
+The features that have been incorporated into its design are extensibility, interoperability,
+portability, ease of use, and maintainability. The extensibility of the Anasazi framework is demonstrated
+through the infrastructure's support for a significant class of large-scale eigenvalue algorithms. 
+Extensions can be made through the addition of, or modification to, existing algorithms and auxiliary
+functionality such as orthogonalization, desired eigenvalue selection, or stopping conditions. 
+This is encouraged by promoting code modularization and multiple levels of access to solvers and
+their data. 
 
-Another distinction between Anasazi and the previously described packages is that Anasazi
-makes no specification on the data representation. Just as the authors of SLEPc invested
-significant effort to ensure that the eigensolvers would be able to exploit a wide variety
-of matrix operators, the Anasazi code was designed to admit operation with any user choice
+Interoperability in the Anasazi framework is enabled via the treatment of both matrices and 
+vectors as opaque objects---only knowledge of the matrix and vectors via elementary operations 
+is necessary. This permits algorithms to be implemented in a generic manner, requiring no
+knowledge of the underlying linear algebra types or their specific implementations.
+Furthermore, the Anasazi framework was designed to admit operation with any user choice
 of scalar field, vector and operator. This is accomplished using the template mechanism in
 the C++ programming language, an option not available to SLEPc or PRIMME. As a result, an
 Anasazi eigensolver using single-precision complex arithmetic can be used alongside
@@ -221,9 +206,9 @@ arena for research into eigensolvers as well as their constituent components.
 
 The rest of this paper is organized as follows. Section~\ref{sec:algorithm-overview}
 briefly reviews one class of algorithms that can be implemented within Anasazi, in order
-to explore the types of operations necessary for a eigensolver framework.
-Section~\ref{sec:framework} reviews the Anasazi framework, arguing for some of the design
-decisions and illustrating the benefits of these decisions. Lastly,
+to explore the types of operations necessary for an eigensolver framework.
+Section~\ref{sec:framework} reviews the Anasazi framework, discusses some of the design
+decisions, and illustrates the benefits of these decisions. Lastly,
 Section~\ref{sec:benchmarking} provides some timings comparing ARPACK and Anasazi in the
 hopes of allaying any concerns over the object-oriented overhead of this undertaking.
 
