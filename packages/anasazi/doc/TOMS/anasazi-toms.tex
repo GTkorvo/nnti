@@ -209,8 +209,9 @@ briefly discusses one class of algorithms that can be implemented using Anasazi
 in order to explore the types of operations necessary for an eigensolver framework.
 Section~\ref{sec:framework} reviews the Anasazi framework, discusses some of the design
 decisions, and illustrates the benefits of these decisions. Lastly,
-Section~\ref{sec:benchmarking} provides some timings comparing ARPACK and Anasazi in the
-hopes of allaying any concerns over the object-oriented overhead of this undertaking.
+Section~\ref{sec:benchmarking} provides some timings comparing ARPACK and Anasazi to 
+demonstrate that object-oriented overhead has no impact on the performance of this
+modern software framework.
 
 
 \section{Algorithmic Inspiration}
@@ -220,7 +221,7 @@ hopes of allaying any concerns over the object-oriented overhead of this underta
 The Anasazi software framework provides tools that are useful for solving a wide variety
 of eigenvalue problems. While development of the package continues to expand its scope to
 other important eigenvalue problems (e.g., nonlinear eigenproblems, constrained
-eigenproblems), the solvers currently released with the project are aimed at computing a
+eigenproblems), the solvers currently released with the package are aimed at computing a
 partial eigen-decomposition for the generalized eigenvalue problem
 \begin{equation}  \label{eq:intro.1}
   \mathbf{A} \mathbf{x} = \mathbf{B} \mathbf{x} \lambda , \qquad
@@ -235,8 +236,8 @@ references on the large-scale eigenvalue problem.
 \begin{algorithm}{Rayleigh-Ritz Algorithm\label{algo:obliqueRR}}
 {\smallskip
 \begin{tabbing}
-(nr)ss\=ijkl\=bbb\=ccc\=ddd\= \kill {\rm (1)} \>\> Let the matrices
-$\mathbf{M}$, $\mathbf{U}$ and $\mathbf{V}$ be given
+(nr)ss\=ijkl\=bbb\=ccc\=ddd\= \kill {\rm (1)} \>\> Let the matrix
+$\mathbf{M}$ and bases $\mathbf{U}$, $\mathbf{V}$ be given
 \\
 {\rm (2)} \>\> Form the Rayleigh quotients $ \mathbf{V}^H
 \mathbf{M}\Phi(\mathbf{A}) \mathbf{U}$ and $ \mathbf{V}^H \mathbf{M}
@@ -258,21 +259,73 @@ pencil\\
 
 Algorithm~\ref{algo:obliqueRR} is a simple extension of the Rayleigh-Ritz procedure given
 in~\cite[p.281]{stew:01book}. This algorithm lists the salient steps found in the majority
-of large-scale eigensolvers, namely subspace projection methods, and as such is useful for
+of large-scale eigensolvers, namely subspace projection methods.  The matrices $\mathbf{U}$ and
+$\mathbf{V}$ are bases for the trial and test subspaces $\mathcal{U}$ and $\mathcal{V}$, 
+respectively.  When these two subspaces are distinct, then the Rayleigh-Ritz method is called
+oblique.  Otherwise, when $\mathcal{V}=\mathcal{U}$ the orthogonal Rayleigh-Ritz method results.
+The functions $\Phi(\cdot)$ and $\Psi(\cdot)$ are often used to improve convergence to the 
+eigenvalues and eigenspace of interest.  The matrix $\mathbf{M}$ is often used to denote an 
+inner product; for instance $\mathbf{M}$ can be set equal to $\mathbf{A}$ or $\mathbf{B}$ when
+either matrix is Hermitian positive semi-definite.
+
+The Rayleigh-Ritz procedure is useful for
 examining some of the functionality that should be provided by a general eigensolver
-framework. These include:
+framework.  However, first we should observe some general structure of the participants in
+this algorithm.  The bases $\mathbf{U}$ and $\mathbf{V}$ are dense matrices that are stored
+as a collection of vectors, which we call a \emph{multivector}.  Interaction with 
+$\mathbf{A}$, $\mathbf{B}$, and $\mathbf{M}$ requires only knowledge of the underlying matrix
+via application on a vector or multivector, thus we regard these matrices as \emph{operators}.
+The functions $\Phi(\cdot)$ and $\Psi(\cdot)$ should also be considered operators and, while the
+choice of functions is outside the scope of this
+paper, the use of these types of operators should not be hindered.  
+
+Given these observations,
+the functionality that is important to an eigensolver includes:
 \begin{itemize}
-  \item matrix-matrix applications: $\mathbf{A} \mathbf{U}$;
-  \item block inner products: $\mathbf{V}^H (\mathbf{A}\mathbf{U})$;
+  \item multivector creation: create $\mathbf{U}$, $\mathbf{V}$
+  \item operator-multivector applications: $\mathbf{A} \mathbf{U}$;
+  \item multivector arithmetic: $\mathbf{V}^H (\mathbf{A}\mathbf{U})$;
   \item solution of typically much smaller eigenproblems (step~3).
 \end{itemize}
-Other linear algebra operations include methods for creating vectors and performing vector
-arithmetic. We list our primitives in Section \ref{sec:framework}. The functions
-$\Phi(\cdot)$ and $\Psi(\cdot)$ are often used to improve convergence to the eigenvalues
-and eigenspace of interest. The choice of these operators is beyond the scope of this
-paper. Algorithm~\ref{algo:obliqueRR} needs to be augmented with several steps in order
+A full list of our primitives for operators and multivectors will be presented in Section \ref{sec:framework}. 
+It is worthy to note at this point that the Anasazi framework was designed to support block methods,
+defined as those that apply $\mathbf{A}$ or $\mathbf{B}$ to a collection of vectors, or multivector.
+One advantage of using a multivector data structure is that it can improve the ratio of 
+floating-point
+operations to memory references and so better exploit a memory hierarchy.
+
+\begin{figure}[htb]
+\begin{algorithm}{Eigen-iteration\label{algo:eigen-iter}}
+{\smallskip
+\begin{tabbing}
+(nr)ss\=ijkl\=bbb\=ccc\=ddd\= \kill {\rm (1)} \>\> Update the
+bases $\mathbf{U}$ and $\mathbf{V}$\\
+{\rm (2)} \>\> Determine whether any portion of the
+eigen-decomposition\\
+\>\> is of acceptable accuracy
+\\
+{\rm (3)} \>\> Deflate the accurate portions of the
+eigen-decomposition
+\\
+{\rm (4)} \>\> Terminate the eigen-iteration or return to step (1).
+\\
+\end{tabbing} }
+\end{algorithm}
+\end{figure}
+
+Algorithm~\ref{algo:obliqueRR} needs to be augmented with several steps in order
 to result in an \emph{eigen-iteration}. Algorithm \ref{algo:eigen-iter} lists these
-additional steps, so defining an eigen-iteration.
+additional steps and allow us to further analyze the
+components that make up an eigen-iteration.  
+The decisions involved in Steps~2 and 4 require the determination of the intersting portion of the
+eigen-decomposition and a definition of accuracy or algorithmic breakdown, thus they are 
+likely candidates for decoupling from the
+implementation of a particular eigen-iteration. For a particular eigen-iteration,
+deflation (Step~3) also may be conducted in a manner of ways. Steps~1 and 3, whatever their
+implementation, typically require orthogonalization methods, which are an active area of research.
+These methods provide another opportunity for decoupling functionality that need not be
+explicitly described.
+
 
 
 % The matrices $\mathbf{U}$ and $\mathbf{V}$ are bases for the trial
@@ -319,32 +372,6 @@ additional steps, so defining an eigen-iteration.
 % approaches to solving the symmetric positive semi-definite
 % (\ref{eq:intro.1}).}.
 
-\begin{figure}[htb]
-\begin{algorithm}{Eigen-iteration\label{algo:eigen-iter}}
-{\smallskip
-\begin{tabbing}
-(nr)ss\=ijkl\=bbb\=ccc\=ddd\= \kill {\rm (1)} \>\> Update the
-bases $\mathbf{U}$ and $\mathbf{V}$\\
-{\rm (2)} \>\> Determine whether any portion of the
-eigen-decomposition\\
-\>\> is of acceptable accuracy
-\\
-{\rm (3)} \>\> Deflate the accurate portions of the
-eigen-decomposition
-\\
-{\rm (4)} \>\> Terminate the eigen-iteration
-\\
-\end{tabbing} }
-\end{algorithm}
-\end{figure}
-
-The decisions involved in Steps~2 and 4 are likely candidates for decoupling from the
-implementation of a particular eigen-iteration. For a particular eigen-iteration, Step~3
-deflation also may be conducted in a manner of ways. Steps~1 and 3, whatever their
-implementation, are typically implemented using utility methods for orthogonalization.
-These methods provide another opportunity for decoupling functionality that need not be
-explicitly described.
-
 
 % A distinguishing characteristic of the Rayleigh-Ritz algorithm is
 % the number of columns $m$ of $\mathbf{U}$ and $\mathbf{V}$. The size of the
@@ -357,12 +384,12 @@ explicitly described.
 % subspaces and the choice of bases representation, an issue that is
 % beyond the scope of this paper.
 
-The algorithms that are currently available in Anasazi are:
-\begin{enumerate}
-  \item a block extension of a Krylov-Schur method~\cite{stew:01},
-  \item a block Davidson method as described in~\cite{Arbenz:2005:ACE},
-  \item an implementation of LOBPCG as described in~\cite{Hetmaniuk:2006:BSL}.
-\end{enumerate}
+%The algorithms that are currently available in Anasazi are:
+%\begin{enumerate}
+%  \item a block extension of a Krylov-Schur method~\cite{stew:01},
+%  \item a block Davidson method as described in~\cite{Arbenz:2005:ACE},
+%  \item an implementation of LOBPCG as described in~\cite{Hetmaniuk:2006:BSL}.
+%\end{enumerate}
 
 % removed the first two of these remarks; they do not add
 % anything to the paper and may distract the reader. re-emphasize that
@@ -382,12 +409,6 @@ The algorithms that are currently available in Anasazi are:
 % for non-Hermitian generalized eigenvalue problems. In contrast, all
 % three algorithms can be used for symmetric positive semi-definite
 % generalized eigenvalue problems.
-
-We briefly remark that the Anasazi framework was designed to support block methods,
-defined as those that apply $\mathbf{A}$ or $\mathbf{B}$ to a collection of vectors. One
-consequence of this design is the use of multivector data structures, defined as a
-collection of vectors. The use of multivectors can improve the ratio of floating-point
-operations to memory references and so better exploit a memory hierarchy.
 
 This discussion illustrates that many distinct parts make up a
 large-scale eigensolver code: orthogonalization, sorting tools, dense
