@@ -118,8 +118,8 @@ the physical representation of the data manipulated, ARPACK is
 susceptible to design changes. Hence, code reuse is limited and
 software complexity and maintenance are more cumbersome.
 
-The Anasazi framework employs more modern software development paradigms through the use
-of generic programming via static and dynamic polymorphism~\cite[Chapter 14]{VJ02}. Static
+The Anasazi framework employs more modern software development paradigms, such as generic and
+object-oriented programming, via static and dynamic polymorphism~\cite[Chapter 14]{VJ02}. Static
 polymorphism, via templating of the linear algebra objects, allows algorithms in Anasazi
 to be written in a generic manner (i.e., independent of the data types). Dynamic
 polymorphism, via virtual functions and inheritance, allows eigensolvers to be decoupled
@@ -140,17 +140,17 @@ quality practices employed by ARPACK.
 There are related software efforts that implement several algorithms for solving
 large-scale eigenvalue problems (the reader is referred to~\cite{slepc:05}
 for a software survey).  The two most advanced, comparable software efforts are PRIMME and
-SLEPc.
+SLEPc:
 \begin{itemize}
 \item
 The Preconditioned Iterative Multi-Method Eigensolver (PRIMME)~\cite{primme:06} is a C
-library to find a number of eigenvalues and their corresponding eigenvectors of a real
+library for computing a number of eigenvalues and their corresponding eigenvectors of a real
 symmetric or complex Hermitian matrix. PRIMME provides a highly parametrized
 Jacobi-Davidson~\cite{slvo:96} iteration, allowing the behavior of multiple eigensolvers
 to be obtained via the appropriate selection of parameters;
 \item
 The Scalable Library for Eigenvalue Problem Computations (SLEPc)~\cite{slepc:06} library
-written is another C library for the solution of large scale sparse eigenvalue problems on parallel
+is another C library for the solution of large scale sparse eigenvalue problems on parallel
 computers. SLEPc is an extension of the popular PETSc~\cite{petsc-web-page} and can be
 used for either Hermitian or non-Hermitian, standard or generalized, eigenproblems.
 \end{itemize}
@@ -259,7 +259,7 @@ to construct \\
 \end{figure}
 
 Algorithm~\ref{algo:obliqueRR} is a simple extension of the Rayleigh-Ritz procedure given
-in~\cite[p.281]{stew:01book}. This algorithm lists the salient steps found in the majority
+in~\cite[p.284]{stew:01book}. This algorithm lists the salient steps found in the majority
 of large-scale eigensolvers, namely subspace projection methods.  The matrices $\mathbf{U}$ and
 $\mathbf{V}$ are bases for the trial and test subspaces $\mathcal{U}$ and $\mathcal{V}$, 
 respectively.  When these two subspaces are distinct, then the Rayleigh-Ritz method is called
@@ -284,8 +284,8 @@ Given these observations,
 the functionality that is important to an eigensolver includes:
 \begin{itemize}
   \item multivector creation: create $\mathbf{U}$, $\mathbf{V}$
-  \item operator-multivector applications: $\mathbf{A} \mathbf{U}$;
-  \item multivector arithmetic: $\mathbf{V}^H (\mathbf{A}\mathbf{U})$;
+  \item operator-multivector applications: $\Phi(A)U$, $\Psi(B)U$;
+  \item multivector arithmetic: $\mathbf{V}^H\mathbf{U}$;
   \item solution of typically much smaller eigenproblems (step~3).
 \end{itemize}
 A full list of our primitives for operators and multivectors will be presented in Section \ref{sec:framework}. 
@@ -318,7 +318,7 @@ Algorithm~\ref{algo:obliqueRR} needs to be augmented with several steps in order
 to result in an \emph{eigen-iteration}. Algorithm \ref{algo:eigen-iter} lists these
 additional steps and allow us to further analyze the
 components that make up an eigen-iteration.  
-The decisions involved in Steps~2 and 4 require the determination of the intersting portion of the
+The decisions involved in Steps~2 and 4 require the determination of the interesting portion of the
 eigen-decomposition and a definition of accuracy or algorithmic breakdown, thus they are 
 likely candidates for decoupling from the
 implementation of a particular eigen-iteration. For a particular eigen-iteration,
@@ -453,24 +453,26 @@ encourage code reuse, and maximize flexibility in implementation.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \label{sec:framework}
 
-This section outlines the Anasazi software framework and motivates
+This section outlines the Anasazi software framework and discusses 
 the design decisions made in the development of Anasazi. Three
-subsections describe the Anasazi operator/vector interface, the
+subsections describe the Anasazi operator/multivector interface, the
 eigensolver framework, and a review of the various classes in
 Anasazi. The reader is referred to
 \cite{Trilinos:anasazi,Trilinos-Tutorial} for software documentation
 and a tutorial.
 
-\subsection{The Anasazi Operator/Vector Interface}
+\subsection{The Anasazi Operator/Multivector Interface}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \label{sec:anasazi:opvec}
 
-Anasazi utilizes abstract interfaces for matrix operators and
-multivectors. This allows generic programming techniques to be used
-when developing the numerical algorithms in Anasazi. In C++, generic
-programming is traditionally implemented using virtual
-functions or templates. The abstract numerical interfaces used
-in Anasazi are supported via templates. Most classes in Anasazi accept
+Anasazi utilizes trait \cite{myer:95,veld:96} classes to define interfaces for the scalar field,
+multivectors, and matrix operators. This allows generic programming techniques to
+be used when developing numerical algorithms in the Anasazi framework.  
+Anasazi's eigensolver framework (Section  
+\ref{subsec:anasazi:solver_framework}) is comprised of abstract numerical interfaces
+that are all implemented using templates and the functionality of the 
+template arguments is provided through their corresponding trait classes.
+Most classes in Anasazi accept
 three template parameters:
 \begin{itemize}
 \item
@@ -485,116 +487,178 @@ providing linear operators used to define eigenproblems and
 preconditioners.
 \end{itemize}
 
-\cbcomm{give small code example of template use in C++}
-
 Templating an eigensolver on operator, multivector, and scalar types makes software reuse
-easier. Consider in contrast that ARPACK implements the subroutines---\texttt{SNAUPD},
-\texttt{DNAUPD}, \texttt{CNAUPD}, and \texttt{ZNAUPD}---for solving non-Hermitian
-eigenproblems. Four separate subroutines are provided for these four FORTRAN 77 floating
+easier. Consider in contrast that ARPACK implements the subroutines \texttt{SNAUPD},
+\texttt{DNAUPD}, \texttt{CNAUPD}, and \texttt{ZNAUPD} for solving non-Hermitian
+eigenproblems. Separate subroutines are required for these four FORTRAN 77 floating
 point types (single and double precision real, and single and double precision complex).
-Moreover, four additional subroutines are needed for a distributed memory implementation
-(say, using MPI). In Anasazi, templating on multivector and scalar types requires the
-maintenance of a single code. The multivector templating allows us to separate the
-eigenvalue algorithm from the linear algebra data structures. The operator type templating
-is analogous to the reverse communication interface used by ARPACK for providing
-matrix-vector products.
+Moreover, four additional subroutines are needed for a distributed memory implementation.
+By templating abstract numerical interfaces on operator, multivector, and scalar types, 
+it is only necessary to maintain a single code using the Anasazi framework.
 
-\cbcomm{this is an opportunity to explain why we choose templating
-over dynamic polymorphism.}
-
-Because the underlying data types are unknown to the Anasazi
-developer, algorithms are developed abstractly. Access to the
-functionality of the underlying objects is provided via the classes
-\aspace{MultiVecTraits} and \aspace{OperatorTraits}. These classes
-implement the traits mechanism~\cite{myer:95} and specify the
-operations that the multivector and operator classes must support in
-order to be used within Anasazi. This mechanism hides the low-level
-details of the underlying data structures.  As a result, a single
-eigensolver implementation in Anasazi can be exploited on a number of
-diverse computing platforms: serial, distributed memory parallel,
-multi-core shared memory parallel, graphics processing units, FPGAs,
-etc.
-
-The methods defined by these traits classes are listed in
-Table~\ref{tab:anasazi:mvt}. Most of the methods listed are
-self-explanatory. The first three \aspace{MultiVecTraits} methods are
-C++ \emph{virtual} constructors \cite[pp.~123--129]{meyers:96} that
-create multivectors from a multivector provided by the user. Deep and
-shallow copy denotes whether the object contains the storage for the
-multivector entries or not. A shallow copy is useful when only a
-subset of the columns of a multivector is required for computation.
-This concept provides Anasazi access to the performance benefits
-previously available only to C/FORTRAN implementations.
-
-\begin{table}
+\begin{figure}[htb]
+\label{fig:latemplate}
 \begin{center}
-  \caption{Methods provided by the \aspace{OperatorTraits} and
-  \aspace{MultiVecTraits} interfaces. \cbcomm{fix this table}}
-\label{tab:anasazi:mvt}
+%\includegraphics[height=1.5in]{interface_level5}
+\includegraphics[height=1.5in]{anasazi_linalg_template}
+\end{center}
+\caption{An eigensolver templated on scalar (ST), multivector (MV), and
+operator (OP) type.}
+\end{figure}
+
+Another aspect of software reuse that templating alleviates is through the separation of the
+eigensolver algorithm from the linear algebra data structures.  This separation, as shown in
+Figure \ref{fig:latemplate}, allows a user of the Anasazi framework to leverage an existing 
+linear algebra software investment.  All that is required is the template instantiation of the trait
+classes, \aspace{MultiVecTraits} and \aspace{OperatorTraits}, for the user-defined multvector 
+and operator, respectively.  The \aspace{ScalarTraits} class and respective template 
+instantiations for different scalar types are provided by the Trilinos Teuchos package 
+\cite{Trilinos:Teuchos}. Another user-friendly aspect of employing templates and traits mechanisms
+is that the Anasazi eigensolver, eigenproblem, and eigensolution are all defined by the 
+specified scalar, multivector, and operator type at compile time.  This approach, as opposed to
+using abstract interfaces and dynamic polymorphism, avoids any dynamic casting of the multivectors 
+and operators in the user's interaction with the Anasazi framework.
+
+%eigenvalue algorithm from the linear algebra data structures. The operator type templating
+%is analogous to the reverse communication interface used by ARPACK for providing
+%matrix-vector products.
+
+%Because the underlying data types are unknown to the Anasazi
+%developer, algorithms are developed abstractly. Access to the
+%functionality of the underlying objects is provided via the classes
+%\aspace{MultiVecTraits} and \aspace{OperatorTraits}. These classes
+%implement the traits mechanism~\cite{myer:95} and specify the
+%operations that the multivector and operator classes must support in
+%order to be used within Anasazi. This mechanism hides the low-level
+%details of the underlying data structures.  As a result, a single
+%eigensolver implementation in Anasazi can be exploited on a number of
+%diverse computing platforms: serial, distributed memory parallel,
+%multi-core shared memory parallel, graphics processing units, FPGAs,
+%etc.
+
+The \aspace{MultiVecTraits} and \aspace{OperatorTraits} classes specify
+the operations that the multivector and operator type must support in order for them to be
+used by Anasazi. Through the observations made in Section \ref{sec:algorithm-overview}, 
+it is clear that the \aspace{OperatorTraits} class only needs to provide one method,
+described in Table \ref{tab:anasazi:opt}, that applies an operator to a multivector.  
+This interface defines the only interaction required from an operator, eventhough
+the underlying operator may be a matrix, 
+spectral transformation, or preconditioner.
+\begin{table}[bth]
+\begin{center}
+  \caption{The method provided by the \aspace{OperatorTraits} interface.}
+\label{tab:anasazi:opt}
 \begin{tabular}{| p{4cm} | p{8cm} |}
 \hline
-%%%
+%%
 \multicolumn{2}{|c|}{\textbf{OperatorTraits$<$ST,MV,OP$>$}} \\\hline
 \emph{Method name} & \emph{Description} \\\hline
-Apply($A,X,Y$) & Applies the operator A to the multivector X, placing the
-result in the multivector Y. \\\hline\hline
-%%%
-\multicolumn{2}{|c|}{\textbf{MultiVecTraits$<$ST,MV$>$}} \\\hline
-%%%
-\emph{Method name} & \emph{Description} \\\hline
-Clone($X,numvecs$)           & Creates a new multivector from X with
-numvecs vectors.  \\\hline
-
-CloneCopy($X,index$) & Creates a new multivector with a copy of the contents of
-a subset of the multivector X (deep copy). \\\hline
-
-CloneView($X,index$) & Creates a new multivector that shares the selected
-contents of a subset of the multivector X (shallow copy).  \\\hline
-
-GetVecLength($X$) & Returns the vector length of the multivector X.
-\\\hline
-
-GetNumberVecs($X$)& Returns the number of vectors in the multivector X.
-\\\hline
-
-MvTimesMatAddMv($alpha,$ & Applies a serial, dense matrix $M$ to multivector $A$ and \\ 
-           $X,M,beta,B$) & accumulates the result into another multivector $B$:\\ & $B \leftarrow \alpha A M + \beta B$.  \\\hline
-
-MvAddMv($alpha,A,beta,B$)  & Performs multivector AXPBY: $ B \leftarrow \alpha A + \beta B$.
-\\\hline
-
-MvTransMv($alpha,A,B,C$) & Computes the serial, dense matrix $C \leftarrow \alpha A^H B$.
-\\\hline
-
-MvDot($A,B,c$) & Computes the vector $c$ where the components are the
-individual dot-products of the $i$-th columns of $A$ and $B$, i.e.,
-$c[i] = A[i]^H B[i]$.  \\\hline
-
-MvScale($A,c$)    & Scales the columns of a multivector by the entries
-of c. \\\hline
-
-MvNorm($A,c$)     & Computes the 2-norm of each vector of
-$A$: $c[i] = \|A[i]\|_2$  \\\hline
-
-SetBlock($A,B,index$) & Copies the vectors in $A$ to a subset of vectors in
-$B$. \\\hline
-
-MvRandom($A$) & Replaces the entries in the multivector $A$ with random
-numbers.  \\\hline
-
-MvInit($A,\alpha$) & Replaces each entry in the multivector $A$ with $\alpha$.
-\\\hline
-
-MvPrint($A$)    & Prints the Multivector to an output stream.
-\\\hline \hline
+Apply($A,X,Y$) & Applies the operator $A$ to the multivector $X$, placing the
+result in the multivector $Y$. \\
+\hline
+%%
 \end{tabular}
 \end{center}
 \end{table}
 
+The methods defined by the \aspace{MultiVecTraits} class, listed in
+Table~\ref{tab:anasazi:mvt}, are the creational and arithmetic methods necessitated
+by the observations in Section \ref{sec:algorithm-overview}.
+The creational methods generate empty or populated multivectors from a previously
+created multivector. The populated multivectors can be 
+a deep copy, where the object contains the storage for the multivector entries, or a shallow copy, 
+where the object has a view of another multivector's storage.
+A shallow copy is useful when only a
+subset of the columns of a multivector is required for computation, which is a situation that commonly occurs
+during the generation of a Krylov subspace.  Methods that give the dimensional attributes of
+a multivector (\aspace{GetVecLength}, \aspace{GetNumberVecs}) are useful for performing error checking.
+
+%This concept provides Anasazi access to the performance benefits
+%previously available only to C/FORTRAN implementations.
+
+\begin{table}
+\begin{center}
+  \caption{The methods provided by the \aspace{MultiVecTraits} interface.}
+\label{tab:anasazi:mvt}
+\begin{tabular}{| p{4cm} | p{8cm} |}
+\hline
+%%%
+%\multicolumn{2}{|c|}{\textbf{OperatorTraits$<$ST,MV,OP$>$}} \\\hline
+%\emph{Method name} & \emph{Description} \\\hline
+%Apply($A,X,Y$) & Applies the operator $A$ to the multivector $X$, placing the
+%result in the multivector $Y$. \\\hline
+%\hline
+%%%
+\multicolumn{2}{|c|}{\textbf{MultiVecTraits$<$ST,MV$>$}} \\\hline
+%%%
+\emph{Method name} & \emph{Description} \\\hline
+Clone($X,numvecs$)           & Creates a new multivector from $X$ with
+$numvecs$ vectors.  \\\hline
+
+CloneCopy($X,index$) & Creates a new multivector with a copy of the contents of
+a subset of the multivector $X$ (deep copy). \\\hline
+
+CloneView($X,index$) & Creates a new multivector that shares the selected
+contents of a subset of the multivector $X$ (shallow copy).  \\\hline
+
+GetVecLength($X$) & Returns the vector length of the multivector $X$.
+\\\hline
+
+GetNumberVecs($X$)& Returns the number of vectors in the multivector $X$.
+\\\hline
+
+MvTimesMatAddMv($alpha,$ & Applies a dense matrix $D$ to multivector $X$ and \\ 
+           $X,M,beta,B$) & accumulates the result into multivector $Y$:\\ & $Y \leftarrow \alpha X D + \beta Y$.  \\\hline
+
+MvAddMv($alpha,X,beta,Y$)  & Performs multivector AXPBY: $Y \leftarrow \alpha X + \beta Y$.
+\\\hline
+
+MvTransMv($alpha,X,Y,D$) & Computes the dense matrix $D \leftarrow \alpha X^H Y$.
+\\\hline
+
+MvDot($X,Y,d$) & Computes the vector $d$ where the components are the
+individual dot-products of the $i$-th columns of $X$ and $Y$, i.e.,
+$d[i] = X[i]^H Y[i]$.  \\\hline
+
+MvScale($X,d$)    & Scales the columns of a multivector by the entries
+of d. \\\hline
+
+MvNorm($X,d$)     & Computes the 2-norm of each vector of
+$A$: $d[i] = \|X[i]\|_2$  \\\hline
+
+SetBlock($X,Y,index$) & Copies the vectors in $X$ to a subset of vectors in
+$Y$. \\\hline
+
+MvRandom($X$) & Replaces the entries in the multivector $X$ with random
+numbers.  \\\hline
+
+MvInit($X,\alpha$) & Replaces each entry in the multivector $X$ with $\alpha$.
+\\\hline
+
+MvPrint($X$)    & Prints the multivector $X$ to an output stream.
+\\\hline 
+\end{tabular}
+\end{center}
+\end{table}
+
+The arithmetic methods defined by the \aspace{MultiVecTraits} are essential to the computations
+required by the Rayleigh-Ritz method and the general eigen-iteration.  The 
+\aspace{MvTimesMatAddMv} and \aspace{MvAddMv} methods are necessary for updating the approximate 
+eigenpairs 
+in Step~4 of the Algorithm \ref{algo:obliqueRR}
+or Step~2 of Algorithm \ref{algo:eigen-iter}.
+The \aspace{MvDot} and \aspace{MvTransMv} methods are required by the orthogonalization procedures
+utilized in Steps~1 and 3 of the eigen-iteration.  The \aspace{MvScale} and \aspace{MvNorm}
+methods are necessary, at the very least, for the computation of approximate eigenpairs and for  
+some termination criteria (Step~4) of the eigen-iteration. 
+The \aspace{SetBlock} method is required for deflating and locking
+in Step~3 of the eigen-iteration. The \aspace{MvRandom} and \aspace{MvInit} methods are necessary
+for the initialization of the bases in the eigen-iteration. 
+
 The use of \aspace{MultiVecTraits} and \aspace{OperatorTraits} requires that
 specializations of these traits classes have been implemented for
 given template arguments. Anasazi provides the following
-specializations of these traits classes:
+specializations of these trait classes:
 \begin{itemize}
   \item \aspace{Epetra\_MultiVector} and \aspace{Epetra\_Operator} (with scalar type
     \aspace{double}) allow Anasazi to be used with the Epetra~\cite{Trilinos:Epetra} linear
