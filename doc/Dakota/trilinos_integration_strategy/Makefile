@@ -6,7 +6,11 @@ BIBTEX_COMMAND = bibtex
 SOURCEFILES= \
   $(BASE_NAME).tex \
   rab_commands.tex \
-  references.bib
+  DakotalinosClassDiagram.eps \
+  DakotalinosObjectDiagram1.eps \
+  ModelEvaluator.eps \
+  TrikotaPackageDiagram.eps \
+ references.bib
 
 #
 # Shortcut targets
