@@ -118,9 +118,9 @@ the physical representation of the data manipulated, ARPACK is
 susceptible to design changes. Hence, code reuse is limited and
 software complexity and maintenance are more cumbersome.
 
-The Anasazi framework employs more modern software development paradigms, such as generic and
-object-oriented programming, via static and dynamic polymorphism~\cite[Chapter 14]{VJ02}. Static
-polymorphism, via templating of the linear algebra objects, allows algorithms in Anasazi
+The Anasazi framework employs more modern software development paradigms, both generic and
+object-oriented programming, via static and dynamic polymorphism~\cite[Chapter 14]{VJ02}, respectively. 
+Static polymorphism, via templating of the linear algebra objects, allows algorithms in Anasazi
 to be written in a generic manner (i.e., independent of the data types). Dynamic
 polymorphism, via virtual functions and inheritance, allows eigensolvers to be decoupled
 from mechanisms such as orthogonalization and stopping conditions. Upshots of this
@@ -461,6 +461,14 @@ Anasazi. The reader is referred to
 \cite{Trilinos:anasazi,Trilinos-Tutorial} for software documentation
 and a tutorial.
 
+We remark that Anasazi is largely independent of other Trilinos packages. 
+Anasazi only relies on the Trilinos Teuchos package~\cite{Trilinos:Teuchos}
+that provides a common suite of tools, such as: \texttt{RCP},
+a reference-counting smart pointer~\cite{Detlefs:1992:GCR,Teuchos-RCP};
+\texttt{ParameterList}, a list for algorithmic parameters of
+varying data types; and the BLAS
+\cite{Lawson:1979:BLA,Blackford:2002:USB} and LAPACK \cite{abbd:95} C++ wrappers.
+
 \subsection{The Anasazi Operator/Multivector Interface}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \label{sec:anasazi:opvec}
@@ -569,9 +577,9 @@ created multivector. The populated multivectors can be
 a deep copy, where the object contains the storage for the multivector entries, or a shallow copy, 
 where the object has a view of another multivector's storage.
 A shallow copy is useful when only a
-subset of the columns of a multivector is required for computation, which is a situation that commonly occurs
-during the generation of a Krylov subspace.  Methods that give the dimensional attributes of
-a multivector (\aspace{GetVecLength}, \aspace{GetNumberVecs}) are useful for performing error checking.
+subset of the columns of a multivector is required for computation, which is a situation that 
+commonly occurs during the generation of a Krylov subspace. All the creational methods return
+a reference-counted pointer \cite{Detlefs:1992:GCR,Teuchos-RCP} to the new multivector (\aspace{RCP<MV>}). 
 
 %This concept provides Anasazi access to the performance benefits
 %previously available only to C/FORTRAN implementations.
@@ -608,7 +616,7 @@ GetNumberVecs($X$)& Returns the number of vectors in the multivector $X$.
 \\\hline
 
 MvTimesMatAddMv($alpha,$ & Applies a dense matrix $D$ to multivector $X$ and \\ 
-           $X,M,beta,B$) & accumulates the result into multivector $Y$:\\ & $Y \leftarrow \alpha X D + \beta Y$.  \\\hline
+           $X,M,beta,Y$) & accumulates the result into multivector $Y$:\\ & $Y \leftarrow \alpha X D + \beta Y$.  \\\hline
 
 MvAddMv($alpha,X,beta,Y$)  & Performs multivector AXPBY: $Y \leftarrow \alpha X + \beta Y$.
 \\\hline
@@ -620,11 +628,10 @@ MvDot($X,Y,d$) & Computes the vector $d$ where the components are the
 individual dot-products of the $i$-th columns of $X$ and $Y$, i.e.,
 $d[i] = X[i]^H Y[i]$.  \\\hline
 
-MvScale($X,d$)    & Scales the columns of a multivector by the entries
-of d. \\\hline
+MvScale($X,d$)    & Scales the i-th column of a multivector $X$ by $d[i]$. \\\hline
 
 MvNorm($X,d$)     & Computes the 2-norm of each vector of
-$A$: $d[i] = \|X[i]\|_2$  \\\hline
+$X$: $d[i] = \|X[i]\|_2$  \\\hline
 
 SetBlock($X,Y,index$) & Copies the vectors in $X$ to a subset of vectors in
 $Y$. \\\hline
@@ -632,7 +639,7 @@ $Y$. \\\hline
 MvRandom($X$) & Replaces the entries in the multivector $X$ with random
 numbers.  \\\hline
 
-MvInit($X,\alpha$) & Replaces each entry in the multivector $X$ with $\alpha$.
+MvInit($X,\alpha$) & Replaces each entry in the multivector $X$ with a scalar $\alpha$.
 \\\hline
 
 MvPrint($X$)    & Prints the multivector $X$ to an output stream.
@@ -651,59 +658,179 @@ The \aspace{MvDot} and \aspace{MvTransMv} methods are required by the orthogonal
 utilized in Steps~1 and 3 of the eigen-iteration.  The \aspace{MvScale} and \aspace{MvNorm}
 methods are necessary, at the very least, for the computation of approximate eigenpairs and for  
 some termination criteria (Step~4) of the eigen-iteration. 
-The \aspace{SetBlock} method is required for deflating and locking
-in Step~3 of the eigen-iteration. The \aspace{MvRandom} and \aspace{MvInit} methods are necessary
-for the initialization of the bases in the eigen-iteration. 
+Deflation and locking in Step~3 of the eigen-iteration necessitates the \aspace{SetBlock} method.
+Initialization of the bases for the eigen-iteration requires
+methods such as \aspace{MvRandom} and \aspace{MvInit}.
+The ability to perform error checking and debugging in Anasazi is supported by methods that give 
+dimensional attributes (\aspace{GetVecLength}, \aspace{GetNumberVecs}) and allow the users to print
+out a multivector (\aspace{MvPrint}). 
 
-The use of \aspace{MultiVecTraits} and \aspace{OperatorTraits} requires that
-specializations of these traits classes have been implemented for
-given template arguments. Anasazi provides the following
-specializations of these trait classes:
+Specialization of the \aspace{MultiVecTraits} and \aspace{OperatorTraits} classes on
+given template arguments is compulsory for their usage in the eigensolver framework.
+However, Anasazi provides the following specializations of these trait classes:
 \begin{itemize}
   \item \aspace{Epetra\_MultiVector} and \aspace{Epetra\_Operator} (with scalar type
     \aspace{double}) allow Anasazi to be used with the Epetra~\cite{Trilinos:Epetra} linear
-    algebra library provided with Trilinos.
+    algebra library provided with Trilinos. This gives Anasazi the ability to interact with 
+    Trilinos packages that support the Epetra\_Operator interface, like Amesos, AztecOO, Belos, 
+    Ifpack, ML, and NOX/LOCA. 
   \item \aspace{Thyra::MultiVectorBase<ST>} and
     \aspace{Thyra::LinearOpBase<ST>} (with arbitrary scalar type
     \aspace{ST}) allow Anasazi to be used with any classes that implement the abstract interfaces
     provided by the Thyra~\cite{Trilinos:Thyra} package of Trilinos.
-  \item \aspace{MultiVec<ST>} and \aspace{Operator<ST>} (with
-    arbitrary scalar type \aspace{ST}) allow Anasazi to be used with any classes that implement
-    the Anasazi abstract base classes \aspace{MultiVec} and \aspace{Operator}.
+%  \item \aspace{MultiVec<ST>} and \aspace{Operator<ST>} (with
+%    arbitrary scalar type \aspace{ST}) allow Anasazi to be used with any classes that implement
+%    the Anasazi abstract base classes \aspace{MultiVec} and \aspace{Operator}.
 \end{itemize}
+For scalar, multivector and operator types not covered by the provided specializations,
+alternative specializations of \aspace{MultiVecTraits} and \aspace{OperatorTraits}
+must be created. One benefit of the traits mechanism is that it does
+not require that the data types are C++ classes.  Furthermore, it
+does not require modification to existing data types, it only serves as a translator between
+the data type's native functionality and Anasazi's required functionality. 
 
-For scalar, multivectors and operators types not covered by these,
-specializations of \aspace{MultiVecTraits} and \aspace{OperatorTraits}
-must be created. The benefit of the traits mechanism is that it does
-not require that the chosen types are C++ classes.  Furthermore, it
-does not require modification to exiting data types, as the traits
-class specialization occurs external to the chosen types.
 
-
-\subsection{The Anasazi Solver Framework}
+\subsection{The Anasazi Eigensolver Framework}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \label{subsec:anasazi:solver_framework}
 
-We explain how the example Rayleigh-Ritz method of
-Algorithm~\ref{algo:obliqueRR} and the additional steps listed in
-Algorithm~\ref{algo:eigen-iter} may be implemented within the Anasazi
-framework.
+In this section we will discuss how to implement an eigensolver
+in Anasazi's framework.  We will demonstrate Anasazi is 
+a framework of algorithmic components, where decoupled operations 
+simplify component verification, encourage code reuse, and maximize flexibility
+in implementation. This modularized approach requires a \emph{solver manager} that
+combines a strategy with these algorithmic components to define an eigensolver.
+The high-level class collaboration graph for Anasazi's \aspace{SolverManager} class in 
+Figure \ref{fig:solverColl} lists all the algorithmic components offered by the Anasazi
+framework for implementing an eigensolver.
 
-\cbcomm{i think the list below is not necessary, at least, the latter
-two entries. be more clear.}
-In Anasazi, eigensolvers are derived classes of the abstract base
-class \aspace{Eigensolver}. The purpose of a subclass of
-\aspace{Eigensolver} is to encapsulate an eigen-iteration and
-its associated state/data. An inheritance relationship was chosen for
-the following reasons:
+\begin{figure}[htb]
+\label{fig:solverColl}
+\begin{center}
+\includegraphics[height=2in]{anasazi_slvr_collaborations.pdf}
+\end{center}
+\caption{Anasazi::SolverManager class collaboration graph.}
+\end{figure}
+
+The first component that is essential to the \aspace{SolverManager} class is the 
+\aspace{Eigenproblem}.  \aspace {Eigenproblem} is an abstract class that is a container for 
+the components and solution of an eigenvalue problem. By requiring eigenproblems to derive from
+\aspace{Eigenproblem}, Anasazi defines a minimum interface that can be expected of all
+eigenvalue problems by the classes that will work with these problems. From a user's perspective,
+the most important part of the interface may be the methods for storing and retrieving the 
+results of the eigenvalue computation:
+\begin{verbatim}
+const Eigensolution & Eigenproblem::getSolution();
+void Eigenproblem::setSolution(const Eigensolution & sol);
+\end{verbatim}
+
+The \aspace{Eigensolution} class was developed in order to
+facilitate setting and retrieving the solution data from an eigenproblem.  
+Furthermore, the \aspace{Eigensolution} class was designed for storing
+solution data from both Hermitian and non-Hermitian eigenproblems. 
+This structure contains the following information:
 \begin{itemize}
-  \item the abstract base class defines an interface used for checking the
-    status of a solver by a status test;
-  \item a concrete derived class will perform the iteration associated
-    with a specific eigensolver algorithm; and
-  \item a concrete derived class will act as a container for the state
-    associated with its particular iteration.
+  \item \verb!RCP< MV > Evecs! \\
+   The computed eigenvectors.
+ \item \verb!RCP< MV > Espace! \\
+   An orthonormal basis for the computed eigenspace.
+ \item \verb!std::vector< Value< ST > > Evals! \\
+   The computed eigenvalue approximations.
+ \item \verb!std::vector< int > index! \\
+   An index into \verb!Evecs! to enable compressed storage of eigenvectors for non-Hermitian problems.
+ \item \verb!int numVecs! \\
+   The number of computed eigenpair approximations.
 \end{itemize}
+The \aspace{Value} structure is a simple container, templated on scalar type, that
+has two members: the real and imaginary part of an eigenvalue.  The real and imaginary
+parts are stored as the magnitude type of the scalar type.  The \aspace{Value} structure
+along with the \verb!index! vector enable the \aspace{Eigensolution} structure to 
+store the solutions from either real or complex, Hermitian or non-Hermitian eigenvalue
+problems. Implementations of the \aspace{SolverManager} class are expected to place the 
+results of their computation in the \aspace{Eigenproblem} class using an \aspace{Eigensolution}. 
+
+The second component that is essential to a \aspace{SolverManager} class is the \aspace{Eigensolver}.
+The \aspace{Eigensolver} abstract base class defines the basic interface that must be met
+by any eigen-iteration class in Anasazi. Specific eigensolver iterations are implemented as derived
+classes of \aspace{Eigensolver}.  This class
+defines two types of methods: status methods and
+solver-specific methods. A list of these methods is given in Table~\ref{tab:anasazi:itermethods}.
+\begin{table}[htp]
+\begin{center}
+\caption{A list of methods provided by any derived
+\aspace{Eigensolver}.} \label{tab:anasazi:itermethods}
+\begin{tabular}{| p{3cm} | p{6cm} |}
+\hline
+\multicolumn{2}{|c|}{\emph{Status Methods}} \\
+\hline
+\emph{Method name} & \emph{Description} \\
+\hline
+{\tt getNumIters}       & current number of iterations. \\
+{\tt getRitzValues}     & most recent Ritz values. \\
+{\tt getRitzVectors}    & most recent Ritz vectors. \\
+{\tt getRitzIndex}      & Ritz index needed for indexing compressed Ritz vectors. \\
+{\tt getResNorms}       & residual norms, with respect to the \aspace{OrthoManager}. \\
+{\tt getRes2Norms}      & residual Euclidean norms. \\
+{\tt getRitzRes2Norms}  & Ritz residual  Euclidean norms. \\
+{\tt getCurSubspaceDim} & current subspace dimension. \\
+{\tt getMaxSubspaceDim} & maximum subspace dimension. \\
+{\tt getBlockSize}      & block size. \\
+\hline
+\multicolumn{2}{|c|}{\emph{Solver-specific Methods}} \\
+\hline
+\emph{Method name} & \emph{Description} \\
+\hline
+{\tt getState}       & returns a specific structure with read-only pointers to
+                       the current state of the solver. \\
+{\tt initialize}     & accepts a solver-specific structure enabling the user to initialize
+                       the solver with a particular state.\\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+The status methods are defined by the \aspace{Eigensolver}
+abstract base class and represent the information that any status test can request from
+any eigensolver.  Each eigensolver iteration also provides low-level, 
+solver-specific methods for accessing and setting the state of the solver.
+
+\cbcomm{might need more information about solver state and compressed storage.}
+
+%The state of the solver communicated to and from the \aspace{Eigensolver} class using a structure 
+%that is specific to the eigen-iteration.  This structure is expected to fully describe the current
+%state of the solver or the state the solver needs to be initialized to.  An example of a state
+%structure can be seen in Figure \ref{fig:state}.
+%\begin{figure}[htb]
+%\begin{center}
+%\begin{boxedverbatim}
+%  template <class ST, class MV>
+%  struct BlockKrylovSchurState {
+%    /* The current dimension of the reduction.
+%     * NOTE: This should always be equal to BlockKrylovSchur::getCurSubspaceDim()
+%    int curDim;
+%    /* The current Krylov basis. */
+%    RCP<const MV> V;
+%    /* The current Hessenberg matrix. */
+%    RCP<const Teuchos::SerialDenseMatrix<int,ST> > H;
+%    /* The current Schur form reduction of the valid part of H. */
+%    RCP<const Teuchos::SerialDenseMatrix<int,ST> > S;
+%    /* The current Schur vectors of the valid part of H. */
+%    RCP<const Teuchos::SerialDenseMatrix<int,ST> > Q;
+%    BlockKrylovSchurState() : curDim(0), V(Teuchos::null),
+%                              H(Teuchos::null), S(Teuchos::null),
+%                              Q(Teuchos::null) {}
+%  };
+%\end{boxedverbatim}
+%\end{center}
+%\caption{Example of an \aspace{Eigensolver} state structure.}
+%\label{fig:state}
+%\end{figure}
+
+%START HERE!!!!!
+
+from the 
+The combination of these two types of methods, along with the flexibility
+provided by status tests, provides the user with a large degree of
+control over eigensolver iterations.
 
 \cbcomm{explain why we desire status tests: runtime chosen stopping
 conditions, hook for checking state of solver for numerous other logic
@@ -793,57 +920,12 @@ needed. However, the released version of Anasazi provides all
 functionality necessary for solving a wide variety of problems. This
 section lists and briefly describes the classes used in Anasazi.
 
-
-We remark that Anasazi is largely independent of Trilinos. Anasazi
-only relies on the Trilinos Teuchos package~\cite{Trilinos:Teuchos}
-that provides a common suite of tools, such as: \texttt{RCP},
-a reference-counting smart pointer~\cite{Detlefs:1992:GCR};
-\texttt{ParameterList}, a list for algorithmic parameters of
-varying data types; and the BLAS
-\cite{Lawson:1979:BLA,Blackford:2002:USB} and LAPACK \cite{abbd:95}.
-
-The abstract base class \aspace{Eigenproblem} is a container for the components and
-solution of an eigenvalue problem. By requiring eigenproblems to derive from
-\aspace{Eigenproblem}, Anasazi defines a minimum interface that can be expected of all
-eigenvalue problems by the classes that will work with the problems (e.g., eigensolvers
-and status testers). Anasazi provides users with a concrete implementation of
+Anasazi provides users with a concrete implementation of
 \aspace{Eigenproblem}, called \aspace{BasicEigenproblem}. This basic implementation
 provides all the functionality necessary to describe both generalized and standard,
 Hermitian and non-Hermitian linear eigenvalue problems.
 
-The methods for storing and retrieving the results of the
-eigenvalue computation in an \aspace{Eigenproblem} are:
-\begin{verbatim}
-const Eigensolution & Eigenproblem::getSolution();
-void Eigenproblem::setSolution(const Eigensolution & sol);
-\end{verbatim}
-
-The \aspace{Eigensolution} class was developed in order to
-facilitate setting and retrieving the solution data from an eigenproblem.  
-Furthermore, the \aspace{Eigensolution} class was designed for storing
-solution data from both Hermitian and non-Hermitian eigenproblems. 
-This structure contains the following information:
-\begin{itemize}
-  \item \verb!RCP< MV > Evecs! \\
-   The computed eigenvectors.
- \item \verb!RCP< MV > Espace! \\
-   An orthonormal basis for the computed eigenspace.
- \item \verb!std::vector< Value< ST > > Evals! \\
-   The computed eigenvalue approximations.
- \item \verb!std::vector< int > index! \\
-   An index into \verb!Evecs! to enable compressed storage of eigenvectors for non-Hermitian problems.
- \item \verb!int numVecs! \\
-   The number of computed eigenpair approximations.
-\end{itemize}
-The \aspace{Value} structure is a simple container, templated on scalar type, that
-has two members: the real and imaginary part of an eigenvalue.  The real and imaginary
-parts are stored as the magnitude type of the scalar type.  The \aspace{Value} structure
-along with the \verb!index! vector enable the \aspace{Eigensolution} structure to 
-store the solutions from either real or complex, Hermitian or non-Hermitian eigenvalue
-problems.
-
-Anasazi solver managers are expected to place the results of their computation in the
-\aspace{Eigenproblem} class using an \aspace{Eigensolution}. However, a user working
+However, a user working
 directly with an eigensolver (i.e., not with a solver manager) will need to recover the
 solution directly from the eigensolver state.
 
@@ -893,57 +975,7 @@ solution directly from the eigensolver state.
 %  eigensolver will need to recover the solution directly from the eigensolver state.
 %\end{remark}
 
-The \aspace{Eigensolver} abstract base class defines the basic interface that must be met
-by any eigensolver class in Anasazi. Specific eigensolver iterations are implemented as derived
-classes of \aspace{Eigensolver}.  This class
-defines two types of methods: status methods and
-solver-specific methods. A list of these methods is given in Table~\ref{tab:anasazi:itermethods}.
-The status methods are defined by the \aspace{Eigensolver}
-abstract base class and represent the information that any status test can request from
-any eigensolver.  Each eigensolver iteration also provides low-level, 
-solver-specific methods for accessing and setting the state of the solver.
-The combination of these two types of methods, along with the flexibility
-provided by status tests, provides the user with a large degree of
-control over eigensolver iterations.
 
-% The class \aspace{Eigensolver}, like \aspace{Eigenproblem}, is
-% templated on the scalar type, multivector type and operator type.
-
-\begin{table}[htp]
-\begin{center}
-\caption{A list of methods provided by any derived
-\aspace{Eigensolver}.} \label{tab:anasazi:itermethods}
-\begin{tabular}{| p{3cm} | p{6cm} |}
-\hline
-\multicolumn{2}{|c|}{\emph{Status Methods}} \\
-\hline
-\emph{Method name} & \emph{Description} \\
-\hline
-{\tt getNumIters}       & current number of iterations. \\
-{\tt getRitzValues}     & most recent Ritz values. \\
-{\tt getRitzVectors}    & most recent Ritz vectors. \\
-{\tt getRitzIndex}      & Ritz index needed for indexing compressed Ritz vectors. \\
-{\tt getResNorms}       & residual norms, with respect to the \aspace{OrthoManager}. \\
-{\tt getRes2Norms}      & residual Euclidean norms. \\
-{\tt getRitzRes2Norms}  & Ritz residual  Euclidean norms. \\
-{\tt getCurSubspaceDim} & current subspace dimension. \\
-{\tt getMaxSubspaceDim} & maximum subspace dimension. \\
-{\tt getBlockSize}      & block size. \\
-\hline
-\multicolumn{2}{|c|}{\emph{Solver-specific Methods}} \\
-\hline
-\emph{Method name} & \emph{Description} \\
-\hline
-{\tt getState}       & returns a specific structure with read-only pointers to
-                       the current state of the solver. \\
-{\tt initialize}     & accepts a solver-specific structure enabling the user to initialize
-                       the solver with a particular state.\\
-\hline
-\end{tabular}
-\end{center}
-\end{table}
-
-% Using Anasazi by interfacing directly with eigensolvers is extremely
 % powerful, but can be tedious. Solver managers provide a way for users
 % to encapsulate specific solving strategies inside of an easy-to-use
 % class. Novice users may prefer to use existing solver managers, while
