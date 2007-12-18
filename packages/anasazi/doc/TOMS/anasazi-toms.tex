@@ -385,13 +385,6 @@ implemented in a specific manner.
 % subspaces and the choice of bases representation, an issue that is
 % beyond the scope of this paper.
 
-%The algorithms that are currently available in Anasazi are:
-%\begin{enumerate}
-%  \item a block extension of a Krylov-Schur method~\cite{stew:01},
-%  \item a block Davidson method as described in~\cite{Arbenz:2005:ACE},
-%  \item an implementation of LOBPCG as described in~\cite{Hetmaniuk:2006:BSL}.
-%\end{enumerate}
-
 % removed the first two of these remarks; they do not add
 % anything to the paper and may distract the reader. re-emphasize that
 % this section was simply an exploration of one type of eigensolver
@@ -406,10 +399,6 @@ implemented in a specific manner.
 % Algorithm~\ref{algo:obliqueRR} is equivalent to a Schur form when
 % (\ref{eq:intro.1}) is a regular pencil.
 % 
-% Our second remark is that only the Krylov-Schur method can be used
-% for non-Hermitian generalized eigenvalue problems. In contrast, all
-% three algorithms can be used for symmetric positive semi-definite
-% generalized eigenvalue problems.
 
 This discussion illustrates that many distinct parts make up a
 large-scale eigensolver code: orthogonalization, sorting tools, dense
@@ -456,8 +445,8 @@ encourage code reuse, and maximize flexibility in implementation.
 This section outlines the Anasazi software framework and discusses 
 the design decisions made in the development of Anasazi. Three
 subsections describe the Anasazi operator/multivector interface, the
-eigensolver framework, and a review of the various classes in
-Anasazi. The reader is referred to
+eigensolver framework, and the various implementations provided by the
+Anasazi framework. The reader is referred to
 \cite{Trilinos:anasazi,Trilinos-Tutorial} for software documentation
 and a tutorial.
 
@@ -466,8 +455,18 @@ Anasazi only relies on the Trilinos Teuchos package~\cite{Trilinos:Teuchos}
 that provides a common suite of tools, such as: \texttt{RCP},
 a reference-counting smart pointer~\cite{Detlefs:1992:GCR,Teuchos-RCP};
 \texttt{ParameterList}, a list for algorithmic parameters of
-varying data types; and the BLAS
+varying data types (\texttt{ScalarTraits}); and the BLAS
 \cite{Lawson:1979:BLA,Blackford:2002:USB} and LAPACK \cite{abbd:95} C++ wrappers.
+
+%In order to perform the Rayleigh-Ritz analysis used by the
+%algorithms illustrating this section, Anasazi utilizes the classes
+%\aspace{Teuchos::BLAS} and \aspace{Teuchos::LAPACK}. The purpose of
+%these classes is to provide templated interfaces to the dense linear
+%algebra routines provided by the BLAS and LAPACK libraries.
+%Therefore, even such operations as dense matrix-matrix
+%multiplication are made independent of the scalar field defining the
+%eigenvalue problem. Users are therefore currently limited to
+%algorithms provided by LAPACK.
 
 \subsection{The Anasazi Operator/Multivector Interface}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -638,7 +637,9 @@ $Y$. \\
 {\tt MvInit(X,alpha)} & Replaces each entry in the multivector $X$ with a scalar $\alpha$.  \\
 
 {\tt MvRandom(X)} & Replaces the entries in the multivector $X$ by random
-scalars. \\
+scalars. \\\hline
+
+{\tt MvPrint(X)} & Print the multivector $X$. \\
 
 \hline
 \end{tabular}
@@ -717,7 +718,7 @@ the components and solution of an eigenvalue problem. By requiring eigenproblems
 \aspace{Eigenproblem}, Anasazi defines a minimum interface that can be expected of all
 eigenvalue problems by the classes that will work with these problems. The methods provided
 by this interface, shown in Table \ref{tab:anasazi:eigenproblem}, are generic enough to define
-an eigenproblem that is standard or generalized, Hermitian or non-Hermitian.  Furthermore, this
+an eigenproblem that is standard or generalized, Hermitian or non-Hermitian. Furthermore, this
 interface allows the definition of a preconditioner, for 
 preconditioned eigensolvers, as well as the definition of a spectral transformation,
 for Arnoldi-based eigensolvers. 
@@ -955,12 +956,15 @@ void sort(Eigensolver<ST,MV,OP>* solver,
           std::vector<int> *perm)
 \end{boxedverbatim}
 \end{center}
-\caption{Example of communication between status test and eigensolver}
-\label{fig:sort}
+\caption{A list of methods provided by any derived \aspace{SortManager}.} \label{fig:sort}
 \end{figure}
 
-
-
+Since orthogonalization and orthonormalization are commonly performed
+computations in iterative eigensolvers and can be implemented in a variety of ways, 
+the \aspace{OrthoManager} class separates the \aspace{Eigensolver}
+from this functionality. The \aspace{OrthoManager} defines a small number of
+orthogonalization-related operations, including a choice of an inner
+product, which are listed in Table \ref{tab:anasazi:orthomanager}.  The \aspace{OrthoManager} interface
 \begin{table}[htp]
 \begin{center}
 \caption{A list of methods provided by any derived \aspace{OrthoManager}.} 
@@ -987,100 +991,187 @@ for the resultant, optionally returning the coefficients of X with respect to th
 \end{tabular}
 \end{center}
 \end{table}
+has also been extended, through inheritance, to support orthogonalization and 
+orthonormalization using matrix-based inner products in the \aspace{MatOrthoManager}
+class. This extended interface allows the eigen-iteration to pass in pre-computed
+matrix-vector products that can be used in the orthogonalization and orthonormalization
+process, thus making the computation more efficient.
 
+The \aspace{Eigensolver} class combined with the utilities provided by the \aspace{StatusTest},
+\aspace{SortManager}, and \aspace{OrthoManager} classes provides a powerful, flexible way
+to design an eigen-iteration.  However, directly interfacing with the \aspace{Eigensolver} class
+can be overwhelming, since it requires the user to construct a number of support classes and 
+manage calls to \verb!Eigensolver::iterate()!. The \aspace{SolverManager} class was developed to
+encapsulate an instantiation of \aspace{Eigensolver}, providing additional functionality
+and handling low-level interaction with the eigensolver iteration that a user may not want to
+specify. 
 
+Solver managers are intended to be easy to use, while still providing the
+features and flexibility needed to solve large-scale eigenvalue problems.
+The \aspace{SolverManager} constructor accepts only two arguments:
+an \aspace{Eigenproblem} specifying the eigenvalue problem to be solved and a
+\texttt{ParameterList} of options specific to this solver manager. 
+\begin{figure}[htb]
+\begin{center}
+\begin{boxedverbatim}
+SolverManager(
+   const RCP< Eigenproblem<ST,MV,OP> > &problem,
+   ParameterList                       &params
+ );
+\end{boxedverbatim}
+\end{center}
+\caption{Basic constructor for a \aspace{SolverManager}}
+\label{fig:constructor2}
+\end{figure}
+The solver manager instantiates an \aspace{Eigensolver} implementation, along with the
+status tests and other support classes needed by the eigensolver iteration, as
+specified by the parameter list. To solve the eigenvalue
+problem, the user simply calls the \verb!solve()! method of the \aspace{SolverManager},
+which returns either \aspace{Converged} or \aspace{Unconverged}, and retrieves the computed
+\aspace{Eigensolution} from the \aspace{Eigenproblem} (Figure \ref{fig:examplesolve}).
 
-Since orthogonalization and orthonormalization are commonly performed
-computations in iterative eigensolvers and can be implemented in a variety of ways, 
-the \aspace{OrthoManager} class separates the \aspace{Eigensolver}
-from this functionality. The \aspace{OrthoManager} defines a small number of
-orthogonalization-related operations, including choice of an inner
-product.
+\begin{figure}[htb]
+\begin{center}
+\begin{boxedverbatim}
+// create an eigenproblem
+RCP< Anasazi::Eigenproblem<ST,MV,OP> > problem = ...;
+// create a parameter list
+ParameterList params;
+params.set(...);
+// create a solver manager
+Anasazi::SolverManager<ST,MV,OP> solman(problem,params);
+// solve the eigenvalue problem
+Anasazi::ReturnType ret = solman.solve();
+// get the solution from the problem
+Anasazi::Eigensolution<ST,MV> sol = problem->getSolution();
+\end{boxedverbatim}
+\end{center}
+\caption{Sample code for solving an eigenvalue problem using a \aspace{SolverManager}}
+\label{fig:examplesolve}
+\end{figure}
 
-// START HERE!!!
-As explained in Section
-\ref{sec:algorithm-overview}, all our current implementations are
-orthogonal Rayleigh-Ritz methods where an orthonormal basis
-representation is computed. 
-Combined with the plethora of available methods for
-performing these computations, Anasazi has left as much leeway to
-the users as possible. To this end, Anasazi provides two concrete
-orthogonalization managers:
+The simplicity of the \aspace{SolverManager} interface often conceals a complex eigensolver strategy.
+The purpose of many solver managers is to manage and initiate the repeated calls to the underlying 
+\aspace{Eigensolver::iterate()} method. For
+solvers that increase the dimension of trial and test subspaces (e.g., Davidson and Krylov
+subspace methods), the solver manager may also assume the task of restarting (so that
+storage costs may be fixed). This decoupling of restarting from the eigensolver is
+beneficial due to the numerous restarting techniques in use.
+
+Under this framework, users have a number of options for performing eigenvalue
+computations with Anasazi:
+\begin{itemize}
+\item
+Use the existing solver managers, which we will discuss in the next section. 
+In this case, the user is limited to the functionality provided by the existing 
+solver managers.
+\item
+Develop a new solver manager for an existing eigensolver iteration.
+The user can extend the functionality provided by the eigen-iteration,
+specifying custom configurations for status tests, orthogonalization, restarting, 
+locking, etc.
+\item
+Implement a new eigensolver iteration, thus taking advantage of Anasazi's extensibility. 
+The user can write an eigensolver iteration that is not provided by Anasazi. 
+The user still has the benefit of the available support classes 
+and the knowledge that this effort can be easily employed by anyone already 
+familiar with Anasazi.
+\end{itemize}
+In the next section we will discuss the current implementations of
+eigensolver iterations and managers, as well as utility classes, provided
+by the Anasazi eigensolver framework.
+
+\subsection{Anasazi Class Implementations}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{subsec:anasazi:classes}
+
+Anasazi is an eigensolver software framework designed with extensibility in mind, 
+so that users can augment the package with any special functionality that may be
+needed. However, the released version of Anasazi provides all
+functionality necessary for solving a wide variety of problems. This
+section lists and briefly describes the class implementations provided
+by Anasazi.
+
+\subsubsection{\aspace{Anasazi::Eigenproblem}}
+
+Anasazi provides users with a concrete implementation of
+\aspace{Eigenproblem}, called \aspace{BasicEigenproblem}. This basic implementation
+provides all the functionality necessary to describe both generalized and standard,
+Hermitian and non-Hermitian linear eigenvalue problems. This implementation fully 
+supports the definition of a preconditioner, for preconditioned eigensolvers, 
+as well as the definition of a spectral transformation, for Arnoldi-based eigensolvers. 
+
+\subsubsection{\aspace{Anasazi::Eigensolver}}
+
+Anasazi provides users with a concrete implementation of three popular algorithms:
+\begin{enumerate}
+  \item a block extension of a Krylov-Schur method~\cite{stew:01},
+  \item a block Davidson method as described in~\cite{Arbenz:2005:ACE},
+  \item an implementation of LOBPCG as described in~\cite{Hetmaniuk:2006:BSL}.
+\end{enumerate}
+These implementations can be found in the \aspace{BlockKrylovSchur}, \aspace{BlockDavidson}, 
+and \aspace{LOBPCG} classes, respectively. Only the block Krylov-Schur method can be used
+for non-Hermitian generalized eigenvalue problems. In contrast, all three algorithms can 
+be used for symmetric positive semi-definite generalized eigenvalue problems.
+
+\subsubsection{\aspace{Anasazi::StatusTest}}
+
+The purpose of the \aspace{StatusTest} is to give the user or solver
+manager flexibility in terminating the eigensolver iterations in
+order to interact directly with the solver. Typical
+reasons for terminating the iteration are:
+\begin{itemize}
+  \item some convergence criterion has been satisfied;
+  \item some portion of the subspace has reached sufficient accuracy to be
+  deflated from the iterate or locked;
+  \item the solver has performed a sufficient number of iterations.
+\end{itemize}
+With respect to these reasons, the following is a list of Anasazi-provided status tests:
+\begin{itemize}
+  \item \aspace{StatusTestMaxIters} - monitors the number of iterations
+    performed by the solver; it can be used to halt the solver at some maximum number of iterations
+    or even to require some minimum number of iterations.
+  \item \aspace{StatusTestResNorm} - monitors the residual norms of the
+    current iterate.
+  \item \aspace{StatusTestOrderedResNorm} - monitors the residual
+    norms of the current iterate, but only considers the residuals associated with the
+    most significant eigenvalues.
+  \item \aspace{StatusTestCombo} - a boolean combination of
+    other status tests, creating near unlimited potential for complex status tests.
+  \item \aspace{StatusTestOutput} - a wrapper around another
+    status test, allowing for printing of status information on a call to
+    \verb!checkStatus()!.
+\end{itemize}
+
+\subsubsection{\aspace{Anasazi::SortManager}}
+
+The purpose of the \aspace{SortManager} is to give users the opportunity to choose the 
+eigenvalues of interest in whatever manner is deemed to be most appropriate. 
+Typically, the eigenvalues of interest are those with:
+\begin{itemize}
+  \item the smallest or largest magnitude
+  \item the smallest or largest real part
+  \item the smallest or largest imaginary part
+\end{itemize}
+Anasazi provides the ability to perform these six sorts in the \aspace{BasicSortManager} class.
+
+\subsubsection{\aspace{Anasazi::OrthoManager}}
+
+The eigen-iteration implementations provided by Anasazi are all orthogonal 
+Rayleigh-Ritz methods where an orthonormal basis representation is computed. 
+Motivated by the plethora of available methods for performing these 
+computations, Anasazi has left as much leeway to the users as possible. 
+Anasazi provides two concrete orthogonalization managers:
 \begin{itemize}
 \item
   \aspace{BasicOrthoManager} - performs orthogonalization using
-  multiple steps of classical Gram-Schmidt \cite{dgks:76}.
+  classical Gram-Schmidt with a possible DGKS correction step \cite{dgks:76}.
 \item
   \aspace{SVQBOrthoManager} - performs orthogonalization using the
   SVQB orthogonalization technique described by Stathapoulos and
   Wu~\cite{Stathopoulos:2002:BOP}.
 \end{itemize}
 
-\cbcomm{emphasize: solver managers driven by parameter lists.}
-
-While this approach to interfacing with the solver is powerful, it can be overwhelming. It
-requires the user to construct a number of support classes and to manage calls to
-\verb!Eigensolver::iterate()!. The \aspace{SolverManager} class was developed to
-encapsulate an instantiation of \aspace{Eigensolver}, providing additional functionality
-and handling low-level interaction with the eigensolver that a user may not want to
-specify. Solver managers are intended to be easy to use, while still providing the
-features and flexibility needed to solve large-scale eigenvalue problems.
-
-For example, the constructor of \aspace{BlockDavidsonSolMgr} accepts only two arguments:
-an \aspace{Eigenproblem} specifying the eigenvalue problem to be solved and a
-\texttt{ParameterList} of options specific to this solver manager. This solver manager
-instantiates a \aspace{BlockDavidson} subclass of \aspace{Eigensolver}, along with the
-status tests and other support classes needed by the eigensolver, as
-specified by the parameter list. To solve the eigenvalue
-problem, the user simply calls the \verb!solve()! method of \aspace{BlockDavidsonSolMgr}.
-The solver manager calls \verb!iterate()!, performs restarts and locking, and places the
-final solution into the \aspace{Eigenproblem}.
-
-Under this framework, users have a number of options for performing eigenvalue
-computations with Anasazi:
-\begin{itemize}
-\item
-Use an existing solver manager. In this case, the user is limited to
-the functionality provided by the existing solver managers.
-\item
-Develop a new solver manager for an existing eigensolver.
-The user can extend the functionality provided by the eigensolver,
-specifying custom configurations for status tests,
-orthogonalization, restarting, locking,  etc.
-\item
-Implement a new eigensolver (and so extend Anasazi). The user can
-write an eigensolver for an iteration that is not represented in
-Anasazi. The user still has the benefit of the support classes
-provided by Anasazi, and the knowledge that this effort can be
-easily employed by anyone already familiar with Anasazi.
-\end{itemize}
-
-
-\subsection{Anasazi Classes}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\label{subsec:anasazi:classes}
-
-Anasazi is designed with extensibility in mind, so that users can
-augment the package with any special functionality that may be
-needed. However, the released version of Anasazi provides all
-functionality necessary for solving a wide variety of problems. This
-section lists and briefly describes the classes used in Anasazi.
-
-Anasazi provides users with a concrete implementation of
-\aspace{Eigenproblem}, called \aspace{BasicEigenproblem}. This basic implementation
-provides all the functionality necessary to describe both generalized and standard,
-Hermitian and non-Hermitian linear eigenvalue problems.
-
-However, a user working
-directly with an eigensolver (i.e., not with a solver manager) will need to recover the
-solution directly from the eigensolver state.
-
-%The eigenvalues are always stored as two real values, even
-%when templated on a complex data type or when the eigenvalues are
-%real. Similarly, a basis for the eigenspace can always be represented
-%by a multivector of width \verb!numVecs!, even for non-symmetric
-%eigenproblems over the real field. However, the storage scheme for
-%eigenvectors requires more finesse.
 
 %When solving real symmetric eigenproblems, the eigenvectors can always
 %be chosen to be real, and therefore can be stored in a single column
@@ -1108,39 +1199,23 @@ solution directly from the eigensolver state.
 % class. Novice users may prefer to use existing solver managers, while
 % advanced user may prefer to write custom solver managers.
 
-\aspace{SolverManager} defines only two methods: a constructor
-accepting an \aspace{Eigenproblem} and a parameter list of
-options specific to the solver manager; and a \verb!solve()! method, taking no
-arguments and returning either \aspace{Converged} or
-\aspace{Unconverged} (Figure~\ref{fig:examplesolve}).
+\subsubsection{\aspace{Anasazi::SolverManager}}
 
-\begin{figure}[htb]
-\begin{center}
-\begin{boxedverbatim}
-// create an eigenproblem
-RCP< Anasazi::Eigenproblem<ST,MV,OP> > problem = ...;
-// create a parameter list
-ParameterList params;
-params.set(...);
-// create a solver manager
-Anasazi::BlockDavidsonSolMgr<ST,MV,OP> solman(problem,params);
-// solve the eigenvalue problem
-Anasazi::ReturnType ret = solman.solve();
-// get the solution from the problem
-Anasazi::Eigensolution<ST,MV> sol = problem->getSolution();
-\end{boxedverbatim}
-\end{center}
-\caption{Sample code for solving an eigenvalue problem using a \aspace{SolverManager}}
-\label{fig:examplesolve}
-\end{figure}
+Anasazi provides at least one solver manager for each implemented eigensolver iteration:
+\begin{itemize}
+  \item \aspace{BlockKrylovSchurSolMgr} - provides a restarted, block Krylov-Schur eigensolver.
+  When the block size is one, this Krylov-subspace method is mathematically equivalent to the
+  implicitly-restarted Arnoldi method in ARPACK. 
+  \item \aspace{BlockDavidsonSolMgr} -
+  \item \aspace{LOBPCGSolMgr} -
+  \item \aspace{SimpleLOBPCGSolMgr} -
+\end{itemize}
 
-The goal of the solver manager is to instantiate a subclass of \aspace{Eigensolver}, along
-with the necessary support objects. Another purpose of many solver managers is to manage
-and initiate the repeated calls to the underlying solver's \verb!iterate()! method. For
-solvers that increase the dimension of trial and test subspaces (e.g., Davidson and Krylov
-subspace methods), the solver manager may also assume the task of restarting (so that
-storage costs may be fixed). This decoupling of restarting from the eigensolver is
-beneficial due to the numerous restarting techniques in use.
+%All of these solver managers are constructed using an \aspace{Eigenproblem} and a 
+%solver-specific \aspace{ParameterList}, and have a \verb!solve()! method that takes no
+%arguments and returns either \aspace{Converged} or \aspace{Unconverged}. Figure~\ref{fig:examplesolve}
+%provides a sample code that creates an \aspace{Eigenproblem} and \aspace{ParameterList}, uses it 
+%to create a \aspace{SolverManager}, solves the eigenproblem, and retrieves the \aspace{Eigensolution}.
 
 % These examples are meant to illustrate the flexibility that specific
 % solver managers may have in implementing the \verb!solve()! routine.
@@ -1154,74 +1229,38 @@ beneficial due to the numerous restarting techniques in use.
 % some expert knowledge, or to create a hybrid method which uses the
 % output from one solver manager to initialize another one.
 
-Performing an eigen-iteration requires a number of support classes.  These are passed
-through the objects constructor, defined by \aspace{Eigensolver} to take the form listed
-in Figure~\ref{fig:constructor}.
-
-These support classes are employed for the following purposes:
-\begin{itemize}
-  \item \verb!problem! - the eigenproblem to be solved; problem operators are
-  defined.
-  \item \verb!sorter! - the sort manager selects the
-  eigenvalues of interest.
-  \item \verb!printer! - the output manager dictates the verbosity level in addition to
-    processing output streams.
-  \item \verb!tester! - the status tester dictates the termination of the iteration
-  \verb!iterate()!.
-  \item \verb!ortho! - the orthogonalization manager defines the inner product
-   in addition to performing orthogonalization for the solver.
-  \item \verb!params! - the parameter list specifies eigensolver-specific
-  options.
-\end{itemize}
-
-The purpose of the \aspace{StatusTest} is to give the user or solver
-manager flexibility in terminating the eigensolver iterations in
-order to interact directly with the solver. For instance, typical
-reasons for terminating the iteration are:
-\begin{itemize}
-  \item some convergence criterion has been satisfied;
-  \item some portion of the subspace has reached sufficient accuracy to be
-  deflated from the iterate or locked;
-  \item the solver has performed a sufficient number of iterations.
-\end{itemize}
-The variation that exists for monitoring these and other conditions requires an abstract mechanism
-controlling the iteration.
-
-The following is a list of Anasazi-provided status tests:
-\begin{itemize}
-  \item \aspace{StatusTestMaxIters} - monitors the number of iterations
-    performed by the solver; it can be used to halt the solver at some maximum number of iterations
-    or even to require some minimum number of iterations.
-  \item \aspace{StatusTestResNorm} - monitors the residual norms of the
-    current iterate.
-  \item \aspace{StatusTestOrderedResNorm} - monitors the residual
-    norms of the current iterate, but only considers the residuals associated with the
-    most significant eigenvalues.
-  \item \aspace{StatusTestCombo} - a boolean combination of
-    other status tests, creating near unlimited potential for complex status tests.
-  \item \aspace{StatusTestOutput} - a wrapper around another
-    status test, allowing for printing of status information on a call to
-    \verb!checkStatus()!.
-\end{itemize}
-
 %Anasazi
 %provides a concrete implementation called \aspace{BasicSort}.  This class provides basic
 %functionality for selecting significant eigenvalues: by largest or smallest real part, by
 %largest or smallest imaginary part, or by largest or smallest magnitude.
 
-In order to perform the Rayleigh-Ritz analysis used by the
-algorithms illustrating this section, Anasazi utilizes the classes
-\aspace{Teuchos::BLAS} and \aspace{Teuchos::LAPACK}. The purpose of
-these classes is to provide templated interfaces to the dense linear
-algebra routines provided by the BLAS and LAPACK libraries.
-Therefore, even such operations as dense matrix-matrix
-multiplication are made independent of the scalar field defining the
-eigenvalue problem. Users are therefore currently limited to
-algorithms provided by LAPACK.
-
 \section{Benchmarking}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \label{sec:benchmarking}
+
+The benefits of an object-oriented eigensolver framework such as
+Anasazi are many: modularization provides improved code reuse,
+static polymorphism via templating allows easier code maintenance and
+a larger audience, and dynamic polymorphism via inheritance allows
+flexible runtime behavior. However, none of these benefits should come
+at the expense of code performance. Concern over overhead has long
+been an inhibiting factor in the adoption of object-oriented
+programming paradigms in scientific computing. In this section we
+will discuss the important issue of comparing Anasazi and ARPACK
+on a model problem. Our interest is in assessing any overhead of
+Anasazi and ARPACK, C++ and FORTRAN 77 software.
+
+We benchmarked Anasazi's \aspace{BlockKrylovSchurSolMgr} (with a block size
+of one) and ARPACK's \aspace{dnaupd} that compute approximations to the
+eigenspace of a non-symmetric matrix. Our goal was to benchmark the
+cost of computing $50, 100, 150$ Arnoldi vectors for a finite
+difference approximation to a two dimensional convection diffusion
+problem. Both codes use classical Gram-Schmidt with the DGKS \cite{dgks:76} 
+correction for maintaining the numerical orthogonality of the Arnoldi basis
+vectors.  The Intel 9.1 C++ and FORTRAN compilers were used with
+compiler switches ``-O2 -xP'' on an Intel Pentium D, 3GHz, 1MB L2
+cache, 2GB main, Linux/FC5 PC.  The results of this study can be found
+in Table~\ref{table:timings}.
 
 \begin{table}
 \caption{Comparing the overhead of Anasazi with ARPACK; ``---'' denotes a measurement
@@ -1264,32 +1303,6 @@ below the clock resolution.}
      \end{tabular}
 \end{center}
 \end{table}
-
-The benefits of an object-oriented eigensolver framework such as
-Anasazi are manifold: modularization provides improved code reuse,
-static polymorphism via templating allows easier code maintenance and
-a larger audience, and dynamic polymorphism via inheritance allows
-flexible runtime behavior. However, none of these benefits should come
-at the expense of code performance. Concern over overhead has long
-been an inhibiting factor in the adoption of object-oriented
-programming paradigms in scientific computing scenarios. 
-
-We now discuss the important issue of comparing Anasazi and ARPACK
-on a model problem. Our interest is in assessing any overhead of
-Anasazi and ARPACK, C++ and FORTRAN 77 software.
-
-We benchmarked Anasazi's \aspace{BlockKrylovSchurSolMgr} (with a block size
-of one) and ARPACK's \aspace{dnaupd} that compute approximations to the
-eigenspace of a non-symmetric matrix. Our goal was to benchmark the
-cost of computing $50, 100, 150$ Arnoldi vectors for a finite
-difference approximation to a two dimensional convection diffusion
-problem. Both codes use the DGKS \cite{dgks:76} method for
-maintaining the numerical orthogonality of the Arnoldi basis
-vectors.  The Intel 9.1 C++ and FORTRAN compilers were used with
-compiler switches ``-O2 -xP'' on an Intel Pentium D, 3GHz, 1MB L2
-cache, 2GB main, Linux/FC5 PC.
-
-\cbcomm{rewrite this operator}
 
 The operator application in Anasazi records approximately twice as much time as the ARPACK
 implementation. This is because the Anasazi code used an Epetra sparse matrix
