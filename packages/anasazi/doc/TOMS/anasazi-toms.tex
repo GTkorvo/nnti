@@ -561,7 +561,7 @@ spectral transformation, or preconditioner.
 %%
 \multicolumn{2}{|c|}{\textbf{OperatorTraits$<$ST,MV,OP$>$}} \\\hline
 \emph{Method name} & \emph{Description} \\\hline
-Apply($A,X,Y$) & Applies the operator $A$ to the multivector $X$, placing the
+{\tt Apply(A,X,Y)} & Applies the operator $A$ to the multivector $X$, placing the
 result in the multivector $Y$. \\
 \hline
 %%
@@ -600,53 +600,52 @@ a reference-counted pointer \cite{Detlefs:1992:GCR,Teuchos-RCP} to the new multi
 \multicolumn{2}{|c|}{\textbf{MultiVecTraits$<$ST,MV$>$}} \\\hline
 %%%
 \emph{Method name} & \emph{Description} \\\hline
-Clone($X,numvecs$)           & Creates a new multivector from $X$ with
-$numvecs$ vectors.  \\\hline
+{\tt Clone(X,numvecs)}           & Creates a new multivector from $X$ with
+$numvecs$ vectors.  \\
 
-CloneCopy($X,index$) & Creates a new multivector with a copy of the contents of
-a subset of the multivector $X$ (deep copy). \\\hline
+{\tt CloneCopy(X,index)} & Creates a new multivector with a copy of the contents of
+a subset of the multivector $X$ (deep copy). \\
 
-CloneView($X,index$) & Creates a new multivector that shares the selected
+{\tt CloneView(X,index)} & Creates a new multivector that shares the selected
 contents of a subset of the multivector $X$ (shallow copy).  \\\hline
 
-GetVecLength($X$) & Returns the vector length of the multivector $X$.
+{\tt GetVecLength(X)} & Returns the vector length of the multivector $X$.
+\\
+
+{\tt GetNumberVecs(X)}& Returns the number of vectors in the multivector $X$.
 \\\hline
 
-GetNumberVecs($X$)& Returns the number of vectors in the multivector $X$.
-\\\hline
+{\tt MvTimesMatAddMv(alpha,X}, & Applies a dense matrix $D$ to multivector $X$ and \\ 
+{\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ M,beta,Y)} & accumulates the result into multivector $Y$:\\ & $Y \leftarrow \alpha X D + \beta Y$.  \\
 
-MvTimesMatAddMv($alpha,$ & Applies a dense matrix $D$ to multivector $X$ and \\ 
-           $X,M,beta,Y$) & accumulates the result into multivector $Y$:\\ & $Y \leftarrow \alpha X D + \beta Y$.  \\\hline
+{\tt MvAddMv(alpha,X,beta,Y)}  & Performs multivector AXPBY: $Y \leftarrow \alpha X + \beta Y$.
+\\
 
-MvAddMv($alpha,X,beta,Y$)  & Performs multivector AXPBY: $Y \leftarrow \alpha X + \beta Y$.
-\\\hline
+{\tt MvTransMv(alpha,X,Y,D)} & Computes the dense matrix $D \leftarrow \alpha X^H Y$.
+\\
 
-MvTransMv($alpha,X,Y,D$) & Computes the dense matrix $D \leftarrow \alpha X^H Y$.
-\\\hline
+{\tt MvDot(X,Y,d)} & Computes the corresponding dot products:
+$d[i] \leftarrow X[i]^H Y[i]$.  \\
 
-MvDot($X,Y,d$) & Computes the vector $d$ where the components are the
-individual dot-products of the $i$-th columns of $X$ and $Y$, i.e.,
-$d[i] = X[i]^H Y[i]$.  \\\hline
+{\tt MvScale(X,d)}    & Scales the i-th column of a multivector $X$ by $d[i]$. \\
 
-MvScale($X,d$)    & Scales the i-th column of a multivector $X$ by $d[i]$. \\\hline
+{\tt MvNorm(X,d)}     & Computes the 2-norm of each vector of
+$X$: $d[i] \leftarrow \|X[i]\|_2$  \\\hline
 
-MvNorm($X,d$)     & Computes the 2-norm of each vector of
-$X$: $d[i] = \|X[i]\|_2$  \\\hline
+{\tt SetBlock(X,Y,index)} & Copies the vectors in $X$ to a subset of vectors in
+$Y$. \\
 
-SetBlock($X,Y,index$) & Copies the vectors in $X$ to a subset of vectors in
-$Y$. \\\hline
+{\tt MvInit(X,alpha)} & Replaces each entry in the multivector $X$ with a scalar $\alpha$.  \\
 
-MvRandom($X$) & Replaces the entries in the multivector $X$ with random
-numbers.  \\\hline
+{\tt MvRandom(X)} & Replaces the entries in the multivector $X$ by random
+scalars. \\
 
-MvInit($X,\alpha$) & Replaces each entry in the multivector $X$ with a scalar $\alpha$.
-\\\hline
-
-MvPrint($X$)    & Prints the multivector $X$ to an output stream.
-\\\hline 
+\hline
 \end{tabular}
 \end{center}
 \end{table}
+
+
 
 The arithmetic methods defined by the \aspace{MultiVecTraits} are essential to the computations
 required by the Rayleigh-Ritz method and the general eigen-iteration.  The 
@@ -724,10 +723,11 @@ preconditioned eigensolvers, as well as the definition of a spectral transformat
 for Arnoldi-based eigensolvers. 
 \begin{table}[htb]
 \begin{center}
-\caption{A list of methods provided by any derived \aspace{Eigenproblem}.} 
+  \caption{A list of methods provided by any derived \aspace{Eigenproblem}.} 
 \label{tab:anasazi:eigenproblem}
 \begin{tabular}{| p{2cm}  p{2cm} | p{6cm} |}
 \hline
+\multicolumn{3}{|c|}{\textbf{Eigenproblem$<$ST,MV,OP$>$}} \\\hline
 \multicolumn{2}{|c|}{\emph{Method name}} & \emph{Description} \\
 \hline
 {\tt setOperator()}&{\tt getOperator()}    & Access the operator for which eigenvalues will be computed. \\
@@ -802,34 +802,35 @@ by any eigen-iteration class in Anasazi. This class defines two types of methods
 solver-specific methods. A list of these methods is given in Table~\ref{tab:anasazi:itermethods}.
 \begin{table}[htp]
 \begin{center}
-\caption{A list of methods provided by any derived
-\aspace{Eigensolver}.} \label{tab:anasazi:itermethods}
+\caption{A list of methods provided by any derived \aspace{Eigensolver}.} 
+\label{tab:anasazi:itermethods}
 \begin{tabular}{| p{3cm} | p{6cm} |}
 \hline
+\multicolumn{2}{|c|}{\textbf{Eigensolver$<$ST,MV,OP$>$}} \\\hline
 \multicolumn{2}{|c|}{\emph{Status Methods}} \\
 \hline
 \emph{Method name} & \emph{Description} \\
 \hline
-{\tt getNumIters}       & current number of iterations. \\
-{\tt getRitzValues}     & most recent Ritz values. \\
-{\tt getRitzVectors}    & most recent Ritz vectors. \\
-{\tt getRitzIndex}      & Ritz index needed for indexing compressed Ritz vectors. \\
-{\tt getResNorms}       & residual norms, with respect to the \aspace{OrthoManager}. \\
-{\tt getRes2Norms}      & residual Euclidean norms. \\
-{\tt getRitzRes2Norms}  & Ritz residual  Euclidean norms. \\
-{\tt getCurSubspaceDim} & current subspace dimension. \\
-{\tt getMaxSubspaceDim} & maximum subspace dimension. \\
-{\tt getBlockSize}      & block size. \\
+{\tt getNumIters()}       & current number of iterations. \\
+{\tt getRitzValues()}     & most recent Ritz values. \\
+{\tt getRitzVectors()}    & most recent Ritz vectors. \\
+{\tt getRitzIndex()}      & Ritz index needed for indexing compressed Ritz vectors. \\
+{\tt getResNorms()}       & residual norms, with respect to the \aspace{OrthoManager}. \\
+{\tt getRes2Norms()}      & residual Euclidean norms. \\
+{\tt getRitzRes2Norms()}  & Ritz residual  Euclidean norms. \\
+{\tt getCurSubspaceDim()} & current subspace dimension. \\
+{\tt getMaxSubspaceDim()} & maximum subspace dimension. \\
+{\tt getBlockSize()}      & block size. \\
 \hline
 \multicolumn{2}{|c|}{\emph{Solver-specific Methods}} \\
 \hline
 \emph{Method name} & \emph{Description} \\
 \hline
-{\tt getState}       & returns a specific structure with read-only pointers to
+{\tt getState()}       & returns a specific structure with read-only pointers to
                        the current state of the solver. \\
-{\tt initialize}     & accepts a solver-specific structure enabling the user to initialize
+{\tt initialize()}     & accepts a solver-specific structure enabling the user to initialize
                        the solver with a particular state.\\
-{\tt iterate}        & performs eigen-iteration until the status test indicates the need
+{\tt iterate()}        & performs eigen-iteration until the status test indicates the need
                        to stop or an error occurs.\\
 \hline
 \end{tabular}
@@ -957,6 +958,37 @@ void sort(Eigensolver<ST,MV,OP>* solver,
 \caption{Example of communication between status test and eigensolver}
 \label{fig:sort}
 \end{figure}
+
+
+
+\begin{table}[htp]
+\begin{center}
+\caption{A list of methods provided by any derived \aspace{OrthoManager}.} 
+\label{tab:anasazi:orthomanager}
+\begin{tabular}{| p{4cm} | p{6cm} |}
+\hline
+\multicolumn{2}{|c|}{\textbf{OrthoManager$<$ST,MV$>$}} \\\hline
+\emph{Method name} & \emph{Description} \\
+\hline
+{\tt innerProd(X,Y,Z)} &
+Provides the inner product defining the concepts of orthogonality: $Z = \langle X, Y \rangle$ \\
+{\tt norm(X,normvec)} &
+Provides the norm norm induced by the inner product: $normvec[i] = \sqrt{\langle X[i], Y[i] \rangle}$\\
+{\tt project(X,Q,C) } &
+Projects the multivector X onto the subspace orthogonal to the multivectors Q, optionally returning the coefficients of 
+X with respect to the Q.\\
+{\tt normalize(X,B)} &
+Computes an orthonormal basis for the multivector X, optionally returning the coefficients
+of X with respect to the computed basis.\\
+{\tt projectAndNormalize(X,Q,C,B)} &
+Projects the multivector X onto the subspace orthogonal to the multivectors Q and computes an orthonormal basis (orthogonal to the Q) 
+for the resultant, optionally returning the coefficients of X with respect to the Q and the computed basis.\\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+
 
 Since orthogonalization and orthonormalization are commonly performed
 computations in iterative eigensolvers and can be implemented in a variety of ways, 
