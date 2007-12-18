@@ -704,7 +704,25 @@ The high-level class collaboration graph for Anasazi's \aspace{SolverManager} cl
 Figure \ref{fig:solverColl} lists all the algorithmic components offered by the Anasazi
 framework for implementing an eigensolver.
 
-\begin{table}[htp]
+\begin{figure}[htb]
+\label{fig:solverColl}
+\begin{center}
+\includegraphics[height=2in]{anasazi_slvr_collaborations.pdf}
+\end{center}
+\caption{Anasazi::SolverManager class collaboration graph.}
+\end{figure}
+
+The first component that is essential to the \aspace{SolverManager} is the 
+\aspace{Eigenproblem} class.  \aspace {Eigenproblem} is an abstract class that is a container for 
+the components and solution of an eigenvalue problem. By requiring eigenproblems to derive from
+\aspace{Eigenproblem}, Anasazi defines a minimum interface that can be expected of all
+eigenvalue problems by the classes that will work with these problems. The methods provided
+by this interface, shown in Table \ref{tab:anasazi:eigenproblem}, are generic enough to define
+an eigenproblem that is standard or generalized, Hermitian or non-Hermitian.  Furthermore, this
+interface allows the definition of a preconditioner, for 
+preconditioned eigensolvers, as well as the definition of a spectral transformation,
+for Arnoldi-based eigensolvers. 
+\begin{table}[htb]
 \begin{center}
 \caption{A list of methods provided by any derived \aspace{Eigenproblem}.} 
 \label{tab:anasazi:eigenproblem}
@@ -727,27 +745,12 @@ framework for implementing an eigensolver.
 \end{center}
 \end{table}
 
-
-\begin{figure}[htb]
-\label{fig:solverColl}
-\begin{center}
-\includegraphics[height=2in]{anasazi_slvr_collaborations.pdf}
-\end{center}
-\caption{Anasazi::SolverManager class collaboration graph.}
-\end{figure}
-
-The first component that is essential to the \aspace{SolverManager} class is the 
-\aspace{Eigenproblem}.  \aspace {Eigenproblem} is an abstract class that is a container for 
-the components and solution of an eigenvalue problem. By requiring eigenproblems to derive from
-\aspace{Eigenproblem}, Anasazi defines a minimum interface that can be expected of all
-eigenvalue problems by the classes that will work with these problems. From a user's perspective,
-the most important part of the interface may be the methods for storing and retrieving the 
-results of the eigenvalue computation:
+From a user's perspective, the most important part of the interface may be the methods 
+for storing and retrieving the results of the eigenvalue computation:
 \begin{verbatim}
 const Eigensolution & Eigenproblem::getSolution();
 void Eigenproblem::setSolution(const Eigensolution & sol);
 \end{verbatim}
-
 The \aspace{Eigensolution} class was developed in order to
 facilitate setting and retrieving the solution data from an eigenproblem.  
 Furthermore, the \aspace{Eigensolution} class was designed for storing
@@ -761,10 +764,30 @@ This structure contains the following information:
  \item \verb!std::vector< Value< ST > > Evals! \\
    The computed eigenvalue approximations.
  \item \verb!std::vector< int > index! \\
-   An index into \verb!Evecs! to enable compressed storage of eigenvectors for non-Hermitian problems.
+   An index scheme enabling compressed storage of eigenvectors for non-Hermitian problems.
  \item \verb!int numVecs! \\
    The number of computed eigenpair approximations.
 \end{itemize}
+The \aspace{Eigensolution::index} vector has \aspace{numVecs} integer entries that take 
+one of three values: $\{0, +1, -1\}$. These values allow the eigenvectors to be retrieved as follows:
+\begin{itemize}
+  \item \aspace{index[i]== 0}: the $i$-th eigenvector is stored uncompressed in column $i$ of
+    \verb!Evecs!.
+  \item \aspace{index[i]==+1}: the $i$-th eigenvector is stored compressed, with the real
+    component in column $i$ of \verb!Evecs! and the \emph{positive} complex component
+    stored in column $i+1$ of \verb!Evecs!
+  \item \aspace{index[i]==-1}: the $i$-th eigenvector is stored compressed, with the real
+    component in column $i-1$ of \verb!Evecs! and the \emph{negative} complex component
+    stored in column $i$ of \verb!Evecs!
+\end{itemize}
+This storage scheme is only required for non-symmetric problems over the real field and enables
+Anasazi to use \aspace{numVecs} vectors to store \aspace{numVecs} eigenvectors, even when
+complex conjugate pairs are present.  All other eigenproblems will return an index vector 
+composed entirely of zeroes. 
+%For the real
+%non-symmetric case, the $+1$ index will always immediately precede
+%the corresponding $-1$ index.
+
 The \aspace{Value} structure is a simple container, templated on scalar type, that
 has two members: the real and imaginary part of an eigenvalue.  The real and imaginary
 parts are stored as the magnitude type of the scalar type.  The \aspace{Value} structure
@@ -773,11 +796,9 @@ store the solutions from either real or complex, Hermitian or non-Hermitian eige
 problems. Implementations of the \aspace{SolverManager} class are expected to place the 
 results of their computation in the \aspace{Eigenproblem} class using an \aspace{Eigensolution}. 
 
-The second component that is essential to a \aspace{SolverManager} class is the \aspace{Eigensolver}.
-The \aspace{Eigensolver} abstract base class defines the basic interface that must be met
-by any eigen-iteration class in Anasazi. Specific eigensolver iterations are implemented as derived
-classes of \aspace{Eigensolver}.  This class
-defines two types of methods: status methods and
+The second component that is essential to a \aspace{SolverManager} is the \aspace{Eigensolver}
+class. The \aspace{Eigensolver} abstract base class defines the basic interface that must be met
+by any eigen-iteration class in Anasazi. This class defines two types of methods: status methods and
 solver-specific methods. A list of these methods is given in Table~\ref{tab:anasazi:itermethods}.
 \begin{table}[htp]
 \begin{center}
@@ -808,64 +829,75 @@ solver-specific methods. A list of these methods is given in Table~\ref{tab:anas
                        the current state of the solver. \\
 {\tt initialize}     & accepts a solver-specific structure enabling the user to initialize
                        the solver with a particular state.\\
+{\tt iterate}        & performs eigen-iteration until the status test indicates the need
+                       to stop or an error occurs.\\
 \hline
 \end{tabular}
 \end{center}
 \end{table}
 The status methods are defined by the \aspace{Eigensolver}
-abstract base class and represent the information that any status test can request from
-any eigensolver.  Each eigensolver iteration also provides low-level, 
-solver-specific methods for accessing and setting the state of the solver.
+abstract base class and represent the information about the iteration status that can 
+be requested from any eigensolver.  Each eigensolver iteration also provides low-level, 
+solver-specific methods for accessing and setting the state of the solver.  
+An eigensolver's state is stored in a solver-specific structure and is expected to fully describe 
+the current state of the solver or the state the solver needs to be initialized to.  
+A simple example of a state structure can be seen in Figure \ref{fig:state}.
+\begin{figure}[htb]
+\begin{center}
+\begin{boxedverbatim}
+  template <class ST, class MV>
+  struct SomeEigensolverState {
+    /* The current dimension of the subspace.
+     * NOTE: This should always be equal to SomeEigensolver::getCurSubspaceDim()
+    int curDim;
+    /* The current subspace. */
+    RCP<const MV> V;
+    /* The current Rayleigh-Ritz projection */
+    RCP<const Teuchos::SerialDenseMatrix<int,ST> > H;
+    SomeEigensolverState() : curDim(0), V(Teuchos::null),
+                             H(Teuchos::null) {}	
+  };
+\end{boxedverbatim}
+\end{center}
+\caption{Example of an \aspace{Eigensolver} state structure.}
+\label{fig:state}
+\end{figure}
 
-\cbcomm{might need more information about solver state and compressed storage.}
+The eigensolver iterations implemented using the \aspace{Eigensolver} class
+are generic iteration kernels that do not have the intelligence to determine when
+to stop the iteration, what the eigenvalues of interest are, where to send output,
+or how to orthogonalize the basis for a subspace.  The intelligence to perform these four
+tasks is, instead, provided by the \aspace{StatusTest}, \aspace{SortManager},
+\aspace{OutputManager}, and \aspace{OrthoManager} objects, which are passed into the
+constructor of an \aspace{Eigensolver} (Figure \ref{fig:constructor}).  This allows 
+each of these four tasks to be modified without affecting the basic eigensolver 
+iteration. When combined with the status and state-specific \aspace{Eigensolver} 
+methods, this provides the user with a large degree of control over eigensolver iterations.
+\begin{figure}[htb]
+\begin{center}
+\begin{boxedverbatim}
+Eigensolver(
+   const RCP< Eigenproblem<ST,MV,OP> > &problem,
+   const RCP< SortManager<ST,MV,OP>  > &sorter,
+   const RCP< OutputManager<ST>      > &printer,
+   const RCP< StatusTest<ST,MV,OP>   > &tester,
+   const RCP< OrthoManager<ST,OP>    > &ortho,
+   ParameterList                       &params
+ );
+\end{boxedverbatim}
+\end{center}
+\caption{Basic constructor for an \aspace{Eigensolver}}
+\label{fig:constructor}
+\end{figure}
 
-%The state of the solver communicated to and from the \aspace{Eigensolver} class using a structure 
-%that is specific to the eigen-iteration.  This structure is expected to fully describe the current
-%state of the solver or the state the solver needs to be initialized to.  An example of a state
-%structure can be seen in Figure \ref{fig:state}.
-%\begin{figure}[htb]
-%\begin{center}
-%\begin{boxedverbatim}
-%  template <class ST, class MV>
-%  struct BlockKrylovSchurState {
-%    /* The current dimension of the reduction.
-%     * NOTE: This should always be equal to BlockKrylovSchur::getCurSubspaceDim()
-%    int curDim;
-%    /* The current Krylov basis. */
-%    RCP<const MV> V;
-%    /* The current Hessenberg matrix. */
-%    RCP<const Teuchos::SerialDenseMatrix<int,ST> > H;
-%    /* The current Schur form reduction of the valid part of H. */
-%    RCP<const Teuchos::SerialDenseMatrix<int,ST> > S;
-%    /* The current Schur vectors of the valid part of H. */
-%    RCP<const Teuchos::SerialDenseMatrix<int,ST> > Q;
-%    BlockKrylovSchurState() : curDim(0), V(Teuchos::null),
-%                              H(Teuchos::null), S(Teuchos::null),
-%                              Q(Teuchos::null) {}
-%  };
-%\end{boxedverbatim}
-%\end{center}
-%\caption{Example of an \aspace{Eigensolver} state structure.}
-%\label{fig:state}
-%\end{figure}
-
-%START HERE!!!!!
-
-from the 
-The combination of these two types of methods, along with the flexibility
-provided by status tests, provides the user with a large degree of
-control over eigensolver iterations.
-
-\cbcomm{explain why we desire status tests: runtime chosen stopping
-conditions, hook for checking state of solver for numerous other logic
-(restarting, debugging, etc). contrast against ARPACK.}
-
-The class \aspace{StatusTest} is used to specify stopping conditions for an
-eigen-iteration. \aspace{Eigensolver} queries the \aspace{StatusTest} during its class
-method \aspace{iterate()} to determine whether or not to continue iterating. Concrete
-subclasses of \aspace{StatusTest} provide particular stopping criteria. A typical
-interaction between these two classes is illustrated in Figure~\ref{fig:comm}.
-
+The abstract \aspace{StatusTest} class is used to provide the interface for stopping 
+conditions for an eigen-iteration. There are numerous conditions under which an eigen-iteration 
+should be stopped, the most common are the number of iterations, convergence, and deflation.
+Often the decision to stop an eigensolver iteration is based on a hierarchy 
+of problem-dependent, logically connected stopping conditions.
+This, possibly complex, reasoning does not have to be known by the \aspace{Eigensolver} class,
+which queries the \aspace{StatusTest} during its class method \aspace{iterate()} to determine 
+whether or not to continue iterating (Figure~\ref{fig:comm}).
 \begin{figure}[htb]
 \begin{center}
 \begin{boxedverbatim}
@@ -882,17 +914,75 @@ SomeEigensolver::iterate() {
 \caption{Example of communication between status test and eigensolver}
 \label{fig:comm}
 \end{figure}
+The \aspace{StatusTest} class provides a method, \verb!checkStatus()!, which queries the methods provided by
+\aspace{Eigensolver} and determines whether the solver meets the criteria defined by a particular 
+status test. After a solver returns from \verb!iterate()!, the caller has the ability to access the
+solver's state and the option to re-initialize the solver with a new state and continue iterating.
 
-Each \aspace{StatusTest} provides a virtual method,
-\verb!checkStatus()!, which queries the methods provided by
-\aspace{Eigensolver} and determines whether the solver meets the
-criteria defined by a particular status test. After a solver returns
-from \verb!iterate()!, the caller has the ability to access the
-solver's state and the option to re-initialize the solver with a new
-state and continue iterating.
+A \aspace{StatusTest} is a desirable feature in the Anasazi software framework because it
+provides the eigensolver user and developer with a flexible interface for interrogating the eigen-iteration.
+Besides the basic usage, this interface makes it possible to select stopping conditions at runtime 
+and it also makes it possible to put hooks in the eigensolver for debugging and checkpointing.
+This flexible approach to selecting and developing stopping criteria for an eigensolver is not
+available in PRIMME or SLEPc.  Since the user provides the memory for computations, ARPACK can give the
+user the power to determine if an iteration should terminate.  However, this is not a clean, direct 
+approach because the user must know the data layout to determine where the information is for making
+this decision.
 
-\cbcomm{perhaps utility classes should be introduced before discussion
-of solver managers.}
+The purpose of the \aspace{SortManager} class is to separate the \aspace{Eigensolver} from the sorting
+functionality, giving users the opportunity to choose the eigenvalues of interest in whatever manner is
+deemed to be most appropriate. Anasazi defines an abstract class \aspace{SortManager} with
+two methods, one for sorting real values and one for sorting complex values, shown in Figure \ref{fig:sort}
+The \aspace{SortManager} is also expected to provide the permutation vector if the 
+\aspace{Eigensolver} passes a non-null pointer for \verb!perm! to the \aspace{sort} method.  This is 
+necessary, because many eigen-iterations must sort their approximate eigenvectors, as well as their 
+eigenvalues.
+\begin{figure}[htb]
+\begin{center}
+\begin{boxedverbatim}
+// Sort n real values stored in evals and return permutation, if required, in perm.
+void sort(Eigensolver<ST,MV,OP>* solver, 
+          const int n, 
+          std::vector<typename Teuchos::ScalarTraits<ST>::magnitudeType> &evals,
+          std::vector<int> *perm) 
+// Sort n complex values, whose real and imaginary part are stored in r_evals 
+//   and i_evals, respectively. Return permutation, if required, in perm.
+void sort(Eigensolver<ST,MV,OP>* solver, 
+          const int n, 
+          std::vector<typename Teuchos::ScalarTraits<ST>::magnitudeType> &r_evals, 
+          std::vector<typename Teuchos::ScalarTraits<ST>::magnitudeType> &i_evals, 
+          std::vector<int> *perm)
+\end{boxedverbatim}
+\end{center}
+\caption{Example of communication between status test and eigensolver}
+\label{fig:sort}
+\end{figure}
+
+Since orthogonalization and orthonormalization are commonly performed
+computations in iterative eigensolvers and can be implemented in a variety of ways, 
+the \aspace{OrthoManager} class separates the \aspace{Eigensolver}
+from this functionality. The \aspace{OrthoManager} defines a small number of
+orthogonalization-related operations, including choice of an inner
+product.
+
+// START HERE!!!
+As explained in Section
+\ref{sec:algorithm-overview}, all our current implementations are
+orthogonal Rayleigh-Ritz methods where an orthonormal basis
+representation is computed. 
+Combined with the plethora of available methods for
+performing these computations, Anasazi has left as much leeway to
+the users as possible. To this end, Anasazi provides two concrete
+orthogonalization managers:
+\begin{itemize}
+\item
+  \aspace{BasicOrthoManager} - performs orthogonalization using
+  multiple steps of classical Gram-Schmidt \cite{dgks:76}.
+\item
+  \aspace{SVQBOrthoManager} - performs orthogonalization using the
+  SVQB orthogonalization technique described by Stathapoulos and
+  Wu~\cite{Stathopoulos:2002:BOP}.
+\end{itemize}
 
 \cbcomm{emphasize: solver managers driven by parameter lists.}
 
@@ -974,25 +1064,6 @@ solution directly from the eigensolver state.
 %allowing conjugate pair eigenvectors to be easily retrieved from
 %\verb!Evecs!.
 
-%The integers in \aspace{Eigensolution}::index take one of three
-%values: $\{0, +1, -1\}$. These values allow the eigenvectors to be
-%retrieved as follows:
-%\begin{itemize}
-%  \item \aspace{index[i]== 0}: the $i$-th eigenvector is stored uncompressed in column $i$ of
-%    \verb!Evecs!.
-%  \item \aspace{index[i]==+1}: the $i$-th eigenvector is stored compressed, with the real
-%    component in column $i$ of \verb!Evecs! and the \emph{positive} complex component
-%    stored in column $i+1$ of \verb!Evecs!
-%  \item \aspace{index[i]==-1}: the $i$-th eigenvector is stored compressed, with the real
-%    component in column $i-1$ of \verb!Evecs! and the \emph{negative} complex component
-%    stored in column $i$ of \verb!Evecs!
-%\end{itemize}
-%Because this storage scheme is only required for non-symmetric
-%problems over the real field, all other eigenproblems will result in
-%an index vector composed entirely of zeroes. For the real
-%non-symmetric case, the $+1$ index will always immediately precede
-%the corresponding $-1$ index.
-
 %\begin{remark}
 %  Solver managers all put the computed eigensolution into the eigenproblem class before
 %  returning from \verb!solve()!. Eigensolvers do not; a user working directly with an
@@ -1055,23 +1126,6 @@ Performing an eigen-iteration requires a number of support classes.  These are p
 through the objects constructor, defined by \aspace{Eigensolver} to take the form listed
 in Figure~\ref{fig:constructor}.
 
-\begin{figure}[htb]
-\begin{center}
-\begin{boxedverbatim}
-Eigensolver(
-   const RCP< Eigenproblem<ST,MV,OP> > &problem,
-   const RCP< SortManager<ST,MV,OP>  > &sorter,
-   const RCP< OutputManager<ST>      > &printer,
-   const RCP< StatusTest<ST,MV,OP>   > &tester,
-   const RCP< OrthoManager<ST,OP>    > &ortho,
-   ParameterList                               &params
- );
-\end{boxedverbatim}
-\end{center}
-\caption{Constructor for eigensolver}
-\label{fig:constructor}
-\end{figure}
-
 These support classes are employed for the following purposes:
 \begin{itemize}
   \item \verb!problem! - the eigenproblem to be solved; problem operators are
@@ -1118,36 +1172,10 @@ The following is a list of Anasazi-provided status tests:
     \verb!checkStatus()!.
 \end{itemize}
 
-The purpose of a sort manager is to separate the eigensolver classes from the sorting
-functionality required by those classes. This satisfies the flexibility principle sought
-by Anasazi, by giving users the opportunity to perform the sorting in whatever manner is
-deemed to be most appropriate. Anasazi defines an abstract class \aspace{SortManager} with
-two methods, one for sorting real values and one for sorting complex values.  Anasazi
-provides a concrete implementation called \aspace{BasicSort}.  This class provides basic
-functionality for selecting significant eigenvalues: by largest or smallest real part, by
-largest or smallest imaginary part, or by largest or smallest magnitude.
-
-Orthogonalization and orthonormalization are commonly performed
-computations in iterative eigensolvers. As explained in Section
-\ref{sec:algorithm-overview}, all our current implementations are
-orthogonal Rayleigh-Ritz methods where an orthonormal basis
-representation is computed. The abstract base class
-\aspace{OrthoManager} defines a small number of
-orthogonalization-related operations, including choice of an inner
-product (e.g., Euclidean, induced by a symmetric positive semi-definite
-$\mathbf{B}$). Combined with the plethora of available methods for
-performing these computations, Anasazi has left as much leeway to
-the users as possible. To this end, Anasazi provides two concrete
-orthogonalization managers:
-\begin{itemize}
-\item
-  \aspace{BasicOrthoManager} - performs orthogonalization using
-  multiple steps of classical Gram-Schmidt \cite{dgks:76}.
-\item
-  \aspace{SVQBOrthoManager} - performs orthogonalization using the
-  SVQB orthogonalization technique described by Stathapoulos and
-  Wu~\cite{Stathopoulos:2002:BOP}.
-\end{itemize}
+%Anasazi
+%provides a concrete implementation called \aspace{BasicSort}.  This class provides basic
+%functionality for selecting significant eigenvalues: by largest or smallest real part, by
+%largest or smallest imaginary part, or by largest or smallest magnitude.
 
 In order to perform the Rayleigh-Ritz analysis used by the
 algorithms illustrating this section, Anasazi utilizes the classes
