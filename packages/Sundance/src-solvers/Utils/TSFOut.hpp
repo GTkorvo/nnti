@@ -28,10 +28,10 @@
 // ************************************************************************
 /* @HEADER@ */
 
-#ifndef SUNDANCE_OUT_H
-#define SUNDANCE_OUT_H
+#ifndef TSF_OUT_H
+#define TSF_OUT_H
 
-#include "SundanceDefs.hpp"
+#include "TSFConfigDefs.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "TSFObjectWithVerbosity.hpp"
 #include "Teuchos_RefCountPtr.hpp"
@@ -40,70 +40,25 @@
 
 #ifndef DOXYGEN_DEVELOPER_ONLY
 
-namespace SundanceUtils
+namespace TSFExtended
 {
-  using namespace Teuchos;
-  /**
-   *
-   */
-  class Out
+class TSFOut
+{
+public:
+  static FancyOStream& os()
     {
-    public:
-      
-      static void println(const std::string& str) 
+      static RefCountPtr<std::ostream> os = rcp(&std::cout, false);
+      static RefCountPtr<FancyOStream> rtn = fancyOStream(os);
+      static bool first = true;
+      if (first)
       {
-        if (hasLogFile()) *logFile() << str << std::endl;
-        if (!suppressStdout()) os() << str << std::endl;
+        rtn->setShowProcRank(true);
+        first = false;
       }
-
-      static void setLogFile(const std::string& filename)
-      {
-        logFile() = rcp(new std::ofstream(filename.c_str()));
-        hasLogFile() = true;
-      }
-
-      static FancyOStream& os()
-        {
-          static RefCountPtr<std::ostream> os = rcp(&std::cout, false);
-          static RefCountPtr<FancyOStream> rtn = fancyOStream(os);
-          static bool first = true;
-          if (first)
-          {
-            rtn->setShowProcRank(true);
-            first = false;
-          }
-          return *rtn;
-        }
-
-      static bool& suppressStdout() {static bool rtn=false; return rtn;}
-
-    private:
-      static bool& hasLogFile() {static bool rtn=false; return rtn;}
-      static RefCountPtr<std::ostream>& logFile() {static RefCountPtr<std::ostream> rtn; return rtn;}
-      
-    };
-
+      return *rtn;
+    }
+};
 }
-
-#define SUNDANCE_OUT(test, msg) \
-{ \
-  if (test) \
-    { \
-      TeuchosOStringStream omsg; \
-      omsg << msg; \
-      Out::println(omsg.str());                 \
-    } \
-}
-
-
-#define SUNDANCE_VERB_EXTREME(msg) SUNDANCE_OUT(this->verbosity() > VerbHigh, msg)
-#define SUNDANCE_VERB_HIGH(msg) SUNDANCE_OUT(this->verbosity() > VerbMedium, msg)
-#define SUNDANCE_VERB_MEDIUM(msg) SUNDANCE_OUT(this->verbosity() > VerbLow, msg)
-#define SUNDANCE_VERB_LOW(msg) SUNDANCE_OUT(this->verbosity() > VerbSilent, msg)
-
-#define SUNDANCE_HEADER_LINE "\n------------------------------------------------------------------\n"
-
-
 
 #endif /* DOXYGEN_DEVELOPER_ONLY */
 #endif

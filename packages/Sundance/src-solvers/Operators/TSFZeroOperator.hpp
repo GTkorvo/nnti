@@ -53,7 +53,8 @@ namespace TSFExtended
    */
   template <class Scalar> 
   class ZeroOperator : public SingleScalarTypeOp<Scalar>,
-		       public Handleable<SingleScalarTypeOpBase<Scalar> >,
+                       public Handleable<SingleScalarTypeOpBase<Scalar> >,
+                       public Printable,
                        public RowAccessibleOp<Scalar>
   {
   public:
@@ -64,9 +65,10 @@ namespace TSFExtended
      */
     ZeroOperator(const VectorSpace<Scalar>& domain, 
 		 const VectorSpace<Scalar>& range)
-      :domain_(domain),
-	range_(range)
-	{;}
+      :
+      range_(range),
+      domain_(domain)
+      {;}
 
 
     /** Virtual dtor */
@@ -118,6 +120,13 @@ namespace TSFExtended
       indices.resize(0);
       values.resize(0);
     }
+
+    /** */
+    void print(std::ostream& os) const 
+      {
+        os << "ZeroOperator(range=" << range_ << ", domain=" << domain_ 
+           << ")";
+      }
 
 
   protected:

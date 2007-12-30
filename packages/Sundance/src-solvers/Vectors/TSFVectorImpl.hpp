@@ -81,7 +81,7 @@ void Vector<Scalar>::print(std::ostream& os) const
     dynamic_cast <const Thyra::ProductMultiVectorBase<Scalar>* >(this->ptr().get());
   if (pv != 0)
   {
-    os << "ProductVectorSpace[" << std::endl;
+    os << "ProductVector[" << std::endl;
     for (int i=0; i<this->space().numBlocks(); i++)
     {
       os << "block=" << i << std::endl;
@@ -816,7 +816,12 @@ void Vector<Scalar>::addToElement(Index globalIndex, const Scalar& value)
     Thyra::DefaultSpmdVector<Scalar>* dsv
       = dynamic_cast<Thyra::DefaultSpmdVector<Scalar>*>(this->ptr().get());
       
-    if (dsv)
+    LoadableVector<Scalar>* loadable = dynamic_cast<LoadableVector<Scalar>*>(this->ptr().get());
+    if (loadable)
+    {
+      loadable->addToElement(globalIndex, value);
+    }
+    else if (dsv)
     {
       Index stride = dsv->getStride();
       Index low = dsv->spmdSpace()->localOffset();
@@ -829,7 +834,7 @@ void Vector<Scalar>::addToElement(Index globalIndex, const Scalar& value)
     }
     else
     {
-      castToLoadable()->addToElement(globalIndex, value);
+      TEST_FOR_EXCEPT(true);
     }
   }
 }

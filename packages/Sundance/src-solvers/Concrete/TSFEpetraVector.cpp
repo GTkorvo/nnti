@@ -112,6 +112,7 @@ void EpetraVector::setElement(Index index, const double& value)
 
 void EpetraVector::addToElement(Index index, const double& value)
 {
+//  cout << "adding (" << index << ", " << value << ")" << endl;
   epetraVec()->SumIntoGlobalValues(1, const_cast<double*>(&value), 
                                     const_cast<int*>(&index));
 }

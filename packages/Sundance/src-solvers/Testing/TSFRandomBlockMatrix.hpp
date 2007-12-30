@@ -69,7 +69,10 @@ namespace TSFExtended
                       const VectorType<double>& type)
     : OperatorBuilder<double>(d, r, type), op_()
   {
-    op_ = new BlockOperator<Scalar>(this->domain(), this->range());
+    RefCountPtr<BlockOperator<Scalar> > b = 
+      rcp(new BlockOperator<Scalar>(this->domain(), this->range()));
+    RefCountPtr<SingleScalarTypeOpBase<Scalar> > p = b;
+    op_ = p;
 
     for (int i=0; i<this->range().numBlocks(); i++)
       {
@@ -83,6 +86,7 @@ namespace TSFExtended
             op_.setBlock(i, j, builder.getOp());
           }
       }
+    b->endBlockFill();
   }
 }
 

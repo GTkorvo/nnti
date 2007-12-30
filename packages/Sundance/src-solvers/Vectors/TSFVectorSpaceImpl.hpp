@@ -101,6 +101,16 @@ int VectorSpace<Scalar>::lowestLocallyOwnedIndex() const
 template <class Scalar>
 int VectorSpace<Scalar>::numLocalElements() const
 {
+  if (numBlocks() > 1)
+  {
+    int rtn = 0;
+    for (int b=0; b<numBlocks(); b++) 
+    {
+      rtn += getBlock(b).numLocalElements();
+    } 
+    return rtn;
+  }
+  
   const Thyra::SpmdVectorSpaceBase<Scalar>* mpiSpace 
     = dynamic_cast<const Thyra::SpmdVectorSpaceBase<Scalar>*>(this->ptr().get());
   if (mpiSpace != 0)

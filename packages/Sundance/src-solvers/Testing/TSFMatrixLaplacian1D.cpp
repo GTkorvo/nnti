@@ -37,11 +37,32 @@ MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows,
                                      const VectorType<double>& type, bool symBC)
   : OperatorBuilder<double>(nLocalRows, type), op_()
 {
+  MatrixLaplacianBCStyle bcStyle = Normal;
+  if (symBC) bcStyle = Symmetrized;
 
+  init(nLocalRows, type, bcStyle);
+}
+
+
+
+MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows, 
+                                     const VectorType<double>& type, 
+  MatrixLaplacianBCStyle bcStyle)
+  : OperatorBuilder<double>(nLocalRows, type), op_()
+{
+  init(nLocalRows, type, bcStyle);
+}
+
+void MatrixLaplacian1D::init(int nLocalRows, 
+  const VectorType<double>& type,
+  MatrixLaplacianBCStyle bcStyle)
+{
   int rank = MPIComm::world().getRank();
   int nProc = MPIComm::world().getNProc();
-  RefCountPtr<MatrixFactory<double> > mFact 
-    = vecType().createMatrixFactory(domain(), range());
+  RefCountPtr<MatrixFactory<double> > mFact;
+  mFact = vecType().createMatrixFactory(domain(), range());
+
+  
 
   int lowestLocalRow = nLocalRows * rank;
 
@@ -55,11 +76,11 @@ MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows,
         {
           colIndices = tuple(row);
         }
-      else if (symBC && rank==0 && i==1)
+      else if (bcStyle==Symmetrized && rank==0 && i==1)
         {
           colIndices = tuple(row, row+1);
         }
-      else if (symBC && rank==nProc-1 && i==nLocalRows-2)
+      else if (bcStyle==Symmetrized && rank==nProc-1 && i==nLocalRows-2)
         {
           colIndices = tuple(row-1, row);
         }
@@ -87,12 +108,12 @@ MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows,
           colIndices = tuple(row);
           colVals = tuple(1.0);
         }
-      else if (symBC && rank==0 && i==1)
+      else if (bcStyle==Symmetrized && rank==0 && i==1)
         {
           colIndices = tuple(row, row+1);
           colVals = tuple(2.0, -1.0);
         }
-      else if (symBC && rank==nProc-1 && i==nLocalRows-2)
+      else if (bcStyle==Symmetrized  && rank==nProc-1 && i==nLocalRows-2)
         {
           colIndices = tuple(row-1, row);
           colVals = tuple(-1.0, 2.0);

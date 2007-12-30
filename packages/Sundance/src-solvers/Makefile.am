@@ -83,6 +83,7 @@ UTILS_H = \
 	$(srcdir)/Utils/TSFHandle.hpp \
 	$(srcdir)/Utils/TSFHandleable.hpp \
 	$(srcdir)/Utils/TSFObjectWithVerbosity.hpp \
+	$(srcdir)/Utils/TSFOut.hpp \
 	$(srcdir)/Utils/TSFPrintable.hpp
 
 UTILS = \
@@ -138,6 +139,7 @@ OPERATORS_H = \
 	$(srcdir)/Operators/TSFLinearOperator.hpp \
 	$(srcdir)/Operators/TSFLinearOperatorDecl.hpp \
 	$(srcdir)/Operators/TSFLinearOperatorImpl.hpp \
+	$(srcdir)/Operators/TSFLoadableBlockOperator.hpp\
 	$(srcdir)/Operators/TSFLoadableMatrix.hpp\
 	$(srcdir)/Operators/TSFLTIProblemFactoryBase.hpp\
 	$(srcdir)/Operators/TSFDefaultLTIProblemFactory.hpp\
@@ -145,6 +147,8 @@ OPERATORS_H = \
 	$(srcdir)/Operators/TSFMultiVectorOperator.hpp\
 	$(srcdir)/Operators/TSFNonlinearOperator.hpp\
 	$(srcdir)/Operators/TSFNonlinearOperatorBase.hpp\
+	$(srcdir)/Operators/TSFPartitionedMatrixFactory.hpp \
+	$(srcdir)/Operators/TSFPartitionedToMonolithicConverter.hpp\
 	$(srcdir)/Operators/TSFRowAccessibleOp.hpp \
 	$(srcdir)/Operators/TSFScaledOperator.hpp\
 	$(srcdir)/Operators/TSFSimplifiedLinearOpBase.hpp\
@@ -154,7 +158,8 @@ OPERATORS_H = \
 	$(srcdir)/Operators/TSFTransposeOperator.hpp\
 	$(srcdir)/Operators/TSFZeroOperator.hpp 
 
-OPERATORS =
+OPERATORS = \
+	$(srcdir)/Operators/TSFPartitionedMatrixFactory.cpp 
 
 LINEARSOLVERS_H = \
 	$(srcdir)/LinearSolvers/TSFAmesosSolver.hpp \

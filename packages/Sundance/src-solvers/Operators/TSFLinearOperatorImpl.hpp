@@ -224,7 +224,7 @@ void LinearOperator<Scalar>::setBlock(int i, int j,
 		     "Can't call setBlock since operator not BlockOperator");
 
   
-  b->setBlock(i, j, sub.ptr());
+  b->setNonconstBlock(i, j, sub.ptr());
 } 
 
 
@@ -252,9 +252,26 @@ LinearOperator<Scalar> LinearOperator<Scalar>::getBlock(const int &i,
                          "non-block operator");
       return *this;
     }
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > block = b->getBlock(i, j);
-  return rcp_dynamic_cast<SingleScalarTypeOpBase<Scalar> >(block);
+  RefCountPtr<const LinearOpBase<Scalar, Scalar> > block = b->getBlock(i, j);
+  RefCountPtr<LinearOpBase<Scalar> > ncBlock = rcp_const_cast<LinearOpBase<Scalar> >(block);
+  return rcp_dynamic_cast<SingleScalarTypeOpBase<Scalar> >(ncBlock);
 }
+
+ 
+
+//=============================================================================
+template <class Scalar>
+void LinearOperator<Scalar>::endBlockFill() 
+{
+  Thyra::DefaultBlockedLinearOp<Scalar>* b = 
+    dynamic_cast<Thyra::DefaultBlockedLinearOp<Scalar>* >(this->ptr().get());
+  
+  TEST_FOR_EXCEPTION(b == 0, runtime_error, 
+		     "Can't call setBlock since operator not BlockOperator");
+
+  
+  b->endBlockFill();
+} 
 
 
 

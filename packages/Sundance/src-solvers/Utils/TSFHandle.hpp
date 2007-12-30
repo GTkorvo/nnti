@@ -104,6 +104,18 @@ namespace TSFExtended
      */
     std::string description() const ;
 
+
+    /** */
+    void describe(
+      Teuchos::FancyOStream                &out_arg,
+      const Teuchos::EVerbosityLevel      verbLevel
+      ) const 
+      {
+        const Describable* p = dynamic_cast<const Describable*>(ptr().get());
+        if (p!=0) p->describe(out_arg, verbLevel);
+        else out_arg << description();
+      }
+
     /** 
      * Return the verbosity setting using the ObjectWithVerbosity
      * interface. If the contents of the handle cannot be downcasted
@@ -154,11 +166,14 @@ namespace TSFExtended
   void Handle<PointerType>::print(std::ostream& os) const 
   {
     const Printable* p = dynamic_cast<const Printable*>(ptr_.get());
+    const Describable* d = dynamic_cast<const Describable*>(ptr_.get());
       
-    TEST_FOR_EXCEPTION(p==0, std::runtime_error,
-                       "Attempted to cast non-printable "
-                       "pointer to a Printable");
-      p->print(os);
+    TEST_FOR_EXCEPTION(p==0 && d==0, std::runtime_error,
+      "Attempt to print a Handle to an object that is neither "
+      "Printable nor Describable");
+
+    if (p!=0) p->print(os);
+    if (d!=0) os << description();
   }
 
   /* implementation of description() */

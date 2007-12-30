@@ -27,6 +27,7 @@
 #include "TSFEpetraVectorSpace.hpp"
 #include "TSFEpetraVector.hpp"
 #include "Teuchos_Utils.hpp"
+#include "TSFOut.hpp"
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
 #endif
@@ -56,9 +57,13 @@ EpetraVectorSpace::EpetraVectorSpace(const RefCountPtr<const Epetra_Map>& m)
     comm_(Thyra::create_Comm(Teuchos::rcp(&m->Comm(),false))),
     localSubDim_(epetraMap_->NumMyElements())
 {
+//  TSFOut::os() << "entering EVS ctor" << endl;
   Array<int> elems(epetraMap_->NumMyElements());
-  epetraMap_->MyGlobalElements(&(elems[0]));
+//  TSFOut::os() << "getting element list" << endl;
+  if (elems.size() > 0) epetraMap_->MyGlobalElements(&(elems[0]));
+//  TSFOut::os() << "updating state glob=" << epetraMap_->NumGlobalElements() << endl;
   updateState(epetraMap_->NumGlobalElements());
+//  TSFOut::os() << "leaving EVS ctor" << endl;
 }
 
 
@@ -67,6 +72,7 @@ EpetraVectorSpace::EpetraVectorSpace(const RefCountPtr<const Epetra_Map>& m)
 Teuchos::RefCountPtr<VectorBase<double> >
 EpetraVectorSpace::createMember() const
 {
+//  cout << "creating vector" << endl;
   return rcp(new EpetraVector(rcp(this, false)));
 }
 

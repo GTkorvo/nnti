@@ -35,68 +35,76 @@
 #include "TSFRowAccessibleOp.hpp"
 #include "TSFHandleable.hpp"
 #include "TSFSingleScalarTypeOp.hpp"
-#include "Thyra_DefaultBlockOperatorDecl.hpp"
+#include "Thyra_DefaultBlockedLinearOp.hpp"
 
 
 
 
 namespace TSFExtended
 {
-  template <class Scalar>
-  class LinearOperator;
+template <class Scalar>
+class LinearOperator;
 
-  using namespace Teuchos;
+using Teuchos::RefCountPtr;
+using Teuchos::Array;
 
-  /**
-   * Class BlockOperator provides an abstract interface for configuration
-   * and building block operators
-   *
-   * @author Paul T Boggs (ptboggs@sandia.gov)
+/**
+ * Class BlockOperator provides an abstract interface for configuration
+ * and building block operators
+ *
+ * @author Paul T Boggs (ptboggs@sandia.gov)
+ */
+template <class Scalar>
+class BlockOperator : public SingleScalarTypeOp<Scalar>,
+                      public RowAccessibleOp<Scalar>,
+                      public Thyra::DefaultBlockedLinearOp<Scalar>,
+                      public Printable
+{
+public:
+
+  /** ctor with domain and range specified.  The blocks must be
+   *	specified later and all filled before use.
    */
-  template <class Scalar>
-  class BlockOperator : public SingleScalarTypeOpBase<Scalar>,
-                        public Handleable<SingleScalarTypeOpBase<Scalar> >,
-                        public RowAccessibleOp<Scalar>,
-                        public Thyra::DefaultBlockOperator<Scalar, Scalar>,
-                        public Printable
-  {
-  public:
-    GET_RCP(SingleScalarTypeOpBase<Scalar>);
+  BlockOperator(const VectorSpace<Scalar> &domain, 
+    const VectorSpace<Scalar> &range);
 
-    /** ctor with domain and range specified.  The blocks must be
-     *	specified later and all filled before use.
-     */
-    BlockOperator(const VectorSpace<Scalar> &domain, 
-		  const VectorSpace<Scalar> &range);
+  /** */
+  RefCountPtr<const VectorSpaceBase<Scalar> > range() const 
+    {return range_.ptr();}
 
-     /** \brief Return a smart pointer for the range space for <tt>this</tt> operator.
+  /** */
+  RefCountPtr<const VectorSpaceBase<Scalar> > domain() const 
+    {return domain_.ptr();}
+
+
+
+  /** */
+  int numBlockRows() const {return this->productRange()->numBlocks();}
+
+  /** */
+  int numBlockCols() const {return this->productDomain()->numBlocks();}
+    
+
+  /** 
+   * Compute alpha*M*x + beta*y, where M=*this.
+   * @param M_trans specifies whether the operator is transposed:
+   *                op(M) = M, for M_trans == NOTRANS
+   *                op(M) = M', for M_trans == TRANS
+   * @param x       vector of length this->domain()->dim()
+   * @param y       vector of length this->range()->dim()
+   * @param alpha   scalar multiplying M*x (default is 1.0)
+   * @param beta    scalar multiplying y (default is 0.0)
    */
-  Teuchos::RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > range() const ;
+  virtual void generalApply(
+    const Thyra::ETransp            M_trans
+    ,const Thyra::VectorBase<Scalar>    &x
+    ,Thyra::VectorBase<Scalar>          *y
+    ,const Scalar            //alpha = 1.0
+    ,const Scalar           // beta  = 0.0
+    ) const;
 
-  /** \brief Return a smart pointer for the domain space for <tt>this</tt> operator.
-   */
-  Teuchos::RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > domain() const ;
-
-    /** 
-     * Compute alpha*M*x + beta*y, where M=*this.
-     * @param M_trans specifies whether the operator is transposed:
-     *                op(M) = M, for M_trans == NOTRANS
-     *                op(M) = M', for M_trans == TRANS
-     * @param x       vector of length this->domain()->dim()
-     * @param y       vector of length this->range()->dim()
-     * @param alpha   scalar multiplying M*x (default is 1.0)
-     * @param beta    scalar multiplying y (default is 0.0)
-     */
-    virtual void generalApply(
-                       const Thyra::ETransp            M_trans
-                       ,const Thyra::VectorBase<Scalar>    &x
-                       ,Thyra::VectorBase<Scalar>          *y
-                       ,const Scalar            //alpha = 1.0
-                       ,const Scalar           // beta  = 0.0
-                       ) const;
-
-    /** */
-    void apply(
+  /** */
+  void apply(
     const EConj                             conj
     ,const Thyra::MultiVectorBase<Scalar>    &X
     ,Thyra::MultiVectorBase<Scalar>           *Y
@@ -104,8 +112,8 @@ namespace TSFExtended
     ,const Scalar                      beta  = Teuchos::ScalarTraits<Scalar>::zero()
     ) const ;
 
-    /** */
-    void applyTranspose(
+  /** */
+  void applyTranspose(
     const EConj                            conj
     ,const Thyra::MultiVectorBase<Scalar>    &X
     ,Thyra::MultiVectorBase<Scalar>         *Y
@@ -113,25 +121,26 @@ namespace TSFExtended
     ,const Scalar                     beta  = Teuchos::ScalarTraits<Scalar>::zero()
     ) const;
 
-    /** Get entire row of the block matrix  */
-    void getRow(const int& row, Teuchos::Array<int>& indices,
-		Teuchos::Array<Scalar>& values) const;
+  /** Get entire row of the block matrix  */
+  void getRow(const int& row, Array<int>& indices,
+		Array<Scalar>& values) const;
 
     
 
-    /** */
-    std::ostream& describe(
+  /** */
+  std::ostream& describe(
     std::ostream                         &out
     ,const Teuchos::EVerbosityLevel      verbLevel
     ,const std::string                   leadingIndent
     ,const std::string                   indentSpacer
     ) const;
 
-    /** */
-    void print(std::ostream& os) const ;
-  private:
-
-  }; 
+  /** */
+  void print(std::ostream& os) const ;
+private:
+  VectorSpace<Scalar> domain_;
+  VectorSpace<Scalar> range_;
+}; 
 }
 
 #endif

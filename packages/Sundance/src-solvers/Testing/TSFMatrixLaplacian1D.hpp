@@ -38,21 +38,31 @@ using std::ostream;
 
 namespace TSFExtended
 {
-  /** */
-  class MatrixLaplacian1D : public OperatorBuilder<double>
-  {
-  public:
+enum MatrixLaplacianBCStyle {Normal, Symmetrized};
+
+/** */
+class MatrixLaplacian1D : public OperatorBuilder<double>
+{
+public:
     
-    /** */
-    MatrixLaplacian1D(int nLocal, const VectorType<double>& vecType,
-                      bool symBC=false);
+  /** */
+  MatrixLaplacian1D(int nLocal, const VectorType<double>& vecType,
+    bool symBC=false);
+    
+  /** */
+  MatrixLaplacian1D(int nLocal, const VectorType<double>& vecType,
+    MatrixLaplacianBCStyle bcStyle);
 
-    /** */
-    LinearOperator<double> getOp() const {return op_;}
+  /** */
+  LinearOperator<double> getOp() const {return op_;}
 
-  private:
-    LinearOperator<double> op_;
-  };
+private:
+  /** */
+  void init(int nLocal, const VectorType<double>& vecType,
+    MatrixLaplacianBCStyle bcStyle);
+  
+  LinearOperator<double> op_;
+};
 
 }
 

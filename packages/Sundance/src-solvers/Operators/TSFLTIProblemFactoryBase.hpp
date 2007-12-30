@@ -221,8 +221,12 @@ protected:
     {
       Array<VectorSpace<Scalar> > d(n, C.domain());
       Array<VectorSpace<Scalar> > r(n, C.range());
-      LinearOperator<Scalar> rtn = new BlockOperator<Scalar>(productSpace(d), productSpace(r));
+      
+      RefCountPtr<SingleScalarTypeOpBase<Scalar> > op
+        = rcp(new BlockOperator<Scalar>(productSpace(d), productSpace(r)));
+      LinearOperator<Scalar> rtn = op;
       for (int i=0; i<n; i++) rtn.setBlock(i, i, C);
+      rtn.endBlockFill();
       return rtn;
     }
   //@}
@@ -245,11 +249,20 @@ protected:
       VectorSpace<Scalar> littleDomain = productSpace<Scalar>(tuple(A.domain()));
       
       LinearOperator<Scalar> I = new IdentityOperator<Scalar>(A.domain());
+      LinearOperator<Scalar> Z = new ZeroOperator<Scalar>(A.domain(), A.range());
       VectorSpace<Scalar> bigRange = this->blockSpace(nSteps_, A.range());
       std::cout << "bigRange.dim() = " << bigRange.dim() << std::endl;
-      
-      LinearOperator<Scalar> rtn = new BlockOperator<Scalar>(littleDomain, bigRange);
+
+      RefCountPtr<SingleScalarTypeOpBase<Scalar> > op
+        = rcp(new BlockOperator<Scalar>(littleDomain, bigRange));
+      LinearOperator<Scalar> rtn = op;
+
       rtn.setBlock(0, 0, I);
+      for (int i=1; i<bigRange.numBlocks(); i++)
+      {
+        rtn.setBlock(i, 0, Z);
+      }
+      rtn.endBlockFill();
       return rtn;
     }
 

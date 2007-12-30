@@ -163,7 +163,8 @@ namespace TSFExtended
     void setBlock(int i, int j, 
 		  const LinearOperator<Scalar>& sub);
 
-    
+    /** Finalize block assembly */
+    void endBlockFill();
 
     //@}
 
