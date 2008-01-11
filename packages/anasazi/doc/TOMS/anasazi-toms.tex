@@ -93,7 +93,7 @@ paradigms to implement algorithms for the numerical solution of
 large-scale eigenvalue problems. We define a
 large-scale eigenvalue problem to be one where a small number
 (relative to the dimension of the problem) of eigenvalues and the
-associated eigenspace are computed, and only knowledge of the
+associated eigenspace are computed and only knowledge of the
 underlying matrix via application on a vector (or group of vectors)
 is assumed.
 
@@ -133,18 +133,16 @@ using modern programming techniques. Our approach is algorithm-oriented \cite{mu
 that requirements for efficient implementation of the necessary algorithms are considered
 first. This is followed by a formulation of the software abstractions capable of
 implementing these algorithms, and their constituent mechanisms, in sufficiently diverse
-ways. The result is a collection of implementations that are efficient and flexible. We
-believe that Anasazi is the natural successor to ARPACK, inheriting and extending the
-quality practices employed by ARPACK.
+ways. The result is a collection of implementations that are efficient and flexible. 
 
 There are related software efforts that implement several algorithms for solving
 large-scale eigenvalue problems (the reader is referred to~\cite{slepc:05}
-for a complete survey). The two most advanced, comparable software efforts are PRIMME and
+for a more complete survey). The two most advanced, comparable software efforts are PRIMME and
 SLEPc:
 \begin{itemize}
 \item
 The Preconditioned Iterative Multi-Method Eigensolver (PRIMME)~\cite{primme:06} is a C
-library for computing a number of eigenvalues and their corresponding eigenvectors of a real
+library for computing a number of eigenvalues and the corresponding eigenvectors of a real
 symmetric or complex Hermitian matrix. PRIMME provides a highly parametrized
 Jacobi-Davidson~\cite{slvo:96} iteration, allowing the behavior of multiple eigensolvers
 to be obtained via the appropriate selection of parameters;
@@ -156,7 +154,7 @@ used for either Hermitian or non-Hermitian, standard or generalized, eigenproble
 \end{itemize}
 
 PRIMME provides a flexible metasolver capable of implementing a variety of
-Hermitian eigensolvers. Predefined parameters are provided to emulate a number of 
+Hermitian eigensolvers. Packaged parameter choices are provided to emulate a number of 
 popular eigensolvers, allowing easy use of the software by novice users. Expert users may
 manually specify the parameters in order to access the full flexibility available in the
 solver's behavior. Therefore, PRIMME is valuable both as a convenient eigensolver for
@@ -169,17 +167,17 @@ implementations due to the lack of generic programming ability in the C programm
 language.
 
 SLEPc extends the PETSc toolkit to provide a library of solvers for standard or
-generalized, Hermitian or non-Hermitian eigenproblems.
-SLEPc provides wrappers for several eigensolver packages, most notably ARPACK and PRIMME,
-as well as native implementations of eigensolvers like Krylov-Schur, Arnoldi, and Lanczos.
-The use of PETSc also gives SLEPc users access to a large library of linear and nonlinear 
-solvers, preconditioners and matrix formats. PETSc uses C language features such as 
-\texttt{typedef}s and function pointers to support some generic programming and object-oriented 
-paradigms. However, SLEPc's reliance on PETSc requires that the user employ PETSc for vectors 
-and matrices. Similar to PRIMME, SLEPc can be compiled with support for double precision
-real or complex arithmetic, however only one version of the library can be used at a time.
-Furthermore, mechanisms such as orthogonalization are hard-coded allowing only parametrized 
-control over their behavior. 
+generalized, Hermitian or non-Hermitian eigenproblems.  SLEPc provides wrappers for
+several eigensolver packages, most notably ARPACK and PRIMME, as well as native
+implementations of eigensolvers like Krylov-Schur, Arnoldi, and Lanczos.  The use of PETSc
+also gives SLEPc users access to a large library of linear and nonlinear solvers,
+preconditioners and matrix formats. PETSc uses C language features such as
+\texttt{typedef}s and function pointers to support some generic programming and
+object-oriented programming techniques. However, SLEPc's reliance on PETSc requires that
+the user employ PETSc for vectors and matrices. Similar to PRIMME, SLEPc can be compiled
+with support for double precision real or complex arithmetic. However, only one version of
+the library can be used at a time.  Furthermore, mechanisms such as orthogonalization are
+hard-coded, allowing only parametrized control over their behavior. 
 
 The Anasazi framework was designed to include features from other eigensolver packages
 that are conducive to algorithm development, while avoiding some of the drawbacks
@@ -200,14 +198,14 @@ any user choice of scalar field, vector and operator. This is accomplished using
 template mechanism in the C++ programming language, an option not available to SLEPc or
 PRIMME. As a result, for example, an Anasazi eigensolver using single-precision complex
 arithmetic can be used alongside another Anasazi eigensolver using an extended precision
-scalar type. 
+scalar type; both are instantiated from the same source code.
 
 As a result of these design features, the Anasazi eigensolver framework is significantly
 more flexible than previous efforts, allowing its inclusion in diverse application
 environments in addition to providing an arena for research into eigensolvers and their
 constituent mechanisms.  The rest of this paper is organized as follows.
 Section~\ref{sec:algorithm-overview} briefly discusses one class of algorithms that can be
-implemented using Anasazi in order to explore the types of operations necessary for an
+implemented using Anasazi, in order to explore the types of operations necessary for an
 eigensolver framework.  Section~\ref{sec:framework} reviews the Anasazi framework,
 discusses some of the design decisions, and illustrates the benefits of these decisions.
 Lastly, Section~\ref{sec:benchmarking} provides some timings comparing ARPACK and Anasazi
@@ -241,18 +239,18 @@ references on the large-scale eigenvalue problem.
 $\mathbf{M}$ and bases $\mathbf{U}$, $\mathbf{V}$ be given
 \\
 {\rm (2)} \>\> Form the Rayleigh quotients $ \mathbf{V}^H
-\mathbf{M}\Phi(\mathbf{A}) \mathbf{U}$ and $ \mathbf{V}^H \mathbf{M}
-\Psi(\mathbf{B}) \mathbf{U}$\\
-\>\> where $\Phi(\cdot)$ and $\Psi(\cdot)$ are matrix functions
+\mathbf{M}\mathbf{\Phi}(\mathbf{A}) \mathbf{U}$ and $ \mathbf{V}^H \mathbf{M}
+\mathbf{\Psi}(\mathbf{B}) \mathbf{U}$\\
+\>\> where $\mathbf{\Phi}(\cdot)$ and $\mathbf{\Psi}(\cdot)$ are matrix functions
 \\
 {\rm (3)} \>\> Compute an eigen-decomposition $(\mathbf{L},\mathbf{W})$ for the Rayleigh
 quotients\\
-\>\>\>\>$ \left(\mathbf{V}^H \mathbf{M}\Phi(\mathbf{A}) \mathbf{U}\right) \mathbf{W} = 
-\left(\mathbf{V}^H \mathbf{M}\Psi(\mathbf{B}) \mathbf{U}\right) \mathbf{W} \mathbf{L}$
+\>\>\>\>$ \left(\mathbf{V}^H \mathbf{M}\mathbf{\Phi}(\mathbf{A}) \mathbf{U}\right) \mathbf{W} = 
+\left(\mathbf{V}^H \mathbf{M}\mathbf{\Psi}(\mathbf{B}) \mathbf{U}\right) \mathbf{W} \mathbf{L}$
 \\
-{\rm (4)} \>\> Use the approximation $(\mathbf{L},\mathbf{W})$ and the basis $\mathbf{U}$
+{\rm (4)} \>\> Use the decomposition $(\mathbf{L},\mathbf{W})$ and the basis $\mathbf{U}$
 to construct \\
-\>\>an approximation for the pencil $(\mathbf{A}, \mathbf{B})$
+\>\>approximate eigenpairs for the pencil $(\mathbf{A}, \mathbf{B})$
 \\
 \end{tabbing}
 }
@@ -265,7 +263,7 @@ of large-scale eigensolvers, namely subspace projection methods.  The matrices $
 $\mathbf{V}$ are bases for the trial and test subspaces $\mathcal{U}$ and $\mathcal{V}$, 
 respectively.  When these two subspaces are distinct, then the Rayleigh-Ritz method is called
 oblique.  Otherwise, when $\mathcal{V}=\mathcal{U}$ the orthogonal Rayleigh-Ritz method results.
-The functions $\Phi(\cdot)$ and $\Psi(\cdot)$ are often used to improve convergence to the 
+The functions $\mathbf{\Phi}(\cdot)$ and $\mathbf{\Psi}(\cdot)$ are often used to improve convergence to the 
 eigenvalues and eigenspace of interest.  The matrix $\mathbf{M}$ is often used to denote an 
 inner product; for instance $\mathbf{M}$ can be set equal to $\mathbf{A}$ or $\mathbf{B}$ when
 either matrix is Hermitian positive semi-definite.
@@ -277,7 +275,7 @@ this algorithm.  The bases $\mathbf{U}$ and $\mathbf{V}$ are dense matrices that
 as a collection of vectors, which we call a \emph{multivector}.  Interaction with 
 $\mathbf{A}$, $\mathbf{B}$, and $\mathbf{M}$ requires only knowledge of the underlying matrix
 via application on a vector or multivector, thus we regard these matrices as \emph{operators}.
-The functions $\Phi(\cdot)$ and $\Psi(\cdot)$ should also be considered operators and, while the
+The functions $\mathbf{\Phi}(\cdot)$ and $\mathbf{\Psi}(\cdot)$ should also be considered operators and, while the
 choice of functions is outside the scope of this
 paper, the use of these types of operators should not be hindered.  
 
@@ -285,14 +283,14 @@ Given these observations,
 the functionality that is important to an eigensolver includes:
 \begin{itemize}
   \item multivector creation: create $\mathbf{U}$, $\mathbf{V}$
-  \item operator-multivector applications: $\Phi(A)U$, $\Psi(B)U$;
+  \item operator-multivector applications: $\mathbf{\Phi}(A)U$, $\mathbf{\Psi}(B)U$;
   \item multivector arithmetic: $\mathbf{V}^H\mathbf{U}$;
   \item solution of typically much smaller eigenproblems (step~3).
 \end{itemize}
 A full list of our primitives for operators and multivectors will be presented in Section \ref{sec:framework}. 
 It is worthwhile to note at this point that the Anasazi framework was designed to support block methods,
 defined as those that apply $\mathbf{A}$ or $\mathbf{B}$ to a collection of vectors, or multivector.
-One advantage of using a multivector data structure is that to improve the ratio of 
+One advantage of using a multivector data structure is to improve the ratio of 
 floating-point operations to memory references and so better exploit a memory hierarchy.
 
 \begin{figure}[htb]
@@ -500,7 +498,7 @@ preconditioners.
 Templating an eigensolver on operator, multivector, and scalar types makes software reuse
 easier. Consider in contrast that ARPACK implements the subroutines \texttt{SNAUPD},
 \texttt{DNAUPD}, \texttt{CNAUPD}, and \texttt{ZNAUPD} for solving non-Hermitian
-eigenproblems. Separate subroutines are required for the four FORTRAN 77 floating
+eigenproblems. Separate subroutines are required for each of the four FORTRAN 77 floating
 point types (single and double precision real, and single and double precision complex).
 Moreover, four additional subroutines are needed for a distributed memory implementation.
 By templating abstract numerical interfaces on operator, multivector, and scalar types, 
@@ -520,10 +518,10 @@ Another aspect of software reuse that templating alleviates is through the separ
 eigensolver algorithm from the linear algebra data structures.  This separation, as shown in
 Figure \ref{fig:latemplate}, allows a user of the Anasazi framework to leverage an existing 
 linear algebra software investment.  All that is required is the template instantiation of the trait
-classes, \aspace{MultiVecTraits} and \aspace{OperatorTraits}, for the user-defined multvector 
+classes, \aspace{MultiVecTraits} and \aspace{OperatorTraits}, for the user-defined multivector 
 and operator, respectively.  The \aspace{ScalarTraits} class and respective template 
 instantiations for different scalar types are provided by the Trilinos Teuchos package 
-\cite{Trilinos:Teuchos}. Another user-friendly aspect of employing templates and traits mechanisms
+\cite{Trilinos:Teuchos}. Another friendly aspect of employing templates and traits mechanisms
 is that the Anasazi eigensolver, eigenproblem, and eigensolution are all defined by the 
 specified scalar, multivector, and operator type at compile time.  This approach, as opposed to
 using abstract interfaces and dynamic polymorphism, avoids any dynamic casting of the multivectors 
@@ -564,7 +562,7 @@ spectral transformation, or preconditioner.
 \multicolumn{2}{|c|}{\textbf{OperatorTraits$<$ST,MV,OP$>$}} \\\hline
 \emph{Method name} & \emph{Description} \\\hline
 {\tt Apply(A,X,Y)} & Applies the operator $A$ to the multivector $X$, placing the
-result in the multivector $Y$. \\
+result in the multivector $Y$ \\
 \hline
 %%
 \end{tabular}
@@ -603,46 +601,46 @@ a reference-counted pointer \cite{Detlefs:1992:GCR,Teuchos-RCP} to the new multi
 %%%
 \emph{Method name} & \emph{Description} \\\hline
 {\tt Clone(X,numvecs)}           & Creates a new multivector from $X$ with
-$numvecs$ vectors.  \\
+$numvecs$ vectors  \\
 
 {\tt CloneCopy(X,index)} & Creates a new multivector with a copy of the contents of
-a subset of the multivector $X$ (deep copy). \\
+a subset of the multivector $X$ (deep copy) \\
 
 {\tt CloneView(X,index)} & Creates a new multivector that shares the selected
-contents of a subset of the multivector $X$ (shallow copy).  \\\hline
+contents of a subset of the multivector $X$ (shallow copy)  \\\hline
 
-{\tt GetVecLength(X)} & Returns the vector length of the multivector $X$.
+{\tt GetVecLength(X)} & Returns the vector length of the multivector $X$
 \\
 
-{\tt GetNumberVecs(X)}& Returns the number of vectors in the multivector $X$.
+{\tt GetNumberVecs(X)}& Returns the number of vectors in the multivector $X$
 \\\hline
 
 {\tt MvTimesMatAddMv(alpha,X}, & Applies a dense matrix $D$ to multivector $X$ and \\ 
-{\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ M,beta,Y)} & accumulates the result into multivector $Y$:\\ & $Y \leftarrow \alpha X D + \beta Y$.  \\
+{\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ D,beta,Y)} & accumulates the result into multivector $Y$:\\ & $Y \leftarrow \alpha X D + \beta Y$  \\
 
-{\tt MvAddMv(alpha,X,beta,Y)}  & Performs multivector AXPBY: $Y \leftarrow \alpha X + \beta Y$.
+{\tt MvAddMv(alpha,X,beta,Y)}  & Performs multivector AXPBY: $Y \leftarrow \alpha X + \beta Y$
 \\
 
-{\tt MvTransMv(alpha,X,Y,D)} & Computes the dense matrix $D \leftarrow \alpha X^H Y$.
+{\tt MvTransMv(alpha,X,Y,D)} & Computes the dense matrix $D \leftarrow \alpha X^H Y$
 \\
 
 {\tt MvDot(X,Y,d)} & Computes the corresponding dot products:
-$d[i] \leftarrow X[i]^H Y[i]$.  \\
+$d[i] \leftarrow X[i]^H Y[i]$  \\
 
-{\tt MvScale(X,d)}    & Scales the i-th column of a multivector $X$ by $d[i]$. \\
+{\tt MvScale(X,d)}    & Scales the i-th column of a multivector $X$ by $d[i]$ \\
 
 {\tt MvNorm(X,d)}     & Computes the 2-norm of each vector of
 $X$: $d[i] \leftarrow \|X[i]\|_2$  \\\hline
 
 {\tt SetBlock(X,Y,index)} & Copies the vectors in $X$ to a subset of vectors in
-$Y$. \\
+$Y$ \\
 
-{\tt MvInit(X,alpha)} & Replaces each entry in the multivector $X$ with a scalar $\alpha$.  \\
+{\tt MvInit(X,alpha)} & Replaces each entry in the multivector $X$ with a scalar $\alpha$  \\
 
 {\tt MvRandom(X)} & Replaces the entries in the multivector $X$ by random
-scalars. \\\hline
+scalars \\\hline
 
-{\tt MvPrint(X)} & Print the multivector $X$. \\
+{\tt MvPrint(X)} & Print the multivector $X$ \\
 
 \hline
 \end{tabular}
@@ -735,16 +733,16 @@ definition of a spectral transformation, for Arnoldi-based eigensolvers.
 \multicolumn{3}{|c|}{\textbf{Eigenproblem$<$ST,MV,OP$>$}} \\\hline
 \multicolumn{2}{|c|}{\emph{Method name}} & \emph{Description} \\
 \hline
-{\tt setOperator()}&{\tt getOperator()}    & Access the operator for which eigenvalues will be computed. \\
-{\tt setA()}&{\tt getA()}                  & Access the operator A of the eigenvalue problem $Ax=\lambda Mx$ . \\
-{\tt setM()}&{\tt getM()}                  & Access the operator M of the eigenvalue problem $Ax=\lambda Mx$ . \\
-{\tt setPrec()}&{\tt getPrec()}            & Access the preconditioner for this eigenvalue problem $Ax=\lambda Mx$ . \\
-{\tt setInitVec()}&{\tt getInitVec()}      & Access the initial guess. \\
-{\tt setAuxVecs()}&{\tt getAuxVecs()}      & Access the auxiliary vectors. \\
-{\tt setNEV()}&{\tt getNEV()}              & Access the number of eigenvalues (NEV) that are requested.  \\
-{\tt setHermitian()}&{\tt isHermitian()}   & Access the symmetry of the eigenproblem. \\
-{\tt setProblem()}&{\tt isProblemSet()}    & Access whether the eigenproblem is fully defined.  \\
-{\tt setSolution()}&{\tt getSolution()}    & Access the solution to the eigenproblem. \\
+{\tt setOperator()}&{\tt getOperator()}    & Access the operator for which eigenvalues will be computed \\
+{\tt setA()}&{\tt getA()}                  & Access the operator A of the eigenvalue problem $Ax=\lambda Mx$  \\
+{\tt setM()}&{\tt getM()}                  & Access the operator M of the eigenvalue problem $Ax=\lambda Mx$  \\
+{\tt setPrec()}&{\tt getPrec()}            & Access the preconditioner for this eigenvalue problem $Ax=\lambda Mx$  \\
+{\tt setInitVec()}&{\tt getInitVec()}      & Access the initial guess \\
+{\tt setAuxVecs()}&{\tt getAuxVecs()}      & Access the auxiliary vectors \\
+{\tt setNEV()}&{\tt getNEV()}              & Access the number of eigenvalues (NEV) that are requested  \\
+{\tt setHermitian()}&{\tt isHermitian()}   & Access the symmetry of the eigenproblem \\
+{\tt setProblem()}&{\tt isProblemSet()}    & Access whether the eigenproblem is fully defined  \\
+{\tt setSolution()}&{\tt getSolution()}    & Access the solution to the eigenproblem \\
 \hline
 \end{tabular}
 \end{center}
@@ -776,14 +774,14 @@ This structure contains the following information:
 The \aspace{Eigensolution::index} vector has \aspace{numVecs} integer entries that take 
 one of three values: $\{0, +1, -1\}$. These values allow the eigenvectors to be retrieved as follows:
 \begin{itemize}
-  \item \aspace{index[i]==0}: the $i$-th eigenvector is stored uncompressed in column $i$ of
+  \item \aspace{index[i]==0}: The $i$-th eigenvector is stored uncompressed in column $i$ of
     \verb!Evecs!.
-  \item \aspace{index[i]==+1}: the $i$-th eigenvector is stored compressed, with the real
+  \item \aspace{index[i]==+1}: The $i$-th eigenvector is stored compressed, with the real
     component in column $i$ of \verb!Evecs! and the \emph{positive} complex component
-    stored in column $i+1$ of \verb!Evecs!
-  \item \aspace{index[i]==-1}: the $i$-th eigenvector is stored compressed, with the real
+    stored in column $i+1$ of \verb!Evecs!.
+  \item \aspace{index[i]==-1}: The $i$-th eigenvector is stored compressed, with the real
     component in column $i-1$ of \verb!Evecs! and the \emph{negative} complex component
-    stored in column $i$ of \verb!Evecs!
+    stored in column $i$ of \verb!Evecs!.
 \end{itemize}
 This storage scheme is only required for non-symmetric problems over the real field and enables
 Anasazi to use \aspace{numVecs} vectors to store \aspace{numVecs} eigenvectors, even when
@@ -816,16 +814,16 @@ solver-specific methods. A list of these methods is given in Table~\ref{tab:anas
 \hline
 \emph{Method name} & \emph{Description} \\
 \hline
-{\tt getNumIters()}       & current number of iterations. \\
-{\tt getRitzValues()}     & most recent Ritz values. \\
-{\tt getRitzVectors()}    & most recent Ritz vectors. \\
-{\tt getRitzIndex()}      & Ritz index needed for indexing compressed Ritz vectors. \\
-{\tt getResNorms()}       & residual norms, with respect to the \aspace{OrthoManager}. \\
-{\tt getRes2Norms()}      & residual Euclidean norms. \\
-{\tt getRitzRes2Norms()}  & Ritz residual  Euclidean norms. \\
-{\tt getCurSubspaceDim()} & current subspace dimension. \\
-{\tt getMaxSubspaceDim()} & maximum subspace dimension. \\
-{\tt getBlockSize()}      & block size. \\
+{\tt getNumIters()}       & current number of iterations \\
+{\tt getRitzValues()}     & most recent Ritz values \\
+{\tt getRitzVectors()}    & most recent Ritz vectors \\
+{\tt getRitzIndex()}      & Ritz index needed for indexing compressed Ritz vectors \\
+{\tt getResNorms()}       & residual norms, with respect to the \aspace{OrthoManager} \\
+{\tt getRes2Norms()}      & residual Euclidean norms \\
+{\tt getRitzRes2Norms()}  & Ritz residual  Euclidean norms \\
+{\tt getCurSubspaceDim()} & current subspace dimension \\
+{\tt getMaxSubspaceDim()} & maximum subspace dimension \\
+{\tt getBlockSize()}      & block size \\
 \hline
 \multicolumn{2}{|c|}{\emph{Solver-specific Methods}} \\
 \hline
@@ -853,15 +851,13 @@ A simple example of a state structure can be seen in Figure \ref{fig:state}.
 \begin{boxedverbatim}
   template <class ST, class MV>
   struct SomeEigensolverState {
-    /* The current dimension of the subspace.
-     * NOTE: This should always be equal to SomeEigensolver::getCurSubspaceDim()
+    /* The current dimension of the subspace.                              *
+     * NOTE: This should be equal to SomeEigensolver::getCurSubspaceDim(). */
     int curDim;
     /* The current subspace. */
     RCP<const MV> V;
     /* The current Rayleigh-Ritz projection */
     RCP<const Teuchos::SerialDenseMatrix<int,ST> > H;
-    SomeEigensolverState() : curDim(0), V(Teuchos::null),
-                             H(Teuchos::null) {}	
   };
 \end{boxedverbatim}
 \end{center}
@@ -902,8 +898,8 @@ should be stopped, with the most common conditions being the number of iteration
 convergence criterion, and deflation of converged eigenpairs.
 Often the decision to stop an eigensolver iteration is based on a hierarchy 
 of problem-dependent, logically connected stopping conditions.
-This, possibly complex, reasoning does not have to be known by the \aspace{Eigensolver} class,
-which queries the \aspace{StatusTest} during its class method \aspace{iterate()} to determine 
+This, possibly complex, reasoning should not be encoded in the \aspace{Eigensolver} class,
+which instead queries the \aspace{StatusTest} during its class method \aspace{iterate()} to determine 
 whether or not to continue iterating (Figure~\ref{fig:comm}).
 \begin{figure}[htb]
 \begin{center}
@@ -922,9 +918,10 @@ SomeEigensolver::iterate() {
 \label{fig:comm}
 \end{figure}
 The \aspace{StatusTest} class provides a method, \verb!checkStatus()!, which queries the methods provided by
-\aspace{Eigensolver} and determines whether the solver meets the criteria defined by a particular 
+\aspace{Eigensolver} and determines whether the solver meets the criteria defined by the 
 status test. After a solver returns from \verb!iterate()!, the caller has the ability to access the
-solver's state and the option to re-initialize the solver with a new state and continue iterating.
+solver's state and the option to re-initialize the solver with a new state and continue
+the iteration.
 
 A \aspace{StatusTest} is a desirable feature in the Anasazi software framework because it
 provides the eigensolver user and developer with a flexible interface for interrogating
@@ -932,19 +929,20 @@ the eigen-iteration. Besides the basic usage, this interface makes it possible t
 example, select stopping conditions at runtime or put application-specific hooks in the
 eigensolver for debugging and checkpointing. This flexible approach to selecting and
 developing stopping criteria for an eigensolver is not available in PRIMME or SLEPc.
-Since the user provides the memory for computations, ARPACK can give the user the power to
-determine if an iteration should terminate. However, this is not a clean, direct approach
-because the user must know the data layout to determine where the information is for
-making this decision.
+Since an ARPACK user provides the memory for computations and ARPACK is constantly
+returning control via the reverse communication mechanism, the user has some ability to
+examine the current state and modify it to force certain behavior. However, this is an
+advanced use case which requires intimacy with the formatting of the ARPACK control data.
 
-The purpose of the \aspace{SortManager} class is to separate the \aspace{Eigensolver} from the sorting
-functionality, giving users the opportunity to choose the eigenvalues of interest in whatever manner is
-deemed to be most appropriate. Anasazi defines an abstract class \aspace{SortManager} with
-two methods, one for sorting real values and one for sorting complex values, shown in Figure \ref{fig:sort}
-The \aspace{SortManager} is also expected to provide the permutation vector if the 
-\aspace{Eigensolver} passes a non-null pointer for \verb!perm! to the \aspace{sort} method.  This is 
-necessary, because many eigen-iterations must sort their approximate eigenvectors, as well as their 
-eigenvalues.
+The purpose of the \aspace{SortManager} class is to separate the \aspace{Eigensolver} from
+the sorting functionality, giving users the opportunity to choose the eigenvalues of
+interest in whatever manner is deemed to be most appropriate. Anasazi defines an abstract
+class \aspace{SortManager} with two methods, one for sorting real values and one for
+sorting complex values, shown in Figure \ref{fig:sort}.  The \aspace{SortManager} is also
+expected to provide the permutation vector if the \aspace{Eigensolver} passes a non-null
+pointer for \verb!perm! to the \aspace{sort} method.  This is necessary, because many
+eigen-iterations must sort their approximate eigenvectors, as well as their eigenvalues.
+
 \begin{figure}[htb]
 \begin{center}
 \begin{boxedverbatim}
@@ -1122,8 +1120,6 @@ be used for symmetric positive semi-definite generalized eigenvalue problems.
 
 \subsubsection{\aspace{Anasazi::StatusTest}}
 
-% CGB here
-
 The purpose of the \aspace{StatusTest} is to give the user or solver
 manager flexibility in terminating the eigensolver iterations in
 order to interact directly with the solver. Typical
@@ -1141,11 +1137,8 @@ With respect to these reasons, the following is a list of Anasazi-provided statu
     or even to require some minimum number of iterations.
   \item \aspace{StatusTestResNorm} - monitors the residual norms of the
     current iterate.
-  \item \aspace{StatusTestOrderedResNorm} - monitors the residual
-    norms of the current iterate, but only considers the residuals associated with the
-    most significant eigenvalues.
   \item \aspace{StatusTestCombo} - a boolean combination of
-    other status tests, creating near unlimited potential for complex status tests.
+    other status tests, creating unlimited potential for complex status tests.
   \item \aspace{StatusTestOutput} - a wrapper around another
     status test, allowing for printing of status information on a call to
     \verb!checkStatus()!.
@@ -1161,7 +1154,9 @@ Typically, the eigenvalues of interest are those with:
   \item the smallest or largest real part
   \item the smallest or largest imaginary part
 \end{itemize}
-Anasazi provides the ability to perform these six sorts in the \aspace{BasicSortManager} class.
+Anasazi provides the ability to perform these six sorts in the \aspace{BasicSortManager}
+class. Other implementations of \aspace{SortManager} may, for example, be tailored to
+account for the effects of chosen spectral transformations.
 
 \subsubsection{\aspace{Anasazi::OrthoManager}}
 
@@ -1173,11 +1168,11 @@ Anasazi provides two concrete orthogonalization managers:
 \begin{itemize}
 \item
   \aspace{BasicOrthoManager} - performs orthogonalization using
-  classical Gram-Schmidt with a possible DGKS correction step \cite{dgks:76}.
+  classical Gram-Schmidt with a possible DGKS correction step \cite{dgks:76}
 \item
   \aspace{SVQBOrthoManager} - performs orthogonalization using the
   SVQB orthogonalization technique described by Stathapoulos and
-  Wu~\cite{Stathopoulos:2002:BOP}.
+  Wu~\cite{Stathopoulos:2002:BOP}
 \end{itemize}
 
 
@@ -1211,12 +1206,18 @@ Anasazi provides two concrete orthogonalization managers:
 
 Anasazi provides at least one solver manager for each implemented eigensolver iteration:
 \begin{itemize}
-  \item \aspace{BlockKrylovSchurSolMgr} - provides a restarted, block Krylov-Schur eigensolver.
+  \item \aspace{BlockKrylovSchurSolMgr} - provides a solver manager for the
+    \aspace{BlockKrylovSchur} eigensolver with restarting.
   When the block size is one, this Krylov-subspace method is mathematically equivalent to the
   implicitly-restarted Arnoldi method in ARPACK. 
-  \item \aspace{BlockDavidsonSolMgr} -
-  \item \aspace{LOBPCGSolMgr} -
-  \item \aspace{SimpleLOBPCGSolMgr} -
+  \item \aspace{BlockDavidsonSolMgr} - provides a solver manager for the
+    \aspace{BlockDavidson} eigensolver which performs restarts and locking/deflating of
+    converged eigenvectors.
+  \item \aspace{LOBPCGSolMgr} - provides a solver manager for the \aspace{LOBPCG}
+    eigensolver which provides a lock/deflating mechanism for converged eigenvectors.
+  \item \aspace{SimpleLOBPCGSolMgr} - a simple solver manager for the \space{LOBPCG}
+    eigensolver, providing a checkpointing eigensolver. This solver manager is intended
+    as an example of how a solver manager should be constructed.
 \end{itemize}
 
 %All of these solver managers are constructed using an \aspace{Eigenproblem} and a 
@@ -1246,20 +1247,19 @@ Anasazi provides at least one solver manager for each implemented eigensolver it
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \label{sec:benchmarking}
 
-The benefits of an object-oriented eigensolver framework such as
-Anasazi are many: modularization provides improved code reuse,
-static polymorphism via templating allows easier code maintenance and
-a larger audience, and dynamic polymorphism via inheritance allows
-flexible runtime behavior. However, none of these benefits should come
-at the expense of code performance. Concern over overhead has long
-been an inhibiting factor in the adoption of object-oriented
-programming paradigms in scientific computing. In this section we
-will discuss the important issue of comparing Anasazi and ARPACK
-on a model problem. Our interest is in assessing any overhead of
-Anasazi and ARPACK, C++ and FORTRAN 77 software.
+The benefits of an object-oriented eigensolver framework such as Anasazi are many:
+modularization provides improved code reuse, static polymorphism via templating allows
+easier code maintenance and a larger audience through software interoperability, and
+dynamic polymorphism via inheritance allows easy extension of capability and flexible
+runtime behavior. However, none of these benefits should come at the expense of code
+performance. Concern over overhead has long been an inhibiting factor in the adoption of
+object-oriented programming paradigms in scientific computing. In this section we 
+address this important issue by comparing Anasazi and ARPACK on a model problem. Our
+interest is in addressing concerns about the overhead of Anasazi and ARPACK, C++ and
+FORTRAN 77 software.
 
-We benchmarked Anasazi's \aspace{BlockKrylovSchurSolMgr} (with a block size
-of one) and ARPACK's \aspace{dnaupd} that compute approximations to the
+We compared Anasazi's \aspace{BlockKrylovSchurSolMgr} (with a block size
+of one) and ARPACK's \aspace{dnaupd}, which each compute approximations to the
 eigenspace of a non-symmetric matrix. Our goal was to benchmark the
 cost of computing $50, 100, 150$ Arnoldi vectors for a finite
 difference approximation to a two dimensional convection diffusion
@@ -1314,25 +1314,35 @@ below the clock resolution.}
 
 The operator application in Anasazi records approximately twice as much time as the ARPACK
 implementation. This is because the Anasazi code used an Epetra sparse matrix
-representation, while the ARPACK implementation applies the block tridiagonal
-matrix via a stencil. Note that the operator application comprised only a small
-portion of the clock time in these tests. The performance of the Anasazi library in
-computing the Arnoldi vectors is similar to that of ARPACK. Our conclusion is that a
-well-designed library in C++ is as efficient as a FORTRAN 77 library.
+representation, while the ARPACK implementation applies the block tridiagonal matrix via a
+stencil. Note that the operator application comprised only a small portion of the clock
+time in these tests. The majority of the clock time was consumed via the orthogonalization
+routines which support the Arnoldi iteration. It should be noted that while these routines
+are hard-coded in the ARPACK FORTRAN 77 library, they are accessed through a dynamic
+polymorphic interface in Anasazi. Regardless, the performance of the Anasazi library in
+computing the Arnoldi vectors is similar to that of ARPACK. This illustrates that a
+well-designed library in C++ can be as efficient as a FORTRAN 77 library.
 
 \section{Conclusion}
 
-\cbcomm{reinforce their clarity}
+We believe that Anasazi is the natural successor to ARPACK, inheriting and extending the
+quality practices employed by ARPACK. Anasazi takes advantage of the generic and
+object-oriented language features of C++, allowing it to improve on the design of related
+eigensolver efforts. The use of static polymorphism via templated code replaces the
+reverse communication model which helped to popularize ARPACK and enable its adoption as
+the default eigensolver in many scientific communities. The decoupling of algorithmic
+components, via dynamic polymorphism, is beneficial from a software engineering point of
+view, by easing component verification, enabling code reuse, and maximizing runtime
+flexibility in implementation. Furthermore, this decoupling allows Anasazi to act as a
+research platform not only for eigensolvers, but also for those components which are vital
+to the efficient and effective implementation of large-scale eigensolvers.
 
-\cbcomm{issues yet to be handled: anasazi provides only three
-eigensolvers, it also provides a framework capable of implementing
-multiple eigensolvers. for example, eigen-iterations requiring an
-iteration have been implemented using anasazi, such as RTR, TRACEMIN
-and Jacobi-Davidson.}
 
 \section{Acknowledgments}
-We thank Roscoe Bartlett, Mike Heroux, Roger Pawlowski, Eric Phipps,
-and Andy Salinger for many helpful discussions.
+
+We thank Roscoe Bartlett, Mike Heroux, Roger Pawlowski, Eric Phipps, and Andy Salinger for
+many helpful discussions. We appreciate the suggestions and corrections of the anonymous
+reviewers.
 
 \bibliography{anasazi-toms}
 \bibliographystyle{acmtrans}
