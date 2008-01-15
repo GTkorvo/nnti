@@ -41,46 +41,52 @@ using std::ostream;
 
 namespace TSFExtended
 {
-  using Teuchos::Array;
-  using Teuchos::RefCountPtr;
-  /** */
-  template <class Scalar>
-  Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
-  productSpace(const Array<VectorSpace<Scalar> >& spaces)
+using Teuchos::Array;
+using Teuchos::RefCountPtr;
+/** */
+template <class Scalar>
+Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+productSpace(const Array<VectorSpace<Scalar> >& spaces)
+{
+  Array<RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > > data(spaces.size());
+  for (unsigned int i=0; i<spaces.size(); i++)
   {
-    Array<RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > > data(spaces.size());
-    for (unsigned int i=0; i<spaces.size(); i++)
-      {
-        data[i] = spaces[i].ptr();
-      }
-    return rcp(new Thyra::ProductVectorSpace<Scalar>(data.size(), &(data[0])));
+    data[i] = spaces[i].ptr();
   }
+  return rcp(new Thyra::ProductVectorSpace<Scalar>(data.size(), &(data[0])));
+}
 
-  /** */
-  template <class Scalar>
-  Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
-  productSpace(VectorSpace<Scalar>& s1)
-  {
-    return productSpace(tuple(s1));
-  }
+template <class Scalar, int N>
+Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+productSpace(const Tuple<VectorSpace<Scalar> , N>& spaces)
+{return productSpace(Array<VectorSpace<Scalar> >(spaces));}
 
-  /** */
-  template <class Scalar>
-  Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
-  productSpace(VectorSpace<Scalar>& s1, 
-               VectorSpace<Scalar>& s2)
-  {
-    return productSpace(tuple(s1, s2));
-  }
 
-  /** */
-  template <class Scalar>
-  Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
-  productSpace(VectorSpace<Scalar>& s1,VectorSpace<Scalar>& s2,
-               VectorSpace<Scalar>& s3)
-  {
-    return productSpace(tuple(s1, s2, s3));
-  }
+/** */
+template <class Scalar>
+Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+productSpace(VectorSpace<Scalar>& s1)
+{
+  return productSpace(tuple(s1));
+}
+
+/** */
+template <class Scalar>
+Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+productSpace(VectorSpace<Scalar>& s1, 
+  VectorSpace<Scalar>& s2)
+{
+  return productSpace(tuple(s1, s2));
+}
+
+/** */
+template <class Scalar>
+Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+productSpace(VectorSpace<Scalar>& s1,VectorSpace<Scalar>& s2,
+  VectorSpace<Scalar>& s3)
+{
+  return productSpace(tuple(s1, s2, s3));
+}
 
   
   
