@@ -1,4 +1,5 @@
 syn case match
+syn keyword GoodWord transparent IETL
 syn keyword GoodWord transparent Phipps
 syn keyword GoodWord transparent Pawlowski
 syn keyword GoodWord transparent Roscoe
