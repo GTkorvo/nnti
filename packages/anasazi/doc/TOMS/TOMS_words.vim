@@ -50,3 +50,4 @@ syn keyword GoodWord transparent metasolver
 syn keyword GoodWord transparent creational
 syn keyword GoodWord transparent typename
 syn keyword GoodWord transparent checkpointing
+syn keyword GoodWord transparent multigrid
