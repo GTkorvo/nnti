@@ -348,26 +348,20 @@ We make the specific choice that these vectors are orthonormal with
 respect to the inner product induced by the Hermitian
 positive-definite matrix $\mathbf{M}$, but this is not a requirement.
 
-The block Davidson eigensolver as described above is useful for
-examining some of the functionality provided by 
-Anasazi. Algorithm~\ref{algo:blockdavid}
-highlights three levels of functionality. The first level is given
-by Steps 1-12 that constitute the eigensolver strategy to solve
-problem (\ref{eq:EigenproblemDefinitionDavidson}). 
-The second level is given by Steps 2-10 that form the eigen-iteration.
-Steps 3-9 and Step 11 are computational steps that encourage
-modularization and require several details in order to result 
-in a complete implementation.
-Step 3 requires a orthonormalization method. The decisions involved
-in Step 5 require a determination of the eigenvalues and invariant
-subspace of interest, as well as a definition of accuracy. To check
-convergence in Step 9, several criteria are possible. For instance,
-a norm induced by a matrix other than $\mathbf{M}$ may be employed.
-The restarting of this eigensolver (Step 11) can be performed in a
-variety of ways and therefore need not be tightly coupled to the
-eigensolver. Each of these mechanisms provide opportunity for
-decoupling functionality that need not be implemented in a specific
-manner.
+The block Davidson eigensolver as described above is useful for examining some of the
+functionality provided by Anasazi. Algorithm~\ref{algo:blockdavid} highlights three levels
+of functionality. The first level is given by Steps 1-12 that constitute the eigensolver
+strategy to solve problem (\ref{eq:EigenproblemDefinitionDavidson}). The second level is
+given by Steps 2-10 that form the eigen-iteration. The third level consists of
+computational steps that can be implemented in a variety of manners, so encouraging
+modularization. Step 3 requires a orthonormalization method. The decisions involved in
+Step 5 require a determination of the eigenvalues and invariant subspace of interest, as
+well as a definition of accuracy. To check convergence in Step 9, several criteria are
+possible. For instance, a norm induced by a matrix other than $\mathbf{M}$ may be
+employed. The restarting of this eigensolver (Step 11) can be performed in a variety of
+ways and therefore need not be tightly coupled to the eigensolver. Each of these
+mechanisms provide opportunity for decoupling functionality that need not be implemented
+in a specific manner.
 
 Anasazi also implements LOBPCG as described in~\cite{Hetmaniuk:2006:BSL} to solve
 (\ref{eq:EigenproblemDefinitionDavidson}).  For the more general eigenvalue problem given
@@ -1035,38 +1029,45 @@ by Anasazi.
 
 \subsubsection{\aspace{Anasazi::Eigenproblem}}
 
-Anasazi provides users with a concrete implementation of \aspace{Eigenproblem}, called
-\aspace{BasicEigenproblem}. This basic implementation provides all the functionality
-necessary to describe both generalized and standard, Hermitian and non-Hermitian linear
-eigenvalue problems. This implementation fully supports the definition of a
-preconditioner, for preconditioned eigensolvers, as well as the definition of a spectral
-transformation, for Krylov-based eigensolvers. 
+The \aspace{Eigenproblem} class describes an interface for encapsulating the information
+necessary to define an eigenvalue problem.  Anasazi provides users with a concrete
+implementation of \aspace{Eigenproblem}, called \aspace{BasicEigenproblem}. This basic
+implementation contains the matrices and functionality necessary to describe generalized
+and standard, Hermitian and non-Hermitian linear eigenvalue problems. A user may specify
+the $\mathbf{A}$ and $\mathbf{B}$ operators defining the eigenvalue problem, a
+preconditioner and a spectral transformation. The user also may specify the symmetry of
+the problem, as well as the number of eigenvalue that should be computed.
 
 \subsubsection{\aspace{Anasazi::Eigensolver}}
 
-Anasazi provides users with concrete implementations for the iterations associated with
-the following three methods:
+The \aspace{Eigensolver} class is intended to capture only the essential steps of an
+eigensolver iteration, capturing the second level of functionality discussed in
+Section~\ref{sec:algorithm-overview}. For example, the \aspace{BlockDavidson} class
+describes only Steps~2--11 of Algorithm~\ref{algo:blockdavid}.  Anasazi provides concrete
+implementations for the iterations associated with the following three methods:
 \begin{enumerate}
   \item a block extension of a Krylov-Schur method~\cite{stew:01},
   \item a block Davidson method as described in~\cite{Arbenz:2005:ACE},
   \item an implementation of LOBPCG as described in~\cite{Hetmaniuk:2006:BSL}.
 \end{enumerate}
-These implementations can be found in the \aspace{BlockKrylovSchur}, \aspace{BlockDavidson}, 
-and \aspace{LOBPCG} classes, respectively. Only the block Krylov-Schur method can be used
-for non-Hermitian generalized eigenvalue problems. In contrast, all three algorithms can 
-be used for symmetric positive semi-definite generalized eigenvalue problems. These
-implementations are intended to capture only the essential steps of an algorithm. For
-example, the \aspace{BlockDavidson} class encapsulates only Steps~3--8 of
-Algorithm~\ref{algo:blockdavid}.
+These implementations can be found in the \aspace{BlockKrylovSchur},
+\aspace{BlockDavidson}, and \aspace{LOBPCG} classes, respectively. Only the block
+Krylov-Schur method can be used for non-Hermitian generalized eigenvalue problems. In
+contrast, all three algorithms can be used for symmetric positive semi-definite
+generalized eigenvalue problems. 
+
 
 \subsubsection{\aspace{Anasazi::SolverManager}}
 
-Anasazi provides solver managers to implement a strategy for solving an eigenvalue problem
-using the iterations encapsulated in an \aspace{Eigensolver} object. As described in Section  
-\ref{subsec:anasazi:solver_framework}, such a strategy is
-implemented in the instantiation of constituent objects that are given to the underlying
-\aspace{Eigensolver} object, in addition to any additional functionality provided by the
-solver manager. The current solver manager are:
+Anasazi provides solver managers to implement a strategy for solving an eigenvalue
+problem. At the heart of each strategy is the iteration encapsulated in an
+\aspace{Eigensolver} object. Solver managers therefore fulfill the highest level of
+functionality involved in the solution of an eigenvalue problem. As described in
+Section~\ref{subsec:anasazi:solver_framework}, such a strategy is implemented in the
+instantiation of constituent objects that are to be passed to the underlying
+\aspace{Eigensolver} object. The strategy is also defined by any additional
+functionality provided by the solver manager (e.g., subspace restarting). The current
+solver managers are:
 \begin{itemize}
   \item \aspace{BlockKrylovSchurSolMgr} - a solver manager 
     that provides a restarting mechanism for the block Krylov-Schur iteration.
