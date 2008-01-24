@@ -354,7 +354,7 @@ of functionality. The first level is given by Steps 1-12 that constitute the eig
 strategy to solve problem (\ref{eq:EigenproblemDefinitionDavidson}). The second level is
 given by Steps 2-10 that form the eigen-iteration. The third level consists of
 computational steps that can be implemented in a variety of manners, so encouraging
-modularization. Step 3 requires a orthonormalization method. The decisions involved in
+modularization. Step 3 requires an orthonormalization method. The decisions involved in
 Step 5 require a determination of the eigenvalues and invariant subspace of interest, as
 well as a definition of accuracy. To check convergence in Step 9, several criteria are
 possible. For instance, a norm induced by a matrix other than $\mathbf{M}$ may be
@@ -364,12 +364,12 @@ mechanisms provide opportunity for decoupling functionality that need not be imp
 in a specific manner.
 
 Anasazi also implements LOBPCG as described in~\cite{Hetmaniuk:2006:BSL} to solve
-(\ref{eq:EigenproblemDefinitionDavidson}).  For the more general eigenvalue problem given
+(\ref{eq:EigenproblemDefinitionDavidson}). For the more general eigenvalue problem given
 by (\ref{eq:EigenproblemDefinition}), Anasazi implements a block Krylov-Schur [Stewart
-2001a] method. This method allows the use of a matrix operator $\mathbf{OP}$ for
-implementing a spectral transformation (e.g. shift-invert). We remark that a spectral
-transformation may be implemented in a number of ways, e.g., via a preconditioned
-iterative method; this decision resides with the user.
+2001a] method. This method allows the use of a linear operator implementing a spectral
+transformation (e.g., shift-invert). We remark that a spectral transformation may be
+implemented in a number of ways, e.g., via a preconditioned iterative method; this
+decision resides with the user.
 
 Given these observations, the components that are important
 to an eigensolver include:
@@ -378,7 +378,7 @@ to an eigensolver include:
         projection, right multiplication;
   \item operator-multivector applications:
         $\mathbf{A\,X}$, $\mathbf{M\,X}$, 
-        $\mathbf{OP\,X}$, $\mathbf{N\,R}$;
+        $\mathbf{N\,R}$;
   \item solution of typically much smaller dense eigenproblems;
   \item a sorting method (for the desired portion of the
   eigenvalues);
@@ -1042,8 +1042,10 @@ the problem, as well as the number of eigenvalue that should be computed.
 
 The \aspace{Eigensolver} class is intended to capture only the essential steps of an
 eigensolver iteration, capturing the second level of functionality discussed in
-Section~\ref{sec:algorithm-overview}. For example, the \aspace{BlockDavidson} class
-describes only Steps~2--11 of Algorithm~\ref{algo:blockdavid}.  Anasazi provides concrete
+Section~\ref{sec:algorithm-overview}. 
+For example, the \aspace{BlockDavidson} class
+describes only Steps~2--10 of Algorithm~\ref{algo:blockdavid}.  
+Anasazi provides concrete
 implementations for the iterations associated with the following three methods:
 \begin{enumerate}
   \item a block extension of a Krylov-Schur method~\cite{stew:01},
@@ -1051,10 +1053,12 @@ implementations for the iterations associated with the following three methods:
   \item an implementation of LOBPCG as described in~\cite{Hetmaniuk:2006:BSL}.
 \end{enumerate}
 These implementations can be found in the \aspace{BlockKrylovSchur},
-\aspace{BlockDavidson}, and \aspace{LOBPCG} classes, respectively. Only the block
-Krylov-Schur method can be used for non-Hermitian generalized eigenvalue problems. In
-contrast, all three algorithms can be used for symmetric positive semi-definite
-generalized eigenvalue problems. 
+\aspace{BlockDavidson}, and \aspace{LOBPCG} classes, respectively. We recall that the
+user must still specify the \aspace{SortManager}, \aspace{OutputManager},
+\aspace{StatusTest}, and \aspace{OrthoManager} objects, which are passed into the
+constructor of \aspace{Anasazi::Eigensolver}. Only the block Krylov-Schur method can be
+used for non-Hermitian generalized eigenvalue problems. In contrast, all three algorithms
+can be used for symmetric positive semi-definite generalized eigenvalue problems. 
 
 
 \subsubsection{\aspace{Anasazi::SolverManager}}
@@ -1062,24 +1066,32 @@ generalized eigenvalue problems.
 Anasazi provides solver managers to implement a strategy for solving an eigenvalue
 problem. At the heart of each strategy is the iteration encapsulated in an
 \aspace{Eigensolver} object. Solver managers therefore fulfill the highest level of
-functionality involved in the solution of an eigenvalue problem. As described in
-Section~\ref{subsec:anasazi:solver_framework}, such a strategy is implemented in the
-instantiation of constituent objects that are to be passed to the underlying
-\aspace{Eigensolver} object. The strategy is also defined by any additional
-functionality provided by the solver manager (e.g., subspace restarting). The current
-solver managers are:
+functionality involved in the solution of an eigenvalue problem. 
+For example, the \aspace{BlockDavidsonSolMgr} class describes
+Steps 1--12 of Algorithm 1. 
+
+As described in Section \ref{subsec:anasazi:solver_framework}, a solver manager
+instantiates an underlying \aspace{Eigen\-solver} object and all the components required
+to construct this \aspace{Eigen\-solver} object (\aspace{Sort\-Manager},
+\aspace{Output\-Manager}, \aspace{Status\-Test}, and \aspace{Ortho\-Manager} objects).
+The solver manager may also contain additional functionality.  For example, for the block
+Davidson algorithm, the outer loop and Step~11 of Algorithm~\ref{algo:blockdavid} are
+implemented in the \aspace{BlockDavidsonSolMgr} class.
+
+The current solver managers are:
 \begin{itemize}
-  \item \aspace{BlockKrylovSchurSolMgr} - a solver manager 
-    that provides a restarting mechanism for the block Krylov-Schur iteration.
-  When the block size is one, this Krylov-subspace method is mathematically equivalent to the
-  implicitly-restarted Arnoldi method in ARPACK. 
-  \item \aspace{BlockDavidsonSolMgr} - a solver manager that provides restarting and locking/deflating
-    mechanisms of converged eigenvectors (Step~11 of Algorithm~\ref{algo:blockdavid})
-    for the block Davidson iteration.
-  \item \aspace{LOBPCGSolMgr} - a solver manager 
-    that provides a lock/deflating mechanism of converged eigenvectors for the LOBPCG
-    iteration.
+\item
+\aspace{BlockKrylovSchurSolMgr} - a solver manager that implements the block Krylov-Schur
+algorithm with restarting.  When the block size is one, this Krylov-subspace method is
+mathematically equivalent to the implicitly-restarted Arnoldi method in ARPACK.
+\item
+\aspace{BlockDavidsonSolMgr} - a solver manager that implements the block Davidson
+algorithm with restarting and locking/deflating mechanisms of converged eigenvectors.
+\item
+\aspace{LOBPCGSolMgr} - a solver manager that implements the LOBPCG algorithm with a
+locking/deflating mechanism of converged eigenvectors.
 \end{itemize}
+
 
 \subsubsection{\aspace{Anasazi::StatusTest}}
 
@@ -1134,7 +1146,7 @@ Anasazi provides two concrete orthogonalization managers:
   classical Gram-Schmidt with a possible DGKS correction step~\cite{dgks:76};
 \item
   \aspace{SVQBOrthoManager} - performs orthogonalization using the
-  SVQB orthogonalization technique described by Stathapoulos and
+  SVQB orthogonalization technique described by Stathopoulos and
   Wu~\cite{Stathopoulos:2002:BOP}.
 \end{itemize}
 

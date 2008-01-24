@@ -1,4 +1,5 @@
 syn case match
+syn keyword GoodWord transparent Stathopoulos
 syn keyword GoodWord transparent IETL
 syn keyword GoodWord transparent Phipps
 syn keyword GoodWord transparent Pawlowski
@@ -30,7 +31,6 @@ syn keyword GoodWord transparent CloneCopy
 syn keyword GoodWord transparent PETSc
 syn keyword GoodWord transparent SLEPc
 syn keyword GoodWord transparent PRIMME
-syn keyword GoodWord transparent Stathapoulos
 syn keyword GoodWord transparent Lockheed
 syn keyword GoodWord transparent Thornquist
 syn keyword GoodWord transparent Hetmaniuk
