@@ -7,6 +7,7 @@ BIBTEX_COMMAND = bibtex
 
 SOURCEFILES= \
   $(BASE_NAME).tex \
+  guideline_defs.tex \
   CodingGuideLinesBody.tex \
   apdx_Summary.tex \
   apdx_MiscAmendments.tex \
