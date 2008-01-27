@@ -1,11 +1,14 @@
 
 BASE_NAME = ThyraCodingGuideLines
 LATEX_COMMAND = latex
+MAKEINDEX_COMMAND = makeindex
+MAKEGLOSSARY_COMMAND = makeglossary
 BIBTEX_COMMAND = bibtex
 
 SOURCEFILES= \
   $(BASE_NAME).tex \
   CodingGuideLinesBody.tex \
+  apdx_Summary.tex \
   apdx_MiscAmendments.tex \
   apdx_ArgumentsForConsistentStyle.tex \
   apdx_CodeReformattingGuidelines.tex \
@@ -33,10 +36,15 @@ clean:
 
 $(BASE_NAME).dvi: $(SOURCEFILES)
 	$(LATEX_COMMAND) $(BASE_NAME)
+	$(MAKEINDEX_COMMAND) $(BASE_NAME)
 	$(BIBTEX_COMMAND) $(BASE_NAME)
 	$(LATEX_COMMAND) $(BASE_NAME)
 	$(LATEX_COMMAND) $(BASE_NAME)
 	$(LATEX_COMMAND) $(BASE_NAME)
+
+#	$(MAKEINDEX_COMMAND) -s $(BASE_NAME).ist -t $(BASE_NAME).glg -o $(BASE_NAME).gls $(BASE_NAME).glo
+#	$(MAKEINDEX_COMMAND)  -t $(BASE_NAME).glg -o $(BASE_NAME).gls $(BASE_NAME).glo
+
 
 $(BASE_NAME).ps: $(BASE_NAME).dvi
 	dvips -t letter -o $(BASE_NAME).ps $(BASE_NAME)
