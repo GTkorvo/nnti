@@ -13,6 +13,8 @@ SOURCEFILES= \
   apdx_MiscAmendments.tex \
   apdx_ArgumentsForConsistentStyle.tex \
   apdx_CodeReformattingGuidelines.tex \
+  PassingValueObjects.tex \
+  PassingReferenceObjects.tex \
   references.bib
 
 #
