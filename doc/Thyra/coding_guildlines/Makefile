@@ -10,6 +10,7 @@ SOURCEFILES= \
   guideline_defs.tex \
   CodingGuideLinesBody.tex \
   apdx_Summary.tex \
+  apdx_CppCodingStandards.tex \
   apdx_MiscAmendments.tex \
   apdx_ArgumentsForConsistentStyle.tex \
   apdx_CodeReformattingGuidelines.tex \
