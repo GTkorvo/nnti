@@ -690,10 +690,6 @@ output is produced and formatted.
 
 \end{itemize}
 
-{}\item\GCGTemplateHeaders: ToDo: Merge this with the above item on layout of files
-for implicit and explicit template instantiation once we figure out how to do
-this with explicit and implicit instantiation ???
-
 {}\item\GCGStandardCppHeaders: Only include the C++ {}\texttt{<cX>} versions of the
 standard C {}\texttt{<X.h>} headers.  For example, include {}\texttt{<cmath>},
 {}\texttt{<cstdlib>}, and {}\texttt{<cassert>} instead of {}\texttt{<math.h>},
@@ -708,6 +704,10 @@ versions of the standard C headers.
 clarification of Item 59 in {}\cite{C++CodingStandards05} dealing with the
 issue of {}\texttt{using} declarations and directives.
 
+{}\item\GCGTemplateHeaders: ToDo: Merge this with the above item on layout of files
+for implicit and explicit template instantiation once we figure out how to do
+this with explicit and implicit instantiation ???
+
 
 \end{enumerate}
 
@@ -715,74 +715,6 @@ issue of {}\texttt{using} declarations and directives.
 \subsection{Specification of formal arguments for C++ functions}
 \label{sec:func_arguments}
 %
-
-Here we describe a convention for the specification of the formal arguments
-for C++ functions that leads to C++ code that maximizes compile-time and
-run-time checking, yields near optimal performance, and is highly self
-documenting.  A key component to this specification is that no raw C++
-pointers are used.  Raw pointers are the cause of almost all memory usage
-problems in C++.  Raw C++ references, on the other hand, are safe to use as
-long as the object reference they are being used to point to is valid and no
-persisting association exists.  All of these classes perform runtime checks of
-correct memory usage when enabled at configure time (i.e., using
-{}\texttt{--enable-teuchos-debug} with {}\texttt{configure}).  In optimized
-builds, however, these classes perform no debug checking and yield the same
-performance achieved using raw C++ pointers.  The classes {}\texttt{RCP} and
-{}\texttt{ArrayRCP} always implement reference counting in optimized and debug
-builds and therefore impart necessary extra overhead that never goes away
-(unless you don't use them).  The other classes {}\texttt{Ptr} and
-{}\texttt{ArrayView} do not use any reference counting in an optimized build
-and therefore really do result in little to no overhead in an optimized build.
-
-Tables {}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type}
-give conventions for passing single objects and arrays of objects for
-value-type {}\index{Types!Value Type} and reference-type
-{}\index{Types!Reference Type} objects, respectively.  In this specification,
-the classes {}\texttt{Teuchos\-::Ptr}, {}\texttt{Teuchos\-::RCP},
-{}\texttt{Teuchos\-::ArrayRCP}, and {}\texttt{Teuchos\-::ArrayView} are used
-as a means to pass objects of another type (shown as {}\texttt{S} and
-{}\texttt{A} in Tables {}\ref{fig:func_args_value_type} and
-{}\ref{fig:func_args_ref_type}).  This specification addresses the four
-different properties that must be considered when passing an object to a
-function: 1) does the object use value semantics or reference semantics, 2) is
-the object changeable (const) or changeable (nonconst), 3) is this
-establishing a persisting or non-persisting association, and 4) is the object
-optional or required.  All of these properties are directly expressed in the
-C++ code in all cases shown in Tables {}\ref{fig:func_args_value_type} and
-{}\ref{fig:func_args_ref_type} except for whether an argument or object is
-required or optional and therefore must be documented in the function's
-interface specification (i.e.\ in a doxygen documentation {}\texttt{param}
-field).  Here we state that by default, an argument will be assumed to be
-required unless otherwise stated.  The only exception for this implicit
-assumption for non-null objects is {}\texttt{const Ptr<const T>\&} for single,
-non-changeable, non-persisting, objects where these always mean that the
-argument is optional.
-
-Note that an array of value objects just stores the objects themselves and
-passes them through an {}\texttt{ArrayView<S>} or {}\texttt{ArrayView<const
-S>} object.  An array of reference objects, however, can not directly store
-the objects themselves and instead must store an array to (smart) pointers to
-the objects using {}\texttt{ArrayView<const Ptr<const A> >\&} for
-non-persisting associations or {}\texttt{ArrayView<const RCP<const A> >\&} for
-persisting associations.  The {}\texttt{const} can be removed from the either
-{}\texttt{Ptr}/{}\texttt{RCP} or {}\texttt{A} depending on what is allowed to
-change or not change during the function call.
-
-Note that in the case of {}\texttt{RCP} and {}\texttt{ArrayRCP}, that these
-can be treaded as output objects in their own right.  For example, passing an
-{}\texttt{RCP<T>} object into a function to be set to point to a different
-{}\texttt{A} object would be specified in the function prototype as
-{}\texttt{const Ptr<RCP<T> >\&} or {}\texttt{RCP<T>\&} depending on
-preference.  Note that it never makes sense for {}\texttt{Ptr} or
-{}\texttt{ArrayView} to be set in this way since such a function call would
-almost always be establishing a persisting association with the embedded
-objects and therefore would require using {}\texttt{RCP} or
-{}\texttt{ArrayRCP}.
-
-{}\textbf{ToDo:} Describe why using the Ptr class for single, changeable,
-required, non-persisting objects makes sense (cite references on this).
-
-{}\textbf{ToDo:} Describe now the Array class can be used.
 
 
 \begin{table}[p]
@@ -829,6 +761,146 @@ words, documentation must be added to state that an argument is optional; the
 default is that the argument is required.}
 %} % end fbox
 \end{table}
+
+
+Here we describe a convention for the specification of the formal arguments
+for C++ functions that that maximizes compile-time and run-time checking,
+yields near optimal performance, and is highly self documenting.  A key
+component to this specification is that no raw C++ pointers are used.  Raw
+pointers are the cause of almost all memory usage problems in C++.  Raw C++
+references, on the other hand, are safe to use as long as the object reference
+they are being used to point to is valid and no persisting association exists.
+All of these classes perform runtime checks of correct memory usage when debug
+checking is enabled at configure time (i.e., using
+{}\texttt{--enable-teuchos-debug} with {}\texttt{configure}).  However, in
+optimized builds these classes perform no debug checking at all and yield the
+same performance achieved using raw C++ pointers.  The classes {}\texttt{RCP}
+and {}\texttt{ArrayRCP} always implement reference counting in optimized and
+debug builds and therefore impart necessary extra overhead that never goes
+away (unless you don't use them).  The other classes {}\texttt{Ptr} and
+{}\texttt{ArrayView} do not use any reference counting in an optimized build
+and therefore impart little extra overhead.
+
+Tables {}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type}
+give conventions for passing single objects and arrays of objects for
+value-type {}\index{Types!Value Type} and reference-type
+{}\index{Types!Reference Type} objects, respectively.  In this specification,
+the classes {}\texttt{Teuchos\-::Ptr}, {}\texttt{Teuchos\-::RCP},
+{}\texttt{Teuchos\-::ArrayRCP}, and {}\texttt{Teuchos\-::ArrayView} are used
+as a means to pass objects of another type (shown as {}\texttt{S} and
+{}\texttt{A} in Tables {}\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}).  This specification addresses the four
+different properties that must be considered when passing an object to a
+function:
+
+\begin{enumerate}
+
+{}\item Does the object use value semantics or reference semantics?
+
+{}\item Is the object changeable or non-changeable (i.e.\ const)?
+
+{}\item Is this establishing a persisting or non-persisting association?
+
+{}\item Is the object optional or required?
+
+\end{enumerate}
+
+The first three of these properties are directly expressed in the C++ code in
+all cases shown in Tables {}\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}.  The specification for whether an argument or
+object is required or optional must be documented in the function's interface
+specification (i.e.\ in a doxygen documentation {}\texttt{param} field).  Here
+we state that, by default, an argument will be assumed to be required unless
+otherwise stated.  The only exception for this implicit assumption for
+non-null objects is {}\texttt{const Ptr<const T>\&} for single,
+non-changeable, non-persisting, objects where these always mean that the
+argument is optional.  If such an argument is required, it is specified as
+{}\texttt{const T\&}.
+
+An array of value objects is just passed as contiguous storage for the objects
+themselves and passes them through an {}\texttt{ArrayView<S>} or
+{}\texttt{ArrayView<const S>} object.  An array of reference objects, however,
+can not be passed in contiguous storage for the objects themselves and instead
+must be passed as contiguous storage of (smart) pointers to the objects using
+{}\texttt{ArrayView<const Ptr<const A> >\&} for non-persisting associations or
+{}\texttt{ArrayView<const RCP<const A> >\&} for persisting associations.  The
+{}\texttt{const} can be removed from the either {}\texttt{Ptr}/{}\texttt{RCP}
+or {}\texttt{A} depending on what is allowed to change or not change during
+the function call.
+
+Note that in the case of {}\texttt{RCP} and {}\texttt{ArrayRCP} objects, that
+these can be treaded as output objects in their own right.  For example,
+passing an {}\texttt{RCP<T>} object into a function to be set to point to a
+different {}\texttt{A} object would be specified in the function prototype as
+{}\texttt{const Ptr<RCP<T> >\&} or {}\texttt{RCP<T>\&} depending on
+preference.  Note that it never makes sense for {}\texttt{Ptr} or
+{}\texttt{ArrayView} to be set in this way since such a function call would
+almost always be establishing a persisting association with the embedded
+objects and therefore would require (according to the standards established
+here) using an {}\texttt{RCP} or {}\texttt{ArrayRCP} object.
+
+
+%
+\subsubsection{Variations in passing single changeable objects}
+%
+
+The only area of contention in this specification is how to handle single
+required changeable arguments.  The specification described here allows either
+passing them as a pointer {}\texttt{const Ptr<T>\&} or as a raw non-const
+object reference {}\texttt{T\&}.  In Item 25 in {}\cite{C++CodingStandards05},
+the authors recommend passing a raw non-const object reference {}\texttt{T\&}
+for changeable required objects, which seems very reasonable.  However, other
+notable authors {}\cite[Section ???]{stroustrup97} and {}\cite[Section
+???]{CodeComplete2nd04} recommend passing a pointer instead, as it provides a
+visual clue that the object is being modified in the function call.  Of
+course, our specification does not allow raw pointers so we pass a
+{}\texttt{const Ptr<T>\&} object instead.  To consider the issues, for
+example, from looking at the following function call which (if any)
+argument(s) is being modified?
+
+{\small\begin{verbatim}
+  someFunction(a,b,c,d);
+\end{verbatim}}
+
+To tell for sure, one would have to look at the function proptoype:
+
+{\small\begin{verbatim}
+  void someFunction(const A& a, const B& b, const C& c, D& d);
+\end{verbatim}}
+
+to see that it is the {}\texttt{d} argument is being modified in the function
+call.
+
+Now consider the convention that all changeable arguments be passed in through
+a pointer as {}\texttt{const Ptr<T>\&}, giving the new prototype:
+
+{\small\begin{verbatim}
+  void someFunction(const A& a, const B& b, const C& c,
+    const Ptr<D>& d );
+\end{verbatim}}
+
+Now the function call looks like:
+
+{\small\begin{verbatim}
+  someFunction(a,b,c,outArg(d));
+\end{verbatim}}
+
+where {}\texttt{outArg(...)} is a templated non-member function that returns a
+{}\texttt{Ptr<T>} object given a raw reference {}\texttt{T\&}.  Now the client
+function call itself is self documenting.  Also, given that this specification
+states that all {}\texttt{Ptr<T>} arguments are required to be non-null by
+default, this specifies that passing an argument as {}\texttt{const Ptr<T>\&}
+has all of the same meaning by default that passing {}\texttt{T\&} does.  Of
+course now we have given up a compile-time check for a non-null argument for
+{}\texttt{T\&} with a debug-only runtime check that {}\texttt{const Ptr<T>\&}
+is non-null.
+
+
+%
+\subsubsection{Relationship between different array classes}
+%
+
+{}\textbf{ToDo:} Describe now the Array class can be used.
 
 
 %
