@@ -532,6 +532,26 @@ uses a simplified data-structure with fully checking of access and iterators.
 This class uses {}\texttt{Teuchos\-::Array}, {}\texttt{Teuchos::List} and
 others to build a fully checked (but slower) implementation.
 
+{}\item\GCGPostponeRawPointers: When raw C++ pointers must be exposed to
+communicate with other code that uses raw C++ pointers, encapsulate the raw
+C++ pointer as fast as possible and then only give up a raw pointer at the
+last possible moment.  For example, 
+
+{\small\begin{verbatim}
+  SomeForeignClass* get_raw_foreign_obj_ptr();
+  do_some_foreign_stuff(SomeForeignClass* foreign_obj_ptr);
+
+  void foo() {
+    // Get the raw pointer into a proper encapsulated class object right away!
+    Ptr<SomeForeignClass> foreignObj(get_raw_foreign_obj_ptr());
+
+    // Lots of code ...
+
+    // Only expose the raw pointer directly in the foreign function call! 
+    do_some_foreign_stuff(&*foreignObj);
+  }
+\end{verbatim}}
+
 \end{itemize}
 
 
@@ -702,6 +722,57 @@ the meaning is much more clear.  Therefore, when self documentation and
 compile-time safety are important, perfer to define and use {}\texttt{enum}s
 over {}\texttt{bool}s as formal function arguments (see {}\cite[Section
 12.6]{CodeComplete2nd04}).
+
+{}\item\GCGAvoidSmartPtrFuncOverloads: Overloading functions on different
+smart pointer types, such as {}\texttt{RCP} or {}\texttt{Ptr} can create
+ambugous function calls that will not happen when using raw C++ pointers or
+references.
+
+{}\textit{Justification}: Cconsider the following overloaded funcitons:
+
+{\small\begin{verbatim}
+  void foo9(const RCP<A> &a);
+  void foo9(const RCP<const A> &a);
+\end{verbatim}}
+
+Now, suppose class {}\texttt{C} is derived from class {}\texttt{A}.  The code
+fragment:
+
+{\small\begin{verbatim}
+  RCP<C> c(new C);
+  RCP<A> a = c;
+  foo9(a); // Okay!
+\end{verbatim}}
+
+succeeds in calling the first {}\texttt{foo9(...)} function because it is an
+exact match.  However, the code fragment:
+
+{\small\begin{verbatim}
+  RCP<C> c(new C);
+  foo9(c); // Error!
+\end{verbatim}}
+
+fails to compile because the call is ambiguous.  When using raw C++ pointers,
+the call would not be ambiguous and would also call the non-const
+{}\texttt{foo9(...)} function because the C++ compiler knows that a conversion
+from derived to base type is to be preferred over an additional conversion
+from non-const to const.  This is one example where smart pointers are put at
+a disadvantage over raw C++ pointers.  Therefore, never overload C++ functions
+on different RCP argument types.  Instead, name multiple functions such as:
+
+{\small\begin{verbatim}
+  void nonconstFoo9(const RCP<A> &a);
+  void foo9(const RCP<const A> &a);
+\end{verbatim}}
+
+With non-overloaded functions, the following code fragement compiles just
+fine:
+
+{\small\begin{verbatim}
+  RCP<C> c(new C);
+  nonconstFoo9(c);  // Okay!
+  foo9(c);          // Okay!
+\end{verbatim}}
 
 {}\item\GCGTeuchosParamterListAcceptor: The {}\texttt{Teuchos\-::Parameter\-List}
 class provides many useful features that make it easy to accept user options
