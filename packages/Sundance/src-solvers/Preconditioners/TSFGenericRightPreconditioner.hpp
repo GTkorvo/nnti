@@ -24,7 +24,7 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
-/* @HEADER@ */
+ /* @HEADER@ */
 
 #ifndef TSFGENERICRIGHTPRECONDITIONER_HPP
 #define TSFGENERICRIGHTPRECONDITIONER_HPP
@@ -37,49 +37,51 @@
 
 namespace TSFExtended
 {
-  using namespace Teuchos;
+using namespace Teuchos;
 
-  /**
-   * A one-size-fits-most right preconditioner that can be constructed by
-   * accepting an operator for the right op of the preconditioner. 
-   */
-  template <class Scalar>
-  class GenericRightPreconditioner : public PreconditionerBase<Scalar>
-  {
-  public:
-    /** construct with an operator for the right preconditioner */
-    GenericRightPreconditioner(const LinearOperator<Scalar>& right) 
+/**
+ * A one-size-fits-most right preconditioner that can be constructed by
+ * accepting an operator for the right op of the preconditioner. 
+ */
+template <class Scalar>
+class GenericRightPreconditioner : public PreconditionerBase<Scalar>
+{
+public:
+  /** construct with an operator for the right preconditioner */
+  GenericRightPreconditioner(const LinearOperator<Scalar>& right) 
     : PreconditionerBase<Scalar>(), right_(right) {;}
 
-    /** virtual dtor */
-    virtual ~GenericRightPreconditioner(){;}
+  /** virtual dtor */
+  virtual ~GenericRightPreconditioner(){;}
 
     
-    /** Return the right operator */
-    virtual LinearOperator<Scalar> right() const {return right_;}
+  /** Return the right operator */
+  virtual LinearOperator<Scalar> right() const {return right_;}
 
-    /** A call to left() results in an error for a right precond. */
-    virtual LinearOperator<Scalar> left() const
+  /** A call to left() results in an error for a right precond. */
+  virtual LinearOperator<Scalar> left() const
     {
       TEST_FOR_EXCEPTION(true, logic_error, "left() called for a "
-                         "preconditioner known to be a right precond");
+        "preconditioner known to be a right precond");
       return LinearOperator<Scalar>();
     }
 
-    /** return true because 
-     * this preconditioner has a nontrivial right component. */
-    virtual bool hasRight() const {return true;}
+  /** return true because 
+   * this preconditioner has a nontrivial right component. */
+  virtual bool hasRight() const {return true;}
 
-    /** return false, because this preconditioner has
-     * no nontrivial left component */
-    virtual bool hasLeft() const {return false;}
+  /** return false, because this preconditioner has
+   * no nontrivial left component */
+  virtual bool hasLeft() const {return false;}
 
-    /* Handleable boilerplate */
-    GET_RCP(PreconditionerBase<Scalar>);
+  /* Handleable boilerplate */
+  GET_RCP(PreconditionerBase<Scalar>);
 
-  private:
-    LinearOperator<Scalar> right_;
-  };
+private:
+  LinearOperator<Scalar> right_;
+};
+
+
 
 }
 

@@ -24,7 +24,7 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
-/* @HEADER@ */
+ /* @HEADER@ */
 
 #ifndef TSFPRECONDITIONERFACTORYBASE_HPP
 #define TSFPRECONDITIONERFACTORYBASE_HPP
@@ -38,28 +38,28 @@
 
 namespace TSFExtended
 {
-  using namespace Teuchos;
+using namespace Teuchos;
 
-  /**
-   * Base class for preconditioner factories. 
-   */
-  template <class Scalar>
-  class PreconditionerFactoryBase 
-    : public Handleable<PreconditionerFactoryBase<Scalar> >
-  {
-  public:
-    /** empty ctor */
-    PreconditionerFactoryBase() {;}
+/**
+ * Base class for preconditioner factories. 
+ */
+template <class Scalar>
+class PreconditionerFactoryBase 
+  : public Handleable<PreconditionerFactoryBase<Scalar> >
+{
+public:
+  /** empty ctor */
+  PreconditionerFactoryBase() {;}
 
-    /** virtual dtor */
-    virtual ~PreconditionerFactoryBase(){;}
+  /** virtual dtor */
+  virtual ~PreconditionerFactoryBase(){;}
 
     
-    /** */
-    virtual Preconditioner<Scalar> createPreconditioner(const LinearOperator<Scalar>& A) const = 0 ;
+  /** */
+  virtual Preconditioner<Scalar> createPreconditioner(const LinearOperator<Scalar>& A) const = 0 ;
 
-  private:
-  };
+private:
+};
 
 }
 
