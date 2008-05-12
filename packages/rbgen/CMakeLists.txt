@@ -1,3 +1,5 @@
+# $Header$
+
 PROJECT(RBGen)
 
 SET(${PROJECT_NAME}_VERSION "0.1d")

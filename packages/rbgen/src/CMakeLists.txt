@@ -1,3 +1,4 @@
+# $Header$ 
 
 CONFIGURE_FILE(${RBGen_SOURCE_DIR}/cmake/${PROJECT_NAME}_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h)
 INSTALL(
