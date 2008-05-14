@@ -411,20 +411,36 @@ functions for $\Lambda$ by forcing $\Lambda$ to satisfy the differential
 equation
 %
 \begin{equation}
-- \frac{d}{dt}\left( \Lambda^T \Jac{f}{\dot{x}} \right)
-+  \Lambda^T \Jac{f}{x} = - \Jac{g}{x}, \; t \in \left[ t_0, t_f \right].
+\frac{d}{dt}\left( \Lambda^T \Jac{f}{\dot{x}} \right)
+-  \Lambda^T \Jac{f}{x} = - \Jac{g}{x}, \; t \in \left[ t_0, t_f \right].
 \label{eqn:sens:adj-trans}
 \end{equation}
 %
 All that we have done in (\ref{eqn:sens:adj-trans}) is to make what appears to
 be an arbitrary choice to help narrow the weighting function $\Lambda$ from
-the infinite set of possible choices.  It will be clear below why this choice
+the infinite set of possible choices.  It will be clear later why this choice
 is a convenient one.  Note that the choice in (\ref{eqn:sens:adj-trans}) does
 not in and of itself uniquely determine $\Lambda$ since boundary conditions
 have yet to be specified.  It will be shown later that the choice of boundary
 condition is arbitrary but when we move toward the end of the derivation, a
-natural choice for a boundary condition that uniquely specifies $\Lambda$ will
-be obvious.
+natural and very convenient choice for a boundary condition that uniquely
+specifies $\Lambda$ will be obvious.
+
+{}\noindent\textit{Side Note:} What is critical about the choice for the
+adjoint equation in (\ref{eqn:sens:adj-trans}) is that the derivative
+$\jac{g}{x}$ appear on the RHS.  What is largely arbitrary, however is the
+sign of the given to $\jac{g}{x}$ which of course defines the sign for the
+adjoint variables $\Lambda$.  The Petzold papers (e.g.\
+{}\cite{adjoint-sens-2003}) and the IDAS code {}\cite{sundials} use the sign
+for the adjoint given in (\ref{eqn:sens:adj-trans}).  However, the CVODES code
+{}\cite{cvodes,sundials} uses the opposite sign for $\jac{g}{x}$ in the RHS
+and therefore gives the opposite sign for the adjoint solution $\Lambda$.
+With respect the the computation of the reduced response derivative, the
+choice for the sign of $\Lambda$ is arbitrary.  However, if one is going to
+directly interpret the adjoint solution $\Lambda$ as we do in Section
+{}\ref{sec:adjoint-interpretation}, then the sign of the adjoint becomes very
+important and it is critical that the user of any adjoint code know the
+significance of the sign of the adjoint and understand its meaning.
 
 The derivation continues by substituting
 (\ref{eqn:sens:adj-trans}) into
@@ -432,8 +448,9 @@ The derivation continues by substituting
 %
 \begin{eqnarray}
 \int_{t_0}^{t_f} \left( \Jac{g}{x} \Jac{x}{p} \right) dt
-& = &  \int_{t_0}^{t_f} \left( \Lambda^T \Jac{f}{p} \right) dt
-+ \left. \left( \Lambda^T \Jac{f}{\dot{x}} \Jac{x}{p} \right) \right|^{t_f}_{t_0}.
+& = & 
+- \int_{t_0}^{t_f} \left( \Lambda^T \Jac{f}{p} \right) dt
+- \left. \left( \Lambda^T \Jac{f}{\dot{x}} \Jac{x}{p} \right) \right|^{t_f}_{t_0}.
 \label{eqn:sens:weak-forward-f-3}
 \end{eqnarray}
 
@@ -444,13 +461,14 @@ and rearranging gives
 %
 \begin{eqnarray}
 \Jac{\hat{d}}{p} 
-& = & \int_{t_0}^{t_f} \left( \Lambda^T \Jac{f}{p} + \Jac{g}{p} \right) dt
-  + \left. \left( \Jac{h}{p} \right) \right|_{t=t_f}
-  - \left. \left( \Lambda^T \Jac{f}{\dot{x}} \Jac{x}{p} \right) \right|_{t=t_0}
+& = &
+\int_{t_0}^{t_f} \left(\Jac{g}{p} -  \Lambda^T \Jac{f}{p} \right) dt
++ \left. \left( \Jac{h}{p} \right) \right|_{t=t_f}
++ \left. \left( \Lambda^T \Jac{f}{\dot{x}} \Jac{x}{p} \right) \right|_{t=t_0}
 \nonumber \\
-& & + \left. \left[ \left(
-    \Lambda^T \Jac{f}{\dot{x}}
-    +  \Jac{h}{x}
+& &
++ \left. \left[ \left(
+    \Jac{h}{x} - \Lambda^T \Jac{f}{\dot{x}}
   \right)  \Jac{x}{p} \right] \right|_{t=t_f}.
 \label{eqn:sens:d_d_hat_d_p-3}
 \end{eqnarray}
@@ -560,21 +578,21 @@ picking just any final condition, selecting the final condition
 %
 \begin{equation}
 \left. \left(
-  \Lambda^T \Jac{f}{\dot{x}}
-  +  \Jac{h}{x}
+  \Jac{h}{x} - \Lambda^T \Jac{f}{\dot{x}}
 \right) \right|_{t=t_f}
  = 0,
 \label{eqn:sens:adj-trans:fc}
 \end{equation}
 %
 is rather convenient since it zeros out the last term in
-(\ref{eqn:sens:d_d_hat_d_p-3}).  This specification of the final condition
-closes the adjoint equation and uniquely defines the adjoint $\Lambda$ in all
-of the cases of state DAEs what we will consider here\footnote{A uniquely
-defined adjoint $\Lambda$ requires that certain regularity conditions are
-satisfied by the state DAE (see {}\cite{adjoint-sens-2003}) but for the
-purposes of this derivation we assume that such a condition is always
-satisfied.}.
+(\ref{eqn:sens:d_d_hat_d_p-3}) and allows us to avoid the computation of
+$\jac{x}{p}$ at $t=t_f$ which we do not readly have with an adjoint method.
+This specification of the final condition closes the adjoint equation and
+uniquely defines the adjoint $\Lambda$ in all of the cases of state DAEs what
+we will consider here\footnote{A uniquely defined adjoint $\Lambda$ requires
+that certain regularity conditions are satisfied by the state DAE (see
+{}\cite{adjoint-sens-2003}) but for the purposes of this derivation we assume
+that such a condition is always satisfied.}.
 
 Finally, substituting (\ref{eqn:sens:adj-trans:fc}) and
 $\jac{x_0}{p}$ for $\jac{x}{p}$ at $t=t_0$ in
@@ -585,10 +603,10 @@ reduced derivative
 \Jac{\hat{d}}{p} =
 \int_{t_0}^{t_f} \left(
     \Jac{g}{p}
-    + \Lambda^T \Jac{f}{p}
+    - \Lambda^T \Jac{f}{p}
   \right) dt
   + \left. \left( \Jac{h}{p} \right) \right|_{t=t_f}
-  - \left. \left( \Lambda^T \Jac{f}{\dot{x}} \Jac{x_0}{p} \right) \right|_{t=t_0}.
+  + \left. \left( \Lambda^T \Jac{f}{\dot{x}} \right) \right|_{t=t_0} \Jac{x_0}{p}.
 \label{eqn:sens:d_d_hat_d_p_final}
 \end{equation}
 
@@ -688,8 +706,9 @@ Substituting the choice for the adjoint equation
 %
 \begin{eqnarray}
 \int_{t_0}^{t_f} \left( \Jac{g}{x} \Jac{x}{v} \delta v \right) dt
-& = &  \int_{t_0}^{t_f} \left( \Lambda^T \Jac{f}{v} \delta v \right) dt
-+ \left. \left( \Lambda^T \Jac{f}{\dot{x}} \Jac{x}{v} \delta v \right) \right|^{t_f}_{t_0}.
+& = &
+- \int_{t_0}^{t_f} \left( \Lambda^T \Jac{f}{v} \delta v \right) dt
+- \left. \left( \Lambda^T \Jac{f}{\dot{x}} \Jac{x}{v} \delta v \right) \right|^{t_f}_{t_0}.
 \label{eqn:sens:weak-forward-f-v-3}
 \end{eqnarray}
 %
@@ -699,23 +718,25 @@ yields
 %
 \begin{eqnarray}
 \Jac{\hat{d}}{v} \delta v 
-& = & \int_{t_0}^{t_f} \left( \Lambda^T \Jac{f}{v} + \Jac{g}{v} \right) \delta v dt
-  - \left. \left( \Lambda^T \Jac{f}{\dot{x}} \Jac{x}{v} \delta v \right) \right|_{t=t_0}
+& = &
+\int_{t_0}^{t_f} \left( \Jac{g}{v} -  \Lambda^T \Jac{f}{v} \right) \delta v dt
++ \left. \left( \Lambda^T \Jac{f}{\dot{x}} \Jac{x}{v} \delta v \right) \right|_{t=t_0}
 \nonumber \\
-& & + \left. \left[ \left(
-    \Lambda^T \Jac{f}{\dot{x}} +  \Jac{h}{x}
+& &
++ \left. \left[ \left(
+    \Jac{h}{x} - \Lambda^T \Jac{f}{\dot{x}}
   \right)  \Jac{x}{v} \delta v \right] \right|_{t=t_f}.
 \label{eqn:sens:d_d_hat_d_v_delta_v-3}
 \end{eqnarray}
 %
-Using the choice for the final condition in
-(\ref{eqn:sens:adj-trans:fc}) and noting that
-$\left.(\jac{x}{v})\delta v\right|_{t=t_0} = 0$, then
-(\ref{eqn:sens:d_d_hat_d_v_delta_v-3}) reduces to
+Using the choice for the final condition in (\ref{eqn:sens:adj-trans:fc}) and
+noting that $\left.(\jac{x}{v})\delta v\right|_{t=t_0} = 0$ (since $v$ can not
+affect $x$ at $t=t_0$ because $v$ only appears in the DAE RHS, not the initial
+condition), then (\ref{eqn:sens:d_d_hat_d_v_delta_v-3}) reduces to
 %
 \begin{equation}
 \Jac{\hat{d}}{v} \delta v 
- = \int_{t_0}^{t_f} \left( \Lambda^T \Jac{f}{v} + \Jac{g}{v} \right) \delta v dt.
+ = \int_{t_0}^{t_f} \left( \Jac{g}{v} - \Lambda^T \Jac{f}{v} \right) \delta v dt.
 \label{eqn:sens:d_d_hat_d_v_delta_v-final}
 \end{equation}
 
@@ -723,13 +744,17 @@ Finally, by comparing (\ref{eqn:sens:d_d_hat_d_v_delta_v-final})
 with (\ref{eqn:sens:d_d_hat_d_v_delta_v}) it is clear that
 %
 \begin{equation}
-\Jac{\hat{d}}{v(t)} = \Lambda(t)^T \Jac{f}{v(t)} + \Jac{g}{v(t)}, \; t\in[t_0,t_f]
+\Jac{\hat{d}}{v(t)} = \Jac{g}{v(t)} - \Lambda(t)^T \Jac{f}{v(t)}, \; t\in[t_0,t_f]
 \label{eqn:sens:d_d_hat_d_v_t-final}
 \end{equation}
 %
 is the reduced derivative object that we are seeking.
 
+
+%
 \section{Significance and interpretation of the adjoint}
+\label{sec:adjoint-interpretation}
+%
 
 In this section we consider another reason for choosing
 (\ref{eqn:sens:adj-trans:fc}) as the final condition to close the
@@ -738,7 +763,7 @@ final condition makes the adjoint variables $\Lambda$ become the first-order
 sensitivity of the auxiliary response function $d(x)$ with respect the
 perturbations in the constraints through the state solution.  This is easy to
 see by simply considering the case where $g(x,v,t) = g(x)$, $h(x) = h(x)$, and
-$f(\dot{x},x,v,t) = f(\dot{x},x,t) + v$ which, when substituted into
+$f(\dot{x},x,v,t) = f(\dot{x},x,t) - v$ which, when substituted into
 (\ref{eqn:sens:d_d_hat_d_v_t-final}), gives
 %
 \begin{equation}
@@ -746,7 +771,8 @@ $f(\dot{x},x,v,t) = f(\dot{x},x,t) + v$ which, when substituted into
 \label{eqn:sens:adjoint_interpretation}
 \end{equation}
 %
-where $v(t)\in\mathcal{F}$ are the perturbations in the state constraints.
+where $v(t)\in\mathcal{F}$ are the perturbations in the state constraints
+$f(\dot{x},x,t)$.
 
 The knowledge that this selection for the adjoint $\Lambda$ is the sensitivity
 of a functional of interest $d(x)$ with respect to the changes in the
@@ -755,6 +781,16 @@ the adjoint is useful in more contexts other than just computing reduced
 derivatives.  Examples of other areas where adjoints are useful are
 sensitivity analysis and error estimation
 {}\cite{SensitivityTechnologiesSandReport}
+
+Note that the sign given the adjoint in the choice for the adjoint equation
+(\ref{eqn:sens:adj-trans}) determines the interpretation for the adjoint in
+this analysis.  If the opposite sign for the adjoint would have been chosen,
+then we must interpret the perturbation to the state equation as
+$f(\dot{x},x,v,t) = f(\dot{x},x,t) + v$.  The only issue here is whether
+adding a constant to a state equation will increase or decrease the reduced
+response function $\hat{d}(p)$.  However, since most people just look at the
+magnitude of this sensitivity inherent in the adjoint, the sign of the adjoint
+again becomes unimportant.
 
 
 %
@@ -768,12 +804,12 @@ standard column-wise multi-vector form for $\Lambda$ which yields the adjoint
 DAE equations
 %
 \begin{eqnarray}
-- \frac{d}{dt}\left( \Jac{f}{\dot{x}}^T \Lambda \right)
-+  \Jac{f}{x}^T \Lambda + \Jac{g}{x}^T
+\frac{d}{dt}\left( \Jac{f}{\dot{x}}^T \Lambda \right)
+- \Jac{f}{x}^T \Lambda + \Jac{g}{x}^T
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{eqn:sens:adj} \\
 \left.\left( \Jac{f}{\dot{x}}^T \Lambda \right)\right|_{t=t_f}
-& = & - \left. \Jac{h}{x}^T \right|_{x=x(t_f)},
+& = & \left. \Jac{h}{x}^T \right|_{x=x(t_f)},
 \label{eqn:sens:adj:fc}
 \end{eqnarray}
 %
@@ -782,18 +818,17 @@ and the reduced gradient expressions
 \begin{equation}
 \Jac{\hat{d}}{p}^T =
 \int_{t_0}^{t_f} \left(
-    \Jac{g}{p}^T
-    + \Jac{f}{p}^T \Lambda
+    \Jac{g}{p}^T - \Jac{f}{p}^T \Lambda
   \right) dt
   + \left. \Jac{h}{p}^T \right|_{t=t_f}
-  - \left. \left( \Jac{x_0}{p}^T \Jac{f}{\dot{x}}^T \Lambda \right) \right|_{t=t_0}.
+  +\Jac{x_0}{p}^T \left. \left( \Jac{f}{\dot{x}}^T \Lambda \right) \right|_{t=t_0}.
 \label{eqn:sens:d_d_hat_d_p_final-2}
 \end{equation}
 %
 and
 %
 \begin{equation}
-\Jac{\hat{d}}{v(t)}^T =  \Jac{g}{v(t)}^T + \Jac{f}{v(t)}^T \Lambda(t), \; t\in[t_0,t_f]
+\Jac{\hat{d}}{v(t)}^T =  \Jac{g}{v(t)}^T - \Jac{f}{v(t)}^T \Lambda(t), \; t\in[t_0,t_f]
 \label{eqn:sens:d_d_hat_d_v_t-final-2}
 \end{equation}
 %
@@ -801,14 +836,15 @@ and
 As described in {}\cite{adjoint-sens-2003}, for some classes of DAEs
 (including some implicit ODEs), the form of the adjoint in
 (\ref{eqn:sens:adj})--(\ref{eqn:sens:adj:fc}) may be unstable while the
-following {}\textit{augmented adjoint system}
+following {}\textit{augmented adjoint DAE system} (created by defining the
+augmented adjoint varaibles $\hat{\Lambda} = \jac{f}{\dot{x}} {}\Lambda$)
 %
 \begin{eqnarray}
 \frac{d}{dt}\left( \hat{\Lambda} \right)
-+  \Jac{f}{x}^T \Lambda + \Jac{g}{x}^T
+-  \Jac{f}{x}^T \Lambda + \Jac{g}{x}^T
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{eqn:sens:aug-adj-de} \\
-\hat{\Lambda} + \Jac{f}{\dot{x}}^T \Lambda
+\hat{\Lambda} - \Jac{f}{\dot{x}}^T \Lambda
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{eqn:sens:aug-adj-ae} \\
 \left. \hat{\Lambda} \right|_{t=t_f}
