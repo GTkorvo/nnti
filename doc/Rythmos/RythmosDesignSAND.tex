@@ -1043,9 +1043,8 @@ confusion may result, the exact meaning will be explained.
 Note that the domain $(x,p,v)$ for the overall response function $d(x,p,v)$ is
 infinite since $x$ and $v$ are infinite in the continuous formulation.
 
-
 The implicit state solution for the DAEs in
-(\ref{rythmos:apdx:eqn:sens:f})--(\ref{rythmos:apdx:eqn:sens:f:ic}) at points
+(\ref{rythmos:eqn:sens:f})--(\ref{rythmos:eqn:sens:f:ic}) at points
 $t$ is signified as $x(p,v,t)\in\mathcal{X}$, where $v$ in this case is the
 selection of transient parameters in the range $t\in[t_0,t]$.  Note that
 selections for $v$ in the range $(t:t_f]$ have no influence on the implicit
@@ -1329,7 +1328,7 @@ solve as it just requires an inversion of $\jac{f}{\dot{x}}$ (assuming that
 the mass matrix is easy to invert).  For index-1 DAEs, the computation of the
 final condition (\ref{rythmos:app:eqn:sens:adj:fc}) is more involved.
 
-As the adjoint is being computed, the integral
+As the adjoint is being computed, the integral in
 %
 \begin{equation}
 \Jac{\hat{d}}{p}^T
@@ -1365,69 +1364,95 @@ the next two subsections.
 
 
 %
+\subsubsection{Reverse time adjoint}
+%
+
+In order for general purpose forward time stepping algorithms and software to
+be used to solve for the adjoint, the adjoint equation in
+(\ref{rythmos:app:eqn:sens:adj})--(\ref{rythmos:app:eqn:sens:adj:fc}) must be
+stated in reverse time.  Reverse time $\bar{t}\in[0,t_f-t_0]$ is defined so
+that $t = t_f - {}\bar{t}$.  Since the adjoint equation in
+(\ref{rythmos:app:eqn:sens:adj}) involves fixed operators and is linear in the
+adjoint varaibles, this change in the meaning of time only affects the
+definition of $\frac{d}{dt}$ first term.  Reverse time means that $dt =
+-d\bar{t}$ which gives
+%
+\begin{eqnarray}
+\frac{d}{d\bar{t}}\left( \Jac{f}{\dot{x}}^T \breve{\Lambda} \right)
++ \Jac{f}{x}^T \breve{\Lambda} - \Jac{g}{x}^T
+& = & 0, \; \bar{t} \in \left[0, t_f-t_0 \right],
+\label{rythmos:app:eqn:sens:adj-rev} \\
+\left.\left( \Jac{f}{\dot{x}}^T \breve{\Lambda} \right)\right|_{\bar{t}=0}
+& = & \left. \Jac{h}{x}^T \right|_{x=x(t_f)},
+\label{rythmos:app:eqn:sens:adj-rev:fc}
+\end{eqnarray}
+%
+where $\breve{\Lambda}=\Lambda$ and $\slantedfrac{d}{d\bar{t}} (\breve{\Lambda}) =
+-\slantedfrac{d}{dt}(\Lambda)$.
+
+
+%
 \subsubsection{Non-augmented adjoint equations for constant mass matrices}
 %
 
 When the mass matrix $\jac{f}{\dot{x}}$ is not a function of $t$, then
-(\ref{rythmos:app:eqn:sens:adj}) reduces to
+(\ref{rythmos:app:eqn:sens:adj-rev}), as stated in reverse time $\bar{t}$
+reduces to
 %
 \begin{eqnarray}
-\Jac{f}{\dot{x}}^T \dot{\Lambda}
-- \Jac{f}{x}^T \Lambda + \Jac{g}{x}^T
+\Jac{f}{\dot{x}}^T \dot{\breve{\Lambda}}
++ \Jac{f}{x}^T \breve{\Lambda} - \Jac{g}{x}^T
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{rythmos:app:eqn:sens:adj-const-mass} \\
-\left.\left( \Jac{f}{\dot{x}}^T \Lambda \right)\right|_{t=t_f}
+\left.\left( \Jac{f}{\dot{x}}^T \breve{\Lambda} \right)\right|_{t=t_f}
 & = & \left. \Jac{h}{x}^T \right|_{x=x(t_f)},
 \label{rythmos:app:eqn:sens:adj-const-mass:fc}
 \end{eqnarray}
 %
-where $\dot{\Lambda}=d(\Lambda)/d(t)\in\mathcal{F}|\mathcal{G}$.
+where $\dot{\breve{\Lambda}}=-\dot{\Lambda}=
+-d(\Lambda)/d(t)\in\mathcal{F}|\mathcal{G}$.
 
-The adjoint DAE can be cast in the standard form
+This reverse-time adjoint DAE can be cast in the standard form
 $\bar{f}(\dot{\bar{x}},\bar{x},\bar{t})$ understood by a general time
 integrator by first defining the composite vector
 %
 \begin{equation}
 \bar{x} =
 {\bmat{c}
-\lambda_{(0)} \\ \vdots \\ \lambda_{(n_g-1)}
+\breve{\lambda}_{(0)} \\ \vdots \\ \breve{\lambda}_{(n_g-1)}
 \emat}
 \in \mathcal{F}^{n_g}
 \end{equation}
 %
-consisting of the columns $\lambda_{j}$ of $\Lambda$ and then defining the
+consisting of the columns $\breve{\lambda}_{j}$ of $\breve{\lambda}$ and then defining the
 associated composite DAE function
 %
 \begin{equation}
 \bar{f}(\dot{\bar{x}},\bar{x},\bar{t}) =
 {\bmat{c}
 %
-\Jac{f}{\dot{x}}^T \dot{\lambda}_{(0)}
-- \Jac{f}{x}^T \lambda_{(0)} + \Jac{g_{(0)}}{x}^T
+\Jac{f}{\dot{x}}^T \dot{\breve{\lambda}}_{(0)}
++ \Jac{f}{x}^T \breve{\lambda}_{(0)} - \Jac{g_{(0)}}{x}^T
 %
 \\ \vdots \\
 %
-\Jac{f}{\dot{x}}^T \dot{\lambda}_{(n_g-1)}
-- \Jac{f}{x}^T \lambda_{(n_g-1)} + \Jac{g_{(n_g-1)}}{x}^T
+\Jac{f}{\dot{x}}^T \dot{\breve{\lambda}}_{(n_g-1)}
++ \Jac{f}{x}^T \breve{\lambda}_{(n_g-1)} - \Jac{g_{(n_g-1)}}{x}^T
 %
 \emat}
 \in \mathcal{F}^{n_p} \rightarrow \mathcal{X}^{n_p}.
 \label{rythmos:eqn:adj-sens-daes}
 \end{equation}
 %
-Note also that a transformation in time $\bar{t}\in[0,t_f-t_0]$ for the
-sensitivity equations of $t = t_f - \bar{t}$ is needed to allow the
-integration backward in time using a forward time integrator.
-
 The matrix $\bar{W}$ in for (\ref{rythmos:eqn:adj-sens-daes}) is given by
 %
 \begin{equation}
 \bar{\alpha} \Jac{\bar{f}}{\dot{\bar{x}}} + \bar{\beta} \Jac{\bar{f}}{\bar{x}}
 = 
 {\bmat{ccc}
-\bar{\alpha} \Jac{f}{\dot{x}}^T - \bar{\beta} \Jac{f}{x}^T \\
+\bar{\alpha} \Jac{f}{\dot{x}}^T + \bar{\beta} \Jac{f}{x}^T \\
 & \ddots \\
-& & \bar{\alpha} \Jac{f}{\dot{x}}^T - \bar{\beta} \Jac{f}{x}^T
+& & \bar{\alpha} \Jac{f}{\dot{x}}^T + \bar{\beta} \Jac{f}{x}^T
 \emat}
 \in \mathcal{X}^{n_p}|\mathcal{F}^{n_p}
 \label{rythmos:eqn:adj-sens-daes-jac}
@@ -1454,6 +1479,9 @@ such as is the case in CVODES and IDAS (see ??? in [???] for example).
 %
 \subsubsection{Augmented adjoint equations for non-constant mass matrices}
 %
+
+{}\textbf{TODO: This section needs to be updated in terms of reverse time to
+will lead to a direct implementation in code.}
 
 When the mass matrix $\jac{f}{\dot{x}}$ is a function of $t$, then the adjoint
 equations in
@@ -1516,10 +1544,6 @@ and then defining the associated composite DAE function
 \label{rythmos:eqn:aug-adj-sens-daes}
 \end{equation}
 %
-Note also that a transformation in time $\bar{t}\in[0,t_f-t_0]$ for the
-sensitivity equations of $t = t_f - \bar{t}$ is needed to allow the
-integration backward in time using a forward time integrator.
-
 The matrix $\bar{W}$ for (\ref{rythmos:eqn:aug-adj-sens-daes}) is given by
 %
 \begin{equation}
