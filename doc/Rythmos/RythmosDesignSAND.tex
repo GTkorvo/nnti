@@ -1300,8 +1300,11 @@ of processors since the block linear solver will slow down (because of slower
 flop rates due to reductions in cache efficiency and increased relative global
 communication overhead).
 
+
+%
 \subsection{Transient adjoint sensitivity computations}
 \label{rythmos:sec:adj-sens}
+%
 
 The most general statement of the adjoint equations associated with the state
 equations in (\ref{rythmos:eqn:sens:f})--(\ref{rythmos:eqn:sens:f:ic}) and the
@@ -1311,7 +1314,7 @@ response functions in (\ref{rythmos:eqn:sens:d}), as derived in
 \begin{eqnarray}
 \frac{d}{dt}\left( \Jac{f}{\dot{x}}^T \Lambda \right)
 - \Jac{f}{x}^T \Lambda + \Jac{g}{x}^T
-& = & 0, \; t \in \left[ t_0, t_f \right],
+& = & 0, \; \mbox{for} \; t \in \left[ t_0, t_f \right],
 \label{rythmos:app:eqn:sens:adj} \\
 \left.\left( \Jac{f}{\dot{x}}^T \Lambda \right)\right|_{t=t_f}
 & = & \left. \Jac{h}{x}^T \right|_{x=x(t_f)},
@@ -1364,7 +1367,7 @@ the next two subsections.
 
 
 %
-\subsubsection{Reverse time adjoint}
+\subsubsection{Reverse-time adjoint}
 %
 
 In order for general purpose forward time stepping algorithms and software to
@@ -1380,15 +1383,23 @@ definition of $\frac{d}{dt}$ first term.  Reverse time means that $dt =
 \begin{eqnarray}
 \frac{d}{d\bar{t}}\left( \Jac{f}{\dot{x}}^T \breve{\Lambda} \right)
 + \Jac{f}{x}^T \breve{\Lambda} - \Jac{g}{x}^T
-& = & 0, \; \bar{t} \in \left[0, t_f-t_0 \right],
+& = & 0, \; \mbox{for} \; \bar{t} \in \left[0, t_f-t_0 \right],
 \label{rythmos:app:eqn:sens:adj-rev} \\
 \left.\left( \Jac{f}{\dot{x}}^T \breve{\Lambda} \right)\right|_{\bar{t}=0}
 & = & \left. \Jac{h}{x}^T \right|_{x=x(t_f)},
 \label{rythmos:app:eqn:sens:adj-rev:fc}
 \end{eqnarray}
 %
-where $\breve{\Lambda}=\Lambda$ and $\slantedfrac{d}{d\bar{t}} (\breve{\Lambda}) =
--\slantedfrac{d}{dt}(\Lambda)$.
+where $\breve{\Lambda}=\Lambda$ and $\dot{\breve{\Lambda}} =
+d(\breve{\Lambda})/d(\bar{t}) = - d(\Lambda)/d(t) = -\dot{\Lambda}$.
+
+{}\textbf{Warning!} One must be careful when using this formulation to
+remember that while $\breve{\Lambda}=\Lambda$ is the orignial forward-time
+adjoint solution, the reverse-time time derivative $\dot{\breve{\Lambda}}$ is
+the {}\textit{negative} of the forward-time time derivative
+$\dot{\breve{\Lambda}} = -\dot{\Lambda}$.  Other than that, the reverse-time
+adjoint formulation is very straight forward and allows forward-stepping time
+integration algorithms and software to be used off-the-shelf.
 
 
 %
@@ -1396,7 +1407,7 @@ where $\breve{\Lambda}=\Lambda$ and $\slantedfrac{d}{d\bar{t}} (\breve{\Lambda})
 %
 
 When the mass matrix $\jac{f}{\dot{x}}$ is not a function of $t$, then
-(\ref{rythmos:app:eqn:sens:adj-rev}), as stated in reverse time $\bar{t}$
+(\ref{rythmos:app:eqn:sens:adj-rev}), as stated in reverse-time $\bar{t}$
 reduces to
 %
 \begin{eqnarray}
@@ -1424,8 +1435,8 @@ integrator by first defining the composite vector
 \in \mathcal{F}^{n_g}
 \end{equation}
 %
-consisting of the columns $\breve{\lambda}_{j}$ of $\breve{\lambda}$ and then defining the
-associated composite DAE function
+consisting of the columns $\breve{\lambda}_{j}$ of $\breve{\Lambda}$ and then
+defining the associated composite DAE function
 %
 \begin{equation}
 \bar{f}(\dot{\bar{x}},\bar{x},\bar{t}) =
@@ -1462,36 +1473,77 @@ which is a block diagonal matrix with the same block along the diagonal and
 all quantities are evaluated at the same trial point $(\dot{x},x,p,v,t)$ as
 defined by the time integration algorithm.  An important property of this
 block matrix is that each block along the diagonal is the adjoint of the
-matrix $\bar{\alpha} (\jac{f}{\dot{x}}) - {}\bar{\beta} (\jac{f}{x})$ which
-is needed by the implicit forward and direct direct sensitivity solvers.  In
-general, the adjoint time stepper can be implemented using the same
-sensitivity objects as required by forward and direct sensitivity solves with
-the added requirement that adjoint operations with these objects also need to
-be supported (see Section~\ref{rythmos:sec:general-dae-requirements}).
+matrix $\tilde{W} = \bar{\alpha} (\jac{f}{\dot{x}}) + {}\bar{\beta}
+(\jac{f}{x})$ which is needed by the implicit forward and direct direct
+sensitivity solvers.  In general, the adjoint time stepper can be implemented
+using the same sensitivity objects as required by forward and direct
+sensitivity solves with the added requirement that adjoint operations with
+these objects also need to be supported (see
+Section~\ref{rythmos:sec:general-dae-requirements}).
 
 Also note that the block diagonal form of
 (\ref{rythmos:eqn:adj-sens-daes-jac}) immediately lends itself for use with a
 block linear solver.  When $n_g$ is larger, then a block linear solver may
 provide significant speedups over a single RHS linear solver implementation
-such as is the case in CVODES and IDAS (see ??? in [???] for example).
+such as is the case in CVODES and IDAS.
+
+
+%
+\subsubsection*{Evaluation of Non-augmented adjoint equation residual}
+%
+
+Given the basic operator $\tilde{W} = {}\bar{\alpha} (\jac{f}{\dot{x}}) +
+{}\bar{\beta} (\jac{f}{x})$ that is needed in the defintion of $\bar{W}$ in
+(\ref{rythmos:eqn:adj-sens-daes-jac}) and $\jac{f}{\dot{x}}$ as a separate
+operator, one can compute the multi-vector adjoint residual in
+(\ref{rythmos:app:eqn:sens:adj-const-mass}).  To see this, first note that
+%
+\begin{equation}
+\Jac{f}{x}^T = \frac{1}{\bar{\beta}} \tilde{W}^T - \frac{\bar{\alpha}}{\bar{\beta}} \Jac{f}{\dot{x}}^T.
+\label{rythmos:eqn:sub-d_f_d_x_adj}
+\end{equation}
+%
+Substituting (\ref{rythmos:eqn:sub-d_f_d_x_adj}) into
+(\ref{rythmos:app:eqn:sens:adj-const-mass}) and rearranging yields
+%
+\begin{equation}
+\Jac{f}{\dot{x}}^T \dot{\breve{\Lambda}}
++ \Jac{f}{x}^T \breve{\Lambda} - \Jac{g}{x}^T
+=
+\Jac{f}{\dot{x}}^T \left( \dot{\breve{\Lambda}} - \frac{\bar{\alpha}}{\bar{\beta}} \breve{\Lambda} \right)
++ \frac{1}{\bar{\beta}} \tilde{W}^T \breve{\lambda}
+- \Jac{g}{x}^T.
+\end{equation}
+%
+This residual evaluation requires two adjoint linear operator applications:
+one for $(\jac{f}{\dot{x}})^T$ and one for $(\tilde{W})^T$.
+
+The so-called mass matrix $\jac{f}{\dot{x}}$ is computed by calling
+{}\texttt{evalModel(...)} on the underlying forward state model by setting
+$\alpha=1.0$ and $\beta=0.0$ and evaluating $W$.  In the most general case,
+two calls to the underlying forward model's {}\texttt{evalModel(...)} function
+are required in order to compute $\jac{f}{\dot{x}}$ and $\tilde{W} =
+{}\bar{\alpha} (\jac{f}{\dot{x}}) + {}\bar{\beta} (\jac{f}{x})$.  However,
+when $\jac{f}{\dot{x}}$ is constant, which is the case in many models, it can
+be computed once and be reused multiple times.  Typically, however, since
+$\bar{\alpha}$ and $\bar{\beta}$ are likely to change from one time step to
+the next, $\tilde{W}$ typically needs to be recomputed for each time step even
+if $\jac{f}{\dot{x}}$ and $\jac{f}{x}$ are constant.
 
 
 %
 \subsubsection{Augmented adjoint equations for non-constant mass matrices}
 %
 
-{}\textbf{TODO: This section needs to be updated in terms of reverse time to
-will lead to a direct implementation in code.}
-
-When the mass matrix $\jac{f}{\dot{x}}$ is a function of $t$, then the adjoint
-equations in
-(\ref{rythmos:app:eqn:sens:adj})--(\ref{rythmos:app:eqn:sens:adj:fc}) can be
-transformed into the {}\textit{augmented adjoint equations} which take the
-form
+When the mass matrix $\jac{f}{\dot{x}}$ is a function of $t$, then the
+reverse-time adjoint equations in
+(\ref{rythmos:app:eqn:sens:adj-rev})--(\ref{rythmos:app:eqn:sens:adj-rev:fc})
+can be transformed into the {}\textit{reverse-time augmented adjoint
+equations} which take the form
 %
 \begin{eqnarray}
-\frac{d}{dt}\left( \hat{\Lambda} \right)
-- \Jac{f}{x}^T \Lambda + \Jac{g}{x}^T
+\frac{d}{d\bar{t}}\left( \hat{\Lambda} \right)
++ \Jac{f}{x}^T \Lambda - \Jac{g}{x}^T
 & = & 0, \; t \in \left[ t_0, t_f \right],
 \label{rythmos:app:eqn:sens:aug-adj-de} \\
 \hat{\Lambda} - \Jac{f}{\dot{x}}^T \Lambda
@@ -1525,18 +1577,18 @@ and then defining the associated composite DAE function
 %
 {\bmat{c}
 \frac{d}{dt}\left( \hat{\lambda}_{(0)} \right)
-- \Jac{f}{x}^T \lambda_{(0)} + \Jac{g_{(0)}}{x}^T
++ \Jac{f}{x}^T \lambda_{(0)} - \Jac{g_{(0)}}{x}^T
 \\
-\hat{\lambda}_{(0)} + \Jac{f}{\dot{x}}^T \lambda_{(0)}
+\hat{\lambda}_{(0)} - \Jac{f}{\dot{x}}^T \lambda_{(0)}
 \emat} \\
 %
 \vdots \\
 %
 {\bmat{c}
 \frac{d}{dt}\left( \hat{\lambda}_{(n_g-1)} \right)
-- \Jac{f}{x}^T \lambda_{(n_g-1)} + \Jac{g_{(n_g-1)}}{x}^T
++ \Jac{f}{x}^T \lambda_{(n_g-1)} - \Jac{g_{(n_g-1)}}{x}^T
 \\
-\hat{\lambda}_{(n_g-1)} + \Jac{f}{\dot{x}}^T \lambda_{(n_g-1)}
+\hat{\lambda}_{(n_g-1)} - \Jac{f}{\dot{x}}^T \lambda_{(n_g-1)}
 \emat} \\
 %
 \emat}
@@ -1552,14 +1604,14 @@ The matrix $\bar{W}$ for (\ref{rythmos:eqn:aug-adj-sens-daes}) is given by
 {\bmat{ccc}
 %
 {\bmat{cc}
-\bar{\alpha} I & -\bar{\beta} \Jac{f}{x}^T \\
+\bar{\alpha} I & \bar{\beta} \Jac{f}{x}^T \\
 \bar{\beta} I &  -\bar{\beta} \Jac{f}{\dot{x}}^T
 \emat} \\
 %
 & \ddots \\
 %
 & & {\bmat{cc}
-\bar{\alpha} I & -\bar{\beta} \Jac{f}{x}^T \\
+\bar{\alpha} I & \bar{\beta} \Jac{f}{x}^T \\
 \bar{\beta} I &  -\bar{\beta} \Jac{f}{\dot{x}}^T
 \emat}
 %
@@ -1575,7 +1627,7 @@ the diagonal
 %
 \begin{equation}
 {\bmat{cc}
-\bar{\alpha} I & -\bar{\beta} \Jac{f}{x}^T \\
+\bar{\alpha} I & \bar{\beta} \Jac{f}{x}^T \\
 \bar{\beta} I &  -\bar{\beta} \Jac{f}{\dot{x}}^T
 \emat} \in \mathcal{X}^{2}|\mathcal{F}^{2}
 \label{rythmos:eqn:aug-adj-sens-jac}
@@ -1588,7 +1640,7 @@ consider the solution of any arbitrary system of the form
 %
 \begin{equation}
 {\bmat{cc}
-\bar{\alpha} I & -\bar{\beta} \Jac{f}{x}^T \\
+\bar{\alpha} I & \bar{\beta} \Jac{f}{x}^T \\
 \bar{\beta} I &  -\bar{\beta} \Jac{f}{\dot{x}}^T
 \emat}
 {\bmat{c} v_1 \\ v_2 \emat}
@@ -1609,7 +1661,7 @@ Apply the transformation
 \emat}
 \left[
 {\bmat{cc}
-\bar{\alpha} I & -\bar{\beta} \Jac{f}{x}^T \\
+\bar{\alpha} I & \bar{\beta} \Jac{f}{x}^T \\
 \bar{\beta} I &  -\bar{\beta} \Jac{f}{\dot{x}}^T
 \emat}
 {\bmat{c} v_1 \\ v_2 \emat}
@@ -1622,23 +1674,23 @@ yields the transformed system
 %
 \begin{equation}
 {\bmat{cc}
- & \hat{\alpha} \Jac{f}{\dot{x}}^T + \bar{\beta} \Jac{f}{x}^T \\
+ & \hat{\alpha} \Jac{f}{\dot{x}}^T + \hat{\beta} \Jac{f}{x}^T \\
 \bar{\beta} I &  -\bar{\beta} \Jac{f}{\dot{x}}^T
 \emat}
 {\bmat{c} v_1 \\ v_2 \emat}
 =
-{\bmat{c}  b_2 - \hat{\gamma} b_1 \\ b_2 \emat}
+{\bmat{c}  b_2 + \hat{\gamma} b_1 \\ b_2 \emat}
 \label{rythmos:eqn:aug-adj-sens-trans-system}
 \end{equation}
 %
-where $\hat{\alpha}=-\bar{\beta}$, $\hat{\beta}=\bar{\beta}^2/\bar{\alpha}$, and
-$\hat{\gamma}=\bar{\beta}/\bar{\alpha}$.
+where $\hat{\alpha}=-\bar{\beta}$, $\hat{\beta}=-\bar{\beta}^2/\bar{\alpha}$,
+and $\hat{\gamma}=-\bar{\beta}/\bar{\alpha}$.
 
 This system can then be solved as
 %
 \[
 v_2 = \left( \hat{\alpha} \Jac{f}{\dot{x}}^T + \hat{\beta} \Jac{f}{x}^T \right)^{-1}
-\left(  b_2 - \hat{\gamma} b_1 \right)
+\left(  b_2 + \hat{\gamma} b_1 \right)
 \]
 %
 followed by
@@ -1650,7 +1702,7 @@ v_1 = \frac{1}{\bar{\beta}} \left( b_2 + \bar{\beta} \Jac{f}{\dot{x}}^T v_2 \rig
 The matrix
 %
 \[
-\hat{\alpha} \Jac{f}{\dot{x}}^T + \hat{\beta} \Jac{f}{x}^T
+\hat{W} = \hat{\alpha} \Jac{f}{\dot{x}}^T + \hat{\beta} \Jac{f}{x}^T
 \]
 %
 is known as the Schur complement and in this case is of the same general form
@@ -1658,7 +1710,7 @@ needed for implicit forward and direct sensitivity solvers and no new
 functionality over what is needed for the solution of the non-augmented
 adjoint DAE form is required for the solution of the augmented adjoint system.
 Solving the augmented adjoint DAE system only requires a few extra operations
-but requires twice the time-step $O(n_f)$ storage since both $\hat{\Lambda}$
+but requires twice the $O(n_f)$ time-step storage since both $\hat{\Lambda}$
 and $\Lambda$ need to be stored and updated.
 
 Again, these computations can be rearranged so that multi-vector operations
