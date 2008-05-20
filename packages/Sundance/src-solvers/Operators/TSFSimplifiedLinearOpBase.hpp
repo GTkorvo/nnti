@@ -30,7 +30,7 @@
 #define TSFSIMPLIFIEDOPBASE_HPP
 
 #include "TSFConfigDefs.hpp"
-#include "TSFSingleScalarTypeOpBase.hpp"
+#include "TSFOpWithBackwardsCompatibleApply.hpp"
 #include "TSFLinearOperatorImpl.hpp"
 
 
@@ -48,7 +48,7 @@ namespace TSFExtended
    */
   template <class Scalar> 
   class SimplifiedLinearOpBase 
-    : public SingleScalarTypeOp<Scalar>
+    : public OpWithBackwardsCompatibleApply<Scalar>
   {
   public:
 
@@ -105,10 +105,5 @@ namespace TSFExtended
 
   };
 }
-
-
-#ifdef TRILINOS_6
-#undef DefaultColumnwiseMultiVector
-#endif
 
 #endif

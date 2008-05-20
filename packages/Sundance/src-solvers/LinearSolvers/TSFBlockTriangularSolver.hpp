@@ -31,6 +31,7 @@
 
 #include "TSFConfigDefs.hpp"
 #include "TSFLinearSolver.hpp" 
+#include "Thyra_DefaultZeroLinearOp.hpp"
 
 namespace TSFExtended
 {
@@ -75,12 +76,12 @@ namespace TSFExtended
     soln = op.domain().createMember();
     //    bool converged = false;
 
-    TEST_FOR_EXCEPTION(nRows != rhs.space().numBlocks(), runtime_error,
+    TEST_FOR_EXCEPTION(nRows != rhs.space().numBlocks(), std::runtime_error,
                        "number of rows in operator " << op
                        << " not equal to number of blocks on RHS "
                        << rhs);
 
-    TEST_FOR_EXCEPTION(nRows != nCols, runtime_error,
+    TEST_FOR_EXCEPTION(nRows != nCols, std::runtime_error,
                        "nonsquare block structure in block triangular "
                        "solver: nRows=" << nRows << " nCols=" << nCols);
 
@@ -92,9 +93,9 @@ namespace TSFExtended
         for (int c=0; c<nCols; c++)
           {
             if (op.getBlock(r,c).ptr().get() == 0 ||
-                dynamic_cast<const ZeroOperator<Scalar>* >(op.getBlock(r,c).ptr().get()))
+                dynamic_cast<const DefaultZeroLinearOp<Scalar>* >(op.getBlock(r,c).ptr().get()))
               {
-                TEST_FOR_EXCEPTION(r==c, runtime_error,
+                TEST_FOR_EXCEPTION(r==c, std::runtime_error,
                                    "zero diagonal block (" << r << ", " << c 
                                    << " detected in block "
                                    "triangular solver. Operator is " << op);
@@ -108,7 +109,7 @@ namespace TSFExtended
           }
       }
 
-    TEST_FOR_EXCEPTION(isUpper && isLower, runtime_error, 
+    TEST_FOR_EXCEPTION(isUpper && isLower, std::runtime_error, 
                        "block triangular solver detected non-triangular operator "
                        << op);
 

@@ -31,7 +31,6 @@
 #define TSF_LINEARCOMBINATIONTESTER_HPP
 
 #include "TSFLinearOperator.hpp"
-#include "TSFIdentityOperator.hpp"
 #include "TSFLinearCombination.hpp"
 #include "TSFVector.hpp"
 #include "TSFTesterBase.hpp"

@@ -89,7 +89,7 @@ namespace TSFExtended
                                      const PreconditionerFactory<Scalar>& precond)
     : IterativeSolver<Scalar>(params), precond_(precond)
   {
-    TEST_FOR_EXCEPTION(params.isParameter("Precond"), runtime_error,
+    TEST_FOR_EXCEPTION(params.isParameter("Precond"), std::runtime_error,
                        "ambiguous preconditioner specification in "
                        "KrylovSolver ctor: parameters specify "
                        << params.template get<string>("Precond") 

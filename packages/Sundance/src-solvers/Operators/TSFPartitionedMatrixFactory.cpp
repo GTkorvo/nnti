@@ -82,7 +82,7 @@ PartitionedMatrixFactory::PartitionedMatrixFactory(
       if (i==1 && j==0) continue;
       IncrementallyConfigurableMatrixFactory* icmf 
         = dynamic_cast<IncrementallyConfigurableMatrixFactory*>(blockFactory_[i][j].get());
-      TEST_FOR_EXCEPTION(icmf==0, runtime_error,
+      TEST_FOR_EXCEPTION(icmf==0, std::runtime_error,
         "block(" << i << ", " << j << ") is not an ICMF");
       blockICMF_[i][j] = icmf;
     }
@@ -95,7 +95,6 @@ void PartitionedMatrixFactory::initializeNonzerosInRow(int globalRowIndex,
   const int* globalColumnIndices)
 {
   if (globalRowIndex < lowestLocalRow_ || globalRowIndex >= highestLocalRow_) return;
-  int p = MPIComm::world().getRank();
 
   Array<int> bcCols;
   Array<int> intCols;
@@ -160,7 +159,7 @@ void PartitionedMatrixFactory::finalize()
 LinearOperator<double> PartitionedMatrixFactory::createMatrix() const
 {
 
-  RefCountPtr<SingleScalarTypeOpBase<double> > op 
+  RefCountPtr<LinearOpBase<double, double> > op 
     = rcp(new TSFExtended::LoadableBlockOperator<double>(domain_, lowestLocalCol_, isBCCol_, remoteBCCols_, range_, lowestLocalRow_, isBCRow_));
   LinearOperator<double> A = op;
 

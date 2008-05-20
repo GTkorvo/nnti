@@ -30,10 +30,9 @@
 #define TSFINVERSELTIOP_HPP
 
 #include "TSFConfigDefs.hpp"
-#include "TSFIdentityOperator.hpp"
 #include "TSFSimplifiedLinearOpBase.hpp"
 #include "TSFHomogeneouslyBlockedLinearOp.hpp"
-
+#include "TSFNonmemberOpHelpers.hpp"
 
 
 namespace TSFExtended
@@ -69,11 +68,11 @@ using namespace Thyra;
  */
 template <class Scalar> 
 class InverseLTIOp
-  : public HomogeneouslyBlockedLinearOp<Scalar>,
-    public Handleable<SingleScalarTypeOpBase<Scalar> >
+  : public virtual LinearOpBase<Scalar,Scalar>,
+    public virtual HomogeneouslyBlockedLinearOp<Scalar>,
+    public virtual SimplifiedLinearOpBase<Scalar>
 {
 public:
-  GET_RCP(SingleScalarTypeOpBase<Scalar>);
 
   /** 
    * Construct a InverseLTIOp that takes <t>numTimesteps</t> steps
@@ -86,6 +85,8 @@ public:
       A.range(), numTimesteps),
       A_(A), At_(At)
     {}
+
+
 
   /** 
    * Apply the operator
@@ -103,7 +104,7 @@ public:
         << ", nbOut=" << nbOut);
           
 
-      LinearOperator<Scalar> I = new IdentityOperator<Scalar>(in.space().getBlock(0));
+      LinearOperator<Scalar> I = identityOperator<Scalar>(in.space().getBlock(0));
 
       if (M_trans==Thyra::NOTRANS)
       {

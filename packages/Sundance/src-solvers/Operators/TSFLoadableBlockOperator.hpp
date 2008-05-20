@@ -177,7 +177,7 @@ namespace TSFExtended
           block = this->getNonconstBlock(i, j);
         TEST_FOR_EXCEPT(block.get() == 0);
         LoadableMatrix<Scalar>* mat = dynamic_cast<LoadableMatrix<Scalar>*>(block.get());
-        TEST_FOR_EXCEPTION(mat==0, runtime_error, "block(" << i 
+        TEST_FOR_EXCEPTION(mat==0, std::runtime_error, "block(" << i 
           << ", " << j << ") is not of type LoadableMatrix");
         return mat;
       }

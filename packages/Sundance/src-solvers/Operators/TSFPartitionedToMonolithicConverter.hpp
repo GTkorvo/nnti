@@ -72,7 +72,7 @@ namespace TSFExtended
       const Vector<double>& in,
       Vector<double>& out) const 
       {
-        TEST_FOR_EXCEPTION(in.space().numBlocks() != 2, runtime_error,
+        TEST_FOR_EXCEPTION(in.space().numBlocks() != 2, std::runtime_error,
           "PartitionedToMonolithicConverter::convert() expects 2 blocks "
           "in input vector. Input vector has numBlocks()="
           << in.space().numBlocks());

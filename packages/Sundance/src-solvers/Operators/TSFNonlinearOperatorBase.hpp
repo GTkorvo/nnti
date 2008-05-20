@@ -97,7 +97,7 @@ namespace TSFExtended
         residualIsValid_ = false;
 
 //         TEST_FOR_EXCEPTION(!x.space().isCompatible(*domain()),
-//                            runtime_error,
+//                            std::runtime_error,
 //                            "evaluation point " << x
 //                            << " for nonlinear operator is not in the "
 //                            "operator's domain space ");

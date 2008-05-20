@@ -61,7 +61,7 @@ void ProductVectorSpace<Scalar>::finalize()
   dim_ = 0;
   for (int i = 0; i < numBlocks_; i++)
     {
-      TEST_FOR_EXCEPTION(vecSpaces_[i].ptr() == 0, runtime_error,
+      TEST_FOR_EXCEPTION(vecSpaces_[i].ptr() == 0, std::runtime_error,
 			 "Vector space " << i << " not set" << endl)
 	isSet_[i] = true;
 
@@ -135,7 +135,7 @@ template <class Scalar>
 void ProductVectorSpace<Scalar>::setBlock(const int i, 
 					  const VectorSpace<Scalar> &subSp)
   {
-    TEST_FOR_EXCEPTION(vecSpace_[i] != subSp, runtime_error,
+    TEST_FOR_EXCEPTION(vecSpace_[i] != subSp, std::runtime_error,
 		       "subspace not compatible with existing space: "
 		       << "subSp is " << subSp.description() 
 		       << " vecSpace_{i} is" << vecSpace_[i].description() 

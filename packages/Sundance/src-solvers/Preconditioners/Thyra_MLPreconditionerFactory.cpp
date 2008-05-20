@@ -92,7 +92,7 @@ RefCountPtr<ParameterList> MLPreconditionerFactory
 {
   RefCountPtr<ParameterList> rtn = rcp(new ParameterList());
   int err = ML_Epetra::SetDefaults(probType, *rtn);
-  TEST_FOR_EXCEPTION(err != 0, runtime_error,
+  TEST_FOR_EXCEPTION(err != 0, std::runtime_error,
                      "unable to find default parameters for problem type "
                      << probType);
   return rtn;

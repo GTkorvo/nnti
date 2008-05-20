@@ -33,8 +33,7 @@
 #include "TSFLinearCombinationDecl.hpp"
 #include "TSFVectorImpl.hpp"
 #include "TSFLinearOperatorImpl.hpp"
-#include "TSFScaledOperator.hpp"
-#include "TSFComposedOperator.hpp"
+#include "TSFNonmemberOpHelpers.hpp"
 
 
 #ifndef DOXYGEN_DEVELOPER_ONLY
@@ -255,7 +254,7 @@ namespace TSFExtended
   operator*(const LinearOperator<Scalar>& op, 
             const OpTimesLC<Scalar, Node>& x)
   {
-    TEST_FOR_EXCEPTION(op.ptr().get()==0, runtime_error,
+    TEST_FOR_EXCEPTION(op.ptr().get()==0, std::runtime_error,
                        "null operator in LinearOperator * ( OpTimesLC )");
     if (x.op().ptr().get()==0)
       {
@@ -580,7 +579,7 @@ namespace TSFExtended
   template <class Scalar> inline
   LinearOperator<Scalar> operator*(const Scalar& a, const LinearOperator<Scalar>& A)
   {
-    return new ScaledOperator<Scalar>(A, a);
+    return scaledOperator(a, A);
   }
   
 
@@ -594,7 +593,7 @@ namespace TSFExtended
   LinearOperator<Scalar> operator*(const LinearOperator<Scalar>& A, 
                                    const LinearOperator<Scalar>& B)
   {
-    return new ComposedOperator<Scalar>(A, B);
+    return composedOperator(Array<LinearOperator<Scalar> >(tuple(A,B)));
   }
   
 

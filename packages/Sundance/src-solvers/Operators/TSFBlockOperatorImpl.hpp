@@ -34,7 +34,7 @@
 #include "TSFProductVectorSpaceDecl.hpp"
 #include "Thyra_DefaultBlockOperatorImpl.hpp"
 #include "TSFLinearCombination.hpp"
-#include "TSFZeroOperator.hpp"
+#include "TSFNonmemberOpHelpers.hpp"
 
 using namespace TSFExtended;
 using namespace TSFExtendedOps;
@@ -66,7 +66,7 @@ BlockOperator<Scalar>::BlockOperator(const VectorSpace<Scalar>& domain,
     for (int j=0; j<prodDomain->numBlocks(); j++)
     {
       VectorSpace<Scalar> db = prodDomain->getBlock(j);
-      LinearOperator<Scalar> Z = new ZeroOperator<Scalar>(db, rb);
+      LinearOperator<Scalar> Z = zeroOperator(db, rb);
       setNonconstBlock(i, j, Z.ptr());
     }
   }
@@ -74,25 +74,6 @@ BlockOperator<Scalar>::BlockOperator(const VectorSpace<Scalar>& domain,
 
 
 
-/*==================================================================*/
-template <class Scalar> inline
-void BlockOperator<Scalar>::generalApply(
-  const Thyra::ETransp            M_trans
-  ,const Thyra::VectorBase<Scalar>    &x
-  ,Thyra::VectorBase<Scalar>          *y
-  ,const Scalar            alpha = 1.0
-  ,const Scalar            beta  = 0.0
-  ) const 
-{  
-  if (M_trans == Thyra::NOTRANS || M_trans == Thyra::CONJ)
-  {
-    apply(transToConj(M_trans), x, y, alpha, beta);
-  }
-  else
-  {
-    applyTranspose(transToConj(M_trans), x, y, alpha, beta);
-  }
-}
 
 template <class Scalar>
 void BlockOperator<Scalar>::apply(const EConj                             conj
@@ -136,7 +117,7 @@ void BlockOperator<Scalar>::getRow(const int& row,
       if (this->getBlock(i,j).get()==0) continue;
       numR = this->getBlock(i, j)->range()->dim();
     }
-    TEST_FOR_EXCEPTION(numR==-1, runtime_error,
+    TEST_FOR_EXCEPTION(numR==-1, std::runtime_error,
       "Empty block row detected in "
       "BlockOperator<Scalar>::getRow()");
     K += numR;
@@ -197,7 +178,7 @@ inline void BlockOperator<Scalar>
 template <class Scalar>
 inline LinearOperator<Scalar> makeLinearOperator(BlockOperator<Scalar>* b)
 {
-  RefCountPtr<SingleScalarTypeOp<Scalar> > p = rcp(b);
+  RefCountPtr<LinearOpBase<Scalar> > p = rcp(b);
   return LinearOperator<Scalar>(p);
 }
 }

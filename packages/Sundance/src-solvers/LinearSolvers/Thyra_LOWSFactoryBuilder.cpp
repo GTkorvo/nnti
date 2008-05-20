@@ -18,7 +18,7 @@ LOWSFactoryBuilder::createLOWSFactory(const ParameterList& params)
 {
   /* check that we have a linear solver parameter list */
  //  TEST_FOR_EXCEPTION(params.name() != "Linear Solver",
-//                      runtime_error,
+//                      std::runtime_error,
 //                      "Expected \"Linear Solver\" as name of parameter list input "
 //                      "to createLOWSFactory()");
 
@@ -46,7 +46,7 @@ LOWSFactoryBuilder::createLOWSFactory(const ParameterList& params)
     }
   else
     {
-      TEST_FOR_EXCEPTION(true, runtime_error, 
+      TEST_FOR_EXCEPTION(true, std::runtime_error, 
                          "solver parameter list did not contain one of [Aztec, Amesos, "
                          "Belos]");
     }
@@ -71,13 +71,13 @@ LOWSFactoryBuilder::createLOWSFactory(const ParameterList& params)
         }
       else
         {
-          TEST_FOR_EXCEPTION(true, runtime_error,
+          TEST_FOR_EXCEPTION(true, std::runtime_error,
                              "Preconditioner type [" << precType << "] not recognized");
         }
     }
 
   TEST_FOR_EXCEPTION(prec.get() != 0 && !rtn->acceptsPreconditionerFactory(),
-                     runtime_error,
+                     std::runtime_error,
                      "Huh? You have provided a preconditioner for a solver that cannot "
                      "accept a preconditioner!");
 

@@ -33,7 +33,6 @@
 #include "TSFHandle.hpp"
 #include "TSFHandleable.hpp"
 #include "Thyra_LinearOpBase.hpp"
-#include "TSFSingleScalarTypeOpBase.hpp"
 #include "TSFLoadableMatrix.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "TSFRowAccessibleOp.hpp"
@@ -54,7 +53,7 @@ namespace TSFExtended
    * User-level linear operator class
    */
   template <class Scalar>
-  class LinearOperator : public Handle<SingleScalarTypeOpBase<Scalar> >
+  class LinearOperator : public Handle<LinearOpBase<Scalar, Scalar> >
   {
   public:
     /** \name Constructors, Destructors, and Assignment Operators */
@@ -62,12 +61,8 @@ namespace TSFExtended
     /** Empty constructor*/
     LinearOperator();
 
-    /** Constructor with raw pointer */
-    LinearOperator(Handleable<SingleScalarTypeOpBase<Scalar> >* rawPtr);
-
-
     /** Constructor with smart pointer */
-    LinearOperator(const RefCountPtr<SingleScalarTypeOpBase<Scalar> >& smartPtr);
+    LinearOperator(const RefCountPtr<LinearOpBase<Scalar, Scalar> >& smartPtr);
     //@}
 
     /** Return the domain */
@@ -98,18 +93,6 @@ namespace TSFExtended
 			Vector<Scalar>& out,
 			const Scalar& alpha = 1.0,
 			const Scalar& beta = 0.0) const ;
-
-    /** 
-     * Apply method written in terms of Thyra objects. This simplifies
-     * the conversion from TSFCore
-     */
-    virtual void generalApply(
-                              const Thyra::ETransp            M_trans
-                              ,const Thyra::VectorBase<Scalar>    &x
-                              ,Thyra::VectorBase<Scalar>          *y
-                              ,const Scalar            alpha = 1.0
-                              ,const Scalar            beta  = 0.0
-                              ) const ;
 
 
     //       /** For the moment this does nothing*/

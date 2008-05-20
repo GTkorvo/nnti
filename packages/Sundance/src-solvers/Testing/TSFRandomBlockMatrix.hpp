@@ -71,7 +71,7 @@ namespace TSFExtended
   {
     RefCountPtr<BlockOperator<Scalar> > b = 
       rcp(new BlockOperator<Scalar>(this->domain(), this->range()));
-    RefCountPtr<SingleScalarTypeOpBase<Scalar> > p = b;
+    RefCountPtr<LinearOpBase<Scalar, Scalar> > p = b;
     op_ = p;
 
     for (int i=0; i<this->range().numBlocks(); i++)

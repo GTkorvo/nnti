@@ -31,7 +31,7 @@
 #define TSF_COMPOUNDTESTER_HPP
 
 #include "TSFLinearOperator.hpp"
-#include "TSFScaledOperator.hpp"
+#include "TSFNonmemberOpHelpers.hpp"
 #include "TSFTesterBase.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 
@@ -176,7 +176,7 @@ namespace TSFExtended
       {
         cerr << "running operator scaling test..." << endl;
         Scalar alpha = sqrt(2.0);
-        LinearOperator<Scalar> scaled = new ScaledOperator<Scalar>(A_, alpha);
+        LinearOperator<Scalar> scaled = scaledOperator(alpha, A_);
 
         Vector<Scalar> x = A_.domain().createMember();
         randomizeVec(x);

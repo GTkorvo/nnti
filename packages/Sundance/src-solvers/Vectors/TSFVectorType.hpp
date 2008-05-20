@@ -94,7 +94,7 @@ namespace TSFExtended
     const Thyra::VectorSpaceFactoryBase<Scalar>* f
       = dynamic_cast<const Thyra::VectorSpaceFactoryBase<Scalar>*>(this->ptr().get());
     
-    TEST_FOR_EXCEPTION(f==0, runtime_error, 
+    TEST_FOR_EXCEPTION(f==0, std::runtime_error, 
                        "failed cast to Thyra::VectorSpaceFactoryBase in "
                        "VectorType<Scalar>::createReplicatedSpace()");
     return f->createVecSpc(dimension);

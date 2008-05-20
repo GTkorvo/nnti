@@ -34,7 +34,6 @@
 #include "TSFExplicitlyTransposeableOp.hpp"
 #include "TSFRowAccessibleOp.hpp"
 #include "TSFHandleable.hpp"
-#include "TSFSingleScalarTypeOp.hpp"
 #include "Thyra_DefaultBlockedLinearOp.hpp"
 
 
@@ -55,9 +54,8 @@ using Teuchos::Array;
  * @author Paul T Boggs (ptboggs@sandia.gov)
  */
 template <class Scalar>
-class BlockOperator : public SingleScalarTypeOp<Scalar>,
+class BlockOperator : public Thyra::DefaultBlockedLinearOp<Scalar>,
                       public RowAccessibleOp<Scalar>,
-                      public Thyra::DefaultBlockedLinearOp<Scalar>,
                       public Printable
 {
 public:
@@ -85,23 +83,7 @@ public:
   int numBlockCols() const {return this->productDomain()->numBlocks();}
     
 
-  /** 
-   * Compute alpha*M*x + beta*y, where M=*this.
-   * @param M_trans specifies whether the operator is transposed:
-   *                op(M) = M, for M_trans == NOTRANS
-   *                op(M) = M', for M_trans == TRANS
-   * @param x       vector of length this->domain()->dim()
-   * @param y       vector of length this->range()->dim()
-   * @param alpha   scalar multiplying M*x (default is 1.0)
-   * @param beta    scalar multiplying y (default is 0.0)
-   */
-  virtual void generalApply(
-    const Thyra::ETransp            M_trans
-    ,const Thyra::VectorBase<Scalar>    &x
-    ,Thyra::VectorBase<Scalar>          *y
-    ,const Scalar            //alpha = 1.0
-    ,const Scalar           // beta  = 0.0
-    ) const;
+ 
 
   /** */
   void apply(

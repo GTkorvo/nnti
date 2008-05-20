@@ -45,8 +45,8 @@ using namespace Teuchos;
  * @author Kevin Long (krlong@sandia.gov)
  */
 template <class Scalar>
-class HomogeneouslyBlockedLinearOp 
-  : public SimplifiedLinearOpBase<Scalar>
+class HomogeneouslyBlockedLinearOp :
+    public virtual LinearOpBase<Scalar, Scalar>
 {
 public:
 
@@ -60,8 +60,7 @@ public:
     const VectorSpace<Scalar>& singleBlockRange,
     int numRangeBlocks
     )
-    : SimplifiedLinearOpBase<Scalar>(),
-      singleBlockDomain_(singleBlockDomain),
+    : singleBlockDomain_(singleBlockDomain),
       numDomainBlocks_(numDomainBlocks),
       singleBlockRange_(singleBlockRange),
       numRangeBlocks_(numRangeBlocks),

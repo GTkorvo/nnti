@@ -41,7 +41,7 @@ using namespace Teuchos;
 LinearSolver<double> LinearSolverBuilder::createSolver(const XMLObject& xml)
 {
   string name = xml.getRequired("name");
-  TEST_FOR_EXCEPTION(name != "Linear Solver", runtime_error,
+  TEST_FOR_EXCEPTION(name != "Linear Solver", std::runtime_error,
                      "solver builder expected name [Linear Solver], got "
                      << name);
 
@@ -93,7 +93,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const XMLObject& xml)
       return new BlockTriangularSolver<double>(subSolvers);
     }
 
-  TEST_FOR_EXCEPTION(true, runtime_error, 
+  TEST_FOR_EXCEPTION(true, std::runtime_error, 
                      "Could not create a solver from XML object " 
                      << xml);
   return LinearSolver<double>();
@@ -102,7 +102,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const XMLObject& xml)
 
 LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& params)
 {
-  TEST_FOR_EXCEPTION(!params.isSublist("Linear Solver"), runtime_error,
+  TEST_FOR_EXCEPTION(!params.isSublist("Linear Solver"), std::runtime_error,
                      "did not find Linear Solver sublist in " << params);
 
 
@@ -137,7 +137,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
       return new BlockTriangularSolver<double>(subSolver);
     }
 
-  TEST_FOR_EXCEPTION(true, runtime_error, 
+  TEST_FOR_EXCEPTION(true, std::runtime_error, 
                      "Could not create a solver from parameter list " 
                      << params);
   return LinearSolver<double>();

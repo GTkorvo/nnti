@@ -55,7 +55,7 @@ IfpackOperator::IfpackOperator(const EpetraMatrix* A,
 
   int ierr = precondGraph->ConstructFilledGraph();
 
-  TEST_FOR_EXCEPTION(ierr < 0, runtime_error,
+  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error,
                      "IfpackOperator ctor: "
                      "precondGraph->ConstructFilledGraph() failed with ierr="
                      << ierr);
@@ -69,14 +69,14 @@ IfpackOperator::IfpackOperator(const EpetraMatrix* A,
 
   ierr = precond->InitValues(*matrix);
 
-  TEST_FOR_EXCEPTION(ierr < 0, runtime_error,
+  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error,
                      "IfpackOperator ctor: "
                      "precond->InitValues() failed with ierr="
                      << ierr);
 
   ierr = precond->Factor();
 
-  TEST_FOR_EXCEPTION(ierr < 0, runtime_error,
+  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error,
                      "IfpackOperator ctor: "
                      "precond->Factor() failed with ierr="
                      << ierr);
@@ -91,14 +91,14 @@ void IfpackOperator::generalApply(const Thyra::ETransp M_trans,
 {
   /* grab the epetra vector objects underlying the input and output vectors */
   const EpetraVector* epIn = dynamic_cast<const EpetraVector*>(&x);
-  TEST_FOR_EXCEPTION(epIn == 0, runtime_error,
+  TEST_FOR_EXCEPTION(epIn == 0, std::runtime_error,
                      "IfpackOperator apply: input vector is "
                      "not an EpetraVector");
 
   const Epetra_Vector* in = epIn->epetraVec().get();
 
   EpetraVector* epy = dynamic_cast<EpetraVector*>(y);
-  TEST_FOR_EXCEPTION(epy == 0, runtime_error,
+  TEST_FOR_EXCEPTION(epy == 0, std::runtime_error,
                      "IfpackOperator apply: output vector is "
                      "not an EpetraVector");
 
@@ -133,7 +133,7 @@ void IfpackOperator::generalApply(const Thyra::ETransp M_trans,
     }
   else
     {
-      ierr = p->Solve(false, *in, *tmp);
+      ierr = p->Solve(true, *in, *tmp);
     }
 
   /* if necessary, add beta*y */

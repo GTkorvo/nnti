@@ -51,7 +51,7 @@ void EpetraMatrixFactory::finalize()
 {
   int ierr = graph_->FillComplete(*(domain_->epetraMap()), *(range_->epetraMap()));
 
-  TEST_FOR_EXCEPTION(ierr < 0, runtime_error, 
+  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, 
                      "EpetraMatrixFactory::finalize() failed during call "
                      "to FillComplete(). Error code was " << ierr);
 
@@ -59,7 +59,7 @@ void EpetraMatrixFactory::finalize()
     {
       ierr = graph_->OptimizeStorage();
       
-      TEST_FOR_EXCEPTION(ierr < 0, runtime_error, 
+      TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, 
                          "EpetraMatrixFactory::freezeValues() failed during call "
                          "to OptimizeStorage(). Error code was " << ierr);
     }
@@ -73,7 +73,7 @@ void EpetraMatrixFactory::initializeNonzerosInRow(int globalRowIndex,
                                          nElemsToInsert,
                                          (int*) globalColumnIndices);
   
-  TEST_FOR_EXCEPTION(ierr < 0, runtime_error, 
+  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, 
                      "failed to add to row " << globalRowIndex
                      << " in EpetraMatrixFactory::setRowValues() with nnz="
                      << nElemsToInsert 
@@ -131,7 +131,7 @@ const Epetra_CrsGraph& EpetraMatrixFactory::graph() const
 
 LinearOperator<double> EpetraMatrixFactory::createMatrix() const
 {
-  RefCountPtr<SingleScalarTypeOpBase<double> > A 
+  RefCountPtr<LinearOpBase<double> > A 
     = rcp(new EpetraMatrix(graph(), epDomain(), epRange()));
   return A;
 }

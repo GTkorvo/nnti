@@ -62,7 +62,7 @@ namespace TSFExtended
             isBCRow_(isBCRow)
         {
           TEST_FOR_EXCEPTION(vec.space().numBlocks() != 2,
-            runtime_error, "LoadableBlockVector expected numBlocks=2, "
+            std::runtime_error, "LoadableBlockVector expected numBlocks=2, "
             "found " << vec.space().numBlocks());
 
           internalVec_ = vec.getBlock(0);

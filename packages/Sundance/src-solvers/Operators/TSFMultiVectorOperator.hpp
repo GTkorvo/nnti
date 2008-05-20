@@ -30,13 +30,12 @@
 #define TSFMULTIVECTOROPERATOR_HPP
 
 #include "TSFConfigDefs.hpp"
-#include "TSFSingleScalarTypeOp.hpp"
 #include "Thyra_LinearOpBase.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 #include "Thyra_DefaultSpmdVectorSpace.hpp"
-
 #include "TSFRowAccessibleOp.hpp"
+#include "TSFOpWithBackwardsCompatibleApply.hpp"
 #include "TSFHandleable.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 #include "TSFVectorImpl.hpp"
@@ -49,12 +48,10 @@ namespace TSFExtended
    */
   template <class Scalar> 
   class MultiVectorOperator 
-    : public SingleScalarTypeOp<Scalar>,
-      public Handleable<SingleScalarTypeOpBase<Scalar> >,
+    : public OpWithBackwardsCompatibleApply<Scalar>,
       public RowAccessibleOp<Scalar>
   {
   public:
-    GET_RCP(SingleScalarTypeOpBase<Scalar>);
 
     /**
      * Construct from an array of vectors and a specifier for the 
@@ -66,12 +63,12 @@ namespace TSFExtended
         domain_(domain.ptr()),
         range_()
     {
-      TEST_FOR_EXCEPTION(cols.size() == 0U, runtime_error,
+      TEST_FOR_EXCEPTION(cols.size() == 0U, std::runtime_error,
         "empty multivector given to MultiVectorOperator ctor");
       range_ = cols[0].space();
       for (unsigned int i=1; i<cols.size(); i++)
       {
-        TEST_FOR_EXCEPTION(cols[i].space() != range_, runtime_error,
+        TEST_FOR_EXCEPTION(cols[i].space() != range_, std::runtime_error,
           "inconsistent vector spaces in  MultiVectorOperator ctor");
       }
     }

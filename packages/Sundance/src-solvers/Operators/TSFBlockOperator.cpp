@@ -90,7 +90,7 @@ LinearOperator<Scalar> BlockOperator<Scalar>::getBlock(const int &i,
 		     "j is out of range in setBlock: i = " << i 
 		     << "and j = " << j << endl);
 
-  TEST_FOR_EXCEPTION(!isSet[i][j], runtime_error,
+  TEST_FOR_EXCEPTION(!isSet[i][j], std::runtime_error,
 		     "Block (" << i << ", " << j << ") is not set." << endl);
 
   return sub_[i][j];
@@ -164,7 +164,7 @@ void BlockOperator<Scalar>::apply(const Vector<Scalar>& arg,
 				  Vector<Scalar>& out, 
 				  const Scalar beta) const
 {
-  TEST_FOR_EXCEPTION(isFinal_, runtime_error, "Operator not finalized");
+  TEST_FOR_EXCEPTION(isFinal_, std::runtime_error, "Operator not finalized");
   for (int i=0; i<nBlockRows_; i++)
     {
       Vector<Scalar> tmp = this->range().getBlock(i).createMember();
@@ -193,7 +193,7 @@ void BlockOperator<Scalar>::applyTranspose(const Vector<Scalar>& arg,
 					   Vector<Scalar>& out,
 					   const Scalar beta) const
 {
-  TEST_FOR_EXCEPTION(isFinal_, runtime_error, "Operator not finalized");
+  TEST_FOR_EXCEPTION(isFinal_, std::runtime_error, "Operator not finalized");
   for (int i=0; i<nBlockCols_; i++)
     {
       Vector<Scalar> tmpRow = this->domain().getBlock(i).createMember();
@@ -221,7 +221,7 @@ void BlockOperator<Scalar>::applyTranspose(const Vector<Scalar>& arg,
 template <class Scalar>
 LinearOperator<Scalar>* BlockOperator<Scalar>::formTranspose()
 {
-  TEST_FOR_EXCEPTION(isFinal_, runtime_error, "Operator not finalized");
+  TEST_FOR_EXCEPTION(isFinal_, std::runtime_error, "Operator not finalized");
   opTrp_ = new BlockOperator(this->range(), this->domain());
   for (int i = 0; i < numBlockRows(); i++)
     {
@@ -243,7 +243,7 @@ LinearOperator<Scalar>* BlockOperator<Scalar>::formTranspose()
 template <class Scalar>
 void BlockOperator<Scalar>::print(ostream& os) const 
 {
-  TEST_FOR_EXCEPTION(isFinal_, runtime_error, "Operator not finalized");
+  TEST_FOR_EXCEPTION(isFinal_, std::runtime_error, "Operator not finalized");
   os << "<BlockOperator nRows=\"" << nBlockRows_ 
      << "\" nCols=\"" << nBlockCols_ << "\">" << endl;
   for (int i=0; i<nBlockRows_; i++)
@@ -273,7 +273,7 @@ void BlockOperator<Scalar>::finalize(const bool &zerofill)
     }
   catch(runtime_error)
     {
-      TEST_FOR_EXCEPTION(true, runtime_error, "Domain not complete" << 
+      TEST_FOR_EXCEPTION(true, std::runtime_error, "Domain not complete" << 
 			 endl);
     }
   try
@@ -282,7 +282,7 @@ void BlockOperator<Scalar>::finalize(const bool &zerofill)
     }
   catch(runtime_error)
     {
-      TEST_FOR_EXCEPTION(true, runtime_error, "Range not complete" << 
+      TEST_FOR_EXCEPTION(true, std::runtime_error, "Range not complete" << 
 			 endl);
     }
   for (int i = 0; i < nBlockRows_; i++)
@@ -297,7 +297,7 @@ void BlockOperator<Scalar>::finalize(const bool &zerofill)
 		}
 	      else
 		{
-		  TEST_FOR_EXCEPTION(true, runtime_error,
+		  TEST_FOR_EXCEPTION(true, std::runtime_error,
 				     "Block (" << i << ", " << j << 
 				     ") not set and zerofill is false" 
 				     << endl);
@@ -322,7 +322,7 @@ bool BlockOperator<Scalar>::buildSpaces(const int &i, const int &j,
     }
   catch(runtime_error)
     {
-      TEST_FOR_EXCEPTION(true, runtime_error,
+      TEST_FOR_EXCEPTION(true, std::runtime_error,
 			 "Domain not compatible while setting block (" << i
 			 << ", " << j << ")" << endl);
     }
@@ -335,7 +335,7 @@ bool BlockOperator<Scalar>::buildSpaces(const int &i, const int &j,
     }
   catch(runtime_error)
     {
-      TEST_FOR_EXCEPTION(true, runtime_error,
+      TEST_FOR_EXCEPTION(true, std::runtime_error,
 			 "Range not compatible while setting block (" << i
 			 << ", " << j << ")" << endl);
     }
@@ -376,13 +376,13 @@ void BlockOperator<Scalar>::chkSpaces(const int &i, const int &j,
 {
   if (sub.domain() != domain_.getBlock(j))
     {
-      TEST_FOR_EXCEPTION(true, runtime_error, 
+      TEST_FOR_EXCEPTION(true, std::runtime_error, 
 			 "Domain not compatible in block (" << i 
 			 << ", " << j << ")" << endl);
     }
   if (sub.range() != range_.getBlock(i))
     {
-      TEST_FOR_EXCEPTION(true, runtime_error, 
+      TEST_FOR_EXCEPTION(true, std::runtime_error, 
 			 "Range not compatible in block (" << i 
 			 << ", " << j << ")" << endl);
     }
@@ -421,7 +421,7 @@ void BlockOperator<Scalar>:: zeroFill(const int &i, const int &j)
 template <class Scalar>
 string BlockOperator<Scalar>::describe(const int &depth) const
 {
-  TEST_FOR_EXCEPTION(isFinal_, runtime_error, "Operator not finalized");
+  TEST_FOR_EXCEPTION(isFinal_, std::runtime_error, "Operator not finalized");
   string spaces = "";
   for (int i = 0; i < depth; i++)
     {
@@ -473,7 +473,7 @@ string BlockOperator<Scalar>::describe(const int &depth) const
 // 		     "j is out of range in setBlock: i = " << i 
 // 		     << "and j = " << j << endl);
 
-//   TEST_FOR_EXCEPTION(!isSet[i][j], runtime_error,
+//   TEST_FOR_EXCEPTION(!isSet[i][j], std::runtime_error,
 // 		     "Block (" << i << ", " << j << ") is not set." << endl);
 
 //   sub = sub_[i][j];

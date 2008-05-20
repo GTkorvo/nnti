@@ -336,7 +336,7 @@ namespace Thyra
       }
     else
       {
-        TEST_FOR_EXCEPTION(true, runtime_error, 
+        TEST_FOR_EXCEPTION(true, std::runtime_error, 
                            "input to DefaultBlockOperator::apply() is neither "
                            "a ProductVector nor a ProductMultiVector.");
       }
@@ -375,7 +375,7 @@ namespace Thyra
       }
     else
       {
-        TEST_FOR_EXCEPTION(true, runtime_error, 
+        TEST_FOR_EXCEPTION(true, std::runtime_error, 
                            "input to DefaultBlockOperator::applyTranspose() "
                            "is neither "
                            "a ProductVector nor a ProductMultiVector.");

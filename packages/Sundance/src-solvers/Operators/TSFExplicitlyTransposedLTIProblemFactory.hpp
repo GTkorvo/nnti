@@ -129,7 +129,7 @@ protected:
        * because the transposer is implemented in terms of CrsMatrix. If it
        * doesn't work, there's been an error somehere in Trilinos. */
       Epetra_CrsMatrix* epXt = dynamic_cast<Epetra_CrsMatrix*>(&eprXt);
-      TEST_FOR_EXCEPTION(epXt == 0, runtime_error, "expected return type "
+      TEST_FOR_EXCEPTION(epXt == 0, std::runtime_error, "expected return type "
         "of EpetraExt tranposer to be a CrsMatrix");
 
       
@@ -149,8 +149,9 @@ protected:
        * Epetra_CrsMatrix because the transposed matrix is
        * owned by the transposer. We also swap the original operator's 
        * domain and range spaces in creating the transpose. */
-      LinearOperator<Scalar> Xt = new EpetraMatrix(rcp(epXt, false), 
-          epXRange, epXDomain);
+      RefCountPtr<LinearOpBase<Scalar> > XtPtr = rcp(new EpetraMatrix(rcp(epXt, false), 
+          epXRange, epXDomain));
+      LinearOperator<Scalar> Xt = XtPtr;
 
       /** all done! */
       return Xt;

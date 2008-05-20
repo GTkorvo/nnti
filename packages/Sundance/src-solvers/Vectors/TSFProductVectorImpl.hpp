@@ -52,7 +52,7 @@ ProductVector<Scalar>::ProductVector(const VectorSpace<Scalar> &space)
 {
   const ProductVectorSpace<Scalar>* pvs =
     dynamic_cast<const ProductVectorSpace<Scalar>* > (space.ptr().get());
-  TEST_FOR_EXCEPTION(pvs == 0, runtime_error,
+  TEST_FOR_EXCEPTION(pvs == 0, std::runtime_error,
 		     "Space must be a ProductVectorSpace." << endl);
   space_ = space;
   numBlocks_ = pvs->numBlocks();
@@ -89,11 +89,11 @@ void ProductVector<Scalar>::setCore()
 template <class Scalar>
 void ProductVector<Scalar>::setBlock(int k, const Vector<Scalar> &vec)
 {
-  TEST_FOR_EXCEPTION(k < 0 || k > vecsE_.length(), runtime_error,
+  TEST_FOR_EXCEPTION(k < 0 || k > vecsE_.length(), std::runtime_error,
 		     "index k  = " << k << " out of range");
 
   
-  TEST_FOR_EXCEPTION(vec.space() != space_.getBlock(k), runtime_error,
+  TEST_FOR_EXCEPTION(vec.space() != space_.getBlock(k), std::runtime_error,
 		     "for k = " << k << 
 		     " vec is not a member of the underlying space" << endl << 
 		     "   vec.space = " << vec.space().description() << endl <<
@@ -116,7 +116,7 @@ void ProductVector<Scalar>::finalize()
   isFinal_ = true;
   for (int i = 0; i < numBlocks_; i++)
     {
-      TEST_FOR_EXCEPTION(vecsE_[i].ptr() == 0, runtime_error,
+      TEST_FOR_EXCEPTION(vecsE_[i].ptr() == 0, std::runtime_error,
 			 "Attempting to finalize BlockVector where block "
 			 << i << " is not set" << endl);
     }
@@ -131,7 +131,7 @@ void ProductVector<Scalar>::testSpace(const VectorSpace<Scalar> &space,
 {
   const ProductVectorSpace<Scalar>* pvs =
     dynamic_cast<const ProductVectorSpace<Scalar>* > (space.ptr());
-  TEST_FOR_EXCEPTION(pvs == 0, runtime_error,
+  TEST_FOR_EXCEPTION(pvs == 0, std::runtime_error,
 		     "In " << method << "space is not ProductVectorSpace"
 		     << endl);
 }

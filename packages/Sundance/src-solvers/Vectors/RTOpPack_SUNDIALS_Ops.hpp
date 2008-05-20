@@ -433,7 +433,7 @@ namespace RTOpPack
             }
           else
             {
-              TEST_FOR_EXCEPTION(true, runtime_error,
+              TEST_FOR_EXCEPTION(true, std::runtime_error,
                                  "illegal constraint flag = " << c_i
                                  << ". Allowed values are {-2.0, -1.0, 1.0, 2.0}");
             }

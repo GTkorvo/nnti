@@ -40,7 +40,7 @@ bool VectorSpace<Scalar>::operator==(const VectorSpace<Scalar>& other) const
 {
   const DescribableByTypeID<Scalar> *descrOther = 
     dynamic_cast<const DescribableByTypeID<Scalar>* > other;
-  TEST_FOR_EXCEPTION(descOther == 0, runtime_error,
+  TEST_FOR_EXCEPTION(descOther == 0, std::runtime_error,
 		     "Operator not describable; "
 		     << "hence not testable for equality" << endl);
   if (descOther->typeName() != this->ptr()->typeName() || other.dim() != this->dim()
@@ -77,7 +77,7 @@ int VectorSpace<Scalar>::numBlocks() const
 {
   ProductVectorSpacs<Scalar> pvs = 
     dynamic_cast<ProductVectorSpacs<Scalar> > *(this->ptr)();
-  TEST_FOR_EXCEPTION(pvs == 0, runtime_error,
+  TEST_FOR_EXCEPTION(pvs == 0, std::runtime_error,
 		     "Space not a ProductVectorSpace" << endl);
   return pvs.numBlocks();
 }
@@ -90,7 +90,7 @@ VectorSpace<Scalar> VectorSpace<Scalar>::getBlock(const int i)
 {
   ProductVectorSpacs<Scalar> pvs = 
     dynamic_cast<ProductVectorSpacs<Scalar> > *(this->ptr)();
-  TEST_FOR_EXCEPTION(pvs == 0, runtime_error,
+  TEST_FOR_EXCEPTION(pvs == 0, std::runtime_error,
 		     "Space not a ProductVectorSpace" << endl);
   return pvs.getBlock(i);
 }

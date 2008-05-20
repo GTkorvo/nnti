@@ -96,16 +96,16 @@ int Epetra_TSFOperator::Apply(const Epetra_MultiVector& in, Epetra_MultiVector& 
       const Epetra_Vector* cevIn = dynamic_cast<const Epetra_Vector*>(&in);
       Epetra_Vector* evIn = const_cast<Epetra_Vector*>(cevIn);
       Epetra_Vector* evOut = dynamic_cast<Epetra_Vector*>(&out);
-      TEST_FOR_EXCEPTION(evIn==0, runtime_error, "Epetra_TSFOperator::Apply "
+      TEST_FOR_EXCEPTION(evIn==0, std::runtime_error, "Epetra_TSFOperator::Apply "
 			 "cannot deal with multivectors");
-      TEST_FOR_EXCEPTION(evOut==0, runtime_error, "Epetra_TSFOperator::Apply "
+      TEST_FOR_EXCEPTION(evOut==0, std::runtime_error, "Epetra_TSFOperator::Apply "
 			 "cannot deal with multivectors");
 
       const EpetraVectorSpace* ed 
 	= dynamic_cast<const EpetraVectorSpace*>(A_.domain().ptr().get());
       const EpetraVectorSpace* er 
 	= dynamic_cast<const EpetraVectorSpace*>(A_.range().ptr().get());
-      TEST_FOR_EXCEPTION(er == 0 || ed==0, runtime_error, 
+      TEST_FOR_EXCEPTION(er == 0 || ed==0, std::runtime_error, 
 			 "this should never happen, because we have found "
 			 "Epetra domain and range in the ctor");
 
@@ -132,9 +132,9 @@ int Epetra_TSFOperator::Apply(const Epetra_MultiVector& in, Epetra_MultiVector& 
 int Epetra_TSFOperator::ApplyInverse(const Epetra_MultiVector& in, Epetra_MultiVector& out) const
 {
   
-  TEST_FOR_EXCEPTION(solver_.ptr().get()==0, runtime_error,
+  TEST_FOR_EXCEPTION(solver_.ptr().get()==0, std::runtime_error,
 		     "no solver provided for Epetra_TSFOperator::ApplyInverse");
-  TEST_FOR_EXCEPTION(!isNativeEpetra_ && !isCompoundEpetra_, runtime_error,
+  TEST_FOR_EXCEPTION(!isNativeEpetra_ && !isCompoundEpetra_, std::runtime_error,
 		     "Epetra_TSFOperator::ApplyInverse expects either "
 		     "a native epetra operator or a compound operator with "
 		     "Epetra domain and range spaces");
@@ -142,9 +142,9 @@ int Epetra_TSFOperator::ApplyInverse(const Epetra_MultiVector& in, Epetra_MultiV
   Epetra_Vector* evIn = const_cast<Epetra_Vector*>(cevIn);
   Epetra_Vector* evOut = dynamic_cast<Epetra_Vector*>(&out);
 
-  TEST_FOR_EXCEPTION(evIn==0, runtime_error, "Epetra_TSFOperator::Apply "
+  TEST_FOR_EXCEPTION(evIn==0, std::runtime_error, "Epetra_TSFOperator::Apply "
 		     "cannot deal with multivectors");
-  TEST_FOR_EXCEPTION(evOut==0, runtime_error, "Epetra_TSFOperator::Apply "
+  TEST_FOR_EXCEPTION(evOut==0, std::runtime_error, "Epetra_TSFOperator::Apply "
 		     "cannot deal with multivectors");
   
   const EpetraVectorSpace* ed 

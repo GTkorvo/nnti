@@ -35,10 +35,6 @@
 #include "TSFVectorDecl.hpp"
 #include "TSFVectorSpaceDecl.hpp"
 #include "TSFInverseOperator.hpp"
-#include "TSFTransposeOperator.hpp"
-#include "TSFComposedOperator.hpp"
-#include "TSFSumOperator.hpp"
-#include "TSFScaledOperator.hpp"
 #include "TSFBlockOperator.hpp"
 #include "TSFVectorType.hpp"
 
@@ -54,19 +50,13 @@ class InverseOperator;
 
 //=======================================================================
 template <class Scalar>
-LinearOperator<Scalar>::LinearOperator() : Handle<SingleScalarTypeOpBase<Scalar> >() {;}
-
+LinearOperator<Scalar>::LinearOperator() : Handle<LinearOpBase<Scalar, Scalar> >() {;}
 
 
 //=======================================================================
 template <class Scalar>
-LinearOperator<Scalar>::LinearOperator(Handleable<SingleScalarTypeOpBase<Scalar> >* rawPtr) 
-  : Handle<SingleScalarTypeOpBase<Scalar> >(rawPtr) {;}
-
-//=======================================================================
-template <class Scalar>
-LinearOperator<Scalar>::LinearOperator(const RefCountPtr<SingleScalarTypeOpBase<Scalar> >& smartPtr) 
-  : Handle<SingleScalarTypeOpBase<Scalar> >(smartPtr) {;}
+LinearOperator<Scalar>::LinearOperator(const RefCountPtr<LinearOpBase<Scalar, Scalar> >& smartPtr) 
+  : Handle<LinearOpBase<Scalar, Scalar> >(smartPtr) {;}
 
 
 
@@ -84,8 +74,8 @@ void LinearOperator<Scalar>::apply(const Vector<Scalar>& in,
     {
       out = this->range().createMember();
     }
-  this->ptr()->generalApply(Thyra::NOTRANS, *(in.ptr().get()),
-                            out.ptr().get(), alpha, beta);
+  this->ptr()->apply(Thyra::NONCONJ_ELE, *(in.ptr().get()),
+    out.ptr().get(), alpha, beta);
 }
 
 
@@ -105,23 +95,8 @@ void LinearOperator<Scalar>::applyTranspose(const Vector<Scalar>& in,
     {
       out = this->domain().createMember();
     }
-  this->ptr()->generalApply(Thyra::TRANS, *(in.ptr().get()),
-                            out.ptr().get(), alpha, beta);
-}
-
-
-//=======================================================================
-template <class Scalar> inline 
-void LinearOperator<Scalar>
-::generalApply(
-               const Thyra::ETransp            M_trans
-               ,const Thyra::VectorBase<Scalar>    &x
-               ,Thyra::VectorBase<Scalar>          *y
-               ,const Scalar            alpha
-               ,const Scalar            beta
-               ) const 
-{
-  this->ptr()->generalApply(M_trans, x, y, alpha, beta);
+  this->ptr()->applyTranspose(Thyra::NONCONJ_ELE, *(in.ptr().get()),
+    out.ptr().get(), alpha, beta);
 }
 
 
@@ -138,7 +113,7 @@ RefCountPtr<Time>& LinearOperator<Scalar>::opTimer()
 template <class Scalar>
 LinearOperator<Scalar> LinearOperator<Scalar>::transpose() const
 {
-  LinearOperator<Scalar> op = new TransposeOperator<Scalar>(*this);
+  LinearOperator<Scalar> op = transposedOperator(*this);
   return op;
 }
 
@@ -147,7 +122,9 @@ template <class Scalar>
 LinearOperator<Scalar> 
 LinearOperator<Scalar>::inverse(const LinearSolver<Scalar>& solver) const
 {
-  LinearOperator<Scalar> op = new InverseOperator<Scalar>(*this, solver);
+  RefCountPtr<LinearOpBase<Scalar, Scalar> > Ainv 
+    = rcp(new InverseOperator<Scalar>(*this, solver));
+  LinearOperator<Scalar> op = Ainv;
   return op;
 }
 
@@ -158,7 +135,7 @@ template <class Scalar>
 LinearOperator<Scalar> 
 LinearOperator<Scalar>::operator+(const LinearOperator<Scalar>& other) const
 {
-  LinearOperator<Scalar> op = new SumOperator<Scalar>(*this, other);
+  LinearOperator<Scalar> op = addedOperator(Array<LinearOperator<Scalar> >(tuple(*this, other)));
   return op;
 }
 
@@ -181,7 +158,7 @@ void LinearOperator<Scalar>::getRow(const int& row,
 {
   const RowAccessibleOp<Scalar>* val = 
     dynamic_cast<const RowAccessibleOp<Scalar>* >(this->ptr().get());
-  TEST_FOR_EXCEPTION(val == 0, runtime_error, 
+  TEST_FOR_EXCEPTION(val == 0, std::runtime_error, 
 		     "Operator not row accessible; getRow() not defined.");
   val->getRow(row, indices, values);
 }
@@ -220,7 +197,7 @@ void LinearOperator<Scalar>::setBlock(int i, int j,
   BlockOperator<Scalar>* b = 
     dynamic_cast<BlockOperator<Scalar>* >(this->ptr().get());
   
-  TEST_FOR_EXCEPTION(b == 0, runtime_error, 
+  TEST_FOR_EXCEPTION(b == 0, std::runtime_error, 
 		     "Can't call setBlock since operator not BlockOperator");
 
   
@@ -247,14 +224,14 @@ LinearOperator<Scalar> LinearOperator<Scalar>::getBlock(const int &i,
   
   if (b==0)
     {
-      TEST_FOR_EXCEPTION(i != 0 || j != 0, runtime_error, 
+      TEST_FOR_EXCEPTION(i != 0 || j != 0, std::runtime_error, 
                          "nonzero block index (" << i << "," << j << ") into "
                          "non-block operator");
       return *this;
     }
   RefCountPtr<const LinearOpBase<Scalar, Scalar> > block = b->getBlock(i, j);
   RefCountPtr<LinearOpBase<Scalar> > ncBlock = rcp_const_cast<LinearOpBase<Scalar> >(block);
-  return rcp_dynamic_cast<SingleScalarTypeOpBase<Scalar> >(ncBlock);
+  return ncBlock;
 }
 
  
@@ -266,7 +243,7 @@ void LinearOperator<Scalar>::endBlockFill()
   Thyra::DefaultBlockedLinearOp<Scalar>* b = 
     dynamic_cast<Thyra::DefaultBlockedLinearOp<Scalar>* >(this->ptr().get());
   
-  TEST_FOR_EXCEPTION(b == 0, runtime_error, 
+  TEST_FOR_EXCEPTION(b == 0, std::runtime_error, 
 		     "Can't call setBlock since operator not BlockOperator");
 
   

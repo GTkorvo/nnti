@@ -31,16 +31,14 @@
 
 #include "TSFConfigDefs.hpp"
 #include "TSFLinearOperatorDecl.hpp"
-#include "TSFSingleScalarTypeOp.hpp"
+#include "Thyra_ZeroLinearOpBase.hpp"
+#include "TSFOpWithBackwardsCompatibleApply.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 
 #include "Teuchos_RefCountPtr.hpp"
 #include "TSFLinearSolver.hpp"
 #include "TSFSolverState.hpp"
-#include "TSFZeroOperator.hpp"
-#include "TSFIdentityOperator.hpp"
-#include "TSFDiagonalOperator.hpp"
 
 namespace TSFExtended
 {
@@ -54,11 +52,10 @@ namespace TSFExtended
    * does solves by factoring and backsolves.
    */
   template <class Scalar> 
-  class InverseOperator : public SingleScalarTypeOp<Scalar>,
-                          public Handleable<SingleScalarTypeOpBase<Scalar> >
+  class InverseOperator : public OpWithBackwardsCompatibleApply<Scalar>
   {
   public:
-    GET_RCP(SingleScalarTypeOpBase<Scalar>);
+
 
     /**
      * Ctor with a linear operator and a solver specified.
@@ -90,9 +87,9 @@ namespace TSFExtended
                               ,const Scalar            beta  = 0.0
                               ) const 
     {
-      TEST_FOR_EXCEPTION(dynamic_cast<ZeroOperator<Scalar>* >(op_.ptr().get()) != 0, runtime_error,
+      TEST_FOR_EXCEPTION(dynamic_cast<Thyra::ZeroLinearOpBase<Scalar>* >(op_.ptr().get()) != 0, std::runtime_error,
                          "InverseOperator<Scalar>::apply() called on a ZeroOperator.");
-      TEST_FOR_EXCEPTION(op_.domain().dim() != op_.range().dim(), runtime_error,
+      TEST_FOR_EXCEPTION(op_.domain().dim() != op_.range().dim(), std::runtime_error,
                          "InverseOperator<Scalar>::apply() called on a non-square operator.");
       LinearOperator<Scalar> applyOp;      
       if (M_trans == Thyra::NOTRANS)
@@ -118,7 +115,7 @@ namespace TSFExtended
           assign(temp.ptr().get(), x);
           SolverState<Scalar> haveSoln = solver_.solve(applyOp, temp, result);
           TEST_FOR_EXCEPTION(haveSoln.finalState() != SolveConverged, 
-                             runtime_error,
+                             std::runtime_error,
                              "InverseOperator<Scalar>::apply() " 
                              << haveSoln.stateDescription());
           Vt_S(result.ptr().get(), alpha);

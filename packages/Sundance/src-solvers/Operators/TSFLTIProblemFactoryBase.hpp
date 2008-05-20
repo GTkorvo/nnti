@@ -222,7 +222,7 @@ protected:
       Array<VectorSpace<Scalar> > d(n, C.domain());
       Array<VectorSpace<Scalar> > r(n, C.range());
       
-      RefCountPtr<SingleScalarTypeOpBase<Scalar> > op
+      RefCountPtr<LinearOpBase<Scalar> > op
         = rcp(new BlockOperator<Scalar>(productSpace(d), productSpace(r)));
       LinearOperator<Scalar> rtn = op;
       for (int i=0; i<n; i++) rtn.setBlock(i, i, C);
@@ -235,7 +235,11 @@ protected:
   //@{
   /** */
   virtual LinearOperator<Scalar> createBigAInv() const 
-    {return new InverseLTIOp<Scalar>(nSteps_, getA(), getAt());}
+    {
+      RefCountPtr<LinearOpBase<Scalar, Scalar> > rtn 
+        = rcp(new InverseLTIOp<Scalar>(nSteps_, getA(), getAt()));
+      return rtn;
+    }
 
   /** */
   virtual LinearOperator<Scalar> createBigC() const 
@@ -248,12 +252,12 @@ protected:
       std::cout << "A.domain().dim() = " << A.domain().dim() << std::endl;
       VectorSpace<Scalar> littleDomain = productSpace<Scalar>(tuple(A.domain()));
       
-      LinearOperator<Scalar> I = new IdentityOperator<Scalar>(A.domain());
-      LinearOperator<Scalar> Z = new ZeroOperator<Scalar>(A.domain(), A.range());
+      LinearOperator<Scalar> I = identityOperator<Scalar>(A.domain());
+      LinearOperator<Scalar> Z = zeroOperator<Scalar>(A.domain(), A.range());
       VectorSpace<Scalar> bigRange = this->blockSpace(nSteps_, A.range());
       std::cout << "bigRange.dim() = " << bigRange.dim() << std::endl;
 
-      RefCountPtr<SingleScalarTypeOpBase<Scalar> > op
+      RefCountPtr<LinearOpBase<Scalar> > op
         = rcp(new BlockOperator<Scalar>(littleDomain, bigRange));
       LinearOperator<Scalar> rtn = op;
 
