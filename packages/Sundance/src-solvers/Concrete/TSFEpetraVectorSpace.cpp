@@ -28,6 +28,7 @@
 #include "TSFEpetraVector.hpp"
 #include "Teuchos_Utils.hpp"
 #include "TSFOut.hpp"
+#include "Epetra_Comm.h"
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
 #endif
