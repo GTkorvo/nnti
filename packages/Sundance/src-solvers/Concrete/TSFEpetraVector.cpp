@@ -29,7 +29,9 @@
 #include "TSFVectorImpl.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_dyn_cast.hpp"
+#ifdef HAVE_MPI
 #include "Teuchos_DefaultMpiComm.hpp"
+#endif
 #include "Teuchos_DefaultSerialComm.hpp"
 
 using namespace Teuchos;

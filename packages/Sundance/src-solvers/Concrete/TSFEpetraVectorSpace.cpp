@@ -27,7 +27,7 @@
 #include "TSFEpetraVectorSpace.hpp"
 #include "TSFEpetraVector.hpp"
 #include "Teuchos_Utils.hpp"
-#include "Teuchos_DefaultMpiComm.hpp"
+
 #include "Teuchos_DefaultSerialComm.hpp"
 #include "Thyra_DefaultSpmdVectorSpaceFactory.hpp"
 #include "TSFOut.hpp"
@@ -35,6 +35,7 @@
 #include "Epetra_Comm.h"
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
+#include "Teuchos_DefaultMpiComm.hpp"
 #endif
 
 
