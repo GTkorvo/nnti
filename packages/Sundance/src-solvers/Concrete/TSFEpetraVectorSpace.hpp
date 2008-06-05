@@ -29,83 +29,104 @@
 
 #include "TSFConfigDefs.hpp"
 #include "Epetra_Map.h"
-#include "TSFHandleable.hpp"
+#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_Comm.hpp"
 #include "Thyra_ScalarProdVectorSpaceBase.hpp"
-#include "Thyra_EpetraThyraWrappers.hpp"
-
-#ifdef TRILINOS_6
-#include "Thyra_MPIVectorSpaceBase.hpp"
-#else
-#include "Thyra_SpmdVectorSpaceDefaultBase.hpp"
-#define MPIVectorSpaceBase SpmdVectorSpaceDefaultBase 
-#endif
+#include "Thyra_SpmdVectorSpaceBase.hpp"
 
 namespace TSFExtended
 {
-  using namespace Teuchos;
-  using namespace Thyra;
+using namespace Teuchos;
+using namespace Thyra;
 
 
-  /**
-   * Adaptor wrapping Epetra in the Thyra vector space system.
-   * We derive from Thyra::ScalarProdVectorSpaceBase in order to
-   * inherit defaults for scalar products and view creation.
-   */
-  class EpetraVectorSpace : virtual public MPIVectorSpaceBase<double>,
-                            public Handleable<const VectorSpaceBase<double> >
-  {
-  public:
-    GET_RCP(const Thyra::VectorSpaceBase<double>);
+/**
+ * Adaptor wrapping Epetra map in the Thyra vector space system.
+ */
+class EpetraVectorSpace 
+  : virtual public Thyra::ScalarProdVectorSpaceBase<double>,
+    virtual public Thyra::SpmdVectorSpaceBase<double>
+{
+public:
 
-    /** */
-    EpetraVectorSpace(const RefCountPtr<const Epetra_Map>& map);
+  /** */
+  EpetraVectorSpace(const RefCountPtr<const Epetra_Map>& map);
     
 
-    /** @name Overridden form Teuchos::Describable */
-    //@{
-    /** \brief . */
-    std::string description() const;
-    //@}
+  /** @name Overridden form Teuchos::Describable */
+  //@{
+  /** \brief . */
+  std::string description() const;
+  //@}
 
-    /** @name Public overridden from VectorSpace */
-    //@{
-    /** \brief clone the space */
-    Teuchos::RefCountPtr< const VectorSpaceBase<double> > clone() const;
+  /** @name Public overridden from VectorSpace */
+  //@{
 
-    /** */
-    const RefCountPtr<const Epetra_Map>& epetraMap() const 
-    {return epetraMap_;}
+  /** */
+  Index dim() const ;
 
-    /** */
-    Teuchos::RefCountPtr<const Teuchos::Comm<Index> > getComm() const
+  /** */
+  bool isCompatible(const VectorSpaceBase<double>& other) const ;
+
+  /** */
+  RefCountPtr<const VectorSpaceFactoryBase<double> > 
+  smallVecSpcFcty() const ;
+
+  /** \brief clone the space */
+  RefCountPtr< const VectorSpaceBase<double> > clone() const ;
+
+  //@}
+
+
+
+
+  /** \name Overidden from SpmdVectorSpaceBase */
+  //@{
+  /** */
+  Teuchos::RefCountPtr<const Teuchos::Comm<Index> > getComm() const
     {return comm_;}
 
-    /** */
-    Index localSubDim() const {return localSubDim_;}
+  /** */
+  Index localSubDim() const {return localSubDim_;}
 
-  protected:
+  /** */
+  Index localOffset() const {return localOffset_;}
 
-    /** @name Protected overridden from VectorSpace */
-    //@{
-    /** \brief create a vector */
-    RefCountPtr<VectorBase<double> > createMember() const;
-    /** \brief create a multivector */
-    RefCountPtr<MultiVectorBase<double> > createMembers(int numVecs) const;
+  /** */
+  Index mapCode() const {return -1;}
+  //@}
 
-    //@}
-  private:
-    /** */
-    RefCountPtr<const Epetra_Map> epetraMap_;
 
-    Teuchos::RefCountPtr<const Teuchos::Comm<Index> > comm_;
+ /** */
+  const RefCountPtr<const Epetra_Map>& epetraMap() const 
+    {return epetraMap_;}
 
-    Index localSubDim_;
-      
-  };
+
+protected:
+  /** */
+  Teuchos::RefCountPtr<const Teuchos::Comm<Index> > 
+  epetraCommToTeuchosComm(const Epetra_Comm& epComm) const ;
+  
+  /** @name Protected overridden from VectorSpace */
+  //@{
+  /** \brief create a vector */
+  RefCountPtr<VectorBase<double> > createMember() const;
+  /** \brief create a multivector */
+  RefCountPtr<MultiVectorBase<double> > createMembers(int numVecs) const;
+  //@}
+private:
+  /** */
+  RefCountPtr<const VectorSpaceFactoryBase<double> > smallVecSpcFactory_;
+  /** */
+  RefCountPtr<const Epetra_Map> epetraMap_;
+
+  Teuchos::RefCountPtr<const Teuchos::Comm<Index> > comm_;
+
+  Index localSubDim_;
+
+  Index localOffset_;
+};
   
 }
-
-
-#undef MPIVectorSpaceBase
 
 #endif

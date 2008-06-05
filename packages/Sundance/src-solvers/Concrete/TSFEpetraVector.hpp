@@ -31,125 +31,184 @@
 #include "TSFPrintable.hpp"
 #include "TSFIndexableVector.hpp"
 #include "TSFRawDataAccessibleVector.hpp"
-#include "TSFVectorDecl.hpp"
+#include "Thyra_VectorDefaultBase.hpp"
 #include "Epetra_FEVector.h"
 #include "Epetra_Vector.h"
+#include "TSFEpetraVectorSpace.hpp"
+#include "TSFVectorImpl.hpp"
 
-#ifdef TRILINOS_6
-#include "Thyra_MPIVectorStdDecl.hpp"
-#else
-#define MPIVectorStd DefaultMPIVector
-#include "Thyra_DefaultSpmdVectorDecl.hpp"
-#endif
 
 namespace TSFExtended
 {
-  using namespace Teuchos;
-  using namespace Thyra;
-  /**
-   * TSF extension of Thyra::EpetraVector, implementing the LoadableVector
-   * interface allowing an application to access elements. This class derives
-   * from Thyra::EpetraVector, so it can be used seamlessly in any 
-   * Thyra-based code.
-   */
-  class EpetraVector : public DefaultSpmdVector<double>,
-                       public Handleable<VectorBase<double> >,
-                       public IndexableVector<double>,
-                       public RawDataAccessibleVector<double>
-  {
-  public:
-    GET_RCP(VectorBase<double>);
+using Teuchos::Range1D;
+using namespace Thyra;
+using namespace Teuchos;
+/**
+ * TSF extension of Thyra::EpetraVector, implementing the LoadableVector
+ * interface allowing an application to access elements. This class derives
+ * from Thyra::VectorDefaultBase, so it can be used seamlessly in any 
+ * Thyra-based code.
+ */
+class EpetraVector : public Thyra::VectorDefaultBase<double>,
+                     public IndexableVector<double>,
+                     public RawDataAccessibleVector<double>
+{
+public:
 
-    /** Construct with a smart pointer to an Epetra vector space. */
-    EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs);
+  /** Construct with a smart pointer to an Epetra vector space. */
+  EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs);
 
-    /** Construct with smart pointers to an Epetra vector space
-        and an existing Epetra vector. */
-    EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs,
-                 const RefCountPtr<Epetra_Vector>& vec);
+  /** Construct with smart pointers to an Epetra vector space
+      and an existing Epetra vector. */
+  EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs,
+    const RefCountPtr<Epetra_Vector>& vec);
 
-    /** \name IndexableVector interface */
-    //@{
-    /** read the element at the given global index */
-    virtual const double& operator[](Index globalIndex) const 
+
+  /** \name VectorBase interface */
+  //@{
+  /** */
+   RefCountPtr< const VectorSpaceBase<double> > 
+   space() const {return vecSpace_;}
+
+#ifdef TRILINOS_DEV
+  /** */
+  void applyOpImpl(const RTOpPack::RTOpT< double >& op,
+		const ArrayView< const Ptr< const VectorBase< double > > > &  	vecs,
+		const ArrayView< const Ptr< VectorBase< double > > > &  	targ_vecs,
+		const Ptr< RTOpPack::ReductTarget > &  	reduct_obj,
+		const Index  	first_ele_offset,
+		const Index  	sub_dim,
+		const Index  	global_offset	 
+    ) const ;
+#else
+
+  virtual void applyOp(
+    const RTOpPack::RTOpT<double> &op,
+    const int num_vecs,
+    const VectorBase<double>*const vecs[],
+    const int num_targ_vecs,
+    VectorBase<double>*const targ_vecs[],
+    RTOpPack::ReductTarget *reduct_obj,
+    const Index first_ele_offset,
+    const Index sub_dim,
+    const Index global_offset
+    ) const ;
+#endif
+
+  /** */
+  void acquireDetachedVectorViewImpl(const Range1D& rng,
+		RTOpPack::ConstSubVectorView<double>* sub_vec) const ;
+
+  /** */
+  void releaseDetachedVectorViewImpl(
+    RTOpPack::ConstSubVectorView<double>* sub_vec) const ;
+
+  /** */
+  void acquireNonconstDetachedVectorViewImpl(const Range1D& rng,
+		RTOpPack::SubVectorView<double> * sub_vec);	 
+
+
+  /** */
+  void commitNonconstDetachedVectorViewImpl(
+    RTOpPack::SubVectorView<double>* sub_vec);
+  
+  //@}
+
+  /** \name IndexableVector interface */
+  //@{
+  /** read the element at the given global index */
+  virtual const double& operator[](Index globalIndex) const 
     {return getElement(globalIndex);}
 
-    /** writable access to the element at the given global index */
-    virtual double& operator[](Index globalIndex) ;
-    //@}
+  /** writable access to the element at the given global index */
+  virtual double& operator[](Index globalIndex) ;
+  //@}
 
-    /** \name Raw data access interface */
-    //@{
-    /** */
-    virtual const double* dataPtr() const {return &(epetraVec_->operator[](0));}
-    /** */
-    virtual double* dataPtr() {return &(epetraVec_->operator[](0));}
-    //@}
+  /** \name Raw data access interface */
+  //@{
+  /** */
+  virtual const double* dataPtr() const {return &(epetraVec_->operator[](0));}
+  /** */
+  virtual double* dataPtr() {return &(epetraVec_->operator[](0));}
+  //@}
 
-    /** \name LoadableVector interface */
-    //@{
-    /** set a single element */
-    void setElement(Index globalIndex, const double& value);
+  /** \name LoadableVector interface */
+  //@{
+  /** set a single element */
+  void setElement(Index globalIndex, const double& value);
 
-    /** add to a single element */
-    void addToElement(Index globalIndex, const double& value);
+  /** add to a single element */
+  void addToElement(Index globalIndex, const double& value);
 
-    /** set a group of elements */
-    void setElements(size_t numElems, const Index* globalIndices, 
-                     const double* values);
+  /** set a group of elements */
+  void setElements(size_t numElems, const Index* globalIndices, 
+    const double* values);
 
 
-    /** add to a group of elements */
-    void addToElements(size_t numElems, const Index* globalIndices, 
-                       const double* values);
+  /** add to a group of elements */
+  void addToElements(size_t numElems, const Index* globalIndices, 
+    const double* values);
 
-    /** */
-    void finalizeAssembly();
-    //@}
+  /** */
+  void finalizeAssembly();
+  //@}
 
-    /** \name AccessibleVector interface */
-    //@{
-    /** */
-    const double& getElement(Index globalIndex) const ;
+  /** \name AccessibleVector interface */
+  //@{
+  /** */
+  const double& getElement(Index globalIndex) const ;
 
-    /** */
-    void getElements(const Index* globalIndices, int numElems,
-      Teuchos::Array<double>& elems) const ;
-    //@}
+  /** */
+  void getElements(const Index* globalIndices, int numElems,
+    Teuchos::Array<double>& elems) const ;
+  //@}
       
 
+  /** */
+  const RefCountPtr<Epetra_Vector>& epetraVec() const 
+    {return epetraVec_;}
 
-    /** Get a read-only Epetra_Vector */
-    static const Epetra_Vector& getConcrete(const TSFExtended::Vector<double>& tsfVec);
-    /** Get a read-write Epetra_Vector */
-    static Epetra_Vector& getConcrete(TSFExtended::Vector<double>& tsfVec);
-    /** Get a read-write Epetra_Vector pointer */
-    static Epetra_Vector* getConcretePtr(TSFExtended::Vector<double>& tsfVec);
+  /** */
+  RefCountPtr<Epetra_Vector>& epetraVec() {return epetraVec_;}
 
+  /** Get a read-only Epetra_Vector */
+  static const Epetra_Vector& getConcrete(const TSFExtended::Vector<double>& tsfVec);
+  /** Get a read-write Epetra_Vector */
+  static Epetra_Vector& getConcrete(TSFExtended::Vector<double>& tsfVec);
+  /** Get a read-write Epetra_Vector pointer */
+  static Epetra_Vector* getConcretePtr(TSFExtended::Vector<double>& tsfVec);
 
+  
 
     
-    /** */
-    const RefCountPtr<Epetra_Vector>& epetraVec() const {return epetraVec_;}
-    
-    /** */
-    RefCountPtr<Epetra_Vector>& epetraVec() {return epetraVec_;}
 
-  protected:    
-    /** */
-    const RefCountPtr<const Epetra_Map>& epetraMap() const {return epetraMap_;}
+protected:    
+  /** */
+  const RefCountPtr<const Epetra_Map>& epetraMap() const {return epetraMap_;}
 
-  private:
+  /** */
+  Range1D validateRange(const Range1D& rng) const ;
 
-    RefCountPtr<Epetra_Vector> epetraVec_;
+private:
 
-    RefCountPtr<const SpmdVectorSpaceBase<double> > mpiVecSpace_;
+  RefCountPtr<Epetra_Vector> epetraVec_;
 
-    RefCountPtr<const Epetra_Map> epetraMap_;
-  };
+  RefCountPtr<const Thyra::VectorSpaceBase<double> > vecSpace_;
+
+  RefCountPtr<const EpetraVectorSpace> epetraVecSpace_;
+
+  RefCountPtr<const Epetra_Map> epetraMap_;
+
+  int localOffset_;
+
+  int localSubDim_;
+
+  int globalDim_;
+
+  mutable bool in_applyOpImpl_;
+};
   
 }
 
 
-#undef MPIVectorStd
 #endif

@@ -165,6 +165,8 @@ namespace TSFExtended
         Vector<Scalar> y = space_.createMember();
         x.zero();
         y.zero();
+        cout << "x = " << x << endl;
+        cout << "y = " << y << endl;
         randomizeVec(a);
         randomizeVec(b);
 

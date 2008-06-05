@@ -30,6 +30,7 @@
 #define TSFVECTORIMPL_HPP
 
 
+#include "TSFVectorDecl.hpp"
 #include "TSFVectorSpaceDecl.hpp"
 #include "Thyra_SUNDIALS_Ops.hpp"
 #include "TSFIndexableVector.hpp"

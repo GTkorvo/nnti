@@ -27,45 +27,54 @@
 #include "TSFEpetraVectorSpace.hpp"
 #include "TSFEpetraVector.hpp"
 #include "Teuchos_Utils.hpp"
+#include "Teuchos_DefaultMpiComm.hpp"
+#include "Teuchos_DefaultSerialComm.hpp"
+#include "Thyra_DefaultSpmdVectorSpaceFactory.hpp"
 #include "TSFOut.hpp"
+#include "Epetra_SerialComm.h"
 #include "Epetra_Comm.h"
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
 #endif
 
 
-#ifdef TRILINOS_6
-#include "Thyra_MultiVectorCols.hpp"
-#include "Thyra_MPIVectorSpaceBase.hpp"
-#include "Thyra_SerialVectorSpaceStd.hpp"
-#define DefaultSerialVectorSpace SerialVectorSpaceStd
-#define DefaultColumnwiseMultiVector MultiVectorCols
-#else
-#include "Thyra_DefaultSpmdVector.hpp"
-#include "Thyra_SpmdVectorSpaceDefaultBase.hpp"
-#include "Thyra_DefaultColumnwiseMultiVector.hpp"
-#define MPIVectorSpaceBase SpmdVectorSpaceDefaultBase
-#endif
 
 using namespace TSFExtended;
 using namespace Teuchos;
 using namespace Thyra;
 
 EpetraVectorSpace::EpetraVectorSpace(const RefCountPtr<const Epetra_Map>& m)
-  : SpmdVectorSpaceBase<double>(),
-    Handleable<const VectorSpaceBase<double> >(), 
+  : ScalarProdVectorSpaceBase<double>(),
+    SpmdVectorSpaceBase<double>(),
+    smallVecSpcFactory_(rcp(new DefaultSpmdVectorSpaceFactory<double>())),
     epetraMap_(m),
-    comm_(Thyra::create_Comm(Teuchos::rcp(&m->Comm(),false))),
-    localSubDim_(epetraMap_->NumMyElements())
+    comm_(epetraCommToTeuchosComm(m->Comm())),
+    localSubDim_(epetraMap_->NumMyElements()),
+    localOffset_(epetraMap_->MinMyGID())
+{}
+
+
+Index EpetraVectorSpace::dim() const 
 {
-//  TSFOut::os() << "entering EVS ctor" << endl;
-  Array<int> elems(epetraMap_->NumMyElements());
-//  TSFOut::os() << "getting element list" << endl;
-  if (elems.size() > 0) epetraMap_->MyGlobalElements(&(elems[0]));
-//  TSFOut::os() << "updating state glob=" << epetraMap_->NumGlobalElements() << endl;
-  updateState(epetraMap_->NumGlobalElements());
-//  TSFOut::os() << "leaving EVS ctor" << endl;
+  return epetraMap_->NumGlobalElements();
 }
+
+bool EpetraVectorSpace::isCompatible(const VectorSpaceBase<double>& other) const 
+{
+  const EpetraVectorSpace* epvs = dynamic_cast<const EpetraVectorSpace*>(&other);
+  if (epvs != 0)
+  {
+    return epetraMap_->SameAs(*(epvs->epetraMap_));
+  }
+  return false;
+}
+
+RefCountPtr<const VectorSpaceFactoryBase<double> > 
+EpetraVectorSpace::smallVecSpcFcty() const 
+{
+  return smallVecSpcFactory_;
+}
+
 
 
 // Overridden from VectorSpace
@@ -118,8 +127,41 @@ string EpetraVectorSpace::description() const
     + Teuchos::toString(localSubDim()) + "]";
 }
 
-#undef MPIVectorSpaceBase 
 
+
+Teuchos::RefCountPtr<const Teuchos::Comm<Index> > 
+EpetraVectorSpace::epetraCommToTeuchosComm(const Epetra_Comm& epComm) const 
+{
+  RefCountPtr<const Comm<Index> > rtn;
+
+#ifdef HAVE_MPI
+  const Epetra_MpiComm* mpiComm 
+    = dynamic_cast<const Epetra_MpiComm*>(&epComm);
+#endif
+
+  const Epetra_SerialComm* serialComm 
+    = dynamic_cast<const Epetra_SerialComm*>(&epComm);
+
+  if (serialComm != 0)
+  {
+    rtn  = rcp(new SerialComm<Index>());
+  }
+#ifdef HAVE_MPI
+  else if (mpiComm != 0)
+  {
+    MPI_Comm rawMpiComm = mpiComm->GetMpiComm();
+    RefCountPtr<const OpaqueWrapper<MPI_Comm> > ptr 
+      = rcp(new OpaqueWrapper<MPI_Comm>(rawMpiComm));
+    rtn  = rcp(new MpiComm<Index>(ptr));
+  }
+#endif
+  else
+  {
+    TEST_FOR_EXCEPTION(true, std::runtime_error, "Epetra_Comm is neither "
+      "a SerialComm or MpiComm");
+  }
+  return rtn;
+}
 
 
 

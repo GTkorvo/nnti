@@ -98,7 +98,8 @@ LinearOperator<Scalar> composedOperator(
     }
     else if (constMultOp!=0) /* is a const MultipliedLinearOpBase */
     {
-      TEST_FOR_EXCEPT(true);
+      multOp = const_cast<MultipliedLinearOpBase<Scalar>* >(constMultOp);
+      ptrs.append(op_i.ptr());
     }
     else if (multOp!=0) /* is a MultipliedLinearOpBase */
     {

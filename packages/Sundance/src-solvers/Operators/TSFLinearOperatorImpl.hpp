@@ -73,6 +73,7 @@ void LinearOperator<Scalar>::apply(const Vector<Scalar>& in,
   if (out.ptr().get()==0)
     {
       out = this->range().createMember();
+      
     }
   this->ptr()->apply(Thyra::NONCONJ_ELE, *(in.ptr().get()),
     out.ptr().get(), alpha, beta);
