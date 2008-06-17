@@ -61,13 +61,14 @@ PartitionedMatrixFactory::PartitionedMatrixFactory(
   rangeVecType_(rangeVecType),
   lowestLocalRow_(lowestLocalRow),
   highestLocalRow_(-1),
-  blockFactory_(2, 2),
-  blockICMF_(2, 2)
+  blockFactory_(2),
+  blockICMF_(2)
 {
   highestLocalCol_ = lowestLocalCol_ + domain.numLocalElements();
   highestLocalRow_ = lowestLocalRow_ + range.numLocalElements();
 
-  
+  blockFactory_[0].resize(2);
+  blockFactory_[1].resize(2);
   
   blockFactory_[0][0] = rangeVecType_.createMatrixFactory(internalDomain_, internalRange_);
 
@@ -77,6 +78,7 @@ PartitionedMatrixFactory::PartitionedMatrixFactory(
 
   for (int i=0; i<2; i++)
   {
+    blockICMF_[i].resize(2);
     for (int j=0; j<2; j++)
     {
       if (i==1 && j==0) continue;
