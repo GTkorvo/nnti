@@ -300,7 +300,7 @@ void MLPreconditionerFactory::setParameterList(Teuchos::RefCountPtr<Teuchos::Par
 }
 
 Teuchos::RefCountPtr<Teuchos::ParameterList>
-MLPreconditionerFactory::getParameterList()
+MLPreconditionerFactory::getNonconstParameterList()
 {
   return paramList_;
 }

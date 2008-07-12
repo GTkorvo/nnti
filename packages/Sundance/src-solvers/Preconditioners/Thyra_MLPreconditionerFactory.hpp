@@ -113,7 +113,7 @@ public:
   /** \brief . */
   void setParameterList(RefCountPtr<ParameterList> const& paramList);
   /** \brief . */
-  RefCountPtr<ParameterList> getParameterList();
+  RefCountPtr<ParameterList> getNonconstParameterList();
   /** \brief . */
   RefCountPtr<ParameterList> unsetParameterList();
   /** \brief . */
