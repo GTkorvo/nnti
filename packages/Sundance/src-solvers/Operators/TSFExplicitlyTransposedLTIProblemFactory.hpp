@@ -46,7 +46,7 @@ using namespace Thyra;
  * done using explicit transforms. For example, with backwards Euler
  * time stepping, the advance matrix \f$ A\f$ will be 
  * \f$ A = M B^{-1}, \f$ 
- * where \f$ M \f$ is the mass matrix and \f$ B = M - \Delta t K \f.$ However,
+ * where \f$ M \f$ is the mass matrix and \f$ B = M - \Delta t K \f$. However,
  * with the AztecOO solver we can't do a transpose solve on B, so we will want
  * to form \f$ B^T\f$ explicitly, after which we can form \f$ A^T \f$ 
  * implicitly as \f$ A^T = (B^T)^{-1} M^T.\f$ In this formulation
