@@ -88,7 +88,7 @@ EXTRA_EPETRA = \
 	
 if BUILD_RBGEN_EPETRA
 
-EPETRA_H = $(EXTRA_EXTENDED_H)
+EPETRA_H = $(EXTRA_EPETRA_H)
 EPETRA = $(EXTRA_EPETRA)
 
 else 
@@ -303,7 +303,16 @@ librbgen_a_SOURCES = \
 #np# replace rbgen with the name of the package being autotool'ed here
 EXTRA_librbgen_a_SOURCES = \
 	$(EXTRA_MPI) \
-	$(EXTRA_MPI_H) 
+	$(EXTRA_MPI_H) \
+	$(EXTRA_EPETRA_H) \
+	$(EXTRA_EPETRA) \
+	$(EXTRA_EPETRAEXT_H) \
+	$(EXTRA_EPETRAEXT) \
+	$(EXTRA_ANASAZI_EPETRA_H) \
+	$(EXTRA_ANASAZI_EPETRA) \
+	$(EXTRA_NETCDF_H) \
+	$(EXTRA_NETCDF)
+ 
 
 #We need the following to support separate build directories
 #AM_CPPFLAGS=-I$(builddir)/src
