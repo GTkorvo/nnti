@@ -74,40 +74,16 @@ public:
   RefCountPtr<const VectorSpaceBase<Scalar> > domain() const 
     {return domain_.ptr();}
 
-
-
   /** */
   int numBlockRows() const {return this->productRange()->numBlocks();}
 
   /** */
   int numBlockCols() const {return this->productDomain()->numBlocks();}
-    
-
- 
-
-  /** */
-  void apply(
-    const EConj                             conj
-    ,const Thyra::MultiVectorBase<Scalar>    &X
-    ,Thyra::MultiVectorBase<Scalar>           *Y
-    ,const Scalar                      alpha = Teuchos::ScalarTraits<Scalar>::one()
-    ,const Scalar                      beta  = Teuchos::ScalarTraits<Scalar>::zero()
-    ) const ;
-
-  /** */
-  void applyTranspose(
-    const EConj                            conj
-    ,const Thyra::MultiVectorBase<Scalar>    &X
-    ,Thyra::MultiVectorBase<Scalar>         *Y
-    ,const Scalar                     alpha = Teuchos::ScalarTraits<Scalar>::one()
-    ,const Scalar                     beta  = Teuchos::ScalarTraits<Scalar>::zero()
-    ) const;
 
   /** Get entire row of the block matrix  */
   void getRow(const int& row, Array<int>& indices,
 		Array<Scalar>& values) const;
-
-    
+   
 
   /** */
   std::ostream& describe(

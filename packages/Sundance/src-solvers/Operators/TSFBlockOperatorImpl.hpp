@@ -74,31 +74,6 @@ BlockOperator<Scalar>::BlockOperator(const VectorSpace<Scalar>& domain,
 
 
 
-
-template <class Scalar>
-void BlockOperator<Scalar>::apply(const EConj                             conj
-  ,const Thyra::MultiVectorBase<Scalar>    &X
-  ,Thyra::MultiVectorBase<Scalar>           *Y
-  ,const Scalar                      alpha
-  ,const Scalar                      beta 
-  ) const 
-{
-  Thyra::DefaultBlockedLinearOp<Scalar>::apply(conj, X, Y, alpha, beta);
-}
-
-template <class Scalar>
-void BlockOperator<Scalar>::applyTranspose(const EConj                             conj
-  ,const Thyra::MultiVectorBase<Scalar>    &X
-  ,Thyra::MultiVectorBase<Scalar>           *Y
-  ,const Scalar                      alpha
-  ,const Scalar                      beta 
-  ) const 
-{
-  Thyra::DefaultBlockedLinearOp<Scalar>::applyTranspose(conj, X, Y, alpha, beta);
-}
-
-
-
 /*==================================================================*/
 template <class Scalar> inline
 void BlockOperator<Scalar>::getRow(const int& row, 
