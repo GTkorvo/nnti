@@ -4,7 +4,7 @@
 SET(DIRECT_DEPS Teuchos)
 IF(${PROJECT_NAME}_ENABLE_EPETRA)
   LIST(APPEND DIRECT_DEPS Epetra)
-ENDIF(${PROJECT_NAME}_ENABLE_EPETRA)
+ENDIF()
 
 # Create <PACKAGE>_config.h
 CONFIGURE_FILE(
@@ -51,6 +51,7 @@ SET(SOURCES
 # Set addition headers and source based on package-specific 
 # configuration options
 IF(${PROJECT_NAME}_ENABLE_EPETRA)
+
   SET(HEADERS
     ${HEADERS}
     RBGen_BurkardtFileIOHandler.h 
@@ -72,6 +73,7 @@ IF(${PROJECT_NAME}_ENABLE_EPETRA)
     RBGen_MSPreprocessor.cpp 
     RBGen_Utils.cpp
     )
+
 ENDIF(${PROJECT_NAME}_ENABLE_EPETRA)
 
 # Target library setup
@@ -89,11 +91,11 @@ ENDIF(${PROJECT_NAME}_ENABLE_EPETRA)
 
 INSTALL(
   TARGETS rbgen
-	RUNTIME DESTINATION bin
-	LIBRARY DESTINATION lib
-	ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
   COMPONENT ${PROJECT_NAME}
-	)
+  )
 
 INSTALL(
   FILES ${HEADERS}
