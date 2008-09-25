@@ -2,7 +2,7 @@
 
 ADD_SUBDIRECTORY(Lena)
 ADD_SUBDIRECTORY(Moon)
-ADD_SUBDIRECTORY(SampleXML)
+ADD_SUBDIRECTORY(sampleXML)
 
 # Setup include directories and library dependencies
 INCLUDE_DIRECTORIES(${${PROJECT_NAME}_INCLUDE_DIRS})
