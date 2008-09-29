@@ -108,14 +108,15 @@ private:
 
 }
 
-
+namespace TSFExtended
+{
 template <class Scalar> inline
 std::ostream& operator<<(std::ostream& os, 
   const TSFExtended::SequentialIterator<Scalar>& i)
 {
   return i.print(os);
 }
-
+}
 
 
 #endif

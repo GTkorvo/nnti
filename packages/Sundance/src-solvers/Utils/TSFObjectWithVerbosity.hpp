@@ -7,6 +7,7 @@
 #include "TSFConfigDefs.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RefCountPtr.hpp"
+#include "TSFParamUtils.hpp"
 
 
 namespace TSFExtended
@@ -71,6 +72,12 @@ public:
   /** \deprecated Construct, starting silent */
   ObjectWithVerbosity() : verbosity_(classVerbosity()), setLocally_(false) {;}
 
+  /** */
+  ObjectWithVerbosity(int verb) : verb_(verb){;}
+
+  /** */
+  int verb() const {return verb_;}
+
   /** \deprecated Read-only access to the verbosity */
   VerbositySetting verbosity() const 
     {
@@ -99,6 +106,9 @@ private:
 
   /** */
   bool setLocally_;
+
+  /** */
+  int verb_;
 };
 
 /** 
@@ -112,7 +122,7 @@ template <class X> VerbositySetting& verbosity()
 
 template <class X> 
 class ParameterControlledObjectWithVerbosity 
-  : public ObjectWithVerbosity<X>
+  : public ObjectWithVerbosity<X> 
 {
 public:
   /** \deprecated Construct, starting silent */
@@ -164,42 +174,11 @@ public:
   /** */
   ParameterList mergeParams(const ParameterList& pDef, const ParameterList& pIn) const
     {
-      ParameterList rtn = pDef;
-      using namespace Teuchos;
-
-      /* replace any defaults with overriden values */
-      ParameterList::ConstIterator i;
-      for (i=pDef.begin(); i!=pDef.end(); i++)
-      {
-        const ParameterEntry& eDef = pDef.entry(i);
-        const std::string& name = pDef.name(i);
-        const ParameterEntry* eIn = pIn.getEntryPtr(name);
-        if (eIn != NULL)
-        {
-          if (eIn->isList() && eDef.isList())
-          {
-            ParameterList sub = mergeParams(
-              getValue<ParameterList>(eDef),
-              getValue<ParameterList>(*eIn));
-          }
-          else if (eIn->isType<int>() && eDef.isType<int>())
-          {
-            rtn.set(name, Teuchos::any_cast<int>(eIn->getAny()));
-          }
-          else
-          {
-            TEST_FOR_EXCEPTION(eIn->isList() && !eDef.isList(), 
-              std::runtime_error, "mismatched parameters in mergeParams()");
-            TEST_FOR_EXCEPTION(!eIn->isList() && eDef.isList(), 
-              std::runtime_error, "mismatched parameters in mergeParams()");
-            TEST_FOR_EXCEPT(1);
-          }
-        }
-      }
-      return rtn;
+      return mergeParamLists(pDef, pIn);
     }
        
-
+  /** */
+  const ParameterList params() const {return verbControlParams_;}
 private:
   ParameterList verbControlParams_;
 };

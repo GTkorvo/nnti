@@ -84,9 +84,11 @@ UTILS_H = \
 	$(srcdir)/Utils/TSFHandleable.hpp \
 	$(srcdir)/Utils/TSFObjectWithVerbosity.hpp \
 	$(srcdir)/Utils/TSFOut.hpp \
+	$(srcdir)/Utils/TSFParamUtils.hpp \
 	$(srcdir)/Utils/TSFPrintable.hpp
 
 UTILS = \
+	$(srcdir)/Utils/TSFParamUtils.cpp \
 	$(srcdir)/Utils/SundancePathUtils.cpp 
 
 CONCRETE_H = \

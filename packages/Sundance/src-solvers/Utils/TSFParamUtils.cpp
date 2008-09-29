@@ -28,17 +28,57 @@
 // ************************************************************************
 /* @HEADER@ */
 
+#include "TSFParamUtils.hpp"
 
-#include "SundanceAbstractEvalMediator.hpp"
+using Teuchos::Array;
+using Teuchos::ParameterList;
+using std::string;
+using std::ifstream;
 
-using namespace SundanceCore::Internal;
-using namespace SundanceCore::Internal;
-using namespace SundanceCore;
-using namespace SundanceUtils;
+namespace TSFExtended
+{
+ParameterList mergeParamLists(const ParameterList& pDef, 
+  const ParameterList& pIn)
+{
+  ParameterList rtn = pDef;
+  using namespace Teuchos;
+  
+  /* replace any defaults with overriden values */
+  ParameterList::ConstIterator i;
 
+  for (i=pDef.begin(); i!=pDef.end(); i++)
+  {
+    const ParameterEntry& eDef = pDef.entry(i);
 
+    const std::string& name = pDef.name(i);
+    const ParameterEntry* eIn = pIn.getEntryPtr(name);
+    if (eIn != NULL)
+    {
+      if (eIn->isList() && eDef.isList())
+      {
+        ParameterList sub = mergeParamLists(
+          getValue<ParameterList>(eDef),
+          getValue<ParameterList>(*eIn));
+        rtn.set(name, sub);
 
-AbstractEvalMediator::AbstractEvalMediator(int verb)
-  : TSFExtended::ObjectWithVerbosity<AbstractEvalMediator>(verb)
-{}
-
+      }
+      else if (eIn->isType<int>() && eDef.isType<int>())
+      {
+        rtn.set(name, Teuchos::any_cast<int>(eIn->getAny()));
+      }
+      else
+      {
+        TEST_FOR_EXCEPTION(eIn->isList() && !eDef.isList(), 
+          std::runtime_error, "mismatched parameters in mergeParams()");
+        TEST_FOR_EXCEPTION(!eIn->isList() && eDef.isList(), 
+          std::runtime_error, "mismatched parameters in mergeParams()");
+        TEST_FOR_EXCEPT(1);
+      }
+    }
+    else
+    {
+    }
+  }
+  return rtn;
+}
+}
