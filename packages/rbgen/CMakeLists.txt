@@ -1,32 +1,41 @@
-# $Header$
+#
+# A) Define the package
+#
 
-PROJECT(RBGen)
+INCLUDE(TrilinosPackageHelpers)
+TRILINOS_PACKAGE(RBGen)
 
-SET(${PROJECT_NAME}_VERSION "0.1d")
+SET(${PACKAGE_NAME}_VERSION "0.1d")
 
-OPTION(${PROJECT_NAME}_ENABLE_EPETRA
-  "Enable ${PROJECT_NAME} features that use epetra."
+#
+# B) Set up package-specific options
+#
+
+OPTION(${PACKAGE_NAME}_ENABLE_EPETRA
+  "Enable ${PACKAGE_NAME} features that use epetra."
   ON
   )
 
+# 2008/10/03: rabartl: ToDo: Above, the option RBGen_ENABLE_EPETRA should get
+# added automatically given the package dependency
+# RBGen_LIB_OPTIONAL_DEP_PACKAGES
+
+#
+# C) Add the libraries and examples
+#
+
 ADD_SUBDIRECTORY(src)
 
-# Note ... currently no tests are defined, so this is a no-op
-IF(${PROJECT_NAME}_ENABLE_TESTS)
-  ADD_SUBDIRECTORY(test)
-ENDIF()
+#IF(${PACKAGE_NAME}_ENABLE_TESTS)
+#  ADD_SUBDIRECTORY(test)
+#ENDIF()
+#
+#IF(${PACKAGE_NAME}_ENABLE_EXAMPLES)
+#  ADD_SUBDIRECTORY(example)
+#ENDIF()
 
-# Note ... currently no examples are defined, so this is a no-op
-IF(${PROJECT_NAME}_ENABLE_EXAMPLES)
-  ADD_SUBDIRECTORY(example)
-ENDIF()
+#
+# D) Do standard postprocessing
+#
 
-LIST(REMOVE_DUPLICATES ${PROJECT_NAME}_INCLUDE_DIRS)
-LIST(REMOVE_DUPLICATES ${PROJECT_NAME}_LIBRARY_DIRS)
-LIST(REMOVE_DUPLICATES ${PROJECT_NAME}_LIBRARIES)
-
-##############################################################################
-# Configure <PACKAGE>Config.cmake for the build tree.
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in
-               ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake @ONLY)
-##############################################################################
+TRILINOS_PACKAGE_POSTPROCESS()

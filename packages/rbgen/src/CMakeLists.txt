@@ -1,10 +1,12 @@
-# $Header$ 
 
 # Setup direct dependencies
 SET(DIRECT_DEPS Teuchos)
 IF(${PROJECT_NAME}_ENABLE_EPETRA)
   LIST(APPEND DIRECT_DEPS Epetra)
 ENDIF()
+
+# 2008/10/03: rabartl: ToDo: Above, These should be set up in by the automatic
+# dependancy machanism
 
 # Create <PACKAGE>_config.h
 CONFIGURE_FILE(
@@ -27,6 +29,9 @@ FOREACH(DIRECT_DEP ${DIRECT_DEPS})
   INCLUDE_DIRECTORIES(${${DIRECT_DEP}_INCLUDE_DIRS})
   LINK_DIRECTORIES(${${DIRECT_DEP}_LIBRARY_DIRS})
 ENDFOREACH(DIRECT_DEP ${DIRECT_DEPS})
+
+# 2008/10/03: rabartl: ToDo: Above, These should be set up in by the automatic
+# dependancy machanism
 
 # Set headers
 SET(HEADERS
