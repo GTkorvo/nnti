@@ -26,7 +26,7 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#include "TSFIfpackOperator.hpp"
+#include "TSFMLOperator.hpp"
 #include "Teuchos_Array.hpp"
 #include "Teuchos_MPIComm.hpp"
 #include "TSFEpetraVector.hpp"
@@ -34,64 +34,26 @@
 using namespace TSFExtended;
 using namespace Teuchos;
 
-IfpackOperator::IfpackOperator(const EpetraMatrix* A,
-                               int fillLevels,
-                               int overlapFill,
-                               double relaxationValue,
-                               double relativeThreshold,
-                               double absoluteThreshold)
-  : precondGraph_(),
-    precond_(),
-    domain_(A->domain()),
-    range_(A->range())
+MLOperator::MLOperator(
+  const LinearOperator<double>& op,
+  const ParameterList& mlParams)
+  : mlPrec_(),
+    domain_(op.domain().ptr()),
+    range_(op.range().ptr())
 {
-  std::cerr << "Creating Ifpack operator" << std::endl;
-  const Epetra_CrsMatrix* matrix = A->crsMatrix();
-
-  const Epetra_CrsGraph& matrixGraph = matrix->Graph();
-			
-  Ifpack_IlukGraph* precondGraph 
-    = new Ifpack_IlukGraph(matrixGraph, fillLevels, overlapFill);
-  precondGraph_ = rcp(precondGraph);
-
-  int ierr = precondGraph->ConstructFilledGraph();
-
-  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error,
-                     "IfpackOperator ctor: "
-                     "precondGraph->ConstructFilledGraph() failed with ierr="
-                     << ierr);
-
-  Ifpack_CrsRiluk* precond = new Ifpack_CrsRiluk(*precondGraph);
-  precond_ = rcp(precond);
-
-  precond->SetRelaxValue(relaxationValue);
-  precond->SetRelativeThreshold(relativeThreshold);
-  precond->SetAbsoluteThreshold(absoluteThreshold);
-
-  ierr = precond->InitValues(*matrix);
-
-  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error,
-                     "IfpackOperator ctor: "
-                     "precond->InitValues() failed with ierr="
-                     << ierr);
-
-  ierr = precond->Factor();
-
-  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error,
-                     "IfpackOperator ctor: "
-                     "precond->Factor() failed with ierr="
-                     << ierr);
-  std::cerr << "Done creating Ifpack operator" << std::endl;
+	Epetra_CrsMatrix& A = EpetraMatrix::getConcrete(op);
+  
+  
+  mlPrec_ = rcp(new ML_Epetra::MultiLevelPreconditioner(A, mlParams));
 }
 
 
-void IfpackOperator::generalApply(const Thyra::ETransp M_trans,
-                                  const Thyra::VectorBase<double>& x,
-                                  Thyra::VectorBase<double>* y,
-                                  const double alpha,
-                                  const double beta) const
+void MLOperator::generalApply(const Thyra::ETransp M_trans,
+  const Thyra::VectorBase<double>& x,
+  Thyra::VectorBase<double>* y,
+  const double alpha,
+  const double beta) const
 {
-//  std::cerr << "Applying Ifpack operator" << std::endl;
   /* grab the epetra vector objects underlying the input and output vectors */
   const EpetraVector* epIn = dynamic_cast<const EpetraVector*>(&x);
   TEST_FOR_EXCEPTION(epIn == 0, std::runtime_error,
@@ -123,20 +85,18 @@ void IfpackOperator::generalApply(const Thyra::ETransp M_trans,
       tmp = yy;
     }
 
-  /* ifpack's solve is logically const but declared non-const because
-   *  internal data changes. So, do a const_cast. */
-  Ifpack_CrsRiluk* p = const_cast<Ifpack_CrsRiluk*>(precond_.get());
 
   int ierr;
 
   /* do the solve (or transpose solve) */
   if (M_trans==NOTRANS)
     {
-      ierr = p->Solve(false, *in, *tmp);
+      ierr = mlPrec_->ApplyInverse(*in, *tmp);
     }
   else
     {
-      ierr = p->Solve(true, *in, *tmp);
+      TEST_FOR_EXCEPTION(M_trans != NOTRANS, std::runtime_error,
+        "ML preconditioner does not support transposes");
     }
 
   /* if necessary, add beta*y */
@@ -154,6 +114,5 @@ void IfpackOperator::generalApply(const Thyra::ETransp M_trans,
     }
 
   /* At this point, the contents of y should be yy. We are done. */
-//  std::cerr << "Done applying Ifpack operator" << std::endl;
 }
   

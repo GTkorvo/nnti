@@ -55,11 +55,14 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const XMLObject& xml)
           break;
         }
     }
+
+  LinearSolver<double>::os() << "solver type = " << solverType << std::endl;
   
   if (solverType=="Aztec")
     {
       XMLParameterListReader reader;
       ParameterList params = reader.toParameterList(xml);
+      LinearSolver<double>::os() << "aztec params = " << params << std::endl;
       return new AztecSolver(params);
     }
   else if (solverType=="TSF")
@@ -81,6 +84,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const XMLObject& xml)
     {
       XMLParameterListReader reader;
       ParameterList params = reader.toParameterList(xml);
+      LinearSolver<double>::os() << "amesos params = " << params << std::endl;
       return new AmesosSolver(params);
     }
   else if (solverType=="Block Triangular")
@@ -112,6 +116,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
 
   if (solverType=="Aztec")
     {
+      LinearSolver<double>::os() << "aztec params = " << params << std::endl;
       return new AztecSolver(solverSublist);
     }
   else if (solverType=="TSF")
@@ -128,6 +133,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
     }
   else if (solverType=="Amesos")
     {
+      LinearSolver<double>::os() << "amesos params = " << params << std::endl;
       return new AmesosSolver(solverSublist);
     }
   else if (solverType=="Block Triangular")

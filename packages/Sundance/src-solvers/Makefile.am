@@ -104,6 +104,7 @@ CONCRETE_H = \
 	$(srcdir)/Concrete/TSFEpetraVectorSpace.hpp\
 	$(srcdir)/Concrete/TSFEpetraVectorType.hpp \
 	$(srcdir)/Concrete/TSFIfpackOperator.hpp \
+	$(srcdir)/Concrete/TSFMLOperator.hpp \
 	$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.hpp \
 	$(srcdir)/Concrete/TSFVectorSpace2EpetraMap.hpp 
 
@@ -118,6 +119,7 @@ CONCRETE = \
 	$(srcdir)/Concrete/TSFEpetraVectorSpace.cpp\
 	$(srcdir)/Concrete/TSFEpetraVectorType.cpp \
 	$(srcdir)/Concrete/TSFIfpackOperator.cpp \
+	$(srcdir)/Concrete/TSFMLOperator.cpp \
 	$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.cpp \
 	$(srcdir)/Concrete/TSFVectorSpace2EpetraMap.cpp 
 
@@ -161,10 +163,13 @@ OPERATORS = \
 
 LINEARSOLVERS_H = \
 	$(srcdir)/LinearSolvers/TSFAmesosSolver.hpp \
+	$(srcdir)/LinearSolvers/TSFAnasaziEigensolver.hpp \
 	$(srcdir)/LinearSolvers/TSFAztecSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFAztecSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFBICGSTABSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFBlockTriangularSolver.hpp \
+	$(srcdir)/LinearSolvers/TSFEigensolver.hpp \
+	$(srcdir)/LinearSolvers/TSFEigensolverBase.hpp \
 	$(srcdir)/LinearSolvers/TSFGMRESSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFIterativeSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFKrylovSolver.hpp \
@@ -236,13 +241,15 @@ PRECONDITIONERS_H = \
 	$(srcdir)/Preconditioners/TSFGenericLeftPreconditioner.hpp \
 	$(srcdir)/Preconditioners/TSFGenericRightPreconditioner.hpp \
 	$(srcdir)/Preconditioners/TSFILUKPreconditionerFactory.hpp \
+	$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.hpp \
 	$(srcdir)/Preconditioners/TSFPreconditioner.hpp \
 	$(srcdir)/Preconditioners/TSFPreconditionerBase.hpp \
 	$(srcdir)/Preconditioners/TSFPreconditionerFactory.hpp \
 	$(srcdir)/Preconditioners/TSFPreconditionerFactoryBase.hpp 
 
 
-PRECONDITIONERS =
+PRECONDITIONERS = \
+	$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp 
 
 #
 # Read macros that are common to building source and tests. We define these

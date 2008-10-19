@@ -82,6 +82,11 @@ namespace TSFExtended
     /** */
     ParameterList& parameters() ;
     
+
+    static FancyOStream& os()
+      {
+        return ObjectWithVerbosity<LinearSolverBase<Scalar> >::os();
+      }
   };
 
   
@@ -100,7 +105,19 @@ namespace TSFExtended
     TEST_FOR_EXCEPTION(op.ptr().get()==0, std::runtime_error,
                         "null op pointer in LinearSolver<Scalar>::solve()");
     TimeMonitor timer(solveTimer());
-    return this->ptr()->solve(op, rhs, soln);
+
+    os() << "params = " << parameters() << std::endl;
+    if (this->ptr()->getVerbosity() > 0) 
+    {
+      os() << "LinearOperator::solve()" << std::endl;
+    }
+    SolverState<Scalar> rtn = this->ptr()->solve(op, rhs, soln);
+    return rtn;
+    
+    if (this->ptr()->getVerbosity() > 0) 
+    {
+      os() << "done LinearOperator::solve()" << std::endl;
+    }
   }
 
   template <class Scalar> inline 

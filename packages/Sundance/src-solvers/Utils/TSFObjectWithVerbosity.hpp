@@ -8,11 +8,15 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 #include "TSFParamUtils.hpp"
+#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_FancyOStream.hpp"
 
 
 namespace TSFExtended
 {
 using Teuchos::RefCountPtr;
+using Teuchos::rcp;
+using Teuchos::FancyOStream;
 using Teuchos::ParameterList;
 using Teuchos::ParameterEntry;
 
@@ -99,6 +103,20 @@ public:
       return rtn;
     }
 
+  /** */
+  static FancyOStream& os()
+    {
+      static RefCountPtr<std::ostream> os = rcp(&std::cout, false);
+      static RefCountPtr<FancyOStream> rtn = fancyOStream(os);
+      static bool first = true;
+      if (first)
+      {
+        rtn->setShowProcRank(true);
+        first = false;
+      }
+      return *rtn;
+    }
+  
 
 private:
   /** */

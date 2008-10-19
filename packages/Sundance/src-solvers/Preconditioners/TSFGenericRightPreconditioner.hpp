@@ -61,7 +61,7 @@ public:
   /** A call to left() results in an error for a right precond. */
   virtual LinearOperator<Scalar> left() const
     {
-      TEST_FOR_EXCEPTION(true, logic_error, "left() called for a "
+      TEST_FOR_EXCEPTION(true, std::logic_error, "left() called for a "
         "preconditioner known to be a right precond");
       return LinearOperator<Scalar>();
     }

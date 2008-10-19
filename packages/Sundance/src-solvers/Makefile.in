@@ -166,7 +166,7 @@ am__objects_4 = EpetraTSFOperator.$(OBJEXT) \
 	TSFEpetraMatrix.$(OBJEXT) TSFEpetraMatrixFactory.$(OBJEXT) \
 	TSFEpetraVector.$(OBJEXT) TSFEpetraVectorSpace.$(OBJEXT) \
 	TSFEpetraVectorType.$(OBJEXT) TSFIfpackOperator.$(OBJEXT) \
-	TSFLAPACKGeneralMatrix.$(OBJEXT) \
+	TSFMLOperator.$(OBJEXT) TSFLAPACKGeneralMatrix.$(OBJEXT) \
 	TSFVectorSpace2EpetraMap.$(OBJEXT)
 am__objects_5 = TSFAmesosSolver.$(OBJEXT) TSFAztecSolver.$(OBJEXT) \
 	TSFLinearSolverBuilder.$(OBJEXT)
@@ -178,10 +178,11 @@ am__objects_7 = TSFHeatOperator1D.$(OBJEXT) \
 	TSFPoissonBoltzmannJacobian.$(OBJEXT) \
 	TSFPoissonBoltzmannOp.$(OBJEXT)
 am__objects_8 = TSF_NVector.$(OBJEXT)
+am__objects_9 = TSFParameterListPreconditionerFactory.$(OBJEXT)
 am_libTSFExtended_a_OBJECTS = $(am__objects_1) $(am__objects_2) \
 	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
 	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
-	$(am__objects_2)
+	$(am__objects_9)
 libTSFExtended_a_OBJECTS = $(am_libTSFExtended_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/src-utils@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
@@ -394,6 +395,7 @@ CONCRETE_H = \
 	$(srcdir)/Concrete/TSFEpetraVectorSpace.hpp\
 	$(srcdir)/Concrete/TSFEpetraVectorType.hpp \
 	$(srcdir)/Concrete/TSFIfpackOperator.hpp \
+	$(srcdir)/Concrete/TSFMLOperator.hpp \
 	$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.hpp \
 	$(srcdir)/Concrete/TSFVectorSpace2EpetraMap.hpp 
 
@@ -408,6 +410,7 @@ CONCRETE = \
 	$(srcdir)/Concrete/TSFEpetraVectorSpace.cpp\
 	$(srcdir)/Concrete/TSFEpetraVectorType.cpp \
 	$(srcdir)/Concrete/TSFIfpackOperator.cpp \
+	$(srcdir)/Concrete/TSFMLOperator.cpp \
 	$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.cpp \
 	$(srcdir)/Concrete/TSFVectorSpace2EpetraMap.cpp 
 
@@ -451,10 +454,13 @@ OPERATORS = \
 
 LINEARSOLVERS_H = \
 	$(srcdir)/LinearSolvers/TSFAmesosSolver.hpp \
+	$(srcdir)/LinearSolvers/TSFAnasaziEigensolver.hpp \
 	$(srcdir)/LinearSolvers/TSFAztecSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFAztecSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFBICGSTABSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFBlockTriangularSolver.hpp \
+	$(srcdir)/LinearSolvers/TSFEigensolver.hpp \
+	$(srcdir)/LinearSolvers/TSFEigensolverBase.hpp \
 	$(srcdir)/LinearSolvers/TSFGMRESSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFIterativeSolver.hpp \
 	$(srcdir)/LinearSolvers/TSFKrylovSolver.hpp \
@@ -515,12 +521,15 @@ PRECONDITIONERS_H = \
 	$(srcdir)/Preconditioners/TSFGenericLeftPreconditioner.hpp \
 	$(srcdir)/Preconditioners/TSFGenericRightPreconditioner.hpp \
 	$(srcdir)/Preconditioners/TSFILUKPreconditionerFactory.hpp \
+	$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.hpp \
 	$(srcdir)/Preconditioners/TSFPreconditioner.hpp \
 	$(srcdir)/Preconditioners/TSFPreconditionerBase.hpp \
 	$(srcdir)/Preconditioners/TSFPreconditionerFactory.hpp \
 	$(srcdir)/Preconditioners/TSFPreconditionerFactoryBase.hpp 
 
-PRECONDITIONERS = 
+PRECONDITIONERS = \
+	$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp 
+
 SUNDANCE_DIR = $(top_srcdir)
 
 # ------------------------------------------------------------------------
@@ -867,9 +876,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSFIfpackOperator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSFLAPACKGeneralMatrix.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSFLinearSolverBuilder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSFMLOperator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSFMatrixLaplacian1D.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSFNOXSolver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSFParamUtils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSFParameterListPreconditionerFactory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSFPartitionedMatrixFactory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSFPoissonBoltzmannJacobian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSFPoissonBoltzmannOp.Po@am__quote@
@@ -1071,6 +1082,20 @@ TSFIfpackOperator.obj: $(srcdir)/Concrete/TSFIfpackOperator.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/Concrete/TSFIfpackOperator.cpp' object='TSFIfpackOperator.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o TSFIfpackOperator.obj `if test -f '$(srcdir)/Concrete/TSFIfpackOperator.cpp'; then $(CYGPATH_W) '$(srcdir)/Concrete/TSFIfpackOperator.cpp'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/Concrete/TSFIfpackOperator.cpp'; fi`
+
+TSFMLOperator.o: $(srcdir)/Concrete/TSFMLOperator.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT TSFMLOperator.o -MD -MP -MF $(DEPDIR)/TSFMLOperator.Tpo -c -o TSFMLOperator.o `test -f '$(srcdir)/Concrete/TSFMLOperator.cpp' || echo '$(srcdir)/'`$(srcdir)/Concrete/TSFMLOperator.cpp
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/TSFMLOperator.Tpo $(DEPDIR)/TSFMLOperator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/Concrete/TSFMLOperator.cpp' object='TSFMLOperator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o TSFMLOperator.o `test -f '$(srcdir)/Concrete/TSFMLOperator.cpp' || echo '$(srcdir)/'`$(srcdir)/Concrete/TSFMLOperator.cpp
+
+TSFMLOperator.obj: $(srcdir)/Concrete/TSFMLOperator.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT TSFMLOperator.obj -MD -MP -MF $(DEPDIR)/TSFMLOperator.Tpo -c -o TSFMLOperator.obj `if test -f '$(srcdir)/Concrete/TSFMLOperator.cpp'; then $(CYGPATH_W) '$(srcdir)/Concrete/TSFMLOperator.cpp'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/Concrete/TSFMLOperator.cpp'; fi`
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/TSFMLOperator.Tpo $(DEPDIR)/TSFMLOperator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/Concrete/TSFMLOperator.cpp' object='TSFMLOperator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o TSFMLOperator.obj `if test -f '$(srcdir)/Concrete/TSFMLOperator.cpp'; then $(CYGPATH_W) '$(srcdir)/Concrete/TSFMLOperator.cpp'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/Concrete/TSFMLOperator.cpp'; fi`
 
 TSFLAPACKGeneralMatrix.o: $(srcdir)/Concrete/TSFLAPACKGeneralMatrix.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT TSFLAPACKGeneralMatrix.o -MD -MP -MF $(DEPDIR)/TSFLAPACKGeneralMatrix.Tpo -c -o TSFLAPACKGeneralMatrix.o `test -f '$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.cpp' || echo '$(srcdir)/'`$(srcdir)/Concrete/TSFLAPACKGeneralMatrix.cpp
@@ -1281,6 +1306,20 @@ TSF_NVector.obj: $(srcdir)/Adapters/TSF_NVector.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/Adapters/TSF_NVector.cpp' object='TSF_NVector.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o TSF_NVector.obj `if test -f '$(srcdir)/Adapters/TSF_NVector.cpp'; then $(CYGPATH_W) '$(srcdir)/Adapters/TSF_NVector.cpp'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/Adapters/TSF_NVector.cpp'; fi`
+
+TSFParameterListPreconditionerFactory.o: $(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT TSFParameterListPreconditionerFactory.o -MD -MP -MF $(DEPDIR)/TSFParameterListPreconditionerFactory.Tpo -c -o TSFParameterListPreconditionerFactory.o `test -f '$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp' || echo '$(srcdir)/'`$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/TSFParameterListPreconditionerFactory.Tpo $(DEPDIR)/TSFParameterListPreconditionerFactory.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp' object='TSFParameterListPreconditionerFactory.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o TSFParameterListPreconditionerFactory.o `test -f '$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp' || echo '$(srcdir)/'`$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp
+
+TSFParameterListPreconditionerFactory.obj: $(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT TSFParameterListPreconditionerFactory.obj -MD -MP -MF $(DEPDIR)/TSFParameterListPreconditionerFactory.Tpo -c -o TSFParameterListPreconditionerFactory.obj `if test -f '$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp'; then $(CYGPATH_W) '$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp'; fi`
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/TSFParameterListPreconditionerFactory.Tpo $(DEPDIR)/TSFParameterListPreconditionerFactory.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp' object='TSFParameterListPreconditionerFactory.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o TSFParameterListPreconditionerFactory.obj `if test -f '$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp'; then $(CYGPATH_W) '$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/Preconditioners/TSFParameterListPreconditionerFactory.cpp'; fi`
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

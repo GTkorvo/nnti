@@ -113,6 +113,7 @@ namespace TSFExtended
           Vector<Scalar> temp = createMember(*(x.space()));
           Vector<Scalar> result;
           assign(temp.ptr().get(), x);
+          std::cerr << "inv op solver input norm = " << temp.norm2() << std::endl;
           SolverState<Scalar> haveSoln = solver_.solve(applyOp, temp, result);
           TEST_FOR_EXCEPTION(haveSoln.finalState() != SolveConverged, 
                              std::runtime_error,

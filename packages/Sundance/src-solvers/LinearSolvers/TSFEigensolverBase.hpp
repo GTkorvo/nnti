@@ -26,65 +26,70 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFLINEARSOLVERBASEDECL_HPP
-#define TSFLINEARSOLVERBASEDECL_HPP
+#ifndef TSFEIGENSOLVERBASE_HPP
+#define TSFEIGENSOLVERBASE_HPP
 
 #include "TSFConfigDefs.hpp"
 #include "TSFVectorDecl.hpp" 
 #include "TSFSolverState.hpp"
 #include "Teuchos_ParameterList.hpp"
- //#include "TSFLinearOperatorDecl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
 
 namespace TSFExtended
 {
-  using namespace Teuchos;
-  template <class Scalar>
-  class LinearOperator;
-  
+using Teuchos::ParameterList;
+
+/**
+ * Base class for eigensolvers for linear eigenvalue problems
+ * \f[
+ * K x = \lambda M x.
+ * \f]
+ */
+template <class Scalar>
+class EigensolverBase 
+  : public ObjectWithVerbosity<EigensolverBase<Scalar> >
+{
+public:
+  /** */
+  EigensolverBase() : params_() {;}
 
   /** */
-  template <class Scalar>
-  class LinearSolverBase : public ObjectWithVerbosity<LinearSolverBase<Scalar> >
-  {
-  public:
-    /** */
-    LinearSolverBase(const ParameterList& params);
+  EigensolverBase(const ParameterList& params) : params_(params) {;}
 
-    /** */
-    virtual ~LinearSolverBase(){;}
+  /** */
+  virtual ~EigensolverBase(){;}
 
-    /** */
-    virtual SolverState<Scalar> solve(const LinearOperator<Scalar>& op,
-                                      const Vector<Scalar>& rhs,
-                                      Vector<Scalar>& soln) const = 0;
+  /** 
+   * Solve a generalized eigensystem \f$K x = \lambda M x.\f$
+   */
+  virtual void solve(
+    const LinearOperator<Scalar>& K,
+    const LinearOperator<Scalar>& M,
+    Array<Vector<Scalar> >& ev,
+    Array<std::complex<Scalar> >& ew) const = 0 ;
 
-    /** Change the convergence tolerance. Default does nothing. */
-    virtual void updateTolerance(const double& tol) {;}
+  /** 
+   * Solve an eigensystem \f$K x = \lambda x.\f$
+   */
+  virtual void solve(
+    const LinearOperator<Scalar>& K,
+    Array<Vector<Scalar> >& ev,
+    Array<std::complex<Scalar> >& ew) const 
+    {
+      LinearOperator<Scalar> M;
+      solve(K,M,ev,ew);
+    };
 
-    /** Set a user-defined preconditioning operator. Default is an error. */
-    virtual void setUserPrec(const LinearOperator<Scalar>& P,
-			     const LinearSolver<double>& pSolver);
+  /** 
+   * Return the parameter list that was used to define this object. 
+   */
+  const ParameterList& params() const {return params_;}
+  
+private:
+  ParameterList params_;
+};  
 
-    /** */
-    const ParameterList& parameters() const ;
-
-    /** */
-    ParameterList& parameters();
-
-    /** */
-    int getVerbosity() const ;
-
-    /** */
-    static string verbosityParam();
-
-    /** */
-    template <typename T>
-    static void setParameter(const ParameterList& params,
-                             T* valuePtr, 
-                             const string& paramName);
-  private:
-    ParameterList params_;
-  };
 }
+
 
 #endif
