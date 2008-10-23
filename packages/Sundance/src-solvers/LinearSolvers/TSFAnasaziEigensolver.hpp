@@ -36,6 +36,8 @@
 #include "TSFEigensolverBase.hpp"
 #include "AnasaziBlockKrylovSchurSolMgr.hpp"
 #include "AnasaziBlockDavidsonSolMgr.hpp"
+#include "AnasaziSimpleLOBPCGSolMgr.hpp"
+#include "AnasaziLOBPCGSolMgr.hpp"
 #include "AnasaziBasicEigenproblem.hpp"
 #include "AnasaziThyraAdapter.hpp"
 
@@ -154,10 +156,31 @@ inline void AnasaziEigensolver<Scalar>::solve(
   
 
   // Create the solver manager
-  Anasazi::BlockDavidsonSolMgr<Scalar,MV,OP> MySolverMan(problem, eigParams);
+  RefCountPtr<Anasazi::SolverManager<Scalar,MV,OP> > MySolverMan;
+  if (method=="Block Davidson")
+  {
+    MySolverMan = rcp(new Anasazi::BlockDavidsonSolMgr<Scalar,MV,OP>(problem, eigParams));
+  }
+  else if (method=="Block Krylov Schur")
+  {
+    MySolverMan = rcp(new Anasazi::BlockKrylovSchurSolMgr<Scalar,MV,OP>(problem, eigParams));
+  }
+  else if (method=="Simple LOBPCG")
+  {
+    MySolverMan = rcp(new Anasazi::SimpleLOBPCGSolMgr<Scalar,MV,OP>(problem, eigParams));
+  }
+  else if (method=="LOBPCG")
+  {
+    MySolverMan = rcp(new Anasazi::LOBPCGSolMgr<Scalar,MV,OP>(problem, eigParams));
+  }
+  else
+  {
+    TEST_FOR_EXCEPTION(true, std::runtime_error,
+      "solver method [" << method << "] not recognized");
+  }
 
   // Solve the problem to the specified tolerances or length
-  Anasazi::ReturnType returnCode = MySolverMan.solve();
+  Anasazi::ReturnType returnCode = MySolverMan->solve();
   TEST_FOR_EXCEPTION(returnCode != Anasazi::Converged, 
     std::runtime_error, "Anasazi did not converge!");
   

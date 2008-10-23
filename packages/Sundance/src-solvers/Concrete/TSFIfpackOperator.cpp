@@ -45,7 +45,6 @@ IfpackOperator::IfpackOperator(const EpetraMatrix* A,
     domain_(A->domain()),
     range_(A->range())
 {
-  std::cerr << "Creating Ifpack operator" << std::endl;
   const Epetra_CrsMatrix* matrix = A->crsMatrix();
 
   const Epetra_CrsGraph& matrixGraph = matrix->Graph();
@@ -81,7 +80,6 @@ IfpackOperator::IfpackOperator(const EpetraMatrix* A,
                      "IfpackOperator ctor: "
                      "precond->Factor() failed with ierr="
                      << ierr);
-  std::cerr << "Done creating Ifpack operator" << std::endl;
 }
 
 

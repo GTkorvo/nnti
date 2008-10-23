@@ -173,7 +173,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
 	TSFExtended::Vector<double> bCopy = rhs.copy();
 	TSFExtended::Vector<double> xCopy = rhs.copy();
 
-  LinearSolverBase<double>::os() << "rhs norm=" << bCopy.norm2() << std::endl;
+//  LinearSolverBase<double>::os() << "rhs norm=" << bCopy.norm2() << std::endl;
 
   Epetra_Vector* b = EpetraVector::getConcretePtr(bCopy);
   Epetra_Vector* x = EpetraVector::getConcretePtr(xCopy);
@@ -235,12 +235,12 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
    * If so, need to set parameter aztec_recursive_iterate to true. */
   if (aztec_recursive_iterate_)
   {
-    LinearSolverBase<double>::os() << "az_recursive_iterate" << std::endl;
+//    LinearSolverBase<double>::os() << "az_recursive_iterate" << std::endl;
     aztec.recursiveIterate(maxIters, tol);
   }
   else
   {
-    LinearSolverBase<double>::os() << "az_iterate" << std::endl;
+//    LinearSolverBase<double>::os() << "az_iterate" << std::endl;
     aztec.Iterate(maxIters, tol);
   }
   
