@@ -91,7 +91,7 @@ EpetraVector
 
   epetraVecSpace_ = rcp_dynamic_cast<const EpetraVectorSpace>(vs);
   epetraMap_ = epvs->epetraMap();
-  epetraVec_ = rcp(new Epetra_Vector(*epetraMap_, true));
+  if (vec.get() == 0) epetraVec_ = rcp(new Epetra_Vector(*epetraMap_, true));
 
   localOffset_ = epetraMap_->MinMyGID();
   localSubDim_ = epetraMap_->NumMyElements();

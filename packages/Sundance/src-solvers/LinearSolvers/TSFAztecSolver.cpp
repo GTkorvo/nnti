@@ -173,7 +173,10 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
 	TSFExtended::Vector<double> bCopy = rhs.copy();
 	TSFExtended::Vector<double> xCopy = rhs.copy();
 
-//  LinearSolverBase<double>::os() << "rhs norm=" << bCopy.norm2() << std::endl;
+  if (getVerbosity() > 2) 
+  {
+    os() << "rhs=" << bCopy << std::endl;
+  }
 
   Epetra_Vector* b = EpetraVector::getConcretePtr(bCopy);
   Epetra_Vector* x = EpetraVector::getConcretePtr(xCopy);

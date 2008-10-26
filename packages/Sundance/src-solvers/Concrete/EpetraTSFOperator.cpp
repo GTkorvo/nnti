@@ -146,7 +146,7 @@ int Epetra_TSFOperator::ApplyInverse(const Epetra_MultiVector& in, Epetra_MultiV
 		     "cannot deal with multivectors");
   TEST_FOR_EXCEPTION(evOut==0, std::runtime_error, "Epetra_TSFOperator::Apply "
 		     "cannot deal with multivectors");
-  
+
   const EpetraVectorSpace* ed 
     = dynamic_cast<const EpetraVectorSpace*>(A_.range().ptr().get());
   const EpetraVectorSpace* er 
