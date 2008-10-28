@@ -24,7 +24,7 @@
 %
 
 \title{\center
-Desirable Properties of a Test Harness for Complex Computational Science Software}
+Desirable Properties of a Test Harness for Complex Computational Software}
 \author{
 Roscoe A. Bartlett \\ Department of Optimization and Uncertainty Estimation \\ \\
 Sandia National Laboratories, Albuquerque NM 87185-1318 USA \\ }
@@ -142,7 +142,7 @@ harness software for computational software.
 {}\section{Desirable Properties for individual tests}
 %
 
-There are several desirable features individual tests to posses in
+There are several desirable features for individual tests to posses in
 order to maximize the effectiveness of a testing process:
 
 \begin{itemize}
@@ -150,25 +150,27 @@ order to maximize the effectiveness of a testing process:
 {}\item\textit{Tests should check their own results and return
 ``passed'' or ``failed''}: All tests must check themselves in some way
 to determine if they succeeded or not.  Also, it is a good idea to
-print an explicit ``FINAL: Passed'' or ``FINAL: Failed'' and not just
-rely on the return code from the test as the return code has been
-found to be unreliable in some MPI implementation.
+print and check for an explicit ``FINAL: Passed'' or ``FINAL: Failed''
+and not just rely on the return code from the test as the return code
+has been found to be unreliable in some MPI implementations.
 
-{}\item\textit{Tests should report why they fail}: Instead of a test
-just returning ``Failed'' or a nonzero return value, they should print
-to STDOUT exactly why the test failed the best they can.  For example,
-if a test failed because a tolerance was not achieved, the test should
-print out the details of the test like the name/value of the error
-computation, and the name/value of the error tolerance variable.
-Also, for example, if a test fails because a solver took too many
-iterations, then all the number of iterations taken must be printed as
-well as the maximum number and the name of the command-line option
-that specifies this.
+{}\item\textit{Tests should report why they fail with as much detail
+as is reasonable}: Instead of a test just printing ``Failed'' or a
+nonzero return value, every test should print out exactly why the test
+failed in as much detail as is needed to diagnose the test failure.
+For example, if a test failed because a tolerance was not achieved,
+the test should print out the details of the test like the name/value
+of the error computation, and the name/value of the error tolerance
+variable the error is compared to.  Also, for example, if a test fails
+because a solver took too many iterations, then the number of
+iterations taken must be printed as well as the value/name of the
+maximum number of allowed iterations.
 
 {}\item\textit{Tests should provide enough ``knobs'' so that they can
-be specialized for different platforms}: For example, a test should
-provide an --error-tol=VAL command-line argument that can be adjusted
-by the test harness for different platforms.
+be specialized for different platforms or other special cases}: For
+example, a test should provide an --error-tol=VAL command-line
+argument that can be adjusted by the test harness for different
+platforms.
 
 {}\item\textit{???}:
 
@@ -191,14 +193,15 @@ Desirable properties for test reporting and notification include:
 \begin{itemize}
 
 {}\item\textit{Test results should be posted to a results web page
-(dashboard) to allow all to see}: A (semi)public test results
+(dashboard) to allow all to see}: A (semi-)public test results
 dashboard provides visibility for the development effort and should be
-the primary way to start to diagnose failed builds and failed tests.
+the primary way to start to diagnose failed builds and tests.
 
 {}\item\textit{Sufficient information should be accessible from the
-dashboard to determine exactly why a test failing}: A developer should
-not have to go to a different machine to try to hunt down the output
-from the test to determine why the test is failing.
+dashboard to determine exactly why a test failed}: A developer should
+not have to go to a different machine or build and run the code
+themselves to try to hunt down the output from the test to determine
+why the test is failing.
 
 {}\item\textit{Sufficient information for passing tests should be
 available to compare against failing tests}: It is not enough to just
@@ -207,15 +210,17 @@ test, you also need to see what the test output looked like when it
 passed.  Often, that type of information is critical in helping to
 diagnose and fix failing tests.
 
-{}\item\textit{Archive and allow for easy access to test results for a
-sufficient period of time}: It is often the case failing tests can not
-be addressed immediately and may need to be removed from the test
-harness until they can be fixed later.  In this case, it is very
-important to be able to archive the test results on consecutive days
-where the test went from passing to failing to be able to diagnose and
-fix the problem.  In order to not fill up disk storage, a process must
-be implemented that will selectively prune out old test results and
-only keep critical data needed to diagnose failing builds and tests.
+{}\item\textit{Archive and allow for easy access to older test results
+for a sufficient period of time}: It is often the case that failing
+tests can not be addressed immediately and may need to be removed from
+the test harness (i.e.\ by disabling them and then putting a new story
+on the Sprint Backlog or Product Backlog) until a later time when they
+can be fixed.  In this situation, it is very important to be able to
+archive the test results on consecutive days where a test went from
+passing to failing to be able to diagnose and fix the problem.  In
+order to not fill up disk storage, a process must be implemented that
+will selectively prune out old test results and only keep critical
+data needed to diagnose failing builds and tests.
 
 {}\item\textit{Notification of critical failed builds and tests should
 be pushed out to everyone who needs to know}: There are builds and
@@ -230,8 +235,8 @@ of critical build and test failures, everyone on the development team
 should get some type of automatic notification that there is a problem
 so that it can be addressed as soon a possible.  The form of
 notification is typically email but other more drastic forms of
-notification my be appropriate in many cases (see
-{}\cite{book:continuous-integration}).  For example, every continuous
+notification my be appropriate in many cases (see {}\cite[Chapter
+9]{book:continuous-integration}).  For example, every continuous
 integration (CI) system must support automatic notifications or it is
 not a very useful form of CI (again, see
 {}\cite{book:continuous-integration}).  Note that it may not be
@@ -252,10 +257,26 @@ include:
 
 \begin{itemize}
 
+{}\item\textit{The test harness should use as much of the same
+infrastructure for building and running tests that is used in
+day-to-day development and deployments as possible}: Major problems
+can occur when there is even what might appear to be minor differences
+between the automated testing environment and the environments used
+for day-to-day development and deployment of the software.  If the
+environments are different, then developers may get all passing tests
+while the automated testing environment shows failed builds and/or
+failing tests.  Whats worse, if there is a mismatch in the automated
+testing and deployment environments, then broken object code and
+executables may be distrubuted to users.  The best way to ensure that
+the development, testing, and deployment environments are the same is
+to use the exact same set of tools for all three (see
+{}\cite{book:continuous-integration}).
+
 {}\item\textit{The test harness should allow for targeted testing
-criteria for different platforms}: One approach to achieve a portable
-test suite is the ability to allow different tests properties or even
-entire tests to be targeted or excluded from specific platforms.
+criteria for different platforms}: One approach to port a test suite
+is the ability to allow different tests properties for different
+platforms or even entire tests to be targeted or excluded from
+specific platforms.
 
 {}\item\textit{???}:
 
