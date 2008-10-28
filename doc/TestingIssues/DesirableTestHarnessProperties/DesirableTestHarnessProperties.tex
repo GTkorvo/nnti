@@ -1,0 +1,304 @@
+\documentclass[pdf,ps2pdf,11pt]{SANDreport}
+\usepackage{pslatex}
+%Local stuff
+\usepackage{graphicx}
+\usepackage{latexsym}
+%\usepackage{color}
+\usepackage[all]{draftcopy}
+\input{rab_commands}
+
+\raggedright
+
+% If you want to relax some of the SAND98-0730 requirements, use the "relax"
+% option. It adds spaces and boldface in the table of contents, and does not
+% force the page layout sizes.
+% e.g. \documentclass[relax,12pt]{SANDreport}
+%
+% You can also use the "strict" option, which applies even more of the
+% SAND98-0730 guidelines. It gets rid of section numbers which are often
+% useful; e.g. \documentclass[strict]{SANDreport}
+
+% ---------------------------------------------------------------------------- %
+%
+% Set the title, author, and date
+%
+
+\title{\center
+Desirable Properties of a Test Harness for Complex Computational Science Software}
+\author{
+Roscoe A. Bartlett \\ Department of Optimization and Uncertainty Estimation \\ \\
+Sandia National Laboratories, Albuquerque NM 87185-1318 USA \\ }
+
+% ---------------------------------------------------------------------------- %
+% Set some things we need for SAND reports. These are mandatory
+%
+\SANDnum{SAND2008-xxx}
+\SANDprintDate{October 2008}
+\SANDauthor{Roscoe A. Bartlett}
+
+% ---------------------------------------------------------------------------- %
+% The following definitions are optional. The values shown are the default
+% ones provided by SANDreport.cls
+%
+\SANDreleaseType{Unlimited Release}
+%\SANDreleaseType{Not approved for general release}
+
+% ---------------------------------------------------------------------------- %
+% The following definition does not have a default value and will not
+% print anything, if not defined
+%
+%\SANDsupersed{SAND1901-0001}{January 1901}
+
+% ---------------------------------------------------------------------------- %
+%
+% Start the document
+%
+\begin{document}
+
+\maketitle
+
+%% ------------------------------------------------------------------------ %
+%% An Abstract is required for SAND reports
+%%
+%
+%%\clearpage
+%
+%%
+%\begin{abstract}
+%%
+%
+%Blah blah blah ...
+%
+%%
+%\end{abstract}
+%%
+
+%% ------------------------------------------------------------------------ %
+%% An Acknowledgement section is optional but important, if someone made
+%% contributions or helped beyond the normal part of a work assignment.
+%% Use \section* since we don't want it in the table of context
+%%
+%\clearpage
+%\section*{Acknowledgments}
+%
+%Blah blah blah ...
+
+%
+%The format of this report is based on information found
+%in~\cite{Sand98-0730}.
+
+% ------------------------------------------------------------------------ %
+% The table of contents and list of figures and tables
+% Comment out \listoffigures and \listoftables if there are no
+% figures or tables. Make sure this starts on an odd numbered page
+%
+\clearpage
+\tableofcontents
+%\listoffigures
+%\listoftables
+
+% ---------------------------------------------------------------------- %
+% An optional preface or Foreword
+%\clearpage
+%\section{Preface}
+%Although muggles usually have only limited experience with
+%magic, and many even dispute its existence, it is worthwhile
+%to be open minded and explore the possibilities.
+
+% ---------------------------------------------------------------------- %
+% An optional executive summary
+
+%\clearpage
+
+%\section{Executive Summary}
+
+% ---------------------------------------------------------------------- %
+% An optional glossary. We don't want it to be numbered
+%\clearpage
+%\section*{Nomenclature}
+%\addcontentsline{toc}{section}{Nomenclature}
+%\begin{itemize}
+%\item[alohomora]
+%spell to open locked doors and containers
+%\end{itemize}
+
+% ---------------------------------------------------------------------- %
+% This is where the body of the report begins; usually with an Introduction
+%
+
+
+\SANDmain % Start the main part of the report
+
+
+%
+{}\section{Introduction}
+%
+
+In this document, we describe some of desirable properties for test
+harness software for computational software.
+
+
+%
+{}\section{Desirable Properties for individual tests}
+%
+
+There are several desirable features individual tests to posses in
+order to maximize the effectiveness of a testing process:
+
+\begin{itemize}
+
+{}\item\textit{Tests should check their own results and return
+``passed'' or ``failed''}: All tests must check themselves in some way
+to determine if they succeeded or not.  Also, it is a good idea to
+print an explicit ``FINAL: Passed'' or ``FINAL: Failed'' and not just
+rely on the return code from the test as the return code has been
+found to be unreliable in some MPI implementation.
+
+{}\item\textit{Tests should report why they fail}: Instead of a test
+just returning ``Failed'' or a nonzero return value, they should print
+to STDOUT exactly why the test failed the best they can.  For example,
+if a test failed because a tolerance was not achieved, the test should
+print out the details of the test like the name/value of the error
+computation, and the name/value of the error tolerance variable.
+Also, for example, if a test fails because a solver took too many
+iterations, then all the number of iterations taken must be printed as
+well as the maximum number and the name of the command-line option
+that specifies this.
+
+{}\item\textit{Tests should provide enough ``knobs'' so that they can
+be specialized for different platforms}: For example, a test should
+provide an --error-tol=VAL command-line argument that can be adjusted
+by the test harness for different platforms.
+
+{}\item\textit{???}:
+
+\end{itemize}
+
+
+%
+{}\section{Desirable properties for a test harness}
+%
+
+There are a number of important properties that a test harness should
+have to provide maximum value from the testing process.
+
+%
+\subsection{Test reporting and notification}
+%
+
+Desirable properties for test reporting and notification include:
+
+\begin{itemize}
+
+{}\item\textit{Test results should be posted to a results web page
+(dashboard) to allow all to see}: A (semi)public test results
+dashboard provides visibility for the development effort and should be
+the primary way to start to diagnose failed builds and failed tests.
+
+{}\item\textit{Sufficient information should be accessible from the
+dashboard to determine exactly why a test failing}: A developer should
+not have to go to a different machine to try to hunt down the output
+from the test to determine why the test is failing.
+
+{}\item\textit{Sufficient information for passing tests should be
+available to compare against failing tests}: It is not enough to just
+provide information for failing tests.  Often, to diagnose a failing
+test, you also need to see what the test output looked like when it
+passed.  Often, that type of information is critical in helping to
+diagnose and fix failing tests.
+
+{}\item\textit{Archive and allow for easy access to test results for a
+sufficient period of time}: It is often the case failing tests can not
+be addressed immediately and may need to be removed from the test
+harness until they can be fixed later.  In this case, it is very
+important to be able to archive the test results on consecutive days
+where the test went from passing to failing to be able to diagnose and
+fix the problem.  In order to not fill up disk storage, a process must
+be implemented that will selectively prune out old test results and
+only keep critical data needed to diagnose failing builds and tests.
+
+{}\item\textit{Notification of critical failed builds and tests should
+be pushed out to everyone who needs to know}: There are builds and
+tests that must work in order to support the basic functioning of a
+development team.  For example, if a main part of the code does not
+build on the primary development platforms where developers do their
+development work, then no-one can checkout or checkin any code and
+development comes to a halt.  Also, even if the build succeeds, if a
+critical foundational functionality of the code is broken, then no-one
+can develop new functionality and development stops.  For these types
+of critical build and test failures, everyone on the development team
+should get some type of automatic notification that there is a problem
+so that it can be addressed as soon a possible.  The form of
+notification is typically email but other more drastic forms of
+notification my be appropriate in many cases (see
+{}\cite{book:continuous-integration}).  For example, every continuous
+integration (CI) system must support automatic notifications or it is
+not a very useful form of CI (again, see
+{}\cite{book:continuous-integration}).  Note that it may not be
+appropriate to send out automatic notifications for every secondary
+platform and test as these can be broken much more frequently than on
+the primary development platforms.
+  
+{}\item\textit{???}:
+
+\end{itemize}
+
+%
+\subsection{Other test harness features}
+%
+
+Desirable properties for other miscellaneous testing properties
+include:
+
+\begin{itemize}
+
+{}\item\textit{The test harness should allow for targeted testing
+criteria for different platforms}: One approach to achieve a portable
+test suite is the ability to allow different tests properties or even
+entire tests to be targeted or excluded from specific platforms.
+
+{}\item\textit{???}:
+
+\end{itemize}
+
+
+% ---------------------------------------------------------------------- %
+% References
+%
+\clearpage
+\bibliographystyle{plain}
+\bibliography{references}
+\addcontentsline{toc}{section}{References}
+
+
+%% ---------------------------------------------------------------------- %
+%% Appendices should be stand-alone for SAND reports. If there is only
+%% one appendix, put \setcounter{secnumdepth}{0} after \appendix
+%%
+%\appendix
+%
+%%
+%\section*{???}
+%\label{sec:checkist}
+%%
+
+
+
+\begin{SANDdistribution}[NM]
+% \SANDdistCRADA	% If this report is about CRADA work
+% \SANDdistPatent	% If this report has a Patent Caution or Patent Interest
+% \SANDdistLDRD	% If this report is about LDRD work
+% External Address Format: {num copies}{Address}
+%\SANDdistExternal{}{}
+%\bigskip
+%% The following MUST BE between the external and internal distributions!
+%\SANDdistClassified % If this report is classified
+% Internal Address Format: {num copies}{Mail stop}{Name}{Org}
+%\SANDdistInternal{}{}{}{}
+% Mail Channel Address Format: {num copies}{Mail Channel}{Name}{Org}
+%\SANDdistInternalM{}{}{}{}
+%\SANDdistInternal{2}{MS 9018}{Central Technical Files}{8944}
+%\SANDdistInternal{2}{MS 0899}{Technical Library}{4536}
+\end{SANDdistribution}
+
+\end{document}
