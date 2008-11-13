@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage{latexsym}
 \input{rab_commands}
+\usepackage{hyperref}
 
 \newtheorem{commandment}{Commandment}
 \newtheorem{anticommandment}{Anti-Commandment}
@@ -40,10 +41,10 @@ under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA, \\
 % ---------------------------------------------------------------------------- %
 % Set some things we need for SAND reports. These are mandatory
 %
-\SANDnum{SAND2004-3268 (Updated December 2007)}
-\SANDprintDate{December 2007}
+\SANDnum{SAND2004-3268 (Updated Novenber 2008)}
+\SANDprintDate{November 2008}
 \SANDauthor{
-Roscoe A. Bartlett \\ Optimization and Uncertainty Estimation
+Roscoe A. Bartlett \\ Department of Optimization and Uncertainty Estimation
 }
 
 % ---------------------------------------------------------------------------- %
@@ -173,11 +174,12 @@ of C++ exception handing.  This is because the raw use of operator
 thrown.  For example, in the code fragment:
 
 {\small\begin{verbatim}
-void someFunction() {
-  A *a = new A;
-  a->f();
-  delete a;
-}
+  void someFunction()
+  {
+    A *a = new A;
+    a->f();
+    delete a;
+  }
 \end{verbatim}}
 
 {}\noindent{}if an exception is thrown in the function call
@@ -188,10 +190,11 @@ executed and a memory leak will have been created.  The class
 these types of memory leaks.  For example, the rewritten function:
 
 {\small\begin{verbatim}
-void someFunction() {
-  std::auto_ptr<A> a(new A);
-  a->f();
-}
+  void someFunction()
+  {
+    std::auto_ptr<A> a(new A);
+    a->f();
+  }
 \end{verbatim}}
 
 {}\noindent{}is robust in the event of exceptions and no memory leak
@@ -295,9 +298,9 @@ the following abstract interface base class {}\texttt{Utility\-Base}
 that defines an interface to provide some useful capability.
 
 {\small\begin{verbatim}
-class UtilityBase {
-public:
-  virtual void f() const = 0;
+  class UtilityBase {
+  public:
+    virtual void f() const = 0;
 };
 \end{verbatim}}
 
@@ -305,15 +308,15 @@ In our example program, {}\texttt{Utility\-Base} will have two
 subclasses where one or the other will be used at runtime.
 
 {\small\begin{verbatim}
-class UtilityA : public UtilityBase {
-public:
-  void f() const { std::cout<<"\nUtilityA::f() called, this="<<this<<"\n"; }
-};
-
-class UtilityB : public UtilityBase {
-public:
-  void f() const { std::cout<<"\nUtilityB::f() called, this="<<this<<"\n"; }
-};
+  class UtilityA : public UtilityBase {
+  public:
+    void f() const { std::cout<<"\nUtilityA::f() called, this="<<this<<"\n"; }
+  };
+  
+  class UtilityB : public UtilityBase {
+  public:
+    void f() const { std::cout<<"\nUtilityB::f() called, this="<<this<<"\n"; }
+  };
 \end{verbatim}}
 
 {}\noindent{}In this example program the above implementation
@@ -326,63 +329,63 @@ the ``Abstract Factory'' design pattern {}\cite{ref:gama_et_al_1995}.
 For {}\texttt{Utility\-Base}, the abstract factory looks like
 
 {\small\begin{verbatim}
-class UtilityBaseFactory {
-public:
-  virtual UtilityBase* createUtility() const = 0;
-};
+  class UtilityBaseFactory {
+  public:
+    virtual UtilityBase* createUtility() const = 0;
+  };
 \end{verbatim}}
 
 {}\noindent{}and has the following factory subclasses for creating
 {}\texttt{Utility\-A} and {}\texttt{Utility\-B} objects.
 
 {\small\begin{verbatim}
-class UtilityAFactory : public UtilityBaseFactory {
-public:
-  UtilityBase* createUtility() const { return new UtilityA(); }
-};
-
-class UtilityBFactory : public UtilityBaseFactory {
-public:
-  UtilityBase* createUtility() const { return new UtilityB(); }
-};
+  class UtilityAFactory : public UtilityBaseFactory {
+  public:
+    UtilityBase* createUtility() const { return new UtilityA(); }
+  };
+  
+  class UtilityBFactory : public UtilityBaseFactory {
+  public:
+    UtilityBase* createUtility() const { return new UtilityB(); }
+  };
 \end{verbatim}}
 
 Now let's assume that our example program has the following client
 classes.
 
 {\small\begin{verbatim}
-// Simple client with no state
-class ClientA {
-public:
-  void f( const UtilityBase &utility ) const { utility.f(); }
-};
-
-// Client that maintains a pointer to a Utility object 
-class ClientB {
-  UtilityBase *utility_;
-public:
-  ClientB() : utility_(0) {}
-  ~ClientB() { delete utility_; }
-  void initialize( UtilityBase *utility ) { utility_ = utility; }
-  void g( const ClientA &a ) { a.f(*utility_); }
-};
-
-// Client that maintains pointers to UtilityFactory and Utility objects
-class ClientC {
-  const UtilityBaseFactory *utilityFactory_;
-  UtilityBase *utility_;
-  bool shareUtility_;
-public:
-  ClientC( const UtilityBaseFactory *utilityFactory, bool shareUtility )
-    :utilityFactory_(utilityFactory),
-    utility_(utilityFactory->createUtility())
-    ,shareUtility_(shareUtility) {}
-  ~ClientC() { delete utilityFactory_; delete utility_; }
-  void h( ClientB *b ) {
-    if( shareUtility_ ) b->initialize(utility_);
-    else  b->initialize(utilityFactory_->createUtility());
-  }
-};
+  // Simple client with no state
+  class ClientA {
+  public:
+    void f( const UtilityBase &utility ) const { utility.f(); }
+  };
+  
+  // Client that maintains a pointer to a Utility object 
+  class ClientB {
+    UtilityBase *utility_;
+  public:
+    ClientB() : utility_(0) {}
+    ~ClientB() { delete utility_; }
+    void initialize( UtilityBase *utility ) { utility_ = utility; }
+    void g( const ClientA &a ) { a.f(*utility_); }
+  };
+  
+  // Client that maintains pointers to UtilityFactory and Utility objects
+  class ClientC {
+    const UtilityBaseFactory *utilityFactory_;
+    UtilityBase *utility_;
+    bool shareUtility_;
+  public:
+    ClientC( const UtilityBaseFactory *utilityFactory, bool shareUtility )
+      :utilityFactory_(utilityFactory),
+      utility_(utilityFactory->createUtility())
+      ,shareUtility_(shareUtility) {}
+    ~ClientC() { delete utilityFactory_; delete utility_; }
+    void h( ClientB *b ) {
+      if( shareUtility_ ) b->initialize(utility_);
+      else  b->initialize(utilityFactory_->createUtility());
+    }
+  };
 \end{verbatim}}
 
 The type of logic used in {}\texttt{ClientC} for determining when new
@@ -393,18 +396,18 @@ The above client classes demonstrate two different types of
 associations between objects: {}\textit{non-persisting} and
 {}\textit{persisting}.
 
-{}\textit{Non-Persisting}\label{rcp:non-persisting-defined}
-associations exist only within a single function call and do not
-extend after the function has finished executing.  For example,
-objects of type {}\texttt{Client\-A} and {}\texttt{Utility\-Base} have
-a non-persisting relationship through the function
-{}\texttt{ClientA\-::f(const UtilityBase \&utility)}.  Likewise,
-objects of type {}\texttt{Client\-B} and {}\texttt{Client\-A} have a
-non-persisting association through the function
-{}\texttt{ClientB\-::g( const ClientA
+{}\textit{Non-Persisting
+associations}\label{rcp:non-persisting-defined} exist only within a
+single function call and do not extend after the function has finished
+executing.  For example, objects of type {}\texttt{Client\-A} and
+{}\texttt{Utility\-Base} have a non-persisting relationship through
+the function {}\texttt{ClientA\-::f(const UtilityBase \&utility)}.
+Likewise, objects of type {}\texttt{Client\-B} and
+{}\texttt{Client\-A} have a non-persisting association through the
+function {}\texttt{ClientB\-::g( const ClientA
 \&a )}.
 
-{}\textit{Persisting}\label{rcp:persisting-defined} associations are
+{}\textit{Persisting associations}\label{rcp:persisting-defined} are
 where a relationship between two objects exists past a single function
 call.  The most typical kind of persisting association in an OO C++
 program is where one object maintains a private pointer data member to
@@ -485,20 +488,20 @@ Factory'' class declarations (assuming that the symbols from the
 {}\texttt{Teuchos::} qualification is not necessary) become
 
 {\small\begin{verbatim}
-class UtilityBaseFactory {
-public:
-  virtual RCP<UtilityBase> createUtility() const = 0;
-};
-
-class UtilityAFactory : public UtilityBaseFactory {
-public:
-  RCP<UtilityBase> createUtility() const { return rcp(new UtilityA()); }
-};
-
-class UtilityBFactory : public UtilityBaseFactory {
-public:
-  RCP<UtilityBase> createUtility() const { return rcp(new UtilityB()); }
-};
+  class UtilityBaseFactory {
+  public:
+    virtual RCP<UtilityBase> createUtility() const = 0;
+  };
+  
+  class UtilityAFactory : public UtilityBaseFactory {
+  public:
+    RCP<UtilityBase> createUtility() const { return rcp(new UtilityA()); }
+  };
+  
+  class UtilityBFactory : public UtilityBaseFactory {
+  public:
+    RCP<UtilityBase> createUtility() const { return rcp(new UtilityB()); }
+  };
 \end{verbatim}}
 
 In addition to the change of the return type, the refactoring also
@@ -512,27 +515,27 @@ other objects.  However, the definitions of the classes
 {}\texttt{ClientB} and {}\texttt{ClientC} do change and become
 
 {\small\begin{verbatim}
-class ClientB {
-  RCP<UtilityBase> utility_;
-public:
-  void initialize(const RCP<UtilityBase> &utility) { utility_=utility; }
-  void g( const ClientA &a ) { a.f(*utility_); }
-};
-
-class ClientC {
-  RCP<UtilityBaseFactory> utilityFactory_;
-  RCP<UtilityBase> utility_;
-  bool shareUtility_;
-public:
-  ClientC( const RCP<UtilityBaseFactory> &utilityFactory, bool shareUtility )
-    :utilityFactory_(utilityFactory),
-    utility_(utilityFactory->createUtility())
-    ,shareUtility_(shareUtility) {}
-  void h( const Ptr<ClientB> &b ) {
-    if( shareUtility_ ) b->initialize(utility_);
-    else b->initialize(utilityFactory_->createUtility());
-  }
-};
+  class ClientB {
+    RCP<UtilityBase> utility_;
+  public:
+    void initialize(const RCP<UtilityBase> &utility) { utility_=utility; }
+    void g( const ClientA &a ) { a.f(*utility_); }
+  };
+  
+  class ClientC {
+    RCP<UtilityBaseFactory> utilityFactory_;
+    RCP<UtilityBase> utility_;
+    bool shareUtility_;
+  public:
+    ClientC( const RCP<UtilityBaseFactory> &utilityFactory, bool shareUtility )
+      :utilityFactory_(utilityFactory),
+      utility_(utilityFactory->createUtility())
+      ,shareUtility_(shareUtility) {}
+    void h( const Ptr<ClientB> &b ) {
+      if( shareUtility_ ) b->initialize(utility_);
+      else b->initialize(utilityFactory_->createUtility());
+    }
+  };
 \end{verbatim}}
 
 The first thing that one should notice about the refactored
@@ -556,7 +559,7 @@ yields slightly more efficient code and simplifies stepping through
 the code in a debugger.  For example, a function declared as
 
 {\small\begin{verbatim}
-void someFunction( RCP<A> a );
+  void someFunction( RCP<A> a );
 \end{verbatim}}
 
 {}\noindent{}will always result in the copy constructor for
@@ -564,7 +567,7 @@ void someFunction( RCP<A> a );
 in a debugger) while this same function declared as:
 
 {\small\begin{verbatim}
-void someFunction( const RCP<A> &a );
+  void someFunction( const RCP<A> &a );
 \end{verbatim}}
 
 {}\noindent{}will often not require the copy constructor be called
@@ -594,10 +597,10 @@ example, when a one sees a function prototype where an object is
 passed through a {}\texttt{RCP} such as
 
 {\small\begin{verbatim}
-class SomeClass {
-public:
-  void someFunction( const RCP<A> &a );
-}
+  class SomeClass {
+  public:
+    void someFunction( const RCP<A> &a );
+  }
 \end{verbatim}}
 
 {}\noindent{}one can automatically deduce that ``memory'' of the
@@ -682,12 +685,142 @@ information.
 
 \item \textbf{Checking for memory leaks from circular references}
 
-In a debug build, the user can enable checking for memory leaks caused by
-circular references among RCP objects.  If cicular references do exist, then
-RCPNode objects that where created but not removed are displaed at the end of
-a program.  See the file {}\texttt{Teuchos\-\_RCP.cpp} for details.
+In a debug build, the user can enable checking for memory leaks caused
+by circular references among RCP objects.  If cicular references do
+exist, then {}\texttt{RCPNode} objects that where created but not
+removed are displaed at the end of a program.  See the file
+{}\texttt{Teuchos\-\_RCP.cpp} for details.
+
+\item \textbf{Addressing circular references with weak RCP objects}
+
+The default mode for {}\texttt{RCP} is as a ``strong'' pointer.  That
+means that the underlying reference-counted object is only deleted
+after all of the ``strong'' {}\texttt{RCP}s to the object are removed.
+Of course when you have a circular reference using ``strong''
+{}\texttt{RCP}s, then that will never happen and a memory leak will be
+created for all of the objects involved in the cycle.
+
+To help address this problem, an {}\texttt{RCP} object can be tagged
+as a ``weak'' pointer.  When all of the ``strong'' {}\texttt{RCP}
+objects goes away, the underlying reference-counted object is
+destroyed but the {}\texttt{RCPNode} object is not if there are any
+lingering (i.e.\ dangling) ``weak'' {}\texttt{RCP} objects.  In a
+debug build of the code, all of the dangling ``weak'' {}\texttt{RCP}
+objects will thrown exceptions when clients try to dereference the
+object through the ``weak'' pointer.  This functionality provides the
+foundation for a number of very advanced features.  This capability
+imparts very little O(1) extra overhead.
+
+The ability to tag {}\texttt{RCP} objects as ``weak'' can be used to
+help address circular dependencies in general, clean, and safe way.
+In a debug build of the code, if any mistakes are made then exceptions
+will be thrown with an excellent error messages to help debug the
+problem.  Without full blown garbage collection, this is about the
+best that we can do in C++.
+
 
 \end{enumerate}
+
+
+%
+\section{Debugging C++ code}
+%
+
+One issue that commonly comes up for beginning C++ programmers is how
+to debug programs that use {}\texttt{RCP} when they are just used to
+using raw C++ pointers.  I am not going to cover the basics on how to
+use debuggers like GDB to debug C++ programs but I will give a few
+tips that should help beginning C++ programings get started.
+
+This first problem that begining C++ programmers have is in trying to
+access the underlying raw C++ pointer in the debugger.  For example,
+consider the function:
+
+{\small\begin{verbatim}
+  void someFunc( const RCP<const A> &a )
+  {
+    a->f();
+  }
+\end{verbatim}}
+
+When debugging the above function in a debugger such as GDB, how can
+you access the underlying raw object of type {}\texttt{A} inside of
+the {}\texttt{RCP<A>} object {}\texttt{a}?  Well, in GDB for instance,
+if you put a breakpoint on the line {}\texttt{a->f()}, you can print
+the address of the underlying object of type {}\texttt{A} by typing:
+
+{\small\begin{verbatim}
+  print a.ptr_
+\end{verbatim}}
+
+You can print the whole object with:
+
+{\small\begin{verbatim}
+  print *a.ptr_
+\end{verbatim}}
+
+{}\noindent{}and so on.  In general, if you had code with a raw
+pointer named {}\texttt{somePtr} that was converted over to use
+{}\texttt{RCP}, you simply access the underlying raw C++ pointer using
+{}\texttt{somePtr.ptr\_} in the debugger.  That is all there is to it.
+See the internal private reprsentation of {}\texttt{RCP} shown in
+Appendix {}\ref{rcpqs:apdx:c++decl} for more details.
+
+One other note on debugging programs that use {}\texttt{RCP} that is
+worth mentioning is how to step through functions that take
+{}\texttt{RCP} as formal arguments.  Consider the simple function
+{}\texttt{someFunc(const RCP<const A>\&)} shown above.  When this function
+is called by the following function:
+
+{\small\begin{verbatim}
+  void someFunc2( const RCP<const A> &a )
+  {
+    someFunc(a);
+  }
+\end{verbatim}}
+
+{}\noindent{}you can step from the call {}\texttt{someFunc(a)}
+directly into {}\texttt{someFunc(...)} because the formal argument
+{}\texttt{a} of type {}\texttt{const RCP<const A>\&} is a direct
+match.
+
+However, if any implicit (or explicit) conversion of {}\texttt{RCP}
+objects is required to complete the function call, you will end up
+stepping into the copy constructor for {}\texttt{RCP} for each
+argument requiring a conversion.  For example, the following functions
+require the copy constructor for {}\texttt{RCP} to be called in order
+to call and therefore step into the function {}\texttt{someFunc(...)}:
+
+{\small\begin{verbatim}
+  void someFunc3( const RCP<A> &a )
+  {
+    someFunc(a); // Convert from RCP<A> to RCP<const A>
+  }
+
+  void someFunc4( const RCP<const B> &b )
+  {
+    someFunc(b); // Convert from RCP<const B> to RCP<const A>
+  }
+\end{verbatim}}
+
+To avoid having to step into the copy constructor for {}\texttt{RCP}
+in these cases, you can just directly set a breakpoint in the function
+{}\texttt{someFunc(...)}.  In GDB you can do this by setting the
+breakpoint by typing:
+
+{\small\begin{verbatim}
+  break 'someFunc(
+\end{verbatim}}
+
+{}\noindent{}followed by typing {}\texttt{[Tab]} (which will expand
+the full function prototype) and then typing {}\texttt{[Enter]}.  With
+this breakpoint set, you can just type {}\texttt{continue} in GDB and
+you will enter the function {}\texttt{someFunc(...)} without having to
+step through the copy constructors for {}\texttt{RCP}.
+
+Debugging strategies in other debuggers is similar but you should get
+the idea.
+
 
 %
 \section{Summary}
@@ -711,9 +844,11 @@ and refactored classes {}\texttt{ClientB} and {}\texttt{ClientC}
 described in Sections {}\ref{rcpbg:sec:original-program} and
 {}\ref{rcpbg:sec:refactored-program}.
 
-The class {}\texttt{RCP} also has advanced features not
-found in other smart-pointer implementations such as the ability to
-attach extra data and the customization of the deallocation policy.
+The class {}\texttt{RCP} also has advanced features not found in many
+other smart-pointer implementations such as the ability to attach
+extra data, the customization of the deallocation policy, cicular
+reference identification and debugging, and ``weak'' pointers to help
+resolve circular references.
 
 % ---------------------------------------------------------------------- %
 % References
@@ -743,86 +878,127 @@ enum ENull { null };
 enum EPrePostDestruction { PRE_DESTROY, POST_DESTROY };
 
 template<class T>
-class DeallocDelete { public: void free( T* ptr ) { if(ptr) delete ptr; }  };
-
-template<class T>
-class DeallocArrayDelete { public: void free( T* ptr ) { if(ptr) delete [] ptr; }  };
-
-template<class T>
 class RCP {
 public:
   typedef T  element_type;
-  explicit RCP( T* ptr, bool owns_mem = true );
   RCP( ENull null_arg = null );
+  explicit RCP( T* p, bool has_ownership = false );
+  template<class Dealloc_T>
+  RCP( T* p, Dealloc_T dealloc, bool has_ownership );
   RCP(const RCP<T>& r_ptr);
   template<class T2> RCP(const RCP<T2>& r_ptr);
   ~RCP();
   RCP<T>& operator=(const RCP<T>& r_ptr);
+  bool is_null() const;
   T* operator->() const;
   T& operator*() const;
   T* get() const;
-  T* release();
-  int count() const;
+  T* getRawPtr() const;
+  Ptr<T> ptr() const;
+  ERCPStrength strength() const;
+  bool is_valid_ptr() const;
+  int strong_count() const;
+  int weak_count() const;
+  int total_count() const;
   void set_has_ownership();
   bool has_ownership() const;
-  bool shares_resource(const RCP<T>& r_ptr) const;
+  Ptr<T> release();
+  RCP<T> create_weak() const;
+  template<class T2>
+  bool shares_resource(const RCP<T2>& r_ptr) const;
+  const RCP<T>& assert_not_null() const;
+  const RCP<T>& assert_valid_ptr() const;
 private:
+  T *ptr_;
+  RCPNode node_;
   ...
 };
 
-template<class T>            RCP<T>   rcp( T* p );
-template<class T>            RCP<T>   rcp( T* p, bool owns_mem);
-template<class T,
-  class Dealloc_T>           RCP<T>   rcp( T* p, Dealloc_T dealloc, bool owns_mem );
-template<class T,
-  class Embedded>            RCP<T>   rcpWithEmbeddedObjPreDestroy( T* p,
-                                       const Embedded &embedded, bool owns_mem = true );
-template<class T,
-  class Embedded>            RCP<T>   rcpWithEmbeddedObjPostDestroy( T* p,
-                                        const Embedded &embedded, bool owns_mem = true );
-template<class T,
-  class Embedded>            RCP<T>   rcpWithEmbeddedObj( T* p,
-                                        const Embedded &embedded, bool owns_mem = true );
-template<class T>            bool     is_null(const RCP<T>& p);
-template<class T>            bool     operator==(const RCP<T>& p, ENull);
-template<class T>            bool     operator!=(const RCP<T>& p, ENull);
-template<class T2, class T1> bool     operator==(const RCP<T1>& p1,
-                                                 const RCP<T2>& p2 );
-template<class T2, class T1> bool     operator!=(const RCP<T1>& p1,
-                                                 const RCP<T2>& p2 );
+template<class T> RCP<T> rcp( T* p, bool owns_mem = true );
+
+template<class T, class Dealloc_T> RCP<T> rcp( T* p, Dealloc_T dealloc,
+  bool owns_mem );
+
+template<class T> Teuchos::RCP<T> rcpFromRef( T& r );
+
+template<class T, class Embedded>
+RCP<T> rcpWithEmbeddedObjPreDestroy( T* p, const Embedded &embedded,
+  bool owns_mem = true );
+
+template<class T, class Embedded>
+RCP<T> rcpWithEmbeddedObjPostDestroy( T* p, const Embedded &embedded,
+  bool owns_mem = true );
+
+template<class T, class Embedded>
+RCP<T> rcpWithEmbeddedObj( T* p, const Embedded &embedded,
+  bool owns_mem = true );
+
+template<class T> bool is_null( const RCP<T> &p );
 \end{verbatim}}
 \pagebreak
 {\scriptsize\begin{verbatim}
-template<class T2, class T1> RCP<T2>          rcp_implicit_cast(const RCP<T1>& p1);
-template<class T2, class T1> RCP<T2>          rcp_static_cast(const RCP<T1>& p1);
-template<class T2, class T1> RCP<T2>          rcp_const_cast(const RCP<T1>& p1);
-template<class T2, class T1> RCP<T2>          rcp_dynamic_cast(const RCP<T1>& p1,
-                                                       bool throw_on_fail = false );
-template<class T1, class T2> int              set_extra_data( const T1 &extra_data,
-                                                const std::string& name, const Ptr<RCP<T2> > &p,
-                                                bool force_unique = true,
-                                                EPrePostDestruction destroy_when = POST_DESTROY );
-template<class T1, class T2> const T1&        get_extra_data( const RCP<T2>& p,
-                                                const std::string& name );
-template<class T1, class T2> T1&              get_nonconst_extra_data( const RCP<T2>& p,
-                                                const std::string& name );
-template<class T1, class T2> T1*              get_optional_extra_data( const RCP<T2>& p,
-                                                const std::string& name );
-template<class T1, class T2> const T1*        get_optional_extra_data( const RCP<T2>& p,
-                                                const std::string& name );
-template<class Dealloc_T,
-  class T>                   const Dealloc_T& get_dealloc( const RCP<T>& p );
-template<class Dealloc_T,
-  class T>                   Dealloc_T&       get_nonconst_dealloc( const RCP<T>& p );
-template<class Dealloc_T,
-  class T>                   const Dealloc_T* get_optional_dealloc( const RCP<T>& p );
-template<class Dealloc_T,
-  class T>                   Dealloc_T*       get_optional_nonconst_dealloc( const RCP<T>& p );
-template<class TOrig,
-  class Embedded, class T>   const Embedded&  getEmbeddedObj( const RCP<T>& p );
-template<class TOrig,
-  class Embedded, class T>   Embedded&        getNonconstEmbeddedObj( const RCP<T>& p );
+template<class T> bool operator==( const RCP<T> &p, ENull );
 
+template<class T> bool operator!=( const RCP<T> &p, ENull );
+
+template<class T1, class T2> bool operator==( const RCP<T1> &p1,
+  const RCP<T2> &p2 );
+
+template<class T1, class T2> bool operator!=( const RCP<T1> &p1,
+  const RCP<T2> &p2 );
+
+template<class T2, class T1> RCP<T2> rcp_implicit_cast(const RCP<T1>& p1);
+
+template<class T2, class T1> RCP<T2> rcp_static_cast(const RCP<T1>& p1);
+
+template<class T2, class T1> RCP<T2> rcp_const_cast(const RCP<T1>& p1);
+
+template<class T2, class T1>
+RCP<T2> rcp_dynamic_cast(const RCP<T1>& p1, bool throw_on_fail = false);
+
+template<class T1, class T2>
+void set_extra_data(const T1 &extra_data, const std::string& name,
+  const Ptr<RCP<T2> > &p, EPrePostDestruction destroy_when = POST_DESTROY,
+  bool force_unique = true );
+
+template<class T1, class T2>
+const T1& get_extra_data( const RCP<T2>& p, const std::string& name );
+
+template<class T1, class T2>
+T1& get_nonconst_extra_data( RCP<T2>& p, const std::string& name );
+
+template<class T1, class T2>
+Ptr<const T1> get_optional_extra_data( const RCP<T2>& p, const std::string& name );
+
+template<class T1, class T2>
+Ptr<T1> get_optional_nonconst_extra_data( RCP<T2>& p, const std::string& name );
+
+template<class Dealloc_T, class T>
+const Dealloc_T& get_dealloc( const RCP<T>& p );
+
+template<class Dealloc_T, class T>
+Dealloc_T& get_nonconst_dealloc( const RCP<T>& p );
+
+template<class Dealloc_T, class T>
+Ptr<const Dealloc_T> get_optional_dealloc( const RCP<T>& p );
+
+template<class Dealloc_T, class T>
+Ptr<Dealloc_T> get_optional_nonconst_dealloc( const RCP<T>& p );
+
+template<class TOrig, class Embedded, class T>
+const Embedded& getEmbeddedObj( const RCP<T>& p );
+
+template<class TOrig, class Embedded, class T>
+Embedded& getNonconstEmbeddedObj( const RCP<T>& p );
+
+template<class TOrig, class Embedded, class T>
+Ptr<const Embedded> getOptionalEmbeddedObj( const RCP<T>& p );
+
+template<class TOrig, class Embedded, class T>
+Ptr<Embedded> getOptionalNonconstEmbeddedObj( const RCP<T>& p );
+
+template<class T>
+std::ostream& operator<<( std::ostream& out, const RCP<T>& p );
 
 } // namespace Teuchos
 \end{verbatim}}
@@ -841,13 +1017,13 @@ The following class hierarchy will be used in the C++ examples given
 below.
 
 {\small\begin{verbatim}
-class A { public: virtual ~A(){} A& operator=(const A&){} virtual void f(){} };
-class B1 : virtual public A {};
-class B2 : virtual public A {};
-class C : virtual public B1, virtual public B2 {};
-
-class D {};
-class E : public D {};
+  class A { public: virtual ~A(){} A& operator=(const A&){} virtual void f(){} };
+  class B1 : virtual public A {};
+  class B2 : virtual public A {};
+  class C : virtual public B1, virtual public B2 {};
+  
+  class D {};
+  class E : public D {};
 \end{verbatim}}
 
 All of the following code examples used in this appendix are assumed
@@ -869,44 +1045,50 @@ which means that checking will only be performed in a debug build
 \label{rcpqs:apdx:qs:null}
 %
 {\small\begin{verbatim}
-RCP<C> c_ptr;
+  RCP<C> c_ptr;
 \end{verbatim}}
 or
 {\small\begin{verbatim}
-RCP<C> c_ptr = null;
+  RCP<C> c_ptr = null;
 \end{verbatim}}
 
 \item {\bf Creating a \texttt{RCP} object using \texttt{new}}
 \label{rcpqs:apdx:qs:new}
 %
 {\small\begin{verbatim}
-RCP<C> c_ptr = rcp(new C);
+  RCP<C> c_ptr = rcp(new C);
 \end{verbatim}}
 or
 {\small\begin{verbatim}
-RCP<C> c_ptr(new C);
+  RCP<C> c_ptr(new C);
+\end{verbatim}}
+NOTE: Prefer to define and use non-member constructor functions that
+yeild:
+{\small\begin{verbatim}
+  RCP<C> c_ptr = newC();
 \end{verbatim}}
 %
 \item {\bf Creating a \texttt{RCP} object to an array allocated using \texttt{new[n]}} \\
 \label{rcpqs:apdx:qs:array-new}
 %
-See the class {}\texttt{Teuchos::ArrayRCP}.
+See the class {}\texttt{Teuchos::ArrayRCP} and the function
+{}\texttt{arcp<T>(int n)}.
 %
 \item {\bf Initializing a \texttt{RCP} object to an object
        \underline{not} allocated with \texttt{new}}
 \label{rcpqs:apdx:qs:not-new}
 %
 {\small\begin{verbatim}
-C      c;
-RCP<C> c_ptr = rcp(&c,false);
+  C c;
+  RCP<C> c_ptr = rcpFromRef(c);
 \end{verbatim}}
 %
 \item {\bf Copy constructor (implicit casting)}
 %
 {\small\begin{verbatim}
-RCP<C>       c_ptr  = rcp(new C); // No cast
-RCP<A>       a_ptr  = c_ptr;      // Cast to base class
-RCP<const A> ca_ptr = a_ptr;      // Cast from non-const to const
+  RCP<C>       c_ptr  = rcp(new C); // No cast
+  RCP<A>       a_ptr  = c_ptr;      // Cast to base class
+  RCP<const A> ca_ptr = a_ptr;      // Cast from non-const to const
 \end{verbatim}}
 %
 \item {\bf Representing constantness and non-constantness}
@@ -915,22 +1097,22 @@ RCP<const A> ca_ptr = a_ptr;      // Cast from non-const to const
 %
 \item {\bf Non-constant pointer to non-constant object }
 {\small\begin{verbatim}
-RCP<C> c_ptr;
+  RCP<C> c_ptr;
 \end{verbatim}}
 %
 \item {\bf Constant pointer to non-constant object }
 {\small\begin{verbatim}
-const RCP<C> c_ptr;
+  const RCP<C> c_ptr;
 \end{verbatim}}
 %
 \item {\bf Non-Constant pointer to constant object }
 {\small\begin{verbatim}
-RCP<const C> c_ptr;
+  RCP<const C> c_ptr;
 \end{verbatim}}
 %
 \item {\bf Constant pointer to constant object }
 {\small\begin{verbatim}
-const RCP<const C> c_ptr;
+  const RCP<const C> c_ptr;
 \end{verbatim}}
 %
 \end{enumerate}
@@ -944,23 +1126,23 @@ const RCP<const C> c_ptr;
 \item {\bf Resetting from a raw pointer}
 %
 {\small\begin{verbatim}
-RCP<A> a_ptr;
-a_ptr = rcp(new A());
+  RCP<A> a_ptr;
+  a_ptr = rcp(new A());
 \end{verbatim}}
 %
 \item {\bf Resetting to null}
 %
 {\small\begin{verbatim}
-RCP<A> a_ptr = rcp(new A());
-a_ptr = null; // The A object will be deleted here
+  RCP<A> a_ptr = rcp(new A());
+  a_ptr = null; // The A object will be deleted here
 \end{verbatim}}
 %
 \item {\bf Assigning from a \texttt{RCP} object}
 %
 {\small\begin{verbatim}
-RCP<A> a_ptr1;
-RCP<A> a_ptr2 = rcp(new A());
-a_ptr1 = a_ptr2; // Now a_ptr1 and a_ptr2 point to same A object
+  RCP<A> a_ptr1;
+  RCP<A> a_ptr2 = rcp(new A());
+  a_ptr1 = a_ptr2; // Now a_ptr1 and a_ptr2 point to same A object
 \end{verbatim}}
 %
 \end{enumerate}
@@ -972,49 +1154,51 @@ a_ptr1 = a_ptr2; // Now a_ptr1 and a_ptr2 point to same A object
 \item {\bf Access to object reference (debug runtime checked)}
 %
 {\small\begin{verbatim}
-C &c_ref = *c_ptr;
+  C &c_ref = *c_ptr;
 \end{verbatim}}
 %
 \item {\bf Access to object pointer (unchecked, may return \texttt{NULL}, NOT RECOMMENDED)}
 %
 {\small\begin{verbatim}
-C *c_rptr = c_ptr.get();
+  C *c_rptr = c_ptr.get();
 \end{verbatim}}
+{}\textbf{WARNING:} Avoid exposing raw C++ pointers in your program!
 %
 \item {\bf Access to object pointer (debug runtime checked, will not return \texttt{NULL}, NOT RECOMMENDED)}
 %
 {\small\begin{verbatim}
-C *c_rptr = &*c_ptr;
+  C *c_rptr = &*c_ptr;
 \end{verbatim}}
+{}\textbf{WARNING:} Avoid exposing raw C++ pointers in your program!
 %
 \item {\bf Access of object's member (debug runtime checked)}
 %
 {\small\begin{verbatim}
-c_ptr->f();
+  c_ptr->f();
 \end{verbatim}}
 %
 \item {\bf Testing for non-null}
 %
 {\small\begin{verbatim}
-if( !is_null(a_ptr) ) std::cout << "a_ptr is not null!\n";
+  if (!is_null(a_ptr)) std::cout << "a_ptr is not null!\n";
 \end{verbatim}}
 %
 or
 %
 {\small\begin{verbatim}
-if( a_ptr != null ) std::cout << "a_ptr is not null!\n";
+  if (a_ptr != null) std::cout << "a_ptr is not null!\n";
 \end{verbatim}}
 %
 \item {\bf Testing for null}
 %
 {\small\begin{verbatim}
-if( is_null(a_ptr) ) std::cout << "a_ptr is null!\n";
+  if (is_null(a_ptr)) std::cout << "a_ptr is null!\n";
 \end{verbatim}}
 %
 or
 %
 {\small\begin{verbatim}
-if( a_ptr == null ) std::cout << "a_ptr is null!\n";
+  if (a_ptr == null) std::cout << "a_ptr is null!\n";
 \end{verbatim}}
 
 %
@@ -1034,9 +1218,9 @@ if( a_ptr == null ) std::cout << "a_ptr is null!\n";
 \item {\bf Using conversion function}
 %
 {\small\begin{verbatim}
-RCP<C>       c_ptr  = rcp(new C);                       // No cast
-RCP<A>       a_ptr  = rcp_implicit_cast<A>(c_ptr);      // To base
-RCP<const A> ca_ptr = rcp_implicit_cast<const A>(a_ptr);// To const
+  RCP<C>       c_ptr  = rcp(new C);                       // No cast
+  RCP<A>       a_ptr  = rcp_implicit_cast<A>(c_ptr);      // To base
+  RCP<const A> ca_ptr = rcp_implicit_cast<const A>(a_ptr);// To const
 \end{verbatim}}
 %
 \end{enumerate}
@@ -1044,33 +1228,33 @@ RCP<const A> ca_ptr = rcp_implicit_cast<const A>(a_ptr);// To const
 \item {\bf Casting away \texttt{const}}
 %
 {\small\begin{verbatim}
-RCP<const A>  ca_ptr = rcp(new C);
-RCP<A>        a_ptr  = rcp_const_cast<A>(ca_ptr); // cast away const!
+  RCP<const A>  ca_ptr = rcp(new C);
+  RCP<A>        a_ptr  = rcp_const_cast<A>(ca_ptr); // cast away const!
 \end{verbatim}}
 %
 \item {\bf Static cast (no runtime check)}
 %
 {\small\begin{verbatim}
-RCP<D>  d_ptr = rcp(new E);
-RCP<E>  e_ptr = rcp_static_cast<E>(d_ptr); // Unchecked, unsafe?
+  RCP<D>  d_ptr = rcp(new E);
+  RCP<E>  e_ptr = rcp_static_cast<E>(d_ptr); // Unchecked, unsafe?
 \end{verbatim}}
 %
 \item {\bf Dynamic cast (runtime checked, failed cast allowed)}
 %
 {\small\begin{verbatim}
-RCP<A>  a_ptr  = rcp(new C);
-RCP<B1> b1_ptr = rcp_dynamic_cast<B1>(a_ptr);  // Checked, safe!
-RCP<B2> b2_ptr = rcp_dynamic_cast<B2>(b1_ptr); // Checked, safe!
-RCP<C>  c_ptr  = rcp_dynamic_cast<C>(b2_ptr);  // Checked, safe!
+  RCP<A>  a_ptr  = rcp(new C);
+  RCP<B1> b1_ptr = rcp_dynamic_cast<B1>(a_ptr);  // Checked, safe!
+  RCP<B2> b2_ptr = rcp_dynamic_cast<B2>(b1_ptr); // Checked, safe!
+  RCP<C>  c_ptr  = rcp_dynamic_cast<C>(b2_ptr);  // Checked, safe!
 \end{verbatim}}
 %
 \item {\bf Dynamic cast (runtime checked, failed cast not allowed)}
 %
 {\small\begin{verbatim}
-RCP<A>  a_ptr1  = rcp(new C);
-RCP<A>  a_ptr2  = rcp(new A);
-RCP<B1> b1_ptr1 = rcp_dynamic_cast<B1>(a_ptr1,true); // Success!
-RCP<B1> b1_ptr2 = rcp_dynamic_cast<B1>(a_ptr2,true); // Throw std::bad_cast!
+  RCP<A>  a_ptr1  = rcp(new C);
+  RCP<A>  a_ptr2  = rcp(new A);
+  RCP<B1> b1_ptr1 = rcp_dynamic_cast<B1>(a_ptr1,true); // Success!
+  RCP<B1> b1_ptr2 = rcp_dynamic_cast<B1>(a_ptr2,true); // Throw std::bad_cast!
 \end{verbatim}}
 %
 \end{enumerate}
@@ -1085,22 +1269,23 @@ RCP<B1> b1_ptr2 = rcp_dynamic_cast<B1>(a_ptr2,true); // Throw std::bad_cast!
 \item {\bf Creating a \texttt{RCP} object with a custom deallocator }
 %
 {\small\begin{verbatim}
-RCP<C> c_ptr = rcp(new C[N],DeallocArrayDelete<C>(),true);
+  RCP<C> c_ptr = rcp(new C[N],DeallocArrayDelete<C>(),true);
 \end{verbatim}}
 %
 \item {\bf Access customized deallocator (runtime checked, throws on failure)}
 %
 {\small\begin{verbatim}
-const DeallocArrayDelete<C>
-  &dealloc = get_dealloc<DeallocArrayDelete<C> >(c_ptr);
+  const DeallocArrayDelete<C>
+    &dealloc = get_dealloc<DeallocArrayDelete<C> >(c_ptr);
 \end{verbatim}}
 %
 \item {\bf Access optional customized deallocator}
 %
 {\small\begin{verbatim}
-const DeallocArrayDelete<C>
-  *dealloc = get_optional_dealloc<DeallocArrayDelete<C> >(c_ptr);
-if(dealloc) std::cout << "This deallocator exits!\n";
+  Ptr<const DeallocArrayDelete<C> >
+    dealloc = get_optional_dealloc<DeallocArrayDelete<C> >(c_ptr);
+  if (!is_null(dealloc))
+    std::cout << "This deallocator exits!\n";
 \end{verbatim}}
 %
 \end{enumerate}
@@ -1110,35 +1295,37 @@ if(dealloc) std::cout << "This deallocator exits!\n";
 %
 \begin{enumerate}
 %
-\item {\bf Adding extra data (post destruction of extra data)}
+\item {\bf Adding extra data (post-destruction of extra data)}
 %
 {\small\begin{verbatim}
-set_extra_data(rcp(new B1),"A:B1",&a_ptr);
+  set_extra_data(rcp(new B1), "A:B1", inOutArg(a_ptr));
 \end{verbatim}}
 %
-\item {\bf Adding extra data (pre destruction of extra data)}
+\item {\bf Adding extra data (pre-destruction of extra data)}
 %
 {\small\begin{verbatim}
-set_extra_data(rcp(new B1),"A:B1",&a_ptr,PRE_DESTORY);
+  set_extra_data(rcp(new B1), "A:B1", inOutArg(a_ptr), PRE_DESTORY);
 \end{verbatim}}
 %
 \item {\bf Retrieving extra data}
 %
 {\small\begin{verbatim}
-get_extra_data<RCP<B1> >(a_ptr,"A:B1")->f();
+  get_extra_data<RCP<B1> >(a_ptr,"A:B1")->f();
 \end{verbatim}}
 %
 \item {\bf Resetting extra data}
 %
 {\small\begin{verbatim}
-get_extra_data<RCP<B1> >(a_ptr,"A:B1") = rcp(new C);
+  get_extra_data<RCP<B1> >(a_ptr,"A:B1") = rcp(new C);
 \end{verbatim}}
 %
 \item {\bf Retrieving optional extra data}
 %
 {\small\begin{verbatim}
-const RCP<B1> *b1 = get_optional_extra_data<RCP<B1> >(a_ptr,"A:B1");
-if(b1) (*b1)->f();
+  Ptr<const RCP<B1> > b1 =
+    get_optional_extra_data<RCP<B1> >(a_ptr,"A:B1");
+  if (!is_null(b1))
+    (*b1)->f();
 \end{verbatim}}
 %
 \end{enumerate}
@@ -1152,21 +1339,21 @@ if(b1) (*b1)->f();
 \item {\bf Creating an RCP object with embedded data}
 %
 {\small\begin{verbatim}
-RCP<D> d_ptr(new D);
-RCP<A> a_ptr rcpWithEmbeddedObj(new C, rcp(new D));
+  RCP<D> d_ptr(new D);
+  RCP<A> a_ptr rcpWithEmbeddedObj(new C, rcp(new D));
 \end{verbatim}}
 %
 \item {\bf Extract reference to const embedded object}
 %
 {\small\begin{verbatim}
-const RCP<D> &d_ptr = getEmbeddedObj<C,RCP<D> >(a_ptr);
+  const RCP<D> &d_ptr = getEmbeddedObj<C,RCP<D> >(a_ptr);
 \end{verbatim}}
 %
 \item {\bf Extract reference to nonconst embedded object}
 %
 {\small\begin{verbatim}
-RCP<D> &d_ptr = getNonconstEmbeddedObj<C,RCP<D> >(a_ptr);
-d_ptr = null; // Sets the actual embedded RCP<D> object in a_ptr to null!
+  RCP<D> &d_ptr = getNonconstEmbeddedObj<C,RCP<D> >(a_ptr);
+  d_ptr = null; // Sets the actual embedded RCP<D> object in a_ptr to null!
 \end{verbatim}}
 %
 \end{enumerate}
@@ -1187,13 +1374,13 @@ are also included to demonstrate each commandment and anti-commandment.
 
 \begin{commandment}\label{rcp:cmd:rcp-new}
 Thou shall put a pointer for an object allocated with operator
-{}\texttt{new} into a {}\texttt{RCP} object only once.
-The best way to insure this is to call operator {}\texttt{new}
-directly in a call to {}\texttt{rcp(...)} to create a dynamically
-allocated object that is to be managed by a
-{}\texttt{RCP} object.  See item
-({}\ref{rcpqs:apdx:qs:new}) in Appendix
-{}\ref{rcpqs:apdx:quickstart}.
+{}\texttt{new} into a {}\texttt{RCP} object only once.  The best way
+to insure this is to call operator {}\texttt{new} directly in a call
+to {}\texttt{rcp(...)} to create a dynamically allocated object that
+is to be managed by a {}\texttt{RCP} object.  Better yet, define and
+use non-member constructor functions and never use raw calls to
+{}\texttt{new} at the application programming level See item
+({}\ref{rcpqs:apdx:qs:new}) in Appendix {}\ref{rcpqs:apdx:quickstart}.
 \end{commandment}
 
 \begin{anticommandment}
@@ -1217,7 +1404,7 @@ returned from operator {}\texttt{new[]} to a
 {}\noindent{}Example:
 {\small\begin{verbatim}
   RCP<std::vector<C> > c_array_ptr1 = rcp(new std::vector<C>(N)); // Okay
-  RCP<C>               c_array_ptr3 = rcp(new C[n]);              // no, No, NO!
+  RCP<C> c_array_ptr3 = rcp(new C[n]);  // no, No, NO!
 \end{verbatim}}
 
 \begin{commandment}
@@ -1244,11 +1431,9 @@ very verbose and complicates maintenance.
 \begin{commandment}
 Thou shall only pass a raw pointer for an object that is
 {}\underline{not} allocated by operator {}\texttt{new} (e.g.~allocated
-on the stack) into a {}\texttt{RCP} object by using the
-templated function {}\texttt{rcp<T>(T* p, bool owns\_mem)} and setting
-{}\texttt{owns\_mem} to {}\texttt{false} (see item
-({}\ref{rcpqs:apdx:qs:not-new}) in Appendix
-{}\ref{rcpqs:apdx:quickstart}).
+on the stack) into a {}\texttt{RCP} object by using the templated
+function {}\texttt{rcpFromRef<T>(T\& t)} described in Appendix
+{}\ref{rcpqs:apdx:quickstart}.
 \end{commandment}
 
 \begin{anticommandment}
@@ -1261,7 +1446,7 @@ allocated with operator {}\texttt{new} into a
 {}\noindent{}Example:
 {\small\begin{verbatim}
   C c;
-  RCP<A> a_ptr1 = rcp(&c,false);  // Yes :-)
+  RCP<A> a_ptr1 = rcpFromRef(c);  // Yes :-)
   RCP<A> a_ptr2 = rcp(&c);        // no, No, NO !!!!
 \end{verbatim}}
 
@@ -1293,19 +1478,20 @@ using raw pointer access.
 \label{rcpqs:apdx:passing-args}
 %
 
-Below are recommended idioms for passing required\footnote{Required arguments
-must be bound to valid objects (i.e.~can not be {}\texttt{NULL})} and
-optional\footnote{Optional arguments may be {}\texttt{NULL} in some cases}
-arguments into and out of C++ functions for various use cases and different
-types of objects.  These idioms show how to write function prototype argument
-declarations which exploit the C++ language in a way that makes these function
-prototypes as self documenting as possible, avoids coding errors, and
-increases readability\footnote{What makes code more ``readable'' is subjective
-of course.} of C++ code.  In general, {}\texttt{RCP<T>} objects should be
-passed and manipulated as though they where raw C++ pointer {}\texttt{T*}
-objects.  However, while raw C++ pointer objects should generally be passed by
-value, {}\texttt{RCP} objects should generally be passed by reference for
-several reasons.
+Below are recommended idioms for passing required\footnote{Required
+arguments must be bound to valid objects (i.e.~can not be
+{}\texttt{NULL})} and optional\footnote{Optional arguments may be
+{}\texttt{NULL} in some cases} arguments into and out of C++ functions
+for various use cases and different types of objects.  These idioms
+show how to write function prototype argument declarations which
+exploit the C++ language in a way that makes these function prototypes
+as self documenting as possible, avoids coding errors, and increases
+readability\footnote{What makes code more ``readable'' is subjective
+of course.} of C++ code.  In general, {}\texttt{RCP<T>} objects should
+be passed and manipulated as though they where raw C++ pointer
+{}\texttt{T*} objects.  However, while raw C++ pointer objects should
+generally be passed by value, {}\texttt{RCP} objects should generally
+be passed by reference to avoid unecessary copy constructor calls.
 
 %
 %\fbox{
@@ -1340,8 +1526,8 @@ changeable object
 \hline
 \end{tabular}\\[2ex]
 C++ declarations for passing small concrete objects (i.e.~with value
-semantics) to and from functions where {}\texttt{S} is a place holder for an
-actual built-in or user-defined data type.
+semantics) to and from functions where {}\texttt{S} is a place holder
+for an actual built-in or user-defined data type.
 \end{minipage}
 \end{center}
 %} % end fbox
@@ -1371,10 +1557,10 @@ changeable object
 & {}\texttt{const RCP<A> \&a} \\
 \hline
 \end{tabular}\\[2ex]
-C++ declarations for passing abstract objects (i.e.\ with reference or pointer
-semantics) or large concrete objects (i.e.\ that are too expensive to copy) to
-and from functions where {}\texttt{A} is a place holder for an actual abstract
-C++ base class.
+C++ declarations for passing abstract objects (i.e.\ with reference or
+pointer semantics) or large concrete objects (i.e.\ that are too
+expensive to copy) to and from functions where {}\texttt{A} is a place
+holder for an actual (abstract) C++ base class.
 \end{minipage}
 \end{center}
 %} % end fbox
