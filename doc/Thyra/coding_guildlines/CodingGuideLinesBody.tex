@@ -583,6 +583,69 @@ last possible moment.  For example,
 
 
 %
+\subsubsection{Object Control}
+%
+
+\begin{itemize}
+
+{}\item\GCGTeuchosParamterListAcceptor: The {}\texttt{Teuchos\-::Parameter\-List}
+class provides many useful features that make it easy to accept user options
+in a flexible and fully validated way (see Teuchos documentation for more
+details).  The {}\texttt{Teuchos\-::Parameter\-List\-Acceptor} interface
+defines a consistent flexible protocol for setting and managing a parameter
+list.
+
+{}\item\GCGTeuchosParamterListValidation: All user parameters and
+sublists passed in through a
+{}\texttt{Teuchos\-::Parameter\-List\-Acceptor} should be fully
+validated.  The mail tool for this is the member function
+{}\texttt{validateParameters(...)}.  Using this function and other
+other approaches, when a user mispells a parameter or sublist, uses
+the wrong type for a parameter, or provides an invalid parameter
+value, they will get an exception thrown with a helpful error message.
+Also, objects are only responsible for validating their own parameters
+and sublists, and not those of other objects that they hold sublists
+for.
+
+\end{itemize}
+
+%
+\subsubsection{Object Introspection}
+%
+
+\begin{itemize}
+
+{}\item\GCGStdStream: Sending output directly to {}\texttt{std\-::cout} or
+{}\texttt{std\-::cerr} destroys the flexibility of numerical software and does
+not perform well in SPMD programs.  Instead, produce output using one of the
+following approaches.
+
+{}\item\GCGTeuchosFancyOStream: A {}\texttt{Teuchos\-::Fancy\-OStream} class object
+can wrap any {}\texttt{std\-::ostream} object and helps to produce structured
+indented output and to create more readable output in an SPMD program (even
+when every processor produces output).
+
+{}\item\GCGTeuchosDescribable: The {}\texttt{Teuchos\-::Describable} interface is
+the appropriate way to allow clients to print the current state of an object
+in a flexible way.  The verbosity of the output is controlled by an input enum
+parameter.
+
+{}\item\GCGTeuchosVerboseObject: Clients can set the output stream and the
+verbosity level through a parameter list (see the
+{}\texttt{Teuchos\-::ParameterListAcceptor} interface described above) or can
+set them directly in code.  If no output stream is set, then
+{}\texttt{Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()} will be
+used.
+
+{}\item\GCGTeuchosVerboseObjectBaseDefaultOStream: The stream provided by
+{}\texttt{*Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()} is
+setup by default to do clean printing in an SPMD program and can also be setup
+through a {}\texttt{Teuchos\-::Command\-Line\-Processor} object to control how
+output is produced and formatted.
+
+\end{itemize}
+
+%
 \subsubsection{Miscellaneous coding guidelines}
 %
 
@@ -823,45 +886,6 @@ fine:
   nonconstFoo9(c);  // Okay!
   foo9(c);          // Okay!
 \end{verbatim}}
-
-{}\item\GCGTeuchosParamterListAcceptor: The {}\texttt{Teuchos\-::Parameter\-List}
-class provides many useful features that make it easy to accept user options
-in a flexible and fully validated way (see Teuchos documentation for more
-details).  The {}\texttt{Teuchos\-::Parameter\-List\-Acceptor} interface
-defines a consistent flexible protocol for setting and managing a parameter
-list.
-
-{}\item\GCGStdStream: Sending output directly to {}\texttt{std\-::cout} or
-{}\texttt{std\-::cerr} destroys the flexibility of numerical software and does
-not perform well in SPMD programs.  Instead, produce output using one of the
-following approaches.
-
-\begin{itemize}
-
-{}\item\GCGTeuchosFancyOStream: A {}\texttt{Teuchos\-::Fancy\-OStream} class object
-can wrap any {}\texttt{std\-::ostream} object and helps to produce structured
-indented output and to create more readable output in an SPMD program (even
-when every processor produces output).
-
-{}\item\GCGTeuchosDescribable: The {}\texttt{Teuchos\-::Describable} interface is
-the appropriate way to allow clients to print the current state of an object
-in a flexible way.  The verbosity of the output is controlled by an input enum
-parameter.
-
-{}\item\GCGTeuchosVerboseObject: Clients can set the output stream and the
-verbosity level through a parameter list (see the
-{}\texttt{Teuchos\-::ParameterListAcceptor} interface described above) or can
-set them directly in code.  If no output stream is set, then
-{}\texttt{Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()} will be
-used.
-
-{}\item\GCGTeuchosVerboseObjectBaseDefaultOStream: The stream provided by
-{}\texttt{*Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()} is
-setup by default to do clean printing in an SPMD program and can also be setup
-through a {}\texttt{Teuchos\-::Command\-Line\-Processor} object to control how
-output is produced and formatted.
-
-\end{itemize}
 
 {}\item\GCGStandardCppHeaders: Only include the C++ {}\texttt{<cX>} versions
 of the standard C {}\texttt{<X.h>} headers.  For example, include
