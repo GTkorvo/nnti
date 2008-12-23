@@ -1,7 +1,7 @@
 
-INCLUDE(TrilinosPackageHelpers)
+INCLUDE(PackageMacros)
 
-TRILINOS_PACKAGE(RBGen)
+PACKAGE(RBGen)
 
 SET(${PACKAGE_NAME}_VERSION "0.1d")
 
@@ -9,4 +9,4 @@ ADD_SUBDIRECTORY(src)
 
 # There are not tests and examples yet!
 
-TRILINOS_PACKAGE_POSTPROCESS()
+PACKAGE_POSTPROCESS()
