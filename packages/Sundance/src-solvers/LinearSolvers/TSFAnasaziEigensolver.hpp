@@ -41,6 +41,7 @@
 #include "AnasaziBasicEigenproblem.hpp"
 #include "AnasaziThyraAdapter.hpp"
 
+
 namespace TSFExtended
 {
 using Teuchos::ParameterList;
@@ -86,6 +87,20 @@ public:
   
 private:
 
+  static Time& solveTimer() 
+    {
+      static RefCountPtr<Time> rtn 
+        = TimeMonitor::getNewTimer("AnasaziEigensolver solve()"); 
+      return *rtn;
+    }
+
+  static Time& precondBuildTimer() 
+    {
+      static RefCountPtr<Time> rtn 
+        = TimeMonitor::getNewTimer("AnasaziEigensolver building preconditioner"); 
+      return *rtn;
+    }
+
 };
 
 
@@ -96,6 +111,7 @@ inline void AnasaziEigensolver<Scalar>::solve(
   Array<Vector<Scalar> >& evecs,
   Array<std::complex<Scalar> >& ew) const 
 {
+  TimeMonitor timer(solveTimer());
   VectorSpace<Scalar> KDomain = K.domain();
   
   /* Get a Thyra representation of the stiffness matrix */
@@ -130,7 +146,11 @@ inline void AnasaziEigensolver<Scalar>::solve(
     = new ParameterListPreconditionerFactory(precParams);
 
   LinearOperator<Scalar> P;
-  if (usePrec) P = precFactory.createPreconditioner(K).right();
+  if (usePrec) 
+  {
+    TimeMonitor pTimer(precondBuildTimer());
+    P = precFactory.createPreconditioner(K).right();
+  }
 
   /* Create eigenproblem */
   RefCountPtr<Anasazi::Eigenproblem<Scalar,MV,OP> > problem;
