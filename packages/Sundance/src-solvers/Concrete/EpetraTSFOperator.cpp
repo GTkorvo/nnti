@@ -42,6 +42,7 @@
 #include "EpetraTSFOperator.hpp"
 #include "Epetra_Comm.h"
 #include "Epetra_CrsMatrix.h"
+#include "Thyra_Config.h"
 
 #ifdef HAVE_THYRA_EPETRA
 #include "Thyra_EpetraThyraWrappers.hpp"

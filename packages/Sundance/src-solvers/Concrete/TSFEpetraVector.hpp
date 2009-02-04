@@ -70,7 +70,7 @@ public:
    RefCountPtr< const VectorSpaceBase<double> > 
    space() const {return vecSpace_;}
 
-#ifdef TRILINOS_DEV
+#ifndef TRILINOS_8
   /** */
   void applyOpImpl(const RTOpPack::RTOpT< double >& op,
 		const ArrayView< const Ptr< const VectorBase< double > > > &  	vecs,
@@ -81,7 +81,6 @@ public:
 		const Index  	global_offset	 
     ) const ;
 #else
-
   virtual void applyOp(
     const RTOpPack::RTOpT<double> &op,
     const int num_vecs,

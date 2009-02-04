@@ -101,7 +101,7 @@ EpetraVector
 
 
 
-#ifdef TRILINOS_DEV
+#ifndef TRILINOS_8
 
 void EpetraVector::applyOpImpl(const RTOpPack::RTOpT< double >& op,
 		const ArrayView< const Ptr< const VectorBase< double > > > &  	vecs,

@@ -56,7 +56,7 @@ productSpace(const Array<VectorSpace<Scalar> >& spaces)
   return rcp(new Thyra::ProductVectorSpace<Scalar>(data.size(), &(data[0])));
 }
 
-#ifdef TRILINOS_DEV
+#ifndef TRILINOS_8
 template <class Scalar, int N>
 Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
 productSpace(const Tuple<VectorSpace<Scalar> , N>& spaces)

@@ -77,7 +77,7 @@ namespace TSFExtended
     Handle() : ptr_() {;}
 
     /** Construct from a smart pointer */
-    Handle(const RefCountPtr<PointerType>& ptr) : ptr_(ptr) {;}
+    Handle(const RefCountPtr<PointerType>& _ptr) : ptr_(_ptr) {;}
 
     /** Construct from a raw pointer to a Handleable.  */
     Handle(Handleable<PointerType>* rawPtr) : ptr_(rawPtr->getRcp()) {;}
