@@ -1,5 +1,6 @@
 \documentclass[acmtoms,acmnow]{acmtrans2m}
 \usepackage{graphicx}
+%\usepackage{hyperref}
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{conjecture}[theorem]{Conjecture}
@@ -59,48 +60,54 @@ under Contract DE-AC04-94AL85000.
 
 \section{Introduction}
 
-Linear algebra computations such as matrix-vector multiplication and the
-solution of linear systems serve as the building blocks for numerical
-algorithms and consume the majority of the runtime of numerical codes.  These
-linear algebra abstractions transcend details such as matrix storage formats
-(of which there are many) and linear system solver codes (sparse or dense,
-direct or iterative).  Primary linear algebra abstractions include vectors and
-matrices and the operations that can be performed with them.  C++ abstractions
-for vectors and matrices abound.
+Linear algebra computations such as linear operation applications and
+the solution of linear systems serve as the building blocks for
+numerical algorithms and consume the majority of the runtime of
+numerical codes.  These linear algebra abstractions transcend details
+such as matrix storage formats (of which there are many) and linear
+system solver codes (sparse or dense, direct or iterative).  Primary
+linear algebra abstractions include vectors and matrices and the
+operations that can be performed with them.  C++ abstractions for
+vectors and matrices abound.
 
-Once convenient vector and matrix classes {}\texttt{Vec} and {}\texttt{Mat}
-are created, for instance, there is a need to implement BLAS-like linear
-algebra operations.  Given that C++ has operator overloading, it would seem
-reasonable to implement these operations using a
-MATLAB${}^{\mbox{\copyright}}$ like notation.  For example, the matrix-vector
-multiplication $y = y + A^T x$ might be represented in C++ with the statement
-{}\texttt{y = y + trans(A)*x} (the character {}\texttt{'} can not be used for
-transpose since it is not a C++ operator).  MATLAB is seen by many in the
-numerical computational community to be the ideal for the representation of
+Once convenient vector and linear operator classes {}\texttt{Vec} and
+{}\texttt{LinearOp} are created, for instance, there is a need to
+implement BLAS-like linear algebra operations.  Given that C++ has
+operator overloading, it would seem reasonable to implement these
+operations using a MATLAB${}^{\mbox{\copyright}}$ like notation.  For
+example, the linear operator applications $y = y + A^T x$ might be
+represented in C++ with the statement {}\texttt{y = y + trans(A)*x}
+(the character {}\texttt{'} can not be used for transpose since it is
+not a C++ operator).  MATLAB is seen by many in the numerical
+computational community to be the ideal for the representation of
 linear algebra operations using only ASCII characters
-{}\cite{ref:demmel_1997}.  The advantages of such an interface are obvious; It
-is almost the same as standard mathematical notation, which makes it very easy
-to match the implementation with the operation for the application programmer,
-and makes the code much easier to understand.  The primary disadvantage for
-this approach in C++ is that the straightforward implementation requires a lot
-of overhead because operators are implemented in a pair-wise fashion involving
-temporaries.  For example, for the operation {}\texttt{y = y + trans(A)*x}, a
-temporary matrix ($n^2$ overhead) and two temporary vectors ($2n$ overhead)
-would be created by the compiler.  Specifically, the compiler would perform
-the following operations: {}\texttt{Mat t1 = trans(A); Vec t2 = t1*x; Vec t3 =
-y + t2; y = t3;}.  Attempts have been made to come up with a strategy in C++
-to implement operations like {}\texttt{y = y + trans(A)*x} in a way where
+{}\cite{ref:demmel_1997}.  The advantages of such an interface are
+obvious; It is almost the same as standard mathematical notation,
+which makes it very easy to match the implementation with the
+operation for the application programmer, and makes the code much
+easier to understand.  The primary disadvantage for this approach in
+C++ is that the straightforward implementation requires a lot of
+overhead because operators are implemented in a pair-wise fashion
+involving temporaries.  For example, for the operation {}\texttt{y = y
++ trans(A)*x}, a temporary matrix ($n^2$ overhead) and two temporary
+vectors ($2n$ overhead) would be created by the compiler.
+Specifically, the compiler would perform the following operations:
+{}\texttt{LinearOp t1 = trans(A); Vec t2 = t1*x; Vec t3 = y + t2; y =
+t3;}.  Attempts have been made to come up with a strategy in C++ to
+implement operations like {}\texttt{y = y + trans(A)*x} in a way where
 little overhead is required beyond a direct BLAS call
-{}\cite{ref:parker_1997}.  It is relatively easy to implement these operator
-functions with only a little constant-time overhead for a small set of linear
-algebra operations {}\cite[pages 675-677]{ref:stroustrup_1997}.  However, for
-more elaborate expressions, a compile-time expression parsing method is
-needed.  Some have advocated preprocessing tools, while others have looked at
-using C++'s template mechanisms {}\cite{ref:veldhuizen_et_al_1998},
-{}\cite{ref:parker_1997}.  In any case, these methods are complex and not
-trivial to implement.  Methods based on runtime parsing are also possible but
-add more of a runtime penalty.  Aliasing is also another big problem.  For
-example, suppose we allow users to write expressions like
+{}\cite{ref:parker_1997}.  It is relatively easy to implement these
+operator functions with only a little constant-time overhead for a
+small set of linear algebra operations {}\cite[pages
+675-677]{ref:stroustrup_1997}.  However, for more elaborate
+expressions, a compile-time expression parsing method is needed.  Some
+have advocated preprocessing tools, while others have looked at using
+C++'s template mechanisms {}\cite{ref:veldhuizen_et_al_1998},
+{}\cite{ref:parker_1997}.  In any case, these methods are complex and
+not trivial to implement.  Methods based on runtime parsing are also
+possible but add more of a runtime penalty.  Aliasing is also another
+big problem.  For example, suppose we allow users to write expressions
+like
 %
 \[
 y = x + v + \alpha M^{T} + \beta y.
@@ -154,7 +161,7 @@ form $y +\!= \alpha A^T x$ (this is well understood by C, C++ and Perl
 programmers).  Next, translate into MATLAB-like notation as {}\texttt{y +=
 alpha*A'*x} (except MATLAB does not have the operator {}\texttt{+=}).
 Finally, for {}\texttt{Vec} objects {}\texttt{y} and {}\texttt{x} and a
-{}\texttt{Mat} object {}\texttt{A}, the function call and its prototype are
+{}\texttt{LinearOp} object {}\texttt{A}, the function call and its prototype are
 shown in Figure {}\ref{rsqppp:fig:example_linalgpack_convention}.  In this
 function prototype, type {}\texttt{Transp} is a simple C++ {}\texttt{enum}
 with the values {}\texttt{TRANS} or {}\texttt{NOTRANS}, and the type
@@ -213,7 +220,8 @@ $\downarrow$
 \end{tabular}
 \begin{tabbing}xxx\= \kill
 \textbf{Function Prototype} \\
-\texttt{void Vp\_StMtV( Vec* y, Scalar alpha, const Mat\& A, Transp A\_trans, const Vec\& x);}\\
+\texttt{void Vp\_StMtV( const Ptr<Vec>\& y, Scalar alpha, const LinearOp\& A, Transp A\_trans,}\\
+\texttt{\hspace{4ex}const Vec\& x);}\\
 \end{tabbing}
 
 }}
@@ -224,9 +232,7 @@ Example of the linear algebra naming convention for $y +\!\!= \alpha A^T x$
 \end{figure}
 \esinglespace}
 
-A summary of this convention is shown in Figure
-{}\ref{rsqppp:tbl:linalgpack_naming_convention}.
-%
+
 {\bsinglespace
 \begin{figure}
 \fbox{\parbox{\textwidth}{
@@ -243,9 +249,8 @@ A summary of this convention is shown in Figure
 \underline{\bf Operand Type}	& \underline{\bf Character (Upper Case)}	& \underline{\bf Argument(s)}	\\
 Scalar							& \texttt{S}								& \texttt{Scalar} \\
 Vector							& \texttt{V}								& (rhs) \texttt{const Vec\&} \\
-								&											& (lhs) \texttt{Vec*} \\
-Matrix							& \texttt{M}								& (rhs) \texttt{const Mat\&, Transp} \\
-								&											& (lhs) \texttt{Mat*}								
+								&											& (lhs) \texttt{const Ptr<Vec>\&} \\
+LinearOp							& \texttt{M}								& (rhs) \texttt{const LinearOp\&, Transp} \\
 \end{tabular}
 }}
 \caption[Naming convention summary table for linear algebra functions]{
@@ -254,36 +259,39 @@ Naming convention for linear algebra functions in C++
 }
 \end{figure}
 \esinglespace}
-%
-Given this convention, it is easy to go back and forth between the
-mathematical notation and the function prototype. For example, consider the
+
+
+A summary of this convention is shown in Figure
+{}\ref{rsqppp:tbl:linalgpack_naming_convention}.  Given this
+convention, it is easy to go back and forth between the mathematical
+notation and the function prototype. For example, consider the
 function call and its mathematical expression\\[1.0ex]
 
 {\bsinglespace
 \hspace*{4ex}\parbox{\textwidth}{
-{}\texttt{Mp\_StMtM( \&C, alpha, A, NOTRANS, B, TRANS )}\\
+{}\texttt{Vp\_StMtV( \&y, alpha, A, NOTRANS, x )}\\
 $\Longrightarrow$\\
-$C +\!= \alpha A B^T$.
+$y +\!= \alpha A x$.
 }
 \esinglespace}\\[1ex]
 
 One difficulty with this convention is dealing with Level-2 and Level-3 BLAS
 that have expressions such as\\[1ex]
 
-\hspace*{4ex}$C = \alpha \: \mbox{op}(A) \: \mbox{op}(B) + \underbrace{\beta}_{
-	\mbox{?} } C$ \hspace{4ex} (xGEMM).\\[1ex]
+\hspace*{4ex}$y = \alpha \: \mbox{op}(A) \: x + \underbrace{\beta}_{
+	\mbox{?} } y$ \hspace{4ex} (xGEMM).\\[1ex]
 
 Given $\beta \neq 1$ we can not simply rewrite the above BLAS operation using
 +=.  To deal with this problem, $\beta$ is moved to the end of the argument
 list and has a default value of 1.0 as\\[1.0ex]
 
-\hspace*{4ex}\texttt{Mp\_StMtM( \&C, alpha, A, A\_trans, B, B\_trans
-	, $\underbrace{\mbox{\texttt{beta}}}_{\mbox{default to 1.0}}$ )}.\\[1.0ex]
+\hspace*{4ex}\texttt{Vp\_StMtV( \&y, alpha, A, A\_trans, x,
+  $\underbrace{\mbox{\texttt{beta}}}_{\mbox{default to 1.0}}$ )}.\\[1.0ex]
 
-Only exact equivalents to the Level-2 and Level-3 BLAS need be explicitly
-implemented (i.e. {}\texttt{Vp\_StMtV(...)} and {}\texttt{Mp\_StMtM(...)}).
-Functions for simpler expressions can be generated automatically using
-template functions.  As an example, consider the linear algebra operation and
+Only exact equivalents to the Level-2 and Level-3 BLAS need be
+explicitly implemented (e.g. {}\texttt{Vp\_StMtV(...)}).  Functions
+for simpler expressions can be generated automatically using template
+functions.  As an example, consider the linear algebra operation and
 its function call\\[1.0ex]
 
 {\bsinglespace
@@ -305,7 +313,7 @@ trivial and is
 {\bsinglespace\small
 \begin{verbatim}
     template<class M, class V>
-    inline void V_MtV( V* y, const M& A, Transp A_trans, const V& x )
+    inline void V_MtV( const Ptr<V>\& y, const M& A, Transp A_trans, const V& x )
     {
       Vp_StMtV( y, 1.0, A, A_trans, x, 0.0 );
     }
@@ -327,25 +335,26 @@ $\Longrightarrow$\\
 }
 \esinglespace}
 
-As stated above, only the base BLAS operations {}\texttt{Vp\_StMtV(...)} (e.g.
-{}\texttt{xGEMV(...)})  and {}\texttt{Mp\_StMtM(...)} 
-(e.g. {}\texttt{xGEMM(...)}) must be implemented for the specific vector and
-matrix types {}\texttt{Vec} and {}\texttt{Mat}.  For example, if these are
-simple encapsulations of BLAS compatible serial vectors and matrices (e.g. TNT
-style) then the call the the BLAS functions can be written as template
-functions for all serial dense vector and matrix (column oriented) classes.
-For example, an inlined call to {}\texttt{DGEMV(...)} can be performed as\\[1ex]
+As stated above, only the base BLAS operation
+{}\texttt{Vp\_StMtV(...)} (e.g. {}\texttt{xGEMV(...)}) must be
+implemented for the specific vector and linear-operator/matrix types
+{}\texttt{Vec} and {}\texttt{LinearOp}.  For example, if these are
+simple encapsulations of BLAS compatible serial vectors and matrices
+(e.g. TNT style) then the call the the BLAS functions can be written
+as template functions for all serial dense vector and matrix (column
+oriented) classes.  For example, an inlined call to
+{}\texttt{DGEMV(...)} can be performed as\\[1ex]
 
 {\bsinglespace\small
 \begin{minipage}{\textwidth}
 \begin{verbatim}
     template<class M, class V>
-    inline void Vp_StMtV( V* y, Scalar alpha, const M& A, Transp A_trans
-      , const V& x, Scalar beta = 1.0 )
+    inline void Vp_StMtV( const Ptr<V>& y, Scalar alpha, const M& A,
+      Transp A_trans, const V& x, Scalar beta = 1.0 )
     {
       DGEMV( A_trans == NOTRANS ? 'N' : 'T', rows(A), cols(A), alpha
-        ,&A(1,1), &A(1,2) - &A(1,1), &x(1), &x(2) - &x(1), beta
-        ,&(*y)(1), &(*y)(2) - &(*y)(1) );
+        ,&A(0,0), &A(0,1) - &A(0,0), &x(0), &x(1) - &x(0), beta
+        ,&(*y)(0), &(*y)(1) - &(*y)(0) );
     }
 \end{verbatim}
 \end{minipage}
@@ -357,36 +366,36 @@ be clear.  By calling {}\texttt{rows(...)} and {}\texttt{cols(...)} as
 nonmember functions, they can be overloaded to call the appropriate member
 functions on the matrix object since there is no standard names for these.
 
-When {}\texttt{Vec} and {}\texttt{Mat} are polymorphic types, one can use a
-common trick to implement {}\texttt{Vp\_StMtV(...)} and
-{}\texttt{Mp\_StMtM(...)} using member functions.  For example,
-{}\texttt{Vp\_StMtV(...)} can be implemented as\\[1ex]
+When {}\texttt{Vec} and {}\texttt{LinearOp} are polymorphic types, one
+can use a common trick to implement {}\texttt{Vp\_StMtV(...)} using
+member functions.  For example, {}\texttt{Vp\_StMtV(...)} can be
+implemented as\\[1ex]
 
 {\bsinglespace\small
 \begin{minipage}{\textwidth}
 \begin{verbatim}
     class Vec { ... };
 
-    class Mat {
+    class LinearOp {
     public:
-      virtual void apply( Vec* y, Scalar alpha, Transp A_trans
-        , const Vec& x, Scalar beta ) const = 0;
+      virtual void apply( const Ptr<Vec>& y, Scalar alpha, Transp A_trans,
+        const Vec& x, Scalar beta ) const = 0;
       ...
     };
 
-    inline void Vp_StMtV( Vec* y, Scalar alpha, const Mat& A, Transp A_trans
-      , const Vec& x, Scalar beta = 1.0 )
+    inline void Vp_StMtV( const Ptr<Vec>& y, Scalar alpha, const LinearOp& A,
+      Transp A_trans, const Vec& x, Scalar beta = 1.0 )
     {
-      A.apply(y,alpha,A_trans,x,beta);
+      A.apply(y, alpha, A_trans, x, beta);
     }
 \end{verbatim}
 \end{minipage}
 \esinglespace}\\[1ex]
 
-Using these inlined non-member functions there is no extra overhead beyond the
-unavoidable virtual function calls.  In this way there is consistent calling
-of linear algebra operations irregardless whether the vector and matrix
-objects are concrete or abstract.
+Using these inlined non-member functions there is no extra overhead
+beyond the unavoidable virtual function calls.  There is onsistent
+calling of linear algebra operations irregardless whether the vector
+and matrix objects are concrete or abstract.
 
 This convention can, of course, also be used for level-1 vector-vector
 operations like {}\texttt{Vt\_S(\&y,alpha)} for $y = \alpha y$,

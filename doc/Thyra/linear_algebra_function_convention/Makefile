@@ -1,23 +1,42 @@
-TARGET=LinearAlgebraFunctionConvention
 
-$(TARGET).dvi: $(TARGET).tex
-	latex $(TARGET)
-	bibtex $(TARGET)
-	latex $(TARGET)
-	latex $(TARGET)
+BASE_NAME = LinearAlgebraFunctionConvention
+LATEX_COMMAND = latex
+BIBTEX_COMMAND = bibtex
 
-view: $(TARGET).dvi
-	xdvi $(TARGET) &
+SOURCEFILES= \
+            $(BASE_NAME).tex \
+            bartlett_roscoe.bib
 
-ps: $(TARGET).dvi
-	dvips -o $(TARGET).ps $(TARGET)
+#
+# Shortcut targets
+#
 
-pdf: ps
-	ps2pdf $(TARGET).ps $(TARGET).pdf
+default: pdf
 
-print: $(TARGET).dvi
-	dvips $(TARGET)
+dvi: $(BASE_NAME).dvi
+
+ps: $(BASE_NAME).ps
+
+pdf: $(BASE_NAME).pdf
 
 clean:
-	rm -f *.ps *.pdf *.dvi *.aux *.toc *.idx *.ind *.ilg *.log *.out \
-           *.bbl *.blg *.lof *.lot *.tex~
+	rm -f *.ps $(BASE_NAME).pdf *.dvi *.aux *.toc *.idx *.ind *.ilg \
+	*.log *.out *.bbl *.blg *.lof *.lot *.tex~ .log *~
+
+#
+# File targets
+#
+
+$(BASE_NAME).dvi: $(SOURCEFILES)
+	$(LATEX_COMMAND) $(BASE_NAME)
+	$(BIBTEX_COMMAND) $(BASE_NAME)
+	$(LATEX_COMMAND) $(BASE_NAME)
+	$(LATEX_COMMAND) $(BASE_NAME)
+	$(LATEX_COMMAND) $(BASE_NAME)
+
+$(BASE_NAME).ps: $(BASE_NAME).dvi
+	dvips -t letter -o $(BASE_NAME).ps $(BASE_NAME)
+
+$(BASE_NAME).pdf: $(BASE_NAME).ps
+	ps2pdf $(BASE_NAME).ps $(BASE_NAME).pdf
+
