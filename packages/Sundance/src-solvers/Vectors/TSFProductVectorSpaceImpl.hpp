@@ -30,6 +30,7 @@
 #define TSFPRODUCTVECTORSPACEIMPL_HPP
 
 #include "TSFProductVectorDecl.hpp"
+#include "Thyra_DefaultProductVectorSpace.hpp"
  
 using namespace TSFExtended;
 using namespace Teuchos;

@@ -35,6 +35,7 @@
 #include "Thyra_SUNDIALS_Ops.hpp"
 #include "TSFIndexableVector.hpp"
 #include "TSFSequentialIteratorImpl.hpp"
+#include "Thyra_DefaultProductVectorSpace.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultSpmdVector.hpp"
 
