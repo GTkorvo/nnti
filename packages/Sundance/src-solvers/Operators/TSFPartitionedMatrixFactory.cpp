@@ -150,6 +150,7 @@ void PartitionedMatrixFactory::initializeNonzerosInRow(int globalRowIndex,
   }
 }
 
+
 void PartitionedMatrixFactory::finalize() 
 {
   blockICMF_[0][0]->finalize();
