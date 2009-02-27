@@ -112,12 +112,13 @@ namespace TSFExtended
       os() << "LinearOperator::solve()" << std::endl;
     }
     SolverState<Scalar> rtn = this->ptr()->solve(op, rhs, soln);
-    return rtn;
-    
+
     if (this->ptr()->getVerbosity() > 0) 
     {
       os() << "done LinearOperator::solve()" << std::endl;
     }
+
+    return rtn;    
   }
 
   template <class Scalar> inline 

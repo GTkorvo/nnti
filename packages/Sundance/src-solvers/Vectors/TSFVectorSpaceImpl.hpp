@@ -70,7 +70,9 @@ template <class Scalar>
 Vector<Scalar> VectorSpace<Scalar>::createMember() const 
 {
   TimeMonitor timer(createVecTimer());
-  return Thyra::createMember(this->ptr());
+  Vector<Scalar> rtn = Thyra::createMember(this->ptr());
+  rtn.setToConstant(0.0);
+  return rtn;
 }
     
 
