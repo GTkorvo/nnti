@@ -49,8 +49,8 @@ namespace TSFExtended
   RefCountPtr<const Epetra_Map> tsfVectorSpace2EpetraMap(const VectorSpace<double>& tsfSpace);
   
   /** */
-  void getComm(const VectorSpace<double>& tsfSpace,
-	       const RefCountPtr<Epetra_Comm>& comm);
+void getComm(const TSFExtended::VectorSpace<double>& tsfSpace,
+  Teuchos::RefCountPtr<Epetra_Comm>& comm);
 	       
 }
 

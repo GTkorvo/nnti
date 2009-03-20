@@ -85,8 +85,8 @@ namespace TSFExtended {
   }
 
 
-  void getComm(const VectorSpace<double>& tsfSpace,
-	       RefCountPtr<Epetra_Comm>& comm)
+void getComm(const TSFExtended::VectorSpace<double>& tsfSpace,
+    Teuchos::RefCountPtr<Epetra_Comm>& comm)
   {
 #ifdef HAVE_MPI
     if (tsfSpace.numBlocks()==1)
