@@ -443,7 +443,7 @@ template <class Scalar> inline
 bool Vector<Scalar>::hasNANINF() const 
 {
   double x = Thyra::sum(*(this->ptr)());
-  return finite(x);
+  return this->finite(x);
 }
 
 
