@@ -1,5 +1,6 @@
 
 INCLUDE(PackageLibraryMacros)
+INCLUDE(PackageAddExecutable)
 
 #
 # A) Package-specific configuration options
