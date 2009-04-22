@@ -94,7 +94,7 @@ EpetraVectorSpace::createMembers(int n) const
 {
   RefCountPtr<const VectorSpaceBase<double> > self = rcp(this, false);
   RefCountPtr<const VectorSpaceBase<double> > small 
-    = rcp(new DefaultSpmdVectorSpace<double>(n));
+    = Thyra::defaultSpmdVectorSpace<double>(n);
   Array<RefCountPtr<VectorBase<double> > > vecs(n);
   for (unsigned int i=0; i<vecs.size(); i++)
     {
