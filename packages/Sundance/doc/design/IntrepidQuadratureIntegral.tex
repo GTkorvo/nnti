@@ -13,28 +13,31 @@ necessary for the element integration routines to support a wider
 range of integrands.  This document attempts to enumerate the types
 of computations necessary.
 
-To establish some terminology, we divide expressions into
-0-forms, 1-forms, and 2-forms.  These are different ideas than
-expressed in exterior algebra.  A 0-form is a functional -- it has
-no test or trial functions and simply returns a number.  A 1-form
-returns a vector, it contains a test function but no unknown function.
+To establish some terminology, we divide expressions functionals,
+linear forms, and bilinear forms.  A functional has
+no test or trial functions and simply returns a number.  A linear form
+constructs a vector, and it contains a test function but no unknown function.
 This paradigm is needed for 
 \begin{enumerate}
 \item Residual evaluation for Newton's method
 \item Matrix-free application of a stiffness matrix
 \item Formation of the load vector
 \end{enumerate}
-Finally, a 2-form provides a matrix over each mesh entity and must
+Finally, a bilinear form provides a matrix over each mesh entity and must
 contain a test and trial function.
 
-\section{0-forms}
+Nonlinearities, etc, are handled by the symbolic and discrete function
+systems and are already tabulated at quadrature points before being
+passed into the quadrature integral evaluation.
+
+\section{Functionals}
 Nothing to do.
 
-\section{1-forms}
-For one forms, we may distinguish several cases, based on which space
+\section{Linear forms}
+For linear forms, we may distinguish several cases, based on which space
 the test function \( v \) lives in (\(H^1\), \( H(\mathrm{div}) \), or
 \( H(\mathrm{curl}) \).
-\subsection{1-forms with \( H^1 \) test functions}
+\subsection{Linear forms with \( H^1 \) test functions}
 For the current version of Sundance (not recognizing gradients as
 such), we will need to support operations of the form:
 \[
@@ -49,7 +52,7 @@ particular facet.  \( D_i \) is the partial derivative operator in
 a particular Cartesian direction.
 
 In the future, we will have vector-valued
-functions, and will need to support 1-forms of the form
+functions, and will need to support linear forms of the form
 \[
 \int \tilde{f} \cdot \nabla v,
 \]
@@ -62,7 +65,7 @@ over boundary facets.  This is properly a scalar operation, but relies
 on recognizing the gradient as a particular entity.
 
 
-\subsection{1-forms with \( H(\mathrm{div}) \) test functions}
+\subsection{Linear forms with \( H(\mathrm{div}) \) test functions}
 For now, Sundance will only recognize scalar entities, so we need 
 \[
 \int f v_i,
@@ -91,12 +94,12 @@ and \emph{a posteriori} error estimates also sometimes require
 tangential components of these fields on boundaries, so supporting
 these operations as well makes sense.
 
-\subsection{1-forms on \(H(\mathrm{curl})\)}
+\subsection{Linear forms on \(H(\mathrm{curl})\)}
 
 
-\section{2-forms}
+\section{Bilinear forms}
 There is the potential for some combinatorial blow-up in the cases we
-need to handle for 2-forms, as we must support pairs of test and trial
+need to handle for bilinear forms, as we must support pairs of test and trial
 spaces.  
 
 \subsection{\( H^1 \) test and trial spaces}
