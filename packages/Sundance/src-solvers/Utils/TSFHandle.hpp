@@ -173,7 +173,7 @@ namespace TSFExtended
       "Printable nor Describable");
 
     if (p!=0) p->print(os);
-    if (d!=0) os << description();
+    else if (d!=0) os << description();
   }
 
   /* implementation of description() */
