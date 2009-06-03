@@ -72,6 +72,7 @@ namespace TSFExtended
     mutable RefCountPtr<NOX::Solver::Generic> solver_;
     mutable RefCountPtr<NOX::StatusTest::Generic> statusTest_;
     mutable ParameterList params_;
+    mutable ParameterList printParams_;
 #ifdef TRILINOS_6
     mutable NOX::Parameter::List noxParams_;
 #else

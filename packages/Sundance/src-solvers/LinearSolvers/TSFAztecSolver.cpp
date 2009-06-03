@@ -185,7 +185,6 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
 
   AztecOO aztec(&A, x, b);
 
-
   aztec.SetAllAztecOptions((int*) &(options_[0]));
   aztec.SetAllAztecParams((double*) &(parameters_[0]));
   aztec.SetOutputStream(os());
@@ -193,7 +192,6 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   
   int maxIters = options_[AZ_max_iter];
   double tol = parameters_[AZ_tol];
-
 
   if (useML_)
   {

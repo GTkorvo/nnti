@@ -35,8 +35,8 @@
 
 
 NOX::TSF::Group::Group(const TSFExtended::Vector<double>& initcond, 
-                       const TSFExtended::NonlinearOperator<double>& nonlinOp,
-                       const TSFExtended::LinearSolver<double>& linsolver) 
+  const TSFExtended::NonlinearOperator<double>& nonlinOp,
+  const TSFExtended::LinearSolver<double>& linsolver) 
   :
   precision(3),  // 3 digits of accuracy is default
   xVector(initcond, precision, DeepCopy),
@@ -53,7 +53,7 @@ NOX::TSF::Group::Group(const TSFExtended::Vector<double>& initcond,
 }
 
 NOX::TSF::Group::Group(const TSFExtended::NonlinearOperator<double>& nonlinOp,
-                       const TSFExtended::LinearSolver<double>& linsolver) 
+  const TSFExtended::LinearSolver<double>& linsolver) 
   :
   precision(3), // 3 digits of accuracy is default
   xVector(nonlinOp.getInitialGuess(), precision, DeepCopy),
@@ -70,9 +70,9 @@ NOX::TSF::Group::Group(const TSFExtended::NonlinearOperator<double>& nonlinOp,
 }
 
 NOX::TSF::Group::Group(const TSFExtended::Vector<double>& initcond, 
-                       const TSFExtended::NonlinearOperator<double>& nonlinOp,
-                       const TSFExtended::LinearSolver<double>& linsolver,
-                       int numdigits) 
+  const TSFExtended::NonlinearOperator<double>& nonlinOp,
+  const TSFExtended::LinearSolver<double>& linsolver,
+  int numdigits) 
   :
   precision(numdigits),
   xVector(initcond, precision, DeepCopy),
@@ -89,8 +89,8 @@ NOX::TSF::Group::Group(const TSFExtended::Vector<double>& initcond,
 }
 
 NOX::TSF::Group::Group(const TSFExtended::NonlinearOperator<double>& nonlinOp,
-                       const TSFExtended::LinearSolver<double>& linsolver,
-                       int numdigits) 
+  const TSFExtended::LinearSolver<double>& linsolver,
+  int numdigits) 
   :
   precision(numdigits),
   xVector(nonlinOp.getInitialGuess(), precision, DeepCopy),
@@ -125,23 +125,23 @@ NOX::TSF::Group::Group(const NOX::TSF::Group& source, NOX::CopyType type) :
   switch (type) 
   {
     
-  case NOX::DeepCopy:
+    case NOX::DeepCopy:
     
-    isValidF = source.isValidF;
-    isValidGradient = source.isValidGradient;
-    isValidNewton = source.isValidNewton;
-    isValidJacobian = source.isValidJacobian;
-    normF = source.normF;
-    break;
+      isValidF = source.isValidF;
+      isValidGradient = source.isValidGradient;
+      isValidNewton = source.isValidNewton;
+      isValidJacobian = source.isValidJacobian;
+      normF = source.normF;
+      break;
 
-  case NOX::ShapeCopy:
-    resetIsValid();
-    normF = 0.0;
-    break;
+    case NOX::ShapeCopy:
+      resetIsValid();
+      normF = 0.0;
+      break;
 
-  default:
-    cerr << "NOX:TSF::Group - invalid CopyType for copy constructor." << endl;
-    throw "NOX TSF Error";
+    default:
+      cerr << "NOX:TSF::Group - invalid CopyType for copy constructor." << endl;
+      throw "NOX TSF Error";
   }
 
 }
@@ -225,8 +225,8 @@ void NOX::TSF::Group::setX(const NOX::TSF::Vector& y)
 }
 
 void NOX::TSF::Group::computeX(const NOX::Abstract::Group& grp, 
-                               const NOX::Abstract::Vector& d, 
-                               double step) 
+  const NOX::Abstract::Vector& d, 
+  double step) 
 {
   // Cast to appropriate type, then call the "native" computeX
   const Group& tsfgrp = dynamic_cast<const NOX::TSF::Group&> (grp);
@@ -244,29 +244,29 @@ NOX::Abstract::Group::ReturnType NOX::TSF::Group::computeF()
 {
  
   if (verbosity() > TSFExtended::VerbMedium)
-    {
-      cerr << "calling computeF()" << endl;
-    }
+  {
+    cerr << "calling computeF()" << endl;
+  }
 
   if (isValidF)
+  {
+    if (verbosity() > TSFExtended::VerbMedium)
     {
-      if (verbosity() > TSFExtended::VerbMedium)
-        {
-          cerr << "reusing F" << endl;
-        }
-      return NOX::Abstract::Group::Ok;
+      cerr << "reusing F" << endl;
     }
+    return NOX::Abstract::Group::Ok;
+  }
   else
+  {
+    if (verbosity() > TSFExtended::VerbMedium)
     {
-      if (verbosity() > TSFExtended::VerbMedium)
-        {
-          cerr << "computing new F" << endl;
-        }
-      nonlinearOp.setEvalPt(xVector.getTSFVector());
-      fVector = nonlinearOp.getFunctionValue();
-      isValidF = true;
-      normF = fVector.norm();
+      cerr << "computing new F" << endl;
     }
+    nonlinearOp.setEvalPt(xVector.getTSFVector());
+    fVector = nonlinearOp.getFunctionValue();
+    isValidF = true;
+    normF = fVector.norm();
+  }
 
   return (isValidF) ? (NOX::Abstract::Group::Ok) : (NOX::Abstract::Group::Failed);
 }
@@ -275,110 +275,113 @@ NOX::Abstract::Group::ReturnType NOX::TSF::Group::computeJacobian()
 {
 
   if (verbosity() > TSFExtended::VerbMedium)
-    {
-      cerr << "calling computeJ()" << endl;
-    }
+  {
+    cerr << "calling computeJ()" << endl;
+  }
 
   // Skip if the Jacobian is already valid
   if (isValidJacobian)
-    {
-      return NOX::Abstract::Group::Ok;
-    }
+  {
+    return NOX::Abstract::Group::Ok;
+  }
   else
-    {
-      nonlinearOp.setEvalPt(xVector.getTSFVector());
-      jacobian = nonlinearOp.getJacobian();
+  {
+    nonlinearOp.setEvalPt(xVector.getTSFVector());
+    jacobian = nonlinearOp.getJacobian();
 
-      isValidJacobian = true;
-    }
+    isValidJacobian = true;
+  }
   return (isValidJacobian) ? (NOX::Abstract::Group::Ok) : (NOX::Abstract::Group::Failed);
 }
 
 NOX::Abstract::Group::ReturnType NOX::TSF::Group::computeGradient() 
 {
   if (verbosity() > TSFExtended::VerbMedium)
-    {
-      cerr << "calling computeGrad()" << endl;
-    }
+  {
+    cerr << "calling computeGrad()" << endl;
+  }
   if (isValidGradient)
-    {
-      return NOX::Abstract::Group::Ok;
-    }
+  {
+    return NOX::Abstract::Group::Ok;
+  }
   else
+  {
+    if (!isF()) 
     {
-      if (!isF()) 
-        {
-          cerr << "ERROR: NOX::TSF::Group::computeGrad() - F is out of date wrt X!" << endl;
-          return NOX::Abstract::Group::BadDependency;
-        }
-
-      if (!isJacobian()) 
-        {
-          cerr << "ERROR: NOX::TSF::Group::computeGrad() - Jacobian is out of date wrt X!" << endl;
-          return NOX::Abstract::Group::BadDependency;
-        }
-  
-      // Compute Gradient = J' * F
-
-      NOX::Abstract::Group::ReturnType status 
-        = applyJacobianTranspose(fVector,gradientVector);
-      isValidGradient = (status == NOX::Abstract::Group::Ok);
-
-      // Return result
-      return status;
+      cerr << "ERROR: NOX::TSF::Group::computeGrad() - F is out of date wrt X!" << endl;
+      return NOX::Abstract::Group::BadDependency;
     }
+
+    if (!isJacobian()) 
+    {
+      cerr << "ERROR: NOX::TSF::Group::computeGrad() - Jacobian is out of date wrt X!" << endl;
+      return NOX::Abstract::Group::BadDependency;
+    }
+  
+    // Compute Gradient = J' * F
+
+    NOX::Abstract::Group::ReturnType status 
+      = applyJacobianTranspose(fVector,gradientVector);
+    isValidGradient = (status == NOX::Abstract::Group::Ok);
+
+    // Return result
+    return status;
+  }
 }
 
 NOX::Abstract::Group::ReturnType 
 NOX::TSF::Group::computeNewton(Teuchos::ParameterList& p) 
 {
   if (isNewton())
-    {
-      return NOX::Abstract::Group::Ok;
-    }
+  {
+    return NOX::Abstract::Group::Ok;
+  }
   else
+  {
+    if (!isF()) 
     {
-      if (!isF()) 
-        {
-          cerr << "ERROR: NOX::Example::Group::computeNewton() - invalid F" 
-               << endl;
-          throw "NOX Error";
-        }
-
-      if (!isJacobian()) 
-        {
-          cerr << "ERROR: NOX::Example::Group::computeNewton() - invalid Jacobian" << endl;
-          throw "NOX Error";
-        }
-
-      if (p.isParameter("Tolerance"))
-        {
-          double tol = p.get("Tolerance", tol);
-          solver.updateTolerance(tol);
-        }
-
-      NOX::Abstract::Group::ReturnType status 
-        = applyJacobianInverse(p, fVector, newtonVector);
-      isValidNewton = (status == NOX::Abstract::Group::Ok);
-
-      // Scale soln by -1
-      newtonVector.scale(-1.0);
-
-      if (verbosity() > TSFExtended::VerbLow)
-        {
-          cerr << "newton step" << endl;
-          newtonVector.getTSFVector().print(cerr);
-        }
-      
-      // Return solution
-      return status;
+      cerr << "ERROR: NOX::Example::Group::computeNewton() - invalid F" 
+           << endl;
+      throw "NOX Error";
     }
+
+    if (!isJacobian()) 
+    {
+      cerr << "ERROR: NOX::Example::Group::computeNewton() - invalid Jacobian" << endl;
+      throw "NOX Error";
+    }
+
+/*
+    if (p.isParameter("Tolerance"))
+    {
+      double tol = p.get("Tolerance", tol);
+      solver.updateTolerance(tol);
+    }
+*/
+
+
+    NOX::Abstract::Group::ReturnType status 
+      = applyJacobianInverse(p, fVector, newtonVector);
+    isValidNewton = (status == NOX::Abstract::Group::Ok);
+
+    // Scale soln by -1
+    newtonVector.scale(-1.0);
+
+    if (verbosity() > TSFExtended::VerbLow)
+    {
+      cerr << "newton step" << endl;
+      newtonVector.getTSFVector().print(cerr);
+    }
+      
+    // Return solution
+    return status;
+  }
 }
 
 
 NOX::Abstract::Group::ReturnType 
 NOX::TSF::Group::applyJacobian(const Abstract::Vector& input, 
-				  NOX::Abstract::Vector& result) const
+  NOX::Abstract::Vector& result) const
 {
   const NOX::TSF::Vector& tsfinput = dynamic_cast<const NOX::TSF::Vector&> (input);
   NOX::TSF::Vector& tsfresult = dynamic_cast<NOX::TSF::Vector&> (result);
@@ -387,24 +390,24 @@ NOX::TSF::Group::applyJacobian(const Abstract::Vector& input,
 
 NOX::Abstract::Group::ReturnType 
 NOX::TSF::Group::applyJacobian(const NOX::TSF::Vector& input, 
-                               NOX::TSF::Vector& result) const
+  NOX::TSF::Vector& result) const
 {
   // Check validity of the Jacobian
   if (!isJacobian()) 
-    {
-      return NOX::Abstract::Group::BadDependency;
-    }
+  {
+    return NOX::Abstract::Group::BadDependency;
+  }
   else
-    {
-      // Compute result = J * input
-      jacobian.apply(input.getTSFVector(),result.getTSFVector());
-      return NOX::Abstract::Group::Ok;
-    }
+  {
+    // Compute result = J * input
+    jacobian.apply(input.getTSFVector(),result.getTSFVector());
+    return NOX::Abstract::Group::Ok;
+  }
 }
 
 NOX::Abstract::Group::ReturnType 
 NOX::TSF::Group::applyJacobianTranspose(const NOX::Abstract::Vector& input, 
-					   NOX::Abstract::Vector& result) const
+  NOX::Abstract::Vector& result) const
 {
   const NOX::TSF::Vector& tsfinput = dynamic_cast<const NOX::TSF::Vector&> (input);
   NOX::TSF::Vector& tsfresult = dynamic_cast<NOX::TSF::Vector&> (result);
@@ -416,22 +419,22 @@ NOX::TSF::Group::applyJacobianTranspose(const NOX::TSF::Vector& input, NOX::TSF:
 {
   // Check validity of the Jacobian
   if (!isJacobian()) 
-    {
-      return NOX::Abstract::Group::BadDependency;
-    }
+  {
+    return NOX::Abstract::Group::BadDependency;
+  }
   else
-    {
-      // Compute result = J^T * input
-      jacobian.applyTranspose(input.getTSFVector(), result.getTSFVector());
+  {
+    // Compute result = J^T * input
+    jacobian.applyTranspose(input.getTSFVector(), result.getTSFVector());
       
-      return NOX::Abstract::Group::Ok;
-    }
+    return NOX::Abstract::Group::Ok;
+  }
 }
 
 NOX::Abstract::Group::ReturnType 
 NOX::TSF::Group::applyJacobianInverse(Teuchos::ParameterList& p, 
-					 const Abstract::Vector& input, 
-					 NOX::Abstract::Vector& result) const 
+  const Abstract::Vector& input, 
+  NOX::Abstract::Vector& result) const 
 {
   const NOX::TSF::Vector& tsfinput = dynamic_cast<const NOX::TSF::Vector&> (input);
   NOX::TSF::Vector& tsfresult = dynamic_cast<NOX::TSF::Vector&> (result); 
@@ -440,8 +443,8 @@ NOX::TSF::Group::applyJacobianInverse(Teuchos::ParameterList& p,
 
 NOX::Abstract::Group::ReturnType 
 NOX::TSF::Group::applyJacobianInverse(Teuchos::ParameterList& p, 
-					 const NOX::TSF::Vector& input, 
-					 NOX::TSF::Vector& result) const 
+  const NOX::TSF::Vector& input, 
+  NOX::TSF::Vector& result) const 
 {
 
   if (!isJacobian()) 
@@ -450,37 +453,39 @@ NOX::TSF::Group::applyJacobianInverse(Teuchos::ParameterList& p,
     throw "NOX Error";
 
   }
+/*
   if (p.isParameter("Tolerance"))
-    {
-      double tol = p.get("Tolerance", tol);
-      solver.updateTolerance(tol);
-    }
+  {
+    double tol = p.get("Tolerance", tol);
+    solver.updateTolerance(tol);
+  }
+*/
   if (verbosity() > TSFExtended::VerbHigh)
-    {
-      cerr << "---------------- applying J^-1 ------------------" << endl;
-      cerr << "J=" << endl;
-      jacobian.print(cerr);
-      cerr << "F=" << endl;
-      input.getTSFVector().print(cerr);
-    }
+  {
+    cerr << "---------------- applying J^-1 ------------------" << endl;
+    cerr << "J=" << endl;
+    jacobian.print(cerr);
+    cerr << "F=" << endl;
+    input.getTSFVector().print(cerr);
+  }
   
   TSFExtended::SolverState<double> status 
     = solver.solve(jacobian, input.getTSFVector(),
-                   result.getTSFVector());
+      result.getTSFVector());
   
   if (status.finalState() != TSFExtended::SolveConverged)
-    {
-      return NOX::Abstract::Group::Failed;
-    }
+  {
+    return NOX::Abstract::Group::Failed;
+  }
   else
+  {
+    if (verbosity() > TSFExtended::VerbMedium)
     {
-      if (verbosity() > TSFExtended::VerbMedium)
-        {
-          cerr << "soln=" << endl;
-          result.getTSFVector().print(cerr);
-        }
-      return NOX::Abstract::Group::Ok;
+      cerr << "soln=" << endl;
+      result.getTSFVector().print(cerr);
     }
+    return NOX::Abstract::Group::Ok;
+  }
 
 }
 
@@ -512,22 +517,22 @@ const NOX::Abstract::Vector& NOX::TSF::Group::getX() const
 const NOX::Abstract::Vector& NOX::TSF::Group::getF() const 
 {  
   if (verbosity() > TSFExtended::VerbMedium)
-    {
-      cerr << "calling getF()" << endl;
-    }
+  {
+    cerr << "calling getF()" << endl;
+  }
   TEST_FOR_EXCEPTION(!isF(), runtime_error, 
-                     "calling getF() with invalid function value");
+    "calling getF() with invalid function value");
   return fVector;
 }
 
 double NOX::TSF::Group::getNormF() const
 {
   if (verbosity() > TSFExtended::VerbMedium)
-    {
-      cerr << "normF = " << normF << endl;
-    }
+  {
+    cerr << "normF = " << normF << endl;
+  }
   TEST_FOR_EXCEPTION(!isF(), runtime_error, 
-                     "calling normF() with invalid function value");
+    "calling normF() with invalid function value");
   return normF;
 }
 

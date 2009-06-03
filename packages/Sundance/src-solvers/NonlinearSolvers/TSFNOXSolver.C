@@ -61,7 +61,8 @@ NOXSolver::NOXSolver(const ParameterList& params,
     solver_(),
     statusTest_(),
     params_(),
-    noxParams_()
+    noxParams_(),
+    printParams_()
 {
   TEST_FOR_EXCEPTION(!params.isSublist("NOX Solver"), runtime_error,
                      "did not find NOX Solver sublist in " << params);
@@ -86,7 +87,13 @@ NOXSolver::NOXSolver(const ParameterList& params,
     {
       linSolver_ = LinearSolverBuilder::createSolver(params_);
     }
-
+  
+  if (params_.isSublist("Printing"))
+    {
+      printParams_ = params_.sublist("Printing");
+      std::cout << "print params = " << printParams_ << std::endl;
+    }
+  
   TEST_FOR_EXCEPTION(linSolver_.ptr().get()==0, runtime_error,
                      "null linear solver object in NOXSolver ctor");
 
