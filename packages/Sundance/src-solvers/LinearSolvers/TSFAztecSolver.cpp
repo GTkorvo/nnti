@@ -4,6 +4,7 @@
 #include "Ifpack_Preconditioner.h"
 #include "Ifpack.h"
 #include "EpetraTSFOperator.hpp"
+#include "Teuchos_basic_oblackholestream.hpp"
 
 #ifdef HAVE_ML
 #include "ml_include.h"
@@ -105,6 +106,7 @@ AztecSolver::AztecSolver(const ParameterList& params)
     {
       int val = getValue<int>(entry);
       options_[aztecCode] = val;
+      if (name=="Verbosity") verbosity() = (VerbositySetting) val;
     }
     else if (entry.isType<double>())
     {
@@ -167,6 +169,15 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   const Vector<double>& rhs, 
   Vector<double>& soln) const
 {
+  RCP<ostream> out;
+  if (verbosity()==VerbSilent)
+  {
+    out = rcp(new oblackholestream());
+  }
+  else
+  {
+    out = rcp(&os(), false);
+  }
   RefCountPtr<MultiLevelPreconditioner> mlPrec;
   RefCountPtr<Ifpack_Preconditioner> ifpackPrec;
 
@@ -175,7 +186,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
 
   if (getVerbosity() > 2) 
   {
-    os() << "rhs=" << bCopy << std::endl;
+    *out << "rhs=" << bCopy << std::endl;
   }
 
   Epetra_Vector* b = EpetraVector::getConcretePtr(bCopy);
@@ -187,8 +198,8 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
 
   aztec.SetAllAztecOptions((int*) &(options_[0]));
   aztec.SetAllAztecParams((double*) &(parameters_[0]));
-  aztec.SetOutputStream(os());
-  aztec.SetErrorStream(os());
+  aztec.SetOutputStream(*out);
+  aztec.SetErrorStream(*out);
   
   int maxIters = options_[AZ_max_iter];
   double tol = parameters_[AZ_tol];
@@ -237,12 +248,10 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
    * If so, need to set parameter aztec_recursive_iterate to true. */
   if (aztec_recursive_iterate_)
   {
-//    LinearSolverBase<double>::os() << "az_recursive_iterate" << std::endl;
     aztec.recursiveIterate(maxIters, tol);
   }
   else
   {
-//    LinearSolverBase<double>::os() << "az_iterate" << std::endl;
     aztec.Iterate(maxIters, tol);
   }
   
@@ -290,7 +299,6 @@ void AztecSolver::setUserPrec(const LinearOperator<double>& P,
 {
   if (useUserPrec_)
   {
-    LinearSolverBase<double>::os() << "setting user prec" << std::endl;
     prec_ = rcp(new Epetra::Epetra_TSFOperator(P, pSolver));
   }
   else

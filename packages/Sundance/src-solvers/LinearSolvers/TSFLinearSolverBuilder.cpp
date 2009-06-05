@@ -116,7 +116,6 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
 
   if (solverType=="Aztec")
     {
-      LinearSolver<double>::os() << "aztec params = " << params << std::endl;
       return new AztecSolver(solverSublist);
     }
   else if (solverType=="TSF")

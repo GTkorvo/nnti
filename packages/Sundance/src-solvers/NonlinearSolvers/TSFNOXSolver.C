@@ -32,6 +32,7 @@
 
 #include "TSFNOXSolver.H"         
 #include "NOX_StatusTest_SafeCombo.H"         
+#include "NOX.H"         
 //#include "NOX_Parameter_Teuchos2NOX.H"         
 #include "TSFLinearSolverBuilder.hpp"
 #include "Teuchos_Time.hpp"
@@ -61,8 +62,8 @@ NOXSolver::NOXSolver(const ParameterList& params,
     solver_(),
     statusTest_(),
     params_(),
-    noxParams_(),
-    printParams_()
+    printParams_(),
+    noxParams_()
 {
   TEST_FOR_EXCEPTION(!params.isSublist("NOX Solver"), runtime_error,
                      "did not find NOX Solver sublist in " << params);
@@ -91,7 +92,6 @@ NOXSolver::NOXSolver(const ParameterList& params,
   if (params_.isSublist("Printing"))
     {
       printParams_ = params_.sublist("Printing");
-      std::cout << "print params = " << printParams_ << std::endl;
     }
   
   TEST_FOR_EXCEPTION(linSolver_.ptr().get()==0, runtime_error,
@@ -104,23 +104,10 @@ NOXSolver::NOXSolver(const ParameterList& params,
 
 void NOXSolver::reset() const 
 {
+  x0_ = F_.getInitialGuess();
   grp_ = rcp(new NOX::TSF::Group(x0_, F_, linSolver_));
-#ifdef TRILINOS_6
-  NOX::Parameter::Teuchos2NOX converter;
-  noxParams_ = converter.toNOX(params_);
-#endif
-
-#ifdef TRILINOS_6
-  solver_ = rcp(new NOX::Solver::Manager(*grp_, *statusTest_, noxParams_));
-#endif
-
-#ifdef TRILINOS_7
-  noxParams_ = Teuchos::rcp(&params_, false);
-  solver_ = rcp(new NOX::Solver::Manager(grp_, statusTest_, noxParams_));
-#else
   noxParams_ = Teuchos::rcp(&params_, false);
   solver_ = NOX::Solver::buildSolver(grp_, statusTest_, noxParams_);
-#endif
 }
 
 
@@ -147,6 +134,8 @@ NOX::StatusTest::StatusType NOXSolver::solve() const
 
   x0_ = soln_;
   F_.setEvalPt(soln_);
+
+
 
   return rtn;
 }

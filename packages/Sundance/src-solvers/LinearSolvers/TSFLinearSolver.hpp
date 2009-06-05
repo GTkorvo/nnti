@@ -106,7 +106,6 @@ namespace TSFExtended
                         "null op pointer in LinearSolver<Scalar>::solve()");
     TimeMonitor timer(solveTimer());
 
-    os() << "params = " << parameters() << std::endl;
     if (this->ptr()->getVerbosity() > 0) 
     {
       os() << "LinearOperator::solve()" << std::endl;
