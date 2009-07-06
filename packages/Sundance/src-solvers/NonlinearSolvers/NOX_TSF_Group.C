@@ -32,6 +32,7 @@
 
 #include "NOX_Common.H"
 #include "NOX_TSF_Group.H"	// class definition
+#include "Teuchos_MPIComm.hpp"
 
 
 NOX::TSF::Group::Group(const TSFExtended::Vector<double>& initcond, 
@@ -359,11 +360,11 @@ NOX::TSF::Group::computeNewton(Teuchos::ParameterList& p)
     }
 */
 
-
     NOX::Abstract::Group::ReturnType status 
       = applyJacobianInverse(p, fVector, newtonVector);
     isValidNewton = (status == NOX::Abstract::Group::Ok);
 
+    
     // Scale soln by -1
     newtonVector.scale(-1.0);
 
@@ -468,7 +469,7 @@ NOX::TSF::Group::applyJacobianInverse(Teuchos::ParameterList& p,
     cerr << "F=" << endl;
     input.getTSFVector().print(cerr);
   }
-  
+
   TSFExtended::SolverState<double> status 
     = solver.solve(jacobian, input.getTSFVector(),
       result.getTSFVector());

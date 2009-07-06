@@ -114,6 +114,7 @@ void NOXSolver::reset() const
 NOX::StatusTest::StatusType NOXSolver::solve() const 
 {
   TimeMonitor timer(noxSolverTimer());
+
   reset();
 
   NOX::StatusTest::StatusType rtn = solver_->solve();
@@ -134,8 +135,6 @@ NOX::StatusTest::StatusType NOXSolver::solve() const
 
   x0_ = soln_;
   F_.setEvalPt(soln_);
-
-
 
   return rtn;
 }
