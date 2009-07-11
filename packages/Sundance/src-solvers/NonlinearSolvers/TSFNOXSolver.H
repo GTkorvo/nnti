@@ -50,34 +50,25 @@ namespace TSFExtended
   {
   public:
     /** */
-    NOXSolver(const ParameterList& params,
-              const NonlinearOperator<double>& F);
+    NOXSolver(){;}
+    /** */
+    NOXSolver(const ParameterList& params);
 
     /** */
-    NOX::StatusTest::StatusType solve() const ;
-
+    NOX::StatusTest::StatusType solve(const NonlinearOperator<double>& F, 
+      Vector<double>& soln) const ;
 
     /** */
-    Vector<double> getSolution() const {return soln_;}
+    const LinearSolver<double>& linSolver() const 
+      {return linSolver_;}
 
 
   private:
-    void reset() const ;
 
-    mutable NonlinearOperator<double> F_;
     LinearSolver<double> linSolver_;
-    mutable Vector<double> x0_;
-    mutable Vector<double> soln_;
-    mutable RefCountPtr<NOX::TSF::Group> grp_;
-    mutable RefCountPtr<NOX::Solver::Generic> solver_;
     mutable RefCountPtr<NOX::StatusTest::Generic> statusTest_;
     mutable ParameterList params_;
     mutable ParameterList printParams_;
-#ifdef TRILINOS_6
-    mutable NOX::Parameter::List noxParams_;
-#else
-    mutable RefCountPtr<Teuchos::ParameterList> noxParams_;
-#endif
   };
 }
 
