@@ -39,6 +39,7 @@
 
 namespace Thyra
 {
+using namespace Teuchos;
 
   template <class RangeScalar, class DomainScalar>
   inline DefaultBlockOperator<RangeScalar, DomainScalar>::DefaultBlockOperator(

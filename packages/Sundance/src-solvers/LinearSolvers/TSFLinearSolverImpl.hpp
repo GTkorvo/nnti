@@ -26,26 +26,29 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFLINEARSOLVERBUILDER_HPP
-#define TSFLINEARSOLVERBUILDER_HPP
+#ifndef TSFLINEARSOLVERIMPL_HPP
+#define TSFLINEARSOLVERIMPL_HPP
 
-#include "TSFConfigDefs.hpp"
-#include "TSFLinearSolver.hpp"
-#include "Teuchos_XMLObject.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include "TSFLinearSolverDecl.hpp"
+#include "TSFLinearSolverBaseImpl.hpp"
+#include "TSFPreconditionerFactory.hpp"
 
-namespace TSFExtended
+using namespace TSFExtended;
+using namespace Teuchos;
+
+
+
+template <class Scalar> inline
+void LinearSolver<Scalar>::setUserPrec(const PreconditionerFactory<Scalar>& pf)
 {
-  using namespace Teuchos;
+  this->ptr()->setUserPrec(pf);
+}
 
-  /** */
-  class LinearSolverBuilder
-  {
-  public:
-    /** */
-    static LinearSolver<double> createSolver(const ParameterList& params);
-  };
-  
+template <class Scalar> inline
+void LinearSolver<Scalar>::setUserPrec(const LinearOperator<Scalar>& P,
+  const LinearSolver<Scalar>& pSolver)
+{
+  this->ptr()->setUserPrec(P, pSolver);
 }
 
 #endif

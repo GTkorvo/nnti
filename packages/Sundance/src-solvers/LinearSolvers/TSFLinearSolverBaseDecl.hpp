@@ -40,6 +40,12 @@ namespace TSFExtended
   using namespace Teuchos;
   template <class Scalar>
   class LinearOperator;
+
+  template <class Scalar>
+  class Preconditioner;
+
+  template <class Scalar>
+  class PreconditionerFactory;
   
 
   /** */
@@ -62,8 +68,11 @@ namespace TSFExtended
     virtual void updateTolerance(const double& tol) {;}
 
     /** Set a user-defined preconditioning operator. Default is an error. */
+    virtual void setUserPrec(const PreconditionerFactory<Scalar>& pf);
+
+    /** Set a user-defined preconditioning operator. Default is an error. */
     virtual void setUserPrec(const LinearOperator<Scalar>& P,
-			     const LinearSolver<double>& pSolver);
+      const LinearSolver<Scalar>& pSolver);
 
     /** */
     const ParameterList& parameters() const ;

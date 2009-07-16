@@ -38,7 +38,6 @@
 #include "Teuchos_FancyOStream.hpp"
 
 
-#ifndef DOXYGEN_DEVELOPER_ONLY
 
 namespace TSFExtended
 {
@@ -60,5 +59,4 @@ public:
 };
 }
 
-#endif /* DOXYGEN_DEVELOPER_ONLY */
 #endif

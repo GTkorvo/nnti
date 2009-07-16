@@ -39,6 +39,9 @@
 
 namespace TSFExtendedOps
 {
+using TSFExtended::Vector;
+using TSFExtended::VectorSpace;
+using TSFExtended::LinearOperator;
   /** 
    *
    */

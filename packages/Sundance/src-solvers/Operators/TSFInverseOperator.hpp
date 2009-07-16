@@ -37,7 +37,7 @@
 #include "Thyra_VectorSpaceBase.hpp"
 
 #include "Teuchos_RefCountPtr.hpp"
-#include "TSFLinearSolver.hpp"
+#include "TSFLinearSolverDecl.hpp"
 #include "TSFSolverState.hpp"
 
 namespace TSFExtended
@@ -61,7 +61,7 @@ namespace TSFExtended
      * Ctor with a linear operator and a solver specified.
      */
     InverseOperator(const LinearOperator<Scalar>& op, 
-                    const LinearSolver<Scalar>& solver = new LinearSolver<Scalar>())
+      const LinearSolver<Scalar>& solver)
       : op_(op), solver_(solver) {;}
 
 
@@ -113,7 +113,6 @@ namespace TSFExtended
           Vector<Scalar> temp = createMember(*(x.space()));
           Vector<Scalar> result;
           assign(temp.ptr().get(), x);
-          std::cerr << "inv op solver input norm = " << temp.norm2() << std::endl;
           SolverState<Scalar> haveSoln = solver_.solve(applyOp, temp, result);
           TEST_FOR_EXCEPTION(haveSoln.finalState() != SolveConverged, 
                              std::runtime_error,
@@ -141,6 +140,7 @@ namespace TSFExtended
   private:
     const LinearOperator<Scalar> op_;
     const LinearSolver<Scalar> solver_;  
+    std::string msg_;
   };
 }
 

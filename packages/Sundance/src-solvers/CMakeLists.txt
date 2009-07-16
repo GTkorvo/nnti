@@ -185,6 +185,7 @@ APPEND_SET(HEADERS
   LinearSolvers/TSFAnasaziEigensolver.hpp
   LinearSolvers/TSFAztecSolver.hpp
   LinearSolvers/TSFAztecSolver.hpp
+  LinearSolvers/TSFBelosSolver.hpp
   LinearSolvers/TSFBICGSTABSolver.hpp
   LinearSolvers/TSFBlockTriangularSolver.hpp
   LinearSolvers/TSFEigensolver.hpp
@@ -193,6 +194,8 @@ APPEND_SET(HEADERS
   LinearSolvers/TSFIterativeSolver.hpp
   LinearSolvers/TSFKrylovSolver.hpp
   LinearSolvers/TSFLinearSolver.hpp
+  LinearSolvers/TSFLinearSolverDecl.hpp
+  LinearSolvers/TSFLinearSolverImpl.hpp
   LinearSolvers/TSFLinearSolverBase.hpp
   LinearSolvers/TSFLinearSolverBaseDecl.hpp
   LinearSolvers/TSFLinearSolverBaseImpl.hpp
@@ -203,6 +206,7 @@ APPEND_SET(HEADERS
 APPEND_SET(SOURCES
   LinearSolvers/TSFAmesosSolver.cpp
   LinearSolvers/TSFAztecSolver.cpp
+  LinearSolvers/TSFBelosSolver.cpp
   LinearSolvers/TSFLinearSolverBuilder.cpp
   )
 

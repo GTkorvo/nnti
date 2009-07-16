@@ -120,7 +120,7 @@ namespace Thyra
 
 
     /** Return a short description of the operator */
-    string description() const ;
+    std::string description() const ;
 
     /** */
     std::ostream& describe(

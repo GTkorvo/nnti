@@ -37,6 +37,7 @@
 #include "TSFInverseOperator.hpp"
 #include "TSFBlockOperator.hpp"
 #include "TSFVectorType.hpp"
+#include "TSFOut.hpp"
 
 
 
@@ -50,13 +51,14 @@ class InverseOperator;
 
 //=======================================================================
 template <class Scalar>
-LinearOperator<Scalar>::LinearOperator() : Handle<LinearOpBase<Scalar, Scalar> >() {;}
+LinearOperator<Scalar>::LinearOperator() 
+  : Handle<LinearOpBase<Scalar, Scalar> >(), name_(), verb_(0) {;}
 
 
 //=======================================================================
 template <class Scalar>
 LinearOperator<Scalar>::LinearOperator(const RefCountPtr<LinearOpBase<Scalar, Scalar> >& smartPtr) 
-  : Handle<LinearOpBase<Scalar, Scalar> >(smartPtr) {;}
+  : Handle<LinearOpBase<Scalar, Scalar> >(smartPtr), name_(), verb_(0) {;}
 
 
 
@@ -64,19 +66,28 @@ LinearOperator<Scalar>::LinearOperator(const RefCountPtr<LinearOpBase<Scalar, Sc
 //=======================================================================
 template <class Scalar> inline 
 void LinearOperator<Scalar>::apply(const Vector<Scalar>& in,
-                                   Vector<Scalar>& out,
-                                   const Scalar& alpha,
-                                   const Scalar& beta) const
+  Vector<Scalar>& out,
+  const Scalar& alpha,
+  const Scalar& beta) const
 {
   /* the result vector might not be initialized. If it's null,
    * create a new vector in the range space */
   if (out.ptr().get()==0)
-    {
-      out = this->range().createMember();
-      
-    }
+  {
+    out = this->range().createMember();
+  }
+  if (verb_ > 0) TSFOut::os() << "applying op=" << name() << " with alpha="
+                              << alpha << ", beta=" << beta << " to vec ";
+  if (verb_==1) TSFOut::os() << "norm=" << in.norm2() << std::endl;
+  if (verb_ > 1) TSFOut::os() << "norm=" << in << std::endl;
+
   this->ptr()->apply(Thyra::NONCONJ_ELE, *(in.ptr().get()),
     out.ptr().get(), alpha, beta);
+
+  if (verb_ > 0) TSFOut::os() << "result of op=" << name() << " is ";
+  if (verb_==1) TSFOut::os() << "norm=" << out.norm2() << std::endl;
+  if (verb_ > 1) TSFOut::os() << "norm=" << out << std::endl;
+  
 }
 
 
@@ -85,19 +96,27 @@ void LinearOperator<Scalar>::apply(const Vector<Scalar>& in,
 //=======================================================================
 template <class Scalar> inline 
 void LinearOperator<Scalar>::applyTranspose(const Vector<Scalar>& in,
-                                            Vector<Scalar>& out,
-                                            const Scalar& alpha,
-                                            const Scalar& beta) const
+  Vector<Scalar>& out,
+  const Scalar& alpha,
+  const Scalar& beta) const
 {
   /* the result vector might not be initialized. If it's null,
    * create a new vector in the domain space (i.e., the range space
    * of the transpose operator */
   if (out.ptr().get()==0)
-    {
-      out = this->domain().createMember();
-    }
+  {
+    out = this->domain().createMember();
+  }
+  if (verb_ > 0) TSFOut::os() << "applying op=" << name() << " transposed with alpha="
+                              << alpha << ", beta=" << beta << " to vec ";
+  if (verb_==1) TSFOut::os() << "norm=" << in.norm2() << std::endl;
+  if (verb_ >1) TSFOut::os() << "norm=" << in << std::endl;
   this->ptr()->applyTranspose(Thyra::NONCONJ_ELE, *(in.ptr().get()),
     out.ptr().get(), alpha, beta);
+
+  if (verb_ > 0) TSFOut::os() << "result of op=" << name() << " is ";
+  if (verb_==1) TSFOut::os() << "norm=" << out.norm2() << std::endl;
+  if (verb_ >1) TSFOut::os() << "norm=" << out << std::endl;
 }
 
 
@@ -121,7 +140,8 @@ LinearOperator<Scalar> LinearOperator<Scalar>::transpose() const
 //=======================================================================
 template <class Scalar>
 LinearOperator<Scalar> 
-LinearOperator<Scalar>::inverse(const LinearSolver<Scalar>& solver) const
+LinearOperator<Scalar>::inverse(const LinearSolver<Scalar>& solver,
+  const std::string& msg) const
 {
   RefCountPtr<LinearOpBase<Scalar, Scalar> > Ainv 
     = rcp(new InverseOperator<Scalar>(*this, solver));
@@ -154,13 +174,13 @@ RefCountPtr<LoadableMatrix<Scalar> > LinearOperator<Scalar>::matrix()
 //=======================================================================
 template <class Scalar>
 void LinearOperator<Scalar>::getRow(const int& row, 
-				    Teuchos::Array<int>& indices, 
-				    Teuchos::Array<Scalar>& values) const
+  Teuchos::Array<int>& indices, 
+  Teuchos::Array<Scalar>& values) const
 {
   const RowAccessibleOp<Scalar>* val = 
     dynamic_cast<const RowAccessibleOp<Scalar>* >(this->ptr().get());
   TEST_FOR_EXCEPTION(val == 0, std::runtime_error, 
-		     "Operator not row accessible; getRow() not defined.");
+    "Operator not row accessible; getRow() not defined.");
   val->getRow(row, indices, values);
 }
 
@@ -193,13 +213,13 @@ LinearOperator<Scalar>::range() const
 //=============================================================================
 template <class Scalar>
 void LinearOperator<Scalar>::setBlock(int i, int j, 
-				      const LinearOperator<Scalar>& sub) 
+  const LinearOperator<Scalar>& sub) 
 {
   BlockOperator<Scalar>* b = 
     dynamic_cast<BlockOperator<Scalar>* >(this->ptr().get());
   
   TEST_FOR_EXCEPTION(b == 0, std::runtime_error, 
-		     "Can't call setBlock since operator not BlockOperator");
+    "Can't call setBlock since operator not BlockOperator");
 
   
   b->setNonconstBlock(i, j, sub.ptr());
@@ -218,18 +238,18 @@ LinearOperator<Scalar>::domain() const
 //=============================================================================
 template <class Scalar>
 LinearOperator<Scalar> LinearOperator<Scalar>::getBlock(const int &i, 
-							const int &j) const 
+  const int &j) const 
 {
   BlockOperator<Scalar>* b = 
     dynamic_cast<BlockOperator<Scalar>* >(this->ptr().get());
   
   if (b==0)
-    {
-      TEST_FOR_EXCEPTION(i != 0 || j != 0, std::runtime_error, 
-                         "nonzero block index (" << i << "," << j << ") into "
-                         "non-block operator");
-      return *this;
-    }
+  {
+    TEST_FOR_EXCEPTION(i != 0 || j != 0, std::runtime_error, 
+      "nonzero block index (" << i << "," << j << ") into "
+      "non-block operator");
+    return *this;
+  }
   RefCountPtr<const LinearOpBase<Scalar, Scalar> > block = b->getBlock(i, j);
   RefCountPtr<LinearOpBase<Scalar> > ncBlock = rcp_const_cast<LinearOpBase<Scalar> >(block);
   return ncBlock;
@@ -245,7 +265,7 @@ void LinearOperator<Scalar>::endBlockFill()
     dynamic_cast<Thyra::DefaultBlockedLinearOp<Scalar>* >(this->ptr().get());
   
   TEST_FOR_EXCEPTION(b == 0, std::runtime_error, 
-		     "Can't call setBlock since operator not BlockOperator");
+    "Can't call setBlock since operator not BlockOperator");
 
   
   b->endBlockFill();

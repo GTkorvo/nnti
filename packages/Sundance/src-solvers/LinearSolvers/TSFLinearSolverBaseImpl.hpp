@@ -29,7 +29,9 @@
 #ifndef TSFLINEARSOLVERBASEIMPL_HPP
 #define TSFLINEARSOLVERBASEIMPL_HPP
 
-//#include "TSFLinearSolverBaseDecl.hpp"
+#include "TSFLinearSolverBaseDecl.hpp"
+#include "TSFPreconditioner.hpp"
+#include "TSFPreconditionerFactory.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 using namespace TSFExtended;
@@ -38,20 +40,20 @@ using namespace Teuchos;
 
 
 
-template <class Scalar>
+template <class Scalar> inline
 const ParameterList& LinearSolverBase<Scalar>::parameters() const 
 {return params_;}
 
-template <class Scalar>
+template <class Scalar> inline
 LinearSolverBase<Scalar>::LinearSolverBase(const ParameterList& params)
   : ObjectWithVerbosity<LinearSolverBase<Scalar> >(), 
     params_(params) 
 {}
 
-template <class Scalar>
+template <class Scalar> inline
 ParameterList& LinearSolverBase<Scalar>::parameters() {return params_;}
 
-template <class Scalar>
+template <class Scalar> inline
 int LinearSolverBase<Scalar>::getVerbosity() const 
 {
   if (this->parameters().isParameter(verbosityParam()))
@@ -61,11 +63,11 @@ int LinearSolverBase<Scalar>::getVerbosity() const
   return 0;
 }
 
-template <class Scalar>
+template <class Scalar> inline
 string LinearSolverBase<Scalar>::verbosityParam() {return "Verbosity";}
 
 template <class Scalar>
-template <typename T>
+template <typename T> inline
 void LinearSolverBase<Scalar>::setParameter(const ParameterList& params,
                                             T* dataPtr,
                                             const string& name)
@@ -78,9 +80,17 @@ void LinearSolverBase<Scalar>::setParameter(const ParameterList& params,
   *dataPtr = params.template get<T>(name);
 }
 
-template <class Scalar>
-void LinearSolverBase<Scalar>::setUserPrec(const LinearOperator<Scalar>& op,
-					   const LinearSolver<double>& pSolver)
+template <class Scalar> inline
+void LinearSolverBase<Scalar>::setUserPrec(const PreconditionerFactory<Scalar>& pf)
+{
+  TEST_FOR_EXCEPTION(true, std::runtime_error,
+                     "User-defined preconditioning not allowed for generic "
+		     "linear solver subtypes");
+}
+
+template <class Scalar> inline
+void LinearSolverBase<Scalar>::setUserPrec(const LinearOperator<Scalar>& P,
+  const LinearSolver<Scalar>& pSolver)
 {
   TEST_FOR_EXCEPTION(true, std::runtime_error,
                      "User-defined preconditioning not allowed for generic "
