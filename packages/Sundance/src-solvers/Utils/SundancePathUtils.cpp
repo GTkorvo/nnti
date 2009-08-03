@@ -31,8 +31,9 @@
 #include "SundancePathUtils.hpp"
 #include "SundanceDefaultPath.hpp"
 #include <unistd.h>
+#ifndef _MSC_VER
 #include <sys/unistd.h>
-
+#endif
 
 using Teuchos::Array;
 using std::string;

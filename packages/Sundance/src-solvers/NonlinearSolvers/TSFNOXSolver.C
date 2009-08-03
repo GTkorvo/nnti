@@ -98,7 +98,7 @@ NOXSolver::NOXSolver(const ParameterList& params)
 
 NOX::StatusTest::StatusType 
 NOXSolver::solve(const NonlinearOperator<double>& F, 
-  Vector<double>& solnVec) const 
+                 TSFExtended::Vector<double>& solnVec) const 
 {
   TimeMonitor timer(noxSolverTimer());
 

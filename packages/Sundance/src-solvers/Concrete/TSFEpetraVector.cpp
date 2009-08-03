@@ -393,7 +393,8 @@ void EpetraVector::applyOp(
 
 
 
-void EpetraVector::acquireDetachedVectorViewImpl(const Range1D& rng_in,
+void EpetraVector::acquireDetachedVectorViewImpl(
+  const Teuchos::Range1D& rng_in,
   RTOpPack::ConstSubVectorView<double>* sub_vec) const
 {
   /* if range is empty, return a null view */
@@ -447,7 +448,7 @@ void EpetraVector::releaseDetachedVectorViewImpl(
 
 
 void EpetraVector::acquireNonconstDetachedVectorViewImpl(
-  const Range1D& rng_in, 
+  const Teuchos::Range1D& rng_in, 
   RTOpPack::SubVectorView<double>* sub_vec) 
 {
   if( rng_in == Range1D::Invalid ) {
