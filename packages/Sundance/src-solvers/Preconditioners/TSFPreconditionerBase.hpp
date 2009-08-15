@@ -29,7 +29,7 @@
 #ifndef TSFPRECONDITIONERBASE_HPP
 #define TSFPRECONDITIONERBASE_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFVector.hpp"
 #include "TSFLinearOperatorDecl.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -49,7 +49,7 @@ namespace TSFExtended
    * The base class implements neither a left nor a right preconditioner.
    */
   template <class Scalar>
-  class PreconditionerBase : public Handleable<PreconditionerBase<Scalar> >
+  class PreconditionerBase : public SundanceUtils::Handleable<PreconditionerBase<Scalar> >
   {
   public:
     /** empty ctor */

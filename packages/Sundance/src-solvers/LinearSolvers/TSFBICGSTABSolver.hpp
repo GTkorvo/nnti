@@ -29,11 +29,11 @@
 #ifndef TSFBICGSTABSOLVER_HPP
 #define TSFBICGSTABSOLVER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFKrylovSolver.hpp"
-#include "TSFHandleable.hpp"
-#include "TSFPrintable.hpp"
-#include "TSFDescribable.hpp"
+#include "SundanceHandleable.hpp"
+#include "SundancePrintable.hpp"
+#include "Teuchos_Describable.hpp"
 #include "TSFLinearCombination.hpp"
 
 namespace TSFExtended
@@ -44,7 +44,7 @@ namespace TSFExtended
    */
   template <class Scalar>
   class BICGSTABSolver : public KrylovSolver<Scalar>,
-                         public Handleable<LinearSolverBase<Scalar> >,
+                         public SundanceUtils::Handleable<LinearSolverBase<Scalar> >,
                          public Printable,
                          public Describable
   {

@@ -31,7 +31,7 @@
 #include "Epetra_Map.h"
 #include "Epetra_Import.h"
 #include "Epetra_Comm.h"
-#include "TSFOut.hpp"
+#include "SundanceOut.hpp"
 
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
@@ -64,7 +64,7 @@ EpetraVectorType::createSpace(int /*dimension*/,
                                                    (int*) localIndices,
                                                    0, *epetraComm()));
 
-//  map->Print(TSFOut::os());
+//  map->Print(Out::os());
 
 	return rcp(new EpetraVectorSpace(map));
 }

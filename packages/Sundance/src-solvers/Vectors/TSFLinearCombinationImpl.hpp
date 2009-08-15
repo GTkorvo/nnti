@@ -29,7 +29,7 @@
 #ifndef TSFLINEARCOMBINATIONIMPL_HPP
 #define TSFLINEARCOMBINATIONIMPL_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFLinearCombinationDecl.hpp"
 #include "TSFVectorImpl.hpp"
 #include "TSFLinearOperatorImpl.hpp"

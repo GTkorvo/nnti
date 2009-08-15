@@ -29,7 +29,7 @@
 #ifndef TSFROWACCESSIBLEOP_HPP
 #define TSFROWACCESSIBLEOP_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Teuchos_Array.hpp"
 
 namespace TSFExtended

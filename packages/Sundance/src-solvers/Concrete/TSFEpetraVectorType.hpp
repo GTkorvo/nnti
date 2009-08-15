@@ -28,8 +28,8 @@
 #define TSFEPETRAVECTORTYPE_HPP
 
 #include "TSFEpetraVectorSpace.hpp"
-#include "TSFHandleable.hpp"
-#include "TSFPrintable.hpp"
+#include "SundanceHandleable.hpp"
+#include "SundancePrintable.hpp"
 #include "Teuchos_Describable.hpp"
 #include "TSFVectorTypeExtensions.hpp"
  //#include "TSFLinearOperator.hpp"
@@ -51,7 +51,7 @@ namespace TSFExtended
 
 
   class EpetraVectorType : public VectorTypeExtensions<double>,
-                           public Handleable<VectorTypeExtensions<double> >,
+                           public SundanceUtils::Handleable<VectorTypeExtensions<double> >,
                            public Printable,
                            public Describable
   {

@@ -29,7 +29,7 @@
 #ifndef TSFNOXSOLVER_HPP
 #define TSFNOXSOLVER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "NOX.H"
 #include "NOX_Common.H"
 #include "NOX_Utils.H"

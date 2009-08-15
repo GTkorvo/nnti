@@ -34,8 +34,8 @@
 #include "TSFMatrixFactory.hpp"
 #include "TSFVectorSpace.hpp"
 #include "TSFVectorType.hpp"
-#include "TSFHandleable.hpp"
-#include "TSFPrintable.hpp"
+#include "SundanceHandleable.hpp"
+#include "SundancePrintable.hpp"
 #include "Epetra_CrsGraph.h"
 #include <set>
 

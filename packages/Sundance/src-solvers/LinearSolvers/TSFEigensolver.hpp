@@ -29,7 +29,7 @@
 #ifndef TSFEIGENSOLVER_HPP
 #define TSFEIGENSOLVER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFVectorDecl.hpp" 
 #include "TSFSolverState.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -43,13 +43,13 @@ using Teuchos::ParameterList;
  * Handle class for eigensolvers
  */
 template <class Scalar>
-class Eigensolver : public Handle<EigensolverBase<Scalar> >
+class Eigensolver : public SundanceUtils::Handle<EigensolverBase<Scalar> >
 {
 public:
   /** */
   Eigensolver() : Handle<EigensolverBase<Scalar> >() {;}
   /** */
-  Eigensolver( TSFExtended::Handleable<EigensolverBase<Scalar> >* rawPtr) 
+  Eigensolver( SundanceUtils::Handleable<EigensolverBase<Scalar> >* rawPtr) 
     : Handle<EigensolverBase<Scalar> >(rawPtr) {;}
   /** */
   Eigensolver(const RefCountPtr<EigensolverBase<Scalar> >& smartPtr)

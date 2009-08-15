@@ -29,7 +29,7 @@
 #ifndef TSFANASAZIEIGENSOLVER_HPP
 #define TSFANASAZIEIGENSOLVER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFVectorDecl.hpp" 
 #include "TSFSolverState.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -52,7 +52,7 @@ using Teuchos::ParameterList;
 template <class Scalar>
 class AnasaziEigensolver
   : public EigensolverBase<Scalar>,
-    public Handleable<EigensolverBase<Scalar> >
+    public SundanceUtils::Handleable<EigensolverBase<Scalar> >
 {
 public:
 

@@ -29,7 +29,7 @@
 #ifndef TSFSIMPLIFIEDOPBASE_HPP
 #define TSFSIMPLIFIEDOPBASE_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFOpWithBackwardsCompatibleApply.hpp"
 #include "TSFLinearOperatorImpl.hpp"
 
@@ -51,6 +51,7 @@ namespace TSFExtended
     : public OpWithBackwardsCompatibleApply<Scalar>
   {
   public:
+
 
     /** 
      *
@@ -102,6 +103,7 @@ namespace TSFExtended
         }
       }
     
+ 
 
   };
 }

@@ -41,7 +41,7 @@ namespace TSFExtended
 
   template<class Scalar>
   class ProductVector : public Thyra::ProductVectorBase<Scalar>, 
-                        public Handleable<Thyra::VectorBase<Scalar> >
+                        public SundanceUtils::Handleable<Thyra::VectorBase<Scalar> >
   {
   public:
 

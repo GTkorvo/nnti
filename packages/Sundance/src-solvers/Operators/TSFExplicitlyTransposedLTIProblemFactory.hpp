@@ -30,7 +30,7 @@
 #define TSF_EXPLICITLYTRANSPOSED_LTI_PROBLEMFACTORY_HPP
 
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFDefaultLTIProblemFactory.hpp"
 #include "TSFEpetraMatrix.hpp"
 #include "EpetraExt_Transpose_RowMatrix.h"

@@ -29,7 +29,7 @@
 #ifndef TSF_POISSONBOLTZMANNOP_HPP
 #define TSF_POISSONBOLTZMANNOP_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFNonlinearOperatorBase.hpp"
 #include "TSFPoissonBoltzmannJacobian.hpp"
 #include "TSFVector.hpp"

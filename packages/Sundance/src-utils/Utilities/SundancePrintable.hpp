@@ -26,16 +26,13 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFPRINTABLE_HPP
-#define TSFPRINTABLE_HPP
+#ifndef SUNDANCE_PRINTABLE_HPP
+#define SUNDANCE_PRINTABLE_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
+#include <iostream>
 
-
-
-#ifndef DOXYGEN_DEVELOPER_ONLY
-
-namespace TSFExtended
+namespace SundanceUtils
 {
   /**
    * Printable defines an interface for writing an object to a stream. 
@@ -51,5 +48,4 @@ namespace TSFExtended
 }
 
 
-#endif  /* DOXYGEN_DEVELOPER_ONLY */
 #endif

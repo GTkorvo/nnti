@@ -27,7 +27,7 @@
 #ifndef TSFVECTORTYPE_HPP
 #define TSFVECTORTYPE_HPP
 
-#include "TSFHandle.hpp"
+#include "SundanceHandle.hpp"
 #include "TSFVectorTypeExtensions.hpp"
 #include "TSFVectorSpaceDecl.hpp"
 #include "TSFGhostImporter.hpp"
@@ -40,7 +40,7 @@ namespace TSFExtended
    * vector spaces and operators of a given type.
    */
   template <class Scalar>
-  class VectorType : public Handle<VectorTypeExtensions<Scalar> >
+  class VectorType : public SundanceUtils::Handle<VectorTypeExtensions<Scalar> >
   {
   public:
     HANDLE_CTORS(VectorType<Scalar>, VectorTypeExtensions<Scalar>);

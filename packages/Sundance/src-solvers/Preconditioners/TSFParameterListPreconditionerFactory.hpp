@@ -31,7 +31,7 @@
 #ifndef TSF_PARAMETERLIST_PRECONDITIONERFACTORY_HPP
 #define TSF_PARAMETERLIST_PRECONDITIONERFACTORY_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFPreconditionerFactoryBase.hpp"
 #include "TSFILUKPreconditionerFactory.hpp"
 #include "TSFLinearOperator.hpp"

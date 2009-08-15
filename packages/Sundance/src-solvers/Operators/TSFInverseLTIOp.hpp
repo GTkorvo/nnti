@@ -29,7 +29,7 @@
 #ifndef TSFINVERSELTIOP_HPP
 #define TSFINVERSELTIOP_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFSimplifiedLinearOpBase.hpp"
 #include "TSFHomogeneouslyBlockedLinearOp.hpp"
 #include "TSFNonmemberOpHelpers.hpp"

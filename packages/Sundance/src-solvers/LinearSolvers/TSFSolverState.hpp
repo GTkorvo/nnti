@@ -29,7 +29,7 @@
 #ifndef TSFSOLVERSTATE_HPP
 #define TSFSOLVERSTATE_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFVectorDecl.hpp"
 #include "TSFLinearOperatorDecl.hpp"
 #include "Teuchos_ParameterList.hpp"

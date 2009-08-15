@@ -29,8 +29,8 @@
 #ifndef TSFMULTIVECTOR_HPP
 #define TSFMULTIVECTOR_HPP
 
-#include "TSFConfigDefs.hpp"
-#include "TSFHandle.hpp"
+#include "SundanceDefs.hpp"
+#include "SundanceHandle.hpp"
 #include "Thyra_MultiVectorBase.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 #include "TSFVectorSpaceDecl.hpp"
@@ -53,7 +53,7 @@ namespace TSFExtended
   
 
   template <class Scalar>
-  class MultiVector : public Handle<Thyra::MultiVectorBase<Scalar> >
+  class MultiVector : public SundanceUtils::Handle<Thyra::MultiVectorBase<Scalar> >
     {
     public:
 

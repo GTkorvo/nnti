@@ -1,15 +1,15 @@
 /* @HEADER@ */
 /* @HEADER@ */
 
-#ifndef TSF_PARAMUTILS_H
-#define TSF_PARAMUTILS_H
+#ifndef SUNDANCE_PARAMUTILS_H
+#define SUNDANCE_PARAMUTILS_H
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 
 
-namespace TSFExtended
+namespace SundanceUtils
 {
 Teuchos::ParameterList mergeParamLists(
   const Teuchos::ParameterList& pDefault, 

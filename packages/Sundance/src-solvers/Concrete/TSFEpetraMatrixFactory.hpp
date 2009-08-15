@@ -33,8 +33,8 @@
 #include "TSFIncrementallyConfigurableMatrixFactory.hpp"
 #include "TSFCollectivelyConfigurableMatrixFactory.hpp"
 #include "TSFMatrixFactory.hpp"
-#include "TSFHandleable.hpp"
-#include "TSFPrintable.hpp"
+#include "SundanceHandleable.hpp"
+#include "SundancePrintable.hpp"
 #include "Epetra_CrsGraph.h"
 
 namespace TSFExtended

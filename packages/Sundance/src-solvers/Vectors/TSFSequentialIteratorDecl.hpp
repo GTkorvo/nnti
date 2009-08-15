@@ -29,12 +29,13 @@
 #ifndef TSFSEQUENTIALITERATORDECL_HPP
 #define TSFSEQUENTIALITERATORDECL_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 
 namespace TSFExtended
 {
 using Thyra::Index;
+using Teuchos::RCP;
 
 /* Forward declare VectorSpace */
 template <class Scalar> 

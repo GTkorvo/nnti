@@ -29,12 +29,12 @@
 #ifndef TSFBELOSSOLVER_HPP
 #define TSFBELOSSOLVER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFLinearSolverBase.hpp"
 #include "TSFPreconditionerFactory.hpp"
-#include "TSFHandleable.hpp"
-#include "TSFPrintable.hpp"
-#include "TSFDescribable.hpp"
+#include "SundanceHandleable.hpp"
+#include "SundancePrintable.hpp"
+#include "Teuchos_Describable.hpp"
 
 #include "Teuchos_RefCountPtr.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -48,7 +48,7 @@ namespace TSFExtended
    *
    */
   class BelosSolver : public LinearSolverBase<double>,
-                      public Handleable<LinearSolverBase<double> >,
+                      public SundanceUtils::Handleable<LinearSolverBase<double> >,
                       public Printable,
                       public Describable
   {

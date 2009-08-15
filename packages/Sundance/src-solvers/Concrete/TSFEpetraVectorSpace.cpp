@@ -30,7 +30,7 @@
 
 #include "Teuchos_DefaultSerialComm.hpp"
 #include "Thyra_DefaultSpmdVectorSpaceFactory.hpp"
-#include "TSFOut.hpp"
+#include "SundanceOut.hpp"
 #include "Epetra_SerialComm.h"
 #include "Epetra_Comm.h"
 #ifdef HAVE_MPI

@@ -28,22 +28,57 @@
 // ************************************************************************
 /* @HEADER@ */
 
-#ifndef SUNDANCE_PATHUTILS_H
-#define SUNDANCE_PATHUTILS_H
+#include "SundanceParamUtils.hpp"
 
-#include "TSFConfigDefs.hpp"
-#include "Teuchos_Array.hpp"
+using Teuchos::Array;
+using Teuchos::ParameterList;
+using std::string;
+using std::ifstream;
 
 namespace SundanceUtils
 {
-  /** */
-  std::string searchForFile(const std::string& name) ;    
-
-  /** */
-  std::string getPathStr();
+ParameterList mergeParamLists(const ParameterList& pDef, 
+  const ParameterList& pIn)
+{
+  ParameterList rtn = pDef;
+  using namespace Teuchos;
   
-  /** */
-  Teuchos::Array<std::string> parsePathStr();
-}
+  /* replace any defaults with overriden values */
+  ParameterList::ConstIterator i;
 
-#endif
+  for (i=pDef.begin(); i!=pDef.end(); i++)
+  {
+    const ParameterEntry& eDef = pDef.entry(i);
+
+    const std::string& name = pDef.name(i);
+    const ParameterEntry* eIn = pIn.getEntryPtr(name);
+    if (eIn != NULL)
+    {
+      if (eIn->isList() && eDef.isList())
+      {
+        ParameterList sub = mergeParamLists(
+          getValue<ParameterList>(eDef),
+          getValue<ParameterList>(*eIn));
+        rtn.set(name, sub);
+
+      }
+      else if (eIn->isType<int>() && eDef.isType<int>())
+      {
+        rtn.set(name, Teuchos::any_cast<int>(eIn->getAny()));
+      }
+      else
+      {
+        TEST_FOR_EXCEPTION(eIn->isList() && !eDef.isList(), 
+          std::runtime_error, "mismatched parameters in mergeParams()");
+        TEST_FOR_EXCEPTION(!eIn->isList() && eDef.isList(), 
+          std::runtime_error, "mismatched parameters in mergeParams()");
+        TEST_FOR_EXCEPT(1);
+      }
+    }
+    else
+    {
+    }
+  }
+  return rtn;
+}
+}

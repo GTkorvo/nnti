@@ -29,7 +29,7 @@
 #ifndef TSFPRECONDITIONERFACTORYBASE_HPP
 #define TSFPRECONDITIONERFACTORYBASE_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFVector.hpp"
 #include "TSFLinearOperator.hpp"
 #include "TSFPreconditioner.hpp"
@@ -45,7 +45,7 @@ using namespace Teuchos;
  */
 template <class Scalar>
 class PreconditionerFactoryBase 
-  : public Handleable<PreconditionerFactoryBase<Scalar> >
+  : public SundanceUtils::Handleable<PreconditionerFactoryBase<Scalar> >
 {
 public:
   /** empty ctor */

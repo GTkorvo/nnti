@@ -29,7 +29,7 @@
 #ifndef TSFGENERICLEFTPRECONDITIONER_HPP
 #define TSFGENERICLEFTPRECONDITIONER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFVector.hpp"
 #include "TSFLinearOperator.hpp"
 #include "Teuchos_ParameterList.hpp"

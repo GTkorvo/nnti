@@ -29,14 +29,14 @@
 #ifndef TSFMULTIVECTOROPERATOR_HPP
 #define TSFMULTIVECTOROPERATOR_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Thyra_LinearOpBase.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 #include "Thyra_DefaultSpmdVectorSpace.hpp"
 #include "TSFRowAccessibleOp.hpp"
 #include "TSFOpWithBackwardsCompatibleApply.hpp"
-#include "TSFHandleable.hpp"
+#include "SundanceHandleable.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 #include "TSFVectorImpl.hpp"
 

@@ -29,7 +29,7 @@
 #ifndef TSFEXPLICITLYTRANSPOSEABLEOP_HPP
 #define TSFEXPLICITLYTRANSPOSEABLEOP_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 
 
 namespace TSFExtended

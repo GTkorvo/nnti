@@ -29,7 +29,7 @@
 #ifndef TSFLINEARSOLVERBUILDER_HPP
 #define TSFLINEARSOLVERBUILDER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFLinearSolver.hpp"
 #include "Teuchos_XMLObject.hpp"
 #include "Teuchos_ParameterList.hpp"

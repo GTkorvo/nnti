@@ -27,9 +27,9 @@
 #ifndef TSFVECTORSPACE2EPETRAMAP_HPP
 #define TSFVECTORSPACE2EPETRAMAP_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Epetra_Map.h"
-#include "TSFHandleable.hpp"
+#include "SundanceHandleable.hpp"
 #include "Thyra_EpetraThyraWrappers.hpp"
 #include "TSFVectorSpaceImpl.hpp"
 

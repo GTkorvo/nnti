@@ -29,7 +29,7 @@
 #ifndef TSFBLOCKTRIANGULARSOLVER_HPP
 #define TSFBLOCKTRIANGULARSOLVER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFLinearSolver.hpp" 
 #include "Thyra_DefaultZeroLinearOp.hpp"
 
@@ -38,7 +38,7 @@ namespace TSFExtended
   /** */
   template <class Scalar>
   class BlockTriangularSolver : public LinearSolverBase<Scalar>,
-                                public Handleable<LinearSolverBase<Scalar> >
+                                public SundanceUtils::Handleable<LinearSolverBase<Scalar> >
   {
   public:
     /** */

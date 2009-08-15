@@ -29,7 +29,7 @@
 #ifndef TSFINVERSEOPERATOR_HPP
 #define TSFINVERSEOPERATOR_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFLinearOperatorDecl.hpp"
 #include "Thyra_ZeroLinearOpBase.hpp"
 #include "TSFOpWithBackwardsCompatibleApply.hpp"

@@ -29,9 +29,9 @@
 #ifndef TSFNONLINEAROPERATORBASE_HPP
 #define TSFNONLINEAROPERATORBASE_HPP
 
-#include "TSFConfigDefs.hpp"
-#include "TSFHandleable.hpp"
-#include "TSFObjectWithVerbosity.hpp"
+#include "SundanceDefs.hpp"
+#include "SundanceHandleable.hpp"
+#include "SundanceObjectWithVerbosity.hpp"
 #include "TSFVectorDecl.hpp"
 #include "TSFLinearOperator.hpp"
 #include "TSFLinearCombination.hpp"
@@ -46,7 +46,7 @@ namespace TSFExtended
    */
   template <class Scalar>
   class NonlinearOperatorBase 
-    : public Handleable<NonlinearOperatorBase<Scalar> >,
+    : public SundanceUtils::Handleable<NonlinearOperatorBase<Scalar> >,
     public ObjectWithVerbosity<NonlinearOperatorBase<Scalar> >
     {
     public:

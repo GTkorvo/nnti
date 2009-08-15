@@ -29,8 +29,8 @@
 #ifndef TSFNONLINEAROPERATOR_HPP
 #define TSFNONLINEAROPERATOR_HPP
 
-#include "TSFConfigDefs.hpp"
-#include "TSFHandle.hpp"
+#include "SundanceDefs.hpp"
+#include "SundanceHandle.hpp"
 #include "TSFNonlinearOperatorBase.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
@@ -43,7 +43,7 @@ namespace TSFExtended
    * User-level nonlinear operator class
    */
   template <class Scalar>
-  class NonlinearOperator : public Handle<NonlinearOperatorBase<Scalar> >
+  class NonlinearOperator : public SundanceUtils::Handle<NonlinearOperatorBase<Scalar> >
     {
     public:
       /* boilerplate ctors */

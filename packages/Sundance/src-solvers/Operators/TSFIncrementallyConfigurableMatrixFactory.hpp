@@ -29,7 +29,7 @@
 #ifndef TSF_INCREMENTALLYCONFIGURABLEMATRIXFACTORY_HPP
 #define TSF_INCREMENTALLYCONFIGURABLEMATRIXFACTORY_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 
 namespace TSFExtended
 {

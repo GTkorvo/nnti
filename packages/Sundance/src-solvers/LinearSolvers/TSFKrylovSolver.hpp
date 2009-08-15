@@ -29,7 +29,7 @@
 #ifndef TSFKRYLOVSOLVER_HPP
 #define TSFKRYLOVSOLVER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFIterativeSolver.hpp"
 #include "TSFPreconditionerFactory.hpp"
 #include "TSFILUKPreconditionerFactory.hpp"

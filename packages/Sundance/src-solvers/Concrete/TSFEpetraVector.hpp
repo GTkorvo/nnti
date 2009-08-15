@@ -27,8 +27,8 @@
 #ifndef TSFEPETRAVECTOR_HPP
 #define TSFEPETRAVECTOR_HPP
 
-#include "TSFConfigDefs.hpp"
-#include "TSFPrintable.hpp"
+#include "SundanceDefs.hpp"
+#include "SundancePrintable.hpp"
 #include "TSFIndexableVector.hpp"
 #include "TSFRawDataAccessibleVector.hpp"
 #include "Thyra_VectorDefaultBase.hpp"

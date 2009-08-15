@@ -27,7 +27,7 @@
 #ifndef TSFEPETRAGHOSTVIEW_HPP
 #define TSFEPETRAGHOSTVIEW_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFGhostImporter.hpp"
 #include "TSFGhostView.hpp"
 #include "Epetra_Vector.h"

@@ -4,9 +4,8 @@ INCLUDE(PackageLibraryMacros)
 #
 # A) Package-specific configuration options
 #
+# NONE
 
-PACKAGE_CONFIGURE_FILE(TSF_config.h)
-PACKAGE_CONFIGURE_FILE(SundanceDefaultPath.hpp)
 
 #
 # B) Define the header and source files (and directories)
@@ -16,21 +15,21 @@ PACKAGE_CONFIGURE_FILE(SundanceDefaultPath.hpp)
 # src
 #
 
+
 SET(HEADERS "")
 SET(SOURCES "")
 
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
-SET(HEADERS ${HEADERS}
-  ${CMAKE_CURRENT_BINARY_DIR}/TSF_config.h
-  ${CMAKE_CURRENT_BINARY_DIR}/SundanceDefaultPath.hpp
-  )
+
 
 #
 # Vectors headers
 #
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src-utils/Utilities)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Vectors)
 
 APPEND_SET(HEADERS
@@ -66,29 +65,7 @@ APPEND_SET(HEADERS
   Vectors/TSFVectorTypeExtensions.hpp
   )
 
-#
-# Utils files
-#
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Utils)
-
-APPEND_SET(HEADERS
-  Utils/SundancePathUtils.hpp
-  Utils/TSFConfigDefs.hpp
-  Utils/TSFDescribable.hpp
-  Utils/TSFDouble.hpp
-  Utils/TSFHandle.hpp
-  Utils/TSFHandleable.hpp
-  Utils/TSFObjectWithVerbosity.hpp
-  Utils/TSFOut.hpp
-  Utils/TSFParamUtils.hpp
-  Utils/TSFPrintable.hpp
-  )
-
-APPEND_SET(SOURCES
-  Utils/TSFParamUtils.cpp
-  Utils/SundancePathUtils.cpp
-  )
 
 #
 # Concrete files

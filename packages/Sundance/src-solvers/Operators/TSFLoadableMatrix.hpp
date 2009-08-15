@@ -29,7 +29,7 @@
 #ifndef TSFLOADABLEMATRIX_HPP
 #define TSFLOADABLEMATRIX_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 
 namespace TSFExtended
 {

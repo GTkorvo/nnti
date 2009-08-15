@@ -29,8 +29,8 @@
 #ifndef TSFVECTORDECL_HPP
 #define TSFVECTORDECL_HPP
 
-#include "TSFConfigDefs.hpp"
-#include "TSFHandle.hpp"
+#include "SundanceDefs.hpp"
+#include "SundanceHandle.hpp"
 #include "Thyra_VectorBase.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 #include "TSFVectorSpaceDecl.hpp"
@@ -49,12 +49,12 @@
 
 namespace TSFExtendedOps
 {
-  template <class Scalar, class Node1, class Node2> class LC2;
-  template <class Scalar, class Node> class OpTimesLC; 
-  /** 
-   * 
-   */
-  enum LCSign {LCAdd = 1, LCSubtract = -1};
+template <class Scalar, class Node1, class Node2> class LC2;
+template <class Scalar, class Node> class OpTimesLC; 
+/** 
+ * 
+ */
+enum LCSign {LCAdd = 1, LCSubtract = -1};
 }
 
 namespace TSFExtended
@@ -102,7 +102,7 @@ namespace TSFExtended
    * \endcode
    */
   template <class Scalar>
-  class Vector : public Handle<Thyra::VectorBase<Scalar> >
+  class Vector : public SundanceUtils::Handle<Thyra::VectorBase<Scalar> >
   {
   public:
     /** \name Constructors, Destructors, and Assignment Operators */
@@ -393,17 +393,6 @@ namespace TSFExtended
       return "Vector not describable";
     }
 
-    string indentedDescribe(int depth) const
-    {
-      const PTBDescribable* p = 
-        dynamic_cast<const PTBDescribable* >(this->ptr().get());
-      if (p != 0)
-        {
-          return p -> indentedDescribe(depth);
-        }
-      return "Vector not describable";
-    }
-      
     void print(std::ostream& os) const ;
     
 

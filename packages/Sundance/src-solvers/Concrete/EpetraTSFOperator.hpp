@@ -38,7 +38,7 @@ namespace Epetra
 {
   using namespace Teuchos;
   using namespace Thyra;
-  using namespace TSFExtended;
+  
 
   /** */
   class Epetra_TSFOperator : public Epetra_Operator

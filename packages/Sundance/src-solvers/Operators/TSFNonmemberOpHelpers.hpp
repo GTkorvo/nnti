@@ -38,7 +38,7 @@
 #include "Thyra_DefaultMultipliedLinearOp.hpp"
 #include "Thyra_DefaultScaledAdjointLinearOp.hpp"
 #include "Thyra_DefaultIdentityLinearOp.hpp"
-#include "TSFOut.hpp"
+#include "SundanceOut.hpp"
 
 namespace TSFExtended
 {

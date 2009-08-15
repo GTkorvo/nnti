@@ -26,14 +26,14 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFHANDLE_HPP
-#define TSFHANDLE_HPP
+#ifndef SundanceHANDLE_HPP
+#define SundanceHANDLE_HPP
 
-#include "TSFConfigDefs.hpp"
-#include "TSFPrintable.hpp"
-#include "TSFDescribable.hpp"
-#include "TSFHandleable.hpp"
-#include "TSFObjectWithVerbosity.hpp"
+#include "SundanceDefs.hpp"
+#include "SundancePrintable.hpp"
+#include "Teuchos_Describable.hpp"
+#include "SundanceHandleable.hpp"
+#include "SundanceObjectWithVerbosity.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 #include "Teuchos_MPIComm.hpp"
 
@@ -51,26 +51,26 @@
  * The macro will also create appropriate doxygen for the handle ctors */
 #define HANDLE_CTORS(handle, contents) \
 /** Empty ctor */ \
-handle() : TSFExtended::Handle<contents >() {;} \
+handle() : SundanceUtils::Handle<contents >() {;} \
 /** Construct a #handle with a raw pointer to a #contents */ \
-handle(TSFExtended::Handleable<contents >* rawPtr) : TSFExtended::Handle<contents >(rawPtr) {;} \
+handle(SundanceUtils::Handleable<contents >* rawPtr) : SundanceUtils::Handle<contents >(rawPtr) {;} \
 /** Construct a #handle with a smart pointer to a #contents */ \
-handle(const Teuchos::RefCountPtr<contents >& smartPtr) : TSFExtended::Handle<contents >(smartPtr){;}
+handle(const Teuchos::RefCountPtr<contents >& smartPtr) : SundanceUtils::Handle<contents >(smartPtr){;}
 
 
 
 #ifndef DOXYGEN_DEVELOPER_ONLY
 
-namespace TSFExtended
+namespace SundanceUtils
 {
   using namespace Teuchos;
 
   /**
-   * Class TSFExtended::Handle provides a general implementation
+   * Class SundanceUtils::Handle provides a general implementation
    * of the common features of reference-counted handles.
    */
   template <class PointerType>
-  class Handle : public PTBDescribable
+  class Handle : public Describable
   {
   public:
     /** Empty ctor  */
@@ -191,7 +191,7 @@ namespace TSFExtended
 
 
 template <class PointerType> inline
-std::ostream& operator<<(std::ostream& os, const TSFExtended::Handle<PointerType>& h)
+std::ostream& operator<<(std::ostream& os, const SundanceUtils::Handle<PointerType>& h)
 {
   h.print(os);
   return os;

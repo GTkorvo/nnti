@@ -29,7 +29,7 @@
 #ifndef TSFINDEXABLEVECTOR_HPP
 #define TSFINDEXABLEVECTOR_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 
 #include "TSFLoadableVector.hpp"
 #include "TSFAccessibleVector.hpp"

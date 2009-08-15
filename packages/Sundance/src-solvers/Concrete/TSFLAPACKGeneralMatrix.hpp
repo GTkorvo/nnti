@@ -1,7 +1,7 @@
 #ifndef TSFLAPACKGENERALMATRIX_H
 #define TSFLAPACKGENERALMATRIX_H
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFDenseSerialVector.hpp"
 #include "Teuchos_Array.hpp"
 

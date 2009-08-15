@@ -77,10 +77,12 @@ SolverState<double> BelosSolver::solve(const LinearOperator<double>& A,
   Belos::ReturnType rtn = solver->solve();
 
   int numIters = solver->getNumIters();
+  cerr << "num iters=" << numIters << endl;
   double resid = -1.0;
   
   SolverStatusCode code = SolveFailedToConverge;
   if (rtn==Belos::Converged) code = SolveConverged;
+  else cerr << "solver failed to converge!" << endl;
   SolverState<double> state(code, "Belos solver completed", numIters, resid);
   
   return state;

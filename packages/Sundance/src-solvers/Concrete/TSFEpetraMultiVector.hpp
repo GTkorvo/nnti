@@ -27,8 +27,8 @@
 #ifndef TSFEPETRAMULTIVECTOR_HPP
 #define TSFEPETRAMULTIVECTOR_HPP
 
-#include "TSFConfigDefs.hpp"
-#include "TSFPrintable.hpp"
+#include "SundanceDefs.hpp"
+#include "SundancePrintable.hpp"
 #include "TSFIndexableVector.hpp"
 #include "TSFRawDataAccessibleVector.hpp"
 #include "TSFVectorDecl.hpp"
@@ -54,7 +54,7 @@ namespace TSFExtended
    * Thyra-based code.
    */
   class EpetraMultiVector : public MPIMultiVectorStd<double>,
-                            public Handleable<MultiVectorBase<double> >,
+                            public SundanceUtils::Handleable<MultiVectorBase<double> >,
                             public IndexableVector<double>,
                             public RawDataAccessibleVector<double>,
                             public Printable

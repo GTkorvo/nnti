@@ -1,7 +1,7 @@
 #ifndef TSFDENSESERIALVECTOR_H
 #define TSFDENSESERIALVECTOR_H
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_Array.hpp"
 #include "Teuchos_BLAS.hpp"

@@ -29,11 +29,11 @@
 #ifndef TSFBLOCKOPERATORDECL_HPP
 #define TSFBLOCKOPERATORDECL_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Teuchos_Array.hpp"
 #include "TSFExplicitlyTransposeableOp.hpp"
 #include "TSFRowAccessibleOp.hpp"
-#include "TSFHandleable.hpp"
+#include "SundanceHandleable.hpp"
 #include "Thyra_DefaultBlockedLinearOp.hpp"
 
 

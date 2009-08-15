@@ -34,7 +34,7 @@
 #include "TSFPreconditionerFactory.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-using namespace TSFExtended;
+
 using namespace Teuchos;
 
 

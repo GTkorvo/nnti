@@ -29,7 +29,7 @@
 #ifndef TSFITERATIVESOLVER_HPP
 #define TSFITERATIVESOLVER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFLinearSolverBaseDecl.hpp"
 
 namespace TSFExtended

@@ -29,7 +29,7 @@
 #ifndef TSFLTIPROBLEMFACTORYBASE_HPP
 #define TSFLTIPROBLEMFACTORYBASE_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFInverseLTIOp.hpp"
 
 

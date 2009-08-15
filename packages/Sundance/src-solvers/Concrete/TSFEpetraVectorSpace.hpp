@@ -27,7 +27,7 @@
 #ifndef TSFEPETRAVECTORSPACE_HPP
 #define TSFEPETRAVECTORSPACE_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Epetra_Map.h"
 #include "Teuchos_RefCountPtr.hpp"
 #include "Teuchos_Comm.hpp"

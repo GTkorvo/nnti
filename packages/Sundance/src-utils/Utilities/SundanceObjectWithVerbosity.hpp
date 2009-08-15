@@ -1,18 +1,18 @@
 /* @HEADER@ */
 /* @HEADER@ */
 
-#ifndef TSF_OBJECTWITHVERBOSITY_H
-#define TSF_OBJECTWITHVERBOSITY_H
+#ifndef SUNDANCE_OBJECTWITHVERBOSITY_H
+#define SUNDANCE_OBJECTWITHVERBOSITY_H
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RefCountPtr.hpp"
-#include "TSFParamUtils.hpp"
+#include "SundanceParamUtils.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 #include "Teuchos_FancyOStream.hpp"
 
 
-namespace TSFExtended
+namespace SundanceUtils
 {
 using Teuchos::RefCountPtr;
 using Teuchos::rcp;

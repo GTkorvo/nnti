@@ -26,19 +26,17 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFHANDLEABLE_HPP
-#define TSFHANDLEABLE_HPP
+#ifndef SUNDANCE_HANDLEABLE_HPP
+#define SUNDANCE_HANDLEABLE_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Teuchos_RefCountPtr.hpp"
-
-#ifndef DOXYGEN_DEVELOPER_ONLY
 
 #define GET_RCP(Base) \
 /** Handleable<##Base> interface */ \
-virtual RefCountPtr<Base > getRcp() {return rcp(this);}
+virtual Teuchos::RCP<Base > getRcp() {return rcp(this);}
 
-namespace TSFExtended
+namespace SundanceUtils
 {
   using namespace Teuchos;
 
@@ -73,7 +71,6 @@ namespace TSFExtended
 }
 
 
-#endif  /* DOXYGEN_DEVELOPER_ONLY */
 
 
 #endif

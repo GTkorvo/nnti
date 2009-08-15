@@ -30,7 +30,7 @@
 // ************************************************************************
 //@HEADER
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "NOX_StatusTest_SafeCombo.H"
 #include "NOX_Utils.H"
 

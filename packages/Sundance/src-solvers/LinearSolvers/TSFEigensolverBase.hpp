@@ -29,7 +29,7 @@
 #ifndef TSFEIGENSOLVERBASE_HPP
 #define TSFEIGENSOLVERBASE_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFVectorDecl.hpp" 
 #include "TSFSolverState.hpp"
 #include "Teuchos_ParameterList.hpp"

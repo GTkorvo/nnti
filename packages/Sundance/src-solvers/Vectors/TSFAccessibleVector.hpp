@@ -29,7 +29,7 @@
 #ifndef TSFACCESSIBLEVECTOR_HPP
 #define TSFACCESSIBLEVECTOR_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 
 
 

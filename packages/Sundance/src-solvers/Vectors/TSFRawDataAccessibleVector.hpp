@@ -29,7 +29,7 @@
 #ifndef TSFRAWDATAACCESSABLEVECTOR_HPP
 #define TSFRAWDATAACCESSABLEVECTOR_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 
 #include "TSFLoadableVector.hpp"
 #include "TSFAccessibleVector.hpp"

@@ -27,7 +27,7 @@
 #ifndef TSFVECTORTYPEEXTENSIONS_HPP
 #define TSFVECTORTYPEEXTENSIONS_HPP
 
-#include "TSFHandle.hpp"
+#include "SundanceHandle.hpp"
 #include "Thyra_VectorSpaceFactoryBase.hpp"
 #include "TSFVectorSpaceDecl.hpp"
 #include "TSFLinearOperatorDecl.hpp" //Decl added by ptb

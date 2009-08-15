@@ -30,7 +30,7 @@
 #ifndef THYRA_LOWSFACTORYBUILDER_HPP
 #define THYRA_LOWSFACTORYBUILDER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 
 #ifndef TRILINOS_6
 #include "Thyra_LinearOpWithSolveFactoryBase.hpp"

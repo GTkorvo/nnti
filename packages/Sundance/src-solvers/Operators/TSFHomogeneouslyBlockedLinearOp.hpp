@@ -29,7 +29,7 @@
 #ifndef TSFHOMOGENEOUSLYBLOCKEDLINEAROP_HPP
 #define TSFHOMOGENEOUSLYBLOCKEDLINEAROP_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFSimplifiedLinearOpBase.hpp"
 
 namespace TSFExtended

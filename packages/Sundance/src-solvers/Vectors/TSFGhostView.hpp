@@ -42,7 +42,7 @@ namespace TSFExtended
    */
   template <class Scalar>
   class GhostView : public AccessibleVector<Scalar>,
-    public Printable
+                    public SundanceUtils::Printable
   {
   public:
     /** Virtual dtor */

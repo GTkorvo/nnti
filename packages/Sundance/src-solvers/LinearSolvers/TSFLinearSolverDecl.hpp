@@ -27,8 +27,8 @@
 #ifndef TSFLINEARSOLVERDECL_HPP
 #define TSFLINEARSOLVERDECL_HPP
 
-#include "TSFHandle.hpp"
-#include "TSFHandleable.hpp"
+#include "SundanceHandle.hpp"
+#include "SundanceHandleable.hpp"
 #include "TSFLinearSolverBaseDecl.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
@@ -41,103 +41,103 @@ inline static Teuchos::Time& solveTimer()
 
 namespace TSFExtended
 {
-  using namespace Teuchos;
+using namespace Teuchos;
+using namespace SundanceUtils;
   
-  /**
-   *
-   */
-  template <class Scalar>
-  class LinearSolver : public Handle<LinearSolverBase<Scalar> >
-  {
-  public:
-    //HANDLE_CTORS(LinearSolver<Scalar>, LinearSolverBase<Scalar>);
-    /** */
-    LinearSolver() : Handle<LinearSolverBase<Scalar> >() {;}
-    /** */
-    LinearSolver( Handleable<LinearSolverBase<Scalar> >* rawPtr) 
-      : Handle<LinearSolverBase<Scalar> >(rawPtr) {;}
-    /** */
-    LinearSolver(const RefCountPtr<LinearSolverBase<Scalar> >& smartPtr)
-      : Handle<LinearSolverBase<Scalar> >(smartPtr) {;}
+/**
+ *
+ */
+template <class Scalar>
+class LinearSolver : public SundanceUtils::Handle<LinearSolverBase<Scalar> >
+{
+public:
+  /** */
+  LinearSolver() : SundanceUtils::Handle<LinearSolverBase<Scalar> >() {;}
+  /** */
+  LinearSolver( SundanceUtils::Handleable<LinearSolverBase<Scalar> >* rawPtr) 
+    : SundanceUtils::Handle<LinearSolverBase<Scalar> >(rawPtr) {;}
+  /** */
+  LinearSolver(const RefCountPtr<LinearSolverBase<Scalar> >& smartPtr)
+    : SundanceUtils::Handle<LinearSolverBase<Scalar> >(smartPtr) {;}
 
 
-    /** Change the convergence tolerance. Default does nothing. */
-    void updateTolerance(const double& tol) {this->ptr()->updateTolerance(tol);}
+  /** Change the convergence tolerance. Default does nothing. */
+  void updateTolerance(const double& tol) {this->ptr()->updateTolerance(tol);}
 
-    /** Set a user-defined preconditioner */
-    void setUserPrec(const LinearOperator<Scalar>& op,
-      const LinearSolver<Scalar>& pSolver) ;
+  /** Set a user-defined preconditioner */
+  void setUserPrec(const LinearOperator<Scalar>& op,
+    const LinearSolver<Scalar>& pSolver) ;
 
-    /** Set a user-defined preconditioner */
-    void setUserPrec(const PreconditionerFactory<Scalar>& pf);
+  /** Set a user-defined preconditioner */
+  void setUserPrec(const PreconditionerFactory<Scalar>& pf);
 
 
-    /** */
-    SolverState<Scalar> solve(const LinearOperator<Scalar>& op,
-                              const Vector<Scalar>& rhs,
-                              Vector<Scalar>& soln) const ;
+  /** */
+  SolverState<Scalar> solve(const LinearOperator<Scalar>& op,
+    const Vector<Scalar>& rhs,
+    Vector<Scalar>& soln) const ;
     
     
 
-    /** */
-    const ParameterList& parameters() const ;
+  /** */
+  const ParameterList& parameters() const ;
 
-    /** */
-    ParameterList& parameters() ;
+  /** */
+  ParameterList& parameters() ;
     
 
-    static FancyOStream& os()
-      {
-        return ObjectWithVerbosity<LinearSolverBase<Scalar> >::os();
-      }
-  };
+  static FancyOStream& os()
+    {
+      return ObjectWithVerbosity<LinearSolverBase<Scalar> >::os();
+    }
+};
 
   
-  template <class Scalar> inline 
-  SolverState<Scalar> LinearSolver<Scalar>
-  ::solve(const LinearOperator<Scalar>& op,
-          const Vector<Scalar>& rhs,
-          Vector<Scalar>& soln) const
+template <class Scalar> inline 
+SolverState<Scalar> LinearSolver<Scalar>
+::solve(const LinearOperator<Scalar>& op,
+  const Vector<Scalar>& rhs,
+  Vector<Scalar>& soln) const
+{
+  TEST_FOR_EXCEPTION(this->ptr().get()==0, std::runtime_error,
+    "null pointer in LinearSolver<Scalar>::solve()");
+
+  TEST_FOR_EXCEPTION(rhs.ptr().get()==0, std::runtime_error,
+    "null rhs pointer in LinearSolver<Scalar>::solve()");
+
+  TEST_FOR_EXCEPTION(op.ptr().get()==0, std::runtime_error,
+    "null op pointer in LinearSolver<Scalar>::solve()");
+  TimeMonitor timer(solveTimer());
+
+  if (this->ptr()->getVerbosity() > 0) 
   {
-    TEST_FOR_EXCEPTION(this->ptr().get()==0, std::runtime_error,
-                       "null pointer in LinearSolver<Scalar>::solve()");
+    os() << "LinearOperator::solve()" << std::endl;
+  }
+  SolverState<Scalar> rtn = this->ptr()->solve(op, rhs, soln);
 
-    TEST_FOR_EXCEPTION(rhs.ptr().get()==0, std::runtime_error,
-                        "null rhs pointer in LinearSolver<Scalar>::solve()");
-
-    TEST_FOR_EXCEPTION(op.ptr().get()==0, std::runtime_error,
-                        "null op pointer in LinearSolver<Scalar>::solve()");
-    TimeMonitor timer(solveTimer());
-
-    if (this->ptr()->getVerbosity() > 0) 
-    {
-      os() << "LinearOperator::solve()" << std::endl;
-    }
-    SolverState<Scalar> rtn = this->ptr()->solve(op, rhs, soln);
-
-    if (this->ptr()->getVerbosity() > 0) 
-    {
-      os() << "done LinearOperator::solve()" << std::endl;
-    }
-
-    return rtn;    
+  if (this->ptr()->getVerbosity() > 0) 
+  {
+    os() << "done LinearOperator::solve()" << std::endl;
   }
 
-  template <class Scalar> inline 
-  const ParameterList& LinearSolver<Scalar>::parameters() const 
-  {
-    TEST_FOR_EXCEPTION(this->ptr().get()==0, std::runtime_error,
-                       "null pointer in LinearSolver<Scalar>::parameters()");
-    return this->ptr()->parameters();
-  }
+  return rtn;    
+}
 
-  template <class Scalar> inline 
-  ParameterList& LinearSolver<Scalar>::parameters() 
-  {
-    TEST_FOR_EXCEPTION(this->ptr().get()==0, std::runtime_error,
-                       "null pointer in LinearSolver<Scalar>::parameters()");
-    return this->ptr()->parameters();
-  }
+template <class Scalar> inline 
+const ParameterList& LinearSolver<Scalar>::parameters() const 
+{
+  TEST_FOR_EXCEPTION(this->ptr().get()==0, std::runtime_error,
+    "null pointer in LinearSolver<Scalar>::parameters()");
+  return this->ptr()->parameters();
+}
+
+template <class Scalar> inline 
+ParameterList& LinearSolver<Scalar>::parameters() 
+{
+  TEST_FOR_EXCEPTION(this->ptr().get()==0, std::runtime_error,
+    "null pointer in LinearSolver<Scalar>::parameters()");
+  return this->ptr()->parameters();
+}
 
   
 

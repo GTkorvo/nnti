@@ -29,7 +29,7 @@
 #ifndef TSFLOADABLEBLOCKOPERATOR_HPP
 #define TSFLOADABLEBLOCKOPERATOR_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFBlockOperatorImpl.hpp"
 #include "TSFLoadableMatrix.hpp"
 

@@ -29,90 +29,90 @@
 #ifndef TSFVECTORSPACEDECL_HPP
 #define TSFVECTORSPACEDECL_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
-#include "TSFHandle.hpp"
+#include "SundanceHandle.hpp"
 #include "TSFSequentialIteratorDecl.hpp"
 
 
 
 namespace TSFExtended
 {
-  using namespace Teuchos;
-  template<class Scalar> class Vector;
+using namespace Teuchos;
+template<class Scalar> class Vector;
 
-  /**
-   *  Implementation of the Handle for the Vector class.  This wraps a
-   *  TSFCoreVector
-   */
-  template <class Scalar>
-  class VectorSpace : public Handle< const Thyra::VectorSpaceBase<Scalar> >
-  {
-  public:
-    HANDLE_CTORS(VectorSpace<Scalar>, const Thyra::VectorSpaceBase<Scalar>);
+/**
+ *  Implementation of the Handle for the Vector class.  This wraps a
+ *  TSFCoreVector
+ */
+template <class Scalar>
+class VectorSpace : public SundanceUtils::Handle< const Thyra::VectorSpaceBase<Scalar> >
+{
+public:
+  HANDLE_CTORS(VectorSpace<Scalar>, const Thyra::VectorSpaceBase<Scalar>);
     
-    /** Create a new element of this vector space */
-    Vector<Scalar>  createMember() const ;
+  /** Create a new element of this vector space */
+  Vector<Scalar>  createMember() const ;
 
-    /** Return the dimension of the space */
-    int dim() const {return this->ptr()->dim();}
+  /** Return the dimension of the space */
+  int dim() const {return this->ptr()->dim();}
 
-    /** Return the lowest global index accessible on this processor */
-    int lowestLocallyOwnedIndex() const ;
+  /** Return the lowest global index accessible on this processor */
+  int lowestLocallyOwnedIndex() const ;
 
-    /** Return the number of elements owned by this processor */
-    int numLocalElements() const ;
+  /** Return the number of elements owned by this processor */
+  int numLocalElements() const ;
 
-    /** Check compatibility with another space. Implementation note: 
-     * we don't know if the argument vec space is a handle to another
-     * vector space or the contents of a handle, and we want the operation
-     * to work the same in either case. We can make this work as
-     * follows: have the argument check compatibility with the contents
-     * of this handle. If the argument is a handle, the process 
-     * will be repeated, interchanging places again so that both handles
-     * are dereferenced. If the argument is not a handle, then it
-     * ends up comparing to the concrete contents of this handle, giving the
-     * same results. */
-    bool isCompatible(const VectorSpace<Scalar>& vecSpc) const; 
+  /** Check compatibility with another space. Implementation note: 
+   * we don't know if the argument vec space is a handle to another
+   * vector space or the contents of a handle, and we want the operation
+   * to work the same in either case. We can make this work as
+   * follows: have the argument check compatibility with the contents
+   * of this handle. If the argument is a handle, the process 
+   * will be repeated, interchanging places again so that both handles
+   * are dereferenced. If the argument is not a handle, then it
+   * ends up comparing to the concrete contents of this handle, giving the
+   * same results. */
+  bool isCompatible(const VectorSpace<Scalar>& vecSpc) const; 
 
 
-    /** Tell if vectors of this space are in core  */
-    bool isInCore() const {return this->ptr()->isInCore();}
+  /** Tell if vectors of this space are in core  */
+  bool isInCore() const {return this->ptr()->isInCore();}
 
    
 
-    /** test equality between two spaces */
-    bool operator==(const VectorSpace<Scalar>& other) const ;
+  /** test equality between two spaces */
+  bool operator==(const VectorSpace<Scalar>& other) const ;
 
 
-    /** test inequality of two spaces */
-    bool operator!=(const VectorSpace<Scalar>& other) const ;
+  /** test inequality of two spaces */
+  bool operator!=(const VectorSpace<Scalar>& other) const ;
 
 
-    /** test whether the space contains a given vector */
-    bool contains(const Vector<Scalar>& vec) const ;
+  /** test whether the space contains a given vector */
+  bool contains(const Vector<Scalar>& vec) const ;
 
 
-    /** return the number of subblocks. */
-    int numBlocks() const ;
+  /** return the number of subblocks. */
+  int numBlocks() const ;
 
-    /** get the i-th subblock */
-    VectorSpace<Scalar> getBlock(int i) const ;
-
-
-    /** set the i-th subblock */
-    void setBlock(int i, const VectorSpace<Scalar>& space);
+  /** get the i-th subblock */
+  VectorSpace<Scalar> getBlock(int i) const ;
 
 
-    /** */
-    SequentialIterator<Scalar> begin() const ;
+  /** set the i-th subblock */
+  void setBlock(int i, const VectorSpace<Scalar>& space);
 
-    /** */
-    SequentialIterator<Scalar> end() const ;
 
-    /** */
-    bool advanceIndex(int& blockIndex, int& indexInCurrentBlock, int& globalIndex) const ;
-  };
+  /** */
+  SequentialIterator<Scalar> begin() const ;
+
+  /** */
+  SequentialIterator<Scalar> end() const ;
+
+  /** */
+  bool advanceIndex(int& blockIndex, int& indexInCurrentBlock, int& globalIndex) const ;
+};
 
 }
 

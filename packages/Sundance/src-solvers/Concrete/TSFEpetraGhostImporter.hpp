@@ -27,7 +27,7 @@
 #ifndef TSFEPETRAGHOSTIMPORTER_HPP
 #define TSFEPETRAGHOSTIMPORTER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFGhostImporter.hpp"
 #include "TSFGhostView.hpp"
 #include "Epetra_Map.h"

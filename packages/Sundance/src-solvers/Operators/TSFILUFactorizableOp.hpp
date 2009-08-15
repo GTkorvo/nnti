@@ -29,7 +29,7 @@
 #ifndef TSFILUFACTORIZABLEOP_HPP
 #define TSFILUFACTORIZABLEOP_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFPreconditioner.hpp"
 
 

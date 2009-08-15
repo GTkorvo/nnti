@@ -27,7 +27,7 @@
 #ifndef TSF_NVECTOR_HPP
 #define TSF_NVECTOR_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFVector.hpp"
 #include "TSFVectorSpace.hpp"
 

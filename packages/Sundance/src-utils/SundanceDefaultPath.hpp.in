@@ -28,35 +28,39 @@
 // ************************************************************************
 /* @HEADER@ */
 
-#ifndef TSF_OUT_H
-#define TSF_OUT_H
+#ifndef SUNDANCEDEFAULTPATH_H
+#define SUNDANCEDEFAULTPATH_H
 
-#include "TSFConfigDefs.hpp"
-#include "Teuchos_TestForException.hpp"
-#include "TSFObjectWithVerbosity.hpp"
-#include "Teuchos_RefCountPtr.hpp"
-#include "Teuchos_FancyOStream.hpp"
+using std::string;
 
-
-
-namespace TSFExtended
+namespace SundanceUtils
 {
-class TSFOut
-{
-public:
-  static FancyOStream& os()
-    {
-      static RefCountPtr<std::ostream> os = rcp(&std::cout, false);
-      static RefCountPtr<FancyOStream> rtn = fancyOStream(os);
-      static bool first = true;
-      if (first)
-      {
-        rtn->setShowProcRank(true);
-        first = false;
-      }
-      return *rtn;
-    }
-};
+inline string defaultSundancePath()
+{ 
+  static string installDir = "@prefix@";
+  static string buildDir = "@abs_top_builddir@";
+  static string trilinosData = "@TRILINOS_DATA_DIR@";
+  static string cwd = ".";
+
+  static string sundanceEtc = buildDir + "/etc";
+  static string sundanceData = buildDir + "/examples-tutorial/data";
+
+  static string isundanceEtc = installDir + "/etc";
+  static string isundanceData = installDir + "/examples-tutorial/data";
+
+  static string sundanceMesh = trilinosData + "/Sundance/meshes";
+
+
+
+
+  static string rtn = cwd + ":" + sundanceEtc + ":" + isundanceEtc 
+                    + ":" + sundanceMesh 
+                    + ":" + sundanceData + ":" + isundanceData ;
+
+  return rtn;
+}
 }
 
 #endif
+
+

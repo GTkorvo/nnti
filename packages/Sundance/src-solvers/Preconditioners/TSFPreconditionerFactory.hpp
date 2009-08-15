@@ -29,8 +29,8 @@
 #ifndef TSFPRECONDITIONERFACTORY_HPP
 #define TSFPRECONDITIONERFACTORY_HPP
 
-#include "TSFConfigDefs.hpp"
-#include "TSFHandle.hpp"
+#include "SundanceDefs.hpp"
+#include "SundanceHandle.hpp"
 #include "TSFPreconditionerFactoryBase.hpp"
 
 namespace TSFExtended
@@ -50,7 +50,7 @@ namespace TSFExtended
    */
   template <class Scalar> 
   class PreconditionerFactory 
-    : public Handle<PreconditionerFactoryBase<Scalar> >
+    : public SundanceUtils::Handle<PreconditionerFactoryBase<Scalar> >
   {
   public:
     /* Boilerplate ctors */

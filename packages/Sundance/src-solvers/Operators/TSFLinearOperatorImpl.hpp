@@ -29,7 +29,7 @@
 #ifndef TSFLINEAROPERATORIMPL_HPP
 #define TSFLINEAROPERATORIMPL_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFLinearOperatorDecl.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 #include "TSFVectorDecl.hpp"
@@ -37,13 +37,14 @@
 #include "TSFInverseOperator.hpp"
 #include "TSFBlockOperator.hpp"
 #include "TSFVectorType.hpp"
-#include "TSFOut.hpp"
+#include "SundanceOut.hpp"
 
 
 
 using namespace TSFExtended;
 using namespace Thyra;
 using namespace Teuchos;
+using namespace SundanceUtils;
 
 template <class Scalar>
 class InverseOperator;
@@ -76,17 +77,17 @@ void LinearOperator<Scalar>::apply(const Vector<Scalar>& in,
   {
     out = this->range().createMember();
   }
-  if (verb_ > 0) TSFOut::os() << "applying op=" << name() << " with alpha="
+  if (verb_ > 0) Out::os() << "applying op=" << name() << " with alpha="
                               << alpha << ", beta=" << beta << " to vec ";
-  if (verb_==1) TSFOut::os() << "norm=" << in.norm2() << std::endl;
-  if (verb_ > 1) TSFOut::os() << "norm=" << in << std::endl;
+  if (verb_==1) Out::os() << "norm=" << in.norm2() << std::endl;
+  if (verb_ > 1) Out::os() << "norm=" << in << std::endl;
 
   this->ptr()->apply(Thyra::NONCONJ_ELE, *(in.ptr().get()),
     out.ptr().get(), alpha, beta);
 
-  if (verb_ > 0) TSFOut::os() << "result of op=" << name() << " is ";
-  if (verb_==1) TSFOut::os() << "norm=" << out.norm2() << std::endl;
-  if (verb_ > 1) TSFOut::os() << "norm=" << out << std::endl;
+  if (verb_ > 0) Out::os() << "result of op=" << name() << " is ";
+  if (verb_==1) Out::os() << "norm=" << out.norm2() << std::endl;
+  if (verb_ > 1) Out::os() << "norm=" << out << std::endl;
   
 }
 
@@ -107,16 +108,16 @@ void LinearOperator<Scalar>::applyTranspose(const Vector<Scalar>& in,
   {
     out = this->domain().createMember();
   }
-  if (verb_ > 0) TSFOut::os() << "applying op=" << name() << " transposed with alpha="
+  if (verb_ > 0) Out::os() << "applying op=" << name() << " transposed with alpha="
                               << alpha << ", beta=" << beta << " to vec ";
-  if (verb_==1) TSFOut::os() << "norm=" << in.norm2() << std::endl;
-  if (verb_ >1) TSFOut::os() << "norm=" << in << std::endl;
+  if (verb_==1) Out::os() << "norm=" << in.norm2() << std::endl;
+  if (verb_ >1) Out::os() << "norm=" << in << std::endl;
   this->ptr()->applyTranspose(Thyra::NONCONJ_ELE, *(in.ptr().get()),
     out.ptr().get(), alpha, beta);
 
-  if (verb_ > 0) TSFOut::os() << "result of op=" << name() << " is ";
-  if (verb_==1) TSFOut::os() << "norm=" << out.norm2() << std::endl;
-  if (verb_ >1) TSFOut::os() << "norm=" << out << std::endl;
+  if (verb_ > 0) Out::os() << "result of op=" << name() << " is ";
+  if (verb_==1) Out::os() << "norm=" << out.norm2() << std::endl;
+  if (verb_ >1) Out::os() << "norm=" << out << std::endl;
 }
 
 

@@ -29,7 +29,7 @@
 #ifndef TSFMATRIXFACTORY_HPP
 #define TSFMATRIXFACTORY_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFLoadableMatrix.hpp"
 #include "TSFLinearOperatorDecl.hpp"
 

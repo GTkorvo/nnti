@@ -29,7 +29,7 @@
 #ifndef TSFILUKPRECONDITIONERFACTORY_HPP
 #define TSFILUKPRECONDITIONERFACTORY_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFPreconditionerFactoryBase.hpp"
 #include "TSFLinearOperator.hpp"
 #include "Teuchos_ParameterList.hpp"

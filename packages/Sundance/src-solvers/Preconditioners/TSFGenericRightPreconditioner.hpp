@@ -29,7 +29,7 @@
 #ifndef TSFGENERICRIGHTPRECONDITIONER_HPP
 #define TSFGENERICRIGHTPRECONDITIONER_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFVector.hpp"
 #include "TSFLinearOperator.hpp"
 #include "TSFPreconditionerBase.hpp"

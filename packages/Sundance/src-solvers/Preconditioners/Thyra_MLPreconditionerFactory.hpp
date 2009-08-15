@@ -30,7 +30,7 @@
 #ifndef THYRA_ML_PRECONDITIONER_FACTORY_DECL_HPP
 #define THYRA_ML_PRECONDITIONER_FACTORY_DECL_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 
 #ifndef TRILINOS_6
 

@@ -29,9 +29,9 @@
 #ifndef TSFLINEAROPERATORDECL_HPP
 #define TSFLINEAROPERATORDECL_HPP
 
-#include "TSFConfigDefs.hpp"
-#include "TSFHandle.hpp"
-#include "TSFHandleable.hpp"
+#include "SundanceDefs.hpp"
+#include "SundanceHandle.hpp"
+#include "SundanceHandleable.hpp"
 #include "Thyra_LinearOpBase.hpp"
 #include "TSFLoadableMatrix.hpp"
 #include "Teuchos_TimeMonitor.hpp"
@@ -40,137 +40,138 @@
 
 namespace TSFExtended
 {
-  using Thyra::Index;
-  using namespace Teuchos;
-  using namespace Thyra;
+using Thyra::Index;
+using namespace Teuchos;
+using namespace Thyra;
+using namespace SundanceUtils;
 
-  template <class Scalar>  class LinearSolver;
-  template <class Scalar>  class VectorSpace;
-  template <class Scalar>  class Vector;
-  template <class Scalar>  class VectorType;
+template <class Scalar>  class LinearSolver;
+template <class Scalar>  class VectorSpace;
+template <class Scalar>  class Vector;
+template <class Scalar>  class VectorType;
+
+/** 
+ * User-level linear operator class
+ */
+template <class Scalar>
+class LinearOperator : public SundanceUtils::Handle<LinearOpBase<Scalar, Scalar> >
+{
+public:
+  /** \name Constructors, Destructors, and Assignment Operators */
+  //@{
+  /** Empty constructor*/
+  LinearOperator();
+
+  /** Constructor with smart pointer */
+  LinearOperator(const RefCountPtr<LinearOpBase<Scalar, Scalar> >& smartPtr);
+  //@}
+
+  /** Return the domain */
+  const VectorSpace<Scalar> domain() const ;
+
+  /** Return the range */
+  const VectorSpace<Scalar> range() const ;
+
+  /** Set a name */
+  void setName(const std::string& name) {name_ = name;}
+
+  /** Set the verbosity level */
+  void setVerbosity(int verb) {verb_ = verb;}
+
+  /** Return the name */
+  const std::string& name() const {return name_;}
+
+  /** */
+  int verbosity() const {return verb_;}
 
   /** 
-   * User-level linear operator class
+   * Compute
+   * \code
+   * out = beta*out + alpha*op*in;
+   * \endcode
+   **/
+  void apply(const Vector<Scalar>& in,
+    Vector<Scalar>& out,
+    const Scalar& alpha = 1.0,
+    const Scalar& beta = 0.0) const ;
+
+  /**  
+   * Compute
+   * \code
+   * out = beta*out + alpha*op^T*in;
+   * \endcode
+   **/
+  void applyTranspose(const Vector<Scalar>& in,
+    Vector<Scalar>& out,
+    const Scalar& alpha = 1.0,
+    const Scalar& beta = 0.0) const ;
+
+
+  //       /** For the moment this does nothing*/
+  LinearOperator<Scalar> form() const {return *this;}
+      
+      
+  /** Get a stopwatch for timing vector operations */
+  RefCountPtr<Time>& opTimer();
+
+  /**
+   * Return a TransposeOperator.
    */
-  template <class Scalar>
-  class LinearOperator : public Handle<LinearOpBase<Scalar, Scalar> >
-  {
-  public:
-    /** \name Constructors, Destructors, and Assignment Operators */
-    //@{
-    /** Empty constructor*/
-    LinearOperator();
+  LinearOperator<Scalar> transpose() const ; 
 
-    /** Constructor with smart pointer */
-    LinearOperator(const RefCountPtr<LinearOpBase<Scalar, Scalar> >& smartPtr);
-    //@}
-
-    /** Return the domain */
-    const VectorSpace<Scalar> domain() const ;
-
-    /** Return the range */
-    const VectorSpace<Scalar> range() const ;
-
-    /** Set a name */
-    void setName(const std::string& name) {name_ = name;}
-
-    /** Set the verbosity level */
-    void setVerbosity(int verb) {verb_ = verb;}
-
-    /** Return the name */
-    const std::string& name() const {return name_;}
-
-    /** */
-    int verbosity() const {return verb_;}
-
-    /** 
-     * Compute
-     * \code
-     * out = beta*out + alpha*op*in;
-     * \endcode
-     **/
-    void apply(const Vector<Scalar>& in,
-	       Vector<Scalar>& out,
-	       const Scalar& alpha = 1.0,
-	       const Scalar& beta = 0.0) const ;
-
-    /**  
-     * Compute
-     * \code
-     * out = beta*out + alpha*op^T*in;
-     * \endcode
-     **/
-    void applyTranspose(const Vector<Scalar>& in,
-			Vector<Scalar>& out,
-			const Scalar& alpha = 1.0,
-			const Scalar& beta = 0.0) const ;
+  /**
+   * Return an InverseOperator.
+   */
+  LinearOperator<Scalar> inverse(const LinearSolver<Scalar>& solver, const std::string& msg="") const ;
 
 
-    //       /** For the moment this does nothing*/
-    LinearOperator<Scalar> form() const {return *this;}
-      
-      
-    /** Get a stopwatch for timing vector operations */
-    RefCountPtr<Time>& opTimer();
+  /** Operator sum */
+  LinearOperator<Scalar> operator+(const LinearOperator<Scalar>& other) const ;
 
-    /**
-     * Return a TransposeOperator.
-     */
-    LinearOperator<Scalar> transpose() const ; 
+  /** Return a Loadable Matrix  */
+  RefCountPtr<LoadableMatrix<Scalar> > matrix();
 
-    /**
-     * Return an InverseOperator.
-     */
-    LinearOperator<Scalar> inverse(const LinearSolver<Scalar>& solver, const std::string& msg="") const ;
-
-
-    /** Operator sum */
-    LinearOperator<Scalar> operator+(const LinearOperator<Scalar>& other) const ;
-
-    /** Return a Loadable Matrix  */
-    RefCountPtr<LoadableMatrix<Scalar> > matrix();
-
-    /** Get a row of the underlying matrix */     
-    void getRow(const int& row, 
-                Teuchos::Array<int>& indices, 
-                Teuchos::Array<Scalar>& values) const ;
+  /** Get a row of the underlying matrix */     
+  void getRow(const int& row, 
+    Teuchos::Array<int>& indices, 
+    Teuchos::Array<Scalar>& values) const ;
     
 
-    /** \name  Block operations  */
-    //@{
+  /** \name  Block operations  */
+  //@{
       
-    /** return number of block rows */
-    int numBlockRows() const ;
-      
-
-    /** return number of block cols */
-    int numBlockCols() const ;
+  /** return number of block rows */
+  int numBlockRows() const ;
       
 
-    /** get the (i,j)-th block */
-    LinearOperator<Scalar> getBlock(const int &i, const int &j) const ;
+  /** return number of block cols */
+  int numBlockCols() const ;
+      
 
-    /** set the (i,j)-th block 
-     *  If the domain and/or the range are not set, then we
-     *  are building the operator
-     */
-    void setBlock(int i, int j, 
-		  const LinearOperator<Scalar>& sub);
+  /** get the (i,j)-th block */
+  LinearOperator<Scalar> getBlock(const int &i, const int &j) const ;
 
-    /** Finalize block assembly */
-    void endBlockFill();
+  /** set the (i,j)-th block 
+   *  If the domain and/or the range are not set, then we
+   *  are building the operator
+   */
+  void setBlock(int i, int j, 
+    const LinearOperator<Scalar>& sub);
 
-    //@}
+  /** Finalize block assembly */
+  void endBlockFill();
+
+  //@}
 
 
     
 
       
 
-  private:
-    std::string name_;
-    int verb_;
-  };
+private:
+  std::string name_;
+  int verb_;
+};
 
 }
 

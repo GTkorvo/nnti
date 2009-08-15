@@ -29,7 +29,7 @@
 #ifndef TSFLOADABLEBLOCKVECTOR_HPP
 #define TSFLOADABLEBLOCKVECTOR_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "Thyra_VectorBaseDecl.hpp"
 
 #ifndef DOXYGEN_DEVELOPER_ONLY

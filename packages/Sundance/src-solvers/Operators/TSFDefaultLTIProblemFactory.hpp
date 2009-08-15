@@ -30,7 +30,7 @@
 #define TSF_DEFAULT_LTI_PROBLEMFACTORY_HPP
 
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFLTIProblemFactoryBase.hpp"
 
 

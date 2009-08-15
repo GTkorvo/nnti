@@ -42,7 +42,7 @@
 #include "TSFVectorSpace.hpp"
 #include "TSFLinearSolver.hpp"
 #include "TSFLinearOperator.hpp"
-#include "TSFObjectWithVerbosity.hpp"
+#include "SundanceObjectWithVerbosity.hpp"
 #include "TSFNonlinearOperator.hpp" // nonlinear operator
 
 // Forward declares

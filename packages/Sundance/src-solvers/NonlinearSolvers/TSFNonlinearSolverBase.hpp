@@ -29,7 +29,7 @@
 #ifndef TSFNONLINEARSOLVERBASE_HPP
 #define TSFNONLINEARSOLVERBASE_HPP
 
-#include "TSFConfigDefs.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFLinearSolverBase.hpp"
 
 namespace TSFExtended
