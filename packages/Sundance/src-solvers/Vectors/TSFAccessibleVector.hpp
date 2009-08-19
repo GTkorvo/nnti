@@ -30,11 +30,8 @@
 #define TSFACCESSIBLEVECTOR_HPP
 
 #include "SundanceDefs.hpp"
+#include "Teuchos_Array.hpp"
 
-
-
-
-#ifndef DOXYGEN_DEVELOPER_ONLY
 
 namespace TSFExtended
 {
@@ -74,6 +71,6 @@ namespace TSFExtended
     };
 }
 
-#endif  /* DOXYGEN_DEVELOPER_ONLY */
+
 
 #endif

@@ -30,8 +30,8 @@
 #ifndef TSF_COMPOUNDTESTER_HPP
 #define TSF_COMPOUNDTESTER_HPP
 
-#include "TSFLinearOperator.hpp"
-#include "TSFNonmemberOpHelpers.hpp"
+#include "TSFLinearOperatorDecl.hpp"
+#include "TSFNonmemberOpHelpersDecl.hpp"
 #include "TSFTesterBase.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 

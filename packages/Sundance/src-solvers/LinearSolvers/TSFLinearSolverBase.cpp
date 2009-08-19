@@ -1,3 +1,4 @@
+/* @HEADER@ */
 /* ***********************************************************************
 // 
 //           TSFExtended: Trilinos Solver Framework Extended
@@ -23,12 +24,19 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
-
-#ifndef TSFLINEARSOLVER_HPP
-#define TSFLINEARSOLVER_HPP
+/* @HEADER@ */
 
 
-#include "TSFLinearSolverImpl.hpp"
+#include "SundanceDefs.hpp"
+
+#ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+
 #include "TSFLinearSolverBaseImpl.hpp"
+
+
+template class TSFExtended::LinearSolverBase<double>;
+template void TSFExtended::LinearSolverBase<double>::setParameter(const Teuchos::ParameterList& pl, int* val, const std::string& name);
+template void TSFExtended::LinearSolverBase<double>::setParameter(const Teuchos::ParameterList& pl, bool* val, const std::string& name);
+template void TSFExtended::LinearSolverBase<double>::setParameter(const Teuchos::ParameterList& pl, double* val, const std::string& name);
 
 #endif

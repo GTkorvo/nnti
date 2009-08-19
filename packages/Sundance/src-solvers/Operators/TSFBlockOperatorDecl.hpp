@@ -85,13 +85,6 @@ public:
 		Array<Scalar>& values) const;
    
 
-  /** */
-  std::ostream& describe(
-    std::ostream                         &out
-    ,const Teuchos::EVerbosityLevel      verbLevel
-    ,const std::string                   leadingIndent
-    ,const std::string                   indentSpacer
-    ) const;
 
   /** */
   void print(std::ostream& os) const ;
@@ -99,6 +92,10 @@ private:
   VectorSpace<Scalar> domain_;
   VectorSpace<Scalar> range_;
 }; 
+
+/** \relates BlockOperator */
+template <class Scalar>
+LinearOperator<Scalar> makeLinearOperator(BlockOperator<Scalar>* b);
 }
 
 #endif

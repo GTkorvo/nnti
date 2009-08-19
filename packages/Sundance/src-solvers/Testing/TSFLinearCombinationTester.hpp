@@ -30,16 +30,24 @@
 #ifndef TSF_LINEARCOMBINATIONTESTER_HPP
 #define TSF_LINEARCOMBINATIONTESTER_HPP
 
-#include "TSFLinearOperator.hpp"
-#include "TSFLinearCombination.hpp"
-#include "TSFVector.hpp"
+#include "TSFLinearOperatorDecl.hpp"
+#include "TSFLinearCombinationDecl.hpp"
+#include "SundanceOut.hpp"
+#include "TSFVectorDecl.hpp"
 #include "TSFTesterBase.hpp"
 #include "TSFRandomSparseMatrix.hpp"
 #include "Thyra_TestSpecifier.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFLinearCombinationImpl.hpp"
+#endif
+
 using namespace TSFExtended;
 using namespace Teuchos;
+using namespace SundanceUtils;
 using namespace std;
 using std::ostream;
 using Thyra::TestSpecifier;
@@ -47,11 +55,11 @@ using Thyra::TestSpecifier;
 
 #define TESTER(form1, form2)\
   {\
-    std::cout << "testing " #form1 << std::endl;\
+    Out::os() << "testing " #form1 << std::endl;\
     Vector<Scalar> _val1 = form1;\
-    std::cout << "testing " #form2 << std::endl;\
+    Out::os() << "testing " #form2 << std::endl;\
     Vector<Scalar> _val2 = form2;\
-    std::cout << "done testing... checking error" << std::endl;\
+    Out::os() << "done testing... checking error" << std::endl;\
     ScalarMag err = (_val1-_val2).norm2();\
     if (!checkTest(spec_, err, "[" #form1 "] == [" #form2 "]")) pass = false;\
   }
@@ -274,7 +282,7 @@ namespace TSFExtended
     Vector<Scalar> c = z.copy();
     
 
-    cerr << "starting linear combination tests" << endl;
+    Out::os() << "starting linear combination tests" << endl;
 
     x = 2.0*A*x;
     Scalar err = (x - 2.0*A*a).norm2();
@@ -314,17 +322,21 @@ namespace TSFExtended
     Vector<Scalar> u;
     u = 2.0*A*B*x;
     err = (u - 2.0*A*B*x).norm2();
+    if (!checkTest(spec_, err, "(empty) u=2*A*B*x")) pass = false;
 
-    u = 2.0*A*x;
+    u = 2.0*A*B*x;
     err = (u - 2.0*A*B*x).norm2();
+    if (!checkTest(spec_, err, "(non-empty) u=2*A*B*x")) pass = false;
 
     /* test assignment of LC2 into empty and non-empty vectors */
     Vector<Scalar> v;
     v = 2.0*x + 3.0*y;
     err = (v - (2.0*x + 3.0*y)).norm2();
+    if (!checkTest(spec_, err, "(empty) v=2*x + 3*y")) pass = false;
 
     v = 2.0*x + 3.0*y;
     err = (v - (2.0*x + 3.0*y)).norm2();
+    if (!checkTest(spec_, err, "(non-empty) v=2*x + 3*y")) pass = false;
 
 
     

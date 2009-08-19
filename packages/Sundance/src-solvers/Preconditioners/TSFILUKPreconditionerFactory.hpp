@@ -31,10 +31,10 @@
 
 #include "SundanceDefs.hpp"
 #include "TSFPreconditionerFactoryBase.hpp"
-#include "TSFLinearOperator.hpp"
+#include "TSFLinearOperatorDecl.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "TSFILUFactorizableOp.hpp"
-#include "TSFLinearSolverBase.hpp"
+#include "TSFLinearSolverBaseDecl.hpp"
 
 namespace TSFExtended
 {

@@ -2,6 +2,14 @@
 #include "TSFEpetraVector.hpp"
 #include "TSFEpetraMatrix.hpp"
 
+
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFLinearSolverImpl.hpp"
+#endif
+
 #include "Amesos.h"
 #include "Amesos_BaseSolver.h"
 

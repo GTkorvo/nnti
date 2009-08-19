@@ -35,7 +35,6 @@
 #include "Teuchos_ScalarTraits.hpp"
 
 
-#ifndef DOXYGEN_DEVELOPER_ONLY
 
 namespace TSFExtendedOps
 {
@@ -217,7 +216,6 @@ using TSFExtended::LinearOperator;
 
 }
 
-#endif  /* DOXYGEN_DEVELOPER_ONLY */
 
 
 #endif

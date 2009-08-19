@@ -32,10 +32,15 @@
 
 #include "Thyra_ProductVectorSpaceBase.hpp"
 #include "TSFVectorSpaceDecl.hpp"
+#include "TSFVectorDecl.hpp"
 #include "Thyra_SpmdVectorSpaceBase.hpp"
 #include "Teuchos_Describable.hpp"
 #include "Teuchos_Time.hpp"
 #include "Teuchos_TimeMonitor.hpp"
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFSequentialIteratorImpl.hpp"
+#endif
 
 using namespace TSFExtended;
 using namespace Teuchos;

@@ -32,7 +32,7 @@
 #include "SundanceDefs.hpp"
 #include "TSFNonlinearOperatorBase.hpp"
 #include "TSFPoissonBoltzmannJacobian.hpp"
-#include "TSFVector.hpp"
+#include "TSFVectorDecl.hpp"
 
 namespace TSFExtended
 {

@@ -31,12 +31,15 @@
 
 #include "SundanceDefs.hpp"
 #include "TSFLinearCombinationDecl.hpp"
+#include "TSFNonmemberOpHelpersDecl.hpp"
+
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 #include "TSFVectorImpl.hpp"
 #include "TSFLinearOperatorImpl.hpp"
-#include "TSFNonmemberOpHelpers.hpp"
+#include "TSFNonmemberOpHelpersImpl.hpp"
+#endif
 
-
-#ifndef DOXYGEN_DEVELOPER_ONLY
 
 namespace TSFExtendedOps
 {
@@ -599,7 +602,6 @@ namespace TSFExtended
 
 }
 
-#endif  /* DOXYGEN_DEVELOPER_ONLY */
 
 
 #endif

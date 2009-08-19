@@ -30,7 +30,7 @@
 #define TSFNONLINEARSOLVERBASE_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFLinearSolverBase.hpp"
+#include "TSFLinearSolverBaseDecl.hpp"
 
 namespace TSFExtended
 {
@@ -41,7 +41,7 @@ namespace TSFExtended
    */
   template <class Scalar>
   class NonlinearSolverBase 
-    : public ObjectWithVerbosity<NonlinearSolverBase>
+    : public ObjectWithVerbosity<NonlinearSolverBase<Scalar> >
   {
   public:
     /** */
@@ -65,8 +65,7 @@ namespace TSFExtended
   template <class Scalar> inline
   NonlinearSolverBase<Scalar>
   ::NonlinearSolverBase(const ParameterList& params)
-    : params_(params);
-   
+    : params_(params)
   {;}
   
 }

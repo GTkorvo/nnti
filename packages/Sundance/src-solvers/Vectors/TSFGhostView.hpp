@@ -28,7 +28,7 @@
 #define TSFGHOSTVIEW_HPP
 
 #include "TSFAccessibleVector.hpp"
-#include "TSFVector.hpp"
+#include "TSFVectorDecl.hpp"
 
 namespace TSFExtended
 {

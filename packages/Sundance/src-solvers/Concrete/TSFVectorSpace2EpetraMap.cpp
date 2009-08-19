@@ -30,6 +30,11 @@
 #include "Teuchos_Utils.hpp"
 #include "Teuchos_DefaultSerialComm.hpp"
 
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorSpaceImpl.hpp"
+#endif
+
 #ifdef HAVE_MPI
 #include "Teuchos_DefaultMpiComm.hpp"
 #include "Epetra_MpiComm.h"

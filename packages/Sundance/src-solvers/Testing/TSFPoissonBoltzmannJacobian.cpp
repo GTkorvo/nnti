@@ -29,6 +29,11 @@
 #include "TSFPoissonBoltzmannJacobian.hpp"
 #include "TSFEpetraMatrix.hpp"
 
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#endif
 using namespace TSFExtended;
 using namespace Teuchos;
 using std::ostream;

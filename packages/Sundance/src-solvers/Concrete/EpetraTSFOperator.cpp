@@ -28,10 +28,9 @@
 
 #include "TSFEpetraMatrix.hpp"
 #include "TSFEpetraVector.hpp"
-#include "TSFVectorSpace.hpp"  // changed from Impl
- //#include "TSFVectorImpl.hpp"
-#include "TSFVector.hpp"
-#include "TSFLinearOperator.hpp"  // changed from Impl
+#include "TSFVectorSpaceDecl.hpp"  // changed from Impl
+#include "TSFVectorDecl.hpp"
+#include "TSFLinearOperatorDecl.hpp"  // changed from Impl
 #include "Teuchos_Array.hpp"
 #include "Teuchos_MPIComm.hpp"
 #include "TSFIfpackOperator.hpp"
@@ -46,6 +45,12 @@
 
 #ifdef HAVE_THYRA_EPETRA
 #include "Thyra_EpetraThyraWrappers.hpp"
+#endif
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFLinearSolverImpl.hpp"
 #endif
 
 using namespace TSFExtended;

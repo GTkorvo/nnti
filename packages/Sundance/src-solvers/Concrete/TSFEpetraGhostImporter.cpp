@@ -28,6 +28,11 @@
 #include "TSFEpetraGhostView.hpp"
 #include "TSFEpetraVector.hpp"
 
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#endif
+
 using namespace Teuchos;
 using namespace TSFExtended;
 

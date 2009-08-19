@@ -6,6 +6,14 @@
 #include "EpetraTSFOperator.hpp"
 #include "Teuchos_basic_oblackholestream.hpp"
 
+
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFLinearSolverImpl.hpp"
+#endif
+
 #ifdef HAVE_ML
 #include "ml_include.h"
 #include "ml_epetra_utils.h"
@@ -106,7 +114,7 @@ AztecSolver::AztecSolver(const ParameterList& params)
     {
       int val = getValue<int>(entry);
       options_[aztecCode] = val;
-      if (name=="Verbosity") verbosity() = (VerbositySetting) val;
+      if (name=="Verbosity") verb() = val;
     }
     else if (entry.isType<double>())
     {
@@ -170,7 +178,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   Vector<double>& soln) const
 {
   RCP<ostream> out;
-  if (verbosity()==VerbSilent)
+  if (verb()==0)
   {
     out = rcp(new oblackholestream());
   }

@@ -31,16 +31,23 @@
 
 
 #include "TSFVectorDecl.hpp"
-#include "TSFVectorSpaceDecl.hpp"
 #include "Thyra_SUNDIALS_Ops.hpp"
 #include "TSFIndexableVector.hpp"
-#include "TSFSequentialIteratorImpl.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultSpmdVector.hpp"
+#include "SundancePrintable.hpp"
 
-using namespace TSFExtended;
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorSpaceImpl.hpp"
+#include "TSFSequentialIteratorImpl.hpp"
+#endif
 
+
+using namespace SundanceUtils;
+
+namespace TSFExtended
+{
 
 //===========================================================================
 template <class Scalar> 
@@ -79,6 +86,13 @@ Vector<Scalar> Vector<Scalar>::getBlock(int i) const
 template <class Scalar> 
 void Vector<Scalar>::print(std::ostream& os) const 
 {
+
+  const Printable* p = 
+    dynamic_cast<const Printable* >(this->ptr().get());
+  if (p != 0)
+  {
+    p->print(os);
+  }
   const Thyra::ProductMultiVectorBase<Scalar>* pv = 
     dynamic_cast <const Thyra::ProductMultiVectorBase<Scalar>* >(this->ptr().get());
   if (pv != 0)
@@ -434,16 +448,6 @@ Scalar Vector<Scalar>::normInf() const
   TimeMonitor t(*opTimer());
     
   return Thyra::norm_inf(*(this->ptr)());
-}
-
-
-
-//===========================================================================
-template <class Scalar> inline 
-bool Vector<Scalar>::hasNANINF() const 
-{
-  double x = Thyra::sum(*(this->ptr)());
-  return this->finite(x);
 }
 
 
@@ -852,6 +856,6 @@ void Vector<Scalar>::boundscheck(Index i, int dim) const
 }
 
 
-
+}
 
 #endif

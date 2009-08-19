@@ -34,11 +34,15 @@
 #include "Teuchos_RefCountPtr.hpp"
 #include "TSFVectorDecl.hpp"
 #include "TSFVectorSpaceDecl.hpp"
-#include "TSFInverseOperator.hpp"
-#include "TSFBlockOperator.hpp"
+#include "TSFInverseOperatorDecl.hpp"
+#include "TSFBlockOperatorDecl.hpp"
+#include "TSFNonmemberOpHelpersDecl.hpp"
 #include "TSFVectorType.hpp"
 #include "SundanceOut.hpp"
 
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#endif
 
 
 using namespace TSFExtended;
@@ -53,13 +57,13 @@ class InverseOperator;
 //=======================================================================
 template <class Scalar>
 LinearOperator<Scalar>::LinearOperator() 
-  : Handle<LinearOpBase<Scalar, Scalar> >(), name_(), verb_(0) {;}
+  : Handle<LinearOpBase<Scalar, Scalar> >(), verb_(0) {;}
 
 
 //=======================================================================
 template <class Scalar>
 LinearOperator<Scalar>::LinearOperator(const RefCountPtr<LinearOpBase<Scalar, Scalar> >& smartPtr) 
-  : Handle<LinearOpBase<Scalar, Scalar> >(smartPtr), name_(), verb_(0) {;}
+  : Handle<LinearOpBase<Scalar, Scalar> >(smartPtr), verb_(0) {;}
 
 
 
@@ -77,7 +81,7 @@ void LinearOperator<Scalar>::apply(const Vector<Scalar>& in,
   {
     out = this->range().createMember();
   }
-  if (verb_ > 0) Out::os() << "applying op=" << name() << " with alpha="
+  if (verb_ > 0) Out::os() << "applying op=" << this->name() << " with alpha="
                               << alpha << ", beta=" << beta << " to vec ";
   if (verb_==1) Out::os() << "norm=" << in.norm2() << std::endl;
   if (verb_ > 1) Out::os() << "norm=" << in << std::endl;
@@ -85,7 +89,7 @@ void LinearOperator<Scalar>::apply(const Vector<Scalar>& in,
   this->ptr()->apply(Thyra::NONCONJ_ELE, *(in.ptr().get()),
     out.ptr().get(), alpha, beta);
 
-  if (verb_ > 0) Out::os() << "result of op=" << name() << " is ";
+  if (verb_ > 0) Out::os() << "result of op=" << this->name() << " is ";
   if (verb_==1) Out::os() << "norm=" << out.norm2() << std::endl;
   if (verb_ > 1) Out::os() << "norm=" << out << std::endl;
   
@@ -108,14 +112,14 @@ void LinearOperator<Scalar>::applyTranspose(const Vector<Scalar>& in,
   {
     out = this->domain().createMember();
   }
-  if (verb_ > 0) Out::os() << "applying op=" << name() << " transposed with alpha="
+  if (verb_ > 0) Out::os() << "applying op=" << this->name() << " transposed with alpha="
                               << alpha << ", beta=" << beta << " to vec ";
   if (verb_==1) Out::os() << "norm=" << in.norm2() << std::endl;
   if (verb_ >1) Out::os() << "norm=" << in << std::endl;
   this->ptr()->applyTranspose(Thyra::NONCONJ_ELE, *(in.ptr().get()),
     out.ptr().get(), alpha, beta);
 
-  if (verb_ > 0) Out::os() << "result of op=" << name() << " is ";
+  if (verb_ > 0) Out::os() << "result of op=" << this->name() << " is ";
   if (verb_==1) Out::os() << "norm=" << out.norm2() << std::endl;
   if (verb_ >1) Out::os() << "norm=" << out << std::endl;
 }
@@ -138,17 +142,7 @@ LinearOperator<Scalar> LinearOperator<Scalar>::transpose() const
   return op;
 }
 
-//=======================================================================
-template <class Scalar>
-LinearOperator<Scalar> 
-LinearOperator<Scalar>::inverse(const LinearSolver<Scalar>& solver,
-  const std::string& msg) const
-{
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > Ainv 
-    = rcp(new InverseOperator<Scalar>(*this, solver));
-  LinearOperator<Scalar> op = Ainv;
-  return op;
-}
+
 
 
 

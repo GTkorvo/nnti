@@ -51,6 +51,7 @@ class EpetraMatrix : virtual public EuclideanOpWithBackwardsCompatibleApply<doub
                      public LoadableMatrix<double>,
                      public RowAccessibleOp<double>,
                      public Printable,
+                     public NamedObject,
                      public ILUFactorizableOp<double>,
                      virtual public EpetraLinearOpBase
 {

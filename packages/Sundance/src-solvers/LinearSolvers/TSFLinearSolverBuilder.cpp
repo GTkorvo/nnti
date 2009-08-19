@@ -32,8 +32,17 @@
 #include "TSFBelosSolver.hpp"
 #include "TSFBICGSTABSolver.hpp"
 #include "TSFGMRESSolver.hpp"
-#include "TSFBlockTriangularSolver.hpp"
+#include "TSFNonmemberOpHelpersDecl.hpp"
+#include "TSFLinearCombinationImpl.hpp"
+#include "TSFBlockTriangularSolverDecl.hpp"
 #include "Teuchos_XMLParameterListReader.hpp"
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFLinearSolverImpl.hpp"
+#include "TSFBlockTriangularSolverImpl.hpp"
+#endif
 
 using namespace TSFExtended;
 using namespace TSFExtendedOps;

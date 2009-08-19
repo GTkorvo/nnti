@@ -72,14 +72,8 @@ public:
   /** Return the range */
   const VectorSpace<Scalar> range() const ;
 
-  /** Set a name */
-  void setName(const std::string& name) {name_ = name;}
-
   /** Set the verbosity level */
   void setVerbosity(int verb) {verb_ = verb;}
-
-  /** Return the name */
-  const std::string& name() const {return name_;}
 
   /** */
   int verbosity() const {return verb_;}
@@ -118,11 +112,6 @@ public:
    * Return a TransposeOperator.
    */
   LinearOperator<Scalar> transpose() const ; 
-
-  /**
-   * Return an InverseOperator.
-   */
-  LinearOperator<Scalar> inverse(const LinearSolver<Scalar>& solver, const std::string& msg="") const ;
 
 
   /** Operator sum */
@@ -169,7 +158,6 @@ public:
       
 
 private:
-  std::string name_;
   int verb_;
 };
 

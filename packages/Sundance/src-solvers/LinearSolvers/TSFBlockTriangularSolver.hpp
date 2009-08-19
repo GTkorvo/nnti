@@ -30,8 +30,10 @@
 #define TSFBLOCKTRIANGULARSOLVER_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFLinearSolver.hpp" 
-#include "Thyra_DefaultZeroLinearOp.hpp"
+#include "TSFLinearSolverDecl.hpp" 
+#include "TSFLinearCombinationDecl.hpp" 
+#include "TSFCommonOperatorsDecl.hpp" 
+
 
 namespace TSFExtended
 {
@@ -93,7 +95,7 @@ namespace TSFExtended
         for (int c=0; c<nCols; c++)
           {
             if (op.getBlock(r,c).ptr().get() == 0 ||
-                dynamic_cast<const DefaultZeroLinearOp<Scalar>* >(op.getBlock(r,c).ptr().get()))
+                dynamic_cast<const SimpleZeroOp<Scalar>* >(op.getBlock(r,c).ptr().get()))
               {
                 TEST_FOR_EXCEPTION(r==c, std::runtime_error,
                                    "zero diagonal block (" << r << ", " << c 

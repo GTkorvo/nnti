@@ -29,8 +29,8 @@
 #ifndef EPETRA_TSFOPERATOR_HPP
 #define EPETRA_TSFOPERATOR_HPP
 
-#include "TSFLinearOperatorImpl.hpp"
-#include "TSFLinearSolver.hpp"
+#include "TSFLinearOperatorDecl.hpp"
+#include "TSFLinearSolverDecl.hpp"
 #include "Epetra_Operator.h"
 #include "TSFVectorSpace2EpetraMap.hpp"
 

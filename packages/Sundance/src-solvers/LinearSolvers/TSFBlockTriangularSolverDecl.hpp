@@ -24,13 +24,43 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
-/* @HEADER@ */
+ /* @HEADER@ */
 
-#ifndef TSFPRODUCTVECTOR_HPP
-#define TSFPRODUCTVECTOR_HPP
+#ifndef TSFBLOCKTRIANGULARSOLVER_DECL_HPP
+#define TSFBLOCKTRIANGULARSOLVER_DECL_HPP
+
+#include "SundanceDefs.hpp"
+#include "TSFLinearSolverDecl.hpp" 
 
 
-#include "TSFProductVectorDecl.hpp"
-#include "TSFProductVectorImpl.hpp"
+namespace TSFExtended
+{
+/** */
+template <class Scalar>
+class BlockTriangularSolver : public LinearSolverBase<Scalar>,
+                              public SundanceUtils::Handleable<LinearSolverBase<Scalar> >
+{
+public:
+  /** */
+  BlockTriangularSolver(const LinearSolver<Scalar>& solver);
+
+  /** */
+  BlockTriangularSolver(const Array<LinearSolver<Scalar> >& solvers);
+
+  /** */
+  virtual ~BlockTriangularSolver(){}
+
+  /** */
+  virtual SolverState<Scalar> solve(const LinearOperator<Scalar>& op,
+    const Vector<Scalar>& rhs,
+    Vector<Scalar>& soln) const ;
+
+  /* */
+  GET_RCP(LinearSolverBase<Scalar>);
+private:
+  Array<LinearSolver<Scalar> > solvers_;
+};
+
+}
 
 #endif

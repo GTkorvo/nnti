@@ -39,6 +39,11 @@
 #endif
 
 
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorSpaceImpl.hpp"
+#endif
+
+
 
 using namespace TSFExtended;
 using namespace Teuchos;

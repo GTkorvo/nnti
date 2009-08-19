@@ -27,128 +27,36 @@
 /* @HEADER@ */
 
 
-#include "TSFProductVectorSpace.hpp"
-#include "TSFProductVector.hpp"
 
+#include "SundanceDefs.hpp"
 
-using namespace TSFExtended;
-using namespace Teuchos;
-using std::ostream;
+#ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 
+#include "TSFProductVectorSpaceImpl.hpp"
 
-//========================================================================
-template <class Scalar>
-ProductVectorSpace<Scalar>::
-  ProductVectorSpace(const Teuchos::Array<const VectorSpace<Scalar> >
-		     &vecSpaces)
-    :vecSpaces_(vecSpaces),
-     numBlocks_(vecSpaces.size()),
-     isFinal_(true)
-  {
-    isSet_.resize(vecSpaces.size());
-    finalize();
-  }
-    
+namespace TSFExtended{
 
+template 
+RCP<const Thyra::VectorSpaceBase<double> > 
+productSpace(const Teuchos::Array<TSFExtended::VectorSpace<double> >& spaces);
 
+template 
+RCP<const Thyra::VectorSpaceBase<double> > 
+productSpace(TSFExtended::VectorSpace<double>& s1);
 
-//========================================================================
-template <class Scalar>
-void ProductVectorSpace<Scalar>::finalize()
-{
-  isFinal_ = true;
-  isInCore_ = true;
-  dim_ = 0;
-  for (int i = 0; i < numBlocks_; i++)
-    {
-      TEST_FOR_EXCEPTION(vecSpaces_[i].ptr() == 0, std::runtime_error,
-			 "Vector space " << i << " not set" << endl)
-	isSet_[i] = true;
+template 
+RCP<const Thyra::VectorSpaceBase<double> > 
+productSpace(TSFExtended::VectorSpace<double>& s1, 
+  TSFExtended::VectorSpace<double>& s2);
 
-      if (!vecSpaces_[i].isInCore()) isInCore_ = false;
-      dim_ += vecSpaces_[i].dim();
-    }
+template 
+RCP<const Thyra::VectorSpaceBase<double> > 
+productSpace(
+  TSFExtended::VectorSpace<double>& s1,
+  TSFExtended::VectorSpace<double>& s2,
+  TSFExtended::VectorSpace<double>& s3);
+ 
 }
 
 
-
-//========================================================================
-template <class Scalar>
-bool ProductVectorSpace<Scalar>::operator==(const VectorSpace<Scalar> &other) 
-  const
-{
-  const ProductVectorSpace<Scalar>* otherPVS = 
-    dynamic_cast<const ProductVectorSpace<Scalar>* > (other.ptr());
-  if (otherPVS == 0)
-    {
-      return false;
-    }
-  for (int i = 0; i < numBlocks_; i++)
-    {
-      if (vecSpaces_[i] != other->getBlock(i)) 
-	{
-	  return false;
-	} 
-    }
-  return true;
-}
-
-
-
-//========================================================================
-template <class Scalar>
-bool ProductVectorSpace<Scalar>::operator!=(const VectorSpace<Scalar>& other) 
-const
-{
-  return !(operator==(other));
-}
-
-
-
-//========================================================================
-template <class Scalar>
-bool ProductVectorSpace<Scalar>::isCompatible(const VectorSpace<Scalar> 
-					      &other ) const
-{
-  const ProductVectorSpace<Scalar>* otherPVS = 
-    dynamic_cast<const ProductVectorSpace<Scalar>* > (other.ptr());
-  if (otherPVS == 0) return false;
-
-  for (int i = 0; i < numBlocks_; i++)
-    {
-      if (!vecSpaces_[i].isCompatible(other.getBlock(i)))
-	{
-	  return false;
-	}
-    }
-  return true;
-}
-
-
-
-
-
-
-
-//========================================================================
-template <class Scalar>
-void ProductVectorSpace<Scalar>::setBlock(const int i, 
-					  const VectorSpace<Scalar> &subSp)
-  {
-    TEST_FOR_EXCEPTION(vecSpace_[i] != subSp, std::runtime_error,
-		       "subspace not compatible with existing space: "
-		       << "subSp is " << subSp.description() 
-		       << " vecSpace_{i} is" << vecSpace_[i].description() 
-		       << endl);
-    vecSpace_[i] = subSp;
-  }
-  
-
-
-
-//========================================================================
-template <class Scalar>
-Vector<Scalar> ProductVectorSpace<Scalar>::createMember() const
-  {
-    return new ProductVector<Scalar>(*this);
-  }
+#endif

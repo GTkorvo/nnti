@@ -26,13 +26,19 @@
 
 #include "TSFEpetraVector.hpp"
 #include "TSFEpetraVectorSpace.hpp"
-#include "TSFVectorImpl.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_dyn_cast.hpp"
+#include "Thyra_DefaultSpmdVector.hpp"
 #ifdef HAVE_MPI
 #include "Teuchos_DefaultMpiComm.hpp"
 #endif
 #include "Teuchos_DefaultSerialComm.hpp"
+
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#endif
 
 using namespace Teuchos;
 using namespace TSFExtended;
@@ -578,6 +584,13 @@ void EpetraVector::finalizeAssembly()
   Epetra_FEVector* vec = dynamic_cast<Epetra_FEVector*>(epetraVec().get());
   vec->GlobalAssemble();
 }
+
+
+void EpetraVector::print(std::ostream& os) const 
+{
+  epetraVec()->Print(os);
+}
+
 
 const Epetra_Vector& EpetraVector::getConcrete(const TSFExtended::Vector<double>& tsfVec)
 {

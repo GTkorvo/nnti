@@ -32,7 +32,7 @@
 #include "TSFIncrementallyConfigurableMatrixFactory.hpp"
 #include "TSFCollectivelyConfigurableMatrixFactory.hpp"
 #include "TSFMatrixFactory.hpp"
-#include "TSFVectorSpace.hpp"
+#include "TSFVectorSpaceDecl.hpp"
 #include "TSFVectorType.hpp"
 #include "SundanceHandleable.hpp"
 #include "SundancePrintable.hpp"

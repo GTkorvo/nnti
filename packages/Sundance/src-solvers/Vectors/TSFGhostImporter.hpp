@@ -27,8 +27,8 @@
 #ifndef TSFGHOSTIMPORTER_HPP
 #define TSFGHOSTIMPORTER_HPP
 
-#include "TSFVector.hpp"
-#include "TSFVectorSpace.hpp"
+#include "TSFVectorDecl.hpp"
+#include "TSFVectorSpaceDecl.hpp"
 #include "TSFGhostView.hpp"
 
 namespace TSFExtended

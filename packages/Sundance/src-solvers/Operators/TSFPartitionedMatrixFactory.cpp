@@ -31,6 +31,11 @@
 #include "TSFLoadableBlockOperator.hpp"
 #include "Teuchos_MPIComm.hpp"
 
+#ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorSpaceImpl.hpp"
+#include "TSFSequentialIteratorImpl.hpp"
+#endif
+
 using namespace TSFExtended;
 using namespace Teuchos;
 

@@ -135,7 +135,7 @@ namespace TSFExtended
     /** Return the dimension of the vector  */
     int dim() const
     {
-      return this->ptr()->space().dim();
+      return this->ptr()->space()->dim();
     }
       
 
@@ -292,12 +292,6 @@ namespace TSFExtended
 
 
 
-    /** 
-     * Count the number of elements that are NAN or INF.
-     */
-    bool hasNANINF() const ;
-
-
     //@}
 
 
@@ -334,8 +328,8 @@ namespace TSFExtended
 
     /** Get a batch of elements */
     void getElements(const Index* globalIndices, int numElems,
-                     std::vector<Scalar>& elems) const 
-    {castToAccessible()->getElements(globalIndices, numElems, elems);}
+      Teuchos::Array<Scalar>& elems) const 
+      {castToAccessible()->getElements(globalIndices, numElems, elems);}
 
 
     /** const bracket operator  */
@@ -398,7 +392,6 @@ namespace TSFExtended
 
   private:
 
-#ifndef DOXYGEN_DEVELOPER_ONLY
     /** Cross-cast vector pointer to an accessible vector */
     const AccessibleVector<Scalar>* castToAccessible() const ;
 
@@ -421,7 +414,6 @@ namespace TSFExtended
     Scalar& localElement(const Index& blockIndex, const Index& indexInBlock) ;
       
       
-#endif
   };
 }
 

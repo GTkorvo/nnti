@@ -24,12 +24,45 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
-/* @HEADER@ */
+ /* @HEADER@ */
 
-#ifndef TSFLINEARSOLVERBASE_HPP
-#define TSFLINEARSOLVERBASE_HPP
+#ifndef SUNDANCE_NAMED_OBJECT_HPP
+#define SUNDANCE_NAMED_OBJECT_HPP
 
-#include "TSFLinearSolverBaseDecl.hpp"
-#include "TSFLinearSolverBaseImpl.hpp"
+#include "SundanceDefs.hpp"
+#include <string>
+
+namespace SundanceUtils
+{
+/**
+ * NamedObject provides an interface for getting and setting 
+ * names of an object.
+ *
+ * @author Kevin Long (kevin.long@ttu.edu)
+ */
+class NamedObject 
+{
+public:
+  /** */
+  NamedObject() : name_("Anonymous[]") {}
+
+  /** */
+  virtual ~NamedObject() {}
+      
+  /** */
+  void setName(const std::string& name) {name_ = name;}
+
+  /** */
+  std::string name() const 
+    {return name_;}
+
+private:
+  std::string name_;
+      
+};
+
+
+}
+
 
 #endif

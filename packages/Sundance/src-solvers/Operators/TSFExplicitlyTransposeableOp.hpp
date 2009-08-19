@@ -30,6 +30,7 @@
 #define TSFEXPLICITLYTRANSPOSEABLEOP_HPP
 
 #include "SundanceDefs.hpp"
+#include "TSFLinearOperatorDecl.hpp"
 
 
 namespace TSFExtended

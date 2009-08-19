@@ -27,7 +27,7 @@
 // @HEADER
 
 // //////////////////////////////////////////////////////////////
-// TSFProductVectorSpace.hpp
+// TSFProductVectorSpaceDecl.hpp
 
 #ifndef TSFPRODUCTVECTORSPACEDECL_HPP
 #define TSFPRODUCTVECTORSPACEDECL_HPP
@@ -40,7 +40,7 @@
 
 namespace TSFExtended
 {
-  using Teuchos::Array;
+  using Teuchos::Tuple;
   using Teuchos::RefCountPtr;
   /** */
   template <class Scalar>

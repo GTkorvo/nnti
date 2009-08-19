@@ -76,11 +76,6 @@ public:
   bool isCompatible(const VectorSpace<Scalar>& vecSpc) const; 
 
 
-  /** Tell if vectors of this space are in core  */
-  bool isInCore() const {return this->ptr()->isInCore();}
-
-   
-
   /** test equality between two spaces */
   bool operator==(const VectorSpace<Scalar>& other) const ;
 

@@ -1,6 +1,11 @@
 #include "TSF_NVector.hpp"
-#include "TSFLinearCombination.hpp"
+#include "TSFLinearCombinationDecl.hpp"
 #include "Thyra_SUNDIALS_Ops.hpp"
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearCombinationImpl.hpp"
+#endif
 
 using namespace TSFExtended;
 using namespace TSFExtendedOps;

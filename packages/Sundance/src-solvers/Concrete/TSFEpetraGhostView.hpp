@@ -63,7 +63,7 @@ namespace TSFExtended
 
       /** get the batch of elements at the given global indices */
       void getElements(const int* globalIndices, int numElems,
-                       std::vector<double>& elems) const ;
+                       Array<double>& elems) const ;
 
       /** */
       void import(const Epetra_Import& importer,

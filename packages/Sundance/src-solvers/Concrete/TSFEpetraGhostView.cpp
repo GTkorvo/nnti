@@ -27,6 +27,7 @@
 #include "TSFEpetraGhostView.hpp"
 #include "Epetra_Import.h"
 
+
 using namespace Teuchos;
 using namespace TSFExtended;
 
@@ -37,7 +38,7 @@ const double& EpetraGhostView::getElement(int globalIndex) const
 }
 
 void EpetraGhostView::getElements(const int* globalIndices, int numElems,
-                                  std::vector<double>& elems) const
+                                  Array<double>& elems) const
 {
   elems.resize(numElems);
   const Epetra_BlockMap& myMap = ghostView_->Map();

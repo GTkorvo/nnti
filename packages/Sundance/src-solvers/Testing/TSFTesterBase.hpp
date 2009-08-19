@@ -30,7 +30,7 @@
 #ifndef TSF_TESTERBASE_HPP
 #define TSF_TESTERBASE_HPP
 
-#include "TSFLinearOperator.hpp"
+#include "TSFLinearOperatorDecl.hpp"
 #include "Thyra_TestSpecifier.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 

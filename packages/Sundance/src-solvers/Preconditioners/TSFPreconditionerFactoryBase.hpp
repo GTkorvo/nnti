@@ -30,8 +30,8 @@
 #define TSFPRECONDITIONERFACTORYBASE_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFVector.hpp"
-#include "TSFLinearOperator.hpp"
+#include "TSFVectorDecl.hpp"
+#include "TSFLinearOperatorDecl.hpp"
 #include "TSFPreconditioner.hpp"
 #include "Teuchos_ParameterList.hpp"
 

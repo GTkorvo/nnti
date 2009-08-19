@@ -31,7 +31,9 @@
 
 #include "SundanceDefs.hpp"
 #include "TSFOpWithBackwardsCompatibleApply.hpp"
-#include "TSFLinearOperatorImpl.hpp"
+#include "TSFLinearOperatorDecl.hpp"
+#include "TSFVectorDecl.hpp"
+
 
 
 

@@ -30,8 +30,8 @@
 #ifndef TSF_VECTORTESTER_HPP
 #define TSF_VECTORTESTER_HPP
 
-#include "TSFVector.hpp"
-#include "TSFProductVectorSpace.hpp"
+#include "TSFVectorDecl.hpp"
+#include "TSFProductVectorSpaceDecl.hpp"
 #include "Thyra_TestSpecifier.hpp"
 #include "Thyra_SUNDIALS_Ops.hpp"
 #include "Teuchos_ScalarTraits.hpp"

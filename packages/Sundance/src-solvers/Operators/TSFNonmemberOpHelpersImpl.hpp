@@ -26,12 +26,12 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFNONMEMBEROPHELPERS_HPP
-#define TSFNONMEMBEROPHELPERS_HPP
+#ifndef TSFNONMEMBEROPHELPERS_IMPL_HPP
+#define TSFNONMEMBEROPHELPERS_IMPL_HPP
 
 
-#include "TSFLinearOperatorImpl.hpp"
 #include "TSFMultiVectorOperator.hpp"
+#include "TSFCommonOperatorsDecl.hpp"
 #include "Thyra_DefaultZeroLinearOp.hpp"
 #include "Thyra_DefaultDiagonalLinearOp.hpp"
 #include "Thyra_DefaultAddedLinearOp.hpp"
@@ -40,33 +40,39 @@
 #include "Thyra_DefaultIdentityLinearOp.hpp"
 #include "SundanceOut.hpp"
 
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFCommonOperatorsImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#endif
+
 namespace TSFExtended
 {
 
-template <class Scalar>
+template <class Scalar> inline
 LinearOperator<Scalar> zeroOperator(
   const VectorSpace<Scalar>& domain,
   const VectorSpace<Scalar>& range)
 {
   RefCountPtr<LinearOpBase<Scalar, Scalar> > op 
-    = rcp(new DefaultZeroLinearOp<Scalar>(range.ptr(), domain.ptr()));
+    = rcp(new SimpleZeroOp<Scalar>(domain, range));
 
   return op;
 }
 
 
-template <class Scalar>
+template <class Scalar> inline
 LinearOperator<Scalar> identityOperator(
   const VectorSpace<Scalar>& space)
 {
   RefCountPtr<LinearOpBase<Scalar, Scalar> > op 
-    = rcp(new DefaultIdentityLinearOp<Scalar>(space.ptr()));
+    = rcp(new SimpleIdentityOp<Scalar>(space));
 
   return op;
 }
 
 
-template <class Scalar>
+template <class Scalar> inline
 LinearOperator<Scalar> diagonalOperator(
   const Vector<Scalar>& vec)
 {
@@ -78,91 +84,85 @@ LinearOperator<Scalar> diagonalOperator(
 
 
 
-template <class Scalar>
+template <class Scalar> inline
 LinearOperator<Scalar> composedOperator(
   const Array<LinearOperator<Scalar> >& ops)
 {
-  Array<RefCountPtr<LinearOpBase<Scalar, Scalar> > > ptrs;
+  /* We will strip out any identity operators, and if we find a zero
+  * operator the whole works becomes a zero operator */ 
+  Array<LinearOperator<Scalar> > strippedOps;
 
   for (unsigned int i=0; i<ops.size(); i++)
   {
     LinearOperator<Scalar> op_i = ops[i];
 
-    const MultipliedLinearOpBase<Scalar>* constMultOp 
-      = dynamic_cast<const MultipliedLinearOpBase<Scalar>* >(op_i.ptr().get());
-    MultipliedLinearOpBase<Scalar>* multOp 
-      = dynamic_cast<MultipliedLinearOpBase<Scalar>* >(op_i.ptr().get());
-    if (multOp==0 && constMultOp==0) /* is not a MultipliedLinearOpBase */
+    /* if a factor is zero, the whole operator is
+     * a zero operator */
+    const SimpleZeroOp<Scalar>* zPtr 
+      = dynamic_cast<const SimpleZeroOp<Scalar>*>(op_i.ptr().get());
+
+    if (zPtr != 0) 
     {
-      ptrs.append(op_i.ptr());
+      VectorSpace<Scalar> r = ops[0].range();
+      VectorSpace<Scalar> d = ops[ops.size()-1].domain();
+      return zeroOperator(d, r);
     }
-    else if (constMultOp!=0) /* is a const MultipliedLinearOpBase */
+
+    /* if a factor is the identity, skip it */
+    const SimpleIdentityOp<Scalar>* IPtr 
+      = dynamic_cast<const SimpleIdentityOp<Scalar>*>(op_i.ptr().get());  
+    if (IPtr != 0) 
     {
-      multOp = const_cast<MultipliedLinearOpBase<Scalar>* >(constMultOp);
-      ptrs.append(op_i.ptr());
+      continue;
     }
-    else if (multOp!=0) /* is a MultipliedLinearOpBase */
-    {
-      int n = multOp->numOps();
-      for (int k=0; k<n; k++)
-      {
-        RefCountPtr<LinearOpBase<Scalar, Scalar> > A = multOp->getNonconstOp(k);
-        ptrs.append(A);
-      }
-    }
+
+    strippedOps.append(op_i);
   }
   
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > op 
-    = rcp(new DefaultMultipliedLinearOp<Scalar>(ptrs.size(), &(ptrs[0])));
-
+  TEST_FOR_EXCEPT(strippedOps.size() < 1U);
+  if (strippedOps.size()==1U) return strippedOps[0];
+  
+  RCP<LinearOpBase<Scalar,Scalar> > op 
+    = rcp(new SimpleComposedOp<Scalar>(strippedOps));
   return op;
 }
 
 
 
 
-template <class Scalar>
+
+template <class Scalar> inline
 LinearOperator<Scalar> addedOperator(
   const Array<LinearOperator<Scalar> >& ops)
 {
-  Array<RefCountPtr<LinearOpBase<Scalar, Scalar> > > ptrs;
+  /* We will strip out any zero operators */
+  Array<LinearOperator<Scalar> > strippedOps;
 
   for (unsigned int i=0; i<ops.size(); i++)
   {
     LinearOperator<Scalar> op_i = ops[i];
 
-    const AddedLinearOpBase<Scalar>* constAddedOp 
-      = dynamic_cast<const AddedLinearOpBase<Scalar>* >(op_i.ptr().get());
-    AddedLinearOpBase<Scalar>* addedOp 
-      = dynamic_cast<AddedLinearOpBase<Scalar>* >(op_i.ptr().get());
-    if (addedOp==0 && constAddedOp==0) /* is not a AddedLinearOpBase */
-    {
-      ptrs.append(op_i.ptr());
-    }
-    else if (constAddedOp!=0) /* is a const AddedLinearOpBase */
-    {
-      TEST_FOR_EXCEPT(true);
-    }
-    else if (addedOp!=0) /* is a AddedLinearOpBase */
-    {
-      int n = addedOp->numOps();
-      for (int k=0; k<n; k++)
-      {
-        RefCountPtr<LinearOpBase<Scalar, Scalar> > A = addedOp->getNonconstOp(k);
-        ptrs.append(A);
-      }
-    }
+    /* Ignore any zero operators */
+    const SimpleZeroOp<Scalar>* zPtr 
+      = dynamic_cast<const SimpleZeroOp<Scalar>*>(op_i.ptr().get());
+
+    if (zPtr != 0) continue;
+
+    strippedOps.append(op_i);
   }
   
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > op 
-    = rcp(new DefaultAddedLinearOp<Scalar>(ptrs.size(), &(ptrs[0])));
-
+  TEST_FOR_EXCEPT(strippedOps.size() < 1U);
+  if (strippedOps.size()==1U) return strippedOps[0];
+  
+  RCP<LinearOpBase<Scalar,Scalar> > op 
+    = rcp(new SimpleAddedOp<Scalar>(strippedOps));
+  
   return op;
 }
 
 
 
-template <class Scalar>
+template <class Scalar> inline
 LinearOperator<Scalar> scaledOperator(
   const Scalar& scale,
   const LinearOperator<Scalar>& op)
@@ -175,7 +175,7 @@ LinearOperator<Scalar> scaledOperator(
 
 
 
-template <class Scalar>
+template <class Scalar> inline
 LinearOperator<Scalar> scaledTransposedOperator(
   const Scalar& scale,
   const LinearOperator<Scalar>& op)
@@ -188,18 +188,40 @@ LinearOperator<Scalar> scaledTransposedOperator(
 
 
 
-template <class Scalar>
+template <class Scalar> inline
 LinearOperator<Scalar> transposedOperator(
   const LinearOperator<Scalar>& op)
 {
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > A
-    = rcp(new DefaultScaledAdjointLinearOp<Scalar>(Teuchos::ScalarTraits<Scalar>::one(), Thyra::TRANS, op.ptr()));
 
+  /* If the operator is a transpose, return the untransposed op */
+  const SimpleTransposedOp<Scalar>* tPtr
+    = dynamic_cast<const SimpleTransposedOp<Scalar>*>(op.ptr().get());
+  if (tPtr)
+  {
+    return tPtr->op();
+  }
+
+  /* If the operator is zero, return a transposed zero */
+  const SimpleZeroOp<Scalar>* zPtr 
+    = dynamic_cast<const SimpleZeroOp<Scalar>*>(op.ptr().get());
+
+  if (zPtr != 0) 
+  {
+    VectorSpace<Scalar> r = op.range();
+    VectorSpace<Scalar> d = op.domain();
+    return zeroOperator(r, d);
+  }
+
+
+  /* Return a transposed operator */
+  RefCountPtr<LinearOpBase<Scalar, Scalar> > A
+    = rcp(new SimpleTransposedOp<Scalar>(op));
+      
   return A;
 }
 
   
-template <class Scalar>
+template <class Scalar> inline
 LinearOperator<Scalar> multiVectorOperator(
   const Teuchos::Array<Vector<Scalar> >& cols,
   const VectorSpace<Scalar>& domain)

@@ -28,8 +28,8 @@
 #define TSF_NVECTOR_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFVector.hpp"
-#include "TSFVectorSpace.hpp"
+#include "TSFVectorDecl.hpp"
+#include "TSFVectorSpaceDecl.hpp"
 
 #ifdef HAVE_SUNDIALS
 #include "nvector.h"

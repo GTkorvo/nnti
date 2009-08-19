@@ -32,6 +32,13 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src-utils/Utilities)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Vectors)
 
+
+APPEND_SET(HEADERS)
+
+APPEND_SET(SOURCES)
+
+
+
 APPEND_SET(HEADERS
   Vectors/RTOpPack_SUNDIALS_Helpers.hpp
   Vectors/RTOpPack_SUNDIALS_Ops.hpp
@@ -42,28 +49,29 @@ APPEND_SET(HEADERS
   Vectors/TSFIndexableVector.hpp
   Vectors/TSFLoadableBlockVector.hpp
   Vectors/TSFLoadableVector.hpp
-  Vectors/TSFLinearCombination.hpp
   Vectors/TSFLinearCombinationDecl.hpp
   Vectors/TSFLinearCombinationImpl.hpp
   Vectors/TSFAccessibleVector.hpp
-  Vectors/TSFProductVectorSpace.hpp
   Vectors/TSFProductVectorSpaceDecl.hpp
   Vectors/TSFProductVectorSpaceImpl.hpp
-  Vectors/TSFProductVector.hpp
-  Vectors/TSFProductVectorDecl.hpp
-  Vectors/TSFProductVectorImpl.hpp
   Vectors/TSFRawDataAccessibleVector.hpp
   Vectors/TSFSequentialIteratorDecl.hpp
   Vectors/TSFSequentialIteratorImpl.hpp
-  Vectors/TSFVector.hpp
   Vectors/TSFVectorDecl.hpp
   Vectors/TSFVectorImpl.hpp
-  Vectors/TSFVectorSpace.hpp
   Vectors/TSFVectorSpaceDecl.hpp
   Vectors/TSFVectorSpaceImpl.hpp
   Vectors/TSFVectorType.hpp
   Vectors/TSFVectorTypeExtensions.hpp
   )
+
+
+APPEND_SET(SOURCES
+  Vectors/TSFProductVectorSpace.cpp
+  Vectors/TSFSequentialIterator.cpp
+  Vectors/TSFVector.cpp
+  Vectors/TSFVectorSpace.cpp
+)
 
 
 
@@ -116,19 +124,20 @@ APPEND_SET(HEADERS
   Operators/Thyra_DefaultBlockOperatorDecl.hpp
   Operators/Thyra_DefaultBlockOperatorImpl.hpp
   Operators/Thyra_SetableBlockOperatorBase.hpp
-  Operators/TSFBlockOperator.hpp
   Operators/TSFBlockOperatorDecl.hpp
   Operators/TSFBlockOperatorImpl.hpp
   Operators/TSFCollectivelyConfigurableMatrixFactory.hpp
+  Operators/TSFCommonOperatorsDecl.hpp
+  Operators/TSFCommonOperatorsImpl.hpp
   Operators/TSFEuclideanOpWithBackwardsCompatibleApply.hpp
   Operators/TSFExplicitlyTransposeableOp.hpp
   Operators/TSFExplicitlyTransposedLTIProblemFactory.hpp
   Operators/TSFHomogeneouslyBlockedLinearOp.hpp
   Operators/TSFILUFactorizableOp.hpp
   Operators/TSFIncrementallyConfigurableMatrixFactory.hpp
-  Operators/TSFInverseOperator.hpp
+  Operators/TSFInverseOperatorDecl.hpp
+  Operators/TSFInverseOperatorImpl.hpp
   Operators/TSFInverseLTIOp.hpp
-  Operators/TSFLinearOperator.hpp
   Operators/TSFLinearOperatorDecl.hpp
   Operators/TSFLinearOperatorImpl.hpp
   Operators/TSFLoadableBlockOperator.hpp
@@ -139,7 +148,8 @@ APPEND_SET(HEADERS
   Operators/TSFMultiVectorOperator.hpp
   Operators/TSFNonlinearOperator.hpp
   Operators/TSFNonlinearOperatorBase.hpp
-  Operators/TSFNonmemberOpHelpers.hpp
+  Operators/TSFNonmemberOpHelpersDecl.hpp
+  Operators/TSFNonmemberOpHelpersImpl.hpp
   Operators/TSFOpWithBackwardsCompatibleApply.hpp
   Operators/TSFPartitionedMatrixFactory.hpp
   Operators/TSFPartitionedToMonolithicConverter.hpp
@@ -148,6 +158,10 @@ APPEND_SET(HEADERS
   )
 
 APPEND_SET(SOURCES
+  Operators/TSFBlockOperator.cpp
+  Operators/TSFCommonOperators.cpp
+  Operators/TSFInverseOperator.cpp
+  Operators/TSFLinearOperator.cpp
   Operators/TSFPartitionedMatrixFactory.cpp
   )
 
@@ -164,16 +178,15 @@ APPEND_SET(HEADERS
   LinearSolvers/TSFAztecSolver.hpp
   LinearSolvers/TSFBelosSolver.hpp
   LinearSolvers/TSFBICGSTABSolver.hpp
-  LinearSolvers/TSFBlockTriangularSolver.hpp
+  LinearSolvers/TSFBlockTriangularSolverDecl.hpp
+  LinearSolvers/TSFBlockTriangularSolverImpl.hpp
   LinearSolvers/TSFEigensolver.hpp
   LinearSolvers/TSFEigensolverBase.hpp
   LinearSolvers/TSFGMRESSolver.hpp
   LinearSolvers/TSFIterativeSolver.hpp
   LinearSolvers/TSFKrylovSolver.hpp
-  LinearSolvers/TSFLinearSolver.hpp
   LinearSolvers/TSFLinearSolverDecl.hpp
   LinearSolvers/TSFLinearSolverImpl.hpp
-  LinearSolvers/TSFLinearSolverBase.hpp
   LinearSolvers/TSFLinearSolverBaseDecl.hpp
   LinearSolvers/TSFLinearSolverBaseImpl.hpp
   LinearSolvers/TSFLinearSolverBuilder.hpp
@@ -184,6 +197,9 @@ APPEND_SET(SOURCES
   LinearSolvers/TSFAmesosSolver.cpp
   LinearSolvers/TSFAztecSolver.cpp
   LinearSolvers/TSFBelosSolver.cpp
+  LinearSolvers/TSFBlockTriangularSolver.cpp
+  LinearSolvers/TSFLinearSolver.cpp
+  LinearSolvers/TSFLinearSolverBase.cpp
   LinearSolvers/TSFLinearSolverBuilder.cpp
   )
 

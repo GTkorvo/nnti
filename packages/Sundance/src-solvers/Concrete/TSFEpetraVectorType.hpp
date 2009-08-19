@@ -32,7 +32,7 @@
 #include "SundancePrintable.hpp"
 #include "Teuchos_Describable.hpp"
 #include "TSFVectorTypeExtensions.hpp"
- //#include "TSFLinearOperator.hpp"
+ //#include "TSFLinearOperatorDecl.hpp"
 
 
 namespace TSFExtended

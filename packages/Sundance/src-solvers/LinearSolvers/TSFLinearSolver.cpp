@@ -26,12 +26,14 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFVECTORSPACE_HPP
-#define TSFVECTORSPACE_HPP
+
+#include "SundanceDefs.hpp"
+
+#ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+
+#include "TSFLinearSolverImpl.hpp"
 
 
-#include "TSFVectorSpaceDecl.hpp"
-#include "TSFVectorSpaceImpl.hpp"
-#include "TSFSequentialIteratorImpl.hpp"
+template class TSFExtended::LinearSolver<double>;
 
 #endif

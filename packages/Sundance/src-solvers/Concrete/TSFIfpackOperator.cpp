@@ -31,6 +31,12 @@
 #include "Teuchos_MPIComm.hpp"
 #include "TSFEpetraVector.hpp"
 
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#endif
+
 using namespace TSFExtended;
 using namespace Teuchos;
 

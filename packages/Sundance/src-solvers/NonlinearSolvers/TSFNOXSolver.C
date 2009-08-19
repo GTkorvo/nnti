@@ -38,6 +38,11 @@
 #include "Teuchos_Time.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#endif
+
 
 using namespace NOX;
 using namespace NOX::TSF;

@@ -35,6 +35,12 @@
 #include "NOX_Utils.H"
 #include "NOX_Random.H" // for Random class
 
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#endif
+
+using namespace Teuchos;
 
 NOX::TSF::Vector::Vector(const NOX::TSF::Vector& source, 
 			 NOX::CopyType type)
@@ -257,7 +263,7 @@ NOX::Abstract::Vector* NOX::TSF::Vector::clone(NOX::CopyType type) const
   return new NOX::TSF::Vector(*this, type);
 }
 #else
-RefCountPtr<NOX::Abstract::Vector> NOX::TSF::Vector::clone(NOX::CopyType type) const
+RCP<NOX::Abstract::Vector> NOX::TSF::Vector::clone(NOX::CopyType type) const
 {
   return rcp(new NOX::TSF::Vector(*this, type));
 }

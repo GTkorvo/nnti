@@ -24,7 +24,7 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
-/* @HEADER@ */
+ /* @HEADER@ */
 
 #ifndef TSFLINEARSOLVERBASEIMPL_HPP
 #define TSFLINEARSOLVERBASEIMPL_HPP
@@ -38,7 +38,8 @@
 using namespace Teuchos;
 
 
-
+namespace TSFExtended
+{
 
 template <class Scalar> inline
 const ParameterList& LinearSolverBase<Scalar>::parameters() const 
@@ -69,13 +70,13 @@ string LinearSolverBase<Scalar>::verbosityParam() {return "Verbosity";}
 template <class Scalar>
 template <typename T> inline
 void LinearSolverBase<Scalar>::setParameter(const ParameterList& params,
-                                            T* dataPtr,
-                                            const string& name)
+  T* dataPtr,
+  const string& name)
 {
   if (!params.isParameter(name)) return;
 
   TEST_FOR_EXCEPTION(!params.template isType<T>(name), std::runtime_error,
-                     "invalid type for parameter [" << name << "]"); 
+    "invalid type for parameter [" << name << "]"); 
 
   *dataPtr = params.template get<T>(name);
 }
@@ -84,8 +85,8 @@ template <class Scalar> inline
 void LinearSolverBase<Scalar>::setUserPrec(const PreconditionerFactory<Scalar>& pf)
 {
   TEST_FOR_EXCEPTION(true, std::runtime_error,
-                     "User-defined preconditioning not allowed for generic "
-		     "linear solver subtypes");
+    "User-defined preconditioning not allowed for generic "
+    "linear solver subtypes");
 }
 
 template <class Scalar> inline
@@ -93,8 +94,10 @@ void LinearSolverBase<Scalar>::setUserPrec(const LinearOperator<Scalar>& P,
   const LinearSolver<Scalar>& pSolver)
 {
   TEST_FOR_EXCEPTION(true, std::runtime_error,
-                     "User-defined preconditioning not allowed for generic "
-		     "linear solver subtypes");
+    "User-defined preconditioning not allowed for generic "
+    "linear solver subtypes");
+}
+
 }
 
 #endif

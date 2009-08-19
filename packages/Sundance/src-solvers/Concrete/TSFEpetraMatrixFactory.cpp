@@ -29,11 +29,17 @@
 #include "TSFEpetraMatrixFactory.hpp"
 #include "TSFEpetraMatrix.hpp"
 #include "TSFEpetraVector.hpp"
-#include "TSFVectorSpace.hpp"  
-#include "TSFVector.hpp"
+#include "TSFVectorSpaceDecl.hpp"  
+#include "TSFVectorDecl.hpp"
 #include "Teuchos_Array.hpp"
 #include "Teuchos_MPIComm.hpp"
-#include "TSFLinearOperator.hpp"
+#include "TSFLinearOperatorDecl.hpp"
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFVectorImpl.hpp"
+#endif
+
 
 using namespace TSFExtended;
 using namespace Teuchos;

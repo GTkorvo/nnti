@@ -26,97 +26,17 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#include "TSFVectorSpace.hpp"
 
 
-using namespace TSFExtended;
-using namespace Teuchos;
-using std::ostream;
+#include "SundanceDefs.hpp"
 
+#ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 
-//========================================================================
-template <class Scalar>
-bool VectorSpace<Scalar>::operator==(const VectorSpace<Scalar>& other) const 
-{
-  const DescribableByTypeID<Scalar> *descrOther = 
-    dynamic_cast<const DescribableByTypeID<Scalar>* > other;
-  TEST_FOR_EXCEPTION(descOther == 0, std::runtime_error,
-		     "Operator not describable; "
-		     << "hence not testable for equality" << endl);
-  if (descOther->typeName() != this->ptr()->typeName() || other.dim() != this->dim()
-      || other.isInCore() != this->ptr()->isIncore())
-    {
-      return false;
-    }
-  return true;
-  
-}
+#include "TSFVectorSpaceImpl.hpp"
 
+template class TSFExtended::VectorSpace<double>;
 
-//========================================================================
-template <class Scalar>
-bool VectorSpace<Scalar>::operator!=(const VectorSpace<Scalar>& other) const 
-{
-  return !(operator==(other));
-}
-    
-
-
-
-//========================================================================
-template <class Scalar>
-bool VectorSpace<Scalar>::contains(const Vector<Scalar> &vec)
-{
-  return (operator==(vec.space()));
-}
-
-
-//========================================================================
-template <class Scalar>
-int VectorSpace<Scalar>::numBlocks() const
-{
-  ProductVectorSpacs<Scalar> pvs = 
-    dynamic_cast<ProductVectorSpacs<Scalar> > *(this->ptr)();
-  TEST_FOR_EXCEPTION(pvs == 0, std::runtime_error,
-		     "Space not a ProductVectorSpace" << endl);
-  return pvs.numBlocks();
-}
-
-
-
-//========================================================================
-template <class Scalar>
-VectorSpace<Scalar> VectorSpace<Scalar>::getBlock(const int i)
-{
-  ProductVectorSpacs<Scalar> pvs = 
-    dynamic_cast<ProductVectorSpacs<Scalar> > *(this->ptr)();
-  TEST_FOR_EXCEPTION(pvs == 0, std::runtime_error,
-		     "Space not a ProductVectorSpace" << endl);
-  return pvs.getBlock(i);
-}
-
-
-
-//========================================================================
-template <class Scalar>
-string VectorSpace<Scalar>::description()
-{
-  return describe(0);
-}
-
-
-//========================================================================
-template <class Scalar>
-string VectorSpace<Scalar>::describe(const int depth)
-{
-  DescribableByTypeID<Scalar> descr = 
-    dynamic_cast<DescribableByTypeID<Scalar> > *(this->ptr)();
-  if (descr != 0)
-    {
-      return this->ptr()->describe(depth);
-    }
-  return "Space not describable \n";
-}
+#endif
 
 
 

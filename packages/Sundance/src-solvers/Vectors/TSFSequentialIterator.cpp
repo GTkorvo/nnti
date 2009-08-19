@@ -1,4 +1,3 @@
-/* @HEADER@ */
 /* ***********************************************************************
 // 
 //           TSFExtended: Trilinos Solver Framework Extended
@@ -24,13 +23,15 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
-/* @HEADER@ */
-
-#ifndef TSFPRODUCTVECTORSPACE_HPP
-#define TSFPRODUCTVECTORSPACE_HPP
+ /* @HEADER@ */
 
 
-#include "TSFProductVectorSpaceDecl.hpp"
-#include "TSFProductVectorSpaceImpl.hpp"
+#include "SundanceDefs.hpp"
+
+#ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+
+#include "TSFSequentialIteratorImpl.hpp"
+
+template class TSFExtended::SequentialIterator<double>;
 
 #endif

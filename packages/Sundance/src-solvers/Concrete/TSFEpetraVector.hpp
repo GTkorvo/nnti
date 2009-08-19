@@ -30,12 +30,12 @@
 #include "SundanceDefs.hpp"
 #include "SundancePrintable.hpp"
 #include "TSFIndexableVector.hpp"
+#include "TSFVectorDecl.hpp"
 #include "TSFRawDataAccessibleVector.hpp"
 #include "Thyra_VectorDefaultBase.hpp"
 #include "Epetra_FEVector.h"
 #include "Epetra_Vector.h"
 #include "TSFEpetraVectorSpace.hpp"
-#include "TSFVectorImpl.hpp"
 
 
 namespace TSFExtended
@@ -51,7 +51,8 @@ using namespace Teuchos;
  */
 class EpetraVector : public Thyra::VectorDefaultBase<double>,
                      public IndexableVector<double>,
-                     public RawDataAccessibleVector<double>
+                     public RawDataAccessibleVector<double>,
+                     public SundanceUtils::Printable
 {
 public:
 
@@ -160,6 +161,12 @@ public:
   /** */
   void getElements(const Index* globalIndices, int numElems,
     Teuchos::Array<double>& elems) const ;
+  //@}
+
+  /** \name Printable interface */
+  //@{
+  /** Print to a stream */
+  void print(std::ostream& os) const ;
   //@}
       
 

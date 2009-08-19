@@ -26,14 +26,14 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFVECTOR_HPP
-#define TSFVECTOR_HPP
 
- /* dummy comment for testing CVS */
- /* another dummy comment for testing CVS */
+#include "SundanceDefs.hpp"
 
-#include "TSFVectorDecl.hpp"
-#include "TSFVectorImpl.hpp"
+#ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+
+#include "TSFBlockTriangularSolverImpl.hpp"
+
+
+template class TSFExtended::BlockTriangularSolver<double>;
 
 #endif
-

@@ -30,12 +30,13 @@
 #ifndef TSFOPERATORBUILDER_HPP
 #define TSFOPERATORBUILDER_HPP
 
-#include "TSFLinearOperator.hpp"
-#include "TSFLinearCombination.hpp"
+#include "TSFLinearOperatorDecl.hpp"
+#include "TSFLinearCombinationDecl.hpp"
 #include "TSFVectorType.hpp"
-#include "TSFVectorSpace.hpp"
+#include "TSFVectorSpaceDecl.hpp"
 #include "Teuchos_Array.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
+
 
 using namespace TSFExtended;
 using namespace Teuchos;

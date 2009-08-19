@@ -30,7 +30,7 @@
 #define TSFSEQUENTIALITERATORDECL_HPP
 
 #include "SundanceDefs.hpp"
-#include "Teuchos_RefCountPtr.hpp"
+#include "Thyra_OperatorVectorTypes.hpp"
 
 namespace TSFExtended
 {
@@ -100,7 +100,7 @@ private:
 
   /* This is odd but necessary: we store the VectorSpace handle in an RCP
    * because we can only forward declare VectorSpace at this point. */
-  RefCountPtr<VectorSpace<Scalar> > space_;
+  RCP<VectorSpace<Scalar> > space_;
   Index blockIndex_;
   Index indexInCurrentBlock_;
   Index globalIndex_;

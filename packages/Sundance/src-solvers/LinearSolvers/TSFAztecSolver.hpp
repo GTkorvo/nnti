@@ -30,7 +30,7 @@
 #define TSFAZTECSOLVER_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFLinearSolverBase.hpp"
+#include "TSFLinearSolverBaseDecl.hpp"
 #include "SundanceHandleable.hpp"
 #include "SundancePrintable.hpp"
 #include "Teuchos_Describable.hpp"

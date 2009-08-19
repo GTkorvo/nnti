@@ -31,13 +31,21 @@
 #define TSFBLOCKOPERATORIMPL_HPP
 
 
+
+
+#include "TSFBlockOperatorDecl.hpp"
 #include "TSFProductVectorSpaceDecl.hpp"
-#include "Thyra_DefaultBlockOperatorImpl.hpp"
-#include "TSFLinearCombination.hpp"
-#include "TSFNonmemberOpHelpers.hpp"
+#include "TSFVectorSpaceDecl.hpp"
+#include "Thyra_DefaultBlockOperatorDecl.hpp"
+#include "TSFNonmemberOpHelpersDecl.hpp"
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFNonmemberOpHelpersImpl.hpp"
+#include "TSFCommonOperatorsImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#endif
 
 using namespace TSFExtended;
-using namespace TSFExtendedOps;
 using namespace Teuchos;
 using std::ostream;
 
@@ -126,21 +134,6 @@ void BlockOperator<Scalar>::getRow(const int& row,
 
 /*==================================================================*/
 
-
-template <class Scalar> inline
-std::ostream& BlockOperator<Scalar>
-::describe(
-  std::ostream                         &out
-  ,const Teuchos::EVerbosityLevel      verbLevel
-  ,const std::string                   leadingIndent
-  ,const std::string                   indentSpacer
-  ) const
-{
-  return DefaultBlockOperator<Scalar, Scalar>::describe(out,
-    verbLevel,
-    leadingIndent,
-    indentSpacer);
-}
 
 template <class Scalar>
 inline void BlockOperator<Scalar>

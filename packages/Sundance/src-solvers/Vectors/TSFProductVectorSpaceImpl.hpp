@@ -26,27 +26,24 @@
 // **********************************************************************/
  /* @HEADER@ */
 
+
 #ifndef TSFPRODUCTVECTORSPACEIMPL_HPP
 #define TSFPRODUCTVECTORSPACEIMPL_HPP
 
-#include "TSFProductVectorDecl.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "TSFVectorSpaceDecl.hpp"
  
 using namespace TSFExtended;
 using namespace Teuchos;
 using std::ostream;
 
-#ifndef TRILINOS_6
-#define ProductVectorSpace DefaultProductVectorSpace
-#endif
 
 namespace TSFExtended
 {
-using Teuchos::Array;
-using Teuchos::RefCountPtr;
+
 /** */
-template <class Scalar>
-Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+template <class Scalar> inline
+Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
 productSpace(const Array<VectorSpace<Scalar> >& spaces)
 {
   Array<RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > > data(spaces.size());
@@ -54,41 +51,43 @@ productSpace(const Array<VectorSpace<Scalar> >& spaces)
   {
     data[i] = spaces[i].ptr();
   }
-  return rcp(new Thyra::ProductVectorSpace<Scalar>(data.size(), &(data[0])));
+  return rcp(new Thyra::DefaultProductVectorSpace<Scalar>(data.size(), &(data[0])));
 }
-
-#ifndef TRILINOS_8
-template <class Scalar, int N>
-Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
-productSpace(const Tuple<VectorSpace<Scalar> , N>& spaces)
-{return productSpace(Array<VectorSpace<Scalar> >(spaces));}
-#endif
 
 
 /** */
-template <class Scalar>
-Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+template <class Scalar> inline
+Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
 productSpace(VectorSpace<Scalar>& s1)
 {
-  return productSpace(tuple(s1));
+  Array<VectorSpace<Scalar> > s;
+  s.append(s1);
+  return productSpace(s);
 }
 
 /** */
-template <class Scalar>
-Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+template <class Scalar> inline
+Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
 productSpace(VectorSpace<Scalar>& s1, 
   VectorSpace<Scalar>& s2)
 {
-  return productSpace(tuple(s1, s2));
+  Array<VectorSpace<Scalar> > s;
+  s.append(s1);
+  s.append(s2);
+  return productSpace(s);
 }
 
 /** */
-template <class Scalar>
-Teuchos::RefCountPtr<const VectorSpaceBase<Scalar> > 
+template <class Scalar> inline
+Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
 productSpace(VectorSpace<Scalar>& s1,VectorSpace<Scalar>& s2,
   VectorSpace<Scalar>& s3)
 {
-  return productSpace(tuple(s1, s2, s3));
+  Array<VectorSpace<Scalar> > s;
+  s.append(s1);
+  s.append(s2);
+  s.append(s3);
+  return productSpace(s);
 }
 
   
@@ -98,7 +97,6 @@ productSpace(VectorSpace<Scalar>& s1,VectorSpace<Scalar>& s2,
 
 
 
-#undef ProductVectorSpace
 
 
 #endif

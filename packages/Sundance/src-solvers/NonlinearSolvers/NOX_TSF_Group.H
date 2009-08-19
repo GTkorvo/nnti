@@ -39,9 +39,9 @@
 #include "NOX_Common.H"             // class data element (string)
 #include "NOX_TSF_Vector.H"	    // class data element
 #include "TSFVectorType.hpp"
-#include "TSFVectorSpace.hpp"
-#include "TSFLinearSolver.hpp"
-#include "TSFLinearOperator.hpp"
+#include "TSFVectorSpaceDecl.hpp"
+#include "TSFLinearSolverDecl.hpp"
+#include "TSFLinearOperatorDecl.hpp"
 #include "SundanceObjectWithVerbosity.hpp"
 #include "TSFNonlinearOperator.hpp" // nonlinear operator
 

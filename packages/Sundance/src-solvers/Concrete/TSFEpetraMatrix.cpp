@@ -28,19 +28,25 @@
 
 #include "TSFEpetraMatrix.hpp"
 #include "TSFEpetraVector.hpp"
-#include "TSFVectorSpace.hpp"  // changed from Impl
- //#include "TSFVectorImpl.hpp"
-#include "TSFVector.hpp"
-#include "TSFLinearOperator.hpp"  // changed from Impl
+#include "TSFVectorSpaceDecl.hpp"  // changed from Impl
+#include "TSFVectorDecl.hpp"
+#include "TSFLinearOperatorDecl.hpp"  // changed from Impl
 #include "Teuchos_Array.hpp"
 #include "Teuchos_MPIComm.hpp"
 #include "TSFIfpackOperator.hpp"
+#include "TSFPreconditioner.hpp"
 #include "TSFGenericLeftPreconditioner.hpp"
 #include "TSFGenericRightPreconditioner.hpp"
 #include "Teuchos_dyn_cast.hpp"
 #include "Teuchos_getConst.hpp"
 
 #include "Thyra_EpetraThyraWrappers.hpp"
+
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#endif
 
 using namespace TSFExtended;
 using namespace Teuchos;
@@ -272,6 +278,7 @@ void EpetraMatrix::print(ostream& os) const
 
 string EpetraMatrix::description() const 
 {
+  if (name() != "") return name();
   string rtn = "EpetraMatrix[nRow=" 
     + Teuchos::toString(crsMatrix()->NumGlobalRows())
     + ", nCol=" + Teuchos::toString(crsMatrix()->NumGlobalCols())

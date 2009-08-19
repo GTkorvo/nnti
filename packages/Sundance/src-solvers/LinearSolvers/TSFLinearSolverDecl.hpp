@@ -32,6 +32,12 @@
 #include "TSFLinearSolverBaseDecl.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFLinearSolverBaseImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#endif
+
 inline static Teuchos::Time& solveTimer() 
 {
   static Teuchos::RefCountPtr<Teuchos::Time> rtn 

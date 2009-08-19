@@ -31,7 +31,13 @@
 #define RANDOMBLOCKMATRIX_HPP
 
 #include "TSFRandomSparseMatrix.hpp"
-#include "TSFBlockOperator.hpp"
+#include "TSFBlockOperatorDecl.hpp"
+
+
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFBlockOperatorImpl.hpp"
+#endif
 
 using namespace TSFExtended;
 using namespace Teuchos;

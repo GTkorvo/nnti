@@ -10,6 +10,13 @@
 #include "Thyra_MLPreconditionerFactory.hpp"
 
 
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFLinearSolverImpl.hpp"
+#include "TSFLinearCombinationImpl.hpp"
+#endif
+
+
 using namespace Thyra;
 using namespace Teuchos;
 

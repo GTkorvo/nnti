@@ -1,4 +1,3 @@
-/* @HEADER@ */
 /* ***********************************************************************
 // 
 //           TSFExtended: Trilinos Solver Framework Extended
@@ -24,13 +23,15 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
-/* @HEADER@ */
-
-#ifndef TSFLINEAROPERATOR_HPP
-#define TSFLINEAROPERATOR_HPP
+ /* @HEADER@ */
 
 
-#include "TSFLinearOperatorDecl.hpp"
+#include "SundanceDefs.hpp"
+
+#ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+
 #include "TSFLinearOperatorImpl.hpp"
+
+template class TSFExtended::LinearOperator<double>;
 
 #endif

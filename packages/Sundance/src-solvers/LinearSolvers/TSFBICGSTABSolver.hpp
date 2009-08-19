@@ -33,12 +33,20 @@
 #include "TSFKrylovSolver.hpp"
 #include "SundanceHandleable.hpp"
 #include "SundancePrintable.hpp"
+#include "SundanceOut.hpp"
 #include "Teuchos_Describable.hpp"
-#include "TSFLinearCombination.hpp"
+#include "TSFLinearCombinationDecl.hpp"
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFLinearSolverBaseImpl.hpp"
+#endif
+
 
 namespace TSFExtended
 {
   using namespace Teuchos;
+  using namespace SundanceUtils;
   /**
    *
    */
@@ -221,11 +229,11 @@ namespace TSFExtended
 
         if (myRank==0 && verbosity > 1 ) 
           {
-            cerr << "BICGSTAB: iteration=";
-            cerr.width(8);
-            cerr << k;
-            cerr.width(20);
-            cerr << " resid=" << resid << endl;
+            Out::os() << "BICGSTAB: iteration=";
+            Out::os().width(8);
+            Out::os() << k;
+            Out::os().width(20);
+            Out::os() << " resid=" << resid << endl;
           }
       }
     

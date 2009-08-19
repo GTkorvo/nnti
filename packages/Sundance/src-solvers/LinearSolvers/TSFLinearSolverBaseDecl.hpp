@@ -30,10 +30,8 @@
 #define TSFLINEARSOLVERBASEDECL_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFVectorDecl.hpp" 
 #include "TSFSolverState.hpp"
 #include "Teuchos_ParameterList.hpp"
- //#include "TSFLinearOperatorDecl.hpp"
 
 namespace TSFExtended
 {
@@ -46,6 +44,9 @@ namespace TSFExtended
 
   template <class Scalar>
   class PreconditionerFactory;
+
+  template <class Scalar>
+  class Vector;
   
 
   /** */

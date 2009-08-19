@@ -8,6 +8,13 @@
 #include "TSFPreconditionerFactory.hpp"
 #include "TSFParameterListPreconditionerFactory.hpp"
 
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFLinearSolverImpl.hpp"
+#endif
+
 using namespace TSFExtended;
 using namespace Teuchos;
 

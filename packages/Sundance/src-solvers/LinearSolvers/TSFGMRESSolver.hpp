@@ -34,7 +34,7 @@
 #include "SundanceHandleable.hpp"
 #include "SundancePrintable.hpp"
 #include "Teuchos_Describable.hpp"
-#include "TSFLinearCombination.hpp"
+#include "TSFLinearCombinationDecl.hpp"
 
 namespace TSFExtended
 {

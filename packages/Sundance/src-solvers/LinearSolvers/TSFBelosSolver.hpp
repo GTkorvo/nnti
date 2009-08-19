@@ -30,7 +30,7 @@
 #define TSFBELOSSOLVER_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFLinearSolverBase.hpp"
+#include "TSFLinearSolverBaseDecl.hpp"
 #include "TSFPreconditionerFactory.hpp"
 #include "SundanceHandleable.hpp"
 #include "SundancePrintable.hpp"
@@ -65,7 +65,7 @@ namespace TSFExtended
     /** \name Printable interface */
     //@{
     /** Write to a stream  */
-    void print(ostream& os) const 
+    void print(std::ostream& os) const 
     {
       os << description() << std::endl;
     }
