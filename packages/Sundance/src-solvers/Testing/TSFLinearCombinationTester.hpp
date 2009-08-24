@@ -31,18 +31,24 @@
 #define TSF_LINEARCOMBINATIONTESTER_HPP
 
 #include "TSFLinearOperatorDecl.hpp"
-#include "TSFLinearCombinationDecl.hpp"
+#include "TSFLinearCombinationImpl.hpp"
+#include "TSFSimpleComposedOpDecl.hpp"
+#include "TSFSimpleScaledOpDecl.hpp"
+#include "TSFSimpleAddedOpDecl.hpp"
 #include "SundanceOut.hpp"
 #include "TSFVectorDecl.hpp"
 #include "TSFTesterBase.hpp"
-#include "TSFRandomSparseMatrix.hpp"
+#include "TSFRandomSparseMatrixBuilderDecl.hpp"
 #include "Thyra_TestSpecifier.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 #include "TSFVectorImpl.hpp"
 #include "TSFLinearOperatorImpl.hpp"
-#include "TSFLinearCombinationImpl.hpp"
+#include "TSFRandomSparseMatrixBuilderImpl.hpp"
+#include "TSFSimpleComposedOpImpl.hpp"
+#include "TSFSimpleScaledOpImpl.hpp"
+#include "TSFSimpleAddedOpImpl.hpp"
 #endif
 
 using namespace TSFExtended;
@@ -73,277 +79,277 @@ using Thyra::TestSpecifier;
 namespace TSFExtended
 {
 
+/** */
+template <class Scalar>
+class LinearCombinationTester : public TesterBase<Scalar>
+{
+public:
+  /** \brief Local typedef for promoted scalar magnitude */
+  typedef typename Teuchos::ScalarTraits<Scalar>::magnitudeType ScalarMag;
+
   /** */
-  template <class Scalar>
-  class LinearCombinationTester : public TesterBase<Scalar>
-  {
-  public:
-    /** \brief Local typedef for promoted scalar magnitude */
-    typedef typename Teuchos::ScalarTraits<Scalar>::magnitudeType ScalarMag;
+  LinearCombinationTester(int nLocalRows, double onProcDensity, 
+    double offProcDensity,
+    const VectorType<Scalar>& vecType,
+    const TestSpecifier<Scalar>& spec);
 
-    /** */
-    LinearCombinationTester(int nLocalRows, double onProcDensity, 
-                            double offProcDensity,
-                            const VectorType<Scalar>& vecType,
-                            const TestSpecifier<Scalar>& spec);
-
-    /** */
-    bool runAllTests() const ;
+  /** */
+  bool runAllTests() const ;
 
 
-  private:
+private:
 
-    /** */
-    bool nonModifyingOpTests() const ;
+  /** */
+  bool nonModifyingOpTests() const ;
 
-    /** */
-    bool selfModifyingOpTests() const ;
+  /** */
+  bool selfModifyingOpTests() const ;
 
-    TestSpecifier<Scalar> spec_;
+  TestSpecifier<Scalar> spec_;
 
-    int nLocalRows_;
-    double onProcDensity_;
-    double offProcDensity_;
-    VectorType<Scalar> vecType_;
+  int nLocalRows_;
+  double onProcDensity_;
+  double offProcDensity_;
+  VectorType<Scalar> vecType_;
 
-  };
+};
 
-  template <class Scalar> 
-  inline LinearCombinationTester<Scalar>
-  ::LinearCombinationTester(int nLocalRows, double onProcDensity, 
-                            double offProcDensity,
-                            const VectorType<Scalar>& vecType,
-                            const TestSpecifier<Scalar>& spec)
-    : TesterBase<Scalar>(),
-      spec_(spec),
-      nLocalRows_(nLocalRows),
-      onProcDensity_(onProcDensity),
-      offProcDensity_(offProcDensity),
-      vecType_(vecType)
-  {;}
+template <class Scalar> 
+inline LinearCombinationTester<Scalar>
+::LinearCombinationTester(int nLocalRows, double onProcDensity, 
+  double offProcDensity,
+  const VectorType<Scalar>& vecType,
+  const TestSpecifier<Scalar>& spec)
+  : TesterBase<Scalar>(),
+    spec_(spec),
+    nLocalRows_(nLocalRows),
+    onProcDensity_(onProcDensity),
+    offProcDensity_(offProcDensity),
+    vecType_(vecType)
+{;}
 
-  template <class Scalar> 
-  inline bool LinearCombinationTester<Scalar>
-  ::runAllTests() const
-  {
-    bool pass = true;
+template <class Scalar> 
+inline bool LinearCombinationTester<Scalar>
+::runAllTests() const
+{
+  bool pass = true;
 
-    pass = nonModifyingOpTests() && pass;
-    pass = selfModifyingOpTests() && pass;
+  pass = nonModifyingOpTests() && pass;
+  pass = selfModifyingOpTests() && pass;
 
-    return pass;
-  }
+  return pass;
+}
 
-  template <class Scalar> 
-  inline bool LinearCombinationTester<Scalar>
-  ::nonModifyingOpTests() const
-  {
-    bool pass = true;
+template <class Scalar> 
+inline bool LinearCombinationTester<Scalar>
+::nonModifyingOpTests() const
+{
+  bool pass = true;
 
-    RandomSparseMatrix<double> ABuilder(nLocalRows_, nLocalRows_, 
-                                        onProcDensity_, offProcDensity_, 
-                                        vecType_);
-    RandomSparseMatrix<double> BBuilder(nLocalRows_, nLocalRows_, 
-                                        onProcDensity_, offProcDensity_, 
-                                        vecType_);
-    RandomSparseMatrix<double> CBuilder(nLocalRows_, nLocalRows_, 
-                                        onProcDensity_, offProcDensity_, 
-                                        vecType_);
+  RandomSparseMatrixBuilder<double> ABuilder(nLocalRows_, nLocalRows_, 
+    onProcDensity_, offProcDensity_, 
+    vecType_);
+  RandomSparseMatrixBuilder<double> BBuilder(nLocalRows_, nLocalRows_, 
+    onProcDensity_, offProcDensity_, 
+    vecType_);
+  RandomSparseMatrixBuilder<double> CBuilder(nLocalRows_, nLocalRows_, 
+    onProcDensity_, offProcDensity_, 
+    vecType_);
 
 
-    LinearOperator<double> A = ABuilder.getOp();
+  LinearOperator<double> A = ABuilder.getOp();
 
     
-    LinearOperator<Scalar> B = BBuilder.getOp();
-    LinearOperator<Scalar> C = CBuilder.getOp();
+  LinearOperator<Scalar> B = BBuilder.getOp();
+  LinearOperator<Scalar> C = CBuilder.getOp();
 
-    Vector<Scalar> x = A.domain().createMember();
-    Vector<Scalar> y = A.domain().createMember();
-    Vector<Scalar> z = A.domain().createMember();
+  Vector<Scalar> x = A.domain().createMember();
+  Vector<Scalar> y = A.domain().createMember();
+  Vector<Scalar> z = A.domain().createMember();
 
-    randomizeVec(x);
-    randomizeVec(y);
-    randomizeVec(z);
-
-
-    TESTER(x*2.0, 2.0*x);
-
-    TESTER(2.0*(x + y), 2.0*x + 2.0*y);
-
-    TESTER(2.0*(x - y), 2.0*x - 2.0*y);
-
-    TESTER((x + y)*2.0, 2.0*x + 2.0*y);
-
-    TESTER((x - y)*2.0, 2.0*x - 2.0*y);
-
-    TESTER(2.0*(x - y), -2.0*(y - x));
-
-    TESTER(0.25*(2.0*(x + y) - 2.0*(x - y)), y);
-
-    TESTER((2.0*A)*x, 2.0*(A*x));
-
-    TESTER(2.0*(A*x), (A*x)*2.0);
-
-    TESTER(A*(B*x), (A*B)*x);
-
-    TESTER(2.0*A*(B*x), A*(B*(2.0*x)));
-
-    TESTER(3.0*(2.0*A)*x, 6.0*(A*x));
-
-    TESTER(y + A*x, A*x + y);
+  randomizeVec(x);
+  randomizeVec(y);
+  randomizeVec(z);
 
 
-    TESTER(z + (A*x + B*y), (B*y + A*x) + z);
+  TESTER(x*2.0, 2.0*x);
+
+  TESTER(2.0*(x + y), 2.0*x + 2.0*y);
+
+  TESTER(2.0*(x - y), 2.0*x - 2.0*y);
+
+  TESTER((x + y)*2.0, 2.0*x + 2.0*y);
+
+  TESTER((x - y)*2.0, 2.0*x - 2.0*y);
+
+  TESTER(2.0*(x - y), -2.0*(y - x));
+
+  TESTER(0.25*(2.0*(x + y) - 2.0*(x - y)), y);
+
+  TESTER((2.0*A)*x, 2.0*(A*x));
+
+  TESTER(2.0*(A*x), (A*x)*2.0);
+
+  TESTER(A*(B*x), (A*B)*x);
+
+  TESTER(2.0*A*(B*x), A*(B*(2.0*x)));
+
+  TESTER(3.0*(2.0*A)*x, 6.0*(A*x));
+
+  TESTER(y + A*x, A*x + y);
 
 
-    TESTER(z - (A*x + B*y), -1.0*((B*y + A*x) - z));
+  TESTER(z + (A*x + B*y), (B*y + A*x) + z);
 
-    TESTER(C*z + (A*x + B*y), (B*y + A*x) + C*z);
 
-    TESTER(C*z - (A*x + B*y), -1.0*((B*y + A*x) - C*z));
+  TESTER(z - (A*x + B*y), -1.0*((B*y + A*x) - z));
 
-    TESTER(2.0*z + (A*x + B*y), (B*y + A*x) + 2.0*z);
+  TESTER(C*z + (A*x + B*y), (B*y + A*x) + C*z);
 
-    TESTER(2.0*z - (A*x + B*y), -1.0*((B*y + A*x) - 2.0*z));
+  TESTER(C*z - (A*x + B*y), -1.0*((B*y + A*x) - C*z));
 
-    TESTER(A*x - y, -1.0*(y - A*x));
+  TESTER(2.0*z + (A*x + B*y), (B*y + A*x) + 2.0*z);
 
-    TESTER(A*x + B*y, B*y + A*x);
+  TESTER(2.0*z - (A*x + B*y), -1.0*((B*y + A*x) - 2.0*z));
 
-    TESTER(A*x - B*y - A*x + B*y +z, z);
+  TESTER(A*x - y, -1.0*(y - A*x));
 
-    TESTER(2.0*(A*x + y), 2.0*A*x + 2.0*y);
+  TESTER(A*x + B*y, B*y + A*x);
 
-    TESTER(2.0*(A*x + B*y), A*x + B*y + A*x + B*y);
+  TESTER(A*x - B*y - A*x + B*y +z, z);
 
-    TESTER(2.0*(y + A*x), 2.0*y + 2.0*(A*x));
+  TESTER(2.0*(A*x + y), 2.0*A*x + 2.0*y);
 
-    TESTER(x + 2.0*A*y, x + 2.0*(A*y));
+  TESTER(2.0*(A*x + B*y), A*x + B*y + A*x + B*y);
 
-    TESTER(2.0*A*y + x, 2.0*(A*y) + x);
+  TESTER(2.0*(y + A*x), 2.0*y + 2.0*(A*x));
 
-    TESTER(2.0*(A*x + B*y), 2.0*A*x + 2.0*B*y);
+  TESTER(x + 2.0*A*y, x + 2.0*(A*y));
 
-    TESTER(2.0*(A*x - B*y), 2.0*A*x - 2.0*B*y);
+  TESTER(2.0*A*y + x, 2.0*(A*y) + x);
 
-    TESTER(2.0*(A*x + B*y + z), 2.0*A*x + 2.0*B*y + 2.0*z);
+  TESTER(2.0*(A*x + B*y), 2.0*A*x + 2.0*B*y);
 
-    TESTER(2.0*(A*x + 3.0*B*y), 2.0*A*x + 6.0*B*y);
+  TESTER(2.0*(A*x - B*y), 2.0*A*x - 2.0*B*y);
 
-    TESTER(2.0*(A*x + 3.0*(z + B*y)), 2.0*A*x + 6.0*B*y + 6.0*z);
+  TESTER(2.0*(A*x + B*y + z), 2.0*A*x + 2.0*B*y + 2.0*z);
 
-    TESTER(2.0*(z + A*x + B*y + z), 2.0*A*x + 2.0*B*y + 4.0*z);
+  TESTER(2.0*(A*x + 3.0*B*y), 2.0*A*x + 6.0*B*y);
 
-    TESTER(2.0*(3.0*(z + A*x) + B*y), 6.0*z + 6.0*A*x + 2.0*B*y);
+  TESTER(2.0*(A*x + 3.0*(z + B*y)), 2.0*A*x + 6.0*B*y + 6.0*z);
 
-    TESTER(2.0*(3.0*(z + A*x) + 4.0*(B*y + z)), 6.0*z + 6.0*A*x + 8.0*B*y + 8.0*z);
+  TESTER(2.0*(z + A*x + B*y + z), 2.0*A*x + 2.0*B*y + 4.0*z);
+
+  TESTER(2.0*(3.0*(z + A*x) + B*y), 6.0*z + 6.0*A*x + 2.0*B*y);
+
+  TESTER(2.0*(3.0*(z + A*x) + 4.0*(B*y + z)), 6.0*z + 6.0*A*x + 8.0*B*y + 8.0*z);
     
-    TESTER((A*x + B*y) + (A*y + B*x), (A + B)*x + (A+B)*y);
-    TESTER((A*x + B*y) - (A*y + B*x), A*x - A*y + B*y - B*x);
+  TESTER((A*x + B*y) + (A*y + B*x), (A + B)*x + (A+B)*y);
+  TESTER((A*x + B*y) - (A*y + B*x), A*x - A*y + B*y - B*x);
 
-    TESTER((A*x + B*y) + 2.0*(A*y + B*x), A*(x + 2.0*y) + B*(2.0*x + y));
-    TESTER((A*x + B*y) - 2.0*(A*y + B*x), A*(x - 2.0*y) + B*(y - 2.0*x));
-
-
-    return pass;
-  }
+  TESTER((A*x + B*y) + 2.0*(A*y + B*x), A*(x + 2.0*y) + B*(2.0*x + y));
+  TESTER((A*x + B*y) - 2.0*(A*y + B*x), A*(x - 2.0*y) + B*(y - 2.0*x));
 
 
-  template <class Scalar> 
-  inline bool LinearCombinationTester<Scalar>
-  ::selfModifyingOpTests() const
-  {
-    bool pass = true;
+  return pass;
+}
 
-    RandomSparseMatrix<double> ABuilder(nLocalRows_, nLocalRows_, 
-                                        onProcDensity_, offProcDensity_, 
-                                        vecType_);
-    RandomSparseMatrix<double> BBuilder(nLocalRows_, nLocalRows_, 
-                                        onProcDensity_, offProcDensity_, 
-                                        vecType_);
-    RandomSparseMatrix<double> CBuilder(nLocalRows_, nLocalRows_, 
-                                        onProcDensity_, offProcDensity_, 
-                                        vecType_);
 
-    LinearOperator<double> A = ABuilder.getOp();
-    LinearOperator<double> B = BBuilder.getOp();
-    LinearOperator<double> C = CBuilder.getOp();
+template <class Scalar> 
+inline bool LinearCombinationTester<Scalar>
+::selfModifyingOpTests() const
+{
+  bool pass = true;
 
-    Vector<Scalar> x = A.domain().createMember();
-    Vector<Scalar> y = A.domain().createMember();
-    Vector<Scalar> z = A.domain().createMember();
+  RandomSparseMatrixBuilder<double> ABuilder(nLocalRows_, nLocalRows_, 
+    onProcDensity_, offProcDensity_, 
+    vecType_);
+  RandomSparseMatrixBuilder<double> BBuilder(nLocalRows_, nLocalRows_, 
+    onProcDensity_, offProcDensity_, 
+    vecType_);
+  RandomSparseMatrixBuilder<double> CBuilder(nLocalRows_, nLocalRows_, 
+    onProcDensity_, offProcDensity_, 
+    vecType_);
 
-    randomizeVec(x);
-    randomizeVec(y);
-    randomizeVec(z);
+  LinearOperator<double> A = ABuilder.getOp();
+  LinearOperator<double> B = BBuilder.getOp();
+  LinearOperator<double> C = CBuilder.getOp();
 
-    Vector<Scalar> a = x.copy();
-    Vector<Scalar> b = y.copy();
-    Vector<Scalar> c = z.copy();
+  Vector<Scalar> x = A.domain().createMember();
+  Vector<Scalar> y = A.domain().createMember();
+  Vector<Scalar> z = A.domain().createMember();
+
+  randomizeVec(x);
+  randomizeVec(y);
+  randomizeVec(z);
+
+  Vector<Scalar> a = x.copy();
+  Vector<Scalar> b = y.copy();
+  Vector<Scalar> c = z.copy();
     
 
-    Out::os() << "starting linear combination tests" << endl;
+  Out::os() << "starting linear combination tests" << endl;
 
-    x = 2.0*A*x;
-    Scalar err = (x - 2.0*A*a).norm2();
-    if (!checkTest(spec_, err, "x=2.0*A*x")) pass = false;
+  x = 2.0*A*x;
+  Scalar err = (x - 2.0*A*a).norm2();
+  if (!checkTest(spec_, err, "x=2.0*A*x")) pass = false;
 
-    a = x.copy();
-    x = x + y;
-    err = (x - (a + y)).norm2();
-    if (!checkTest(spec_, err, "x=x+y")) pass = false;
+  a = x.copy();
+  x = x + y;
+  err = (x - (a + y)).norm2();
+  if (!checkTest(spec_, err, "x=x+y")) pass = false;
 
-    a = x.copy();
-    x = y + x;
-    err = (x - (y + a)).norm2();
-    if (!checkTest(spec_, err, "x=y+x")) pass = false;
+  a = x.copy();
+  x = y + x;
+  err = (x - (y + a)).norm2();
+  if (!checkTest(spec_, err, "x=y+x")) pass = false;
 
-    a = x.copy();
-    x = A*x + B*y;
-    err = (x - (A*a + B*y)).norm2();
-    if (!checkTest(spec_, err, "x=A*x+B*y")) pass = false;
+  a = x.copy();
+  x = A*x + B*y;
+  err = (x - (A*a + B*y)).norm2();
+  if (!checkTest(spec_, err, "x=A*x+B*y")) pass = false;
 
-    a = x.copy();
-    x = B*y + A*x;
-    err = (x - (B*y + A*a)).norm2();
-    if (!checkTest(spec_, err, "x=B*y+A*x")) pass = false;
+  a = x.copy();
+  x = B*y + A*x;
+  err = (x - (B*y + A*a)).norm2();
+  if (!checkTest(spec_, err, "x=B*y+A*x")) pass = false;
 
-    a = x.copy();
-    x = A*x + (B*y + C*x);
-    err = (x - (A*a + (B*y + C*a))).norm2();
-    if (!checkTest(spec_, err, "x=A*x + (B*y + C*x)")) pass = false;
+  a = x.copy();
+  x = A*x + (B*y + C*x);
+  err = (x - (A*a + (B*y + C*a))).norm2();
+  if (!checkTest(spec_, err, "x=A*x + (B*y + C*x)")) pass = false;
 
-    a = x.copy();
-    x = (A*x + B*y) + C*x;
-    err = (x - ((A*a + B*y) + C*a)).norm2();
-    if (!checkTest(spec_, err, "x=(A*x + B*y) + C*x")) pass = false;
+  a = x.copy();
+  x = (A*x + B*y) + C*x;
+  err = (x - ((A*a + B*y) + C*a)).norm2();
+  if (!checkTest(spec_, err, "x=(A*x + B*y) + C*x")) pass = false;
 
-    /* test assignment of OpTimesLC into empty and non-empty vectors */
-    Vector<Scalar> u;
-    u = 2.0*A*B*x;
-    err = (u - 2.0*A*B*x).norm2();
-    if (!checkTest(spec_, err, "(empty) u=2*A*B*x")) pass = false;
+  /* test assignment of OpTimesLC into empty and non-empty vectors */
+  Vector<Scalar> u;
+  u = 2.0*A*B*x;
+  err = (u - 2.0*A*B*x).norm2();
+  if (!checkTest(spec_, err, "(empty) u=2*A*B*x")) pass = false;
 
-    u = 2.0*A*B*x;
-    err = (u - 2.0*A*B*x).norm2();
-    if (!checkTest(spec_, err, "(non-empty) u=2*A*B*x")) pass = false;
+  u = 2.0*A*B*x;
+  err = (u - 2.0*A*B*x).norm2();
+  if (!checkTest(spec_, err, "(non-empty) u=2*A*B*x")) pass = false;
 
-    /* test assignment of LC2 into empty and non-empty vectors */
-    Vector<Scalar> v;
-    v = 2.0*x + 3.0*y;
-    err = (v - (2.0*x + 3.0*y)).norm2();
-    if (!checkTest(spec_, err, "(empty) v=2*x + 3*y")) pass = false;
+  /* test assignment of LC2 into empty and non-empty vectors */
+  Vector<Scalar> v;
+  v = 2.0*x + 3.0*y;
+  err = (v - (2.0*x + 3.0*y)).norm2();
+  if (!checkTest(spec_, err, "(empty) v=2*x + 3*y")) pass = false;
 
-    v = 2.0*x + 3.0*y;
-    err = (v - (2.0*x + 3.0*y)).norm2();
-    if (!checkTest(spec_, err, "(non-empty) v=2*x + 3*y")) pass = false;
+  v = 2.0*x + 3.0*y;
+  err = (v - (2.0*x + 3.0*y)).norm2();
+  if (!checkTest(spec_, err, "(non-empty) v=2*x + 3*y")) pass = false;
 
 
     
 
 
-    return pass;
-  }
+  return pass;
+}
 
   
 }

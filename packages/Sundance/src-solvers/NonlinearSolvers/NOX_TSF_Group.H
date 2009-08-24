@@ -58,7 +58,7 @@ namespace NOX {
   namespace TSF {
 
     class Group : public virtual NOX::Abstract::Group,
-    public TSFExtended::ObjectWithVerbosity<Group> 
+    public TSFExtended::DefaultObjectWithVerbosity
     {
 
     public:

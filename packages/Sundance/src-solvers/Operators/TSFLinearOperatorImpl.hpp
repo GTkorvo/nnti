@@ -35,8 +35,8 @@
 #include "TSFVectorDecl.hpp"
 #include "TSFVectorSpaceDecl.hpp"
 #include "TSFInverseOperatorDecl.hpp"
-#include "TSFBlockOperatorDecl.hpp"
-#include "TSFNonmemberOpHelpersDecl.hpp"
+#include "TSFSimpleTransposedOpDecl.hpp"
+#include "TSFBlockOperatorBaseDecl.hpp"
 #include "TSFVectorType.hpp"
 #include "SundanceOut.hpp"
 
@@ -45,8 +45,8 @@
 #endif
 
 
+
 using namespace TSFExtended;
-using namespace Thyra;
 using namespace Teuchos;
 using namespace SundanceUtils;
 
@@ -57,13 +57,13 @@ class InverseOperator;
 //=======================================================================
 template <class Scalar>
 LinearOperator<Scalar>::LinearOperator() 
-  : Handle<LinearOpBase<Scalar, Scalar> >(), verb_(0) {;}
+  : Handle<Thyra::LinearOpBase<Scalar, Scalar> >(), verb_(0) {;}
 
 
 //=======================================================================
 template <class Scalar>
-LinearOperator<Scalar>::LinearOperator(const RefCountPtr<LinearOpBase<Scalar, Scalar> >& smartPtr) 
-  : Handle<LinearOpBase<Scalar, Scalar> >(smartPtr), verb_(0) {;}
+LinearOperator<Scalar>::LinearOperator(const RefCountPtr<Thyra::LinearOpBase<Scalar, Scalar> >& smartPtr) 
+  : Handle<Thyra::LinearOpBase<Scalar, Scalar> >(smartPtr), verb_(0) {;}
 
 
 
@@ -75,23 +75,56 @@ void LinearOperator<Scalar>::apply(const Vector<Scalar>& in,
   const Scalar& alpha,
   const Scalar& beta) const
 {
+  Tabs tab(0);
+  SUNDANCE_MSG1(this->verb(), tab << "Operator=" << this->description()
+    << ",  calling apply() function");
+  Tabs tab1;
+  SUNDANCE_MSG1(this->verb(), tab1 << "alpha=" << alpha);
+  SUNDANCE_MSG1(this->verb(), tab1 << "beta=" << beta);
+  
+  if (this->verb() > 2)
+  {
+    Tabs tab2;
+    Out::os() << tab2 << "input vector = " << in << std::endl;
+  }
+  else if (this->verb() > 1)
+  {
+    Tabs tab2;
+    Out::os() << tab2 << "input vector = " << in.description() << std::endl;
+  }
+
   /* the result vector might not be initialized. If it's null,
    * create a new vector in the range space */
   if (out.ptr().get()==0)
   {
+    Tabs tab2;
+    SUNDANCE_MSG3(this->verb(), tab2 << "allocating output vector");
     out = this->range().createMember();
   }
-  if (verb_ > 0) Out::os() << "applying op=" << this->name() << " with alpha="
-                              << alpha << ", beta=" << beta << " to vec ";
-  if (verb_==1) Out::os() << "norm=" << in.norm2() << std::endl;
-  if (verb_ > 1) Out::os() << "norm=" << in << std::endl;
+  else
+  {
+    Tabs tab2;
+    SUNDANCE_MSG3(this->verb(), tab2 << "using preallocated output vector");
+  }
 
   this->ptr()->apply(Thyra::NONCONJ_ELE, *(in.ptr().get()),
     out.ptr().get(), alpha, beta);
 
-  if (verb_ > 0) Out::os() << "result of op=" << this->name() << " is ";
-  if (verb_==1) Out::os() << "norm=" << out.norm2() << std::endl;
-  if (verb_ > 1) Out::os() << "norm=" << out << std::endl;
+  
+  
+  if (this->verb() > 2)
+  {
+    Tabs tab2;
+    Out::os() << tab2 << "output vector = " << out << std::endl;
+  }
+  else if (this->verb() > 1)
+  {
+    Tabs tab2;
+    Out::os() << tab2 << "output vector = " << out.description() << std::endl;
+  }
+
+  SUNDANCE_MSG1(this->verb(), tab << "Operator=" << this->description()
+    << ",  done with apply() function");
   
 }
 
@@ -105,23 +138,58 @@ void LinearOperator<Scalar>::applyTranspose(const Vector<Scalar>& in,
   const Scalar& alpha,
   const Scalar& beta) const
 {
+  Tabs tab(0);
+  SUNDANCE_MSG1(this->verb(), tab << "Operator=" << this->description()
+    << ",  calling applyTranspose() function");
+  Tabs tab1;
+  SUNDANCE_MSG1(this->verb(), tab1 << "alpha=" << alpha);
+  SUNDANCE_MSG1(this->verb(), tab1 << "beta=" << beta);
+  
+  if (this->verb() > 2)
+  {
+    Tabs tab2;
+    Out::os() << tab2 << "input vector = " << in << std::endl;
+  }
+  else if (this->verb() > 1)
+  {
+    Tabs tab2;
+    Out::os() << tab2 << "input vector = " << in.description() << std::endl;
+  }
+
+
   /* the result vector might not be initialized. If it's null,
-   * create a new vector in the domain space (i.e., the range space
-   * of the transpose operator */
+   * create a new vector in the range space */
   if (out.ptr().get()==0)
   {
+    Tabs tab2;
+    SUNDANCE_MSG3(this->verb(), tab2 << "allocating output vector");
     out = this->domain().createMember();
   }
-  if (verb_ > 0) Out::os() << "applying op=" << this->name() << " transposed with alpha="
-                              << alpha << ", beta=" << beta << " to vec ";
-  if (verb_==1) Out::os() << "norm=" << in.norm2() << std::endl;
-  if (verb_ >1) Out::os() << "norm=" << in << std::endl;
+  else
+  {
+    Tabs tab2;
+    SUNDANCE_MSG3(this->verb(), tab2 << "using preallocated output vector");
+  }
+
   this->ptr()->applyTranspose(Thyra::NONCONJ_ELE, *(in.ptr().get()),
     out.ptr().get(), alpha, beta);
 
-  if (verb_ > 0) Out::os() << "result of op=" << this->name() << " is ";
-  if (verb_==1) Out::os() << "norm=" << out.norm2() << std::endl;
-  if (verb_ >1) Out::os() << "norm=" << out << std::endl;
+  
+  
+  if (this->verb() > 2)
+  {
+    Tabs tab2;
+    Out::os() << tab2 << "output vector = " << out << std::endl;
+  }
+  else if (this->verb() > 1)
+  {
+    Tabs tab2;
+    Out::os() << tab2 << "output vector = " << out.description() << std::endl;
+  }
+
+  SUNDANCE_MSG1(this->verb(), tab << "Operator=" << this->description()
+    << ",  done with applyTranpose() function");
+  
 }
 
 
@@ -143,17 +211,6 @@ LinearOperator<Scalar> LinearOperator<Scalar>::transpose() const
 }
 
 
-
-
-
-//=======================================================================
-template <class Scalar>
-LinearOperator<Scalar> 
-LinearOperator<Scalar>::operator+(const LinearOperator<Scalar>& other) const
-{
-  LinearOperator<Scalar> op = addedOperator(Array<LinearOperator<Scalar> >(tuple(*this, other)));
-  return op;
-}
 
 
 
@@ -183,7 +240,7 @@ void LinearOperator<Scalar>::getRow(const int& row,
 template <class Scalar>
 int LinearOperator<Scalar>::numBlockRows() const
 {
-  const BlockOperator<Scalar>* b = dynamic_cast<const BlockOperator<Scalar>* >(this->ptr().get());
+  const BlockOperatorBase<Scalar>* b = dynamic_cast<const BlockOperatorBase<Scalar>* >(this->ptr().get());
   if (b==0) return 1;
   return b->numBlockRows(); 
 }
@@ -192,7 +249,7 @@ int LinearOperator<Scalar>::numBlockRows() const
 template <class Scalar>
 int LinearOperator<Scalar>::numBlockCols() const
 {
-  const BlockOperator<Scalar>* b = dynamic_cast<const BlockOperator<Scalar>* >(this->ptr().get());
+  const BlockOperatorBase<Scalar>* b = dynamic_cast<const BlockOperatorBase<Scalar>* >(this->ptr().get());
   if (b==0) return 1;
   return b->numBlockCols(); 
 }
@@ -210,14 +267,13 @@ template <class Scalar>
 void LinearOperator<Scalar>::setBlock(int i, int j, 
   const LinearOperator<Scalar>& sub) 
 {
-  BlockOperator<Scalar>* b = 
-    dynamic_cast<BlockOperator<Scalar>* >(this->ptr().get());
+  SetableBlockOperatorBase<Scalar>* b = 
+    dynamic_cast<SetableBlockOperatorBase<Scalar>* >(this->ptr().get());
   
   TEST_FOR_EXCEPTION(b == 0, std::runtime_error, 
-    "Can't call setBlock since operator not BlockOperator");
+    "Can't call setBlock since operator not SetableBlockOperatorBase");
 
-  
-  b->setNonconstBlock(i, j, sub.ptr());
+  b->setBlock(i, j, sub);
 } 
 
 
@@ -235,8 +291,8 @@ template <class Scalar>
 LinearOperator<Scalar> LinearOperator<Scalar>::getBlock(const int &i, 
   const int &j) const 
 {
-  BlockOperator<Scalar>* b = 
-    dynamic_cast<BlockOperator<Scalar>* >(this->ptr().get());
+  const BlockOperatorBase<Scalar>* b = 
+    dynamic_cast<const BlockOperatorBase<Scalar>* >(this->ptr().get());
   
   if (b==0)
   {
@@ -245,9 +301,26 @@ LinearOperator<Scalar> LinearOperator<Scalar>::getBlock(const int &i,
       "non-block operator");
     return *this;
   }
-  RefCountPtr<const LinearOpBase<Scalar, Scalar> > block = b->getBlock(i, j);
-  RefCountPtr<LinearOpBase<Scalar> > ncBlock = rcp_const_cast<LinearOpBase<Scalar> >(block);
-  return ncBlock;
+  return b->getBlock(i, j);
+}
+
+
+//=============================================================================
+template <class Scalar>
+LinearOperator<Scalar> LinearOperator<Scalar>::getNonconstBlock(const int &i, 
+  const int &j) 
+{
+  BlockOperatorBase<Scalar>* b = 
+    dynamic_cast<BlockOperatorBase<Scalar>* >(this->ptr().get());
+  
+  if (b==0)
+  {
+    TEST_FOR_EXCEPTION(i != 0 || j != 0, std::runtime_error, 
+      "nonzero block index (" << i << "," << j << ") into "
+      "non-block operator");
+    return *this;
+  }
+  return b->getNonconstBlock(i, j);
 }
 
  
@@ -256,11 +329,11 @@ LinearOperator<Scalar> LinearOperator<Scalar>::getBlock(const int &i,
 template <class Scalar>
 void LinearOperator<Scalar>::endBlockFill() 
 {
-  Thyra::DefaultBlockedLinearOp<Scalar>* b = 
-    dynamic_cast<Thyra::DefaultBlockedLinearOp<Scalar>* >(this->ptr().get());
+  SetableBlockOperatorBase<Scalar>* b = 
+    dynamic_cast<SetableBlockOperatorBase<Scalar>* >(this->ptr().get());
   
   TEST_FOR_EXCEPTION(b == 0, std::runtime_error, 
-    "Can't call setBlock since operator not BlockOperator");
+    "Can't call endBlockFill because operator is not a SetableBlockOperator");
 
   
   b->endBlockFill();

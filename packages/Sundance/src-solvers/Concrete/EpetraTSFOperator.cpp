@@ -49,6 +49,7 @@
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 #include "TSFVectorImpl.hpp"
+#include "TSFLinearCombinationImpl.hpp"
 #include "TSFLinearOperatorImpl.hpp"
 #include "TSFLinearSolverImpl.hpp"
 #endif

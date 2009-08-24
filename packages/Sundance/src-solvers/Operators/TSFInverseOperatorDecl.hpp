@@ -53,7 +53,8 @@ using Teuchos::RCP;
  * does solves by factoring and backsolves.
  */
 template <class Scalar> 
-class InverseOperator : public OpWithBackwardsCompatibleApply<Scalar>
+class InverseOperator : public OpWithBackwardsCompatibleApply<Scalar>,
+  public Printable
 {
 public:
   /**
@@ -94,6 +95,9 @@ public:
    * Return the range of the operator. 
    */
   virtual RCP<const Thyra::VectorSpaceBase<Scalar> > range() const ;
+
+  /** */
+  void print(std::ostream& os) const ;
 
 
 private:

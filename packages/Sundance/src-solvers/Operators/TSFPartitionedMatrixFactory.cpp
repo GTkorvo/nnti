@@ -28,12 +28,13 @@
 
 #include "TSFPartitionedMatrixFactory.hpp"
 #include "TSFVectorType.hpp"
-#include "TSFLoadableBlockOperator.hpp"
+#include "TSFLoadableBlockOperatorDecl.hpp"
 #include "Teuchos_MPIComm.hpp"
 
-#ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 #include "TSFVectorSpaceImpl.hpp"
 #include "TSFSequentialIteratorImpl.hpp"
+#include "TSFLoadableBlockOperatorImpl.hpp"
 #endif
 
 using namespace TSFExtended;

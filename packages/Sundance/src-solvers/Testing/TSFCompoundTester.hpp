@@ -31,9 +31,21 @@
 #define TSF_COMPOUNDTESTER_HPP
 
 #include "TSFLinearOperatorDecl.hpp"
-#include "TSFNonmemberOpHelpersDecl.hpp"
+#include "TSFSimpleComposedOpDecl.hpp"
+#include "TSFSimpleScaledOpDecl.hpp"
+#include "TSFSimpleAddedOpDecl.hpp"
+#include "TSFSimpleDiagonalOpDecl.hpp"
 #include "TSFTesterBase.hpp"
 #include "Teuchos_ScalarTraits.hpp"
+#include "TSFLinearCombinationImpl.hpp"
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFSimpleComposedOpImpl.hpp"
+#include "TSFSimpleScaledOpImpl.hpp"
+#include "TSFSimpleAddedOpImpl.hpp"
+#include "TSFSimpleDiagonalOpImpl.hpp"
+#include "TSFRandomSparseMatrixBuilderImpl.hpp"
+#endif
 
 using namespace TSFExtended;
 using namespace Teuchos;
@@ -43,158 +55,199 @@ using Thyra::TestSpecifier;
 namespace TSFExtended
 {
 
+/** */
+template <class Scalar>
+class CompoundTester : public TesterBase<Scalar>
+{
+public:
+  /** \brief Local typedef for promoted scalar magnitude */
+  typedef typename Teuchos::ScalarTraits<Scalar>::magnitudeType ScalarMag;
+
   /** */
-  template <class Scalar>
-  class CompoundTester : public TesterBase<Scalar>
+  CompoundTester(const LinearOperator<Scalar>& A,
+    const LinearOperator<Scalar>& B,
+    const TestSpecifier<Scalar>& sumSpec,
+    const TestSpecifier<Scalar>& composedSpec,
+    const TestSpecifier<Scalar>& scaledSpec,
+    const TestSpecifier<Scalar>& diagSpec);
+
+  /** */
+  bool runAllTests() const ;
+
+  /** */
+  bool sumTest() const ;
+
+  /** */
+  bool composedTest() const ;
+
+  /** */
+  bool scaledTest() const ;
+
+  /** */
+  bool diagTest() const ;
+
+
+private:
+
+  LinearOperator<Scalar> A_;
+
+  LinearOperator<Scalar> B_;
+
+  TestSpecifier<Scalar> sumSpec_;
+
+  TestSpecifier<Scalar> composedSpec_;
+
+  TestSpecifier<Scalar> scaledSpec_;
+
+  TestSpecifier<Scalar> diagSpec_;
+
+};
+
+template <class Scalar> 
+inline CompoundTester<Scalar>
+::CompoundTester(const LinearOperator<Scalar>& A,
+  const LinearOperator<Scalar>& B,
+  const TestSpecifier<Scalar>& sumSpec,
+  const TestSpecifier<Scalar>& composedSpec,
+  const TestSpecifier<Scalar>& scaledSpec,
+  const TestSpecifier<Scalar>& diagSpec)
+  : TesterBase<Scalar>(), 
+    A_(A),
+    B_(B),
+    sumSpec_(sumSpec),
+    composedSpec_(composedSpec),
+    scaledSpec_(scaledSpec),
+    diagSpec_(diagSpec)
+{;}
+
+template <class Scalar> 
+inline bool CompoundTester<Scalar>
+::runAllTests() const
+{
+  bool pass = true;
+
+  pass = sumTest() && pass;
+  pass = composedTest() && pass;
+  pass = scaledTest() && pass;
+  pass = diagTest() && pass;
+
+  return pass;
+}
+
+template <class Scalar> 
+inline bool CompoundTester<Scalar>
+::sumTest() const 
+{
+  if (sumSpec_.doTest())
   {
-  public:
-    /** \brief Local typedef for promoted scalar magnitude */
-    typedef typename Teuchos::ScalarTraits<Scalar>::magnitudeType ScalarMag;
+    Out::os() << "running operator addition test..." << endl;
+    LinearOperator<Scalar> sum = A_ + B_;
 
-    /** */
-    CompoundTester(const LinearOperator<Scalar>& A,
-                   const LinearOperator<Scalar>& B,
-                   const TestSpecifier<Scalar>& sumSpec,
-                   const TestSpecifier<Scalar>& composedSpec,
-                   const TestSpecifier<Scalar>& scaledSpec);
-
-    /** */
-    bool runAllTests() const ;
-
-    /** */
-    bool sumTest() const ;
-
-    /** */
-    bool composedTest() const ;
-
-    /** */
-    bool scaledTest() const ;
-
-
-  private:
-
-    LinearOperator<Scalar> A_;
-
-    LinearOperator<Scalar> B_;
-
-    TestSpecifier<Scalar> sumSpec_;
-
-    TestSpecifier<Scalar> composedSpec_;
-
-    TestSpecifier<Scalar> scaledSpec_;
-
-  };
-
-  template <class Scalar> 
-  inline CompoundTester<Scalar>
-  ::CompoundTester(const LinearOperator<Scalar>& A,
-                   const LinearOperator<Scalar>& B,
-                   const TestSpecifier<Scalar>& sumSpec,
-                   const TestSpecifier<Scalar>& composedSpec,
-                   const TestSpecifier<Scalar>& scaledSpec)
-    : TesterBase<Scalar>(), 
-      A_(A),
-      B_(B),
-      sumSpec_(sumSpec),
-      composedSpec_(composedSpec),
-      scaledSpec_(scaledSpec)
-  {;}
-
-  template <class Scalar> 
-  inline bool CompoundTester<Scalar>
-  ::runAllTests() const
-  {
-    bool pass = true;
-
-    pass = sumTest() && pass;
-    pass = composedTest() && pass;
-    pass = scaledTest() && pass;
-
-    return pass;
-  }
-
-  template <class Scalar> 
-  inline bool CompoundTester<Scalar>
-  ::sumTest() const 
-  {
-    if (sumSpec_.doTest())
-      {
-        cerr << "running operator addition test..." << endl;
-        LinearOperator<Scalar> sum = A_ + B_;
-
-        Vector<Scalar> x = A_.domain().createMember();
-        randomizeVec(x);
-        cerr << "computing y1 = (A+B)*x..." << endl;
-        Vector<Scalar> y1 = sum*x;
-        cerr << "computing y2 = A*x + B*x..." << endl;
-        Vector<Scalar> y2 = A_*x + B_*x;
+    Vector<Scalar> x = A_.domain().createMember();
+    randomizeVec(x);
+    Out::os() << "computing y1 = (A+B)*x..." << endl;
+    Vector<Scalar> y1 = sum*x;
+    Out::os() << "computing y2 = A*x + B*x..." << endl;
+    Vector<Scalar> y2 = A_*x + B_*x;
     
-        ScalarMag err = (y1 - y2).norm2();
+    ScalarMag err = (y1 - y2).norm2();
 
-        cerr << "|y1-y2| = " << err << endl;
+    Out::os() << "|y1-y2| = " << err << endl;
         
-        return checkTest(sumSpec_, err, "operator addition");
-      }
-    cerr << "skipping operator addition test..." << endl;
-    return true;
+    return checkTest(sumSpec_, err, "operator addition");
   }
+  Out::os() << "skipping operator addition test..." << endl;
+  return true;
+}
 
 
-  template <class Scalar> 
-  inline bool CompoundTester<Scalar>
-  ::composedTest() const 
+template <class Scalar> 
+inline bool CompoundTester<Scalar>
+::composedTest() const 
+{
+  if (composedSpec_.doTest())
   {
-    if (composedSpec_.doTest())
-      {
-        cerr << "running operator composition test..." << endl;
-        LinearOperator<Scalar> composed = A_ * B_;
+    Out::os() << "running operator composition test..." << endl;
+    LinearOperator<Scalar> composed = A_ * B_;
 
-        Vector<Scalar> x = B_.domain().createMember();
-        randomizeVec(x);
-        cerr << "computing y1 = (A*B)*x..." << endl;
-        Vector<Scalar> y1 = composed*x;
-        cerr << "computing y2 = B*x..." << endl;
-        Vector<Scalar> y2 = B_*x;
-        cerr << "computing y3 = A*y2..." << endl;
-        Vector<Scalar> y3 = A_*y2;
+    Vector<Scalar> x = B_.domain().createMember();
+    randomizeVec(x);
+    Out::os() << "computing y1 = (A*B)*x..." << endl;
+    Vector<Scalar> y1 = composed*x;
+    Out::os() << "computing y2 = B*x..." << endl;
+    Vector<Scalar> y2 = B_*x;
+    Out::os() << "computing y3 = A*y2..." << endl;
+    Vector<Scalar> y3 = A_*y2;
 
-        ScalarMag err = (y1 - y3).norm2();
+    ScalarMag err = (y1 - y3).norm2();
 
-        cerr << "|y1-y3| = " << err << endl;
-        return checkTest(composedSpec_, err, "operator composition");
-      }
-    cerr << "skipping operator composition test..." << endl;
-    return true;
+    Out::os() << "|y1-y3| = " << err << endl;
+    return checkTest(composedSpec_, err, "operator composition");
   }
+  Out::os() << "skipping operator composition test..." << endl;
+  return true;
+}
 
 
-  template <class Scalar> 
-  inline bool CompoundTester<Scalar>
-  ::scaledTest() const 
+template <class Scalar> 
+inline bool CompoundTester<Scalar>
+::scaledTest() const 
+{
+  if (scaledSpec_.doTest())
   {
-    if (scaledSpec_.doTest())
-      {
-        cerr << "running operator scaling test..." << endl;
-        Scalar alpha = sqrt(2.0);
-        LinearOperator<Scalar> scaled = scaledOperator(alpha, A_);
+    Out::os() << "running operator scaling test..." << endl;
+    Scalar alpha = sqrt(2.0);
+    LinearOperator<Scalar> scaled = alpha*A_;
 
-        Vector<Scalar> x = A_.domain().createMember();
-        randomizeVec(x);
-        cerr << "computing y1 = (alpha*A)*x..." << endl;
-        Vector<Scalar> y1 = scaled*x;
-        cerr << "computing y2 = A*x..." << endl;
-        Vector<Scalar> y2 = A_*x;
-        cerr << "computing y3 = alpha*y2..." << endl;
-        Vector<Scalar> y3 = alpha*y2;
+    Vector<Scalar> x = A_.domain().createMember();
+    randomizeVec(x);
+    Out::os() << "computing y1 = (alpha*A)*x..." << endl;
+    Vector<Scalar> y1 = scaled*x;
+    Out::os() << "computing y2 = A*x..." << endl;
+    Vector<Scalar> y2 = A_*x;
+    Out::os() << "computing y3 = alpha*y2..." << endl;
+    Vector<Scalar> y3 = alpha*y2;
 
-        ScalarMag err = (y1 - y3).norm2();
+    ScalarMag err = (y1 - y3).norm2();
 
-        cerr << "|y1-y3| = " << err << endl;
-        return checkTest(composedSpec_, err, "operator scaling");
-      }
-    cerr << "skipping operator scaling test..." << endl;
-    return true;
+    Out::os() << "|y1-y3| = " << err << endl;
+    return checkTest(composedSpec_, err, "operator scaling");
   }
+  Out::os() << "skipping operator scaling test..." << endl;
+  return true;
+}
+
+  
+
+template <class Scalar> 
+inline bool CompoundTester<Scalar>
+::diagTest() const 
+{
+  if (diagSpec_.doTest())
+  {
+    Out::os() << "running diagonal operator test..." << endl;
+
+    Vector<Scalar> x = A_.domain().createMember();
+    randomizeVec(x);
+
+    Vector<Scalar> d = A_.domain().createMember();
+    randomizeVec(d);
+        
+    LinearOperator<Scalar> D = diagonalOperator(d);
+
+    Out::os() << "computing y1 = D*x..." << endl;
+    Vector<Scalar> y1 = D*x;
+    Out::os() << "computing y2 = d .* x..." << endl;
+    Vector<Scalar> y2 = x.dotStar(d);
+
+    ScalarMag err = (y1 - y2).norm2();
+
+    Out::os() << "|y1-y2| = " << err << endl;
+    return checkTest(diagSpec_, err, "diagonal operator");
+  }
+  Out::os() << "skipping diagonal operator test..." << endl;
+  return true;
+}
 
   
   

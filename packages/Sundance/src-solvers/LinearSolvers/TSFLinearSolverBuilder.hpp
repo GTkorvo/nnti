@@ -43,7 +43,8 @@ namespace TSFExtended
   {
   public:
     /** */
-    static LinearSolver<double> createSolver(const ParameterList& params);
+    static LinearSolver<double> createSolver(const ParameterList& params,
+      int verb=0);
   };
   
 }

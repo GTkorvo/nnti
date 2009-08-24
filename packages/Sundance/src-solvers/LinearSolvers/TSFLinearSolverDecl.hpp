@@ -27,6 +27,7 @@
 #ifndef TSFLINEARSOLVERDECL_HPP
 #define TSFLINEARSOLVERDECL_HPP
 
+#include "SundanceTabs.hpp"
 #include "SundanceHandle.hpp"
 #include "SundanceHandleable.hpp"
 #include "TSFLinearSolverBaseDecl.hpp"
@@ -90,12 +91,6 @@ public:
 
   /** */
   ParameterList& parameters() ;
-    
-
-  static FancyOStream& os()
-    {
-      return ObjectWithVerbosity<LinearSolverBase<Scalar> >::os();
-    }
 };
 
   
@@ -105,6 +100,7 @@ SolverState<Scalar> LinearSolver<Scalar>
   const Vector<Scalar>& rhs,
   Vector<Scalar>& soln) const
 {
+  Tabs tab;
   TEST_FOR_EXCEPTION(this->ptr().get()==0, std::runtime_error,
     "null pointer in LinearSolver<Scalar>::solve()");
 
@@ -113,18 +109,19 @@ SolverState<Scalar> LinearSolver<Scalar>
 
   TEST_FOR_EXCEPTION(op.ptr().get()==0, std::runtime_error,
     "null op pointer in LinearSolver<Scalar>::solve()");
+
   TimeMonitor timer(solveTimer());
 
-  if (this->ptr()->getVerbosity() > 0) 
-  {
-    os() << "LinearOperator::solve()" << std::endl;
-  }
+  SUNDANCE_MSG1(this->ptr()->verb(), 
+    tab << "Solver(" << this->description() << ") starting solve");
+
   SolverState<Scalar> rtn = this->ptr()->solve(op, rhs, soln);
 
-  if (this->ptr()->getVerbosity() > 0) 
-  {
-    os() << "done LinearOperator::solve()" << std::endl;
-  }
+  SUNDANCE_MSG1(this->ptr()->verb(), 
+    tab << "Solver(" << this->description() << ") done solve:");
+  Tabs tab1;
+  SUNDANCE_MSG2(this->ptr()->verb(), 
+    tab << "state=" << rtn);
 
   return rtn;    
 }

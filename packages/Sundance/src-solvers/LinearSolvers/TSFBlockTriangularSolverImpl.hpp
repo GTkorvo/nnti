@@ -32,13 +32,13 @@
 #include "SundanceDefs.hpp"
 #include "TSFLinearSolverDecl.hpp" 
 #include "TSFLinearCombinationImpl.hpp" 
-#include "TSFCommonOperatorsDecl.hpp" 
+#include "TSFSimpleZeroOpDecl.hpp" 
 #include "TSFBlockTriangularSolverDecl.hpp" 
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 #include "TSFLinearSolverImpl.hpp" 
-#include "TSFCommonOperatorsImpl.hpp" 
+#include "TSFSimpleZeroOpDecl.hpp" 
 #endif
 
 namespace TSFExtended

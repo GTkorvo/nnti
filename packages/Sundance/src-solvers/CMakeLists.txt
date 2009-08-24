@@ -67,6 +67,7 @@ APPEND_SET(HEADERS
 
 
 APPEND_SET(SOURCES
+  Vectors/TSFLinearCombination.cpp
   Vectors/TSFProductVectorSpace.cpp
   Vectors/TSFSequentialIterator.cpp
   Vectors/TSFVector.cpp
@@ -120,15 +121,8 @@ APPEND_SET(SOURCES
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Operators)
 
 APPEND_SET(HEADERS
-  Operators/Thyra_BlockOperatorBase.hpp
-  Operators/Thyra_DefaultBlockOperatorDecl.hpp
-  Operators/Thyra_DefaultBlockOperatorImpl.hpp
-  Operators/Thyra_SetableBlockOperatorBase.hpp
-  Operators/TSFBlockOperatorDecl.hpp
-  Operators/TSFBlockOperatorImpl.hpp
+  Operators/TSFBlockOperatorBaseDecl.hpp
   Operators/TSFCollectivelyConfigurableMatrixFactory.hpp
-  Operators/TSFCommonOperatorsDecl.hpp
-  Operators/TSFCommonOperatorsImpl.hpp
   Operators/TSFEuclideanOpWithBackwardsCompatibleApply.hpp
   Operators/TSFExplicitlyTransposeableOp.hpp
   Operators/TSFExplicitlyTransposedLTIProblemFactory.hpp
@@ -140,29 +134,55 @@ APPEND_SET(HEADERS
   Operators/TSFInverseLTIOp.hpp
   Operators/TSFLinearOperatorDecl.hpp
   Operators/TSFLinearOperatorImpl.hpp
-  Operators/TSFLoadableBlockOperator.hpp
+  Operators/TSFLoadableBlockOperatorDecl.hpp
+  Operators/TSFLoadableBlockOperatorImpl.hpp
   Operators/TSFLoadableMatrix.hpp
   Operators/TSFLTIProblemFactoryBase.hpp
   Operators/TSFDefaultLTIProblemFactory.hpp
   Operators/TSFMatrixFactory.hpp
-  Operators/TSFMultiVectorOperator.hpp
+  Operators/TSFMultiVectorOperatorDecl.hpp
+  Operators/TSFMultiVectorOperatorImpl.hpp
   Operators/TSFNonlinearOperator.hpp
   Operators/TSFNonlinearOperatorBase.hpp
-  Operators/TSFNonmemberOpHelpersDecl.hpp
-  Operators/TSFNonmemberOpHelpersImpl.hpp
   Operators/TSFOpWithBackwardsCompatibleApply.hpp
   Operators/TSFPartitionedMatrixFactory.hpp
   Operators/TSFPartitionedToMonolithicConverter.hpp
   Operators/TSFRowAccessibleOp.hpp
-  Operators/TSFSimplifiedLinearOpBase.hpp 
+  Operators/TSFSimpleAddedOpDecl.hpp
+  Operators/TSFSimpleAddedOpImpl.hpp
+  Operators/TSFSimpleBlockOpDecl.hpp
+  Operators/TSFSimpleBlockOpImpl.hpp
+  Operators/TSFSimpleComposedOpDecl.hpp
+  Operators/TSFSimpleComposedOpImpl.hpp
+  Operators/TSFSimpleDiagonalOpDecl.hpp
+  Operators/TSFSimpleDiagonalOpImpl.hpp
+  Operators/TSFSimpleIdentityOpDecl.hpp
+  Operators/TSFSimpleIdentityOpImpl.hpp
+  Operators/TSFSimpleScaledOpDecl.hpp
+  Operators/TSFSimpleScaledOpImpl.hpp
+  Operators/TSFSimpleTransposedOpDecl.hpp
+  Operators/TSFSimpleTransposedOpImpl.hpp
+  Operators/TSFSimpleZeroOpDecl.hpp
+  Operators/TSFSimpleZeroOpImpl.hpp
+  Operators/TSFSimplifiedLinearOpBaseDecl.hpp 
+  Operators/TSFSimplifiedLinearOpBaseImpl.hpp 
   )
 
 APPEND_SET(SOURCES
-  Operators/TSFBlockOperator.cpp
-  Operators/TSFCommonOperators.cpp
   Operators/TSFInverseOperator.cpp
   Operators/TSFLinearOperator.cpp
+  Operators/TSFLoadableBlockOperator.cpp
+  Operators/TSFMultiVectorOperator.cpp
   Operators/TSFPartitionedMatrixFactory.cpp
+  Operators/TSFSimpleAddedOp.cpp
+  Operators/TSFSimpleBlockOp.cpp
+  Operators/TSFSimpleComposedOp.cpp
+  Operators/TSFSimpleDiagonalOp.cpp
+  Operators/TSFSimpleIdentityOp.cpp
+  Operators/TSFSimpleScaledOp.cpp
+  Operators/TSFSimpleTransposedOp.cpp
+  Operators/TSFSimpleZeroOp.cpp
+  Operators/TSFSimplifiedLinearOpBase.cpp 
   )
 
 #
@@ -177,12 +197,12 @@ APPEND_SET(HEADERS
   LinearSolvers/TSFAztecSolver.hpp
   LinearSolvers/TSFAztecSolver.hpp
   LinearSolvers/TSFBelosSolver.hpp
-  LinearSolvers/TSFBICGSTABSolver.hpp
+  LinearSolvers/TSFBICGSTABSolverDecl.hpp
+  LinearSolvers/TSFBICGSTABSolverImpl.hpp
   LinearSolvers/TSFBlockTriangularSolverDecl.hpp
   LinearSolvers/TSFBlockTriangularSolverImpl.hpp
   LinearSolvers/TSFEigensolver.hpp
   LinearSolvers/TSFEigensolverBase.hpp
-  LinearSolvers/TSFGMRESSolver.hpp
   LinearSolvers/TSFIterativeSolver.hpp
   LinearSolvers/TSFKrylovSolver.hpp
   LinearSolvers/TSFLinearSolverDecl.hpp
@@ -197,6 +217,7 @@ APPEND_SET(SOURCES
   LinearSolvers/TSFAmesosSolver.cpp
   LinearSolvers/TSFAztecSolver.cpp
   LinearSolvers/TSFBelosSolver.cpp
+  LinearSolvers/TSFBICGSTABSolver.cpp
   LinearSolvers/TSFBlockTriangularSolver.cpp
   LinearSolvers/TSFLinearSolver.cpp
   LinearSolvers/TSFLinearSolverBase.cpp
@@ -241,8 +262,10 @@ APPEND_SET(HEADERS
   Testing/TSFOperatorBuilder.hpp
   Testing/TSFPoissonBoltzmannJacobian.hpp
   Testing/TSFPoissonBoltzmannOp.hpp
-  Testing/TSFRandomBlockMatrix.hpp
-  Testing/TSFRandomSparseMatrix.hpp
+  Testing/TSFRandomBlockMatrixBuilderDecl.hpp
+  Testing/TSFRandomBlockMatrixBuilderImpl.hpp
+  Testing/TSFRandomSparseMatrixBuilderDecl.hpp
+  Testing/TSFRandomSparseMatrixBuilderImpl.hpp
   Testing/TSFTesterBase.hpp
   Testing/TSFVectorTester.hpp 
   )
@@ -252,6 +275,8 @@ APPEND_SET(SOURCES
   Testing/TSFMatrixLaplacian1D.cpp
   Testing/TSFPoissonBoltzmannJacobian.cpp
   Testing/TSFPoissonBoltzmannOp.cpp 
+  Testing/TSFRandomBlockMatrixBuilder.cpp
+  Testing/TSFRandomSparseMatrixBuilder.cpp
   )
 
 #

@@ -41,7 +41,7 @@ namespace TSFExtended
 /**
  *
  */
-class IfpackOperator : virtual public LinearOpBase<double, double>,
+class IfpackOperator : 
   public OpWithBackwardsCompatibleApply<double>
 {
 public:

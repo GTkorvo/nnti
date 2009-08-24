@@ -109,7 +109,6 @@ namespace TSFExtended
     //@{
     HANDLE_CTORS(Vector<Scalar>, Thyra::VectorBase<Scalar>);
 
-#ifndef DOXYGEN_DEVELOPER_ONLY
     /** Construct a vector from a 2-term LC */
     template<class Node1, class Node2>
     Vector(const TSFExtendedOps::LC2<Scalar, Node1, Node2>& x);
@@ -125,7 +124,6 @@ namespace TSFExtended
     /** Assign a scaled linear combination to this vector */
     template<class Node>
     Vector& operator=(const TSFExtendedOps::OpTimesLC<Scalar, Node>& x);
-#endif
     //@}
 
     /** */
@@ -202,6 +200,12 @@ namespace TSFExtended
      * Element-by-element product (Matlab dot-star operator)
      */
     Vector<Scalar> dotStar(const Vector<Scalar>& other) const ;
+
+    /** 
+     * Write the elementwise product of \f$a\f$ and \f$b\f$ into
+     * <t>this.</t>
+     */
+    void dotStarInto(const Vector<Scalar>& a, const Vector<Scalar>& b) const ;
 
     /** 
      * Element-by-element division (Matlab dot-slash operator)

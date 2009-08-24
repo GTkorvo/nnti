@@ -109,7 +109,7 @@ namespace TSFExtended
     int maxiters = this->getMaxiters();
     int kSpace = getKSpace();
     Scalar tol = this->getTol();
-    int verbosity = this->getVerbosity();
+    int verbosity = this->verb();
 
     if (verbosity > 1)
       {

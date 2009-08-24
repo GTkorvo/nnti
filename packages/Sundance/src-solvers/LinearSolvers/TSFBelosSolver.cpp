@@ -22,6 +22,7 @@ using namespace Teuchos;
 BelosSolver::BelosSolver(const ParameterList& params)
   : LinearSolverBase<double>(params), pf_()
 {
+  setName("BelosSolver");
   if (params.isSublist("Preconditioner"))
   {
     ParameterList precParams = params.sublist("Preconditioner");

@@ -42,6 +42,7 @@ AztecSolver::AztecSolver(const ParameterList& params)
     aztec_status(AZ_STATUS_SIZE),
     aztec_proc_config(AZ_PROC_SIZE)
 {
+  setName("AztecSolver");
   initParamMap();
 
   /* initialize the options and parameters with Aztec's defaults */
@@ -114,7 +115,7 @@ AztecSolver::AztecSolver(const ParameterList& params)
     {
       int val = getValue<int>(entry);
       options_[aztecCode] = val;
-      if (name=="Verbosity") verb() = val;
+      if (name=="Verbosity") setVerbosity(val);
     }
     else if (entry.isType<double>())
     {
@@ -138,6 +139,7 @@ AztecSolver::AztecSolver(const Teuchos::map<int, int>& aztecOptions,
     aztec_status(AZ_STATUS_SIZE),
     aztec_proc_config(AZ_PROC_SIZE)
 {
+  setName("AztecSolver");
   if (aztecOptions.find(AZ_recursive_iterate) != aztecOptions.end())
   {
     aztec_recursive_iterate_ = true;
@@ -184,7 +186,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   }
   else
   {
-    out = rcp(&os(), false);
+    out = rcp(&Out::os(), false);
   }
   RefCountPtr<MultiLevelPreconditioner> mlPrec;
   RefCountPtr<Ifpack_Preconditioner> ifpackPrec;
@@ -192,7 +194,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
 	TSFExtended::Vector<double> bCopy = rhs.copy();
 	TSFExtended::Vector<double> xCopy = rhs.copy();
 
-  if (getVerbosity() > 2) 
+  if (verb() > 2) 
   {
     *out << "rhs=" << bCopy << std::endl;
   }

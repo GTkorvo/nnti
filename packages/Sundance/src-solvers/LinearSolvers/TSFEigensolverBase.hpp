@@ -47,7 +47,7 @@ using Teuchos::ParameterList;
  */
 template <class Scalar>
 class EigensolverBase 
-  : public ObjectWithVerbosity<EigensolverBase<Scalar> >
+  : public ObjectWithClassVerbosity<EigensolverBase<Scalar> >
 {
 public:
   /** */

@@ -26,14 +26,12 @@
 // **********************************************************************/
 /* @HEADER@ */
 
+#include "SundanceExceptions.hpp"
 #include "TSFLinearSolverBuilder.hpp"
 #include "TSFAmesosSolver.hpp"
 #include "TSFAztecSolver.hpp"
 #include "TSFBelosSolver.hpp"
-#include "TSFBICGSTABSolver.hpp"
-#include "TSFGMRESSolver.hpp"
-#include "TSFNonmemberOpHelpersDecl.hpp"
-#include "TSFLinearCombinationImpl.hpp"
+#include "TSFBICGSTABSolverDecl.hpp"
 #include "TSFBlockTriangularSolverDecl.hpp"
 #include "Teuchos_XMLParameterListReader.hpp"
 
@@ -41,6 +39,7 @@
 #include "TSFVectorImpl.hpp"
 #include "TSFLinearOperatorImpl.hpp"
 #include "TSFLinearSolverImpl.hpp"
+#include "TSFBICGSTABSolverImpl.hpp"
 #include "TSFBlockTriangularSolverImpl.hpp"
 #endif
 
@@ -50,15 +49,20 @@ using namespace Teuchos;
 
 
 
-LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& params)
+LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& params, int verb)
 {
   TEST_FOR_EXCEPTION(!params.isSublist("Linear Solver"), std::runtime_error,
                      "did not find Linear Solver sublist in " << params);
 
-
   ParameterList solverSublist = params.sublist("Linear Solver");
 
   const string& solverType = getParameter<string>(solverSublist, "Type");
+
+  Tabs tab;
+  SUNDANCE_MSG1(verb, tab << "Solver builder creating a solver of type="
+    << solverType);
+  Tabs tab2;
+  SUNDANCE_MSG2(verb, tab2 << "params = " << solverSublist);
 
   if (solverType=="Aztec")
     {
@@ -73,17 +77,15 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
         }
       else if (solverMethod=="GMRES")
         {
-          return new GMRESSolver<double>(solverSublist);
+          TEST_FOR_EXCEPTION(true, RuntimeError, "TSF GMRES solver not implemented");
         }
     }
   else if (solverType=="Amesos")
     {
-      LinearSolver<double>::os() << "amesos params = " << params << std::endl;
       return new AmesosSolver(solverSublist);
     }
   else if (solverType=="Belos")
     {
-      LinearSolver<double>::os() << "belos params = " << params << std::endl;
       return new BelosSolver(solverSublist);
     }
   else if (solverType=="Block Triangular")

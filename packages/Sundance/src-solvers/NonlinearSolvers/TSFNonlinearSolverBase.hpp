@@ -41,7 +41,7 @@ namespace TSFExtended
    */
   template <class Scalar>
   class NonlinearSolverBase 
-    : public ObjectWithVerbosity<NonlinearSolverBase<Scalar> >
+    : public ObjectWithClassVerbosity<NonlinearSolverBase<Scalar> >
   {
   public:
     /** */

@@ -48,7 +48,7 @@ using namespace Teuchos;
 template <class Scalar>
 class NonlinearOperatorBase 
   : public SundanceUtils::Handleable<NonlinearOperatorBase<Scalar> >,
-    public ObjectWithVerbosity<NonlinearOperatorBase<Scalar> >
+    public ObjectWithClassVerbosity<NonlinearOperatorBase<Scalar> >
 {
 public:
   /** Empty ctor, for contexts in which we don't know the

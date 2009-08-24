@@ -41,7 +41,7 @@ namespace TSFExtended
 /**
  *
  */
-class MLOperator : virtual public LinearOpBase<double, double>,
+class MLOperator :
   public OpWithBackwardsCompatibleApply<double>
 {
 public:

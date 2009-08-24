@@ -30,6 +30,8 @@
 #define TSFLINEARSOLVERBASEDECL_HPP
 
 #include "SundanceDefs.hpp"
+#include "SundanceObjectWithVerbosity.hpp"
+#include "SundanceNamedObject.hpp"
 #include "TSFSolverState.hpp"
 #include "Teuchos_ParameterList.hpp"
 
@@ -51,7 +53,8 @@ namespace TSFExtended
 
   /** */
   template <class Scalar>
-  class LinearSolverBase : public ObjectWithVerbosity<LinearSolverBase<Scalar> >
+  class LinearSolverBase : public DefaultObjectWithVerbosity,
+                           public NamedObject
   {
   public:
     /** */
@@ -80,9 +83,6 @@ namespace TSFExtended
 
     /** */
     ParameterList& parameters();
-
-    /** */
-    int getVerbosity() const ;
 
     /** */
     static string verbosityParam();

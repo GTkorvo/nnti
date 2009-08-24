@@ -101,7 +101,8 @@ void Vector<Scalar>::print(std::ostream& os) const
     for (int i=0; i<this->space().numBlocks(); i++)
     {
       os << "block=" << i << std::endl;
-      os << this->getBlock(i) << std::endl;
+      this->getBlock(i).print(os);
+      os << std::endl;
     }
     os << "]" << std::endl;
     return;
@@ -253,6 +254,17 @@ Vector<Scalar> Vector<Scalar>::dotStar(const Vector<Scalar>& other) const
     Thyra::ele_wise_prod(1.0, *(this->ptr)(), *(other.ptr()), rtn.ptr().get());
   }
   return rtn;
+}
+
+
+
+//===========================================================================
+template <class Scalar> inline 
+void Vector<Scalar>::dotStarInto(
+  const Vector<Scalar>& a, const Vector<Scalar>& b) const 
+{
+  TimeMonitor t(*opTimer());
+  Thyra::ele_wise_prod(1.0, *(a.ptr()), *(b.ptr()), this->ptr().get());
 }
 
 

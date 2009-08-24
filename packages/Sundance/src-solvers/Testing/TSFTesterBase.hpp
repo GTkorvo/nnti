@@ -44,7 +44,7 @@ namespace TSFExtended
 
   /** */
   template <class Scalar>
-  class TesterBase : public ObjectWithVerbosity<TesterBase<Scalar> >
+  class TesterBase : public ObjectWithClassVerbosity<TesterBase<Scalar> >
   {
   public:
     /** \brief Local typedef for promoted scalar magnitude */

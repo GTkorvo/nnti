@@ -72,11 +72,6 @@ public:
   /** Return the range */
   const VectorSpace<Scalar> range() const ;
 
-  /** Set the verbosity level */
-  void setVerbosity(int verb) {verb_ = verb;}
-
-  /** */
-  int verbosity() const {return verb_;}
 
   /** 
    * Compute
@@ -114,11 +109,8 @@ public:
   LinearOperator<Scalar> transpose() const ; 
 
 
-  /** Operator sum */
-  LinearOperator<Scalar> operator+(const LinearOperator<Scalar>& other) const ;
-
   /** Return a Loadable Matrix  */
-  RefCountPtr<LoadableMatrix<Scalar> > matrix();
+  RCP<LoadableMatrix<Scalar> > matrix();
 
   /** Get a row of the underlying matrix */     
   void getRow(const int& row, 
@@ -140,6 +132,10 @@ public:
   /** get the (i,j)-th block */
   LinearOperator<Scalar> getBlock(const int &i, const int &j) const ;
 
+
+  /** get a writeable copy of the (i,j)-th block */
+  LinearOperator<Scalar> getNonconstBlock(const int &i, const int &j) ;
+
   /** set the (i,j)-th block 
    *  If the domain and/or the range are not set, then we
    *  are building the operator
@@ -151,9 +147,6 @@ public:
   void endBlockFill();
 
   //@}
-
-
-    
 
       
 

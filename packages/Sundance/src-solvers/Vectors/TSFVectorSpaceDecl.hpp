@@ -109,6 +109,9 @@ public:
   bool advanceIndex(int& blockIndex, int& indexInCurrentBlock, int& globalIndex) const ;
 };
 
+template <class Scalar>
+STREAM_OUT(VectorSpace<Scalar>)
+
 }
 
 

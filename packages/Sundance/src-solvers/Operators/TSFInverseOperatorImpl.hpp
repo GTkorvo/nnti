@@ -30,18 +30,23 @@
 #define TSFINVERSEOPERATOR_IMPL_HPP
 
 #include "SundanceDefs.hpp"
+#include "SundanceTabs.hpp"
 #include "TSFSolverState.hpp"
 #include "TSFInverseOperatorDecl.hpp"
-#include "TSFLinearCombinationImpl.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 
 #include "Teuchos_RefCountPtr.hpp"
 
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFSimpleTransposedOpImpl.hpp"
+#endif
+
 
 namespace TSFExtended
 {
 using Teuchos::RCP;
+using std::endl;
 
 /*
  * Ctor with a linear operator and a solver specified.
@@ -71,6 +76,10 @@ void InverseOperator<Scalar>::generalApply(
   ,const Scalar            beta  
   ) const 
 {
+  
+  Tabs tab(0);
+  SUNDANCE_MSG2(this->verb(), tab << "InverseOperator::generalApply()");
+
   TEST_FOR_EXCEPTION(dynamic_cast<Thyra::ZeroLinearOpBase<Scalar>* >(op_.ptr().get()) != 0, std::runtime_error,
     "InverseOperator<Scalar>::apply() called on a ZeroOperator.");
   TEST_FOR_EXCEPTION(op_.domain().dim() != op_.range().dim(), std::runtime_error,
@@ -101,6 +110,7 @@ void InverseOperator<Scalar>::generalApply(
     Vt_S(result.ptr().get(), alpha);
     V_StVpV(y, beta, *y, *result.ptr().get());
   }      
+  SUNDANCE_MSG2(this->verb(), tab << "done InverseOperator::generalApply()");
 }
 
 
@@ -120,6 +130,18 @@ template <class Scalar> inline
 RCP<const Thyra::VectorSpaceBase<Scalar> >
 InverseOperator<Scalar>::range() const 
 {return op_.ptr()->range();}
+
+
+template <class Scalar> 
+void InverseOperator<Scalar>::print(std::ostream& os) const
+{
+  using namespace std;
+  Tabs tab(0);
+  os << tab << "InverseOperator[" << endl;
+  Tabs tab1;
+  os << tab1 << "op=" << op_ << endl;
+  os << tab << "]" << endl;
+}
 
 
 template <class Scalar> 

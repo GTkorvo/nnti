@@ -47,22 +47,13 @@ const ParameterList& LinearSolverBase<Scalar>::parameters() const
 
 template <class Scalar> inline
 LinearSolverBase<Scalar>::LinearSolverBase(const ParameterList& params)
-  : ObjectWithVerbosity<LinearSolverBase<Scalar> >(), 
+  : DefaultObjectWithVerbosity(), 
     params_(params) 
 {}
 
 template <class Scalar> inline
 ParameterList& LinearSolverBase<Scalar>::parameters() {return params_;}
 
-template <class Scalar> inline
-int LinearSolverBase<Scalar>::getVerbosity() const 
-{
-  if (this->parameters().isParameter(verbosityParam()))
-  {
-    return this->parameters().template get<int>(verbosityParam());
-  }
-  return 0;
-}
 
 template <class Scalar> inline
 string LinearSolverBase<Scalar>::verbosityParam() {return "Verbosity";}

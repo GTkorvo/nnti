@@ -24,7 +24,7 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
-/* @HEADER@ */
+ /* @HEADER@ */
 
 #ifndef TSFSOLVERSTATE_HPP
 #define TSFSOLVERSTATE_HPP
@@ -36,83 +36,83 @@
 
 namespace TSFExtended
 {
-  using namespace Teuchos;
+using namespace Teuchos;
 
-  /** 
-   *
-   */
-  enum SolverStatusCode {SolveCrashed, SolveFailedToConverge, SolveConverged};
+/** 
+ *
+ */
+enum SolverStatusCode {SolveCrashed, SolveFailedToConverge, SolveConverged};
 
 
-  /**
-   *
-   */
-  template <class Scalar>
-  class SolverState
-  {
-  public:
-    /** */
-    SolverState(SolverStatusCode finalState, const string& msg, 
-                int finalIters, const Scalar& finalResid)
-      : finalState_(finalState),
-        finalResid_(finalResid),
-        finalIters_(finalIters),
-        msg_(msg)
+/**
+ *
+ */
+template <class Scalar>
+class SolverState
+{
+public:
+  /** */
+  SolverState(SolverStatusCode finalState, const string& msg, 
+    int finalIters, const Scalar& finalResid)
+    : finalState_(finalState),
+      finalResid_(finalResid),
+      finalIters_(finalIters),
+      msg_(msg)
     {;}
 
-    /** */
-    SolverState() {;}
+  /** */
+  SolverState() {;}
 
-    /** */
-    const Scalar& finalResid() const {return finalResid_;}
+  /** */
+  const Scalar& finalResid() const {return finalResid_;}
 
-    /** */
-    int finalIters() const {return finalIters_;}
+  /** */
+  int finalIters() const {return finalIters_;}
 
-    /** */
-    const SolverStatusCode& finalState() const {return finalState_;}
+  /** */
+  const SolverStatusCode& finalState() const {return finalState_;}
 
-    /** */
-    const string& finalMsg() const {return msg_;}
+  /** */
+  const string& finalMsg() const {return msg_;}
 
-    /** */
-    string stateDescription() const 
+  /** */
+  string stateDescription() const 
     {
       switch (finalState_)
-        {
+      {
         case SolveCrashed:
           return "Crashed";
         case SolveFailedToConverge:
           return "Failed to converge";
         case SolveConverged:
           return "Converged";
-        }
+      }
       return "Crashed";
     }
 
-  private:
+private:
     
-    SolverStatusCode finalState_;
+  SolverStatusCode finalState_;
 
-    Scalar finalResid_;
+  Scalar finalResid_;
 
-    int finalIters_;
+  int finalIters_;
 
-    string msg_;
-  };
-
-}
+  string msg_;
+};
 
 
 template <class Scalar> inline
 std::ostream& operator<<(std::ostream& os, 
-                    const TSFExtended::SolverState<Scalar>& state)
+  const TSFExtended::SolverState<Scalar>& state)
 {
   os << "Solver final state: " << state.stateDescription() << std::endl;
   os << "message: " << state.finalMsg() << std::endl;
   os << "iters taken: " << state.finalIters() << std::endl;
   os << "final residual: " << state.finalResid() << std::endl;
   return os;
+}
+
 }
 
 

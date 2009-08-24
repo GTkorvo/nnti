@@ -129,8 +129,11 @@ EpetraVectorSpace::clone() const
 
 string EpetraVectorSpace::description() const
 {
-  return "EpetraVectorSpace[dim=" + Teuchos::toString(dim()) + ", local="
-    + Teuchos::toString(localSubDim()) + "]";
+  string rtn = "EpetraVS[d=" + Teuchos::toString(dim());
+  if (localSubDim() != dim()) rtn += ", local="
+    + Teuchos::toString(localSubDim());
+  rtn += "]";
+  return rtn;
 }
 
 

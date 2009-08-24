@@ -94,7 +94,7 @@ public:
 
   static FancyOStream& os()
     {
-      return ObjectWithVerbosity<EigensolverBase<Scalar> >::os();
+      return ObjectWithClassVerbosity<EigensolverBase<Scalar> >::os();
     }
 };
 

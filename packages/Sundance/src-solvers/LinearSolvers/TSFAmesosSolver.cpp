@@ -21,6 +21,7 @@ AmesosSolver::AmesosSolver(const ParameterList& params)
   : LinearSolverBase<double>(params),
     kernel_()
 {
+  setName("AmesosSolver");
   if (parameters().isParameter("Kernel"))
     {
       kernel_ = getParameter<string>(parameters(), "Kernel");

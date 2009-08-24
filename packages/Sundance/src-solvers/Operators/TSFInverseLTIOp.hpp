@@ -32,7 +32,7 @@
 #include "SundanceDefs.hpp"
 #include "TSFSimplifiedLinearOpBase.hpp"
 #include "TSFHomogeneouslyBlockedLinearOp.hpp"
-#include "TSFNonmemberOpHelpers.hpp"
+#include "TSFSimpleIdentityOpDecl.hpp"
 
 
 namespace TSFExtended
