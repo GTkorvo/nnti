@@ -187,7 +187,15 @@ transient parameters, and \\
 DAE residual function.
 \eifthen
 
-Note that we assume that we have a consistent initial condition where
+Note that we assume that we have a consistent initial
+condition\footnote{Note: While it is assumed that the user of DAE
+software will be responsibile for setting up an consistent initial
+condition it is common for either a steady state solution to be chosen
+for $x$ such that $\dot{x} = 0$ or $x$ will be chosen based on some
+criteria and then an initial condition calculation will be performed
+to solve for $\dot{x}$ at $t_0$ such that the DAE residual is
+satisfied.} where
+
 %
 \begin{eqnarray}
 f\left( \dot{x}_0(t_0), x_0(t_0), p, v(t_0), t_0 \right) = 0. \label{dae::consistent-ic}
@@ -426,21 +434,23 @@ condition is arbitrary but when we move toward the end of the derivation, a
 natural and very convenient choice for a boundary condition that uniquely
 specifies $\Lambda$ will be obvious.
 
-{}\noindent\textit{Side Note:} What is critical about the choice for the
-adjoint equation in (\ref{eqn:sens:adj-trans}) is that the derivative
-$\jac{g}{x}$ appear on the RHS.  What is largely arbitrary, however, is the
-sign given to $\jac{g}{x}$ which of course defines the sign for the
-adjoint variables $\Lambda$.  The Petzold papers (e.g.\
-{}\cite{adjoint-sens-2003}) and the IDAS code {}\cite{sundials} use the sign
-for the adjoint given in (\ref{eqn:sens:adj-trans}).  However, the CVODES code
-{}\cite{cvodes,sundials} uses the opposite sign for $\jac{g}{x}$ in the RHS
-and therefore gives the opposite sign for the adjoint solution $\Lambda$.
-With respect the the computation of the reduced response derivative, the
-choice for the sign of $\Lambda$ is arbitrary.  However, if one is going to
-directly interpret the adjoint solution $\Lambda$ as we do in Section
-{}\ref{sec:adjoint-interpretation}, then the sign of the adjoint becomes very
-important and it is critical that the user of any adjoint code know the
-significance of the sign of the adjoint and understand its meaning.
+{}\noindent\textit{Side Note:} What is critical about the choice for
+the adjoint equation in (\ref{eqn:sens:adj-trans}) is that the
+derivative $\jac{g}{x}$ appear on the RHS.  What is largely arbitrary,
+however, is the sign given to $\jac{g}{x}$ which of course defines the
+sign for the adjoint variables $\Lambda$.  The Petzold papers (e.g.\
+{}\cite{adjoint-sens-2003}) and the IDAS code {}\cite{sundials} use
+the sign for the adjoint given in (\ref{eqn:sens:adj-trans}).
+However, the CVODES code {}\cite{cvodes,sundials} uses the opposite
+sign for $\jac{g}{x}$ in the RHS and therefore gives the opposite sign
+for the adjoint solution $\Lambda$.  With respect the the computation
+of the reduced response derivative, the choice for the sign of
+$\Lambda$ is arbitrary.  However, if one is going to directly
+interpret the adjoint solution $\Lambda$ as we do in Section
+{}\ref{sec:adjoint-interpretation}, then the sign of the adjoint
+becomes very important and it is critical that the user of any adjoint
+code know the significance of the sign of the adjoint and understand
+its meaning. {}\textit{End Side Note.}
 
 The derivation continues by substituting
 (\ref{eqn:sens:adj-trans}) into
@@ -584,15 +594,22 @@ picking just any final condition, selecting the final condition
 \label{eqn:sens:adj-trans:fc}
 \end{equation}
 %
+
 is rather convenient since it zeros out the last term in
-(\ref{eqn:sens:d_d_hat_d_p-3}) and allows us to avoid the computation of
-$\jac{x}{p}$ at $t=t_f$ which we do not have available with an adjoint method.
-This specification of the final condition closes the adjoint equation and
-uniquely defines the adjoint $\Lambda$ in all of the cases of state DAEs what
-we will consider here\footnote{A uniquely defined adjoint $\Lambda$ requires
-that certain regularity conditions are satisfied by the state DAE (see
-{}\cite{adjoint-sens-2003}) but for the purposes of this derivation we assume
-that such a condition is always satisfied.}.
+(\ref{eqn:sens:d_d_hat_d_p-3}) and allows us to avoid the computation
+of $\jac{x}{p}$ at $t=t_f$ which we do not have available with an
+adjoint method.  This specification of the final condition closes the
+adjoint equation and uniquely defines the adjoint $\Lambda$ in all of
+the cases of state DAEs what we will consider here\footnote{Note: A
+uniquely defined adjoint $\Lambda$ requires that certain regularity
+conditions are satisfied by the state DAE (see
+{}\cite{adjoint-sens-2003}) but for the purposes of this derivation we
+assume that such a condition is always satisfied.}.  Note that even
+though the adjoint equation is now closed given this initial condition
+at $t_f$, getting a consistent initial condition also means computing
+$\dot{\Lambda}(t_f)$ such that it satifies the the adjoint equation at
+$t_f$.  Computing a consistent intial condition for the adjoint can be
+quite complex {}\cite{adjoint-sens-2003}.
 
 Finally, substituting (\ref{eqn:sens:adj-trans:fc}) and
 $\jac{x_0}{p}$ for $\jac{x}{p}$ at $t=t_0$ in
@@ -837,7 +854,7 @@ As described in {}\cite{adjoint-sens-2003}, for some classes of DAEs
 (including some implicit ODEs), the form of the adjoint in
 (\ref{eqn:sens:adj})--(\ref{eqn:sens:adj:fc}) may be unstable while the
 following {}\textit{augmented adjoint DAE system} (created by defining the
-augmented adjoint varaibles $\hat{\Lambda} = \jac{f}{\dot{x}} {}\Lambda$)
+augmented adjoint varaibles $\hat{\Lambda} = (\jac{f}{\dot{x}})^T {}\Lambda$)
 %
 \begin{eqnarray}
 \frac{d}{dt}\left( \hat{\Lambda} \right)
@@ -858,6 +875,15 @@ equations, only the augmented adjoint DAE is guaranteed to be stable for the
 same time-step used by the forward DAE {}\cite{adjoint-sens-2003}.  Therefore,
 the augmented adjoint DAE system is to be preferred in a software
 implementation and only imparts a small additional space/time cost.
+
+As noted earlier in the derivation, one must be careful in general to
+compute a consistent initial condition by computing
+$\dot{\Lambda}(t_f)$ such that $\dot{\Lambda}$ and $\Lambda$ satisfy
+the adjoint equation (\ref{eqn:sens:adj}) at $t_f$.  If
+$\jac{f}{\dot{x}}$ is not a function of $t$ and is nonsingular,
+computing $\dot{\Lambda}$ for consistent initial condition just
+involves performing a single adjoint linear solve with
+$(\jac{f}{\dot{x}})^T$.
 
 
 % ---------------------------------------------------------------------- %
