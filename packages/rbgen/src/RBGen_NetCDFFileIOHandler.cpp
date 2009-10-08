@@ -8,6 +8,7 @@
 #include "Epetra_MultiVector.h"
 
 #include "Teuchos_Utils.hpp"
+#include "Teuchos_TestForException.hpp"
 
 #ifdef EPETRA_MPI
 #include "Epetra_MpiComm.h"
@@ -210,9 +211,7 @@ namespace RBGen {
 	if (status != NC_NOERR) handle_error(status);
 	//
 	//
-	if ( cols_t != cols0 || (int)num_nod_var_t != num_nod_var )
-	  { // TO DO:  Throw exception!
-	  }
+        TEST_FOR_EXCEPTION(cols_t != cols0 || (int)num_nod_var_t != num_nod_var, std::runtime_error, "Data set in file "+temp_filename+" is of inconsistent size!");
 	total_rows += rows_t;
 	//
 	// If the scaling index vector is needed we can set the endpoint here.

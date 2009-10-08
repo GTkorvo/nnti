@@ -1,7 +1,8 @@
 #include "RBGen_EpetraMVMethodFactory.h"
 #include "RBGen_LapackPOD.h"
+#include "Teuchos_TestForException.hpp"
 
-#if HAVE_RBGEN_ANASAZI
+#ifdef HAVE_RBGEN_ANASAZI
 #include "RBGen_AnasaziPOD.h"
 #include "RBGen_ISVD_SingleUDV.h"
 #include "RBGen_ISVD_MultiCDUDV.h"
@@ -14,10 +15,7 @@ namespace RBGen {
   
   Teuchos::RCP<Method<Epetra_MultiVector,Epetra_Operator> > EpetraMVMethodFactory::create( const Teuchos::ParameterList& params )
   {
-     // See if the "Reduced Basis Method" sublist exists
-    if ( !params.isSublist( "Reduced Basis Method" ) ) {
-      //  TO DO:  THROW EXCEPTION!!!!
-    }
+    TEST_FOR_EXCEPTION(!params.isSublist( "Reduced Basis Method" ), std::invalid_argument, "Reduced Basis Method sublist does not exist!");
 
     // Get the "Reduced Basis Method" sublist.
     const Teuchos::ParameterList& rbmethod_params = params.sublist( "Reduced Basis Method" );
@@ -34,7 +32,7 @@ namespace RBGen {
     } 
     // Inexact POD computed using inexact SVD through Anasazi
     // IncSVDPOD uses Anasazi utility classes, while AnasaziPOD uses Anasazi for the solution
-#if HAVE_RBGEN_ANASAZI
+#ifdef HAVE_RBGEN_ANASAZI
     else if ( method == "IncSVD POD" ) {
       std::string incsvdmethod = rbmethod_params.get<std::string>("IncSVD Method");
       if ( incsvdmethod == "Single/UDV" ) {
@@ -58,7 +56,8 @@ namespace RBGen {
     } else 
 #endif
     {
-    // TO DO:  Throw exception because method was not valid
+      std::string err_str = "Reduced basis method, 'Method = " + method + "', is not recognized!";
+      TEST_FOR_EXCEPTION(true, std::invalid_argument, err_str);
     }
     //
     // Return the method created

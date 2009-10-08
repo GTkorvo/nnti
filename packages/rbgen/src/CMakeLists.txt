@@ -83,6 +83,42 @@ IF(${PACKAGE_NAME}_ENABLE_EpetraExt)
 
 ENDIF()
 
+IF(${PACKAGE_NAME}_ENABLE_Anasazi)
+
+  SET(HEADERS
+    ${HEADERS}
+    RBGen_AnasaziPOD.h
+    RBGen_IncSVDPOD.h
+    RBGen_ISVDMultiCD.h
+    RBGen_ISVD_MultiCDUDV.h
+    RBGen_ISVDMultiSDA.h
+    RBGen_ISVD_MultiSDAUDV.h
+    RBGen_ISVDMultiSDB.h
+    RBGen_ISVD_MultiSDBUDV.h
+    RBGen_ISVDSingle.h
+    RBGen_ISVD_SingleUDV.h
+    RBGen_ISVDUDV.h
+    RBGen_StSVD_RTR.h
+    )
+
+  SET(SOURCES
+    ${SOURCES}
+    RBGen_AnasaziPOD.cpp
+    RBGen_IncSVDPOD.cpp
+    RBGen_ISVDMultiCD.cpp
+    RBGen_ISVD_MultiCDUDV.cpp
+    RBGen_ISVDMultiSDA.cpp
+    RBGen_ISVD_MultiSDAUDV.cpp
+    RBGen_ISVDMultiSDB.cpp
+    RBGen_ISVD_MultiSDBUDV.cpp
+    RBGen_ISVDSingle.cpp
+    RBGen_ISVD_SingleUDV.cpp
+    RBGen_ISVDUDV.cpp
+    RBGen_StSVD_RTR.cpp
+  )
+
+ENDIF()
+
 #
 # C) Define the targets for package's library(s)
 #

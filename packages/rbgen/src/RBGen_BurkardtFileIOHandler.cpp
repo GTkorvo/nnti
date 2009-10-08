@@ -10,6 +10,7 @@
 #include "Epetra_MultiVector.h"
 
 #include "Teuchos_Utils.hpp"
+#include "Teuchos_TestForException.hpp"
 
 #ifdef EPETRA_MPI
 #include "Epetra_MpiComm.h"
@@ -53,7 +54,7 @@ namespace RBGen {
     {
       // Can't find the data size or data format file
       isInit = false;
-      // TO DO:  THROW EXCEPTION!
+      TEST_FOR_EXCEPTION(true, std::runtime_error, "Cannot find the data size or data format file 'Burkardt Data Format File'!");
     }
 
     // Get the input path.
@@ -153,7 +154,7 @@ namespace RBGen {
 
     }
     else {
-      // TO DO:  THROW EXCEPTION!
+      TEST_FOR_EXCEPTION(true, std::runtime_error, "File I/O handler is not initialized!");
     }      
     // Return.
     return newMV;
@@ -239,7 +240,7 @@ namespace RBGen {
       delete Proc0Map;
     }
     else {
-      // TO DO:  THROW EXCEPTION!
+      TEST_FOR_EXCEPTION(true, std::runtime_error, "File I/O handler is not initialized!");
     }      
   }
 
