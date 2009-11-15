@@ -65,6 +65,7 @@ SolverState<double> BelosSolver::solve(const LinearOperator<double>& A,
   }
 
   ParameterList plist = parameters();
+  Out::os() << "Belos parameters = " << plist << endl;
   RCP<ParameterList> belosList = rcp(&plist, false);
   RCP<Belos::SolverManager<double, MV, OP> > solver ;
   string solverType = parameters().get<string>("Method");
@@ -81,6 +82,8 @@ SolverState<double> BelosSolver::solve(const LinearOperator<double>& A,
   {
     TEST_FOR_EXCEPT(!(solverType=="GMRES" || solverType=="CG"));
   }
+
+  Out::os() << "Belos thinks that parameters are " << *(solver->getCurrentParameters()) << endl;
 
   Belos::ReturnType rtn = solver->solve();
 
