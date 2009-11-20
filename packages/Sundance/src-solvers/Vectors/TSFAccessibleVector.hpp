@@ -59,7 +59,7 @@ namespace TSFExtended
       /** get a batch of elements. Slow default implementation loops
        * over calls to getElement(). */
 
-      virtual void getElements(const Index* globalIndices, int numElems,
+      virtual void getElements(const int* globalIndices, int numElems,
         Teuchos::Array<Scalar>& elems) const 
         {
           elems.resize(numElems);

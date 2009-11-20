@@ -59,7 +59,7 @@ namespace TSFExtended
       {return ghostView_->Map().MyGID(globalIndex);}
 
       /** get the element at the given global index */
-      const double& getElement(int globalIndex) const ;
+      const double& getElement(Index globalIndex) const ;
 
       /** get the batch of elements at the given global indices */
       void getElements(const int* globalIndices, int numElems,

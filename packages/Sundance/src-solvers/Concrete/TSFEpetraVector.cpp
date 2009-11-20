@@ -531,15 +531,17 @@ double& EpetraVector::operator[](Index globalIndex)
 
 void EpetraVector::setElement(Index index, const double& value)
 {
+  int loc_index[1] = { index };
   epetraVec()->ReplaceGlobalValues(1, const_cast<double*>(&value), 
-    const_cast<int*>(&index));
+    loc_index);
 }
 
 void EpetraVector::addToElement(Index index, const double& value)
 {
 //  cout << "adding (" << index << ", " << value << ")" << endl;
+  int loc_index[1] = { index };
   epetraVec()->SumIntoGlobalValues(1, const_cast<double*>(&value), 
-    const_cast<int*>(&index));
+    loc_index);
 }
 
 const double& EpetraVector::getElement(Index index) const 
@@ -561,7 +563,7 @@ void EpetraVector::getElements(const Index* globalIndices, int numElems,
   }
 }
 
-void EpetraVector::setElements(size_t numElems, const Index* globalIndices,
+void EpetraVector::setElements(size_t numElems, const int* globalIndices,
   const double* values)
 {
   Epetra_FEVector* vec = dynamic_cast<Epetra_FEVector*>(epetraVec().get());
@@ -570,7 +572,7 @@ void EpetraVector::setElements(size_t numElems, const Index* globalIndices,
     "ierr=" << ierr << " in EpetraVector::setElements()");
 }
 
-void EpetraVector::addToElements(size_t numElems, const Index* globalIndices,
+void EpetraVector::addToElements(size_t numElems, const int* globalIndices,
   const double* values)
 {
   Epetra_FEVector* vec = dynamic_cast<Epetra_FEVector*>(epetraVec().get());

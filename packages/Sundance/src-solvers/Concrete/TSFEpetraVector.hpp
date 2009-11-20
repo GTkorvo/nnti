@@ -141,12 +141,12 @@ public:
   void addToElement(Index globalIndex, const double& value);
 
   /** set a group of elements */
-  void setElements(size_t numElems, const Index* globalIndices, 
+  void setElements(size_t numElems, const int* globalIndices, 
     const double* values);
 
 
   /** add to a group of elements */
-  void addToElements(size_t numElems, const Index* globalIndices, 
+  void addToElements(size_t numElems, const int* globalIndices, 
     const double* values);
 
   /** */

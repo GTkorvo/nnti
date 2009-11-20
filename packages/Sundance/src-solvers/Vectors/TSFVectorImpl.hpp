@@ -506,8 +506,9 @@ Scalar Vector<Scalar>::max(int& index)const
   TimeMonitor t(*opTimer());
   Scalar maxEl;
   Scalar* maxElP = &maxEl;
-  int* indexP = &index;
-  Thyra::max(*(this->ptr)(), maxElP, indexP); 
+  Index loc_index = -1;
+  Thyra::max(*(this->ptr)(), maxElP, &loc_index); 
+  index = loc_index;
   return maxEl;
 }
 
@@ -519,8 +520,9 @@ Scalar Vector<Scalar>::max(const Scalar& bound, int& index)const
   TimeMonitor t(*opTimer());
   Scalar maxEl;
   Scalar* maxElP = &maxEl;
-  int* indexP = &index;
-  Thyra::maxLessThanBound(*(this->ptr)(), bound, maxElP, indexP); 
+  Index loc_index = -1;
+  Thyra::maxLessThanBound(*(this->ptr)(), bound, maxElP, &loc_index); 
+  index = loc_index;
   return maxEl;
 
 }
@@ -542,8 +544,9 @@ Scalar Vector<Scalar>::min(int& index)const
   TimeMonitor t(*opTimer());
   Scalar minEl;
   Scalar* minElP = &minEl;
-  int* indexP = &index;
-  Thyra::min(*(this->ptr)(), minElP, indexP); 
+  Index loc_index = -1;
+  Thyra::min(*(this->ptr)(), minElP, &loc_index); 
+  index = loc_index;
   return minEl;
 }
 
@@ -555,8 +558,9 @@ Scalar Vector<Scalar>::min(const Scalar& bound, int& index)const
   TimeMonitor t(*opTimer());
   Scalar minEl;
   Scalar* minElP = &minEl;
-  int* indexP = &index;
-  Thyra::minGreaterThanBound(*(this->ptr)(), bound, minElP, indexP); 
+  Index loc_index = -1;
+  Thyra::minGreaterThanBound(*(this->ptr)(), bound, minElP, &loc_index); 
+  index = loc_index;
   return minEl;
 }
 

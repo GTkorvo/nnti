@@ -309,12 +309,12 @@ namespace TSFExtended
     void addToElement(Index globalIndex, const Scalar& value) ;
 
     /** set a group of elements */
-    void setElements(size_t numElems, const Index* globalIndices, 
+    void setElements(size_t numElems, const int* globalIndices, 
                      const Scalar* values) 
     {castToLoadable()->setElements(numElems, globalIndices, values);}
 
     /** add to a group of elements */
-    void addToElements(size_t numElems, const Index* globalIndices, 
+    void addToElements(size_t numElems, const int* globalIndices, 
                        const Scalar* values)
     {castToLoadable()->addToElements(numElems, globalIndices, values);}
 
@@ -331,7 +331,7 @@ namespace TSFExtended
     //{return castToAccessible()->getElement(globalIndex);}
 
     /** Get a batch of elements */
-    void getElements(const Index* globalIndices, int numElems,
+    void getElements(const int* globalIndices, int numElems,
       Teuchos::Array<Scalar>& elems) const 
       {castToAccessible()->getElements(globalIndices, numElems, elems);}
 

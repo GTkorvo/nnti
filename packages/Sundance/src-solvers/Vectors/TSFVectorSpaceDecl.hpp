@@ -106,7 +106,7 @@ public:
   SequentialIterator<Scalar> end() const ;
 
   /** */
-  bool advanceIndex(int& blockIndex, int& indexInCurrentBlock, int& globalIndex) const ;
+  bool advanceIndex(Index& blockIndex, Index& indexInCurrentBlock, Index& globalIndex) const ;
 };
 
 template <class Scalar>
