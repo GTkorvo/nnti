@@ -1,0 +1,4054 @@
+\documentclass[pdf,ps2pdf,11pt]{SANDreport}
+\usepackage{pslatex}
+%Local stuff
+\usepackage{graphicx}
+\usepackage{latexsym}
+%\usepackage{color}
+\usepackage[all]{draftcopy}
+\input{rab_commands}
+\setcounter{tocdepth}{3}
+\newtheorem{listing}{Listing}
+\usepackage{hyperref}
+
+\newtheorem{commandment}{Commandment}
+\newtheorem{anticommandment}{Anti-Commandment}
+
+\raggedright
+
+% If you want to relax some of the SAND98-0730 requirements, use the "relax"
+% option. It adds spaces and boldface in the table of contents, and does not
+% force the page layout sizes.
+% e.g. \documentclass[relax,12pt]{SANDreport}
+%
+% You can also use the "strict" option, which applies even more of the
+% SAND98-0730 guidelines. It gets rid of section numbers which are often
+% useful; e.g. \documentclass[strict]{SANDreport}
+
+% ---------------------------------------------------------------------------- %
+%
+% Set the title, author, and date
+%
+
+\title{\center
+Teuchos Memory Mangement Classes for C++ \\[2ex] A Comprehensive
+Strategy for Safe and Efficient Memory Management in C++ for High
+Performance Computing }
+
+\author{
+Roscoe Bartlett
+}
+
+\date{}
+
+%Sandia National
+%Laboratories\footnote{ Sandia is a multiprogram laboratory operated by Sandia
+%Corporation, a Lockheed-Martin Company, for the United States Department of
+%Energy under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA
+
+
+% ---------------------------------------------------------------------------- %
+% Set some things we need for SAND reports. These are mandatory
+%
+\SANDnum{SAND2008-xxx}
+\SANDprintDate{October 2008}
+\SANDauthor{
+Roscoe Bartlett
+}
+
+% ---------------------------------------------------------------------------- %
+% Build your markings. See example files and SAND Report Guide
+%
+
+\SANDreleaseType{Unlimited Release}
+%\SANDreleaseType{Not approved for general release}
+%\SANDmarkTopBottomCoverBackTitle{}
+%\SANDmarkBottomCover{}
+%\SANDmarkTopBottomCoverTitle{}
+%\SANDmarkTop{}
+%\SANDmarkBottom{}
+%\SANDmarkTopBottom{}
+%\SANDmarkCover{}
+%\SANDmarkCoverTitle{}
+
+
+% ---------------------------------------------------------------------------- %
+%
+% Start the document
+%
+
+\begin{document}
+
+\maketitle
+
+
+% ------------------------------------------------------------------------ %
+% An Abstract is required for SAND reports
+%
+
+%\clearpage
+
+%
+\begin{abstract}
+%
+
+
+The ubiquitous use raw pointers in higher-level code is the primary
+cause of all memory usage problems and memory leaks in C++
+programs. This paper describes what might be considered a radical
+approach to the problem which is to eliminate the use of all raw
+pointers and all raw calls to {}\texttt{new} and {}\texttt{delete} in
+higher-level C++ code.  Instead, a set of cooperating concrete
+template classes developed in the Trilinos package Teuchos are used to
+replace every use of raw C++ pointers in every use case where it
+appears in high-level code.  Included in the set of memory management
+classes are the typical reference-counted smart pointers similar to
+{}\texttt{boost::shared\_ptr} (and therefore C++09
+{}\texttt{std::shared\_ptr}) and {}\texttt{boost::shared\_array}.
+However, what is missing in boost and the new standard libary are
+non-reference counted classes for remaining use cases where raw C++
+pointers would need to be used.  These classes have a debug build mode
+where nearly all programmer errrors are caught and gracefully reported
+at runtime.  The default optimized build mode strips all runtime
+checks and allows the code to perform as efficiently as raw C++
+pointers with reasonable usge.  Also included is a novel approach for
+dealing with the circular references problem that imparts little extra
+overhead and is almost completely invisible to most of the code
+(unlike the boost and therefore C++09 approach).  Rather than being a
+radical approach this is simply the logical result of a trend in the
+C++ development and standards community that started with
+{}\texttt{std::auto\_ptr} and is continued (but not finished) with
+{}\texttt{std::shared\_ptr}.
+
+%
+\end{abstract}
+%
+
+% ------------------------------------------------------------------------ %
+% An Acknowledgement section is optional but important, if someone made
+% contributions or helped beyond the normal part of a work assignment.
+% Use \section* since we don't want it in the table of context
+%
+%\clearpage
+%\section*{Acknowledgment}
+%
+%
+%The format of this report is based on information found
+%in~\cite{Sand98-0730}.
+
+% ------------------------------------------------------------------------ %
+% The table of contents and list of figures and tables
+% Comment out \listoffigures and \listoftables if there are no
+% figures or tables. Make sure this starts on an odd numbered page
+%
+\cleardoublepage   % TOC needs to start on an odd page
+\tableofcontents
+\listoffigures
+\listoftables
+
+% ---------------------------------------------------------------------- %
+% An optional preface or Foreword
+%\clearpage
+%\section{Preface}
+%Although muggles usually have only limited experience with
+%magic, and many even dispute its existence, it is worthwhile
+%to be open minded and explore the possibilities.
+
+% ---------------------------------------------------------------------- %
+% An optional glossary. We don't want it to be numbered
+%\clearpage
+%\subsection*{Nomenclature}
+%\addcontentsline{toc}{section}{Nomenclature}
+%\begin{itemize}
+%\item[alohomora]
+%spell to open locked doors and containers
+%\end{itemize}
+
+% ---------------------------------------------------------------------- %
+% This is where the body of the report begins; usually with an Introduction
+%
+
+\SANDmain % Start the main part of the report
+
+
+%
+\section{Introduction}
+%
+
+A critical problem in computational science and engineering (CS\&E)
+software (and other types) developed in C++ is in the effective and
+safe management of memory and data.  CS\&E software often has the goal
+of high performance where arbitrary data copy leads to undo overhead
+and can actually complicate the software in many cases.  It is common
+for CS\&E software to share and pass around large blocks of memory in
+order to do work efficiently.  At the most basic level, large arrays
+of integral and floating point data are managed along with more
+complex general single and arrays of derived objects.  In C++, the
+only universally accepted way to deal with memory for single objects
+and arrays of objects is to use raw C++ pointers.  However, raw C++
+pointer facilities for the manipulation and sharing of basic memory
+are inherently unsafe and error prone.  The problem is further
+exacerbated when larger programs composed out of different separately
+developed and maintained components are integrated together.
+Assumptions about the origin, ownership, and process for reclaiming
+memory and other resources remain the most basic problems with
+lower-level C++ programming techniques and are unfortunately still
+ubiquitous in the C++ community and even in the current C++
+best-practices literature [???].  Our inability to effectively address
+the basic problem of the usage of memory in large-scaled modularized
+C++ codes affects every aspect of software quality and productivity
+and undermines the most basic software verification foundations of our
+codes.
+
+C++ is an incredibility complex language that very few people really
+know how to use in a confident and successful way.  Arguably the most
+serious problems in C++ are related to dynamic memory management which
+must be used with any moderately complex object-oriented program.  The
+built-in C++ support for dealing with dynamic memory allocation with
+{}\texttt{new} and {}\texttt{delete} is fundamentally incompatible
+with the built-in exception handling mechanism using {}\texttt{try},
+{}\texttt{throw}, and {}\texttt{catch}.  One cannot effectively build
+large-scale integrated software using just these low-level language
+features at the application programming level.  Software developed
+this way segfaults and leaks memory unpredictably and is nearly
+impossible to integrate with other code.  The only successful way to
+use C++ to create complex robust software is to develop and rigorously
+adopt a set of programming idioms for safely dealing with memory.  By
+developing the right support software and associated idioms, we make
+C++ programs safer, better defined, faster to develop, and more
+efficient when run.
+
+The reason that C++ is in this state of affairs is due to how C++ came
+into being and how it evolved over many years [???, ???].  C++ was
+first developed in the early 1980s as an extension to the popular C
+programming language and was first called ``C with Classes''.  At the
+time, high efficiency, very low runtime overhead, and strong
+compatibility with C were critical requirements to the success of the
+new language.  Without this, the original creator of C++, Bjanre
+Stroustrup {}\cite{stroustrup97}, concluded that C++ would be ``still
+born''.  The first C++ compilers where little more than preprocessors
+putting out C code on the backend which was then compiled into
+executable binary code.
+
+As the years went on, however, object-oriented programming was
+refined, computers become faster with more memory, and it was realized
+that more runtime support was required to enable some more advanced
+usages of C++.  As new features were added to C++ to support new
+programming idioms, a strong need for backward compatibility
+constrained the design of the language.  The most unfortunate example
+of this, which was already mentioned, is the fundamental incompatibility of
+built-in dynamic memory management (i.e.\ using
+{}\texttt{new}/{}\texttt{delete}) and built-in exception handling
+(i.e.\ using {}\texttt{try}/{}\texttt{throw}/{}\texttt{catch}) that
+was added more than a decade later [???].
+
+Therefore, because of the way that C++ ``evolved'' along with a strong
+need for backward compatibility, we have a language that is a disaster
+when used in raw form on complex large-scale programs.  Many
+programming teams have exploited this natural capability of C++ to
+create travesties of software which in turn have dumbfounded many a
+C++ programmer (and entire teams) and have resulted in giving C++ a
+bad name in the general software engineering community (see Section
+??? in [Domain Driven Design] for instance).
+
+However, C++ has some unique features that differentiate it from every
+other language in wide use with wide availability.
+This unique feature set includes:
+
+\begin{itemize}
+
+{}\item Strong typing
+
+{}\item Support for creating very efficient concrete data types with
+efficiency on par with built-in data types that don't not require
+dynamic memory management
+
+{}\item Support for operator overloading
+
+{}\item Support for object-oriented programming
+
+{}\item Support for generic programming (i.e.\ templates)
+
+{}\item Powerful turning-complete compile-time programming mechanism
+(i.e.\ template meta-programming)
+
+\end{itemize}
+
+No other programming language with wide availability has this set of
+features.  For instance, C++ can be used to create class libraries for
+capabilities like automatic differentiation [???] for computing
+derivatives of functions (see the Trilinos Sacado package [???]) that
+achieves a level of generality and efficiency that has no rival in a
+software library in any other programming language.
+
+It is this unique feature set that is C++'s saving grace.  In C++, you
+can actually develop a set of new data types that in essence can be
+used to develop new programming environments in C++.  This essentually
+allows you to define a new programming language within C++ with a
+level of efficiency and flexibility that does not exist in any other
+programming language.  This is exactly what this paper advocates
+with respect to basic memory management in C++; developing a new
+higher-level programming language in C++ for abstracting and
+encapsulating all raw memory usage as well as dynamic memory
+management that is very compatible with the built-in C++ exception
+handling mechanism.
+
+This paper describes a set of low-level C++ classes and supporting
+software in the Teuchos package in Trilinos [???] that is used to
+encapsulate all raw pointers and enable strong debug runtime checking
+while allowing for very high performance in optimized builds.
+
+The Teuchos memory management classes and the idioms that
+they help to define (which are described in this paper) do not remove
+the need for programmers to learn and understand the intricate details
+of the C++ memory management model and type system.  On the contrary,
+learning to effectively use these memory management classes requires
+more effort over just learning raw C++.  However, the payoff is that
+the programs that result from the use of these classes and idioms will
+be more likely to be correct on first writing, will be easier to debug
+when there are defects, will be easier and safter to maintain, and
+will be more self documenting (which helps all of the above).  In
+fact, the self-documenting expressiveness of the resulting programs
+written using these classes and idioms is unmatched in any other
+programming language currently in popular use, including Java and
+Python.  This statement will be backed up throughout this paper and
+then reiterated in the final conclusions section.
+
+The remainder of this paper assumes that the reader has some basic
+knowledge of C++ and is somewhat familiar with smart reference-counted
+pointer classes like {}\texttt{boost::shared\_ptr} (which is the basis
+for the new C++09 {}\texttt{std::shared\_ptr} class).  The Teuchos
+equivalent for these smart pointer classes is {}\texttt{Teuchos::RCP}
+which we abbreviate as just {}\texttt{RCP} in sample code.  If the
+reader is not familiar with the basics of smart reference-counted
+pointer classes, then they should refer to
+{}\cite{RefCountPtrBeginnersGuide} and {}\cite{C++CodingStandards05}.
+If the reader is not familiar with fundamental C++ concepts like
+implicit type conversions, templates, object lifetime models, raw
+reference and pointers, and other basic topics, then some more basic
+background will be needed.  However, specific references to basic C++
+material in books like [???, ???, ???] are make throughout this
+document.  So if you are a novice C++ programmer and are willing to
+look up the mentioned references, then this paper can be a good guide
+to help you learn this basic C++ material as well.
+
+A final warning: the material in this paper is pretty detailed and
+will take a significant investment in time and experience with writing
+code with the memory management classes using the idioms describe here
+before a developer will be proficient.  It takes years just to master
+raw C++ so it should be no surprise that learning a new set of idioms
+to fix a large number of the problems with raw C++ will also take a
+significant amount of time and effort.  What is needed is a culture
+change in the C++ programming community where the memory management
+classes and the idioms described here are tought at a very early
+stage; much like the STL is now being taught in introductory C++
+courses.  What we need is a revolution in C++ education but we have to
+start somewhere and that is what this paper is all about, getting
+started and on the road to a better generation of C++ programmers and
+C++ software.
+
+The reminder of this paper is organized as follows.  First, the
+fundamental problems with raw C++ pointers is described in Section
+???.  ToDo: Finish describing the other sections.
+
+
+%
+{}\section{Fundamental problems with raw C++ pointers}
+%
+
+In this section, I summarize some of the fundamental problems with
+basic C++ features related to raw pointers.  What I am going to argue
+is that while some people will claim that C++ pointers are strongly
+typed, I will show that they are actually very weakly typed in many
+respects and how this weak typing is the cause of many programming
+errors that result in incorrect programs and segfaults.
+
+In the following examples, I will use the simple classes shown in
+Listing {}\ref{listing:Simple_A_B}:
+
+\begin{listing}:\\
+\label{listing:Simple_A_B}
+{\small\begin{verbatim}
+  class A {
+  public:
+    ...
+    void incrementA() { ++(*char_ptr_); }
+    ...
+  private:
+    char *char_ptr_;
+  };
+
+  class B : public A {
+  public:
+    ...
+    void incrementB() { ++(*int_ptr_); }
+    ...
+  private:
+    int size_;
+    int *int_ptr_;
+  };
+\end{verbatim}}
+\end{listing}
+
+The concrete class hierarchy in Listing {}\ref{listing:Simple_A_B} was
+chosen to demonstrate some insidious and perhaps less well known flaws
+in the C++ type system when dealing with raw C++ pointers.
+
+
+%
+{}\subsection{Problems using raw C++ pointers for handling single objects}
+%
+
+There are a number of problems with using raw C++ pointers to manage
+single objects.  For example, given a class of type {}\texttt{B} in
+Listing {}\ref{listing:Simple_A_B} consider a pointer declared as:
+
+{\small\begin{verbatim}
+  B some_b(...);
+  B *b_ptr = &some_b;
+\end{verbatim}}
+
+Some of the legitimate things that you can do with this pointer are:
+
+{\small\begin{verbatim}
+  // Call member functions
+  b_ptr->incrementA();
+  b_ptr->incrementB();
+  // Extract reference
+  B &b_ref = *b_ptr;
+  // Copy pointer
+  B *b_ptr2 = b_ptr;
+  // Implicit conversion to const
+  const B *b_ptr3 = b_ptr;
+  // Implicit conversion to base type
+  A *a_ptr4 = b_ptr;
+\end{verbatim}}
+
+However, nothing good can {}\underline{ever} come of any of the
+following operations when a pointer is only pointing to a single
+object:
+
+{\small\begin{verbatim}
+  b_ptr++
+  b_ptr--
+  ++b_ptr
+  --b_ptr
+  b_ptr+i
+  b_ptr-i
+  b_ptr[i]
+\end{verbatim}}
+
+No C++ compiler I have ever worked with will even issue a warning when
+array operations are invoked on a raw C++ pointer for which it is
+clear is only pointing to a single object.
+
+The problem here of course is that there is no way to tell the C++
+compiler that a raw pointer is only pointing to a single object.  With
+respect to differentiating single objects and arrays of objects, C++
+pointers are untyped and the compiler provides no help whatsoever in
+statically asserting correct usage.  This is strike one for the
+notation that C++ pointers being strongly typed!
+
+
+%
+{}\subsection{Problems using raw C++ pointers for handling arrays of
+objects}
+\label{sec:problem-with-raw-array-pointers}
+%
+
+When considering the semantics of raw C++ pointers one realizes that
+raw pointers are really designed primarily for dealing with contiguous
+arrays of objects (save for one exception that I mention below).  I
+say this because almost every operation that C++ defined for raw
+pointers makes sense and is fairly well defined when raw C++ pointers
+are pointing with contiguous arrays of objects.  I will not review
+every valid C++ operation for raw pointers to contiguous arrays of
+objects (see [???] for a complete listing).  Instead, I want to show a
+few examples where the C++ type system using raw pointers falls flat
+on its face when dealing with arrays of memory.
+
+One particularly troubling example where the C++ type system fails
+when dealing with raw C++ pointers to contiguous arrays of memory is
+shown in Listing {}\ref{listing:BadArrayPointerConversion}.
+
+\begin{listing}:\\
+\label{listing:BadArrayPointerConversion}
+{\small\begin{verbatim}
+
+  void foo( const int n )
+  {
+    B *b_array = new[n];
+    ...
+    A *a_array = b_array; // Compiles just fine :-(
+    for (int i = 0; i < n; ++i) {
+      a_array[i]->incrementA(); // KABOMMMMM!
+
+    }
+  }
+
+\end{verbatim}}
+\end{listing}
+
+There are a lot of beginning and even some more experienced C++
+programmers that would think that the C++ code in Listing
+{}\ref{listing:BadArrayPointerConversion} is just fine.  I have seen
+this mistake made more than once and the resulting program may seem to
+run okay in some cases but in the above case will almost certainly
+segfault right away.  The above code fragment is wrong, wrong, wrong
+because it violates Item ??? in [???] and Gotcha ??? in [???].  I will
+not go into great detail about what happens here, but converting from
+an array of type {}\texttt{B} it a base of type {}\texttt{A} is almost
+always asking for disaster because the alignment of the base type
+{}\texttt{A} will be wrong according to the full type {}\texttt{B}
+(again see Item ??? in [???] for all the gory details).  As a result,
+for the second iteration {}\texttt{i=1}, the embedded pointer in
+{}\texttt{a\_array[1].char\_ptr\_} is pointing to garbage because on
+most 32 bit machines with most compilers, the address in
+{}\texttt{a\_array[1].char\_ptr\_} is actually the binary
+representation of the integer {}\texttt{b\_array[0].size\_}.
+Therefore, calling {}\texttt{a\_array[1]->increment()} on most 32 bit
+machines is equivalent to performing:
+
+{\small\begin{verbatim}
+  ++(*reinterpret_cast<char*>(b_array[0].size_)); // KABOMMMMM!
+\end{verbatim}}
+
+If this sort of thing comes as a surprise to you, you should probably
+fear using raw memory in C++ more than you currently do and you should
+seriously consider the safer approach to encapsulating raw memory
+usage that is being advocated in this paper.
+
+So how did C++ come to allow such a completely wrong and dangerous
+operation like shown in Listing
+{}\ref{listing:BadArrayPointerConversion}?  It is because of the
+untyped dual nature of raw C++ pointers in trying to handle both
+single objects and contiguous arrays of objects with one set of what
+should be non-overlapping semantics.  The ability to cast raw C++
+pointers from derived types to base types only ever generally makes
+sense when the pointer is pointing to a single object and will not be
+interpreted as a pointer to a contiguous array of objects.  Note that
+C does not have this problem since there is no such thing as type
+derivation and the designers of C never even envisioned that raw C
+pointers would be used for such a thing.  However, when the original
+designer of C++ adopted the C type system along with raw pointers and
+tried to apply it to an object-oriented language, he inadvertently
+opened up a number of serious language gotchas that we are still
+living with to this day.  This is strike two for the notation that C++
+pointers are strongly typed!
+
+ToDo: Find another issues with type safety of raw C++ pointers so you
+can write ``Strike three, you are out!''.
+
+
+%
+{}\subsection{Problems with the incompatibility of
+{}\texttt{new}/{}\texttt{delete} and {}\texttt{try}/{}\texttt{catch}}
+%
+
+The use of raw pointers and raw calls to {}\texttt{new} and
+{}\texttt{delete} is also fundamentally incompatible with the built-in
+C++ exception handling mechanism using {}\texttt{try} and
+{}\texttt{catch}.  For example, the following code will leak memory
+if the function {}\texttt{someFunc()} throws a C++ exception:
+
+{\small\begin{verbatim}
+  void foo()
+  {
+    A *a = new A(...);
+    someFunc(); // Could throw an exception
+    delete a; // Will never be called if someFunc() throws!
+  }
+\end{verbatim}}
+
+According to current C++ best practices relating to memory management
+and exception handling as described in [???] and [???], code like
+shown above that leaks memory is totally unacceptable in production
+quality C++ code.  This fundamental incompatibility of the built-in C++
+dynamic memory management facilities using
+{}\texttt{new}/\texttt{delete} and the built-in exception handling
+mechanism using {}\texttt{try}/\texttt{catch} was clear even to the
+committee that created the official C++ standard in 1998.  However, again,
+because of the need for backward compatibility they were powerless to
+fix the problem at the language level.  Instead, the C++ standards
+committee included the first standard C++ smart pointer class;
+{}\texttt{auto\_ptr}.  I will not go into the details about
+{}\texttt{auto\_ptr} other than to say that is solved only the most
+basic problem with raw C++ pointers and that is that it ensures that
+memory will be reclaimed when exceptions are thrown.  For example, the
+following rewritten function will not leak any memory when
+{}\texttt{someFunc()} throws:
+
+{\small\begin{verbatim}
+  void foo()
+  {
+    std::auto_ptr<A> a(new A(...));
+    someFunc(); // Could throw and exception
+    // NOTE: delete will get called on the A object no matter how this
+    // function exists (i.e. normal exit or with a throw) since it is
+    // called by the destructor of the stack object 'a' of type
+    // std::auto_ptr<A>. 
+  }
+\end{verbatim}}
+
+The introduction of {}\texttt{std::auto\_ptr} is the first example
+that I can think of where a user-defined type was added to the
+standard C++ library in order to define an idiom meant to fix a
+fundamental C++ language flaw.  Note that I said ``flaw'' and not
+``deficiency''.  It is generally excepted in most modern programming
+languages that the language proper will not support every programming
+model or idiom that is of general interest and instead class libraries
+are provided to fill the gaps.  The problem with C++ pointers is
+different in that it is the language definition itself which is flawed
+and is not just simply missing some desirable feature.  You could
+argue that what C++ is really missing is garbage collection (GC) but
+even that is not the case because to add GC would be fundamentally
+incompatible with the current user-controlled memory management
+facility using {}\texttt{new} and {}\texttt{delete}.  There is a lot
+of C++ code out there that requires that destructors for objects be
+called exactly when expected such as when {}\texttt{delete} is called.
+Any form of language-supported GC will break some backward
+compatibility of C++ and therefore we may never see a C++ standard
+with full GC.
+
+The boost library and the up-coming C++09 standard add more types that
+I will mention below that continue in this trend of providing new
+user-defined types and idioms to address fundamental C++ language
+flaws and deficiencies.  However, as I describe in meat of this paper,
+both the boost and the C++09 standard library fall short of providing
+a complete and comprehensive solution to the problems with raw C++
+pointers and raw access to memory.
+
+Note that the upcoming C++09 standard as it is currently defined (at
+least the time of this writing) will do nothing to fix the majority of
+these nonsensical raw C++ pointer gotchas because to do so would
+destroy backward compatibility of many millions of lines of existing
+C++ code.  Because of the need for backward compatibility, we can not
+rely on any future C++ standard to fix the basic problems with raw C++
+pointers.  Instead, the meat of this paper advocates using new C++
+user-defined types to create a new safer type-system in C++ and
+avoiding the direct use of raw C++ pointers in all but the lowest
+level of code.
+
+One has to wonder how the addition of such a feature as exception
+handling which is so incompatible with a primary language feature like
+basic memory management was ever accepted into the C++ language
+standard.  It is clear what the advantages of exception handling are
+in C++ (and any other language) but since the naive use of such a
+feature will result in memory leaks one just have to wonder how this
+was justified.  However, all is not lost since we don't have to write
+naive memory management code and fixing this problem is one of the
+main features of the memory management classes proposed here.
+
+
+%
+{}\section{Problems with popular approaches for addressing memory
+management in C++}
+%
+
+Because of some of the obvious problems with using raw C++ pointers to
+access raw memory and using raw calls to {}\texttt{new} and
+{}\texttt{delete} to perform dynamic memory management, various
+authors have advocated a number of different approaches for addressing
+these problems.  I will review a few of these approaches and I
+will argue why these are much too sub-optimal.
+
+
+%
+{}\subsection{Problems with using {}\texttt{std::vector} for handling
+all arrays}
+%
+
+A very common approach that I have seen used to try to get around
+using raw C++ pointers for managing contiguous arrays of data is to
+use the container class {}\texttt{std::vector} in {}\underline{every}
+use case where a raw C++ array or pointer to an array would be used.
+Before I describe use cases where {}\texttt{std::vector} is being
+poorly used, first let's review what {}\texttt{std::vector} is and
+what it is good for.  The standard library class
+{}\texttt{std::vector} is a general-purpose concrete contiguous data
+container class for storing and retrieving value objects\footnote{See
+Section {}\ref{sec:value-and-reference-types} for a definition of
+``Value Types''.}.  What makes using {}\texttt{std::vector} attractive
+as compared to a simple class that you would write yourself is:
+
+\begin{itemize}
+
+{}\item\texttt{std::vector} is a Standard Template Library (STL)
+complaint data container which makes it easy to use with STL-like
+generic algorithms.
+
+{}\item\texttt{std::vector} contains functions for efficiently
+expanding and shrinking the size of the array that can have
+platform/compiler specific optimizations with much better performance
+than what you would roll on your own.
+
+{}\item\texttt{std::vector} is standardized so you can use it as a
+means for interoperability with other software in appropriate
+situations.
+
+\end{itemize}
+
+These are pretty much the advantages of using {}\texttt{std::vector}
+over other alternatives.  When used as a general purpose data
+container where you will be changing the size of the array on the fly,
+{}\texttt{std::vector} is convenient, general, and efficient (just
+what components from a standard library should be).  However, in other
+use cases, {}\texttt{std::vector} is far from convenient, general, or
+efficient.  As one example, consider using {}\texttt{std::vector} to
+replace raw C++ pointers for array arguments in {}\underline{all} C++
+functions as some authors have suggested (e.g.\ see [???]).  For
+example, consider the function that adds elements from one array into
+another array expressed with raw C++ pointers shown in Listing
+{}\ref{listing:addArrayIntoArray-raw}.
+
+\begin{listing}:\\
+\label{listing:addArrayIntoArray-raw}
+{\small\begin{verbatim}
+  template<class T>
+  void addArrayIntoArray( const int n, const T a[], T b[] )
+  {
+    for (int i = 0; i < n; ++i)
+      b[i] += a[i];
+  }
+\end{verbatim}}
+\end{listing}
+
+The advantages of the function in Listing
+{}\ref{listing:addArrayIntoArray-raw} are that a) it is clean, b) the
+arrays of data can be sub-views of large arrays, and c) it will yield
+very fast code.  Of course the problem with the above function
+{}\texttt{addArrayIntoArray(...)} is that is uses raw C++ pointers.  How
+does the function {}\texttt{addArrayIntoArray(...)} know that
+{}\texttt{a} and {}\texttt{b} are valid pointers and really point to
+valid arrays of data with at least {}\texttt{n} elements.  It is
+impossible for the function {}\texttt{addArrayIntoArray(...)} to
+assert anything about the data and completely relies on the caller of
+the function to validate the data.  Even in a debug build of the code,
+there is no way for the implementation of the function
+{}\texttt{addArrayIntoArray(...)} to validate that the preconditions
+concerning arguments have been met.  This is not good and does not
+allow for even the most basic approaches for defensive programming.
+
+Therefore, some C++ programmers look at this and then they change
+functions like {}\texttt{addArrayIntoArray(...)} in Listing
+{}\ref{listing:addArrayIntoArray-raw} to use {}\texttt{std::vector}
+which is shown in Listing
+{}\ref{listing:addArrayIntoArray-std-vector}.
+
+\begin{listing}:\\
+\label{listing:addArrayIntoArray-std-vector}
+{\small\begin{verbatim}
+  template<class T>
+  void addArrayIntoArray( const std::vector<T> &a, std::vector<T> &b )
+  {
+    DEBUG_MODE_ASSERT_EQUALITY( a.size(), b.size() );
+    for (int i = 0; i < a.size(); ++i)
+      b[i] += a[i];
+  }
+\end{verbatim}}
+\end{listing}
+
+The advantages of the function in Listing
+{}\ref{listing:addArrayIntoArray-std-vector} are that a) the size of
+each array is kept with the pointer to the array itself inside of each
+{}\texttt{std::vector} object, b) The sizes of the arrays can be
+asserted by the implementation of the function
+{}\texttt{addArrayIntoArray(...)}, c) it is easy for callers who
+already use single {}\texttt{std::vector} objects.
+
+While this use of {}\texttt{std::vector} replaces raw C++ pointers as
+basic array function arguments, it has several serious problems in
+both usability and performance in some important use cases.  The
+primary disadvantages of using {}\texttt{std::vector} as general array
+arguments to functions is a) there is no flexibility in how the arrays
+are allocated, and b) one can not pass sub-views of larger arrays of
+data.
+
+To illustrate the problems with using {}\texttt{std::vector} for all
+array arguments to functions, consider a situation where the
+application wants to allocate big arrays of data and then operate on
+pieces of the array based on different logic.  One motivation for
+allocating big arrays of data is to avoid memory fragmentation and
+improve data locality.  Now consider in Listing
+{}\ref{listing:someBlockAlgo-std-vector} what the client code would
+have to look like when using the form of
+{}\texttt{addArrayIntoArray(...)} in Listing
+{}\ref{listing:addArrayIntoArray-std-vector} which takes in
+{}\texttt{std::vector} objects.
+
+\begin{listing}:\\
+\label{listing:someBlockAlgo-std-vector}
+{\small\begin{verbatim}
+  void someBlockAlgo( const int numBlocks, const std::vector<double> &big_a,
+    std::vector<double> &big_b )
+  {
+    DEBUG_MODE_ASSERT_EQUALITY( big_a.size(), big_b.size() );
+    const int totalLen = big_a.size();
+    const int blockSize = totalLen/numBlocks; // Assume no remainder!
+    
+    const int blockOffset = 0;
+    for (int block_k = 0; block_k < numBlocks;
+      ++block_k, blockOffset += blockSize)
+    {
+      if (big_a[blockOffset] > 0.0) {
+        // Create temporary std::vectors to do function call
+        std::vector a(big_a.begin()+blockOffset,
+          big_a.begin()+blockOffset+blockSize);
+        std::vector b(big_a.begin()+blockOffset,
+          big_b.begin()+blockOffset+blockSize);
+        // Do the operation
+        addArrayIntoArray(a, b);
+        // Copy back into the output array
+        std::copy(b.begin(), b.end(), big_b.begin() + blockOffset);
+      }
+    }
+  }
+\end{verbatim}}
+\end{listing}
+
+As you can see, the client code that uses the {}\texttt{std::vector}
+version of {}\texttt{addArrayIntoArray(...)} is niether clean, nor
+efficient as temporary copies of all of the data have to be created
+just to make the function call and then data has be be copied back
+into the full array.
+
+Now consider the client code in Listing
+{}\ref{listing:someBlockAlgo-std-vector-raw-ptr} which uses the raw C++
+pointer version of {}\texttt{addArrayIntoArray(...)} in Listing
+{}\ref{listing:addArrayIntoArray-raw}.
+
+\begin{listing}:\\
+\label{listing:someBlockAlgo-std-vector-raw-ptr}
+{\small\begin{verbatim}
+  void someBlockAlgo( const int numBlocks, const std::vector<double> &big_a,
+    std::vector<double> &big_b )
+  {
+    DEBUG_MODE_ASSERT_EQUALITY( big_a.size(), big_b.size() );
+    const int totalLen = big_a.size();
+    const int blockSize = totalLen/numBlocks; // Assume no remainder!
+    
+    const int blockOffset = 0;
+    for (int block_k = 0; block_k < numBlocks;
+      ++block_k, blockOffset += blockSize)
+    {
+      if (big_a[blockOffset] > 0.0) {
+        addArrayIntoArray( blockSize, &big_a[blockOffset], &big_b[blockOffset]);
+      }
+    }
+  }
+\end{verbatim}}
+\end{listing}
+
+As you can clearly see, using the raw C++ pointer version of
+{}\texttt{addArrayIntoArray(...)} makes the client code much cleaning
+and much more efficient.  However, of course, if the client makes any
+mistakes with its arrays of memory, then the resulting program will
+(in the base case) segfault, or will silently produce the wrong
+result, or (in the worst case) actually produce the right result on
+the current platform but will fail on other platforms.
+
+The Teuchos array utility classes make algorithms involving subviews
+like shown above very clean, very efficient, and very safe (see the
+same versions of this example code using these new Teuchos classes in
+Section ???).
+
+In summary, {}\texttt{std::vector} is {}\underline{not} an efficient
+or convenient general-purpose replacement for raw C++ pointers as
+function arguments in many important use cases.
+
+
+%
+{}\subsection{Problems with relying on standard memory checking
+utilities}
+%
+
+Some programmers simply use raw C++ pointers and think that standard
+memory checking tools like Valgrind [???] and Purify [???] will catch
+all of their mistakes.  When I first started coding in C++ back in
+1996, I was very aware of the problems with using raw pointers in C++
+after experiencing the segfaults and memory leaks that all C++
+programmers experience.  At the time, I had experimented some with
+writing my own utility classes that encapsulated raw C++ pointers and
+I considered taking that further.  However, at that time, I
+conjectured that going through the effort of encapsulating all raw C++
+pointers might be a waste of time because it would not be long until
+someone came up with an 100\% bullet-proof memory checking tool for
+C++ that would make my feable programmer-controlled attempts to wrap
+raw pointers obsolute.  After more than 10+ years of C++ programming
+experience where I have written perhaps a million lines of C++ code on
+a number of different platforms/compilers, I have come to regret that
+decision.
+
+Through painful experience and then through some more careful thought,
+I have come to realize that memory checking tools like Valgrind and
+Purify will never be able to provide an even sufficient (forget about
+100\%) means to validate the memory usage of our C++ programs.  With
+respect to existing tool implementations, I have experienced cases
+where both Valgrind and Purify have reported not even a single warning
+before the program segfaulted with essentially no feedback at all.  I
+will not go into detail about what techniques memory tools like
+Valgrind and Purify use to verify memory usage other than to say that
+they can do a lot by just taking control of {}\texttt{malloc(...)} and
+{}\texttt{free(...)} and in inserting checks into the execution of the
+program by controlling the manipulation of the program stack.
+
+One such case where the Valgrind and Purify were completely unhelpful
+occured with an off-by-one error with an {}\texttt{std::vector} using
+Linux/gcc.  In the end, the way that I found the off-by-one error was
+by just staring at the code over and over again until I happened to
+see the problem.  However, what I discovered through two days of
+debugging was that {}\texttt{std::vector} used its own allocator which
+allocated big chunks of memory through {}\texttt{malloc(...)}.  It
+then proceeded to do its own memory allocation scheme, which was very
+fast but was invisible to the watchfull eyes of Valgrind and Purify.
+Any reads to this block of memory looked fine to Valgrind and Purify
+because it was all contained within the block returned from
+{}\texttt{malloc(...)}.  What the off-by-one error did was to write
+over a library managed part of the memory block and that silent
+corruption would doom a later attempt by {}\texttt{std::vector} to
+allocate memory.
+
+There are other categories of use cases where external memory checking
+tools like Valgrind and Purify will never be able to verify correct
+memory usage.  One example is semantic off-by-one errors commited in
+larger blocks of data.  To demonstrate this type of error, consider
+the example code in the function {}\texttt{someBlockAlgo(...)} in
+Listing {}\ref{listing:someBlockAlgo-std-vector-raw-ptr} which uses
+the raw C++ pointer version of the function
+{}\texttt{addArrayIntoArray(...)} in Listing
+{}\ref{listing:addArrayIntoArray-raw}.  Now consider what happens when
+a developer introduces an off-by-one error as shown in
+{}\texttt{addArrayIntoArray(...)} in Listing
+{}\ref{listing:addArrayIntoArray_rawError}.
+
+\begin{listing}:\\
+\label{listing:addArrayIntoArray_rawError}
+{\small\begin{verbatim}
+  template<class T>
+  void addArrayIntoArray( const int n, const T a[], T b[] )
+  {
+    for (int i = 0; i <= n; ++i)
+      b[i] += a[i];
+  }
+\end{verbatim}}
+\end{listing}
+
+In case you missed it, the off-by-one error shown in Listing
+{}\ref{listing:addArrayIntoArray_rawError} is the replacement of the
+loop termination statement {}\texttt{i < n} with {}\texttt{i <= n}
+which is a very common C++ programming error.
+
+Now let's consider the implications that the off-by-one error shown in
+Listing {}\ref{listing:addArrayIntoArray_rawError} will have of the
+data in {}\texttt{big\_b} as driven by the code in Listing
+{}\ref{listing:someBlockAlgo-std-vector-raw-ptr}.  If the last block
+{}\texttt{block\_k=numBlocks-1} of data is processed, then there is a
+reasonable chance a memory checking tool like Valgrind would catch the
+off-by-one error being committed at the very end of the array
+{}\texttt{big\_b}.  However, as described above, Valgrind may not
+catch even this error.  Also, note that turning on bounds checking
+with {}\texttt{std::vector} (i.e.\ by enabling
+{}\texttt{\_GLIB\_CXX\_DEBUG} with gcc) will not catch this error
+either because of the way the raw pointers are extracted in and and
+passed in the function call:
+
+{\small\begin{verbatim}
+  addArrayIntoArray( blockSize, &big_a[blockOffset], &big_b[blockOffset]);
+\end{verbatim}}
+
+Now consider a defect caused by this off-by-one error for which no
+automated memory checking tool that will ever be devised will ever be
+able to catch.  This type of defect will occur, for example, when for
+the last block {}\texttt{block\_k=numBlocks-1} we have
+{}\texttt{big\_a[(numBlocks-2)*blockSize] > 0.0} and
+{}\texttt{big\_a[(numBlocks-1)*blockSize] <= 0.0}.  In this case, only
+the next-to-last block of data will be processed by the defective
+{}\texttt{addArrayIntoArray(...)} function.  This will not result in a
+classic off-by-one error that a memory checking tool would catch
+because it would not touch memory outside of what is stored in
+{}\texttt{big\_b}.  However, this off-by-one error commited in Listing
+{}\ref{listing:addArrayIntoArray_rawError} would result in the array
+entry {}\texttt{big\_b[(numBlocks-2)*blockSize+blockSize]} being
+erroneously modified.  This is a defect that might only slightly
+damage the final result of the program for the typical use case and
+might therefore go unnoticed for years.  However, when the program was
+really being used for something important years later for a
+non-typical use case, this small off-by-one error could result in
+reporting incorrect results which could embarrass a company, result in
+a lawsuit, or (in an exteme case) even cause someone's death.
+
+The point that I am trying to make in the above example is that
+automated memory checking tools like Valgrind and Purify will never be
+able to check the {}\textit{semantic} correctness of our usage of<
+memory.  The off-by-one defect shown above is 100\% correct from a
+strict memory usage point of view (i.e.\ only allocated memory can be
+written to and only allocated and initialized memory can be read from)
+but is 100\% wrong from a semantic point of view (i.e.\ the function
+{}\texttt{addArrayIntoArray(...)} can only operate on the elements of
+data from {}\texttt{0} to {}\texttt{n-1}).  The utility classes in
+Teuchos described below help to verify that memory is used in a
+semantically correct way.
+
+
+%
+{}\section{Philosophy of memory management: Safety, speed, generality
+and the 100\% guarantee}
+%
+
+When looking at different strategies for memory management in C++ and
+in other languages, I believe it helps to think a little on the
+philosophical level which can actually help ground us.
+
+When looking at the different memory management appraoches implemented
+in varous programming languages, the core issues come down to tradoffs
+in saftey and correctness versus speed and generality.  For example, a
+language like C sacrifices safety and correctness for speed and
+generality.  Because C is so ``close'' to the hardware, you can
+implement very specialized memory management appraoched tailored to
+very specific types of domains.  However, the price one pays for this
+raw speed and flexibility in C is the fact that there is very little
+compiler-supported checking needed to assert correct memory usage.
+
+Now take Python on the other extreme.  If you write code only in
+Python, you will almost never experience and memory leak or segfault
+of any kind due to code that you directly write.  Here we have a
+language which is nearly 100\% safe (assuming the language
+implementation is 100\% correct) but offers less flexibility in how
+memory is managed and results in very slow native code as compared to
+C in many cases (e.g.\ for computationally intensive loops).
+
+So how important is a 100\% guarantee that memory will always be used
+correctly like is provided in a language like Python?  How important
+is a 100\% guarantee in any area?  Well, if you can get a 100\%
+guarantee without having to pay a significant price for it then you
+would be a fool not to accept it.  For example, if you have a choice
+between two venders selling the same product for the same price but
+one vender will give you a 100\% money-back guarantee, with all things
+being equal, it would probably be foolish not to go with the vender
+with the 100\% guarantee.
+
+However, in most areas, greater safety (not to mention a 100\%
+guarantee) comes with greater costs.  Instead of demanding a 100\%
+guarantee, we typically accept some level of extra risk as long as we
+have taken basic precautions to protect ourselves.  To demonstrate
+this, let's consider another analogy which I like to refer to as the
+{}\textit{Transportation Analogy}.  When considering modes of
+transporation, we accept that we are not 100\% safe when driving our
+cars on the road but we do it anyway.  The reason that we get into our
+cars every day is that we take reasonable precautions like purchasing
+a car with a good safely design, wearing seat-belts, obeying the
+traffic laws, driving a reasonable speed, and practicing defensive
+driving.  What I am going to argue is that the approach to memory
+management that I am advocating in this paper is the equivalent of
+driving a car, wearing your seat belt, and taking other reasonable
+safety precautions.
+
+Now let's talk about the safety versus speed/efficiently extremes in
+the Transportation Analogy and in the areas of memory mangement.  At
+one extreme, writing all high-level code in C++ (or C) using raw
+pointers for everything is like riding a high-performance motorcycle
+on a crowded interstate going 150 mph, without wearing a helment or
+any other safety gear, while doing a wheelie.  At this extreme, one
+wrong move and you are dead.
+
+At the other exteme, writing all code in a language like Python is
+like driving around in a reinforeced tank that does a maximum of 10
+mph where you sit inside wearing a car racing helment with the Hans
+device, full racing safety gear, and have a massive air bag system to
+encase your entire body in foam three feet thick in case of a
+collision.  On this side of extreme safely, we could hit a Mac truck
+head on and be just fine.  The only way to really kill ourselves is if
+we were to dirve off of a shear cliff.
+
+If we all required a near 100\% safely guarantee, we would all be
+driving around in reinforced tanks like the one described above but we
+don't.  We don't because we are not willing to pay the price of the
+near 100\% guarantee provided by the tank.  We can't afford it
+financially and it would take forever to get back and forth to
+work. Instead, we are content with our less than 100\% safe cars
+because they are affordable and fast and do not pose unreasonable
+risks.
+
+Now, we can incrementally go from either extreme to the more balanced
+position in both the Transportation Analogy and with memory management
+in C++ and Python.
+
+From the extreme of safety with less speed and flexibility represented
+by the reinforced tank (and Python) you can incrementally move toward
+the middle ground of the car. You can start by removing the racing
+helment and Hans device, followed by decreasing the weight and
+incresing the speed of the tank, and so on.  Continuing on this trend
+of sacrificing safety in favor of greater speed and agility leads us
+to our typical car.  Likewise, moving from an extreme of safety to a
+more reasonable balance between safety and speed/flexibility in Python
+involves taking pieces of computationally intensive Python code,
+rewriting them in C/C++, and then calling them from Python.  This is
+an approach that many Python enthusiasts are advocating [???] but make
+no mistake that in going down this road that you are sacrificing
+safety in Python in the name of speed and flexibility.  You are giving
+up Python's nearly 100\% guarantee when you do this.
+
+From the extreme of speed and flexibilty with little reguard for
+safety represnted by the motorcycle (and C/C++ raw pointers) you can
+also incrementally move toward the car.  You can start by putting on a
+helment, followed by slowing down some, and so on.  Continuing on this
+trend of adding safety will eventually see you morphing the motorcycle
+into the typcial car.  Likewise, moving from an extreme of less safety
+toward a more reasonable balance between speed/flexibiltiy and safety
+in C++ involves adding more and more utility classes to hide more and
+more uses of raw C++ pointers in our high-level C++ code.  This is the
+trend that the C++ community has been following for more than the last
+decade.  We see it first in the introduction of
+{}\texttt{std::auto\_ptr} and {}\texttt{std::vector}.  This was then
+followed by the development of {}\texttt{boost::shared\_ptr} (and
+threfore {}\texttt{std::shared\_ptr} in C++09) and
+{}\texttt{boost::array\_ptr}.  What I am suggesting in this paper is
+the logical conclusion of this journey which is the development of a
+complete set of utility classes in order to remove all raw C++
+pointers from our high-level C++ code; i.e.\ complete the transition
+from the motorcycle (C/C++ raw pointers) to the car (Teuchos C++
+memory management classes).
+
+With the approach being advocated in this paper for the Teuchos Memory
+Management classes, using the debug mode is like driving around in the
+tank where you are protected from almost any danger.  However, using
+the optimized mode is like driving around with the high-performance
+motorcycle.  Try that with a car!
+
+
+%
+{}\section{Important prerequisites}
+%
+
+Before finally discussing the Teuchos memory management classes, I
+need to discuss a set of prerequisite concepts that are needed in
+order to understand the wholistic memory management approach described
+here.
+
+
+%
+{}\subsection{Value types versus reference types}
+\label{sec:value-and-reference-types}
+%
+
+Because of the flexibility of C++, many C++ programmers can and do
+implement a wide varity of types yielding objects with different types
+of usage symentics.  A quick summary of ``accepted'' class types in
+C++ is given in Item 33 ``Be clear what kink of clas you're writing''
+in {}\cite{C++CodingStandards05}.  I see little point here in trying
+to classify all of the crazy ways that I have seen people code objects
+in C++ that stray from these ``accepted'' class types.  Instead, I
+want to suggest that we should classify 99\% of our classes as either
+{}\textit{Value Types} or {}\textit{Reference Types}.  Value Types and
+Reference Types are said to use {}\textit{Value Semantics} and
+{}\textit{Reference Semantics}, respectively, and that is sometimes
+how these datatypes are described in various C++ literature.
+
+{}\textit{Value Types} in general:
+
+\begin{itemize}
+
+{}\item have public destructors, default constructors, copy
+constructors, and assignemnt operators (implementing deap copy,
+semantics)
+
+{}\item have an identity that is determined by their value, not their
+address,
+
+{}\item are usually allocated on the stack or as direct data members
+in other class objects,
+
+{}\item are usually {}\underline{not} allocated on the heap, and
+
+{}\item do not have any virtual functions and are not to be used as
+base classes (see Item 35 in {}\cite{C++CodingStandards05}).
+
+\end{itemize}
+
+If {}\texttt{S} denotes a typical Value Type, the class defintion of
+{}\texttt{S} includes:
+
+{\small\begin{verbatim}
+  class S {
+  pubic:
+    ~S();
+    S();
+    S(const S&);
+    S& operator=(const S&);
+    ...
+  };
+\end{verbatim}}
+
+All of the built-in intrisic C++ data-types like {}\texttt{char},
+{}\texttt{int}, and {}\texttt{double} are Value Types.  Likewise,
+derived class types like {}\texttt{std::complex} and
+{}\texttt{std::vector} are also Value Types.  Value Types have also be
+called by other names in the C++ literature. Stroustroup refers to
+Value Types as ``true local variables'' in
+[???DesignAndEvolutionOfC++???].  The term Abstract Data Type (ADT) in
+older C++ literature such as [???Advanced C++???] usually maps to the
+concept of a Value type, but usaully carries greater significance in
+implying that operator overloading is used to make an ADT look more
+like a built-in C++ type (such as is the case for
+{}\texttt{std::complex}).
+
+Alternatively, {}\textit{Reference Types} in general:
+
+\begin{itemize}
+
+{}\item do not have a public copy constructor or assignement operator,
+
+{}\item are manipulated through a (smart) pointer or reference,
+
+{}\item have an identity that is determined by their address and not
+their value,
+
+{}\item are allocated on the heap,
+
+{}\item typically are not permitted to be or cannot be allocated on
+the stack,
+
+{}\item are copied through an abstract clone function (if copying is
+allowed at all),
+
+{}\item have one or more virtual functions, and
+
+{}\item are usually designed to be used as base classes.
+
+\end{itemize}
+
+Referene Types (i.e.\ Reference Semantics) are typically used for base
+classes in C++.  Examples of base classes in the C++ standard library
+include {}\texttt{std::ios\_base} and
+{}\texttt{std::basic\_streambuf}.  Reference Types in the form of
+abstract base classes form the foundation for object-oriented
+programming in C++.
+
+If {}\texttt{A} denotes a typical Reference Type, the class defintion
+of {}\texttt{A} generally includes:
+
+{\small\begin{verbatim}
+  class A {
+  pubic:
+    virtual ~A();
+    virtual A* clone() const = 0;  // NOTE: Should use RCP (see later)
+    virtual void someFunc() = 0;
+    ...
+  protected: // or private
+    A(const A&);
+    A& operator=(const A&);
+    ...
+  };
+\end{verbatim}}
+
+Note that you can almost always choose to manipulate a Value Type
+using Reference Semantics.  For example, it is very common to choose
+to dynamically allocate large value objects like
+{}\texttt{std::vector} and then pass around (smart) pointers and
+references to the object to avoid unnecessary and expensive copying
+and to facilitate sharing state.
+
+While the ideas of Value Types and Reference Types and Value Semantics
+and Reference Semantics are long estabilished in the C++ literature
+(even if the terminology is not very uniform), many C++ programmers
+either seem to not know about these idoms or choose not to follow them
+for some reason.  By forcing the majority of our classes into either
+using {}\textit{Value Semantics} or {}\textit{Reference Semantics} we
+eliminate meaningless variability in our C++ programs and we free
+ourselves to think about more important things.
+
+{}\textbf{Side Note:} The somewhat rigid classification of C++ types
+into Value Types and Reference Types is similar in motivation and in
+many other respects to Eric Evans' differentiation of all domain types
+into {}\textit{Value Objects} and {}\textit{Entities} in Domain Driven
+Design (DDD) {}\cite{DomainDrivenDesign}.  While there are
+similarities between DDD's Value Objects and Entities and C++'s Value
+Types and Reference Types, respectively, there is not a one-to-one
+mapping.  In DDD, the distinction between Value Object and an Entity
+has more to do with the nature of the object in relation to the domain
+model and is not related to how memory is manged.  Evans assumes that
+you are using a language like Java where all objects use reference
+semantics.
+
+
+%
+{}\subsection{Persisting associations versus non-persisting associations}
+%
+
+Another important prerequisite for understanding the Teuchos memory
+management classes is the distinction between {}\textit{non-persisting
+associations} and {}\textit{persisting associations}.  Working
+definitions for these are:
+
+\begin{itemize}
+
+{}\item\textit{Non-Persisting associations} are associations between
+two or more objects that exist only within a single function call for
+formal function arguments, or a single statement for function return
+objects, where no memory of any of the objects is retained as a side
+effect after the function returns or the statement ends.
+
+{}\item\textit{Persisting associations} are associations that exist
+between two or more objects that extend past a single function call
+for formal function arguments, or a single statement for function
+return objects.
+
+\end{itemize}
+
+To help define these two different types of associations, consider the
+class and function defintions in Listing
+{}\ref{listing:NonPersistingPersistingAssociationsRawPointers}.
+
+\begin{listing}:\\
+\label{listing:NonPersistingPersistingAssociationsRawPointers}
+{\small\begin{verbatim}
+  class A {
+  public:
+    void fooA() const;
+  };
+
+  class B {
+  public:
+    void fooB1(const A &a) { a.fooA(); }
+    void fooB2() const { ... }
+  };
+
+  class C {
+  public:
+    C() : b_(0) {}
+    void fooC1(B &b, const A &a)
+      { b_ = &b; b_->fooB1(A); }
+    void fooC2() const
+      { b_->fooB2(); }
+  private:
+    B* b_;    
+  };
+
+  void someFunc(C &c, B &b, const A &a)
+  {
+    c.fooC1(b, a);
+    c.fooC2();
+  }
+\end{verbatim}}
+\end{listing}
+
+The function {}\texttt{B::fooB1(...)} in Listing
+{}\ref{listing:NonPersistingPersistingAssociationsRawPointers}
+involves a non-perissting association with respect to the {}\texttt{A}
+and {}\texttt{B} objects since no memory of the object {}\texttt{a}
+remains after the function {}\texttt{B::fooB1(...)} exists.
+Non-persisting associations represent typical input/output-only
+arguments to a function.
+
+The function {}\texttt{C::fooC1(...)} in Listing
+{}\ref{listing:NonPersistingPersistingAssociationsRawPointers} creates
+a perissting association between a {}\texttt{C} object and a
+{}\texttt{B} object since the memory of the {}\texttt{B} object is
+retained in the {}\texttt{C} object that persists after the function
+{}\texttt{C::fooC1(...)} exits.  This memory of the {}\texttt{B}
+object stored in the {}\texttt{C::b\_} pointer data member is then
+used to implement the function {}\texttt{C::fooC2()}.  Note that the
+function {}\texttt{C::fooC1(...)} also involves a non-persisting
+association with the {}\texttt{A} object {}\texttt{a} since it is only
+used to call {}\texttt{B::fooB1(...)} and no memory of {}\texttt{a}
+lingers after {}\texttt{C::fooC1(...)} exists.
+
+As a final example, consider the nonmember function
+{}\texttt{someFunc(...)} in Listing
+{}\ref{listing:NonPersistingPersistingAssociationsRawPointers}.  While
+{}\texttt{someFunc(...)} is a free function, it actually involves the
+creation of a presisting asscoation between the {}\texttt{C} and
+{}\texttt{B} objects as a side effect.
+
+In the idioms advocated in this paper, smart reference counted
+pointers are used for all persisting associations and never for
+non-persisting associations.  Using the basic Teuchos {}\texttt{RCP}
+class, the raw pointer code in Listing
+{}\ref{listing:NonPersistingPersistingAssociationsRawPointers} would
+be refactored into the code in Listing
+{}\ref{listing:NonPersistingPersistingAssociationsRCP}.
+
+\begin{listing}:\\
+\label{listing:NonPersistingPersistingAssociationsRCP}
+{\small\begin{verbatim}
+  class A {
+  public:
+    void fooA() const;
+  };
+
+  class B {
+  public:
+    void fooB1(const A &a) { a.fooA(); }
+    void fooB2() const { ... }
+  };
+
+  class C {
+  public:
+    C() : b_(0) {}
+    void fooC1(const RCP<B> &b, const A &a)
+      { b_ = &b; b_->fooB1(A); }
+    void fooC2() const
+      { b_->fooB2(); }
+  private:
+    RCP<B> b_;
+  };
+
+  void someFunc(C &c, const RCP<B> &b, const A &a)
+  {
+    c.fooC1(b, a);
+    c.fooC2();
+  }
+\end{verbatim}}
+\end{listing}
+
+Note that the classes {}\texttt{A} and {}\texttt{B} remain unchanged
+because they do not involve any persisting associations.
+
+Another situation where the concepts of persisting and non-persisting
+associations comes up relates to how objects are returned by C++
+functions as return values.  A presisting relationship is made through
+a function return object if that object is remembered past a single
+statement.  For example, cnsider the following code fragment:
+
+\begin{listing}:\\
+{\small\begin{verbatim}
+  std::vector<int> v(n);
+  ...
+  int &ele = v[0];  // Creates a persisting return object relationship
+  ...
+  ele = 5;          // Changes v[0] much later!
+\end{verbatim}}
+\end{listing}
+
+The above code fragment shows a presenting relationship between the
+client code that is initializing the local reference {}\texttt{ele}
+and the {}\texttt{std::vector} container object {}\texttt{v}.  This is
+very fragile and dangerous code because if {}\texttt{v} is resized,
+grown or have some other type of change, then the reference pointed to
+by {}\texttt{ele} can be invalid.  For example, the following code
+fragement will likely result in a runtime memory usage error and (if
+we are lucky) segfault:
+
+\begin{listing}:\\
+{\small\begin{verbatim}
+  std::vector<int> v(n);
+  int &ele = v[0];
+  v.resize(10*n);
+  ele = 5;  // ele is likely to be invalid here!
+\end{verbatim}}
+\end{listing}
+
+If we are unlucky, the statement {}\texttt{ele = 5} will work just
+fine on one platform with one implementation of the
+{}\texttt{std::vector} but will break on another platform when run
+with a different dataset.  Note that tools like Valgrind and Purify
+may not flag the problem due to how many implementations of
+{}\texttt{std::vector} deal with memory.
+
+Basically the problem here is that the
+{}\texttt{std::vector::operator=(size\_type)} function returns a raw
+C++ reference that should never be remembered past a single statement.
+The safe way to change an element is:
+
+\begin{listing}:\\
+{\small\begin{verbatim}
+  std::vector<int> v(n);
+  v[0] = 5; // Non-persisting relationship!
+  v.resize(10*n);
+\end{verbatim}}
+\end{listing}
+
+Here, we will say that the
+{}\texttt{std::vector::operator=(size\_type)} should only be used for
+non-persisting relationships as shown above.
+
+For a more detailed treatment of persisting and non-persisting
+associations, and on the basics of {}\texttt{RCP}, see the discussion
+in {}\cite{RefCountPtrBeginnersGuide}.
+
+
+%
+{}\section{Teuchos classes for safer memory management and usage}
+%
+
+The primary purpose for the Teuchos memory management classes is to
+allow the replacement of all raw C++ pointers in all application-level
+code.  These classes are efficient and general and, in a debug build
+of the code, will catch and gracefully report 99\% or more of the
+programming errors typically made with the ubiquitous high-level use
+of raw C++ pointers.
+
+
+%
+{}\subsection{Outline of the basic approach}
+{}\label{sec:outline_of_basic_approach}
+%
+
+The basic approach being advocated here and implemented in the Teuchos
+memory management classes is to:
+
+\begin{itemize}
+
+{}\item Encapsulate all raw C++ pointers in high-level code in
+specially designed memory management classes, caputre raw C++ pointers
+as soon as possible, and avoid exposing raw calls to {}\texttt{new} in
+application-level code.
+
+{}\item Provide a complete set of cooperating types that work together
+to safely and conveniently implement all hand-offs of raw C++
+pointers using supported and carefully scrutinized conversion code.
+Also, never define implicit conversions from these safe types to raw
+C++ pointers or the entire type safe system falls apart.
+
+{}\item Differentiate memory management classes for handling single
+objects and for handling contiguous arrays of objects.
+
+{}\item Differentiate memory management classes according to
+persisting and non-perissting associations.
+
+  \begin{itemize}
+
+  {}\item Use reference counting for memory management classes
+  designed to handle persisting associations.
+
+  {}\item Do not impose the overhead of reference counting for memory
+  management classes designed to handle non-persisting associations.
+
+  \end{itemize}
+
+{}\item Provide encpauslations for all uses of raw C++ pointers for
+arrays of memory including dynamically sized arrays, statically sized
+arrays, and stack-based arrays.
+
+{}\item Provide a default {}\textit{optimized mode} where maximum
+performance and minimal overhead are the goals where raw C++ pointer
+performance is achieved for all reasonable use cases.
+
+{}\item Provide an optional {}\textit{debug mode} whose goal is to
+provide maximum runtime checking with low overhead by default to catch
+all sorts of common errors like:.
+
+  \begin{itemize}
+  {}\item Dereferencing null pointers
+  {}\item Dereferencing dangling pointers (references)
+  {}\item Array access errors like off-by-one and other errors
+  {}\item Incorrect iterator usage
+  {}\item Circular dependencies
+  \end{itemize}
+
+\end{itemize}
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+& Non-persisting
+& Persisting \\
+& Associations
+& Associations \\
+\hline
+single objects
+& {}\texttt{Ptr<T>}
+& {}\texttt{RCP<T>} \\
+\hline
+contiguous arrays
+& {}\texttt{ArrayView<T>}
+& {}\texttt{ArrayRCP<T>} \\
+\hline
+\end{tabular}
+\end{center}
+\caption{\label{table:BasicSingleArrayTypes}
+Basic Teuchos memory management utility classes for encapsulating raw
+pointers for single objects and contiguous arrays of objects.}
+\end{table}
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|c|c|c|c|}
+%
+\hline
+%
+Operation
+& \texttt{Ptr<T>}
+& \texttt{RCP<T>}
+& \texttt{ArrayView<T>}
+& \texttt{ArrayRCP<T>} \\
+%
+\hline
+%
+\multicolumn{5}{l}{\textit{Raw pointer-like functionality}} \\
+%
+\hline
+%
+Implicit conv derived to base
+& x
+& x
+& 
+&  \\
+%
+\hline
+%
+Implicit conv non-const to const
+& x
+& x
+& x
+& x \\
+%
+\hline
+%
+Dereference \texttt{operator*()}
+& x
+& x
+& 
+& x \\
+%
+\hline
+%
+Member access \texttt{operator->()}
+& x
+& x
+& 
+& x \\
+%
+\hline
+%
+\texttt{operator[](int)}
+& 
+& 
+& x
+& x \\
+%
+\hline
+%
+operators \texttt{++}, \texttt{--}, \texttt{+=(int)}, \texttt{-=(int)}
+& 
+& 
+& 
+& x \\
+%
+\hline
+%
+\multicolumn{5}{l}{\textit{Other functionality}} \\
+%
+\hline
+%
+Reference counting machinery
+& 
+& x
+& 
+& x \\
+%
+\hline
+%
+Iterators: begin(), end()
+& 
+& 
+& x
+& x \\
+%
+\hline
+%
+\texttt{ArrayView} subviews
+& -
+& -
+& x
+& x \\
+%
+\hline
+%
+\end{tabular}
+\end{center}
+\caption{\label{table:TypesSummary}
+Summary of capabilities of the basic Teuchos memory management
+classes.}
+\end{table}
+
+The basic templated Teuchos memory management classes for encapsulating
+raw C++ pointers for single objects and arrays shown in Table
+{}\ref{table:BasicSingleArrayTypes} are {}\texttt{Ptr},
+{}\texttt{RCP}, {}\texttt{ArrayView}, and {}\texttt{ArrayRCP}.  A
+summary of the capabilities of these classes is shown in Table
+{}\ref{table:TypesSummary}.  What you can see from this table is that
+raw pointer-like functionality is partitioned across these various
+sets of clasess in logical and safe ways.  For example, array-related
+operations are not defined on the single-object classes
+{}\texttt{Ptr}, {}\texttt{RCP} but implicit conversion from derived
+types to base types is allowed.  Alternatively, the array classes
+{}\texttt{ArrayView}, and {}\texttt{ArrayRCP} do {}\underline{not}
+support the dangerous and ill-conceived ability to implicitly convert
+arrays of derived types to arrays of base types that is decried in
+Section {}\ref{sec:problem-with-raw-array-pointers}.  Note that the
+class {}\texttt{ArrayView} does not support all of the raw pointer
+iterator-like operations that {}\texttt{ArrayRCP} does like the
+dereference operator {}\texttt{operator*()} or the pointer offset
+functions that change the pointer while {}\texttt{ArrayRCP} does.  The
+reason that {}\texttt{ArrayRCP} does support these iterator-like
+operations is so that it can be used as a general purpose iterator
+implementation while {}\texttt{ArrayView} does not.  Note that all of
+the array classes defined in Teuchos all support a basic iterator
+interface with the typedefs {}\texttt{iterator} and the functions
+{}\texttt{begin()} and {}\texttt{end()}.  In optimized mode, these
+iterators are simply raw C++ pointers yielding maximum performance.
+However, in debug mode, the iterators are implemented as
+{}\texttt{ArrayRCP} objects resulting in fully checked iterators.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Array class
+& Specific use case \\
+\hline
+{}\texttt{Array<T>}
+&  Contiguous dynamically sizable, expandable, and contractible arrays \\
+{}\texttt{Tuple<T,N>}
+&  Contiguous statically sized (with size {}\texttt{N}) arrays \\
+\hline
+\end{tabular}
+\end{center}
+\caption{\label{table:ExtendedArrayTypes}
+Teuchos array container classes.}
+\end{table}
+
+In addition to the four basic memory management classes shown in Table
+{}\ref{table:BasicSingleArrayTypes} which provide the most fundamental
+replacements for all raw C++ pointers in all high-level code, Teuchos
+also contains a few other array container classes for a few more
+specific use cases shown in Table {}\ref{table:ExtendedArrayTypes}.
+The three array container classes {}\texttt{Array}, and
+{}\texttt{Tuple} pretty much cover the majority of use cases in C++
+where raw C++ pointer arrays are used for containers.  The class
+{}\texttt{Array} is a directly replacement for {}\texttt{std::vector}
+and actually wraps it internally.
+
+These classes all work together to provide a high level of debug-mode
+runtime checking to catch the majority of common programming errors
+and report these errors gracefully with informative error messages.  A
+debug-mode build of the code is facilitated by defining the
+preprocessor macro {}\texttt{TEUCHOS\_DEBUG}.  When
+{}\texttt{TEUCHOS\_DEBUG} is not defined, the Teuchos memory
+management classes are configured to impart minimal overhead and yeild
+fast performance.  When {}\texttt{TEUCHOS\_DEBUG} is defined, these
+classes are configured to perform maximal debug runtime checking.
+These classes are also carefully designed so that if a program is
+implemented correctly using these classes and executes correctly in
+the optimized mode, the program compiled with the debug checking
+turned on will execute in exactly the same way.  However, if any
+undefined, dangerous, or just plain wrong behavoir is being used, then
+these memory management classes will throw exceptions and the
+exception objects will have very good error messages embedded in them.
+
+What is important to understand is that all of these memory management
+classes must be developed together with knowledge of each other's
+internal implementations in order to provide for solid debug-mode
+runtime checking.  For example, in general, you can not mix in other
+memory management classes like {}\texttt{boost::shared\_ptr} (i.e.\
+{}\texttt{std::shared\_ptr} in C++09) and {}\texttt{std::vector} and
+provide for the level of runtime checking that is supported by the
+concert of Teuchos memory management classes described here.  More
+details about why this is so are given in Section
+{}\ref{sec:debug-mode-runtime-checking} in the context of debug-mode
+runtime checking for and reporting of dangling references.
+
+As with the development of any set of C++ classes, a set of
+accompanying idioms must also be developed for maximizing their
+effective use.  The idioms described in this paper involving the
+Teuchos memory management classes result in code with maximum
+compile-time checking, maximum debug-mode runtime checking, and which
+is highly self-documenting.
+
+
+%
+{}\subsection{The proper role of raw C++ pointers}
+%
+
+The thesis of this paper is that we should eliminate the use of all
+raw C++ pointers in all of our high-level C++ code and instead use a
+system of specially designed types for the right situations.  Does
+that mean that we should never use raw C++ pointers in any C++ code?
+The answer of course is {}\underline{no}, since we will always have to
+use raw C++ pointers in special situations.
+
+Here are the valid situations where it is appropriate (or required)
+to use raw C++ pointers in our C++ programs:
+
+\begin{itemize}
+
+{}\item{}\textit{Use raw C++ pointers for extremely well-encapsulated,
+low-level, high-performance algorithms}
+
+In order to achieve high performance in computationally intensive
+code, we will always have to use raw C++ pointers.  This includes
+using raw C++ pointers to build complex specialized data structures
+and similar purposes.  In this context, we can think of raw C++
+pointers as a fairly compact and efficient way to communicate with the
+compiler about how we want to manage memory at the hardware level.
+The ability to do this type if fine-grained manipulation of memory
+has always been one of the strengths of C and C++ in systems-level
+programming.  Therefore, we can think of using raw pointers in C++ as
+a kind of portable assembly language that we always have at our
+disposal on every platform and with every compiler.  However, note
+that our use of raw C++ pointers in the name of performance must be
+very well encapsulated and we must thoroughly review (by our best
+programmers) and exhaustively test this code.  Note that we can always
+use a series of typedefs to substitute our safe memory management
+classes like {}\texttt{ArrayRCP} in place of raw C++ pointers when we
+need to debug our code.  In fact, such an approach would be
+recommended practice.
+
+{}\item{}\textit{Use raw C++ pointers to communicate with legacy C++
+code and with other languages through C bindings}
+
+We will always have to use raw C++ pointers to reuse and communicate
+with legacy C++ code and to call functions in other languages through
+the now-universal approach of using C bindings.  However, we must
+endeavor to minimize the amount of our C++ code that has naked raw C++
+pointers and we should only expose a raw C++ pointer at the last
+possible moment (such as in the call to the external functions
+themselves).  Again, we must carefully encapsulate our access to this
+non-complient code that requires us to expose raw C++ pointers.
+
+\end{itemize}
+
+One point is worth nothing here which is that in our new modern C++
+software we must never use raw C++ pointers in the basic interfaces
+between our various modules as that is where a majority of mistakes in
+the use of memory will be made.  This goes somewhat contrary to the
+advice in Item 63 ``Use sufficiently portable types in a module's
+interface'' in {}\cite{C++CodingStandards05}.  If our new modern safe
+C++ software must be called by non-compliant software that uses raw
+C++ pointers, then we can provide specialized C-like interfaces for
+those clients that use raw C++ pointers for communication.  Of course,
+once we do this, we will have to rely on our clients to pass in memory
+correctly and keep it valid as long as our modules need it.
+
+
+%
+{}\subsection{Memory management classes replacing raw pointers for
+single objects}
+%
+
+Here we describe the templated classes {}\texttt{Ptr} and
+{}\texttt{RCP} which are used to encapsulate raw C++ pointers to
+single objects in more detail.  Again, {}\texttt{Ptr} is used for
+non-persisting associations and {}\texttt{RCP} is for persisting
+assoications.  Below, and in all of the code listings, we assume that
+they are enclosed in the {}\texttt{Teuchos} namespace or there are
+appropriate {}\texttt{using Teuchos::XXX} declarations for the various
+names in place.
+
+%
+{}\subsubsection{\texttt{Teuchos::Ptr<T>}}
+%
+
+The templated class {}\texttt{Ptr} is the simplest of all the Teuchos
+memory management classes.  In optimized mode it is just the thinest
+of wrappers around a raw C++ pointer.  Listing {}\ref{listing:Ptr}
+shows what the implementation of {}\texttt{Ptr} looks like in
+optimized mode:
+
+\begin{listing}: Teuchos::Ptr\\
+\label{listing:Ptr}
+{\small\begin{verbatim}
+  template<class T>
+  class Ptr {
+  public:
+    Ptr( ENull null_in = null ) : ptr_(0) {}
+    explicit Ptr( T *ptr ) : ptr_(ptr) {}
+    Ptr(const Ptr<T>& ptr) : ptr_(ptr.ptr_) {}
+    template<class T2> Ptr(const Ptr<T2>& ptr) : ptr_(ptr.ptr_) {}
+    Ptr<T>& operator=(const Ptr<T>& ptr) { ptr_=ptr.ptr_; return *this; }
+    T* operator->() const { return ptr_; }
+    T& operator*() const { return *ptr_; }
+    T* get() const { return ptr_; }
+    T* getRawPtr() const { return ptr_; }
+    const Ptr<T>& assert_not_null() const;
+  private:
+    T *ptr_;
+  };
+\end{verbatim}}
+\end{listing}
+
+In optimized mode, the only overhead imparted by {}\texttt{Ptr} is the
+default initialization to null.  All other functions are just inline
+accessors to the underlying raw C++ pointer member {}\texttt{ptr\_}.
+Therefore, the performance when using this type is the same as when
+using a raw C++ pointer.
+
+However, in debug mode (enabled when {}\texttt{TEUCHOS\_DEBUG} is
+defined), then the {}\texttt{Ptr} becomes more complex and performs a
+number of runtime checks like for null dereferences and dangling
+references (see Section {}\ref{sec:dangling-references}).
+
+One note about the default null constructor shown in Listing
+{}\ref{listing:Ptr} which is:
+
+{\small\begin{verbatim}
+  template<class T>
+  Ptr<T>::Ptr( ENull null_in = null ) : ptr_(0) {}
+\end{verbatim}}
+
+{}\noindent{}is that the type {}\texttt{ENull} is the simple enum in
+the {}\texttt{Teuchos} namespace:
+
+{\small\begin{verbatim}
+  enum ENull { null };
+\end{verbatim}}
+
+This simple enum allows for the safe implicit conversion from the enum
+value {}\texttt{null} to any {}\texttt{Ptr<T>} object.  For example,
+you can write code like:
+
+{\small\begin{verbatim}
+  Ptr<A> a_ptr = null;
+\end{verbatim}}
+
+This implicit conversion from {}\texttt{null} is shared by the other
+Teuchos memory management classes {}\texttt{RCP<T>},
+{}\texttt{ArrayView<T>}, and {}\texttt{ArrayRCP<T>}.  This allows you
+to call functions that accept one of these objects and just pass in
+{}\texttt{null} when appropriate and the implicit conversion will be
+done automatically if possible.
+
+The main purpose for the existance of the {}\texttt{Ptr} class is to
+replace raw C++ pointers in function calls for typical input,
+input/output, and output arguments where no peristing relationship is
+present.  For example, consider the function that modifies a type
+{}\texttt{A} object shown in Listing {}\ref{listing:modifyA-rawPtr}.
+
+\begin{listing}:\\
+\label{listing:modifyA-rawPtr}
+{\small\begin{verbatim}
+  void modifyA( A *a )
+  {
+    a->increment();
+  }
+\end{verbatim}}
+\end{listing}
+
+Using {}\texttt{Ptr}, the function {}\texttt{modifyA(...)} in Listing
+{}\ref{listing:modifyA-rawPtr} would be changed to the form shown in
+Listing {}\ref{listing:modifyA-Ptr}.
+
+\begin{listing}:\\
+\label{listing:modifyA-Ptr}
+{\small\begin{verbatim}
+  void modifyA( const Ptr<A> &a )
+  {
+    a->increment();
+  }
+\end{verbatim}}
+\end{listing}
+
+In this context, the primary advantage of the form shown in Listing
+{}\ref{listing:modifyA-Ptr} as apposed to Listing
+{}\ref{listing:modifyA-rawPtr} is that in debug mode, a check for a
+null pointer would be performed automatically.  If a null dereference
+occured, then an exception would be thrown with a very good error
+message. I have seen platforms where a null dereference did not
+automatically result in a gracefull assert, stoping the program.  I
+have seen cases where somehow memory was corrupted and the program
+continued!  My general phylosophy is to make as few assumptions as
+possible about the behavior of the compiler and platform because I
+have found that ``typical and obvious'' behavior is not universal.  I
+have learned the hard way that you will pay a price for such
+assumptions in lost time debugging obscure things like a null pointer
+dereference that should have stopped the program but did not.  Don't
+take chances with your code, take control!
+
+When all of the high-level code has been converted over to use these
+memory management classes and there are no more raw C++ pointers, then
+client code should never have to construct a {}\texttt{Ptr} using a
+raw C++ pointer.  However, as code is being transistioned over and
+when such code is called by non-complient code, construction from a
+raw pointer is needed.  The recommended way to convert from a raw C++
+pointers to {}\texttt{Ptr} is to use the following templated
+non-member function:
+
+\begin{listing}: Teuchos::ptr(...)\\
+\label{listing:ptr}
+{\small\begin{verbatim}
+  template<class T>  Ptr<T> ptr(T *p);
+\end{verbatim}}
+\end{listing}
+
+Using this non-member constructor function, client code would then be
+written as shown in Listing {}\ref{listing:using-ptr}.
+
+\begin{listing}:\\
+\label{listing:using-ptr}
+{\small\begin{verbatim}
+  void foo( A* a )
+  {
+    using Teuchos::ptr;
+    modifyA(ptr(a));
+  }
+\end{verbatim}}
+\end{listing}
+
+A more typical use case for the construction of a {}\texttt{Ptr}
+object is from a C++ object/reference.  This type of construction
+should always be performed using one of the non-member constructor
+functions shown in Listing
+{}\ref{listing:ptr-from-ref-nonmember-constructors}.
+
+\begin{listing}: Safe nonmember constructors for Teuchos::Ptr\\
+\label{listing:ptr-from-ref-nonmember-constructors}
+{\small\begin{verbatim}
+  template<typename T> Ptr<T>        ptrFromRef( T& arg );
+  template<typename T> Ptr<T>        inOutArg( T& arg );
+  template<typename T> Ptr<T>        outArg( T& arg );
+  template<typename T> Ptr<T>        optInArg( T& arg );
+  template<typename T> Ptr<const T>  constOptInArg( T& arg );
+\end{verbatim}}
+\end{listing}
+
+The different forms of non-member constructor functions shown in
+Listing {}\ref{listing:ptr-from-ref-nonmember-constructors} are to
+allow for self-documenting code for calls to functions that accept
+{}\texttt{Ptr}-wrapped objects.
+
+A complete and comprehensive set of idioms for using {}\texttt{Ptr}
+along with the other Teuchos memory management types is given in
+Section {}\ref{sec:idioms}.
+
+
+%
+{}\subsubsection{\texttt{Teuchos::RCP<T>}}
+%
+
+The class {}\texttt{RCP}, the real workhorse of the Teuchos memory
+mangement classes, is used to manage single objects in persisting
+associations.  {}\texttt{RCP} is very similar to other high-quality
+reference-counted smart pointer classes like
+{}\texttt{boost::shared\_ptr} and of course the upcoming standard
+C++09 class {}\texttt{std::shared\_ptr}.  However, {}\texttt{RCP} has
+some key features that differentiate it from these other better known
+smart pointer classes.  In particular, {}\texttt{RCP} has built in
+support for the detection of circular references (Section ???), has
+built in support for resolving circular references with built-in weak
+pointers (Section ???), and other strong debug runtime checking such
+as detecting multiple non-related {}\texttt{RCP} owning the same
+objects and others.
+
+Because the class {}\texttt{RCP} is described in
+{}\cite{RefCountPtrBeginnersGuide} and is so similar in use to
+{}\texttt{boost::shared\_ptr}, this class will not be described in too
+much detail here.
+
+A fairly complete definition of the class {}\texttt{RCP} is shown in
+Listing ???.
+
+
+%
+{}\subsubsection{Raw C++ references}
+%
+
+Why do we have a subsection on raw C++ references under the section
+for Teuchos Memory Management classes?  The reason is that raw C++
+references to single objects are used in the idioms described in this
+paper for non-persisting associations for single objects and this was
+a reasonable place to discuss them.
+
+While this paper argues that raw C++ pointers have no place in
+application-level code because they are fundamentally unsafe does that
+also mean that raw C++ references are also unsafe in application-level
+code?  After all, under the covers raw C++ references really are just
+raw C++ pointers in disguise.  While this is true, in practice raw C++
+references are significantly safer than raw C++ pointers, espeically
+if the idioms outlined in this paper are carefully followed.  In
+addition, the use of raw C++ references is exploited (as explained in
+Section ???) in defining idioms that increase the self-documenting
+nature of C++ code and play a role in defining non-persisting
+associations related to function formal arguments and return objects.
+
+Basically, a raw C++ reference is relatively safe as long as a) it is
+always initialized to a valid object, and b) it is only used for
+non-persisting relationships (especially as const input arguments in
+C++ functions).  If a raw C++ reference is initalized directly from an
+object or from dereferening a smart pointer, then you are guaranteed
+that the object will be valid when the reference is first created (at
+least in a debug build where dereferencing null smart pointers
+throws).  While raw C++ references are faily safe when used with the
+idioms described in this paper, there are no 100\% guarantees.  There
+is typically no guarantee that the object pointed to by a raw reference
+will stay valid, even in cases where you would assume that it should
+be if other idioms outlined in this paper are broken or in rare other
+cases even if no specific idiom rule is broken.
+
+
+%
+{}\subsection{Memory management classes replacing raw pointers for
+arrays of objects}
+\label{sec:array-classes}
+%
+
+The Teuchos memory management module actually defines four different
+C++ classes for dealing with contiguous arrays of objects:
+{}\texttt{ArrayView}, {}\texttt{ArrayRCP}, {}\texttt{Array}, and
+{}\texttt{Tuple}.  As stated in Section
+{}\ref{sec:outline_of_basic_approach} each of these classes is needed
+in order to address different important use cases for dealing with
+continguous arrays of objects.  The conventions outlined in the paper
+never have you exposing a raw C++ pointer to an array or directly
+using built-in (statically sized) C++ arrays.
+
+All of the Teuchos array classes provide a common subset of the
+interface of {}\texttt{std::vector} which includes the typedefs and
+member functions shown in Table {}\ref{tbl:common-array-type-members}.
+
+\begin{table}
+{\small\begin{center}
+\begin{tabular}{|l|}
+\hline
+{}\textbf{std::vector compatible typedefs} \\
+\hline
+{}\texttt{value\_type} \\
+{}\texttt{size\_type} \\
+{}\texttt{difference\_type} \\
+{}\texttt{pointer} \\
+{}\texttt{const\_pointer} \\
+{}\texttt{reference} \\
+{}\texttt{const\_reference} \\
+{}\texttt{iterator} \\
+{}\texttt{const\_iterator} \\
+\hline
+{}\textbf{std::vector compatible functions} \\
+\hline
+{}\texttt{size\_type size()} \\
+{}\texttt{[const\_]reference operator{}(size\_type) [const]} \\
+{}\texttt{[const\_]reference front() const} \\
+{}\texttt{[const\_]reference back() const} \\
+{}\texttt{[const\_]iterator begin() [const]} \\
+{}\texttt{[const\_]iterator end() [const]} \\
+\hline
+{}\textbf{ArrayView returning functions} \\
+\hline
+{}\texttt{ArrayView<[const] T> view(size\_type offset, size\_type size) [const]} \\
+{}\texttt{ArrayView<[const] T> operator()(size\_type offset, size\_type size) [const]} \\
+{}\texttt{ArrayView<[const] T> operator()() [const]} \\
+{}\texttt{operator ArrayView<const T>() const} \\
+\hline
+{}\textbf{Other common array functions} \\
+{}\texttt{[const\_]pointer getRawPtr() [const]} \\
+\hline
+\end{tabular}
+\caption{\label{tbl:common-array-type-members} Common members for
+{}\texttt{ArrayView}, {}\texttt{ArrayRCP}, {}\texttt{Array}, and
+{}\texttt{Tuple} .}
+\end{center}}
+\end{table}
+
+A few things to note about the array interface components shown in
+Table {}\ref{tbl:common-array-type-members}:
+
+\begin{itemize}
+
+{}\item{}All of the Teuchos array classes are drop-in replacements for
+any code that uses {}\texttt{std::vector} that does not grow or shink
+the container by supporting the necessary typedefs, query functions,
+element access, and iterator access.  This helps in migrating current
+code that uses {}\texttt{std::vector} but should be using
+{}\texttt{Array}, {}\texttt{ArrayView}, {}\texttt{ArrayRCP} or
+{}\texttt{Tuple}.
+
+{}\item{}All of the array classes support returning \texttt{ArrayView}
+subviews of contiguous ranges of elements.
+
+{}\item{}All of the array classes support a handy
+{}\texttt{getRawPtr()} function that allows a client to get the base
+pointer address, or null, to the array.  The standard
+{}\texttt{std::vector} class supports no such function which is very
+painful for users.
+
+\end{itemize}
+
+The exact functions shown in Table
+{}\ref{tbl:common-array-type-members} for {}\texttt{ArrayView} and
+{}\texttt{ArrayRCP} and a little different than for {}\texttt{Array}
+due to the different nature of these view classes as apposed to the
+container class {}\texttt{Array}.  As described in Section ???, the
+classes {}\texttt{ArrayView} and {}\texttt{ArrayRCP} can encapsulate
+both non-const and const types {}\texttt{T} as their template argument
+while {}\texttt{Array} can only accept a non-constr type {}\texttt{T}.
+Therefore, the {}\texttt{std::vector} compatible functions in
+{}\texttt{ArrayView} and {}\texttt{ArrayRCP} are all {}\texttt{const}
+functions since they don't change what data these objects point to,
+but only change the data themselves.
+
+One other aspect to note about the Teuchos array classes is that they
+deviate from the standard C++ library convention of using an unsigned
+integer for {}\texttt{size\_type}.  Instead, they use a signed integer
+for {}\texttt{size\_type} typedefed to the signed type
+{}\texttt{Teuchos\_Ordinal} which is 32 bit on a 32 bit machine and 64
+bit on a 64 bit machine\footnote{{}\texttt{Teucohs\_Ordinal} is
+typedefed to the standard C library type {}\texttt{ptrdiff\_t} which
+is always signed and 32 bit or 64 bit which are always 32 bit or 64
+bit machines, respectively.}.  The reasoning for breaking from the
+{}\texttt{std::vector} standard for {}\texttt{size\_type} is described
+in Appendix ???.
+
+ToDo: Add an appendix that gives a more detailed argument for going
+with going with a signed integer instead of an unsigned integer for
+size\_type.  Use the arguments from the Bugzilla bug for this.
+
+
+%
+{}\subsubsection{\texttt{Teuchos::ArrayView<T>}}
+%
+
+The class {}\texttt{ArrayView}, the simplest of the Teuchos array
+memory management classes, is designed to replace raw pointers in
+non-persisting associations primarily for formal function array
+arguemnts.  In an optimized build, it simply holds a raw base array
+pointer and an integer size.  In an optimized build,
+{}\texttt{ArrayView} looks like in Listing {}\ref{listing:ArrayView}.
+
+{}\begin{listing}: {}\texttt{Teuchos::ArrayView} Declaration (See
+Table {}\ref{tbl:common-array-type-members} for common array members.)
+\label{listing:ArrayView}
+{\small\begin{verbatim}
+
+  template<class T>
+  class ArrayView {
+  public:
+
+    // Constructors/Assignment/Destructors
+    ArrayView( ENull null_arg = null );
+    ArrayView( T* p, size_type size );
+    ArrayView(const ArrayView<T>& array);
+    ArrayView(std::vector<typename ConstTypeTraits<T>::NonConstType>& vec);
+    ArrayView(const std::vector<typename ConstTypeTraits<T>::NonConstType>& vec);
+    ArrayView<T>& operator=(const ArrayView<T>& array);
+    ~ArrayView();
+
+    // Common array members (see above)
+    ...
+
+    // Other functions
+    bool is_null() const;
+    std::string toString() const;
+
+    // ArrayView returning functions
+    ArrayView<T> view( size_type offset, size_type size ) const;
+    ArrayView<T> operator()( size_type offset, size_type size ) const;
+    const ArrayView<T>& operator()() const;
+    ArrayView<const T> getConst() const;
+    operator ArrayView<const T>() const;
+
+    // Deep copy  
+    void assign(const ArrayView<const T>& array) const;
+
+    // Others
+    ...
+
+  private:
+    T *ptr_;     // Optimized implementation
+    int size_;
+
+  };
+
+  // Non-member helpers
+  template<class T>
+  ArrayView<T> arrayView( T* p, typename ArrayView<T>::size_type size );
+  template<class T>
+  ArrayView<T> arrayViewFromVector( std::vector<T>& vec );
+  template<class T>
+  ArrayView<const T> arrayViewFromVector( const std::vector<T>& vec );
+  template<class T>
+  std::vector<T> createVector( const ArrayView<T> &av );
+  template<class T>
+  std::vector<T> createVector( const ArrayView<const T> &av );
+  template<class T>
+  bool is_null( const ArrayView<T> &av );
+  template<class T>
+  bool nonnull( const ArrayView<T> &av );
+  template<class T>
+  std::ostream& operator<<( std::ostream& out, const ArrayView<T>& av );
+  template<class T2, class T1>
+  ArrayView<T2> av_reinterpret_cast(const ArrayView<T1>& p1);
+
+\end{verbatim}}
+\end{listing}
+
+ToDo: In the code, match up the above set of delcarations with the
+class ArrayView itself.  Also, test all the typedefs to make sure they
+work correctly.
+
+A few things to note about {}\texttt{ArrayView} shown in
+{}\ref{listing:ArrayView} in addition to the comments in Section
+{}\ref{sec:array-classes} include:
+
+\begin{itemize}
+
+{}\item{}{}\texttt{ArrayView} is extremely lightweight in an optimized
+build, carrying only a pointer and in integer size.  This allows you
+to replace the typical pointer and separate size argument with a
+single aggregate light weight object.  Therefore, it yield very
+efficient code.
+
+{}\item{}\texttt{ArrayView} in optimized mode has all trivial inlined
+functions that work with the raw pointer so it is as efficient has raw
+pointer code.
+
+{}\item{}{}\texttt{ArrayView} is a drop in replacement for any code
+that uses {}\texttt{std::vector} that does not grow or shink the
+container by supporting the necessary typedefs, query functions, and
+iterator access.  This helps in migrating current code that uses
+{}\texttt{std::vector} but should be using {}\texttt{ArrayView}.
+
+{}\item{}{}\texttt{ArrayView} implicitly converts from an
+{}\texttt{std::vector} so functions called by existing client code
+that uses {}\texttt{std::vector} can be safely and transparently
+refactored to use {}\texttt{ArrayView} instead of
+{}\texttt{std::vector}.
+
+{}\item{}\texttt{ArrayView} directly supports the creation of subviews
+of contiguous ranges of elements.
+
+{}\item{}\texttt{ArrayView} Supports all safe raw array pointer
+implicit convesions such as from non-const to a const but does not
+support implicit conversion from derived to base types which is almost
+always a programming error (see Section
+{}\ref{sec:problem-with-raw-array-pointers}).  Also supported is
+{}\texttt{reinterpret\_cast} which is not safe but is a valid type of
+conversion of array types ins low-level code.
+
+{}\item{}\texttt{AraryView}s of {}\texttt{Array} and
+{}\texttt{ArrayRCP} objects are fully supported as subviews and
+implicit conversions (see Section
+{}\ref{sec:teuchos-type-conversions}).
+
+{}\item{}\texttt{ArrayView} supports a handy {}\texttt{getRawPtr()}
+function that allows a client to get the base pointer address, or
+null, to the array.  The standard {}\texttt{std::vector} class
+supports no such function which is very painful for users.
+
+\end{itemize}
+
+What makes {}\texttt{ArrayView} non-trivial and special, however, is
+that in a debug build, the implementation takes on a variety of
+runtime checking to catch all sorts of errors such as dangling
+iterators and other sub-views (Section
+{}\ref{sec:dangling-references}), range checking (Section
+{}\ref{sec:null-dereferences-range-checking}), and other types of
+checking.
+
+It should be noted that you should almost never create an
+{}\texttt{ArrayView} object directly from a raw pointer but instead
+create them as views of {}\texttt{Array}, {}\texttt{ArrayRCP},
+{}\texttt{Tuple } and other {}\texttt{ArrayView} object.  If you are
+routinely creating {}\texttt{ArrayView} from raw pointers, then your
+code is not safe and you need to study the core idioms described in
+Section {}\ref{sec:idioms}.
+
+The class {}\texttt{ArrayView} has no equivalent in boost or the
+current C++ or prposed C++0x standard.  This is a critical class
+needed to allow for flexibility.
+
+
+%
+{}\subsubsection{\texttt{Teuchos::ArrayRCP<T>}}
+%
+
+The class {}\texttt{ArrayRCP} is the counterpart to
+{}\texttt{ArrayView} for general flexible array views except it is
+used for persisting relations where reference counting machinary is
+required.  An {}\texttt{ArrayRCP} object can provide a contiguous view
+into any array of data allocated in any way possible and can allow the
+user to define what is done to release memory any way they would like.
+
+The class declaration for {}\texttt{Teuchos::ArrayRCP} is shown in
+Listing {}\ref{listing:ArrayRCP}.
+
+\begin{listing}: {}\texttt{Teuchos::ArrayRCP} Declaration (optimized build)\\
+\label{listing:ArrayRCP}
+{\small\begin{verbatim}
+
+
+\end{verbatim}}
+\end{listing}
+
+
+
+
+
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{\texttt{Teuchos::Array<T>}}
+%
+
+The class {}\texttt{Array} is a complete replacement for
+{}\texttt{std::vector} that is integrated with the
+{}\texttt{ArrayView} class for debug-mode runtime checking.  In an
+optimized build, {}\texttt{Array} is nothing but an inline wrapper
+around a fully encapsulated {}\texttt{std::vector} object.  This means
+that in a optimized build, {}\texttt{Array} takes advantage of all of
+the platform-specific optimizations contained in the native
+{}\texttt{std::vector} implementation and imparts no extra space/time
+overhead.  However, in a debug build, a full set of
+platform-independent runtime checking is performed that is as strong
+or stronger than any checked STL implementation (see [Item ???, ???])
+and includes dangling reference detection and reporting of
+{}\texttt{ArrayView} views (see Section ???).  In addition,
+{}\texttt{Array} supports better runtime debug output with better
+exception error messages.
+
+The class declaration for the {}\texttt{Array} class is shown in
+Listing ???.
+
+
+
+
+
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{\texttt{Teuchos::Tuple<T,N>}}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{Array Views}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsection{Core idioms for the use of memory management classes}
+\label{sec:idioms}
+%
+
+Well designed C++ class libraries are created together with a set of
+idioms for their use and this is especially true for the Teuchos
+Memory Management classes.  This paper describes idoms related to the
+creation of single dynamically allocated objects, for defining and
+using local variables and data members, for passing objects and arrays
+of objects to and from functions, and for returning objects and arrays
+of objects as return values from functions.  It is critical that these
+idioms be used consistently in order to yield the safest, highest
+quality, clearest code.
+
+
+%
+{}\subsubsection{The non-member constructor function idiom}
+%
+
+The mainstream C++ literature espousing the use of smart
+reference-counted pointers like {}\texttt{boost::shared\_ptr} seems to
+lack a solution for an effective, safe, and clean way to create new
+dynamically allocated objects.  To demonstrate the issues involved,
+consider the C++ class {}\texttt{Blaget} shown in Listing
+{}\ref{listing:BlagetClass}:
+
+\begin{listing}: A class taking multiple dynamically allocatable objects \\
+\label{listing:BlagetClass}
+{\small\begin{verbatim}
+  class Blaget {
+  public:
+    Blaget(const RCP<Widget> &widgetA, const RCP<Widget> const widgetB);
+      widgetA_(widget), widgetB_(widget) {}
+    ...
+  private:
+    RCP<Widget> widgetA_;
+    RCP<Widget> widgetB_;
+  };
+\end{verbatim}}
+\end{listing}
+
+Now consider how you might go about constructing a {}\texttt{Blaget}
+object on the stack given newly dynamically allocated
+{}\texttt{Widget} objects.  A compact, clean, and seemingly safe way
+to do so is shown in Listing {}\ref{listing:BlagetConstruct1}.
+
+\begin{listing}: A leaky way to construct \\
+\label{listing:BlagetConstruct1}
+{\small\begin{verbatim}
+  Blaget blaget( rcp(new Widget()), rcp(new Widget()) );
+\end{verbatim}}
+\end{listing}
+
+The problem with the code in Listing {}\ref{listing:BlagetConstruct1}
+is that it might result in a memory leak if an exception is thrown by
+one of the constructors for {}\texttt{Widget} (see {}\cite[Item
+13]{C++CodingStandards05}).  The reason that a memory leak might occur
+is that a C++ compiler is allowed to evaluate both {}\texttt{new
+Widget()} calls before calling the {}\texttt{rcp()} functions.
+If the second constructor {}\texttt{Widget()} throws an exception
+after the first {}\texttt{Widget()} constructor has been invoked
+but before the {}\texttt{RCP} object wrapping the first
+{}\texttt{Widget} object is constructed, then the memory created by
+the first {}\texttt{new Widget()} will never be reclaimed.
+
+The current C++ literature (see {}\cite[Item
+13]{C++CodingStandards05}) recommends rewriting constructor code like
+shown in Listing {}\ref{listing:BlagetConstruct1} using temporary local
+varibles as shown in Listing {}\ref{listing:BlagetConstruct2}.
+
+\begin{listing}: A sound but verbose way to construct \\
+\label{listing:BlagetConstruct2}
+{\small\begin{verbatim}
+  RCP<Widget> widgetA(new Widget());
+  RCP<Widget> widgetB(new Widget());
+  Blaget blaget(widgetA, widgetB);
+\end{verbatim}}
+\end{listing}
+
+While the code in Listing {}\ref{listing:BlagetConstruct2} will avoid a
+memory leak being created in case an exception is thrown, competent
+Java and Python programs will rightfully be disgusted that they have
+to create temporary variables just to call another constructor.  From
+a software engineering perspective, it is undesirable to create
+useless local {}\texttt{RCP} objects like {}\texttt{widgetA} and
+{}\texttt{widgetB} because they might be inadvertently copied and used
+for other purposes, resulting in undesirable side-effects.
+
+The way to solve the problems described above is to provide non-member
+constructor functions for all of your dynamically allocatable
+reference-type classes and then always call them to create your
+{}\texttt{RCP}-wrapped objects in client code.  In fact, to avoid
+mistakes when using reference-type classes, you should disallow the
+creation of the objects except through a provided non-member
+constructor.  A {}\textit{non-member constructor} complient
+{}\texttt{Widget} class declaration is shown in Listing
+{}\ref{listing:WidgetNonmemberConstructor}.
+
+\begin{listing}: The Non-member Constructor Idom\\
+\label{listing:WidgetNonmemberConstructor}
+{\small\begin{verbatim}
+  class Widget {
+    friend RCP<Widget> widget();
+  public: // Public interface
+    void display(std::ostream&);
+  private: // or protected
+    Widget(); // Not for user's to call!
+  };
+
+  // Non-member constructor function
+  inline
+  RCP<Widget> widget()
+  {
+    return rcp(new Widget());
+  }
+\end{verbatim}}
+\end{listing}
+
+Using the non-member constructor function {}\texttt{widget()}, the
+unsafe constructor call in Listing {}\ref{listing:BlagetConstruct1} can
+be written as shown in Listing {}\ref{listing:BlagetConstruct3}.
+
+\begin{listing}: Clean and bullet-proof way using non-member
+constructor function idiom \\
+\label{listing:BlagetConstruct3}
+{\small\begin{verbatim}
+  Blaget blaget(widget(), widget());
+\end{verbatim}}
+\end{listing}
+
+The code in Listing {}\ref{listing:BlagetConstruct3} will never result
+in a memory leak if an exception is thrown because each argument is
+returned as a fully formed {}\texttt{RCP} object which will clean up
+memory if any exception is thrown.
+
+Note that the use of the {}\textit{non-member constructor idom} not
+only means that raw calls to {}\texttt{delete} are eliminated from all
+high-level C++ code, but it also means that raw calls to
+{}\texttt{new} should be largely eliminated as well!
+
+The non-member constructor idiom as shown in Listing
+{}\ref{listing:WidgetNonmemberConstructor} where a reference-type
+object can only be dynamically allocated and returned wrapped in an
+{}\texttt{RCP} object is recommended for all reference-type objects.
+The reason for this is that, as described in Section ???, when an
+object is dynamically allocated in managed in an {}\texttt{RCP}
+object, a number of important debug-mode runtime checks can be
+performed which can not be when the object is first allocated on the
+stack or managed as a static object.
+
+
+%
+{}\subsubsection{General idioms for handling arrays of objects}
+%
+
+Before describing specific idioms for class data members, formal
+function arguments, and function return types it is worth discussing
+how arrays of objects are treated in a common way in all of these
+idioms and why.  A common set of idioms that is used throughout is how
+arrays of value-type objects and reference-types objects are handled.
+When dealing with an array of value-type objects, typically a
+contiguous array of objects will be allocated.  For example, to create
+an array of value-type objects you would declare:
+
+{\small\begin{verbatim}
+  Array<S> valTypeArray;
+\end{verbatim}}
+
+In this case, the array holding value-type objects and the value-type
+objects themselves are one in the same.  The same goes for persisting
+and non-persisting views of array of value-type objects represented as
+{}\texttt{ArrayRCP<[const] S>} and {}\texttt{ArrayView<[const] S>},
+respectively.  It is common for numerical programs to create very
+large arrays of value-type objects such as for integers and floating
+point numbers.  Therefore, it is usually important to share these
+arrays and pass them around instead of creating copies.  Because if
+this, it is typical to see {}\texttt{ArrayRCP<[const] S>} being used
+to share large value-type arrays of objects.
+
+On the other hand, we can't generally allocate a contiguous array of
+reference-type objects.  Instead, we have to allocate and use a
+contiguous array of (smart) pointer objects that then point to
+individually allocated reference-type objects.  For example, to store
+an array of dynamically allocated reference-type objects, you would
+delcare:
+
+{\small\begin{verbatim}
+  Array<RCP<A> > refTypeArray;
+\end{verbatim}}
+
+Anyone familiar with object-oriented programming in C++ should already
+knows this, but they might be used to allocating and working with
+arrays of raw pointers like {}\texttt{std::vector<T*>}.  This is a
+really bad idea of course which is mentioned in Item 79 ``Store only
+values and smart pointers in containers'' in
+{}\cite{C++CodingStandards05}.  In this case, we can think of the
+array of {}\texttt{RCP} value-type objects and the reference-type
+objects of type {}\texttt{A} themselves to be different objects.  For
+example, you can change what {}\texttt{A} object is pointed to in the
+{}\texttt{RCP<A>} object stored in the contiguous array to without
+changing the {}\texttt{A} object itself such as with:
+
+{\small\begin{verbatim}
+  void foo(Array<RCP<A> > &refTypeArray, const RCP<A> &someA)
+  {
+    refTypeArray[0] = someA;
+  }
+\end{verbatim}}
+
+Likewise, we can change an {}\texttt{A} object itself without
+disturbing the {}\texttt{Array<RCP<A> >} object itself such as with:
+
+{\small\begin{verbatim}
+  void foo(Array<RCP<A> > &refTypeArray)
+  {
+    refTypeArray[0]->someChange();
+  }
+\end{verbatim}}
+
+As opposed to value-type arrays, we typically do not create large
+arrays of reference-type objects.  As a result, we usually don't care
+to share the array storage of {}\texttt{Ptr} or {}\texttt{RCP} objects
+itself, only the reference-type objects they point to.  Because of
+this, you typically will not see {}\texttt{ArrayRCP<[const]
+RCP<[const] A> >} objects being passed around and stored.  Instead,
+you would typically just pass {}\texttt{ArrayView<[const] RCP<[const]
+A> >} objects and then use this array to create a new
+{}\texttt{Array<[const] RCP<[const] A> >} object to copy the smart
+pointers.  In general, we use arrays of {}\texttt{RCP} objects for
+representing persisting associations and arrays of {}\texttt{Ptr}
+objects for representing non-persisting associations when dealing with
+reference-type objects.
+
+
+%
+{}\subsubsection{Idioms for class object data members and local
+variables}
+%
+
+In general, class object data members and local varaibles represent a
+presisting relationship and therefore should have unique ownership or
+use reference counting.  That means that the types {}\texttt{Ptr} and
+{}\texttt{ArrayView} should almost never be used for class object data
+members or local variables (especially not for data members).
+However, local varibles of type {}\texttt{Ptr} and
+{}\texttt{ArrayView} will be created in a function when that are
+created off of other {}\texttt{Ptr} and {}\texttt{ArrayView} objects
+(passed through the formal argument list).
+
+
+\begin{table}[p]
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\input{ValueTypeDataMembersTable}
+%
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{fig:data_member_value_type}
+Idioms for class data member delcarations for value-type objects.}
+%
+\end{table}
+
+
+\begin{table}
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\input{ReferenceTypeDataMembersTable}
+%
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{fig:data_member_reference_type}
+Idioms for class data member delcarations for reference-types
+objects.}
+%
+\end{table}
+
+
+Tables {}\ref{fig:data_member_value_type} and
+{}\ref{fig:data_member_reference_type} gives idioms for class object
+data members.  Usages for local varaibles are similar.  Table
+{}\ref{fig:data_member_value_type} shows a few use cases involving
+value-type objects.  Table {}\ref{fig:data_member_reference_type}
+shows use cases involving reference-type objects.  Every possible use
+case is not shown in thess tables, only the most common ones.  There
+is almost no end to the number of different types of data structures
+that can be created by embedding these memory management types in each
+other.  When creating these composite data structures one just needs
+to understand the implications for the selections of the class type
+and the use of const.
+
+It is important to note that we do not show an {}\texttt{RCP<S>} data
+member for a value-type object in Table
+{}\ref{fig:data_member_value_type}.  That is because once you declare
+an {}\texttt{RCP} object pointing to a value-type object, at that
+point you are treating the value-type object with reference symatics
+so we would consider it to be a reference-type object (which takes you
+to Table {}\ref{fig:data_member_reference_type}).
+
+Note that there are a few other important differences between the way
+that value-type objects and reference-type objects are handled.  The
+main difference, obviously, is that you can hold a value-type object
+by value but not for a reference-type object.  We see this in how
+single objects are stored and how arrays of objects are delcared.
+
+
+%
+{}\subsubsection{Idioms for the specification of formal arguments for
+C++ functions}
+%
+
+
+
+\begin{table}[p]
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\input{PassingValueObjectsTable}
+%
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{fig:func_args_value_type}
+Idioms for passing value-type objects to C++ functions.}
+%
+\end{table}
+
+
+\begin{table}[p]
+%
+%\fbox{
+\begin{center}
+\input{PassingReferenceObjectsTable}
+\end{center}
+\caption{\label{fig:func_args_ref_type}
+Idioms for passing reference-type objects to C++ functions.}
+%} % end fbox
+\end{table}
+
+
+Here we describe a convention for the specification of the formal
+arguments for C++ functions that that maximizes compile-time and
+run-time checking, yields near optimal performance, and is highly self
+documenting.  A key component to this specification is that no raw C++
+pointers are used.  Raw pointers are the cause of almost all memory
+usage problems in C++.  Raw C++ references, on the other hand, are
+safe to use as long as the object reference they are being used to
+point to is valid and no persisting association exists.  All of these
+classes perform runtime checks of correct memory usage when debug
+checking is enabled at configure time (i.e., using
+{}\texttt{--enable-teuchos-debug} with {}\texttt{configure}).
+However, in optimized builds these classes perform no debug checking
+at all and yield the same performance achieved using raw C++ pointers.
+The classes {}\texttt{RCP} and {}\texttt{ArrayRCP} always implement
+reference counting in optimized and debug builds and therefore impart
+necessary extra overhead that never goes away (unless you don't use
+them).  The other classes {}\texttt{Ptr} and {}\texttt{ArrayView} do
+not use any reference counting in an optimized build and therefore
+impart little extra overhead.
+
+Tables {}\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type} give conventions for passing single
+objects and arrays of objects for value-type {}\index{Types!Value
+Type} and reference-type {}\index{Types!Reference Type} objects,
+respectively.  In this specification, the classes
+{}\texttt{Teuchos\-::Ptr}, {}\texttt{Teuchos\-::RCP},
+{}\texttt{Teuchos\-::ArrayRCP}, and {}\texttt{Teuchos\-::ArrayView}
+are used as a means to pass objects of another type (shown as
+{}\texttt{S} and {}\texttt{A} in Tables
+{}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type}).
+This specification addresses the five different properties that must
+be considered when passing an object to a function:
+
+\begin{itemize}
+
+{}\item Is it a single object or an array of objects?
+
+{}\item Does the object or array of objects use value semantics or
+reference semantics?
+
+{}\item Is the object or array of objects changeable or non-changeable
+(i.e.\ const)?
+
+{}\item Is this establishing a persisting or non-persisting association?
+
+{}\item Is the object or array of objects optional or required?
+
+\end{itemize}
+
+The first four of these properties are directly expressed in the C++
+code in all cases shown in Tables {}\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}.  The specification for whether an
+argument or object is required or optional must be documented in the
+function's interface specification (i.e.\ in a Doxygen documentation
+{}\texttt{param} field).  Here we state that, by default, an argument
+will be assumed to be required unless otherwise stated.  The only
+exception for this implicit assumption for non-null objects is
+{}\texttt{const Ptr<const T>\&} for single, non-changeable,
+non-persisting, objects where these always mean that the argument is
+optional.  If such an argument is required, it is specified as
+{}\texttt{const T\&}.
+
+An array of value objects is passed as contiguous storage through an
+{}\texttt{ArrayView<S>} or {}\texttt{ArrayView<const S>} object.  An
+array of reference objects, however, can not be passed in contiguous
+storage for the objects themselves and instead must be passed as
+contiguous storage of (smart) pointers to the objects using
+{}\texttt{ArrayView<const Ptr<const A> >} for non-persisting
+associations or {}\texttt{ArrayView<const RCP<const A> >} for
+persisting associations.  The {}\texttt{const} can be removed from the
+either {}\texttt{Ptr}/{}\texttt{RCP} or {}\texttt{A} depending on what
+is allowed to change or not change during the function call.
+
+Note that in the case of {}\texttt{RCP} and {}\texttt{ArrayRCP}
+objects, that these can be treated as output objects in their own
+right.  For example, passing an {}\texttt{RCP<T>} object into a
+function to be set to point to a different {}\texttt{A} object would
+be specified in the function prototype as {}\texttt{const Ptr<RCP<T>
+>\&} or {}\texttt{RCP<T>\&} depending on preference.  Note that it
+never makes sense for {}\texttt{Ptr} or {}\texttt{ArrayView} to be set
+in this way since such a function call would almost always be
+establishing a persisting association with the embedded objects and
+therefore would require (according to the standards established here)
+using an {}\texttt{RCP} or {}\texttt{ArrayRCP} object.
+
+
+%
+\subsubsection*{Variations in passing single changeable objects}
+%
+
+The only area of contention in this specification is how to handle
+arguments for required single changeable objects.  The specification
+described here allows either passing them through a smart pointer as
+{}\texttt{const Ptr<T>\&} or as a raw non-const object reference as
+{}\texttt{T\&}.  In Item 25 in {}\cite{C++CodingStandards05}, the
+authors recommend passing a raw non-const object reference
+{}\texttt{T\&} for changeable required objects, which seems very
+reasonable.  However, other notable authors {}\cite[Section Section
+5.5]{stroustrup97} and {}\cite[Section 13.2]{CodeComplete2nd04}
+recommend passing a pointer instead, as it provides a visual clue that
+the object is being modified in the function call.  Of course, our
+specification does not allow raw pointers so we pass a {}\texttt{const
+Ptr<T>\&} object instead.  To consider the issues, for example, from
+looking at the following function call which (if any) argument(s) is
+being modified?
+
+{\small\begin{verbatim}
+  someFunction(a, b, c, d);
+\end{verbatim}}
+
+To tell for sure, one would have to look at the function prototype:
+
+{\small\begin{verbatim}
+  void someFunction(const A& a, const B& b, const C& c, D& d);
+\end{verbatim}}
+
+to see that it is the {}\texttt{d} argument is being modified in the
+function call.
+
+Now consider the convention that all changeable arguments be passed in
+through a pointer as {}\texttt{const Ptr<T>\&}, giving the new
+prototype:
+
+{\small\begin{verbatim}
+  void someFunction(const A& a, const B& b, const C& c,
+    const Ptr<D>& d );
+\end{verbatim}}
+
+Now the function call looks like:
+
+{\small\begin{verbatim}
+  someFunction(a, b, c, outArg(d));
+\end{verbatim}}
+
+where {}\texttt{outArg(...)} is a templated non-member function that
+returns a {}\texttt{Ptr<T>} object given a raw reference
+{}\texttt{T\&}.  Now the client function call itself is self
+documenting.  Also, given that this specification states that all
+{}\texttt{Ptr<T>} arguments are required to be non-null by default,
+this specifies that passing an argument as {}\texttt{const Ptr<T>\&}
+has all of the same meaning by default that passing {}\texttt{T\&}
+does.  Of course now we have given up a compile-time check for a
+non-null argument for {}\texttt{T\&} with a debug-only runtime check
+that {}\texttt{const Ptr<T>\&} is non-null.
+
+
+%
+{}\subsubsection{Idioms for returning objects from C++ functions}
+%
+
+Idioms for how objects are returned from C++ functions are also
+important in order to achieve C++ code that is efficient, safe (both
+compile-time and debug-mode run-time checking), and is as
+self-documentaing as possible.  Tables
+{}\ref{fig:func_return_value_type} and
+{}\ref{fig:func_return_reference_type} give common specifications for
+returning single objects and arrays of objects for both value-type and
+reference-type objects.  Five different types of properties that must
+be defined and considered when returning an object (or array of
+objects) from a function are:
+
+\begin{itemize}
+
+{}\item Is it a single object or an array of objects?
+
+{}\item Does the object or array of objects use value semantics or
+reference semantics?
+
+{}\item Is the object or array of objects changeable or non-changeable
+(i.e.\ const)?
+
+{}\item Is this establishing a persisting or non-persisting
+association?
+
+{}\item Is the object or array of objects optional or required?
+
+\end{itemize}
+
+
+\begin{table}[p]
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\input{ReturningValueObjectsTable}
+%
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{fig:func_return_value_type}
+Idioms for returning value-type objects from C++ functions.}
+%
+\end{table}
+
+
+\begin{table}[p]
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\input{ReturningReferenceObjectsTable}
+%
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{fig:func_return_reference_type}
+Idioms for returning reference-type objects from C++ functions.}
+%
+\end{table}
+
+
+These five different properites are the same five described for formal
+function arguments.  Again, the first four of these properties are
+mostly clearly defined in the C++ code itself.  However, again, it is
+not always possible to directly state in the C++ code declarations
+whether the object (or array of objects) is optional or required (but
+in some cases for value-type objects it is as shown in Table
+{}\ref{fig:func_return_value_type}).
+
+The semantics of return objects is different than for formal function
+arguments and the specifications described in Tables
+{}\ref{fig:func_return_value_type} and
+{}\ref{fig:func_return_reference_type}.  There are several differences
+that you can see from looking at Tables
+{}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type},
+and Tables {}\ref{fig:func_return_value_type} and
+{}\ref{fig:func_return_reference_type}.
+
+The first difference that we will discuss between formal functions
+arguments and return values relates to using constant references for
+formal arguments versus returning raw objects as return values.  While
+all of the memory mangement objects of type {}\texttt{Ptr},
+{}\texttt{RCP}, {}\texttt{ArrayView}, and {}\texttt{ArrayRCP} are all
+passed by constant reference in Tables
+{}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type},
+alternatively they are always returned as objects (i.e.\ by value) in
+Tables {}\ref{fig:func_return_value_type} and
+{}\ref{fig:func_return_reference_type}.  The reason that these memory
+management objects should always be returned by value is that this is
+needed to correctly set up the reference counting machinary to
+properly set up persisting relationships and to enable debug runtime
+checking (e.g.\ to detect dangling references).
+
+In order to o understand the importance of returning memory management
+objects by value instead of by reference, first consider Listing
+{}\ref{listing:unsafe_raw_C++_reference1} that looks to be perfectly
+safe code.
+
+\begin{listing}: A seemingly safe use raw C++ references that is not \\
+\label{listing:unsafe_raw_C++_reference1}
+{\small\begin{verbatim}
+  void seeminglySafeFoo(Blob &blob, const Flab &flab)
+  {
+    blob.doGoodStuff(flab);
+  }
+\end{verbatim}}
+\end{listing}
+
+The code in Listing {}\ref{listing:unsafe_raw_C++_reference1} does not
+itself look unsafe.  However, the reason that it unsafe comes from the
+code that calls {}\texttt{seeminglySafeFoo(...)} and the code that
+implements {}\texttt{Blob} shown in Listing
+{}\ref{listing:unsafe_raw_C++_reference2}.
+
+\begin{listing}: Code that makes seeminglySafeFoo(...) fail\\
+\label{listing:unsafe_raw_C++_reference2}
+{\small\begin{verbatim}
+  class Blob
+  {
+    RCP<Flab> flab_;
+  public:
+    Blob() : flab_(flab()) {}
+    const RCP<Flab>& getFlab() { return flab_; }
+    void doGoodStuff(const Flab &flab_in)
+    {
+      flab_ = flab(); // Using non-member constructor
+      flab_->conflab(flab_in);
+    }
+  };
+
+
+  void badCallingFunction()
+  {
+    Blob blob;
+    seeminglySafeFoo(blob, *blob.getFlab());
+  }
+\end{verbatim}}
+\end{listing}
+
+When the code in Listings {}\ref{listing:unsafe_raw_C++_reference1}
+and {}\ref{listing:unsafe_raw_C++_reference2} executes, it will most
+likely cause a segfault when it runs, if we are lucky.  If we are
+unlucky, the code will actually seem to be working correctly on the
+machine where we test it but will explode later (parhaps years later)
+when run under different circumstances.  The reason that the code in
+Listings {}\ref{listing:unsafe_raw_C++_reference1} and
+{}\ref{listing:unsafe_raw_C++_reference2} is faulty is because the
+{}\texttt{Flab} object that is passed through the call
+{}\texttt{seeminglySafeFoo(blob, *blob.getFlab())} to
+{}\texttt{blob.doGoodStuff(flab)} is invalidated before it is used
+because it gets destoryed and is replaced by a new object in the
+expression {}\texttt{flab\_ = flab()}.  When this happens, the object
+now represented as the raw C++ reference {}\texttt{flab\_in} is
+deleted which causes the code in the expression
+{}\texttt{flab\_->conflab(flab\_in)} to be in error, and the behavior
+of the program is undefined (and again will segfault if we are lucky).
+
+How did we get into this situation?  What if we changed the code to
+replace the raw C++ references with RCP-wrapped objects?  Well,
+consider the updated code in Listing
+{}\ref{listing:unsafe_raw_C++_reference3}.
+
+\begin{listing}: Still unsafe code  \\
+\label{listing:unsafe_raw_C++_reference3}
+{\small\begin{verbatim}
+  class Blob
+  {
+    RCP<Flab> flab_;
+  public:
+    Blob() : flab_(flab()) {}
+    const RCP<Flab>& getFlab() { return flab_; }
+    void doGoodStuff(const RCP<Flab> &flab_in)
+    {
+      flab_ = flab(); // Using non-member constructor
+      flab_->conflab(flab_in);
+    }
+  };
+
+
+  void seeminglySafeFoo(Blob &blob, const RCP<Flab> &flab)
+  {
+    blob.doGoodStuff(flab);
+  }
+
+
+  void badCallingFunction()
+  {
+    Blob blob;
+    seeminglySafeFoo(blob, blob.getFlab());
+  }
+\end{verbatim}}
+\end{listing}
+
+Is the code in Listing {}\ref{listing:unsafe_raw_C++_reference3}
+correct?  The sad answer is no, it is not.  The {}\texttt{Flab} object
+returned from {}\texttt{blob.getFlab()} will still get deleted before
+it is used in the expression {}\texttt{flab\_->conflab(flab\_in)}.
+What is going on here?  The core of the problem is that the function
+{}\texttt{Blob::getFlab()} is incorrectly implemented.  Functions must
+always return {}\texttt{RCP} objects by value and never by reference
+as shown in Tables {}\ref{fig:func_return_value_type} and
+{}\ref{fig:func_return_reference_type}.  By returning a raw C++
+reference to the RCP object, a peristing association with the client
+is never properly established and this is the root casue the whole
+problem.
+
+Now consider the updated code in Listing
+{}\ref{listing:safe_raw_C++_reference3} that goes back to using raw
+C++ references where appropriate but now returns the
+{}\texttt{RCP<Flab>} object by value as it should.
+
+\begin{listing}: Correctly returning RCP by value yielding safe code \\
+\label{listing:safe_raw_C++_reference3}
+{\small\begin{verbatim}
+  class Blob
+  {
+    RCP<Flab> flab_;
+  public:
+    Blob() : flab_(flab()) {}
+    RCP<Flab> getFlab() { return flab_; } // Returns by value now!
+    void doGoodStuff(const RCP<Flab> &flab_in)
+    {
+      flab_ = flab(); // Using non-member constructor
+      flab_->conflab(flab_in);
+    }
+  };
+
+
+  void seeminglySafeFoo(Blob &blob, const Flab &flab)
+  {
+    blob.doGoodStuff(flab);
+  }
+
+
+  void goodCallingFunction()
+  {
+    Blob blob;
+    seeminglySafeFoo(blob, *blob.getFlab());
+  }
+\end{verbatim}}
+\end{listing}
+
+Is the code represented in Listing
+{}\ref{listing:safe_raw_C++_reference3} now safe and correct?  Yes it
+is.  The reason that it is now safe and correct is that a persisting
+relationship is now being correctly created by the function call
+{}\texttt{blob.getFlab()} in that a new temporary {}\texttt{RCP<Flab>}
+object is created.  From this new temporary {}\texttt{RCP<Flab>}
+object, a raw C++ reference is then returned from
+{}\texttt{*blob.getFlab()} and passed through.  In this case, since
+the reference count on the existing {}\texttt{Flab} object is now two
+instead of one, the expression {}\texttt{flab\_ = flab()} will not
+delete the existing {}\texttt{Flab} object and the following
+expression {}\texttt{flab\_->conflab(flab\_in)} will have two valid
+{}\texttt{Flab} objects.  After the function
+{}\texttt{seeminglySafeFoo(blob, *blob.getFlab())} exits, the first
+{}\texttt{Flab} object will finally be deleted but that is just fine.
+
+The second difference between formal function arguments and return
+values is what persisting and non-persisting associations mean related
+to function returns.  In the case of objects returned from C++
+functions, a persisting association is one where the object returned
+from a C++ function is remembered past the end of the statement where
+the C++ function returning the objects is called.  For example,
+consider the code in Listing {}\ref{listing:persisting-func-return-1}.
+
+\begin{listing}:\\
+\label{listing:persisting-func-return-1}
+{\small\begin{verbatim}
+  void foo(Blob& blob)
+  {
+    const Flab &flab = blob.getFlab();
+    blob.doStuff();
+    flab.doMoreStuff();
+  }
+\end{verbatim}}
+\end{listing}
+
+The code in Listing {}\ref{listing:persisting-func-return-1}
+represents a persisting association because because the
+{}\texttt{Flab} object returned in the expression {}\texttt{const Flab
+\&flab = blob.getFlab()} is remembered past the statement where it is
+called and is used later in calling {}\texttt{flab.doMoreStuff()}.
+This type of code is all too common in C++ programs (including a lot
+of code I have written over the last 10 years) but it is not safe
+because it is not properly respecting the notion of persisting
+assocations.  To see why the code in Listing
+{}\ref{listing:persisting-func-return-1} is so bad, consider a
+possible unfortunate implementation of the {}\texttt{Blob} class shown
+in Listing {}\ref{listing:bad-Blob-non-persisting}:
+
+\begin{listing}:\\
+\label{listing:bad-Blob-non-persisting}
+{\small\begin{verbatim}
+  class Blob {
+    RCP<Flab> flab_;
+  public:
+    Blob() : flab_(flab()) {}
+    const Flab& getFlab() const { return *flab_; }
+    void doStuff()
+      {
+        flab_ = flab(); // Non-member constructor
+        ...
+      }
+  };
+\end{verbatim}}
+\end{listing}
+
+What happens of course is that the behavior of the code in Listings
+{}\ref{listing:persisting-func-return-1} and
+{}\ref{listing:bad-Blob-non-persisting} is undefined and will most
+likely result in a segfault (if we are lucky).  The reason this is bad
+code is that the {}\texttt{Flab} object reference that gets returned
+from {}\texttt{blob.getFlab()} is not used until after the function
+{}\texttt{Blob::doStuff()} gets called which will delete the
+{}\texttt{Flab} object and replace it with another one.  This results
+in {}\texttt{flab.doMoreStuff()} being called on a deleted object.
+Again, this will typically result in a segfault, but on some systems
+in some cases the program might actually seem to run just fine,
+perhaps even for years.  This of course is an error that a tool like
+Valgrind or Purify would likely catch pretty easily which is why these
+tools are very useful to have around.  So what rule did we break in
+Listng {}\ref{listing:persisting-func-return-1}?  This now brings us
+back to our defintion of a persisting association related to a return
+value which is:
+
+\begin{itemize}
+
+{}\item\textit{Persisting associations} are associations that exist
+between two or more objects that extend past a single function call
+for formal function arguments, or a single statement for function
+return objects.
+
+\end{itemize}
+
+What this means is that any object that is returned as a raw C++
+reference from a function must be used in the same statement from
+where the returning function is called.  Therefore, the function in
+Listing {}\ref{listing:persisting-func-return-1} should be rewritten
+as shown in Listing {}\ref{listing:non-persisting-func-return-1}.
+
+\begin{listing}:\\
+\label{listing:non-persisting-func-return-1}
+{\small\begin{verbatim}
+  void foo(Blob& blob)
+  {
+    blob.getFlab().doMoreStuff();
+    blob.doStuff();
+  }
+\end{verbatim}}
+\end{listing}
+
+Here, of course, we are assuming that the order of evaluation of the
+functions is not important.
+
+Note that functions returning raw C++ references are common and are
+faily safe to use as long as the returned object is used in the same
+statment where the function is called.  For example, this is what is
+commonly done when a non-const reference to an element from a
+user-defined array class object is returned and set in the same
+statements such as shown in Listing
+{}\ref{listing:non-persisting-array-return-1}.
+
+\begin{listing}:\\
+\label{listing:non-persisting-array-return-1}
+{\small\begin{verbatim}
+  void foo(std::vector<int>& a)
+  {
+    a[0] = 5; // Non-persisting function return association
+    ...
+  }
+\end{verbatim}}
+\end{listing}
+
+What is typically not safe, of course, is when you try to save a
+reference to an object and then use it like in Listing
+{}\ref{listing:bad-persisting-array-return-1}.
+
+\begin{listing}:\\
+\label{listing:bad-persisting-array-return-1}
+{\small\begin{verbatim}
+  void foo(std::vector<int>& a)
+  {
+    int &a_0 = a[0]; // Incorrect persisting association
+    a.resize(20);
+    a_0 = 5;         // Will likely segfault if we are lucky!
+    ...
+  }
+\end{verbatim}}
+\end{listing}
+
+The problem with the code in Listing
+{}\ref{listing:bad-persisting-array-return-1} is that the
+{}\texttt{a.resize(20)} function might cause a new buffer to be
+allocated and the existing buffer to be deleted.  This will of course
+make the reference returned in {}\texttt{int \&a\_0 = a[0]} invalid
+when it is later written to in {}\texttt{a\_0 = 5}.
+
+The whole point of the example code Listings
+{}\ref{listing:non-persisting-array-return-1} and
+{}\ref{listing:bad-persisting-array-return-1} is to demonstrate the
+working definition of persisting \& non-persisting associations as
+they relate to objects returned from functions and support the idioms
+shown in Tables {}\ref{fig:func_return_value_type} and
+{}\ref{fig:func_return_reference_type}.
+
+
+%
+{}\subsection{Conversions between memory management types}
+\label{sec:teuchos-type-conversions}
+%
+
+It is critical that all conversions between the various Teuchos memory
+management classes be performed using conversion code provided by the
+memory management classes themselves or by associated helper
+functions.  Client code should never convert between memory management
+types by exposing a raw C++ pointer.  As soon as a raw C++ pointer is
+exposed, nearly all of the debug-mode runtime checking will be
+disabled.
+
+
+{\bsinglespace
+\begin{figure}[p]
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{TeuchosPtrConversions}
+%}
+\end{center}
+\caption{
+\label{fig:TeuchosPtrConversions}
+Conversions between Teuchos memory management single object pointer
+types.}
+\end{figure}
+\esinglespace}
+
+
+{\bsinglespace
+\begin{figure}[p]
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65
+]{TeuchosArrayConversions}
+%}
+\end{center}
+\caption{
+\label{fig:TeuchosArrayConversions}
+Conversions between Teuchos memory management array types.  }
+\end{figure}
+\esinglespace}
+
+
+Figures {}\ref{fig:TeuchosPtrConversions} and
+{}\ref{fig:TeuchosArrayConversions} show many of the types of
+conversions that are supported between the different memory mangement
+types.  For single objects, the conversions between different
+{}\texttt{RCP} and {}\texttt{Ptr} objects of various kinds shown in
+figures {}\ref{fig:TeuchosPtrConversions} include both implicit and
+explicit conversions.  Conversions between different array types as
+shown in Figure {}\ref{fig:TeuchosArrayConversions} include both
+implicit and explicit conversions and view and copy conversions
+yielding four different types of conversions.
+
+Conversions between different Teuchos memory management types,
+espeically in templated application code, is one of the most confusing
+aspects of using these classes.  As shown in Figures
+{}\ref{fig:TeuchosPtrConversions} and
+{}\ref{fig:TeuchosArrayConversions}, many different implicit
+conversions are defined.  An implicit conversion will only be
+performed by the C++ compiler when it is needed to allow a piece of
+code to compile, when a only a single implicit conversion is defined,
+and when not calling a templated function where the template arguments
+are not fully specified.  Also, the C++ compiler will not be able to
+do an implicit conversion when an ambiguous function call exists.
+Explaining the behavior of these implicit conversions in C++ gets down
+to the nitty gritty details of the C++ type system that many C++
+programers take for grated or don't understand all that well.
+
+Almost all of the problems that people have with implicit conversions
+occur when trying to call functions where implicit conversions are
+required to satisfy the signature of the function.  Some of these
+problems occur when developers fail to understand the C++ type system.
+Other problems are due to a fundamental handicap that smart pointer
+types have with respect to raw C++ pointers.
+
+Implicit conversions of the Teuchos memory mangament classes (or any
+other C++ classes in any other library) fail for one of the following
+reasons:
+
+\begin{enumerate}
+
+{}\item{}Implicit conversions to functions failing because memory
+management types are not passed by const reference (or by value) and
+are mistakenly (or on purpose) passed by non-const reference. (This is
+a programming error.)
+
+{}\item{}Implicit conversions failing because templated functions can
+not perform implicit conversions in order to satisfy a call. (This is
+a language usability annoyance associated with templates and has
+nothing to do with the Teuchos memory management classes themselves.)
+
+{}\item{}Implicit conversions failing due to ambiguous calls to
+overloaded functions that would work just fine when raw C++ pointers
+are involved. (This is a fundamental shortcoming of smart pointers or
+any other class as compared to raw C++ pointers.)
+
+\end{enumerate}
+
+ToDo: Give code examples for all of the above reasons that implicit
+conversions fail.
+
+
+%
+{}\subsection{Reference-counting machinery in-depth}
+%
+
+In order to effectively use these memory management classes and to
+debug problems when they occur, one must understand the basic
+reference-counting approach being used.  Basic reference counting with
+smart pointers is well established in the C++ literature [???] but a
+basic overview and specific details about the approach used in the
+Teuchos memory management classes is appropriate to describe here.  Of
+equal importance is to describe how the reference counting
+infrastructure can be used to address some boundary cases that can be
+used to help solve some fundamental problems with reference counting.
+
+The basic reference counting machinery being used by the classes is
+first described.  Next, the issue of circular references and weak
+pointers are described.  The last issue to discuss is the general
+roles and responsibilities for the various actors in software using
+reference counting.
+
+
+%
+{}\subsubsection{Basic reference counting machinery}
+%
+
+The foundation for the reference-counting machinery used by all of the
+reference counting classes is shown in Figure ???.  The class
+{}\texttt{RCPNode} is an abstract base class that contains the strong
+and weak reference counts themselves and inline functions for
+manipulating the counts as efficiently as possible.  The templated
+concrete subclass {}\texttt{RCPNodeRef} is what actually stores the
+raw C++ pointer to the reference-counted object.  This class is also
+templated on an deallocation policy object that determines how the
+object is reclaimed.  The class {}\texttt{RCPNodeHandle} is a simple
+handle class that automates the manipulation of the reference counts
+by overloading the copy constructor and assignment operator functions.
+This avoids having to replicate reference counting updating and
+downdating in the user-level classes that contain it.  All of the
+functions on {}\texttt{RCPNodeHandle} are inlined and the only data
+member is a pointer to the underlying {}\texttt{RCPNode} object.
+Therefore, the class {}\texttt{RCPNodeHandle} imparts zero space and
+time overhead and removes all duplication in how the reference count
+node object is handled.  Note that the classes {}\texttt{RCPNode},
+{}\texttt{RCPNodeImpl}, and {}\texttt{RCPNodeHandle}, are used for
+both {}\texttt{RCP} and {}\texttt{ArrayRCP} classes.
+
+ToDo: Put in UML class diagram figure showing basic reference counting
+classes along with the ArrayRCP and RCP classes.
+
+It is critical to understand that the foundation for sharing objects
+using reference counting is that only one {}\texttt{RCPNode} object
+can exist for any object that is shared.  Figure ??? shows an example
+of several {}\texttt{RCP} objects pointing to the same concrete object
+of type {}\texttt{ConcreteT} through different base class interfaces.
+If the programmer follows the idioms described in Section ??? and
+outlined in Appendix ???, it will always be the case that only one
+reference-counting node object will exist.
+
+ToDo: Put in a UML object diagram showing several RCPNodeHandle
+objects pointing to the same RCPNodeImpl and therefore ConcreteT
+object with interfaces BaseT1, BaseT2 …
+
+However, consider what happens when one or more of the commandments
+are broken and more than one node object exists pointing to the same
+underlying {}\texttt{ConcreteT} object as shown if Figure ???.  The
+problem is that the two {}\texttt{RCPNodeImpl} objects do not know
+about each other and the first one who has its strong reference count
+go to zero will result in the underlying {}\texttt{ConcreteT} object
+being deleted.  In this case, the other remaining
+{}\texttt{RCPNodeImpl} object, and all of the resulting
+{}\texttt{ArrayRCP} and/or {}\texttt{RCP} objects pointing to it will
+be left with a non-null pointer to a now deleted {}\texttt{ConcreteT}
+object.  If the client tries to access the underlying object through
+one of these now invalid references, it will likely result in a
+segfault (if we are lucky).  Or, if we are unlucky, the program might
+seem to work okay on the platform we are currently testing on but will
+eventually explode at the worst possible time. Putting in the
+machinery to try to track multiple {}\texttt{RCPNode} objects for the
+same underlying {}\texttt{ConcreteT} object would be fairly expensive
+in space and/or time overhead and therefore is not done in a release
+build.  However, in a debug build, you can enable runtime checks for
+just this situation as described in Section ???.  Therefore, if you
+are willing to pay for a little extra overhead, these classes will
+detect this type of invalid usage.
+
+ToDo: Put in UML object diagram showing two {}\texttt{RCPNodeImpl}
+objects pointing to the same {}\texttt{ConcreteT} objects which will
+result in a double delete and/or accessing a deleted object after it
+is destoried, whatever comes first.
+
+
+%
+{}\subsubsection{Circular references and weak pointers}
+%
+
+The fundamental weakness of low-overhead reference counting as
+described in this paper and used in the Teuchos memory management
+classes is that there is no bullet-proof way to address circular
+references that result in memory leaks.  Because of possible circular
+references, only system-level garbage collection methods, as
+implemented in Java and Python can robustly clean up memory in every
+case of circular reference.  As stated earlier, given backward
+compatibility constraints, many existing C++ programs cannot be used
+with any C++ implementation that might implement garbage collection,
+not now or ever.
+
+To understand the problem with circular references, consider Figure
+??? showing the circular reference between two objects {}\texttt{a}
+and {}\texttt{b}.  Here object {}\texttt{a} contains an {}\texttt{RCP}
+pointing to object {}\texttt{b}, and object {}\texttt{b} contains an
+{}\texttt{RCP} pointing to object {}\texttt{a}.  In this situation,
+when {}\texttt{ClientA} and {}\texttt{ClientB} destroy their
+{}\texttt{RCP} objects pointing to the underlying {}\texttt{a} and
+{}\texttt{b} objects, the reference counts will not go to zero because
+of the circular reference between {}\texttt{a} and {}\texttt{b}.  This
+will result in a memory leak that a tool like Valgrind or Purify
+should contain about.  If lots of objects with circular references are
+constantly being created and destroyed creating these types of memory
+leaks, obviously we have a problem and the system could run out of
+memory.
+
+ToDo: Show a UML object diagram showing a classical circular reference
+between two objects A and B.
+
+While there is no completely general and bullet proof way to address
+the circular reference problem, there is a fairly simple and cheap
+approach that can effectively resolve circular references in most
+cases.  The different approaches described here supported by these
+reference counted classes is the definition of a weak
+reference-counted pointer.  As shown in Figure ???, this is
+accomplished through a {}\texttt{strength\_} attribute with values
+{}\texttt{STRONG} and {}\texttt{WEAK}.  By default, all
+{}\texttt{[Array]RCP} objects are {}\texttt{STRONG}.  When an
+{}\texttt{[Array]RCP} is {}\texttt{STRONG}, then the underlying
+{}\texttt{ConcreteT} object is guaranteed to stay around.  However,
+when the {}\texttt{[Array]RCP} is {}\texttt{WEAK}, the underlying
+{}\texttt{ConcreteT} can get deleted when strong count goes to zero.
+
+So how does this work?  Figure ??? shows the same setup with a
+circular references as shown in Figure ??? …
+
+ToDo: Copy the material from the slides showing how the a weak pointer
+resolves the circular reference problem!
+
+With respect the weak references, the Teuchos classes
+{}\texttt{[Array]RCP} differ substantially from the Boost and
+therefore C++09 standard reference counting classes.  With the classes
+{}\texttt{[Array]RCP}, the attribution of strong work weak is made at
+runtime.  At runtime, an external client can decide to make
+{}\texttt{a}'s reference to {}\texttt{b} weak or {}\texttt{b}'s
+reference to {}\texttt{a} weak depending on the given circumstance.
+With the Boost and C++09 {}\texttt{shared\_ptr} class, you have to use
+a separate class {}\texttt{weak\_ptr} to represent a weak pointer.
+The problem with the Boost approach then is that you have to decide at
+compile time if a particular reference is going to be weak or strong.
+While there are some cases where you can always assume the reference
+needs be weak (like in the self reference case described in Section
+???), there are more complex cases where you cannot so easily.  For
+example, if we were to use the {}\texttt{[shared\_ptr} and
+{}\texttt{weak\_ptr} classes, we would have to decide at compile time
+to make {}\texttt{a}'s reference or {}\texttt{b}'s reference weak.
+The decision you make might work for one set of use cases that you
+currently know about, but for more complex usage cases you have not
+discovered yet you may need to switch it.  In fact, in the same
+program you may have some cases where {}\texttt{a} will be deleted
+before {}\texttt{b} and other cases where {}\texttt{b} will be deleted
+before {}\texttt{a}.  With the classes {}\texttt{[shared\_ptr} and
+{}\texttt{weak\_ptr}, this is impossible (at least not without storing
+both smart pointer types in each class {}\texttt{A} and {}\texttt{B}
+object and then using one or the other which is not very elegant or
+efficient).  The only argument for the compile-time approach uses by
+Boost and C++09 is performance and a little extra speed and memory
+overhead but the results in Section ??? show that this extra runtime
+overhead is minimal.  Overall, the overhead induced by the flexible
+runtime approach of the {}\texttt{[Array]RCP} classes is well worth
+the minimal extra overhead.  Typically, the classes
+{}\texttt{[Array]RCP} are used to manage objects much larger than what
+is contained in the infrastructure for the {}\texttt{[Array]RCP}
+objects so the additional memory is also insignificant.
+
+Section ??? describes how weak pointers are used in runtime debug
+checking for dangling non-persisting references.  Section ??? 
+describes how weak pointers are used in dealing with object self
+references.  In summary, the this reference counting machinery
+addressing both strong and weak references is a very powerful tool but
+to use it effectively, you need to understand the basic semantics.
+The good news is that 99\% of the people who use the classes
+{}\texttt{[Array]RCP} will never need to know the difference between a
+strong and weak reference and will by default use just strong
+references.  Weak references will get used under the hood in debug
+builds of the code but they are totally transparent to client code and
+the programmer.
+
+
+%
+{}\subsubsection{Customized deallocators}
+\label{sec:deallocators}
+%
+
+Perhaps the key differentating property between a flexible high
+quality reference-counted pointer implementation and a poor
+implementation is the capability to allow the user to define an
+arbitrary deallocator policy object that defines exactly what it means
+to release a reference-counted object (or array of objects).  The
+reference-counted Teuchos classes {}\texttt{RCP} and
+{}\texttt{ArrayRCP}, as well as {}\texttt{boost::shared\_ptr} all
+allow the client to specify a user-defined deallocation policy object
+when the first reference-counted object is first constructed.
+
+ToDo: Show the code specifying the deallocator policy template
+interface.
+
+??? Listing showing [a]rcp(...) constructors using template deallocator
+policy objects ???
+
+ToDo: Scavenge code from the more detailed unfinished RCP report that
+gives some examples of custom deallocator policies.
+
+
+%
+{}\subsubsection{Extra data}
+\label{sec:extra-data}
+%
+
+ToDo: Fill in.
+
+
+%
+{}\subsubsection{General roles and responsibilities: Factories and
+general clients}
+%
+
+There are two fundamentally different sets of actors that play two
+different roles in the use of the reference counted classes: a)
+factory entities that first create the reference counted object, and
+b) general clients that accept and use a shared reference counted
+object through a passed-in reference-counted class.
+
+Factory entities first create the reference-counted object/array
+and/or construct the first {}\texttt{[Array]RCP object} containing it.
+The most basic type of factory are the non-member constructor
+functions described in Section ???.  When the first
+{}\texttt{[Array]RCP object} is created, the factory gets to decide
+exactly how object/array will be released when the last reference
+count goes to zero.  The default, of course, is to just simply call
+{}\texttt{delete} or {}\texttt{delete []} on the contained raw pointer
+which is the default behavior.  However, the factory can also chooce
+any arbitrary action imaginable to occur when the last reference-count
+goes to zero.  This is set up using a template deallocator policy
+object described in Section {}\ref{sec:deallocators}.
+
+On the other side, the responsibilities of the general client that
+shares and uses a reference-counted object are very simple.  These
+responsibilities are:
+
+\begin{itemize}
+
+{}\item Accept the persisting relationship for a shared
+reference-counted object/array through an {}\texttt{[Array]RCP} object
+(as described in Section ???).
+
+{}\item Share the reference-counted object/array with other clients by
+creating a copy if your {}\texttt{[Array]RCP} object and giving it to
+them.
+
+{}\item When you are finished using the object, simply delete or set
+to null all of your {}\texttt{[Array]RCP} objects.  If some other
+client is still using the object, it will still remain.  If yours is
+the last reference, then the deallocator policy object that is
+embedded in the underlying {}\texttt{RCPNodeImpl} object will know
+exactly how to clean up and reclaim the object/array.
+
+\end{itemize}
+
+That is all there is to it.  Factories create the underlying object(s)
+wrapped in the first {}\texttt{[Array]RCP} object and define how the
+referenced object(s) will be reclaimed when it is time.  General
+clients just accept and maintain their references to shared
+objects/arrays by accepting and storing {}\texttt{[Array]RCP} object
+and then setting them to null when they are finished using the
+object(s).
+
+
+%
+{}\subsection{Debug-mode runtime checking}
+\label{sec:debug-mode-runtime-checking}
+%
+
+The primary reason that these Teuchos memory management classes need
+to be developed in tandem and know each other's internal
+implementations to some extend is to be able to implement robust and
+effective debug-mode runtime testing.  The debug-mode runtime testing
+that is built into these classes is surprisingly strong and will catch
+nearly every type of programmer error that is possible, as long as raw
+C++ pointers are never externally exposed.  The different categories
+of debug-mode runtime testing are described below along with what the
+typical diagnostic error messages look like.
+
+
+%
+{}\subsubsection{Detection of null dereferences and range checking}
+\label{sec:null-dereferences-range-checking}
+%
+
+One of the most basic types of debug runtime checking performed by the
+Teuchos memory management classes are attempts to dereferences a null
+pointer and range checking.
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{Detection of circular references}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{Detection of dangling references}
+\label{sec:dangling-references}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{Detection of other invalid usage}
+\label{sec:dangling-references}
+%
+
+ToDo:
+
+(*) Discuss creating two owning RCP objects that point to the same concrete
+object but don't share the same node.
+
+
+%
+{}\subsubsection{Performance of debug-mode checking versus memory
+checking tools}
+%
+
+ToDo:
+
+(*) Compare O(1) debug-mode checking to valgrind and purify
+
+(*) Compare more expensive debug-mode with node-tracing checking to
+valgrind and purify
+
+
+%
+{}\subsubsection{Holes in debug-mode runtime checking}
+%
+
+If you follow all of the idioms and rules outlined in this paper, then
+the only issue you will have to address that is not 100\% obvious are
+circular references.  However, if programmers never made any mistakes,
+we would not need debug-mode runtime testing in the first place.
+While the level of debug-mode runtime testing implemented in the
+Teuchos memory management classes is unmatched, there are a few
+different types of programmer errors that debug-mode runtime checking
+will not catch.  First, as soon as you expose a raw C++ pointer and
+start copying it around, all bets are off.  However, even if you never
+expose a C++ pointer, you can still get into trouble.  One unfortunate
+case involves the use of raw C++ references.
+
+If C++ references are only used as formal function arguments for C++
+functions, you will almost never have a problem.  However, incorrectly
+returning an {}\texttt{RCP} object by reference instead of by value,
+as is described in Section ???, can result in invalid C++ references.
+Also, if you use references like in the below code, you can of course
+have dangling raw C++ references.
+
+{\small\begin{verbatim}
+  RCP<A> a_ptr = newA();
+  A &a = *a_ptr;
+  ...
+  a->someFunc(); // This object may not be valid any more!
+\end{verbatim}}
+
+The above code fragment violates the use of raw C++ references only
+for non-persisting associations.  Above, the statement {}\texttt{A \&a
+= *a\_ptr} results in the creation of a persisting relationship in that
+it extends past the statement where it was created.
+
+In summary, as soon as an object reference is exposed through a raw
+C++ pointer or a raw C++ reference, the runtime checking can no longer
+detect errors.  Therefore, never expose a raw C++ pointer (except for
+the situations described in Section ???) and only expose and use raw
+C++ references in strictly non-persisting associations.
+
+
+%
+{}\subsubsection{Exception handling and debugging}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsection{Optimized performance}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{Reference counting overhead}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{Array access overhead}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{Array iterator overhead}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsection{Related idioms}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{Objects maintaining self references}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{The generalized view idiom}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsection{Summary of common problems and fundamental shortcomings}
+%
+
+ToDo: Review the material on the C++ memory model for implicit
+conversions and why smart pointers will *always* be at a usage
+disadvantage w.r.t. raw C++ pointers.  Point back to the section on
+implicit conversions.
+
+
+%
+{}\section{Conclusions}
+%
+
+While the idioms described in this document as shown in Tables ???,
+??? ... ??? may look complex, one has to consider that it is not the
+idioms that are complex but the essential nature of different data
+types and object relationships that are complex.  Consider that in
+Java and Python that it is impossible to distinguish between
+persisting and non-persisting associations because every user-defined
+object is always managed through an indrect reference handed by the
+garbage-collected language.  This causes a big problem when it comes
+time to try to understand a complex program written in thess
+languages.  For example, consider the agony that the author goes
+through in [Feathers ???, Sections ??? and ???] in trying to determine
+the nature of objects embedded in each other or just passed to each
+other.  For example, in [Feathers, Section ???], the author trys to
+determine if the passed in object is remembered or not and is going to
+be changed or not.  Python has no user-definable concept of
+{}\texttt{const} but the Python language itself understands the need
+for {}\texttt{const} by having built-in immutable data-types like
+strings and tuples.  The following five questions must be answered in
+every context that you have in your program (no matter what language
+it is written).
+
+\begin{itemize}
+
+{}\item Is it a single object or an array of objects?
+
+{}\item Does the object or array of objects use value
+semantics\footnote{The distiction between value semantics and
+reference semantics is really only an issue in C++ since all
+user-defiend data-types in languages like Java and Python use
+reference semantics.} or reference semantics?
+
+{}\item Is the object or array of objects changeable or non-changeable
+(i.e.\ const)?
+
+{}\item Is this establishing a persisting or non-persisting
+association?
+
+{}\item Is the object or array of objects optional or required?
+
+\end{itemize}
+
+The goal of the idioms defined in this paper is to change these from
+implicit concepts to explicit concepts directly stated in code (see
+MAKE IMPLICIT CONCEPTS EXPLICIT in [DDD ???]).  The five questions
+stated above are part of the essential complexity that will be present
+in every program you write no mater what high-level programming
+language that is used [Mythical Man Month ???, McConnell ???].  The
+issue is that many languages lack the expressiveness to make these
+concepts explicit.  The Teuchos memory management classes and the
+associated idioms described in this paper provide a means to make
+these concepts explicit in a way that is not possible in any other
+widely used high-level programming language, period.
+
+
+% ---------------------------------------------------------------------- %
+% References
+%
+
+\clearpage
+% If hyperref is included, then \phantomsection is already defined.
+% If not, we need to define it.
+\providecommand*{\phantomsection}{}
+\phantomsection
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{plain}
+\bibliography{references}
+
+% ---------------------------------------------------------------------- %
+% Appendices should be stand-alone for SAND reports. If there is only
+% one appendix, put \setcounter{secnumdepth}{0} after \appendix
+%
+\appendix
+
+%
+\section{Teuchos Memory Management Commandments (Guidelines)}
+%
+
+\begin{anticommandment}\label{rcp:cmd:rcp-new}
+Thou shall not expose raw pointers in any high-level C++ code.
+\end{anticommandment}
+
+\begin{anticommandment}\label{rcp:cmd:rcp-new}
+Thou shall not call raw {}\texttt{new} or {}\texttt{delete} in any
+high-level C++ code to dynamically allocate and destroy single
+objects.  Instead, create memory using a user-defined non-member
+constructor function (see ???).
+\end{anticommandment}
+
+\begin{anticommandment}\label{rcp:cmd:rcp-new}
+Thou shall not call raw operator {}\texttt{new []} or {}\texttt{delete
+[]} in any high-level C++ code to dynamically allocate and destroy
+contiguous arrays of data.  Instead, use functions such as
+{}\texttt{Teuchos::Array<T>(n)} and {}\texttt{Teuchos::arcp<T>(n)}
+(see ???) and let reference counting semnatics take care of the rest.
+\end{anticommandment}
+
+\begin{anticommandment}\label{rcp:cmd:rcp-new}
+Thou shall not directly create and use compile-time fixed sized
+arrays with {}\texttt{T[N]}.  Instead, create compile-time fixed-sized
+arrays using {}\texttt{Teuchos::Tuple<T,N>} and covert to
+{}\texttt{Teuchos::ArrayView<T>} for more general usage.
+\end{anticommandment}
+
+\begin{commandment}\label{rcp:cmd:rcp-new}
+Thou shall use {}\texttt{Teuchos::Array} as a general purpose
+contiguous container instead of {}\texttt{std::vector}.
+\end{commandment}
+
+
+%
+{}\section{Argument for using an signed integer for
+{}\texttt{size\_type} in the Teuchos array classes}
+%
+
+ToDo: Add discussion of why the Teuchos array classes all use a signed
+integer for size\_type and why that is better.  This is important
+because of the break from std::vector.
+
+
+
+
+\begin{SANDdistribution}[NM]
+% \SANDdistCRADA	% If this report is about CRADA work
+% \SANDdistPatent	% If this report has a Patent Caution or Patent Interest
+% \SANDdistLDRD	% If this report is about LDRD work
+% External Address Format: {num copies}{Address}
+%\SANDdistExternal{}{}
+%\bigskip
+%% The following MUST BE between the external and internal distributions!
+%\SANDdistClassified % If this report is classified
+% Internal Address Format: {num copies}{Mail stop}{Name}{Org}
+%\SANDdistInternal{}{}{}{}
+% Mail Channel Address Format: {num copies}{Mail Channel}{Name}{Org}
+%\SANDdistInternalM{}{}{}{}
+%\SANDdistInternal{2}{MS 9018}{Central Technical Files}{8944}
+%\SANDdistInternal{2}{MS 0899}{Technical Library}{4536}
+\end{SANDdistribution}
+
+\end{document}
