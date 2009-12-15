@@ -175,59 +175,60 @@ C++ development and standards community that started with
 %
 
 A critical problem in computational science and engineering (CS\&E)
-software (and other types) developed in C++ is in the effective and
-safe management of memory and data.  CS\&E software often has the goal
-of high performance where arbitrary data copy leads to undo overhead
-and can actually complicate the software in many cases.  It is common
-for CS\&E software to share and pass around large blocks of memory in
-order to do work efficiently.  At the most basic level, large arrays
-of integral and floating point data are managed along with more
-complex general single and arrays of derived objects.  In C++, the
-only universally accepted way to deal with memory for single objects
-and arrays of objects is to use raw C++ pointers.  However, raw C++
-pointer facilities for the manipulation and sharing of basic memory
-are inherently unsafe and error prone.  The problem is further
+software as well as in other types of software developed in C++ is in
+the effective and safe management of memory and data.  CS\&E software
+often has the goal of high performance where arbitrary data copy leads
+to undo overhead and can actually complicate the software in many
+cases.  It is common for CS\&E software to share and pass around large
+blocks of memory in order to do work efficiently.  At the most basic
+level, large arrays of integral and floating point data are managed
+along with more complex general objects and arrays of objects.  In
+C++, the only universally accepted way to deal with memory for single
+objects and arrays of objects is to use raw C++ pointers.  However,
+raw C++ pointer facilities for the manipulation and sharing of basic
+memory are inherently unsafe and error prone.  The problem is further
 exacerbated when larger programs composed out of different separately
 developed and maintained components are integrated together.
 Assumptions about the origin, ownership, and process for reclaiming
 memory and other resources remain the most basic problems with
 lower-level C++ programming techniques and are unfortunately still
 ubiquitous in the C++ community and even in the current C++
-best-practices literature [???].  Our inability to effectively address
-the basic problem of the usage of memory in large-scaled modularized
-C++ codes affects every aspect of software quality and productivity
-and undermines the most basic software verification foundations of our
+best-practices literature {}\cite{C++CodingStandards05,
+EffectiveC++ThirdEdition}.  Our inability to effectively address the
+basic problem of the usage of memory in large-scale modular C++ codes
+affects every aspect of software quality and productivity and
+undermines the most basic software verification foundation for our
 codes.
 
-C++ is an incredibility complex language that very few people really
-know how to use in a confident and successful way.  Arguably the most
-serious problems in C++ are related to dynamic memory management which
-must be used with any moderately complex object-oriented program.  The
-built-in C++ support for dealing with dynamic memory allocation with
-{}\texttt{new} and {}\texttt{delete} is fundamentally incompatible
-with the built-in exception handling mechanism using {}\texttt{try},
-{}\texttt{throw}, and {}\texttt{catch}.  One cannot effectively build
-large-scale integrated software using just these low-level language
-features at the application programming level.  Software developed
-this way segfaults and leaks memory unpredictably and is nearly
-impossible to integrate with other code.  The only successful way to
-use C++ to create complex robust software is to develop and rigorously
-adopt a set of programming idioms for safely dealing with memory.  By
-developing the right support software and associated idioms, we make
-C++ programs safer, better defined, faster to develop, and more
-efficient when run.
+C++ is an incredibility large and complex language that very few
+people really know how to use in a confident and successful way.
+Arguably the most serious problems in C++ are related to dynamic
+memory management which must be used with any moderately complex
+object-oriented program.  The built-in C++ support for dealing with
+dynamic memory allocation with {}\texttt{new} and {}\texttt{delete} is
+fundamentally incompatible with the built-in exception handling
+mechanism using {}\texttt{try}, {}\texttt{throw}, and
+{}\texttt{catch}.  One cannot effectively build large-scale integrated
+software using just these low-level language features at the
+application programming level.  Software developed this way segfaults
+and leaks memory unpredictably and is nearly impossible to integrate
+with other code.  The only successful way to use C++ to create complex
+robust software is to develop and rigorously adopt a set of
+programming idioms for safely dealing with memory.  By developing the
+right support software and associated idioms, we make C++ programs
+safer, better defined, faster to develop, and more efficient when run.
 
 The reason that C++ is in this state of affairs is due to how C++ came
-into being and how it evolved over many years [???, ???].  C++ was
-first developed in the early 1980s as an extension to the popular C
-programming language and was first called ``C with Classes''.  At the
-time, high efficiency, very low runtime overhead, and strong
-compatibility with C were critical requirements to the success of the
-new language.  Without this, the original creator of C++, Bjanre
-Stroustrup {}\cite{stroustrup97}, concluded that C++ would be ``still
-born''.  The first C++ compilers where little more than preprocessors
-putting out C code on the backend which was then compiled into
-executable binary code.
+into being and how it evolved over many years {}\cite{stroustrup94,
+stroustrup07}.  C++ was first developed in the early 1980s as an
+extension to the popular C programming language and was first called
+``C with Classes''.  At the time, high efficiency, very low runtime
+overhead, and strong compatibility with C were critical requirements
+to the success of the new language.  Without this, the original
+creator of C++, Bjanre Stroustrup, concluded that C++ would be ``still
+born'' {}\cite{stroustrup97}.  The first C++ compilers where little
+more than preprocessors putting out C code on the backend which was
+then compiled into executable binary code.
 
 As the years went on, however, object-oriented programming was
 refined, computers become faster with more memory, and it was realized
@@ -235,11 +236,11 @@ that more runtime support was required to enable some more advanced
 usages of C++.  As new features were added to C++ to support new
 programming idioms, a strong need for backward compatibility
 constrained the design of the language.  The most unfortunate example
-of this, which was already mentioned, is the fundamental incompatibility of
-built-in dynamic memory management (i.e.\ using
+of this, which was already mentioned, is the fundamental
+incompatibility of built-in dynamic memory management (i.e.\ using
 {}\texttt{new}/{}\texttt{delete}) and built-in exception handling
 (i.e.\ using {}\texttt{try}/{}\texttt{throw}/{}\texttt{catch}) that
-was added more than a decade later [???].
+was added more than a decade later {}\cite{stroustrup94}.
 
 Therefore, because of the way that C++ ``evolved'' along with a strong
 need for backward compatibility, we have a language that is a disaster
@@ -247,12 +248,12 @@ when used in raw form on complex large-scale programs.  Many
 programming teams have exploited this natural capability of C++ to
 create travesties of software which in turn have dumbfounded many a
 C++ programmer (and entire teams) and have resulted in giving C++ a
-bad name in the general software engineering community (see Section
-??? in [Domain Driven Design] for instance).
+bad name in the general software engineering community (see Section 6
+``DDD Matters Today'' in {}\cite{DomainDrivenDesignQuickly} for
+instance).
 
 However, C++ has some unique features that differentiate it from every
-other language in wide use with wide availability.
-This unique feature set includes:
+other language in wide use:
 
 \begin{itemize}
 
@@ -275,10 +276,12 @@ dynamic memory management
 
 No other programming language with wide availability has this set of
 features.  For instance, C++ can be used to create class libraries for
-capabilities like automatic differentiation [???] for computing
-derivatives of functions (see the Trilinos Sacado package [???]) that
-achieves a level of generality and efficiency that has no rival in a
-software library in any other programming language.
+capabilities like automatic differentiation {}\cite{ref:ad} for
+computing derivatives of functions (see the Trilinos
+Sacado\footnote{\texttt{http://trilinos.sandia.gov/packages/sacado/}}
+package {}\cite{phippsEtAl2006}) that achieves a level of generality
+and efficiency that has no rival in a software library in any other
+programming language.
 
 It is this unique feature set that is C++'s saving grace.  In C++, you
 can actually develop a set of new data types that in essence can be
@@ -293,25 +296,26 @@ management that is very compatible with the built-in C++ exception
 handling mechanism.
 
 This paper describes a set of low-level C++ classes and supporting
-software in the Teuchos package in Trilinos [???] that is used to
+software in the Teuchos package in
+Trilinos\footnote{http://trilinos.sandia.gov} that is used to
 encapsulate all raw pointers and enable strong debug runtime checking
 while allowing for very high performance in optimized builds.
 
-The Teuchos memory management classes and the idioms that
-they help to define (which are described in this paper) do not remove
-the need for programmers to learn and understand the intricate details
-of the C++ memory management model and type system.  On the contrary,
-learning to effectively use these memory management classes requires
-more effort over just learning raw C++.  However, the payoff is that
-the programs that result from the use of these classes and idioms will
-be more likely to be correct on first writing, will be easier to debug
-when there are defects, will be easier and safter to maintain, and
-will be more self documenting (which helps all of the above).  In
-fact, the self-documenting expressiveness of the resulting programs
-written using these classes and idioms is unmatched in any other
-programming language currently in popular use, including Java and
-Python.  This statement will be backed up throughout this paper and
-then reiterated in the final conclusions section.
+The Teuchos memory management classes and the idioms that they help to
+define (which are described in this paper) do not remove the need for
+programmers to learn and understand the intricate details of the C++
+memory model and type system.  On the contrary, learning to
+effectively use these memory management classes requires more effort
+over just learning raw C++.  However, the payoff is that the programs
+that result from the use of these classes and idioms will be more
+likely to be correct on first writing, will be easier to debug when
+there are defects, will be easier and safter to maintain, and will be
+more self documenting (which helps all of the above).  In fact, the
+self-documenting expressiveness of the resulting programs written
+using these classes and idioms is unmatched in any other programming
+language currently in popular use, including Java and Python.  This
+statement will be backed up throughout this paper and then reiterated
+in the final conclusions section.
 
 The remainder of this paper assumes that the reader has some basic
 knowledge of C++ and is somewhat familiar with smart reference-counted
@@ -326,10 +330,11 @@ If the reader is not familiar with fundamental C++ concepts like
 implicit type conversions, templates, object lifetime models, raw
 reference and pointers, and other basic topics, then some more basic
 background will be needed.  However, specific references to basic C++
-material in books like [???, ???, ???] are make throughout this
-document.  So if you are a novice C++ programmer and are willing to
-look up the mentioned references, then this paper can be a good guide
-to help you learn this basic C++ material as well.
+material in books like {}\cite{EffectiveC++ThirdEdition, stroustrup97,
+C++CodingStandards05} are make throughout this document.  So if you
+are a novice C++ programmer and are willing to look up the mentioned
+references, then this paper can be a good guide to help you learn this
+basic C++ material as well.
 
 A final warning: the material in this paper is pretty detailed and
 will take a significant investment in time and experience with writing
@@ -462,9 +467,9 @@ say this because almost every operation that C++ defined for raw
 pointers makes sense and is fairly well defined when raw C++ pointers
 are pointing with contiguous arrays of objects.  I will not review
 every valid C++ operation for raw pointers to contiguous arrays of
-objects (see [???] for a complete listing).  Instead, I want to show a
-few examples where the C++ type system using raw pointers falls flat
-on its face when dealing with arrays of memory.
+objects (see {}\cite{stroustrup97} for a complete listing).  Instead,
+I want to show a few examples where the C++ type system using raw
+pointers falls flat on its face when dealing with arrays of memory.
 
 One particularly troubling example where the C++ type system fails
 when dealing with raw C++ pointers to contiguous arrays of memory is
@@ -494,15 +499,15 @@ programmers that would think that the C++ code in Listing
 this mistake made more than once and the resulting program may seem to
 run okay in some cases but in the above case will almost certainly
 segfault right away.  The above code fragment is wrong, wrong, wrong
-because it violates Item ??? in [???] and Gotcha ??? in [???].  I will
-not go into great detail about what happens here, but converting from
-an array of type {}\texttt{B} it a base of type {}\texttt{A} is almost
-always asking for disaster because the alignment of the base type
+as described in Gotcha \#33 {}\cite{C++Gotchas03}.  I will not go into
+great detail about what happens here, but converting from an array of
+type {}\texttt{B} it a base of type {}\texttt{A} is almost always
+asking for disaster because the alignment of the base type
 {}\texttt{A} will be wrong according to the full type {}\texttt{B}
-(again see Item ??? in [???] for all the gory details).  As a result,
-for the second iteration {}\texttt{i=1}, the embedded pointer in
-{}\texttt{a\_array[1].char\_ptr\_} is pointing to garbage because on
-most 32 bit machines with most compilers, the address in
+(again see {}\cite[Gotcha \#33]{C++Gotchas03} all the gory details).
+As a result, for the second iteration {}\texttt{i=1}, the embedded
+pointer in {}\texttt{a\_array[1].char\_ptr\_} is pointing to garbage
+because on most 32 bit machines with most compilers, the address in
 {}\texttt{a\_array[1].char\_ptr\_} is actually the binary
 representation of the integer {}\texttt{b\_array[0].size\_}.
 Therefore, calling {}\texttt{a\_array[1]->increment()} on most 32 bit
@@ -560,16 +565,18 @@ if the function {}\texttt{someFunc()} throws a C++ exception:
 \end{verbatim}}
 
 According to current C++ best practices relating to memory management
-and exception handling as described in [???] and [???], code like
-shown above that leaks memory is totally unacceptable in production
-quality C++ code.  This fundamental incompatibility of the built-in C++
-dynamic memory management facilities using
-{}\texttt{new}/\texttt{delete} and the built-in exception handling
-mechanism using {}\texttt{try}/\texttt{catch} was clear even to the
-committee that created the official C++ standard in 1998.  However, again,
-because of the need for backward compatibility they were powerless to
-fix the problem at the language level.  Instead, the C++ standards
-committee included the first standard C++ smart pointer class;
+and exception handling as described in {}\cite[Item
+{}\#29]{EffectiveC++ThirdEdition} and {}\cite[Item
+{}\#71]{C++CodingStandards05}, code like shown above that leaks memory
+is totally unacceptable in production quality C++ code.  This
+fundamental incompatibility of the built-in C++ dynamic memory
+management facilities using {}\texttt{new}/\texttt{delete} and the
+built-in exception handling mechanism using
+{}\texttt{try}/\texttt{catch} was clear even to the committee that
+created the official C++ standard in 1998.  However, again, because of
+the need for backward compatibility they were powerless to fix the
+problem at the language level.  Instead, the C++ standards committee
+included the first standard C++ smart pointer class;
 {}\texttt{auto\_ptr}.  I will not go into the details about
 {}\texttt{auto\_ptr} other than to say that is solved only the most
 basic problem with raw C++ pointers and that is that it ensures that
@@ -862,10 +869,12 @@ utilities}
 %
 
 Some programmers simply use raw C++ pointers and think that standard
-memory checking tools like Valgrind [???] and Purify [???] will catch
-all of their mistakes.  When I first started coding in C++ back in
-1996, I was very aware of the problems with using raw pointers in C++
-after experiencing the segfaults and memory leaks that all C++
+memory checking tools like
+Valgrind\footnote{{}\texttt{http://valgrind.org}} and
+Purify\footnote{\texttt{http://www.ibm.com/software/awdtools/purify}}
+will catch all of their mistakes.  When I first started coding in C++
+back in 1996, I was very aware of the problems with using raw pointers
+in C++ after experiencing the segfaults and memory leaks that all C++
 programmers experience.  At the time, I had experimented some with
 writing my own utility classes that encapsulated raw C++ pointers and
 I considered taking that further.  However, at that time, I
@@ -1183,13 +1192,12 @@ All of the built-in intrisic C++ data-types like {}\texttt{char},
 derived class types like {}\texttt{std::complex} and
 {}\texttt{std::vector} are also Value Types.  Value Types have also be
 called by other names in the C++ literature. Stroustroup refers to
-Value Types as ``true local variables'' in
-[???DesignAndEvolutionOfC++???].  The term Abstract Data Type (ADT) in
-older C++ literature such as [???Advanced C++???] usually maps to the
-concept of a Value type, but usaully carries greater significance in
-implying that operator overloading is used to make an ADT look more
-like a built-in C++ type (such as is the case for
-{}\texttt{std::complex}).
+Value Types as ``true local variables'' in {}\cite{stroustrup94}.  The
+term Abstract Data Type (ADT) in older C++ literature such as
+[???Advanced C++???] usually maps to the concept of a Value type, but
+usaully carries greater significance in implying that operator
+overloading is used to make an ADT look more like a built-in C++ type
+(such as is the case for {}\texttt{std::complex}).
 
 Alternatively, {}\textit{Reference Types} in general:
 
@@ -2040,6 +2048,8 @@ much detail here.
 A fairly complete definition of the class {}\texttt{RCP} is shown in
 Listing ???.
 
+ToDo: Show listing of RCP.
+
 
 %
 {}\subsubsection{Raw C++ references}
@@ -2126,7 +2136,7 @@ member functions shown in Table {}\ref{tbl:common-array-type-members}.
 {}\textbf{ArrayView returning functions} \\
 \hline
 {}\texttt{ArrayView<[const] T> view(size\_type offset, size\_type size) [const]} \\
-{}\texttt{ArrayView<[const] T> operator()(size\_type offset, size\_type size) [const]} \\
+{}\texttt{ArrayView<[const] T> operator[]()(size\_type offset, size\_type size) [const]} \\
 {}\texttt{ArrayView<[const] T> operator()() [const]} \\
 {}\texttt{operator ArrayView<const T>() const} \\
 \hline
@@ -2392,11 +2402,11 @@ the platform-specific optimizations contained in the native
 {}\texttt{std::vector} implementation and imparts no extra space/time
 overhead.  However, in a debug build, a full set of
 platform-independent runtime checking is performed that is as strong
-or stronger than any checked STL implementation (see [Item ???, ???])
-and includes dangling reference detection and reporting of
-{}\texttt{ArrayView} views (see Section ???).  In addition,
-{}\texttt{Array} supports better runtime debug output with better
-exception error messages.
+or stronger than any checked STL implementation (see {}\cite[Item
+\#83]{C++CodingStandards05}) and includes dangling reference detection
+and reporting of {}\texttt{ArrayView} views (see Section ???).  In
+addition, {}\texttt{Array} supports better runtime debug output with
+better exception error messages.
 
 The class declaration for the {}\texttt{Array} class is shown in
 Listing ???.
