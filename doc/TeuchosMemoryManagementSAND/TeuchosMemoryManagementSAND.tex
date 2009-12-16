@@ -249,8 +249,9 @@ programming teams have exploited this natural capability of C++ to
 create travesties of software which in turn have dumbfounded many a
 C++ programmer (and entire teams) and have resulted in giving C++ a
 bad name in the general software engineering community (see Section 6
-``DDD Matters Today'' in {}\cite{DomainDrivenDesignQuickly} for
-instance).
+``DDD Matters Today'' in {}\cite{DomainDrivenDesignQuickly} and ``The
+Case of the Construction Blob'' in {}\cite[Chapter
+9]{WorkingEffectivelyWithLegacyCode05} for a few examples).
 
 However, C++ has some unique features that differentiate it from every
 other language in wide use:
@@ -499,15 +500,16 @@ programmers that would think that the C++ code in Listing
 this mistake made more than once and the resulting program may seem to
 run okay in some cases but in the above case will almost certainly
 segfault right away.  The above code fragment is wrong, wrong, wrong
-as described in Gotcha \#33 {}\cite{C++Gotchas03}.  I will not go into
-great detail about what happens here, but converting from an array of
-type {}\texttt{B} it a base of type {}\texttt{A} is almost always
-asking for disaster because the alignment of the base type
-{}\texttt{A} will be wrong according to the full type {}\texttt{B}
-(again see {}\cite[Gotcha \#33]{C++Gotchas03} all the gory details).
-As a result, for the second iteration {}\texttt{i=1}, the embedded
-pointer in {}\texttt{a\_array[1].char\_ptr\_} is pointing to garbage
-because on most 32 bit machines with most compilers, the address in
+as described in {}\cite[Gotcha \#33]{C++Gotchas03} and {}\cite[Item
+\#100]{C++CodingStandards05}.  I will not go into great detail about
+what happens here, but converting from an array of type {}\texttt{B}
+it a base of type {}\texttt{A} is almost always asking for disaster
+because the alignment of the base type {}\texttt{A} will be wrong
+according to the full type {}\texttt{B} (again see {}\cite[Gotcha
+\#33]{C++Gotchas03} all the gory details).  As a result, for the
+second iteration {}\texttt{i=1}, the embedded pointer in
+{}\texttt{a\_array[1].char\_ptr\_} is pointing to garbage because on
+most 32 bit machines with most compilers, the address in
 {}\texttt{a\_array[1].char\_ptr\_} is actually the binary
 representation of the integer {}\texttt{b\_array[0].size\_}.
 Therefore, calling {}\texttt{a\_array[1]->increment()} on most 32 bit
@@ -1621,7 +1623,7 @@ Member access \texttt{operator->()}
 %
 \hline
 %
-\texttt{operator[](int)}
+\texttt{operator[](s)}
 & 
 & 
 & x
@@ -1629,7 +1631,7 @@ Member access \texttt{operator->()}
 %
 \hline
 %
-operators \texttt{++}, \texttt{--}, \texttt{+=(int)}, \texttt{-=(int)}
+operators \texttt{++}, \texttt{--}, \texttt{+=(s)}, \texttt{-=(s)}
 & 
 & 
 & 
@@ -1769,6 +1771,7 @@ is highly self-documenting.
 
 %
 {}\subsection{The proper role of raw C++ pointers}
+\label{sec:role-of-raw-pointers}
 %
 
 The thesis of this paper is that we should eliminate the use of all
@@ -2411,11 +2414,6 @@ better exception error messages.
 The class declaration for the {}\texttt{Array} class is shown in
 Listing ???.
 
-
-
-
-
-
 ToDo: Fill this in!
 
 
@@ -2647,7 +2645,7 @@ Likewise, we can change an {}\texttt{A} object itself without
 disturbing the {}\texttt{Array<RCP<A> >} object itself such as with:
 
 {\small\begin{verbatim}
-  void foo(Array<RCP<A> > &refTypeArray)
+  void foo(const Array<RCP<A> > &refTypeArray)
   {
     refTypeArray[0]->someChange();
   }
@@ -3849,8 +3847,9 @@ it extends past the statement where it was created.
 In summary, as soon as an object reference is exposed through a raw
 C++ pointer or a raw C++ reference, the runtime checking can no longer
 detect errors.  Therefore, never expose a raw C++ pointer (except for
-the situations described in Section ???) and only expose and use raw
-C++ references in strictly non-persisting associations.
+the situations described in Section {}\ref{sec:role-of-raw-pointers})
+and only expose and use raw C++ references in strictly non-persisting
+associations.
 
 
 %
@@ -3930,19 +3929,20 @@ types and object relationships that are complex.  Consider that in
 Java and Python that it is impossible to distinguish between
 persisting and non-persisting associations because every user-defined
 object is always managed through an indrect reference handed by the
-garbage-collected language.  This causes a big problem when it comes
-time to try to understand a complex program written in thess
+garbage-collected language.  This causes big problems when it comes
+time to try to understand a complex program written in these
 languages.  For example, consider the agony that the author goes
 through in [Feathers ???, Sections ??? and ???] in trying to determine
-the nature of objects embedded in each other or just passed to each
-other.  For example, in [Feathers, Section ???], the author trys to
-determine if the passed in object is remembered or not and is going to
-be changed or not.  Python has no user-definable concept of
+the nature of objects as to whether they are actually embedded in each
+other (persisting) or are just passed to each other (non-persisting).
+For instance, in [Feathers, Section ???], the author trys to determine
+if the passed in object is remembered or not and is going to be
+changed or not.  Python has no user-definable concept of
 {}\texttt{const} but the Python language itself understands the need
 for {}\texttt{const} by having built-in immutable data-types like
-strings and tuples.  The following five questions must be answered in
-every context that you have in your program (no matter what language
-it is written).
+strings and tuples.  The point is that, the following five questions
+must be answered in every context that you have in your program (no
+matter what language it is written):
 
 \begin{itemize}
 
@@ -3955,7 +3955,7 @@ user-defiend data-types in languages like Java and Python use
 reference semantics.} or reference semantics?
 
 {}\item Is the object or array of objects changeable or non-changeable
-(i.e.\ const)?
+(i.e.\ const or non-const)?
 
 {}\item Is this establishing a persisting or non-persisting
 association?
@@ -3964,17 +3964,18 @@ association?
 
 \end{itemize}
 
-The goal of the idioms defined in this paper is to change these from
-implicit concepts to explicit concepts directly stated in code (see
-MAKE IMPLICIT CONCEPTS EXPLICIT in [DDD ???]).  The five questions
-stated above are part of the essential complexity that will be present
-in every program you write no mater what high-level programming
-language that is used [Mythical Man Month ???, McConnell ???].  The
-issue is that many languages lack the expressiveness to make these
-concepts explicit.  The Teuchos memory management classes and the
-associated idioms described in this paper provide a means to make
-these concepts explicit in a way that is not possible in any other
-widely used high-level programming language, period.
+The goal of the idioms defined in this paper is to change the above
+from implicit concepts to explicit concepts directly stated in code
+(see ``Making Implicit Concepts Explicit'' in {}\cite[Chapter
+9]{DomainDrivenDesign}).  The five questions stated above are part of
+the essential complexity that will be present in every program you
+write no mater what high-level programming language that is used
+{}\cite{MythicalManMonth95, CodeComplete2nd04}.  The issue is that
+most languages lack the expressiveness to make these concepts
+explicit.  The Teuchos memory management classes and the associated
+idioms described in this paper provide a means to make these concepts
+explicit in C++ in a way that is not possible in any other widely used
+high-level programming language, period.
 
 
 % ---------------------------------------------------------------------- %
