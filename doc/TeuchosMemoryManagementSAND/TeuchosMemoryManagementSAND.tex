@@ -49,8 +49,8 @@ Roscoe Bartlett
 % ---------------------------------------------------------------------------- %
 % Set some things we need for SAND reports. These are mandatory
 %
-\SANDnum{SAND2008-xxx}
-\SANDprintDate{October 2008}
+\SANDnum{SAND2010-xxx}
+\SANDprintDate{January 2010}
 \SANDauthor{
 Roscoe Bartlett
 }
@@ -542,7 +542,7 @@ opened up a number of serious language gotchas that we are still
 living with to this day.  This is strike two for the notation that C++
 pointers are strongly typed!
 
-ToDo: Find another issues with type safety of raw C++ pointers so you
+ToDo: Find another issue with type safety of raw C++ pointers so you
 can write ``Strike three, you are out!''.
 
 
@@ -2143,8 +2143,11 @@ member functions shown in Table {}\ref{tbl:common-array-type-members}.
 {}\texttt{ArrayView<[const] T> operator()() [const]} \\
 {}\texttt{operator ArrayView<const T>() const} \\
 \hline
-{}\textbf{Other common array functions} \\
+{}\textbf{Other common functions} \\
+\hline
 {}\texttt{[const\_]pointer getRawPtr() [const]} \\
+{}\texttt{bool is\_null() const} \\
+{}\texttt{std::string toString() const} \\
 \hline
 \end{tabular}
 \caption{\label{tbl:common-array-type-members} Common members for
@@ -2236,24 +2239,10 @@ Table {}\ref{tbl:common-array-type-members} for common array members.)
     ArrayView<T>& operator=(const ArrayView<T>& array);
     ~ArrayView();
 
-    // Common array members (see above)
-    ...
-
-    // Other functions
-    bool is_null() const;
-    std::string toString() const;
-
-    // ArrayView returning functions
-    ArrayView<T> view( size_type offset, size_type size ) const;
-    ArrayView<T> operator()( size_type offset, size_type size ) const;
-    const ArrayView<T>& operator()() const;
-    ArrayView<const T> getConst() const;
-    operator ArrayView<const T>() const;
-
     // Deep copy  
     void assign(const ArrayView<const T>& array) const;
 
-    // Others
+    // Common array members (see above) and other functions
     ...
 
   private:
@@ -3906,6 +3895,133 @@ ToDo: Fill this in!
 %
 
 ToDo: Fill this in!
+
+
+%
+{}\subsubsection{Inverting object ownership and avoiding circular references}
+%
+
+A rare situration that can occur is when you have an object that
+maintains an RCP to another object but you want to expose the second
+object and have it remember the first object.  To demonstrate,
+consider the two classes in Listing {}\ref{listing:B_owns_A_decl}.
+
+\begin{listing}: Two classes where one maintains an RCP to the other \\
+\label{listing:B_owns_A_decl}
+{\small\begin{verbatim}
+  class A { ... };
+
+  RCP<A> createA(...);
+
+  class B {
+  public:
+    static RCP<B> create(const RCP<A> &a)
+      {return rcp(new B(a)); }
+    RCP<A> getA() { return a_; }
+    ...
+  private:
+    RCP<A> a_;
+    B(const RCP<A> &a) a_(a) {}
+  };
+
+  RCP<B> createB(const RCP<A> &a)
+  {return B::create(a);}
+\end{verbatim}}
+\end{listing}
+
+The class {}\texttt{A} in Listing {}\ref{listing:B_owns_A_decl} may
+involve some complex initialization or it may only be an abstract
+interface with multiple subclasses.  In either case, it may make sense
+to provide a factory function (or a set of such functions) that
+creates and initializes a {}\texttt{B} object for different complex
+initializations of {}\texttt{A} objects as shown in Listing
+{}\ref{listing:createBFactory}.
+
+\begin{listing}: A factory function that creates a B object wrapping a complex A object \\
+\label{listing:createBFactory}
+{\small\begin{verbatim}
+  RCP<B> createBFactory(...)
+  {
+     // Complex initialization of A
+     RCP<A> a;
+     ...
+     // Wrapped B
+     return createB(a);
+  }
+\end{verbatim}}
+\end{listing}
+
+Up to now, this is pretty standard code.  The client would typically
+hold an {}\texttt{RCP<B>} object to the {}\texttt{B} object and would
+manage the lifetime of the {}\texttt{A} object implicity wrapped in
+the {}\texttt{B} object.
+
+However, now consider a rare use case where a client may only want to
+deal directy with the {}\texttt{A} object but still maintain the
+{}\texttt{B} object for use later.  There are a few approaches that
+one could try to implement this inversion of RCP ownership but there
+is a way to enable this that is 100\% bullet-proof without having to
+change the existing {}\texttt{A} or {}\texttt{B} classes or any other
+code at all.  The way to do this is to use the
+{}\texttt{rcpWithEmbeddedObj(...)} function as shown in Listing
+{}\ref{listing:A_owns_B_owns_A}.
+
+\begin{listing}: A factory function that returns a A object
+embedded with a B object \\
+\label{listing:A_owns_B_owns_A}
+{\small\begin{verbatim}
+  RCP<A> createAFactory(...)
+  {
+    RCP<B> b = createBFactory(...);
+    return rcpWithEmbeddedObj(b->getA().getRawPtr(),
+      std::make_pair(b->getA(), b), false);
+  }
+\end{verbatim}}
+\end{listing}
+
+Without going into a lot of detail, what the code in Listing
+{}\ref{listing:A_owns_B_owns_A} accomplishes is that it defines a new
+{}\texttt{RCP<A>} object with a new {}\texttt{RCPNode} object that
+uses the other existing {}\texttt{RCP<A>} and {}\texttt{RCP<B>}
+objects to define ownership and ensure that the underlying
+{}\texttt{A} object and {}\texttt{B} do not go away until the last
+{}\texttt{RCP<A>} object copied from the object returned by the
+function {}\texttt{createAFactory(...)} has gone away.  The reason
+that {}\texttt{false} is passed into the
+{}\texttt{rcpWithEmbeddedObj(...)} is because it is the embedded
+objects {}\texttt{RCP<A>} and {}\texttt{RCP<B>} that define the
+deallocation and not the default behavior which calls
+{}\texttt{delete}.
+
+Given this data-structure, another piece of code can then extract the
+underlying {}\texttt{RCP<B>} object as shown in Listing
+{}\ref{listing:Extract_B_from_A}.
+
+\begin{listing}: A function that extracts the B object from the A object \\
+\label{listing:Extract_B_from_A}
+{\small\begin{verbatim}
+  RCP<B> extractBFromA(const RCP<A> &a)
+  {
+    typedef std::pair<RCP<A>, RCP<B> > ABPair_t;
+    ABPair_t abPair = getEmbeddedObj<A, ABPair_t>(a);
+    return abPair->second;
+  }
+\end{verbatim}}
+\end{listing}
+
+That is all there is to it.  Now this is not the sort of thing that
+you want to expose to general clients but it can be very handy to have
+this type of flexibility when implementing the guts of your library
+code.  Note that the function {}\texttt{createAFactory(...)} in
+Listing {}\ref{listing:A_owns_B_owns_A} has to expose a raw C++
+pointer but it does so only in a single statement and therefore is not
+to serious a violation of the idioms defined in this paper.  This
+would be consider specialized low level code and is not recommended
+unless it is absolutely necessary.
+
+However, The example shown above just shows the flexibility of these
+memory management classes and what some of the possibilities if you
+understand the underlying reference-counting machinary a little.
 
 
 %
