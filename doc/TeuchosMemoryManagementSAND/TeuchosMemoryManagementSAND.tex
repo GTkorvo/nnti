@@ -2053,99 +2053,139 @@ listing can be found in the Doxygen documentation).
 \begin{listing}: Class and helper function listing for RCP \\
 \label{listing:RCP}
 {\small\begin{verbatim}
-template<class T>
-class RCP {
-public:
-  typedef T element_type;
-  RCP(ENull null_arg = null);
-  explicit RCP(T* p, bool has_ownership = false);
-  template<class Dealloc_T> RCP(T* p, Dealloc_T dealloc, bool has_ownership);
-  RCP(const RCP<T>& r_ptr);
-  template<class T2> RCP(const RCP<T2>& r_ptr);
-  ~RCP();
-  RCP<T>& operator=(const RCP<T>& r_ptr);
-  bool is_null() const;
-  T* operator->() const;
-  T& operator*() const;
-  T* get() const;
-  T* getRawPtr() const;
-  Ptr<T> ptr() const;
-  ERCPStrength strength() const;
-  bool is_valid_ptr() const;
-  int strong_count() const;
-  int weak_count() const;
-  int total_count() const;
-  void set_has_ownership();
-  bool has_ownership() const;
-  Ptr<T> release();
-  RCP<T> create_weak() const;
-  RCP<T> create_strong() const;
-  template<class T2> bool shares_resource(const RCP<T2>& r_ptr) const;
-  const RCP<T>& assert_not_null() const;
-  const RCP<T>& assert_valid_ptr() const;
-private:
-  T *ptr_;
-  RCPNode node_;
-  ...
-};
-
-template<class T>  RCP<T> rcp(T* p, bool owns_mem = true);
-template<class T, class Dealloc_T>
+  template<class T>
+  class RCP {
+  public:
+  
+    // General functions
+    RCP(ENull null_arg = null);
+    explicit RCP(T* p, bool has_ownership = false);
+    template<class Dealloc_T> RCP(T* p, Dealloc_T dealloc, bool has_ownership);
+    RCP(const RCP<T>& r_ptr);
+    template<class T2> RCP(const RCP<T2>& r_ptr);
+    ~RCP();
+    RCP<T>& operator=(const RCP<T>& r_ptr);
+    bool is_null() const;
+    T* operator->() const;
+    T& operator*() const;
+    T* getRawPtr() const;
+    Ptr<T> ptr() const;
+  
+    // Other shared_ptr compariblity functions
+    ...
+  
+    // Reference counting 
+    ERCPStrength strength() const;
+    bool is_valid_ptr() const;
+    int strong_count() const;
+    int weak_count() const;
+    int total_count() const;
+    void set_has_ownership();
+    bool has_ownership() const;
+    Ptr<T> release();
+    RCP<T> create_weak() const;
+    RCP<T> create_strong() const;
+    template<class T2> bool shares_resource(const RCP<T2>& r_ptr) const;
+    const RCP<T>& assert_not_null() const;
+    const RCP<T>& assert_valid_ptr() const;
+  
+  private:
+    T *ptr_;
+    RCPNode node_;
+    ...
+  };
+  
+  template<class T>  RCP<T> rcp(T* p, bool owns_mem = true);
+  
+  template<class T, class Dealloc_T>
   RCP<T> rcp(T* p, Dealloc_T dealloc, bool owns_mem);
-template<class T> RCP<T> rcpFromRef(T& r);
-template<class T, class Embedded>
+  
+  template<class T> RCP<T> rcpFromRef(T& r);
+  
+  template<class T, class Embedded>
   RCP<T> rcpWithEmbeddedObjPreDestroy(T* p, const Embedded &embedded,
     bool owns_mem = true);
-template<class T, class Embedded>
+  
+  template<class T, class Embedded>
   RCP<T> rcpWithEmbeddedObjPostDestroy(T* p, const Embedded &embedded,
     bool owns_mem = true);
-template<class T, class Embedded>
-  RCP<T> rcpWithEmbeddedObj(T* p, const Embedded &embedded, bool owns_mem = true);
-template<class T> bool is_null(const RCP<T> &p);
-template<class T> bool operator==(const RCP<T> &p, ENull);
-template<class T> bool operator!=(const RCP<T> &p, ENull);
-template<class T1, class T2>
+  
+  template<class T, class Embedded>
+  RCP<T> rcpWithEmbeddedObj(T* p, const Embedded &embedded, bool owns_mem=true);
+  
+  template<class T> bool is_null(const RCP<T> &p);
+  
+  template<class T> bool operator==(const RCP<T> &p, ENull);
+  
+  template<class T> bool operator!=(const RCP<T> &p, ENull);
+  
+  template<class T1, class T2>
   bool operator==(const RCP<T1> &p1, const RCP<T2> &p2);
-template<class T1, class T2>
+  
+  template<class T1, class T2>
   bool operator!=(const RCP<T1> &p1, const RCP<T2> &p2);
-template<class T2, class T1> RCP<T2> rcp_implicit_cast(const RCP<T1>& p1);
-template<class T2, class T1> RCP<T2> rcp_static_cast(const RCP<T1>& p1);
-template<class T2, class T1> RCP<T2> rcp_const_cast(const RCP<T1>& p1);
-template<class T2, class T1>
+  
+  template<class T2, class T1> RCP<T2> rcp_implicit_cast(const RCP<T1>& p1);
+  
+  template<class T2, class T1> RCP<T2> rcp_static_cast(const RCP<T1>& p1);
+  
+  template<class T2, class T1> RCP<T2> rcp_const_cast(const RCP<T1>& p1);
+  
+  template<class T2, class T1>
   RCP<T2> rcp_dynamic_cast(const RCP<T1>& p1, bool throw_on_fail = false);
-template<class T1, class T2>
+  
+  template<class T1, class T2>
   void set_extra_data(const T1 &extra_data, const std::string& name,
     const Ptr<RCP<T2> > &p, EPrePostDestruction destroy_when = POST_DESTROY,
     bool force_unique = true);
-template<class T1, class T2> 
+  
+  template<class T1, class T2> 
   const T1& get_extra_data(const RCP<T2>& p, const std::string& name);
-template<class T1, class T2>
+  
+  template<class T1, class T2>
   T1& get_nonconst_extra_data(RCP<T2>& p, const std::string& name);
-template<class T1, class T2>
+  
+  template<class T1, class T2>
   Ptr<const T1> get_optional_extra_data(const RCP<T2>& p, const std::string& name);
-template<class T1, class T2>
+  
+  template<class T1, class T2>
   Ptr<T1> get_optional_nonconst_extra_data(RCP<T2>& p, const std::string& name);
-template<class Dealloc_T, class T> const Dealloc_T& get_dealloc(const RCP<T>& p);
-template<class Dealloc_T, class T> Dealloc_T& get_nonconst_dealloc(const RCP<T>& p);
-template<class Dealloc_T, class T>
+  
+  template<class Dealloc_T, class T>
+  const Dealloc_T& get_dealloc(const RCP<T>& p);
+  
+  template<class Dealloc_T, class T>
+  Dealloc_T& get_nonconst_dealloc(const RCP<T>& p);
+  
+  template<class Dealloc_T, class T>
   Ptr<const Dealloc_T> get_optional_dealloc(const RCP<T>& p);
-template<class Dealloc_T, class T> 
+  
+  template<class Dealloc_T, class T> 
   Ptr<Dealloc_T> get_optional_nonconst_dealloc(const RCP<T>& p);
-template<class TOrig, class Embedded, class T> 
+  
+  template<class TOrig, class Embedded, class T> 
   const Embedded& getEmbeddedObj(const RCP<T>& p);
-template<class TOrig, class Embedded, class T>
+  
+  template<class TOrig, class Embedded, class T>
   Embedded& getNonconstEmbeddedObj(const RCP<T>& p);
-template<class TOrig, class Embedded, class T>
+  
+  template<class TOrig, class Embedded, class T>
   Ptr<const Embedded> getOptionalEmbeddedObj( const RCP<T>& p );
-template<class TOrig, class Embedded, class T>
+  
+  template<class TOrig, class Embedded, class T>
   Ptr<Embedded> getOptionalNonconstEmbeddedObj( const RCP<T>& p );
+
 \end{verbatim}}
 \end{listing}
 
 Again, basic usage of the {}\texttt{RCP} class is described in
-{}\cite{RefCountPtrBeginnersGuide}.  Some of the more advanced
-functionality for {}\texttt{RCP} is described in later chapters that
-is not described in {}\cite{RefCountPtrBeginnersGuide}.
+{}\cite{RefCountPtrBeginnersGuide}.  The basic idiom of smart pointers and
+reference counting is fairly well known and is well documented in the
+literature and there is a good overivew in {}\cite{RefCountPtrBeginnersGuide}
+so basic information will not be repleaded here.  However, some of the more
+advanced functionality for {}\texttt{RCP} is described in later chapters that
+is not described in {}\cite{RefCountPtrBeginnersGuide} or an any of the
+existing C++ literature.
 
 
 %
@@ -2336,7 +2376,7 @@ Table {}\ref{tbl:common-array-type-members} for common array members.)
     // Deep copy  
     void assign(const ArrayView<const T>& array) const;
 
-    // Common array members (see above) and other functions
+    // Common array class members (see above) and other functions
     ...
 
   private:
@@ -2346,22 +2386,31 @@ Table {}\ref{tbl:common-array-type-members} for common array members.)
   };
 
   // Non-member helpers
+
   template<class T>
   ArrayView<T> arrayView( T* p, typename ArrayView<T>::size_type size );
+
   template<class T>
   ArrayView<T> arrayViewFromVector( std::vector<T>& vec );
+
   template<class T>
   ArrayView<const T> arrayViewFromVector( const std::vector<T>& vec );
+
   template<class T>
   std::vector<T> createVector( const ArrayView<T> &av );
+
   template<class T>
   std::vector<T> createVector( const ArrayView<const T> &av );
+
   template<class T>
   bool is_null( const ArrayView<T> &av );
+
   template<class T>
   bool nonnull( const ArrayView<T> &av );
+
   template<class T>
   std::ostream& operator<<( std::ostream& out, const ArrayView<T>& av );
+
   template<class T2, class T1>
   ArrayView<T2> av_reinterpret_cast(const ArrayView<T1>& p1);
 
@@ -3754,6 +3803,14 @@ policy objects ???
 
 ToDo: Scavenge code from the more detailed unfinished RCP report that
 gives some examples of custom deallocator policies.
+
+
+%
+{}\subsubsection{Embedded objects}
+\label{sec:embedded-objecs}
+%
+
+ToDo: Fill in.
 
 
 %
