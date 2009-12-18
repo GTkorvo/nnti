@@ -2040,18 +2040,112 @@ smart pointer classes.  In particular, {}\texttt{RCP} has built in
 support for the detection of circular references (Section ???), has
 built in support for resolving circular references with built-in weak
 pointers (Section ???), and other strong debug runtime checking such
-as detecting multiple non-related {}\texttt{RCP} owning the same
-objects and others.
+as detecting multiple non-related {}\texttt{RCP} objects owning the
+same reference-counted objects and other types of checks.
 
 Because the class {}\texttt{RCP} is described in
 {}\cite{RefCountPtrBeginnersGuide} and is so similar in use to
 {}\texttt{boost::shared\_ptr}, this class will not be described in too
-much detail here.
+much detail here.  However, a fairly complete definition of the class
+{}\texttt{RCP} is shown in Listing {}\ref{listing:RCP} (the full
+listing can be found in the Doxygen documentation).
 
-A fairly complete definition of the class {}\texttt{RCP} is shown in
-Listing ???.
+\begin{listing}: Class and helper function listing for RCP \\
+\label{listing:RCP}
+{\small\begin{verbatim}
+template<class T>
+class RCP {
+public:
+  typedef T element_type;
+  RCP(ENull null_arg = null);
+  explicit RCP(T* p, bool has_ownership = false);
+  template<class Dealloc_T> RCP(T* p, Dealloc_T dealloc, bool has_ownership);
+  RCP(const RCP<T>& r_ptr);
+  template<class T2> RCP(const RCP<T2>& r_ptr);
+  ~RCP();
+  RCP<T>& operator=(const RCP<T>& r_ptr);
+  bool is_null() const;
+  T* operator->() const;
+  T& operator*() const;
+  T* get() const;
+  T* getRawPtr() const;
+  Ptr<T> ptr() const;
+  ERCPStrength strength() const;
+  bool is_valid_ptr() const;
+  int strong_count() const;
+  int weak_count() const;
+  int total_count() const;
+  void set_has_ownership();
+  bool has_ownership() const;
+  Ptr<T> release();
+  RCP<T> create_weak() const;
+  RCP<T> create_strong() const;
+  template<class T2> bool shares_resource(const RCP<T2>& r_ptr) const;
+  const RCP<T>& assert_not_null() const;
+  const RCP<T>& assert_valid_ptr() const;
+private:
+  T *ptr_;
+  RCPNode node_;
+  ...
+};
 
-ToDo: Show listing of RCP.
+template<class T>  RCP<T> rcp(T* p, bool owns_mem = true);
+template<class T, class Dealloc_T>
+  RCP<T> rcp(T* p, Dealloc_T dealloc, bool owns_mem);
+template<class T> RCP<T> rcpFromRef(T& r);
+template<class T, class Embedded>
+  RCP<T> rcpWithEmbeddedObjPreDestroy(T* p, const Embedded &embedded,
+    bool owns_mem = true);
+template<class T, class Embedded>
+  RCP<T> rcpWithEmbeddedObjPostDestroy(T* p, const Embedded &embedded,
+    bool owns_mem = true);
+template<class T, class Embedded>
+  RCP<T> rcpWithEmbeddedObj(T* p, const Embedded &embedded, bool owns_mem = true);
+template<class T> bool is_null(const RCP<T> &p);
+template<class T> bool operator==(const RCP<T> &p, ENull);
+template<class T> bool operator!=(const RCP<T> &p, ENull);
+template<class T1, class T2>
+  bool operator==(const RCP<T1> &p1, const RCP<T2> &p2);
+template<class T1, class T2>
+  bool operator!=(const RCP<T1> &p1, const RCP<T2> &p2);
+template<class T2, class T1> RCP<T2> rcp_implicit_cast(const RCP<T1>& p1);
+template<class T2, class T1> RCP<T2> rcp_static_cast(const RCP<T1>& p1);
+template<class T2, class T1> RCP<T2> rcp_const_cast(const RCP<T1>& p1);
+template<class T2, class T1>
+  RCP<T2> rcp_dynamic_cast(const RCP<T1>& p1, bool throw_on_fail = false);
+template<class T1, class T2>
+  void set_extra_data(const T1 &extra_data, const std::string& name,
+    const Ptr<RCP<T2> > &p, EPrePostDestruction destroy_when = POST_DESTROY,
+    bool force_unique = true);
+template<class T1, class T2> 
+  const T1& get_extra_data(const RCP<T2>& p, const std::string& name);
+template<class T1, class T2>
+  T1& get_nonconst_extra_data(RCP<T2>& p, const std::string& name);
+template<class T1, class T2>
+  Ptr<const T1> get_optional_extra_data(const RCP<T2>& p, const std::string& name);
+template<class T1, class T2>
+  Ptr<T1> get_optional_nonconst_extra_data(RCP<T2>& p, const std::string& name);
+template<class Dealloc_T, class T> const Dealloc_T& get_dealloc(const RCP<T>& p);
+template<class Dealloc_T, class T> Dealloc_T& get_nonconst_dealloc(const RCP<T>& p);
+template<class Dealloc_T, class T>
+  Ptr<const Dealloc_T> get_optional_dealloc(const RCP<T>& p);
+template<class Dealloc_T, class T> 
+  Ptr<Dealloc_T> get_optional_nonconst_dealloc(const RCP<T>& p);
+template<class TOrig, class Embedded, class T> 
+  const Embedded& getEmbeddedObj(const RCP<T>& p);
+template<class TOrig, class Embedded, class T>
+  Embedded& getNonconstEmbeddedObj(const RCP<T>& p);
+template<class TOrig, class Embedded, class T>
+  Ptr<const Embedded> getOptionalEmbeddedObj( const RCP<T>& p );
+template<class TOrig, class Embedded, class T>
+  Ptr<Embedded> getOptionalNonconstEmbeddedObj( const RCP<T>& p );
+\end{verbatim}}
+\end{listing}
+
+Again, basic usage of the {}\texttt{RCP} class is described in
+{}\cite{RefCountPtrBeginnersGuide}.  Some of the more advanced
+functionality for {}\texttt{RCP} is described in later chapters that
+is not described in {}\cite{RefCountPtrBeginnersGuide}.
 
 
 %
@@ -2371,11 +2465,6 @@ Listing {}\ref{listing:ArrayRCP}.
 
 \end{verbatim}}
 \end{listing}
-
-
-
-
-
 
 ToDo: Fill this in!
 
@@ -3359,7 +3448,7 @@ disabled.
 
 
 {\bsinglespace
-\begin{figure}[p]
+\begin{figure}
 \begin{center}
 %\fbox{
 \includegraphics*[angle=270,scale=0.65]{TeuchosPtrConversions}
@@ -3374,7 +3463,7 @@ types.}
 
 
 {\bsinglespace
-\begin{figure}[p]
+\begin{figure}
 \begin{center}
 %\fbox{
 \includegraphics*[angle=270,scale=0.65
@@ -3458,7 +3547,7 @@ reference-counting approach being used.  Basic reference counting with
 smart pointers is well established in the C++ literature [???] but a
 basic overview and specific details about the approach used in the
 Teuchos memory management classes is appropriate to describe here.  Of
-equal importance is to describe how the reference counting
+equal importance is to describe how the reference-counting
 infrastructure can be used to address some boundary cases that can be
 used to help solve some fundamental problems with reference counting.
 
@@ -3918,6 +4007,7 @@ consider the two classes in Listing {}\ref{listing:B_owns_A_decl}.
     static RCP<B> create(const RCP<A> &a)
       {return rcp(new B(a)); }
     RCP<A> getA() { return a_; }
+    void unsetA() { a_ = null; }
     ...
   private:
     RCP<A> a_;
@@ -3991,7 +4081,11 @@ that {}\texttt{false} is passed into the
 {}\texttt{rcpWithEmbeddedObj(...)} is because it is the embedded
 objects {}\texttt{RCP<A>} and {}\texttt{RCP<B>} that define the
 deallocation and not the default behavior which calls
-{}\texttt{delete}.
+{}\texttt{delete}.  The reason that both {}\texttt{RCP<A>} and
+{}\texttt{RCP<B>} are passed as an embedded object (stored in an
+{}\texttt{std::pair} object) is that we need to make sure the
+{}\texttt{A} object does not get deleted in case some client calls the
+{}\texttt{B::unsetA()} function.
 
 Given this data-structure, another piece of code can then extract the
 underlying {}\texttt{RCP<B>} object as shown in Listing
@@ -4038,60 +4132,128 @@ implicit conversions.
 {}\section{Conclusions}
 %
 
-While the idioms described in this document as shown in Tables ???,
-??? ... ??? may look complex, one has to consider that it is not the
-idioms that are complex but the essential nature of different data
-types and object relationships that are complex.  Consider that in
-Java and Python that it is impossible to distinguish between
-persisting and non-persisting associations because every user-defined
-object is always managed through an indrect reference handed by the
-garbage-collected language.  This causes big problems when it comes
-time to try to understand a complex program written in these
-languages.  For example, consider the agony that the author goes
-through in [Feathers ???, Sections ??? and ???] in trying to determine
-the nature of objects as to whether they are actually embedded in each
-other (persisting) or are just passed to each other (non-persisting).
-For instance, in [Feathers, Section ???], the author trys to determine
-if the passed in object is remembered or not and is going to be
-changed or not.  Python has no user-definable concept of
-{}\texttt{const} but the Python language itself understands the need
-for {}\texttt{const} by having built-in immutable data-types like
-strings and tuples.  The point is that, the following five questions
-must be answered in every context that you have in your program (no
-matter what language it is written):
+While the idioms described in this document (outlined in Section
+{}\ref{sec:idioms}) may look complex, one has to consider that it is
+not really the idioms that are complex but the essential attributes of
+object relationships that are complex.  Frederick Brooks refers to
+this as {}\textit{essential complexity} as opposed to
+{}\textit{accedential complexity} {}\cite{MythicalManMonth95}.
+{}\textit{Accedential complexity} in programming refers to complexity
+resulting from the details of the programming language or environment
+which are not directly related to solving the problem at hand.
+Accedental complexity has largely been removed as higher level
+langages have been developed {}\cite[Chapter 16]{MythicalManMonth95}.
+However, raw pointers in C and C++ and manual resource management
+(when that is not the main focus of the program) are definitely a
+lingering category of accedental
+complexity\footnote{\texttt{http://discuss.joelonsoftware.com/default.asp?joel.3.278613.51}}.
+Alternatively, {}\textit{essential complexity} exists because of the
+nature of the problem at hand and no programming lanague will remove
+it (but we can use object-oriented and other design approaches to
+partition and abstract this essential complexity such that we can
+write and maintain large-scale programs).
+
+What the Teuchos Memory Management classes do is that they remove the
+accedental complexity of using raw pointers and manual resource
+management and instead they more directly address the essential
+complexity of writing programs in making important concepts explicit
+that are implicit in most lanaguages (including raw C++).  Dealing
+with the nature of relationships between objects is essential
+complexity and for every relationship between two classes (for example
+in a UML class diagram {}\cite{UMLDistilledThirdEdition04}) one must
+answer the essential questions:
 
 \begin{itemize}
 
-{}\item Is it a single object or an array of objects?
+{}\item\textit{What is the multiplicity of the relationship?}  (i.e.\
+is there just one object or are there more than one object at the
+other end of the association?).  In UML class diagrams, a singlular
+multiplicity relationship is represented using a {}\texttt{1} and
+multiplicity greater than one is represented using {}\texttt{1..*}
+(See Figure ??? for examples).
 
-{}\item Does the object or array of objects use value
-semantics\footnote{The distiction between value semantics and
-reference semantics is really only an issue in C++ since all
-user-defiend data-types in languages like Java and Python use
-reference semantics.} or reference semantics?
+{}\item\textit{Is the object optional or required?}  In a UML class
+diagram, an optional object is represented using {}\texttt{0..1} while
+a required object is represented as {}\texttt{1} (see Figure ??? for
+examples).
 
-{}\item Is the object or array of objects changeable or non-changeable
-(i.e.\ const or non-const)?
+{}\item\textit{Is the object chanageable or non-changable?}  In UML
+class diagrams, a non-changable object is given the attribute
+{}\texttt{\{readOnly\}}.  In UML, by default, all objects at the end
+of an assoication are assumed chanageble.
 
-{}\item Is this establishing a persisting or non-persisting
-association?
-
-{}\item Is the object or array of objects optional or required?
+{}\item\textit{Is the association persisting or non-persisting?}  In a
+UML class diagram, non-persisting associations are refered to as
+``dependency associations'' and can be given the keyword
+{}\texttt{$\ll$parameter$\gg$} and are represented with a dotted line.
+Persisting assocations are refered to as ``relationships'' and are
+represented as solid lines (see Figure ??? for examples)?
 
 \end{itemize}
 
-The goal of the idioms defined in this paper is to change the above
-from implicit concepts to explicit concepts directly stated in code
-(see ``Making Implicit Concepts Explicit'' in {}\cite[Chapter
-9]{DomainDrivenDesign}).  The five questions stated above are part of
-the essential complexity that will be present in every program you
-write no mater what high-level programming language that is used
-{}\cite{MythicalManMonth95, CodeComplete2nd04}.  The issue is that
-most languages lack the expressiveness to make these concepts
-explicit.  The Teuchos memory management classes and the associated
-idioms described in this paper provide a means to make these concepts
-explicit in C++ in a way that is not possible in any other widely used
-high-level programming language, period.
+Note that while UML is an expressive language that allows you to
+excplicitly represent the above essential information, most
+programming languages can not (at least not the raw language).
+Consider that in Java and Python that it is impossible to distinguish
+between persisting and non-persisting associations because every
+user-defined object is always managed through an indrect reference
+handed by the garbage-collected language.  This causes big problems
+when it comes time to try to understand a complex program written in
+these languages.  For example, consider the agony that Feathers goes
+through in many refactorings described in [Feathers ???, Sections ??? 
+and ???] in trying to determine the nature of objects as to whether
+they are actually embedded in each other (persisting) or are just
+passed to each other (non-persisting).  For instance, in [Feathers,
+Section ???], the author trys to determine if the passed in object is
+remembered or not and is going to be changed or not.  Python has no
+user-definable concept of {}\texttt{const} but the Python language
+itself understands the need for {}\texttt{const} by having built-in
+immutable data-types like strings and tuples.
+
+One of the goals of the idioms defined in this paper is to change the
+above essential complexities from implicit concepts to explicit
+concepts directly stated in code (see ``Making Implicit Concepts
+Explicit'' in {}\cite[Chapter 9]{DomainDrivenDesign}).  The essential
+attributes of object relationships (i.e.\ multiplicity, persistent
+vs.\ non-persistent, changable vs.\ non-changeable) are present in
+every program no mater what high-level programming language is used
+{}\cite{MythicalManMonth95, CodeComplete2nd04,
+WorkingEffectivelyWithLegacyCode05}.  The issue is that most
+executable languages (not withstanding executable XML {}\cite[Chapter
+1]{UMLDistilledThirdEdition04}) lack the expressiveness to make these
+concepts explicit.  The Teuchos memory management classes and the
+associated idioms described in this paper provide a means to make many
+of these essential concepts explicit in C++ in a way that is not
+possible in any other widely used high-level programming language,
+period.  One (of many) of the remaining types of accedental complexity
+in C++ is the distiction between value semantics verses reference
+semantics.  In Java and Python, all user-defined types use reference
+semantics but in C++ we can take advantage of objects with value
+semantics which gives us more efficient code and more control in C++
+than what is possible in Java or Python.  However, this extra control
+could be classified as accedential complexity (which we tolerate for
+the sake of added control and improved performance).
+
+Using reference-counting in Teuchos Memory Management classes allows
+you to remove unecessary constraints in the use of objects in removing
+arbitrary lifetime ordering constraints which are a type of unecessary
+coupling {}\cite{CodeComplete2nd04}.  The code you write with these
+classes will be more likely to be correct on first writing, will be
+less likely to contain silent (but deadly) memory usage errors, and
+will be much more robust to later refactoring and maintainance.  These
+classes and idioms largely address the technical issues in resolving
+the fragile built-in C++ memory management model (with the exception
+of circular references which has no easy solution but can be managed
+as discussed).  All that remains is to teach these classes and idioms
+and expand their usage in C++ codes.  The long-term viability of C++
+as a usageable and productive language depends on it.  Otherwise, if
+C++ is no safer than C, then why bother with C++?  C is smaller and
+easier to learn and since most programmers don't know object-oriention
+all that well anyway then what are they really getting out of C++
+other than more complexity?  C++ zelots will argue this point but the
+reality is that C++ is becoming less popular while the popularity of C
+is remaining failry stable over the last 10 years.
+
 
 
 % ---------------------------------------------------------------------- %
