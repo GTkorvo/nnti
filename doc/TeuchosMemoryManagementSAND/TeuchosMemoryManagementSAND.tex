@@ -630,7 +630,7 @@ Note that the upcoming C++09 standard as it is currently defined (at
 least the time of this writing) will do nothing to fix the majority of
 these nonsensical raw C++ pointer gotchas because to do so would
 destroy backward compatibility of many millions of lines of existing
-C++ code.  Because of the need for backward compatibility, we can not
+C++ code.  Because of the need for backward compatibility, we cannot
 rely on any future C++ standard to fix the basic problems with raw C++
 pointers.  Instead, the meat of this paper advocates using new C++
 user-defined types to create a new safer type-system in C++ and
@@ -769,7 +769,7 @@ basic array function arguments, it has several serious problems in
 both usability and performance in some important use cases.  The
 primary disadvantages of using {}\texttt{std::vector} as general array
 arguments to functions is a) there is no flexibility in how the arrays
-are allocated, and b) one can not pass sub-views of larger arrays of
+are allocated, and b) one cannot pass sub-views of larger arrays of
 data.
 
 To illustrate the problems with using {}\texttt{std::vector} for all
@@ -1752,7 +1752,7 @@ exception objects will have very good error messages embedded in them.
 What is important to understand is that all of these memory management
 classes must be developed together with knowledge of each other's
 internal implementations in order to provide for solid debug-mode
-runtime checking.  For example, in general, you can not mix in other
+runtime checking.  For example, in general, you cannot mix in other
 memory management classes like {}\texttt{boost::shared\_ptr} (i.e.\
 {}\texttt{std::shared\_ptr} in C++09) and {}\texttt{std::vector} and
 provide for the level of runtime checking that is supported by the
@@ -2093,13 +2093,13 @@ listing can be found in the Doxygen documentation).
     RCPNode node_;
     ...
   };
-  
+
+  // General non-member constructor functions
   template<class T>  RCP<T> rcp(T* p, bool owns_mem = true);
-  
-  template<class T, class Dealloc_T>
-  RCP<T> rcp(T* p, Dealloc_T dealloc, bool owns_mem);
-  
   template<class T> RCP<T> rcpFromRef(T& r);
+
+  // Deallocation policy functions (see Section ???)
+  ...
   
   template<class T, class Embedded>
   RCP<T> rcpWithEmbeddedObjPreDestroy(T* p, const Embedded &embedded,
@@ -2149,18 +2149,6 @@ listing can be found in the Doxygen documentation).
   
   template<class T1, class T2>
   Ptr<T1> get_optional_nonconst_extra_data(RCP<T2>& p, const std::string& name);
-  
-  template<class Dealloc_T, class T>
-  const Dealloc_T& get_dealloc(const RCP<T>& p);
-  
-  template<class Dealloc_T, class T>
-  Dealloc_T& get_nonconst_dealloc(const RCP<T>& p);
-  
-  template<class Dealloc_T, class T>
-  Ptr<const Dealloc_T> get_optional_dealloc(const RCP<T>& p);
-  
-  template<class Dealloc_T, class T> 
-  Ptr<Dealloc_T> get_optional_nonconst_dealloc(const RCP<T>& p);
   
   template<class TOrig, class Embedded, class T> 
   const Embedded& getEmbeddedObj(const RCP<T>& p);
@@ -2905,7 +2893,7 @@ object can only be dynamically allocated and returned wrapped in an
 The reason for this is that, as described in Section ???, when an
 object is dynamically allocated in managed in an {}\texttt{RCP}
 object, a number of important debug-mode runtime checks can be
-performed which can not be when the object is first allocated on the
+performed which cannot be when the object is first allocated on the
 stack or managed as a static object.
 
 
@@ -3180,7 +3168,7 @@ optional.  If such an argument is required, it is specified as
 
 An array of value objects is passed as contiguous storage through an
 {}\texttt{ArrayView<S>} or {}\texttt{ArrayView<const S>} object.  An
-array of reference objects, however, can not be passed in contiguous
+array of reference objects, however, cannot be passed in contiguous
 storage for the objects themselves and instead must be passed as
 contiguous storage of (smart) pointers to the objects using
 {}\texttt{ArrayView<const Ptr<const A> >} for non-persisting
@@ -3984,24 +3972,197 @@ the programmer.
 \label{sec:deallocators}
 %
 
+The most common use of {}\texttt{RCP} is to manage the lifetime of
+objects allocated using operator {}\texttt{new} and deallocated using
+operator {}\texttt{delete} (or {}\texttt{new []} and {}\texttt{delete
+[]} for {}\texttt{ArrayRCP}).  For these use cases, the built-in
+behavior in {}\texttt{RCP} does exactly the right thing for this
+average case.  However, there are situations when one cannot simply
+call {}\texttt{delete} to deallocate an object.  Some examples of
+these situations include:
+
+\begin{enumerate}
+
+{}\item When reference counts for objects are managed by requiring
+clients to explicitly call increment and decrement functions.  This
+situation occurs when using CORBA {}\cite{ref:corba} and COM
+{}\cite{ref:com} for instance.  Such an approach is also presented in
+{}\cite[Item 29]{ref:meyers_1996} in the subsection ``A
+Reference-Counting Base Class''.  In these protocols, deallocation
+occurs automatically behind the scenes when this other reference count
+goes to zero and does not occur through an explicit call to operator
+{}\texttt{delete} as with the default behavior for {}\texttt{RCP}.
+
+{}\item When objects are managed by certain types of object databases.
+In some object databases, an object that is grabbed from the database
+must be explicitly returned to the database in order to allow proper
+object deletion to take place later.
+
+{}\item A different reference-counted pointer class is used to
+initially get access to the managed object.  For example, suppose some
+piece of peer software works with {}\texttt{boost::shared\_ptr} (see
+{}\cite{ref:boost}) referenced-counted objects while the resident
+software works with {}\texttt{RCP} objects.  It then becomes critical
+no object is deleted until all the clients using either of these smart
+pointer types remove their references (i.e.\ destroy their smart
+pointers) to this underlying object.
+
+\end{enumerate}
+
+There are also other situations where one cannot simply assume that
+calling operator {}\texttt{delete} is used to release an object.  The
+bottom line is that in order to be general, one must allow arbitrary
+policies to be used to deallocate an object after clients are finished
+using the object.
+
 Perhaps the key differentating property between a flexible high
 quality reference-counted pointer implementation and a poor
 implementation is the capability to allow the user to define an
-arbitrary deallocator policy object that defines exactly what it means
-to release a reference-counted object (or array of objects).  The
+arbitrary deallocator policy that defines exactly what it means to
+release a reference-counted object (or array of objects).  The
 reference-counted Teuchos classes {}\texttt{RCP} and
 {}\texttt{ArrayRCP}, as well as {}\texttt{boost::shared\_ptr} all
 allow the client to specify a user-defined deallocation policy object
-when the first reference-counted object is first constructed.
+when the first reference-counted object is constructed.
 
-ToDo: Show the code specifying the deallocator policy template
-interface.
+The code associated with customized deallocation policies for
+{}\texttt{RCP} (what are identical for {}\texttt{ArrayRCP}) are shown
+in Listing {}\ref{listing:RCP-dealloc}.
 
-??? Listing showing [a]rcp(...) constructors using template deallocator
-policy objects ???
+\begin{listing}: Decalarations for customized deallocation policies for {}\texttt{RCP} \\
+\label{listing:RCP-dealloc}
+{\small\begin{verbatim}
+  // Default decallocation policy for RCP
+  template<class T>
+  class DeallocDelete
+  {
+  public:
+    typedef T ptr_t;
+    void free( T* ptr ) { if(ptr) delete ptr; }
+  };
 
-ToDo: Scavenge code from the more detailed unfinished RCP report that
-gives some examples of custom deallocator policies.
+  template<class T>
+  class RCP {
+  public:
+    ...
+    template<class Dealloc_T>
+    RCP(T* p, Dealloc_T dealloc, bool has_ownership);
+    ...
+  };
+  
+  template<class T, class Dealloc_T>
+  RCP<T> rcp(T* p, Dealloc_T dealloc, bool owns_mem);
+  
+  template<class Dealloc_T, class T>
+  const Dealloc_T& get_dealloc(const RCP<T>& p);
+  
+  template<class Dealloc_T, class T>
+  Dealloc_T& get_nonconst_dealloc(const RCP<T>& p);
+  
+  template<class Dealloc_T, class T>
+  Ptr<const Dealloc_T> get_optional_dealloc(const RCP<T>& p);
+  
+  template<class Dealloc_T, class T> 
+  Ptr<Dealloc_T> get_optional_nonconst_dealloc(const RCP<T>& p);
+
+\end{verbatim}}
+\end{listing}
+
+All deallocator objects must support the typedef member
+{}\texttt{ptr\_t} and function member {}\texttt{free()}.  The concept
+of a template policy interface (also called a function object
+\cite[Section 18.4]{ref:stroustrup_2000}) should be familiar to
+semi-advanced users of the STL (part of the standard C++ library).
+
+To demonstrate the use of a deallocator object, let us assume that we
+must wrap objects of type {}\texttt{A} managed by the the following
+object database
+
+{\small\begin{verbatim}
+  class ObjectADB {
+    ...
+    A& get(int id);
+    void release(int id);
+    ...
+  };
+\end{verbatim}}
+
+In the above object database, objects are accessed and released using
+an id.  How this id is specified and determined is not important here.
+Let us suppose that we want to define an abstract factory that returns
+objects of type {}\texttt{A} wrapped in {}\texttt{RCP<A>} objects
+using a database object of type {}\texttt{ObjectADB} shown above.  For
+this abstract factory, objects of type {}\texttt{A} will be allocated
+from a list of ids given to the factory.  The outline of this abstract
+factory subclass looks like:
+
+{\small\begin{verbatim}
+  class ObjectADBFactory : public AbstractFactory<A> {
+  public:
+    ObjectADBFactory(const RCP<ObjectADB>& db, const ArrayView<int>& ids)
+     : db_(db), ids_(ids) {}
+    RCP<A> create() { ... };  // Overridden from AbstractFactory
+  private:
+    RCP<ObjectjADB> db_;
+    Array<int> ids_;
+  };
+\end{verbatim}}
+
+The above abstract factory subclass {}\texttt{ObjectADBFactory}
+inherits from a generic {}\texttt{AbstractFactory} base class that
+defines a pure virtual method {}\texttt{create()}.  In order to
+implement the {}\texttt{create()} function, a deallocator class must
+be defined and used.  For this purpose we define:
+
+{\small\begin{verbatim}
+  class DeallocObjectADB
+  {
+  public:
+    DeallocObjectADB(const RCP<ObjectjADB>& db, int id)
+      : db_(db), id_(id) {}
+    typedef A ptr_t;
+    void free(A* ptr) { db_->release(id_); }
+  private:
+    RCP<ObjectjADB> db_;
+    int id_;
+    DeallocObjectADB(); // not defined and not to be called!
+  };
+\end{verbatim}}
+
+Now we can define the implementation of the {}\texttt{create()}
+function override as:
+
+{\small\begin{verbatim}
+  RCP<A> ObjectADBFactory::create()
+  {
+    TEST_FOR_EXCEPTION(ids_.size()==0, std::runtime_error, "No ids are left!");
+    const int id = ids_.pop();
+    return rcp(&db_->get(id), DeallocObjectADB(db_, id), true);
+  }
+\end{verbatim}}
+
+The following program shows the use of the above factory class:
+
+{\small\begin{verbatim}
+  int main()
+  {
+    // Create the object database and populate it (and save the ids)
+    RCP<ObjectADB> db;
+    Array<int> ids;
+    ...
+    // Create the abstract factory object
+    ObjectADBFactory  ftcy(db, ids());
+    // Create some A objects and use them
+    RCP<A> a_ptr1 = fcty.create();
+    ...
+    return 0;
+  }
+\end{verbatim}}
+
+In the above program, all of the objects of type {}\texttt{A} are
+created and removed seamlessly without the client code that interacts
+with {}\texttt{RCP} and {}\texttt{AbstractFactory} knowing anything
+about what is going on under the hood.
 
 
 %
@@ -4458,7 +4619,7 @@ represented as solid lines (see Figure ??? for examples)?
 
 Note that while UML is an expressive language that allows you to
 explicitly represent the above essential information, most
-programming languages can not (at least not the raw language).
+programming languages cannot (at least not the raw language).
 Consider that in Java and Python that it is impossible to distinguish
 between persisting and non-persisting associations because every
 user-defined object is always managed through an indirect reference
