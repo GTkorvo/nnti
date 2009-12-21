@@ -1859,7 +1859,7 @@ of wrappers around a raw C++ pointer.  Listing {}\ref{listing:Ptr}
 shows what the implementation of {}\texttt{Ptr} looks like in
 optimized mode:
 
-\begin{listing}: Teuchos::Ptr\\
+\begin{listing}: Teuchos::Ptr class\\
 \label{listing:Ptr}
 {\small\begin{verbatim}
   template<class T>
@@ -2100,7 +2100,9 @@ listing can be found in the Doxygen documentation).
 
   // Deallocation policy functions (see Section ???)
   ...
-  
+ 
+  // Conversion functions (see Section ???)
+ 
   template<class T, class Embedded>
   RCP<T> rcpWithEmbeddedObjPreDestroy(T* p, const Embedded &embedded,
     bool owns_mem = true);
@@ -2123,15 +2125,6 @@ listing can be found in the Doxygen documentation).
   
   template<class T1, class T2>
   bool operator!=(const RCP<T1> &p1, const RCP<T2> &p2);
-  
-  template<class T2, class T1> RCP<T2> rcp_implicit_cast(const RCP<T1>& p1);
-  
-  template<class T2, class T1> RCP<T2> rcp_static_cast(const RCP<T1>& p1);
-  
-  template<class T2, class T1> RCP<T2> rcp_const_cast(const RCP<T1>& p1);
-  
-  template<class T2, class T1>
-  RCP<T2> rcp_dynamic_cast(const RCP<T1>& p1, bool throw_on_fail = false);
   
   template<class T1, class T2>
   void set_extra_data(const T1 &extra_data, const std::string& name,
@@ -2325,11 +2318,7 @@ typedefed to the standard C library type {}\texttt{ptrdiff\_t} which
 is always signed and 32 bit or 64 bit which are always 32 bit or 64
 bit machines, respectively.}.  The reasoning for breaking from the
 {}\texttt{std::vector} standard for {}\texttt{size\_type} is described
-in Appendix ???.
-
-ToDo: Add an appendix that gives a more detailed argument for going
-with going with a signed integer instead of an unsigned integer for
-size\_type.  Use the arguments from the Bugzilla bug for this.
+in Appendix {}\ref{sec:unsigned_size_type}.
 
 
 %
@@ -2746,6 +2735,329 @@ ToDo: Fill this in!
 
 
 %
+{}\subsection{Const verses non-const pointers and objects}
+\label{sec:teuchos-const-nonconst-pointer-objects}
+%
+
+The core pointer enacapsulation classes {}\texttt{Ptr},
+{}\texttt{RCP}, {}\texttt{ArrayView} and {}\texttt{ArrayRCP} allow for
+the underlying object (or array of objects) to be const or non-const
+and for the outer pointer type to be const or non-const, just like
+with a regular C++ pointer.  To draw the analogy with raw pointers,
+consider the equivalent declarations of a raw pointer and the pointer
+encapsulation class (using {}\texttt{RCP} as a standin to represent
+all four classes) in Table
+{}\ref{sec:teuchos-const-nonconst-pointer-objects}.
+
+\begin{table}
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\input{RawPointerSmartPointerEquivalencies}
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{sec:teuchos-const-nonconst-pointer-objects}
+Equivalences between raw pointer and smart pointer types for const
+protection.}
+%
+\end{table}
+
+The majority of problems that beginners have with the Teuchos memory
+management classes is relataed to the inability to make the basic
+equivalencies between raw pointers and smart pointers shown in Table
+{}\ref{sec:teuchos-const-nonconst-pointer-objects} (see Section for
+specific examples).  It is crtical that the programmer recognize this
+equivalence with raw pointers because it impacts many things
+especially implicit type conversions to satisfy function calls (again
+see Section ???).
+
+
+%
+{}\subsection{Conversions}
+\label{sec:conversions}
+%
+
+Type conversions exist both for a single smart pointer type for the
+embedded type argument (e.g.\ {}\texttt{RCP<T>} implicitly converts to
+{}\texttt{RCP<const T>}) and also between different smart pointer
+types (e.g.\ {}\texttt{Array} implicitly converts to
+{}\texttt{ArrayView}).  There are implicit conversions and explicit
+conversions.  These two types of converions are described in the
+following two sections.
+
+%
+{}\subsubsection{Implicit and explicit raw-pointer like type conversions}
+\label{sec:raw-pointer-like-type-conversions}
+%
+
+The core Teuchos memory management types {}\texttt{Ptr},
+{}\texttt{RCP}, {}\texttt{ArrayView} and {}\texttt{ArrayRCP} allow all
+of the reasonable implicit and explicit type conversions that are
+allowed by raw C++ pointers.  C++ defines implicit convers for raw
+pointers from non-const to const and from derived to base type.  Table
+??? shows what implicit and explicit conversions are supported for the
+four core memory management types.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|c|c|c|c|}
+%
+\multicolumn{5}{l}{\textbf{Implicit and explicit conversions supported}} \\
+%
+\hline
+%
+Operation
+& \texttt{Ptr<T>}
+& \texttt{RCP<T>}
+& \texttt{ArrayView<T>}
+& \texttt{ArrayRCP<T>} \\
+%
+\hline
+\hline
+%
+Implicit conv derived to base
+& x
+& x
+& 
+&  \\
+%
+\hline
+%
+Implicit conv non-const to const
+& x
+& x
+& x
+& x \\
+%
+\hline
+%
+{}\texttt{const\_cast}
+& x
+& x
+& x
+& x \\
+%
+\hline
+%
+{}\texttt{static\_cast}
+& x
+& x
+& 
+&  \\
+%
+\hline
+%
+{}\texttt{reinterpret\_cast}
+& 
+& 
+& x
+& x \\
+%
+\hline
+%
+{}\texttt{dynamic\_cast}
+& x
+& x 
+& 
+&  \\
+%
+\hline
+%
+\end{tabular}
+\end{center}
+\caption{\label{table:implicit_explicit_conversions}
+Implicit and explicit conversions supported by Teuchos memory
+management types.}
+\end{table}
+
+As can be seen in Table {}\ref{table:implicit_explicit_conversions},
+the smart pointer types for single objects do not support the same
+implicit and explicit conversions as for the smart pointer types for
+arrays.  The justification for this was explained in Section
+{}\ref{sec:problem-with-raw-array-pointers}.
+
+As explained in Section {}\ref{sec:problem-with-raw-array-pointers},
+it almost always incorrect and dangerous to allow implicit conversions
+from derived to base type for pointers that pointers that point into
+continguous arrays of objects.  Therefore, the types
+{}\texttt{ArrayView} and {}\texttt{ArrayRCP} do not support implicit
+conversions from derived to base types.  Due to similar logic, it
+almost never makes any sense to perform a static cast or a dynamic on
+a pointer to an array of contiguous objects so the types
+{}\texttt{ArrayView} and {}\texttt{ArrayRCP} do not support static and
+dynamic casts.
+
+In well formed programs, there is a justification to perform
+reinterpret casts for contingous arrays of POD (plain old data).  For
+example, as mentioned in Section ???, it is prefectly reasonable to
+allocate a large array of {}\texttt{char} (untyped) data and then
+create subviews and reinterpret cast to separate arrays of
+{}\texttt{double} and {}\texttt{int} data, for instance.  However, for
+single objects, I can not think of a single valid reason to perform a
+reinterpret cast and therefore, reinterpret cast is not supported for
+the types {}\texttt{Ptr} and {}\texttt{RCP}.
+
+All implicit conversions are supported by templated copy constructors
+for all four classes.  The explicit conversion operators for these
+four types are shown in the Listings {}\ref{Ptr-conversions},
+{}\ref{RCP-conversions}, {}\ref{ArrayView-conversions},
+{}\ref{ArrayRCP-conversions}.
+
+\begin{listing}: Conversion functions for Ptr\\
+\label{listing:Ptr-conversions}
+{\small\begin{verbatim}
+  template<class T2, class T1> Ptr<T2> ptr_implicit_cast(const Ptr<T1>& p1);
+  template<class T2, class T1> Ptr<T2> ptr_static_cast(const Ptr<T1>& p1);
+  template<class T2, class T1> Ptr<T2> ptr_const_cast(const Ptr<T1>& p1);
+  template<class T2, class T1> Ptr<T2> ptr_dynamic_cast(const Ptr<T1>& p1,
+    bool throw_on_fail = false);
+\end{verbatim}}
+\end{listing}
+
+\begin{listing}: Conversion functions for RCP\\
+\label{listing:RCP-conversions}
+{\small\begin{verbatim}
+  template<class T2, class T1> RCP<T2> rcp_implicit_cast(const RCP<T1>& p1);
+  template<class T2, class T1> RCP<T2> rcp_static_cast(const RCP<T1>& p1);
+  template<class T2, class T1> RCP<T2> rcp_const_cast(const RCP<T1>& p1);
+  template<class T2, class T1> RCP<T2> rcp_dynamic_cast(const RCP<T1>& p1,
+    bool throw_on_fail = false);
+\end{verbatim}}
+\end{listing}
+
+\begin{listing}: Conversion functions for ArrayView\\
+\label{listing:ArrayView-conversions}
+{\small\begin{verbatim}
+  template<class T2, class T1> ArrayView<T2> av_const_cast(const ArrayView<T1>& p1);
+  template<class T2, class T1> ArrayView<T2> av_reinterpret_cast(const ArrayView<T1>& p1);
+\end{verbatim}}
+\end{listing}
+
+\begin{listing}: Conversion functions for ArrayRCP\\
+\label{listing:ArrayRCP-conversions}
+{\small\begin{verbatim}
+  template<class T2, class T1> ArrayRCP<T2> arcp_const_cast(const ArrayRCP<T1>& p1);
+  template<class T2, class T1> ArrayRCP<T2> arcp_reinterpret_cast(const ArrayRCP<T1>& p1);
+\end{verbatim}}
+\end{listing}
+
+Note that the dynamic cast conversion functions
+{}\texttt{ptr\_dynamic\_cast()} and {}\texttt{ptr\_dynamic\_cast()}
+both take an option extra argument {}\texttt{throw\_on\_fail} that if
+set to {}\texttt{true} will result in an excpetion being thrown on a
+dynamic cast failure along with a very helpful error message.
+
+
+%
+{}\subsubsection{Conversions between different memory management types}
+\label{sec:teuchos-type-conversions}
+%
+
+It is critical that all conversions between the various Teuchos memory
+management classes be performed using conversion code provided by the
+memory management classes themselves or by associated helper
+functions.  Client code should never convert between memory management
+types by exposing a raw C++ pointer.  As soon as a raw C++ pointer is
+exposed, nearly all of the debug-mode runtime checking will be
+disabled.
+
+
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{TeuchosPtrConversions}
+%}
+\end{center}
+\caption{
+\label{fig:TeuchosPtrConversions}
+Conversions between Teuchos memory management single object pointer
+types.}
+\end{figure}
+\esinglespace}
+
+
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65
+]{TeuchosArrayConversions}
+%}
+\end{center}
+\caption{
+\label{fig:TeuchosArrayConversions}
+Conversions between Teuchos memory management array types.  }
+\end{figure}
+\esinglespace}
+
+
+Figures {}\ref{fig:TeuchosPtrConversions} and
+{}\ref{fig:TeuchosArrayConversions} show many of the types of
+conversions that are supported between the different memory mangement
+types.  For single objects, the conversions between different
+{}\texttt{RCP} and {}\texttt{Ptr} objects of various kinds shown in
+figures {}\ref{fig:TeuchosPtrConversions} include both implicit and
+explicit conversions.  Conversions between different array types as
+shown in Figure {}\ref{fig:TeuchosArrayConversions} include both
+implicit and explicit conversions and view and copy conversions
+yielding four different types of conversions.
+
+Conversions between different Teuchos memory management types,
+espeically in templated application code, is one of the most confusing
+aspects of using these classes.  As shown in Figures
+{}\ref{fig:TeuchosPtrConversions} and
+{}\ref{fig:TeuchosArrayConversions}, many different implicit
+conversions are defined.  An implicit conversion will only be
+performed by the C++ compiler when it is needed to allow a piece of
+code to compile, when a only a single implicit conversion is defined,
+and when not calling a templated function where the template arguments
+are not fully specified.  Also, the C++ compiler will not be able to
+do an implicit conversion when an ambiguous function call exists.
+Explaining the behavior of these implicit conversions in C++ gets down
+to the nitty gritty details of the C++ type system that many C++
+programers take for grated or don't understand all that well.
+
+Almost all of the problems that people have with implicit conversions
+occur when trying to call functions where implicit conversions are
+required to satisfy the signature of the function.  Some of these
+problems occur when developers fail to understand the C++ type system.
+Other problems are due to a fundamental handicap that smart pointer
+types have with respect to raw C++ pointers.
+
+Implicit conversions of the Teuchos memory mangament classes (or any
+other C++ classes in any other library) fail for one of the following
+reasons:
+
+\begin{enumerate}
+
+{}\item{}Implicit conversions to functions failing because memory
+management types are not passed by const reference (or by value) and
+are mistakenly (or on purpose) passed by non-const reference. (This is
+a programming error.)
+
+{}\item{}Implicit conversions failing because templated functions can
+not perform implicit conversions in order to satisfy a call. (This is
+a language usability annoyance associated with templates and has
+nothing to do with the Teuchos memory management classes themselves.)
+
+{}\item{}Implicit conversions failing due to ambiguous calls to
+overloaded functions that would work just fine when raw C++ pointers
+are involved. (This is a fundamental shortcoming of smart pointers or
+any other class as compared to raw C++ pointers.)
+
+\end{enumerate}
+
+ToDo: Give code examples for all of the above reasons that implicit
+conversions fail.
+
+%
 {}\subsection{Core idioms for the use of memory management classes}
 \label{sec:idioms}
 %
@@ -2995,8 +3307,7 @@ However, local varibles of type {}\texttt{Ptr} and
 created off of other {}\texttt{Ptr} and {}\texttt{ArrayView} objects
 (passed through the formal argument list).
 
-
-\begin{table}[p]
+\begin{table}
 %
 %\fbox{
 \begin{center}
@@ -3004,7 +3315,6 @@ created off of other {}\texttt{Ptr} and {}\texttt{ArrayView} objects
 %\begin{minipage}{{}\textwidth}
 %
 \input{ValueTypeDataMembersTable}
-%
 %
 %\end{minipage}
 %
@@ -3015,7 +3325,6 @@ Idioms for class data member delcarations for value-type objects.}
 %
 \end{table}
 
-
 \begin{table}
 %
 %\fbox{
@@ -3024,7 +3333,6 @@ Idioms for class data member delcarations for value-type objects.}
 %\begin{minipage}{{}\textwidth}
 %
 \input{ReferenceTypeDataMembersTable}
-%
 %
 %\end{minipage}
 %
@@ -3670,110 +3978,6 @@ shown in Tables {}\ref{fig:func_return_value_type} and
 
 
 %
-{}\subsection{Conversions between memory management types}
-\label{sec:teuchos-type-conversions}
-%
-
-It is critical that all conversions between the various Teuchos memory
-management classes be performed using conversion code provided by the
-memory management classes themselves or by associated helper
-functions.  Client code should never convert between memory management
-types by exposing a raw C++ pointer.  As soon as a raw C++ pointer is
-exposed, nearly all of the debug-mode runtime checking will be
-disabled.
-
-
-{\bsinglespace
-\begin{figure}
-\begin{center}
-%\fbox{
-\includegraphics*[angle=270,scale=0.65]{TeuchosPtrConversions}
-%}
-\end{center}
-\caption{
-\label{fig:TeuchosPtrConversions}
-Conversions between Teuchos memory management single object pointer
-types.}
-\end{figure}
-\esinglespace}
-
-
-{\bsinglespace
-\begin{figure}
-\begin{center}
-%\fbox{
-\includegraphics*[angle=270,scale=0.65
-]{TeuchosArrayConversions}
-%}
-\end{center}
-\caption{
-\label{fig:TeuchosArrayConversions}
-Conversions between Teuchos memory management array types.  }
-\end{figure}
-\esinglespace}
-
-
-Figures {}\ref{fig:TeuchosPtrConversions} and
-{}\ref{fig:TeuchosArrayConversions} show many of the types of
-conversions that are supported between the different memory mangement
-types.  For single objects, the conversions between different
-{}\texttt{RCP} and {}\texttt{Ptr} objects of various kinds shown in
-figures {}\ref{fig:TeuchosPtrConversions} include both implicit and
-explicit conversions.  Conversions between different array types as
-shown in Figure {}\ref{fig:TeuchosArrayConversions} include both
-implicit and explicit conversions and view and copy conversions
-yielding four different types of conversions.
-
-Conversions between different Teuchos memory management types,
-espeically in templated application code, is one of the most confusing
-aspects of using these classes.  As shown in Figures
-{}\ref{fig:TeuchosPtrConversions} and
-{}\ref{fig:TeuchosArrayConversions}, many different implicit
-conversions are defined.  An implicit conversion will only be
-performed by the C++ compiler when it is needed to allow a piece of
-code to compile, when a only a single implicit conversion is defined,
-and when not calling a templated function where the template arguments
-are not fully specified.  Also, the C++ compiler will not be able to
-do an implicit conversion when an ambiguous function call exists.
-Explaining the behavior of these implicit conversions in C++ gets down
-to the nitty gritty details of the C++ type system that many C++
-programers take for grated or don't understand all that well.
-
-Almost all of the problems that people have with implicit conversions
-occur when trying to call functions where implicit conversions are
-required to satisfy the signature of the function.  Some of these
-problems occur when developers fail to understand the C++ type system.
-Other problems are due to a fundamental handicap that smart pointer
-types have with respect to raw C++ pointers.
-
-Implicit conversions of the Teuchos memory mangament classes (or any
-other C++ classes in any other library) fail for one of the following
-reasons:
-
-\begin{enumerate}
-
-{}\item{}Implicit conversions to functions failing because memory
-management types are not passed by const reference (or by value) and
-are mistakenly (or on purpose) passed by non-const reference. (This is
-a programming error.)
-
-{}\item{}Implicit conversions failing because templated functions can
-not perform implicit conversions in order to satisfy a call. (This is
-a language usability annoyance associated with templates and has
-nothing to do with the Teuchos memory management classes themselves.)
-
-{}\item{}Implicit conversions failing due to ambiguous calls to
-overloaded functions that would work just fine when raw C++ pointers
-are involved. (This is a fundamental shortcoming of smart pointers or
-any other class as compared to raw C++ pointers.)
-
-\end{enumerate}
-
-ToDo: Give code examples for all of the above reasons that implicit
-conversions fail.
-
-
-%
 {}\subsection{Reference-counting machinery in-depth}
 %
 
@@ -4177,16 +4381,16 @@ object gives you an efficient way to define a different deallocation
 policy that is invoked by the destructor on the object instead of
 requiring an explicit deallocation policy object.  In addition, you
 can also tack on any extra data that you would like and embedd in the
-underlying {}\texttt{RCPNode} object.  The only restriction is that
-you have to make the choice of what you want to embedd in the
+underlying {}\texttt{RCPNodeImpl} object.  The only restriction is
+that you have to make the choice of what you want to embedd in the
 {}\texttt{RCPNode} object when the very first {}\texttt{RCP} object is
 created which in turn creates the concrete {}\texttt{RCPNode} object.
 If you want the flexibility to embedd other data in the underlying
 {}\texttt{RCPNode} object after it has been created then you will have
 to use the ``extra data'' feature which is described in Section
 {}\ref{sec:extra-data}.  The advantage of embedding objects in the
-{}\texttt{RCPNode} object is that it can be quite a bit more efficient
-than using the ``extra data'' feature which requires more
+{}\texttt{RCPNodeImpl} object is that it can be quite a bit more
+efficient than using the ``extra data'' feature which requires more
 runtime-support.
 
 ToDo: Fill in!
@@ -4574,6 +4778,14 @@ classes and boost classes.
 
 
 %
+{}\subsection{Essential and accidental complexity}
+%
+
+ToDo: Move discussion of essential and accidental complexity into this
+section.
+
+
+%
 {}\section{Conclusions}
 %
 
@@ -4730,9 +4942,11 @@ way we teach C++
 management classes}
 %
 
-ToDo: List out all the tables again showing all the idioms for data
-members, passing objects to functions, and returning objects from
-functions.
+\input{RawPointerSmartPointerEquivalencies}
+
+\input{ValueTypeDataMembersTable}
+
+\input{ReferenceTypeDataMembersTable}
 
 
 %
@@ -4774,6 +4988,7 @@ contiguous container instead of {}\texttt{std::vector}.
 %
 {}\section{Argument for using an signed integer for
 {}\texttt{size\_type} in the Teuchos array classes}
+\label{sec:unsigned_size_type}
 %
 
 ToDo: Add discussion of why the Teuchos array classes all use a signed
