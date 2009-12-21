@@ -1282,6 +1282,7 @@ semantics.
 
 %
 {}\subsection{Persisting associations versus non-persisting associations}
+\label{sec:persisting-nonpersisting-associations}
 %
 
 Another important prerequisite for understanding the Teuchos memory
@@ -2696,6 +2697,7 @@ in Sections ???, ???, and ???.
 
 %
 {}\subsubsection{\texttt{Teuchos::Array<T>}}
+\label{sec:Array}
 %
 
 The class {}\texttt{Array} is a complete replacement for
@@ -2807,68 +2809,51 @@ four core memory management types.
 \begin{table}
 \begin{center}
 \begin{tabular}{|l|c|c|c|c|}
-%
 \multicolumn{5}{l}{\textbf{Implicit and explicit conversions supported}} \\
-%
 \hline
-%
 Operation
 & \texttt{Ptr<T>}
 & \texttt{RCP<T>}
 & \texttt{ArrayView<T>}
 & \texttt{ArrayRCP<T>} \\
-%
 \hline
 \hline
-%
 Implicit conv derived to base
 & x
 & x
 & 
 &  \\
-%
 \hline
-%
 Implicit conv non-const to const
 & x
 & x
 & x
 & x \\
-%
 \hline
-%
 {}\texttt{const\_cast}
 & x
 & x
 & x
 & x \\
-%
 \hline
-%
 {}\texttt{static\_cast}
 & x
 & x
 & 
 &  \\
-%
 \hline
-%
-{}\texttt{reinterpret\_cast}
-& 
-& 
-& x
-& x \\
-%
-\hline
-%
 {}\texttt{dynamic\_cast}
 & x
 & x 
 & 
 &  \\
-%
 \hline
-%
+{}\texttt{reinterpret\_cast}
+& 
+& 
+& x
+& x \\
+\hline
 \end{tabular}
 \end{center}
 \caption{\label{table:implicit_explicit_conversions}
@@ -3075,6 +3060,7 @@ quality, clearest code.
 
 %
 {}\subsubsection{The non-member constructor function idiom}
+\label{sec:nonmember-constructor-idiom}
 %
 
 The mainstream C++ literature espousing the use of smart
@@ -4628,6 +4614,7 @@ ToDo: Fill this in!
 
 %
 {}\subsubsection{Inverting object ownership and avoiding circular references}
+\label{sec:inverting-obj-ownership}
 %
 
 A rare situration that can occur is when you have an object that
@@ -4781,14 +4768,6 @@ classes and boost classes.
 {}\subsection{Essential and accidental complexity}
 %
 
-ToDo: Move discussion of essential and accidental complexity into this
-section.
-
-
-%
-{}\section{Conclusions}
-%
-
 While the idioms described in this document (outlined in Section
 {}\ref{sec:idioms}) may look complex, one has to consider that it is
 not really the idioms that are complex but the essential attributes of
@@ -4810,15 +4789,15 @@ it (but we can use object-oriented and other design approaches to
 partition and abstract this essential complexity such that we can
 write and maintain large-scale programs).
 
-What the Teuchos Memory Management classes do is that they remove the
-accidental complexity of using raw pointers and manual resource
+What the Teuchos Memory Management classes do is that they remove much
+of the accidental complexity of using raw pointers and manual resource
 management and instead they more directly address the essential
 complexity of writing programs in making important concepts explicit
-that are implicit in most languages (including raw C++).  Dealing
-with the nature of relationships between objects is essential
-complexity and for every relationship between two classes (for example
-in a UML class diagram {}\cite{UMLDistilledThirdEdition04}) one must
-answer the essential questions:
+that are implicit in most languages (including raw C++).  Dealing with
+the nature of relationships between objects is essential complexity
+and for every relationship between two classes (for example in a UML
+class diagram {}\cite{UMLDistilledThirdEdition04}) one must answer the
+essential questions:
 
 \begin{itemize}
 
@@ -4882,14 +4861,53 @@ concepts explicit.  The Teuchos memory management classes and the
 associated idioms described in this paper provide a means to make many
 of these essential concepts explicit in C++ in a way that is not
 possible in any other widely used high-level programming language,
-period.  One (of many) of the remaining types of accidental complexity
-in C++ is the distinction between value semantics verses reference
-semantics.  In Java and Python, all user-defined types use reference
-semantics but in C++ we can take advantage of objects with value
-semantics which gives us more efficient code and more control in C++
-than what is possible in Java or Python.  However, this extra control
-could be classified as Accedential complexity (which we tolerate for
-the sake of added control and improved performance).
+period.  
+
+While the Teuchos memory management classes go a long way in
+removing some of the accidental complexity of programing in C++ due to
+manual memory management, some of the (of the many others) types of
+remaining accidental complexity include:
+
+\begin{itemize}
+
+{}\item\textit{Value sematics verses\ reference semantics}: The
+distinction between value semantics verses reference semantics in a
+C++ concept that does not directly relate to solving a problem or
+representing a model in code and is therefore accidental complexity.
+In Java and Python, all user-defined types use reference semantics but
+in C++ we can take advantage of objects with value semantics which
+gives us more efficient code and more control in C++ than what is
+possible in Java or Python.  However, this extra control could be
+classified as Accedential complexity (which we tolerate for the sake
+of added control and improved performance).
+
+{}\item\textit{Pointer semantics for memory management types
+{}\texttt{Ptr}, and {}\texttt{RCP}}: In order to access the underying
+object through the types {}\texttt{Ptr}, and {}\texttt{RCP}, you have
+to use pointer semantics using {}\texttt{*a} and
+{}\texttt{a->someMember()}.  The C++ language makes it impossible to
+allow direct access to the underlying type like raw C++ references
+allow.  Pointer semantics are not essental to the nature of problem
+solving (as proven by all the langauges that don't have pointers
+including Java and Python) and must therefore be categorized as
+accidental complexity.  Note, however, that the types
+{}\texttt{ArrayView} and {}\texttt{ArrayRCP} were not listed in this
+category because you can use these array classes using just the
+{}\texttt{operator[](size\_type)} function and do not need to use any
+pointer semantics.  In fact, {}\texttt{ArrayView} does not even
+support any pointer-like functions and the pointer-like functions on
+{}\texttt{ArrayRCP} are only really there to allow it to be used as a
+general purpose checked iterator in a debug build.  While pointer
+semantics are not an essential concept they do actually come in handy
+to define iterators into containers and present a much more compact
+iterator interface that what you will find in other languages.
+Pointers semantics are not all bad.
+
+\end{itemize}
+
+%
+{}\section{Conclusions}
+%
 
 Using reference-counting in Teuchos Memory Management classes allows
 you to remove unnecessary constraints in the use of objects in
@@ -4912,8 +4930,15 @@ getting out of C++ other than more complexity?  C++ zealots will argue
 this point but the reality is that C++ is becoming less popular while
 the popularity of C is remaining fairly stable over the last 10 years.
 I believe that idioms like are advocated here can help to avert this
-trend but it will require wide community buy in and a change in the
-way we teach C++
+trend but it will require wide community buy-in and a change in the
+way we teach C++.
+
+To make our programs more secure, compiler venders or static analysis
+tools (e.g.\ klocwork) could implement a preprocessor-like language
+similar to OpenMP that would allow the programmer to declare (in
+comments) that certain blocks of code should be ``pointer-free'' or
+allow smaller blocks to be ``pointers allowed''.  This would
+significantly improve the robustness of the code.
 
 
 
@@ -4953,36 +4978,69 @@ management classes}
 \section{Teuchos memory management commandments (Guidelines)}
 %
 
-\begin{anticommandment}\label{rcp:cmd:rcp-new}
+\begin{commandment}
 Thou shall not expose raw pointers in any high-level C++ code.
-\end{anticommandment}
+\end{commandment}
+{}\textit{Exception:} Only expose raw pointers when interfacing with
+non-compliant code.
 
-\begin{anticommandment}\label{rcp:cmd:rcp-new}
+\begin{commandment}
+Thou shall only use raw C++ references for non-persisting associations
+(see Section {}\ref{sec:persisting-nonpersisting-associations}).
+\end{commandment}
+
+\begin{commandment}
 Thou shall not call raw {}\texttt{new} or {}\texttt{delete} in any
 high-level C++ code to dynamically allocate and destroy single
 objects.  Instead, create memory using a user-defined non-member
-constructor function (see ???).
-\end{anticommandment}
+constructor function (see Section
+{}\ref{sec:nonmember-constructor-idiom}).
+\end{commandment}
 
-\begin{anticommandment}\label{rcp:cmd:rcp-new}
+\begin{commandment}
 Thou shall not call raw operator {}\texttt{new []} or {}\texttt{delete
 []} in any high-level C++ code to dynamically allocate and destroy
 contiguous arrays of data.  Instead, use functions such as
 {}\texttt{Teuchos::Array<T>(n)} and {}\texttt{Teuchos::arcp<T>(n)}
-(see ???) and let reference counting semnatics take care of the rest.
-\end{anticommandment}
-
-\begin{anticommandment}\label{rcp:cmd:rcp-new}
-Thou shall not directly create and use compile-time fixed sized
-arrays with {}\texttt{T[N]}.  Instead, create compile-time fixed-sized
-arrays using {}\texttt{Teuchos::Tuple<T,N>} and covert to
-{}\texttt{Teuchos::ArrayView<T>} for more general usage.
-\end{anticommandment}
-
-\begin{commandment}\label{rcp:cmd:rcp-new}
-Thou shall use {}\texttt{Teuchos::Array} as a general purpose
-contiguous container instead of {}\texttt{std::vector}.
+(see ???).
 \end{commandment}
+
+\begin{commandment}
+Thou shall not directly create and use compile-time fixed sized arrays
+with {}\texttt{T[N]}.  Instead, create compile-time fixed-sized arrays
+using {}\texttt{Teuchos::Tuple<T,N>} and convert to
+{}\texttt{Teuchos::ArrayView<T>} for more general usage.
+\end{commandment}
+
+\begin{commandment}
+Thou shall use {}\texttt{Teuchos::Array} as a general purpose
+contiguous container instead of {}\texttt{std::vector} (see Section
+{}\ref{sec:Array}).
+\end{commandment}
+
+\begin{commandment}
+Thou shall only convert between different memory management objects
+using the provided implicit and excplicit conversion functions.  Thou
+shall never expose a raw C++ pointer to perform a conversion.
+\end{commandment}
+{}\textit{Exception}: Some very advanced and rare use cases might have
+you exposing a raw C++ pointer (see Section
+{}\ref{sec:inverting-obj-ownership} for the only example described in
+this paper).
+
+\begin{commandment}
+Thou shall only pass in the types {}\texttt{Teuchos::Ptr},
+{}\texttt{Teuchos::RCP}, {}\texttt{Teuchos::ArrayView}, and
+{}\texttt{Teuchos::ArrayRCP} by constant reference (e.g.\
+{}\texttt{const RCP<T> \&a} and never by non-const reference (e.g.\
+never do {}\texttt{RCP<T> \&a}.
+\end{commandment}
+{}\textit{Exception}: The only time you should ever pass in a
+non-const reference to one of these types (e.g.\ {}\texttt{RCP<T> \&a})
+is when the function will modify what data the object points to.
+However, if this is the case, it is typically better and more clear to
+pass in the object through a {}\texttt{Teuchos::Ptr} object (e.g.\
+{}\texttt{const Ptr<RCP<T> > \&a}).
 
 
 %
