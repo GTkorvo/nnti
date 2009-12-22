@@ -858,7 +858,7 @@ the current platform but will fail on other platforms.
 The Teuchos array utility classes make algorithms involving subviews
 like shown above very clean, very efficient, and very safe (see the
 same versions of this example code using these new Teuchos classes in
-Section ???).
+Section {}\ref{sec:array-views}).
 
 In summary, {}\texttt{std::vector} is {}\underline{not} an efficient
 or convenient general-purpose replacement for raw C++ pointers as
@@ -1159,16 +1159,17 @@ how these datatypes are described in various C++ literature.
 \begin{itemize}
 
 {}\item have public destructors, default constructors, copy
-constructors, and assignemnt operators (implementing deap copy,
-semantics)
+constructors, and assignemnt operators (all implementing deap copy
+semantics),
 
-{}\item have an identity that is determined by their value, not their
+{}\item have an identity that is determined by their value not their
 address,
 
 {}\item are usually allocated on the stack or as direct data members
 in other class objects,
 
-{}\item are usually {}\underline{not} allocated on the heap, and
+{}\item are usually {}\underline{not} allocated on the heap (but can
+be typically), and
 
 {}\item do not have any virtual functions and are not to be used as
 base classes (see Item 35 in {}\cite{C++CodingStandards05}).
@@ -1193,11 +1194,11 @@ All of the built-in intrisic C++ data-types like {}\texttt{char},
 {}\texttt{int}, and {}\texttt{double} are Value Types.  Likewise,
 derived class types like {}\texttt{std::complex} and
 {}\texttt{std::vector} are also Value Types.  Value Types have also be
-called by other names in the C++ literature. Stroustroup refers to
+called by other names in the C++ literature.  Stroustroup refers to
 Value Types as ``true local variables'' in {}\cite{stroustrup94}.  The
 term Abstract Data Type (ADT) in older C++ literature such as
-[???Advanced C++???] usually maps to the concept of a Value type, but
-usaully carries greater significance in implying that operator
+{}\cite{AdvancedC++92} usually maps to the concept of a value type,
+but usaully carries greater significance in implying that operator
 overloading is used to make an ADT look more like a built-in C++ type
 (such as is the case for {}\texttt{std::complex}).
 
@@ -1570,7 +1571,7 @@ contiguous arrays
 \end{center}
 \caption{\label{table:BasicSingleArrayTypes}
 Basic Teuchos memory management utility classes for encapsulating raw
-pointers for single objects and contiguous arrays of objects.}
+pointers.}
 \end{table}
 
 
@@ -2038,11 +2039,13 @@ reference-counted smart pointer classes like
 C++09 class {}\texttt{std::shared\_ptr}.  However, {}\texttt{RCP} has
 some key features that differentiate it from these other better known
 smart pointer classes.  In particular, {}\texttt{RCP} has built in
-support for the detection of circular references (Section ???), has
-built in support for resolving circular references with built-in weak
-pointers (Section ???), and other strong debug runtime checking such
-as detecting multiple non-related {}\texttt{RCP} objects owning the
-same reference-counted objects and other types of checks.
+support for the detection of circular references (Section
+{}\ref{sec:circular-references-weak-pointers}), has built in support
+for resolving circular references with built-in weak pointers (Section
+{}\ref{sec:basic-reference-counting-machinery}), and other strong
+debug runtime checking such as detecting multiple non-related
+{}\texttt{RCP} objects owning the same reference-counted objects and
+other types of checks.
 
 Because the class {}\texttt{RCP} is described in
 {}\cite{RefCountPtrBeginnersGuide} and is so similar in use to
@@ -2171,6 +2174,7 @@ existing C++ literature.
 
 %
 {}\subsubsection{Raw C++ references}
+\label{sec:raw-C++-references}
 %
 
 Why do we have a subsection on raw C++ references under the section
@@ -2187,9 +2191,10 @@ raw C++ pointers in disguise.  While this is true, in practice raw C++
 references are significantly safer than raw C++ pointers, espeically
 if the idioms outlined in this paper are carefully followed.  In
 addition, the use of raw C++ references is exploited (as explained in
-Section ???) in defining idioms that increase the self-documenting
-nature of C++ code and play a role in defining non-persisting
-associations related to function formal arguments and return objects.
+Section {}\ref{sec:raw-C++-references}) in defining idioms that
+increase the self-documenting nature of C++ code and play a role in
+defining non-persisting associations related to function formal
+arguments and return objects.
 
 Basically, a raw C++ reference is relatively safe as long as a) it is
 always initialized to a valid object, and b) it is only used for
@@ -2300,9 +2305,10 @@ The exact functions shown in Table
 {}\ref{tbl:common-array-type-members} for {}\texttt{ArrayView} and
 {}\texttt{ArrayRCP} and a little different than for {}\texttt{Array}
 due to the different nature of these view classes as apposed to the
-container class {}\texttt{Array}.  As described in Section ???, the
-classes {}\texttt{ArrayView} and {}\texttt{ArrayRCP} can encapsulate
-both non-const and const types {}\texttt{T} as their template argument
+container class {}\texttt{Array}.  As described in Section
+{}\ref{sec:teuchos-const-nonconst-pointer-objects}, the classes
+{}\texttt{ArrayView} and {}\texttt{ArrayRCP} can encapsulate both
+non-const and const types {}\texttt{T} as their template argument
 while {}\texttt{Array} can only accept a non-constr type {}\texttt{T}.
 Therefore, the {}\texttt{std::vector} compatible functions in
 {}\texttt{ArrayView} and {}\texttt{ArrayRCP} are all {}\texttt{const}
@@ -2526,8 +2532,8 @@ Listing {}\ref{listing:ArrayRCP}.
     size_type upperOffset() const;
     size_type size() const;
   
-    // Implicit conversions
-    operator ArrayView<T>() const;
+    // Other conversions
+    ArrayView<T> operator()() const;
     operator ArrayRCP<const T>() const;
   
     // std::vector like and other misc functions
@@ -2551,7 +2557,7 @@ Listing {}\ref{listing:ArrayRCP}.
     size_type upperOffset_; // -1 if this pointer is null
   };
   
-  // Nonmember functions
+  // Nonmember constructors
   
   template<class T>
   ArrayRCP<T> arcp(T* p, typename ArrayRCP<T>::size_type lowerOffset,
@@ -2567,24 +2573,6 @@ Listing {}\ref{listing:ArrayRCP}.
   template<class T>
   ArrayRCP<T> arcpClone( const ArrayView<const T> &v );
   
-  template<class T, class Embedded>
-  ArrayRCP<T>
-  arcpWithEmbeddedObjPreDestroy(T* p, typename ArrayRCP<T>::size_type lowerOffset,
-    typename ArrayRCP<T>::size_type size, const Embedded &embedded,
-     bool owns_mem=true);
-  
-  template<class T, class Embedded>
-  ArrayRCP<T>
-  arcpWithEmbeddedObjPostDestroy(T* p, typename ArrayRCP<T>::size_type lowerOffset,
-    typename ArrayRCP<T>::size_type size, const Embedded &embedded,
-    bool owns_mem=true);
-  
-  template<class T, class Embedded>
-  ArrayRCP<T>
-  arcpWithEmbeddedObj(T* p, typename ArrayRCP<T>::size_type lowerOffset,
-    typename ArrayRCP<T>::size_type size, const Embedded &embedded,
-    bool owns_mem=true);
-  
   template<class T>
   ArrayRCP<T> arcp(const RCP<std::vector<T> > &v);
   
@@ -2599,6 +2587,20 @@ Listing {}\ref{listing:ArrayRCP}.
   
   template<class T>
   RCP<const std::vector<T> > get_std_vector(const ArrayRCP<const T> &ptr);
+
+  // Customized deallocators (see Section ???)
+  ...
+
+  // Embedded object helper functions (see Section ???)
+  ...
+
+  // Extra data helper functions (see Section ???)
+  ...
+
+  // Conversion functions (see Section ???)
+  ...
+
+  // Other functions
   
   template<class T>
   bool is_null(const ArrayRCP<T> &p);
@@ -2634,50 +2636,6 @@ Listing {}\ref{listing:ArrayRCP}.
   typename ArrayRCP<T>::difference_type
   operator-(const ArrayRCP<T> &p1, const ArrayRCP<T> &p2);
   
-  template<class T2, class T1>
-  ArrayRCP<T2> arcp_const_cast(const ArrayRCP<T1>& p1);
-  
-  template<class T2, class T1>
-  ArrayRCP<T2> arcp_reinterpret_cast(const ArrayRCP<T1>& p1);
-  
-  template<class T2, class T1>
-  ArrayRCP<T2> arcp_implicit_cast(const ArrayRCP<T1>& p1);
-  template<class T1, class T2>
-  void set_extra_data(const T1 &extra_data, const std::string& name,
-    const Ptr<ArrayRCP<T2> > &p, EPrePostDestruction destroy_when = POST_DESTROY,
-    bool force_unique= rue );
-  
-  template<class T1, class T2>
-  T1& get_extra_data( ArrayRCP<T2>& p, const std::string& name );
-  
-  template<class T1, class T2>
-  const T1& get_extra_data( const ArrayRCP<T2>& p, const std::string& name );
-  
-  template<class T1, class T2>
-  T1* get_optional_extra_data( ArrayRCP<T2>& p, const std::string& name );
-  
-  template<class T1, class T2>
-  const T1* get_optional_extra_data(const ArrayRCP<T2>& p,
-    const std::string& name);
-  
-  template<class Dealloc_T, class T>
-  Dealloc_T& get_nonconst_dealloc( const ArrayRCP<T>& p );
-  
-  template<class Dealloc_T, class T>
-  const Dealloc_T& get_dealloc( const ArrayRCP<T>& p );
-  
-  template<class Dealloc_T, class T>
-  const Dealloc_T* get_optional_dealloc( const ArrayRCP<T>& p );
-  
-  template<class Dealloc_T, class T>
-  Dealloc_T* get_optional_nonconst_dealloc( const ArrayRCP<T>& p );
-  
-  template<class TOrig, class Embedded, class T>
-  const Embedded& getEmbeddedObj( const ArrayRCP<T>& p );
-  
-  template<class TOrig, class Embedded, class T>
-  Embedded& getNonconstEmbeddedObj( const ArrayRCP<T>& p );
-  
   template<class T>
   std::ostream& operator<<( std::ostream& out, const ArrayRCP<T>& p );
 \end{verbatim}}
@@ -2685,14 +2643,61 @@ Listing {}\ref{listing:ArrayRCP}.
 
 Some of the main features of the {}\texttt{ArrayRCP} class are:
 
-\begin{itemize}
+{}\texttt{ArrayRCP} allows the user to allocate the contiguous array
+of data in any way they would like and can define how that array is
+deallocated any way they would like.
 
-{}\item ???
+{}\texttt{ArrayRCP} returns persisting subviews of data through the
+member function {}\texttt{persistingView(...)}.  This means that the
+underlying array of data will not be deleted until all the subviews
+are destroyed.
 
-\end{itemize}
+{}\texttt{ArrayRCP} is a full replacement for a general raw
+pointer and can be used as a general iterator that always remembers
+the allowed upper and lower bounds.  It supports all the approriate
+pointer array-like operations including {}\texttt{ptr+i},
+{}\texttt{i+ptr}, {}\texttt{ptr-i}, {}\texttt{ptr+=i},
+{}\texttt{ptr-=i}, , {}\texttt{ptr++}, {}\texttt{ptr--},
+{}\texttt{*ptr}, {}\texttt{ptr->member()}, and of course
+{}\texttt{ptr[i]}.  This is what allows {}\texttt{ArrayRCP} to be used
+as a checked iterator implementation in debug build.
 
-Some of the other features of the {}\texttt{RCP} class are discussed
-in Sections ???, ???, and ???.
+{}\texttt{ArrayRCP} can be used safely as a contiguous array by
+using it through its {}\texttt{const} interface which disables all of
+the pointer-like functions that change the frame of reference
+(e.g. {}\texttt{ptr+=i}, {}\texttt{ptr-=i}, , {}\texttt{ptr++}, and
+{}\texttt{ptr--} are disabled).
+
+{}\texttt{ArrayRCP} can be used in place of
+{}\texttt{std::vector} (and therefore {}\texttt{Array}) that only
+needs to size or resize the array in baulk and does not need to
+flexibly grow or shrink the array.  It does this by supporting
+functions like {}\texttt{assign(...)}, {}\texttt{resize(...)}, and
+{}\texttt{clear()}.  Because of the reference counting machinary that
+is always part of {}\texttt{ArrayRCP}, you may not want to use
+{}\texttt{ArrayRCP} instead of {}\texttt{Array} but if the overhead is
+not going to be significant, then going with {}\texttt{ArrayRCP}
+instead of {}\texttt{Array} can be a good choice because it is much
+more flexible and allows for shared ownership.
+
+{}\texttt{ArrayRCP} supports explicit shallow conversion to
+{}\texttt{ArrayView}.  Requiring an explicit conversion from
+{}\texttt{ArrayRCP} to {}\texttt{ArrayView} in consistent with
+{}\texttt{RCP} and {}\texttt{Ptr}.  As explained in Section
+{}\ref{sec:idioms-for-passing-arguments}, this is meant to increase
+the self-documenting nature of the code.  Note that the
+{}\texttt{ArrayRCP::operator()()} function is a very short-hand way to
+perform this conversion.
+
+{}\texttt{ArrayRCP} supports owning conversions from
+{}\texttt{RCP}-wrapped {}\texttt{Array} and {}\texttt{std::vector}
+objects.  This allows for better interoperability between code that
+still uses solid reference-counting ownership semantics.
+
+Some of the other features of the {}\texttt{ArrayRCP} class that are
+common with the other classes are discussed in Sections
+{}\ref{sec:conversions}, {}\ref{sec:reference-counting-machinary},
+{}\ref{sec:debug-mode-runtime-checking}, and ???.
 
 
 %
@@ -2705,16 +2710,16 @@ The class {}\texttt{Array} is a complete replacement for
 {}\texttt{ArrayView} class for debug-mode runtime checking.  In an
 optimized build, {}\texttt{Array} is nothing but an inline wrapper
 around a fully encapsulated {}\texttt{std::vector} object.  This means
-that in a optimized build, {}\texttt{Array} takes advantage of all of
+that in an optimized build, {}\texttt{Array} takes advantage of all of
 the platform-specific optimizations contained in the native
 {}\texttt{std::vector} implementation and imparts no extra space/time
 overhead.  However, in a debug build, a full set of
 platform-independent runtime checking is performed that is as strong
 or stronger than any checked STL implementation (see {}\cite[Item
-\#83]{C++CodingStandards05}) and includes dangling reference detection
-and reporting of {}\texttt{ArrayView} views (see Section ???).  In
-addition, {}\texttt{Array} supports better runtime debug output with
-better exception error messages.
+{}\#83]{C++CodingStandards05}) and in addition includes dangling
+reference detection of {}\texttt{ArrayView} views (see Section ???).
+{}\texttt{Array} also supports better runtime debug output with better
+exception error messages.
 
 The class declaration for the {}\texttt{Array} class is shown in
 Listing ???.
@@ -2731,9 +2736,13 @@ ToDo: Fill this in!
 
 %
 {}\subsubsection{Array Views}
+\label{sec:array-views}
 %
 
-ToDo: Fill this in!
+ToDo: Discuss persisting and non-persisting views.
+
+ToDo: Show refactored algorithm that uses Array and ArrayView to clean
+up.
 
 
 %
@@ -3040,6 +3049,11 @@ any other class as compared to raw C++ pointers.)
 
 ToDo: Give code examples for all of the above reasons that implicit
 conversions fail.
+
+ToDo: Provide a table of all the types of conversions that are
+supported (implicit or explicit) and give the function that performs
+the conversion.  Remove all ambiguity about what conversions are
+supported and what functions are used.
 
 %
 {}\subsection{Core idioms for the use of memory management classes}
@@ -3361,9 +3375,8 @@ single objects are stored and how arrays of objects are delcared.
 %
 {}\subsubsection{Idioms for the specification of formal arguments for
 C++ functions}
+\label{sec:idioms-for-passing-arguments}
 %
-
-
 
 \begin{table}[p]
 %
@@ -3964,6 +3977,7 @@ shown in Tables {}\ref{fig:func_return_value_type} and
 
 %
 {}\subsection{Reference-counting machinery in-depth}
+\label{sec:reference-counting-machinary}
 %
 
 In order to effectively use these memory management classes and to
@@ -3985,6 +3999,7 @@ reference counting.
 
 %
 {}\subsubsection{Basic reference counting machinery}
+\label{sec:basic-reference-counting-machinery}
 %
 
 The foundation for the reference-counting machinery used by all of the
@@ -4055,6 +4070,7 @@ is destoried, whatever comes first.
 
 %
 {}\subsubsection{Circular references and weak pointers}
+\label{sec:circular-references-weak-pointers}
 %
 
 The fundamental weakness of low-overhead reference counting as
@@ -4591,6 +4607,13 @@ ToDo: Fill this in!
 
 
 %
+{}\subsubsection{Performance tuning strategies}
+%
+
+ToDo: Fill this in!
+
+
+%
 {}\subsection{Related idioms}
 %
 
@@ -4612,7 +4635,7 @@ ToDo: Fill this in!
 
 
 %
-{}\subsubsection{Inverting object ownership and avoiding circular references}
+{}\subsubsection{Inverting object ownership while avoiding circular references}
 \label{sec:inverting-obj-ownership}
 %
 
@@ -4988,12 +5011,12 @@ management classes}
 
 \pagebreak
 
-{}\textbf{Conversions for data-types for single objects}
+{}\textbf{Conversions of data-types for single objects}
 \includegraphics*[angle=270,scale=0.65]{TeuchosPtrConversions} \\[5ex]
 
 
 
-{}\textbf{Conversions for data-types for contiguous arrays}
+{}\textbf{Conversions of data-types for contiguous arrays}
 \includegraphics*[angle=270,scale=0.65]{TeuchosArrayConversions}
 
 
@@ -5058,15 +5081,16 @@ this paper).
 Thou shall only pass in the types {}\texttt{Teuchos::Ptr},
 {}\texttt{Teuchos::RCP}, {}\texttt{Teuchos::ArrayView}, and
 {}\texttt{Teuchos::ArrayRCP} by constant reference (e.g.\
-{}\texttt{const RCP<T> \&a} and never by non-const reference (e.g.\
-never do {}\texttt{RCP<T> \&a}.
+{}\texttt{const RCP<T> \&a}) and never by non-const reference (e.g.\
+never do {}\texttt{RCP<T> \&a}).
 \end{commandment}
 {}\textit{Exception}: The only time you should ever pass in a
-non-const reference to one of these types (e.g.\ {}\texttt{RCP<T> \&a})
-is when the function will modify what data the object points to.
+non-const reference to one of these types (e.g.\ {}\texttt{RCP<T>
+\&a}) is when the function will modify what data the object points to.
 However, if this is the case, it is typically better and more clear to
 pass in the object through a {}\texttt{Teuchos::Ptr} object (e.g.\
-{}\texttt{const Ptr<RCP<T> > \&a}).
+{}\texttt{const Ptr<RCP<T> > \&a}) using the {}\texttt{outArg(...)} 
+function.
 
 
 %
