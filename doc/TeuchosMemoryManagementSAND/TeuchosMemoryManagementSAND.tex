@@ -352,13 +352,28 @@ start somewhere and that is what this paper is all about, getting
 started and on the road to a better generation of C++ programmers and
 C++ software.
 
-The reminder of this paper is organized as follows.  First, the
-fundamental problems with raw C++ pointers is described in Section
-???.  ToDo: Finish describing the other sections.
+The reminder of this paper is organized as follows. The fundamental
+problems with raw C++ pointers is described in Section
+{}\ref{sec:problems-with-raw-pointers}.  Common (suboptimal)
+approaches for addressing memory management problems are discussed in
+Section {}\ref{sec:current-appraoches-to-mem-mng}.  Taking a step
+back, a philosophical discussion of the tradeoffs between speed,
+safety and generality related to memory management is given in Section
+{}\ref{sec:phylosophy-of-mem-mng}.  Some important prerequisite
+concepts like value-types verses references-types and persisting
+verses non-persisting associations are defined in Section
+{}\ref{sec:important-prerequisites}.  With all this background and context
+in place, the Teuchos memory management classes are presented in
+Section {}\ref{sec:teuchos-mem-mng-classes}.  The basic outline of the
+approach in Section {}\ref{sec:outline_of_basic_approach} is perhaps
+the first section one would jump to if they want to get a quick idea
+what these classes are all about.  Finally, concluding remarks are
+given in Section {}\ref{sec:conclusions}.
 
 
 %
 {}\section{Fundamental problems with raw C++ pointers}
+\label{sec:problems-with-raw-pointers}
 %
 
 In this section, I summarize some of the fundamental problems with
@@ -651,6 +666,7 @@ main features of the memory management classes proposed here.
 %
 {}\section{Problems with popular approaches for addressing memory
 management in C++}
+\label{sec:current-appraoches-to-mem-mng}
 %
 
 Because of some of the obvious problems with using raw C++ pointers to
@@ -1002,6 +1018,7 @@ semantically correct way.
 %
 {}\section{Philosophy of memory management: Safety, speed, generality
 and the 100\% guarantee}
+\label{sec:phylosophy-of-mem-mng}
 %
 
 When looking at different strategies for memory management in C++ and
@@ -1092,10 +1109,11 @@ to our typical car.  Likewise, moving from an extreme of safety to a
 more reasonable balance between safety and speed/flexibility in Python
 involves taking pieces of computationally intensive Python code,
 rewriting them in C/C++, and then calling them from Python.  This is
-an approach that many Python enthusiasts are advocating [???] but make
-no mistake that in going down this road that you are sacrificing
-safety in Python in the name of speed and flexibility.  You are giving
-up Python's nearly 100\% guarantee when you do this.
+an approach that many Python enthusiasts are advocating
+{}\cite{PythonForSCPerforamnce08} but make no mistake that in going
+down this road that you are sacrificing safety in Python in the name
+of speed and flexibility.  You are giving up Python's nearly 100\%
+guarantee when you do this.
 
 From the extreme of speed and flexibilty with little reguard for
 safety represnted by the motorcycle (and C/C++ raw pointers) you can
@@ -1127,6 +1145,7 @@ motorcycle.  Try that with a car!
 
 %
 {}\section{Important prerequisites}
+\label{sec:important-prerequisites}
 %
 
 Before finally discussing the Teuchos memory management classes, I
@@ -1418,7 +1437,7 @@ Another situation where the concepts of persisting and non-persisting
 associations comes up relates to how objects are returned by C++
 functions as return values.  A presisting relationship is made through
 a function return object if that object is remembered past a single
-statement.  For example, cnsider the following code fragment:
+statement.  For example, consider the following code fragment:
 
 \begin{listing}:\\
 {\small\begin{verbatim}
@@ -1479,6 +1498,7 @@ in {}\cite{RefCountPtrBeginnersGuide}.
 
 %
 {}\section{Teuchos classes for safer memory management and usage}
+\label{sec:teuchos-mem-mng-classes}
 %
 
 The primary purpose for the Teuchos memory management classes is to
@@ -3062,7 +3082,7 @@ with a regular C++ pointer.  To draw the analogy with raw pointers,
 consider the equivalent declarations of a raw pointer and the pointer
 encapsulation class (using {}\texttt{RCP} as a standin to represent
 all four classes) in Table
-{}\ref{sec:teuchos-const-nonconst-pointer-objects}.
+{}\ref{tbl:teuchos-const-nonconst-pointer-objects}.
 
 \begin{table}
 %
@@ -3077,7 +3097,7 @@ all four classes) in Table
 %
 \end{center}
 %} % end fbox
-\caption{\label{sec:teuchos-const-nonconst-pointer-objects}
+\caption{\label{tbl:teuchos-const-nonconst-pointer-objects}
 Equivalences between raw pointer and smart pointer types for const
 protection.}
 %
@@ -3086,7 +3106,7 @@ protection.}
 The majority of problems that beginners have with the Teuchos memory
 management classes is relataed to the inability to make the basic
 equivalencies between raw pointers and smart pointers shown in Table
-{}\ref{sec:teuchos-const-nonconst-pointer-objects} (see Section ??? 
+{}\ref{tbl:teuchos-const-nonconst-pointer-objects} (see Section ??? 
 for specific examples).  It is crtical that the programmer recognize
 this equivalence with raw pointers because it impacts many things
 especially implicit type conversions to satisfy function calls (again
@@ -3203,9 +3223,10 @@ cast is not supported for the types {}\texttt{Ptr} and {}\texttt{RCP}.
 
 All implicit conversions are supported by templated copy constructors
 for all four classes.  The explicit conversion operators for these
-four types are shown in the Listings {}\ref{Ptr-conversions},
-{}\ref{RCP-conversions}, {}\ref{ArrayView-conversions},
-{}\ref{ArrayRCP-conversions}.
+four types are shown in the Listings {}\ref{listing:Ptr-conversions},
+{}\ref{listing:RCP-conversions},
+{}\ref{listing:ArrayView-conversions},
+{}\ref{listing:ArrayRCP-conversions}.
 
 \begin{listing}: Conversion functions for Ptr\\
 \label{listing:Ptr-conversions}
@@ -4498,7 +4519,7 @@ these situations include:
 clients to explicitly call increment and decrement functions.  This
 situation occurs when using CORBA {}\cite{ref:corba} and COM
 {}\cite{ref:com} for instance.  Such an approach is also presented in
-{}\cite[Item 29]{ref:meyers_1996} in the subsection ``A
+{}\cite[Item 29]{MoreEffectiveC++96} in the subsection ``A
 Reference-Counting Base Class''.  In these protocols, deallocation
 occurs automatically behind the scenes when this other reference count
 goes to zero and does not occur through an explicit call to operator
@@ -4582,7 +4603,7 @@ in Listing {}\ref{listing:RCP-dealloc}.
 All deallocator objects must support the typedef member
 {}\texttt{ptr\_t} and function member {}\texttt{free()}.  The concept
 of a template policy interface (also called a function object
-\cite[Section 18.4]{ref:stroustrup_2000}) should be familiar to
+\cite[Section 18.4]{stroustrup97}) should be familiar to
 semi-advanced users of the STL (part of the standard C++ library).
 
 To demonstrate the use of a deallocator object, let us assume that we
@@ -5242,6 +5263,7 @@ Pointers semantics are not all bad.
 
 %
 {}\section{Conclusions}
+\label{sec:conclusions}
 %
 
 Using reference-counting in Teuchos Memory Management classes allows
