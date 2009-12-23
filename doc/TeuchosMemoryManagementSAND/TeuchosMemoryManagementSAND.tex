@@ -795,8 +795,7 @@ have to look like when using the form of
     const int blockSize = totalLen/numBlocks; // Assume no remainder!
     
     const int blockOffset = 0;
-    for (int block_k = 0; block_k < numBlocks;
-      ++block_k, blockOffset += blockSize)
+    for (int block_k = 0; block_k < numBlocks; ++block_k, blockOffset += blockSize)
     {
       if (big_a[blockOffset] > 0.0) {
         // Create temporary std::vectors to do function call
@@ -836,8 +835,7 @@ pointer version of {}\texttt{addArrayIntoArray(...)} in Listing
     const int blockSize = totalLen/numBlocks; // Assume no remainder!
     
     const int blockOffset = 0;
-    for (int block_k = 0; block_k < numBlocks;
-      ++block_k, blockOffset += blockSize)
+    for (int block_k = 0; block_k < numBlocks; ++block_k, blockOffset += blockSize)
     {
       if (big_a[blockOffset] > 0.0) {
         addArrayIntoArray( blockSize, &big_a[blockOffset], &big_b[blockOffset]);
@@ -868,6 +866,7 @@ function arguments in many important use cases.
 %
 {}\subsection{Problems with relying on standard memory checking
 utilities}
+\label{sec:problems-with-mem-checkers}
 %
 
 Some programmers simply use raw C++ pointers and think that standard
@@ -1734,6 +1733,17 @@ where raw C++ pointer arrays are used for containers.  The class
 {}\texttt{Array} is a directly replacement for {}\texttt{std::vector}
 and actually wraps it internally.
 
+Note that all of these classes are templated on value types and are
+themselves value-types (see Section
+{}\ref{sec:value-and-reference-types}).  This means that you can
+embedd these types in each other in any arbitrary order to create any
+type of data structure that you would like.  For example, you could
+have {}\texttt{Array<RCP<ArrayRCP<ArrayView<Tuple<Ptr<T>,5> > > > >
+>}.  By undestanding what each of these types provide and what each
+type means (in terms of the idioms in Section {}\ref{sec:idioms}), you
+can achieve almost anything you want in a way that is self
+documenting.
+
 These classes all work together to provide a high level of debug-mode
 runtime checking to catch the majority of common programming errors
 and report these errors gracefully with informative error messages.  A
@@ -1892,7 +1902,7 @@ using a raw C++ pointer.
 However, in debug mode (enabled when {}\texttt{TEUCHOS\_DEBUG} is
 defined), then the {}\texttt{Ptr} becomes more complex and performs a
 number of runtime checks like for null dereferences and dangling
-references (see Section {}\ref{sec:dangling-references}).
+references (see Section {}\ref{sec:detection-dangling-references}).
 
 One note about the default null constructor shown in Listing
 {}\ref{listing:Ptr} which is:
@@ -2262,7 +2272,6 @@ member functions shown in Table {}\ref{tbl:common-array-type-members}.
 {}\texttt{ArrayView<[const] T> view(size\_type offset, size\_type size) [const]} \\
 {}\texttt{ArrayView<[const] T> operator[]()(size\_type offset, size\_type size) [const]} \\
 {}\texttt{ArrayView<[const] T> operator()() [const]} \\
-{}\texttt{operator ArrayView<const T>() const} \\
 \hline
 {}\textbf{Other common functions} \\
 \hline
@@ -2339,7 +2348,7 @@ arguemnts.  In an optimized build, it simply holds a raw base array
 pointer and an integer size.  In an optimized build,
 {}\texttt{ArrayView} looks like in Listing {}\ref{listing:ArrayView}.
 
-{}\begin{listing}: {}\texttt{Teuchos::ArrayView} Declaration (See
+{}\begin{listing}: {}\texttt{Teuchos::ArrayView} declaration (See
 Table {}\ref{tbl:common-array-type-members} for common array members.)
 \label{listing:ArrayView}
 {\small\begin{verbatim}
@@ -2460,7 +2469,7 @@ What makes {}\texttt{ArrayView} non-trivial and special, however, is
 that in a debug build, the implementation takes on a variety of
 runtime checking to catch all sorts of errors such as dangling
 iterators and other sub-views (Section
-{}\ref{sec:dangling-references}), range checking (Section
+{}\ref{sec:detection-dangling-references}), range checking (Section
 {}\ref{sec:null-dereferences-range-checking}), and other types of
 checking.
 
@@ -2492,7 +2501,7 @@ would like.
 The class declaration for {}\texttt{Teuchos::ArrayRCP} is shown in
 Listing {}\ref{listing:ArrayRCP}.
 
-\begin{listing}: {}\texttt{Teuchos::ArrayRCP} Declaration (optimized build)\\
+\begin{listing}: {}\texttt{Teuchos::ArrayRCP} declaration (optimized build)\\
 \label{listing:ArrayRCP}
 {\small\begin{verbatim}
   template<class T>
@@ -2696,8 +2705,8 @@ still uses solid reference-counting ownership semantics.
 
 Some of the other features of the {}\texttt{ArrayRCP} class that are
 common with the other classes are discussed in Sections
-{}\ref{sec:conversions}, {}\ref{sec:reference-counting-machinary},
-{}\ref{sec:debug-mode-runtime-checking}, and ???.
+{}\ref{sec:conversions}, {}\ref{sec:reference-counting-machinary}, and
+{}\ref{sec:debug-mode-runtime-checking}.
 
 
 %
@@ -2705,7 +2714,7 @@ common with the other classes are discussed in Sections
 \label{sec:Array}
 %
 
-The class {}\texttt{Array} is a complete replacement for
+The class {}\texttt{Array} is a complete drop-in replacement for
 {}\texttt{std::vector} that is integrated with the
 {}\texttt{ArrayView} class for debug-mode runtime checking.  In an
 optimized build, {}\texttt{Array} is nothing but an inline wrapper
@@ -2717,21 +2726,207 @@ overhead.  However, in a debug build, a full set of
 platform-independent runtime checking is performed that is as strong
 or stronger than any checked STL implementation (see {}\cite[Item
 {}\#83]{C++CodingStandards05}) and in addition includes dangling
-reference detection of {}\texttt{ArrayView} views (see Section ???).
-{}\texttt{Array} also supports better runtime debug output with better
-exception error messages.
+reference detection of {}\texttt{ArrayView} views (see Section
+{}\ref{sec:detection-circular-references}).  {}\texttt{Array} also
+supports better runtime debug output with better exception error
+messages.
 
 The class declaration for the {}\texttt{Array} class is shown in
-Listing ???.
+Listing {}\ref{listing:Array}.
 
-ToDo: Fill this in!
+\begin{listing}: {}\texttt{Teuchos::Array} declaration (optimized build) \\
+\label{listing:Array}
+{\small\begin{verbatim}
+  template<typename T>
+  class Array
+  {
+  public:
+  
+    // Constructors/initializers
+    Array();
+    explicit Array(size_type n, const value_type& value = value_type());
+    Array(const Array<T>& x);
+    template<ypename InputIterator> Array(InputIterator first, InputIterator last);
+    Array(const ArrayView<const T>& a);
+    template<int N> Array(const Tuple<T,N>& t);
+    ~Array();
+    Array& operator=(const Array<T>& a);
+  
+    // Other std::vector functions
+    void assign(size_type n, const value_type& val);
+    template<typename InputIterator> void assign(InputIterator first,
+      InputIterator last);
+    iterator begin();
+    iterator end();
+    const_iterator begin() const;
+    const_iterator end() const;
+    reverse_iterator rbegin();
+    reverse_iterator rend();
+    const_reverse_iterator rbegin() const;
+    const_reverse_iterator rend() const;
+    size_type size() const;
+    size_type max_size() const;
+    void resize(size_type new_size, const value_type& x = value_type());
+    size_type capacity() const;
+    bool empty() const;
+    void reserve(size_type n);
+    reference operator[](size_type i);
+    const_reference operator[](size_type i) const;
+    reference at(size_type i);
+    const_reference at(size_type i) const;
+    reference front();
+    const_reference front() const;
+    reference back();
+    const_reference back() const;
+    void push_back(const value_type& x);
+    void pop_back();
+    iterator insert(iterator position, const value_type& x);
+    void insert(iterator position, size_type n, const value_type& x);
+    template<typename InputIterator> void insert(iterator position,
+      InputIterator first, InputIterator last);
+    iterator erase(iterator position);
+    iterator erase(iterator first, iterator last);
+    void swap(Array& x);
+    void clear();
+  
+    // Conversions to and from std::vector
+    Array( const std::vector<T> &v );
+    std::vector<T> toVector() const;
+    Array& operator=( const std::vector<T> &v );
+
+    // Implicit conversion to ArrayView
+    operator ArrayView<T>();
+    operator ArrayView<const T>() const;
+  
+    // Common array class members (see above)
+    ...
+  
+  private:
+    std::vector<T> vec_; // Optimized implementation
+  };
+  
+  
+  // Non-member helper functions
+  
+  template<class T> ArrayRCP<T> arcp( const RCP<Array<T> > &v );
+  template<class T> ArrayRCP<const T> arcp( const RCP<const Array<T> > &v );
+  template<class T> ArrayRCP<T> arcpFromArray( Array<T> &a );
+  template<class T> ArrayRCP<const T> arcpFromArray( const Array<T> &a );
+  template<typename T> std::ostream& operator<<(std::ostream& os,
+    const Array<T>& array);
+  template<typename T> int hashCode(const Array<T>& array);
+  template<typename T> std::vector<T> createVector( const Array<T> &a );
+  std::string toString(const Array<T>& array);
+  template<typename T> Array<T> fromStringToArray(const std::string& arrayStr);
+  template<typename T> bool operator==( const Array<T> &a1, const Array<T> &a2 );
+  template<typename T> bool operator!=( const Array<T> &a1, const Array<T> &a2 );
+  template<typename T> void swap( Array<T> &a1, Array<T> &a2 );
+  template<typename T> bool operator<( const Array<T> &a1, const Array<T> &a2 );
+  template<typename T> bool operator<=( const Array<T> &a1, const Array<T> &a2 );
+  template<typename T> bool operator>( const Array<T> &a1, const Array<T> &a2 );
+  template<typename T> bool operator>=( const Array<T> &a1, const Array<T> &a2 );
+\end{verbatim}}
+\end{listing}
+
+The usage of the {}\texttt{Array} class is identical to the usage of
+{}\texttt{std::vector} except that it natively supports the creation
+of {}\texttt{AraryView} objects that can detect and report dangling
+references or attempts to resize the container when one or more
+{}\texttt{ArrayView} objects are active.  The unit tests for
+{}\texttt{Array} provide a complete catelog of all the debug-mode
+runtime checking that {}\texttt{Array} performs.  A more general
+discussion of this can be found at
+{}\ref{sec:debug-mode-runtime-checking}.
 
 
 %
 {}\subsubsection{\texttt{Teuchos::Tuple<T,N>}}
 %
 
-ToDo: Fill this in!
+The last array class discussed here is the {}\texttt{Tuple} class
+which represents a compile-time sized array that implicitly converts
+into a {}\texttt{ArrayView} object.  The class listing for
+{}\texttt{Tuple} is shown in Listing {}\ref{listing:Tuple}.
+
+\begin{listing}: {}\texttt{Teuchos::Tuple} declaration (optimized build) \\
+\label{listing:Tuple}
+{\small\begin{verbatim}
+  template<typename T, int N>
+  class Tuple {
+  public:
+    
+    // Constructors/initializers
+    inline Tuple();
+    Tuple( const Tuple<T,N> &t );
+  
+    // Implicit conversion to ArrayView
+    operator ArrayView<T>();
+    operator ArrayView<const T>() const;
+    
+    // Common array class members (see above)
+    ...
+  
+  private:
+    T array_[N]; // Optimized implementation
+  };
+  
+  // Non-member constructors
+  
+  template<typename T>
+  Tuple<T,1> tuple(const T& a);
+  
+  template<typename T>
+  Tuple<T,2> tuple(const T& a, const T& b);
+  
+  template<typename T>
+  Tuple<T,3> tuple(const T& a, const T& b, const T& c);
+  
+  ...
+  
+  template<typename T>
+  Tuple<T,15> tuple(const T& a, const T& b, const T& c, const T& d, const T& e,
+    const T& f, const T& g, const T& h, const T& i, const T& j, const T& k,
+    const T& l, const T& m, const T& n, const T& o);
+\end{verbatim}}
+\end{listing}
+
+The class {}\texttt{Tuple} is very small and efficient in an optimized
+build.  All the functions are inline and all data is allocated on the
+stack (or statically) and does not use the free store.  In an debug
+build, however, {}\texttt{Tuple} takes on all the debug checking of
+all the other Teuchos array classes including the detection of
+dangling {}\texttt{ArrayView} views and dangling iterators.
+
+One of the most useful features of {}\texttt{Tuple} is that a number
+of overloaded non-member constructor functions with name
+{}\texttt{tuple(...)} are provided to make it easy to pass in arrays
+to functions that accept them as {}\texttt{ArrayView} arguments.
+Overloads of {}\texttt{tuple(...)} are currently provided from one up
+through 15 arguments.  For an example using {}\texttt{tuple(...)} in a
+function call, consider the function:
+
+{\small\begin{verbatim}
+  template<typename T>
+  void doSomething(const ArrayView<const T>&);
+\end{verbatim}}
+
+To call the function with three int arguments, one would use:
+
+{\small\begin{verbatim}
+  doSomething<int>(tuple(1, 2, 3));
+\end{verbatim}}
+
+Note that in order to make the above function call happen and allow
+the implicit conversion from {}\texttt{Tuple<int>} to
+{}\texttt{ArrayView<const int>} that we had to explicitly provide the
+template argument to the {}\texttt{doSomething()} function.  If
+{}\texttt{doSomething()} was not a template function, this would have
+not been necessary.
+
+Also note that in an optimized build for above function call that all
+data would be allocated on the stack and would not involve the
+free-store.  This results in very efficient code which is important
+when this is being used in an inner loop.
 
 
 %
@@ -2739,10 +2934,119 @@ ToDo: Fill this in!
 \label{sec:array-views}
 %
 
-ToDo: Discuss persisting and non-persisting views.
+One of the most powerful features of the Teuchos memory management
+array types is that they allow for the creation of arbitrary
+contiguous subviews of data that have the strongest debug-mode runtime
+checking possible.  All of the array classes {}\texttt{ArrayView},
+{}\texttt{ArrayRCP}, {}\texttt{Array}, and {}\texttt{Tuple} provide
+contiguous views as {}\texttt{ArrayView} objects.  The functions the
+provide {}\texttt{ArrayView} views are shown in Table
+{}\texttt{tbl:common-array-type-members}.  The {}\texttt{ArrayRCP}
+class can also provide persisting contiguous subviews as new
+{}\texttt{ArrayRCP} objects using the function
+{}\texttt{ArrayRCP::persistingView(...)}.  Persisting views will
+remain even if the parent {}\texttt{ArrayRCP} objects have been deleted.
 
-ToDo: Show refactored algorithm that uses Array and ArrayView to clean
-up.
+As soon as a continguous array of data is correctly captured in
+{}\texttt{Array} or and owning {}\texttt{ArrayRCP} object, all
+children {}\texttt{ArrayView} objects will be protected in that if the
+parent array gets seleted, a debug-mode runtime check will detect and
+report a problem if a client tries to access the data after the parent
+has gone away (see Section {}\ref{sec:detection-dangling-references}
+for details).
+
+To demonstrate the elegance and superior error checking of
+{}\texttt{ArrayView} subviews, consider a refactored version of code
+in Listings {}\ref{listing:addArrayIntoArray-std-vector} and
+{}\ref{listing:someBlockAlgo-std-vector} that tried to use
+{}\texttt{std::vector} but resulted in verbose clumbsy code that was
+really no more correct or safe than the raw C++ pointer version.  This
+refactored version to use {}\texttt{Array} and {}\texttt{ArrayView} is
+shown in Listings {}\ref{listing:addArrayIntoArray-ArrayView} and
+{}\ref{listing:someBlockAlgo-ArrayView}.
+
+\begin{listing}: Refactored version of Listing
+  {}\ref{listing:addArrayIntoArray-std-vector} to use {}\texttt{ArrayView} \\
+\label{listing:addArrayIntoArray-ArrayView}
+{\small\begin{verbatim}
+  template<class T>
+  void addArrayIntoArray( const ArrayView<const T> &a, const ArrayView<T> &b )
+  {
+    DEBUG_MODE_ASSERT_EQUALITY( a.size(), b.size() );
+    for (int i = 0; i < a.size(); ++i)
+      b[i] += a[i];
+  }
+\end{verbatim}}
+\end{listing}
+
+\begin{listing}: Refactored version of
+  {}\ref{listing:someBlockAlgo-std-vector} to use {}\texttt{ArrayView} \\
+\label{listing:someBlockAlgo-ArrayView}
+{\small\begin{verbatim}
+  void someBlockAlgo( const int numBlocks, const ArrayView<const double> &big_a,
+    const ArrayView<double> &big_b )
+  {
+    DEBUG_MODE_ASSERT_EQUALITY( big_a.size(), big_b.size() );
+    const int totalLen = big_a.size();
+    const int blockSize = totalLen/numBlocks; // Assume no remainder!
+    
+    const int blockOffset = 0;
+    for (int block_k = 0; block_k < numBlocks; ++block_k, blockOffset += blockSize)
+    {
+      if (big_a[blockOffset] > 0.0) {
+        addArrayIntoArray(big_a(blockOffset, blockSize),
+          big_b(blockOffset, blockSize));
+      }
+    }
+  }
+\end{verbatim}}
+\end{listing}
+
+The refactored code in Listings
+{}\texttt{listing:addArrayIntoArray-ArrayView} and
+{}\texttt{listing:someBlockAlgo-ArrayView} are that they are nearly as
+compact as the raw pointer versions in
+{}\texttt{listing:addArrayIntoArray-raw} and
+{}\texttt{listing:someBlockAlgo-raw} but yet have better debug-mode
+runtime error checking as the {}\texttt{std::vector} versions in
+{}\texttt{listing:addArrayIntoArray-std-vector} and
+{}\texttt{listing:someBlockAlgo-std-vector}.  To see the improved
+safetly, let's consider the case where the
+{}\texttt{addArrayIntoArray(...)} function is incorrectly implemented
+with an off-by-one error as shown in Listing
+{}\ref{listing:addArrayIntoArray-ArrayViewError}.
+
+\begin{listing}: Refactored version of off-by-one error in Listing
+  {}\ref{listing:addArrayIntoArray_rawError} to use {}\texttt{ArrayView} \\
+\label{listing:addArrayIntoArray-ArrayViewError}
+{\small\begin{verbatim}
+  template<class T>
+  void addArrayIntoArray( const ArrayView<const T> &a, const ArrayView<T> &b )
+  {
+    DEBUG_MODE_ASSERT_EQUALITY( a.size(), b.size() );
+    for (int i = 0; i <= a.size(); ++i)
+      b[i] += a[i];
+  }
+\end{verbatim}}
+\end{listing}
+
+If the erroreous {}\texttt{addArrayIntoArray(...)} function in Listing
+{}\ref{listing:addArrayIntoArray-ArrayViewError} were called from
+Listing {}\ref{listing:someBlockAlgo-ArrayView} then in debug-mode, a
+runtime exception would immediately be raised when the
+{}\texttt{addArrayIntoArray(...)} function tried to access one past
+the last element.  As mentioned in Section
+{}\ref{sec:problems-with-mem-checkers}, memory checking tools like
+Valgrind or Purify will never be able to catch semantic usage errors
+like this but it is trivial to catch these mistakes when using the
+Teuchos memory management classes.
+
+As mentioned in Section {}\texttt{sec:conversions}, subviews can also
+be used along with the reinterpret cast functions to create very
+efficient memory management schemes for POD (plain old data) where
+large untyped {}\texttt{char} arrays are created and then subviews are
+broken off and reinterpret cast to specific data types.  Examples of
+this can be found in the unit testing code.
 
 
 %
@@ -2782,11 +3086,11 @@ protection.}
 The majority of problems that beginners have with the Teuchos memory
 management classes is relataed to the inability to make the basic
 equivalencies between raw pointers and smart pointers shown in Table
-{}\ref{sec:teuchos-const-nonconst-pointer-objects} (see Section for
-specific examples).  It is crtical that the programmer recognize this
-equivalence with raw pointers because it impacts many things
+{}\ref{sec:teuchos-const-nonconst-pointer-objects} (see Section ??? 
+for specific examples).  It is crtical that the programmer recognize
+this equivalence with raw pointers because it impacts many things
 especially implicit type conversions to satisfy function calls (again
-see Section ???).
+see Section {}\ref{sec:conversions}).
 
 
 %
@@ -2812,8 +3116,9 @@ The core Teuchos memory management types {}\texttt{Ptr},
 of the reasonable implicit and explicit type conversions that are
 allowed by raw C++ pointers.  C++ defines implicit convers for raw
 pointers from non-const to const and from derived to base type.  Table
-??? shows what implicit and explicit conversions are supported for the
-four core memory management types.
+{}\ref{table:implicit_explicit_conversions} shows what implicit and
+explicit conversions are supported for the four core memory management
+types.
 
 \begin{table}
 \begin{center}
@@ -2888,14 +3193,13 @@ a pointer to an array of contiguous objects so the types
 dynamic casts.
 
 In well formed programs, there is a justification to perform
-reinterpret casts for contingous arrays of POD (plain old data).  For
-example, as mentioned in Section ???, it is prefectly reasonable to
-allocate a large array of {}\texttt{char} (untyped) data and then
-create subviews and reinterpret cast to separate arrays of
-{}\texttt{double} and {}\texttt{int} data, for instance.  However, for
-single objects, I can not think of a single valid reason to perform a
-reinterpret cast and therefore, reinterpret cast is not supported for
-the types {}\texttt{Ptr} and {}\texttt{RCP}.
+reinterpret casts for contingous arrays of POD (plain old data). It is
+prefectly reasonable to allocate a large array of {}\texttt{char}
+(untyped) data and then create subviews and reinterpret cast to
+separate arrays of {}\texttt{double} and {}\texttt{int} data, for
+instance.  However, for single objects, I can not think of a single
+valid reason to perform a reinterpret cast and therefore, reinterpret
+cast is not supported for the types {}\texttt{Ptr} and {}\texttt{RCP}.
 
 All implicit conversions are supported by templated copy constructors
 for all four classes.  The explicit conversion operators for these
@@ -3201,11 +3505,12 @@ The non-member constructor idiom as shown in Listing
 {}\ref{listing:WidgetNonmemberConstructor} where a reference-type
 object can only be dynamically allocated and returned wrapped in an
 {}\texttt{RCP} object is recommended for all reference-type objects.
-The reason for this is that, as described in Section ???, when an
-object is dynamically allocated in managed in an {}\texttt{RCP}
-object, a number of important debug-mode runtime checks can be
-performed which cannot be when the object is first allocated on the
-stack or managed as a static object.
+The reason for this is that, as described in Section
+{}\ref{sec:reference-counting-machinary}, when an object is
+dynamically allocated in managed in an {}\texttt{RCP} object, a number
+of important debug-mode runtime checks can be performed which cannot
+be when the object is first allocated on the stack or managed as a
+static object.
 
 
 %
@@ -3983,12 +4288,13 @@ shown in Tables {}\ref{fig:func_return_value_type} and
 In order to effectively use these memory management classes and to
 debug problems when they occur, one must understand the basic
 reference-counting approach being used.  Basic reference counting with
-smart pointers is well established in the C++ literature [???] but a
-basic overview and specific details about the approach used in the
-Teuchos memory management classes is appropriate to describe here.  Of
-equal importance is to describe how the reference-counting
-infrastructure can be used to address some boundary cases that can be
-used to help solve some fundamental problems with reference counting.
+smart pointers is well established in the C++ literature
+{}\cite{MoreEffectiveC++96} but a basic overview and specific details
+about the approach used in the Teuchos memory management classes is
+appropriate to describe here.  Of equal importance is to describe how
+the reference-counting infrastructure can be used to address some
+boundary cases that can be used to help solve some fundamental
+problems with reference counting.
 
 The basic reference counting machinery being used by the classes is
 first described.  Next, the issue of circular references and weak
@@ -4491,6 +4797,7 @@ ToDo: Fill this in!
 
 %
 {}\subsubsection{Detection of circular references}
+\label{sec:detection-circular-references}
 %
 
 ToDo: Fill this in!
@@ -4498,7 +4805,7 @@ ToDo: Fill this in!
 
 %
 {}\subsubsection{Detection of dangling references}
-\label{sec:dangling-references}
+\label{sec:detection-dangling-references}
 %
 
 ToDo: Fill this in!
@@ -4506,7 +4813,7 @@ ToDo: Fill this in!
 
 %
 {}\subsubsection{Detection of other invalid usage}
-\label{sec:dangling-references}
+\label{sec:detection-other-invalid-usage}
 %
 
 ToDo:
@@ -4632,6 +4939,12 @@ ToDo: Fill this in!
 %
 
 ToDo: Fill this in!
+
+ToDo: Mention the relaxed direct-view idiom where multiple changeable
+views can be created to the same parent but that these views become
+invalidated once the parent changes its structure in a significant
+way.  This is what happens with the Array class with iterator and
+ArrayView views.
 
 
 %
