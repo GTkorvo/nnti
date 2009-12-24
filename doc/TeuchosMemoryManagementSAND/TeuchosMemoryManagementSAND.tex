@@ -102,7 +102,7 @@ template classes developed in the Trilinos package Teuchos are used to
 replace every use of raw C++ pointers in every use case where it
 appears in high-level code.  Included in the set of memory management
 classes are the typical reference-counted smart pointers similar to
-{}\texttt{boost::shared\_ptr} (and therefore C++09
+{}\texttt{boost::shared\_ptr} (and therefore C++0x
 {}\texttt{std::shared\_ptr}) and {}\texttt{boost::shared\_array}.
 However, what is missing in boost and the new standard library are
 non-reference counted classes for remaining use cases where raw C++
@@ -113,7 +113,7 @@ checks and allows the code to perform as efficiently as raw C++
 pointers with reasonable usage.  Also included is a novel approach for
 dealing with the circular references problem that imparts little extra
 overhead and is almost completely invisible to most of the code
-(unlike the boost and therefore C++09 approach).  Rather than being a
+(unlike the boost and therefore C++0x approach).  Rather than being a
 radical approach this is simply the logical result of a trend in the
 C++ development and standards community that started with
 {}\texttt{std::auto\_ptr} and is continued (but not finished) with
@@ -321,7 +321,7 @@ in the final conclusions section.
 The remainder of this paper assumes that the reader has some basic
 knowledge of C++ and is somewhat familiar with smart reference-counted
 pointer classes like {}\texttt{boost::shared\_ptr} (which is the basis
-for the new C++09 {}\texttt{std::shared\_ptr} class).  The Teuchos
+for the new C++0x {}\texttt{std::shared\_ptr} class).  The Teuchos
 equivalent for these smart pointer classes is {}\texttt{Teuchos::RCP}
 which we abbreviate as just {}\texttt{RCP} in sample code.  If the
 reader is not familiar with the basics of smart reference-counted
@@ -630,15 +630,15 @@ Any form of language-supported GC will break some backward
 compatibility of C++ and therefore we may never see a C++ standard
 with full GC.
 
-The boost library and the up-coming C++09 standard add more types that
+The boost library and the up-coming C++0x standard add more types that
 I will mention below that continue in this trend of providing new
 user-defined types and idioms to address fundamental C++ language
 flaws and deficiencies.  However, as I describe in meat of this paper,
-both the boost and the C++09 standard library fall short of providing
+both the boost and the C++0x standard library fall short of providing
 a complete and comprehensive solution to the problems with raw C++
 pointers and raw access to memory.
 
-Note that the upcoming C++09 standard as it is currently defined (at
+Note that the upcoming C++0x standard as it is currently defined (at
 least the time of this writing) will do nothing to fix the majority of
 these nonsensical raw C++ pointer gotchas because to do so would
 destroy backward compatibility of many millions of lines of existing
@@ -1125,7 +1125,7 @@ trend that the C++ community has been following for more than the last
 decade.  We see it first in the introduction of
 {}\texttt{std::auto\_ptr} and {}\texttt{std::vector}.  This was then
 followed by the development of {}\texttt{boost::shared\_ptr} (and
-therefore {}\texttt{std::shared\_ptr} in C++09) and
+therefore {}\texttt{std::shared\_ptr} in C++0x) and
 {}\texttt{boost::array\_ptr}.  What I am suggesting in this paper is
 the logical conclusion of this journey which is the development of a
 complete set of utility classes in order to remove all raw C++
@@ -1783,7 +1783,7 @@ classes must be developed together with knowledge of each other's
 internal implementations in order to provide for solid debug-mode
 runtime checking.  For example, in general, you cannot mix in other
 memory management classes like {}\texttt{boost::shared\_ptr} (i.e.\
-{}\texttt{std::shared\_ptr} in C++09) and {}\texttt{std::vector} and
+{}\texttt{std::shared\_ptr} in C++0x) and {}\texttt{std::vector} and
 provide for the level of runtime checking that is supported by the
 concert of Teuchos memory management classes described here.  More
 details about why this is so are given in Section
@@ -2063,7 +2063,7 @@ management classes, is used to manage single objects in persisting
 associations.  {}\texttt{RCP} is very similar to other high-quality
 reference-counted smart pointer classes like
 {}\texttt{boost::shared\_ptr} and of course the upcoming standard
-C++09 class {}\texttt{std::shared\_ptr}.  However, {}\texttt{RCP} has
+C++0x class {}\texttt{std::shared\_ptr}.  However, {}\texttt{RCP} has
 some key features that differentiate it from these other better known
 smart pointer classes.  In particular, {}\texttt{RCP} has built in
 support for the detection of circular references (Section
@@ -4334,35 +4334,34 @@ reference counting.
 \end{center}
 \caption{
 \label{fig:TeuchosRCPDesign}
-{}\textbf{UML Class Diagram:} Basic design of the Teuchos
-reference-counting machinery.  }
+Basic design of the Teuchos reference-counting machinery.  }
 \end{figure}
 \esinglespace}
 
 The foundation for the reference-counting machinery used by all of the
 reference-counting classes is shown in Figure
-{}\ref{fig:TeuchosRCPDesign}.  The class {}\texttt{RCPNode} is an
-abstract base class that contains two different reference counts (a
-strong count and a weak count) and inline functions for manipulating
-the counts as efficiently as possible.  The templated concrete
-subclass {}\texttt{RCPNodeImpl} is what actually stores the raw C++
-pointer to the reference-counted object.  This class is also templated
-on an deallocation policy object that determines how the object is
-reclaimed.  {}\texttt{RCPNodeHandle} is a simple handle class that
-automates the manipulation of the reference counts by overloading the
-copy constructor and assignment operator functions.  This avoids
-having to replicate reference counting incrementing and decrementing
-in the user-level classes {}\texttt{RCP} and {}\texttt{ArrayRCP} that
-contain it.  All of the functions on {}\texttt{RCPNodeHandle} are
-inlined and the only data members are a pointer to the underlying
-{}\texttt{RCPNode} object and a {}\texttt{strength} attribute (with
-values {}\texttt{RCP\_STRONG} and {}\texttt{RCP\_WEAK}).  The class
-{}\texttt{RCPNodeHandle} imparts zero space and time overhead and
-removes all duplication in how the reference count node object is
-handled.  In future UML diagrams, the {}\texttt{RCPNodeHandle} class
-will be considered to be part of the owning {}\texttt{RCP} or
-{}\texttt{ArrayRCP} classes to avoid clutter.  The classes
-{}\texttt{RCPNode}, {}\texttt{RCPNodeImpl}, and
+{}\ref{fig:TeuchosRCPDesign} (UML class diagram).  The class
+{}\texttt{RCPNode} is an abstract base class that contains two
+different reference counts (a strong count and a weak count) and
+inline functions for manipulating the counts as efficiently as
+possible.  The templated concrete subclass {}\texttt{RCPNodeImpl} is
+what actually stores the raw C++ pointer to the reference-counted
+object.  This class is also templated on an deallocation policy object
+that determines how the object is reclaimed.  {}\texttt{RCPNodeHandle}
+is a simple handle class that automates the manipulation of the
+reference counts by overloading the copy constructor and assignment
+operator functions.  This avoids having to replicate reference
+counting incrementing and decrementing in the user-level classes
+{}\texttt{RCP} and {}\texttt{ArrayRCP} that contain it.  All of the
+functions on {}\texttt{RCPNodeHandle} are inlined and the only data
+members are a pointer to the underlying {}\texttt{RCPNode} object and
+a {}\texttt{strength} attribute (with values {}\texttt{RCP\_STRONG}
+and {}\texttt{RCP\_WEAK}).  The class {}\texttt{RCPNodeHandle} imparts
+zero space and time overhead and removes all duplication in how the
+reference count node object is handled.  In future UML diagrams, the
+{}\texttt{RCPNodeHandle} class will be considered to be part of the
+owning {}\texttt{RCP} or {}\texttt{ArrayRCP} classes to avoid clutter.
+The classes {}\texttt{RCPNode}, {}\texttt{RCPNodeImpl}, and
 {}\texttt{RCPNodeHandle}, are used unchanged for both the
 {}\texttt{RCP} and {}\texttt{ArrayRCP} classes (however, only the
 {}\texttt{RCP} class is shown for simplicity).
@@ -4387,29 +4386,30 @@ Section {}\ref{sec:extra-data}.
 \end{center}
 \caption{
 \label{fig:RCPEx1}
-{}\textbf{UML Object Diagram:} Example of several {}\texttt{RCP}
-objects pointing to the same {}\texttt{RCPNodeImpl} object.  }
+Example of several {}\texttt{RCP} objects pointing to the same
+{}\texttt{RCPNodeImpl} object.  }
 \end{figure}
 \esinglespace}
 
 It is critical to understand that the foundation for sharing objects
 using reference counting is that only one owning {}\texttt{RCPNode}
 object can exist for any object that is shared.  Figure
-{}\ref{fig:RCPEx1} shows an example of several {}\texttt{RCP} objects
-pointing to the same concrete object of type {}\texttt{C} through
-different base class interfaces.  If the programmer follows the idioms
-described in Section {}\ref{sec:idioms} and outlined in Appendix
-{}\ref{apdx:summary_of_idioms} and {}\ref{apdx:commandments}, it will
-always be the case that only one reference-counting node object will
-exist for a given reference-counted object.  Exceptions to the one
-effective owning {}\texttt{RCPNode} per reference-counted object
-guideline are allowed to facilitate some more advanced use cases (see
-Section ??? for an example).  As mentioned earlier, the
-{}\texttt{RCPNode} object stores both a strong and a weak reference
-count.  The strong and weak reference counts are equal to the number
-of strong and weak, respectively, {}\texttt{RCP} objects pointing to
-the single {}\texttt{RCP} node object.  When the strong count goes to
-zero, the underlying reference-counted object is destroyed but the
+{}\ref{fig:RCPEx1} (UML object diagram) shows an example of several
+{}\texttt{RCP} objects pointing to the same concrete object of type
+{}\texttt{C} through different base class interfaces.  If the
+programmer follows the idioms described in Section {}\ref{sec:idioms}
+and outlined in Appendix {}\ref{apdx:summary_of_idioms} and
+{}\ref{apdx:commandments}, it will always be the case that only one
+reference-counting node object will exist for a given
+reference-counted object.  Exceptions to the one effective owning
+{}\texttt{RCPNode} per reference-counted object guideline are allowed
+to facilitate some more advanced use cases (see Section ??? for an
+example).  As mentioned earlier, the {}\texttt{RCPNode} object stores
+both a strong and a weak reference count.  The strong and weak
+reference counts are equal to the number of strong and weak,
+respectively, {}\texttt{RCP} objects pointing to the single
+{}\texttt{RCP} node object.  When the strong count goes to zero, the
+underlying reference-counted object is destroyed but the
 {}\texttt{RCPNodeImpl} object is not destroyed until the strong and
 weak counts both go to zero.  The motivation and the workings of
 strong verses weak reference counts is discussed in Section
@@ -4436,8 +4436,8 @@ including: a) reporting objects involved in circular depencencies
 after a program ends (see Section
 {}\ref{sec:detection-circular-references}), b) detection of dangling
 references of non-owning {}\texttt{RCP} objects (see Section
-{}\ref{sec:detection-dangling-references}), and c) detection of
-multiple owning {}\texttt{RCPNode} objects (see Section
+{}\ref{sec:detection-dangling-references}), and c) detection of the
+creation of multiple owning {}\texttt{RCPNode} objects (see Section
 {}\ref{sec:detection-dual-owning-rcps}).
 
 
@@ -4449,80 +4449,160 @@ multiple owning {}\texttt{RCPNode} objects (see Section
 The fundamental weakness of low-overhead reference counting as
 described in this paper and used in the Teuchos memory management
 classes is that there is no bullet-proof way to address circular
-references that result in memory leaks.  Because of possible circular
-references, only system-level garbage collection methods, as
-implemented in Java and Python can robustly clean up memory in every
-case of circular reference.  As stated earlier, given backward
-compatibility constraints, many existing C++ programs cannot be used
-with any C++ implementation that might implement garbage collection,
-not now or ever.
+references that otherwise result in memory leaks.  Because of possible
+circular references, only system-level garbage-collection methods,
+such as implemented in languages like Java and Python, can robustly
+clean up memory in every case of circular reference.  As stated
+earlier, given backward compatibility constraints, many existing C++
+programs cannot be used with any C++ implementation that might
+implement garbage collection, not now or ever.  A key issue is that
+many programs require the side-effects of the deletion of objects as
+specific points in the program and changing the time of deletion of
+the object (and the call of the destructor) would break the program.
 
 To understand the problem with circular references, consider Figure
-??? showing the circular reference between two objects {}\texttt{a}
-and {}\texttt{b}.  Here object {}\texttt{a} contains an {}\texttt{RCP}
-pointing to object {}\texttt{b}, and object {}\texttt{b} contains an
-{}\texttt{RCP} pointing to object {}\texttt{a}.  In this situation,
-when {}\texttt{ClientA} and {}\texttt{ClientB} destroy their
-{}\texttt{RCP} objects pointing to the underlying {}\texttt{a} and
-{}\texttt{b} objects, the reference counts will not go to zero because
-of the circular reference between {}\texttt{a} and {}\texttt{b}.  This
-will result in a memory leak that a tool like Valgrind or Purify
-should contain about.  If lots of objects with circular references are
-constantly being created and destroyed creating these types of memory
-leaks, obviously we have a problem and the system could run out of
-memory.
+{}\ref{fig:CircularRCP_A_B} showing the circular reference between two
+objects of type {}\texttt{A} and {}\texttt{B}.  Here object
+{}\texttt{a} contains an {}\texttt{RCP} pointing to object
+{}\texttt{b}, and object {}\texttt{b} contains an {}\texttt{RCP}
+pointing to object {}\texttt{a}.  In this situation, when
+{}\texttt{ClientA} and {}\texttt{ClientB} destroy their {}\texttt{RCP}
+objects pointing to the underlying {}\texttt{a} and {}\texttt{b}
+objects, the reference counts will not go to zero because of the
+circular reference between {}\texttt{a} and {}\texttt{b}.  This will
+result in a memory leak that a tool like Valgrind or Purify should
+complain about.  If lots of objects with circular references are
+constantly being created and destroyed resulting in these types of
+memory leaks, then obviously we have a problem and the system could
+run out of memory and bring the program down.
 
-ToDo: Show a UML object diagram showing a classical circular reference
-between two objects A and B.
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{CircularRCP_A_B}
+%}
+\end{center}
+\caption{
+\label{fig:CircularRCP_A_B}
+Simple circular reference between two objects.  }
+\end{figure}
+\esinglespace}
+
+When debug-mode node tracing is enabled, the system will print out the
+remaining {}\texttt{RCPNode} objects when it exists (see Section ??? 
+for more details).
 
 While there is no completely general and bullet proof way to address
 the circular reference problem, there is a fairly simple and cheap
-approach that can effectively resolve circular references in most
-cases.  The different approaches described here supported by these
-reference counted classes is the definition of a weak
-reference-counted pointer.  As shown in Figure ???, this is
-accomplished through a {}\texttt{strength\_} attribute with values
-{}\texttt{STRONG} and {}\texttt{WEAK}.  By default, all
-{}\texttt{[Array]RCP} objects are {}\texttt{STRONG}.  When an
-{}\texttt{[Array]RCP} is {}\texttt{STRONG}, then the underlying
-{}\texttt{ConcreteT} object is guaranteed to stay around.  However,
-when the {}\texttt{[Array]RCP} is {}\texttt{WEAK}, the underlying
-{}\texttt{ConcreteT} can get deleted when strong count goes to zero.
+approach supported by the Teuchos reference-counting machinery that
+can effectively resolve circular references in most cases.  The
+approache described here supported by the Teuchos reference-counted
+classes is the definition of weak reference-counted pointers.  As
+shown in Figure {}\ref{fig:TeuchosRCPDesign}, this is accomplished
+through a {}\texttt{strength} attribute with values {}\texttt{STRONG}
+and {}\texttt{WEAK}.  By default, all {}\texttt{RCP} objects are
+{}\texttt{STRONG}.  When an {}\texttt{RCP} is {}\texttt{STRONG}, then
+the underlying {}\texttt{ConcreteT} object is guaranteed to stay
+around.  However, when the {}\texttt{RCP} is {}\texttt{WEAK}, the
+underlying {}\texttt{ConcreteT} can get deleted when strong count goes
+to zero (by the deletion of other {}\texttt{STRONG} {}\texttt{RCP}
+objects).
 
-So how does this work?  Figure ??? shows the same setup with a
-circular references as shown in Figure ??? …
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{CircularRCP_A_B_weak}
+%}
+\end{center}
+\caption{
+\label{fig:CircularRCP_A_B_weak}
+Simple circular reference between two objects broken using a
+{}\texttt{WEAK} {}\texttt{RCP}.  }
+\end{figure}
+\esinglespace}
 
-ToDo: Copy the material from the slides showing how the a weak pointer
-resolves the circular reference problem!
+So how can we use weak pointers to deal with circular references?
+Figure {}\ref{fig:CircularRCP_A_B_weak} shows the same setup with a
+circular references as shown in Figure {}\ref{fig:CircularRCP_A_B}
+except where the circular reference is broken using a weak pointer.
+With the weak pointer in place, all of the objects will get destroyed
+when {}\texttt{ClientA} and {}\texttt{ClientB} remove their
+{}\texttt{RCP} objects, no mater what order they remove them.
 
-With respect the weak references, the Teuchos classes
-{}\texttt{[Array]RCP} differ substantially from the Boost and
-therefore C++09 standard reference counting classes.  With the classes
-{}\texttt{[Array]RCP}, the attribution of strong work weak is made at
-runtime.  At runtime, an external client can decide to make
-{}\texttt{a}'s reference to {}\texttt{b} weak or {}\texttt{b}'s
-reference to {}\texttt{a} weak depending on the given circumstance.
-With the Boost and C++09 {}\texttt{shared\_ptr} class, you have to use
-a separate class {}\texttt{weak\_ptr} to represent a weak pointer.
-The problem with the Boost approach then is that you have to decide at
-compile time if a particular reference is going to be weak or strong.
-While there are some cases where you can always assume the reference
-needs be weak (like in the self reference case described in Section
-???), there are more complex cases where you cannot so easily.  For
-example, if we were to use the {}\texttt{[shared\_ptr} and
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{CircularRCP_A_B_ClientA_1}
+%}
+\\[2ex] a) {}\texttt{ClientA} goes away first \\[3ex]
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{CircularRCP_A_B_ClientA_2}
+%}
+\\[2ex] b) {}\texttt{ClientB} goes away second \\[3ex]
+\end{center}
+\caption{
+\label{fig:CircularRCP_A_B_ClientA}
+Scenario where {}\texttt{ClientA} is deleted first.  }
+\end{figure}
+\esinglespace}
+
+Consider first the scenario where the {}\texttt{ClientA} object goes
+away first as shown in Figure {}\ref{fig:CircularRCP_A_B_ClientA} (UML
+communication diagram).  ToDo: describe what is happening!
+
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{CircularRCP_A_B_ClientB_1}
+%}
+\\[2ex] a) {}\texttt{ClientB} goes away first \\[3ex]
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{CircularRCP_A_B_ClientB_2}
+%}
+\\[2ex] b) {}\texttt{ClientA} goes away second \\[3ex]
+\end{center}
+\caption{
+\label{fig:CircularRCP_A_B_ClientB}
+Scenario where {}\texttt{ClientB} is deleted first.  }
+\end{figure}
+\esinglespace}
+
+Now consider the case where the {}\texttt{ClientB} object goes away
+first depicted in Figure {}\ref{fig:CircularRCP_A_B_ClientB}.  ToDo:
+describe what is happening!
+
+With respect the weak references, the Teuchos class {}\texttt{RCP}
+differS substantially from the Boost and therefore C++0x standard
+reference-counting classes.  With the class {}\texttt{RCP}, the
+attribution of strong or weak is made at runtime.  At runtime, an
+external client can decide to make {}\texttt{a}'s reference to
+{}\texttt{b} weak or {}\texttt{b}'s reference to {}\texttt{a} weak
+depending on the given circumstance.  With the Boost and C++0x
+{}\texttt{shared\_ptr} class, you have to use a separate class
+{}\texttt{weak\_ptr} to represent a weak pointer.  The problem with
+the Boost approach then is that you have to decide at compile time if
+a particular reference is going to be weak or strong.  While there are
+some cases where you can always assume the reference needs be weak
+(like in the self reference case described in Section ???), there are
+more complex cases where you cannot decide this so easily at compile
+time.  For example, if we were to use the {}\texttt{[shared\_ptr} and
 {}\texttt{weak\_ptr} classes, we would have to decide at compile time
 to make {}\texttt{a}'s reference or {}\texttt{b}'s reference weak.
 The decision you make might work for one set of use cases that you
-currently know about, but for more complex usage cases you have not
+currently know about, but for more complex use cases you have not
 discovered yet you may need to switch it.  In fact, in the same
 program you may have some cases where {}\texttt{a} will be deleted
 before {}\texttt{b} and other cases where {}\texttt{b} will be deleted
-before {}\texttt{a}.  With the classes {}\texttt{[shared\_ptr} and
+before {}\texttt{a}.  With the classes {}\texttt{shared\_ptr} and
 {}\texttt{weak\_ptr}, this is impossible (at least not without storing
 both smart pointer types in each class {}\texttt{A} and {}\texttt{B}
 object and then using one or the other which is not very elegant or
-efficient).  The only argument for the compile-time approach uses by
-Boost and C++09 is performance and a little extra speed and memory
+efficient).  The only argument for the compile-time approach used by
+Boost and C++0x is performance and a little extra speed and memory
 overhead but the results in Section ??? show that this extra runtime
 overhead is minimal.  Overall, the overhead induced by the flexible
 runtime approach of the {}\texttt{[Array]RCP} classes is well worth
@@ -4892,8 +4972,8 @@ ToDo: Fill this in!
 \end{center}
 \caption{
 \label{fig:RCPEx2}
-{}\textbf{UML Object Diagram:} Example of duplicate owning
-{}\texttt{RCPNodeImpl} objects pointing to same object. }
+Example of duplicate owning {}\texttt{RCPNodeImpl} objects pointing to
+same object. }
 \end{figure}
 \esinglespace}
 
@@ -5299,12 +5379,12 @@ is there just one object or are there more than one object at the
 other end of the association?).  In UML class diagrams, a singular
 multiplicity relationship is represented using a {}\texttt{1} and
 multiplicity greater than one is represented using {}\texttt{1..*}
-(See Figure ??? for examples).
+(See Figure {}\ref{fig:TeuchosRCPDesign} for examples).
 
 {}\item\textit{Is the object optional or required?}  In a UML class
 diagram, an optional object is represented using {}\texttt{0..1} while
-a required object is represented as {}\texttt{1} (see Figure ??? for
-examples).
+a required object is represented as {}\texttt{1} (see Figure
+{}\ref{fig:TeuchosRCPDesign} for examples).
 
 {}\item\textit{Is the object changeable or non-changeable?}  In UML
 class diagrams, a non-changeable object is given the attribute
@@ -5316,7 +5396,8 @@ UML class diagram, non-persisting associations are referred to as
 ``dependency associations'' and can be given the keyword
 {}\texttt{$\ll$parameter$\gg$} and are represented with a dotted line.
 Persisting associations are referred to as ``relationships'' and are
-represented as solid lines (see Figure ??? for examples)?
+represented as solid lines (see Figure {}\ref{fig:TeuchosRCPDesign}
+for examples)?
 
 \end{itemize}
 
@@ -5432,7 +5513,8 @@ tools (e.g.\ klocwork) could implement a preprocessor-like language
 similar to OpenMP that would allow the programmer to declare (in
 comments) that certain blocks of code should be ``pointer-free'' or
 allow smaller blocks to be ``pointers allowed''.  This would
-significantly improve the robustness of the code.
+significantly improve the robustness of code that uses the memeory
+management classes described here.
 
 
 
