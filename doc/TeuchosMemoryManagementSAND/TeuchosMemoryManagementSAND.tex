@@ -557,9 +557,6 @@ opened up a number of serious language gotchas that we are still
 living with to this day.  This is strike two for the notation that C++
 pointers are strongly typed!
 
-ToDo: Find another issue with type safety of raw C++ pointers so you
-can write ``Strike three, you are out!''.
-
 
 %
 {}\subsection{Problems with the incompatibility of
@@ -3288,30 +3285,29 @@ disabled.
 
 
 {\bsinglespace
-\begin{figure}
+\begin{figure}[p]
 \begin{center}
 %\fbox{
-\includegraphics*[angle=270,scale=0.65]{TeuchosPtrConversions}
+\includegraphics*[angle=270,scale=0.50]{TeuchosPtrConversions}
 %}
 \end{center}
 \caption{
 \label{fig:TeuchosPtrConversions}
-Conversions between Teuchos memory management single object pointer
-types.}
+Conversions between different single-object memory management types.}
 \end{figure}
 \esinglespace}
 
 
 {\bsinglespace
-\begin{figure}
+\begin{figure}[p]
 \begin{center}
 %\fbox{
-\includegraphics*[angle=270,scale=0.65]{TeuchosArrayConversions}
+\includegraphics*[angle=270,scale=0.50]{TeuchosArrayConversions}
 %}
 \end{center}
 \caption{
 \label{fig:TeuchosArrayConversions}
-Conversions between Teuchos memory management array types.  }
+Conversions between array memory management types.  }
 \end{figure}
 \esinglespace}
 
@@ -4319,8 +4315,8 @@ problems with reference counting.
 
 The basic reference counting machinery being used by the classes is
 first described.  Next, the issue of circular references and weak
-pointers are described.  The last issue to discuss is the general
-roles and responsibilities for the various actors in software using
+pointers are described.  The last issue discussed is the general role
+and responsibilities for the various actors in software using
 reference counting.
 
 
@@ -4329,38 +4325,71 @@ reference counting.
 \label{sec:basic-reference-counting-machinery}
 %
 
-The foundation for the reference-counting machinery used by all of the
-reference counting classes is shown in Figure ???.  The class
-{}\texttt{RCPNode} is an abstract base class that contains the strong
-and weak reference counts themselves and inline functions for
-manipulating the counts as efficiently as possible.  The templated
-concrete subclass {}\texttt{RCPNodeRef} is what actually stores the
-raw C++ pointer to the reference-counted object.  This class is also
-templated on an deallocation policy object that determines how the
-object is reclaimed.  The class {}\texttt{RCPNodeHandle} is a simple
-handle class that automates the manipulation of the reference counts
-by overloading the copy constructor and assignment operator functions.
-This avoids having to replicate reference counting incrementing and
-decrementing in the user-level classes that contain it.  All of the
-functions on {}\texttt{RCPNodeHandle} are inlined and the only data
-member is a pointer to the underlying {}\texttt{RCPNode} object.
-Therefore, the class {}\texttt{RCPNodeHandle} imparts zero space and
-time overhead and removes all duplication in how the reference count
-node object is handled.  Note that the classes {}\texttt{RCPNode},
-{}\texttt{RCPNodeImpl}, and {}\texttt{RCPNodeHandle}, are used for
-both {}\texttt{RCP} and {}\texttt{ArrayRCP} classes.
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{TeuchosRCPDesign}
+%}
+\end{center}
+\caption{
+\label{fig:TeuchosRCPDesign}
+{}\textbf{UML Class Diagram:} Basic design of the Teuchos
+reference-counting machinery.  }
+\end{figure}
+\esinglespace}
 
-ToDo: Put in UML class diagram figure showing basic reference counting
-classes along with the ArrayRCP and RCP classes.
+The foundation for the reference-counting machinery used by all of the
+reference-counting classes is shown in Figure
+{}\ref{fig:TeuchosRCPDesign}.  The class {}\texttt{RCPNode} is an
+abstract base class that contains two different reference counts (a
+strong count and a weak count) and inline functions for manipulating
+the counts as efficiently as possible.  The templated concrete
+subclass {}\texttt{RCPNodeImpl} is what actually stores the raw C++
+pointer to the reference-counted object.  This class is also templated
+on an deallocation policy object that determines how the object is
+reclaimed.  {}\texttt{RCPNodeHandle} is a simple handle class that
+automates the manipulation of the reference counts by overloading the
+copy constructor and assignment operator functions.  This avoids
+having to replicate reference counting incrementing and decrementing
+in the user-level classes {}\texttt{RCP} and {}\texttt{ArrayRCP} that
+contain it.  All of the functions on {}\texttt{RCPNodeHandle} are
+inlined and the only data members are a pointer to the underlying
+{}\texttt{RCPNode} object and a {}\texttt{strength} attribute (with
+values {}\texttt{RCP\_STRONG} and {}\texttt{RCP\_WEAK}).  The class
+{}\texttt{RCPNodeHandle} imparts zero space and time overhead and
+removes all duplication in how the reference count node object is
+handled.  In future UML diagrams, the {}\texttt{RCPNodeHandle} class
+will be considered to be part of the owning {}\texttt{RCP} or
+{}\texttt{ArrayRCP} classes to avoid clutter.  The classes
+{}\texttt{RCPNode}, {}\texttt{RCPNodeImpl}, and
+{}\texttt{RCPNodeHandle}, are used unchanged for both the
+{}\texttt{RCP} and {}\texttt{ArrayRCP} classes (however, only the
+{}\texttt{RCP} class is shown for simplicity).
+
+Figure {}\ref{fig:TeuchosRCPDesign} also shown that every
+{}\texttt{RCPNode} object has an optional {}\texttt{std::map} object
+that can be used to store and retrieve arbitrary extra data
+(represented as the {}\texttt{any} data-type which can handle any
+value-type object).  A raw pointer is stored to the
+{}\texttt{extra\_data\_map} object that is initalized to null by
+default.  Therefore, if no extra data is used, the only overhead for
+this feature is an extra pointer member and its initialization to
+null.  The motivation for and the usage of extra data is discussed in
+Section {}\ref{sec:extra-data}.
 
 It is critical to understand that the foundation for sharing objects
-using reference counting is that only one {}\texttt{RCPNode} object
-can exist for any object that is shared.  Figure ??? shows an example
-of several {}\texttt{RCP} objects pointing to the same concrete object
-of type {}\texttt{ConcreteT} through different base class interfaces.
-If the programmer follows the idioms described in Section ??? and
-outlined in Appendix ???, it will always be the case that only one
-reference-counting node object will exist.
+using reference counting is that only one owning {}\texttt{RCPNode}
+object can exist for any object that is shared.  Figure ??? shows an
+example of several {}\texttt{RCP} objects pointing to the same
+concrete object of type {}\texttt{C} through different base class
+interfaces.  If the programmer follows the idioms described in Section
+??? and outlined in Appendix ???, it will always be the case that only
+one reference-counting node object will exist for a given
+reference-counted object.  Exceptions to the one effective owning
+{}\texttt{RCPNode} per reference-counted object guideline are allowed
+to facilitate some more advanced use cases (see Section ??? for an
+example).
 
 ToDo: Put in a UML object diagram showing several RCPNodeHandle
 objects pointing to the same RCPNodeImpl and therefore ConcreteT
