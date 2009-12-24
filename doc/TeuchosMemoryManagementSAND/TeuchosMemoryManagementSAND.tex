@@ -4378,50 +4378,67 @@ this feature is an extra pointer member and its initialization to
 null.  The motivation for and the usage of extra data is discussed in
 Section {}\ref{sec:extra-data}.
 
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{RCPEx1}
+%}
+\end{center}
+\caption{
+\label{fig:RCPEx1}
+{}\textbf{UML Object Diagram:} Example of several {}\texttt{RCP}
+objects pointing to the same {}\texttt{RCPNodeImpl} object.  }
+\end{figure}
+\esinglespace}
+
 It is critical to understand that the foundation for sharing objects
 using reference counting is that only one owning {}\texttt{RCPNode}
-object can exist for any object that is shared.  Figure ??? shows an
-example of several {}\texttt{RCP} objects pointing to the same
-concrete object of type {}\texttt{C} through different base class
-interfaces.  If the programmer follows the idioms described in Section
-??? and outlined in Appendix ???, it will always be the case that only
-one reference-counting node object will exist for a given
-reference-counted object.  Exceptions to the one effective owning
-{}\texttt{RCPNode} per reference-counted object guideline are allowed
-to facilitate some more advanced use cases (see Section ??? for an
-example).
+object can exist for any object that is shared.  Figure
+{}\ref{fig:RCPEx1} shows an example of several {}\texttt{RCP} objects
+pointing to the same concrete object of type {}\texttt{C} through
+different base class interfaces.  If the programmer follows the idioms
+described in Section {}\ref{sec:idioms} and outlined in Appendix
+{}\ref{apdx:summary_of_idioms} and {}\ref{apdx:commandments}, it will
+always be the case that only one reference-counting node object will
+exist for a given reference-counted object.  Exceptions to the one
+effective owning {}\texttt{RCPNode} per reference-counted object
+guideline are allowed to facilitate some more advanced use cases (see
+Section ??? for an example).  As mentioned earlier, the
+{}\texttt{RCPNode} object stores both a strong and a weak reference
+count.  The strong and weak reference counts are equal to the number
+of strong and weak, respectively, {}\texttt{RCP} objects pointing to
+the single {}\texttt{RCP} node object.  When the strong count goes to
+zero, the underlying reference-counted object is destroyed but the
+{}\texttt{RCPNodeImpl} object is not destroyed until the strong and
+weak counts both go to zero.  The motivation and the workings of
+strong verses weak reference counts is discussed in Section
+{}\ref{sec:circular-references-weak-pointers}.
 
-ToDo: Put in a UML object diagram showing several RCPNodeHandle
-objects pointing to the same RCPNodeImpl and therefore ConcreteT
-object with interfaces BaseT1, BaseT2 …
-
-However, consider what happens when one or more of the commandments
-are broken and more than one node object exists pointing to the same
-underlying {}\texttt{ConcreteT} object as shown if Figure ???.  The
-problem is that the two {}\texttt{RCPNodeImpl} objects do not know
-about each other and the first one who has its strong reference count
-go to zero will result in the underlying {}\texttt{ConcreteT} object
-being deleted.  In this case, the other remaining
-{}\texttt{RCPNodeImpl} object, and all of the resulting
-{}\texttt{ArrayRCP} and/or {}\texttt{RCP} objects pointing to it will
-be left with a non-null pointer to a now deleted {}\texttt{ConcreteT}
-object.  If the client tries to access the underlying object through
-one of these now invalid references, it will likely result in a
-segfault (if we are lucky).  Or, if we are unlucky, the program might
-seem to work okay on the platform we are currently testing on but will
-eventually explode at the worst possible time. Putting in the
-machinery to try to track multiple {}\texttt{RCPNode} objects for the
-same underlying {}\texttt{ConcreteT} object would be fairly expensive
-in space and/or time overhead and therefore is not done in a release
-build.  However, in a debug build, you can enable runtime checks for
-just this situation as described in Section ???.  Therefore, if you
-are willing to pay for a little extra overhead, these classes will
-detect this type of invalid usage.
-
-ToDo: Put in UML object diagram showing two {}\texttt{RCPNodeImpl}
-objects pointing to the same {}\texttt{ConcreteT} objects which will
-result in a double delete and/or accessing a deleted object after it
-is destroyed, whatever comes first.
+Finally, one of the key integrated capabilities of the Teuchos
+reference-counting machinery is the ability to trace the
+{}\texttt{RCPNode} objects that are created and destroyed and put them
+in a database.  The {}\texttt{RCPNodeTracer} object is a global object
+that stores all of the {}\texttt{RCPNode} objects created and in
+active use.  An {}\texttt{std::multimap} is used to store raw pointers
+to the {}\texttt{RCPNode} objects and the multi-map is keyed by the
+{}\texttt{void*} address of the underlying reference-counted objects
+themselves.  Therefore, one can query to see if any {}\texttt{RCPNode}
+object already exists for a given object.  The current implementation
+requires Boost which provides some trickery for determining at
+compile-time if a type is polymorphic or not and thereby allowing the
+use {}\texttt{dynamic\_cast<const void*>(p)} to determine the true
+base address of any object (no matter if it uses virtual base classes
+and multiple inheritance or not).  The ability to trace active
+{}\texttt{RCPNode} objects and look them up basesd on an objects
+address is crtical for many debug-mode runtime checking capabilities
+including: a) reporting objects involved in circular depencencies
+after a program ends (see Section
+{}\ref{sec:detection-circular-references}), b) detection of dangling
+references of non-owning {}\texttt{RCP} objects (see Section
+{}\ref{sec:detection-dangling-references}), and c) detection of
+multiple owning {}\texttt{RCPNode} objects (see Section
+{}\ref{sec:detection-dual-owning-rcps}).
 
 
 %
@@ -4862,14 +4879,99 @@ ToDo: Fill this in!
 
 
 %
-{}\subsubsection{Detection of other invalid usage}
-\label{sec:detection-other-invalid-usage}
+{}\subsubsection{Detection of multiple owning {}\texttt{RCP} objects}
+\label{sec:detection-dual-owning-rcps}
 %
 
-ToDo:
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{RCPEx2}
+%}
+\end{center}
+\caption{
+\label{fig:RCPEx2}
+{}\textbf{UML Object Diagram:} Example of duplicate owning
+{}\texttt{RCPNodeImpl} objects pointing to same object. }
+\end{figure}
+\esinglespace}
 
-(*) Discuss creating two owning RCP objects that point to the same concrete
-object but don't share the same node.
+There are other types of invalid usage that can be detected and caught
+in debug-mode with node tracing enabled.  Consider, for example, what
+happens when one or more of the commandments are broken and more than
+one owning {}\texttt{RCPNode} object exists pointing to the same
+underlying {}\texttt{ConcreteT} object as shown if Figure
+{}\ref{fig:RCPEx2}.  This type of structure can be generated with the
+sloppy code shown in Listing {}\ref{listing:duplicate_owning_rcp}.
+
+\begin{listing}: Invalid creation of dual owning {}\texttt{RCPNodeImpl}
+objects \\
+\label{listing:duplicate_owning_rcp}
+{\small\begin{verbatim}
+  C *c_raw_ptr = new C;
+  RCP<C> c_ptr(c_raw_ptr);
+  RCP<A> a_ptr1 = c_ptr;
+  ...
+  A *a_raw_ptr = c_raw_ptr;
+  RCP<A> a_ptr2(a_raw_ptr);
+\end{verbatim}}
+\end{listing}
+
+The problem is that the two {}\texttt{RCPNodeImpl} objects shown in
+Figure {}\ref{fig:RCPEx2} generated by Listing
+{}\ref{listing:duplicate_owning_rcp} do not know about each other and
+the first one who has its strong reference count go to zero will
+result in the underlying {}\texttt{C} object being deleted.  In this
+case, the other remaining {}\texttt{RCPNodeImpl<A>} object, and all of
+the resulting {}\texttt{RCP} objects pointing to it will be left with
+a non-null pointer to a now deleted {}\texttt{C} object.  If the
+client tries to access the underlying object through one of these now
+invalid references, it will likely result in a segfault (if we are
+lucky).  Or, if we are unlucky, the program might seem to work okay on
+the platform we are currently testing on but will eventually explode
+at the worst possible time.
+
+Not to fear, in a debug-mode build with node tracing enabled, the
+{}\texttt{RCPNodeTracing} object automatically detects the creation of
+the second owning {}\texttt{RCPNodeImpl<A>} object and will thrown an
+exception with an error message that looks something like:
+
+{\small\begin{verbatim}
+  Trilinos/packages/teuchos/src/Teuchos_RCPNode.cpp:240:
+  
+  Throw number = 1
+  
+  Throw test that evaluated to true: rcp_node_already_exists && rcp_node->has_ownership()
+  
+  Teuchos::add_new_RCPNode(node_ptr): Error, the client is trying to create a new
+  RCPNode object to an existing managed object in another RCPNode:
+  
+    New RCPNode {address=0x9cb3e0, base_obj_map_key_void_ptr=0x9cac40,
+      base_obj_type_name=A, map_key_void_ptr=0x9cac40, has_ownership=1}
+  
+    Existing RCPNode {address=0x9cb2b0, base_obj_map_key_void_ptr=0x9cac40,
+     base_obj_type_name=C, map_key_void_ptr=0x9cac40, has_ownership=1}
+  
+    Number current nodes = 6
+  
+  This may indicate that the user might be trying to create a weak RCP to an existing
+  object but forgot make it non-ownning.  Perhaps they meant to use rcpFromRef(...)
+  or an equivalent function.
+\end{verbatim}}
+
+A debugger can be opened, a breakpoint can be set in the function
+{}\texttt{TestForException\_break(...)}, and the program can be run
+again to see the context under which the second illegal
+{}\texttt{RCPNodeImpl} is created.
+
+If you are willing to pay for a little extra overhead of
+{}\texttt{RCPNode} tracing (see Section ??? for some timing results of
+the overhead), then node tracing will detect the erroneous creation of
+multiple owning {}\texttt{RCPNode} objects and respond in a graceful
+way.  Note that creating multiple {}\underline{non-owning}
+{}\texttt{RCPNode} objects is just fine and is allowed both when node
+tracing is enabled and when it is not enabled.
 
 
 %
@@ -4964,10 +5066,16 @@ ToDo: Fill this in!
 
 
 %
-{}\subsubsection{Performance tuning strategies}
+{}\subsubsection{Performance tuning strategies (and compromises)}
 %
 
 ToDo: Fill this in!
+
+ToDo: Discuss how you may have to give up using an RCP or ArrayRCP to
+instead use a Ptr or ArrayView object instead in places where a
+presisting relationship really does exist but where you can't afford
+the overhead of the reference-counting machinery in an optimized build
+but yet don't really need reference-counting machinery.
 
 
 %
@@ -5351,6 +5459,7 @@ significantly improve the robustness of the code.
 %
 {}\section{Summary of the idioms for using the Teuchos memory
 management classes}
+\label{apdx:summary_of_idioms}
 %
 
 \begin{center}
@@ -5388,7 +5497,8 @@ management classes}
 
 
 %
-\section{Teuchos memory management commandments (Guidelines)}
+{}\section{Teuchos memory management commandments (Guidelines)}
+\label{apdx:commandments}
 %
 
 \begin{commandment}
