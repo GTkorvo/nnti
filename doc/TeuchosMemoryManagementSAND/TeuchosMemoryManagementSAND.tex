@@ -3880,6 +3880,7 @@ that {}\texttt{const Ptr<T>\&} is non-null.
 
 %
 {}\subsubsection{Idioms for returning objects from C++ functions}
+\label{sec:idioms-returning-objects}
 %
 
 Idioms for how objects are returned from C++ functions are also
@@ -4403,17 +4404,17 @@ and outlined in Appendix {}\ref{apdx:summary_of_idioms} and
 reference-counting node object will exist for a given
 reference-counted object.  Exceptions to the one effective owning
 {}\texttt{RCPNode} per reference-counted object guideline are allowed
-to facilitate some more advanced use cases (see Section ??? for an
-example).  As mentioned earlier, the {}\texttt{RCPNode} object stores
-both a strong and a weak reference count.  The strong and weak
-reference counts are equal to the number of strong and weak,
-respectively, {}\texttt{RCP} objects pointing to the single
-{}\texttt{RCP} node object.  When the strong count goes to zero, the
-underlying reference-counted object is destroyed but the
-{}\texttt{RCPNodeImpl} object is not destroyed until the strong and
-weak counts both go to zero.  The motivation and the workings of
-strong verses weak reference counts is discussed in Section
-{}\ref{sec:circular-references-weak-pointers}.
+to facilitate some more advanced use cases (see Section
+{}\ref{sec:inverting-obj-ownership} for an example).  As mentioned
+earlier, the {}\texttt{RCPNode} object stores both a strong and a weak
+reference count.  The strong and weak reference counts are equal to
+the number of strong and weak, respectively, {}\texttt{RCP} objects
+pointing to the single {}\texttt{RCP} node object.  When the strong
+count goes to zero, the underlying reference-counted object is
+destroyed but the {}\texttt{RCPNodeImpl} object is not destroyed until
+the strong and weak counts both go to zero.  The motivation and the
+workings of strong verses weak reference counts is discussed in
+Section {}\ref{sec:circular-references-weak-pointers}.
 
 Finally, one of the key integrated capabilities of the Teuchos
 reference-counting machinery is the ability to trace the
@@ -4490,16 +4491,16 @@ Simple circular reference between two objects.  }
 \esinglespace}
 
 When debug-mode node tracing is enabled, the system will print out the
-remaining {}\texttt{RCPNode} objects when it exists (see Section ??? 
-for more details).
+remaining {}\texttt{RCPNode} objects when it exists (see Section
+{}\ref{sec:detection-circular-references} for more details).
 
 While there is no completely general and bullet proof way to address
 the circular reference problem, there is a fairly simple and cheap
 approach supported by the Teuchos reference-counting machinery that
 can effectively resolve circular references in most cases.  The
-approache described here supported by the Teuchos reference-counted
-classes is the definition of weak reference-counted pointers.  As
-shown in Figure {}\ref{fig:TeuchosRCPDesign}, this is accomplished
+approach described here supported by the Teuchos reference-counted
+classes is to exploit the concept if weak reference-counted pointers.
+As shown in Figure {}\ref{fig:TeuchosRCPDesign}, this is accomplished
 through a {}\texttt{strength} attribute with values {}\texttt{STRONG}
 and {}\texttt{WEAK}.  By default, all {}\texttt{RCP} objects are
 {}\texttt{STRONG}.  When an {}\texttt{RCP} is {}\texttt{STRONG}, then
@@ -4529,7 +4530,14 @@ circular references as shown in Figure {}\ref{fig:CircularRCP_A_B}
 except where the circular reference is broken using a weak pointer.
 With the weak pointer in place, all of the objects will get destroyed
 when {}\texttt{ClientA} and {}\texttt{ClientB} remove their
-{}\texttt{RCP} objects, no mater what order they remove them.
+{}\texttt{RCP} objects, no mater what order they remove them.  The
+critical assumption is that the ``useful'' lifetime of {}\texttt{a} is
+a superset of the ``useful'' lifetime of {}\texttt{b}.  If
+{}\texttt{a} gets deleted before {}\texttt{b}, then {}\texttt{b} had
+better not try to access {}\texttt{a} anymore!  However, the goal is
+that whoever gets deleted first (i.e.\ {}\texttt{clientA} or
+{}\texttt{clientB}) the objects will go away gracefully and not result
+in memory leaks.
 
 {\bsinglespace
 \begin{figure}
@@ -4549,9 +4557,66 @@ Scenario where {}\texttt{ClientA} is deleted first.  }
 \end{figure}
 \esinglespace}
 
-Consider first the scenario where the {}\texttt{ClientA} object goes
+Consider first the scenario where the {}\texttt{clientA} object goes
 away first as shown in Figure {}\ref{fig:CircularRCP_A_B_ClientA} (UML
-communication diagram).  ToDo: describe what is happening!
+communication diagram).  This scencario is shown in two phases in two
+separate UML communication diagrams:
+
+\begin{description}
+
+{}\item[a)] {}\texttt{ClientA} is deleted
+
+  \begin{description}
+
+  {}\item[a.1)] As {}\texttt{rcpA2} goes away, it deincrements
+  {}\texttt{nodeA::strongCount} from 1 to 0.
+
+  {}\item[a.2)] Since {}\texttt{nodeA::weakCount > 0}, then
+  {}\texttt{nodeA} is not deleted but since
+  {}\texttt{nodeA::strongCount==0} the object {}\texttt{a} gets
+  deleted.
+
+  {}\item[a.3)] As {}\texttt{a} is deleted, it deletes its
+  {}\texttt{RCP} object {}\texttt{rcpB1}.
+
+  {}\item[a.4)] Since {}\texttt{rcpB1} is a strong pointer, it
+  deincrements {}\texttt{nodeB::strongCount} from 2 to 1.  Therefore,
+  neither {}\texttt{nodeB} or {}\texttt{b} gets deleted at this point.
+
+  NOTE: At this point, the object {}\texttt{a} has been deleted and
+  {}\texttt{nodeA}~s internal pointer has been set to {}\texttt{NULL}.
+  If the {}\texttt{b} object trys to access {}\texttt{a} after this,
+  it will result in an exception being thrown in a debug build.  In a
+  non-debug build, any access of {}\texttt{a} from {}\texttt{b} will
+  result in a segfault.
+
+  \end{description}
+
+{}\item[b)] {}\texttt{ClientB} is deleted
+
+  \begin{description}
+
+  {}\item[b.1)] As {}\texttt{clientB} goes away, it takes
+  {}\texttt{rcpB2} with it.  Since rcpB2 is a strong pointer, it
+  deincrements {}\texttt{nodeB::strongCount} from 1 to 0.  Since
+  {}\texttt{nodeB::strongCount} and {}\texttt{nodeB::weakCount} are
+  both 0 this results in {}\texttt{nodeB} being deleted.
+
+  {}\item[b.2)] As {}\texttt{nodeB} is being deleted, it deletes the
+  {}\texttt{b} object.
+
+  {}\item[b.3)] As {}\texttt{b} is being deleted, it deletes its
+  {}\texttt{RCP} object {}\texttt{rcpA1}.
+
+  {}\item[b.4)] With {}\texttt{rcpA1} being deleted it reduces
+  {}\texttt{nodeA::weakCount} from 1 to 0.  Since
+  {}\texttt{nodeA::strongCount} and {}\texttt{nodeA::weakCount} are
+  both 0, this results in {}\texttt{nodeA} being deleted.  Since the
+  object {}\texttt{a} is already deleted, nothing more happens.
+
+  \end{description}
+
+\end{description}
 
 {\bsinglespace
 \begin{figure}
@@ -4571,12 +4636,74 @@ Scenario where {}\texttt{ClientB} is deleted first.  }
 \end{figure}
 \esinglespace}
 
-Now consider the case where the {}\texttt{ClientB} object goes away
-first depicted in Figure {}\ref{fig:CircularRCP_A_B_ClientB}.  ToDo:
-describe what is happening!
+Now consider the case where the {}\texttt{clientB} object goes away
+first depicted in Figure {}\ref{fig:CircularRCP_A_B_ClientB}:
 
-With respect the weak references, the Teuchos class {}\texttt{RCP}
-differS substantially from the Boost and therefore C++0x standard
+\begin{description}
+
+{}\item[a)] {}\texttt{ClientB} is deleted
+
+  \begin{description}
+
+  {}\item[a.1)] The {}\texttt{clientB} object goes away first and takes
+  its {}\texttt{RCP} {}\texttt{rcpB2} with it.  This reduces
+  {}\texttt{nodeB::strongCount} from 2 to 1.  No other objects are
+  deleted yet.
+
+  \end{description}
+
+{}\item[b)] {}\texttt{ClientA} is deleted
+
+  \begin{description}
+
+  {}\item[b.1)] When {}\texttt{rcpA2} goes away, it deincrements
+  {}\texttt{nodeA::strongCount} from 1 to 0.  At this point, since
+  {}\texttt{nodeA::weakCount > 0}, the node is not deleted but the
+  referenced object {}\texttt{a} is deleted.
+
+  {}\item[b.2)] {}\texttt{a} is deleted.
+
+  {}\item[b.3)] As {}\texttt{a} is deleted, it deletes its
+  {}\texttt{RCP} object {}\texttt{rcpB1}.
+
+  {}\item[b.4)] As {}\texttt{rcpB1} is deleted, it deincrements
+  {}\texttt{nodeB::strongCount} from 1 to 0. Since
+  {}\texttt{nodeB::weakCount==0}, then {}\texttt{nodeB} is deleted.
+
+  {}\item[b.5)] As {}\texttt{nodeB} is deleted, it deletes the
+  {}\texttt{b} object.
+
+  {}\item[b.6)] As {}\texttt{b} is deleted, it deletes its
+  {}\texttt{RCP} object {}\texttt{rcpA1}.  What is critical here is
+  that {}\texttt{b} must not try to access {}\texttt{a} which is
+  already in the process of being deleted.  If {}\texttt{b} were to
+  try to access {}\texttt{a} as it is being deleted, in debug mode an
+  exception would be thrown.  In non-debug mode, this would segfault.
+  It is rare, however, that one object tries to access another as they
+  are deleted.
+
+  {}\item[b.7)] When {}\texttt{rcpA1} is removed, it deincrements
+  {}\texttt{nodeA::weakCount} from 1 to 0.  Since
+  {}\texttt{nodeA::strongCount} is already 0, this results in
+  {}\texttt{nodeA} being deleted.  Since {}\texttt{a} is already in
+  the process of being deleted, nothing extra happens here.
+
+  \end{description}
+
+\end{description}
+
+What is espeically interesting about the second scenario is how
+deleting the {}\texttt{a} object in Figure
+{}\ref{fig:CircularRCP_A_B_ClientB}.b triggers a chain reaction that
+causes the {}\texttt{b} object to be deleted which recursively causes
+the {}\texttt{nodeA} object to be deleted, all in the call stack where
+the {}\texttt{a} object is being deleted.  To accomplish this
+correctly, the {}\texttt{RCPNodeImpl::deleteObj()} function has some
+special logic to avoid a double delete call being performed on the
+reference-counted object.
+
+With respect the weak pointers, the Teuchos class {}\texttt{RCP}
+differs substantially from the Boost and therefore C++0x standard
 reference-counting classes.  With the class {}\texttt{RCP}, the
 attribution of strong or weak is made at runtime.  At runtime, an
 external client can decide to make {}\texttt{a}'s reference to
@@ -4587,42 +4714,46 @@ depending on the given circumstance.  With the Boost and C++0x
 the Boost approach then is that you have to decide at compile time if
 a particular reference is going to be weak or strong.  While there are
 some cases where you can always assume the reference needs be weak
-(like in the self reference case described in Section ???), there are
-more complex cases where you cannot decide this so easily at compile
-time.  For example, if we were to use the {}\texttt{[shared\_ptr} and
-{}\texttt{weak\_ptr} classes, we would have to decide at compile time
-to make {}\texttt{a}'s reference or {}\texttt{b}'s reference weak.
-The decision you make might work for one set of use cases that you
-currently know about, but for more complex use cases you have not
-discovered yet you may need to switch it.  In fact, in the same
-program you may have some cases where {}\texttt{a} will be deleted
-before {}\texttt{b} and other cases where {}\texttt{b} will be deleted
-before {}\texttt{a}.  With the classes {}\texttt{shared\_ptr} and
-{}\texttt{weak\_ptr}, this is impossible (at least not without storing
-both smart pointer types in each class {}\texttt{A} and {}\texttt{B}
-object and then using one or the other which is not very elegant or
-efficient).  The only argument for the compile-time approach used by
-Boost and C++0x is performance and a little extra speed and memory
-overhead but the results in Section ??? show that this extra runtime
+(like in the self-reference case described in Section
+{}\ref{sec:self-references}), there are more complex cases where you
+cannot decide this so easily at compile time.  For example, if we were
+to use the {}\texttt{shared\_ptr} and {}\texttt{weak\_ptr} classes, we
+would have to decide at compile time to make {}\texttt{a}'s reference
+or {}\texttt{b}'s reference weak.  The decision you make might work
+for one set of use cases that you currently know about, but for more
+complex use cases you have not discovered yet you may need to switch
+it.  In fact, in the same compiled program you may have some use cases
+where {}\texttt{a} will be deleted before {}\texttt{b} and other use
+cases where {}\texttt{b} will be deleted before {}\texttt{a}.  With
+the classes {}\texttt{shared\_ptr} and {}\texttt{weak\_ptr}, this is
+impossible (at least not without storing both smart pointer types in
+each class {}\texttt{A} and {}\texttt{B} object and then using one or
+the other which is not very elegant or efficient).  The only argument
+for the compile-time approach used by Boost and C++0x is performance
+in both speed and memory overhead but the results in Section
+{}\ref{sec:reference-counting-overhead} show that this extra runtime
 overhead is minimal.  Overall, the overhead induced by the flexible
 runtime approach of the {}\texttt{[Array]RCP} classes is well worth
 the minimal extra overhead.  Typically, the classes
-{}\texttt{[Array]RCP} are used to manage objects much larger than what
-is contained in the infrastructure for the {}\texttt{[Array]RCP}
-objects so the additional memory is also insignificant.
+{}\texttt{[Array]RCP} are used to manage objects (or blocks of array
+data) much larger than what is contained in the infrastructure for the
+{}\texttt{[Array]RCP} objects so the additional memory is
+insignificant.
 
-Section ??? describes how weak pointers are used in runtime debug
-checking for dangling non-persisting references.  Section ??? 
-describes how weak pointers are used in dealing with object self
-references.  In summary, the this reference counting machinery
+Section {}\ref{sec:detection-dangling-references} describes how weak
+pointers are used in runtime debug checking for dangling
+non-persisting references.  Section {}\ref{sec:self-references}
+describes how weak pointers are used in dealing with object
+self-references.  In summary, the Teuchos reference-counting machinery
 addressing both strong and weak references is a very powerful tool but
 to use it effectively, you need to understand the basic semantics.
 The good news is that 99\% of the people who use the classes
 {}\texttt{[Array]RCP} will never need to know the difference between a
 strong and weak reference and will by default use just strong
-references.  Weak references will get used under the hood in debug
-builds of the code but they are totally transparent to client code and
-the programmer.
+references.  Weak references will get used under the hood for some
+debug-mode runtime checking but they are totally transparent to client
+code and the programmer.  It is only in cases of circular references
+do typical programmers need to know anything about weak pointers.
 
 
 %
@@ -4872,7 +5003,8 @@ object through a passed-in reference-counted class.
 Factory entities first create the reference-counted object/array
 and/or construct the first {}\texttt{[Array]RCP object} containing it.
 The most basic type of factory are the non-member constructor
-functions described in Section ???.  When the first
+functions described in Section
+{}\ref{sec:nonmember-constructor-idiom}.  When the first
 {}\texttt{[Array]RCP object} is created, the factory gets to decide
 exactly how object/array will be released when the last reference
 count goes to zero.  The default, of course, is to just simply call
@@ -4890,7 +5022,7 @@ responsibilities are:
 
 {}\item Accept the persisting relationship for a shared
 reference-counted object/array through an {}\texttt{[Array]RCP} object
-(as described in Section ???).
+(as described in Section {}\ref{sec:idioms-for-passing-arguments}).
 
 {}\item Share the reference-counted object/array with other clients by
 creating a copy if your {}\texttt{[Array]RCP} object and giving it to
@@ -5046,8 +5178,9 @@ again to see the context under which the second illegal
 {}\texttt{RCPNodeImpl} is created.
 
 If you are willing to pay for a little extra overhead of
-{}\texttt{RCPNode} tracing (see Section ??? for some timing results of
-the overhead), then node tracing will detect the erroneous creation of
+{}\texttt{RCPNode} tracing (see Section
+{}\ref{sec:reference-counting-overhead} for some timing results of the
+overhead), then node tracing will detect the erroneous creation of
 multiple owning {}\texttt{RCPNode} objects and respond in a graceful
 way.  Note that creating multiple {}\underline{non-owning}
 {}\texttt{RCPNode} objects is just fine and is allowed both when node
@@ -5083,12 +5216,12 @@ start copying it around, all bets are off.  However, even if you never
 expose a C++ pointer, you can still get into trouble.  One unfortunate
 case involves the use of raw C++ references.
 
-If C++ references are only used as formal function arguments for C++
-functions, you will almost never have a problem.  However, incorrectly
-returning an {}\texttt{RCP} object by reference instead of by value,
-as is described in Section ???, can result in invalid C++ references.
-Also, if you use references like in the below code, you can of course
-have dangling raw C++ references.
+If C++ references are only used as formal arguments to C++ functions,
+you will almost never have a problem.  However, incorrectly returning
+an {}\texttt{RCP} object by reference instead of by value, as is
+described in Section {}\ref{sec:idioms-returning-objects}, can result
+in invalid C++ references.  Also, if you use references like in the
+below code, you can of course have dangling raw C++ references.
 
 {\small\begin{verbatim}
   RCP<A> a_ptr = newA();
@@ -5126,6 +5259,7 @@ ToDo: Fill this in!
 
 %
 {}\subsubsection{Reference counting overhead}
+\label{sec:reference-counting-overhead}
 %
 
 ToDo: Fill this in!
@@ -5167,6 +5301,7 @@ ToDo: Fill this in!
 
 %
 {}\subsubsection{Objects maintaining self references}
+\label{sec:self-references}
 %
 
 ToDo: Fill this in!
@@ -5606,8 +5741,7 @@ constructor function (see Section
 Thou shall not call raw operator {}\texttt{new []} or {}\texttt{delete
 []} in any high-level C++ code to dynamically allocate and destroy
 contiguous arrays of data.  Instead, use functions such as
-{}\texttt{Teuchos::Array<T>(n)} and {}\texttt{Teuchos::arcp<T>(n)}
-(see ???).
+{}\texttt{Teuchos::Array<T>(n)} and {}\texttt{Teuchos::arcp<T>(n)}.
 \end{commandment}
 
 \begin{commandment}
