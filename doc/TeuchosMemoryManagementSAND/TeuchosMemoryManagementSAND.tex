@@ -2126,24 +2126,18 @@ listing can be found in the Doxygen documentation).
   };
 
   // General non-member constructor functions
-  template<class T>  RCP<T> rcp(T* p, bool owns_mem = true);
+  template<class T> RCP<T> rcp(T* p, bool owns_mem = true);
   template<class T> RCP<T> rcpFromRef(T& r);
+  template<class T> RCP<T> rcpFromUndefRef(T& r);
 
   // Deallocation policy functions (see Section ???)
   ...
+
+  // Embedded objects functions (see Section ???)
+  ...
  
   // Conversion functions (see Section ???)
- 
-  template<class T, class Embedded>
-  RCP<T> rcpWithEmbeddedObjPreDestroy(T* p, const Embedded &embedded,
-    bool owns_mem = true);
-  
-  template<class T, class Embedded>
-  RCP<T> rcpWithEmbeddedObjPostDestroy(T* p, const Embedded &embedded,
-    bool owns_mem = true);
-  
-  template<class T, class Embedded>
-  RCP<T> rcpWithEmbeddedObj(T* p, const Embedded &embedded, bool owns_mem=true);
+  ...
   
   template<class T> bool is_null(const RCP<T> &p);
   
@@ -2173,18 +2167,6 @@ listing can be found in the Doxygen documentation).
   
   template<class T1, class T2>
   Ptr<T1> get_optional_nonconst_extra_data(RCP<T2>& p, const std::string& name);
-  
-  template<class TOrig, class Embedded, class T> 
-  const Embedded& getEmbeddedObj(const RCP<T>& p);
-  
-  template<class TOrig, class Embedded, class T>
-  Embedded& getNonconstEmbeddedObj(const RCP<T>& p);
-  
-  template<class TOrig, class Embedded, class T>
-  Ptr<const Embedded> getOptionalEmbeddedObj( const RCP<T>& p );
-  
-  template<class TOrig, class Embedded, class T>
-  Ptr<Embedded> getOptionalNonconstEmbeddedObj( const RCP<T>& p );
 
 \end{verbatim}}
 \end{listing}
@@ -4818,7 +4800,8 @@ The code associated with customized deallocation policies for
 {}\texttt{RCP} (what are identical for {}\texttt{ArrayRCP}) are shown
 in Listing {}\ref{listing:RCP-dealloc}.
 
-\begin{listing}: Declarations for customized deallocation policies for {}\texttt{RCP} \\
+\begin{listing}: Declarations for customized deallocation policies
+for {}\texttt{RCP} \\
 \label{listing:RCP-dealloc}
 {\small\begin{verbatim}
   // Default decallocation policy for RCP
@@ -4967,18 +4950,140 @@ policy that is invoked by the destructor on the object instead of
 requiring an explicit deallocation policy object.  In addition, you
 can also tack on any extra data that you would like and embed in the
 underlying {}\texttt{RCPNodeImpl} object.  The only restriction is
-that you have to make the choice of what you want to embed in the
+that you have to make the choice of what you want to embed it in the
 {}\texttt{RCPNode} object when the very first {}\texttt{RCP} object is
-created which in turn creates the concrete {}\texttt{RCPNode} object.
-If you want the flexibility to embed other data in the underlying
-{}\texttt{RCPNode} object after it has been created then you will have
-to use the ``extra data'' feature which is described in Section
-{}\ref{sec:extra-data}.  The advantage of embedding objects in the
-{}\texttt{RCPNodeImpl} object is that it can be quite a bit more
-efficient than using the ``extra data'' feature which requires more
-runtime-support.
+created (which in turn creates the concrete templated
+{}\texttt{RCPNodeImpl} object ).  If you want the flexibility to embed
+other data in the underlying {}\texttt{RCPNode} object after it has
+been created then you will have to use the ``extra data'' feature
+which is described in Section {}\ref{sec:extra-data}.  The advantage
+of embedding objects in the {}\texttt{RCPNodeImpl} object is that it
+can be quite a bit more efficient than using the ``extra data''
+feature which requires more runtime-support.
 
-ToDo: Fill in!
+The functions that are used to embed objects when creating
+{}\texttt{RCP} objects and retrieve them again are shown in Listing
+{}\ref{listing:RCP-embedded-obj} (identical functions exist for the
+{}\texttt{ArrayRCP} class).
+
+\begin{listing}: Embedded object functions for RCP \\
+\label{listing:RCP-embedded-obj}
+{\small\begin{verbatim}
+ 
+  template<class T, class Embedded>
+  RCP<T> rcpWithEmbeddedObjPreDestroy(T* p, const Embedded &embedded,
+    bool owns_mem=true);
+  
+  template<class T, class Embedded>
+  RCP<T> rcpWithEmbeddedObjPostDestroy(T* p, const Embedded &embedded,
+    bool owns_mem=true);
+  
+  template<class T, class Embedded>
+  RCP<T> rcpWithEmbeddedObj(T* p, const Embedded &embedded, bool owns_mem=true);
+  
+  template<class TOrig, class Embedded, class T> 
+  const Embedded& getEmbeddedObj(const RCP<T>& p);
+  
+  template<class TOrig, class Embedded, class T>
+  Embedded& getNonconstEmbeddedObj(const RCP<T>& p);
+  
+  template<class TOrig, class Embedded, class T>
+  Ptr<const Embedded> getOptionalEmbeddedObj( const RCP<T>& p );
+  
+  template<class TOrig, class Embedded, class T>
+  Ptr<Embedded> getOptionalNonconstEmbeddedObj( const RCP<T>& p );
+\end{verbatim}}
+\end{listing}
+
+The embedded object functions in Listing
+{}\ref{listing:RCP-embedded-obj} simply use a custom templated
+deallocator class shown in Listing
+{}\ref{listing:RCP-EmbeddedObjDealloc} along with the public
+deallocator functions in Listing {}\texttt{listing:RCP-dealloc}.
+
+\begin{listing}: RCP Decallocator using an embedded object \\
+\label{listing:RCP-EmbeddedObjDealloc}
+{\small\begin{verbatim}
+  template<class T, class Embedded, class Dealloc>
+  class EmbeddedObjDealloc
+  {
+  public:
+    typedef typename Dealloc::ptr_t ptr_t;
+    EmbeddedObjDealloc(
+      const Embedded &embedded, EPrePostDestruction prePostDestroy,
+      Dealloc dealloc, bool hasOwnership )
+      : embedded_(embedded), prePostDestroy_(prePostDestroy), dealloc_(dealloc),
+        hasOwnership_(hasOwnership)
+      {}
+    void setObj( const Embedded &embedded ) { embedded_ = embedded; }
+    const Embedded& getObj() const { return embedded_; }
+    Embedded& getNonconstObj() { return embedded_; }
+    void hasOwnership(bool hasOwnership_in) { hasOwnership_ = hasOwnership_in; }
+    bool hasOwnership() const { return hasOwnership_; }
+    void free( T* ptr )
+      {
+        if (prePostDestroy_ == PRE_DESTROY)
+          embedded_ = Embedded();
+        if (hasOwnership_)
+          dealloc_.free(ptr);
+        if (prePostDestroy_ == POST_DESTROY)
+          embedded_ = Embedded();
+      }
+  private:
+    Embedded embedded_;
+    EPrePostDestruction prePostDestroy_;
+    Dealloc dealloc_;
+    bool hasOwnership_;
+    EmbeddedObjDealloc(); // Not defined and not to be called!
+  };
+\end{verbatim}}
+\end{listing}
+
+The customized deallocator class in Listing
+{}\ref{listing:RCP-EmbeddedObjDealloc} is them templated with
+{}\texttt{DeallocDelete} (see Listing {}\ref{listing:RCP-dealloc}) is
+set by the non-member constructor functions in Listing
+{}\ref{listing:RCP-embedded-obj}.  The distiction between pre- and
+post-destroy can be critical depending on how the embedded data is
+used (many examples will be given here).  In most cases, the order the
+embedded object is reset to the default value is not important and
+therefore the client would just use {}\texttt{rcpWithEmbeddedObj(...)} 
+to set the extra data (in which case it uses post-destruction by
+default).  As shown in Listing {}\ref{listing:RCP-EmbeddedObjDealloc},
+the official ownership of the underlying reference-counted object of
+type {}\texttt{T} that is freed using {}\texttt{dealloc\_} is
+controlled by the {}\texttt{bool} member {}\texttt{hasOwnership\_}.
+If ownership of the object is given to the embedded object itself,
+then you set {}\texttt{hasOwnership=false}.
+
+Typically, the embedded object will be some {}\texttt{RCP} such that
+when the embedded object is default constructed as in
+{}\texttt{embedded\_ = Embedded()} then the destructor on that object
+will be called.  A simple example of embedding an {}\texttt{RCP} that
+controls the memory is shown below:
+
+\begin{listing}: \\
+{\small\begin{verbatim}
+  RCP<A> a_ptr1(new A);
+  RCP<A> a_ptr2 = rcpWithEmbeddedObj(a_ptr1.getRawPtr(), a_rcp1, false);
+\end{verbatim}}
+\end{listing}
+
+The use case used in the above example looks silly and trivial but it
+is the foundation for several more advanced use cases (see Section
+{}\ref{sec:inverting-obj-ownership} for a related example).  As a
+result of this code, the underlying {}\texttt{A} object will not be
+deleted until the {}\texttt{RCPNodeImpl} object associated with
+{}\texttt{a\_ptr2} (and all of the {}\texttt{RCP} objects created from
+it) is destroyed.  Even the above simple use case can be useful if you
+want to be able to use the reference count on {}\texttt{RCP} objects
+derived from {}\texttt{a\_ptr2} to determine usage of the object by
+other clients.  There are concrete examples of this exact usage in
+Trilinos code.
+
+A more general usage of embedded objects to perform arbitrary actions
+is demonstrated in the context of the ``generalized view idiom'' in
+Section {}\ref{sec:generalized-view-idiom}.
 
 
 %
@@ -5001,7 +5106,7 @@ b) general clients that accept and use a shared reference counted
 object through a passed-in reference-counted class.
 
 Factory entities first create the reference-counted object/array
-and/or construct the first {}\texttt{[Array]RCP object} containing it.
+and/or construct the first {}\texttt{[Array]RCP} object containing it.
 The most basic type of factory are the non-member constructor
 functions described in Section
 {}\ref{sec:nonmember-constructor-idiom}.  When the first
@@ -5067,9 +5172,9 @@ typical diagnostic error messages look like.
 \label{sec:null-dereferences-range-checking}
 %
 
-One of the most basic types of debug runtime checking performed by the
-Teuchos memory management classes are attempts to dereferences a null
-pointer and range checking.
+One of the most basic types of debug-mode runtime checking performed
+by the Teuchos memory management classes are attempts to dereferences
+a null pointer and range checking.
 
 ToDo: Fill this in!
 
@@ -5197,7 +5302,7 @@ ToDo:
 (*) Compare O(1) debug-mode checking to valgrind and purify
 
 (*) Compare more expensive debug-mode with node-tracing checking to
-valgrind and purify
+valgrind and purify.
 
 
 %
@@ -5309,15 +5414,16 @@ ToDo: Fill this in!
 
 %
 {}\subsubsection{The generalized view idiom}
+\label{sec:generalized-view-idiom}
 %
 
 ToDo: Fill this in!
 
-ToDo: Mention the relaxed direct-view idiom where multiple changeable
-views can be created to the same parent but that these views become
-invalidated once the parent changes its structure in a significant
-way.  This is what happens with the Array class with iterator and
-ArrayView views.
+ToDo: Also mention the relaxed direct-view idiom where multiple
+changeable views can be created to the same parent but that these
+views become invalidated once the parent changes its structure in a
+significant way.  This is what happens with the Array class with
+iterator and ArrayView views.
 
 
 %
