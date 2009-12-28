@@ -2081,7 +2081,7 @@ much detail here.  However, a fairly complete definition of the class
 {}\texttt{RCP} is shown in Listing {}\ref{listing:RCP} (the full
 listing can be found in the Doxygen documentation).
 
-\begin{listing}: Class and helper function listing for RCP \\
+\begin{listing}: Class and helper function listing for {}\texttt{RCP} \\
 \label{listing:RCP}
 {\small\begin{verbatim}
   template<class T>
@@ -2135,6 +2135,9 @@ listing can be found in the Doxygen documentation).
 
   // Embedded objects functions (see Section ???)
   ...
+
+  // Extra data functions (see Section ???)
+  ...
  
   // Conversion functions (see Section ???)
   ...
@@ -2150,23 +2153,6 @@ listing can be found in the Doxygen documentation).
   
   template<class T1, class T2>
   bool operator!=(const RCP<T1> &p1, const RCP<T2> &p2);
-  
-  template<class T1, class T2>
-  void set_extra_data(const T1 &extra_data, const std::string& name,
-    const Ptr<RCP<T2> > &p, EPrePostDestruction destroy_when = POST_DESTROY,
-    bool force_unique = true);
-  
-  template<class T1, class T2> 
-  const T1& get_extra_data(const RCP<T2>& p, const std::string& name);
-  
-  template<class T1, class T2>
-  T1& get_nonconst_extra_data(RCP<T2>& p, const std::string& name);
-  
-  template<class T1, class T2>
-  Ptr<const T1> get_optional_extra_data(const RCP<T2>& p, const std::string& name);
-  
-  template<class T1, class T2>
-  Ptr<T1> get_optional_nonconst_extra_data(RCP<T2>& p, const std::string& name);
 
 \end{verbatim}}
 \end{listing}
@@ -4398,13 +4384,13 @@ the strong and weak counts both go to zero.  The motivation and the
 workings of strong verses weak reference counts is discussed in
 Section {}\ref{sec:circular-references-weak-pointers}.
 
-Finally, one of the key integrated capabilities of the Teuchos
-reference-counting machinery is the ability to trace the
+Finally, one of the key integrated debug-mode eanbled capabilities of
+the Teuchos reference-counting machinery is the ability to trace the
 {}\texttt{RCPNode} objects that are created and destroyed and put them
 in a database.  The {}\texttt{RCPNodeTracer} object is a global object
-that stores all of the {}\texttt{RCPNode} objects created and in
-active use.  An {}\texttt{std::multimap} is used to store raw pointers
-to the {}\texttt{RCPNode} objects and the multi-map is keyed by the
+that stores all of the {}\texttt{RCPNode} objects in active use.  An
+{}\texttt{std::multimap} object is used to store raw pointers to the
+{}\texttt{RCPNode} objects and the multi-map is keyed by the
 {}\texttt{void*} address of the underlying reference-counted objects
 themselves.  Therefore, one can query to see if any {}\texttt{RCPNode}
 object already exists for a given object.  The current implementation
@@ -4422,6 +4408,13 @@ references of non-owning {}\texttt{RCP} objects (see Section
 {}\ref{sec:detection-dangling-references}), and c) detection of the
 creation of multiple owning {}\texttt{RCPNode} objects (see Section
 {}\ref{sec:detection-dual-owning-rcps}).
+
+Note that node tracing is only an optional debug-mode feature and is
+not required for the correct functioning of the reference-counting
+machinery.  In fact, the observable behavior of correct programs will
+be exactly whether debug-mode node tracing is enabled or not.  For
+correct programs, the only observable consequence of having node
+tracing enabled will be increased runtimes.
 
 
 %
@@ -5091,7 +5084,149 @@ Section {}\ref{sec:generalized-view-idiom}.
 \label{sec:extra-data}
 %
 
-ToDo: Fill in.
+As mentioned in Section
+{}\ref{sec:basic-reference-counting-machinery}, the Teuchos
+reference-counting machinery supports storing and retrieving arbitrary
+objects as extra data stored on the {}\texttt{RCPNode} object itself.
+The functions supporting extra data for the {}\texttt{RCP} class are
+shown in Listing {}\ref{listing:RCP-extra-data} (the functions for
+{}\texttt{ArrayRCP} are identical).
+
+\begin{listing}:  {}\texttt{RCP} extra data functions \\
+\label{listing:RCP-extra-data}
+{\small\begin{verbatim}
+  template<class T1, class T2>
+  void set_extra_data(const T1 &extra_data, const std::string& name,
+    const Ptr<RCP<T2> > &p, EPrePostDestruction destroy_when = POST_DESTROY,
+    bool force_unique = true);
+  
+  template<class T1, class T2> 
+  const T1& get_extra_data(const RCP<T2>& p, const std::string& name);
+  
+  template<class T1, class T2>
+  T1& get_nonconst_extra_data(RCP<T2>& p, const std::string& name);
+  
+  template<class T1, class T2>
+  Ptr<const T1> get_optional_extra_data(const RCP<T2>& p, const std::string& name);
+  
+  template<class T1, class T2>
+  Ptr<T1> get_optional_nonconst_extra_data(RCP<T2>& p, const std::string& name);
+\end{verbatim}}
+\end{listing}
+
+Given the support for embedded objects as described in Section
+{}\ref{sec:embedded-objecs}, extra data rarely needs to be used.
+Embedding and retrieving objects in the templated
+{}\texttt{RCPNodeImpl} object is more efficient that using the more
+general {}\texttt{std::map} object and {}\texttt{any} wrapper that are
+used to implement the ``extra data'' feature and therefore embedded
+objects should be used whenever possible instead of extra data.
+However, there are a few advantages to using extra data over embedded
+objects that may be worth the performance overhead or extra data may
+be the only way to address an issue:
+
+\begin{itemize}
+
+{}\item\textit{You can associate data after the RCPNode object is
+created.}  With embedded objects, you can only select the data-type
+for the embedded object at the time when the first {}\texttt{RCP}
+object is created.
+
+{}\item\textit{You can retrieve data without having to know the
+concrete template types in the {}\texttt{RCPNodeImpl} object.}  With
+extra data, you only need to know the string name and the type of the
+extra data that you are looking to retrieve.  With embedded objects,
+you also need to know the origianl type of the underling
+reference-counted object that is used to template the
+{}\texttt{RCPNodeImpl} class.  If this type changes (i.e.\ if the
+creating code changes the subclass implementation used), then this
+will break the code that tries to retrieve the embedded object.
+Therefore, client code that retrieves embedded object data is more
+fragile that code that retrieves extra data.
+
+{}\item\textit{You can completely change the deallocation policy at
+runtime after the RCPNode object has been created.}  With embedded
+objects, you can not change the deallocation policy of a
+reference-counted object after the initial {}\texttt{RCPNodeImpl}
+object has been created; with extra data you can.
+
+\end{itemize}
+
+To demonstrate the power and flexibility of extra data, let's consider
+a (unlikely) scenario where some piece of code incorrectly associates
+the wrong deallocation policy to an allocated object shown in Listing
+{}\ref{listing:createRCPWithBadDealloc}.
+
+\begin{listing}: Example of incorrect deallocator \\
+\label{listing:createRCPWithBadDealloc}
+{\small\begin{verbatim}
+  RCP<A> createRCPWithBadDealloc()
+  {
+    return rcp(new A[1]); // Will use delete but should use delete []!
+  }
+\end{verbatim}}
+\end{listing}
+
+Hopefully no-one would write code like is shown in Listing
+{}\ref{listing:createRCPWithBadDealloc}.  However, let's suppose that
+you have to use the function {}\texttt{createRCPWithBadDealloc()} to
+allocate {}\texttt{A} objects and are stuck with a pre-compiled
+library and you can't access the soruce code to fix the problem.  On
+most systems an error like this will be tolerated and not cause
+problems but tools like Valgrind and Purify will complain about code
+like this to no end and there may be some platforms where this will
+actually cause the program to crash (since this is undefined
+behavior).
+
+With {}\texttt{RCP} and extra data, you can replace the deallocation
+policy on the fly to use the correct policy.  The first step is to
+create a class that will call {}\texttt{delete []} on the pointer
+correctly as shown in Listing
+{}\ref{listing:DeallocArrayDeleteExtraData}.
+
+\begin{listing}: Dealllocator class for extra data deallocation \\
+\label{listing:DeallocArrayDeleteExtraData}
+{\small\begin{verbatim}
+  template<typename T>
+  class DeallocArrayDeleteExtraData {
+  public:
+    static RCP<DeallocArrayDeleteExtraData<T> > create(T *ptr)
+      { return rcp(new DeallocArrayDeleteExtraData(ptr)); }
+    ~DeallocArrayDeleteExtraData() { delete [] ptr_; }
+  private:
+    T *ptr_;
+    DeallocArrayDeleteExtraData(T *ptr) : ptr_(ptr) {}
+    // Not defined!
+    DeallocArrayDeleteExtraData();
+    DeallocArrayDeleteExtraData(const DeallocArrayDeleteExtraData&);
+    DeallocArrayDeleteExtraData& operator=(const DeallocArrayDeleteExtraData&);
+  };
+\end{verbatim}}
+\end{listing}
+
+The client code can then fix the deallocation policy as shown in
+Listing {}\ref{listing:using-DeallocArrayDeleteExtraData}.
+
+\begin{listing}: Using {}\texttt{DeallocArrayDeleteExtraData} as extra data \\
+\label{listing:using-DeallocArrayDeleteExtraData}
+{\small\begin{verbatim}
+  // Create object with bad deallocator
+  RCP<A> a = createRCPWithBadDealloc();
+  // Disable default (incorrect) dealloc and set a new deallocation policy as extra data!
+  a.release();
+  set_extra_data( DeallocArrayDeleteExtraData<A>::create(a.getRawPtr()), "dealloc",
+    inOutArg(a));
+\end{verbatim}}
+\end{listing}
+
+The kind of flexibility shown in the above example is not possible
+with using embedded objects and is not possible with classes like
+{}\texttt{boost:shared\_ptr}.
+
+There are numerous other uses for extra data to fix nasty memory
+management problems and you will just have to use your imagination.
+However, in well designed software, there is no need for a feature
+like this so count yourself lucky if you never need to use it.
 
 
 %
