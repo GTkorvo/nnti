@@ -1013,134 +1013,6 @@ semantically correct way.
 
 
 %
-{}\section{Philosophy of memory management: Safety, speed, generality
-and the 100\% guarantee}
-\label{sec:phylosophy-of-mem-mng}
-%
-
-When looking at different strategies for memory management in C++ and
-in other languages, I believe it helps to think a little on the
-philosophical level which can actually help ground us.
-
-When looking at the different memory management approaches implemented
-in various programming languages, the core issues come down to trade-offs
-in safety and correctness versus speed and generality.  For example, a
-language like C sacrifices safety and correctness for speed and
-generality.  Because C is so ``close'' to the hardware, you can
-implement very specialized memory management approaches tailored to
-very specific types of domains.  However, the price one pays for this
-raw speed and flexibility in C is the fact that there is very little
-compiler-supported checking needed to assert correct memory usage.
-
-Now take Python on the other extreme.  If you write code only in
-Python, you will almost never experience and memory leak or segfault
-of any kind due to code that you directly write.  Here we have a
-language which is nearly 100\% safe (assuming the language
-implementation is 100\% correct) but offers less flexibility in how
-memory is managed and results in very slow native code as compared to
-C in many cases (e.g.\ for computationally intensive loops).
-
-So how important is a 100\% guarantee that memory will always be used
-correctly like is provided in a language like Python?  How important
-is a 100\% guarantee in any area?  Well, if you can get a 100\%
-guarantee without having to pay a significant price for it then you
-would be a fool not to accept it.  For example, if you have a choice
-between two vendors selling the same product for the same price but
-one vendor will give you a 100\% money-back guarantee, with all things
-being equal, it would probably be foolish not to go with the vendor
-with the 100\% guarantee.
-
-However, in most areas, greater safety (not to mention a 100\%
-guarantee) comes with greater costs.  Instead of demanding a 100\%
-guarantee, we typically accept some level of extra risk as long as we
-have taken basic precautions to protect ourselves.  To demonstrate
-this, let's consider another analogy which I like to refer to as the
-{}\textit{Transportation Analogy}.  When considering modes of
-transportation, we accept that we are not 100\% safe when driving our
-cars on the road but we do it anyway.  The reason that we get into our
-cars every day is that we take reasonable precautions like purchasing
-a car with a good safely design, wearing seat-belts, obeying the
-traffic laws, driving a reasonable speed, and practicing defensive
-driving.  What I am going to argue is that the approach to memory
-management that I am advocating in this paper is the equivalent of
-driving a car, wearing your seat belt, and taking other reasonable
-safety precautions.
-
-Now let's talk about the safety versus speed/efficiently extremes in
-the Transportation Analogy and in the areas of memory management.  At
-one extreme, writing all high-level code in C++ (or C) using raw
-pointers for everything is like riding a high-performance motorcycle
-on a crowded interstate going 150 mph, without wearing a helmet or
-any other safety gear, while doing a wheelie.  At this extreme, one
-wrong move and you are dead.
-
-At the other extreme, writing all code in a language like Python is
-like driving around in a reinforced tank that does a maximum of 10
-mph where you sit inside wearing a car racing helmet with the Hans
-device, full racing safety gear, and have a massive air bag system to
-encase your entire body in foam three feet thick in case of a
-collision.  On this side of extreme safely, we could hit a Mac truck
-head on and be just fine.  The only way to really kill ourselves is if
-we were to dive off of a shear cliff.
-
-If we all required a near 100\% safely guarantee, we would all be
-driving around in reinforced tanks like the one described above but we
-don't.  We don't because we are not willing to pay the price of the
-near 100\% guarantee provided by the tank.  We can't afford it
-financially and it would take forever to get back and forth to
-work. Instead, we are content with our less than 100\% safe cars
-because they are affordable and fast and do not pose unreasonable
-risks.
-
-Now, we can incrementally go from either extreme to the more balanced
-position in both the Transportation Analogy and with memory management
-in C++ and Python.
-
-From the extreme of safety with less speed and flexibility represented
-by the reinforced tank (and Python) you can incrementally move toward
-the middle ground of the car. You can start by removing the racing
-helmet and Hans device, followed by decreasing the weight and
-increasing the speed of the tank, and so on.  Continuing on this trend
-of sacrificing safety in favor of greater speed and agility leads us
-to our typical car.  Likewise, moving from an extreme of safety to a
-more reasonable balance between safety and speed/flexibility in Python
-involves taking pieces of computationally intensive Python code,
-rewriting them in C/C++, and then calling them from Python.  This is
-an approach that many Python enthusiasts are advocating
-{}\cite{PythonForSCPerforamnce08} but make no mistake that in going
-down this road that you are sacrificing safety in Python in the name
-of speed and flexibility.  You are giving up Python's nearly 100\%
-guarantee when you do this.
-
-From the extreme of speed and flexibility with little regard for
-safety represented by the motorcycle (and C/C++ raw pointers) you can
-also incrementally move toward the car.  You can start by putting on a
-helmet, followed by slowing down some, and so on.  Continuing on this
-trend of adding safety will eventually see you morphing the motorcycle
-into the typical car.  Likewise, moving from an extreme of less safety
-toward a more reasonable balance between speed/flexibility and safety
-in C++ involves adding more and more utility classes to hide more and
-more uses of raw C++ pointers in our high-level C++ code.  This is the
-trend that the C++ community has been following for more than the last
-decade.  We see it first in the introduction of
-{}\texttt{std::auto\_ptr} and {}\texttt{std::vector}.  This was then
-followed by the development of {}\texttt{boost::shared\_ptr} (and
-therefore {}\texttt{std::shared\_ptr} in C++0x) and
-{}\texttt{boost::array\_ptr}.  What I am suggesting in this paper is
-the logical conclusion of this journey which is the development of a
-complete set of utility classes in order to remove all raw C++
-pointers from our high-level C++ code; i.e.\ complete the transition
-from the motorcycle (C/C++ raw pointers) to the car (Teuchos C++
-memory management classes).
-
-With the approach being advocated in this paper for the Teuchos Memory
-Management classes, using the debug mode is like driving around in the
-tank where you are protected from almost any danger.  However, using
-the optimized mode is like driving around with the high-performance
-motorcycle.  Try that with a car!
-
-
-%
 {}\section{Important prerequisites}
 \label{sec:important-prerequisites}
 %
@@ -4715,6 +4587,9 @@ data) much larger than what is contained in the infrastructure for the
 {}\texttt{[Array]RCP} objects so the additional memory is
 insignificant.
 
+ToDo: Show a diagram of a cicular reference involving multiple
+objects.
+
 Section {}\ref{sec:detection-dangling-references} describes how weak
 pointers are used in runtime debug checking for dangling
 non-persisting references.  Section {}\ref{sec:self-references}
@@ -5212,6 +5087,7 @@ Listing {}\ref{listing:using-DeallocArrayDeleteExtraData}.
 {\small\begin{verbatim}
   // Create object with bad deallocator
   RCP<A> a = createRCPWithBadDealloc();
+
   // Disable default (incorrect) dealloc and set a new deallocation policy as extra data!
   a.release();
   set_extra_data( DeallocArrayDeleteExtraData<A>::create(a.getRawPtr()), "dealloc",
@@ -5221,12 +5097,11 @@ Listing {}\ref{listing:using-DeallocArrayDeleteExtraData}.
 
 The kind of flexibility shown in the above example is not possible
 with using embedded objects and is not possible with classes like
-{}\texttt{boost:shared\_ptr}.
-
-There are numerous other uses for extra data to fix nasty memory
-management problems and you will just have to use your imagination.
-However, in well designed software, there is no need for a feature
-like this so count yourself lucky if you never need to use it.
+{}\texttt{boost:shared\_ptr}.  There are numerous other uses for extra
+data to fix nasty memory management problems and you will just have to
+use your imagination.  However, in well designed software, there is no
+need for a feature like this so count yourself lucky if you never need
+to use it.
 
 
 %
@@ -5235,8 +5110,8 @@ general clients}
 %
 
 There are two fundamentally different sets of actors that play two
-different roles in the use of the reference counted classes: a)
-factory entities that first create the reference counted object, and
+different roles in the use of the reference-counted classes: a)
+factory entities that first create the reference-counted object, and
 b) general clients that accept and use a shared reference counted
 object through a passed-in reference-counted class.
 
@@ -5250,9 +5125,9 @@ exactly how object/array will be released when the last reference
 count goes to zero.  The default, of course, is to just simply call
 {}\texttt{delete} or {}\texttt{delete []} on the contained raw pointer
 which is the default behavior.  However, the factory can also choose
-any arbitrary action imaginable to occur when the last reference-count
-goes to zero.  This is set up using a template deallocator policy
-object described in Section {}\ref{sec:deallocators}.
+any arbitrary action imaginable to occur when the reference-count goes
+to zero.  This is set up using a template deallocator policy object as
+described in Section {}\ref{sec:deallocators}.
 
 On the other side, the responsibilities of the general client that
 shares and uses a reference-counted object are very simple.  These
@@ -5295,10 +5170,11 @@ The primary reason that these Teuchos memory management classes need
 to be developed in tandem and know each other's internal
 implementations to some extend is to be able to implement robust and
 effective debug-mode runtime testing.  The debug-mode runtime testing
-that is built into these classes is surprisingly strong and will catch
-nearly every type of programmer error that is possible, as long as raw
-C++ pointers are never externally exposed.  The different categories
-of debug-mode runtime testing are described below along with what the
+that is built into these classes is very strong and will catch nearly
+every type of programmer error that is possible, as long as raw C++
+pointers are never externally exposed and if raw C++ references are
+only used for persisting associations.  The different categories of
+debug-mode runtime testing are described below along with what the
 typical diagnostic error messages look like.
 
 
@@ -5308,10 +5184,64 @@ typical diagnostic error messages look like.
 %
 
 One of the most basic types of debug-mode runtime checking performed
-by the Teuchos memory management classes are attempts to dereferences
-a null pointer and range checking.
+by the Teuchos memory management classes are for attempts to
+dereference a null pointer and range checking of arrays and iterators.
 
-ToDo: Fill this in!
+\begin{listing}: Debug-mode null dereference checking (all types) \\
+\label{listing:null-deref}
+{\small\begin{verbatim}
+  RCP<A> a_ptr;
+  A &a_ref = *a_ptr;   // Throws!
+  a_ptr->someFunc();   // Throws!
+
+  ArrayRCP<int> aa;
+  a[0];                    // Throws!
+  int &i_ref = *a.begin(); // Throws!
+
+  ...  
+\end{verbatim}}
+\end{listing}
+
+All of the Teuchos memory management classes throw on null
+dereferences.  While most systems will abort the program on null
+dereferences there are some platforms (some Intel C++ compilers) that
+will not and it will result in memory errors that may not be seen
+until later in the program.
+
+The Teuchos array classes {}\texttt{Array}, {}\texttt{ArrayView},
+{}\texttt{ArrayRCP}, and {}\texttt{Tuple} all perform array bounds
+checking in debug-mode builds:
+
+\begin{listing}: Debug-mode array-bounds checking (all Teuchos array types) \\
+\label{listing:array-bounds-checking}
+{\small\begin{verbatim}
+  Array a(n);
+  a[-1];   // Throws!
+  a[n];    // Throws!
+\end{verbatim}}
+\end{listing}
+
+In a debug-mode build of the code, all the iterators returned by the
+{}\texttt{begin()} and {}\texttt{end()} functions of the classes
+{}\texttt{Array}, {}\texttt{ArrayView}, {}\texttt{ArrayRCP}, and
+{}\texttt{Tuple} are of the type {}\texttt{ArrayRCP} which is a fully
+ranged checked iterator.  For example:
+
+\begin{listing}: Debug-mode iterator range checking (all Teuchos array types) \\
+\label{listing:iterator-checking}
+{\small\begin{verbatim}
+  Array a(n);
+  *(a.begin()-1);           // Throws!
+  *(a.begin() + a.size());  // Throws!
+  *a.end();                 // Throws!
+\end{verbatim}}
+\end{listing}
+
+This type of checking is fairly straightforward but is extremely
+useful and works on every platform.  This checking is built into your
+programs automatically in a debug build of the code.  However, in an
+non-debug build of the code, there is none of this checking to yield
+the fastest code.
 
 
 %
@@ -5319,7 +5249,53 @@ ToDo: Fill this in!
 \label{sec:detection-circular-references}
 %
 
-ToDo: Fill this in!
+One of the more sophisticated types of debug-mode runtime checking is
+the detection and reporting of circular {}\texttt{RCP} references that
+results in memory leaks.  The issue of circular references and the
+concept of weak pointers was outlined in Section
+{}\ref{sec:circular-references-weak-pointers}.  When debug-mode node
+tracing is enabled, the reference-counting machinery keeps track of
+all the {}\texttt{RCPNode} objects that are created and destroyed.  If
+node tracing is enabled and the program ends and there are one or more
+{}\texttt{RCPNode} objects that are still remaining, then a error
+message is printed to {}\texttt{std::cerr} that gives all the details
+of the objects involved in the cicular reference.
+
+For example, consider the simple circular reference shown in Figure
+{}\ref{fig:CircularRCP_A_B}.  If left this way, if debug-mode node
+tracing is enbled, then the program ends an error message like the
+following will be printed to {}\texttt{std::cerr}:
+
+\begin{listing}: Example error message for circular references \\
+\label{listing:curcular-ref-error-msg}
+{\small\begin{verbatim}
+  ***
+  *** Warning! The following Teuchos::RCPNode objects were created but have
+  *** not been destroyed yet.  This may be an indication that these objects may
+  *** be involved in a circular dependency!  A memory checking tool may complain
+  *** that these objects are not destroyed correctly.
+  ***
+  
+    0: RCPNode (map_key_void_ptr=0x4a3ff50)
+         Information = {T=A, ConcreteT=A, p=0x4a3ff50, has_ownership=1}
+         RCPNode address = 0x4a3ffa8
+         Call number = 23
+    1: RCPNode (map_key_void_ptr=0x4a40548)
+         Information = {T=B, ConcreteT=B, p=0x4a40548, has_ownership=1}
+         RCPNode address = 0x4a405f0
+         Call number = 24
+\end{verbatim}}
+\end{listing}
+
+This error message is enough information to allow you to open a
+debugger, and set a breakpoint in the function
+{}\texttt{RCPNodeTracer::addNewRCPNode(...)} and then exame where
+these objects are getting created that result in the cicular
+reference.
+
+Note that in reality, the cicular references will involve many objects
+(sometimes more than a dozen) and therefore this output will contain
+many {}\texttt{RCPNode} objects.
 
 
 %
@@ -5327,7 +5303,176 @@ ToDo: Fill this in!
 \label{sec:detection-dangling-references}
 %
 
-ToDo: Fill this in!
+Another useful and necessary form of debug-mode runtime checking
+involves detection and reporting of access to invalid objects and
+arrays made through dangling references.  A dangling reference is a
+catch-all term that refers to any pointer or reference that points to
+a no-longer valid object or array.  For example, the following code
+fragement shows invalid access to a dangling iterator to an array that
+has changed shape:
+
+\begin{listing}: Example of a dangling iterator \\
+\label{listing:Array-dangling-iterator}
+{\small\begin{verbatim}
+  Array<int> a(n);
+  Array<int>::iterator itr = a.begin();
+  a.resize(0);
+  *itr = 1; // Invalid access of dangling iterator (throws)!
+\end{verbatim}}
+\end{listing}
+
+In debug-mode, the above example would result in an exception being
+thrown with an error message like shown below:
+
+{\small\begin{verbatim}
+  Teuchos_RCPNode.hpp:515:
+  
+  Throw number = 3
+  
+  Throw test that evaluated to true: true
+  
+  Error, an attempt has been made to dereference the underlying object
+  from a weak smart pointer object where the underling object has already
+  been deleted since the strong count has already gone to zero.
+  
+  Context information:
+  
+    RCP type:             Teuchos::ArrayRCP<int>
+    RCP address:          0x7fbfffec98
+    RCPNode type:         Teuchos::RCPNodeTmpl<int,
+      Teuchos::EmbeddedObjDealloc<int,
+        Teuchos::RCP<__gnu_debug_def::vector<int, std::allocator<int> > >,
+        Teuchos::DeallocArrayDelete<int> > >
+    RCPNode address       0xab65a0
+    RCP ptr address:      0xab4c50
+    Concrete ptr address: 0xab4c50
+  
+  Hint: Open your debugger and set conditional breakpoints in the various
+  routines involved where this node object is first created with this
+  concrete object and in all of the RCP objects of the type given above
+  use this node object.  Debugging an error like this may take a little work
+  setting up your debugging session but at least you don't have to try to
+  track down a segfault that would occur otherwise!
+\end{verbatim}}
+
+The above error message contains all the information needed to open a
+debugger, set up breakpoints and break conditions, and debug the
+problem.
+
+A few other examples of dangling references are shown in Listings
+{}\ref{listing:Array-dangling-ArrayView}--{}\ref{listing:RCP-dangling-Ptr}.
+
+\begin{listing}: Example of a dangling {}\texttt{ArrayView} \\
+\label{listing:Array-dangling-ArrayView}
+{\small\begin{verbatim}
+  ArrayView<int> av;
+  {
+    Array<int> a(n);
+    av = a;
+  }
+  av[0] = 1; // Invalid access to dangling ArrayView (throws)
+\end{verbatim}}
+\end{listing}
+
+\begin{listing}: Example of a dangling {}\texttt{Ptr} \\
+\label{listing:RCP-dangling-Ptr}
+{\small\begin{verbatim}
+  Ptr<A> a_ptr;
+  {
+    RCP<A> a_rcp = createA();
+    a_ptr = a_rcp.ptr();
+  }
+  a_ptr->someFunction(); // Invalid access to dangling Ptr (throws)
+\end{verbatim}}
+\end{listing}
+
+In general, {}\texttt{Ptr}, {}\texttt{ArrayView} and iterators
+(returned from the {}\texttt{begin()} member functions) all can be
+involved in dangling references since they lack support for
+reference-counting machinery in a non-debug build.  Therefore, anytime
+a {}\texttt{Ptr}, {}\texttt{ArrayView}, or iterator object is created
+from some other Teuchos memory management object, you can expect that
+in a debug build that dangling references will checked for.
+
+Note that the ability to detect a dangling {}\texttt{ArrayView} of an
+{}\texttt{Array} object as shown in Listing
+{}\ref{listing:Array-dangling-ArrayView} is due to the fact that the
+debug-mode internal implementation of {}\texttt{Array} is designed to
+support this.  Compare this to {}\texttt{ArrayView} views of
+{}\texttt{std::vector}, as shown in Listing
+{}\ref{listing:vector-dangling-ArrayView}, here dangling references
+can not be detected.
+
+\begin{listing}: Dangling {}\texttt{ArrayView} of {}\texttt{std::vector}
+(can not detect dangling references) \\
+\label{listing:vector-dangling-ArrayView}
+{\small\begin{verbatim}
+  ArrayView<int> av;
+  {
+    std::vector<int> v(n);
+    av = v;
+  }
+  av[0] = 1; // Invalid access to dangling ArrayView (do *not* throw)
+\end{verbatim}}
+\end{listing}
+
+The code in Listing {}\ref{listing:vector-dangling-ArrayView} will
+most likely segfault if we are lucky.  If we are unlucky, the program
+may actually appear to run correctly on our main development and
+testing platforms and it will not be until we move to a production
+platform that the ill effects of this erroneous code will seeen.  This
+is one example of why it is so important to use {}\texttt{Array}
+instead of raw {}\texttt{std::vector} objects.  Strong debug-mode
+runtime checking with {}\texttt{Array} object is not possible with
+{}\texttt{std::vector}.
+
+Another type of more sophisitcated debug-mode dangling reference
+detection involves non-owning {}\texttt{RCP} objects to existing
+reference-counted objects.  Consider like shown in Listing
+{}\ref{listing:RCP-nonowning-dangling-ref}.
+
+\begin{listing}: Example of a dangling non-owning {}\texttt{RCP} object
+(node tracing only) \\
+\label{listing:RCP-nonowning-dangling-ref}
+{\small\begin{verbatim}
+  RCP<A> a_ptr = createA();
+  A &a_ref = *a_ptr;
+  RCP<A> a_ptr2 = rcpFromRef(a_ref);  // Same as rcp(a_ref.getRawPtr(), false)
+  a_ptr = null;   // The 'A' object gets deleted (a_ptr2 is a dangling pointer)
+  a_ptr2->someFunction();  // Invalid reference to deleted 'A' object (throws)
+\end{verbatim}}
+\end{listing}
+
+In a debug-mode build with node tracing turned on, the dangling
+non-owning {}\texttt{RCP} reference in Listing
+{}\ref{listing:RCP-nonowning-dangling-ref} will be caught by the
+system.  This works because the statement
+{}\texttt{rcpFromRef(a\_ref)} results in a call to
+{}\texttt{RCPNodeTracer::getExistingRCPNode(...)} to lookup the
+existing {}\texttt{RCPNode} object that points to the same
+{}\texttt{A} object.  In this case, the existing {}\texttt{RCPNode}
+object is found and it is used to create a weak {}\texttt{RCP} object
+(see Section {}\ref{sec:circular-references-weak-pointers}) that can
+then detect if the original {}\texttt{RCP} object has been deleted.
+Again, this more sophisicated type of debug-mode runtime checking
+requires that node tracing be enabled\footnote{In order to handle
+multiple inheritance and virtual bases classes and still get the
+correct base object address, Boost support must also be configured
+which is needed to use {}\texttt{boost::is\_polymophic} to allow the
+use of {}\texttt{dynamic\_cast<void*>(...)} to determine the true base
+address of an object.  Otherwise, without this, the system will not be
+able to determine if two abstract interfaces really point to the same
+object and therefore the lookup of the {}\texttt{RCPNode} object will
+fail.}.
+
+Debug-mode runtime detection and reporting of dangling references is
+built on the foundation of weak {}\texttt{RCP} and {}\texttt{ArrayRCP}
+objects.  Basically, all non-perisisting views use a weak
+{}\texttt{RCP} or {}\texttt{ArrayRCP} object (see Section
+{}\ref{sec:circular-references-weak-pointers}) internally to allow the
+parent object to be changed or be deleted and to detect this if a
+client tries to access the now invalid object through the dangling
+reference view.
 
 
 %
@@ -5663,6 +5808,8 @@ deallocation and not the default behavior which calls
 {}\texttt{A} object does not get deleted in case some client calls the
 {}\texttt{B::unsetA()} function.
 
+ToDo: Show UML object diagram that shows the two RCPNode objects.
+
 Given this data-structure, another piece of code can then extract the
 underlying {}\texttt{RCP<B>} object as shown in Listing
 {}\ref{listing:Extract_B_from_A}.
@@ -5706,11 +5853,153 @@ implicit conversions.
 
 %
 {}\subsection{Comparison with other class libraries and the standard
-library}
+C++ library}
 %
 
 ToDo: Discuss the similarities and differences between the Teuchos
 classes and boost classes.
+
+
+%
+{}\section{Miscellaneous topics}
+%
+
+When thinking about memory management in C++ it is helpful to take a
+step back and consider a few different higher-level issues.  In the
+following section, I discuss the philosophy of memory management and
+use some analogies to help put things in perspective and provide a
+solid foundation for the appraoch used in the Teuchos memory
+management classes.  Then, the issue essential and accedential
+complexity is discussed and what role the Teuchos memory management
+classes play in addressing accidental complexity.
+
+
+%
+{}\subsection{Philosophy of memory management: Safety, speed,
+generality and 100\% guarantees}
+\label{sec:phylosophy-of-mem-mng}
+%
+
+When looking at different strategies for memory management in C++ and
+in other languages, I believe it helps to think a little on the
+philosophical level which can actually help ground us.
+
+When looking at the different memory management approaches implemented
+in various programming languages, the core issues come down to trade-offs
+in safety and correctness versus speed and generality.  For example, a
+language like C sacrifices safety and correctness for speed and
+generality.  Because C is so ``close'' to the hardware, you can
+implement very specialized memory management approaches tailored to
+very specific types of domains.  However, the price one pays for this
+raw speed and flexibility in C is the fact that there is very little
+compiler-supported checking needed to assert correct memory usage.
+
+Now take Python on the other extreme.  If you write code only in
+Python, you will almost never experience and memory leak or segfault
+of any kind due to code that you directly write.  Here we have a
+language which is nearly 100\% safe (assuming the language
+implementation is 100\% correct) but offers less flexibility in how
+memory is managed and results in very slow native code as compared to
+C in many cases (e.g.\ for computationally intensive loops).
+
+So how important is a 100\% guarantee that memory will always be used
+correctly like is provided in a language like Python?  How important
+is a 100\% guarantee in any area?  Well, if you can get a 100\%
+guarantee without having to pay a significant price for it then you
+would be a fool not to accept it.  For example, if you have a choice
+between two vendors selling the same product for the same price but
+one vendor will give you a 100\% money-back guarantee, with all things
+being equal, it would probably be foolish not to go with the vendor
+with the 100\% guarantee.
+
+However, in most areas, greater safety (not to mention a 100\%
+guarantee) comes with greater costs.  Instead of demanding a 100\%
+guarantee, we typically accept some level of extra risk as long as we
+have taken basic precautions to protect ourselves.  To demonstrate
+this, let's consider another analogy which I like to refer to as the
+{}\textit{Transportation Analogy}.  When considering modes of
+transportation, we accept that we are not 100\% safe when driving our
+cars on the road but we do it anyway.  The reason that we get into our
+cars every day is that we take reasonable precautions like purchasing
+a car with a good safely design, wearing seat-belts, obeying the
+traffic laws, driving a reasonable speed, and practicing defensive
+driving.  What I am going to argue is that the approach to memory
+management that I am advocating in this paper is the equivalent of
+driving a car, wearing your seat belt, and taking other reasonable
+safety precautions.
+
+Now let's talk about the safety versus speed/efficiently extremes in
+the Transportation Analogy and in the areas of memory management.  At
+one extreme, writing all high-level code in C++ (or C) using raw
+pointers for everything is like riding a high-performance motorcycle
+on a crowded interstate going 150 mph, without wearing a helmet or
+any other safety gear, while doing a wheelie.  At this extreme, one
+wrong move and you are dead.
+
+At the other extreme, writing all code in a language like Python is
+like driving around in a reinforced tank that does a maximum of 10
+mph where you sit inside wearing a car racing helmet with the Hans
+device, full racing safety gear, and have a massive air bag system to
+encase your entire body in foam three feet thick in case of a
+collision.  On this side of extreme safely, we could hit a Mac truck
+head on and be just fine.  The only way to really kill ourselves is if
+we were to dive off of a shear cliff.
+
+If we all required a near 100\% safely guarantee, we would all be
+driving around in reinforced tanks like the one described above but we
+don't.  We don't because we are not willing to pay the price of the
+near 100\% guarantee provided by the tank.  We can't afford it
+financially and it would take forever to get back and forth to
+work. Instead, we are content with our less than 100\% safe cars
+because they are affordable and fast and do not pose unreasonable
+risks.
+
+Now, we can incrementally go from either extreme to the more balanced
+position in both the Transportation Analogy and with memory management
+in C++ and Python.
+
+From the extreme of safety with less speed and flexibility represented
+by the reinforced tank (and Python) you can incrementally move toward
+the middle ground of the car. You can start by removing the racing
+helmet and Hans device, followed by decreasing the weight and
+increasing the speed of the tank, and so on.  Continuing on this trend
+of sacrificing safety in favor of greater speed and agility leads us
+to our typical car.  Likewise, moving from an extreme of safety to a
+more reasonable balance between safety and speed/flexibility in Python
+involves taking pieces of computationally intensive Python code,
+rewriting them in C/C++, and then calling them from Python.  This is
+an approach that many Python enthusiasts are advocating
+{}\cite{PythonForSCPerforamnce08} but make no mistake that in going
+down this road that you are sacrificing safety in Python in the name
+of speed and flexibility.  You are giving up Python's nearly 100\%
+guarantee when you do this.
+
+From the extreme of speed and flexibility with little regard for
+safety represented by the motorcycle (and C/C++ raw pointers) you can
+also incrementally move toward the car.  You can start by putting on a
+helmet, followed by slowing down some, and so on.  Continuing on this
+trend of adding safety will eventually see you morphing the motorcycle
+into the typical car.  Likewise, moving from an extreme of less safety
+toward a more reasonable balance between speed/flexibility and safety
+in C++ involves adding more and more utility classes to hide more and
+more uses of raw C++ pointers in our high-level C++ code.  This is the
+trend that the C++ community has been following for more than the last
+decade.  We see it first in the introduction of
+{}\texttt{std::auto\_ptr} and {}\texttt{std::vector}.  This was then
+followed by the development of {}\texttt{boost::shared\_ptr} (and
+therefore {}\texttt{std::shared\_ptr} in C++0x) and
+{}\texttt{boost::array\_ptr}.  What I am suggesting in this paper is
+the logical conclusion of this journey which is the development of a
+complete set of utility classes in order to remove all raw C++
+pointers from our high-level C++ code; i.e.\ complete the transition
+from the motorcycle (C/C++ raw pointers) to the car (Teuchos C++
+memory management classes).
+
+With the approach being advocated in this paper for the Teuchos Memory
+Management classes, using the debug mode is like driving around in the
+tank where you are protected from almost any danger.  However, using
+the optimized mode is like driving around with the high-performance
+motorcycle.  Try that with a car!
 
 
 %
@@ -5730,8 +6019,8 @@ Accidental complexity has largely been removed as higher level
 languages have been developed {}\cite[Chapter 16]{MythicalManMonth95}.
 However, raw pointers in C and C++ and manual resource management
 (when that is not the main focus of the program) are definitely a
-lingering category of accidental
-complexity\footnote{\texttt{http://discuss.joelonsoftware.com/default.asp?joel.3.278613.51}}.
+lingering category of accidental complexity\footnote{
+{}\texttt{http://discuss.joelonsoftware.com/default.asp?joel.3.278613.51}}.
 Alternatively, {}\textit{essential complexity} exists because of the
 nature of the problem at hand and no programming language will remove
 it (but we can use object-oriented and other design approaches to
@@ -5831,27 +6120,27 @@ possible in Java or Python.  However, this extra control could be
 classified as Accidental complexity (which we tolerate for the sake
 of added control and improved performance).
 
-{}\item\textit{Pointer semantics for memory management types
+{}\item\textit{Pointer syntax for memory management types
 {}\texttt{Ptr}, and {}\texttt{RCP}}: In order to access the underlying
 object through the types {}\texttt{Ptr}, and {}\texttt{RCP}, you have
-to use pointer semantics using {}\texttt{*a} and
+to use pointer syntax using {}\texttt{*a} and
 {}\texttt{a->someMember()}.  The C++ language makes it impossible to
 allow direct access to the underlying type like raw C++ references
-allow.  Pointer semantics are not essential to the nature of problem
+allow.  Pointer syntax is not essential to the nature of problem
 solving (as proven by all the languages that don't have pointers
 including Java and Python) and must therefore be categorized as
 accidental complexity.  Note, however, that the types
 {}\texttt{ArrayView} and {}\texttt{ArrayRCP} were not listed in this
 category because you can use these array classes using just the
 {}\texttt{operator[](size\_type)} function and do not need to use any
-pointer semantics.  In fact, {}\texttt{ArrayView} does not even
-support any pointer-like functions and the pointer-like functions on
+pointer syntax.  In fact, {}\texttt{ArrayView} does not even support
+any pointer-like functions and the pointer-like functions on
 {}\texttt{ArrayRCP} are only really there to allow it to be used as a
 general purpose checked iterator in a debug build.  While pointer
-semantics are not an essential concept they do actually come in handy
-to define iterators into containers and present a much more compact
+syntax is not an essential concept they do actually come in handy to
+define iterators into containers and present a much more compact
 iterator interface that what you will find in other languages.
-Pointers semantics are not all bad.
+Pointers syntax are not all bad.
 
 \end{itemize}
 
@@ -5872,21 +6161,21 @@ issues in resolving the fragile built-in C++ memory management model
 (with the exception of circular references which has no easy solution
 but can be managed as discussed).  All that remains is to teach these
 classes and idioms and expand their usage in C++ codes.  The long-term
-viability of C++ as a usage-able and productive language depends on
-it.  Otherwise, if C++ is no safer than C, then is the greater
-complexity of C++ worth what you get as extra features?  C is smaller
-and easier to learn and since most programmers don't know
-object-orientation all that well anyway then what are they really
-getting out of C++ other than more complexity?  C++ zealots will argue
-this point but the reality is that C++ is becoming less popular while
-the popularity of C is remaining fairly stable over the last 10 years.
-I believe that idioms like are advocated here can help to avert this
-trend but it will require wide community buy-in and a change in the
-way we teach C++.
+viability of C++ as a usable and productive language depends on it.
+Otherwise, if C++ is no safer than C, then is the greater complexity
+of C++ worth what you get as extra features?  C is smaller and easier
+to learn and since most programmers don't know object-orientation all
+that well anyway then what are they really getting out of C++ other
+than more complexity?  C++ zealots will argue this point but the
+reality is that C++ is becoming less popular while the popularity of C
+has remained fairly stable over the last decade.  I believe that
+idioms like are advocated here can help to avert this trend but it
+will require wide community buy-in and a change in the way we teach
+C++.
 
 To make our programs more secure, compiler vendors or static analysis
 tools (e.g.\ klocwork) could implement a preprocessor-like language
-similar to OpenMP that would allow the programmer to declare (in
+similar to OpenMP [???] that would allow the programmer to declare (in
 comments) that certain blocks of code should be ``pointer-free'' or
 allow smaller blocks to be ``pointers allowed''.  This would
 significantly improve the robustness of code that uses the memeory
@@ -5962,6 +6251,7 @@ management classes}
 \begin{commandment}
 Thou shall not expose raw pointers in any high-level C++ code.
 \end{commandment}
+
 {}\textit{Exception:} Only expose raw pointers when interfacing with
 non-compliant code.
 
@@ -5969,6 +6259,37 @@ non-compliant code.
 Thou shall only use raw C++ references for non-persisting associations
 (see Section {}\ref{sec:persisting-nonpersisting-associations}).
 \end{commandment}
+
+\begin{commandment}
+Thou shall use {}\texttt{RCP} for handling single objects for all
+persisting associations (see Section
+{}\ref{sec:persisting-nonpersisting-associations}).
+\end{commandment}
+
+{}\textit{Exception:} When performance constraints do not allow the
+reference-counting overhead of {}\texttt{RCP}, then {}\texttt{Ptr} can
+be used instead with appropriate documentation about the performance
+optimization.  You should never have to retreat back to using a raw
+pointer in these cases.  At least with {}\texttt{Ptr}, invalid usage
+will be checked for in a debug build so you don't loose any debug-mode
+runtime checking when using {}\texttt{Ptr} instead of {}\texttt{RCP}
+if you really don't need reference-counting machinery.
+
+\begin{commandment}
+Thou shall use {}\texttt{ArrayRCP} for handling contiguous arrays of
+objects for all persisting associations (see Section
+{}\ref{sec:persisting-nonpersisting-associations}).
+\end{commandment}
+
+{}\textit{Exception:} When performance constraints do not allow the
+reference-counting overhead of {}\texttt{ArrayRCP}, then
+{}\texttt{ArrayView} can be used instead with appropriate
+documentation about the performance optimization.  You should never
+have to retreat back to using a raw pointer in these cases.  At least
+with {}\texttt{ArrayView}, invalid usage will be checked for in a
+debug build so you don't loose any debug-mode runtime checking when
+using {}\texttt{ArrayView} instead of {}\texttt{ArrayRCP} if you
+really don't need reference-counting machinery.
 
 \begin{commandment}
 Thou shall not call raw {}\texttt{new} or {}\texttt{delete} in any
