@@ -1457,7 +1457,7 @@ contiguous arrays
 \hline
 \end{tabular}
 \end{center}
-\caption{\label{table:BasicSingleArrayTypes}
+\caption{\label{tbl:BasicSingleArrayTypes}
 Basic Teuchos memory management utility classes for encapsulating raw
 pointers.}
 \end{table}
@@ -1559,17 +1559,17 @@ Iterators: begin(), end()
 %
 \end{tabular}
 \end{center}
-\caption{\label{table:TypesSummary}
+\caption{\label{tbl:TypesSummary}
 Summary of capabilities of the basic Teuchos memory management
 classes.}
 \end{table}
 
 The basic templated Teuchos memory management classes for encapsulating
 raw C++ pointers for single objects and arrays shown in Table
-{}\ref{table:BasicSingleArrayTypes} are {}\texttt{Ptr},
+{}\ref{tbl:BasicSingleArrayTypes} are {}\texttt{Ptr},
 {}\texttt{RCP}, {}\texttt{ArrayView}, and {}\texttt{ArrayRCP}.  A
 summary of the capabilities of these classes is shown in Table
-{}\ref{table:TypesSummary}.  What you can see from this table is that
+{}\ref{tbl:TypesSummary}.  What you can see from this table is that
 raw pointer-like functionality is partitioned across these various
 sets of classes in logical and safe ways.  For example, array-related
 operations are not defined on the single-object classes
@@ -1607,15 +1607,15 @@ Array class
 \hline
 \end{tabular}
 \end{center}
-\caption{\label{table:ExtendedArrayTypes}
+\caption{\label{tbl:ExtendedArrayTypes}
 Teuchos array container classes.}
 \end{table}
 
 In addition to the four basic memory management classes shown in Table
-{}\ref{table:BasicSingleArrayTypes} which provide the most fundamental
+{}\ref{tbl:BasicSingleArrayTypes} which provide the most fundamental
 replacements for all raw C++ pointers in all high-level code, Teuchos
 also contains a few other array container classes for a few more
-specific use cases shown in Table {}\ref{table:ExtendedArrayTypes}.
+specific use cases shown in Table {}\ref{tbl:ExtendedArrayTypes}.
 The three array container classes {}\texttt{Array}, and
 {}\texttt{Tuple} pretty much cover the majority of use cases in C++
 where raw C++ pointer arrays are used for containers.  The class
@@ -2787,7 +2787,7 @@ when this is being used in an inner loop.
 
 
 %
-{}\subsubsection{Array Views}
+{}\subsubsection{Array views}
 \label{sec:array-views}
 %
 
@@ -2973,7 +2973,7 @@ The core Teuchos memory management types {}\texttt{Ptr},
 of the reasonable implicit and explicit type conversions that are
 allowed by raw C++ pointers.  C++ defines implicit converts for raw
 pointers from non-const to const and from derived to base type.  Table
-{}\ref{table:implicit_explicit_conversions} shows what implicit and
+{}\ref{tbl:implicit_explicit_conversions} shows what implicit and
 explicit conversions are supported for the four core memory management
 types.
 
@@ -3027,12 +3027,12 @@ Implicit conv non-const to const
 \hline
 \end{tabular}
 \end{center}
-\caption{\label{table:implicit_explicit_conversions}
+\caption{\label{tbl:implicit_explicit_conversions}
 Implicit and explicit conversions supported by Teuchos memory
 management types.}
 \end{table}
 
-As can be seen in Table {}\ref{table:implicit_explicit_conversions},
+As can be seen in Table {}\ref{tbl:implicit_explicit_conversions},
 the smart pointer types for single objects do not support the same
 implicit and explicit conversions as for the smart pointer types for
 arrays.  The justification for this was explained in Section
@@ -4265,16 +4265,19 @@ that stores all of the {}\texttt{RCPNode} objects in active use.  An
 {}\texttt{RCPNode} objects and the multi-map is keyed by the
 {}\texttt{void*} address of the underlying reference-counted objects
 themselves.  Therefore, one can query to see if any {}\texttt{RCPNode}
-object already exists for a given object.  The current implementation
-requires Boost which provides some trickery for determining at
-compile-time if a type is polymorphic or not and thereby allowing the
-use {}\texttt{dynamic\_cast<const void*>(p)} to determine the true
-base address of any object (no matter if it uses virtual base classes
-and multiple inheritance or not).  The ability to trace active
-{}\texttt{RCPNode} objects and look them up basesd on an objects
-address is crtical for many debug-mode runtime checking capabilities
-including: a) reporting objects involved in circular depencencies
-after a program ends (see Section
+object already exists for a given object.  The cost of this query is
+$O(log(n))$ where $n$ is the number of active {}\texttt{RCPNode}
+objects currently in use.  Therefore, the cost of node tracing very
+scalable with the number of {}\texttt{RCPNode} objects in use.  The
+current implementation requires Boost which provides some trickery for
+determining at compile-time if a type is polymorphic or not and
+thereby allowing the use {}\texttt{dynamic\_cast<const void*>(p)} to
+determine the true base address of any object (no matter if it uses
+virtual base classes and multiple inheritance or not).  The ability to
+trace active {}\texttt{RCPNode} objects and look them up basesd on an
+objects address is crtical for many debug-mode runtime checking
+capabilities including: a) reporting objects involved in circular
+depencencies after a program ends (see Section
 {}\ref{sec:detection-circular-references}), b) detection of dangling
 references of non-owning {}\texttt{RCP} objects (see Section
 {}\ref{sec:detection-dangling-references}), and c) detection of the
@@ -5357,7 +5360,7 @@ thrown with an error message like shown below:
 
 The above error message contains all the information needed to open a
 debugger, set up breakpoints and break conditions, and debug the
-problem.
+problem (see Section {}\ref{sec:except-handling-debugging}).
 
 A few other examples of dangling references are shown in Listings
 {}\ref{listing:Array-dangling-ArrayView}--{}\ref{listing:RCP-dangling-Ptr}.
@@ -5577,12 +5580,134 @@ tracing is enabled and when it is not enabled.
 checking tools}
 %
 
-ToDo:
+One of the common criticisms of debug-mode runtime checking is that it
+incurs an unacceptably large runtime overhead of the code.  However,
+this overhead is only incurred for debug-mode builds and does not
+affect non-debug optimized builds.  To speed up debug-mode runtime
+checking, you can compile with optimized compiler options (e.g.\
+{}\texttt{-O3}) which significantly speeds up the code.  Also, one has
+to consider the relative cost of built-in debug-mode runtime checking
+verses running a memory checking tool like valgrind or purify.
 
-(*) Compare O(1) debug-mode checking to valgrind and purify
+To investigate the cost of debug-mode runtime checking we use the
+Trilinos package
+Tpetra\footnote{{}\texttt{http://trilinos.sandia.gov/packages/tpetra/}}
+since it uses the Teuchos memory management classes at a very low
+level and therefore would be expected to show the largest runtime
+overhead of debug-mode checking.  Table
+{}\ref{tbl:overhead-of-runtime-checking} shows the runtime of the
+Tpetra serial test suite (12 test programs) for several different
+build and runtime configurations.  In all of these builds, optimized
+compiler options were used.  All of these timing tests were performed
+on an a 3.2GHz AMD machine with 8 cores running Linux
+2.6.9-78.0.1.ELsmp using GCC 3.4.6.  Valgrind tests were run using
+version 3.2.1.  All of the test executables were run in serial with an
+unloaded machine.
 
-(*) Compare more expensive debug-mode with node-tracing checking to
-valgrind and purify.
+\begin{table}
+%
+\begin{center}
+%
+{\small\begin{tabular}{|l|r|r|r|}
+\hline
+Configuration
+& Runtime (sec)
+& Multiplier
+& Valgrind Mult \\
+\hline
+\hline
+1) Optimized build (base-line)
+& 0.16
+& 1.0
+& - \\
+\hline
+2) Debug-mode runtime checking
+& 0.49
+& 3.1
+& - \\
+\hline
+3) Debug-mode runtime checking + node tracing
+& 1.08
+& 6.8
+& - \\
+\hline
+4) Valgrind optimized build
+& 56.21
+& 351.3
+& 351.3 \\
+\hline
+5) Valgrind debug-mode runtime checking
+& 214.01
+& 1337.6
+& 431.5 \\
+\hline
+6) Valgrind debug-mode runtime checking + node tracing
+& 378.54
+& 2365.9
+& 347.9 \\
+\hline
+\end{tabular}}
+%
+\end{center}
+%
+\caption{\label{tbl:overhead-of-runtime-checking}
+Overhead of runtime checking for serial Tpetra test suite.}
+%
+\end{table}
+
+ToDo: Give statistics about the number of RCPNodes created!
+
+The results in Table {}\ref{tbl:overhead-of-runtime-checking} give the
+total runtimes as well as the relative runtimes for debug-mode
+checking and valgrind.  The second column 'Runtime' gives the raw CPU
+time in seconds (as reported by CTest) for all 12 test executables in
+the Tpetra test suite.  The third column 'Muliplier' gives the ratio
+of the runtime relative to the base-line optimized build case.  The
+fourth column 'Valgrind Multi' gives the fractional increase in the
+runtime of the test suite run with valgrind relative to running the
+same executables without valgrind.
+
+The results in Table {}\ref{tbl:overhead-of-runtime-checking} show
+that while the cost incured by debug-mode runtime checking can be
+significant (a factor of 3.1 for basic debug-mode runtime checking) it
+is still quite reasonable.  When node tracing is enabled, the cost
+more than doubles to a factor of 6.8 times the basic optimized build.
+While to cost of full debug-mode runtime checking with node tracing is
+a factor of 6.8 over the basic optimized build, the cost of running
+with valgrind is a factor of over 300!  The increased cost of running
+valgrind is a factor of 431.5 for the basic debug-mode executables.  A
+factor of 300 can make running a tool like valgrind prohibitive for
+reasonable sized problems while a factor of 6.8 may be quite
+reasonable.  For example, a test problem that takes 20 minutes to run
+in a standard optimized build may take 2 hours 15 minutes to run with
+full debug-mode runtime checking with node tracing enabled but that
+same program may take 100 hours or more than 4 days to run with
+valgrind!  Also, as has been mentioned several times before, the level
+of runtime checking provided in a Teuchos debug-mode is arguably more
+effective that what you get with just valgrind\footnote{However,
+valgrind does perform a number of other types of checks including
+usage of uninitialized memory that are very useful and can not be
+duplicated by the Teuchos memory management classes.}.  In order to
+perform the most detailed runtime checking possible, you can run with
+valgrind with debug-mode runtime checking with node tracing enabled.
+However, the overhead of this maximal checking is staggering at more
+than 23K times the cost of the basic optimized build!  At this level
+of overhead, only very small test problems can be run.
+
+What these timing results suggest is that the cost of debug-mode
+runtime checking for programs using the Teuchos memory management
+classes will be less than a factor of 10 more than the basic optimized
+build in the worst case while the overhead of running a tool like
+Valgrind can be as much as a factor of 400 or more.  This means that
+enabling debug-mode runtime checking in regular development and
+automated testing is quite reasonable.  Note that the Tpetra package
+used in this example is likely an extreme case in the usage of the
+Teuchos memory management classes.  Other types of software that don't
+use the Teuchos memory mangement classes for such low-level
+computations will see much less of a slow-down.  However, note that
+theses tests were only performed on one machine using one compiler so
+results on other platforms using different compilers may vary
+significantly.
 
 
 %
@@ -5612,7 +5737,7 @@ below code, you can of course have dangling raw C++ references.
   RCP<A> a_ptr = newA();
   A &a = *a_ptr;
   ...
-  a->someFunc(); // This object may not be valid any more!
+  a->someFunc(); // This object may not be valid anymore!
 \end{verbatim}}
 
 The above code fragment violates the use of raw C++ references only
@@ -5630,9 +5755,95 @@ associations.
 
 %
 {}\subsubsection{Exception handling and debugging}
+\label{sec:except-handling-debugging}
 %
 
-ToDo: Fill this in!
+The debug-mode runtime checking performed by the Teuchos memory
+management classes throw exceptions when violations are detected.  As
+has been shown throughout this document, these exceptions have
+associated messages that are fairly detailed with lots of information
+about the nature and context of the problem.
+
+All exceptions thrown by the Teuchos memory management classes (and
+the rest of Trilinos for that matter) all use a system of macros in
+the file {}\texttt{Teuchos\_TestForException.hpp}.  All of these
+macros call the function {}\texttt{TestForException\_break(...)} just
+before an exception is thrown.  Therefore, if the error is repeatable
+(and most errors are), then you can open a debugger (e.g.\ GDB) and
+set breakpoint in that function and run the program.  Several
+exceptions can be thrown before the exception that you need to debug.
+To make it easier to break on the exception that you care about, every
+exception message has a {}\texttt{Thrown number} associated with it
+embedded in the error message of the exception object.  You can set a
+conditional breakpoint in {}\texttt{TestForException\_break(...)} to
+only stop when {}\texttt{throwNumber} has the right value.  For
+example, if you need to stop on {}\texttt{Throw number = 10}, then in
+GDB you can set:
+
+{\small\begin{verbatim}
+  (gdb) b 'TestForException_break [TAB] [ENTER]
+  (gdb) cond 1 throwNumber==10
+  (gdb) run
+\end{verbatim}}
+
+When the program stops at this breakpoint, you can then examine the
+call stack to troubleshoot the problem.
+
+Many exception messages contain other types of information that would
+have you set breakpoints in other functions.  For example, a dangling
+reference exception (as shown in Section
+{}\ref{sec:detection-dangling-references}) would contain addresses of
+objects that you would use to set conditional breakpoints.  For
+example, to examine the context under which a {}\texttt{RCPNode} is
+first created, you would set a breakpoint in the function
+{}\texttt{Teuchos::RCPNodeTracer::addNewRCPNode(...)} and set a
+condition to only break when the {}\texttt{RCPNode} has the address
+that is printed in the exception message.  For example, for the
+exception message shown in Section
+{}\ref{sec:detection-dangling-references}, you would set the
+breakpoint in GDB as:
+
+{\small\begin{verbatim}
+  (gdb) b 'Teuchos::RCPNodeTracer::addNewRCPNode [TAB] [ENTER]
+  (gdb) cond 1 rcp_node==((void*)0xab65a0)
+  (gdb) run
+\end{verbatim}}
+
+When the debugger breaks you would then be able to examine the call
+stack to see the context under which this {}\texttt{RCPNode} object is
+first created.
+
+The Teuchos memory management classes are all fully exception safe in
+that they provide either the basic guarantee (retain some valid object
+state and no leaked memory when exception is thrown), the strong
+guarantee (retain original state when exception is thrown), or the
+no-throw guarantee (see {}\cite[Item 71]{C++CodingStandards05}).
+However, if exceptions are thrown from destructors when objects are
+being destroyed, then the classes are only fully exception safe in a
+debug-mode build.  This does not really break exception safety since
+destructors should not be throwing exceptions in most valid C++
+programs (see {}\cite[Item 51]{C++CodingStandards05}).  The Teuchos
+memory management classes provide the foundation for allowing the
+wide-spread and consistent use of C++ exception handling in all of
+your programs in such a way as memory will not be leaked when
+exceptions are thrown.  However, achieving a truly an exception safe
+program means more than just not leaking memory; it means that all
+code provides at least one of the fundamental exception guarantees
+(again, see {}\cite[Item 71]{C++CodingStandards05}).
+
+Note that throwing exceptions differs from what other class libraries
+do which is typically to call {}\texttt{assert(...)} when a runtime
+failure is discovered.  For example, the checked STL for g++ will call
+assert when a usage violation is discovered.  There are pros and cons
+for throwing exceptions versus halting the program but if you can make
+your code exception safe, then one can argue that throwing exceptions
+is better because it allows the program to recover in case of a
+catastrophic failure of a submodule while calling
+{}\texttt{assert(...)} does not.  Also, writing unit tests for code
+that throws exceptions is much easier and more efficient than trying
+to write unit tests for code that halts the program.  This issue of
+testability is a huge advantage of exception handling over calling
+{}\texttt{assert(...)} or {}\texttt{exit(...)} when an error occurs.
 
 
 %
@@ -5685,7 +5896,22 @@ ToDo: Fill this in!
 
 
 %
-{}\subsubsection{Objects maintaining self references}
+{}\subsubsection{The separate construction and initialization idiom}
+\label{sec:separate-construct-init}
+%
+
+(*) Avoid duplication of default values in constructors (non-member
+constructors)
+
+(*) Allow for for remaining construction to call virtual functions
+
+(*) Allow for object self reference in initializtion
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection{The object self-reference idiom}
 \label{sec:self-references}
 %
 
@@ -5707,13 +5933,14 @@ iterator and ArrayView views.
 
 
 %
-{}\subsubsection{Inverting object ownership while avoiding circular references}
+{}\subsubsection{The inverted object ownership idiom}
 \label{sec:inverting-obj-ownership}
 %
 
 A rare situation that can occur is when you have an object that
-maintains an RCP to another object but you want to expose the second
-object and have it remember the first object.  To demonstrate,
+maintains an {}\texttt{RCP} to another object but you want to expose
+the second object and have it remember the first object; in other
+words, you want to invert the object ownership.  To demonstrate,
 consider the two classes in Listing {}\ref{listing:B_owns_A_decl}.
 
 \begin{listing}: Two classes where one maintains an RCP to the other \\
@@ -5769,7 +5996,7 @@ the {}\texttt{B} object.
 
 However, now consider a rare use case where a client may only want to
 deal directly with the {}\texttt{A} object but still maintain the
-{}\texttt{B} object for use later.  There are a few approaches that
+{}\texttt{B} object for later use.  There are a few approaches that
 one could try to implement this inversion of RCP ownership but there
 is a way to enable this that is 100\% bullet-proof without having to
 change the existing {}\texttt{A} or {}\texttt{B} classes or any other
@@ -6067,23 +6294,21 @@ for examples)?
 \end{itemize}
 
 Note that while UML is an expressive language that allows you to
-explicitly represent the above essential information, most
-programming languages cannot (at least not the raw language).
-Consider that in Java and Python that it is impossible to distinguish
-between persisting and non-persisting associations because every
-user-defined object is always managed through an indirect reference
-handed by the garbage-collected language.  This causes big problems
-when it comes time to try to understand a complex program written in
-these languages.  For example, consider the agony that Feathers goes
-through in many refactorings described in [Feathers ???, Sections ??? 
-and ???] in trying to determine the nature of objects as to whether
-they are actually embedded in each other (persisting) or are just
-passed to each other (non-persisting).  For instance, in [Feathers,
-Section ???], the author tries to determine if the passed in object is
-remembered or not and is going to be changed or not.  Python has no
-user-definable concept of {}\texttt{const} but the Python language
-itself understands the need for {}\texttt{const} by having built-in
-immutable data-types like strings and tuples.
+explicitly represent the above essential information, most programming
+languages cannot (at least not the raw language).  Consider that in
+Java and Python that it is impossible to distinguish between
+persisting and non-persisting associations because every user-defined
+object is always managed through an indirect reference handed by the
+garbage-collected language.  This causes big problems when it comes
+time to try to understand a complex program written in these
+languages.  For example, consider the agony that Feathers goes through
+in many refactorings described in
+{}\cite{WorkingEffectivelyWithLegacyCode05} in trying to determine the
+nature of objects as to whether they are actually embedded in each
+other (persisting) or are just passed to each other (non-persisting).
+Python has no user-definable concept of {}\texttt{const} but the
+Python language itself understands the need for {}\texttt{const} by
+having built-in immutable data-types like strings and tuples.
 
 One of the goals of the idioms defined in this paper is to change the
 above essential complexities from implicit concepts to explicit
@@ -6156,22 +6381,32 @@ unnecessary coupling {}\cite{CodeComplete2nd04}.  The code you write
 with these classes will be more likely to be correct on first writing,
 will be less likely to contain silent (but deadly) memory usage
 errors, and will be much more robust to later refactoring and
-maintenance.  These classes and idioms largely address the technical
-issues in resolving the fragile built-in C++ memory management model
-(with the exception of circular references which has no easy solution
-but can be managed as discussed).  All that remains is to teach these
-classes and idioms and expand their usage in C++ codes.  The long-term
-viability of C++ as a usable and productive language depends on it.
-Otherwise, if C++ is no safer than C, then is the greater complexity
-of C++ worth what you get as extra features?  C is smaller and easier
-to learn and since most programmers don't know object-orientation all
-that well anyway then what are they really getting out of C++ other
-than more complexity?  C++ zealots will argue this point but the
-reality is that C++ is becoming less popular while the popularity of C
-has remained fairly stable over the last decade.  I believe that
-idioms like are advocated here can help to avert this trend but it
-will require wide community buy-in and a change in the way we teach
-C++.
+maintenance.
+
+The level of debug-mode runtime checking provided by the Teuchos
+memory management classes is stronger in many respects than what is
+provided by memory checking tools like valgrind and purify while being
+much less expensive.  However, tools like valgrind and purify perform
+a number of types of checks (like usage of uninitialized memory) that
+makes these tools very valuable and therefore complement the Teuchos
+memory management debug-mode runtime checking.
+
+The Teuchos memory management classes and idioms largely address the
+technical issues in resolving the fragile built-in C++ memory
+management model (with the exception of circular references which has
+no easy solution but can be managed as discussed).  All that remains
+is to teach these classes and idioms and expand their usage in C++
+codes.  The long-term viability of C++ as a usable and productive
+language depends on it.  Otherwise, if C++ is no safer than C, then is
+the greater complexity of C++ worth what you get as extra features?  C
+is smaller and easier to learn and since most programmers don't know
+object-orientation all that well anyway then what are they really
+getting out of C++ other than more complexity?  C++ zealots will argue
+this point but the reality is that C++ is becoming less popular while
+the popularity of C has remained fairly stable over the last decade.
+I believe that idioms like are advocated here can help to avert this
+trend but it will require wide community buy-in and a change in the
+way we teach C++.
 
 To make our programs more secure, compiler vendors or static analysis
 tools (e.g.\ klocwork) could implement a preprocessor-like language
@@ -6354,8 +6589,6 @@ function.
 ToDo: Add discussion of why the Teuchos array classes all use a signed
 integer for size\_type and why that is better.  This is important
 because of the break from std::vector.
-
-
 
 
 \begin{SANDdistribution}[NM]
