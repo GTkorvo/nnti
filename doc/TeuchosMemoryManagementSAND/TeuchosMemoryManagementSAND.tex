@@ -5850,14 +5850,14 @@ testability is a huge advantage of exception handling over calling
 {}\subsection{Optimized performance}
 %
 
-While the debug-mode runtime checking is of great importance, of equal
-importance is performance in a optimized non-debug build.  It is
-critical that the wise use of the Teuchos memory management classes
-lead to optimized performance that is nearly identical to the
-performance of raw pointers.  Otherwise, if there is alway a
-performance gap with using the Teuchos memory management classes, then
-there will always be an excuse to go back to using raw pointers will
-all of the disasterous consequences discussed in Sections ??? and ???.
+While debug-mode runtime checking is of great importance, of equal
+importance is speed in a optimized non-debug build.  It is critical
+that the wise use of the Teuchos memory management classes lead to
+optimized performance that is nearly identical to the performance of
+raw pointers.  Otherwise, if there is alway a performance gap with
+using the Teuchos memory management classes, then there will always be
+an excuse to go back to using raw pointers will all of the disasterous
+consequences discussed in Sections ??? and ???.
 
 In this section, we look at the optimized performance of the Teuchos
 memory management classes.  In an optimized build, all of the runtime
@@ -5916,6 +5916,47 @@ reference-counted object, for manipulating the reference count, and
 for accessing the underlying reference-counted object.  These are the
 core operations of the {}\texttt{RCP} class that are most likely to
 affect perforamnce.
+
+All of the operations being timed are very low-level and therefore it
+is difficult to get meaningful unbiased timing results.  To get
+accurate timings, one must perform the operaton in loop and average
+the times.  With naive code, some compilers (e.g.\ Microsoft Visual
+C++) will just optimize away the entire loop.  Therefore, the
+operation must be performed in the context of a loop over an array
+where the result of the loop gets used in some way to accumulate a
+final result.  Otherwise, some compilers will just optimize away the
+entire loop.  Examples of these types of timing loops will be given
+below.  Because of the loop and iterator overhead and this extra
+(minimal) computation, the timings listed for each operation are
+higher that what they would be otherwise.  Therefore, the overhead
+reported is lower that what it really is but by how much one can't be
+sure.  Also, when performing loops, issues of loop initialization and
+cache issues come into play.  In order to avoid these issues, a single
+loop size from all the results of 1024 was selected to display in the
+figures and tables in this section.  The raw timing results for other
+loops sizes are given in Appendix {}\ref{apdx:raw-perf-data}.
+
+ToDo: Show a chart showing the relative times for allocation and
+destruction for different size arrays for all three compilers.  This
+will be a line chart with three lines, one for each compiler.
+
+{\bsinglespace
+\begin{figure}[p]
+\begin{center}
+%\fbox{
+\includegraphics*[angle=0,scale=1.00]{RCPTimings}
+%}
+\end{center}
+\caption{
+\label{fig:RCPTimings}
+Timings of basic RCP operations on for three compilers.}
+\end{figure}
+\esinglespace}
+
+ToDo: Show a bar chart for the relative times for each operation for
+each compiler.  This should be be a bar chart showing all three
+compilers.
+
 
 
 ToDo: Fill this in!
@@ -6646,6 +6687,208 @@ function.
 ToDo: Add discussion of why the Teuchos array classes all use a signed
 integer for size\_type and why that is better.  This is important
 because of the break from std::vector.
+
+
+%
+{}\section{Raw performance data}
+\label{apdx:raw-perf-data}
+%
+
+\begin{listing}: Raw {}\texttt{RCP} timing data on GCC 4.1.2  \\
+\label{listing:RCP-GCC-Timings}
+{\scriptsize\begin{verbatim}
+0. RCP_createDestroyOverhead_UnitTest ... 
+ 
+ Messuring the overhead of creating and destorying objects of different sizes
+ using raw C++ pointers, shared_ptr, and using RCP.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.001 = 5e+06
+ 
+   obj size   num loops  raw             shared_ptr      RCP             shared_ptr/raw  RCP/raw       
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+           1    3465735    7.407462e-08    1.215497e-07    1.398462e-07    1.640909e+00    1.887910e+00
+           4    2011797    7.450006e-08    1.239370e-07    1.413890e-07    1.663582e+00    1.897838e+00
+          16     885379    8.031363e-08    1.284388e-07    1.467530e-07    1.599215e+00    1.827249e+00
+          64     326124    1.130889e-07    1.589150e-07    1.792815e-07    1.405222e+00    1.585315e+00
+         256     108380    2.369718e-07    2.786677e-07    2.359753e-07    1.175953e+00    9.957949e-01
+        1024      33849    5.029395e-07    5.578008e-07    5.812875e-07    1.109081e+00    1.155780e+00
+        4096      10153    1.552546e-06    1.608293e-06    1.630947e-06    1.035907e+00    1.050498e+00
+       16384       2961    5.759541e-06    5.821344e-06    5.840932e-06    1.010731e+00    1.014132e+00
+       65536        846    2.503073e-05    2.513239e-05    2.515721e-05    1.004061e+00    1.005053e+00
+
+1. RCP_dereferenceOverhead_UnitTest ... 
+ 
+ Messuring the overhead of dereferencing RCP, shared_ptr and a raw pointer.
+ 
+   array dim  num loops  raw             shared_ptr      RCP             RCP/raw         RCP/shared_ptr
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+          64    3261240    7.765547e-10    1.037752e-09    6.958626e-10    8.960896e-01    6.705479e-01
+         256    1083803    7.295887e-10    8.572714e-10    7.611003e-10    1.043191e+00    8.878173e-01
+        1024     338498    7.117812e-10    8.238572e-10    7.125746e-10    1.001115e+00    8.649249e-01
+        4096     101538    7.187575e-10    1.155846e-09    1.192136e-09    1.658607e+00    1.031397e+00
+       16384      29614    8.350258e-10    1.155404e-09    1.190919e-09    1.426207e+00    1.030739e+00
+       65536       8461    8.362559e-10    1.155293e-09    1.199785e-09    1.434711e+00    1.038512e+00
+
+2. RCP_memberAccessOverhead_UnitTest ... 
+ 
+ Messuring the overhead of dereferencing RCP, shared_ptr and a raw pointer.
+ 
+   array dim  num loops  raw             shared_ptr      RCP             RCP/raw         RCP/shared_ptr
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+          64    3261240    7.794917e-10    1.037733e-09    6.954218e-10    8.921479e-01    6.701355e-01
+         256    1083803    7.295743e-10    8.639896e-10    7.611075e-10    1.043221e+00    8.809221e-01
+        1024     338498    7.115158e-10    8.325987e-10    7.242242e-10    1.017861e+00    8.698358e-01
+        4096     101538    7.252928e-10    1.156058e-09    1.192244e-09    1.643811e+00    1.031302e+00
+       16384      29614    8.369755e-10    1.154404e-09    1.190985e-09    1.422963e+00    1.031688e+00
+       65536       8461    8.364092e-10    1.154440e-09    1.199527e-09    1.434139e+00    1.039056e+00
+
+3. RCP_referenceCountManipulationOverhead_UnitTest ... 
+ 
+ Messuring the overhead of incrementing and deincrementing the reference count
+ comparing RCP to raw pointer and boost::shared_ptr.
+ 
+   array dim  num loops  raw             shared_ptr      RCP             RCP/raw         RCP/shared_ptr
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+          64      65224    1.554978e-09    4.145809e-09    6.009579e-09    3.864736e+00    1.449555e+00
+         256      21676    7.138151e-10    4.221439e-09    5.832524e-09    8.170916e+00    1.381644e+00
+        1024       6769    6.919181e-10    4.224365e-09    5.589158e-09    8.077773e+00    1.323076e+00
+        4096       2030    6.863599e-10    4.226880e-09    6.094856e-09    8.879972e+00    1.441928e+00
+       16384        592    6.854083e-10    4.224623e-09    6.234040e-09    9.095367e+00    1.475644e+00
+       65536        169    6.848397e-10    4.228219e-09    6.216828e-09    9.077785e+00    1.470318e+00
+\end{verbatim}}
+\end{listing}
+
+\pagebreak
+
+\begin{listing}: Raw {}\texttt{RCP} timing data on Intel ICC 10.1  \\
+\label{listing:RCP-ICC-Timings}
+{\scriptsize\begin{verbatim}
+0. RCP_createDestroyOverhead_UnitTest ... 
+ 
+ Messuring the overhead of creating and destorying objects of different sizes
+ using raw C++ pointers, shared_ptr, and using RCP.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.001 = 5e+06
+ 
+   obj size   num loops  raw             shared_ptr      RCP             shared_ptr/raw  RCP/raw       
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+           1    3465735    1.157942e-07    1.941906e-07    2.041379e-07    1.677032e+00    1.762938e+00
+           4    2011797    1.194609e-07    1.984465e-07    2.031149e-07    1.661184e+00    1.700263e+00
+          16     885379    1.200751e-07    2.013262e-07    2.105720e-07    1.676669e+00    1.753668e+00
+          64     326124    1.390085e-07    2.170309e-07    2.277876e-07    1.561279e+00    1.638660e+00
+         256     108380    3.299409e-07    4.036446e-07    4.223381e-07    1.223384e+00    1.280041e+00
+        1024      33849    6.118349e-07    7.350291e-07    7.567432e-07    1.201352e+00    1.236842e+00
+        4096      10153    1.724909e-06    1.833645e-06    1.851472e-06    1.063039e+00    1.073374e+00
+       16384       2961    6.138467e-06    6.252955e-06    6.269504e-06    1.018651e+00    1.021347e+00
+       65536        846    2.482151e-05    2.497754e-05    2.505437e-05    1.006286e+00    1.009381e+00
+
+1. RCP_dereferenceOverhead_UnitTest ... 
+ 
+ Messuring the overhead of dereferencing RCP, shared_ptr and a raw pointer.
+ 
+   array dim  num loops  raw             shared_ptr      RCP             RCP/raw         RCP/shared_ptr
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+          64    3261240    6.909757e-10    3.551453e-09    1.027399e-09    1.486881e+00    2.892897e-01
+         256    1083803    7.113406e-10    3.384829e-09    7.973226e-10    1.120873e+00    2.355577e-01
+        1024     338498    6.914017e-10    2.841675e-09    7.658747e-10    1.107713e+00    2.695152e-01
+        4096     101538    6.864300e-10    3.701316e-09    9.940787e-10    1.448187e+00    2.685744e-01
+       16384      29614    7.319499e-10    3.367334e-09    9.934011e-10    1.357198e+00    2.950112e-01
+       65536       8461    7.317167e-10    2.931704e-09    9.912099e-10    1.354636e+00    3.381003e-01
+
+2. RCP_memberAccessOverhead_UnitTest ... 
+ 
+ Messuring the overhead of dereferencing RCP, shared_ptr and a raw pointer.
+ 
+   array dim  num loops  raw             shared_ptr      RCP             RCP/raw         RCP/shared_ptr
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+          64    3261240    6.899839e-10    6.952541e-10    8.252660e-10    1.196066e+00    1.186999e+00
+         256    1083803    7.112650e-10    7.159684e-10    7.949727e-10    1.117688e+00    1.110346e+00
+        1024     338498    6.911940e-10    6.924634e-10    7.741691e-10    1.120046e+00    1.117993e+00
+        4096     101538    6.863435e-10    7.000054e-10    9.928501e-10    1.446579e+00    1.418346e+00
+       16384      29614    7.326919e-10    8.507246e-10    9.953219e-10    1.358445e+00    1.169970e+00
+       65536       8461    7.315725e-10    8.489935e-10    9.923713e-10    1.356491e+00    1.168880e+00
+
+3. RCP_referenceCountManipulationOverhead_UnitTest ... 
+ 
+ Messuring the overhead of incrementing and deincrementing the reference count
+ comparing RCP to raw pointer and boost::shared_ptr.
+ 
+   array dim  num loops  raw             shared_ptr      RCP             RCP/raw         RCP/shared_ptr
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+          64      65224    1.032260e-09    5.619576e-09    8.805472e-09    8.530285e+00    1.566928e+00
+         256      21676    7.246278e-10    5.881181e-09    8.692109e-09    1.199527e+01    1.477953e+00
+        1024       6769    7.678041e-10    6.050677e-09    8.797574e-09    1.145810e+01    1.453982e+00
+        4096       2030    7.621277e-10    5.988180e-09    8.991230e-09    1.179754e+01    1.501496e+00
+       16384        592    8.004678e-10    6.102691e-09    8.966497e-09    1.120157e+01    1.469269e+00
+       65536        169    7.999578e-10    6.108933e-09    8.973161e-09    1.121704e+01    1.468859e+00
+\end{verbatim}}
+\end{listing}
+
+\pagebreak
+
+\begin{listing}: Raw {}\texttt{RCP} timing data on MSVC++ 2009  \\
+\label{listing:RCP-MSVC-Timings}
+{\scriptsize\begin{verbatim}
+0. RCP_createDestroyOverhead_UnitTest ... 
+ 
+ Messuring the overhead of creating and destorying objects of different sizes
+ using raw C++ pointers, shared_ptr, and using RCP.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+003/0.001 = 5e+006
+ 
+   obj size   num loops  raw             shared_ptr      RCP             shared_ptr/raw  RCP/raw       
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+           1    3465735   2.628591e-007   3.641363e-007   4.117453e-007   1.385291e+000   1.566411e+000
+           4    2011797   2.390897e-007   3.718069e-007   4.130635e-007   1.555094e+000   1.727651e+000
+          16     885379   2.484812e-007   3.885342e-007   4.303242e-007   1.563636e+000   1.731818e+000
+          64     326124   2.882339e-007   4.262182e-007   4.660804e-007   1.478723e+000   1.617021e+000
+         256     108380   4.336593e-007   5.628345e-007   5.997416e-007   1.297872e+000   1.382979e+000
+        1024      33849   9.749180e-007   1.093090e-006   1.122633e-006   1.121212e+000   1.151515e+000
+        4096      10153   3.250271e-006   3.250271e-006   3.348764e-006   1.000000e+000   1.030303e+000
+       16384       2961   1.182033e-005   1.350895e-005   1.215805e-005   1.142857e+000   1.028571e+000
+       65536        846   4.609929e-005   4.609929e-005   4.609929e-005   1.000000e+000   1.000000e+000
+
+1. RCP_dereferenceOverhead_UnitTest ... 
+ 
+ Messuring the overhead of dereferencing RCP, shared_ptr and a raw pointer.
+ 
+   array dim  num loops  raw             shared_ptr      RCP             RCP/raw         RCP/shared_ptr
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+          64    3261240   1.034882e-009   1.034882e-009   6.995039e-010   6.759259e-001   6.759259e-001
+         256    1083803   1.052428e-009   1.052428e-009   7.136329e-010   6.780822e-001   6.780822e-001
+        1024     338498   1.035711e-009   1.038596e-009   6.952820e-010   6.713092e-001   6.694444e-001
+        4096     101538   1.021881e-009   1.043521e-009   1.012263e-009   9.905882e-001   9.700461e-001
+       16384      29614   1.088221e-009   1.141807e-009   1.020207e-009   9.375000e-001   8.935018e-001
+       65536       8461   1.082056e-009   1.141569e-009   1.011722e-009   9.350000e-001   8.862559e-001
+
+2. RCP_memberAccessOverhead_UnitTest ... 
+ 
+ Messuring the overhead of dereferencing RCP, shared_ptr and a raw pointer.
+ 
+   array dim  num loops  raw             shared_ptr      RCP             RCP/raw         RCP/shared_ptr
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+          64    3261240   1.039674e-009   1.044465e-009   1.015718e-009   9.769585e-001   9.724771e-001
+         256    1083803   1.045220e-009   1.048824e-009   7.136329e-010   6.827586e-001   6.804124e-001
+        1024     338498   1.032826e-009   1.038596e-009   6.923970e-010   6.703911e-001   6.666667e-001
+        4096     101538   1.029094e-009   1.053139e-009   1.009859e-009   9.813084e-001   9.589041e-001
+       16384      29614   1.077915e-009   1.135624e-009   1.007841e-009   9.349904e-001   8.874773e-001
+       65536       8461   1.080252e-009   1.137962e-009   1.018936e-009   9.432387e-001   8.954041e-001
+
+3. RCP_referenceCountManipulationOverhead_UnitTest ... 
+ 
+ Messuring the overhead of incrementing and deincrementing the reference count
+ comparing RCP to raw pointer and boost::shared_ptr.
+ 
+   array dim  num loops  raw             shared_ptr      RCP             RCP/raw         RCP/shared_ptr
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+          64      65224   7.186772e-010   5.270299e-009   1.413398e-008   1.966667e+001   2.681818e+000
+         256      21676   3.604217e-010   4.144849e-009   1.261476e-008   3.500000e+001   3.043478e+000
+        1024       6769   1.442698e-010   4.183825e-009   1.269575e-008   8.800000e+001   3.034483e+000
+        4096       2030   2.405326e-010   4.089055e-009   1.274823e-008   5.300000e+001   3.117647e+000
+       16384        592   3.092998e-010   4.227097e-009   1.278439e-008   4.133333e+001   3.024390e+000
+       65536        169   2.708661e-010   4.153280e-009   1.291128e-008   4.766667e+001   3.108696e+000
+\end{verbatim}}
+\end{listing}
 
 
 \begin{SANDdistribution}[NM]
