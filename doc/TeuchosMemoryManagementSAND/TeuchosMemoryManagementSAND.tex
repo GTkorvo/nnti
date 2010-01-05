@@ -5850,7 +5850,53 @@ testability is a huge advantage of exception handling over calling
 {}\subsection{Optimized performance}
 %
 
-ToDo: Fill this in!
+While the debug-mode runtime checking is of great importance, of equal
+importance is performance in a optimized non-debug build.  It is
+critical that the wise use of the Teuchos memory management classes
+lead to optimized performance that is nearly identical to the
+performance of raw pointers.  Otherwise, if there is alway a
+performance gap with using the Teuchos memory management classes, then
+there will always be an excuse to go back to using raw pointers will
+all of the disasterous consequences discussed in Sections ??? and ???.
+
+In this section, we look at the optimized performance of the Teuchos
+memory management classes.  In an optimized build, all of the runtime
+checking is disabled but there is still some non-trivial overhead
+associated with the reference-counting machinery.  If used at too fine
+a granularity, reference-counting overhead can become a significant
+performance problem on real-world problems.
+
+ToDo: Show table giving the details of the three platforms a) gcc ??? 
+on Linux, b) Intel ??? on Linux, c) MS Visual C++ ??? on MS Windows
+Vista.
+
+The optimized performance of several different types of operations are
+examined in the next few sections.  All of these performance timing
+tests were run on three different platforms with three different
+comilers shown in Table ??? that represent a reasonable range of the
+main-stream platforms.  Timing results on other compilers may give
+different results, especially for compilers that have a bad history at
+optimizing C++ code (e.g.\ PGI, Sun, AIX etc.).  All of these
+performance timing tests are driven by a performance testing framework
+in Teuchos and there are nightly tests that strictly enforce relative
+performance timing targets.
+
+This section is broken up into subsections as follows.  First, the
+optimized performance of the reference-counting machinery is looked at
+in Section {}\ref{sec:reference-counting-overhead}.
+Reference-counting overhead will never go to zero with respect to raw
+pointers but it is constant-time overhead and therefore its impact can
+be minimized by not applying it at too low a level.  The optimized
+performance of the Teuchos array classes is given in Section
+{}\ref{sec:array-overhead}.  The timing results shown that the basic
+braket operator (i.e.\ {}\texttt{a[i]}) and iterator (i.e.\
+{}\texttt{a.begin()}) access methods all yield raw pointer
+performance.  Finally, in Section {}\ref{sec:perf-tuning-strategies},
+performance tuning strategies are discussed, including the need to
+relax the strict use of reference-counting classes {}\texttt{RCP} and
+especially {}\texttt{ArrayRCP} in use cases where technically
+persisting associations are present but reference-counting machinery
+is not needed and the overhead of reference-counting is too high.
 
 
 %
@@ -5858,25 +5904,36 @@ ToDo: Fill this in!
 \label{sec:reference-counting-overhead}
 %
 
+While the reference-counting machinery used by the {}\texttt{RCP} and
+{}\texttt{ArrayRCP} classes significantly improves software
+development productivity and quality in many respects, it also has a
+certain amount of space and time overhead that needs to be considered
+in design decisions.  Here, the cost of the various operations
+associated with the {}\texttt{RCP} class are compared to raw pointers
+and to the {}\texttt{boost::shared\_ptr} class.  Timings are performed
+for creating and destroying the {}\texttt{RCPNode} object and
+reference-counted object, for manipulating the reference count, and
+for accessing the underlying reference-counted object.  These are the
+core operations of the {}\texttt{RCP} class that are most likely to
+affect perforamnce.
+
+
 ToDo: Fill this in!
 
 
 %
-{}\subsubsection{Array access overhead}
+{}\subsubsection{Array access and iterator overhead}
+\label{sec:array-overhead}
 %
 
-ToDo: Fill this in!
-
-
-%
-{}\subsubsection{Array iterator overhead}
-%
+ToDo: Give the space overhead of the reference-counting machinery
 
 ToDo: Fill this in!
 
 
 %
 {}\subsubsection{Performance tuning strategies (and compromises)}
+\label{sec:perf-tuning-strategies}
 %
 
 ToDo: Fill this in!
@@ -5896,7 +5953,7 @@ ToDo: Fill this in!
 
 
 %
-{}\subsubsection{The separate construction and initialization idiom}
+{}\subsubsection{The ``separate construction and initialization'' idiom}
 \label{sec:separate-construct-init}
 %
 
@@ -5911,7 +5968,7 @@ ToDo: Fill this in!
 
 
 %
-{}\subsubsection{The object self-reference idiom}
+{}\subsubsection{The ``object self-reference'' idiom}
 \label{sec:self-references}
 %
 
@@ -5919,7 +5976,7 @@ ToDo: Fill this in!
 
 
 %
-{}\subsubsection{The generalized view idiom}
+{}\subsubsection{The ``generalized view'' idiom}
 \label{sec:generalized-view-idiom}
 %
 
@@ -5933,7 +5990,7 @@ iterator and ArrayView views.
 
 
 %
-{}\subsubsection{The inverted object ownership idiom}
+{}\subsubsection{The ``inverted object ownership'' idiom}
 \label{sec:inverting-obj-ownership}
 %
 
