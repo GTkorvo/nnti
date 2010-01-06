@@ -3717,6 +3717,9 @@ does.  Of course now we have given up a compile-time check for a
 non-null argument for {}\texttt{T\&} with a debug-only runtime check
 that {}\texttt{const Ptr<T>\&} is non-null.
 
+ToDo: Show example where you need to create an RCP<T> from a raw T\&
+inside of a function body.
+
 
 %
 {}\subsubsection{Idioms for returning objects from C++ functions}
@@ -5854,10 +5857,11 @@ While debug-mode runtime checking is of great importance, of equal
 importance is speed in a optimized non-debug build.  It is critical
 that the wise use of the Teuchos memory management classes lead to
 optimized performance that is nearly identical to the performance of
-raw pointers.  Otherwise, if there is alway a performance gap with
+raw pointers.  Otherwise, if there is always a performance gap with
 using the Teuchos memory management classes, then there will always be
-an excuse to go back to using raw pointers will all of the disasterous
-consequences discussed in Sections ??? and ???.
+an excuse to go back to using raw pointers will all of the disastrous
+consequences discussed in Section
+{}\ref{sec:problems-with-raw-pointers}.
 
 In this section, we look at the optimized performance of the Teuchos
 memory management classes.  In an optimized build, all of the runtime
@@ -5866,20 +5870,41 @@ associated with the reference-counting machinery.  If used at too fine
 a granularity, reference-counting overhead can become a significant
 performance problem on real-world problems.
 
-ToDo: Show table giving the details of the three platforms a) gcc ??? 
-on Linux, b) Intel ??? on Linux, c) MS Visual C++ ??? on MS Windows
-Vista.
-
 The optimized performance of several different types of operations are
 examined in the next few sections.  All of these performance timing
-tests were run on three different platforms with three different
-comilers shown in Table ??? that represent a reasonable range of the
-main-stream platforms.  Timing results on other compilers may give
-different results, especially for compilers that have a bad history at
-optimizing C++ code (e.g.\ PGI, Sun, AIX etc.).  All of these
-performance timing tests are driven by a performance testing framework
-in Teuchos and there are nightly tests that strictly enforce relative
-performance timing targets.
+tests were run on three different compilers shown in Table
+{}\ref{tbl:PerfTestPlatforms} that represent two mainstream platforms.
+The GCC 4.1.2 and Intel ICC 10.1 results where run on the same Linux
+machine and therefore one can directly compare the optimizing
+capability of these two compilers on this platform.  Timings on other
+compilers may give different results, especially for compilers that
+have a bad history at optimizing C++ code (e.g.\ PGI, Sun, AIX etc.).
+All of these performance timing tests are driven by a performance
+testing framework in Teuchos and there are nightly test that strictly
+enforce relative performance timing targets.
+
+\begin{table}
+\fbox{\begin{minipage}{\textwidth}
+\begin{description}
+%
+{}\item[GCC 4.1.2:] GNU GCC 4.1.2 (compiler options {}\texttt{-O3
+-DBOOST\_SP\_DISABLE\_THREADS}) running under Linux 2.6.18-128.1.6.el5
+on 2 Quad Intel Xeon CPUs at 2.93GHz and 4MB L1 Cache and 16 GB RAM.
+%
+{}\item[ICC 10.1:] Intel ICC C++ 10.1 (compiler options {}\texttt{-O3
+-DBOOST\_SP\_DISABLE\_THREADS}) running under Linux 2.6.18-128.1.6.el5
+on 2 Quad Intel Xeon CPUs at 2.93GHz and 4MB L1 Cache and 16 GB RAM.
+%
+{}\item[MSVC++ 2008:] Microsoft Visual C++ 2008 (compiler options
+{}\texttt{/D\_SECURE\_SCL=0 /DBOOST\_SP\_DISABLE\_THREADS /Ox})
+running under Windows Vista Enterprise on an Intel Core 2 Duo CPU
+T9800 at 2.93GHz and 2.00 MB RAM.
+%
+\end{description}
+\end{minipage}}
+\caption{\label{tbl:PerfTestPlatforms}
+Performance testing platforms.}
+\end{table}
 
 This section is broken up into subsections as follows.  First, the
 optimized performance of the reference-counting machinery is looked at
@@ -5889,7 +5914,7 @@ pointers but it is constant-time overhead and therefore its impact can
 be minimized by not applying it at too low a level.  The optimized
 performance of the Teuchos array classes is given in Section
 {}\ref{sec:array-overhead}.  The timing results shown that the basic
-braket operator (i.e.\ {}\texttt{a[i]}) and iterator (i.e.\
+bracket operator (i.e.\ {}\texttt{a[i]}) and iterator (i.e.\
 {}\texttt{a.begin()}) access methods all yield raw pointer
 performance.  Finally, in Section {}\ref{sec:perf-tuning-strategies},
 performance tuning strategies are discussed, including the need to
@@ -5915,11 +5940,11 @@ for creating and destroying the {}\texttt{RCPNode} object and
 reference-counted object, for manipulating the reference count, and
 for accessing the underlying reference-counted object.  These are the
 core operations of the {}\texttt{RCP} class that are most likely to
-affect perforamnce.
+affect performance.
 
 All of the operations being timed are very low-level and therefore it
 is difficult to get meaningful unbiased timing results.  To get
-accurate timings, one must perform the operaton in loop and average
+accurate timings, one must perform the operation in loop and average
 the times.  With naive code, some compilers (e.g.\ Microsoft Visual
 C++) will just optimize away the entire loop.  Therefore, the
 operation must be performed in the context of a loop over an array
@@ -5934,13 +5959,114 @@ sure.  Also, when performing loops, issues of loop initialization and
 cache issues come into play.  In order to avoid these issues, a single
 loop size from all the results of 1024 was selected to display in the
 figures and tables in this section.  The raw timing results for other
-loops sizes are given in Appendix {}\ref{apdx:raw-perf-data}.
+loops sizes are given in Appendix {}\ref{apdx:raw-rcp-perf-data}.
 
-ToDo: Show a table giving the sizes of RCPNode and RCP for space
-overhead.
+The first type of overhead to consider is the memory overhead of the
+reference-counting machinery shown in Figure ???.  Table
+{}\ref{tbl:RCP-SP-sizes} shows the sizes of some important objects
+associated with {}\texttt{RCP} and {}\texttt{boost::shared\_ptr} (on a
+64 bit platform where pointers are 8 bytes).  The sizes are shown for
+allocating {}\texttt{std::vector<double>} objects but the memory used
+by the reference counting machinery only depends on pointers so the
+memory usage overhead is the same no mater what type of object is
+used.  From looking at Table {}\ref{tbl:RCP-SP-sizes}, one can see that
+the static size of {}\texttt{std::vector<double>} is 24 bytes for this
+compiler.  Consider allocating an {}\texttt{std::vector<double>} with
+only one element.  This would dynamically allocate one
+{}\texttt{double} object in an array giving a total of 32 bytes.  Now
+consider the reference-counting machinery overhead.  For every
+allocated {}\texttt{std::vector<double>} object, there is a
+reference-counting node object of type
+{}\texttt{RCPNodeImpl<std::vector<double>, ... >} which is 48 bytes.
+In addition there is also an {}\texttt{RCP<std::vector<double> >}
+object of size 24 bytes.  That gives a total of 24+48=72 bytes of
+reference-counting overhead to manage an object that only consumes 32
+bytes.  That is memory overhead of 225\%!  However, when the
+{}\texttt{std::vector<double>} is allocated to hold 100 elements, the
+memory consumed by the {}\texttt{std::vector<double>} object is
+24+8*(100) = 824 bytes.  Now the 72 bytes of reference-counting
+overhead is only 8.7\%.  By the time you get to 1000 elements, the
+overhead drops to 0.8\%.  The point is that the reference-counting
+machinery imparts a storage overhead that is non-trivial for small
+objects.  Therefore, {}\texttt{RCP} should not be used to manage large
+numbers small objects.  Likewise, {}\texttt{ArrayRCP} should not be
+used to manage small arrays for the same reason.
+
+Table {}\ref{tbl:RCP-SP-sizes} also shows the sizes of comparable
+objects associated with the {}\texttt{boost::shared\_ptr} class.  The
+boost node object only consumes 32 bytes on this machine as apposed to
+the 48 bytes for the {}\texttt{RCPNodeImpl} object.  The increased
+overhead of the {}\texttt{RCPNodeImpl} object is due to the pointer
+for the extra data map, an extra ownership Boolean, and storage of the
+deallocator object.  Also, the {}\texttt{boost::shared\_ptr} object
+itself only consumes 16 bytes wile the equivalent {}\texttt{RCP}
+object uses 24 bytes.  This increase in storage is due to having to
+store a {}\texttt{strength} enum to dynamically handle
+{}\texttt{STRONG} and {}\texttt{WEAK} references.  This is the storage
+cost of increase flexibility of the {}\texttt{RCP} class over the
+{}\texttt{boost::shared\_ptr} class.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|r|}
+\hline
+Type
+& {}\texttt{sizeof(Type)} \\
+\hline
+{}\texttt{bool}
+& 1 \\
+\hline
+{}\texttt{double*}
+& 8 \\
+\hline
+{}\texttt{double}
+& 8 \\
+\hline
+{}\texttt{std::vector<double>}
+& 24 \\
+\hline
+{}\texttt{boost::shared\_ptr<std::vector<double> >}
+& 16 \\
+\hline
+{}\texttt{boost::detail::sp\_counted\_impl\_p<std::vector<double> >}
+& 32 \\
+\hline
+{}\texttt{RCP<std::vector<double> >}
+& 24 \\
+\hline
+{}\texttt{RCPNodeImpl<std::vector<double>, ... >}
+& 48 \\
+\hline
+\end{tabular}
+\end{center}
+\caption{\label{tbl:RCP-SP-sizes}
+Sizes of RCP and boost::shared\_ptr objects for 64 bit GCC 4.1.2.}
+\end{table}
+
+
+Now consider the runtime overhead associated with dynamic allocation
+and deallocation.  Figure {}\ref{fig:RCPAllocTimings} shows the
+timings for dynamically allocating and deleting
+{}\texttt{std::vector<double>} objects for different numbers of vector
+elements on the three compilers shown in Table
+{}\ref{tbl:PerfTestPlatforms}.  Figure {}\ref{fig:RCPAllocTimings}.a
+shows the timings for allocating {}\texttt{std::vector<double>}
+objects with only one element.  This shows that there is some runtime
+overhead needed to dynamically allocate the new node objects for
+{}\texttt{RCP}.  The extra overhead is due to an extra call to
+{}\texttt{new} in order to allocate the node object.  Note that the
+extra overhead for {}\texttt{RCP} is quite small with respect to
+{}\texttt{boost::shared\_ptr} for all three compilers.  However, this
+is constant time overhead so as larger {}\texttt{std::vector<double>}
+objects are allocated (with associated initialization of the vector
+elements in an inner loop) the relative overhead goes to zero, as
+shown in Figure {}\ref{fig:RCPAllocTimings}.b.  Therefore, the runtime
+overhead of the reference-counting machinery for allocating and
+deallocating large objects is very small.
+
 
 {\bsinglespace
-\begin{figure}[p]
+\begin{figure}
 \begin{center}
 %\fbox{
 \includegraphics*[angle=0,scale=1.00]{RCPAllocTimings}
@@ -5948,12 +6074,52 @@ overhead.
 \end{center}
 \caption{
 \label{fig:RCPAllocTimings}
-Timings for allcoating and deallocating objects using RCP}
+Timings for allocating and deallocating objects using RCP}
 \end{figure}
 \esinglespace}
 
+
+Finally, timings for dereferencing ({}\texttt{RCP::operator*()}),
+member access through the arrow operator
+{}\texttt{RCP::operator->()}, and assignment
+({}\texttt{RCP::operator=(...)}) which changes the reference counts)
+are shown in Figure {}\ref{fig:RCPTimings}.  These timings are the
+average CPU time (in seconds) per inner loop iteration (see Listing
+{}\ref{listing:RCP-assignment-timing} for example of loops).  These
+timing results show that dereferencing and member access for
+{}\texttt{RCP} yield raw pointer performance on all the compilers
+because these member functions are trivially inlined to expose the raw
+pointer.
+
+The assignment operator, however, imposes significant overhead because
+of the need to increment and deincrement the reference counts.  The
+timing code fragment that exercises {}\texttt{RCP::operator=(...)} is
+shown in Listing {}\ref{listing:RCP-assignment-timing}.
+
+
+\begin{listing}: Performance timing loops for {}\texttt{RCP::operator=(...)} \\
+\label{listing:RCP-assignment-timing}
+{\small\begin{verbatim}
+  {
+    RCP<char> p(new char('n'));
+    std::vector<RCP<char> > p_vec(arraySize);
+    TEUCHOS_START_PERF_OUTPUT_TIMER_INNERLOOP(outputter, numActualLoops, arraySize)
+    {
+      for (int i=0; i < arraySize; ++i) {
+        p_vec[i] = p;
+        // NOTE: This assignment operation tests the copy constructor and
+        // the swap function.  This calls both bind() and unbind()
+        // underneath.
+      }
+    }
+  }
+  TEUCHOS_END_PERF_OUTPUT_TIMER(outputter, rcpTime);
+\end{verbatim}}
+\end{listing}
+
+
 {\bsinglespace
-\begin{figure}[p]
+\begin{figure}
 \begin{center}
 %\fbox{
 \includegraphics*[angle=0,scale=1.00]{RCPTimings}
@@ -5965,16 +6131,76 @@ Timings of basic RCP operations on for three compilers}
 \end{figure}
 \esinglespace}
 
-ToDo: Show the sizes
 
+Timing results for the code in Listing
+{}\ref{listing:RCP-assignment-timing} for
+{}\texttt{numActualLoops=338498} and {}\texttt{arraySize=1024} are
+shown in Figure {}\ref{fig:RCPTimings} along with similar timings for
+raw pointers and {}\texttt{boost::shared\_ptr}.  The full timing
+results for other sizes are show in in Appendix
+{}\ref{apdx:raw-rcp-perf-data}.
 
-ToDo: Fill this in!
+There are a few interesting points to note about these timing results.
+
+First, note that the cost of manipulating the reference count in
+{}\texttt{RCP::operator=(...)} is an order of magnitude higher than
+the dereference and arrow operators which have raw-pointer
+performance.  The real overhead of manipulating the reference counts
+may not actually be this high due to the simple nature of the raw
+pointer code run in a loop getting better optimization.  The
+reference-count manipulation code involves if statements that may
+disable certain loop optimizations.
+
+Second, node that {}\texttt{RCP::operator=(...)} is about 30\% slower
+on GCC 4.1.2 than for {}\texttt{boost::shared\_ptr} due to the extra
+overhead of dynamically handling a strong and weak reference counts.
+The overhead of {}\texttt{RCP} over {}\texttt{boost::shared\_ptr} goes
+up to 50\% on on ICC 10.1 and then falls off a cliff going up to 300\%
+for MSVC++ 2008.  Clearly the MSVC++ compiler is not inlining the
+{}\texttt{RCP} functions as well in this case.  However, there may be
+compiler options that would cause the MSVC++ compiler to be more
+aggressive in inlining.
+
+Third, note that for GCC 4.1.2, the cost of manipulating the reference
+count (at {}\texttt{5.59-09 sec}) is two orders of magnitude less than
+the cost to allocate and deallocate an {}\texttt{std::vector<double>}
+object with only one element (at {}\texttt{1.39-07 sec}) and is three
+orders of magnitude less for 16384 elements (at {}\texttt{5.84-06
+sec}) as shown in Appendix {}\ref{apdx:raw-rcp-perf-data}.  Therefore,
+just the memory allocation overhead can dominate these other costs in
+some cases.  Also, if a large object is being used with expensive
+operations, the the reference-counting overhead will be insignificant.
+Again, this argues that classes like {}\texttt{RCP} should only be
+used to manage larger objects that have more expensive operations
+associated with them.  The same argument can be made that
+{}\texttt{ArrayRCP} should only be used for managing larger arrays of
+data where the cost of loops over the data overwhelm the
+reference-counting costs.
+
+Lastly, note that the {}\texttt{RCP::operator=(...)} implementation
+both deincrements and increments the reference count while the copy
+constructor only has to increment the reference count.  Therefore, we
+might expect that the copy constructor would be about twice as fast as
+the assignment operator.  The performance of the copy constructor is
+not measured in a loop because it is hard write a loop that tests it
+without other overhead.  However, the fastest approach is to avoid the
+copy of the {}\texttt{RCP} object at all by passing in a constant
+reference the {}\texttt{RCP} object as formal function arguments as
+advocated in Section {}\ref{sec:idioms-for-passing-arguments}.
 
 
 %
 {}\subsubsection{Array access and iterator overhead}
 \label{sec:array-overhead}
 %
+
+Another important type of performance (perhaps more important than the
+performance of {}\texttt{RCP} for handling single objects) is the
+performance of the Teuchos array classes.  In an optimized debug build
+these classes must yield the same performance as using raw pointers or
+the performance of the application will definitely be affected.
+
+Figure ??? shows the 
 
 ToDo: Give the space overhead of the reference-counting machinery
 
@@ -5985,6 +6211,30 @@ ToDo: Fill this in!
 {}\subsubsection{Performance tuning strategies (and compromises)}
 \label{sec:perf-tuning-strategies}
 %
+
+The timing results shown in the prior two sections lead to a few
+different conclusions:
+
+\begin{itemize}
+
+{}\item The reference-counting machinery of the {}\texttt{RCP} class
+imparts at least 72 bytes of overhead for every reference-counted
+object (the overhead for {}\texttt{ArrayRCP} is slightly higher) and
+therefore {}\texttt{RCP} should not be used to manage massive numbers
+of small objects, just from a memory usage standpoint.
+
+{}\item The extra runtime overhead of reference-counting machinery
+does not significantly increase dynamic memory allocation runtime
+costs.
+
+{}\item The runtime reference-counting overhead of {}\texttt{RCP} with
+respect to {}\texttt{boost::shared\_ptr} can vary from as little as
+30\% on good optimizing compiler (e.g.\ GCC 4.1.2) to as much as 300\%
+or more on poor optimizing (e.g.\ MSVC++ 2008).
+
+{}\item ???
+
+\end{itemize}
 
 ToDo: Fill this in!
 
@@ -6703,6 +6953,11 @@ because of the break from std::vector.
 \label{apdx:raw-perf-data}
 %
 
+%
+{}\subsection{Raw RCP performance data}
+\label{apdx:raw-rcp-perf-data}
+%
+
 \begin{listing}: Raw {}\texttt{RCP} timing data on GCC 4.1.2  \\
 \label{listing:RCP-GCC-Timings}
 {\scriptsize\begin{verbatim}
@@ -6896,6 +7151,308 @@ because of the break from std::vector.
         4096       2030   2.405326e-010   4.089055e-009   1.274823e-008   5.300000e+001   3.117647e+000
        16384        592   3.092998e-010   4.227097e-009   1.278439e-008   4.133333e+001   3.024390e+000
        65536        169   2.708661e-010   4.153280e-009   1.291128e-008   4.766667e+001   3.108696e+000
+\end{verbatim}}
+\end{listing}
+
+\pagebreak
+
+%
+{}\subsection{Raw Array performance data}
+\label{apdx:raw-array-perf-data}
+%
+
+\begin{listing}: Raw Array class timing data on GCC 4.1.2  \\
+\label{listing:Array-GCC-Timings}
+% From ./results/UnitTimings/GCC4/results2/Teuchos_Array_PeformanceTest.out
+{\scriptsize\begin{verbatim}
+0. Array_braketOperatorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the Array braket operator relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         vector          Array           vector/raw      Array/raw     
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+         100    2307560    1.071335e-09    1.071331e-09    1.071430e-09    9.999960e-01    1.000089e+00
+         400     749245    1.037982e-09    1.038222e-09    1.037932e-09    1.000231e+00    9.999518e-01
+        1600     230574    1.030689e-09    1.029648e-09    1.030732e-09    9.989901e-01    1.000042e+00
+        6400      68470    1.027802e-09    1.027642e-09    1.028439e-09    9.998446e-01    1.000619e+00
+
+1. Array_iteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the Array iterators relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         vector          Array           vector/raw      Array/raw     
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+         100    2307560    4.419170e-10    4.723344e-10    4.723517e-10    1.068831e+00    1.068870e+00
+         400     749245    3.670929e-10    3.979473e-10    3.979239e-10    1.084051e+00    1.083987e+00
+        1600     230574    3.485324e-10    3.798455e-10    3.795202e-10    1.089843e+00    1.088910e+00
+        6400      68470    5.450174e-10    5.147008e-10    5.461972e-10    9.443749e-01    1.002165e+00
+
+2. ArrayRCP_braketOperatorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayRCP braket operator relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         ArrayRCP        ArrayRCP/raw  
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560    1.071560e-09    1.071448e-09    9.998949e-01
+         400     749245    1.037928e-09    1.038082e-09    1.000148e+00
+        1600     230574    1.029745e-09    1.030794e-09    1.001019e+00
+        6400      68470    1.027596e-09    1.027578e-09    9.999822e-01
+
+3. ArrayRCP_iteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayRCP iterators relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         ArrayRCP        ArrayRCP/raw  
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560    4.621808e-10    4.450285e-10    9.628883e-01
+         400     749245    3.722514e-10    3.680271e-10    9.886522e-01
+        1600     230574    3.498823e-10    3.487248e-10    9.966919e-01
+        6400      68470    5.455994e-10    5.459302e-10    1.000606e+00
+
+4. ArrayRCP_selfIteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayRCP as a self iterataor relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         ArrayRCP        ArrayRCP/raw  
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560    4.553078e-10    8.442857e-10    1.854319e+00
+         400     749245    3.705197e-10    7.244927e-10    1.955342e+00
+        1600     230574    3.493483e-10    6.944815e-10    1.987935e+00
+        6400      68470    5.449855e-10    6.889673e-10    1.264194e+00
+
+5. ArrayView_braketOperatorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayView braket operator relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         ArrayView       ArrayView/raw 
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560    1.071309e-09    1.072986e-09    1.001565e+00
+         400     749245    1.038025e-09    1.037928e-09    9.999068e-01
+        1600     230574    1.029997e-09    1.029631e-09    9.996447e-01
+        6400      68470    1.027537e-09    1.028484e-09    1.000922e+00
+
+6. ArrayView_iteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayView iterators relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         ArrayView       ArrayView/raw 
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560    4.245090e-10    4.620465e-10    1.088426e+00
+         400     749245    3.628820e-10    3.722414e-10    1.025792e+00
+        1600     230574    3.474264e-10    3.498226e-10    1.006897e+00
+        6400      68470    5.451338e-10    5.343239e-10    9.801701e-01
+\end{verbatim}}
+\end{listing}
+
+\pagebreak
+
+\begin{listing}: Raw Array class timing data on ICC 10.1  \\
+\label{listing:Array-ICC-Timings}
+% From ./results/UnitTimings/ICC/results2/Teuchos_Array_PerformanceTest.out
+{\scriptsize\begin{verbatim}
+0. Array_braketOperatorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the Array braket operator relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         vector          Array           vector/raw      Array/raw     
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+         100    2307560    1.277739e-09    1.102502e-09    1.102316e-09    8.628538e-01    8.627080e-01
+         400     749245    1.239187e-09    1.045689e-09    1.355091e-09    8.438508e-01    1.093532e+00
+        1600     230574    1.174295e-09    1.270818e-09    1.287496e-09    1.082196e+00    1.096399e+00
+        6400      68470    1.381600e-09    1.428607e-09    1.439504e-09    1.034024e+00    1.041911e+00
+
+1. Array_iteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the Array iterators relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         vector          Array           vector/raw      Array/raw     
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+         100    2307560    6.299034e-10    6.023332e-10    6.060687e-10    9.562310e-01    9.621613e-01
+         400     749245    6.993173e-10    6.879859e-10    5.621392e-10    9.837965e-01    8.038400e-01
+        1600     230574    6.648706e-10    6.576034e-10    6.541148e-10    9.890698e-01    9.838228e-01
+        6400      68470    7.367300e-10    7.316548e-10    7.315499e-10    9.931112e-01    9.929687e-01
+
+2. ArrayRCP_braketOperatorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayRCP braket operator relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         ArrayRCP        ArrayRCP/raw  
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560    1.300590e-09    1.102251e-09    8.475005e-01
+         400     749245    1.212534e-09    1.351157e-09    1.114325e+00
+        1600     230574    1.202480e-09    1.291879e-09    1.074346e+00
+        6400      68470    1.795631e-09    1.438940e-09    8.013560e-01
+
+3. ArrayRCP_iteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayRCP iterators relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         ArrayRCP        ArrayRCP/raw  
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560    3.525715e-10    3.527536e-10    1.000516e+00
+         400     749245    3.757282e-10    3.850977e-10    1.024937e+00
+        1600     230574    4.375900e-10    4.022787e-10    9.193050e-01
+        6400      68470    5.521077e-10    5.510557e-10    9.980946e-01
+
+4. ArrayRCP_selfIteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayRCP as a self iterataor relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         ArrayRCP        ArrayRCP/raw  
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560    3.596656e-10    1.896375e-09    5.272607e+00
+         400     749245    3.706198e-10    2.212951e-09    5.970947e+00
+        1600     230574    3.588111e-10    2.089785e-09    5.824192e+00
+        6400      68470    5.484998e-10    2.204421e-09    4.019001e+00
+
+5. ArrayView_braketOperatorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayView braket operator relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         ArrayView       ArrayView/raw 
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560    1.448643e-09    1.270082e-09    8.767392e-01
+         400     749245    1.413176e-09    1.375154e-09    9.730949e-01
+        1600     230574    1.479780e-09    1.349125e-09    9.117065e-01
+        6400      68470    1.778881e-09    1.451322e-09    8.158623e-01
+
+6. ArrayView_iteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayView iterators relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+03/0.0001 = 5e+07
+ 
+   array dim  num loops  raw ptr         ArrayView       ArrayView/raw 
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560    3.542876e-10    3.790627e-10    1.069929e+00
+         400     749245    4.637535e-10    3.658716e-10    7.889356e-01
+        1600     230574    4.497472e-10    3.571142e-10    7.940333e-01
+        6400      68470    5.509712e-10    5.505696e-10    9.992710e-01
+\end{verbatim}}
+\end{listing}
+
+\pagebreak
+
+\begin{listing}: Raw Array class timing data on MSVC++ 2008  \\
+\label{listing:Array-MSVC-Timings}
+% From ./results/UnitTimings/MSVC/results3/Teuchos_Array_PerformanceTest.out
+{\scriptsize\begin{verbatim}
+0. Array_braketOperatorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the Array braket operator relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+003/0.0001 = 5e+007
+ 
+   array dim  num loops  raw ptr         vector          Array           vector/raw      Array/raw     
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+         100    2307560   1.044393e-009   1.196069e-009   1.217736e-009   1.145228e+000   1.165975e+000
+         400     749245   1.001008e-009   8.975702e-010   1.311320e-009   8.966667e-001   1.310000e+000
+        1600     230574   8.890855e-010   9.405874e-010   1.184544e-009   1.057927e+000   1.332317e+000
+        6400      68470   1.501570e-009   1.524390e-009   1.430827e-009   1.015198e+000   9.528875e-001
+
+1. Array_iteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the Array iterators relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+003/0.0001 = 5e+007
+ 
+   array dim  num loops  raw ptr         vector          Array           vector/raw      Array/raw     
+   ---------  ---------  --------------  --------------  --------------  --------------  --------------
+         100    2307560   5.460313e-010   5.633656e-010   5.416977e-010   1.031746e+000   9.920635e-001
+         400     749245   3.903930e-010   3.903930e-010   3.903930e-010   1.000000e+000   1.000000e+000
+        1600     230574   3.550921e-010   3.550921e-010   3.578027e-010   1.000000e+000   1.007634e+000
+        6400      68470   5.157368e-010   5.180188e-010   5.180188e-010   1.004425e+000   1.004425e+000
+
+2. ArrayRCP_braketOperatorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayRCP braket operator relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+003/0.0001 = 5e+007
+ 
+   array dim  num loops  raw ptr         ArrayRCP        ArrayRCP/raw  
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560   9.750559e-010   1.191735e-009   1.222222e+000
+         400     749245   9.676408e-010   1.017691e-009   1.051724e+000
+        1600     230574   1.081540e-009   9.053493e-010   8.370927e-001
+        6400      68470   1.522108e-009   1.503852e-009   9.880060e-001
+
+3. ArrayRCP_iteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayRCP iterators relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+003/0.0001 = 5e+007
+ 
+   array dim  num loops  raw ptr         ArrayRCP        ArrayRCP/raw  
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560   5.460313e-010   5.460313e-010   1.000000e+000
+         400     749245   4.070765e-010   3.937297e-010   9.672131e-001
+        1600     230574   3.550921e-010   3.578027e-010   1.007634e+000
+        6400      68470   5.157368e-010   5.225829e-010   1.013274e+000
+
+4. ArrayRCP_selfIteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayRCP as a self iterataor relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+003/0.0001 = 5e+007
+ 
+   array dim  num loops  raw ptr         ArrayRCP        ArrayRCP/raw  
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560   5.416977e-010   2.457141e-009   4.536000e+000
+         400     749245   3.870563e-010   2.329011e-009   6.017241e+000
+        1600     230574   3.550921e-010   2.238978e-009   6.305344e+000
+        6400      68470   5.180188e-010   2.480557e-009   4.788546e+000
+
+5. ArrayView_braketOperatorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayView braket operator relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+003/0.0001 = 5e+007
+ 
+   array dim  num loops  raw ptr         ArrayView       ArrayView/raw 
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560   1.057394e-009   1.300075e-009   1.229508e+000
+         400     749245   9.276005e-010   1.171179e-009   1.262590e+000
+        1600     230574   9.839574e-010   1.246888e-009   1.267218e+000
+        6400      68470   1.531236e-009   1.437673e-009   9.388972e-001
+
+6. ArrayView_iteratorOverhead_UnitTest ... 
+ 
+ Measuring the overhead of the ArrayView iterators relative to raw pointers.
+ 
+ Number of loops = relCpuSpeed/relTestCost = 5e+003/0.0001 = 5e+007
+ 
+   array dim  num loops  raw ptr         ArrayView       ArrayView/raw 
+   ---------  ---------  --------------  --------------  --------------
+         100    2307560   5.416977e-010   5.416977e-010   1.000000e+000
+         400     749245   3.903930e-010   3.937297e-010   1.008547e+000
+        1600     230574   3.550921e-010   3.550921e-010   1.000000e+000
+        6400      68470   5.317110e-010   5.203009e-010   9.785408e-001
 \end{verbatim}}
 \end{listing}
 
