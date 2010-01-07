@@ -1963,6 +1963,7 @@ listing can be found in the Doxygen documentation).
   template<class T>
   class RCP {
   public:
+
     // General functions
     RCP(ENull null_arg = null);
     explicit RCP(T* p, bool has_ownership = false);
@@ -1980,20 +1981,8 @@ listing can be found in the Doxygen documentation).
     // Other shared_ptr compariblity functions
     ...
   
-    // Reference counting 
-    ERCPStrength strength() const;
-    bool is_valid_ptr() const;
-    int strong_count() const;
-    int weak_count() const;
-    int total_count() const;
-    void set_has_ownership();
-    bool has_ownership() const;
-    Ptr<T> release();
-    RCP<T> create_weak() const;
-    RCP<T> create_strong() const;
-    template<class T2> bool shares_resource(const RCP<T2>& r_ptr) const;
-    const RCP<T>& assert_not_null() const;
-    const RCP<T>& assert_valid_ptr() const;
+    // Reference counting member functions (see Section ???)
+    ...
   
   private:
     T *ptr_;
@@ -2017,18 +2006,9 @@ listing can be found in the Doxygen documentation).
  
   // Conversion functions (see Section ???)
   ...
-  
-  template<class T> bool is_null(const RCP<T> &p);
-  
-  template<class T> bool operator==(const RCP<T> &p, ENull);
-  
-  template<class T> bool operator!=(const RCP<T> &p, ENull);
-  
-  template<class T1, class T2>
-  bool operator==(const RCP<T1> &p1, const RCP<T2> &p2);
-  
-  template<class T1, class T2>
-  bool operator!=(const RCP<T1> &p1, const RCP<T2> &p2);
+
+  // Other common non-member functions (see Section ???)
+  ...
 
 \end{verbatim}}
 \end{listing}
@@ -2106,7 +2086,7 @@ member functions shown in Table {}\ref{tbl:common-array-type-members}.
 {\small\begin{center}
 \begin{tabular}{|l|}
 \hline
-{}\textbf{std::vector compatible typedefs} \\
+{}\textbf{std::vector compatible member typedefs} \\
 \hline
 {}\texttt{value\_type} \\
 {}\texttt{size\_type} \\
@@ -2119,7 +2099,7 @@ member functions shown in Table {}\ref{tbl:common-array-type-members}.
 {}\texttt{const\_iterator} \\
 {}\texttt{element\_type} \\
 \hline
-{}\textbf{std::vector compatible functions} \\
+{}\textbf{std::vector compatible member functions} \\
 \hline
 {}\texttt{size\_type size()} \\
 {}\texttt{[const\_]reference operator{}(size\_type) [const]} \\
@@ -2128,22 +2108,36 @@ member functions shown in Table {}\ref{tbl:common-array-type-members}.
 {}\texttt{[const\_]iterator begin() [const]} \\
 {}\texttt{[const\_]iterator end() [const]} \\
 \hline
-{}\textbf{ArrayView returning functions} \\
+{}\textbf{ArrayView returning member functions} \\
 \hline
 {}\texttt{ArrayView<[const] T> view(size\_type offset, size\_type size) [const]} \\
 {}\texttt{ArrayView<[const] T> operator[]()(size\_type offset, size\_type size) [const]} \\
 {}\texttt{ArrayView<[const] T> operator()() [const]} \\
 \hline
-{}\textbf{Other common functions} \\
+{}\textbf{Other common member functions} \\
 \hline
 {}\texttt{[const\_]pointer getRawPtr() [const]} \\
 {}\texttt{bool is\_null() const} \\
 {}\texttt{std::string toString() const} \\
 \hline
+{}\textbf{Common nonmember functions} \\
+\hline
+{}\texttt{void swap(Type<T>\&, Type<T>\&)} \\
+{}\texttt{bool is\_null(const Type<T>\&)} \\
+{}\texttt{bool nonnull(const Type<T>\&)} \\
+{}\texttt{bool operator==(const Type<T>\&, ENull)} \\
+{}\texttt{bool operator!=(const Type<T>\&, ENull)} \\
+{}\texttt{bool operator==(const Type<T>\&, const Type<T>\&)} \\
+{}\texttt{bool operator!=(const Type<T>\&, const Type<T>\&)} \\
+{}\texttt{bool operator<(const Type<T>\&, const Type<T>\&)} \\
+{}\texttt{bool operator<=(const Type<T>\&, const Type<T>\&)} \\
+{}\texttt{bool operator>(const Type<T>\&, const Type<T>\&)} \\
+{}\texttt{bool operator>=(const Type<T>\&, const Type<T>\&)} \\
+\hline
 \end{tabular}
-\caption{\label{tbl:common-array-type-members} Common members for
-{}\texttt{ArrayView}, {}\texttt{ArrayRCP}, {}\texttt{Array}, and
-{}\texttt{Tuple} .}
+\caption{\label{tbl:common-array-type-members}
+Common members and non-members for {}\texttt{ArrayView},
+{}\texttt{ArrayRCP}, {}\texttt{Array}, and {}\texttt{Tuple} .}
 \end{center}}
 \end{table}
 
@@ -2470,37 +2464,10 @@ Listing {}\ref{listing:ArrayRCP}.
   // Conversion functions (see Section ???)
   ...
 
-  // Other functions
-  
-  template<class T>
-  bool is_null(const ArrayRCP<T> &p);
-  
-  template<class T>
-  bool nonnull(const ArrayRCP<T> &p);
-  
-  template<class T>
-  bool operator==(const ArrayRCP<T> &p, ENull);
-  
-  template<class T>
-  bool operator!=(const ArrayRCP<T> &p, ENull);
-  
-  template<class T1, class T2>
-  bool operator==(const ArrayRCP<T1> &p1, const ArrayRCP<T2> &p2);
-  
-  template<class T1, class T2>
-  bool operator!=(const ArrayRCP<T1> &p1, const ArrayRCP<T2> &p2);
-  
-  template<class T1, class T2>
-  bool operator<(const ArrayRCP<T1> &p1, const ArrayRCP<T2> &p2);
-  
-  template<class T1, class T2>
-  bool operator<=(const ArrayRCP<T1> &p1, const ArrayRCP<T2> &p2);
-  
-  template<class T1, class T2>
-  bool operator>(const ArrayRCP<T1> &p1, const ArrayRCP<T2> &p2);
-  
-  template<class T1, class T2>
-  bool operator>=(const ArrayRCP<T1> &p1, const ArrayRCP<T2> &p2);
+  // Common non-member functions (see Section ???)
+  ...
+
+  // Other nonmember functions
   
   template<class T>
   typename ArrayRCP<T>::difference_type
@@ -2599,8 +2566,7 @@ Listing {}\ref{listing:Array}.
 \label{listing:Array}
 {\small\begin{verbatim}
   template<typename T>
-  class Array
-  {
+  class Array {
   public:
   
     // Constructors/initializers
@@ -2668,7 +2634,6 @@ Listing {}\ref{listing:Array}.
   
   
   // Non-member helper functions
-  
   template<class T> ArrayRCP<T> arcp( const RCP<Array<T> > &v );
   template<class T> ArrayRCP<const T> arcp( const RCP<const Array<T> > &v );
   template<class T> ArrayRCP<T> arcpFromArray( Array<T> &a );
@@ -2679,14 +2644,10 @@ Listing {}\ref{listing:Array}.
   template<typename T> std::vector<T> createVector( const Array<T> &a );
   std::string toString(const Array<T>& array);
   template<typename T> Array<T> fromStringToArray(const std::string& arrayStr);
-  template<typename T> bool operator==( const Array<T> &a1, const Array<T> &a2 );
-  template<typename T> bool operator!=( const Array<T> &a1, const Array<T> &a2 );
-  template<typename T> void swap( Array<T> &a1, Array<T> &a2 );
-  template<typename T> bool operator<( const Array<T> &a1, const Array<T> &a2 );
-  template<typename T> bool operator<=( const Array<T> &a1, const Array<T> &a2 );
-  template<typename T> bool operator>( const Array<T> &a1, const Array<T> &a2 );
-  template<typename T> bool operator>=( const Array<T> &a1, const Array<T> &a2 );
-\end{verbatim}}
+
+  // Other common nonmember functions (see Section ???)
+  ...
+
 \end{listing}
 
 The usage of the {}\texttt{Array} class is identical to the usage of
@@ -2964,11 +2925,42 @@ embedded type argument (e.g.\ {}\texttt{RCP<T>} implicitly converts to
 {}\texttt{RCP<const T>}) and also between different smart pointer
 types (e.g.\ {}\texttt{Array} implicitly converts to
 {}\texttt{ArrayView}).  There are implicit conversions and explicit
-conversions.  These two types of conversions are described in the
-following two sections.
+conversions.  These two types of conversions are shown in Figures
+{}\ref{fig:TeuchosPtrConversions} and
+{}\ref{fig:TeuchosArrayConversions} and are described in the following
+two sections.
+
+
+{\bsinglespace
+\begin{figure}[p]
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.50]{TeuchosPtrConversions}
+%}
+\end{center}
+\caption{
+\label{fig:TeuchosPtrConversions}
+Conversions between different single-object memory management types.}
+\end{figure}
+\esinglespace}
+
+
+{\bsinglespace
+\begin{figure}[p]
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.50]{TeuchosArrayConversions}
+%}
+\end{center}
+\caption{
+\label{fig:TeuchosArrayConversions}
+Conversions between array memory management types.  }
+\end{figure}
+\esinglespace}
+
 
 %
-{}\subsubsection{Implicit and explicit raw-pointer like type conversions}
+{}\subsubsection{Implicit and explicit raw-pointer-like conversions}
 \label{sec:raw-pointer-like-type-conversions}
 %
 
@@ -3127,35 +3119,6 @@ types by exposing a raw C++ pointer.  As soon as a raw C++ pointer is
 exposed, nearly all of the debug-mode runtime checking will be
 disabled.
 
-
-{\bsinglespace
-\begin{figure}[p]
-\begin{center}
-%\fbox{
-\includegraphics*[angle=270,scale=0.50]{TeuchosPtrConversions}
-%}
-\end{center}
-\caption{
-\label{fig:TeuchosPtrConversions}
-Conversions between different single-object memory management types.}
-\end{figure}
-\esinglespace}
-
-
-{\bsinglespace
-\begin{figure}[p]
-\begin{center}
-%\fbox{
-\includegraphics*[angle=270,scale=0.50]{TeuchosArrayConversions}
-%}
-\end{center}
-\caption{
-\label{fig:TeuchosArrayConversions}
-Conversions between array memory management types.  }
-\end{figure}
-\esinglespace}
-
-
 Figures {}\ref{fig:TeuchosPtrConversions} and
 {}\ref{fig:TeuchosArrayConversions} show many of the types of
 conversions that are supported between the different memory management
@@ -3167,9 +3130,14 @@ shown in Figure {}\ref{fig:TeuchosArrayConversions} include both
 implicit and explicit conversions and view and copy conversions
 yielding four different types of conversions.
 
-Conversions between different Teuchos memory management types,
-especially in templated application code, is one of the most confusing
-aspects of using these classes.  As shown in Figures
+%
+{}\subsubsection{Problems and shortcomings with implicit type
+conversions}
+%
+
+Implicit conversions between different Teuchos memory management
+types, especially in templated application code, is one of the most
+confusing aspects of using these classes.  As shown in Figures
 {}\ref{fig:TeuchosPtrConversions} and
 {}\ref{fig:TeuchosArrayConversions}, many different implicit
 conversions are defined.  An implicit conversion will only be
@@ -3213,7 +3181,7 @@ any other class as compared to raw C++ pointers.)
 \end{enumerate}
 
 ToDo: Give code examples for all of the above reasons that implicit
-conversions fail.
+conversions fail.  Show examples from memory management paper.
 
 ToDo: Provide a table of all the types of conversions that are
 supported (implicit or explicit) and give the function that performs
@@ -3721,8 +3689,8 @@ does.  Of course now we have given up a compile-time check for a
 non-null argument for {}\texttt{T\&} with a debug-only runtime check
 that {}\texttt{const Ptr<T>\&} is non-null.
 
-ToDo: Show example where you need to create an RCP<T> from a raw T\&
-inside of a function body.
+ToDo: Show example where you need to create an {}\texttt{RCP<T>} from
+a raw T\& inside of a function body.
 
 
 %
@@ -4214,7 +4182,49 @@ The classes {}\texttt{RCPNode}, {}\texttt{RCPNodeImpl}, and
 {}\texttt{RCP} and {}\texttt{ArrayRCP} classes (however, only the
 {}\texttt{RCP} class is shown for simplicity).
 
-Figure {}\ref{fig:TeuchosRCPDesign} also shown that every
+The member functions for {}\texttt{RCP} {}\texttt{ArrayRCP} related to
+reference-counting are shown in Listing
+{}\ref{listing:ref-count-mem-funcs}.  Most of these funtions are never
+called by general clients except in despirate situations.  One
+exception are the member functions {}\texttt{create\_weak()} (which is
+used to create a {}\texttt{WEAK} {}\texttt{RCP} object from a
+{}\texttt{STRONG} object) and and {}\texttt{create\_strong()} (which
+is used to create a {}\texttt{STRONG} {}\texttt{RCP} object from a
+{}\texttt{WEAK} object).  The function {}\texttt{create\_weak()} is
+used to break a circular reference as described in Section ??? while
+{}\texttt{create\_strong()} is used in situations like the ``object
+self reference'' idiom described in Section ???.
+
+
+\begin{listing}: Reference counting member functions for {}\texttt{RCP}
+{}\texttt{ArrayRCP} \\
+\label{listing:ref-count-mem-funcs}
+{\small\begin{verbatim}
+  template<class T>
+  class [Array]RCP {
+  public:
+    ...
+    // Reference counting member functions
+    ERCPStrength strength() const;
+    bool is_valid_ptr() const;
+    int strong_count() const;
+    int weak_count() const;
+    int total_count() const;
+    void set_has_ownership();
+    bool has_ownership() const;
+    Ptr<T> release();
+    RCP<T> create_weak() const;
+    RCP<T> create_strong() const;
+    template<class T2> bool shares_resource(const RCP<T2>& r_ptr) const;
+    const RCP<T>& assert_not_null() const;
+    const RCP<T>& assert_valid_ptr() const;
+    ...
+  };
+\end{verbatim}}
+\end{listing}
+
+
+Figure {}\ref{fig:TeuchosRCPDesign} also shows that every
 {}\texttt{RCPNode} object has an optional {}\texttt{std::map} object
 that can be used to store and retrieve arbitrary extra data
 (represented as the {}\texttt{any} data-type which can handle any
@@ -4224,6 +4234,7 @@ default.  Therefore, if no extra data is used, the only overhead for
 this feature is an extra pointer member and its initialization to
 null.  The motivation for and the usage of extra data is discussed in
 Section {}\ref{sec:extra-data}.
+
 
 {\bsinglespace
 \begin{figure}
@@ -4238,6 +4249,7 @@ Example of several {}\texttt{RCP} objects pointing to the same
 {}\texttt{RCPNodeImpl} object.  }
 \end{figure}
 \esinglespace}
+
 
 It is critical to understand that the foundation for sharing objects
 using reference counting is that only one owning {}\texttt{RCPNode}
@@ -5422,7 +5434,7 @@ can not be detected.
     std::vector<int> v(n);
     av = v;
   }
-  av[0] = 1; // Invalid access to dangling ArrayView (do *not* throw)
+  av[0] = 1; // Invalid access to dangling ArrayView (does *not* throw)
 \end{verbatim}}
 \end{listing}
 
@@ -5430,7 +5442,7 @@ The code in Listing {}\ref{listing:vector-dangling-ArrayView} will
 most likely segfault if we are lucky.  If we are unlucky, the program
 may actually appear to run correctly on our main development and
 testing platforms and it will not be until we move to a production
-platform that the ill effects of this erroneous code will seeen.  This
+platform that the ill-effects of this erroneous code will seen.  This
 is one example of why it is so important to use {}\texttt{Array}
 instead of raw {}\texttt{std::vector} objects.  Strong debug-mode
 runtime checking with {}\texttt{Array} object is not possible with
@@ -5499,8 +5511,7 @@ reference view.
 \end{center}
 \caption{
 \label{fig:RCPEx2}
-Example of duplicate owning {}\texttt{RCPNodeImpl} objects pointing to
-same object. }
+Example of duplicate owning {}\texttt{RCPNodeImpl} objects}
 \end{figure}
 \esinglespace}
 
@@ -5892,7 +5903,7 @@ in Teuchos and there are nightly test that strictly enforce relative
 performance timing targets.
 
 \begin{table}
-\fbox{\begin{minipage}{\textwidth}
+%\fbox{\begin{minipage}{\textwidth}
 \begin{description}
 %
 {}\item[GCC 4.1.2:] GNU GCC 4.1.2 (compiler options {}\texttt{-O3
@@ -5909,7 +5920,7 @@ running under Windows Vista Enterprise on an Intel Core 2 Duo CPU
 T9800 at 2.93GHz and 2.00 MB RAM.
 %
 \end{description}
-\end{minipage}}
+%\end{minipage}}
 \caption{\label{tbl:PerfTestPlatforms}
 Performance testing platforms.}
 \end{table}
@@ -6150,7 +6161,16 @@ results for other sizes are show in in Appendix
 
 There are a few interesting points to note about these timing results.
 
-First, note that the cost of manipulating the reference count in
+First, the array timing results shown in Section
+{}\ref{sec:array-overhead} suggest that these two machines have nearly
+identical processors.  Therefore, the CPU times on the Y-axis for each
+of these compiler/machine bar charts is made to same to allow for
+absolute comparisons.  This allows for direct comparisons of the
+optimizing capabilities of these three compilers.  This suggests that
+GCC 4.1.2 is better than the rest and that MSVC++ 2008 is quite bad at
+optimizing {}\texttt{RCP} code.
+
+Second, note that the cost of manipulating the reference count in
 {}\texttt{RCP::operator=(...)} is an order of magnitude higher than
 the dereference and arrow operators which have raw-pointer
 performance.  The real overhead of manipulating the reference counts
@@ -6159,7 +6179,7 @@ pointer code run in a loop getting better optimization.  The
 reference-count manipulation code involves if statements that may
 disable certain loop optimizations.
 
-Second, node that {}\texttt{RCP::operator=(...)} is about 30\% slower
+Third, node that {}\texttt{RCP::operator=(...)} is about 30\% slower
 on GCC 4.1.2 than for {}\texttt{boost::shared\_ptr} due to the extra
 overhead of dynamically handling a strong and weak reference counts.
 The overhead of {}\texttt{RCP} over {}\texttt{boost::shared\_ptr} goes
@@ -6169,21 +6189,21 @@ for MSVC++ 2008.  Clearly the MSVC++ compiler is not inlining the
 compiler options that would cause the MSVC++ compiler to be more
 aggressive in inlining.
 
-Third, note that for GCC 4.1.2, the cost of manipulating the reference
-count (at {}\texttt{5.59-09 sec}) is two orders of magnitude less than
-the cost to allocate and deallocate an {}\texttt{std::vector<double>}
-object with only one element (at {}\texttt{1.39-07 sec}) and is three
-orders of magnitude less for 16384 elements (at {}\texttt{5.84-06
-sec}) as shown in Appendix {}\ref{apdx:raw-rcp-perf-data}.  Therefore,
-just the memory allocation overhead can dominate these other costs in
-some cases.  Also, if a large object is being used with expensive
-operations, the the reference-counting overhead will be insignificant.
-Again, this argues that classes like {}\texttt{RCP} should only be
-used to manage larger objects that have more expensive operations
-associated with them.  The same argument can be made that
-{}\texttt{ArrayRCP} should only be used for managing larger arrays of
-data where the cost of loops over the data overwhelm the
-reference-counting costs.
+Fourth, note that for GCC 4.1.2, the cost of manipulating the
+reference count (at {}\texttt{5.59-09 sec}) is two orders of magnitude
+less than the cost to allocate and deallocate an
+{}\texttt{std::vector<double>} object with only one element (at
+{}\texttt{1.39-07 sec}) and is three orders of magnitude less for
+16384 elements (at {}\texttt{5.84-06 sec}) as shown in Appendix
+{}\ref{apdx:raw-rcp-perf-data}.  Therefore, just the memory allocation
+overhead can dominate these other costs in some cases.  Also, if a
+large object is being used with expensive operations, the the
+reference-counting overhead will be insignificant.  Again, this argues
+that classes like {}\texttt{RCP} should only be used to manage larger
+objects that have more expensive operations associated with them.  The
+same argument can be made that {}\texttt{ArrayRCP} should only be used
+for managing larger arrays of data where the cost of loops over the
+data overwhelm the reference-counting costs.
 
 Lastly, note that the {}\texttt{RCP::operator=(...)} implementation
 both deincrements and increments the reference count while the copy
@@ -6242,9 +6262,7 @@ are identical.
   Teuchos::Array<double> a(arraySize); 
   TEUCHOS_START_PERF_OUTPUT_TIMER_INNERLOOP(outputter, numActualLoops, arraySize) 
   { 
-    Teuchos::Array<double>::iterator 
-      a_itr = a.begin(), 
-      a_end = a.end(); 
+    Teuchos::Array<double>::iterator a_itr = a.begin(), a_end = a.end(); 
     for ( ; a_itr < a_end; ++a_itr) 
       *a_itr = 0.0; 
   }
@@ -6270,8 +6288,7 @@ tests with sizes {}\texttt{numActualLoops=230574} and
 \end{center}
 \caption{
 \label{fig:ArrayTimings}
-Timings for basic Array, ArrayRCP, and ArrayView operations on for
-three compilers ({}\texttt{arraySize=1600})}
+Timings for basic Array, ArrayRCP, and ArrayView operations}
 \end{figure}
 \esinglespace}
 
@@ -6582,7 +6599,12 @@ it too!
 {}\subsection{Related idioms}
 %
 
-ToDo: Fill this in!
+There are a number of important idioms related to the usage of the
+Teuchos memory management classes and most specifically the
+{}\texttt{RCP} class.  The power and flexibility of the
+reference-counting machinery built in to the {}\texttt{RCP} class
+opens the door the a whole host of interesting idioms, a few of which
+are described in the following subsections.
 
 
 %
@@ -6756,16 +6778,6 @@ unless it is absolutely necessary.
 However, The example shown above just shows the flexibility of these
 memory management classes and what some of the possibilities if you
 understand the underlying reference-counting machinery a little.
-
-
-%
-{}\subsection{Summary of common problems and fundamental shortcomings}
-%
-
-ToDo: Review the material on the C++ memory model for implicit
-conversions and why smart pointers will *always* be at a usage
-disadvantage w.r.t. raw C++ pointers.  Point back to the section on
-implicit conversions.
 
 
 %
@@ -7494,7 +7506,7 @@ because of the break from std::vector.
 \label{apdx:raw-array-perf-data}
 %
 
-\begin{listing}: Raw Array class timing data on GCC 4.1.2  \\
+\begin{listing}: Raw Array timing data on GCC 4.1.2  \\
 \label{listing:Array-GCC-Timings}
 % From ./results/UnitTimings/GCC4/results2/Teuchos_Array_PeformanceTest.out
 {\scriptsize\begin{verbatim}
@@ -7593,7 +7605,7 @@ because of the break from std::vector.
 
 \pagebreak
 
-\begin{listing}: Raw Array class timing data on ICC 10.1  \\
+\begin{listing}: Raw Array timing data on ICC 10.1  \\
 \label{listing:Array-ICC-Timings}
 % From ./results/UnitTimings/ICC/results2/Teuchos_Array_PerformanceTest.out
 {\scriptsize\begin{verbatim}
@@ -7692,7 +7704,7 @@ because of the break from std::vector.
 
 \pagebreak
 
-\begin{listing}: Raw Array class timing data on MSVC++ 2008  \\
+\begin{listing}: Raw Array timing data on MSVC++ 2008  \\
 \label{listing:Array-MSVC-Timings}
 % From ./results/UnitTimings/MSVC/results1/Teuchos_Array_PerformanceTest.out
 {\scriptsize\begin{verbatim}
