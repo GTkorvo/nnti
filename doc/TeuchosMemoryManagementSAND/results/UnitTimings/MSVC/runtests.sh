@@ -3,7 +3,7 @@
 # This is a Release build with MS Visual C++ 2008 with:
 #
 #  -DTrilinos_ENABLE_BOOST
-#  -DCMAKE_CXX_FLAG:STRING="... /D_SECURE_SCL=0 /DBOOST_SP_DISABLE_THREADS /Ox"
+#  -DCMAKE_CXX_FLAG:STRING="... /DBOOST_SP_DISABLE_THREADS /D_SECURE_SCL=0 /Ox"
 #
 
 # to turn off the checked STL.
