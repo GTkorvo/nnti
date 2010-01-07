@@ -1691,35 +1691,39 @@ to use raw C++ pointers in our C++ programs:
 low-level, high-performance algorithms}
 
 In order to achieve high performance in computationally intensive
-code, we will always have to use raw C++ pointers.  This includes
-using raw C++ pointers to build complex specialized data structures
-and similar purposes.  In this context, we can think of raw C++
-pointers as a fairly compact and efficient way to communicate with the
-compiler about how we want to manage memory at the hardware level.
-The ability to do this type if fine-grained manipulation of memory
-has always been one of the strengths of C and C++ in systems-level
-programming.  Therefore, we can think of using raw pointers in C++ as
-a kind of portable assembly language that we always have at our
-disposal on every platform and with every compiler.  However, note
-that our use of raw C++ pointers in the name of performance must be
-very well encapsulated and we must thoroughly review (by our best
-programmers) and exhaustively test this code.  Note that we can always
-use a series of typedefs to substitute our safe memory management
-classes like {}\texttt{ArrayRCP} in place of raw C++ pointers when we
-need to debug our code.  In fact, such an approach would be
-recommended practice.
+code, we will always have to use raw C++ pointers in a non-debug
+optimized build.  This includes using raw C++ pointers to build
+complex specialized data structures and similar purposes.  In this
+context, we can think of raw C++ pointers as a fairly compact and
+efficient way to communicate with the compiler about how we want to
+manage memory at the hardware level.  The ability to do this type if
+fine-grained manipulation of memory has always been one of the
+strengths of C and C++ in systems-level programming.  Therefore, we
+can think of using raw pointers in C++ as a kind of portable assembly
+language that we always have at our disposal on every platform and
+with every compiler.  However, note that our use of raw C++ pointers
+in the name of performance must be very well encapsulated and we must
+thoroughly review (by our best programmers) and exhaustively test this
+code.  However, instead of using raw pointers, one can always use the
+types {}\texttt{Ptr}, {}\texttt{ArrayView} or
+{}\texttt{Array[RCP,View]::iterator} to yield raw pointer performance
+in a non-debug optimized build but still maintain strong debug-mode
+runtime checking.  This is discuss in more detail in Section
+{}\ref{sec:perf-tuning-strategies}.  Therefore, optimized performance
+use for raw pointers described next.
 
 {}\item{}\textit{Use raw C++ pointers to communicate with legacy C++
 code and with other languages through C bindings}
 
-We will always have to use raw C++ pointers to reuse and communicate
-with legacy C++ code and to call functions in other languages through
-the now-universal approach of using C bindings.  However, we must
-endeavor to minimize the amount of our C++ code that has naked raw C++
-pointers and we should only expose a raw C++ pointer at the last
-possible moment (such as in the call to the external functions
-themselves).  Again, we must carefully encapsulate our access to this
-non-compliant code that requires us to expose raw C++ pointers.
+The only remaining valid reason to use a raw C++ pointer is to reuse
+and communicate with legacy C++ code and to call functions in other
+languages through the now-universal approach of using C bindings.
+However, we must endeavor to minimize the amount of C++ code that has
+naked raw C++ pointers and we should only expose a raw C++ pointer at
+the last possible moment (such as in the call to the external
+functions themselves).  Again, we must carefully encapsulate our
+access to this non-compliant code that requires us to expose raw C++
+pointers.
 
 \end{itemize}
 
@@ -6254,8 +6258,25 @@ Figure {}\ref{fig:ArrayTimings} shows the CPU timings for
 tests with sizes {}\texttt{numActualLoops=230574} and
 {}\texttt{arraySize=1600} shown in Listing
 {}\ref{listing:Array-bracket-timing} and
-{}\ref{listing:Array-iterator-timing}.  These results are fairly
-interesting and there are a few important details to note.
+{}\ref{listing:Array-iterator-timing}.
+
+
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=0,scale=1.00]{ArrayTimings}
+%}
+\end{center}
+\caption{
+\label{fig:ArrayTimings}
+Timings for basic Array, ArrayRCP, and ArrayView operations on for
+three compilers ({}\texttt{arraySize=1600})}
+\end{figure}
+\esinglespace}
+
+These timing results are fairly interesting and there are a few
+important details to note.
 
 First, the performance of the raw pointer iterator loops on all three
 platforms is almost identical.  The CPU time per inner loop iteration
@@ -6292,22 +6313,6 @@ iterator for {}\texttt{ArrayRCP} yield optimal performance (not
 surprising given that {}\texttt{ArrayRCP::iterator} is just a raw
 pointer in a non-debug build).
 
-
-{\bsinglespace
-\begin{figure}
-\begin{center}
-%\fbox{
-\includegraphics*[angle=0,scale=1.00]{ArrayTimings}
-%}
-\end{center}
-\caption{
-\label{fig:ArrayTimings}
-Timings for basic Array, ArrayRCP, and ArrayView operations on for
-three compilers ({}\texttt{arraySize=1600})}
-\end{figure}
-\esinglespace}
-
-
 The take-away points from these timing results are that all compilers
 do not fully optimize the array indexing form of the loops and only
 raw pointers used as iterators will yield the optimal performance.
@@ -6323,7 +6328,8 @@ C++ pointers in an optimized non-debug build.
 %
 
 The timing results shown in the prior two sections lead to a few
-different conclusions:
+different conclusions related to peformance issues in the use of the
+Teuchos memory management types:
 
 \begin{itemize}
 
@@ -6331,7 +6337,9 @@ different conclusions:
 imparts at least 72 bytes of overhead for every reference-counted
 object (the overhead for {}\texttt{ArrayRCP} is slightly higher) and
 therefore {}\texttt{RCP} should not be used to manage massive numbers
-of small objects, just from a memory usage standpoint.
+of small objects, just from a memory usage standpoint.  Likewise,
+{}\texttt{ArrayRCP} should not be used to mange large collectiosn of
+small arrays since the memory overhead can be significant.
 
 {}\item The extra runtime overhead of reference-counting machinery
 does not significantly increase dynamic memory allocation runtime
@@ -6340,7 +6348,11 @@ costs.
 {}\item The runtime reference-counting overhead of {}\texttt{RCP} with
 respect to {}\texttt{boost::shared\_ptr} can vary from as little as
 30\% on good optimizing compiler (e.g.\ GCC 4.1.2) to as much as 300\%
-or more on poor optimizing (e.g.\ MSVC++ 2008).
+or more on poor optimizing compiler (e.g.\ MSVC++ 2008).  Therefore,
+if portable peformance of your application is critical, make sure and
+use the reference-counting types at as high a level of granularity as
+you can such that it does not damage the quality of the software
+(i.e.\ flexibility, usability, maintainability).
 
 {}\item The most portable way to achieve high performance of raw array
 operations is to use iterators on {}\texttt{ArrayRCP} and
@@ -6351,17 +6363,219 @@ automatically fully optimize the array bracket form of an array-based
 loop so an iterator loop is the only full-proof way to get optimized
 performance across platforms.
 
-{}\item ???
-
 \end{itemize}
 
-ToDo: Fill this in!
+The performance tests described above show that the memory and runtime
+overhead of the reference-counting machinery can be high when used
+with small cheap objects.  Therefore, if the reference counted types
+{}\texttt{RCP} and {}\texttt{ArrayRCP} are used at too low a level of
+granularity, the overall performance of the program may suffer and may
+use significantly more memory than it would with raw pointers.  In
+such low-level code, strictly adhering to the idioms described in
+Sections {}\ref{sec:idioms-for-passing-arguments} and
+{}\ref{sec:idioms-returning-objects} with respect to persisting
+relationships can significantly degrade performance.  Therefore, in
+low-level performance-critical code, the strict idioms related to
+persisting associations need to be relaxed or the design must be
+changed to raise the level of granularity where the reference-counted
+types are used.
 
-ToDo: Discuss how you may have to give up using an RCP or ArrayRCP to
-instead use a Ptr or ArrayView object instead in places where a
-presisting relationship really does exist but where you can't afford
-the overhead of the reference-counting machinery in an optimized build
-but yet don't really need reference-counting machinery.
+However, just because one can not use {}\texttt{RCP} and
+{}\texttt{ArrayRCP} and still achieve high performance does not mean
+that this code should use raw pointers.  Instead, {}\texttt{Ptr} can
+be used instead of {}\texttt{RCP} and {}\texttt{ArrayView} can be used
+instead of {}\texttt{ArrayRCP} when the full semantics of persisting
+relationships are not needed.  By using the types {}\texttt{Ptr} and
+{}\texttt{ArrayView} instead of raw pointers we still get all of the
+strong debug-mode runtime checking that is described in Section
+{}\ref{sec:debug-mode-runtime-checking} (e.g.\ dangling reference
+checking, null checking, range checking, etc.) yet removes all
+reference-counting overhead in a non-debug optimized build.
+
+As an example, consider the design of a sparse matrix class that
+stores its data as compressed sparse rows and allows access to the
+sparse rows.  The client of the sparse matrix class would obtain
+handles to the sparse row data, make modifications to it, and then
+release the handles.  Performing all of these operations in a single
+statement (as is stictly required for a non-presisting relationship as
+defined in Section {}\ref{sec:persisting-nonpersisting-associations})
+is impractical.  Therefore, the handles for the interal sparse row
+data represent a persisting relationship and the strict interpretation
+of the idioms defined in Sections
+{}\ref{sec:idioms-for-passing-arguments} and
+{}\ref{sec:idioms-returning-objects} would require the use of
+{}\texttt{ArrayRCP} yielding the sparse matrix class interface shown
+in Listing {}\ref{listing:SparseMatrix-ArrayRCP}.
+
+
+\begin{listing}: Sparse matrix class interface adhering to strict
+interpretation of idioms for persisting relationships  \\
+\label{listing:SparseMatrix-ArrayRCP}
+{\small\begin{verbatim}
+  class SparseMatrix {
+  public:
+    ...
+    int getNumRows() const;
+    void getSparseRow( int rowId, const Ptr<ArrayRCP<double> > &values,
+      const Ptr<ArrayRCP<const int> > &colIds);
+    ...
+\end{verbatim}}
+\end{listing}
+
+
+The {}\texttt{SparseMatrix} class shown in Listing
+{}\ref{listing:SparseMatrix-ArrayRCP} would be used as shown in
+Listing {}\ref{listing:zeroOutSparseMatrix-ArrayRCP}.
+
+
+\begin{listing}: Client code using {}\texttt{ArrayRCP} form of the
+ {}\texttt{SparseMatrix} class  \\
+\label{listing:zeroOutSparseMatrix-ArrayRCP}
+{\small\begin{verbatim}
+  void zeroOutSparseMatrix(const Ptr<SparseMatrix> &M)
+  {
+    const int numRows = M->getNumRows();
+    for (int row_i = 0; row_i < numRows; ++row_i) {
+      ArrayRCP<double> values;
+      M->getSparseRow(row_i, outArg(values), null);
+      typedef ArrayRCP<double>::iterator itr_t;
+      for (itr_t itr = values.begin(); itr != values.end(); ++itr)
+        *itr = 0.0;
+    }
+  }
+\end{verbatim}}
+\end{listing}
+
+
+While the interface and the user code shown in Listing
+{}\ref{listing:zeroOutSparseMatrix-ArrayRCP} strictly satisfies that
+safe and bullet-proof idioms on persisting associations described in
+Section {}\ref{sec:idioms-for-passing-arguments}, the reference
+counting overhead (in memory size and speed) of this code can be quite
+high if the rows are very sparse.  Looking at code such as shown in
+Listing {}\ref{listing:zeroOutSparseMatrix-ArrayRCP} and similar use
+cases, it never seems reasonable that a client would grab
+{}\texttt{ArrayRCP} objects to internal rows and expect to have the
+row data persist even if the matrix changed structure or was deleted.
+Instead, we just need to set up the infrastructure to be able to
+detect those types of invalid usage in a debug-mode build but yield
+high performance an optimized build.  Therefore, it seems reasonble to
+replace {}\texttt{ArrayRCP} in
+{}\texttt{SparseMatrix::getSparseRow(...)} in Listing
+{}\ref{listing:SparseMatrix-ArrayRCP} with {}\texttt{ArrayView}
+yielding the new {}\texttt{SparseMatrix} interface shown in Listing
+{}\ref{listing:SparseMatrix-ArrayView}.
+
+
+\begin{listing}: Sparse matrix class interface bending the idioms on 
+persisting relationships for the sake of performance \\
+\label{listing:SparseMatrix-ArrayView}
+{\small\begin{verbatim}
+  class SparseMatrix {
+  public:
+    ...
+    int getNumRows() const;
+    void getSparseRow( int rowId, const Ptr<ArrayView<double> > &values,
+      const Ptr<ArrayView<const int> > &colIds);
+    ...
+\end{verbatim}}
+\end{listing}
+
+
+The updated client code zeroing out the rows of the matrix would then
+look like Listing {}\ref{listing:zeroOutSparseMatrix-ArrayView}.
+
+
+\begin{listing}: Client code using {}\texttt{ArrayView} form of the
+ {}\texttt{SparseMatrix} class  \\
+\label{listing:zeroOutSparseMatrix-ArrayView}
+{\small\begin{verbatim}
+  void zeroOutSparseMatrix(const Ptr<SparseMatrix> &M)
+  {
+    const int numRows = M->getNumRows();
+    for (int row_i = 0; row_i < numRows; ++row_i) {
+      ArrayView<double> values;
+      M->getSparseRow(row_i, outArg(values), null);
+      typedef ArrayView<double>::iterator itr_t;
+      for (itr_t itr = values.begin(); itr != values.end(); ++itr)
+        *itr = 0.0;
+    }
+  }
+\end{verbatim}}
+\end{listing}
+
+
+Now the client code in Listing
+{}\ref{listing:zeroOutSparseMatrix-ArrayView} will have no
+reference-counting overhead in a non-debug optimized build but in a
+debug-mode build, all invalid usage will be detected.  For example,
+consider invalid code such as shown Listing
+{}\ref{listing:SparseMatrix-dangling-ref} where the client code trys
+to hold on to sparse row data after the matrix is deleted.
+
+
+\begin{listing}: Example of invalid usage of {}\texttt{SparseMatrix} leading
+to a dangling reference exception in a debug-mode build  \\
+\label{listing:SparseMatrix-dangling-ref}
+{\small\begin{verbatim}
+
+  // Create and initialize the matrix
+  RCP<SparseMatrix> M = sparseMatrix(...); // Non-member constructor
+  ...
+
+  // Grab a sparse row to the matrix
+  ArrayView<double> values_row_0;
+  ArrayView<const int> colIds_row_0;
+  M->getSpaseRow(0, outArg(values_row_0), outArg(colIds_row_0));
+
+  // Delete the matrix (leaving dangling values_row_0 and colIds_row_0)
+  M = null;
+
+  // Try to access the row
+  ArrayView<double>::iterator
+    itr = values.begin(),     // Throws exception in debug-mode build!
+    itr_end = values.end();
+  for ( ; itr != itr_end; ++itr)
+    *itr = 0.0; 
+\end{verbatim}}
+\end{listing}
+
+
+As shown in Listing {}\ref{listing:SparseMatrix-dangling-ref}, using
+{}\texttt{ArrayView} allows all types of programming errors to be
+detected in a debug-mode build.  If raw pointers would have been used,
+this dangling reference may not be detected right away.  On some
+platforms for some problem sizes, the program using raw pointers may
+seem to run just fine and valgrind may not complain (especially if
+sophisticated memory management is used inside the
+{}\texttt{SparseMatrix} class).  The error may not present itself
+until months or years later where it will do untold harm.
+
+Note that there may be some extreme cases where the overhead of an
+extra size data member in {}\texttt{ArrayView} is too high.  In these
+cases, one can instead use an iterator type such as
+{}\texttt{Array::iterator} or {}\texttt{ArrayRCP::iterator} (depending
+on type type of the underlying container class).  In a debug-mode
+build, the iterator objects will be fully checked {}\texttt{ArrayRCP}
+objects while in a non-debug optimized build, the iterators will be
+raw pointers (or {}\texttt{std::vector::iterator} in the case of
+{}\texttt{Array::iterator}).  This yields raw pointer performance in a
+non-debug optimized build with no space or time overhead (becuase all
+the object actually are raw pointers in this case).
+
+The point of this section is to acknowlege that there will be
+situations in low-level code where the strict adherence to the using
+of the reference-counted types {}\texttt{RCP} and {}\texttt{ArrayRCP}
+for persisting associations may yield acceptable performance.
+However, as demonstrated above, the solution to the performance
+problem is not to ever fall back to using raw pointers but instead to
+fall back on the non-reference-counted types {}\texttt{Ptr} and
+{}\texttt{ArrayView} (or {}\texttt{Array[RCP]::iterator}).  By using
+the types {}\texttt{Ptr} and {}\texttt{ArrayView} (or
+{}\texttt{Array[RCP]::iterator}), we maintain all the desirable
+debug-mode runtime checking without any of the reference-counting
+overhead in a non-debug optimized build.  We can have our cake and eat
+it too!
 
 
 %
