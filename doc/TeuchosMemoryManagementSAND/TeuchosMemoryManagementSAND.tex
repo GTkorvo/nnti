@@ -5992,35 +5992,36 @@ figures and tables in this section.  The raw timing results for other
 loops sizes are given in Appendix {}\ref{apdx:raw-rcp-perf-data}.
 
 The first type of overhead to consider is the memory overhead of the
-reference-counting machinery shown in Figure ???.  Table
-{}\ref{tbl:RCP-SP-sizes} shows the sizes of some important objects
-associated with {}\texttt{RCP} and {}\texttt{boost::shared\_ptr} (on a
-64 bit platform where pointers are 8 bytes).  The sizes are shown for
-allocating {}\texttt{std::vector<double>} objects but the memory used
-by the reference counting machinery only depends on pointers so the
-memory usage overhead is the same no mater what type of object is
-used.  From looking at Table {}\ref{tbl:RCP-SP-sizes}, one can see that
-the static size of {}\texttt{std::vector<double>} is 24 bytes for this
-compiler.  Consider allocating an {}\texttt{std::vector<double>} with
-only one element.  This would dynamically allocate one
-{}\texttt{double} object in an array giving a total of 32 bytes.  Now
-consider the reference-counting machinery overhead.  For every
-allocated {}\texttt{std::vector<double>} object, there is a
-reference-counting node object of type
-{}\texttt{RCPNodeImpl<std::vector<double>, ... >} which is 48 bytes.
-In addition there is also an {}\texttt{RCP<std::vector<double> >}
-object of size 24 bytes.  That gives a total of 24+48=72 bytes of
-reference-counting overhead to manage an object that only consumes 32
-bytes.  That is memory overhead of 225\%!  However, when the
-{}\texttt{std::vector<double>} is allocated to hold 100 elements, the
-memory consumed by the {}\texttt{std::vector<double>} object is
-24+8*(100) = 824 bytes.  Now the 72 bytes of reference-counting
-overhead is only 8.7\%.  By the time you get to 1000 elements, the
-overhead drops to 0.8\%.  The point is that the reference-counting
-machinery imparts a storage overhead that is non-trivial for small
-objects.  Therefore, {}\texttt{RCP} should not be used to manage large
-numbers small objects.  Likewise, {}\texttt{ArrayRCP} should not be
-used to manage small arrays for the same reason.
+reference-counting machinery shown in Figure
+{}\ref{fig:TeuchosRCPDesign}.  Table {}\ref{tbl:RCP-SP-sizes} shows
+the sizes of some important objects associated with {}\texttt{RCP} and
+{}\texttt{boost::shared\_ptr} (on a 64 bit platform where pointers are
+8 bytes).  The sizes are shown for allocating
+{}\texttt{std::vector<double>} objects but the memory used by the
+reference counting machinery only depends on pointers so the memory
+usage overhead is the same no mater what type of object is used.  From
+looking at Table {}\ref{tbl:RCP-SP-sizes}, one can see that the static
+size of {}\texttt{std::vector<double>} is 24 bytes for this compiler.
+Consider allocating an {}\texttt{std::vector<double>} with only one
+element.  This would dynamically allocate one {}\texttt{double} object
+in an array giving a total of 32 bytes.  Now consider the
+reference-counting machinery overhead.  For every allocated
+{}\texttt{std::vector<double>} object, there is a reference-counting
+node object of type {}\texttt{RCPNodeImpl<std::vector<double>, ... >}
+which is 48 bytes.  In addition there is also an
+{}\texttt{RCP<std::vector<double> >} object of size 24 bytes.  That
+gives a total of 24+48=72 bytes of reference-counting overhead to
+manage an object that only consumes 32 bytes.  That is memory overhead
+of 225\%!  However, when the {}\texttt{std::vector<double>} is
+allocated to hold 100 elements, the memory consumed by the
+{}\texttt{std::vector<double>} object is 24+8*(100) = 824 bytes.  Now
+the 72 bytes of reference-counting overhead is only 8.7\%.  By the
+time you get to 1000 elements, the overhead drops to 0.8\%.  The point
+is that the reference-counting machinery imparts a storage overhead
+that is non-trivial for small objects.  Therefore, {}\texttt{RCP}
+should not be used to manage large numbers small objects.  Likewise,
+{}\texttt{ArrayRCP} should not be used to manage small arrays for the
+same reason.
 
 Table {}\ref{tbl:RCP-SP-sizes} also shows the sizes of comparable
 objects associated with the {}\texttt{boost::shared\_ptr} class.  The
