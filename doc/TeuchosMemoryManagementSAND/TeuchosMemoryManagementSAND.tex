@@ -196,15 +196,18 @@ ubiquitous in the C++ community and even in the current C++
 best-practices literature {}\cite{C++CodingStandards05,
 EffectiveC++ThirdEdition}.  Our inability to effectively address the
 basic problem of the usage of memory in large-scale modular C++ codes
-affects every aspect of software quality and productivity and
-undermines the most basic software verification foundation for our
-codes.  The challenges of writing software that uses raw memory
-management result in components that are overly ridgid in how they can
-be used and reused which fundamentally detacts for the impact that
-such software could otherwise have.  The problems created by the use
-of raw memory management can single handily derail the vision of a
-large interconnected network of reusable CS\&E software components
-developed and used by many different CS\&E organizations [???].
+affects every aspect of software quality, productivity and
+reusabliltiy, and undermines the most basic software verification
+foundation for our codes.  The challenges of writing software that
+uses raw memory management result in components that are overly ridgid
+in how they can be used and reused which fundamentally detacts for the
+impact that such software could otherwise have.  The problems created
+by the use of raw memory management can single handily derail the
+vision of a large interconnected network of reusable CS\&E software
+components developed and used by many different CS\&E organizations
+[???].  Therefore, the issue of memory management has as much or more
+impact on the macroscopic properites of our CS\&E software components
+as it does on low-level internal software development.
 
 C++ is an incredibility large and complex language that very few
 people really know how to use in a confident and successful way.
@@ -238,12 +241,12 @@ then compiled into executable binary code.
 
 As the years went on, however, object-oriented programming was
 refined, computers become faster with more memory, and it was realized
-that more runtime support was required to enable some more advanced
-usages of C++.  As new features were added to C++ to support new
-programming idioms, a strong need for backward compatibility
-constrained the design of the language.  The most unfortunate example
-of this, which was already mentioned, is the fundamental
-incompatibility of built-in dynamic memory management (i.e.\ using
+that more runtime support was required to enable more advanced usages
+of C++.  As new features were added to C++ to support new programming
+idioms, a strong need for backward compatibility constrained the
+design of the language.  The most unfortunate example of this, which
+was already mentioned, is the fundamental incompatibility of built-in
+dynamic memory management (i.e.\ using
 {}\texttt{new}/{}\texttt{delete}) and built-in exception handling
 (i.e.\ using {}\texttt{try}/{}\texttt{throw}/{}\texttt{catch}) that
 was added more than a decade later {}\cite{stroustrup94}.
@@ -261,8 +264,8 @@ Case of the Construction Blob'' in {}\cite[Chapter
 
 More specifically, using low-level manual memory management (e.g.\
 {}\texttt{new}/{}\texttt{delete}, raw pointers everywhere) at all
-levels in C++ has resulted in many negative several consequences in
-the development of C++ software that other more modern languages
+levels in C++ has resulted in several negative consequences in the
+development of C++ (and C) software that other more modern languages
 (e.g.\ Java and Python) have avoided:
 
 \begin{itemize}
@@ -270,17 +273,21 @@ the development of C++ software that other more modern languages
 {}\item Programs that use raw memory management are more difficult to
 write and debug because it is difficult to track down invalid memory
 usage that result in segfaults, double deletes, and memory leaks.
+(Also, memory checking tools like Valgrind and Purify do not catch
+enough of these types of errors to adequately mitigate the problem.)
 
 {}\item Programs that use raw memory management can have many
 ``hidden'' memory usage errors (i.e.\ undefiend behavior) that can
-linger in the code for months or years and damage the most basic
-foundations of software quality.
+linger in the code for months or years which damage the most basic
+foundations of software quality and verification.  Many of these
+programs are ``ticking time bombs'' just ready to go off, sometimes
+with disastrous consequences for users and developers alike.
 
 {}\item Dealing with raw memory mangament at all levels consumes large
 amounts of developer focus which detracts from more general design
 focus.  This results in software with lower quality designs compared
-to software written in other modern languages for the same abount of
-effort.
+to software written in other modern languages developed using the same
+abount of effort.
 
 {}\item Developers maintaining C++ programs that use raw memory
 management typically have a high degree of paranoia and fear about
@@ -304,8 +311,9 @@ reasonable contexts.
 The consequences of raw memory management described above all all too
 common in C++ development organizations and software produced by such
 organizations.  This is why the general software development community
-is largely moving away from C++ to more modern languages that do not
-require manual unchecked memory management.
+is largely moving away from C++ and instead moving to use more modern
+languages that do not require manual unchecked memory management
+[???].
 
 However, C++ has some unique features that differentiate it from every
 other language in wide use:
@@ -383,7 +391,7 @@ pointer classes, then they should refer to
 {}\cite{RefCountPtrBeginnersGuide} and {}\cite{C++CodingStandards05}.
 If the reader is not familiar with fundamental C++ concepts like
 implicit type conversions, templates, object lifetime models, raw
-reference and pointers, and other basic topics, then some more basic
+references and pointers and other basic topics, then some more basic
 background will be needed.  However, specific references to basic C++
 material in books like {}\cite{EffectiveC++ThirdEdition, stroustrup97,
 C++CodingStandards05} are make throughout this document.  So if you
@@ -393,14 +401,14 @@ basic C++ material as well.
 
 A final warning: the material in this paper is pretty detailed and
 will take a significant investment in time and experience with writing
-code with the memory management classes using the idioms describe here
-before a developer will be proficient.  It takes years just to master
-raw C++ so it should be no surprise that learning a new set of idioms
-to fix a large number of the problems with raw C++ will also take a
-significant amount of time and effort.  What is needed is a culture
-change in the C++ programming community where the memory management
-classes and the idioms described here are taught at a very early
-stage; much like the STL is now being taught in introductory C++
+code with the Teuchos memory management classes using the idioms
+describe here before a developer will be proficient.  It takes years
+just to master raw C++ so it should be no surprise that learning a new
+set of idioms to fix a large number of the problems with raw C++ will
+also take a significant amount of time and effort.  What is needed is
+a culture change in the C++ programming community where the memory
+management classes and the idioms described here are taught at a very
+early stage; much like the STL is now being taught in introductory C++
 courses.  What we need is a revolution in C++ education but we have to
 start somewhere and that is what this paper is all about, getting
 started and on the road to a better generation of C++ programmers and
@@ -410,19 +418,20 @@ The reminder of this paper is organized as follows. The fundamental
 problems with raw C++ pointers is described in Section
 {}\ref{sec:problems-with-raw-pointers}.  Common (suboptimal)
 approaches for addressing memory management problems are discussed in
-Section {}\ref{sec:current-appraoches-to-mem-mng}.  Taking a step
-back, a philosophical discussion of the trade-offs between speed,
-safety and generality related to memory management is given in Section
-{}\ref{sec:phylosophy-of-mem-mng}.  Some important prerequisite
-concepts like value-types verses references-types and persisting
-verses non-persisting associations are defined in Section
-{}\ref{sec:important-prerequisites}.  With all this background and context
-in place, the Teuchos memory management classes are presented in
-Section {}\ref{sec:teuchos-mem-mng-classes}.  The basic outline of the
-approach in Section {}\ref{sec:outline_of_basic_approach} is perhaps
-the first section one would jump to if they want to get a quick idea
-what these classes are all about.  Finally, concluding remarks are
-given in Section {}\ref{sec:conclusions}.
+Section {}\ref{sec:current-appraoches-to-mem-mng}.  Some important
+prerequisite concepts like value-types verses references-types and
+persisting verses non-persisting associations are defined in Section
+{}\ref{sec:important-prerequisites}.  With all this background and
+context in place, the Teuchos memory management classes are presented
+in Section {}\ref{sec:teuchos-mem-mng-classes}.  The basic outline of
+the approach in Section {}\ref{sec:outline_of_basic_approach} is
+perhaps the first section one would jump to if they want to get a
+quick idea what the Teuchos memory management classes are all about.
+Finally, Taking a step back, a philosophical discussion of the
+trade-offs between speed, safety and generality related to memory
+management and the concepts of essential and accidental complexity are
+discussed in Section {}\ref{sec:phylosophy-of-mem-mng}.  Concluding
+remarks are given in Section {}\ref{sec:conclusions}.
 
 
 %
@@ -5432,8 +5441,9 @@ following will be printed to {}\texttt{std::cerr}:
 This error message is enough information to allow you to open a
 debugger, and set a breakpoint in the function
 {}\texttt{RCPNodeTracer::addNewRCPNode(...)} and then exame where
-these objects are getting created that result in the cicular
-reference.
+these objects are getting created that result in the cicular reference
+(Note: you will need to run the program again in the debugger which
+will produce different pointer addresses).
 
 Note that in reality, the cicular references will involve many objects
 (sometimes more than a dozen) and therefore this output will contain
@@ -5489,17 +5499,19 @@ thrown with an error message like shown below:
     RCP ptr address:      0xab4c50
     Concrete ptr address: 0xab4c50
   
-  Hint: Open your debugger and set conditional breakpoints in the various
-  routines involved where this node object is first created with this
-  concrete object and in all of the RCP objects of the type given above
-  use this node object.  Debugging an error like this may take a little work
-  setting up your debugging session but at least you don't have to try to
-  track down a segfault that would occur otherwise!
+  Hint: Open your debugger, run the program again (which will result in
+  new pointer addresses) and then set conditional breakpoints using these
+  pointer addresses in the various routines involved where this node object
+  is first created with this concrete object and in all of the RCP objects
+  of the type given above use this node object.  Debugging an error like this
+  may take a little work in setting up your debugging session but at least
+  you don't have to try to track down a segfault that would occur otherwise!
 \end{verbatim}}
 
 The above error message contains all the information needed to open a
-debugger, set up breakpoints and break conditions, and debug the
-problem (see Section {}\ref{sec:except-handling-debugging}).
+debugger, run the program again to create new pointer addresses, set
+up breakpoints and break conditions, and debug the problem (see
+Section {}\ref{sec:except-handling-debugging}).
 
 A few other examples of dangling references are shown in Listings
 {}\ref{listing:Array-dangling-ArrayView}--{}\ref{listing:RCP-dangling-Ptr}.
@@ -5950,6 +5962,12 @@ breakpoint in GDB as:
 When the debugger breaks you would then be able to examine the call
 stack to see the context under which this {}\texttt{RCPNode} object is
 first created.
+
+NOTE: Before entering a conditional breakpoint like this, you must
+first run the program again in the debugger which will typically
+produce an exception message with different addresses because the
+debugger moves things around in memory.  You will need to use these
+new pointer addresses when setting conditional breakpoints like this.
 
 The Teuchos memory management classes are all fully exception safe in
 that they provide either the basic guarantee (retain some valid object
@@ -6733,14 +6751,211 @@ are described in the following subsections.
 \label{sec:separate-construct-init}
 %
 
-(*) Avoid duplication of default values in constructors (non-member
-constructors)
+The ``separate construction and initialization'' idiom described here
+is not specific to the use of the Teuchos memory management classes
+but it does provide the basic foundation for the next idiom described,
+the ``object self-reference'' idiom.  The set up the context for the
+discussion, consider a typical design for a class shown in Listing
+{}\ref{listing:TypicalC++Class-sci}.
 
-(*) Allow for for remaining construction to call virtual functions
 
-(*) Allow for object self reference in initializtion
+\begin{listing}: Example of a typical C++ class that uses constructors for all
+initialization  \\
+\label{listing:TypicalC++Class-sci}
+{\small\begin{verbatim}
+  class SomeClass : public SomeBaseClass {
+  public:
+    SomeClass(): member1_(1), member2_(5.0) {}
+    SomeClass(const RCP<A> &a) : member1_(1), member2_(5.0), a_(a)
+      { finalInitialization(); }
+    SomeClass(const RCP<B> &b) : member1_(1), member2_(5.0), b_(b)
+      { finalInitialization(); }
+    SomeClass(const RCP<A> &a, const RCP<B> &b, const int someValue)
+      : member1_(1), member2_(5.0), a_(a), b_(b)
+      { c_ = createC(rcp(this, false), a, b, someValue);
+        finalInitialization(); }
+    RCP<A> get_A() { return a_; }
+    RCP<B> get_B() { return b_; }
+    RCP<C> get_C() { return c_; }
+    void doSomeOperation(...) {}
+  private:
+    int member1_;
+    double member2_;
+    RCP<A> a_;
+    RCP<B> b_;
+    RCP<C> c_;
+    void finalInitialization() { ...} // Can't call virtual functions on SomeBaseClass
+  };
 
-ToDo: Fill this in!
+\end{verbatim}}
+\end{listing}
+
+
+So what is wrong with the design of {}\texttt{SomeClass} in Listing
+{}\ref{listing:TypicalC++Class-sci}?  First, there is the duplication
+of default values for {}\texttt{member1\_}, {}\texttt{member2\_} in
+all of the constructors.  This makes it labor intensive and
+error-prone to change the values later.  Yes, one could create static
+constants of some type to be reused in all the constructor
+initialization lists but you still have to list all of these arguments
+in every constructor\footnote{The C++0x will address the problem of
+duplicate constructor initialization lists by allowing constructors to
+call each other but we will not see such a feature in wide spread use
+until many years after the C++0x standard is finalized.}.
+
+The second problem with the class {}\texttt{SomeClass} that it can not
+call any virtual functions in the base class {}\texttt{SomeBaseClass}
+to help initialize its state in the constructors [???].
+
+The third problem with the design of {}\texttt{SomeClass} shown in
+Listing {}\ref{listing:TypicalC++Class-sci} is that the {}\texttt{C}
+object that is created in the thrid constructor that takes
+{}\texttt{A} and {}\texttt{B} objects is not properly setting up a
+persisting relationship between the {}\texttt{C} object and the
+{}\texttt{SomeClass} object.  When this {}\texttt{C} object is exposed
+through the {}\texttt{get\_C()} member function, this sets up a
+dangerous situration where the {}\texttt{SomeClass} object may be
+deleted leaving a client with a dangling {}\texttt{RCP<C>} object with
+no way for the reference-counting machinery described in Section
+{}\ref{sec:reference-counting-machinary} do detect the the problem.
+This issue will be discussed more in the context of the ``object
+self-reference'' idiom in Section {}\ref{sec:self-references}.
+
+Lastly, the class {}\texttt{SomeClass} is inflexible in that it
+requires the client creating the {}\texttt{SomeClass} object to know
+the concrete types of {}\texttt{A} and or {}\texttt{B} (which could be
+abstract interfaces in this example) right when the
+{}\texttt{SomeClass} object is first created.  This creates a
+three-way coupling of the client with a) defining the time when the
+{}\texttt{SomeClass} object is first created, b) needing fully
+constructed {}\texttt{A} and {}\texttt{B} objects right when
+{}\texttt{SomeClass} is first created.  In complex programs, it is
+very hard to and very constraining have to fully initialized a web
+interconnected objects before constructing the downstream objects.
+
+Without further ado, the use of the ``separate construction and
+initialization'' idiom applied to {}\texttt{SomeClass} shown in
+Listing {}\ref{listing:TypicalC++Class-sci} gives the new refactored
+class in Listing {}\ref{listing:TypicalC++Class-sci-refactored}.
+
+
+\begin{listing}: Example of the use of the ``separate construction and
+initialization'' idiom  \\
+\label{listing:TypicalC++Class-sci-refactored}
+{\small\begin{verbatim}
+  class SomeClass : public SomeBaseClase {
+  public:
+    SomeClass(): isIntialized_(false), member1_(1), member2_(5.0) {}
+    void set_A(const RCP<A> &a) { a_ = a; isIntialized_=false; }
+    void set_B(const RCP<B> &b) { b_ = b; isIntialized_=false; }
+    RCP<A> get_A() { return a_; }
+    RCP<B> get_B() { return b_; }
+    RCP<C> get_C() { finalInitialization(); return c_; }
+    void uninitialize() { a_ = null, b_ = null; c_ = null; }
+    void doSomeOperation(...)
+      {
+        finalInitialization(); // Just-in-time initialization!
+        ...
+       }
+  private:
+    bool isIntialized_;
+    int member1_;
+    double member2_;
+    RCP<A> a_;
+    RCP<B> b_;
+    RCP<C> c_;
+    void finalInitialization()
+      {
+        if (isIntialized_) return;
+        // Now, we can call virtual functions on SomeBaseClass (someBaseFunc())!
+        if (nonnull(a_) && nonnull(b_))
+          c_ = createC(rcp(this, false), a, b, this->getSomeValue());
+        ...
+        isIntialized_ = true;
+      }
+  };
+
+  // Non-member constructors
+  RCP<SomeClass> someClass(const RCP<A> &a)
+    { RCP<someClass> sc(new someClass()); sc->set_A(a); return sc; }
+  RCP<SomeClass> someClass(const RCP<B> &b)
+    { RCP<someClass> sc(new someClass()); sc->set_B(b); return sc; }
+  RCP<SomeClass> someClass(const RCP<A> &a, const RCP<B> &b)
+    { RCP<someClass> sc(new someClass()); sc->set_A(a); sc->set_B(b);  return sc; }
+\end{verbatim}}
+\end{listing}
+
+
+Side Note: Before describing the specific advantages of the refactored
+class in Listing {}\ref{listing:TypicalC++Class-sci-refactored}, first
+note that the issue of the creation of the {}\texttt{C} object and
+dangling references of {}\texttt{c\_} returned from
+{}\texttt{get\_C()} have not been addressesd in this design.  That
+issue will be addressed with the ``object self-reference'' idiom
+described in Section {}\ref{sec:self-references}.
+
+Now, some of the specific advantages of the usage of the ``separate
+construction and initailization'' idiom as applied to the design of
+{}\texttt{SomeClass} shown in Listing
+{}\ref{listing:TypicalC++Class-sci-refactored} are described below.
+
+a) The default values for {}\texttt{member1\_} and
+{}\texttt{member2\_} are defined in only one constructor
+initialization list.  This massively simplifies the maintenance of of
+large comlex classes with lots of data members.
+
+b) The private initialization function
+{}\texttt{finalInitialization()} can now call a virtual function on
+the base class {}\texttt{SomeBaseClass::getSomeValue()} to get the
+value of {}\texttt{someValue} instead of requiring the client to pass
+it into the constructor.
+
+c) The objects {}\texttt{a} and {}\texttt{b} can constructed and
+injected into the {}\texttt{SomeClass} object in different parts of
+the code by different clients.  This breaks a fundamental dependency
+which couples these objects and the clients together and can massively
+simplify the structure of complex programs.
+
+d) The ``separate construction and initialization'' idiom naturally
+leads to the ``just-in-time initialization'' idiom where the
+{}\texttt{finalInitialization()} function is not called until the
+functions {}\texttt{doSomeOperation(...)} or {}\texttt{get\_C()} are
+called by a client.  This allows the objects {}\texttt{a} and/or
+{}\texttt{b} to be passed into the functions {}\texttt{set\_A(...)} 
+and {}\texttt{set\_B(...)} in a partially-initialized state.  These
+objects do not need to be fully initialized until the
+{}\texttt{doSomeOperation(...)} or {}\texttt{get\_C()} functions are
+called.  This can massively simplify and robustify the design of
+complex problems by separating code that creates the links between
+objects and the code that fully initializes the objects.  This avoids
+the constraints of needing to use a factory object to create fully
+initialized ``aggregate'' objects as described in
+{}\cite{DomainDrivenDesign}.
+
+e) An object of type {}\texttt{SomeClass} is not any harder to create
+since the non-member constructor functions allow the object to be
+constructed in a single function call (see Section
+{}\ref{sec:nonmember-constructor-idiom}).
+
+The only real disadvantage of the ``separate construction and
+initialization'' idiom is some small decrease in performance in using
+assignment instead of member initialization lists.  However, this type
+of low-level perforamnce is almost never an issue in higher-level
+classes like {}\texttt{SomeClass} shown in Listing
+{}\ref{listing:TypicalC++Class-sci-refactored}.  Most classes in a
+complex program are higher-level classes where low-level perforamnce
+considerations like this are not an issue so the the ``separate
+construction and initialization'' idiom is applicable in more cases
+than not.
+
+The main disadvantage of the ``just-in-time initialization'' idiom is
+the need to have a call to a function like
+{}\texttt{finalInitialization()} in every operation that requires the
+object to be fully initialized.  This is minor programming
+inconvenience and a minor perforamnce overhead.  The more significant
+disadvantage is that more unit testing is needed to test the behavior
+of the user functions for when the object is not ready to be fully
+initialized.  However, good class design makes this fairly easy.
 
 
 %
