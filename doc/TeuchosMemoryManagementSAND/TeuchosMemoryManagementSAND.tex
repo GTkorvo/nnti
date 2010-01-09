@@ -198,7 +198,13 @@ EffectiveC++ThirdEdition}.  Our inability to effectively address the
 basic problem of the usage of memory in large-scale modular C++ codes
 affects every aspect of software quality and productivity and
 undermines the most basic software verification foundation for our
-codes.
+codes.  The challenges of writing software that uses raw memory
+management result in components that are overly ridgid in how they can
+be used and reused which fundamentally detacts for the impact that
+such software could otherwise have.  The problems created by the use
+of raw memory management can single handily derail the vision of a
+large interconnected network of reusable CS\&E software components
+developed and used by many different CS\&E organizations [???].
 
 C++ is an incredibility large and complex language that very few
 people really know how to use in a confident and successful way.
@@ -242,16 +248,64 @@ incompatibility of built-in dynamic memory management (i.e.\ using
 (i.e.\ using {}\texttt{try}/{}\texttt{throw}/{}\texttt{catch}) that
 was added more than a decade later {}\cite{stroustrup94}.
 
-Therefore, because of the way that C++ ``evolved'' along with a strong
-need for backward compatibility, we have a language that is a disaster
-when used in raw form on complex large-scale programs.  Many
-programming teams have exploited this natural capability of C++ to
-create travesties of software which in turn have dumbfounded many a
-C++ programmer (and entire teams) and have resulted in giving C++ a
-bad name in the general software engineering community (see Section 6
+Because of the way that C++ ``evolved'' along with a strong need for
+backward compatibility, we have a language that is a disaster when
+used in raw form on complex large-scale programs.  Many programming
+teams have exploited this natural capability of C++ to create
+travesties of software which in turn have dumbfounded many a C++
+programmer (and entire teams) and have resulted in giving C++ a bad
+name in the general software engineering community (see Section 6
 ``DDD Matters Today'' in {}\cite{DomainDrivenDesignQuickly} and ``The
 Case of the Construction Blob'' in {}\cite[Chapter
 9]{WorkingEffectivelyWithLegacyCode05} for a few examples).
+
+More specifically, using low-level manual memory management (e.g.\
+{}\texttt{new}/{}\texttt{delete}, raw pointers everywhere) at all
+levels in C++ has resulted in many negative several consequences in
+the development of C++ software that other more modern languages
+(e.g.\ Java and Python) have avoided:
+
+\begin{itemize}
+
+{}\item Programs that use raw memory management are more difficult to
+write and debug because it is difficult to track down invalid memory
+usage that result in segfaults, double deletes, and memory leaks.
+
+{}\item Programs that use raw memory management can have many
+``hidden'' memory usage errors (i.e.\ undefiend behavior) that can
+linger in the code for months or years and damage the most basic
+foundations of software quality.
+
+{}\item Dealing with raw memory mangament at all levels consumes large
+amounts of developer focus which detracts from more general design
+focus.  This results in software with lower quality designs compared
+to software written in other modern languages for the same abount of
+effort.
+
+{}\item Developers maintaining C++ programs that use raw memory
+management typically have a high degree of paranoia and fear about
+modifying the software (and for good reason because modifying such
+software is dangerous and error prone).  This results in the tendency
+to not refactor software as requirements and domain knowledge change
+{}\cite{DomainDrivenDesign} which therefore results in software that
+dies the slow painful death of software entropty
+{}\cite{MythicalManMonth95}.
+
+{}\item Software that uses raw memory management at all levels
+necessarly have designs that overly constrain how the software is used
+and reused.  For example, in such progorams factory objects typically
+have to outlive the products they create and must also be responsible
+for deleting the objects.  This results in large numbers of ``static''
+factory objects that make the software hard to maintain and reuse in
+reasonable contexts.
+
+\end{itemize}
+
+The consequences of raw memory management described above all all too
+common in C++ development organizations and software produced by such
+organizations.  This is why the general software development community
+is largely moving away from C++ to more modern languages that do not
+require manual unchecked memory management.
 
 However, C++ has some unique features that differentiate it from every
 other language in wide use:
