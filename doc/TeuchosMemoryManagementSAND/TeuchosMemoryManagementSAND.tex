@@ -1360,6 +1360,11 @@ Here, we will say that the
 {}\texttt{std::vector::operator=(size\_type)} should only be used for
 non-persisting relationships as shown above.
 
+ToDo: Discuss the concept of a semi-persisting association with
+iterators as the classic example.  We need to recognize that we need
+to use semi-persisting associations some times for performance and
+ease of programming.
+
 For a more detailed treatment of persisting and non-persisting
 associations, and on the basics of {}\texttt{RCP}, see the discussion
 in {}\cite{RefCountPtrBeginnersGuide}.
@@ -2654,7 +2659,7 @@ Listing {}\ref{listing:Array}.
 
   // Other common nonmember functions (see Section ???)
   ...
-
+\end{verbatim}}
 \end{listing}
 
 The usage of the {}\texttt{Array} class is identical to the usage of
@@ -4341,19 +4346,39 @@ many programs require the side-effects of the deletion of objects as
 specific points in the program and changing the time of deletion of
 the object (and the call of the destructor) would break the program.
 
-To understand the problem with circular references, consider Figure
-{}\ref{fig:CircularRCP_A_B} showing the circular reference between two
-objects of type {}\texttt{A} and {}\texttt{B}.  Here object
-{}\texttt{a} contains an {}\texttt{RCP} pointing to object
-{}\texttt{b}, and object {}\texttt{b} contains an {}\texttt{RCP}
-pointing to object {}\texttt{a}.  In this situation, when
-{}\texttt{ClientA} and {}\texttt{ClientB} destroy their {}\texttt{RCP}
-objects pointing to the underlying {}\texttt{a} and {}\texttt{b}
-objects, the reference counts will not go to zero because of the
-circular reference between {}\texttt{a} and {}\texttt{b}.  This will
-result in a memory leak that a tool like Valgrind or Purify should
-complain about.  If lots of objects with circular references are
-constantly being created and destroyed resulting in these types of
+To understand the problem with circular references, consider the code
+in Listing {}\ref{listing:CircularRCP_A_B} which sets up a simple
+circular reference between two objects.
+
+
+\begin{listing}: Setting up a simple circular reference between two objects \\
+\label{listing:CircularRCP_A_B}
+{\small\begin{verbatim}
+  {
+    RCP<A> a = createA();
+    RCP<B> b = createB();
+    a->set_B(b);
+    b->set_A(a);
+    RCP<ClientA> clientA = createClientA(a);
+    RCP<ClientB> clientB = createClientB(b);
+  }
+  // The A and B objects will not be deleted when the above code block ends!
+\end{verbatim}}
+\end{listing}
+
+
+The code fragement in Listing {}\ref{listing:CircularRCP_A_B} sets up
+the objects in Figure {}\ref{fig:CircularRCP_A_B} showing the circular
+reference.  Here object {}\texttt{a} contains an {}\texttt{RCP}
+pointing to object {}\texttt{b}, and object {}\texttt{b} contains an
+{}\texttt{RCP} pointing to object {}\texttt{a}.  In this situation,
+when {}\texttt{ClientA} and {}\texttt{ClientB} destroy their
+{}\texttt{RCP} objects pointing to the underlying {}\texttt{a} and
+{}\texttt{b} objects, the reference counts will not go to zero because
+of the circular reference between {}\texttt{a} and {}\texttt{b}.  This
+will result in a memory leak that a tool like Valgrind or Purify
+should complain about.  If lots of objects with circular references
+are constantly being created and destroyed resulting in these types of
 memory leaks, then obviously we have a problem and the system could
 run out of memory and bring the program down.
 
@@ -4404,20 +4429,45 @@ Simple circular reference between two objects broken using a
 \end{figure}
 \esinglespace}
 
-So how can we use weak pointers to deal with circular references?
-Figure {}\ref{fig:CircularRCP_A_B_weak} shows the same setup with a
-circular references as shown in Figure {}\ref{fig:CircularRCP_A_B}
-except where the circular reference is broken using a weak pointer.
-With the weak pointer in place, all of the objects will get destroyed
-when {}\texttt{ClientA} and {}\texttt{ClientB} remove their
-{}\texttt{RCP} objects, no mater what order they remove them.  The
-critical assumption is that the ``useful'' lifetime of {}\texttt{a} is
-a superset of the ``useful'' lifetime of {}\texttt{b}.  If
-{}\texttt{a} gets deleted before {}\texttt{b}, then {}\texttt{b} had
-better not try to access {}\texttt{a} anymore!  However, the goal is
-that whoever gets deleted first (i.e.\ {}\texttt{clientA} or
-{}\texttt{clientB}) the objects will go away gracefully and not result
-in memory leaks.
+So how can deal with circular references like this?  The answer in
+this case is to use a weak {}\texttt{RCP} to break the circular
+reference as shown in Listing {}\ref{listing:CircularRCP_A_B_weak}.
+
+
+\begin{listing}: Breaking a simple circular reference using a weak
+{}\texttt{RCP} \\
+\label{listing:CircularRCP_A_B_weak}
+{\small\begin{verbatim}
+  {
+    RCP<A> a = createA();
+    RCP<B> b = createB();
+    a->set_B(b);
+    b->set_A(a.create_weak());
+    RCP<ClientA> clientA = createClientA(a);
+    RCP<ClientB> clientB = createClientB(b);
+    if (deleteClientAFirst)
+      clientA = null;
+    else
+      clientB = null;
+  }
+  // Now all the objects will be deleted correctly!
+\end{verbatim}}
+\end{listing}
+
+
+The object structure set up by the code in listing Listing
+{}\ref{listing:CircularRCP_A_B_weak} is depicted in Figure
+{}\ref{fig:CircularRCP_A_B_weak}.  With the weak pointer in place, all
+of the objects will get destroyed when {}\texttt{ClientA} and
+{}\texttt{ClientB} remove their {}\texttt{RCP} objects, no mater what
+order they remove them.  The critical assumption is that the
+``useful'' lifetime of {}\texttt{a} is a superset of the ``useful''
+lifetime of {}\texttt{b}.  If {}\texttt{a} gets deleted before
+{}\texttt{b}, then {}\texttt{b} had better not try to access
+{}\texttt{a} anymore!  However, the goal is that whoever gets deleted
+first (i.e.\ {}\texttt{clientA} or {}\texttt{clientB}) the objects
+will go away gracefully and not result in memory leaks.
+
 
 {\bsinglespace
 \begin{figure}
@@ -4437,10 +4487,12 @@ Scenario where {}\texttt{ClientA} is deleted first.  }
 \end{figure}
 \esinglespace}
 
+
 Consider first the scenario where the {}\texttt{clientA} object goes
-away first as shown in Figure {}\ref{fig:CircularRCP_A_B_ClientA} (UML
-communication diagram).  This scencario is shown in two phases in two
-separate UML communication diagrams:
+away first (i.e.\ {}\texttt{deleteClientAFirst=true}) as shown in
+Figure {}\ref{fig:CircularRCP_A_B_ClientA} (a UML communication
+diagram).  This scencario is shown in two phases in two separate UML
+communication diagrams:
 
 \begin{description}
 
@@ -4498,6 +4550,7 @@ separate UML communication diagrams:
 
 \end{description}
 
+
 {\bsinglespace
 \begin{figure}
 \begin{center}
@@ -4516,8 +4569,10 @@ Scenario where {}\texttt{ClientB} is deleted first.  }
 \end{figure}
 \esinglespace}
 
-Now consider the case where the {}\texttt{clientB} object goes away
-first depicted in Figure {}\ref{fig:CircularRCP_A_B_ClientB}:
+
+Now consider the scenario where the {}\texttt{clientB} object goes
+away first (i.e.\ {}\texttt{deleteClientAFirst=false}) depicted in
+Figure {}\ref{fig:CircularRCP_A_B_ClientB}:
 
 \begin{description}
 
