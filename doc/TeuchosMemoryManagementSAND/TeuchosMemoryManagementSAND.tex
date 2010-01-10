@@ -7250,6 +7250,52 @@ common use case.
 \label{sec:generalized-view-idiom}
 %
 
+One of the most useful and powerful idioms related to the use of the
+Teuchos memory management classes is the ``generalized view'' idiom.
+Before describing the details of the ``generalized view'' idiom, first
+a precise definition of a ``view'' is in order.  In this context, a
+``view'' is some object that is created off of some parent object and
+provides some type of access to some part of the the parent.  Views
+can be changeable or non-changeable and can be persisting or
+semi-persisting (see Section ??? for the definition of persisting and
+semi-persisting associations).  Views can also be direct views or
+potentially detached views. 
+
+A direct view is one where the view directly points into the the
+internal data structures of the parent so a change of the view
+instantaneously changes the parent and changes to the parent changes
+the view.  An exampmle of a direct view is an iterator into an
+container such as is returned from {}\texttt{std::vector::begin()},
+{}\texttt{Array::begin()} and {}\texttt{ArrayView::begin()}.  Other
+examples of direct views include {}\texttt{ArrayView}s of
+{}\texttt{Array} and {}\texttt{ArrayRCP} objects.  Direct views can be
+changeable (non-const) and non-changeable (const) as is demonstrated
+with iterators and {}\texttt{ArrayView}s.  Direct views are a plesure
+to work with but they usually fundamentally break the encapsulation of
+the parent objects that they are providing the views into (but not
+always).  The behavior of a direct view object can significanly
+constrain the possible implementations of the parent object.  For
+example, if a matrix object provides direct views of the rows of a
+matrix then the matrix must necessarliy be stored in a row-major
+data-structure, precluding other possibilities.
+
+Because direct views can overly constrain the implementation freedom
+of the parent, in order to allow for the fullest freedom to pick the
+internal implementations of the parent and the view seprately, we must
+instead consider using potentially detached non-direct views otherwise
+defined here as a ``generalized view''.  A ``generalized view'' is a
+view of a parent object that is not guaranteed to be a direct view
+such that changes to the view are not guaranteed to be instantaneously
+propagated to the parent and visa versa.  One case where a
+``generalized view'' is important is when you need to create a view of
+non-contiguous columns of a dense matrix but for the sake of
+efficiency you would like to create a temporary contiguous copy as a
+new dense matrix.  This type of view is used in the implementation
+Thyra MultiVector column views [???] and is depecited in Figure ??? .
+
+ToDo: Add figure showing creating a contiguous copy of non-contiguous
+columns.
+
 ToDo: Fill this in!
 
 ToDo: Also mention semi-persisting direct views where multiple
