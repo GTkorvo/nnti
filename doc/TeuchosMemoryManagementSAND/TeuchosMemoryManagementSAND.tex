@@ -7230,17 +7230,18 @@ using a true presisting association  \\
 \end{listing}
 
 
+It is required to create a strong {}\texttt{RCP} in this case and
+invert the object ownership using in
+{}\ref{listing:osr:SomeClass-get_C-persisting} (which is an instance
+of the ``inverted object ownership'' idiom which is described in
+Section {}\ref{sec:inverting-obj-ownership}).
+
 Given the implementation in Listing
 {}\ref{listing:osr:SomeClass-get_C-persisting}, client code like in
 Listing {}\ref{listing:osr:dangling-ref-SomeClass} will allow the
 {}\texttt{C} object can be used after the client's
-{}\texttt{RCP<SomeClass>} object is made null and will not throw.
-Note that the use of {}\texttt{rcpInvertedObjOwnership(...)} shown in
-Listing {}\ref{listing:osr:SomeClass-get_C-persisting} is an instance
-of the ``inverted object ownership'' idiom which is described in
-Section {}\ref{sec:inverting-obj-ownership}.  It is required to create
-a strong {}\texttt{RCP} in this case in order to properly set up the
-true persisting association.
+{}\texttt{RCP<SomeClass>} object is made {}\texttt{null} without
+thrown a dangling reference exception.
 
 
 %
@@ -7252,14 +7253,14 @@ One of the most useful and powerful idioms related to the use of the
 Teuchos memory management classes is the ``generalized view'' idiom.
 Before describing the details of the ``generalized view'' idiom, first
 a precise definition of a ``view'' is in order.  In this context, a
-``view'' is some object that is created off of some parent object and
+``view'' is some object that is created off of a parent object and
 provides some type of access to some part of the the parent.  Views
 can be changeable or non-changeable and can be persisting or
 semi-persisting (see Section
 {}\ref{sec:persisting-nonpersisting-associations} for the definition
 of persisting and semi-persisting associations).  Views can also be
-direct views or potentially detached non-direct views (i.e.\
-``generalized views'').
+direct views or ``generalized views'' (i.e.\ potentially detached
+non-direct views).
 
 A direct view is one which directly points into the the internal data
 structures of the parent so a change of the view instantaneously
@@ -7353,7 +7354,8 @@ creates and initializes a {}\texttt{B} object for different complex
 initializations of {}\texttt{A} objects as shown in Listing
 {}\ref{listing:createBFactory}.
 
-\begin{listing}: A factory function that creates a B object wrapping a complex A object \\
+\begin{listing}: A factory function that creates a {}\texttt{B} object
+wrapping a complex {}\texttt{A} object \\
 \label{listing:createBFactory}
 {\small\begin{verbatim}
   RCP<B> createBFactory(...)
@@ -7383,8 +7385,8 @@ code at all.  The way to do this is to use the
 Listing {}\ref{listing:rcpWithInvertedObjOwnership}) as shown in
 Listing {}\ref{listing:A_owns_B_owns_A}.
 
-\begin{listing}: A factory function that returns a A object
-embedded with a B object (inverting the ownership relationship) \\
+\begin{listing}: A factory function that returns an {}\texttt{A} object
+embedded with a {}\texttt{B} object (inverting the ownership relationship) \\
 \label{listing:A_owns_B_owns_A}
 {\small\begin{verbatim}
   RCP<A> createAFactory(...)
@@ -7411,14 +7413,18 @@ object ownership'' idiom \\
 \end{listing}
 
 
-Without going into a lot of detail, what the code in Listing
-{}\ref{listing:A_owns_B_owns_A} accomplishes is that it defines a new
-{}\texttt{RCP<A>} object with a new {}\texttt{RCPNode} object that
-uses the other existing {}\texttt{RCP<A>} and {}\texttt{RCP<B>}
-objects to define ownership and ensure that the underlying
-{}\texttt{A} object and {}\texttt{B} do not go away until the last
-{}\texttt{RCP<A>} object copied from the object returned by the
-function {}\texttt{createAFactory(...)} has gone away.  The reason
+ToDo: Show UML object diagram that shows the two RCPNode objects.
+
+
+Without going into a lot of detail, what the code in Listings
+{}\ref{listing:A_owns_B_owns_A} and
+{}\ref{listing:rcpWithInvertedObjOwnership} accomplishes is that it
+defines a new {}\texttt{RCP<A>} object with a new {}\texttt{RCPNode}
+object that uses the other existing {}\texttt{RCP<A>} and
+{}\texttt{RCP<B>} objects to define ownership and ensure that the
+underlying {}\texttt{A} object and {}\texttt{B} do not go away until
+the last {}\texttt{RCP<A>} object copied from the object returned by
+the function {}\texttt{createAFactory(...)} has gone away.  The reason
 that {}\texttt{false} is passed into the
 {}\texttt{rcpWithEmbeddedObj(...)} is because it is the embedded
 objects {}\texttt{RCP<A>} and {}\texttt{RCP<B>} that define the
@@ -7428,8 +7434,6 @@ deallocation and not the default behavior which calls
 {}\texttt{std::pair} object) is that we need to make sure the
 {}\texttt{A} object does not get deleted in case some client calls the
 {}\texttt{B::unsetA()} function.
-
-ToDo: Show UML object diagram that shows the two RCPNode objects.
 
 Given this data-structure, another piece of code can then extract the
 underlying {}\texttt{RCP<B>} object as shown in Listing
