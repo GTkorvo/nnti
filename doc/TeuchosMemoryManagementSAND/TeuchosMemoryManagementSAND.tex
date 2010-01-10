@@ -6756,12 +6756,12 @@ is not specific to the use of the Teuchos memory management classes
 but it does provide the basic foundation for the next idiom described,
 the ``object self-reference'' idiom.  The set up the context for the
 discussion, consider a typical design for a class shown in Listing
-{}\ref{listing:TypicalC++Class-sci}.
+{}\ref{listing:sci:SomeClass-before}.
 
 
 \begin{listing}: Example of a typical C++ class that uses constructors for all
 initialization  \\
-\label{listing:TypicalC++Class-sci}
+\label{listing:sci:SomeClass-before}
 {\small\begin{verbatim}
   class SomeClass : public SomeBaseClass {
   public:
@@ -6792,7 +6792,7 @@ initialization  \\
 
 
 So what is wrong with the design of {}\texttt{SomeClass} in Listing
-{}\ref{listing:TypicalC++Class-sci}?  First, there is the duplication
+{}\ref{listing:sci:SomeClass-before}?  First, there is the duplication
 of default values for {}\texttt{member1\_}, {}\texttt{member2\_} in
 all of the constructors.  This makes it labor intensive and
 error-prone to change the values later.  Yes, one could create static
@@ -6808,7 +6808,7 @@ call any virtual functions in the base class {}\texttt{SomeBaseClass}
 to help initialize its state in the constructors [???].
 
 The third problem with the design of {}\texttt{SomeClass} shown in
-Listing {}\ref{listing:TypicalC++Class-sci} is that the {}\texttt{C}
+Listing {}\ref{listing:sci:SomeClass-before} is that the {}\texttt{C}
 object that is created in the thrid constructor that takes
 {}\texttt{A} and {}\texttt{B} objects is not properly setting up a
 persisting relationship between the {}\texttt{C} object and the
@@ -6835,13 +6835,13 @@ interconnected objects before constructing the downstream objects.
 
 Without further ado, the use of the ``separate construction and
 initialization'' idiom applied to {}\texttt{SomeClass} shown in
-Listing {}\ref{listing:TypicalC++Class-sci} gives the new refactored
-class in Listing {}\ref{listing:TypicalC++Class-sci-refactored}.
+Listing {}\ref{listing:sci:SomeClass-before} gives the new refactored
+class in Listing {}\ref{listing:sci:SomeClass-refactored}.
 
 
 \begin{listing}: Example of the use of the ``separate construction and
-initialization'' idiom  \\
-\label{listing:TypicalC++Class-sci-refactored}
+initialization'' and ``just-in-time initialization'' idioms  \\
+\label{listing:sci:SomeClass-refactored}
 {\small\begin{verbatim}
   class SomeClass : public SomeBaseClase {
   public:
@@ -6867,7 +6867,7 @@ initialization'' idiom  \\
     void finalInitialization()
       {
         if (isIntialized_) return;
-        // Now, we can call virtual functions on SomeBaseClass (someBaseFunc())!
+        // We can call virtual functions on SomeBaseClass (someBaseFunc())!
         if (nonnull(a_) && nonnull(b_))
           c_ = createC(rcp(this, false), a, b, this->getSomeValue());
         ...
@@ -6876,6 +6876,8 @@ initialization'' idiom  \\
   };
 
   // Non-member constructors
+  RCP<SomeClass> someClass()
+    { return rcp(new someClass()); }
   RCP<SomeClass> someClass(const RCP<A> &a)
     { RCP<someClass> sc(new someClass()); sc->set_A(a); return sc; }
   RCP<SomeClass> someClass(const RCP<B> &b)
@@ -6887,7 +6889,7 @@ initialization'' idiom  \\
 
 
 Side Note: Before describing the specific advantages of the refactored
-class in Listing {}\ref{listing:TypicalC++Class-sci-refactored}, first
+class in Listing {}\ref{listing:sci:SomeClass-refactored}, first
 note that the issue of the creation of the {}\texttt{C} object and
 dangling references of {}\texttt{c\_} returned from
 {}\texttt{get\_C()} have not been addressesd in this design.  That
@@ -6897,7 +6899,7 @@ described in Section {}\ref{sec:self-references}.
 Now, some of the specific advantages of the usage of the ``separate
 construction and initailization'' idiom as applied to the design of
 {}\texttt{SomeClass} shown in Listing
-{}\ref{listing:TypicalC++Class-sci-refactored} are described below.
+{}\ref{listing:sci:SomeClass-refactored} are described below.
 
 a) The default values for {}\texttt{member1\_} and
 {}\texttt{member2\_} are defined in only one constructor
@@ -6942,8 +6944,8 @@ initialization'' idiom is some small decrease in performance in using
 assignment instead of member initialization lists.  However, this type
 of low-level perforamnce is almost never an issue in higher-level
 classes like {}\texttt{SomeClass} shown in Listing
-{}\ref{listing:TypicalC++Class-sci-refactored}.  Most classes in a
-complex program are higher-level classes where low-level perforamnce
+{}\ref{listing:sci:SomeClass-refactored}.  Most classes in a complex
+program are higher-level classes where low-level perforamnce
 considerations like this are not an issue so the the ``separate
 construction and initialization'' idiom is applicable in more cases
 than not.
@@ -6963,7 +6965,279 @@ initialized.  However, good class design makes this fairly easy.
 \label{sec:self-references}
 %
 
-ToDo: Fill this in!
+There are occasions where an object needs to provide an {}\texttt{RCP}
+to itself with the full protection of the debug-mode checking with
+node-tracing enabled.  However, for an object to hold a strong
+{}\texttt{RCP} to itself would set up a cicular reference and the
+object would never be deleted.  The issue of self references was
+mentioned in the previous section in the context of the ``separate
+construction and initialization'' idiom.
+
+
+
+The most straightforward example of where the ``object
+self-reference'' idiom is needed is when a factory object creates a
+product that must in turn store a strong owning {}\texttt{RCP} to the
+factory that created it.  This is the exact use case that exists in
+the Thyra packages for {}\texttt{VectorBase} and
+{}\texttt{VectorSpaceBase} objects [???].  In this case,
+{}\texttt{VectorSpaceBase} acts as the factory and
+{}\texttt{VectorBase} acts as the product.  Also, every
+{}\texttt{VectorBase} object has a function {}\texttt{space()} that
+returns the {}\texttt{VectorSpaceBase} object that created it to be
+used to create other {}\texttt{VectorBase} objects.
+
+A simplified version of the implemention of the
+{}\texttt{VectorSpaceBase} standard subclass
+{}\texttt{DefaultSpmdVectorSpace} using the ``object self-reference''
+idiom is shown in Listing {}\ref{listing:osr:DefaultSpmdVectorSpace}.
+
+
+\begin{listing}: Exsample of the ``object self-reference'' idiom where a
+factory must give a strong owning {}\texttt{RCP} self reference to its products.  \\
+\label{listing:osr:DefaultSpmdVectorSpace}
+{\small\begin{verbatim}
+  class DefaultSpmdVectorSpace : public VectorSpaceBase {
+  public:
+    static RCP<DefaultSpmdVectorSpace> create()
+      {
+        RCP<DefaultSpmdVectorSpace> vs(new DefaultSpmdVectorSpace);
+        vs.selfRef_ = vs.create_weak();
+        return vs;
+      }
+    void initialize(const Ordinal localDim)
+      {  localDim_ = localDim; }
+    RCP<VectorBase> createMember()
+      {
+         return defaultSpmdVector(selfRef_.create_strong());
+       }
+  private:
+    RCP<DefaultSpmdVectorSpace> selfRef_;
+    Ordinal localDim_;
+    DefaultSpmdVectorSpace() : localDim_(0) {}
+  };
+
+  // Nonmeber constructor
+  RCP<DefaultSpmdVectorSpace> defaultSpmdVectorSpace(const Ordinal localDim)
+  {
+    RCP<DefaultSpmdVectorSpace> vs = DefaultSpmdVectorSpace::create();
+    vs->initialize(localDim);
+    return vs;
+  }
+\end{verbatim}}
+\end{listing}
+
+
+The way the ``object self-reference'' idiom works is that a static
+function {}\texttt{create()} allocates an default-initialized
+{}\texttt{DefaultSpmdVectorSpace} object and stores it in a strong
+owning {}\texttt{RCP} object.  It then creates a weak {}\texttt{RCP}
+object that it sets as the self reference on the newly created
+{}\texttt{DefaultSpmdVectorSpace} object.  The default constructor is
+made private so the only way for a client to create an
+{}\texttt{DefaultSpmdVectorSpace} object is to use use the static
+{}\texttt{create()} function (or call it indirectly through the
+non-member constructor {}\texttt{defaultSpmdVectorSpace()} function).
+Because this self reference is a weak tracing {}\texttt{RCP}, it can
+detect dangling references or can be used to create a strong
+{}\texttt{RCP} when needed while at the same time not creating a
+circular reference that would result in a memory leak.
+
+The code in Listing {}\ref{listing:osr:DefaultSpmdVectorSpace} shows
+the creation of a strong owning {}\texttt{RCP} which is given to the
+newly created {}\texttt{DefaultSpmdVector} object in the statement
+{}\texttt{defaultSpmdVector( selfRef\_.create\_strong())}.  This
+allows the resulting product {}\texttt{DefaultSpmdVector} object to
+outlive the client's code that created the factory
+{}\texttt{DefaultSpmdVectorSpace} object.  A simple example of this is
+shown in Listing
+{}\ref{listing:osr:DefaultSpmdVectorSpace-use-delete}.
+
+
+\begin{listing}: Example of client code that creates a factory, uses it to
+create a product and lets the factory go away.  \\
+\label{listing:osr:DefaultSpmdVectorSpace-use-delete}
+{\small\begin{verbatim}
+  RCP<VectorBase> createMyector(const Ordinal localDim)
+  {
+     RCP<DefaultSpmdVectorSpace> vs = defaultSpmdVectorSpace();
+     return vs.createMember();
+  }
+\end{verbatim}}
+\end{listing}
+
+
+Code like shown in Listing
+{}\ref{listing:osr:DefaultSpmdVectorSpace-use-delete} may seem
+contrived but there have been several use cases for Thyra over the
+years that required code just like this to work or it would have
+resulted in a much more complex design of the client's code.
+
+There are also other less obvious examples where the ``object
+self-reference'' idiom is useful.  For one such case, consider Listing
+{}\ref{listing:osr:SomeClass-before} which shows a simplified version
+of the class shown in Listing {}\ref{listing:sci:SomeClass-before}
+that has to pass a self reference to an object it creates and holds
+internally.
+
+
+\begin{listing}: Example of an class with {}\texttt{RCP} to self problems  \\
+\label{listing:osr:SomeClass-before}
+{\small\begin{verbatim}
+  class SomeClass : public SomeBaseClass {
+  public:
+    SomeClass() {}
+      { c_ = createC(rcp(this, false)); finalInitialization(); }
+    RCP<C> get_C() { return c_; }
+    ...
+  private:
+    RCP<C> c_;
+    void finalInitialization() { ...}
+  };
+\end{verbatim}}
+\end{listing}
+
+
+The problem with the code in Listing
+{}\ref{listing:osr:SomeClass-before} is that it gives up an
+{}\texttt{RCP<C>} object to its internal {}\texttt{C} object that is
+constructed internally but a proper node tracing relationship has not
+been established between the {}\texttt{C} object and the
+{}\texttt{SomeClass} object.  (Even if {}\texttt{SomeClass} does not
+intentionally give up its {}\texttt{RCP<C>} object, it is still very
+easy to do it by accident so this scencario still applies.)  The see
+problem with this, consider the client code in Listing
+{}\ref{listing:osr:bad-use-SomeClass}.
+
+
+\begin{listing}: Client code that results in a segfault  \\
+\label{listing:osr:bad-use-SomeClass}
+{\small\begin{verbatim}
+  RCP<SomeClass> sc(new SomeClass);
+  RCP<C> c = sc->get_C();
+  sc = null; // The SomeClass object is destroyed which invalidates 'c'!
+  c->someFunc(); // Calls on the now deleted SomeClass object pointed to inside!
+\end{verbatim}}
+\end{listing}
+
+
+The problem with the code in Listing
+{}\ref{listing:osr:bad-use-SomeClass} is that when the
+{}\texttt{SomeClass} object {}\texttt{sc} is destroyed, there is no
+way for the reference-counting machinery in to catch the dangling
+reference.  This code will segfault if you are lucky but like any
+memory usage error, if you are unlucking the code will appear to work
+correctly but will be a ticking time-bomb that will go off eventually.
+The reason for this behavior is that the statement {}\texttt{c\_ =
+createC(rcp(this, false))} in the constructor {}\texttt{SomeClass()}
+creates a non-owing {}\texttt{RCPNode} object {}\underline{before} the
+owning {}\texttt{RCPNode} object is created by the client code
+{}\texttt{RCP<SomeClass> sc(new SomeClass)}.  This violates
+Commandment {}\ref{cmnd:owning-rcp-first} in Section
+{}\ref{apdx:commandments}.  The node-tracing reference-counting
+machinery would have to be {}\underline{much} more complex and
+expensive to catch dangling reference errors where the strong owning
+{}\texttt{RCPNode} object was not the first created.
+
+The solution to this problem is to use a variation of the ``object
+self-reference'' idiom.  The updated design that accomplishes this is
+shown in Listing {}\ref{listing:osr:SomeClass-refactored}.
+
+
+\begin{listing}:  Example of the ``object self-reference'' idiom for
+detecting dangling references to internally held objects  \\
+\label{listing:osr:SomeClass-refactored}
+{\small\begin{verbatim}
+  class SomeClass : public SomeBaseClass {
+  public:
+    static RCP<SomeClass> create()
+      {
+        RCP<SomeClass> sc(new SomeClass);
+        sc.selfRef_ = sc.create_weak();
+        return sc;
+      }
+    RCP<C> get_C()
+      {
+        finalInitialization(); // Just-in-time initialization!
+        return c_;
+      }
+    ...
+  private:
+    RCP<SomeClass> selfRef_;
+    RCP<C> c_;
+    SomeClass() {}
+    void finalInitialization() { c_ = createC(selfRef_); }
+    // Note defined and not to be called
+    SomeClass(const SomeClass&);
+    SomeClass operator=(const SomeClass&);
+  };
+
+  // Nonmeber constructor
+  RCP<SomeClass> someClass() { return SomeClass::create(); }
+\end{verbatim}}
+\end{listing}
+
+The advantage of the design in Listing
+{}\ref{listing:osr:SomeClass-refactored} is that now client code like
+shown in Listing {}\ref{listing:osr:dangling-ref-SomeClass} below will
+result in a dangling reference exception in a node-tracing debug-mode
+build.
+
+
+\begin{listing}: Client code that results a clean dangling-reference exception  \\
+\label{listing:osr:dangling-ref-SomeClass}
+{\small\begin{verbatim}
+  RCP<SomeClass> sc = someClass();
+  RCP<C> c = sc->get_C();
+  sc = null; // The SomeClass object is destroyed which invalidates 'c'!
+  c->someFunc(); // Now the dangling reference is detected and throws!
+\end{verbatim}}
+\end{listing}
+
+
+Note that the implementation of {}\texttt{SomeClass} in Listing
+{}\ref{listing:osr:SomeClass-refactored} means that the nature of the
+relationship between the {}\texttt{C} object returned from
+{}\texttt{SomeClass::get\_C()}, the {}\texttt{SomeClass} object, and
+the client code represents a semi-presisting association as defined in
+Section ???.  In this case, the usage of the {}\texttt{C} object is
+only valid while the parent {}\texttt{SomeClass} object still exists.
+However, if the client mistakenly tries to use a dangling {}\texttt{C}
+object after its parent {}\texttt{SomeClass} object is destroyed, then
+a clean runtime dangling-reference exception is thrown as descrbed in
+Section {}\ref{sec:detection-dangling-references}.
+
+Alternatively, if you want the {}\texttt{SomeClass::get\_C()} function
+to create a true presisting association where the {}\texttt{C} object
+can outlive all of the client references to the parent
+{}\texttt{SomeClass} object, then the implementation of
+{}\texttt{SomeClass::get\_C()} can be modified to what is shown in
+Listing {}\ref{listing:osr:SomeClass-get_C-persisting}.
+
+
+\begin{listing}:  Implementation of the ``object self-reference'' idiom
+using a true presisting association  \\
+\label{listing:osr:SomeClass-get_C-persisting}
+{\small\begin{verbatim}
+  RCP<C> SomeClass::get_C()
+  {
+    finalInitialization(); // Just-in-time initialization!
+    return rcpWithEmbeddedObj(c_.getRawPtr(),
+      std::make_pair(c_, selfRef_.create_strong()), false);
+  }
+\end{verbatim}}
+\end{listing}
+
+
+Given the implementation in Listing
+{}\ref{listing:osr:SomeClass-get_C-persisting}, client code like in
+Listing {}\ref{listing:osr:dangling-ref-SomeClass} will allow the
+{}\texttt{C} object can be used after the client's
+{}\texttt{RCP<SomeClass>} object is made null and will not throw.
+Note that the use of {}\texttt{rcpWithEmbeddedObj(...)} shown in
+Listing {}\ref{listing:osr:SomeClass-get_C-persisting} is an instance
+of the ``inverted object ownership'' idiom which is described in
+Section {}\ref{sec:inverting-obj-ownership}.
 
 
 %
@@ -7532,6 +7806,18 @@ non-compliant code.
 Thou shall only use raw C++ references for non-persisting associations
 (see Section {}\ref{sec:persisting-nonpersisting-associations}).
 \end{commandment}
+
+\begin{commandment}\label{cmnd:owning-rcp-first}
+When wrapping an object inside of an {}\texttt{RCP}, thou shall create
+a strong owning {}\texttt{RCP} object first before any non-owning
+{}\texttt{RCP} objects.
+\end{commandment}
+{}\textit{Justification:} In order for the reference-counting
+machinery to detect dangling non-owning refernces in a debug-mode
+build, the first {}\texttt{RCP} object created must have ownership to
+delete.  The system can not detect dangling references from non-owning
+{}\texttt{RCPNode} objects created before the owning
+{}\texttt{RCPNode} object is created.
 
 \begin{commandment}
 Thou shall use {}\texttt{RCP} for handling single objects for all
