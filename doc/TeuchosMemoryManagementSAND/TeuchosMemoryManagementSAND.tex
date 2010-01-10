@@ -3385,12 +3385,18 @@ constructor.  A {}\textit{non-member constructor} compliant
 \end{verbatim}}
 \end{listing}
 
+ToDo: Change over to {}\texttt{createWidget()} as the default idiom
+since it is more clear and state that {}\texttt{widget()} can also be
+used in contexts where it is clear what is happening.  Also, change
+all such non-member constructors to use the createSomeClass() name for
+non-member constructors.
+
 Using the non-member constructor function {}\texttt{widget()}, the
 unsafe constructor call in Listing {}\ref{listing:BlagetConstruct1} can
 be written as shown in Listing {}\ref{listing:BlagetConstruct3}.
 
-\begin{listing}: Clean and bullet-proof way using non-member
-constructor function idiom \\
+\begin{listing}: Clean and bullet-proof way using the ``non-member
+constructor function'' idiom \\
 \label{listing:BlagetConstruct3}
 {\small\begin{verbatim}
   Blaget blaget(widget(), widget());
@@ -6850,11 +6856,11 @@ initialization'' and ``just-in-time initialization'' idioms  \\
     void set_B(const RCP<B> &b) { b_ = b; isIntialized_=false; }
     RCP<A> get_A() { return a_; }
     RCP<B> get_B() { return b_; }
-    RCP<C> get_C() { finalInitialization(); return c_; }
+    RCP<C> get_C() { justInTimeInitialization(); return c_; }
     void uninitialize() { a_ = null, b_ = null; c_ = null; }
     void doSomeOperation(...)
       {
-        finalInitialization(); // Just-in-time initialization!
+        justInTimeInitialization();
         ...
        }
   private:
@@ -6864,7 +6870,7 @@ initialization'' and ``just-in-time initialization'' idioms  \\
     RCP<A> a_;
     RCP<B> b_;
     RCP<C> c_;
-    void finalInitialization()
+    void justInTimeInitialization()
       {
         if (isIntialized_) return;
         // We can call virtual functions on SomeBaseClass (someBaseFunc())!
@@ -6907,7 +6913,7 @@ initialization list.  This massively simplifies the maintenance of of
 large comlex classes with lots of data members.
 
 b) The private initialization function
-{}\texttt{finalInitialization()} can now call a virtual function on
+{}\texttt{justInTimeInitialization()} can now call a virtual function on
 the base class {}\texttt{SomeBaseClass::getSomeValue()} to get the
 value of {}\texttt{someValue} instead of requiring the client to pass
 it into the constructor.
@@ -6920,7 +6926,7 @@ simplify the structure of complex programs.
 
 d) The ``separate construction and initialization'' idiom naturally
 leads to the ``just-in-time initialization'' idiom where the
-{}\texttt{finalInitialization()} function is not called until the
+{}\texttt{justInTimeInitialization()} function is not called until the
 functions {}\texttt{doSomeOperation(...)} or {}\texttt{get\_C()} are
 called by a client.  This allows the objects {}\texttt{a} and/or
 {}\texttt{b} to be passed into the functions {}\texttt{set\_A(...)} 
@@ -6952,7 +6958,7 @@ than not.
 
 The main disadvantage of the ``just-in-time initialization'' idiom is
 the need to have a call to a function like
-{}\texttt{finalInitialization()} in every operation that requires the
+{}\texttt{justInTimeInitialization()} in every operation that requires the
 object to be fully initialized.  This is minor programming
 inconvenience and a minor perforamnce overhead.  The more significant
 disadvantage is that more unit testing is needed to test the behavior
@@ -7156,17 +7162,13 @@ detecting dangling references to internally held objects  \\
         sc.selfRef_ = sc.create_weak();
         return sc;
       }
-    RCP<C> get_C()
-      {
-        finalInitialization(); // Just-in-time initialization!
-        return c_;
-      }
+    RCP<C> get_C() { justInTimeInitialization(); return c_; }
     ...
   private:
     RCP<SomeClass> selfRef_;
     RCP<C> c_;
     SomeClass() {}
-    void finalInitialization() { c_ = createC(selfRef_); }
+    void justInTimeInitialization() { c_ = createC(selfRef_); }
     // Note defined and not to be called
     SomeClass(const SomeClass&);
     SomeClass operator=(const SomeClass&);
@@ -7221,9 +7223,8 @@ using a true presisting association  \\
 {\small\begin{verbatim}
   RCP<C> SomeClass::get_C()
   {
-    finalInitialization(); // Just-in-time initialization!
-    return rcpWithEmbeddedObj(c_.getRawPtr(),
-      std::make_pair(c_, selfRef_.create_strong()), false);
+    justInTimeInitialization();
+    return rcpInvertedObjOwnership(c, selfRef_.create_strong());
   }
 \end{verbatim}}
 \end{listing}
@@ -7234,15 +7235,12 @@ Given the implementation in Listing
 Listing {}\ref{listing:osr:dangling-ref-SomeClass} will allow the
 {}\texttt{C} object can be used after the client's
 {}\texttt{RCP<SomeClass>} object is made null and will not throw.
-Note that the use of {}\texttt{rcpWithEmbeddedObj(...)} shown in
+Note that the use of {}\texttt{rcpInvertedObjOwnership(...)} shown in
 Listing {}\ref{listing:osr:SomeClass-get_C-persisting} is an instance
 of the ``inverted object ownership'' idiom which is described in
-Section {}\ref{sec:inverting-obj-ownership}.
-
-ToDo: Create the functions rcpInvertedObjOwnership(childRcp,
-parentRcp) and getInvertedObjOwnershipParent<ParentT,
-ChildT>(childRcp) and use this in all the examples.  This may be a
-common use case.
+Section {}\ref{sec:inverting-obj-ownership}.  It is required to create
+a strong {}\texttt{RCP} in this case in order to properly set up the
+true persisting association.
 
 
 %
@@ -7257,13 +7255,15 @@ a precise definition of a ``view'' is in order.  In this context, a
 ``view'' is some object that is created off of some parent object and
 provides some type of access to some part of the the parent.  Views
 can be changeable or non-changeable and can be persisting or
-semi-persisting (see Section ??? for the definition of persisting and
-semi-persisting associations).  Views can also be direct views or
-potentially detached views. 
+semi-persisting (see Section
+{}\ref{sec:persisting-nonpersisting-associations} for the definition
+of persisting and semi-persisting associations).  Views can also be
+direct views or potentially detached non-direct views (i.e.\
+``generalized views'').
 
-A direct view is one where the view directly points into the the
-internal data structures of the parent so a change of the view
-instantaneously changes the parent and changes to the parent changes
+A direct view is one which directly points into the the internal data
+structures of the parent so a change of the view instantaneously
+changes the parent and changes to the parent instantaneously changes
 the view.  An exampmle of a direct view is an iterator into an
 container such as is returned from {}\texttt{std::vector::begin()},
 {}\texttt{Array::begin()} and {}\texttt{ArrayView::begin()}.  Other
@@ -7271,13 +7271,18 @@ examples of direct views include {}\texttt{ArrayView}s of
 {}\texttt{Array} and {}\texttt{ArrayRCP} objects.  Direct views can be
 changeable (non-const) and non-changeable (const) as is demonstrated
 with iterators and {}\texttt{ArrayView}s.  Direct views are a plesure
-to work with but they usually fundamentally break the encapsulation of
-the parent objects that they are providing the views into (but not
-always).  The behavior of a direct view object can significanly
-constrain the possible implementations of the parent object.  For
-example, if a matrix object provides direct views of the rows of a
-matrix then the matrix must necessarliy be stored in a row-major
-data-structure, precluding other possibilities.
+to work with but they also fundamentally constrain the implementation
+of the parent objects that they are providing the views into (but not
+always).  For example, if a matrix object provides direct views of the
+rows of a matrix then the matrix must necessarliy be stored in a
+row-major data-structure, precluding other possibilities.  Once a
+direct row-based view is supported by such a matrix class, it becomes
+impossible to change the internal representation of the matrix to
+anything other than a row-oriented implementation.  In the case of
+contiguous array containers, constraining the implementation to be a
+contiguous array of data internally is not a problem.  However, for
+more general classes, the rigid constraints imposed by direct views is
+unacceptable and breaks the abstraction in most cases.
 
 Because direct views can overly constrain the implementation freedom
 of the parent, in order to allow for the fullest freedom to pick the
@@ -7286,8 +7291,8 @@ instead consider using potentially detached non-direct views otherwise
 defined here as a ``generalized view''.  A ``generalized view'' is a
 view of a parent object that is not guaranteed to be a direct view
 such that changes to the view are not guaranteed to be instantaneously
-propagated to the parent and visa versa.  One case where a
-``generalized view'' is important is when you need to create a view of
+propagated to the parent and visa versa.  One example of a case where
+a ``generalized view'' is needed is when you need to create a view of
 non-contiguous columns of a dense matrix but for the sake of
 efficiency you would like to create a temporary contiguous copy as a
 new dense matrix.  This type of view is used in the implementation
@@ -7374,21 +7379,37 @@ one could try to implement this inversion of RCP ownership but there
 is a way to enable this that is 100\% bullet-proof without having to
 change the existing {}\texttt{A} or {}\texttt{B} classes or any other
 code at all.  The way to do this is to use the
-{}\texttt{rcpWithEmbeddedObj(...)} function as shown in Listing
-{}\ref{listing:A_owns_B_owns_A}.
+{}\texttt{rcpWithInvertedObjOwnership(...)} function (defined in
+Listing {}\ref{listing:rcpWithInvertedObjOwnership}) as shown in
+Listing {}\ref{listing:A_owns_B_owns_A}.
 
 \begin{listing}: A factory function that returns a A object
-embedded with a B object \\
+embedded with a B object (inverting the ownership relationship) \\
 \label{listing:A_owns_B_owns_A}
 {\small\begin{verbatim}
   RCP<A> createAFactory(...)
   {
     RCP<B> b = createBFactory(...);
-    return rcpWithEmbeddedObj(b->getA().getRawPtr(),
-      std::make_pair(b->getA(), b), false);
+    return rcpWithInvertedObjOwnership(b->getA(), b);
   }
 \end{verbatim}}
 \end{listing}
+
+
+\begin{listing}: Standard helper function implementing the ``inverted
+object ownership'' idiom \\
+\label{listing:rcpWithInvertedObjOwnership}
+{\small\begin{verbatim}
+  template<class T, class ParentT>
+  RCP<T> rcpWithInvertedObjOwnership(const RCP<T> &child, const RCP<ParentT> &parent)
+  {
+    using std::make_pair;
+    typedef std::pair<RCP<T>, RCP<ParentT> > Pair_t;
+    return rcpWithEmbeddedObj(child.getRawPtr(), make_pair(child, parent), false);
+  }
+\end{verbatim}}
+\end{listing}
+
 
 Without going into a lot of detail, what the code in Listing
 {}\ref{listing:A_owns_B_owns_A} accomplishes is that it defines a new
@@ -7412,19 +7433,35 @@ ToDo: Show UML object diagram that shows the two RCPNode objects.
 
 Given this data-structure, another piece of code can then extract the
 underlying {}\texttt{RCP<B>} object as shown in Listing
-{}\ref{listing:Extract_B_from_A}.
+{}\ref{listing:Extract_B_from_A} which uses the standard Teuchos
+function {}\texttt{getInvertedObjOwnershipParent(...)} defined in
+Listing {}\ref{listing:getInvertedObjOwnershipParent}.
 
 \begin{listing}: A function that extracts the B object from the A object \\
 \label{listing:Extract_B_from_A}
 {\small\begin{verbatim}
   RCP<B> extractBFromA(const RCP<A> &a)
   {
-    typedef std::pair<RCP<A>, RCP<B> > ABPair_t;
-    ABPair_t abPair = getEmbeddedObj<A, ABPair_t>(a);
-    return abPair->second;
+    return getInvertedObjOwnershipParent<B>(a);
   }
 \end{verbatim}}
 \end{listing}
+
+
+\begin{listing}: Standard helper grabbing the inverted parent \\
+\label{listing:getInvertedObjOwnershipParent}
+{\small\begin{verbatim}
+  template<class ParentT, class T>
+  Teuchos::RCP<ParentT>
+  Teuchos::getInvertedObjOwnershipParent(const RCP<T> &invertedChild)
+  {
+    typedef std::pair<RCP<T>, RCP<ParentT> > Pair_t;
+    Pair_t pair = getEmbeddedObj<T, Pair_t>(invertedChild);
+    return pair.second;
+  }
+\end{verbatim}}
+\end{listing}
+
 
 That is all there is to it.  Now this is not the sort of thing that
 you want to expose to general clients but it can be very handy to have
