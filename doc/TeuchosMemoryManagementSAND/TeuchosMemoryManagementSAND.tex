@@ -7008,17 +7008,17 @@ factory must give a strong owning {}\texttt{RCP} self reference to its products.
     static RCP<DefaultSpmdVectorSpace> create()
       {
         RCP<DefaultSpmdVectorSpace> vs(new DefaultSpmdVectorSpace);
-        vs.selfRef_ = vs.create_weak();
+        vs.weakSelfPtr_ = vs.create_weak();
         return vs;
       }
     void initialize(const Ordinal localDim)
       {  localDim_ = localDim; }
     RCP<VectorBase> createMember()
       {
-         return defaultSpmdVector(selfRef_.create_strong());
+         return defaultSpmdVector(weakSelfPtr_.create_strong());
        }
   private:
-    RCP<DefaultSpmdVectorSpace> selfRef_;
+    RCP<DefaultSpmdVectorSpace> weakSelfPtr_;
     Ordinal localDim_;
     DefaultSpmdVectorSpace() : localDim_(0) {}
   };
@@ -7052,7 +7052,7 @@ circular reference that would result in a memory leak.
 The code in Listing {}\ref{listing:osr:DefaultSpmdVectorSpace} shows
 the creation of a strong owning {}\texttt{RCP} which is given to the
 newly created {}\texttt{DefaultSpmdVector} object in the statement
-{}\texttt{defaultSpmdVector( selfRef\_.create\_strong())}.  This
+{}\texttt{defaultSpmdVector( weakSelfPtr\_.create\_strong())}.  This
 allows the resulting product {}\texttt{DefaultSpmdVector} object to
 outlive the client's code that created the factory
 {}\texttt{DefaultSpmdVectorSpace} object.  A simple example of this is
@@ -7159,16 +7159,16 @@ detecting dangling references to internally held objects  \\
     static RCP<SomeClass> create()
       {
         RCP<SomeClass> sc(new SomeClass);
-        sc.selfRef_ = sc.create_weak();
+        sc.weakSelfPtr_ = sc.create_weak();
         return sc;
       }
     RCP<C> get_C() { justInTimeInitialization(); return c_; }
     ...
   private:
-    RCP<SomeClass> selfRef_;
+    RCP<SomeClass> weakSelfPtr_;
     RCP<C> c_;
     SomeClass() {}
-    void justInTimeInitialization() { c_ = createC(selfRef_); }
+    void justInTimeInitialization() { c_ = createC(weakSelfPtr_); }
     // Note defined and not to be called
     SomeClass(const SomeClass&);
     SomeClass operator=(const SomeClass&);
@@ -7224,7 +7224,7 @@ using a true presisting association  \\
   RCP<C> SomeClass::get_C()
   {
     justInTimeInitialization();
-    return rcpInvertedObjOwnership(c, selfRef_.create_strong());
+    return rcpInvertedObjOwnership(c, weakSelfPtr_.create_strong());
   }
 \end{verbatim}}
 \end{listing}
@@ -7262,6 +7262,8 @@ of persisting and semi-persisting associations).  Views can also be
 direct views or ``generalized views'' (i.e.\ potentially detached
 non-direct views).
 
+ToDo: Show a UML figure of a parent and a view.
+
 A direct view is one which directly points into the the internal data
 structures of the parent so a change of the view instantaneously
 changes the parent and changes to the parent instantaneously changes
@@ -7274,33 +7276,110 @@ changeable (non-const) and non-changeable (const) as is demonstrated
 with iterators and {}\texttt{ArrayView}s.  Direct views are a plesure
 to work with but they also fundamentally constrain the implementation
 of the parent objects that they are providing the views into (but not
-always).  For example, if a matrix object provides direct views of the
-rows of a matrix then the matrix must necessarliy be stored in a
-row-major data-structure, precluding other possibilities.  Once a
-direct row-based view is supported by such a matrix class, it becomes
-impossible to change the internal representation of the matrix to
-anything other than a row-oriented implementation.  In the case of
-contiguous array containers, constraining the implementation to be a
-contiguous array of data internally is not a problem.  However, for
-more general classes, the rigid constraints imposed by direct views is
-unacceptable and breaks the abstraction in most cases.
+always).  In the case of contiguous array containers like
+{}\texttt{std::vector} and {}\texttt{ArrayRCP}, constraining the
+implementation to store a pointer to a contiguous array of data
+internally is not a problem.  However, for more general classes, the
+rigid constraints imposed by direct views are unacceptable and break
+the abstraction in most cases.  For example, if an abstract matrix
+object provides direct views of the rows of a matrix then the matrix
+must necessarliy be stored in a row-major data-structure, precluding
+other possibilities.  Once a direct row-based view is supported by
+such a matrix class, it becomes impossible to change the internal
+representation of the matrix to anything other than a row-oriented
+implementation.
 
 Because direct views can overly constrain the implementation freedom
 of the parent, in order to allow for the fullest freedom to pick the
 internal implementations of the parent and the view seprately, we must
 instead consider using potentially detached non-direct views otherwise
-defined here as a ``generalized view''.  A ``generalized view'' is a
+defined here as ``generalized views''.  A ``generalized view'' is a
 view of a parent object that is not guaranteed to be a direct view
 such that changes to the view are not guaranteed to be instantaneously
 propagated to the parent and visa versa.  One example of a case where
 a ``generalized view'' is needed is when you need to create a view of
 non-contiguous columns of a dense matrix but for the sake of
 efficiency you would like to create a temporary contiguous copy as a
-new dense matrix.  This type of view is used in the implementation
-Thyra MultiVector column views [???] and is depecited in Figure ??? .
+new dense matrix.  This type of view is used in the implementation of
+Thyra MultiVector non-contiguous column views [???] which is depecited
+in Figure {}\ref{fig:MultiVectorView}. In the Thyra MultiVector
+implementation, when the client requests a view of a set of
+non-contiguous columns, the implemetion will create a temporary
+contiguous copy which improves performance of many types of
+operations.  Before describing the Thyra MultiVector example in more
+detail below, first, we present a generic description of the
+``generalized view'' idiom.
 
-ToDo: Add figure showing creating a contiguous copy of non-contiguous
-columns.
+The most general statement of the ``generalized view'' idiom is Figure
+{}\ref{fig:GeneralizedViewClassDiagram} (UML class diagram) and Figure
+{}\ref{fig:GeneralizedViewStateDiagram} (UML state diagram).  Figure
+??? shows.
+
+
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{GeneralizedViewClassDiagram}
+%}
+\end{center}
+\caption{
+\label{fig:GeneralizedViewClassDiagram}
+Parent and child classes for ``generalized view'' idiom .}
+\end{figure}
+\esinglespace}
+
+
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.65]{GeneralizedViewStateDiagram}
+%}
+\end{center}
+\caption{
+\label{fig:GeneralizedViewStateDiagram}
+State behavior for parent object in ``generalized view'' idiom .}
+\end{figure}
+\esinglespace}
+
+
+
+
+
+
+
+A simplified class declaration for the Thyra MultiVector subclass that
+implements non-contiguous views is shown in Listing
+{}\ref{listing:DefaultSpmdMultiVector-decl}.
+
+
+\begin{listing}:  Class declaration for Thyra MultiVector implementation
+of multi-vector views as ``generalized views''  \\
+\label{listing:DefaultSpmdMultiVector-decl}
+{\small\begin{verbatim}
+  ToDo: List out DefaultSpmdMultiVector
+\end{verbatim}}
+\end{listing}
+
+
+
+
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=270,scale=0.50]{MultiVectorView}
+%}
+\end{center}
+\caption{
+\label{fig:MultiVectorView}
+Depiction of contiguous and non-continguous multi-vector column views.}
+\end{figure}
+\esinglespace}
+
+
+
 
 ToDo: Fill this in!
 
