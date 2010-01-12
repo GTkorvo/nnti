@@ -7251,76 +7251,71 @@ thrown a dangling reference exception.
 
 One of the most useful and powerful idioms related to the use of the
 Teuchos memory management classes is the ``generalized view'' idiom.
-Before describing the details of the ``generalized view'' idiom, first
-a precise definition of a ``view'' is in order.  In this context, a
-``view'' is some object that is created off of a parent object and
-provides some type of access to some part of the the parent.  Views
-can be changeable or non-changeable and can be persisting or
-semi-persisting (see Section
+In this context, a ``view'' is some object that is created off of a
+parent object and provides some type of access to some part of the the
+parent.  Views can be changeable or non-changeable and can be
+persisting or semi-persisting (see Section
 {}\ref{sec:persisting-nonpersisting-associations} for the definition
 of persisting and semi-persisting associations).  Views can also be
 direct views or ``generalized views'' (i.e.\ potentially detached
 non-direct views).
 
-ToDo: Show a UML figure of a parent and a view.
-
 A direct view is one which directly points into the the internal data
 structures of the parent so a change of the view instantaneously
 changes the parent and changes to the parent instantaneously changes
 the view.  An exampmle of a direct view is an iterator into an
-container such as is returned from {}\texttt{std::vector::begin()},
-{}\texttt{Array::begin()} and {}\texttt{ArrayView::begin()}.  Other
-examples of direct views include {}\texttt{ArrayView}s of
-{}\texttt{Array} and {}\texttt{ArrayRCP} objects.  Direct views can be
-changeable (non-const) and non-changeable (const) as is demonstrated
-with iterators and {}\texttt{ArrayView}s.  Direct views are a plesure
-to work with but they also fundamentally constrain the implementation
-of the parent objects that they are providing the views into (but not
-always).  In the case of contiguous array containers like
-{}\texttt{std::vector} and {}\texttt{ArrayRCP}, constraining the
-implementation to store a pointer to a contiguous array of data
-internally is not a problem.  However, for more general classes, the
-rigid constraints imposed by direct views are unacceptable and break
-the abstraction in most cases.  For example, if an abstract matrix
-object provides direct views of the rows of a matrix then the matrix
-must necessarliy be stored in a row-major data-structure, precluding
-other possibilities.  Once a direct row-based view is supported by
-such a matrix class, it becomes impossible to change the internal
-representation of the matrix to anything other than a row-oriented
-implementation.
+container such as is returned from {}\texttt{std::vector::begin()} or
+{}\texttt{std::list::begin()}.  Other examples of direct views include
+{}\texttt{ArrayView}s of {}\texttt{Array} and {}\texttt{ArrayRCP}
+objects.  Direct views can be changeable (non-const) and
+non-changeable (const) as is demonstrated with iterators and
+{}\texttt{ArrayView}s.  Direct views are a plesure to work with but
+they also fundamentally constrain the implementation of the parent
+objects that they are providing the views into.  In the case of
+contiguous array containers like {}\texttt{std::vector} and
+{}\texttt{ArrayRCP}, constraining the implementation to store a
+pointer to a contiguous array of data internally is not a problem,
+that is an immportant and proper design constraint for these classes.
+However, for more general classes, the rigid constraints imposed by
+direct views are unacceptable and break the abstraction in most cases.
+For example, if an abstract matrix object provides direct views of the
+rows of a matrix then the matrix must necessarliy be stored in a
+row-major data-structure, precluding other possibilities.  Once a
+direct row-based view is supported by such a matrix class, it becomes
+impossible to change the internal representation of the matrix to
+anything other than a row-oriented implementation and still maintain
+high performance and a reasonable implementation.
 
 Because direct views can overly constrain the implementation freedom
 of the parent, in order to allow for the fullest freedom to pick the
 internal implementations of the parent and the view seprately, we must
-instead consider using potentially detached non-direct views otherwise
-defined here as ``generalized views''.  A ``generalized view'' is a
-view of a parent object that is not guaranteed to be a direct view
-such that changes to the view are not guaranteed to be instantaneously
+instead consider using potentially detached non-direct views defined
+here as ``generalized views''.  A ``generalized view'' is a view of a
+parent object that is not guaranteed to be a direct view such that
+changes to the view are not guaranteed to be instantaneously
 propagated to the parent and visa versa.  One example of a case where
-a ``generalized view'' is needed is when you need to create a view of
+a ``generalized view'' is needed is when creating a view of
 non-contiguous columns of a dense matrix but for the sake of
-efficiency you would like to create a temporary contiguous copy as a
-new dense matrix.  This type of view is used in the implementation of
-Thyra MultiVector non-contiguous column views [???] which is depecited
-in Figure {}\ref{fig:MultiVectorView}. In the Thyra MultiVector
-implementation, when the client requests a view of a set of
-non-contiguous columns, the implemetion will create a temporary
-contiguous copy which improves performance of many types of
-operations.  Before describing the Thyra MultiVector example in more
-detail below, first, we present a generic description of the
-``generalized view'' idiom.
-
-The most general statement of the ``generalized view'' idiom is Figure
-{}\ref{fig:GeneralizedViewClassDiagram} (UML class diagram) and Figure
-{}\ref{fig:GeneralizedViewStateDiagram} (UML state diagram).  Figure
-??? shows.
+efficiency one must create a temporary contiguous copy as a new dense
+matrix\footnote{Using contiguous columns of a fortra-style
+column-major dense matrix is require in order to take advantage of
+high performance BLAS routines.}.  This type of generalized view is
+used in the implementation of Thyra MultiVector non-contiguous column
+views [???] which is depecited in Figure
+{}\ref{fig:MultiVectorView}. In the Thyra MultiVector implementation,
+when the client requests a view of a set of non-contiguous columns,
+the implemetion will create a temporary contiguous copy which results
+in improved performance of many types of operations.  The Thyra
+example of non-contiguous column views is a good example because it is
+a simple case to describe yet has all the features needed to
+demonstrate the workings and the generalized view idiom.
 
 
 {\bsinglespace
 \begin{figure}
 \begin{center}
 %\fbox{
-\includegraphics*[angle=270,scale=0.65]{GeneralizedViewClassDiagram}
+\includegraphics*[angle=0,scale=0.65]{GeneralizedViewClassDiagram}
 %}
 \end{center}
 \caption{
@@ -7334,7 +7329,7 @@ Parent and child classes for ``generalized view'' idiom .}
 \begin{figure}
 \begin{center}
 %\fbox{
-\includegraphics*[angle=270,scale=0.65]{GeneralizedViewStateDiagram}
+\includegraphics*[angle=0,scale=0.65]{GeneralizedViewStateDiagram}
 %}
 \end{center}
 \caption{
@@ -7344,14 +7339,267 @@ State behavior for parent object in ``generalized view'' idiom .}
 \esinglespace}
 
 
+Before describing the Thyra MultiVector example in more detail, first,
+a generic description of the ``generalized view'' idiom is presented.
+The most general description of the ``generalized view'' idiom is
+shown in Figure {}\ref{fig:GeneralizedViewClassDiagram} (UML class
+diagram) and Figure {}\ref{fig:GeneralizedViewStateDiagram} (UML state
+diagram).  Figure {}\ref{fig:GeneralizedViewClassDiagram} shows two
+generic classes, a {}\ttt{Parent} and a {}\texttt{View}.  In this
+case, only one type of the view is shown but in reality there can be
+several different types of views into a single parent object (as there
+are in the Thyra MultiVector case).  A view is created using either
+the {}\ttt{createNonconstView(...)} or the {}\ttt{createView(...)} 
+functions.  In either case, the returned view is wrapped in {}\ttt{RCP}
+object.  There are two purposes for warpping the view in an
+{}\ttt{RCP} objects.  First, a new {}\ttt{View} object may need to be
+created to satisify the view request (and therefore needs {}\ttt{RCP}
+to take care to control the lifetime of the dynamically allocated
+object).  Second, the action needed to resync the view up with the
+parent can be attached to the customized deallocator of the
+{}\ttt{View} object as an embedded object.  In fact, the
+{}\ttt{Parent} object is not guaranteed to be updated after changes to
+the view are made until the view is destroyed.  To demonstrate,
+consider the client code in Listing
+{}\ref{listing:generalized-view-ex1}.
 
 
+\begin{listing}:  Example of the use of a generalized view  \\
+\label{listing:generalized-view-ex1}
+{\small\begin{verbatim}
+  void changeParent(const Ptr<Parent> &parent)
+  {
+    // Create a changeable view
+    const RCP<View> view = parent->createNonconstView(...);
+
+    // Chnage the parent through the view
+    view->makeChange(...);
+    view->makeChange(...);
+    ...
+
+    // Destroy the view an resyc the view with the parent
+    view = null
+
+    // Now the parent has been updated for changes through the view!
+
+  }
+\end{verbatim}}
+\end{listing}
 
 
+The code in Listing {}\ref{listing:generalized-view-ex1} demonstrates
+that the parent is only guaranteed to be updated after the non-const
+generalized view has been destroyed.  The state of the parent while a
+changeable non-const view is active is undefined.  One of three
+possibilities exist for the state of the parent while a non-const view
+is active.  First, if the view just happens to be a direct view, then
+changes to the view instantaneously are reflected in the parent.
+Second, if the view is a completely separate chunk of data, changes to
+the view do not affect the state of the parent at all until the view
+is destroyed and the data in the view is copied into the parent in the
+appropriate way.  The third option is somewhere inbetween the first
+two; part of the view's data may directly point back into the parent's
+internal data structures and the rest of the view's data may be
+separate from the parent.
 
-A simplified class declaration for the Thyra MultiVector subclass that
-implements non-contiguous views is shown in Listing
-{}\ref{listing:DefaultSpmdMultiVector-decl}.
+In order to allow complete freedom in how a generalized view is
+implemented and to allow the implementation to change at will, a
+relatively strict usage protocal must be defined as shown in the
+parent's state diagram in Figure
+{}\ref{fig:GeneralizedViewStateDiagram}.  With respect to generalized
+views, the {}\ttt{Parent} has one of three states; no views, only
+const views, and having a non-const view.  The default state of the
+parent is 'no views'.  In this state, either a const or a non-const
+view can be created.  When a const view is created, the parent enters
+the state 'has const- views'.  In this state, the parent object is
+still allowed to be queried and other const-views can be created.
+However, while there are active const views, a non-const view can not
+be created.  The reason that non-const views can not be allowed while
+const views are created is that creating a non-const view and then
+changing it while const views are active would put the const views
+into an undefined state.  If the const and non-const views happened to
+be implemented as direct views, then changes to the non-const view
+would not only change the parent but it would also change the const
+views.  However, if the views are implemented as detached copies of
+data, the changes to the non-const view would not be expected to be
+propogated to the existing const views.  Since this type of ambiguity
+would destroy the abstraction, the generalized view idiom simply
+states that creating non-const views on the parent while const views
+are active is just not allowed.  Likewise, any operations on the
+parent that might change the state in a way that would affect the
+views must also be disallowed.  In summary, when non-const views are
+active, the non-const interface of the parent must be locked down.
+When the last const view is destroyed, the parent goes back to the 'no
+views' state.
+
+When a non-const view is created the parent goes into the 'has
+non-const view' state.  In this state, no other non-const or const
+views can be created and the entire const and non-const interface of
+the parent must be locked down.  In essense, when a non-const view is
+active, the parent object has to be completely left along.  The reason
+for this should be obvious.  When a non-const view is represented as a
+separate copy of data, then the state of the parent is undefined until
+the non-const view is destroyed and the data is written back.  In this
+case, a query of the parent would not show the changes made in the
+active non-const view.  Again, this type of ambiguity would destroy
+the abstraction and therefore the parent object must be totally locked
+down while a non-const view is active.  Likewise, only one non-const
+view can be allowed at any one time due to similar arguments.  When
+the non-const view is destroyed, any changes in the data are written
+back to the parent's internal data structures and the parent goes back
+to the state 'no views'.
+
+In order to allow for the highest performance and the simplest
+implemtations of the parent and the view in all cases, the generalized
+view idiom states that views are semi-peristing; that is, the views
+are only valid while the client's {}\texttt{RCP} to the parent is
+still active and the view is not expected to live on past the lifetime
+of the parent.  Therefore, any generalized views that remain after the
+last strong {}\ttt{RCP<Parent>} object is released will result in
+dangling reference views.  For example, the code in Listing
+{}\ref{listing:generalized-view-dangling} would result in a dangling
+reference exception in a debug-mode node-tracing build.
+
+
+\begin{listing}:  Example of a dangling reference generalized view  \\
+\label{listing:generalized-view-dangling}
+{\small\begin{verbatim}
+  // Create and initialize parent
+  RCP<Parent> parent = createParent(...);
+  ...
+
+  // Create a view
+  RCP<const View> view = parent->createView(...);
+
+  // Destroy the parent (invalidating the existing view)
+  parent = null;
+
+  // Try to access the now dangling view
+  view->makeChange(...); // Throws dangling reference exception!
+\end{verbatim}}
+\end{listing}
+
+
+Another important aspect of the generalized view idiom is that it is
+important to distinguish between changeable non-const views and
+non-changeable const views.  In the case of const views, if a separate
+copy of the data must be created to support the view, the data does
+not have to be written back to the parent when the view is destroyed.
+This makes const views fundamentally more efficient than non-const
+views (which must write back their data when they are destroyed).
+Because const views are potentially more efficient, the unadorned name
+{}\ttt{createView(...)} is given to create const views while the
+longer name {}\ttt{createNonconstView(...)} is used to create
+non-const views.  The idea is that a developer is more likely to call
+the shorter {}\ttt{createView(...)} function creating a more efficient
+and safe const view.  If a const view is all the client code requires,
+then all is good.  However, if the client code really needs to change
+the parent object through the view, then the code will not compiler
+and the developer will need to change to create a non-const view
+through {}\ttt{createNonconstView(...)}.
+
+Because the parent object gets locked down when generalized views are
+active, it is important that client code only create views at the last
+possible moment and then release them at the earliest possible moment.
+The best way to do this, when possible, is to create the view in the
+same satement where the view will be used as demonstrated in Listing
+{}\ref{listing:generalized-view-min-lifetime}.
+
+
+\begin{listing}:  Example of mimimizing the lifetime of a generalized
+view  \\
+\label{listing:generalized-view-min-lifetime}
+{\small\begin{verbatim}
+  void changeParentThroughView(const Ptr<Parent> &parent)
+  {
+    changeTheView(*parent-createNonconstView());
+    queryTheView(*parent->createView());
+    ...
+  }
+\end{verbatim}}
+\end{listing}
+
+
+The client code in Listing
+{}\ref{listing:generalized-view-min-lifetime} works just fine because
+the temporary {}\ttt{RCP<[const] View>} objects managed by the
+compiler are guaranteed to exist until the full statement they are
+created in ends.
+
+The last issue to discuss related to the generalized view idiom is
+that, depending on the nature of the parent and the view classes, it
+may be reasonable to have the parent object partitioned into different
+logical pieces and then apply the behaviors shown in Figure
+{}\ref{fig:GeneralizedViewStateDiagram} to each of these logical
+pieces separately.  For example, we can treat each row or each column
+in a matrix object as a separate logical piece such that we can allow
+separate views of each of the rows or columns independent of each
+other.  This is the case with the Thyra MultiVector example to be
+described below.  However, any bulk query operations on the parent
+object (like taking an induced matrix norm) must be locked out while
+non-const views are active.  Likewise, any bulk modifying operation
+(like assigning all the matrix entries to zero) must be locked out
+when any views are active.
+
+In summary, the main properties and features of the generalized view
+idiom are:
+
+\begin{itemize}
+
+{}\item Generalized views allow for complete abstraction,
+encapsulation, and the highest performance in all cases.  This is
+simply not possible to achieve with direct views.
+
+{}\item Non-const generalized views are only guaranteed to update the
+state of the parent after the view object has been released.
+
+{}\item A single parent object can provide more than one type of
+generalized view and views can be appplied separately to different
+logically distict parts of the parent object (e.g.\ to the rows or
+columns of an abstract matrix object).
+
+{}\item It is important to differentiate between changeable non-const
+views and non-changeable const views.  While detached non-const views
+must be copied back to parent when the view is released, const views
+do not not need to be copied back when the view is released (therefore
+improving performance).
+
+{}\item It is critcial that {}\ttt{RCP} objects be used to wrap the
+created view objects in order to allow the views to be dynamically
+created and to allow for specialized copy-back behavior when non-const
+views are destroyed.
+
+{}\item The flexibility and perforamnce gains allowed by the
+generalized view idiom come at the expense of more restricted usage
+patterns of the parent and views.
+
+  \begin{itemize}
+
+  {}\item Only one non-const view can be active for any logically
+  district part of the parent object at any one time and the parent
+  object must be locked down (or at least any functionality that
+  relates to the viewd part) while a non-const view is active.
+
+  {}\item Multiple const views can be active for any logically
+  district part of the parent object at any one time but the non-const
+  interface of the parent object (at least functonality that relates
+  to that viewed part) must be locked down while any const views are
+  active.
+
+  \end{itemize}
+
+\end{itemize}
+
+ToDo: Write a Teuchos utiltiy class to implement the guts of the
+debug-mode runtime checking needed to enforce the semantics of the
+generalized view idiom.  Use this utility class in a mock Teuchos
+object and in the Thyra::DefaultSpmdMultiVector class.
+
+Now that a overview of the generalized view idiom has been given,
+consider the Thyra MultiVector non-contiguous column view example
+mentioned earlier.  A simplified class declaration for the Thyra
+MultiVector subclass that implements non-contiguous views is shown in
+Listing {}\ref{listing:DefaultSpmdMultiVector-decl}.
 
 
 \begin{listing}:  Class declaration for Thyra MultiVector implementation
