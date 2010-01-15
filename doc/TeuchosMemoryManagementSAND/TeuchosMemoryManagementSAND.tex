@@ -202,7 +202,7 @@ foundation for our codes.  The challenges of writing software that
 uses raw memory management result in components that are overly ridgid
 in how they can be used and reused which fundamentally detacts for the
 impact that such software could otherwise have.  The problems created
-by the use of raw memory management can single handily derail the
+by the use of raw memory management can single-handily derail the
 vision of a large interconnected network of reusable CS\&E software
 components developed and used by many different CS\&E organizations
 [???].  Therefore, the issue of memory management has as much or more
@@ -1173,7 +1173,8 @@ allowed at all),
 
 {}\item have one or more virtual functions, and
 
-{}\item are usually designed to be used as base classes.
+{}\item are usually designed to be used as base classes or are derived
+from base classes.
 
 \end{itemize}
 
@@ -1206,7 +1207,7 @@ using Reference Semantics.  For example, it is very common to choose
 to dynamically allocate large value objects like
 {}\texttt{std::vector} and then pass around (smart) pointers and
 references to the object to avoid unnecessary and expensive copying
-and to facilitate sharing state.
+and to facilitate the sharing of state.
 
 While the ideas of Value Types and Reference Types and Value Semantics
 and Reference Semantics are long established in the C++ literature
@@ -1224,7 +1225,7 @@ into {}\textit{Value Objects} and {}\textit{Entities} in Domain Driven
 Design (DDD) {}\cite{DomainDrivenDesign}.  While there are
 similarities between DDD's Value Objects and Entities and C++'s Value
 Types and Reference Types, respectively, there is not a one-to-one
-mapping.  In DDD, the distinction between Value Object and an Entity
+mapping.  In DDD, the distinction between a Value Object and an Entity
 has more to do with the nature of the object in relation to the domain
 model and is not related to how memory is manged.  Evans assumes that
 you are using a language like Java where all objects use reference
@@ -1419,18 +1420,68 @@ The safe way to change an element is:
 \end{verbatim}}
 \end{listing}
 
-Here, we will say that the
-{}\texttt{std::vector::operator=(size\_type)} should only be used for
-non-persisting relationships as shown above.
+Here, we will say that {}\texttt{std::vector::operator[](size\_type)}
+should only be used for non-persisting associations as shown above.
 
-ToDo: Discuss the concept of a semi-persisting association with
-iterators as the classic example.  We need to recognize that we need
-to use semi-persisting associations some times for performance and
-ease of programming.
+Before leaving the topic of persisting and non-persisting
+associations, we have to recognize that there exists a third category
+of associations that lie in between strict persisting and
+non-persisting associations which we will refer to as semi-persisting
+assocaitions defined as:
 
-For a more detailed treatment of persisting and non-persisting
-associations, and on the basics of {}\texttt{RCP}, see the discussion
-in {}\cite{RefCountPtrBeginnersGuide}.
+\begin{itemize}
+
+{}\item\textit{Semi-persisting associations} are associations that
+(like persisting assocations) exist between two or more objects that
+extend past a single function call for formal function arguments, or a
+single statement for function return objects except were the use of
+the objects and the lifetime of the association have more ridgid
+constraints requiring greater care.
+
+\end{itemize}
+
+An example of a semi-persisting association is the use of an iterator
+to access an STL container.  For example, consider an iterator-based
+loop such as shown in Listing {}\ref{listing:SemiPersistingIterators}:
+
+
+\begin{listing}:\\
+\label{listing:SemiPersistingIterators}
+{\small\begin{verbatim}
+
+  void someFunc(std::vector<int> &v)
+  {
+    typedef std::vector<int>::iterator itr_t;
+    for (itr_t itr = v.begin(); itr != v.end(); ++itr) {
+      *itr = 5;
+    }
+  }
+\end{verbatim}}
+\end{listing}
+
+
+As shown in Listing {}\ref{listing:SemiPersistingIterators}, the
+iterator object {}\texttt{itr} is used well past (perhaps thousands of
+loop iterations) where it was created by the statement {}\ttt{itr\_t
+itr = v.begin()}.  There are, however, significant restrictions on how
+such iterators can be used: a) the iterator cannot be accessed after
+the originating parent object has been destroyed, and b) the iterator
+can not be accessed after the structure of the originating parent has
+changed (e.g.\ {}\ttt{v.resize(...)} was called).  For the sake of
+performance, we have to allow for the use of semi-persisting
+associations such as this.  Note that in the case of the STL
+containers that in a debug-mode checked STL build, these types of
+dangling iterator references will typically be detected.  This type of
+debug-mode runtime checking is the saving grace for the use of
+iterators and other types of semi-persisting associations which makes
+their use acceptable.
+
+Semi-persisting associations will also play a role in the use of the
+Teuchos memory management classes in situations where performance is
+critical (see Section {}\ref{sec:perf-tuning-strategies} and
+Commandments {}\ref{cmnd:ptr-semi-persisting} and
+{}\ref{cmnd:arrayview-semi-persisting} in Appendix
+{}\ref{apdx:commandments}).
 
 
 %
@@ -1471,7 +1522,7 @@ C++ pointers or the entire type safe system falls apart.
 objects and for handling contiguous arrays of objects.
 
 {}\item Differentiate memory management classes according to
-persisting and non-persisting associations.
+persisting and non-persisting (and semi-persisting) associations.
 
   \begin{itemize}
 
@@ -1480,6 +1531,9 @@ persisting and non-persisting associations.
 
   {}\item Do not impose the overhead of reference counting for memory
   management classes designed to handle non-persisting associations.
+
+  {}\item Do not impose the overhead of reference counting for memory
+  management classes designed to handle semi-persisting associations.
 
   \end{itemize}
 
@@ -1510,7 +1564,7 @@ all sorts of common errors like:.
 \begin{center}
 \begin{tabular}{|l|c|c|}
 \hline
-& Non-persisting
+& Non-persisting (and semi-persisting)
 & Persisting \\
 & Associations
 & Associations \\
@@ -1898,8 +1952,10 @@ done automatically if possible.
 The main purpose for the existence of the {}\texttt{Ptr} class is to
 replace raw C++ pointers in function calls for typical input,
 input/output, and output arguments where no persisting relationship is
-present.  For example, consider the function that modifies a type
-{}\texttt{A} object shown in Listing {}\ref{listing:modifyA-rawPtr}.
+present.  (the class {}\ttt{Ptr} should also be used for
+semi-persisting associations where single objects are involved.)  For
+example, consider the function that modifies a type {}\texttt{A}
+object shown in Listing {}\ref{listing:modifyA-rawPtr}.
 
 \begin{listing}:\\
 \label{listing:modifyA-rawPtr}
@@ -2129,6 +2185,12 @@ will stay valid, even in cases where you would assume that it should
 be if other idioms outlined in this paper are broken or in rare other
 cases even if no specific idiom rule is broken.
 
+Note that raw C++ references should never be used for representing
+semi-persisting associations because it is impossible to catch invalid
+usage like dangling references.  Instead, when a semi-persisting
+association is involved, always use {}\ttt{Ptr} instead of a raw C++
+reference.
+
 
 %
 {}\subsection{Memory management classes replacing raw pointers for
@@ -2209,7 +2271,7 @@ Common members and non-members for {}\texttt{ArrayView},
 \end{center}}
 \end{table}
 
-ToDo: Move the ``Common nonmeber function'' items to a more general
+ToDo: Move the ``Common nonmember function'' items to a more general
 section since they apply to all the Teuchos memory management types,
 not just arrays.
 
@@ -2274,9 +2336,11 @@ in Appendix {}\ref{sec:unsigned_size_type}.
 The class {}\texttt{ArrayView}, the simplest of the Teuchos array
 memory management classes, is designed to replace raw pointers in
 non-persisting associations primarily for formal function array
-arguments.  In an optimized build, it simply holds a raw base array
-pointer and an integer size.  In an optimized build,
-{}\texttt{ArrayView} looks like in Listing {}\ref{listing:ArrayView}.
+arguments.  ({}\ttt{ArrayView} is also to be used for semi-persisting
+assocations as well.)  In an optimized build, an {}\texttt{ArrayView}
+object simply holds a raw base array pointer and an integer size.  In
+an optimized build, {}\texttt{ArrayView} looks like in Listing
+{}\ref{listing:ArrayView}.
 
 {}\begin{listing}: {}\texttt{Teuchos::ArrayView} declaration (See
 Table {}\ref{tbl:common-array-type-members} for common array members.)
@@ -2462,7 +2526,7 @@ Listing {}\ref{listing:ArrayRCP}.
     ArrayRCP<T> operator+(size_type offset) const;
     ArrayRCP<T> operator-(size_type offset) const;
   
-    // ArrayRCP Views 
+    // ArrayRCP Views
     ArrayRCP<const T> getConst() const;
     ArrayRCP<T> persistingView(size_type lowerOffset, size_type size) const;
   
@@ -3385,12 +3449,6 @@ constructor.  A {}\textit{non-member constructor} compliant
 \end{verbatim}}
 \end{listing}
 
-ToDo: Change over to {}\texttt{createWidget()} as the default idiom
-since it is more clear and state that {}\texttt{widget()} can also be
-used in contexts where it is clear what is happening.  Also, change
-all such non-member constructors to use the createSomeClass() name for
-non-member constructors.
-
 Using the non-member constructor function {}\texttt{widget()}, the
 unsafe constructor call in Listing {}\ref{listing:BlagetConstruct1} can
 be written as shown in Listing {}\ref{listing:BlagetConstruct3}.
@@ -3627,6 +3685,10 @@ Idioms for passing reference-type objects to C++ functions.}
 \end{table}
 
 
+ToDo: Add tables for semi-persisting associations (i.e. either Ptr or
+ArrayView but never raw C++ references).
+
+
 Here we describe a convention for the specification of the formal
 arguments for C++ functions that that maximizes compile-time and
 run-time checking, yields near optimal performance, and is highly self
@@ -3848,6 +3910,10 @@ Idioms for returning value-type objects from C++ functions.}
 Idioms for returning reference-type objects from C++ functions.}
 %
 \end{table}
+
+
+ToDo: Add tables for semi-persisting associations (i.e. either Ptr or
+ArrayView but never raw C++ references).
 
 
 These five different properties are the same five described for formal
@@ -7360,7 +7426,7 @@ code in Listing {}\ref{listing:generalized-view-ex1}.
 
 
 {\bsinglespace
-\begin{figure}
+\begin{figure}[p]
 \begin{center}
 %\fbox{
 \includegraphics*[angle=0,scale=0.65]{GeneralizedViewClassDiagram}
@@ -7374,7 +7440,7 @@ Parent and child classes for ``generalized view'' design pattern.}
 
 
 {\bsinglespace
-\begin{figure}
+\begin{figure}[p]
 \begin{center}
 %\fbox{
 \includegraphics*[angle=0,scale=0.65]{GeneralizedViewStateDiagram}
@@ -7413,20 +7479,20 @@ pattern.}
 
 The code in Listing {}\ref{listing:generalized-view-ex1} demonstrates
 that the parent is only guaranteed to be updated after the non-const
-generalized view has been destroyed.  The state of the parent while a
-non-const view is active is undefined.  One of three possibilities
-exist for the state of the parent while a non-const view is active.
-First, if the view just happens to be a direct view, then changes to
-the view instantaneously are reflected in the parent.  Second, if the
-view is a completely separate chunk of data, changes to the view do
-not affect the state of the parent at all until the view is destroyed
-and the data in the view is copied into the parent in the appropriate
-way.  The third option is somewhere in between the first two; part of
-the view's data may directly point back into the parent's internal
-data structures and the rest of the view's data may be separate from
-the parent.  In this case, the state of the parent object may actually
-violate its internal invariants and the parent object would not even
-be usable while the non-const view is active.
+generalized view has been destroyed.  The state of the parent is
+undefined while a non-const view is active.  One of three
+possibilities exist for the state of the parent while a non-const view
+is active.  First, if the view just happens to be a direct view, then
+changes to the view instantaneously are reflected in the parent.
+Second, if the view is a completely separate chunk of data, changes to
+the view do not affect the state of the parent at all until the view
+is destroyed and the data in the view is copied into the parent in the
+appropriate way.  The third option is somewhere in between the first
+two; part of the view's data may directly point back into the parent's
+internal data structures and the rest of the view's data may be
+separate from the parent.  In this case, the state of the parent
+object may actually violate its internal invariants and the parent
+object would not even be usable while the non-const view is active.
 
 In order to allow complete freedom in how a generalized view is
 implemented and to allow the implementation to change at will, a
@@ -7632,7 +7698,7 @@ debug-mode runtime checking needed to enforce the semantics of the
 generalized view design pattern.  Use this utility class in a mock Teuchos
 object and in the Thyra::DefaultSpmdMultiVector class.
 
-Now that a overview of the generalized view design pattern has been
+Now that an overview of the generalized view design pattern has been
 given, the Thyra MultiVector non-contiguous column view example
 mentioned earlier is described in more detail.  This is a good example
 to highlight the features of the generalized view design pattern and
@@ -7649,7 +7715,6 @@ of multi-vector views as ``generalized views''  \\
   ToDo: List out DefaultSpmdMultiVector
 \end{verbatim}}
 \end{listing}
-
 
 
 ToDo: Fill this in!
@@ -8267,14 +8332,20 @@ persisting associations (see Section
 {}\ref{sec:persisting-nonpersisting-associations}).
 \end{commandment}
 
-{}\textit{Exception:} When performance constraints do not allow the
-reference-counting overhead of {}\texttt{RCP}, then {}\texttt{Ptr} can
-be used instead with appropriate documentation about the performance
-optimization.  You should never have to retreat back to using a raw
-pointer in these cases.  At least with {}\texttt{Ptr}, invalid usage
-will be checked for in a debug build so you don't loose any debug-mode
-runtime checking when using {}\texttt{Ptr} instead of {}\texttt{RCP}
-if you really don't need reference-counting machinery.
+\begin{commandment}\label{cmnd:ptr-semi-persisting}
+Thou shall use {}\texttt{Ptr} for handling single objects for all
+semi-persisting associations (see Section
+{}\ref{sec:persisting-nonpersisting-associations}).
+\end{commandment}
+{}\textit{Justification:} When performance constraints do not allow
+the reference-counting overhead of {}\texttt{RCP}, then {}\texttt{Ptr}
+can be used instead to form a semi-persisting association which should
+be accompanied with the appropriate documentation about the
+performance optimization.  You should never have to retreat back to
+using a raw pointer in these cases.  At least with {}\texttt{Ptr},
+invalid usage will be checked for in a debug build so you don't loose
+any debug-mode runtime checking when using {}\texttt{Ptr} instead of
+{}\texttt{RCP} if you really don't need reference-counting machinery.
 
 \begin{commandment}
 Thou shall use {}\texttt{ArrayRCP} for handling contiguous arrays of
@@ -8282,9 +8353,15 @@ objects for all persisting associations (see Section
 {}\ref{sec:persisting-nonpersisting-associations}).
 \end{commandment}
 
-{}\textit{Exception:} When performance constraints do not allow the
-reference-counting overhead of {}\texttt{ArrayRCP}, then
-{}\texttt{ArrayView} can be used instead with appropriate
+\begin{commandment}\label{cmnd:arrayview-semi-persisting}
+Thou shall use {}\texttt{ArrayView} for handling contiguous arrays of
+objects for all semi-persisting associations (see Section
+{}\ref{sec:persisting-nonpersisting-associations}).
+\end{commandment}
+{}\textit{Justification:} When performance constraints do not allow
+the reference-counting overhead of {}\texttt{ArrayRCP}, then
+{}\texttt{ArrayView} can be used instead to form a semi-persisting
+association which should be accompanied with the appropriate
 documentation about the performance optimization.  You should never
 have to retreat back to using a raw pointer in these cases.  At least
 with {}\texttt{ArrayView}, invalid usage will be checked for in a
