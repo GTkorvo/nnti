@@ -1258,6 +1258,9 @@ return objects.
 
 \end{itemize}
 
+ToDo: Mention how UML deals with persisting and non-persisting
+assocations.
+
 To help define these two different types of associations, consider the
 class and function definitions in Listing
 {}\ref{listing:NonPersistingPersistingAssociationsRawPointers}.
@@ -6077,6 +6080,7 @@ testability is a huge advantage of exception handling over calling
 
 %
 {}\subsection{Optimized performance}
+\label{sec:optimized-performance}
 %
 
 While debug-mode runtime checking is of great importance, of equal
@@ -6552,7 +6556,8 @@ C++ pointers in an optimized non-debug build.
 
 
 %
-{}\subsubsection{Performance tuning strategies (and compromises)}
+{}\subsubsection{Performance tuning strategies (semi-persisting
+associations)}
 \label{sec:perf-tuning-strategies}
 %
 
@@ -6796,15 +6801,15 @@ non-debug optimized build with no space or time overhead (becuase all
 the object actually are raw pointers in this case).
 
 The point of this section is to acknowlege that there will be
-situations in low-level code where the strict adherence to the using
-of the reference-counted types {}\texttt{RCP} and {}\texttt{ArrayRCP}
-for persisting associations may yield acceptable performance and
-therefore we must instead provide for semi-persisting views.  However,
-as demonstrated above, the solution to the performance problem is not
-to ever fall back to using raw pointers but instead to fall back on
-the non-reference-counted types {}\texttt{Ptr} and
-{}\texttt{ArrayView} (or {}\texttt{Array[RCP]::iterator}).  By using
-the types {}\texttt{Ptr} and {}\texttt{ArrayView} (or
+situations in low-level code where the strict adherence to using
+reference-counted types {}\texttt{RCP} and {}\texttt{ArrayRCP} for
+persisting associations may yield acceptable performance and therefore
+we must instead provide for semi-persisting views.  However, as
+demonstrated above, the solution to the performance problem is not to
+ever fall back to using raw pointers but instead to fall back on the
+non-reference-counted types {}\texttt{Ptr} and {}\texttt{ArrayView}
+(or {}\texttt{Array[RCP]::iterator}).  By using the types
+{}\texttt{Ptr} and {}\texttt{ArrayView} (or
 {}\texttt{Array[RCP]::iterator}), we maintain all the desirable
 debug-mode runtime checking without any of the reference-counting
 overhead in a non-debug optimized build.  We can have our cake and eat
@@ -6824,7 +6829,7 @@ are described in the following subsections.
 
 
 %
-{}\subsubsection{The ``separate construction'' and ``just-in-time''
+{}\subsubsection{The separate construction and just-in-time
 initialization idioms}
 \label{sec:separate-construct-init}
 %
@@ -7040,7 +7045,7 @@ initialized.  However, good class design makes this fairly easy.
 
 
 %
-{}\subsubsection{The ``object self-reference'' idiom}
+{}\subsubsection{The object self-reference idiom}
 \label{sec:self-references}
 %
 
@@ -7318,13 +7323,13 @@ thrown a dangling reference exception.
 
 
 %
-{}\subsubsection{The ``generalized view'' design pattern}
+{}\subsubsection{The generalized view design pattern}
 \label{sec:generalized-view-design-pattern}
 %
 
 One of the most useful and powerful idioms / design-patterns related
 to the use of the Teuchos memory management classes is the
-``generalized view'' design pattern\footnote{Here we using the term
+``generalized view'' design pattern\footnote{Here we use the term
 'design pattern' and not 'idiom' to describe the ``generalized view''
 design pattern.  The reason that the more general term 'design
 pattern' is being used is that the majority of the pattern is really
@@ -7366,6 +7371,12 @@ impossible to change the internal representation of the matrix to
 anything other than a row-oriented implementation and still maintain
 high performance and a reasonable implementation.
 
+
+%
+{}\subsubsection*{Basic overview of the ``generalized view'' design
+pattern}
+%
+
 Because direct views can overly constrain the implementation freedom
 of the parent, in order to allow for the fullest freedom to pick the
 internal implementations of the parent and the view separately, we must
@@ -7373,7 +7384,7 @@ instead consider using potentially detached non-direct views defined
 here as ``generalized views''.  A ``generalized view'' is a view of a
 parent object that is not guaranteed to be a direct view such that
 changes to the view are not guaranteed to be instantaneously
-propagated to the parent and visa versa.  One example of a case where
+propagated to the parent and vice versa.  One example of a case where
 a ``generalized view'' is needed is when creating a view of
 non-contiguous columns of a dense matrix where for the sake of
 efficiency one must create a temporary contiguous copy as a new dense
@@ -7649,6 +7660,311 @@ matrix norm) must be locked out while non-const views are active.
 Likewise, any bulk modifying operation (like assigning all the matrix
 entries to zero) must be locked out when any views are active.
 
+
+%
+{}\subsubsection*{Example implementation of generalized views for
+MultiVector non-contiguous column views}
+%
+
+Now that a basic overview of the generalized view design pattern has
+been given, the Thyra MultiVector non-contiguous column view example
+mentioned earlier and depicted in Figure {}\ref{fig:MultiVectorView}
+is described in more detail.  This is a good example to highlight the
+features of the generalized view design pattern and the usage of the
+{}\ttt{RCP} class to manage detached view semantics.  A simplified
+class declaration for the Thyra MultiVector subclass showing the
+relevant class members is given in Listing
+{}\ref{listing:DefaultSpmdMultiVector-decl}.
+
+
+\begin{listing}:  Class declaration for Thyra MultiVector implementation
+of multi-vector views as ``generalized views''  \\
+\label{listing:DefaultSpmdMultiVector-decl}
+{\small\begin{verbatim}
+  template<class Scalar>
+  class DefaultSpmdMultiVector : virtual public SpmdMultiVectorBase<Scalar> {
+  public:
+  
+    ...
+  
+    DefaultSpmdMultiVector(
+      const RCP<const SpmdVectorSpaceBase<Scalar> > &spmdRangeSpace,
+      const RCP<const ScalarProdVectorSpaceBase<Scalar> > &domainSpace,
+      const ArrayRCP<Scalar> &localValues,
+      const Ordinal leadingDim = -1
+      );
+  
+    ...
+  
+  protected:
+  
+    ...
+  
+    RCP<const MultiVectorBase<Scalar> >
+    nonContigSubViewImpl(const ArrayView<const int> &cols) const;
+  
+    RCP<MultiVectorBase<Scalar> >
+    nonconstNonContigSubViewImpl(const ArrayView<const int> &cols);
+  
+    ...
+    
+  private:
+  
+    RCP<const SpmdVectorSpaceBase<Scalar> > spmdRangeSpace_;
+    RCP<const ScalarProdVectorSpaceBase<Scalar> > domainSpace_;
+    ArrayRCP<Scalar> localValues_;
+    Ordinal leadingDim_;
+  
+    ArrayRCP<Scalar> createContiguousCopy(const ArrayView<const int> &cols) const;
+    
+  };
+  
+  // Non-member constructor
+  template<class Scalar>
+  RCP<DefaultSpmdMultiVector<Scalar> >
+  defaultSpmdMultiVector(
+    const RCP<const SpmdVectorSpaceBase<Scalar> > &spmdRangeSpace,
+    const RCP<const ScalarProdVectorSpaceBase<Scalar> > &domainSpace,
+    const ArrayRCP<Scalar> &localValues,
+    const Ordinal leadingDim = -1
+    )
+  {
+    return Teuchos::rcp(
+      new DefaultSpmdMultiVector<Scalar>(
+        spmdRangeSpace, domainSpace, localValues, leadingDim
+        )
+      );
+  }
+\end{verbatim}}
+\end{listing}
+
+
+The internal private data-structure for a multi-vector is very simple
+as shown in Listing {}\ref{listing:DefaultSpmdMultiVector-decl}.  A
+standard column-major Fortran-style dense matrix format is used where
+all of the data in the local processes is stored in a single
+contiguous {}\ttt{ArrayRCP<Scalar>} object.  The number of rows in the
+local process is given by {}\ttt{spmdRangeSpace\_->localSubDim()} and
+{}\ttt{leadingDim\_} is the stride between columns.
+
+The generalized views returned by the functions
+{}\ttt{nonContigSubViewImpl(...)} and
+{}\ttt{nonconstNonContigSubViewImpl(...)} are of the type
+{}\ttt{MultiVectorBase} which is the upper-most base class for
+{}\ttt{DefaultSpmdMultiVector}.  (As shown below, the concrete types
+of the views are actually {}\ttt{DefaultSpmdMultiVector}.) Therefore,
+this is an instance where the class types of the parent and view are
+actually the same.
+
+The implementations of the functions {}\ttt{nonContigSubViewImpl(...)} 
+and {}\ttt{nonconstNonContigSubViewImpl(...)} are given in Listing
+{}\ref{listing:DefaultSpmdMultiVector-subivew-impl}.
+
+
+{}\begin{listing}: Implementation of {}\ttt{DefaultSpmdMultiVector}
+functions {}\ttt{nonContigSubViewImpl(...)} and
+{}\ttt{nonconstNonContigSubViewImpl(...)} \\
+\label{listing:DefaultSpmdMultiVector-subivew-impl}
+{\small\begin{verbatim}
+  template<class Scalar>
+  RCP<const MultiVectorBase<Scalar> >
+  DefaultSpmdMultiVector<Scalar>::nonContigSubViewImpl(
+    const ArrayView<const int> &cols
+    ) const
+  {
+    THYRA_DEBUG_ASSERT_MV_COLS("nonContigSubViewImpl(cols)", cols);
+    const int numCols = cols.size();
+    const ArrayRCP<Scalar> localValuesView = createContiguousCopy(cols);
+    return defaultSpmdMultiVector<Scalar>(
+      spmdRangeSpace_,
+      createSmallScalarProdVectorSpaceBase<Scalar>(spmdRangeSpace_, numCols),
+      localValuesView
+      );
+  }
+  
+  template<class Scalar>
+  RCP<MultiVectorBase<Scalar> >
+  DefaultSpmdMultiVector<Scalar>::nonconstNonContigSubViewImpl(
+    const ArrayView<const int> &cols )
+  {
+    THYRA_DEBUG_ASSERT_MV_COLS("nonContigSubViewImpl(cols)", cols);
+    const int numCols = cols.size();
+    const ArrayRCP<Scalar> localValuesView = createContiguousCopy(cols);
+    const Ordinal localSubDim = spmdRangeSpace_->localSubDim();
+    RCP<CopyBackSpmdMultiVectorEntries<Scalar> > copyBackView =
+      copyBackSpmdMultiVectorEntries<Scalar>(cols, localValuesView.getConst(),
+        localSubDim, localValues_, leadingDim_);
+    return Teuchos::rcpWithEmbeddedObjPreDestroy(
+      new DefaultSpmdMultiVector<Scalar>(
+        spmdRangeSpace_,
+        createSmallScalarProdVectorSpaceBase<Scalar>(spmdRangeSpace_, numCols),
+        localValuesView),
+      copyBackView
+      );
+  }
+\end{verbatim}}
+\end{listing}
+
+
+The implementation of the sub-view functions in Listing
+{}\ref{listing:DefaultSpmdMultiVector-subivew-impl} is fairly simple.
+First, the private helper function {}\ttt{createContiguousCopy(...)}
+creates an {}\ttt{ArrayRCP<Scalar>} object for a contiguous copy of
+the non-contiguous columns being requested.  This contiguous copy of
+data is then given over to to create a new
+{}\ttt{DefaultSpmdMultiVector} object which represents the view.  The
+implementation of the function {}\ttt{createContiguousCopy(...)} is
+simple enough and is given in Listing
+{}\ref{listing:DefaultSpmdMultiVector-createContiguousCopy}.
+
+
+{}\begin{listing}: Implementation of {}\ttt{DefaultSpmdMultiVector}
+function {}\ttt{createContiguousCopy(...)}
+\label{listing:DefaultSpmdMultiVector-createContiguousCopy}
+{\small\begin{verbatim}
+  template<class Scalar>
+  ArrayRCP<Scalar>
+  DefaultSpmdMultiVector<Scalar>::createContiguousCopy(
+    const ArrayView<const int> &cols ) const
+  {
+    typedef typename ArrayRCP<Scalar>::const_iterator const_itr_t;
+    typedef typename ArrayRCP<Scalar>::iterator itr_t;
+    const int numCols = cols.size();
+    const Ordinal localSubDim = spmdRangeSpace_->localSubDim();
+    ArrayRCP<Scalar> localValuesView = Teuchos::arcp<Scalar>(numCols*localSubDim);
+    // Copy to contiguous storage column by column
+    const const_itr_t lv = localValues_.begin();
+    const itr_t lvv = localValuesView.begin();
+    for (int k = 0; k < numCols; ++k) {
+      const int col_k = cols[k];
+      const const_itr_t lv_k = lv + leadingDim_*col_k;
+      const itr_t lvv_k = lvv + localSubDim*k;
+      std::copy(lv_k, lv_k+localSubDim, lvv_k);
+    }
+    return localValuesView;
+  }
+\end{verbatim}}
+\end{listing}
+
+
+Note how iterators are used to perform the raw data copy in Listing
+{}\ref{listing:DefaultSpmdMultiVector-createContiguousCopy}.  This
+results in very well checked code in a debug-mode build (see Section
+{}\ref{sec:debug-mode-runtime-checking}) but very high performance
+code in a non-debug optimized build (see Section
+{}\ref{sec:optimized-performance}).
+
+Note that the key difference between the implementation of the
+functions {}\ttt{nonContigSubViewImpl(...)} and
+{}\ttt{nonconstNonContigSubViewImpl(...)} in Listing
+{}\ref{listing:DefaultSpmdMultiVector-subivew-impl} is that
+{}\ttt{nonconstNonContigSubViewImpl(...)} creates an {}\ttt{RCP} to an
+object of type {}\ttt{CopyBackSpmdMultiVectorEntries} and attaches it
+to the created {}\ttt{RCP<DefaultSpmdMultiVector<Scalar> > } as an
+embedded object (see Section {}\ref{sec:embedded-objecs}).  The
+destructor for {}\ttt{CopyBackSpmdMultiVectorEntries} performs the
+copy-back of the non-const view after the last {}\ttt{RCP} to the view
+is destroyed.  The implementation of the class
+{}\ttt{CopyBackSpmdMultiVectorEntries} is given in Listing
+{}\ref{listing:CopyBackSpmdMultiVectorEntries}.
+
+
+{}\begin{listing}: Implementation of the class
+{}\ttt{CopyBackSpmdMultiVectorEntries}
+\label{listing:CopyBackSpmdMultiVectorEntries}
+{\small\begin{verbatim}
+  template<class Scalar>
+  class CopyBackSpmdMultiVectorEntries {
+  public:
+    CopyBackSpmdMultiVectorEntries(
+      const ArrayView<const int> &cols,
+      const ArrayRCP<const Scalar> &localValuesView, const Ordinal localSubDim,
+      const ArrayRCP<Scalar> &localValues, const Ordinal leadingDim
+      )
+      : cols_(cols), localValuesView_(localValuesView), localSubDim_(localSubDim),
+        localValues_(localValues), leadingDim_(leadingDim)
+      {}
+    ~CopyBackSpmdMultiVectorEntries()
+      {
+        typedef typename ArrayRCP<const Scalar>::const_iterator const_itr_t;
+        typedef typename ArrayRCP<Scalar>::iterator itr_t;
+        // Copy from contiguous storage column by column
+        const int numCols = cols_.size();
+        const const_itr_t lvv = localValuesView_.begin();
+        const itr_t lv = localValues_.begin();
+        for (int k = 0; k < numCols; ++k) {
+          const int col_k = cols_[k];
+          const const_itr_t lvv_k = lvv + localSubDim_*k;
+          const itr_t lv_k = lv + leadingDim_*col_k;
+          std::copy( lvv_k, lvv_k + localSubDim_, lv_k );
+        }
+      }
+  private:
+    Array<int> cols_;
+    ArrayRCP<const Scalar> localValuesView_;
+    Ordinal localSubDim_;
+    ArrayRCP<Scalar> localValues_;
+    Ordinal leadingDim_;
+    // Not defined and not to be called
+    CopyBackSpmdMultiVectorEntries();
+    CopyBackSpmdMultiVectorEntries(const CopyBackSpmdMultiVectorEntries&);
+    CopyBackSpmdMultiVectorEntries& operator=(const CopyBackSpmdMultiVectorEntries&);
+  };
+
+  // Non-member constructor  
+  template<class Scalar>
+  RCP<CopyBackSpmdMultiVectorEntries<Scalar> >
+  copyBackSpmdMultiVectorEntries(
+    const ArrayView<const int> &cols,
+    const ArrayRCP<const Scalar> &localValuesView, const Ordinal localSubDim,
+    const ArrayRCP<Scalar> &localValues, const Ordinal leadingDim
+    )
+  {
+    return Teuchos::rcp(
+      new CopyBackSpmdMultiVectorEntries<Scalar>(
+        cols, localValuesView, localSubDim, localValues, leadingDim
+        )
+      );
+  }
+\end{verbatim}}
+\end{listing}
+
+
+The implementation of {}\ttt{CopyBackSpmdMultiVectorEntries} in Listing
+{}\ref{listing:CopyBackSpmdMultiVectorEntries} is straightforward.  When the
+destructor is called, it copies the data in the non-const view back to
+the native storage of the parent {}\ttt{DefaultSpmdMultiVector}
+object.
+
+ToDo: Write a Teuchos utility class to implement the guts of the
+debug-mode runtime checking needed to enforce the semantics of the
+generalized view design pattern.  Use this utility class in a mock Teuchos
+object and in the Thyra::DefaultSpmdMultiVector class.
+
+There are several things that are interesting about this example.
+First, by using the embedded object feature of {}\ttt{RCP} the code is
+able to implement the copy-back-to-parent functionality without having
+to write a new {}\ttt{MultiVector} subclass just for the view.  The
+{}\ttt{DefaultSpmdMultiVector} objects that are returned as views have
+no idea they are being used as views into other
+{}\ttt{DefaultSpmdMultiVector} objects and they need not care.
+Without the embedded object feature described in Section
+{}\ref{sec:embedded-objecs}, a different {}\ttt{MultiVector} subclass
+would have to be created with a destructor that would copy back the
+data.  Second, the constraints imposed by the generalized view design
+pattern shown in Figure {}\ref{fig:GeneralizedViewStateDiagram} ensure
+that no problems will arise due to the fact that the views are stored
+in detached copies of the data.  If changes to the parent
+{}\ttt{DefaultSpmdMultiVector} were allowed while a non-const
+{}\ttt{DefaultSpmdMultiVector} view was active, then all of the
+changes in the parent would be overwritten when the
+{}\ttt{DefaultSpmdMultiVector} view was destroyed.  Third, this
+example demonstrates why const views are fundamentally more efficient
+than non-const views.  In the case of a const view, the temporary
+contiguous copy of data must just be released and does not need to be
+copied back to the parent.  This saves the work imposed by the
+destructor on the {}\ttt{CopyBackSpmdMultiVectorEntries} object.
+
 In summary, the main properties and features of the generalized view
 design pattern are:
 
@@ -7698,41 +8014,9 @@ patterns of the parent and views.
 
 \end{itemize}
 
-ToDo: Write a Teuchos utility class to implement the guts of the
-debug-mode runtime checking needed to enforce the semantics of the
-generalized view design pattern.  Use this utility class in a mock Teuchos
-object and in the Thyra::DefaultSpmdMultiVector class.
-
-Now that an overview of the generalized view design pattern has been
-given, the Thyra MultiVector non-contiguous column view example
-mentioned earlier is described in more detail.  This is a good example
-to highlight the features of the generalized view design pattern and
-the usage of the {}\ttt{RCP} class to manage detached view semantics.
-A simplified class declaration for the Thyra MultiVector subclass that
-implements non-contiguous views is shown in Listing
-{}\ref{listing:DefaultSpmdMultiVector-decl}.
-
-
-\begin{listing}:  Class declaration for Thyra MultiVector implementation
-of multi-vector views as ``generalized views''  \\
-\label{listing:DefaultSpmdMultiVector-decl}
-{\small\begin{verbatim}
-  ToDo: List out DefaultSpmdMultiVector
-\end{verbatim}}
-\end{listing}
-
-
-ToDo: Fill this in!
-
-ToDo: Also mention semi-persisting direct views where multiple
-changeable views can be created to the same parent but that these
-views become invalidated once the parent changes its structure in a
-significant way.  This is what happens with the Array class with
-iterator and ArrayView views.
-
 
 %
-{}\subsubsection{The ``inverted object ownership'' idiom}
+{}\subsubsection{The inverted object ownership idiom}
 \label{sec:inverting-obj-ownership}
 %
 
