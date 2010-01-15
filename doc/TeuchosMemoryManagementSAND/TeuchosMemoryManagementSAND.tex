@@ -1233,7 +1233,8 @@ semantics.
 
 
 %
-{}\subsection{Persisting associations versus non-persisting associations}
+{}\subsection{Persisting associations versus non-persisting and
+semi-persisting associations}
 \label{sec:persisting-nonpersisting-associations}
 %
 
@@ -6566,21 +6567,21 @@ imparts at least 72 bytes of overhead for every reference-counted
 object (the overhead for {}\texttt{ArrayRCP} is slightly higher) and
 therefore {}\texttt{RCP} should not be used to manage massive numbers
 of small objects, just from a memory usage standpoint.  Likewise,
-{}\texttt{ArrayRCP} should not be used to mange large collectiosn of
-small arrays since the memory overhead can be significant.
+{}\texttt{ArrayRCP} should not be used to mange large collections of
+small arrays since the memory overhead could be significant.
 
 {}\item The extra runtime overhead of reference-counting machinery
-does not significantly increase dynamic memory allocation runtime
-costs.
+does not significantly increase dynamic memory allocation and
+deallocation runtime costs.
 
 {}\item The runtime reference-counting overhead of {}\texttt{RCP} with
 respect to {}\texttt{boost::shared\_ptr} can vary from as little as
-30\% on good optimizing compiler (e.g.\ GCC 4.1.2) to as much as 300\%
-or more on poor optimizing compiler (e.g.\ MSVC++ 2008).  Therefore,
-if portable peformance of your application is critical, make sure and
-use the reference-counting types at as high a level of granularity as
-you can such that it does not damage the quality of the software
-(i.e.\ flexibility, usability, maintainability).
+30\% on a good optimizing compiler (e.g.\ GCC 4.1.2) to as much as
+300\% or more on a poor optimizing compiler (e.g.\ MSVC++ 2008).
+Therefore, if portable peformance of your application is critical,
+make sure and use the reference-counting types at as high a level of
+granularity as you can such that it does not damage the quality of the
+software (i.e.\ flexibility, usability, maintainability).
 
 {}\item The most portable way to achieve high performance of raw array
 operations is to use iterators on {}\texttt{ArrayRCP} and
@@ -6613,11 +6614,14 @@ However, just because one can not use {}\texttt{RCP} and
 that this code should use raw pointers.  Instead, {}\texttt{Ptr} can
 be used instead of {}\texttt{RCP} and {}\texttt{ArrayView} can be used
 instead of {}\texttt{ArrayRCP} when the full semantics of persisting
-relationships are not needed.  By using the types {}\texttt{Ptr} and
-{}\texttt{ArrayView} instead of raw pointers we still get all of the
-strong debug-mode runtime checking that is described in Section
+relationships are not needed and instead only semi-persisting
+relationships are needed (see Section
+{}\ref{sec:persisting-nonpersisting-associations}).  By using the
+types {}\texttt{Ptr} and {}\texttt{ArrayView} instead of raw pointers
+for all semi-persisting associations we still get all of the strong
+debug-mode runtime checking that is described in Section
 {}\ref{sec:debug-mode-runtime-checking} (e.g.\ dangling reference
-checking, null checking, range checking, etc.) yet removes all
+checking, null checking, range checking, etc.) yet remove all
 reference-counting overhead in a non-debug optimized build.
 
 As an example, consider the design of a sparse matrix class that
@@ -6685,18 +6689,18 @@ Listing {}\ref{listing:zeroOutSparseMatrix-ArrayRCP} and similar use
 cases, it never seems reasonable that a client would grab
 {}\texttt{ArrayRCP} objects to internal rows and expect to have the
 row data persist even if the matrix changed structure or was deleted.
-Instead, we just need to set up the infrastructure to be able to
-detect those types of invalid usage in a debug-mode build but yield
-high performance an optimized build.  Therefore, it seems reasonble to
-replace {}\texttt{ArrayRCP} in
+Instead, we just need to set up the infrastructure for semi-persisting
+associations to be able to detect those types of invalid usage in a
+debug-mode build but yield high performance in an optimized build.
+Therefore, it seems reasonble to replace {}\texttt{ArrayRCP} in
 {}\texttt{SparseMatrix::getSparseRow(...)} in Listing
 {}\ref{listing:SparseMatrix-ArrayRCP} with {}\texttt{ArrayView}
 yielding the new {}\texttt{SparseMatrix} interface shown in Listing
 {}\ref{listing:SparseMatrix-ArrayView}.
 
 
-\begin{listing}: Sparse matrix class interface bending the idioms on 
-persisting relationships for the sake of performance \\
+\begin{listing}: Sparse matrix class interface using a semi-persisting
+assocation for row views for the sake of performance \\
 \label{listing:SparseMatrix-ArrayView}
 {\small\begin{verbatim}
   class SparseMatrix {
@@ -6715,7 +6719,7 @@ look like Listing {}\ref{listing:zeroOutSparseMatrix-ArrayView}.
 
 
 \begin{listing}: Client code using {}\texttt{ArrayView} form of the
- {}\texttt{SparseMatrix} class  \\
+{}\texttt{SparseMatrix} class with semi-persisting row views  \\
 \label{listing:zeroOutSparseMatrix-ArrayView}
 {\small\begin{verbatim}
   void zeroOutSparseMatrix(const Ptr<SparseMatrix> &M)
@@ -6794,10 +6798,11 @@ the object actually are raw pointers in this case).
 The point of this section is to acknowlege that there will be
 situations in low-level code where the strict adherence to the using
 of the reference-counted types {}\texttt{RCP} and {}\texttt{ArrayRCP}
-for persisting associations may yield acceptable performance.
-However, as demonstrated above, the solution to the performance
-problem is not to ever fall back to using raw pointers but instead to
-fall back on the non-reference-counted types {}\texttt{Ptr} and
+for persisting associations may yield acceptable performance and
+therefore we must instead provide for semi-persisting views.  However,
+as demonstrated above, the solution to the performance problem is not
+to ever fall back to using raw pointers but instead to fall back on
+the non-reference-counted types {}\texttt{Ptr} and
 {}\texttt{ArrayView} (or {}\texttt{Array[RCP]::iterator}).  By using
 the types {}\texttt{Ptr} and {}\texttt{ArrayView} (or
 {}\texttt{Array[RCP]::iterator}), we maintain all the desirable
