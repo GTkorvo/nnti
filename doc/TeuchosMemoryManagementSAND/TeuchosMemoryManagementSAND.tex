@@ -3468,32 +3468,33 @@ constructor.  A {}\textit{non-member constructor} compliant
 {}\ttt{Widget} class declaration is shown in Listing
 {}\ref{listing:WidgetNonmemberConstructor}.
 
-\begin{listing}: The Non-member Constructor Idiom\\
+{}\begin{listing}: The non-member constructor idiom for reference-type
+classes
 \label{listing:WidgetNonmemberConstructor}
 {\small\begin{verbatim}
   class Widget {
-    friend RCP<Widget> widget();
-  public: // Public interface
+  public:
+    static RCP<Widget> create() { return rcp(new Widget); }
     void display(std::ostream&);
   private: // or protected
-    Widget(); // Not for user's to call!
+    // Not for user's to call!
+    Widget();
+    Widget(const Widget&);
+    Widget& operator=(const Widget&);
   };
 
   // Non-member constructor function
-  inline
-  RCP<Widget> widget()
-  {
-    return rcp(new Widget());
-  }
+  inline RCP<Widget> widget()
+  { return Widget::create(); }
 \end{verbatim}}
 \end{listing}
 
-Using the non-member constructor function {}\ttt{widget()}, the
-unsafe constructor call in Listing {}\ref{listing:BlagetConstruct1} can
-be written as shown in Listing {}\ref{listing:BlagetConstruct3}.
+Using the non-member constructor function {}\ttt{widget()}, the unsafe
+constructor call in Listing {}\ref{listing:BlagetConstruct1} can be
+written as shown in Listing {}\ref{listing:BlagetConstruct3}.
 
-\begin{listing}: Clean and bullet-proof way using the ``non-member
-constructor function'' idiom \\
+{}\begin{listing}: Clean and bullet-proof way using the ``non-member
+constructor function'' idiom
 \label{listing:BlagetConstruct3}
 {\small\begin{verbatim}
   Blaget blaget(widget(), widget());
@@ -6063,55 +6064,56 @@ significantly.
 {}\subsubsection{Limitations in debug-mode runtime checking}
 %
 
-If you follow all of the idioms and rules outlined in this paper, then
-the only issue you will have to address that is not 100\% obvious are
-circular references.  However, if programmers never made any mistakes,
-we would not need debug-mode runtime testing in the first place.
+Once memory is dynamically allocated and owned by one of the Teuchos
+memory mangaement class objects, the debug-mode runtime checking will
+catch every imaginable type of programming error as long a raw C++
+pointer or raw C++ reference is not exposed.  If all the idioms and
+rules outlined in this paper are followed, then the only issue the
+developer will have to address that is not 100\% obvious are circular
+references.  However, if programmers never made any mistakes, there
+would be no need for debug-mode runtime testing in the first place.
 While the level of debug-mode runtime testing implemented in the
-Teuchos memory management classes is unmatched, there are a few
-different types of programmer errors that debug-mode runtime checking
-will not catch.  First, as soon as you expose a raw C++ pointer and
-start copying it around, all bets are off.  However, even if you never
-expose a C++ pointer, you can still get into trouble.  One unfortunate
-case involves the use of raw C++ references.
+Teuchos memory management classes is unmatched, code that converts
+from raw pointers (and raw references) to Teuchos memory management
+objects and vice versa is vulnerable to programming errors that the
+debug-mode runtime checking cannot catch.
 
-If C++ references are only used as formal arguments to C++ functions,
-you will almost never have a problem.  However, incorrectly returning
-an {}\ttt{RCP} object by reference instead of by value, as is
-described in Section {}\ref{sec:idioms-returning-objects}, can result
-in invalid C++ references.  Also, if you use references like in
-Listing {}\ref{listing:raw-ref-dangling-ref}, then you can of course
-have dangling raw C++ references.
+The first category of programming errors that cannot be detected
+involve some types of conversions of raw pointers (and raw references)
+to Teuchos memory management objects.  However, before discussing
+situations where the debug-mode runtime checking will not catch
+errors, first note that if an object is dynamically allocated and is
+immediately given over to a strong owning {}\ttt{RCP} object (or
+{}\ttt{ArrayRCP} object in the case of arrays) then many different
+types of bad conversions from raw pointers (and raw references) to
+memory management types will be caught.  That is because when an
+object's address is associated with a strong owning RCP, it gets added
+to the debug-mode {}\ttt{RCPNode} tracing system discussed in Section
+{}\ref{sec:basic-reference-counting-machinery}.  Given this tracking,
+future conversions from a raw pointer or raw reference to a Teuchos
+memory management class object that result in multiple owning
+{}\ttt{RCP}s or dangling references from {}\ttt{Ptr}s and non-owning
+{}\ttt{RCP}s will all be detected and cleanly reported (see Sections
+{}\ref{sec:detection-dangling-references} and
+{}\ref{sec:detection-dual-owning-rcps}).  One way to guarantee this is
+to require that a classes' objects be dynamically allocated through
+its non-member constructors (Section
+{}\ref{sec:nonmember-constructor-idiom}) which returned the new
+objects wrapped in {}\ttt{RCP}s.  In this way, the object is
+immediately tracked under the debug-mode node tracing system.
 
-{}\begin{listing}: Example of where holding on to a raw C++ references
-disables debug-mode runtime checking
-\label{listing:raw-ref-dangling-ref}
-{\small\begin{verbatim}
-  RCP<A> a_ptr = newA();
-  A &a = *a_ptr;
-  ...
-  a->someFunc(); // This object may not be valid anymore!
-\end{verbatim}}
-\end{listing}
-
-The code in Listing {}\ref{listing:raw-ref-dangling-ref} violates the
-use of raw C++ references only for non-persisting associations.  The
-statement {}\ttt{A \&a = *a\_ptr} results in the creation of a
-persisting relationship in that it extends past the statement where it
-was created.
-
-In summary, as soon as an object reference is exposed through a raw
-C++ pointer or a raw C++ reference, the runtime checking can no longer
-detect errors.  Therefore, never expose a raw C++ pointer (except for
-the situations described in Section {}\ref{sec:role-of-raw-pointers})
-and only expose and use raw C++ references in strictly non-persisting
-associations.
-
-Another situation where debug-mode runtime checking will not expose a
-problem is when an object is not allocated on the heap with
-{}\ttt{new} (or {}\ttt{new[]} for arrays) but an owning {}\ttt{RCP}
-(or {}\ttt{ArrayRCP}) is created.  For example, consider the code in
-Listing {}\ref{listing:bad-delete-error}.
+However, not every class can or should employ the non-member
+constructor idiom to force the creation of strong owning {}\ttt{RCP}
+objects.  In particular, value-type classes (Section
+{}\ref{sec:value-and-reference-types}) such as {}\ttt{std::vector} and
+{}\ttt{Teuchos::Array} must be allowed to be generally constructed on
+the stack or globally but we still need to be able to dynamically
+allocate them in many different situations.  The downside to allowing
+value-type class objects to be dynamically allocated and managed with
+{}\ttt{RCP} is that it allows client code to try to create an owning
+{}\ttt{RCP} to a stack (or otherwise non-dynamically) allocated object
+which the debug-mode runtime checking will not be able to detect as
+shown, for example, in Listing {}\ref{listing:bad-delete-error}.
 
 
 {}\begin{listing}: Example where debug-mode checking cannot detect an
@@ -6129,28 +6131,75 @@ erroneous delete issue
 \end{listing}
 
 
-The lack of debug-mode checking shown in Listing
-{}\ref{listing:bad-delete-error} is unfortunate but it is very hard to
-detect.  One way to avoid this problem is to make as many
-reference-type classes as possible only allow creation through a
-non-member constructor (see Section
-{}\ref{sec:nonmember-constructor-idiom}) which always creates an
-{}\ttt{RCP} right away and does not allow any other types of
-allocation.  However, there will be value-type classes like
-{}\ttt{std::vector} and {}\ttt{Teuchos::Array} that one will want or
-need to dynamically allocate, hence leaving open this hole in the
-debug-mode runtime checking.  The good news though is that memory
-checking tools like Valgrind and Purify usually do a good job of
-detecting and reporting erroneous calls to {}\ttt{delete} like this.
-Perhaps in the future a portable library function can be written and
-used that will be able to detect the difference between a stack
-address and a heap address so an exception can be thrown right when
-the bad owning {}\ttt{RCP} is first created.
+In this case, the owing {}\ttt{RCP<std::vector<int> >} object will try
+to call {}\ttt{delete} on the address {}\ttt{\&vec} at the end of the
+block which will result in a segfault.  The lack of debug-mode
+checking shown in Listing {}\ref{listing:bad-delete-error} is
+unfortunate but it is very hard to detect if an address is for a
+dynamically allocated object where it is okay to call
+{}\ttt{delete}\footnote{Perhaps in the future a portable library
+function can be written and used that will be able to detect the
+difference between a stack address and a heap address so an exception
+can be thrown right when the bad owning {}\ttt{RCP} is first created.
+}.  Note that the code in this example violates Commandment
+{}\ref{cmnd:rcp-new} in Appendix {}\ref{apdx:commandments} that states
+that owning {}\ttt{RCP} (and {}\ttt{ArrayRCP}) objects should only be
+created by passing in the address directly returned from {}\ttt{new}
+(or {}\ttt{new[]} for {}\ttt{ArrayRCP}) unless a customized
+deallocation policy object is attached.  The good news though is that
+memory checking tools like Valgrind and Purify usually do a good job
+of detecting and reporting erroneous calls to {}\ttt{delete} (i.e.\
+{}\ttt{free(...)}) that try to free stack-owned memory.  But again if
+the idioms outlined in Section {}\ref{sec:idioms} and the commandments
+defined in Appendix {}\ref{apdx:commandments} are followed, this
+problem should never occur.
 
 % ToDo: Look into overloading global new and delete in a debug-mode
 % build in order to log every new and delete and be able to determine if
 % an address is on the stack or the heap.  This could be very hard to
 % pull off.
+
+The other category of programming errors that the debug-mode runtime
+checking cannot detect and report involves exposing and then misusing
+raw C++ pointers and references.  As soon as you expose a raw C++
+pointer and start copying it around, all bets are off.  However, even
+if you never expose a C++ pointer, you can still get into trouble.
+One unfortunate case involves the use of raw C++ references.  If C++
+references are only used as formal arguments to C++ functions, you
+will almost never have a problem.  However, incorrectly returning an
+{}\ttt{RCP} object by reference instead of by value, as is described
+in Section {}\ref{sec:idioms-returning-objects}, can result in invalid
+C++ references.  Also, if you use references like in Listing
+{}\ref{listing:raw-ref-dangling-ref}, then you can of course have
+dangling raw C++ references that the Teuchos debug-mode runtime
+checking can never catch.
+
+{}\begin{listing}: Example of where holding on to a raw C++ references
+disables debug-mode runtime checking
+\label{listing:raw-ref-dangling-ref}
+{\small\begin{verbatim}
+  RCP<A> a_ptr = newA();
+  A &a = *a_ptr;
+  ...
+  a->someFunc();
+  // This above object may not be valid anymore and may result in a segfault!
+\end{verbatim}}
+\end{listing}
+
+The code in Listing {}\ref{listing:raw-ref-dangling-ref} violates the
+use of raw C++ references only for non-persisting associations.  The
+statement {}\ttt{A \&a = *a\_ptr} results in the creation of a
+persisting relationship in that it extends past the statement where it
+was created.
+
+In summary, as soon as an object reference is exposed through a raw
+C++ pointer or a raw C++ reference, in general the Teuchos debug-mode
+runtime checking can no longer detect errors.  Therefore, never expose
+a raw C++ pointer (except for the situations described in Section
+{}\ref{sec:role-of-raw-pointers}) and only expose and use raw C++
+references in strictly non-persisting associations.  Also, great care
+must be taken in first constructing Teuchos memory management class
+objects such they have the correct memory management properties.
 
 
 %
@@ -8960,9 +9009,17 @@ management classes}
 
 
 %
-{}\section{Teuchos memory management commandments (Guidelines)}
+{}\section{Commandments for the use of the Teuchos memory management
+classes}
 \label{apdx:commandments}
 %
+
+Here are stated commandments (or very strongly recommended
+guildelines) that if followed, along with the idioms defined in
+Section {}\ref{sec:idioms}, then client code will be 100\% safe
+through debug-mode runtime checking and will never result in a
+segfault or other memory usage error (except for circular references
+as described in Section {}\ref{sec:detection-circular-references}).
 
 \begin{commandment}
 Thou shall not expose raw pointers in any high-level C++ code.
@@ -8976,6 +9033,19 @@ Thou shall only use raw C++ references for non-persisting associations
 (see Section {}\ref{sec:persisting-nonpersisting-associations}).
 \end{commandment}
 
+\begin{commandment}
+Thou shall use {}\ttt{RCP} for handling single objects for all
+persisting associations (see Section
+{}\ref{sec:persisting-nonpersisting-associations}).
+\end{commandment}
+
+\begin{commandment}\label{cmnd:rcp-new}
+Thou shall put a pointer for an object allocated with operator
+{}\texttt{new} into a strong owning {}\texttt{RCP} whenever possible
+by directly calling {}\ttt{new} right in the constructor for the
+{}\ttt{RCP} object itself or construct from {}\ttt{rcp(...)}).
+\end{commandment}
+
 \begin{commandment}\label{cmnd:owning-rcp-first}
 When wrapping an object inside of an {}\ttt{RCP}, thou shall create
 a strong owning {}\ttt{RCP} object first before any non-owning
@@ -8987,12 +9057,6 @@ build, the first {}\ttt{RCP} object created must have ownership to
 delete.  The system can not detect dangling references from non-owning
 {}\ttt{RCPNode} objects created before the owning
 {}\ttt{RCPNode} object is created.
-
-\begin{commandment}
-Thou shall use {}\ttt{RCP} for handling single objects for all
-persisting associations (see Section
-{}\ref{sec:persisting-nonpersisting-associations}).
-\end{commandment}
 
 \begin{commandment}\label{cmnd:ptr-semi-persisting}
 Thou shall use {}\ttt{Ptr} for handling single objects for all
