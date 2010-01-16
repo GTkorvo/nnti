@@ -180,13 +180,16 @@ the effective and safe management of memory and data.  CS\&E software
 often has the goal of high performance where arbitrary data copy leads
 to undo overhead and can actually complicate the software in many
 cases.  It is common for CS\&E software to share and pass around large
-blocks of memory in order to do work efficiently.  At the most basic
-level, large arrays of integral and floating point data are managed
-along with more complex general objects and arrays of objects.  In
-C++, the only universally accepted way to deal with memory for single
-objects and arrays of objects is to use raw C++ pointers.  However,
-raw C++ pointer facilities for the manipulation and sharing of basic
-memory are inherently unsafe and error prone.  The problem is further
+blocks of memory in order to do work efficiently (however, common
+approaches such as described in
+{}\cite{DataSharinginScientificSimulations} lead to many of the
+problems that exist in CS\&E programs).  At the most basic level,
+large arrays of integral and floating point data are managed along
+with more complex general objects and arrays of objects.  In C++, the
+only universally accepted way to deal with memory for single objects
+and arrays of objects is to use raw C++ pointers.  However, raw C++
+pointer facilities for the manipulation and sharing of basic memory
+are inherently unsafe and error prone.  The problem is further
 exacerbated when larger programs composed out of different separately
 developed and maintained components are integrated together.
 Assumptions about the origin, ownership, and process for reclaiming
@@ -205,9 +208,10 @@ impact that such software could otherwise have.  The problems created
 by the use of raw memory management can single-handily derail the
 vision of a large interconnected network of reusable CS\&E software
 components developed and used by many different CS\&E organizations
-[???].  Therefore, the issue of memory management has as much or more
-impact on the macroscopic properites of our CS\&E software components
-as it does on low-level internal software development.
+{}\cite{HPCNeedsAToolsStrategy05}.  Therefore, the issue of memory
+management has as much or more impact on the macroscopic properites of
+our CS\&E software components as it does on low-level internal
+software development.
 
 C++ is an incredibility large and complex language that very few
 people really know how to use in a confident and successful way.
@@ -272,7 +276,7 @@ development of C++ (and C) software that other more modern languages
 
 {}\item Programs that use raw memory management are more difficult to
 write and debug because it is difficult to track down invalid memory
-usage that result in segfaults, double deletes, and memory leaks.
+usage that results in segfaults, double deletes, and memory leaks.
 (Also, memory checking tools like Valgrind and Purify do not catch
 enough of these types of errors to adequately mitigate the problem.)
 
@@ -308,12 +312,12 @@ reasonable contexts.
 
 \end{itemize}
 
-The consequences of raw memory management described above all all too
+The consequences of raw memory management described above are all too
 common in C++ development organizations and software produced by such
 organizations.  This is why the general software development community
 is largely moving away from C++ and instead moving to use more modern
 languages that do not require manual unchecked memory management
-[???].
+{}\cite{DomainDrivenDesignQuickly}.
 
 However, C++ has some unique features that differentiate it from every
 other language in wide use:
@@ -772,24 +776,25 @@ situations.
 
 \end{itemize}
 
-These are pretty much the advantages of using {}\ttt{std::vector}
-over other alternatives.  When used as a general purpose data
-container where you will be changing the size of the array on the fly,
-{}\ttt{std::vector} is convenient, general, and efficient (just
-what components from a standard library should be).  However, in other
-use cases, {}\ttt{std::vector} is far from convenient, general, or
+These are pretty much the advantages of using {}\ttt{std::vector} over
+other alternatives.  When used as a general purpose data container
+where you will be changing the size of the array on the fly,
+{}\ttt{std::vector} is convenient, general, and efficient (just what
+components from a standard library should be).  However, in other use
+cases, {}\ttt{std::vector} is far from convenient, general, or
 efficient.  As one example, consider using {}\ttt{std::vector} to
 replace raw C++ pointers for array arguments in {}\underline{all} C++
-functions as some authors have suggested (e.g.\ see [???]).  For
-example, consider the function that adds elements from one array into
-another array expressed with raw C++ pointers shown in Listing
+functions as some authors have suggested (e.g.\ see
+{}\cite{Modernizing-the-C++-Interface-to-MPI}).  For example, consider
+the function that adds elements from one array into another array
+expressed with raw C++ pointers shown in Listing
 {}\ref{listing:addArrayIntoArray-raw}.
 
 \begin{listing}:\\
 \label{listing:addArrayIntoArray-raw}
 {\small\begin{verbatim}
   template<class T>
-  void addArrayIntoArray( const int n, const T a[], T b[] )
+  void addArrayIntoArray(const int n, const T a[], T b[])
   {
     for (int i = 0; i < n; ++i)
       b[i] += a[i];
@@ -1258,9 +1263,6 @@ return objects.
 
 \end{itemize}
 
-ToDo: Mention how UML deals with persisting and non-persisting
-assocations.
-
 To help define these two different types of associations, consider the
 class and function definitions in Listing
 {}\ref{listing:NonPersistingPersistingAssociationsRawPointers}.
@@ -1426,6 +1428,15 @@ The safe way to change an element is:
 
 Here, we will say that {}\ttt{std::vector::operator[](size\_type)}
 should only be used for non-persisting associations as shown above.
+
+Most programming languages do not provide any means to differentiate
+between non-persisting associations and persisting associations (see
+Section {}\ref{sec:essentail-accidental-complexity} for an expanded
+discussion).  However, note that the Unified Modeling Language (UML
+{}\cite{UMLDistilledThirdEdition04}) does differentiates between them
+in that presisting relationships are shown with a solid line while
+non-persisting relationships are shown with a dotted line (see Figure
+{}\ref{fig:TeuchosRCPDesign} for exmaples).
 
 Before leaving the topic of persisting and non-persisting
 associations, we have to recognize that there exists a third category
@@ -7059,8 +7070,9 @@ call each other but we will not see such a feature in wide spread use
 until many years after the C++0x standard is finalized.}.
 
 The second problem with the class {}\ttt{SomeClass} that it can not
-call any virtual functions in the base class {}\ttt{SomeBaseClass}
-to help initialize its state in the constructors [???].
+call any virtual functions in the base class {}\ttt{SomeBaseClass} to
+help initialize its state in the constructors {}\cite[Item
+49]{C++CodingStandards05}.
 
 The third problem with the design of {}\ttt{SomeClass} shown in
 Listing {}\ref{listing:sci:SomeClass-before} is that the {}\ttt{C}
@@ -7232,13 +7244,13 @@ The most straightforward example of where the ``object
 self-reference'' idiom is needed is when a factory object creates a
 product that must in turn store a strong owning {}\ttt{RCP} to the
 factory that created it.  This is the exact use case that exists in
-the Thyra packages for {}\ttt{VectorBase} and
-{}\ttt{VectorSpaceBase} objects [???].  In this case,
-{}\ttt{VectorSpaceBase} acts as the factory and
-{}\ttt{VectorBase} acts as the product.  Also, every
-{}\ttt{VectorBase} object has a function {}\ttt{space()} that
-returns the {}\ttt{VectorSpaceBase} object that created it to be
-used to create other {}\ttt{VectorBase} objects.
+the Thyra packages for {}\ttt{VectorBase} and {}\ttt{VectorSpaceBase}
+objects {}\cite{ThyraOperatorVectorSAND}.  In this case,
+{}\ttt{VectorSpaceBase} acts as the factory and {}\ttt{VectorBase}
+acts as the product.  Also, every {}\ttt{VectorBase} object has a
+function {}\ttt{space()} that returns the {}\ttt{VectorSpaceBase}
+object that created it to be used to create other {}\ttt{VectorBase}
+objects.
 
 A simplified version of the implemention of the
 {}\ttt{VectorSpaceBase} standard subclass
@@ -7447,14 +7459,15 @@ build.
 Note that the implementation of {}\ttt{SomeClass} in Listing
 {}\ref{listing:osr:SomeClass-refactored} means that the nature of the
 relationship between the {}\ttt{C} object returned from
-{}\ttt{SomeClass::get\_C()}, the {}\ttt{SomeClass} object, and
-the client code represents a semi-presisting association as defined in
-Section ???.  In this case, the usage of the {}\ttt{C} object is
-only valid while the parent {}\ttt{SomeClass} object still exists.
-However, if the client mistakenly tries to use a dangling {}\ttt{C}
-object after its parent {}\ttt{SomeClass} object is destroyed, then
-a clean runtime dangling-reference exception is thrown as descrbed in
-Section {}\ref{sec:detection-dangling-references}.
+{}\ttt{SomeClass::get\_C()}, the {}\ttt{SomeClass} object, and the
+client code represents a semi-presisting association as defined in
+Section {}\ref{sec:persisting-nonpersisting-associations}.  In this
+case, the usage of the {}\ttt{C} object is only valid while the parent
+{}\ttt{SomeClass} object still exists.  However, if the client
+mistakenly tries to use a dangling {}\ttt{C} object after its parent
+{}\ttt{SomeClass} object is destroyed, then a clean runtime
+dangling-reference exception is thrown as descrbed in Section
+{}\ref{sec:detection-dangling-references}.
 
 Alternatively, if you want the {}\ttt{SomeClass::get\_C()} function
 to create a true presisting association where the {}\ttt{C} object
@@ -7548,21 +7561,22 @@ pattern}
 
 Because direct views can overly constrain the implementation freedom
 of the parent, in order to allow for the fullest freedom to pick the
-internal implementations of the parent and the view separately, we must
-instead consider using potentially detached non-direct views defined
-here as ``generalized views''.  A ``generalized view'' is a view of a
-parent object that is not guaranteed to be a direct view such that
-changes to the view are not guaranteed to be instantaneously
+internal implementations of the parent and the view separately, we
+must instead consider using potentially detached non-direct views
+defined here as ``generalized views''.  A ``generalized view'' is a
+view of a parent object that is not guaranteed to be a direct view
+such that changes to the view are not guaranteed to be instantaneously
 propagated to the parent and vice versa.  One example of a case where
 a ``generalized view'' is needed is when creating a view of
 non-contiguous columns of a dense matrix where for the sake of
 efficiency one must create a temporary contiguous copy as a new dense
 matrix.  This type of generalized view is used in the implementation
-of Thyra MultiVector non-contiguous column views [???] which is
-depicted in Figure {}\ref{fig:MultiVectorView}. In the Thyra
-MultiVector implementation, when the client requests a view of a set
-of non-contiguous columns, the implementation will create a temporary
-contiguous copy which results in improved performance of many types of
+of Thyra MultiVector non-contiguous column views
+{}\ref{ThyraOperatorVectorSAND} which is depicted in Figure
+{}\ref{fig:MultiVectorView}. In the Thyra MultiVector implementation,
+when the client requests a view of a set of non-contiguous columns,
+the implementation will create a temporary contiguous copy which
+results in improved performance of many types of
 operations\footnote{Using contiguous columns of a Fortran-style
 column-major dense matrix is require in order to take advantage of
 high performance BLAS routines.}.  The Thyra example of non-contiguous
@@ -8714,11 +8728,11 @@ way we teach C++.
 
 To make our programs more secure, compiler vendors or static analysis
 tools (e.g.\ klocwork) could implement a preprocessor-like language
-similar to OpenMP [???] that would allow the programmer to declare (in
-comments) that certain blocks of code should be ``pointer-free'' or
-allow smaller blocks to be ``pointers allowed''.  This would
-significantly improve the robustness of code that uses the memeory
-management classes described here.
+similar to OpenMP\footnote{{}\ttt{http://openmp.org}} that would allow
+the programmer to declare (in comments) that certain blocks of code
+should be ``pointer-free'' or allow smaller blocks to be ``pointers
+allowed''.  This would significantly improve the robustness of code
+that uses the memeory management classes described here.
 
 
 
