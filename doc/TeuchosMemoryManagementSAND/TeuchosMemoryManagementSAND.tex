@@ -724,17 +724,17 @@ main features of the memory management classes proposed here.
 
 
 %
-{}\section{Problems with popular approaches for addressing memory
+{}\section{Problems with common approaches for addressing memory
 management in C++}
 \label{sec:current-appraoches-to-mem-mng}
 %
 
 Because of some of the obvious problems with using raw C++ pointers to
 access raw memory and using raw calls to {}\ttt{new} and
-{}\ttt{delete} to perform dynamic memory management, various
-authors have advocated a number of different approaches for addressing
-these problems.  I will review a few of these approaches and I
-will argue why these are much too sub-optimal.
+{}\ttt{delete} to perform dynamic memory management, various authors
+have advocated a number of different approaches for addressing these
+problems.  I will review a few of these approaches and I will argue
+why these are much too sub-optimal.
 
 
 %
@@ -744,16 +744,16 @@ all arrays}
 
 A very common approach that I have seen used to try to get around
 using raw C++ pointers for managing contiguous arrays of data is to
-use the container class {}\ttt{std::vector} in {}\underline{every}
-use case where a raw C++ array or pointer to an array would be used.
-Before I describe use cases where {}\ttt{std::vector} is being
-poorly used, first let's review what {}\ttt{std::vector} is and
-what it is good for.  The standard library class
-{}\ttt{std::vector} is a general-purpose concrete contiguous data
-container class for storing and retrieving value objects\footnote{See
-Section {}\ref{sec:value-and-reference-types} for a definition of
-``Value Types''.}.  What makes using {}\ttt{std::vector} attractive
-as compared to a simple class that you would write yourself is:
+use the container class {}\ttt{std::vector} in {}\underline{every} use
+case where a raw C++ array or pointer to an array would be used.
+Before I describe use cases where {}\ttt{std::vector} is being poorly
+used, first let's review what {}\ttt{std::vector} is and what it is
+good for.  The standard library class {}\ttt{std::vector} is a
+general-purpose concrete contiguous data container class for storing
+and retrieving value objects\footnote{See Section
+{}\ref{sec:value-and-reference-types} for a definition of ``Value
+Types''.}.  What makes using {}\ttt{std::vector} attractive as
+compared to a simple class that you would write yourself is:
 
 \begin{itemize}
 
@@ -7784,8 +7784,13 @@ client code.
 However, if it makes sense in the particular setting, an
 implementation of the generalized view design pattern can choose to
 implement the views as full persisting views that will persist even
-after all the external parent references are removed thereby avoiding
-dangling-reference exceptions.
+after all the external parent references are removed, thereby avoiding
+dangling-reference exceptions.  Note that if the parent class
+implements the ``object self-reference'' idiom described in Section
+{}\ref{sec:self-references} then a strong {}\ttt{RCP} to the parent
+object can always be attached to the {}\ttt{RCP} of the view, thereby
+providing for persisting generalized views no mater what the internal
+data structures are used.
 
 Another aspect of the generalized view design pattern is that it is
 important to distinguish between non-const views and const views.  In
@@ -7983,7 +7988,7 @@ functions {}\ttt{nonContigSubViewImpl(...)} and
     const Ordinal localSubDim = spmdRangeSpace_->localSubDim();
     RCP<CopyBackSpmdMultiVectorEntries<Scalar> > copyBackView =
       copyBackSpmdMultiVectorEntries<Scalar>(cols, localValuesView.getConst(),
-        localSubDim, localValues_, leadingDim_);
+        localSubDim, localValues_.create_weak(), leadingDim_);
     return Teuchos::rcpWithEmbeddedObjPreDestroy(
       new DefaultSpmdMultiVector<Scalar>(
         spmdRangeSpace_,
@@ -8079,14 +8084,16 @@ is destroyed.  The implementation of the class
         typedef typename ArrayRCP<const Scalar>::const_iterator const_itr_t;
         typedef typename ArrayRCP<Scalar>::iterator itr_t;
         // Copy from contiguous storage column by column
-        const int numCols = cols_.size();
-        const const_itr_t lvv = localValuesView_.begin();
-        const itr_t lv = localValues_.begin();
-        for (int k = 0; k < numCols; ++k) {
-          const int col_k = cols_[k];
-          const const_itr_t lvv_k = lvv + localSubDim_*k;
-          const itr_t lv_k = lv + leadingDim_*col_k;
-          std::copy( lvv_k, lvv_k + localSubDim_, lv_k );
+        if (localValues_.strong_count()) {
+          const int numCols = cols_.size();
+          const const_itr_t lvv = localValuesView_.begin();
+          const itr_t lv = localValues_.begin();
+          for (int k = 0; k < numCols; ++k) {
+            const int col_k = cols_[k];
+            const const_itr_t lvv_k = lvv + localSubDim_*k;
+            const itr_t lv_k = lv + leadingDim_*col_k;
+            std::copy( lvv_k, lvv_k + localSubDim_, lv_k );
+          }
         }
       }
   private:
@@ -8095,10 +8102,6 @@ is destroyed.  The implementation of the class
     Ordinal localSubDim_;
     ArrayRCP<Scalar> localValues_;
     Ordinal leadingDim_;
-    // Not defined and not to be called
-    CopyBackSpmdMultiVectorEntries();
-    CopyBackSpmdMultiVectorEntries(const CopyBackSpmdMultiVectorEntries&);
-    CopyBackSpmdMultiVectorEntries& operator=(const CopyBackSpmdMultiVectorEntries&);
   };
 
   // Non-member constructor  
@@ -8112,24 +8115,37 @@ is destroyed.  The implementation of the class
   {
     return Teuchos::rcp(
       new CopyBackSpmdMultiVectorEntries<Scalar>(
-        cols, localValuesView, localSubDim, localValues, leadingDim
-        )
-      );
+        cols, localValuesView, localSubDim, localValues, leadingDim));
   }
 \end{verbatim}}
 \end{listing}
 
 
-The implementation of {}\ttt{CopyBackSpmdMultiVectorEntries} in Listing
-{}\ref{listing:CopyBackSpmdMultiVectorEntries} is straightforward.  When the
-destructor is called, it copies the data in the non-const view back to
-the native storage of the parent {}\ttt{DefaultSpmdMultiVector}
-object.
+The implementation of {}\ttt{CopyBackSpmdMultiVectorEntries} in
+Listing {}\ref{listing:CopyBackSpmdMultiVectorEntries} is
+straightforward.  When the destructor is called, it copies the data in
+the non-const view back to the native storage of the parent
+{}\ttt{DefaultSpmdMultiVector} object.
 
-ToDo: Write a Teuchos utility class to implement the guts of the
-debug-mode runtime checking needed to enforce the semantics of the
-generalized view design pattern.  Use this utility class in a mock Teuchos
-object and in the Thyra::DefaultSpmdMultiVector class.
+The only twist in the implementation of
+{}\ttt{nonconstNonContigSubViewImpl(...)} and
+{}\ttt{CopyBackSpmdMultiVectorEntries} is that a weak {}\ttt{ArrayRCP}
+is used for the parent's {}\ttt{localValues\_} data in the
+{}\ttt{CopyBackSpmdMultiVectorEntries} object.  It is created in the
+function {}\ttt{nonconstNonContigSubViewImpl(...)} with
+{}\ttt{localValues\_.create\_weak()}.  If the parent goes away before
+the view, then the weak pointer {}\ttt{localValues\_} in the
+destructor for {}\ttt{CopyBackSpmdMultiVectorEntries} will have a
+strong count of 0, thereby resulting in the skipping of the copy-back
+of data.  This this a performance optimization since there is no point
+in copying back the data if the parent object is gone.  This design
+allows both const and non-const multi-vector views to be persisting
+and still have the highest performance.
+
+% ToDo: Write a Teuchos utility class to implement the guts of the
+% debug-mode runtime checking needed to enforce the semantics of the
+% generalized view design pattern.  Use this utility class in a mock Teuchos
+% object and in the Thyra::DefaultSpmdMultiVector class.
 
 There are several things that are interesting about this example.
 First, by using the embedded object feature of {}\ttt{RCP} the code is
