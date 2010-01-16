@@ -1876,6 +1876,50 @@ those clients that use raw C++ pointers for communication.  Of course,
 once we do this, we will have to rely on our clients to pass in memory
 correctly and keep it valid as long as our modules need it.
 
+%
+{}\subsection{Common aspects of all Teuchos Memory Management classes}
+\label{sec:common-aspects}
+%
+
+Table {}\ref{tbl:common-type-members} gives the common member and
+non-member functions common all the Teuchos memory management classes
+{}\ttt{Ptr}, {}\ttt{RCP}, {}\ttt{Array}, {}\ttt{ArrayView},
+{}\ttt{ArrayRCP}, and {}\ttt{Tuple}.  The comparison operators allows
+all of these types to be used as keys in assoicative containers like
+{}\ttt{std::map}.
+
+\begin{table}
+{\small\begin{center}
+\begin{tabular}{|l|}
+\hline
+{}\textbf{Common member functions} \\
+\hline
+{}\ttt{[const\_]pointer getRawPtr() [const]} \\
+\hline
+{}\textbf{Common nonmember functions} \\
+\hline
+{}\ttt{void swap(Type<T>\&, Type<T>\&)} \\
+{}\ttt{bool is\_null(const Type<T>\&)} \\
+{}\ttt{bool nonnull(const Type<T>\&)} \\
+{}\ttt{bool operator==(const Type<T>\&, ENull)} \\
+{}\ttt{bool operator!=(const Type<T>\&, ENull)} \\
+{}\ttt{bool operator==(const Type<T>\&, const Type<T>\&)} \\
+{}\ttt{bool operator!=(const Type<T>\&, const Type<T>\&)} \\
+{}\ttt{bool operator<(const Type<T>\&, const Type<T>\&)} \\
+{}\ttt{bool operator<=(const Type<T>\&, const Type<T>\&)} \\
+{}\ttt{bool operator>(const Type<T>\&, const Type<T>\&)} \\
+{}\ttt{bool operator>=(const Type<T>\&, const Type<T>\&)} \\
+\hline
+\end{tabular}
+\caption{\label{tbl:common-type-members}
+Common members and non-members for {}\ttt{Ptr}, {}\ttt{RCP},
+{}\ttt{Array[RCP,View]}, {}\ttt{Tuple}.}
+\end{center}}
+\end{table}
+
+% ToDo: Implement all of the ``Common nonmember functions'' in all
+% Teuchos memory management classes.
+
 
 %
 {}\subsection{Memory management classes replacing raw pointers for
@@ -2223,9 +2267,11 @@ contiguous arrays of objects.  The conventions outlined in the paper
 never have you exposing a raw C++ pointer to an array or directly
 using built-in (statically sized) C++ arrays.
 
-All of the Teuchos array classes provide a common subset of the
-interface of {}\ttt{std::vector} which includes the typedefs and
-member functions shown in Table {}\ref{tbl:common-array-type-members}.
+In addition to the common members shown in Table
+{}\ref{tbl:common-type-members}, all of the Teuchos array classes
+provide a common subset of the interface of {}\ttt{std::vector} which
+includes the typedefs and member functions shown in Table
+{}\ref{tbl:common-array-type-members}.
 
 \begin{table}
 {\small\begin{center}
@@ -2259,25 +2305,10 @@ member functions shown in Table {}\ref{tbl:common-array-type-members}.
 {}\ttt{ArrayView<[const] T> operator[]()(size\_type offset, size\_type size) [const]} \\
 {}\ttt{ArrayView<[const] T> operator()() [const]} \\
 \hline
-{}\textbf{Other common member functions} \\
+{}\textbf{Additionaly common member functions} \\
 \hline
 {}\ttt{[const\_]pointer getRawPtr() [const]} \\
-{}\ttt{bool is\_null() const} \\
 {}\ttt{std::string toString() const} \\
-\hline
-{}\textbf{Common nonmember functions} \\
-\hline
-{}\ttt{void swap(Type<T>\&, Type<T>\&)} \\
-{}\ttt{bool is\_null(const Type<T>\&)} \\
-{}\ttt{bool nonnull(const Type<T>\&)} \\
-{}\ttt{bool operator==(const Type<T>\&, ENull)} \\
-{}\ttt{bool operator!=(const Type<T>\&, ENull)} \\
-{}\ttt{bool operator==(const Type<T>\&, const Type<T>\&)} \\
-{}\ttt{bool operator!=(const Type<T>\&, const Type<T>\&)} \\
-{}\ttt{bool operator<(const Type<T>\&, const Type<T>\&)} \\
-{}\ttt{bool operator<=(const Type<T>\&, const Type<T>\&)} \\
-{}\ttt{bool operator>(const Type<T>\&, const Type<T>\&)} \\
-{}\ttt{bool operator>=(const Type<T>\&, const Type<T>\&)} \\
 \hline
 \end{tabular}
 \caption{\label{tbl:common-array-type-members}
@@ -2285,13 +2316,6 @@ Common members and non-members for {}\ttt{ArrayView},
 {}\ttt{ArrayRCP}, {}\ttt{Array}, and {}\ttt{Tuple} .}
 \end{center}}
 \end{table}
-
-ToDo: Move the ``Common nonmember function'' items to a more general
-section since they apply to all the Teuchos memory management types,
-not just arrays.
-
-ToDo: Implement all of the ``Common nonmember functions'' in all
-Teuchos memory management classes.
 
 A few things to note about the array interface components shown in
 Table {}\ref{tbl:common-array-type-members}:
@@ -2419,9 +2443,9 @@ Table {}\ref{tbl:common-array-type-members} for common array members.)
 \end{verbatim}}
 \end{listing}
 
-ToDo: In the code, match up the above set of declarations with the
-class ArrayView itself.  Also, test all the typedefs to make sure they
-work correctly.
+% ToDo: In the code, match up the above set of declarations with the
+% class ArrayView itself.  Also, test all the typedefs to make sure they
+% work correctly.
 
 A few things to note about {}\ttt{ArrayView} shown in
 {}\ref{listing:ArrayView} in addition to the comments in Section
@@ -3849,8 +3873,96 @@ does.  Of course now we have given up a compile-time check for a
 non-null argument for {}\ttt{T\&} with a debug-only runtime check
 that {}\ttt{const Ptr<T>\&} is non-null.
 
-ToDo: Show example where you need to create an {}\ttt{RCP<T>} from
-a raw T\& inside of a function body.
+
+%
+{}\subsubsection*{Converting from non-persisting to persisting
+references to satisfy the defined idioms}
+%
+
+There are legitimate instances where client code needs to convert a
+non-persisting reference (i.e. {}\ttt{T\&}, {}\ttt{Ptr<T>}, or
+{}\ttt{ArrayView<T>}) to a persisting reference (i.e.\ {}\ttt{RCP} or
+{}\ttt{ArrayRCP}) in order to satisfy the idioms outlined in Table
+{}\ref{fig:func_args_ref_type}.  The most common case is when a
+function is passed a raw reference or a {}\ttt{Ptr} to a C++ object
+(for a non-persisting assocation) but the function's implementation
+must create (and destroy) and object what has a persisting assoication
+with the passed in object.  Consider the classes {}\ttt{A}, {}\ttt{B}
+and {}\ttt{C} shown in Listing
+{}\ref{listing:NonPersistingPersistingAssociationsRCP} where {}\ttt{C}
+maintains an {}\ttt{RCP} to {}\ttt{B}.  Now consider a client function
+that needs an {}\ttt{A} and {}\ttt{B} object to perform its function
+but also needs to create and destroy a {}\ttt{C} object internally
+giving it the {}\ttt{B} object.  In order to be consistent with the
+idioms defined here, the {}\ttt{B} object must be passed as a raw C++
+reference or through a {}\ttt{Ptr} object.  Listing
+{}\ref{listing:convert-from-raw-ref-to-RCP} shows how to convert from
+a raw C++ reference to a non-owning {}\ttt{RCP} object to satisfy the
+idioms.
+
+
+{}\begin{listing}: Converting from a raw C++ reference to an
+{}\ttt{RCP} object to satisfy function argument passing idiom
+\label{listing:convert-from-raw-ref-to-RCP}
+{\small\begin{verbatim}
+  void doSomeOperation(B &b, const A &a)
+  {
+     ...
+     C c;
+     const RCP<B> b_rcp = rcpFromRef(b);
+     c.fooC1(b_rcp, a);
+     c.fooC2();
+     ...
+     // The C object is destroyed here!
+  }
+\end{verbatim}}
+\end{listing}
+
+
+In Listing {}\ref{listing:convert-from-raw-ref-to-RCP}, the standard
+conversion function {}\ttt{rcpFromRef(...)} converts from a raw C++
+reference to a non-owning {}\ttt{RCP} object.  Creating an {}\ttt{RCP}
+like is perfectly safe and correct.  The lifetime of the created
+{}\ttt{C} object is contained within the function
+{}\ttt{doSomeOperation(...)} so the promise of not creating a
+persisting assoication inherent in the functions prototype (i.e.\
+passing the {}\ttt{B} object as a raw C++ referece) is being
+corrrectly kept.  Note that if the created non-owning {}\ttt{RCP} is
+accedentally used to create a persisting association then in many
+cases, the dangling reference will be caught by the built-in
+debug-mode runtime checking (see Section
+{}\ref{sec:detection-dangling-references}).
+
+A similar type of conversion is required when passing in an object
+through a {}\ttt{Ptr} object.  For example, the function in Listing
+{}\ref{listing:convert-from-raw-ref-to-RCP} may instead pass in a
+{}\ttt{Ptr<B>} object instead of a raw C++ reference {}\ttt{B\&} and
+the refactored function is shown in Listing
+{}\ref{listing:convert-from-Ptr-to-RCP}.
+
+
+{}\begin{listing}: Converting from a {}\ttt{Ptr} object to an
+{}\ttt{RCP} object to satisfy function argument passing idiom
+\label{listing:convert-from-Ptr-to-RCP}
+{\small\begin{verbatim}
+  void doSomeOperation(const Ptr<B> &b, const A &a)
+  {
+     ...
+     C c;
+     const RCP<B> b_rcp = rcpFromPtr(b);
+     c.fooC1(b_rcp, a);
+     c.fooC2();
+     ...
+     // The C object is destroyed here!
+  }
+\end{verbatim}}
+\end{listing}
+
+
+Again, if a persisting association is accedentally created by copying
+the {}\ttt{RCP<B>} object created in Listing
+{}\ref{listing:convert-from-Ptr-to-RCP} then this can be detected in a
+debug-mode build.
 
 
 %
@@ -5742,8 +5854,8 @@ underlying {}\ttt{ConcreteT} object as shown if Figure
 {}\ref{fig:RCPEx2}.  This type of structure can be generated with the
 sloppy code shown in Listing {}\ref{listing:duplicate_owning_rcp}.
 
-\begin{listing}: Invalid creation of dual owning {}\ttt{RCPNodeImpl}
-objects \\
+{}\begin{listing}: Invalid creation of dual owning {}\ttt{RCPNodeImpl}
+objects
 \label{listing:duplicate_owning_rcp}
 {\small\begin{verbatim}
   C *c_raw_ptr = new C;
@@ -5948,7 +6060,7 @@ significantly.
 
 
 %
-{}\subsubsection{Holes in debug-mode runtime checking}
+{}\subsubsection{Limitations in debug-mode runtime checking}
 %
 
 If you follow all of the idioms and rules outlined in this paper, then
@@ -5967,20 +6079,26 @@ If C++ references are only used as formal arguments to C++ functions,
 you will almost never have a problem.  However, incorrectly returning
 an {}\ttt{RCP} object by reference instead of by value, as is
 described in Section {}\ref{sec:idioms-returning-objects}, can result
-in invalid C++ references.  Also, if you use references like in the
-below code, you can of course have dangling raw C++ references.
+in invalid C++ references.  Also, if you use references like in
+Listing {}\ref{listing:raw-ref-dangling-ref}, then you can of course
+have dangling raw C++ references.
 
+{}\begin{listing}: Example of where holding on to a raw C++ references
+disables debug-mode runtime checking
+\label{listing:raw-ref-dangling-ref}
 {\small\begin{verbatim}
   RCP<A> a_ptr = newA();
   A &a = *a_ptr;
   ...
   a->someFunc(); // This object may not be valid anymore!
 \end{verbatim}}
+\end{listing}
 
-The above code fragment violates the use of raw C++ references only
-for non-persisting associations.  Above, the statement {}\ttt{A \&a
-= *a\_ptr} results in the creation of a persisting relationship in that
-it extends past the statement where it was created.
+The code in Listing {}\ref{listing:raw-ref-dangling-ref} violates the
+use of raw C++ references only for non-persisting associations.  The
+statement {}\ttt{A \&a = *a\_ptr} results in the creation of a
+persisting relationship in that it extends past the statement where it
+was created.
 
 In summary, as soon as an object reference is exposed through a raw
 C++ pointer or a raw C++ reference, the runtime checking can no longer
@@ -5988,6 +6106,51 @@ detect errors.  Therefore, never expose a raw C++ pointer (except for
 the situations described in Section {}\ref{sec:role-of-raw-pointers})
 and only expose and use raw C++ references in strictly non-persisting
 associations.
+
+Another situation where debug-mode runtime checking will not expose a
+problem is when an object is not allocated on the heap with
+{}\ttt{new} (or {}\ttt{new[]} for arrays) but an owning {}\ttt{RCP}
+(or {}\ttt{ArrayRCP}) is created.  For example, consider the code in
+Listing {}\ref{listing:bad-delete-error}.
+
+
+{}\begin{listing}: Example where debug-mode checking cannot detect an
+erroneous delete issue
+\label{listing:bad-delete-error}
+{\small\begin{verbatim}
+  {
+     std::vector<int> vec(n);
+     const RCP<std::vector<int> > vec_rcp(&vec); // Gives ownership to delete!
+     ...
+     // When vec_rcp is destroyed it will call delete on the address &vec
+     // resulting in a segfault!
+  }
+\end{verbatim}}
+\end{listing}
+
+
+The lack of debug-mode checking shown in Listing
+{}\ref{listing:bad-delete-error} is unfortunate but it is very hard to
+detect.  One way to avoid this problem is to make as many
+reference-type classes as possible only allow creation through a
+non-member constructor (see Section
+{}\ref{sec:nonmember-constructor-idiom}) which always creates an
+{}\ttt{RCP} right away and does not allow any other types of
+allocation.  However, there will be value-type classes like
+{}\ttt{std::vector} and {}\ttt{Teuchos::Array} that one will want or
+need to dynamically allocate, hence leaving open this hole in the
+debug-mode runtime checking.  The good news though is that memory
+checking tools like Valgrind and Purify usually do a good job of
+detecting and reporting erroneous calls to {}\ttt{delete} like this.
+Perhaps in the future a portable library function can be written and
+used that will be able to detect the difference between a stack
+address and a heap address so an exception can be thrown right when
+the bad owning {}\ttt{RCP} is first created.
+
+% ToDo: Look into overloading global new and delete in a debug-mode
+% build in order to log every new and delete and be able to determine if
+% an address is on the stack or the heap.  This could be very hard to
+% pull off.
 
 
 %
