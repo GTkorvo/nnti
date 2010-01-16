@@ -7736,13 +7736,15 @@ back to the parent's internal data structures and the parent goes back
 to the state 'no views'.
 
 In order to allow for the highest performance and the simplest
-implementations of the parent and the view in all cases, the generalized
-view design pattern states that views are semi-persisting; that is, the
+implementations of the parent and the view classes in all cases, and
+to help catch errors in client code, the generalized view design
+pattern states that views should be semi-persisting; that is, the
 views are only valid while the client's {}\texttt{RCP} to the parent
 is still active and the view is not expected to live on past the
 lifetime of the parent.  Therefore, any generalized views that remain
-after the last strong {}\ttt{RCP<Parent>} object is released will
-result in dangling references.  For example, the code in Listing
+after the last strong {}\ttt{RCP<Parent>} object is released should
+result in dangling references and throw exceptions in a debug-mode
+build.  For example, the code in Listing
 {}\ref{listing:generalized-view-dangling} would result in a dangling
 reference exception in a debug-mode build.
 
@@ -7765,6 +7767,25 @@ reference exception in a debug-mode build.
 \end{verbatim}}
 \end{listing}
 
+
+Even if a generalized view can be made persisting (which it is in the
+MultiVector example given later), the implementation should still
+prefer to implement the view as a semi-persisting view.  The main
+purpose of a view is to change the parent object so if the parent is
+released before the view is written to and written back, then that is
+most likely a programming error in the client's code.  For example,
+the code in Listing {}\ref{listing:generalized-view-dangling} is most
+likely an error because if the parent has been deleted then there is
+no use in modifying the view and that is most likely an error in
+program logic that needs to fixed.  By implementing generalized views
+and semi-persisting views the objects help to better catch errors in
+client code.
+
+However, if it makes sense in the particular setting, an
+implementation of the generalized view design pattern can choose to
+implement the views as full persisting views that will persist even
+after all the external parent references are removed thereby avoiding
+dangling-reference exceptions.
 
 Another aspect of the generalized view design pattern is that it is
 important to distinguish between non-const views and const views.  In
@@ -8497,6 +8518,7 @@ motorcycle.  Try that with a car!
 
 %
 {}\subsection{Essential and accidental complexity}
+\label{sec:essentail-accidental-complexity}
 %
 
 While the idioms described in this document (outlined in Section
@@ -8876,9 +8898,253 @@ function.
 \label{sec:unsigned_size_type}
 %
 
-ToDo: Add discussion of why the Teuchos array classes all use a signed
-integer for size\_type and why that is better.  This is important
-because of the break from std::vector.
+The Teuchos array memory management classes {}\ttt{Array},
+{}\ttt{ArrayRCP}, and {}\ttt{ArrayView} all use an unsigned integer
+for {}\ttt{size\_type} ({}\ttt{ptrdiff\_t} by default).  This breaks
+from the C++ standard library convention of the standard containers
+like {}\ttt{std::vector} that all use an unsigned integer for
+{}\ttt{std::vector::size\_type} (which is {}\ttt{size\_t} on most
+machines).  The primary disadvantage for using an unsigned integral
+type is that subtractions that would normally produce a negative number
+instead rolls over into a huge positive number, making it more
+difficult to debug problems.  For example, consider the simple program
+shown in Listing {}\ref{listing:unsigned-int-problem}:
+
+
+{}\begin{listing}: Example program showing the problem with unsigned
+integral types
+\label{listing:unsigned-int-problem}
+{\small\begin{verbatim}
+  #include <iostream>
+  #include <string>
+  
+  typedef unsigned long int size_type ;
+  
+  void print_val(const std::string &valName, const size_type val)
+  { std::cout << valName << " = " << val << "\n";}
+  
+  int main()
+  {
+    const size_type a = 5, b = 7;
+    const size_type c = b - a;
+    const size_type d = a - b;
+    print_val("a", a);
+    print_val("b", b);
+    print_val("b - a", c);
+    print_val("a - b", d);
+    return 0;
+  }
+\end{verbatim}}
+\end{listing}
+
+
+When the above program is compiled with GCC 3.4.6 on a 64 bit Linux
+machine and run it produces the output:
+
+
+{\small\begin{verbatim}
+  a = 5
+  b = 7
+  b - a = 2
+  a - b = 18446744073709551614
+\end{verbatim}}
+
+
+In the above program, the subtraction of {}\ttt{a -b} is a programming
+error but that error results in the number
+{}\ttt{18446744073709551614} when using an unsigned type.  Getting a
+number like {}\ttt{18446744073709551614} in program output or in the
+debugger does not exactly give you a great hint as to what the problem
+might be.  Was uninitialized memory used to produce this result?  Is
+there some other memory usage problem that would cause the program to
+produce a ridiculous result such as this?  It is problems like this
+that greatly contribute to the accidental complexity that is C/C++
+programing (see Section {}\ref{sec:essentail-accidental-complexity}).
+
+However, when you replace {}\ttt{unsigned long int} with {}\ttt{long
+int} in Listing {}\ref{listing:unsigned-int-problem} and rebuild and
+run you get:
+
+
+{\small\begin{verbatim}
+  a = 5
+  b = 7
+  b - a = 2
+  a - b = -2
+\end{verbatim}}
+
+
+Now, getting output like {}\ttt{-2} when a positive number is expected
+is much easier to debug.  The chance of getting {}\ttt{-2} as the
+result of a memory usage error is very unlikely.  This would
+immediately be flagged as a subtraction error in the program and
+quickly traced down.  Therefore, from a program correctness and
+debugging perspective, signed integral types are far superior to
+unsigned types and signed types maintain basic mathematical properties
+of integral numbers.
+
+So if programs with unsigned integers are harder to debug when things
+go wrong, then what are the advantages of using an unsigned type?
+Well, some might argue that using an unsigned type for integral
+objects that that can only be non-negative in valid programs helps to
+make the code self documenting.  This is partially true but you can
+achieve the same result by using a typedef to make the usage clear
+(e.g.\ {}\ttt{size\_type}).
+
+So then what then is left as the real advantage for using an unsigned
+integral type?  The only real advantage of an unsigned integral type
+(e.g.\ {}\ttt{unsigned int}) over a signed integral type (e.g.\
+{}\ttt{int}) is that object of the unsigned integral type can
+represent twice the positive range.  For smaller integral types like
+{}\ttt{char} and and {}\ttt{short int} having twice the range can be
+quite useful.  However, on 32 bit and 64 bit modern computers, using a
+an {}\ttt{unsigned int} instead of an {}\ttt{int} as the size for a
+container is quite worthless.  On a 64 bit Linux machine with GCC
+3.4.6, the sizes of several integral types pertinent to this
+discussion are shown in Listing {}\ref{listing:integral-type-sizes}.
+
+
+{}\begin{listing}: Sizes and ranges of some common integral types of
+GCC on a 64 bit Linux machine
+\label{listing:integral-type-sizes}
+{\small\begin{verbatim}
+  sizeof(int) = 4
+  std::numeric_limits<int>::min()= -2147483648
+  std::numeric_limits<int>::max()= 2147483647
+  std::log10(std::numeric_limits<int>::max())= 9.33193
+  
+  sizeof(unsigned int) = 4
+  std::numeric_limits<unsigned int>::min()= 0
+  std::numeric_limits<unsigned int>::max()= 4294967295
+  std::log10(std::numeric_limits<unsigned int>::max())= 9.63296
+  
+  sizeof(long long int) = 8
+  std::numeric_limits<long long int>::min()= -9223372036854775808
+  std::numeric_limits<long long int>::max()= 9223372036854775807
+  std::log10(std::numeric_limits<long long int>::max())= 18.9649
+  
+  sizeof(unsigned long long int) = 8
+  std::numeric_limits<unsigned long long int>::min()= 0
+  std::numeric_limits<unsigned long long int>::max()= 18446744073709551615
+  std::log10(std::numeric_limits<unsigned long long int>::max())= 19.2659
+  
+  sizeof(size_t) = 8
+  std::numeric_limits<size_t>::min()= 0
+  std::numeric_limits<size_t>::max()= 18446744073709551615
+  std::log10(std::numeric_limits<size_t>::max())= 19.2659
+  
+  sizeof(ptrdiff_t) = 8
+  std::numeric_limits<ptrdiff_t>::min()= -9223372036854775808
+  std::numeric_limits<ptrdiff_t>::max()= 9223372036854775807
+  std::log10(std::numeric_limits<ptrdiff_t>::max())= 18.9649
+\end{verbatim}}
+\end{listing}
+
+
+On a 32 bit machine, {}\ttt{size\_t} is a 4 bit {}\ttt{unsigned int}
+and {}\ttt{ptrdiff\_t} is a 4 bit {}\ttt{int}.  The standard C library
+typedef {}\ttt{size\_t} is guaranteed to be the largest possible
+object size returned from {}\ttt{sizeof(...)} and is also used for
+functions like {}\ttt{malloc(...)}.  The standard C library typedef
+{}\ttt{ptrdiff\_t} is supposed to be guaranteed to hold the difference
+between the subtraction of any two pointers in the largest allocatable
+array.  Right here lies the first problem with this approach as shown
+in the simple program in Listing
+{}\ref{listing:size_t-ptrdiff_t-incompatibility}.
+
+
+{}\begin{listing}: Simple program showing the fundamental
+incompatibility of {}\ttt{size\_t} and {}\ttt{ptrdiff\_t}.
+\label{listing:size_t-ptrdiff_t-incompatibility}
+{\small\begin{verbatim}
+  #include <iostream> 
+  #include <string> 
+  #include <limits> 
+   
+  template<typename T> 
+  void print_val(const std::string &valName, const T val) 
+  { std::cout << valName << " = " << val << "\n";} 
+   
+  int main() 
+  { 
+    const size_t maxSize = std::numeric_limits<size_t>::max(); 
+    const size_t size = static_cast<size_t>(0.75 * maxSize); 
+    char *a = new char[size]; 
+    ptrdiff_t a_diff = (a+size) - a; 
+    print_val("maxSize", maxSize); 
+    print_val("size", size); 
+    print_val("a+size - a", a_diff); 
+    delete a;
+    return 0; 
+  }
+\end{verbatim}}
+\end{listing}
+
+
+The program in Listing
+{}\ref{listing:size_t-ptrdiff_t-incompatibility} allocates a
+{}\ttt{char} array 75\% the size of the maximum.  In this program,
+{}\ttt{size} is 50\% larger than the largest value that can be
+represented by the signed type {}\ttt{ptrdiff\_t} (which is the same
+thing as {}\ttt{int}).  When this program is compiled with GCC 3.4.6
+in 32 bit mode (i.e.\ with {}\ttt{-m32}) and run it produces the
+following output:
+
+{\small\begin{verbatim}
+  maxSize = 4294967295
+  size = 3221225471
+  a+size - a = -1073741825
+\end{verbatim}}
+
+What the above 32 bit output confirms is that it false to claim that
+{}\ttt{ptrdiff\_t} can store the difference between any two pointers
+in a single array of data.  Perhaps that was true on the machines when
+C was first developed the early 1970's but it is not true today where
+machines with 4+ GB of memory are common.
+
+Now consider practical usage of types like {}\ttt{std::vector} modern
+machines.  First, consider what it would mean to allocate the largest
+{}\ttt{std::vector} of even {}\ttt{char}s.  A {}\ttt{char} is 1 byte
+so on a 32 bit machine, an {}\ttt{std::vector<char>} of max size would
+have {}\ttt{4294967295 / 1e+9} = 4.3 GB of memory.  That would exhaust
+all of the memory of a 4 GB machine and more.  Being limited to only
+half the range of {}\ttt{size\_t} (which is the same thing as
+{}\ttt{ptrdiff\_t}) would give an {}\ttt{std::vector<char>} that takes
+up 2.3 GB of memory.  No real 32 bit program is ever going to allocate
+a single {}\ttt{std::vector} of {}\ttt{char}s takes up more than half
+of the addressable memory!  It is hard to imagine what useful task
+such a program would perform.
+
+When you move up to an {}\ttt{std::vector<int>} for a 32 bit (4 byte)
+{}\ttt{int} the maximum size of array that you can create is
+{}\ttt{4294967295 * 4 / 1e+9} = 17.2 GB.  Being limited to the
+{}\ttt{unsigned int} {}\ttt{ptrdiff\_t} would limit you to an
+{}\ttt{std::vector<int>} of size 8.6 GB which is already twice the
+addressable memory of a 32 bit system.
+
+Therefore, even on a 32 bit machine, limiting the maximum size of
+{}\ttt{std::vector} objects to have only
+{}\ttt{std::numeric\_limits<ptrdiff\_t)>::max()} elements is really
+not any kind of real limit at all.  For any reasonable program on any
+reasonable machine you cannot even store that much memory.
+
+On a 64 bit machine this of course becomes silly.  By limited the
+maximum number of elements in an {}\ttt{std::vector<char>} to be
+{}\ttt{std::numeric\_limits<ptrdiff\_t)>::max()} on 64 bit machine
+would mean that you would take up {}\ttt{(18446744073709551615 / 2 /
+1e+9)} = {}\ttt{9.2e+9} GB of memory!
+
+In summary, limiting the maximum number of elements in an
+{}\ttt{std::vector} (and therefore {}\ttt{Teuchos::Array}) to be half
+of {}\ttt{size\_t} with a {}\ttt{signed int} {}\ttt{ptrdiff\_t} is
+not any kind of limit at all in any realistic 32 bit program and
+especially not a 64 bit program.
+
+Therefore, the Teuchos array memory management classes all use by
+default {}\ttt{ptrdiff\_t} as {}\ttt{size\_type} because of the
+inherent advantages of using a signed integral type instead of an
+unsigned type and with no real advantages at all for using
+{}\ttt{size\_t} over {}\ttt{ptrdiff\_t}.
 
 
 %
