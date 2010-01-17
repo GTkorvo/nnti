@@ -428,7 +428,7 @@ persisting verses non-persisting associations are defined in Section
 {}\ref{sec:important-prerequisites}.  With all this background and
 context in place, the Teuchos memory management classes are presented
 in Section {}\ref{sec:teuchos-mem-mng-classes}.  The basic outline of
-the approach in Section {}\ref{sec:outline_of_basic_approach} is
+the approach in Section {}\ref{sec:overview_of_basic_approach} is
 perhaps the first section one would jump to if they want to get a
 quick idea what the Teuchos memory management classes are all about.
 Finally, Taking a step back, a philosophical discussion of the
@@ -1513,8 +1513,9 @@ of raw C++ pointers.
 
 
 %
-{}\subsection{Outline of the basic approach}
-{}\label{sec:outline_of_basic_approach}
+{}\subsection{Overview of basic approach employed by Teuchos
+memory mangement classes}
+\label{sec:overview_of_basic_approach}
 %
 
 The basic approach being advocated here and implemented in the Teuchos
@@ -1877,7 +1878,7 @@ once we do this, we will have to rely on our clients to pass in memory
 correctly and keep it valid as long as our modules need it.
 
 %
-{}\subsection{Common aspects of all Teuchos Memory Management classes}
+{}\subsection{Common aspects of all Teuchos memory management classes}
 \label{sec:common-aspects}
 %
 
@@ -2261,7 +2262,7 @@ The Teuchos memory management module actually defines four different
 C++ classes for dealing with contiguous arrays of objects:
 {}\ttt{ArrayView}, {}\ttt{ArrayRCP}, {}\ttt{Array}, and
 {}\ttt{Tuple}.  As stated in Section
-{}\ref{sec:outline_of_basic_approach} each of these classes is needed
+{}\ref{sec:overview_of_basic_approach} each of these classes is needed
 in order to address different important use cases for dealing with
 contiguous arrays of objects.  The conventions outlined in the paper
 never have you exposing a raw C++ pointer to an array or directly
@@ -4938,8 +4939,33 @@ data) much larger than what is contained in the infrastructure for the
 {}\ttt{[Array]RCP} objects so the additional memory is
 insignificant.
 
-ToDo: Show a diagram of a cicular reference involving multiple
-objects.
+
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=0,scale=0.65]{CircularChain}
+%}
+\end{center}
+\caption{
+\label{fig:CircularChain}
+Example of a circular chain involving many objects and many classes.}
+\end{figure}
+\esinglespace}
+
+
+While this section has focused on a simple example involving a circular
+reference between two classes and to objects, in reality circular
+references typically involve many different objects and classes which
+may be in very distant parts of the code base which makes spotting
+them very difficult.  For example, Figure {}\ref{fig:CircularChain} (a
+UML object diagram) depicts a circular reference involving eight
+objects.  When the external {}\ttt{someClient} object removes its
+{}\ttt{RCP<H>} object, the chain of objects from {}\ttt{a} to
+{}\ttt{h} will not be deleted an will leak memory.  These types of
+chains of circular references can be very difficult to track down and
+that is where the debug-mode runtime node tracing described in Section
+{}\ref{sec:detection-circular-references} comes in most handy.
 
 Section {}\ref{sec:detection-dangling-references} describes how weak
 pointers are used in runtime debug checking for dangling
@@ -6005,8 +6031,6 @@ Overhead of runtime checking for serial Tpetra test suite.}
 %
 \end{table}
 
-ToDo: Give statistics about the number of RCPNodes created!
-
 The results in Table {}\ref{tbl:overhead-of-runtime-checking} give the
 total runtimes as well as the relative runtimes for debug-mode
 checking and valgrind.  The second column 'Runtime' gives the raw CPU
@@ -6061,7 +6085,7 @@ significantly.
 
 
 %
-{}\subsubsection{Limitations in debug-mode runtime checking}
+{}\subsubsection{Limitations of debug-mode runtime checking}
 %
 
 Once memory is dynamically allocated and owned by one of the Teuchos
@@ -7153,7 +7177,7 @@ object ownership'' idiom \\
 \end{listing}
 
 
-ToDo: Show UML object diagram that shows the two RCPNode objects.
+% ToDo: Show UML object diagram that shows the two RCPNode objects.
 
 
 Without going into a lot of detail, what the code in Listings
