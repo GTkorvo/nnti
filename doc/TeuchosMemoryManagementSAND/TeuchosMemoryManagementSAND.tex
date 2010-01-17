@@ -323,7 +323,9 @@ other language in wide use:
 
 \begin{itemize}
 
-{}\item Strong typing
+{}\item Strong typing (leads to high-performance code)
+
+{}\item High-performance native code
 
 {}\item Support for creating very efficient concrete data types with
 efficiency on par with built-in data types that don't not require
@@ -347,15 +349,23 @@ computing derivatives of functions (see the Trilinos
 Sacado\footnote{\ttt{http://trilinos.sandia.gov/packages/sacado/}}
 package {}\cite{phippsEtAl2006}) that achieves a level of generality
 and efficiency that has no rival in a software library in any other
-programming language.
+programming language.  It is precicely the above feature set along
+with wide availability of high quality compilers on every major
+platform (including the cutting-edge massively parallel computers),
+good interoperability with other languges (through C
+interoperability), and strong support for next generation
+architectures {}\cite{DesignIssuesForMultiCore08} that makes C++ so
+attractive for writing computational science \& engineering software
+in the first place.
 
-It is this unique feature set that is C++'s saving grace.  In C++, you
-can actually develop a set of new data types that in essence can be
-used to develop new programming environments in C++.  This essentially
-allows you to define a new programming language within C++ with a
-level of efficiency and flexibility that does not exist in any other
-programming language.  This is exactly what this paper advocates
-with respect to basic memory management in C++; developing a new
+It is also this unique feature set that is C++'s saving grace with
+respect memory management problems.  In C++, you can actually develop
+a set of new data types that in essence can be used to develop new
+programming environments in C++.  This essentially allows you to
+define a new programming language within C++ with a level of
+efficiency and flexibility that does not exist in any other
+programming language.  This is exactly what this paper advocates with
+respect to basic memory management in C++; developing a new
 higher-level programming language in C++ for abstracting and
 encapsulating all raw memory usage as well as dynamic memory
 management that is very compatible with the built-in C++ exception
@@ -3331,12 +3341,12 @@ confusing aspects of using these classes.  As shown in Figures
 {}\ref{fig:TeuchosPtrConversions} and
 {}\ref{fig:TeuchosArrayConversions}, many different implicit
 conversions are defined.  An implicit conversion will only be
-performed by the C++ compiler to satify the formal arguments for a
+performed by the C++ compiler to satisfy the formal arguments for a
 function call when several conditions are satisfied: a) when it is
 needed to call a function where no other better functions provide a
 better match, b) when a only a single implicit conversion for each
 argument is sufficient, and c) when calling a non-template function
-(or a tempate function where all of the template arguments are
+(or a template function where all of the template arguments are
 explicitly specified).  Also, the C++ compiler will not be able to do
 an implicit conversion when an ambiguous function call exists.
 Explaining the behavior of these implicit conversions in C++ gets down
@@ -3363,8 +3373,9 @@ a programming error.)
 
 {}\item{}Implicit conversions fail because templated functions can not
 perform implicit conversions in order to satisfy a call. (This is a
-language usability annoyance associated with templates and has nothing
-specific to do with the Teuchos memory management classes themselves.)
+language usability annoyance associated with templates but also
+represents a fundamental shortcoming of smart pointers compared to raw
+C++ pointers.)
 
 {}\item{}Implicit conversions fail due to ambiguous overloaded calls
 to overloaded functions that would otherwise work just fine when raw
@@ -3421,7 +3432,7 @@ reference problem
 \end{listing}
 
 
-When user code trys to call {}\ttt{someUserFunction(...)} as shown in
+When user code tries to call {}\ttt{someUserFunction(...)} as shown in
 Listing {}\ref{listing:someUserFunction-pass-by-non-const-ref}, the
 C++ compiler refuses to perform the implicit type conversions because
 the compiler will never perform an implicit type conversion for an
@@ -3430,9 +3441,9 @@ least once by most developers when they first start using the Teuchos
 memory management classes and they can't understand why the code does
 not compile.  To understand why the implicit conversions in Listing
 {}\ref{listing:someUserFunction-pass-by-non-const-ref} are not
-occuring, one must understand the C++ type system in how it handles
+occurring, one must understand the C++ type system in how it handles
 basic type conversions.  The C++ standard specifies that implicit type
-conversions to facilitate the call of a C++ funtion will only occur
+conversions to facilitate the call of a C++ function will only occur
 for arguments passed by value or by {}\textit{const} reference.  For
 example, a C++ compiler will convert an {}\ttt{int} into a
 {}\ttt{double} to call a function taking a {}\ttt{double} argument but
@@ -3447,7 +3458,7 @@ combinations of both {}\ttt{Derived*} to {}\ttt{const Derived*}).
 While C++ pointer data types have a special place in the C++ language,
 they behave exactly like every other data type in C++ with respect to
 implicit conversions.  That is, if a pointer object is passed by
-non-const reference instead of by value, the complier will refuse the
+non-const reference instead of by value, the compiler will refuse the
 perform the type conversion.  For example, the equivalent code to
 Listing {}\ref{listing:someUserFunction-pass-by-non-const-ref}
 replacing {}\ttt{RCP} with raw pointers shown in Listing
@@ -3513,7 +3524,112 @@ reference
 {}\subsubsection*{Implicit conversions failing due to templated function}
 %
 
-ToDo: Fill this in!
+Another situation where implicit conversions will fail to be performed
+to satisfy a function call are when the function being called is a
+template function.  The C++98 standard does not the implicit
+conversion of input arguments in order to call a template function
+{}\cite[Item 45]{EffectiveC++ThirdEdition}.  For example, consider the
+code in Listing {}\ref{listing:implicit-conv-fail-template-func} that
+fails to compile:
+
+
+{}\begin{listing}: Situation where implicit conversion fails due to a
+template function.
+\label{listing:implicit-conv-fail-template-func}
+{\small\begin{verbatim}
+  template<class T> class Base { ... };
+  template<class T> class Derived : public Base<T> { ... };
+
+  template<class T>
+  void someTemplateUserFunction(const RCP<const Base<T> > &base);
+
+  template<class T>
+  void someOtherTemplateUserFunction()
+  {
+     RCP<Derived<T> > derived(new Derived<T>);
+     someTemplateUserFunction(derived);   // No implicit conv, no compmile!
+     RCP<const Derived<T> > cderived = derived;
+     someTemplateUserFunction(cderived);  // No implicit conv, no compmile!
+     RCP<Base<T> > base = derived;
+     someTemplateUserFunction(base);      // No implicit conv, no compmile!
+     RCP<const Base<T> > cbase = base;
+     someTemplateUserFunction(cbase);     // Exact match, compiles!
+  }
+\end{verbatim}}
+\end{listing}
+
+
+What is frustrating and yet interesting about this situation is that
+if the {}\ttt{RCP}s are replaced with raw pointers, as shown in
+Listing {}\ref{listing:implicit-conv-pass-raw--template-func}, the C++
+compiler will perform the implicit type conversions just fine.
+
+
+{}\begin{listing}: Example where implicit conversion to call a
+template function works fine when using raw C++ pointers.
+\label{listing:implicit-conv-pass-raw--template-func}
+{\small\begin{verbatim}
+  template<class T>
+  void someTemplateUserFunction(const Base<T> *base);
+  
+  template<class T>
+  void someOtherTemplateUserFunction()
+  {
+    Derived<T> *derived = new Derived<T>;
+    someTemplateUserFunction(derived);  // Okay, Derived<T>* -> const Base<T>*
+    const Derived<T> *cderived = derived;
+    someTemplateUserFunction(cderived); // Okay, const Derived<T>* -> const Base<T>*
+    Base<T> *base = derived;
+    someTemplateUserFunction(base);     // Okay, Base<T>* -> const Base<T>*
+    const Base<T> *cbase = base;
+    someTemplateUserFunction(cbase);    // Okay, exact match!
+  }
+\end{verbatim}}
+\end{listing}
+
+
+Comparing the templated code in Listing
+{}\ref{listing:implicit-conv-fail-template-func} and Listing
+{}\ref{listing:implicit-conv-pass-raw--template-func} it is clear that
+C++ assigns special privileges and abilities to the conversion of
+pointer data types that are not afforded to any other data type.  This
+is the first example of where smart pointer classes in C++ are put at
+a fundamental disadvantage with respect to raw C++ pointers.  This is
+an unfortunate situation but the problem can be dealt with by either
+forcing the conversion of the input arguments or by explicitly
+specifying the template arguments as shown, for example, in Listing
+{}\ref{listing:implicit-conv-pass-explicit-template-func}.
+
+
+{}\begin{listing}: Explicitly specifying function template arguments
+and forcing conversions to call templated function.
+\label{listing:implicit-conv-pass-explicit-template-func}
+{\small\begin{verbatim}
+  template<class T>
+  void someTemplateUserFunction(const RCP<const Base<T> > &base);
+
+  template<class T>
+  void someOtherUserTemplateFunction()
+  {
+     RCP<Derived<T> > derived(new Derived<T>);
+     // Force the conversion Derived<T>* -> const Base<T>*
+     someTemplateUserFunction(RCP<const Base<T> >(derived));
+     // or, specify template argument allowing implicit conversion
+     // Derived<T>* -> const Base<T>*
+     someTemplateUserFunction<T>(derived);
+     ...
+  }
+\end{verbatim}}
+\end{listing}
+
+
+As shown in Listing
+{}\ref{listing:implicit-conv-pass-explicit-template-func} typically
+the least verbose way to call a template function that requires a
+conversion of {}\ttt{RCP} input arguments is to just explicitly
+specify the template argument(s) which turns the template function
+into a regular function in the eyes of the C++ compiler and then the
+implicit conversion will be performed.
 
 
 %
@@ -3521,7 +3637,149 @@ ToDo: Fill this in!
 overloaded function calls}
 %
 
-ToDo: Fill this in!
+The last situation to discuss where implicit conversions will fail to
+be performed for the Teuchos memory management types occurs when
+calling overloaded functions that require a conversion of the internal
+pointer type that would otherwise work just fine for raw C++ pointers.
+Consider the example code in Listing
+{}\ref{listing:overloaded-func-implicit-conv-problem} showing the use
+of overloaded functions that differ in the const type of the object.
+
+
+{}\begin{listing}: Example of ambiguous calls to overloaded functions
+\label{listing:overloaded-func-implicit-conv-problem}
+{\small\begin{verbatim}
+  class Base { ... };
+  class Derived : public Base { ... };
+
+  void someUserFunction(const RCP<Base> &base);         // Overload #1
+  void someUserFunction(const RCP<const Base> &base);   // Overload #2
+
+  void someOtherUserFunction()
+  {
+     RCP<Derived> derived(new Derived);
+     someUserFunction(derived);  // Compile error, ambiguous call
+     RCP<const Derived> cderived = derived;
+     someUserFunction(cderived); // Compile error, ambiguous call
+     RCP<Base> base = derived;
+     someUserFunction(base);     // Okay, exact match for Overload #1
+     RCP<const Base> cbase = base;
+     someUserFunction(cbase);    // Okay, exact match for Overload #2
+  }
+\end{verbatim}}
+\end{listing}
+
+
+The reason that the first two function calls in Listing
+{}\ref{listing:overloaded-func-implicit-conv-problem} with
+{}\ttt{RCP<Derived>} and {}\ttt{RCP<const Derived>} result in
+ambiguous function call compile errors is that the C++ compiler is not
+smart enough to know that a conversion from {}\ttt{RCP<Derived>} to
+{}\ttt{RCP<Base>} is better than a conversion to {}\ttt{RCP<const
+Base>} which would allow the first function call to result in a call
+to Overload \#1.  However, if raw C++ pointers are used in same code,
+as shown in Listing
+{}\ref{listing:overloaded-func-implicit-conv-raw-pass}, the compiler
+will make the right implicit conversions and call the right overloaded
+functions just fine.
+
+
+{}\begin{listing}: Example of implicit conversions for overloaded
+functions that work just fine for raw pointers
+\label{listing:overloaded-func-implicit-conv-raw-pass}
+{\small\begin{verbatim}
+  void someUserFunction(Base *base);         // Overload #1
+  void someUserFunction(const Base *base);   // Overload #2
+
+  void someOtherUserFunction()
+  {
+     Derived *derived = new Derived;
+     someUserFunction(derived);  // Calls Overload #1: Derived* -> Base*
+     const Derived *cderived = derived;
+     someUserFunction(cderived); // Calls Overload #2: const Derived* -> const Base*
+     Base *base = derived;
+     someUserFunction(base);     // Okay, exact match for Overload #1
+     const Base *cbase = base;
+     someUserFunction(cbase);    // Okay, exact match for Overload #2
+  }
+\end{verbatim}}
+\end{listing}
+
+
+Again, similar to the templated function example given above,
+comparing Listing
+{}\ref{listing:overloaded-func-implicit-conv-problem} and Listing
+{}\ref{listing:overloaded-func-implicit-conv-raw-pass}, it is clear
+that the conversions of raw C++ pointer types to call overloaded
+functions are given special privileges and abilities that are not
+afforded to any type data type in C++.  The C++ compiler will resolve
+overloaded functions for the conversion of C++ pointer types based on
+the least required conversions (e.g.\ {}\ttt{Derived*} to
+{}\ttt{Base*} is better than {}\ttt{Derived*} to {}\ttt{const Base*}).
+This is wonderful behavior for raw C++ pointers (or perhaps confusing
+depending on how you look at it) but such special abilities are not
+afforded to smart pointer types like {}\ttt{Ptr} or {}\ttt{RCP} (or
+any other smart pointer type including {}\ttt{boost::shared\_ptr}).
+
+Problems in calling overloaded functions like this can be resolved but
+only through explicitly converting the input arguments as shown in
+Listing {}\ref{listing:overloaded-func-implicit-conv-explicit-pass}.
+
+
+{}\begin{listing}: Example of resolving ambiguous calls to overloaded
+functions through explicit argument conversions
+\label{listing:overloaded-func-implicit-conv-explicit-pass}
+{\small\begin{verbatim}
+  void someUserFunction(const RCP<Base> &base);         // Overload #1
+  void someUserFunction(const RCP<const Base> &base);   // Overload #2
+
+  void someOtherUserFunction()
+  {
+     RCP<Derived> derived(new Derived);
+     someUserFunction(RCP<Base>(derived));        // Calls Overload #1
+     someUserFunction(RCP<const Base>(derived));  // Calls Overload #2
+     ...
+  }
+\end{verbatim}}
+\end{listing}
+
+
+Having to explicitly convert input arguments to satisfy overloaded
+function calls gets annoying very quickly for any reasonable-minded
+programmer.  A much better way to deal with the problem of overload
+functions and smart pointer types is to not use overloaded functions in
+the first place as demonstrated in Listing
+{}\ref{listing:overloaded-func-implicit-conv-nonoverload}.
+
+
+{}\begin{listing}: Example of resolving ambiguous calls to overloaded
+functions by not using overloaded functions in the first place
+\label{listing:overloaded-func-implicit-conv-nonoverload}
+{\small\begin{verbatim}
+  void someNonconstUserFunction(const RCP<Base> &base);
+  void someUserFunction(const RCP<const Base> &base);
+
+  void someOtherUserFunction()
+  {
+     RCP<Derived> derived(new Derived);
+     // Compiles fine, implicit conv: Derived* -> Base*
+     someNonconstUserFunction(derived);
+     // Compiles fine, implicit conv: Derived* -> const Base*
+     someUserFunction(derived);
+     ...
+  }
+\end{verbatim}}
+\end{listing}
+
+
+Avoiding problems with ambiguous function calls to overloaded
+functions by avoiding overloaded functions (as demonstrated in Listing
+{}\ref{listing:overloaded-func-implicit-conv-nonoverload}) may seem
+like a bit of cop-out but in general function overloading tends to be
+abused in C++ anyway.  In many cases, code can be much more clear by
+using different function names in cases where most developers would
+just use overloaded functions (perhaps because they cannot think of
+better non-overloaded names).
 
 
 %
