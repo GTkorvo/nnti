@@ -101,23 +101,22 @@ higher-level C++ code.  Instead, a set of cooperating concrete
 template classes developed in the Trilinos package Teuchos are used to
 replace every use of raw C++ pointers in every use case where it
 appears in high-level code.  Included in the set of memory management
-classes are the typical reference-counted smart pointers similar to
-{}\ttt{boost::shared\_ptr} (and therefore C++0x
-{}\ttt{std::shared\_ptr}) and {}\ttt{boost::shared\_array}.
-However, what is missing in boost and the new standard library are
-non-reference counted classes for remaining use cases where raw C++
-pointers would need to be used.  These classes have a debug build mode
-where nearly all programmer arrows are caught and gracefully reported
-at runtime.  The default optimized build mode strips all runtime
-checks and allows the code to perform as efficiently as raw C++
-pointers with reasonable usage.  Also included is a novel approach for
-dealing with the circular references problem that imparts little extra
-overhead and is almost completely invisible to most of the code
-(unlike the boost and therefore C++0x approach).  Rather than being a
-radical approach this is simply the logical result of a trend in the
-C++ development and standards community that started with
-{}\ttt{std::auto\_ptr} and is continued (but not finished) with
-{}\ttt{std::shared\_ptr}.
+classes is teh typical reference-counted smart pointer class similar
+to {}\ttt{boost::shared\_ptr} (and therefore C++0x
+{}\ttt{std::shared\_ptr}).  However, what is missing in boost and the
+new standard library are non-reference counted classes for remaining
+use cases where raw C++ pointers would need to be used.  These classes
+have a debug build mode where nearly all programmer error are caught
+and gracefully reported at runtime.  The default optimized build mode
+strips all runtime checks and allows the code to perform as
+efficiently as raw C++ pointers with reasonable usage.  Also included
+is a novel approach for dealing with the circular references problem
+that imparts little extra overhead and is almost completely invisible
+to most of the code (unlike the boost and therefore C++0x approach).
+Rather than being a radical approach this is simply the logical
+progression of a trend in the C++ development and standards community
+that started with {}\ttt{std::auto\_ptr} and is continued (but not
+finished) with {}\ttt{std::shared\_ptr} in C++0x.
 
 %
 \end{abstract}
@@ -3238,10 +3237,11 @@ All implicit conversions are supported by templated copy constructors
 for all four classes.  The explicit conversion operators for these
 four types are shown in the Listings {}\ref{listing:Ptr-conversions},
 {}\ref{listing:RCP-conversions},
-{}\ref{listing:ArrayView-conversions},
+{}\ref{listing:ArrayView-conversions}, and
 {}\ref{listing:ArrayRCP-conversions}.
 
-\begin{listing}: Conversion functions for Ptr\\
+
+{}\begin{listing}: Conversion functions for {}\ttt{Ptr}
 \label{listing:Ptr-conversions}
 {\small\begin{verbatim}
   template<class T2, class T1> Ptr<T2> ptr_implicit_cast(const Ptr<T1>& p1);
@@ -3251,6 +3251,7 @@ four types are shown in the Listings {}\ref{listing:Ptr-conversions},
     bool throw_on_fail = false);
 \end{verbatim}}
 \end{listing}
+
 
 \begin{listing}: Conversion functions for RCP\\
 \label{listing:RCP-conversions}
@@ -3263,6 +3264,7 @@ four types are shown in the Listings {}\ref{listing:Ptr-conversions},
 \end{verbatim}}
 \end{listing}
 
+
 \begin{listing}: Conversion functions for ArrayView\\
 \label{listing:ArrayView-conversions}
 {\small\begin{verbatim}
@@ -3271,6 +3273,7 @@ four types are shown in the Listings {}\ref{listing:Ptr-conversions},
 \end{verbatim}}
 \end{listing}
 
+
 \begin{listing}: Conversion functions for ArrayRCP\\
 \label{listing:ArrayRCP-conversions}
 {\small\begin{verbatim}
@@ -3278,6 +3281,7 @@ four types are shown in the Listings {}\ref{listing:Ptr-conversions},
   template<class T2, class T1> ArrayRCP<T2> arcp_reinterpret_cast(const ArrayRCP<T1>& p1);
 \end{verbatim}}
 \end{listing}
+
 
 Note that the dynamic cast conversion functions
 {}\ttt{ptr\_dynamic\_cast()} and {}\ttt{ptr\_dynamic\_cast()}
@@ -3310,9 +3314,14 @@ shown in Figure {}\ref{fig:TeuchosArrayConversions} include both
 implicit and explicit conversions and view and copy conversions
 yielding four different types of conversions.
 
+ToDo: Provide a table of all the types of conversions that are
+supported (implicit or explicit) and give the function that performs
+the conversion.  Remove all ambiguity about what conversions are
+supported and what functions are used.
+
+
 %
-{}\subsubsection{Problems and shortcomings with implicit type
-conversions}
+{}\subsubsection{Implicit type conversion problems and shortcomings}
 \label{sec:conversion-problems}
 %
 
@@ -3322,11 +3331,14 @@ confusing aspects of using these classes.  As shown in Figures
 {}\ref{fig:TeuchosPtrConversions} and
 {}\ref{fig:TeuchosArrayConversions}, many different implicit
 conversions are defined.  An implicit conversion will only be
-performed by the C++ compiler when it is needed to allow a piece of
-code to compile, when a only a single implicit conversion is defined,
-and when not calling a templated function where the template arguments
-are not fully specified.  Also, the C++ compiler will not be able to
-do an implicit conversion when an ambiguous function call exists.
+performed by the C++ compiler to satify the formal arguments for a
+function call when several conditions are satisfied: a) when it is
+needed to call a function where no other better functions provide a
+better match, b) when a only a single implicit conversion for each
+argument is sufficient, and c) when calling a non-template function
+(or a tempate function where all of the template arguments are
+explicitly specified).  Also, the C++ compiler will not be able to do
+an implicit conversion when an ambiguous function call exists.
 Explaining the behavior of these implicit conversions in C++ gets down
 to the low-level details of the C++ type system that many C++
 programmers take for grated or don't understand all that well.
@@ -3339,35 +3351,178 @@ Other problems are due to a fundamental handicap that smart pointer
 types have with respect to raw C++ pointers.
 
 Implicit conversions of the Teuchos memory management classes (or any
-other C++ classes in any other library) fail for one of the following
-reasons:
+other C++ classes in any other library) needed to call a given
+function fail for one of the following reasons:
 
 \begin{enumerate}
 
-{}\item{}Implicit conversions to functions failing because memory
+{}\item{}Implicit conversions to functions fail because the memory
 management types are not passed by const reference (or by value) and
 are mistakenly (or on purpose) passed by non-const reference. (This is
 a programming error.)
 
-{}\item{}Implicit conversions failing because templated functions can
-not perform implicit conversions in order to satisfy a call. (This is
-a language usability annoyance associated with templates and has
-nothing to do with the Teuchos memory management classes themselves.)
+{}\item{}Implicit conversions fail because templated functions can not
+perform implicit conversions in order to satisfy a call. (This is a
+language usability annoyance associated with templates and has nothing
+specific to do with the Teuchos memory management classes themselves.)
 
-{}\item{}Implicit conversions failing due to ambiguous calls to
-overloaded functions that would work just fine when raw C++ pointers
-are involved. (This is a fundamental shortcoming of smart pointers or
-any other class as compared to raw C++ pointers.)
+{}\item{}Implicit conversions fail due to ambiguous overloaded calls
+to overloaded functions that would otherwise work just fine when raw
+C++ pointers are involved. (This is a fundamental shortcoming of smart
+pointers or any other class as compared to raw C++ pointers.)
 
 \end{enumerate}
 
-ToDo: Give code examples for all of the above reasons that implicit
-conversions fail.  Show examples from memory management paper.
+Let's consider each of these types of problems one at a time.  The
+class hierarchy shown in Listing {}\ref{listing:Base-Derived-Classes}
+will be used in demonstration code.
 
-ToDo: Provide a table of all the types of conversions that are
-supported (implicit or explicit) and give the function that performs
-the conversion.  Remove all ambiguity about what conversions are
-supported and what functions are used.
+
+{}\begin{listing}: Basic base and derived classes
+\label{listing:Base-Derived-Classes}
+{\small\begin{verbatim}
+  class Base { ... };
+  class Derived : public Base { ... };
+\end{verbatim}}
+\end{listing}
+
+
+%
+{}\subsubsection*{Implicit conversions failing due to passing by
+non-const reference}
+%
+
+
+First, consider implicit conversion problems caused by erroneously
+passing Teuchos memory management objects by non-const references
+instead of by const reference.  Consider the user-written function in
+Listing {}\ref{listing:someUserFunction-pass-by-non-const-ref} that
+mistakenly passes an {}\ttt{RCP} by non-const reference.
+
+
+{}\begin{listing}: User function with a bad pass by non-const
+reference problem
+\label{listing:someUserFunction-pass-by-non-const-ref}
+{\small\begin{verbatim}
+  void someUserFunction(RCP<const Base> &base); // Should be 'const RCP<...>&'
+
+  void someOtherUserFunction()
+  {
+     RCP<Derived> derived(new Derived);
+     someUserFunction(derived);  // Compile error, no implicit conversion!
+     RCP<const Derived> cderived = derived;
+     someUserFunction(cderived); // Compile error, no implicit conversion!
+     RCP<Base> base = derived;
+     someUserFunction(base);     // Complile error, no implicit conversion!
+     RCP<const Base> cbase = base;
+     someUserFunction(cbase);    // Compliles fine, exact match!
+  }
+\end{verbatim}}
+\end{listing}
+
+
+When user code trys to call {}\ttt{someUserFunction(...)} as shown in
+Listing {}\ref{listing:someUserFunction-pass-by-non-const-ref}, the
+C++ compiler refuses to perform the implicit type conversions because
+the compiler will never perform an implicit type conversion for an
+argument passed by non-const reference.  This type of error is made at
+least once by most developers when they first start using the Teuchos
+memory management classes and they can't understand why the code does
+not compile.  To understand why the implicit conversions in Listing
+{}\ref{listing:someUserFunction-pass-by-non-const-ref} are not
+occuring, one must understand the C++ type system in how it handles
+basic type conversions.  The C++ standard specifies that implicit type
+conversions to facilitate the call of a C++ funtion will only occur
+for arguments passed by value or by {}\textit{const} reference.  For
+example, a C++ compiler will convert an {}\ttt{int} into a
+{}\ttt{double} to call a function taking a {}\ttt{double} argument but
+only if the double is passed by value or by const reference (i.e.\
+{}\ttt{const double\&}).  The same holds true for C++ pointer types.
+Note that every pointer type (e.g.\ {}\ttt{int*}, {}\ttt{SomeType*})
+is a new C++ value-type data type that is automatically defined by the
+compiler for every defined type.  The C++ compiler also automatically
+defines implicit conversions between pointer types for {}\ttt{T*} to
+{}\ttt{const T*} and for {}\ttt{Base*} to {}\ttt{Derived*} (or
+combinations of both {}\ttt{Derived*} to {}\ttt{const Derived*}).
+While C++ pointer data types have a special place in the C++ language,
+they behave exactly like every other data type in C++ with respect to
+implicit conversions.  That is, if a pointer object is passed by
+non-const reference instead of by value, the complier will refuse the
+perform the type conversion.  For example, the equivalent code to
+Listing {}\ref{listing:someUserFunction-pass-by-non-const-ref}
+replacing {}\ttt{RCP} with raw pointers shown in Listing
+{}\ref{listing:someUserFunction-pass-by-non-const-ref-raw-ptr} will
+also result in code that will not compile.
+
+
+{}\begin{listing}: User function with a bad pass by non-const
+reference problem using raw pointers
+\label{listing:someUserFunction-pass-by-non-const-ref-raw-ptr}
+{\small\begin{verbatim}
+  typedef const Base* ptr_const_Base; // Equivalent to RCP<const Base>
+
+  void someUserFunction(ptr_const_Base &base); // Bad pass by non-const ref!
+
+  void someOtherUserFunction()
+  {
+     Derived *derived = new Derived;
+     someUserFunction(derived);   // Compile error, no implicit conversion!
+     const Derived *cderived = derived;
+     someUserFunction(cderived); // Compile error, no implicit conversion!
+     Base *base = derived;
+     someUserFunction(base);     // Complile error, no implicit conversion!
+     const Base *cbase = base;
+     someUserFunction(cbase);    // Compliles fine, exact match!
+  }
+\end{verbatim}}
+\end{listing}
+
+
+The way to fix this problem is to pass the Teuchos memory management
+types (or any other type you want the compiler to perform an implicit
+conversion on) by const reference.  For example, fixing the code in
+Listing {}\ref{listing:someUserFunction-pass-by-non-const-ref} to pass
+by const reference shown in Listing
+{}\ref{listing:someUserFunction-pass-by-const-ref} results in code
+that compiles just fine with the C++ compiler performing all of the
+expected implicit conversions.
+
+
+{}\begin{listing}: User function with corrected pass by const
+reference
+\label{listing:someUserFunction-pass-by-const-ref}
+{\small\begin{verbatim}
+  void someUserFunction(const RCP<const Base> &base); // Now correct!
+
+  void someOtherUserFunction()
+  {
+     RCP<Derived> derived(new Derived);
+     someUserFunction(derived);  // Compiles fine, Derived* -> const Base*
+     RCP<const Derived> cderived = derived;
+     someUserFunction(cderived); // Compiles fine, const Derived* -> const Base*
+     RCP<Base> base = derived;
+     someUserFunction(base);     // Compiles fine, Base* -> const Base*
+     RCP<const Base> cbase = base;
+     someUserFunction(cbase);    // Compliles fine, exact match!
+  }
+\end{verbatim}}
+\end{listing}
+
+
+%
+{}\subsubsection*{Implicit conversions failing due to templated function}
+%
+
+ToDo: Fill this in!
+
+
+%
+{}\subsubsection*{Implicit conversions failing due to ambiguous
+overloaded function calls}
+%
+
+ToDo: Fill this in!
+
 
 %
 {}\subsection{Core idioms for the use of memory management classes}
@@ -3817,7 +3972,8 @@ using an {}\ttt{RCP} or {}\ttt{ArrayRCP} object.
 
 
 %
-\subsubsection*{Variations in passing single changeable objects}
+{}\subsubsection*{Variations in passing single changeable objects}
+\label{sec:vars-passing-single-objs}
 %
 
 The only area of contention in this specification is how to handle
@@ -9038,19 +9194,24 @@ classes}
 \label{apdx:commandments}
 %
 
-Here are stated commandments (or very strongly recommended
-guildelines) that if followed, along with the idioms defined in
+Here are stated commandments (i.e.\ very strongly recommended
+guidelines) that if followed, along with the idioms defined in
 Section {}\ref{sec:idioms}, then client code will be 100\% safe
 through debug-mode runtime checking and will never result in a
 segfault or other memory usage error (except for circular references
 as described in Section {}\ref{sec:detection-circular-references}).
+While there will be situations where it is justified to violate almost
+all of these commandments, they should be valid in 99\% of a well
+written code base.
 
 \begin{commandment}
 Thou shall not expose raw pointers in any high-level C++ code.
 \end{commandment}
 
 {}\textit{Exception:} Only expose raw pointers when interfacing with
-non-compliant code.
+non-compliant code or momentarily in order to construct a Teuchos
+memory management class object.  However, these cases should be
+encapsulated as low-level code.
 
 \begin{commandment}
 Thou shall only use raw C++ references for non-persisting associations
@@ -9067,7 +9228,7 @@ persisting associations (see Section
 Thou shall put a pointer for an object allocated with operator
 {}\texttt{new} into a strong owning {}\texttt{RCP} whenever possible
 by directly calling {}\ttt{new} right in the constructor for the
-{}\ttt{RCP} object itself or construct from {}\ttt{rcp(...)}).
+{}\ttt{RCP} object itself or construct from {}\ttt{rcp(...)}.
 \end{commandment}
 
 \begin{commandment}\label{cmnd:owning-rcp-first}
@@ -9076,7 +9237,7 @@ a strong owning {}\ttt{RCP} object first before any non-owning
 {}\ttt{RCP} objects.
 \end{commandment}
 {}\textit{Justification:} In order for the reference-counting
-machinery to detect dangling non-owning refernces in a debug-mode
+machinery to detect dangling non-owning references in a debug-mode
 build, the first {}\ttt{RCP} object created must have ownership to
 delete.  The system can not detect dangling references from non-owning
 {}\ttt{RCPNode} objects created before the owning
@@ -9169,8 +9330,8 @@ non-const reference to one of these types (e.g.\ {}\ttt{RCP<T>
 \&a}) is when the function will modify what data the object points to.
 However, if this is the case, it is typically better and more clear to
 pass in the object through a {}\ttt{Teuchos::Ptr} object (e.g.\
-{}\ttt{const Ptr<RCP<T> > \&a}) using the {}\ttt{outArg(...)} 
-function.
+{}\ttt{const Ptr<RCP<T> > \&a}) using the {}\ttt{outArg(...)} function
+(see Section {}\ref{sec:vars-passing-single-objs}).
 
 
 %
@@ -9231,7 +9392,7 @@ machine and run it produces the output:
 \end{verbatim}}
 
 
-In the above program, the subtraction of {}\ttt{a -b} is a programming
+In the above program, the subtraction of {}\ttt{a - b} is a programming
 error but that error results in the number
 {}\ttt{18446744073709551614} when using an unsigned type.  Getting a
 number like {}\ttt{18446744073709551614} in program output or in the
