@@ -3,7 +3,7 @@
 %Local stuff
 \usepackage{graphicx}
 \usepackage{latexsym}
-%\usepackage{color}
+\usepackage{color}
 \usepackage[all]{draftcopy}
 \input{rab_commands}
 \setcounter{tocdepth}{3}
@@ -1947,6 +1947,7 @@ names in place.
 
 %
 {}\subsubsection{\ttt{Teuchos::Ptr<T>}}
+\label{sec:Ptr}
 %
 
 The templated class {}\ttt{Ptr} is the simplest of all the Teuchos
@@ -2125,6 +2126,7 @@ Section {}\ref{sec:idioms}.
 
 %
 {}\subsubsection{\ttt{Teuchos::RCP<T>}}
+\label{sec:RCP}
 %
 
 The class {}\ttt{RCP}, the real workhorse of the Teuchos memory
@@ -2380,6 +2382,7 @@ in Appendix {}\ref{sec:unsigned_size_type}.
 
 %
 {}\subsubsection{\ttt{Teuchos::ArrayView<T>}}
+\label{sec:ArrayView}
 %
 
 The class {}\ttt{ArrayView}, the simplest of the Teuchos array
@@ -2408,6 +2411,9 @@ Table {}\ref{tbl:common-array-type-members} for common array members.)
     ArrayView(const std::vector<typename ConstTypeTraits<T>::NonConstType>& vec);
     ArrayView<T>& operator=(const ArrayView<T>& array);
     ~ArrayView();
+
+    // Implicit conversion to const
+    operator ArrayView<const T>() const;
 
     // Deep copy  
     void assign(const ArrayView<const T>& array) const;
@@ -2531,6 +2537,7 @@ needed to allow for flexibility.
 
 %
 {}\subsubsection{\ttt{Teuchos::ArrayRCP<T>}}
+\label{sec:ArrayRCP}
 %
 
 The class {}\ttt{ArrayRCP} is the counterpart to
@@ -2579,14 +2586,16 @@ Listing {}\ref{listing:ArrayRCP}.
     ArrayRCP<const T> getConst() const;
     ArrayRCP<T> persistingView(size_type lowerOffset, size_type size) const;
   
+    // Implicit conversions
+    operator ArrayRCP<const T>() const;
+
+    // Explicit ArrayView
+    ArrayView<T> operator()() const;
+  
     // Size and extent query functions 
     size_type lowerOffset() const;
     size_type upperOffset() const;
     size_type size() const;
-  
-    // Other conversions
-    ArrayView<T> operator()() const;
-    operator ArrayRCP<const T>() const;
   
     // std::vector like and other misc functions
     void assign(size_type n, const T &val);
@@ -3110,12 +3119,12 @@ conversions to satisfy function calls (again see Section
 %
 
 Type conversions exist both for a single smart pointer type for the
-embedded type argument (e.g.\ {}\ttt{RCP<T>} implicitly converts to
-{}\ttt{RCP<const T>}) and also between different smart pointer
-types (e.g.\ {}\ttt{Array} implicitly converts to
-{}\ttt{ArrayView}).  There are implicit conversions and explicit
-conversions.  These two types of conversions are shown in Figures
-{}\ref{fig:TeuchosPtrConversions} and
+embedded type argument (e.g.\ {}\ttt{RCP<Derived>} implicitly converts
+to {}\ttt{RCP<const Derived>}, {}\ttt{RCP<Base>}, and {}\ttt{RCP<const
+Base>}) and also between different smart pointer types (e.g.\
+{}\ttt{Array} implicitly converts to {}\ttt{ArrayView}).  There are
+implicit conversions and explicit conversions.  These two types of
+conversions are shown in Figures {}\ref{fig:TeuchosPtrConversions} and
 {}\ref{fig:TeuchosArrayConversions} and are described in the following
 two sections.
 
@@ -3214,39 +3223,42 @@ Implicit conv non-const to const
 \end{center}
 \caption{\label{tbl:implicit_explicit_conversions}
 Implicit and explicit conversions supported by Teuchos memory
-management types.}
+management smart-pointer types.}
 \end{table}
 
-As can be seen in Table {}\ref{tbl:implicit_explicit_conversions},
-the smart pointer types for single objects do not support the same
-implicit and explicit conversions as for the smart pointer types for
-arrays.  The justification for this was explained in Section
-{}\ref{sec:problem-with-raw-array-pointers}.
-
-As explained in Section {}\ref{sec:problem-with-raw-array-pointers},
-it almost always incorrect and dangerous to allow implicit conversions
-from derived to base type for pointers that pointers that point into
-contiguous arrays of objects.  Therefore, the types
-{}\ttt{ArrayView} and {}\ttt{ArrayRCP} do not support implicit
-conversions from derived to base types.  Due to similar logic, it
-almost never makes any sense to perform a static cast or a dynamic on
-a pointer to an array of contiguous objects so the types
-{}\ttt{ArrayView} and {}\ttt{ArrayRCP} do not support static and
-dynamic casts.
+As seen in Table {}\ref{tbl:implicit_explicit_conversions}, the smart
+pointer types for single objects do not support the same implicit and
+explicit conversions that are supported for the array smart pointer
+types.  As explained in Section
+{}\ref{sec:problem-with-raw-array-pointers}, it almost always
+incorrect and dangerous to allow implicit conversions from derived to
+base type for pointers that pointers that point into contiguous arrays
+of objects.  Therefore, the types {}\ttt{ArrayView} and
+{}\ttt{ArrayRCP} do not support implicit conversions from derived to
+base types.  Due to similar logic, it almost never makes any sense to
+perform a static cast or a dynamic on a pointer to an array of
+contiguous objects so the types {}\ttt{ArrayView} and {}\ttt{ArrayRCP}
+do not support static and dynamic casts.
 
 In well formed programs, there is a justification to perform
 reinterpret casts for contiguous arrays of POD (plain old data). It is
 perfectly reasonable to allocate a large array of {}\ttt{char}
 (untyped) data and then create subviews and reinterpret cast to
-separate arrays of {}\ttt{double} and {}\ttt{int} data, for
-instance.  However, for single objects, I can not think of a single
-valid reason to perform a reinterpret cast and therefore, reinterpret
-cast is not supported for the types {}\ttt{Ptr} and {}\ttt{RCP}.
+separate arrays of {}\ttt{double} and {}\ttt{int} data, for instance.
+However, in a well formed program there is not single valid reason to
+perform a reinterpret cast for single objects and therefore
+reinterpret cast is not supported for the types {}\ttt{Ptr} and
+{}\ttt{RCP}.
 
-All implicit conversions are supported by templated copy constructors
-for all four classes.  The explicit conversion operators for these
-four types are shown in the Listings {}\ref{listing:Ptr-conversions},
-{}\ref{listing:RCP-conversions},
+The allowed implicit conversions for {}\ttt{Ptr} and {}\ttt{RCP} are
+supported templated copy constructors (see Sections {}\ref{sec:Ptr}
+and {}\ref{sec:RCP}).  However, the only allowed implicit conversion
+from {}\ttt{T*} to {}\ttt{const T*} for {}\ttt{ArrayView} and
+{}\ttt{ArrayRCP} are instead supported through conversion member
+functions (see Sections {}\ref{sec:ArrayView} and
+{}\ref{sec:ArrayRCP}).  The supported explicit conversion operators
+for these four types are shown in the Listings
+{}\ref{listing:Ptr-conversions}, {}\ref{listing:RCP-conversions},
 {}\ref{listing:ArrayView-conversions}, and
 {}\ref{listing:ArrayRCP-conversions}.
 
@@ -3324,8 +3336,196 @@ shown in Figure {}\ref{fig:TeuchosArrayConversions} include both
 implicit and explicit conversions and view and copy conversions
 yielding four different types of conversions.
 
-ToDo: Provide a table of all the types of conversions that are
-supported (implicit or explicit) and give the function that performs
+
+\begin{table}
+%
+\begin{center}
+%
+\begin{tabular}{|l|l|l|l|}
+%
+\hline
+%
+To
+& From
+& Properties
+& C++ code \\
+%
+\hline
+{}\ttt{RCP<A>} & \textcolor{magenta}{\ttt{A*}} & Sh, Ex, Ow &
+\textcolor{magenta}{\ttt{rcp(a\_p)}}\\
+%
+\hline
+{}\ttt{RCP<A>} & \textcolor{red}{\ttt{A*}} & Sh, Ex, NOw &
+{}\textcolor{red}{\ttt{rcp(a\_p,false)}}\\
+%
+\hline
+{}\ttt{RCP<A>} & \ttt{A\&} & Sh, Ex, NOw & \ttt{rcpFromRef(a)}\\
+%
+\hline
+{}\ttt{RCP<A>} & \ttt{A\&} & Sh, Ex, NOw & \ttt{rcpFromUndefRef(a)}\\
+%
+\hline
+{}\ttt{RCP<A>} & \ttt{Ptr<A>} & Sh, Ex, NOw, DR &
+{}\ttt{rcpFromPtr(a)}\\
+%
+\hline
+{}\ttt{RCP<const A>} & \ttt{RCP<A>} & Sh, Im, Ow, DR &
+\ttt{RCP::RCP(a\_rcp)} \\
+%
+\hline
+{}\ttt{RCP<Base>} & \ttt{RCP<Derived>} & Sh, Im, Ow, DR &
+{}\ttt{RCP::RCP(derived\_rcp)}\\
+%
+\hline
+{}\ttt{RCP<const Base>} & \ttt{RCP<Derived>} & Sh, Im, Ow, DR &
+{}\ttt{RCP::RCP(derived\_rcp)}\\
+%
+\hline
+{}\textcolor{red}{\ttt{A*}} & \ttt{RCP<A>} & Sh, Ex, NOw &
+{}\textcolor{red}{\ttt{RCP::getRawPtr()}}\\
+%
+\hline
+{}\textcolor{magenta}{\ttt{A\&}} & \ttt{RCP<A>} & Sh, Ex, NOw &
+{}\textcolor{magenta}{\ttt{RCP::operator*()}}\\
+%
+\hline
+%
+\hline
+{}\ttt{Ptr<A>} & \textcolor{red}{\ttt{A*}} & Sh, Ex, NOw &
+\textcolor{red}{\ttt{ptr(a\_p)}}\\
+%
+\hline
+{}\ttt{Ptr<A>} & {}\ttt{A\&} & Sh, Ex, NOw & {}\ttt{outArg(a)}
+${}^{\ref{conv:ptr-helpers}}$\\
+%
+\hline
+{}\ttt{Ptr<A>} & {}\ttt{RCP<A>} & Sh, Ex, NOw, DR &
+{}\ttt{ptrFromRCP(a\_rcp)}\\
+%
+\hline
+{}\ttt{Ptr<const A>} & {}\ttt{Ptr<A>} & Sh, Im, NOw, DR &
+{}\ttt{Ptr::Ptr(a\_ptr)}\\
+%
+\hline
+{}\ttt{Ptr<Base>} & {}\ttt{Ptr<Derived>} & Sh, Im, NOw, DR &
+{}\ttt{Ptr::Ptr(derived\_ptr)}\\
+%
+\hline
+{}\ttt{Ptr<const Base>} & {}\ttt{Ptr<Derived>} & Sh, Im, NOw, DR &
+{}\ttt{Ptr::Ptr(derived\_ptr)}\\
+%
+\hline
+{}\textcolor{red}{\ttt{A*}} & \ttt{Ptr<A>} & Sh, Ex, NOw &
+{}\textcolor{red}{\ttt{Ptr::getRawPtr()}}\\
+%
+\hline
+{}\textcolor{magenta}{\ttt{A\&}} & \ttt{Ptr<A>} & Sh, Ex, NOw &
+{}\textcolor{magenta}{\ttt{Ptr::operator*()}}\\
+%
+\hline
+%
+\hline
+{}\ttt{ArrayRCP<S>} & \textcolor{magenta}{\ttt{S*}} & Sh, Ex, Ow &
+{}\textcolor{magenta}{\ttt{arcp(s\_p,0,n)}}\\
+%
+\hline
+{}\ttt{ArrayRCP<S>} & \textcolor{red}{\ttt{S*}} & Sh, Ex, NOw &
+{}\textcolor{red}{\ttt{arcp(s\_p,0,n,false)}}\\
+%
+\hline
+{}\ttt{ArrayRCP<S>} & \ttt{RCP<Array<S> >} & Sh, Ex, Ow, DR &
+{}\ttt{arcp(s\_a\_rcp)}\\
+%
+\hline
+{}\ttt{ArrayRCP<const S>} & \ttt{RCP<const Array<S> >} & Sh, Ex, Ow,
+DR & {}\ttt{arcp(cs\_a\_rcp)}\\
+%
+\hline
+{}\ttt{ArrayRCP<const S>} & \ttt{ArrayRCP<S>} & Sh, Im, Ow, DR &
+{}\ttt{operator ArrayRCP}\\
+%
+\hline
+%
+\hline
+{}\ttt{ArrayView<S>} & \textcolor{red}{\ttt{S*}} & Sh, Ex, NOw &
+{}\textcolor{red}{\ttt{arrayView(s\_p,n)}}\\
+%
+\hline
+{}\ttt{ArrayView<S>} & \ttt{std::vector<S>} & Sh, Im, NOw, DR &
+{}\ttt{ArrayView::ArrayView(...)}\\
+%
+\hline
+{}\ttt{ArrayView<S>} & \ttt{Array<S>} & Sh, Im, NOw, DR &
+{}\ttt{Array::operator ArrayView}\\
+%
+\hline
+{}\ttt{ArrayView<S>} & \ttt{ArrayRCP<S>} & Sh, Ex, NOw, DR &
+{}\ttt{arrayView(s\_arcp)}\\
+%
+\hline
+{}\ttt{ArrayView<const S>} & \ttt{const std::vector<S>} & Sh, Im, NOw,
+DR & {}\ttt{ArrayView::ArrayView(...)}\\
+%
+\hline
+{}\ttt{ArrayView<const S>} & \ttt{const Array<S>} & Sh, Im, NOw, DR &
+\ttt{Array::operator ArrayView}\\
+%
+\hline
+{}\ttt{ArrayView<const S>} & \ttt{ArrayRCP<const S>} & Sh, Ex, NOw, DR &
+\ttt{arrayView(cs\_arcp)}\\
+%
+\hline
+%
+\end{tabular} \\[3ex]
+%
+\begin{minipage}{80ex}
+
+Types/identifieres: {}\ttt{T* a\_p}; {}\ttt{T\& a}; {}\ttt{Ptr<A>
+a\_ptr}; {}\ttt{RCP<A> a\_rcp}; {}\ttt{ArrayView<S> s\_av};
+{}\ttt{ArrayRCP<S> a\_arcp}; {}\ttt{Array<S> s\_a}; {}\ttt{Tuple<S,N>
+s\_t}; {}\ttt{std::vector<S> s\_v}; \\
+
+Properties: Sh = Shallow copy, Dp = Deep copy, Im = Implicit
+conversion, Ex = Ixplicit conversion, Ow = Owning, NOw = Non-Owning,
+DR = debug-mode Dangling Reference detection \\
+
+{}\textcolor{red}{Warning: Conversions to and from raw pointers shown
+in {}\underline{red} are strongly discouraged and should only be
+performed in the special cases discussed in Appendix
+{}\ref{apdx:commandments} and Section
+{}\ref{sec:role-of-raw-pointers}.} \\
+
+{}\textcolor{magenta}{Warning: Conversions from raw pointers to owning
+{}\ttt{RCP} and {}\ttt{ArrayRCP} objects shown in
+{}\underline{magenta} are stricly necessary but must be performed with
+great caution according to the commandments in Appendix
+{}\ref{apdx:commandments}.} \\
+
+Notes:
+
+\begin{enumerate}
+
+{}\item\label{conv:ptr-helpers} See other helper constructors for
+{}\ttt{Ptr} described in Section {}\ref{sec:Ptr}
+
+\end{enumerate}
+
+\end{minipage}
+%
+\caption{\label{tbl:AllConversions}
+Summary of the basic conversions that are supported involving the
+Teuchos memory management classes.}
+%
+\end{center}
+%
+\end{table}
+
+
+
+
+
+
+ToDo: Provide a table of all the types of conversions that aresupported (implicit or explicit) and give the function that performs
 the conversion.  Remove all ambiguity about what conversions are
 supported and what functions are used.
 
@@ -9596,6 +9796,13 @@ However, if this is the case, it is typically better and more clear to
 pass in the object through a {}\ttt{Teuchos::Ptr} object (e.g.\
 {}\ttt{const Ptr<RCP<T> > \&a}) using the {}\ttt{outArg(...)} function
 (see Section {}\ref{sec:vars-passing-single-objs}).
+
+\begin{commandment}\label{cmnd:conversions}
+Thou shall only cast between the different Teuchos memory management
+types using the provided implicit and explicit conversion functions
+(see Section {}\ref{sec:conversions}).  Thou shall never cast between
+types by exposing raw C++ pointers.
+\end{commandment}
 
 
 %
