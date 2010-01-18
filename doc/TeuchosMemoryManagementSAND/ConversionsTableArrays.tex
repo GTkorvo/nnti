@@ -3,18 +3,19 @@
 %
 \hline
 %
-Type To
-& Type From
-& Properties
-& C++ code \\
+Type To & Type From & Properties & C++ code (or impl function) \\
 %
 \hline
-{}\ttt{ArrayRCP<S>} & \textcolor{magenta}{\ttt{S*}} & Sh, Ex, Ow &
-{}\textcolor{magenta}{\ttt{arcp(s\_p,0,n)}}\\
+%
+\hline
+{}\ttt{ArrayRCP<S>} & \textcolor{red}{\ttt{S*}} & Sh, Ex, Ow &
+{}\textcolor{red}{\ttt{arcp(s\_p,0,n)}}
+${}^{\ref{conv:arcp-owning}}$\\
 %
 \hline
 {}\ttt{ArrayRCP<S>} & \textcolor{red}{\ttt{S*}} & Sh, Ex, NOw &
-{}\textcolor{red}{\ttt{arcp(s\_p,0,n,false)}}\\
+{}\textcolor{red}{\ttt{arcp(s\_p,0,n,false)}}
+${}^{\ref{conv:arcp-nonowning}}$\\
 %
 \hline
 {}\ttt{ArrayRCP<S>} & \ttt{RCP<Array<S> >} & Sh, Ex, Ow, DR &
@@ -26,57 +27,139 @@ DR & {}\ttt{arcp(cs\_a\_rcp)}\\
 %
 \hline
 {}\ttt{ArrayRCP<const S>} & \ttt{ArrayRCP<S>} & Sh, Im, Ow, DR &
-{}\ttt{operator ArrayRCP}\\
+{}\ttt{ArrayRCP::operator ArrayRCP()}\\
+%
+\hline
+{}\textcolor{red}{\ttt{S*}} & \ttt{ArrayRCP<S>} & Sh, Ex, NOw &
+{}\textcolor{red}{\ttt{ArrayRCP::getRawPtr()}}
+${}^{\ref{conv:array-expose-raw-ptr}}$\\
+%
+\hline
+{}\textcolor{magenta}{\ttt{S\&}} & \ttt{ArrayRCP<S>} & Sh, Ex, NOw &
+{}\textcolor{magenta}{\ttt{ArrayRCP::operator[](i)}}
+${}^{\ref{conv:array-expose-raw-ref}}$\\
 %
 \hline
 %
 \hline
 {}\ttt{ArrayView<S>} & \textcolor{red}{\ttt{S*}} & Sh, Ex, NOw &
-{}\textcolor{red}{\ttt{arrayView(s\_p,n)}}\\
-%
-\hline
-{}\ttt{ArrayView<S>} & \ttt{std::vector<S>} & Sh, Im, NOw, DR &
-{}\ttt{ArrayView::ArrayView(...)}\\
+{}\textcolor{red}{\ttt{arrayView(s\_p,n)}}
+${}^{\ref{conv:arcp-owning}}$\\
 %
 \hline
 {}\ttt{ArrayView<S>} & \ttt{Array<S>} & Sh, Im, NOw, DR &
-{}\ttt{Array::operator ArrayView}\\
+{}\ttt{Array::operator ArrayView()}\\
+%
+\hline
+{}\ttt{ArrayView<S>} & \ttt{Tuple<S>} & Sh, Im, NOw, DR &
+{}\ttt{Tuple::operator ArrayView()}\\
+%
+\hline
+{}\ttt{ArrayView<S>} & \ttt{std::vector<S>} & Sh, Im, NOw &
+{}\ttt{ArrayView<S>(s\_v)}\\
 %
 \hline
 {}\ttt{ArrayView<S>} & \ttt{ArrayRCP<S>} & Sh, Ex, NOw, DR &
-{}\ttt{arrayView(s\_arcp)}\\
-%
-\hline
-{}\ttt{ArrayView<const S>} & \ttt{const std::vector<S>} & Sh, Im, NOw,
-DR & {}\ttt{ArrayView::ArrayView(...)}\\
+{}\ttt{ArrayRCP::operator()()}\\
 %
 \hline
 {}\ttt{ArrayView<const S>} & \ttt{const Array<S>} & Sh, Im, NOw, DR &
-\ttt{Array::operator ArrayView}\\
+{}\ttt{Array::operator ArrayView()}\\
 %
 \hline
-{}\ttt{ArrayView<const S>} & \ttt{ArrayRCP<const S>} & Sh, Ex, NOw, DR &
-\ttt{arrayView(cs\_arcp)}\\
+{}\ttt{ArrayView<const S>} & \ttt{const Tuple<S>} & Sh, Im, NOw, DR &
+{}\ttt{Tuple::operator ArrayView()}\\
+%
+\hline
+{}\ttt{ArrayView<const S>} & \ttt{const std::vector<S>} & Sh, Im, NOw
+& {}\ttt{ArrayView(cs\_v)}\\
+%
+\hline
+{}\ttt{ArrayView<const S>} & \ttt{ArrayRCP<const S>} & Sh, Ex, NOw, DR
+& {}\ttt{ArrayRCP::operator ArrayView()}\\
+%
+\hline
+{}\textcolor{red}{\ttt{S*}} & \ttt{ArrayView<S>} & Ex, NOw &
+{}\textcolor{red}{\ttt{ArrayView::getRawPtr()}}
+${}^{\ref{conv:array-expose-raw-ptr}}$\\
+%
+\hline
+{}\textcolor{magenta}{\ttt{S\&}} & \ttt{ArrayView<S>} & Ex, NOw &
+{}\textcolor{magenta}{\ttt{ArrayView::operator[](i)}}
+${}^{\ref{conv:array-expose-raw-ref}}$\\
 %
 \hline
 %
-\end{tabular}} \\[3ex]
+\hline
+{}\ttt{Array<S>} & {}\textcolor{red}{\ttt{S*}} & Dp, Im &
+{}\textcolor{red}{\ttt{Array<S>(s\_p,s\_p+n)}}\\
+%
+\hline
+{}\ttt{Array<S>} & {\ttt{std::vector<S>}} & Dp, Im &
+{}\ttt{Array<S>(s\_v)}\\
+%
+\hline
+{}\ttt{Array<S>} & {}\ttt{ArrayView<S>} & Dp, Im &
+{}\ttt{Array<S>(s\_av)}\\
+%
+\hline
+{}\ttt{Array<S>} & {}\ttt{Tuple<S,N>} & Dp, Im &
+{}\ttt{Array<S>(s\_t)}\\
+%
+\hline
+{}\ttt{Array<S>} & {}\ttt{ArrayRCP<S>} & Dp, Ex &
+{}\ttt{Array<S>(s\_arcp());}\\
+%
+\hline
+{}\ttt{std::vector<S>} & {}\ttt{[const] Array<S>} & Dp, Ex &
+{}\ttt{s\_a.toVector();}\\
+%
+\hline
+{}\textcolor{red}{\ttt{S*}} & \ttt{Array<S>} & Ex, NOw &
+{}\textcolor{red}{\ttt{Array::getRawPtr()}}
+${}^{\ref{conv:array-expose-raw-ptr}}$\\
+%
+\hline
+{}\textcolor{magenta}{\ttt{S\&}} & \ttt{Array<S>} & Ex, NOw &
+{}\textcolor{magenta}{\ttt{Array::operator[](i)}}
+${}^{\ref{conv:array-expose-raw-ref}}$\\
+%
+\hline
+%
+\end{tabular} \\[3ex]
 %
 \begin{minipage}{\textwidth}
 
-Types/identifieres: {}\ttt{T* a\_p}; {}\ttt{T\& a};
-{}\ttt{ArrayView<S> s\_av}; {}\ttt{ArrayRCP<S> a\_arcp};
-{}\ttt{Array<S> s\_a}; {}\ttt{Tuple<S,N> s\_t}; {}\ttt{std::vector<S>
-s\_v}; \\
+Types/identifieres: {}\ttt{S* s\_p}; {}\ttt{ArrayView<S> s\_av};
+{}\ttt{ArrayRCP<S> s\_arcp}; {}\ttt{Array<S> s\_a}; {}\ttt{Tuple<S,N>
+s\_t}; {}\ttt{std::vector<S> s\_v}; \\
 
 Properties: Sh = Shallow copy, Dp = Deep copy, Im = Implicit
 conversion, Ex = Ixplicit conversion, Ow = Owning, NOw = Non-Owning,
-DR = Dangling Reference runtime detection in debug-mode \\
+DR = Dangling Reference debug-mode runtime detection
 
 \begin{enumerate}
-
-{}\item\label{???} ???
-
+%
+{}\item\label{conv:arcp-owning}\textcolor{red}{It should never be
+necessary to convert from a raw pointer to an owning {}\ttt{ArrayRCP}
+object directly.  Intead, use the non-member constructor
+{}\ttt{arcp<S>(n)}.}
+%
+{}\item\label{conv:arcp-nonowning}\textcolor{red}{Constructing a
+non-owning {}\ttt{ArrayRCP} or {}\ttt{ArrayView} directly from a raw
+C++ pointer should never be needed in fully compliant code.  However,
+when inter-operating with non-compliant code (or code in an itermedate
+state of refactoring) this type of conversion will be needed.}
+%
+{}\item\label{conv:array-expose-raw-ptr}\textcolor{red}{Exposing a raw
+C++ pointer should never be necessary in compliant code but may be
+necessary when inter-operating with external code (see Section
+{}\ref{sec:role-of-raw-pointers}).}
+%
+{}\item\label{conv:array-expose-raw-ref}\textcolor{magenta}{Exposing a
+raw C++ reference will be common in compliant code but should only be
+used for non-persisting associations.}
+%
 \end{enumerate}
 
-\end{minipage}
+\end{minipage}}
