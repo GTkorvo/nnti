@@ -4139,40 +4139,32 @@ Idioms for passing reference-type objects to C++ functions.}
 \end{table}
 
 
-ToDo: Add tables for semi-persisting associations (i.e. either Ptr or
-ArrayView but never raw C++ references).
-
-
-Here we describe a convention for the specification of the formal
+Described here are idioms for the specification of the formal
 arguments for C++ functions that that maximizes compile-time and
 run-time checking, yields near optimal performance, and is highly self
 documenting.  A key component to this specification is that no raw C++
 pointers are used.  Raw pointers are the cause of almost all memory
 usage problems in C++.  Raw C++ references, on the other hand, are
 safe to use as long as the object reference they are being used to
-point to is valid and no persisting association exists.  All of these
-classes perform runtime checks of correct memory usage when debug
-checking is enabled at configure time (i.e., using
-{}\ttt{--enable-teuchos-debug} with {}\ttt{configure}).
-However, in optimized builds these classes perform no debug checking
-at all and yield the same performance achieved using raw C++ pointers.
-The classes {}\ttt{RCP} and {}\ttt{ArrayRCP} always implement
-reference counting in optimized and debug builds and therefore impart
-necessary extra overhead that never goes away (unless you don't use
-them).  The other classes {}\ttt{Ptr} and {}\ttt{ArrayView} do
-not use any reference counting in an optimized build and therefore
-impart little extra overhead.
+point to is valid and no persisting association exists.
 
 Tables {}\ref{fig:func_args_value_type} and
 {}\ref{fig:func_args_ref_type} give conventions for passing single
 objects and arrays of objects for value-type {}\index{Types!Value
 Type} and reference-type {}\index{Types!Reference Type} objects,
-respectively.  In this specification, the classes
-{}\ttt{Teuchos\-::Ptr}, {}\ttt{Teuchos\-::RCP},
-{}\ttt{Teuchos\-::ArrayRCP}, and {}\ttt{Teuchos\-::ArrayView}
-are used as a means to pass objects of another type (shown as
-{}\ttt{S} and {}\ttt{A} in Tables
-{}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type}).
+respectively.  In this specification, the Teuchos classes {}\ttt{Ptr},
+{}\ttt{RCP}, {}\ttt{ArrayRCP}, and {}\ttt{ArrayView} are used as a
+means to pass objects of another type (shown as {}\ttt{S} and
+{}\ttt{A} in Tables {}\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}).  Conventions are shown for both
+passing in objects and for passing out objects through the formal
+arguments to C++ functions.  Note that value-type objects can always
+be handled using reference semantics so all of the passing conventions
+in Table {}\ref{fig:func_args_ref_type} apply equality well for
+value-type objects as they do for reference-type objects.  However,
+the conventions in Tables {}\ref{fig:func_args_value_type} only apply
+to value-type objects that can be stored in contiguous arrays.
+
 This specification addresses the five different properties that must
 be considered when passing an object to a function:
 
@@ -4186,7 +4178,8 @@ reference semantics?
 {}\item Is the object or array of objects changeable or non-changeable
 (i.e.\ const)?
 
-{}\item Is this establishing a persisting or non-persisting association?
+{}\item Is this establishing a persisting or non-persisting (or
+semi-persisting) association?
 
 {}\item Is the object or array of objects optional or required?
 
@@ -4216,17 +4209,24 @@ persisting associations.  The {}\ttt{const} can be removed from the
 either {}\ttt{Ptr}/{}\ttt{RCP} or {}\ttt{A} depending on what
 is allowed to change or not change during the function call.
 
-Note that in the case of {}\ttt{RCP} and {}\ttt{ArrayRCP}
-objects, that these can be treated as output objects in their own
-right.  For example, passing an {}\ttt{RCP<T>} object into a
-function to be set to point to a different {}\ttt{A} object would
-be specified in the function prototype as {}\ttt{const Ptr<RCP<T>
->\&} or {}\ttt{RCP<T>\&} depending on preference.  Note that it
-never makes sense for {}\ttt{Ptr} or {}\ttt{ArrayView} to be set
-in this way since such a function call would almost always be
-establishing a persisting association with the embedded objects and
-therefore would require (according to the standards established here)
-using an {}\ttt{RCP} or {}\ttt{ArrayRCP} object.
+Note that in the case of {}\ttt{Ptr}, {}\ttt{RCP}, {}\ttt{ArrayView},
+and {}\ttt{ArrayRCP} objects, that these can be treated as output
+objects in their own right which is shown in Tables
+{}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type}
+for passing out persisting and semi-persisting relationships to single
+objects and arrays of objects.  For example, passing an {}\ttt{RCP<T>}
+object into a function to be set to point to a different {}\ttt{A}
+object would be specified in the function prototype as {}\ttt{const
+Ptr<RCP<A> >\&} or {}\ttt{RCP<A>\&} depending on preference (only the
+case {}\ttt{const Ptr<RCP<A> >\&} is shown in the tables).  Note that
+semi-persisting associations are always passed out as {}\ttt{Ptr} and
+{}\ttt{ArrayView} objects.  These types have essentially zero overhead
+in an optimized build but yet have full runtime checking including
+detection and reporting of dangling references in a debug-mode build
+(see Section {}\ref{sec:perf-tuning-strategies} for a discussion of
+the motivation and usage of semi-persisting associations).  The types
+{}\ttt{RCP} and {}\ttt{ArrayRCP} are always used to establish
+persisting associations.
 
 
 %
@@ -4298,13 +4298,13 @@ references to satisfy the defined idioms}
 There are legitimate instances where client code needs to convert a
 non-persisting reference (i.e. {}\ttt{T\&}, {}\ttt{Ptr<T>}, or
 {}\ttt{ArrayView<T>}) to a persisting reference (i.e.\ {}\ttt{RCP} or
-{}\ttt{ArrayRCP}) in order to satisfy the idioms outlined in Table
-{}\ref{fig:func_args_ref_type}.  The most common case is when a
-function is passed a raw reference or a {}\ttt{Ptr} to a C++ object
-(for a non-persisting assocation) but the function's implementation
-must create (and destroy) and object what has a persisting assoication
-with the passed in object.  Consider the classes {}\ttt{A}, {}\ttt{B}
-and {}\ttt{C} shown in Listing
+{}\ttt{ArrayRCP}) in order to satisfy the idioms outlined in Tables
+{}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type}.
+The most common case is when a function is passed a raw reference or a
+{}\ttt{Ptr} to a C++ object (for a non-persisting assocation) but the
+function's implementation must create (and destroy) and object what
+has a persisting assoication with the passed in object.  Consider the
+classes {}\ttt{A}, {}\ttt{B} and {}\ttt{C} shown in Listing
 {}\ref{listing:NonPersistingPersistingAssociationsRCP} where {}\ttt{C}
 maintains an {}\ttt{RCP} to {}\ttt{B}.  Now consider a client function
 that needs an {}\ttt{A} and {}\ttt{B} object to perform its function
@@ -4393,9 +4393,10 @@ self-documenting as possible.  Tables
 {}\ref{fig:func_return_value_type} and
 {}\ref{fig:func_return_reference_type} give common specifications for
 returning single objects and arrays of objects for both value-type and
-reference-type objects.  Five different types of properties that must
-be defined and considered when returning an object (or array of
-objects) from a function are:
+reference-type objects for non-persisting, persisting, and
+semi-persisting associations..  Five different types of properties
+that must be defined and considered when returning an object (or array
+of objects) from a function are:
 
 \begin{itemize}
 
@@ -4407,15 +4408,15 @@ reference semantics?
 {}\item Is the object or array of objects changeable or non-changeable
 (i.e.\ const)?
 
-{}\item Is this establishing a persisting or non-persisting
-association?
+{}\item Is this establishing a persisting or non-persisting (or
+semi-persisting) association?
 
 {}\item Is the object or array of objects optional or required?
 
 \end{itemize}
 
 
-\begin{table}[p]
+\begin{table}
 %
 %\fbox{
 \begin{center}
@@ -4435,7 +4436,7 @@ Idioms for returning value-type objects from C++ functions.}
 \end{table}
 
 
-\begin{table}[p]
+\begin{table}
 %
 %\fbox{
 \begin{center}
@@ -4455,17 +4456,14 @@ Idioms for returning reference-type objects from C++ functions.}
 \end{table}
 
 
-ToDo: Add tables for semi-persisting associations (i.e. either Ptr or
-ArrayView but never raw C++ references).
-
-
 These five different properties are the same five described for formal
-function arguments.  Again, the first four of these properties are
-mostly clearly defined in the C++ code itself.  However, again, it is
-not always possible to directly state in the C++ code declarations
-whether the object (or array of objects) is optional or required (but
-in some cases for value-type objects it is as shown in Table
-{}\ref{fig:func_return_value_type}).
+function arguments described in Section
+{}\ref{sec:idioms-for-passing-arguments}.  Again, the first four of
+these properties are mostly clearly defined in the C++ code itself.
+However, again, it is not always possible to directly state in the C++
+code declarations whether the object (or array of objects) is optional
+or required (but in some cases for value-type objects it is as shown
+in Table {}\ref{fig:func_return_value_type}).
 
 The semantics of return objects is different than for formal function
 arguments and the specifications described in Tables
@@ -4476,22 +4474,31 @@ that you can see from looking at Tables
 and Tables {}\ref{fig:func_return_value_type} and
 {}\ref{fig:func_return_reference_type}.
 
-The first difference that we will discuss between formal functions
-arguments and return values relates to using constant references for
-formal arguments versus returning raw objects as return values.  While
-all of the memory management objects of type {}\ttt{Ptr},
-{}\ttt{RCP}, {}\ttt{ArrayView}, and {}\ttt{ArrayRCP} are all
-passed by constant reference in Tables
-{}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type},
-alternatively they are always returned as objects (i.e.\ by value) in
-Tables {}\ref{fig:func_return_value_type} and
+The first difference to discuss between formal functions arguments and
+return values relates to using constant references for formal
+arguments versus returning objects by value as return types.  While
+the memory management objects of type {}\ttt{Ptr}, {}\ttt{RCP},
+{}\ttt{ArrayView}, and {}\ttt{ArrayRCP} are all passed by constant
+reference in Tables {}\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}, alternatively they are always returned
+as objects (i.e.\ by value) in Tables
+{}\ref{fig:func_return_value_type} and
 {}\ref{fig:func_return_reference_type}.  The reason that these memory
 management objects should always be returned by value is that this is
 needed to correctly set up the reference counting machinery to
 properly set up persisting relationships and to enable debug runtime
-checking (e.g.\ to detect dangling references).
+checking (e.g.\ to detect dangling references).  Note that it is
+critical that semi-persisting associations for single objects must
+always be returned as {}\ttt{Ptr<T>} objects and never as raw
+references {}\ttt{T\&} which is acceptable for non-persisting
+associations.  The reason that {}\ttt{Ptr<T>} objects must always be
+used for semi-persisting associations is that in a debug-mode build,
+the runtime checking machinery will be able to detect dangling
+references or changes in the parent object that would otherwise
+invalidate the semi-persisting view that is impossible to catch when
+using raw C++ references.
 
-In order to o understand the importance of returning memory management
+In order to understand the importance of returning memory management
 objects by value instead of by reference, first consider Listing
 {}\ref{listing:unsafe_raw_C++_reference1} that looks to be perfectly
 safe code.
@@ -4818,14 +4825,14 @@ smart pointers is well established in the C++ literature
 about the approach used in the Teuchos memory management classes is
 appropriate to describe here.  Of equal importance is to describe how
 the reference-counting infrastructure can be used to address some
-boundary cases that can be used to help solve some fundamental
-problems with reference counting.
+boundary cases that can help solve some fundamental problems with
+reference counting.
 
 The basic reference counting machinery being used by the classes is
 first described.  Next, the issue of circular references and weak
 pointers are described.  The last issue discussed is the general role
-and responsibilities for the various actors in software using
-reference counting.
+and responsibilities for the various actors in software using the
+Teuchos reference counting classes.
 
 
 %
@@ -9424,6 +9431,8 @@ management classes}
 
 \input{PassingValueObjectsTable}
 
+\pagebreak
+
 \input{PassingReferenceObjectsTable}
 
 \pagebreak
@@ -9437,11 +9446,8 @@ management classes}
 {}\textbf{Conversions of data-types for single objects}
 \includegraphics*[angle=270,scale=0.65]{TeuchosPtrConversions} \\[5ex]
 
-
-
 {}\textbf{Conversions of data-types for contiguous arrays}
 \includegraphics*[angle=270,scale=0.65]{TeuchosArrayConversions}
-
 
 \end{center}
 
