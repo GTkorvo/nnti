@@ -1,0 +1,128 @@
+{}\textbf{Basic Conversions for Single Objects}
+{\small\begin{tabular}{|l|l|l|l|}
+%
+\hline
+%
+Type To
+& Type From
+& Properties
+& C++ code \\
+%
+\hline
+{}\ttt{RCP<A>} & \textcolor{magenta}{\ttt{A*}} & Sh, Ex, Ow &
+\textcolor{magenta}{\ttt{rcp(a\_p)}} ${}^{\ref{conv:rcp-owning}}$\\
+%
+\hline
+{}\ttt{RCP<A>} & \textcolor{red}{\ttt{A*}} & Sh, Ex, NOw &
+{}\textcolor{red}{\ttt{rcp(a\_p,false)}}
+${}^{\ref{conv:rcp-nonowning}}$\\
+%
+\hline
+{}\ttt{RCP<A>} & \ttt{A\&} & Sh, Ex, NOw & \ttt{rcpFromRef(a)}\\
+%
+\hline
+{}\ttt{RCP<A>} & \ttt{A\&} & Sh, Ex, NOw & \ttt{rcpFromUndefRef(a)}\\
+%
+\hline
+{}\ttt{RCP<A>} & \ttt{Ptr<A>} & Sh, Ex, NOw, DR &
+{}\ttt{rcpFromPtr(a)}\\
+%
+\hline
+{}\ttt{RCP<const A>} & \ttt{RCP<A>} & Sh, Im, Ow, DR &
+\ttt{RCP::RCP(a\_rcp)} \\
+%
+\hline
+{}\ttt{RCP<Base>} & \ttt{RCP<Derived>} & Sh, Im, Ow, DR &
+{}\ttt{RCP::RCP(derived\_rcp)}\\
+%
+\hline
+{}\ttt{RCP<const Base>} & \ttt{RCP<Derived>} & Sh, Im, Ow, DR &
+{}\ttt{RCP::RCP(derived\_rcp)}\\
+%
+\hline
+{}\textcolor{red}{\ttt{A*}} & \ttt{RCP<A>} & Sh, Ex, NOw &
+{}\textcolor{red}{\ttt{RCP::getRawPtr()}}
+${}^{\ref{conv:obj-expose-raw-ptr}}$\\
+%
+\hline
+{}\textcolor{magenta}{\ttt{A\&}} & \ttt{RCP<A>} & Sh, Ex, NOw &
+{}\textcolor{magenta}{\ttt{RCP::operator*()}}
+${}^{\ref{conv:obj-expose-raw-ref}}$\\
+%
+\hline
+%
+\hline
+{}\ttt{Ptr<A>} & \textcolor{red}{\ttt{A*}} & Sh, Ex, NOw &
+\textcolor{red}{\ttt{ptr(a\_p)}} ${}^{\ref{conv:rcp-nonowning}}$\\
+%
+\hline
+{}\ttt{Ptr<A>} & {}\ttt{A\&} & Sh, Ex, NOw & {}\ttt{outArg(a)}
+${}^{\ref{conv:ptr-helpers}}$\\
+%
+\hline
+{}\ttt{Ptr<A>} & {}\ttt{RCP<A>} & Sh, Ex, NOw, DR &
+{}\ttt{ptrFromRCP(a\_rcp)}\\
+%
+\hline
+{}\ttt{Ptr<const A>} & {}\ttt{Ptr<A>} & Sh, Im, NOw, DR &
+{}\ttt{Ptr::Ptr(a\_ptr)}\\
+%
+\hline
+{}\ttt{Ptr<Base>} & {}\ttt{Ptr<Derived>} & Sh, Im, NOw, DR &
+{}\ttt{Ptr::Ptr(derived\_ptr)}\\
+%
+\hline
+{}\ttt{Ptr<const Base>} & {}\ttt{Ptr<Derived>} & Sh, Im, NOw, DR &
+{}\ttt{Ptr::Ptr(derived\_ptr)}\\
+%
+\hline
+{}\textcolor{red}{\ttt{A*}} & \ttt{Ptr<A>} & Sh, Ex, NOw &
+{}\textcolor{red}{\ttt{Ptr::getRawPtr()}}
+${}^{\ref{conv:obj-expose-raw-ptr}}$\\
+%
+\hline
+{}\textcolor{magenta}{\ttt{A\&}} & \ttt{Ptr<A>} & Sh, Ex, NOw &
+{}\textcolor{magenta}{\ttt{Ptr::operator*()}}
+${}^{\ref{conv:obj-expose-raw-ref}}$\\
+%
+\hline
+%
+\end{tabular}} \\[3ex]
+%
+\begin{minipage}{\textwidth}
+
+Types/identifieres: {}\ttt{T* a\_p}; {}\ttt{T\& a}; {}\ttt{Ptr<A>
+a\_ptr}; {}\ttt{RCP<A> a\_rcp}; \\
+
+Properties: Sh = Shallow copy, Dp = Deep copy, Im = Implicit
+conversion, Ex = Ixplicit conversion, Ow = Owning, NOw = Non-Owning,
+DR = Dangling Reference runtime detection in debug-mode
+
+\begin{enumerate}
+%
+{}\item\label{conv:rcp-owning}\textcolor{magenta}{Constructing an
+owning {}\ttt{RCP} from a raw C++ pointer is strictly necessary but
+must be done with great care according to the commandments in Appendix
+{}\ref{apdx:commandments}.}
+%
+{}\item\label{conv:rcp-nonowning}\textcolor{red}{Constructing an
+non-owning {}\ttt{RCP} or {}\ttt{Ptr} from a raw C++ pointer should
+never be needed in fully compliant code.  However, when
+inter-operating with non-compliant code (or code in an itermedate
+state of refactoring) this type of conversion will be needed.}
+%
+{}\item\label{conv:obj-expose-raw-ptr}\textcolor{red}{Exposing a raw
+C++ pointer should never be necessary in compliant code but may be
+necessary when inter-operating with external code (see Section
+{}\ref{sec:role-of-raw-pointers}).}
+%
+{}\item\label{conv:obj-expose-raw-ref}\textcolor{magenta}{Exposing a
+raw C++ reference will be common in compliant code but should only be
+used for non-persisting associations.}
+%
+{}\item\label{conv:ptr-helpers} See other helper constructors for
+passing {}\ttt{Ptr} described in Section {}\ref{sec:Ptr}.
+%
+\end{enumerate}
+
+\end{minipage}
