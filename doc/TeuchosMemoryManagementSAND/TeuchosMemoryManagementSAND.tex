@@ -147,11 +147,60 @@ development and standards community that started with
 
 % ---------------------------------------------------------------------- %
 % An optional preface or Foreword
-%\clearpage
-%\section{Preface}
-%Although muggles usually have only limited experience with
-%magic, and many even dispute its existence, it is worthwhile
-%to be open minded and explore the possibilities.
+\clearpage
+\section{Preface}
+
+This document describes the basic problems with raw memory management
+in C++ and presents an approach to addressing the problems by
+encapsulating all raw C++ pointers in a system of cooperating types.
+Almost every aspect is presented and issues of detailed usage, safety,
+performance, suggested idioms and many other topics are discussed.
+This is a fairly lengthy document with more than 140 pages in the main
+body and with 20 pages of appendices.  This may seem like a lot of
+material to read through but consider that the ???1500+???  pages of
+mainstream material on modern C++ usage in just the references [???,
+???, ???] still results with a fundamentally unsafe language that
+makes it too easy to write programs that segfault and leak memory.
+
+However, there is a much short path through this document that gives
+the basics for the anxious reader that does not need all the
+background material or the many interesting side topic discussions.
+Every reader should start with the introduction in Section ???.  For
+experienced C++ programmers that just want to get started quickly
+using the software, they should jump directly to Section ??? that
+introduces the Teuchos memory management classes and the basic
+approach being used.  Next, the overview of the classes in Sections
+??? and ??? can be quickly browsed.  Section ??? should be read next
+which gives the idioms for the use of the memory management classes.
+If nothing else, the reader should at least look at the tables and
+figures in this section which are also summarized in Appendix ???.
+Finally, the material in Appendices ??? and ??? should be used as a
+(relatively) short reference guide for the use of these classes.  This
+material together with some existing code examples (e.g\ in Trilinos)
+should give an experienced C++ develeloper enough to get started using
+these classes in productive.  Finally, the reader should go through
+the full table of contents at least once to get an idea of the variety
+of topics covered and where to look when more information is needed
+(and most developers will need to know most of this extra information
+at some point).
+
+All of the rest of the material covered in this document either
+provides more background that might be needed to persuade some readers
+or expands on a number of topics that almost every developer will need
+to consider at some point while using these classes (e.g.\ how to deal
+with type conversion problems, how the basic reference-counting
+machinery works, what types of debug-mode runtime checking is
+performed and how to debug problems with exceptions are thrown, what
+optimized performance should look like and how to better optimize
+code, what related idioms are useful or needed to fully exploit these
+classes, guidance on how to refactor existing software, and other
+related topics like a discussion of essential and accidental
+complexity).
+
+Hopefully this document will be educational and help open the one's
+mind to what is possible to achieve in terms of safety and performance
+in modern C++ programs.
+
 
 % ---------------------------------------------------------------------- %
 % An optional glossary. We don't want it to be numbered
@@ -179,7 +228,7 @@ development and standards community that started with
 
 % ToDo: Replace all references to 'we' and 'I' and make more generic.
 
-ToDo: Relace 'our' with more generic wording ... In Progress ...
+% ToDo: Relace 'our' with more generic wording ... In Progress ...
 
 ToDo: Look for 'where' when it should be 'were'.
 
@@ -212,7 +261,7 @@ EffectiveC++ThirdEdition}.  Our inability to effectively address the
 basic problem of the usage of memory in large-scale modular C++ codes
 affects every aspect of software quality, productivity and
 reusabliltiy, and undermines the most basic software verification
-foundation for our codes.  The challenges of writing software that
+foundation for these codes.  The challenges of writing software that
 uses raw memory management result in components that are overly ridgid
 in how they can be used and reused which fundamentally detacts for the
 impact that such software could otherwise have.  The problems created
@@ -381,7 +430,10 @@ respect to basic memory management in C++; developing a new
 higher-level programming language in C++ for abstracting and
 encapsulating all raw memory usage as well as dynamic memory
 management that is very compatible with the built-in C++ exception
-handling mechanism.
+handling mechanism.  The approach being described here is really just
+the systemantic and (arguably) elegant application to the appraoches
+advocated in {}\cite[Section 13.2: Pointers]{CodeComplete2nd04} for
+instance.
 
 This paper describes a set of low-level C++ classes and supporting
 software in the Teuchos package in
@@ -1776,12 +1828,12 @@ pointers.
 
 \end{itemize}
 
-One point is worth nothing here which is that in our new modern C++
+One point is worth nothing here which is that in this new modern C++
 software one must never use raw C++ pointers in the basic interfaces
-between our various modules as that is where a majority of mistakes in
+between the various modules as that is where a majority of mistakes in
 the use of memory will be made.  This goes somewhat contrary to the
 advice in Item 63 ``Use sufficiently portable types in a module's
-interface'' in {}\cite{C++CodingStandards05}.  If our new modern safe
+interface'' in {}\cite{C++CodingStandards05}.  If this new modern safe
 C++ software must be called by non-compliant software that uses raw
 C++ pointers, then one can provide specialized C-like interfaces for
 those clients that use raw C++ pointers for communication.  Of course,
@@ -6114,7 +6166,7 @@ can not be detected.
 
 The code in Listing {}\ref{listing:vector-dangling-ArrayView} will
 most likely segfault if one is lucky.  If unlucky, the program may
-actually appear to run correctly on our main development and testing
+actually appear to run correctly on the main development and testing
 platforms and it will not be until moved to a production platform that
 the ill-effects of this erroneous code will seen.  This is one example
 of why it is so important to use {}\ttt{Array} instead of raw
@@ -9224,7 +9276,7 @@ trend of adding safety will eventually see one morphing the motorcycle
 into the typical car.  Likewise, moving from an extreme of less safety
 toward a more reasonable balance between speed/flexibility and safety
 in C++ involves adding more and more utility classes to hide more and
-more uses of raw C++ pointers in our high-level C++ code.  This is the
+more uses of raw C++ pointers in high-level C++ code.  This is the
 trend that the C++ community has been following for more than the last
 decade.  We see it first in the introduction of {}\ttt{std::auto\_ptr}
 and {}\ttt{std::vector}.  This was then followed by the development of
@@ -9282,13 +9334,14 @@ The idioms like are advocated here can help to avert this trend but it
 will require wide community buy-in and a change in the way C++ is
 taught.
 
-To make our programs more secure, compiler vendors or static analysis
-tools (e.g.\ klocwork) could implement a preprocessor-like language
-similar to OpenMP\footnote{{}\ttt{http://openmp.org}} that would allow
-the programmer to declare (in comments) that certain blocks of code
-should be ``pointer-free'' or allow smaller blocks to be ``pointers
-allowed''.  This would significantly improve the robustness of code
-that uses the memeory management classes described here.
+To make these programs more secure, compiler vendors or static
+analysis tools (e.g.\ klocwork) could implement a preprocessor-like
+language similar to OpenMP\footnote{{}\ttt{http://openmp.org}} that
+would allow the programmer to declare (in comments) that certain
+blocks of code should be ``pointer-free'' or allow smaller blocks to
+be ``pointers allowed''.  This would significantly improve the
+robustness of code that uses the memeory management classes described
+here.
 
 
 
