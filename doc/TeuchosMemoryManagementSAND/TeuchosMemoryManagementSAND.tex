@@ -229,16 +229,12 @@ in modern C++ programs.
 \label{sec:intro}
 %
 
-% ToDo: Remove all references to 'you' and replace with 'one' or more
-% generic.
-
-% ToDo: Replace all references to 'we' and 'I' and make more generic.
-
-% ToDo: Relace 'our' with more generic wording ... In Progress ...
-
-% ToDo: Look for 'where' when it should be 'were'.
-
-ToDo: Spell check all attached tables, etc.
+% General ToDos:
+% * Remove all references to 'you' and replace with 'one' or more
+%   generic.
+% * Replace all references to 'we' and 'I' and make more generic.
+% * Replace 'our' with more generic wording ... In Progress ...
+% * Look for 'where' when it should be 'were'.
 
 A critical problem in computational science and engineering (CS\&E)
 software as well as in other types of software developed in C++ is in
@@ -9016,7 +9012,127 @@ cases have already been discussed above.
 {}\subsection{Advice on refactoring existing software}
 %
 
-ToDo: Fill in!
+The easiest way to incorporate the full use of the Teuchos memory
+management classes it to develop new code and use them from the very
+beginning.  In this mode of development, the debug-mode runtime
+checking makes development fast and productive with one never seeing a
+segfault or other memory usage error.  However, the more typical
+situation is that a large existing code-base must be continued to be
+developed and current code must be modified and new code must
+integrated with current code.  For existing code bases, the code will
+need to be refactored to use the Teuchos memory management classes,
+replacing the use of raw pointers and raw calls to {}\ttt{new} and
+{}\ttt{delete} along the way.
+
+While code refactored to use the Teuchos memory management classes
+will be of higher quality and more productive to work with during
+further development, there will necessarily be a transition period
+where the code will be refactored to replace current uses of raw C++
+pointers and less-than-safe (or inflexible) memory management
+approaches.  It is not recommended that all work on new capabilities
+stop and the existing code base be refactored all at once to switch
+over to the complete use of the Teuchos memory management classes.
+Instead, the code should be refactored to use the Teuchos memory
+management classes in small, iterative cycles as needed.  The highest
+priority code to refactor are the heavily used major module and class
+interfaces.  It is these major interfaces where mistakes and memory
+usage problems are most likely to be made.  However, rather than break
+backward compatibility it is wise to provide the safe versions of the
+interface functions but leave the existing unsafe raw-pointer versions
+when possible and have them call the new safe versions (by converting
+between raw pointers to the memory management types as needed).  This
+avoids duplication which simplifies further maintenance and also
+provides for smooth upgrades for client code to incrementally switch
+over from raw pointers to the Teuchos memory management classes.  The
+help facilitate the transition of client code, the deprecated raw
+pointer interface functions and other code can be marked as deprecated
+on some compilers which generates warning messages while compiling
+(e.g.\ GCC's {}\ttt{ \_\_attribute\_\_((\_\_deprecated\_\_))}).
+
+While the most critical code to refactor to use the Teuchos memory
+management types are major module and class interfaces, the next most
+important software to refactor is any software that needs to be
+changed.  However, if there is existing well-encapsulated code that
+uses raw C++ pointers and that code does not need to change any time
+soon then refactoring that code to use the Teuchos memory management
+classes should be very low priority.  It is not until such code needs
+to be changed that it should be refactored to use the safer memory
+management types (which will make adding new features much easier and
+safer).
+
+While the final state of code refactored to use the Teuchos memory
+management types is an excellent state (as described throughout this
+document), great care must be exercised in refactoring the software.
+In general, before any piece of software is refactored to use the
+Teuchos memory management types, it should first be covered with high
+quality unit tests (see {}\cite{WorkingEffectivelyWithLegacyCode05}
+for a great treatment on how to add unit tests to existing code bases
+to facilitate adding new features).  The general process that should
+be followed to refactor existing software to use the Teuchos memory
+management types includes the following major steps:
+
+\begin{enumerate}
+
+{}\item Break dependencies to allow unit tests to be written.
+
+{}\item Add unit tests to cover behavior of the code that is to be
+refactored.
+
+{}\item Refactor the targeted code incrementally (running the unit
+tests constantly including using Valgrind and Purify) to use the
+Teuchos memory management classes by:
+
+  \begin{enumerate}
+
+  {}\item Replacing raw pointers internally with Teuchos memory
+  management types until all raw pointers are gone.
+
+  {}\item Writing new versions of the interface functions in terms of
+  the safer Teuchos memory management types.
+
+  {}\item Keeping the existing raw-pointer interface functions which
+  are called by the unit tests but have them call the new functions
+  that take the safer memory management types.
+
+  {}\item Marking the deprecated functions as so to facilitate
+  refactoring of client code (e.g.\ using GCC's {}\ttt{
+  \_\_attribute\_\_((\_\_deprecated\_\_))})
+
+  \end{enumerate}
+
+{}\item After a unit of code is totally refactored to use the new
+Teuchos memory management types, the unit test code should be
+refactored to call the safe interface functions that don't pass raw
+pointers, thereby removing all raw C++ pointers from the unit test
+code itself.
+
+{}\item Selectively refactor client code that can conveniently call
+the new safe interface functions of the refactored code.  (Caution,
+only do this if there are at least some decent system-level regression
+tests in place.)  As more and more code is refactored to use the safe
+Teuchos memory management types, the easier and safer this type of
+refactoring will become.
+
+{}\item Add the desired new features in the selected code safely and
+easily.
+
+\end{enumerate}
+
+While the incremental refactoring process described above may be slow
+and may only refactor small parts of the code in each batch, over
+time, more and more of the code base will be refactored to remove raw
+C++ pointers and the code will become more and more safe, easier to
+work with, and be better self documenting.  Whatever happens, one
+should never attempt to refactor a large volume of code in one batch
+to use the Teuchos memory management types, even if there are good
+unit tests in place.  Refactorings should {}\textit{never} be
+attempted in large batches, no matter what
+{}\cite{WorkingEffectivelyWithLegacyCode05}.
+
+The above process was followed with great success to refactor the
+Trilinos package Thyra over a period of more than a year.  This
+process can be followed for an code base very safely and productively
+if the above process is well followed.
 
 
 %
