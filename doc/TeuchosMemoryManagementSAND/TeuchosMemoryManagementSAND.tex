@@ -113,10 +113,11 @@ efficiently as raw C++ pointers with reasonable usage.  Also included
 is a novel approach for dealing with the circular references problem
 that imparts little extra overhead and is almost completely invisible
 to most of the code (unlike the boost and therefore C++0x approach).
-Rather than being a radical approach this is simply the logical
-progression of a trend in the C++ development and standards community
-that started with {}\ttt{std::auto\_ptr} and is continued (but not
-finished) with {}\ttt{std::shared\_ptr} in C++0x.
+Rather than being a radical approach, encapsulating all raw C++
+pointers is simply the logical progression of a trend in the C++
+development and standards community that started with
+{}\ttt{std::auto\_ptr} and is continued (but not finished) with
+{}\ttt{std::shared\_ptr} in C++0x.
 
 %
 \end{abstract}
@@ -172,6 +173,15 @@ finished) with {}\ttt{std::shared\_ptr} in C++0x.
 %
 \section{Introduction}
 %
+
+ToDo: Remove all references to 'you' and replace with 'one' or more
+generic.
+
+ToDo: Replace all references to 'we' and 'I' and make more generic.
+
+ToDo: Look for 'where' when it should be 'were'.
+
+ToDo: Spell check all attached tables, etc.
 
 A critical problem in computational science and engineering (CS\&E)
 software as well as in other types of software developed in C++ is in
@@ -1514,8 +1524,8 @@ Commandments {}\ref{cmnd:ptr-semi-persisting} and
 %
 
 The primary purpose for the Teuchos memory management classes is to
-allow the replacement of all raw C++ pointers in all application-level
-code.  These classes are efficient and general and, in a debug build
+allow the replacement of all raw C++ pointers in all high-level code,
+period.  These classes are efficient and general and, in a debug build
 of the code, will catch and gracefully report 99\% or more of the
 programming errors typically made with the ubiquitous high-level use
 of raw C++ pointers.
@@ -1535,13 +1545,13 @@ memory management classes is to:
 {}\item Encapsulate all raw C++ pointers in high-level code in
 specially designed memory management classes, capture raw C++ pointers
 as soon as possible, and avoid exposing raw calls to {}\ttt{new} in
-application-level code.
+library and application code.
 
 {}\item Provide a complete set of cooperating types that work together
-to safely and conveniently implement all hand-offs of raw C++
-pointers using supported and carefully scrutinized conversion code.
-Also, never define implicit conversions from these safe types to raw
-C++ pointers or the entire type safe system falls apart.
+to safely and conveniently implement all hand-offs of raw C++ pointers
+using supported and carefully scrutinized conversion code.  Also,
+never define implicit conversions from these safe types to raw C++
+pointers or the entire type safe system falls apart.
 
 {}\item Differentiate memory management classes for handling single
 objects and for handling contiguous arrays of objects.
@@ -1558,7 +1568,8 @@ persisting and non-persisting (and semi-persisting) associations.
   management classes designed to handle non-persisting associations.
 
   {}\item Do not impose the overhead of reference counting for memory
-  management classes designed to handle semi-persisting associations.
+  management classes designed to handle semi-persisting associations
+  (but provide the machinery for strong debug-mode runtime checking).
 
   \end{itemize}
 
@@ -1572,15 +1583,21 @@ performance is achieved for all reasonable use cases.
 
 {}\item Provide an optional {}\textit{debug mode} whose goal is to
 provide maximum runtime checking with low overhead by default to catch
-all sorts of common errors like:.
+all sorts of common errors like:
 
   \begin{itemize}
+  {}\item Multiple owning reference-counting node object
   {}\item Dereferencing null pointers
   {}\item Dereferencing dangling pointers (references)
   {}\item Array access errors like off-by-one and other errors
   {}\item Incorrect iterator usage
   {}\item Circular dependencies
   \end{itemize}
+
+{}\item Structure debug-mode checking such that it does not alter the
+observable behavior of correct programs in any way.  However, when
+debug-mode checking is enabled, the software should never segfault or
+exhibit any other type of illegal or undefined usage of memory.
 
 \end{itemize}
 
@@ -1604,31 +1621,31 @@ Summary of capabilities of the basic Teuchos memory management
 classes.}
 \end{table}
 
-The basic templated Teuchos memory management classes for encapsulating
-raw C++ pointers for single objects and arrays shown in Table
-{}\ref{tbl:BasicSingleArrayTypes} are {}\ttt{Ptr},
-{}\ttt{RCP}, {}\ttt{ArrayView}, and {}\ttt{ArrayRCP}.  A
-summary of the capabilities of these classes is shown in Table
+The basic templated Teuchos memory management classes for
+encapsulating raw C++ pointers for single objects and arrays shown in
+Table {}\ref{tbl:BasicSingleArrayTypes} are {}\ttt{Ptr}, {}\ttt{RCP},
+{}\ttt{ArrayView}, and {}\ttt{ArrayRCP}.  A summary of the
+capabilities of these classes is shown in Table
 {}\ref{tbl:TypesSummary}.  What you can see from this table is that
 raw pointer-like functionality is partitioned across these various
 sets of classes in logical and safe ways.  For example, array-related
-operations are not defined on the single-object classes
-{}\ttt{Ptr}, {}\ttt{RCP} but implicit conversion from derived
-types to base types is allowed.  Alternatively, the array classes
-{}\ttt{ArrayView}, and {}\ttt{ArrayRCP} do {}\underline{not}
-support the dangerous and ill-conceived ability to implicitly convert
-arrays of derived types to arrays of base types that is decried in
-Section {}\ref{sec:problem-with-raw-array-pointers}.  Note that the
-class {}\ttt{ArrayView} does not support all of the raw pointer
-iterator-like operations that {}\ttt{ArrayRCP} does like the
+operations are not defined on the single-object classes {}\ttt{Ptr}
+and {}\ttt{RCP} but implicit conversion from derived types to base
+types is allowed.  Alternatively, the array classes {}\ttt{ArrayView},
+and {}\ttt{ArrayRCP} do {}\underline{not} support the dangerous and
+ill-conceived ability to implicitly convert arrays of derived types to
+arrays of base types that is discussed in Section
+{}\ref{sec:problem-with-raw-array-pointers}.  Note that the class
+{}\ttt{ArrayView} does not support all of the raw pointer
+iterator-like operations that {}\ttt{ArrayRCP} supports like the
 dereference operator {}\ttt{operator*()} or the pointer offset
-functions that change the pointer while {}\ttt{ArrayRCP} does.  The
-reason that {}\ttt{ArrayRCP} does support these iterator-like
-operations is so that it can be used as a general purpose iterator
-implementation while {}\ttt{ArrayView} does not.  Note that all of
-the array classes defined in Teuchos all support a basic iterator
-interface with the typedefs {}\ttt{iterator} and the functions
-{}\ttt{begin()} and {}\ttt{end()}.  In optimized mode, these
+functions that change the pointer.  The reason that {}\ttt{ArrayRCP}
+does support these iterator-like operations is so that it can be used
+as a general purpose iterator implementation while {}\ttt{ArrayView}
+objects do not need to be used in this way.  Note that all of the
+array classes defined in Teuchos all support a basic iterator
+interface with the {}\ttt{[const]\_iterator} member typedefs and the
+functions {}\ttt{begin()} and {}\ttt{end()}.  In optimized mode, these
 iterators are simply raw C++ pointers yielding maximum performance.
 However, in debug mode, the iterators are implemented as
 {}\ttt{ArrayRCP} objects resulting in fully checked iterators.
@@ -1645,50 +1662,51 @@ In addition to the four basic memory management classes shown in Table
 {}\ref{tbl:BasicSingleArrayTypes} which provide the most fundamental
 replacements for all raw C++ pointers in all high-level code, Teuchos
 also contains a few other array container classes for a few more
-specific use cases shown in Table {}\ref{tbl:ExtendedArrayTypes}.
-The three array container classes {}\ttt{Array}, and
-{}\ttt{Tuple} pretty much cover the majority of use cases in C++
-where raw C++ pointer arrays are used for containers.  The class
-{}\ttt{Array} is a directly replacement for {}\ttt{std::vector}
-and actually wraps it internally.
+specific use cases shown in Table {}\ref{tbl:ExtendedArrayTypes}.  The
+array container classes {}\ttt{Array} and {}\ttt{Tuple} pretty much
+cover the majority of use cases in C++ where raw C++ pointer arrays
+are used for containers.  The class {}\ttt{Array} is a directly
+replacement for {}\ttt{std::vector} and actually wraps it internally.
 
 Note that all of these classes are templated on value types and are
 themselves value-types (see Section
-{}\ref{sec:value-and-reference-types}).  This means that you can
-embed these types in each other in any arbitrary order to create any
-type of data structure that you would like.  For example, you could
-have {}\ttt{Array<RCP<ArrayRCP<ArrayView<Tuple<Ptr<T>,5> > > > >
->}.  By understanding what each of these types provide and what each
-type means (in terms of the idioms in Section {}\ref{sec:idioms}), you
-can achieve almost anything you want in a way that is self
+{}\ref{sec:value-and-reference-types}).  This means that you can embed
+these types in each other in any arbitrary order to create any type of
+data structure that you would like.  For example, you could have
+{}\ttt{Array<RCP<ArrayRCP<ArrayView<Tuple<Ptr<T>,5> > > > > >}.  By
+understanding what each of these types provide and what each type
+means (in terms of the idioms defined in Section {}\ref{sec:idioms}),
+you can achieve almost anything you want in a way that is self
 documenting.
 
 These classes all work together to provide a high level of debug-mode
 runtime checking to catch the majority of common programming errors
 and report these errors gracefully with informative error messages.  A
 debug-mode build of the code is facilitated by defining the
-preprocessor macro {}\ttt{TEUCHOS\_DEBUG}.  When
-{}\ttt{TEUCHOS\_DEBUG} is not defined, the Teuchos memory
-management classes are configured to impart minimal overhead and yield
-fast performance.  When {}\ttt{TEUCHOS\_DEBUG} is defined, these
-classes are configured to perform maximal debug runtime checking.
-These classes are also carefully designed so that if a program is
+preprocessor macro {}\ttt{TEUCHOS\_DEBUG} (through the CMake
+configuration varible {}\ttt{Teuchos\_ENABLE\_DEBUG=ON}).  When
+{}\ttt{TEUCHOS\_DEBUG} is not defined, the Teuchos memory management
+classes are configured to impart minimal overhead and yield fast
+performance.  When {}\ttt{TEUCHOS\_DEBUG} is defined, these classes
+are configured to perform maximal debug runtime checking.  These
+classes are also carefully designed so that if a program is
 implemented correctly using these classes and executes correctly in
 the optimized mode, the program compiled with the debug checking
 turned on will execute in exactly the same way.  However, if any
 undefined, dangerous, or just plain wrong behavior is being used, then
 these memory management classes will throw exceptions and the
-exception objects will have very good error messages embedded in them.
+exception objects will have very good error messages embedded in them
+making it easier to debug and fix the problem.
 
 What is important to understand is that all of these memory management
 classes must be developed together with knowledge of each other's
 internal implementations in order to provide for solid debug-mode
 runtime checking.  For example, in general, you cannot mix in other
 memory management classes like {}\ttt{boost::shared\_ptr} (i.e.\
-{}\ttt{std::shared\_ptr} in C++0x) and {}\ttt{std::vector} and
-provide for the level of runtime checking that is supported by the
-concert of Teuchos memory management classes described here.  More
-details about why this is so are given in Section
+{}\ttt{std::shared\_ptr} in C++0x) and {}\ttt{std::vector} and provide
+for the level of runtime checking that is supported by the complete
+set of Teuchos memory management classes described here.  More details
+about why this is so are given in Section
 {}\ref{sec:debug-mode-runtime-checking} in the context of debug-mode
 runtime checking for and reporting of dangling references.
 
@@ -1696,8 +1714,8 @@ As with the development of any set of C++ classes, a set of
 accompanying idioms must also be developed for maximizing their
 effective use.  The idioms described in this paper involving the
 Teuchos memory management classes result in code with maximum
-compile-time checking, maximum debug-mode runtime checking, and which
-is highly self-documenting.
+compile-time checking, maximum debug-mode runtime checking, and
+maximally self-documenting.
 
 
 %
@@ -1717,8 +1735,8 @@ to use raw C++ pointers in our C++ programs:
 
 \begin{itemize}
 
-{}\item{}\textit{Use raw C++ pointers for extremely well-encapsulated,
-low-level, high-performance algorithms}
+{}\item{}\textit{Use raw C++ pointers (indirectly) for extremely
+well-encapsulated, low-level, high-performance algorithms}
 
 In order to achieve high performance in computationally intensive
 code, we will always have to use raw C++ pointers in a non-debug
