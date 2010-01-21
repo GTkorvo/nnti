@@ -1574,8 +1574,6 @@ Commandments {}\ref{cmnd:ptr-semi-persisting} and
 {}\ref{cmnd:arrayview-semi-persisting} in Appendix
 {}\ref{apdx:commandments}).
 
-{}\textbf{ToDo: Finished editing from here!}
-
 
 %
 {}\section{Teuchos classes for safer memory management and usage}
@@ -1781,57 +1779,51 @@ maximally self-documenting.
 \label{sec:role-of-raw-pointers}
 %
 
-The thesis of this paper is that the use of all raw C++ pointers
-should be eliminated in all of high-level C++ code and instead should
-use a system of specially designed types for the right situations.
-Does that mean that raw C++ pointers should never be used in any C++
-code?  The answer of course is {}\underline{no} (but perahps not
-directly), since raw C++ pointers will always have to be used in some
-special situations.
+The thesis of this paper is that the use of all raw C++ pointers should be
+eliminated in all high-level C++ code and instead a system of safe specially
+designed types tailored to specific use cases should be used instead.  Does
+that mean that raw C++ pointers should never be used in any C++ code?  The
+answer of course is {}\underline{no}, since raw C++ pointers will always have
+to be used in some special situations (but perahps not directly used as
+described below).
 
-Given the full use of the Teuchos memory management classes, here are
-the valid situations where it is appropriate (or required) to use raw
-C++ pointers in C++ programs:
+Given the full use of the Teuchos memory management classes, here are the
+valid situations where it is appropriate (or required) to use raw C++ pointers
+in fully compliant C++ programs:
 
 \begin{itemize}
 
 {}\item{}\textit{Use raw C++ pointers (indirectly) for extremely
 well-encapsulated, low-level, high-performance algorithms}
 
-In order to achieve high performance in computationally intensive
-code, one will always have to use raw C++ pointers (at least
-indrectly) in a non-debug optimized build.  This includes using raw
-C++ pointers to build complex specialized data structures and similar
-purposes.  In this context, one can think of raw C++ pointers as a
-fairly compact and efficient way to communicate with the compiler
-about how one wants to manage memory at the hardware level.  The
-ability to do this type if fine-grained manipulation of memory has
-always been one of the strengths of C and C++ in systems-level
-programming.  Therefore, one can think of using raw pointers in C++ as
-a kind of portable assembly language that one always has at one's
-disposal on every platform and with every compiler.  However, note
-that the use of raw C++ pointers in the name of performance must be
-very well encapsulated and one must thoroughly review (by our best
-programmers) and exhaustively test this code.  However, instead of
-using raw pointers, one can always use the types {}\ttt{Ptr},
-{}\ttt{ArrayView} or {}\ttt{Array[RCP,View]::iterator} to yield raw
-pointer performance in a non-debug optimized build but still maintain
-strong debug-mode runtime checking.  This is discuss in more detail in
-Section {}\ref{sec:perf-tuning-strategies}.  Therefore, optimized
-performance use for raw pointers described next.
+In order to achieve high performance in computationally intensive code, one
+will always have to use raw C++ pointers (at least indrectly) in a non-debug
+optimized build.  This includes using raw C++ pointers to build complex
+specialized data structures and similar purposes.  In this context, one can
+think of raw C++ pointers as a fairly compact and efficient way to communicate
+with the compiler about how one wants to manage memory at the hardware level.
+The ability to do this type if fine-grained manipulation of memory has always
+been one of the strengths of C and C++ in systems-level programming.
+Therefore, one can think of using raw pointers in C++ as a kind of portable
+assembly language that one always has at one's disposal on every platform and
+with every compiler.  However, instead of using raw pointers, one can always
+use the types {}\ttt{Ptr}, {}\ttt{ArrayView} or {}\ttt{ArrayType::iterator}
+(where {}\ttt{ArrayType} is {}\ttt{Array}, {}\ttt{ArrayRCP}, or
+{}\ttt{ArrayView}) to yield raw pointer performance in a non-debug optimized
+build but still maintain strong debug-mode runtime checking.  This approach is
+discuss in more detail in Section {}\ref{sec:perf-tuning-strategies}.
 
 {}\item{}\textit{Use raw C++ pointers to communicate with legacy C++
 code and with other languages through C bindings}
 
-The only remaining valid reason to use a raw C++ pointer is to reuse
-and communicate with legacy C++ code and to call functions in other
-languages through the now-universal approach of using C bindings.
-However, one must endeavor to minimize the amount of C++ code that has
-naked raw C++ pointers and one should only expose a raw C++ pointer at
-the last possible moment (such as in the call to the external
-functions themselves).  Again, one must carefully encapsulate our
-access to this non-compliant code that requires us to expose raw C++
-pointers.
+The only remaining valid reason to use a raw C++ pointer is to reuse and
+communicate with legacy C++ code and to call functions in other languages
+through the now-universal approach of using C bindings.  However, one must
+endeavor to minimize the amount of C++ code that has naked raw C++ pointers
+and one should only expose a raw C++ pointer at the last possible moment (such
+as in the call to the external functions themselves).  Again, one must
+carefully encapsulate access to non-compliant code that requires the exposure
+of raw C++ pointers.
 
 \end{itemize}
 
@@ -1852,12 +1844,15 @@ correctly and keep it valid as long as local modules need it.
 \label{sec:common-aspects}
 %
 
-Table {}\ref{tbl:common-type-members} gives the common member and
-non-member functions common all the Teuchos memory management classes
-{}\ttt{Ptr}, {}\ttt{RCP}, {}\ttt{Array}, {}\ttt{ArrayView},
-{}\ttt{ArrayRCP}, and {}\ttt{Tuple}.  The comparison operators allows
-all of these types to be used as keys in assoicative containers like
-{}\ttt{std::map}.
+Table {}\ref{tbl:common-type-members} gives the member and non-member
+functions common all the Teuchos memory management classes {}\ttt{Ptr},
+{}\ttt{RCP}, {}\ttt{Array}, {}\ttt{ArrayView}, {}\ttt{ArrayRCP}, and
+{}\ttt{Tuple}.  The comparison operators allows all of these types to be used
+as keys in assoicative containers like {}\ttt{std::map}.  The member function
+{}\ttt{getRawPtr()} is actually an incredibly useful function that will return
+a null pointer (i.e.\ 0) when the underlying smart pointer is null (such as
+wtih {}\ttt{Ptr}, {}\ttt{RCP}, {}\ttt{ArrayRCP}, and {}\ttt{ArrayView}) or
+when the container has size zero (such as wtih {}\ttt{Array}).
 
 \begin{table}
 {\small\begin{center}
@@ -1865,7 +1860,7 @@ all of these types to be used as keys in assoicative containers like
 \hline
 {}\textbf{Common member functions} \\
 \hline
-{}\ttt{[const\_]pointer getRawPtr() [const]} \\
+{}\ttt{T* getRawPtr() [const]} \\
 \hline
 {}\textbf{Common nonmember functions} \\
 \hline
@@ -1899,13 +1894,14 @@ single objects}
 \label{sec:mem-mng-classes-single-objs}
 %
 
-Here the templated classes {}\ttt{Ptr} and {}\ttt{RCP} are described
-which are used to encapsulate raw C++ pointers to single objects in
-more detail.  Again, {}\ttt{Ptr} is used for non-persisting
-associations and {}\ttt{RCP} is for persisting associations.  Below,
-and in all of the code listings, it is assumed that they are enclosed
-in the {}\ttt{Teuchos} namespace or there are appropriate {}\ttt{using
-Teuchos::XXX} declarations for the various names in place.
+The templated classes {}\ttt{Ptr} and {}\ttt{RCP} are described in more detail
+in the next two sections which are used to encapsulate raw C++ pointers to
+single objects.  Again, {}\ttt{Ptr} is used for non-persisting (and
+semi-persisting) associations and {}\ttt{RCP} is for persisting associations.
+Below, and in all of the code listings, it is assumed that such code is
+enclosed in the {}\ttt{Teuchos} namespace or there are appropriate
+{}\ttt{using Teuchos::XXX} declarations for the various names in place (as is
+safe and appropriate).
 
 %
 {}\subsubsection{\ttt{Teuchos::Ptr<T>}}
@@ -1931,8 +1927,8 @@ optimized mode:
     Ptr<T>& operator=(const Ptr<T>& ptr) { ptr_=ptr.ptr_; return *this; }
     T* operator->() const { return ptr_; }
     T& operator*() const { return *ptr_; }
-    T* get() const { return ptr_; }
     T* getRawPtr() const { return ptr_; }
+    T* get() const { return ptr_; } // For compatibility with shared_ptr
     const Ptr<T>& assert_not_null() const;
   private:
     T *ptr_;
@@ -1946,10 +1942,10 @@ assessors to the underlying raw C++ pointer member {}\ttt{ptr\_}.
 Therefore, the performance when using this type is the same as when
 using a raw C++ pointer.
 
-However, in debug mode (enabled when {}\ttt{TEUCHOS\_DEBUG} is
-defined), then the {}\ttt{Ptr} becomes more complex and performs a
-number of runtime checks like for null dereferences and dangling
-references (see Section {}\ref{sec:detection-dangling-references}).
+However, in debug mode (enabled when {}\ttt{TEUCHOS\_DEBUG} is defined), the
+{}\ttt{Ptr} class becomes more complex and performs a number of runtime checks
+like for null dereferences and dangling references (see Section
+{}\ref{sec:detection-dangling-references}).
 
 One note about the default null constructor shown in Listing
 {}\ref{listing:Ptr} which is:
@@ -1974,12 +1970,12 @@ write code like:
   Ptr<A> a_ptr = null;
 \end{verbatim}}
 
-This implicit conversion from {}\ttt{null} is shared by the other
-Teuchos memory management classes {}\ttt{RCP<T>},
-{}\ttt{ArrayView<T>}, and {}\ttt{ArrayRCP<T>}.  This allows calling
-functions that accept one of these objects and just pass in
-{}\ttt{null} when appropriate and the implicit conversion will be done
-automatically if possible.
+This implicit conversion from {}\ttt{null} is shared by the other Teuchos
+memory management smart-pointer classes {}\ttt{RCP<T>}, {}\ttt{ArrayView<T>},
+and {}\ttt{ArrayRCP<T>}.  This allows calling functions that accept one of
+these objects and by just passing in {}\ttt{null} when appropriate and the
+implicit conversion will be done automatically if possible (see Section
+{}\ref{sec:conversion-problems}).
 
 The main purpose for the existence of the {}\ttt{Ptr} class is to
 replace raw C++ pointers in function calls for typical input,
@@ -1989,7 +1985,7 @@ semi-persisting associations where single objects are involved.)  For
 example, consider the function that modifies a type {}\ttt{A}
 object shown in Listing {}\ref{listing:modifyA-rawPtr}.
 
-\begin{listing}:\\
+{}\begin{listing}: Simple function using unsafe raw pointer
 \label{listing:modifyA-rawPtr}
 {\small\begin{verbatim}
   void modifyA( A *a )
@@ -2003,7 +1999,8 @@ Using {}\ttt{Ptr}, the function {}\ttt{modifyA(...)} in Listing
 {}\ref{listing:modifyA-rawPtr} would be changed to the form shown in
 Listing {}\ref{listing:modifyA-Ptr}.
 
-\begin{listing}:\\
+{}\begin{listing}: Simple function refactored to use safe {}\ttt{Ptr} wrapped
+pointer
 \label{listing:modifyA-Ptr}
 {\small\begin{verbatim}
   void modifyA( const Ptr<A> &a )
@@ -2015,19 +2012,18 @@ Listing {}\ref{listing:modifyA-Ptr}.
 
 In this context, the primary advantage of the form shown in Listing
 {}\ref{listing:modifyA-Ptr} as apposed to Listing
-{}\ref{listing:modifyA-rawPtr} is that in debug mode, a check for a
-null pointer would be performed automatically.  If a null dereference
-occurred, then an exception would be thrown with a very good error
-message.  I have seen platforms where a null dereference did not
-automatically result in a graceful assert, stopping the program.  I
-have seen cases where somehow memory was corrupted and the program
-continued!  My general philosophy is to make as few assumptions as
-possible about the behavior of the compiler and platform because I
-have found that ``typical and obvious'' behavior is not universal.
-Many have learned the hard way that one will pay a price for such
+{}\ref{listing:modifyA-rawPtr} is that in debug mode, a check for a null
+pointer or a dangling reference would be performed automatically.  If a null
+dereference occurred, then an exception would be thrown with a very good error
+message.  I have seen platforms where a null dereference did not automatically
+result in a graceful assert, stopping the program.  I have seen cases where
+somehow memory was corrupted and the program continued!  My general philosophy
+is to make as few assumptions as possible about the behavior of the compiler
+and platform because I have found that ``typical and obvious'' behavior is not
+universal.  Many have learned the hard way that one will pay a price for such
 assumptions in lost time debugging obscure things like a null pointer
-dereference that should have stopped the program but did not.  Don't
-take chances with the code, take control!
+dereference that should have stopped the program but did not.  Don't take
+chances with undefined behavior in the code, take control!
 
 When all of the high-level code has been converted over to use these
 memory management classes and there are no more raw C++ pointers, then
@@ -2059,10 +2055,9 @@ written as shown in Listing {}\ref{listing:using-ptr}.
 \end{verbatim}}
 \end{listing}
 
-A more typical use case for the construction of a {}\ttt{Ptr}
-object is from a C++ object/reference.  This type of construction
-should always be performed using one of the non-member constructor
-functions shown in Listing
+A more typical use case for the construction of a {}\ttt{Ptr} object is from a
+raw C++ object or reference.  This type of construction should always be
+performed using one of the non-member constructor functions shown in Listing
 {}\ref{listing:ptr-from-ref-nonmember-constructors}.
 
 \begin{listing}: Safe nonmember constructors for Teuchos::Ptr\\
@@ -2076,14 +2071,12 @@ functions shown in Listing
 \end{verbatim}}
 \end{listing}
 
-The different forms of non-member constructor functions shown in
-Listing {}\ref{listing:ptr-from-ref-nonmember-constructors} are to
-allow for self-documenting code for calls to functions that accept
-{}\ttt{Ptr}-wrapped objects.
-
-A complete and comprehensive set of idioms for using {}\ttt{Ptr}
-along with the other Teuchos memory management types is given in
-Section {}\ref{sec:idioms}.
+The different forms of non-member constructor functions shown in Listing
+{}\ref{listing:ptr-from-ref-nonmember-constructors} are to allow for
+self-documenting code for calls to functions that accept {}\ttt{Ptr}-wrapped
+objects.  A complete and comprehensive set of idioms for using {}\ttt{Ptr}
+along with the other Teuchos memory management types is given in Section
+{}\ref{sec:idioms}.
 
 
 %
@@ -2091,21 +2084,19 @@ Section {}\ref{sec:idioms}.
 \label{sec:RCP}
 %
 
-The class {}\ttt{RCP}, the real workhorse of the Teuchos memory
-management classes, is used to manage single objects in persisting
-associations.  {}\ttt{RCP} is very similar to other high-quality
-reference-counted smart pointer classes like
-{}\ttt{boost::shared\_ptr} and of course the upcoming standard
-C++0x class {}\ttt{std::shared\_ptr}.  However, {}\ttt{RCP} has
-some key features that differentiate it from these other better known
-smart pointer classes.  In particular, {}\ttt{RCP} has built in
-support for the detection of circular references (Section
-{}\ref{sec:circular-references-weak-pointers}), has built in support
-for resolving circular references with built-in weak pointers (Section
-{}\ref{sec:basic-reference-counting-machinery}), and other strong
-debug runtime checking such as detecting multiple non-related
-{}\ttt{RCP} objects owning the same reference-counted objects and
-other types of checks.
+The class {}\ttt{RCP}, the real workhorse of the Teuchos memory management
+classes, is used to manage single objects in persisting associations.
+{}\ttt{RCP} is very similar to other high-quality reference-counted smart
+pointer classes like {}\ttt{boost::shared\_ptr} and of course the upcoming
+standard C++0x class {}\ttt{std::shared\_ptr}.  However, {}\ttt{RCP} has some
+key features that differentiate it from these other better known smart pointer
+classes.  In particular, {}\ttt{RCP} has built in support for the detection of
+circular references (Section {}\ref{sec:circular-references-weak-pointers}),
+has built in support for resolving circular references with built-in weak
+pointers (Section {}\ref{sec:basic-reference-counting-machinery}), and other
+strong debug runtime checking such as detecting multiple non-related
+{}\ttt{RCP} objects owning the same reference-counted objects (Section
+{}\ref{sec:detection-dual-owning-rcps}) and other types of checks.
 
 Because the class {}\ttt{RCP} is described in
 {}\cite{RefCountPtrBeginnersGuide} and is so similar in use to
@@ -2143,7 +2134,7 @@ listing can be found in the Doxygen documentation).
   
   private:
     T *ptr_;
-    RCPNode node_;
+    RCPNodeHandle node_;
     ...
   };
 
@@ -2171,13 +2162,15 @@ listing can be found in the Doxygen documentation).
 \end{listing}
 
 Again, basic usage of the {}\ttt{RCP} class is described in
-{}\cite{RefCountPtrBeginnersGuide}.  The basic idiom of smart pointers and
-reference counting is fairly well known and is well documented in the
-literature and there is a good overview in {}\cite{RefCountPtrBeginnersGuide}
-so basic information will not be replicated here.  However, some of the more
-advanced functionality for {}\ttt{RCP} is described in later chapters that
+{}\cite{RefCountPtrBeginnersGuide} and the functions for decallocation
+policies, embedded objects, extra data, conversion functions and other
+functions are discussed in other sections in a more general setting.  The
+basic idiom of smart pointers and reference counting is fairly well known and
+is well documented in the literature and there is a good overview in
+{}\cite{RefCountPtrBeginnersGuide} so basic information will not be replicated
+here.  However, some of the more advanced functionality for {}\ttt{RCP} that
 is not described in {}\cite{RefCountPtrBeginnersGuide} or an any of the
-existing C++ literature.
+existing C++ literature is described in later sections of this document.
 
 
 %
@@ -2185,44 +2178,45 @@ existing C++ literature.
 \label{sec:raw-C++-references}
 %
 
-Why is there a subsection on raw C++ references under the section for
-Teuchos Memory Management classes?  The reason is that raw C++
-references to single objects are used in the idioms described in this
-paper for non-persisting associations for single objects and this was
-a reasonable place to discuss them.
+Why is there a subsection on raw C++ references under the a section describing
+Teuchos Memory Management classes for single objects?  The reason is that raw
+C++ references to single objects are used in the idioms described in this
+paper for non-persisting associations for single objects and this was a
+reasonable place to discuss them.
 
 While this paper argues that raw C++ pointers have no place in
-application-level code because they are fundamentally unsafe does that
-also mean that raw C++ references are also unsafe in application-level
-code?  After all, under the covers raw C++ references really are just
-raw C++ pointers in disguise.  While this is true, in practice raw C++
-references are significantly safer than raw C++ pointers, especially
-if the idioms outlined in this paper are carefully followed.  In
-addition, the use of raw C++ references is exploited (as explained in
-Section {}\ref{sec:raw-C++-references}) in defining idioms that
-increase the self-documenting nature of C++ code and play a role in
-defining non-persisting associations related to function formal
-arguments and return objects.
+application-level code because they are fundamentally unsafe, are C++
+references also not inheritantly unsafe as well?  After all, under the covers
+raw C++ references really are just raw C++ pointers in disguise.  While this
+is true, in practice raw C++ references are significantly safer than raw C++
+pointers, especially if the idioms outlined in this paper are carefully
+followed.  In addition, the use of raw C++ references is exploited (as
+explained in Section {}\ref{sec:raw-C++-references}) in defining idioms that
+increase the self-documenting nature of C++ code and play a role in defining
+non-persisting associations related to function formal arguments and return
+objects.  All and all, the increased expressiveness in using raw C++
+references is worth the increased risk of misuse (this is still going to be
+C++ after all).
 
-Basically, a raw C++ reference is relatively safe as long as a) it is
-always initialized to a valid object, and b) it is only used for
-non-persisting relationships (especially as const input arguments in
-C++ functions).  If a raw C++ reference is initialized directly from
-an object or from dereferencing a smart pointer, then it is guaranteed
-that the object will be valid when the reference is first created (at
-least in a debug build where dereferencing null smart pointers
-throws).  While raw C++ references are fairly safe when used with the
-idioms described in this paper, there are no 100\% guarantees.  There
-are typically no guarantees that the object pointed to by a raw
-reference will stay valid, even in cases where one would assume that
-it should be if other idioms outlined in this paper are broken or in
-rare other cases even if no specific idiom is broken.
+Basically, a raw C++ reference is relatively safe as long as a) it is always
+initialized to point to a valid object, and b) it is only used for
+non-persisting relationships (especially as const input arguments in C++
+functions).  If a raw C++ reference is initialized directly from an object or
+from dereferencing a smart pointer, then it is guaranteed that the object will
+be valid when the reference is first created (at least in a debug build where
+dereferencing null smart pointers throws).  While raw C++ references are
+fairly safe when used with the idioms described in this paper, there are no
+100\% guarantees.  There are typically no guarantees that the object pointed
+to by a raw reference will stay valid (because dangling references can not be
+detected as described in Section {}\ref{sec:limitations-debug-mode-checking}).
+This can happen when one breaks one or more of the idioms or guidelines
+defined in this paper (which will happen because programmers make mistakes).
 
 Note that raw C++ references should never be used for representing
-semi-persisting associations because it is impossible to catch invalid
-usage like dangling references.  Instead, when a semi-persisting
-association is involved, always use {}\ttt{Ptr} instead of a raw C++
-reference.
+semi-persisting associations because it is impossible to catch invalid usage
+like dangling references.  Instead, when a semi-persisting association is
+involved, always use {}\ttt{Ptr} instead of a raw C++ reference (even if the
+object being represented is not allowed to be null).
 
 
 %
@@ -2292,55 +2286,51 @@ Additional common members and non-members for {}\ttt{ArrayView},
 \end{center}}
 \end{table}
 
-A few things to note about the array interface components shown in
-Table {}\ref{tbl:common-array-type-members}:
+A few things to note about the common array interface components shown in
+Table {}\ref{tbl:common-array-type-members} include:
 
 \begin{itemize}
 
-{}\item{}All of the Teuchos array classes are drop-in replacements for
-any code that uses {}\ttt{std::vector} that does not grow or shrink
-the container by supporting the necessary typedefs, query functions,
-element access, and iterator access.  This helps in migrating current
-code that uses {}\ttt{std::vector} but should be using
-{}\ttt{Array}, {}\ttt{ArrayView}, {}\ttt{ArrayRCP} or
-{}\ttt{Tuple}.
+{}\item{}All of the Teuchos array classes are drop-in replacements for any
+code that uses {}\ttt{std::vector} that does not grow or shrink the container
+by supporting the necessary typedefs, query functions, element access, and
+iterator access.  This helps in migrating current code that uses
+{}\ttt{std::vector} but should be using {}\ttt{Array}, {}\ttt{ArrayView},
+{}\ttt{ArrayRCP} or {}\ttt{Tuple}.
 
-{}\item{}All of the array classes support returning \ttt{ArrayView}
-subviews of contiguous ranges of elements.
+{}\item{}All of the array classes support returning \ttt{ArrayView} subviews
+of contiguous ranges of elements.
 
-{}\item{}All of the array classes support a handy
-{}\ttt{getRawPtr()} function that allows a client to get the base
-pointer address, or null, to the array.  The standard
-{}\ttt{std::vector} class supports no such function which is very
-painful for users.
+{}\item{}All of the array classes support a handy {}\ttt{getRawPtr()} function
+that allows a client to get the base pointer address, or null, to the array.
+The standard {}\ttt{std::vector} class supports no such function which is very
+painful for users since it makes it hard to get a null pointer then the
+container can legitimately be unsized in some use cases.
 
 \end{itemize}
 
-The exact functions shown in Table
-{}\ref{tbl:common-array-type-members} for {}\ttt{ArrayView} and
-{}\ttt{ArrayRCP} and a little different than for {}\ttt{Array}
-due to the different nature of these view classes as apposed to the
-container class {}\ttt{Array}.  As described in Section
+The exact functions shown in Table {}\ref{tbl:common-array-type-members} for
+{}\ttt{ArrayView} and {}\ttt{ArrayRCP} and a little different than for
+{}\ttt{Array} due to the different nature of these view classes as apposed to
+the container class {}\ttt{Array}.  As described in Section
 {}\ref{sec:teuchos-const-nonconst-pointer-objects}, the classes
-{}\ttt{ArrayView} and {}\ttt{ArrayRCP} can encapsulate both
-non-const and const types {}\ttt{T} as their template argument
-while {}\ttt{Array} can only accept a non-const type {}\ttt{T}.
-Therefore, the {}\ttt{std::vector} compatible functions in
-{}\ttt{ArrayView} and {}\ttt{ArrayRCP} are all {}\ttt{const}
-functions since they don't change what data these objects point to,
-but only change the data themselves.
+{}\ttt{ArrayView} and {}\ttt{ArrayRCP} can encapsulate both non-const and
+const types {}\ttt{T} as their template argument while {}\ttt{Array} can only
+accept a non-const type {}\ttt{T}.  Therefore, the {}\ttt{std::vector}
+compatible functions in {}\ttt{ArrayView} and {}\ttt{ArrayRCP} are all
+{}\ttt{const} functions since they don't change what data these objects point
+to, but only change the data themselves.
 
-One other aspect to note about the Teuchos array classes is that they
-deviate from the standard C++ library convention of using an unsigned
-integer for {}\ttt{size\_type}.  Instead, they use a signed integer
-for {}\ttt{size\_type} typedefed to the signed type
-{}\ttt{Teuchos\_Ordinal} which is 32 bit on a 32 bit machine and 64
-bit on a 64 bit machine\footnote{{}\ttt{Teuchos\_Ordinal} is
-typedefed to the standard C library type {}\ttt{ptrdiff\_t} which
-is always signed and 32 bit or 64 bit which are always 32 bit or 64
-bit machines, respectively.}.  The reasoning for breaking from the
-{}\ttt{std::vector} standard for {}\ttt{size\_type} is described
-in Appendix {}\ref{sec:unsigned_size_type}.
+One other aspect to note about the Teuchos array classes is that they deviate
+from the standard C++ library convention of using an unsigned integer for
+{}\ttt{size\_type}.  Instead, they use a signed integer for {}\ttt{size\_type}
+typedefed to the signed type {}\ttt{Teuchos\_Ordinal} which is guaranteed to
+be 32 bit on a 32 bit machine and 64 bit on a 64 bit
+machine\footnote{{}\ttt{Teuchos\_Ordinal} is typedefed by default to the
+standard C library type {}\ttt{ptrdiff\_t} which is always signed and is 32
+bit on a 32 bit machine and 64 bit on a 64 bit machine.}.  The reasoning for
+breaking from the {}\ttt{std::vector} standard for {}\ttt{size\_type} is
+described in Appendix {}\ref{sec:unsigned_size_type}.
 
 
 %
@@ -2386,7 +2376,7 @@ Table {}\ref{tbl:common-array-type-members} for common array members.)
 
   private:
     T *ptr_;     // Optimized implementation
-    int size_;
+    size_type size_;
 
   };
 
@@ -2407,17 +2397,11 @@ Table {}\ref{tbl:common-array-type-members} for common array members.)
   template<class T>
   std::vector<T> createVector( const ArrayView<const T> &av );
 
-  template<class T>
-  bool is_null( const ArrayView<T> &av );
+  // Other common non-member helpers
+  ...
 
-  template<class T>
-  bool nonnull( const ArrayView<T> &av );
-
-  template<class T>
-  std::ostream& operator<<( std::ostream& out, const ArrayView<T>& av );
-
-  template<class T2, class T1>
-  ArrayView<T2> av_reinterpret_cast(const ArrayView<T1>& p1);
+  // Explicit conversion functions
+  ...
 
 \end{verbatim}}
 \end{listing}
@@ -2426,76 +2410,55 @@ Table {}\ref{tbl:common-array-type-members} for common array members.)
 % class ArrayView itself.  Also, test all the typedefs to make sure they
 % work correctly.
 
-A few things to note about {}\ttt{ArrayView} shown in
+A few specific things to note about {}\ttt{ArrayView} shown in
 {}\ref{listing:ArrayView} in addition to the comments in Section
-{}\ref{sec:array-classes} include:
+{}\ref{sec:array-classes} and other sections include:
 
 \begin{itemize}
 
-{}\item{}{}\ttt{ArrayView} is extremely lightweight in an optimized
-build, carrying only a pointer and in integer size.  This allows one
-to replace the typical pointer and separate size argument with a
-single aggregate light weight object.  Therefore, it yield very
-efficient code.
+{}\item{}{}\ttt{ArrayView} is extremely lightweight in an optimized build,
+carrying only a pointer and in integer size.  This allows one to replace the
+typical pointer and separate size argument with a single aggregate
+light-weight object.  Therefore, it yields very efficient code.
 
-{}\item{}\ttt{ArrayView} in optimized mode has all trivial inlined
-functions that work with the raw pointer so it is as efficient has raw
-pointer code.
+{}\item{}\ttt{ArrayView} in optimized mode has all trivial inlined functions
+that work with the raw pointer so it is as efficient has raw pointer code.
 
-{}\item{}{}\ttt{ArrayView} is a drop in replacement for any code
-that uses {}\ttt{std::vector} that does not grow or shrink the
-container by supporting the necessary typedefs, query functions, and
-iterator access.  This helps in migrating current code that uses
-{}\ttt{std::vector} but should be using {}\ttt{ArrayView}.
+{}\item{}{}\ttt{ArrayView} is a drop in replacement for any code that uses
+{}\ttt{std::vector} that does not grow or shrink the container by supporting
+the necessary typedefs, query functions, and iterator access.  This helps in
+migrating current code that uses {}\ttt{std::vector} but should be using
+{}\ttt{ArrayView}.
 
-{}\item{}{}\ttt{ArrayView} implicitly converts from an
-{}\ttt{std::vector} so functions called by existing client code
-that uses {}\ttt{std::vector} can be safely and transparently
-refactored to use {}\ttt{ArrayView} instead of
-{}\ttt{std::vector}.
+{}\item{}{}\ttt{ArrayView} implicitly converts from an {}\ttt{std::vector} so
+functions called by existing client code that uses {}\ttt{std::vector} can be
+safely and transparently refactored to use {}\ttt{ArrayView} instead of
+{}\ttt{std::vector} (subject to the limitations for implicit conversions
+described in Section {}\ref{sec:conversion-problems}).
 
-{}\item{}\ttt{ArrayView} directly supports the creation of subviews
-of contiguous ranges of elements.
-
-{}\item{}\ttt{ArrayView} Supports all safe raw array pointer
-implicit conversions such as from non-const to a const but does not
-support implicit conversion from derived to base types which is almost
-always a programming error (see Section
-{}\ref{sec:problem-with-raw-array-pointers}).  Also supported is
-{}\ttt{reinterpret\_cast} which is not safe but is a valid type of
-conversion of array types ins low-level code.
-
-{}\item{}\ttt{AraryView}s of {}\ttt{Array} and
-{}\ttt{ArrayRCP} objects are fully supported as subviews and
-implicit conversions (see Section
-{}\ref{sec:teuchos-type-conversions}).
-
-{}\item{}\ttt{ArrayView} supports a handy {}\ttt{getRawPtr()}
-function that allows a client to get the base pointer address, or
-null, to the array.  The standard {}\ttt{std::vector} class
-supports no such function which is very painful for users.
+{}\item{}\ttt{ArrayView} directly supports the creation of subviews of
+contiguous ranges of elements.
 
 \end{itemize}
 
-What makes {}\ttt{ArrayView} non-trivial and special, however, is
-that in a debug build, the implementation takes on a variety of
-runtime checking to catch all sorts of errors such as dangling
-iterators and other sub-views (Section
-{}\ref{sec:detection-dangling-references}), range checking (Section
-{}\ref{sec:null-dereferences-range-checking}), and other types of
-checking.
+What makes {}\ttt{ArrayView} non-trivial and special, however, is that in a
+debug build, the implementation takes on a variety of runtime checking to
+catch all sorts of errors such as dangling iterators and dangling sub-views
+(Section {}\ref{sec:detection-dangling-references}), range checking (Section
+{}\ref{sec:null-dereferences-range-checking}), and other types of checking.
 
-It should be noted that one should almost never create an
-{}\ttt{ArrayView} object directly from a raw pointer but instead
-create them as views of {}\ttt{Array}, {}\ttt{ArrayRCP}, {}\ttt{Tuple}
-and other {}\ttt{ArrayView} object.  If client code is routinely
-creating {}\ttt{ArrayView} objects from raw pointers, then the code is
-not safe and one needs to study the core idioms described in Section
-{}\ref{sec:idioms}.
+It should be noted that one should almost never create an {}\ttt{ArrayView}
+object directly from a raw pointer but instead create them as views of
+{}\ttt{Array}, {}\ttt{ArrayRCP}, {}\ttt{Tuple} and other {}\ttt{ArrayView}
+objects.  If client code is routinely creating {}\ttt{ArrayView} objects from
+raw pointers, then the code is not safe and one needs to study the core idioms
+described in Section {}\ref{sec:idioms}.
 
-The class {}\ttt{ArrayView} has no equivalent in boost or the
-current C++ or proposed C++0x standard.  This is a critical class
-needed to allow for flexibility.
+The class {}\ttt{ArrayView} has no equivalent in boost or the current C++ or
+proposed C++0x standard.  This is a critical class needed to allow for
+flexibility, high-performance, safety, and maximal self-documenting code.  One
+can not develop such an effective type system without an intergrated type like
+{}\ttt{ArrayView}.
 
 
 %
@@ -2503,16 +2466,15 @@ needed to allow for flexibility.
 \label{sec:ArrayRCP}
 %
 
-The class {}\ttt{ArrayRCP} is the counterpart to
-{}\ttt{ArrayView} for general flexible array views except it is
-used for persisting relationships where reference-counting machinery
-is required.  An {}\ttt{ArrayRCP} object can provide a contiguous
-view into any array of data allocated in any way possible and can
-allow the user to define what is done to release memory any way they
+The class {}\ttt{ArrayRCP} is the counterpart to {}\ttt{ArrayView} for general
+flexible array views except it is used for persisting relationships where
+reference-counting machinery is required.  An {}\ttt{ArrayRCP} object can
+provide a contiguous view into any array of data allocated in anyway possible
+and can allow the user to define what is done to release memory in anyway they
 would like.
 
-The class declaration for {}\ttt{Teuchos::ArrayRCP} is shown in
-Listing {}\ref{listing:ArrayRCP}.
+The class declaration for {}\ttt{Teuchos::ArrayRCP} is shown in Listing
+{}\ref{listing:ArrayRCP}.
 
 \begin{listing}: {}\ttt{Teuchos::ArrayRCP} declaration (optimized build)\\
 \label{listing:ArrayRCP}
@@ -2640,50 +2602,51 @@ Listing {}\ref{listing:ArrayRCP}.
 
 Some of the main features of the {}\ttt{ArrayRCP} class are:
 
-{}\ttt{ArrayRCP} allows the user to allocate the contiguous array
-of data in any way they would like and can define how that array is
-deallocated any way they would like.
+{}\ttt{ArrayRCP} allows the user to allocate the contiguous array of data in
+anyway they would like and can define how that array is deallocated anyway
+they would like.
 
-{}\ttt{ArrayRCP} returns persisting subviews of data through the
-member function {}\ttt{persistingView(...)}.  This means that the
-underlying array of data will not be deleted until all the subviews
-are destroyed.
+{}\ttt{ArrayRCP} returns persisting subviews of data through the member
+function {}\ttt{persistingView(...)}.  This means that the underlying array of
+data will not be deleted until all the subviews are destroyed.
 
-{}\ttt{ArrayRCP} is a full replacement for a general raw
-pointer and can be used as a general iterator that always remembers
-the allowed upper and lower bounds.  It supports all the appropriate
-pointer array-like operations including {}\ttt{ptr+i},
-{}\ttt{i+ptr}, {}\ttt{ptr-i}, {}\ttt{ptr+=i},
-{}\ttt{ptr-=i}, , {}\ttt{ptr++}, {}\ttt{ptr--},
-{}\ttt{*ptr}, {}\ttt{ptr->member()}, and of course
-{}\ttt{ptr[i]}.  This is what allows {}\ttt{ArrayRCP} to be used
-as a checked iterator implementation in debug build.
+{}\ttt{ArrayRCP} is a full replacement for a general raw pointer and can be
+used as a general iterator that always remembers the allowed upper and lower
+bounds.  It supports all the appropriate pointer array-like operations
+including {}\ttt{ptr+i}, {}\ttt{i+ptr}, {}\ttt{ptr-i}, {}\ttt{ptr+=i},
+{}\ttt{ptr-=i}, , {}\ttt{ptr++}, {}\ttt{ptr--}, {}\ttt{*ptr},
+{}\ttt{ptr->member()}, and of course {}\ttt{ptr[i]}.  This is what allows
+{}\ttt{ArrayRCP} to be used as a checked iterator implementation in a
+debug-mode build.
 
-{}\ttt{ArrayRCP} can be used safely as a contiguous array by
-using it through its {}\ttt{const} interface which disables all of
-the pointer-like functions that change the frame of reference
-(e.g. {}\ttt{ptr+=i}, {}\ttt{ptr-=i}, , {}\ttt{ptr++}, and
-{}\ttt{ptr--} are disabled).
+{}\ttt{ArrayRCP} can be used safely as a contiguous array by using it through
+its {}\ttt{const} interface which disables all of the pointer-like functions
+that change the frame of reference (e.g. {}\ttt{ptr+=i}, {}\ttt{ptr-=i}, ,
+{}\ttt{ptr++}, and {}\ttt{ptr--} are disabled in the {}\ttt{const} interface).
 
-{}\ttt{ArrayRCP} can be used in place of {}\ttt{std::vector} (and
-therefore {}\ttt{Array}) that only needs to size or resize the array
-in baulk and does not need to flexibly grow or shrink the array.  It
-does this by supporting functions like {}\ttt{assign(...)},
-{}\ttt{resize(...)}, and {}\ttt{clear()}.  Because of the reference
-counting machinery that is always part of {}\ttt{ArrayRCP}, one may
-not want to use {}\ttt{ArrayRCP} instead of {}\ttt{Array} but if the
-overhead is not going to be significant, then going with
-{}\ttt{ArrayRCP} instead of {}\ttt{Array} can be a good choice because
-it is much more flexible and allows for shared ownership.
+{}\ttt{ArrayRCP} can be used in place of {}\ttt{std::vector} (and therefore
+{}\ttt{Array}) that only needs to size or resize the array in baulk and does
+not need to flexibly grow or shrink the array.  It does this by supporting
+functions like {}\ttt{assign(...)}, {}\ttt{resize(...)}, and {}\ttt{clear()}.
+Because of the reference counting machinery that is always part of
+{}\ttt{ArrayRCP} and support for all raw C++ pointer functionality (e.g.,
+{}\ttt{ptr++}), one may not want to use {}\ttt{ArrayRCP} instead of
+{}\ttt{Array} in may types of code.  However, if the overhead is not going to
+be significant, then going with {}\ttt{ArrayRCP} instead of {}\ttt{Array} can
+be a good choice because it is much more flexible in how memory is allocated
+and has built-in support for shared ownership (again, which you may not want).
+The class {}\ttt{ArrayRCP} does not attempt to replace {}\ttt{Array} but can
+be a better choice in many cases where an {}\ttt{Array} may otherwise be used.
 
-{}\ttt{ArrayRCP} supports explicit shallow conversion to
-{}\ttt{ArrayView}.  Requiring an explicit conversion from
-{}\ttt{ArrayRCP} to {}\ttt{ArrayView} in consistent with
-{}\ttt{RCP} and {}\ttt{Ptr}.  As explained in Section
-{}\ref{sec:idioms-for-passing-arguments}, this is meant to increase
-the self-documenting nature of the code.  Note that the
-{}\ttt{ArrayRCP::operator()()} function is a very short-hand way to
-perform this conversion.
+{}\ttt{ArrayRCP} supports explicit shallow conversion to {}\ttt{ArrayView}.
+Requiring an explicit conversion from {}\ttt{ArrayRCP} to {}\ttt{ArrayView} in
+consistent with the required explicit conversion from {}\ttt{RCP} to
+{}\ttt{Ptr}.  As explained in Section
+{}\ref{sec:idioms-for-passing-arguments}, requiring type type of explicit
+conversion is meant to increase the self-documenting nature of all code
+(including the calling code as well).  Note that the
+{}\ttt{ArrayRCP::operator()()} function is a very short-hand way to perform
+this conversion.
 
 {}\ttt{ArrayRCP} supports owning conversions from
 {}\ttt{RCP}-wrapped {}\ttt{Array} and {}\ttt{std::vector}
@@ -2694,6 +2657,8 @@ Some of the other features of the {}\ttt{ArrayRCP} class that are
 common with the other classes are discussed in Sections
 {}\ref{sec:conversions}, {}\ref{sec:reference-counting-machinary}, and
 {}\ref{sec:debug-mode-runtime-checking}.
+
+{}\textbf{ToDo: Finished editing from here!}
 
 
 %
