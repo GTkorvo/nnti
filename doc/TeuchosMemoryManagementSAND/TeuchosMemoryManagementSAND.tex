@@ -469,60 +469,55 @@ language currently in popular use, including Java and Python.  This
 statement will be backed up throughout this paper and then reiterated
 in Section {}\ref{sec:essentail-accidental-complexity}.
 
-{}\textbf{ToDo: Finished editing from here!}
+The remainder of this paper assumes that the reader has some basic knowledge
+of C++ and is somewhat familiar with smart reference-counted pointer classes
+like {}\ttt{boost::shared\_ptr} (which is the basis for the new C++0x
+{}\ttt{std::shared\_ptr} class).  The Teuchos equivalent for these smart
+pointer classes is {}\ttt{Teuchos::RCP} which is abbreviated here as just
+{}\ttt{RCP} in sample code.  If the reader is not familiar with the basics of
+smart reference-counted pointer classes, then they should refer to
+{}\cite{RefCountPtrBeginnersGuide} and {}\cite{C++CodingStandards05}.  If the
+reader is not familiar with fundamental C++ concepts like implicit type
+conversions, templates, object lifetime models, raw references and pointers
+and other basic topics, then some more basic background will be needed.
+However, specific references to basic C++ material in books like
+{}\cite{EffectiveC++ThirdEdition, stroustrup97, C++CodingStandards05} are make
+throughout this document.  So if the reader is a novice C++ programmer and is
+willing to look up the mentioned references, then this paper can be a good
+guide to help learn this basic C++ material as well.
 
-The remainder of this paper assumes that the reader has some basic
-knowledge of C++ and is somewhat familiar with smart reference-counted
-pointer classes like {}\ttt{boost::shared\_ptr} (which is the basis
-for the new C++0x {}\ttt{std::shared\_ptr} class).  The Teuchos
-equivalent for these smart pointer classes is {}\ttt{Teuchos::RCP}
-which is abbreviated here as just {}\ttt{RCP} in sample code.  If the
-reader is not familiar with the basics of smart reference-counted
-pointer classes, then they should refer to
-{}\cite{RefCountPtrBeginnersGuide} and {}\cite{C++CodingStandards05}.
-If the reader is not familiar with fundamental C++ concepts like
-implicit type conversions, templates, object lifetime models, raw
-references and pointers and other basic topics, then some more basic
-background will be needed.  However, specific references to basic C++
-material in books like {}\cite{EffectiveC++ThirdEdition, stroustrup97,
-C++CodingStandards05} are make throughout this document.  So if the
-reader is a novice C++ programmer and is willing to look up the
-mentioned references, then this paper can be a good guide to help
-learn this basic C++ material as well.
-
-A final warning: the material in this paper is pretty detailed and
-will take a significant investment in time and experience with writing
-code with the Teuchos memory management classes using the idioms
-describe here before a developer will be proficient.  It takes years
-just to master raw C++ so it should be no surprise that learning a new
-set of idioms to fix a large number of the problems with raw C++ will
-also take a significant amount of time and effort.  What is needed is
-a culture change in the C++ programming community where the memory
-management classes and the idioms described here are taught at a very
+A final warning: the material in this document is pretty detailed and will
+take a significant investment in time and experience with writing code with
+the Teuchos memory management classes using the idioms describe here before a
+developer will be proficient.  It takes years just to master raw C++ so it
+should be no surprise that learning a new set of idioms to fix a large number
+of the problems with raw C++ will also take a significant amount of time and
+effort.  What is needed is a culture change in the C++ programming community
+where this type of approach and the idioms described here are taught at a very
 early stage; much like the STL is now being taught in introductory C++
-courses.  What we need is a revolution in C++ education but we have to
-start somewhere and that is what this paper is all about, getting
-started and on the road to a better generation of C++ programmers and
-C++ software.
+courses.  What we need is a revolution in C++ education but we have to start
+somewhere and that is what this paper is all about, getting started and on the
+road to a better generation of C++ programmers and C++ software.
 
-The body of this document is organized as follows. The fundamental
-problems with raw C++ pointers is described in Section
-{}\ref{sec:problems-with-raw-pointers}.  Common (suboptimal)
-approaches for addressing memory management problems are discussed in
-Section {}\ref{sec:current-appraoches-to-mem-mng}.  Some important
-prerequisite concepts like value-types verses references-types and
-persisting verses non-persisting associations are defined in Section
-{}\ref{sec:important-prerequisites}.  With all this background and
-context in place, the Teuchos memory management classes are presented
-in Section {}\ref{sec:teuchos-mem-mng-classes}.  The basic outline of
-the approach in Section {}\ref{sec:overview_of_basic_approach} is
-perhaps the first section one would jump to if they want to get a
-quick idea what the Teuchos memory management classes are all about.
-Finally, Taking a step back, a philosophical discussion of the
-trade-offs between speed, safety and generality related to memory
-management and the concepts of essential and accidental complexity are
-discussed in Section {}\ref{sec:phylosophy-of-mem-mng}.  Concluding
-remarks are given in Section {}\ref{sec:conclusions}.
+The body of this document is organized as follows. The fundamental problems
+with raw C++ pointers is described in Section
+{}\ref{sec:problems-with-raw-pointers}.  Common (suboptimal) approaches for
+addressing memory management problems are discussed in Section
+{}\ref{sec:current-appraoches-to-mem-mng}.  Some important prerequisite
+concepts like value-types verses references-types and persisting verses
+non-persisting associations are defined in Section
+{}\ref{sec:important-prerequisites}.  With all this background and context in
+place, the Teuchos memory management classes are presented in Section
+{}\ref{sec:teuchos-mem-mng-classes}.  The basic outline of the approach in
+Section {}\ref{sec:overview_of_basic_approach} is perhaps the first section
+one would jump to if they want to get a quick idea what the Teuchos memory
+management classes are all about.  Finally, Taking a step back, the concepts
+of essential and accidental complexity and a philosophical discussion of the
+trade-offs between speed, safety and generality related to memory management
+are discussed in Section {}\ref{sec:misc-topics}.  Concluding remarks are
+given in Section {}\ref{sec:conclusions}.
+
+{}\textbf{ToDo: Finished editing from here!}
 
 
 %
@@ -1324,9 +1319,9 @@ semantics.
 
 
 %
-{}\subsection{Persisting associations versus non-persisting and
-semi-persisting associations}
-\label{sec:persisting-nonpersisting-associations}
+{}\subsection{Non-persisting versus persisting and semi-persisting
+associations}
+\label{sec:nonpersisting-persisting-associations}
 %
 
 Another important prerequisite for understanding the Teuchos memory
@@ -7252,7 +7247,7 @@ use raw pointers.  Instead, {}\ttt{Ptr} can be used instead of
 {}\ttt{ArrayRCP} when the full semantics of persisting relationships
 are not needed and instead only semi-persisting relationships are
 needed (see Section
-{}\ref{sec:persisting-nonpersisting-associations}).  By using the
+{}\ref{sec:nonpersisting-persisting-associations}).  By using the
 types {}\ttt{Ptr} and {}\ttt{ArrayView} instead of raw pointers for
 all semi-persisting associations one still gets all of the strong
 debug-mode runtime checking that is described in Section
@@ -7266,7 +7261,7 @@ sparse rows.  The client of the sparse matrix class would obtain
 handles to the sparse row data, make modifications to it, and then
 release the handles.  Performing all of these operations in a single
 statement (as is stictly required for a non-presisting relationship as
-defined in Section {}\ref{sec:persisting-nonpersisting-associations})
+defined in Section {}\ref{sec:nonpersisting-persisting-associations})
 is impractical.  Therefore, the handles for the interal sparse row
 data represent a persisting relationship and the strict interpretation
 of the idioms defined in Sections
@@ -8078,7 +8073,7 @@ Note that the implementation of {}\ttt{SomeClass} in Listing
 relationship between the {}\ttt{C} object returned from
 {}\ttt{SomeClass::get\_C()}, the {}\ttt{SomeClass} object, and the
 client code represents a semi-presisting association as defined in
-Section {}\ref{sec:persisting-nonpersisting-associations}.  In this
+Section {}\ref{sec:nonpersisting-persisting-associations}.  In this
 case, the usage of the {}\ttt{C} object is only valid while the parent
 {}\ttt{SomeClass} object still exists.  However, if the client
 mistakenly tries to use a dangling {}\ttt{C} object after its parent
@@ -8140,7 +8135,7 @@ to be discussed in this document.}.  In this context, a ``view'' is
 some object that is created off of a parent object and provides some
 type of access to some part of the the parent.  Views can be const or
 non-const and can be persisting or semi-persisting (see Section
-{}\ref{sec:persisting-nonpersisting-associations} for the definition
+{}\ref{sec:nonpersisting-persisting-associations} for the definition
 of persisting and semi-persisting associations).  Views can also be
 direct views or ``generalized views'' (i.e.\ potentially detached
 non-direct views).
@@ -9151,6 +9146,7 @@ if the above process is well followed.
 
 %
 {}\section{Miscellaneous topics}
+\label{sec:misc-topics}
 %
 
 When thinking about memory management in C++ it is helpful to take a
@@ -9584,13 +9580,13 @@ encapsulated as low-level code.
 
 \begin{commandment}
 Thou shall only use raw C++ references for non-persisting associations
-(see Section {}\ref{sec:persisting-nonpersisting-associations}).
+(see Section {}\ref{sec:nonpersisting-persisting-associations}).
 \end{commandment}
 
 \begin{commandment}
 Thou shall use {}\ttt{RCP} for handling single objects for all
 persisting associations (see Section
-{}\ref{sec:persisting-nonpersisting-associations}).
+{}\ref{sec:nonpersisting-persisting-associations}).
 \end{commandment}
 
 \begin{commandment}\label{cmnd:rcp-new}
@@ -9615,7 +9611,7 @@ delete.  The system can not detect dangling references from non-owning
 \begin{commandment}\label{cmnd:ptr-semi-persisting}
 Thou shall use {}\ttt{Ptr} for handling single objects for all
 semi-persisting associations (see Section
-{}\ref{sec:persisting-nonpersisting-associations}).
+{}\ref{sec:nonpersisting-persisting-associations}).
 \end{commandment}
 {}\textit{Justification:} When performance constraints do not allow
 the reference-counting overhead of {}\ttt{RCP}, then {}\ttt{Ptr} can
@@ -9630,13 +9626,13 @@ really does not need reference-counting machinery.
 \begin{commandment}
 Thou shall use {}\ttt{ArrayRCP} for handling contiguous arrays of
 objects for all persisting associations (see Section
-{}\ref{sec:persisting-nonpersisting-associations}).
+{}\ref{sec:nonpersisting-persisting-associations}).
 \end{commandment}
 
 \begin{commandment}\label{cmnd:arrayview-semi-persisting}
 Thou shall use {}\ttt{ArrayView} for handling contiguous arrays of
 objects for all semi-persisting associations (see Section
-{}\ref{sec:persisting-nonpersisting-associations}).
+{}\ref{sec:nonpersisting-persisting-associations}).
 \end{commandment}
 {}\textit{Justification:} When performance constraints do not allow
 the reference-counting overhead of {}\ttt{ArrayRCP}, then
