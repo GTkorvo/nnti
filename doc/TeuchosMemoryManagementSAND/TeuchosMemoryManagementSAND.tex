@@ -517,8 +517,6 @@ trade-offs between speed, safety and generality related to memory management
 are discussed in Section {}\ref{sec:misc-topics}.  Concluding remarks are
 given in Section {}\ref{sec:conclusions}.
 
-{}\textbf{ToDo: Finished editing from here!}
-
 
 %
 {}\section{Fundamental problems with raw C++ pointers}
@@ -527,7 +525,7 @@ given in Section {}\ref{sec:conclusions}.
 
 This section summarizes some of the fundamental problems with basic
 C++ features related to raw pointers.  What is going to be argued is
-that while some people will claim that C++ pointers are strongly
+that while many people will claim that C++ pointers are strongly
 typed, it will be shown that raw pointers are actually very weakly
 typed in many respects and how this weak typing is the cause of many
 programming errors that result in incorrect programs and segfaults.
@@ -539,22 +537,18 @@ In the following examples, the simple classes shown in Listing
 \label{listing:Simple_A_B}
 {\small\begin{verbatim}
   class A {
-  public:
-    ...
-    void incrementA() { ++(*char_ptr_); }
-    ...
-  private:
     char *char_ptr_;
+  public:
+    A(...);
+    void incrementA() { ++(*char_ptr_); }
   };
 
   class B : public A {
-  public:
-    ...
-    void incrementB() { ++(*int_ptr_); }
-    ...
-  private:
     int size_;
     int *int_ptr_;
+  public:
+    B(...);
+    void incrementB() { ++(*int_ptr_); }
   };
 \end{verbatim}}
 \end{listing}
@@ -569,8 +563,8 @@ in the C++ type system when dealing with raw C++ pointers.
 %
 
 There are a number of problems with using raw C++ pointers to manage
-single objects.  For example, given a class of type {}\ttt{B} in
-Listing {}\ref{listing:Simple_A_B} consider a pointer declared as:
+single objects.  For example, given a class object of type {}\ttt{B}
+in Listing {}\ref{listing:Simple_A_B} consider a pointer declared as:
 
 {\small\begin{verbatim}
   B some_b(...);
@@ -616,7 +610,7 @@ compiler that a raw pointer is only pointing to a single object.  With
 respect to differentiating single objects and arrays of objects, C++
 pointers are untyped and the compiler provides no help whatsoever in
 statically asserting correct usage.  This is strike one for the
-notation that C++ pointers being strongly typed!
+notation that C++ pointers are strongly typed!
 
 
 %
@@ -627,8 +621,8 @@ objects}
 
 When considering the semantics of raw C++ pointers one realizes that
 raw pointers are really designed primarily for dealing with contiguous
-arrays of objects (save for one exception that is mentioned below).  I
-say this because almost every operation that C++ defined for raw
+arrays of objects (save for one exception that is mentioned below).
+This is because almost every operation that C++ defines for raw
 pointers makes sense and is fairly well defined when raw C++ pointers
 are pointing with contiguous arrays of objects.  Every valid C++
 operation will not be reviewed for raw pointers to contiguous arrays
@@ -644,14 +638,13 @@ shown in Listing {}\ref{listing:BadArrayPointerConversion}.
 \label{listing:BadArrayPointerConversion}
 {\small\begin{verbatim}
 
-  void foo( const int n )
+  void foo(const int n)
   {
     B *b_array = new[n];
     ...
     A *a_array = b_array; // Compiles just fine :-(
     for (int i = 0; i < n; ++i) {
       a_array[i]->incrementA(); // KABOMMMMM!
-
     }
   }
 
@@ -660,24 +653,23 @@ shown in Listing {}\ref{listing:BadArrayPointerConversion}.
 
 There are a lot of beginning and even some more experienced C++
 programmers that would think that the C++ code in Listing
-{}\ref{listing:BadArrayPointerConversion} is just fine.  I have seen
-this mistake made more than once and the resulting program may seem to
-run okay in some cases but in the above case will almost certainly
-segfault right away.  The above code fragment is wrong, wrong, wrong
-as described in {}\cite[Gotcha \#33]{C++Gotchas03} and {}\cite[Item
-\#100]{C++CodingStandards05}.  Great detail about
-what happens here will not be given, but converting from an array of
-type {}\ttt{B} it a base of type {}\ttt{A} is almost always asking for
+{}\ref{listing:BadArrayPointerConversion} is just fine.  The resulting
+program may seem to run okay in some cases but in the above case will
+almost certainly segfault right away.  The above code fragment is
+wrong, wrong, wrong as described in {}\cite[Gotcha 33]{C++Gotchas03}
+and {}\cite[Item 100]{C++CodingStandards05}.  Without going into great
+detail, converting from a pointer for an array of type {}\ttt{B} to a
+pointer of type of base type {}\ttt{A} is almost always asking for
 disaster because the alignment of the base type {}\ttt{A} will be
 wrong according to the full type {}\ttt{B} (again see {}\cite[Gotcha
-\#33]{C++Gotchas03} all the gory details).  As a result, for the
-second iteration {}\ttt{i=1}, the embedded pointer in
-{}\ttt{a\_array[1].char\_ptr\_} is pointing to garbage because on
-most 32 bit machines with most compilers, the address in
-{}\ttt{a\_array[1].char\_ptr\_} is actually the binary
-representation of the integer {}\ttt{b\_array[0].size\_}.
-Therefore, calling {}\ttt{a\_array[1]->increment()} on most 32 bit
-machines is equivalent to performing:
+33]{C++Gotchas03} all the gory details).  As a result, for the second
+iteration {}\ttt{i=1}, the embedded pointer in
+{}\ttt{a\_array[1].char\_ptr\_} is pointing to garbage because on most
+32 bit machines with most compilers, the address in
+{}\ttt{a\_array[1].char\_ptr\_} is actually the binary representation
+of the integer {}\ttt{b\_array[0].size\_}.  Therefore, calling
+{}\ttt{a\_array[1]->incrementA()} on most 32 bit machines is
+equivalent to performing:
 
 {\small\begin{verbatim}
   ++(*reinterpret_cast<char*>(b_array[0].size_)); // KABOMMMMM!
@@ -685,26 +677,26 @@ machines is equivalent to performing:
 
 If this sort of thing comes as a surprise to C++ developers, then they
 should probably fear using raw memory in C++ more than they currently
-do and should should seriously consider the safer approach to
+do and should seriously consider using the safer approach to
 encapsulating raw memory usage that is being advocated in this paper.
 
-So how did C++ come to allow such a completely wrong and dangerous
-operation like shown in Listing
+So how did C++ come to allow such completely wrong and dangerous
+operations like shown in Listing
 {}\ref{listing:BadArrayPointerConversion}?  It is because of the
 untyped dual nature of raw C++ pointers in trying to handle both
-single objects and contiguous arrays of objects with one set of what
-should be non-overlapping semantics.  The ability to cast raw C++
-pointers from derived types to base types only ever generally makes
-sense when the pointer is pointing to a single object and will not be
-interpreted as a pointer to a contiguous array of objects.  Note that
-C does not have this problem since there is no such thing as type
-derivation and the designers of C never even envisioned that raw C
-pointers would be used for such a thing.  However, when the original
-designer of C++ adopted the C type system along with raw pointers and
-tried to apply it to an object-oriented language, he inadvertently
-opened up a number of serious language gotchas that we are still
-living with to this day.  This is strike two for the notation that C++
-pointers are strongly typed!
+single objects and contiguous arrays of objects with one data type
+where the full set of operations are not appropiate for both.  The
+ability to cast raw C++ pointers from derived types to base types only
+ever generally makes sense when the pointer is pointing to a single
+object and will not be interpreted as a pointer to a contiguous array
+of objects.  Note that C does not have this problem since there is no
+such thing as type derivation and the designers of C never even
+envisioned that raw C pointers would be used for such a thing.
+However, when the original designer of C++ adopted the C type system
+along with raw pointers and tried to apply it to an object-oriented
+language, he inadvertently opened up a number of serious language
+gotchas that we are still living with to this day.  This is another
+strike for the notation that C++ pointers are strongly typed!
 
 
 %
@@ -714,9 +706,10 @@ pointers are strongly typed!
 
 The use of raw pointers and raw calls to {}\ttt{new} and
 {}\ttt{delete} is also fundamentally incompatible with the built-in
-C++ exception handling mechanism using {}\ttt{try} and
-{}\ttt{catch}.  For example, the following code will leak memory
-if the function {}\ttt{someFunc()} throws a C++ exception:
+C++ exception handling mechanism using
+{}\ttt{try}/{}\ttt{throw}/{}\ttt{catch}.  For example, the following
+code will leak memory if the function {}\ttt{someFunc()} throws a C++
+exception:
 
 {\small\begin{verbatim}
   void foo()
@@ -729,21 +722,21 @@ if the function {}\ttt{someFunc()} throws a C++ exception:
 
 According to current C++ best practices relating to memory management
 and exception handling as described in {}\cite[Item
-{}\#29]{EffectiveC++ThirdEdition} and {}\cite[Item
-{}\#71]{C++CodingStandards05}, code like shown above that leaks memory
-is totally unacceptable in production quality C++ code.  This
+{}29]{EffectiveC++ThirdEdition} and {}\cite[Item
+{}71]{C++CodingStandards05}, code like shown above that leaks memory
+is totally unacceptable in production quality C++ programs.  This
 fundamental incompatibility of the built-in C++ dynamic memory
 management facilities using {}\ttt{new}/\ttt{delete} and the built-in
-exception handling mechanism using {}\ttt{try}/\ttt{catch} was clear
-even to the committee that created the official C++ standard in 1998.
-However, again, because of the need for backward compatibility they
-were powerless to fix the problem at the language level.  Instead, the
-C++ standards committee included the first standard C++ smart pointer
-class; {}\ttt{auto\_ptr}.  Great detail about {}\ttt{auto\_ptr} is not
-given here other than to say that is solved only the most basic
-problem with raw C++ pointers and that is that it ensures that memory
-will be reclaimed when exceptions are thrown.  For example, the
-following rewritten function will not leak any memory when
+exception handling mechanism using
+{}\ttt{try}/{}\ttt{throw}/\ttt{catch} was clear even to the committee
+that created the official 1998 C++ standard.  However, again, because
+of the need for backward compatibility they were powerless to fix the
+problem at the language level.  Instead, the C++ standards committee
+included the first standard C++ smart pointer class;
+{}\ttt{auto\_ptr}.  The class {}\ttt{auto\_ptr} solves only the most
+basic problem with raw C++ pointers and that is that it ensures that
+memory will be reclaimed when exceptions are thrown.  For example, the
+following refactored function will not leak any memory when
 {}\ttt{someFunc()} throws:
 
 {\small\begin{verbatim}
@@ -761,29 +754,34 @@ following rewritten function will not leak any memory when
 The introduction of {}\ttt{std::auto\_ptr} is the first example that I
 can think of where a user-defined type was added to the standard C++
 library in order to define an idiom meant to fix a fundamental C++
-language flaw.  Note the term ``flaw'' and not ``deficiency''.  It is
-generally excepted in most modern programming languages that the
-language proper will not support every programming model or idiom that
-is of general interest and instead class libraries are provided to
-fill the gaps.  The problem with C++ pointers is different in that it
-is the language definition itself which is flawed and is not just
-simply missing some desirable feature.  One could argue that what C++
-is really missing is garbage collection (GC) but even that is not the
-case because to add GC would be fundamentally incompatible with the
-current user-controlled memory management facility using {}\ttt{new}
-and {}\ttt{delete}.  There is a lot of C++ code out there that
-requires that destructors for objects be called exactly when expected
-such as when {}\ttt{delete} is called.  Any form of language-supported
-GC will break some backward compatibility of C++ and therefore we may
-never see a C++ standard with full GC.
+language flaw due to incompatible language features.  Note the term
+``flaw'' is used and not ``deficiency''.  It is generally excepted in
+most modern programming languages that the language proper will not
+support every programming model or idiom that is of general interest
+and instead class libraries are provided to fill the gaps.  The
+problem with C++ pointers is different in that it is the language
+definition itself which is flawed and is not just simply missing some
+desirable feature.  One could argue that what C++ is really missing is
+garbage collection (GC) but even that is not the case because to add
+GC would be fundamentally incompatible with the current
+user-controlled memory management facility using {}\ttt{new} and
+{}\ttt{delete}.  There is a lot of C++ code out there that requires
+that destructors for objects be called exactly when expected such as
+when {}\ttt{delete} is called.  Any form of language-supported GC will
+break some backward compatibility of C++ and therefore we may never
+see a C++ standard with full GC.  Also, removing the ability to
+precisely control when destructors are called and memory is reclaimed
+would make C++ less attractive for many domains where such low-level
+control is critical (e.g.\ embedded programming, systems programming,
+scientific programming).
 
-The boost library and the up-coming C++0x standard add more types that
+The Boost library and the up-coming C++0x standard add more types that
 will be mentioned below that continue in this trend of providing new
 user-defined types and idioms to address fundamental C++ language
 flaws and deficiencies.  However, as described in meat of this paper,
-both the boost and the C++0x standard library fall short of providing
-a complete and comprehensive solution to the problems with raw C++
-pointers and raw access to memory.
+both the Boost and the C++0x standard libraries fall short of
+providing a complete and comprehensive solution to the problems with
+raw C++ pointers and raw access to memory.
 
 Note that the upcoming C++0x standard as it is currently defined (at
 least the time of this writing) will do nothing to fix the majority of
@@ -791,20 +789,20 @@ these nonsensical raw C++ pointer gotchas because to do so would
 destroy backward compatibility of many millions of lines of existing
 C++ code.  Because of the need for backward compatibility, we cannot
 rely on any future C++ standard to fix the basic problems with raw C++
-pointers.  Instead, the meat of this paper advocates using new C++
-user-defined types to create a new safer type-system in C++ and
-avoiding the direct use of raw C++ pointers in all but the lowest
-level of code.
+pointers.  Instead, this document advocates using new C++ user-defined
+types to create a new safer type-system in C++ and avoiding the direct
+use of raw C++ pointers except where required to interact with
+non-compliant code.
 
 One has to wonder how the addition of such a feature as exception
 handling which is so incompatible with a primary language feature like
-basic memory management was ever accepted into the C++ language
-standard.  It is clear what the advantages of exception handling are
-in C++ (and any other language) but since the naive use of such a
-feature will result in memory leaks one just have to wonder how this
-was justified.  However, all is not lost since we do not have to write
-naive memory management code and fixing this problem is one of the
-main features of the memory management classes proposed here.
+basic dynamic memory management was ever accepted into the C++
+language standard.  It is clear what the advantages of exception
+handling are in C++ (and any other language) but since the naive use
+of such a feature will result in memory leaks one just have to wonder
+how this was justified.  However, all is not lost since we do not have
+to write naive memory management code and fixing this problem is one
+of the main features of the memory management classes proposed here.
 
 
 %
@@ -837,8 +835,8 @@ concrete contiguous data container class for storing and retrieving
 value objects\footnote{See Section
 {}\ref{sec:value-and-reference-types} for a definition of ``Value
 Types''.}.  What makes using {}\ttt{std::vector} attractive as
-compared to a simple class that an developer would write for
-themselves is that:
+compared to a simple class that a developer would write for themselves
+is that:
 
 \begin{itemize}
 
@@ -945,7 +943,9 @@ have to look like when using the form of
 {}\ref{listing:addArrayIntoArray-std-vector} which takes in
 {}\ttt{std::vector} objects.
 
-\begin{listing}:\\
+{}\begin{listing}: Client code that has to create temporary
+{}\ttt{std::vector} objects to call function that takes
+{}\ttt{std::vector} arguments
 \label{listing:someBlockAlgo-std-vector}
 {\small\begin{verbatim}
   void someBlockAlgo( const int numBlocks, const std::vector<double> &big_a,
@@ -974,9 +974,9 @@ have to look like when using the form of
 \end{verbatim}}
 \end{listing}
 
-As it is clear to see, the client code that uses the
+As it is clear to see, the above client code that uses the
 {}\ttt{std::vector} version of {}\ttt{addArrayIntoArray(...)} is
-neither clean, nor efficient as temporary copies of all of the data
+neither clean, nor efficient since temporary copies of all of the data
 have to be created just to make the function call and then data has be
 be copied back into the full array.
 
@@ -1014,10 +1014,10 @@ mistakes with its arrays of memory, then the resulting program will
 result, or (in the worst case) actually produce the right result on
 the current platform but will fail on other platforms.
 
-The Teuchos array utility classes make algorithms involving subviews
-like shown above very clean, very efficient, and very safe (see the
-same versions of this example code using these new Teuchos classes in
-Section {}\ref{sec:array-views}).
+The Teuchos memory management array classes make algorithms involving
+subviews like shown above very clean, very efficient, and very safe
+(see the same versions of this example code using these new Teuchos
+classes in Section {}\ref{sec:array-views}).
 
 In summary, {}\ttt{std::vector} is {}\underline{not} an efficient
 or convenient general-purpose replacement for raw C++ pointers as
@@ -1055,40 +1055,40 @@ Purify will never be able to provide an even sufficient (forget about
 100\%) means to validate the memory usage in C++ programs.  With
 respect to existing tool implementations, I have experienced cases
 where both Valgrind and Purify have reported not even a single warning
-before the program segfaulted with essentially no feedback at all.  I
-will not go into detail about what techniques memory tools like
-Valgrind and Purify use to verify memory usage other than to say that
-they can do a lot by just taking control of {}\ttt{malloc(...)} and
-{}\ttt{free(...)} and in inserting checks into the execution of the
-program by controlling the manipulation of the program stack.
+before the program segfaulted (while running in the tool) with
+essentially no feedback at all.  I will not go into detail about what
+techniques memory tools like Valgrind and Purify use to verify memory
+usage other than to say that they can do a lot by just taking control
+of {}\ttt{malloc(...)} and {}\ttt{free(...)} and in inserting checks
+into the execution of the program by controlling the manipulation of
+the program stack.
 
 One such case where the Valgrind and Purify were completely unhelpful
 occurred with an off-by-one error with an {}\ttt{std::vector} using
-Linux/gcc.  In the end, the way that I found the off-by-one error was
-by just staring at the code over and over again until I happened to
-see the problem.  However, what I discovered through two days of
-debugging was that {}\ttt{std::vector} used its own allocator which
-allocated big chunks of memory through {}\ttt{malloc(...)}.  It
+Linux/gcc (befored I learned the GCC had a checked STL
+implementation).  In the end, the way that I found the off-by-one
+error was by just staring at the code over and over again until I
+happened to see the problem.  However, what I discovered through two
+days of debugging was that {}\ttt{std::vector} used its own allocator
+which allocated big chunks of memory through {}\ttt{malloc(...)}.  It
 then proceeded to do its own memory allocation scheme, which was very
 fast but was invisible to the watchful eyes of Valgrind and Purify.
 Any reads to this block of memory looked fine to Valgrind and Purify
 because it was all contained within the block returned from
-{}\ttt{malloc(...)}.  What the off-by-one error did was to write
-over a library managed part of the memory block and that silent
-corruption would doom a later attempt by {}\ttt{std::vector} to
-allocate memory.
+{}\ttt{malloc(...)}.  What the off-by-one error did was to write over
+a library managed part of the memory block and that silent corruption
+would doom a later attempt by {}\ttt{std::vector} to allocate memory.
 
 There are other categories of use cases where external memory checking
 tools like Valgrind and Purify will never be able to verify correct
 memory usage.  One example is semantic off-by-one errors committed in
 larger blocks of data.  To demonstrate this type of error, consider
-the example code in the function {}\ttt{someBlockAlgo(...)} in
-Listing {}\ref{listing:someBlockAlgo-std-vector-raw-ptr} which uses
-the raw C++ pointer version of the function
-{}\ttt{addArrayIntoArray(...)} in Listing
-{}\ref{listing:addArrayIntoArray-raw}.  Now consider what happens when
-a developer introduces an off-by-one error as shown in
-{}\ttt{addArrayIntoArray(...)} in Listing
+the example code in the function {}\ttt{someBlockAlgo(...)} in Listing
+{}\ref{listing:someBlockAlgo-std-vector-raw-ptr} which uses the raw
+C++ pointer version of the function {}\ttt{addArrayIntoArray(...)} in
+Listing {}\ref{listing:addArrayIntoArray-raw}.  Now consider what
+happens when a developer introduces an off-by-one error such as shown
+in {}\ttt{addArrayIntoArray(...)} in Listing
 {}\ref{listing:addArrayIntoArray_rawError}.
 
 \begin{listing}:\\
@@ -1115,12 +1115,11 @@ data in {}\ttt{big\_b} as driven by the code in Listing
 {}\ttt{block\_k=numBlocks-1} of data is processed, then there is a
 reasonable chance a memory checking tool like Valgrind would catch the
 off-by-one error being committed at the very end of the array
-{}\ttt{big\_b}.  However, as described above, Valgrind may not
-catch even this error.  Also, note that turning on bounds checking
-with {}\ttt{std::vector} (i.e.\ by enabling
-{}\ttt{\_GLIB\_CXX\_DEBUG} with gcc) will not catch this error
-either because of the way the raw pointers are extracted in and and
-passed in the function call:
+{}\ttt{big\_b}.  However, as described above, Valgrind may not catch
+even this type of error.  Also, note that turning on bounds checking
+with {}\ttt{std::vector} (i.e.\ by enabling {}\ttt{\_GLIB\_CXX\_DEBUG}
+with gcc) will not catch this error either because of the way the raw
+pointers are extracted in and and passed in the function call:
 
 {\small\begin{verbatim}
   addArrayIntoArray( blockSize, &big_a[blockOffset], &big_b[blockOffset]);
@@ -1150,14 +1149,15 @@ a lawsuit, or (in an extreme case) even cause someone's death.
 The point that is trying to be made in the above example is that
 automated memory checking tools like Valgrind and Purify will never be
 able to check the {}\textit{semantic} correctness of the usage of
-memory.  The off-by-one defect shown above is 100\% correct from a
-strict memory usage point of view (i.e.\ only allocated memory can be
-written to and only allocated and initialized memory can be read from)
-but is 100\% wrong from a semantic point of view (i.e.\ the function
-{}\ttt{addArrayIntoArray(...)} can only operate on the elements of
-data from {}\ttt{0} to {}\ttt{n-1}).  The utility classes in Teuchos
-described below help to verify that memory is used in a semantically
-correct way.
+memory.  The semantic off-by-one defect described above is 100\%
+correct from a strict memory usage point of view (i.e.\ only allocated
+memory can be written to and only allocated and initialized memory can
+be read from) but is 100\% wrong from a semantic point of view (i.e.\
+the function {}\ttt{addArrayIntoArray(...)} can only operate on the
+elements of data from {}\ttt{0} to {}\ttt{n-1}).  The array memory
+management classes in Teuchos described below help to verify that
+memory is used in a semantically correct way and throws exceptions for
+these types of errors in a debug-mode build.
 
 
 %
@@ -1165,10 +1165,9 @@ correct way.
 \label{sec:important-prerequisites}
 %
 
-Before finally discussing the Teuchos memory management classes, I
-need to discuss a set of prerequisite concepts that are needed in
-order to understand the holistic memory management approach described
-here.
+Before finally discussing the Teuchos memory management classes, a set
+of prerequisite concepts are presented that are needed in order to
+understand the holistic memory management approach described here.
 
 
 %
@@ -1184,13 +1183,13 @@ writing'' in {}\cite{C++CodingStandards05}.  There is little point
 here in trying to classify all of the crazy ways that people have used
 to code objects in C++ that stray from these ``accepted'' class types.
 Instead, the recommendation here is to classify the majority of
-classes as either {}\textit{Value Types} or {}\textit{Reference
-Types}.  Value Types and Reference Types are said to use
-{}\textit{Value Semantics} and {}\textit{Reference Semantics},
+classes as either {}\textit{value types} or {}\textit{reference
+types}.  Value types and reference types are said to use
+{}\textit{value semantics} and {}\textit{reference semantics},
 respectively, and that is sometimes how these data-types are described
 in various C++ literature.
 
-{}\textit{Value Types} in general:
+{}\textit{Value types} in general:
 
 \begin{itemize}
 
@@ -1205,14 +1204,14 @@ address,
 in other class objects,
 
 {}\item are usually {}\underline{not} allocated on the heap (but can
-be typically), and
+be for most value-type classses), and
 
 {}\item do not have any virtual functions and are not to be used as
 base classes (see Item 35 in {}\cite{C++CodingStandards05}).
 
 \end{itemize}
 
-If {}\ttt{S} denotes a typical Value Type, the class definition of
+If {}\ttt{S} denotes a typical value type, the class definition of
 {}\ttt{S} includes:
 
 {\small\begin{verbatim}
@@ -1227,18 +1226,18 @@ If {}\ttt{S} denotes a typical Value Type, the class definition of
 \end{verbatim}}
 
 All of the built-in intrinsic C++ data-types like {}\ttt{char},
-{}\ttt{int}, and {}\ttt{double} are Value Types.  Likewise,
-derived class types like {}\ttt{std::complex} and
-{}\ttt{std::vector} are also Value Types.  Value Types have also be
-called by other names in the C++ literature.  Stroustrup refers to
-Value Types as ``true local variables'' in {}\cite{stroustrup94}.  The
-term Abstract Data Type (ADT) in older C++ literature such as
-{}\cite{AdvancedC++92} usually maps to the concept of a value type,
-but usually carries greater significance in implying that operator
-overloading is used to make an ADT look more like a built-in C++ type
-(such as is the case for {}\ttt{std::complex}).
+{}\ttt{int}, and {}\ttt{double} are value types.  Likewise, derived
+class types like {}\ttt{std::complex} and {}\ttt{std::vector} are also
+value types.  value types have also be called by other names in the
+C++ literature.  Stroustrup refers to value types as ``true local
+variables'' in {}\cite{stroustrup94}.  The term Abstract Data Type
+(ADT) in older C++ literature such as {}\cite{AdvancedC++92} usually
+maps to the concept of a value type, but usually carries greater
+significance in implying that operator overloading is used to make an
+ADT look more like a built-in C++ type (such as is the case for
+{}\ttt{std::complex}).
 
-Alternatively, {}\textit{Reference Types} in general:
+Alternatively, {}\textit{reference types} in general:
 
 \begin{itemize}
 
@@ -1264,15 +1263,15 @@ from base classes.
 
 \end{itemize}
 
-Reference Types (i.e.\ Reference Semantics) are typically used for base
-classes in C++.  Examples of base classes in the C++ standard library
-include {}\ttt{std::ios\_base} and
-{}\ttt{std::basic\_streambuf}.  Reference Types in the form of
+Reference types (employing reference semantics) are typically used for
+base classes in C++.  Examples of base classes in the C++ standard
+library include {}\ttt{std::ios\_base} and
+{}\ttt{std::basic\_streambuf}.  Reference types in the form of
 abstract base classes form the foundation for object-oriented
 programming in C++.
 
-If {}\ttt{A} denotes a typical Reference Type, the class definition
-of {}\ttt{A} generally includes:
+If {}\ttt{A} denotes a typical reference type class, the class
+definition of {}\ttt{A} generally includes:
 
 {\small\begin{verbatim}
   class A {
@@ -1288,34 +1287,38 @@ of {}\ttt{A} generally includes:
   };
 \end{verbatim}}
 
-Note that one can almost always choose to manipulate a Value Type
-using Reference Semantics.  For example, it is very common to choose
+Note that one can almost always choose to manipulate a value type 
+using reference semantics.  For example, it is very common to choose
 to dynamically allocate large value objects like {}\ttt{std::vector}
 and then pass around (smart) pointers and references to the object to
 avoid unnecessary and expensive copying and to facilitate the sharing
 of state.
 
-While the ideas of Value Types and Reference Types and Value Semantics
-and Reference Semantics are long established in the C++ literature
+While the ideas of value types and reference types and value semantics
+and reference semantics are long established in the C++ literature
 (even if the terminology is not very uniform), many C++ programmers
 either seem to not know about these idioms or choose not to follow
 them for some reason.  By forcing the majority of classes into either
-using {}\textit{Value Semantics} or {}\textit{Reference Semantics} one
-eliminates meaningless variability in C++ programs and one frees
-ones-self to think about more important things.
+using {}\textit{value semantics} or {}\textit{reference semantics} one
+eliminates meaningless variability in C++ programs and frees one's
+self to think about more important things (see the discussion of using
+standards to actually improve creativity in
+{}\cite{CodeComplete2nd04}).
 
 {}\textbf{Side Note:} The somewhat rigid classification of C++ types
-into Value Types and Reference Types is similar in motivation and in
+into value types and reference types is similar in motivation and in
 many other respects to Eric Evans' differentiation of all domain types
 into {}\textit{Value Objects} and {}\textit{Entities} in Domain Driven
 Design (DDD) {}\cite{DomainDrivenDesign}.  While there are
-similarities between DDD's Value Objects and Entities and C++'s Value
-Types and Reference Types, respectively, there is not a one-to-one
+similarities between DDD's Value Objects and Entities and C++'s value
+types and reference types, respectively, there is not a one-to-one
 mapping.  In DDD, the distinction between a Value Object and an Entity
 has more to do with the nature of the object in relation to the domain
 model and is not related to how memory is manged.  Evans assumes that
 one is using a language like Java where all objects use reference
 semantics.
+
+{}\textbf{ToDo: Finished editing from here!}
 
 
 %
@@ -2714,7 +2717,7 @@ the platform-specific optimizations contained in the native
 overhead.  However, in a debug build, a full set of
 platform-independent runtime checking is performed that is as strong
 or stronger than any checked STL implementation (see {}\cite[Item
-{}\#83]{C++CodingStandards05}) and in addition includes dangling
+{}83]{C++CodingStandards05}) and in addition includes dangling
 reference detection of {}\ttt{ArrayView} views (see Section
 {}\ref{sec:detection-circular-references}).  {}\ttt{Array} also
 supports better runtime debug output with better exception error
@@ -4117,7 +4120,7 @@ point to is valid and no persisting association exists.
 Tables {}\ref{fig:func_args_value_type} and
 {}\ref{fig:func_args_ref_type} give conventions for passing single
 objects and arrays of objects for value-type {}\index{Types!Value
-Type} and reference-type {}\index{Types!Reference Type} objects,
+Type} and reference-type {}\index{Types!reference type} objects,
 respectively.  In this specification, the Teuchos classes {}\ttt{Ptr},
 {}\ttt{RCP}, {}\ttt{ArrayRCP}, and {}\ttt{ArrayView} are used as a
 means to pass objects of another type (shown as {}\ttt{S} and
