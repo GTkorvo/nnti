@@ -1318,8 +1318,6 @@ model and is not related to how memory is manged.  Evans assumes that
 one is using a language like Java where all objects use reference
 semantics.
 
-{}\textbf{ToDo: Finished editing from here!}
-
 
 %
 {}\subsection{Non-persisting versus persisting and semi-persisting
@@ -1366,14 +1364,13 @@ class and function definitions in Listing
   };
 
   class C {
+    B* b_;    
   public:
     C() : b_(0) {}
     void fooC1(B &b, const A &a)
       { b_ = &b; b_->fooB1(A); }
     void fooC2() const
       { b_->fooB2(); }
-  private:
-    B* b_;    
   };
 
   void someFunc(C &c, B &b, const A &a)
@@ -1385,39 +1382,35 @@ class and function definitions in Listing
 \end{listing}
 
 The function {}\ttt{B::fooB1(...)} in Listing
-{}\ref{listing:NonPersistingPersistingAssociationsRawPointers}
-involves a non-persisting association with respect to the {}\ttt{A}
-and {}\ttt{B} objects since no memory of the object {}\ttt{a}
-remains after the function {}\ttt{B::fooB1(...)} exists.
-Non-persisting associations represent typical input/output-only
-arguments to a function.
+{}\ref{listing:NonPersistingPersistingAssociationsRawPointers} involves a
+non-persisting association with respect to the {}\ttt{A} and {}\ttt{B} objects
+since no memory of the object {}\ttt{a} remains after the function
+{}\ttt{B::fooB1(...)} exists.  Non-persisting associations represent typical
+input/output-only arguments to a function.
 
 The function {}\ttt{C::fooC1(...)} in Listing
-{}\ref{listing:NonPersistingPersistingAssociationsRawPointers} creates
-a persisting association between a {}\ttt{C} object and a
-{}\ttt{B} object since the memory of the {}\ttt{B} object is
-retained in the {}\ttt{C} object that persists after the function
-{}\ttt{C::fooC1(...)} exits.  This memory of the {}\ttt{B}
-object stored in the {}\ttt{C::b\_} pointer data member is then
-used to implement the function {}\ttt{C::fooC2()}.  Note that the
-function {}\ttt{C::fooC1(...)} also involves a non-persisting
-association with the {}\ttt{A} object {}\ttt{a} since it is only
-used to call {}\ttt{B::fooB1(...)} and no memory of {}\ttt{a}
-lingers after {}\ttt{C::fooC1(...)} exists.
+{}\ref{listing:NonPersistingPersistingAssociationsRawPointers} creates a
+persisting association between a {}\ttt{C} object and a {}\ttt{B} object since
+the memory of the {}\ttt{B} object is retained in the {}\ttt{C} object that
+persists after the function {}\ttt{C::fooC1(...)} exits.  This memory of the
+{}\ttt{B} object stored in the {}\ttt{C::b\_} pointer data member is then used
+to implement the function {}\ttt{C::fooC2()}.  Note that the function
+{}\ttt{C::fooC1(...)} also involves a non-persisting association with the
+{}\ttt{A} object {}\ttt{a} since it is only used to call {}\ttt{B::fooB1(...)} 
+and no memory of {}\ttt{a} lingers after {}\ttt{C::fooC1(...)} exists.
 
-As a final example, consider the nonmember function
-{}\ttt{someFunc(...)} in Listing
+Another intersting case is the nonmember function {}\ttt{someFunc(...)} also
+shown in Listing
 {}\ref{listing:NonPersistingPersistingAssociationsRawPointers}.  While
-{}\ttt{someFunc(...)} is a free function, it actually involves the
-creation of a persisting association between the {}\ttt{C} and
-{}\ttt{B} objects as a side effect.
+{}\ttt{someFunc(...)} is a free function, it actually involves the creation of
+a persisting association between the {}\ttt{C} and {}\ttt{B} objects as a side
+effect because it calls the {}\ttt{C::fooC1(...)} function.
 
-In the idioms advocated in this paper, smart reference counted
-pointers are used for all persisting associations and never for
-non-persisting associations.  Using the basic Teuchos {}\ttt{RCP}
-class, the raw pointer code in Listing
-{}\ref{listing:NonPersistingPersistingAssociationsRawPointers} would
-be refactored into the code in Listing
+In the idioms advocated in this paper, smart reference counted pointers are
+used for all persisting associations and never for non-persisting
+associations.  Using the basic Teuchos {}\ttt{RCP} class, the raw pointer code
+in Listing {}\ref{listing:NonPersistingPersistingAssociationsRawPointers}
+would be refactored into the code shown in Listing
 {}\ref{listing:NonPersistingPersistingAssociationsRCP}.
 
 \begin{listing}:\\
@@ -1435,14 +1428,12 @@ be refactored into the code in Listing
   };
 
   class C {
+    RCP<B> b_;
   public:
-    C() : b_(0) {}
     void fooC1(const RCP<B> &b, const A &a)
-      { b_ = &b; b_->fooB1(A); }
+      { b_ = b; b_->fooB1(A); }
     void fooC2() const
       { b_->fooB2(); }
-  private:
-    RCP<B> b_;
   };
 
   void someFunc(C &c, const RCP<B> &b, const A &a)
@@ -1453,14 +1444,15 @@ be refactored into the code in Listing
 \end{verbatim}}
 \end{listing}
 
-Note that the classes {}\ttt{A} and {}\ttt{B} remain unchanged
-because they do not involve any persisting associations.
+Note that the classes {}\ttt{A} and {}\ttt{B} remain unchanged because they do
+not involve any persisting associations.  It is only the class {}\ttt{C} that
+needed to be refactored to handle the persisting association with {}\ttt{B}.
 
 Another situation where the concepts of persisting and non-persisting
-associations comes up relates to how objects are returned by C++
-functions as return values.  A persisting relationship is made through
-a function return object if that object is remembered past a single
-statement.  For example, consider the following code fragment:
+associations comes up relates to how objects are returned by C++ functions as
+return values.  A persisting relationship is made through a function return
+object if that object is remembered past a single statement.  For example,
+consider the following code fragment:
 
 \begin{listing}:\\
 {\small\begin{verbatim}
@@ -1472,14 +1464,13 @@ statement.  For example, consider the following code fragment:
 \end{verbatim}}
 \end{listing}
 
-The above code fragment shows a presenting relationship between the
-client code that is initializing the local reference {}\ttt{ele} and
-the {}\ttt{std::vector} container object {}\ttt{v}.  This is very
-fragile and dangerous code because if {}\ttt{v} is resized, grown or
-have some other type of change, then the reference pointed to by
-{}\ttt{ele} can be invalid.  For example, the following code fragment
-will likely result in a runtime memory usage error and (if one is
-lucky) segfault:
+The above code fragment shows a presenting relationship between the client
+code that is initializing the local reference {}\ttt{ele} and the
+{}\ttt{std::vector} container object {}\ttt{v}.  This is very fragile and
+dangerous code because if {}\ttt{v} is resized, grown or have some other type
+of change, then the reference pointed to by {}\ttt{ele} can be invalid.  For
+example, the following code fragment will likely result in a runtime memory
+usage error and (if one is lucky) segfault:
 
 \begin{listing}:\\
 {\small\begin{verbatim}
@@ -1490,11 +1481,11 @@ lucky) segfault:
 \end{verbatim}}
 \end{listing}
 
-If one is unlucky, the statement {}\ttt{ele = 5} will work just fine
-on one platform with one implementation of the {}\ttt{std::vector} but
-will break on another platform when run with a different data-set.
-Note that tools like Valgrind and Purify may not flag the problem due
-to how many implementations of {}\ttt{std::vector} deal with memory.
+If one is unlucky, the statement {}\ttt{ele = 5} will work just fine on one
+platform with one implementation of the {}\ttt{std::vector} but will break on
+another platform when run with a different data set.  Note that tools like
+Valgrind and Purify may not flag the problem due to the way that many
+implementations of {}\ttt{std::vector} deal with memory.
 
 Basically the problem here is that the
 {}\ttt{std::vector::operator=(size\_type)} function returns a raw
@@ -1509,8 +1500,8 @@ The safe way to change an element is:
 \end{verbatim}}
 \end{listing}
 
-Here, it is stated that {}\ttt{std::vector::operator[](size\_type)}
-should only be used for non-persisting associations as shown above.
+Therefore, functions like {}\ttt{std::vector::operator[](size\_type)} should
+only be used for non-persisting associations as shown above.
 
 Most programming languages do not provide any means to differentiate
 between non-persisting associations and persisting associations (see
@@ -1521,26 +1512,26 @@ in that presisting relationships are shown with a solid line while
 non-persisting relationships are shown with a dotted line (see Figure
 {}\ref{fig:TeuchosRCPDesign} for exmaples).
 
-Before leaving the topic of persisting and non-persisting
-associations, one has to recognize that there exists a third category
-of associations that lie in between strict persisting and
-non-persisting associations which will be refered to here as
-semi-persisting assocaitions defined as:
+ToDo: Provide a UML diagram showing the classes A, B, and C and point to that.
+
+Before leaving the topic of persisting and non-persisting associations, one
+has to recognize that there exists a third category of associations that lie
+in between strict persisting and non-persisting associations.  This gray area
+will be refered to here as semi-persisting assocaitions defined as:
 
 \begin{itemize}
 
-{}\item\textit{Semi-persisting associations} are associations that
-(like persisting assocations) exist between two or more objects that
-extend past a single function call for formal function arguments, or a
-single statement for function return objects except were the use of
-the objects and the lifetime of the association have more ridgid
-constraints requiring greater care.
+{}\item\textit{Semi-persisting associations} are associations that (like
+persisting assocations) exist between two or more objects that extend past a
+single function call for formal function arguments, or a single statement for
+function return objects except where the use of the objects and the lifetime
+of the association have more ridgid constraints requiring greater care in use.
 
 \end{itemize}
 
-An example of a semi-persisting association is the use of an iterator
-to access an STL container.  For example, consider an iterator-based
-loop such as shown in Listing {}\ref{listing:SemiPersistingIterators}:
+An example of a semi-persisting association is the use of an iterator to
+access an STL container as shown in Listing
+{}\ref{listing:SemiPersistingIterators}:
 
 
 \begin{listing}:\\
@@ -1558,21 +1549,23 @@ loop such as shown in Listing {}\ref{listing:SemiPersistingIterators}:
 \end{listing}
 
 
-As shown in Listing {}\ref{listing:SemiPersistingIterators}, the
-iterator object {}\ttt{itr} is used well past (perhaps thousands of
-loop iterations) where it was created by the statement {}\ttt{itr\_t
-itr = v.begin()}.  There are, however, significant restrictions on how
-such iterators can be used: a) the iterator cannot be accessed after
-the originating parent object has been destroyed, and b) the iterator
-can not be accessed after the structure of the originating parent has
-changed (e.g.\ {}\ttt{v.resize(...)} was called).  For the sake of
-performance, one has to allow for the use of semi-persisting
-associations such as this.  Note that in the case of the STL
-containers that in a debug-mode checked STL build, these types of
-dangling iterator references will typically be detected.  This type of
-debug-mode runtime checking is the saving grace for the use of
-iterators and other types of semi-persisting associations which makes
-their use acceptable.
+As shown in Listing {}\ref{listing:SemiPersistingIterators}, the iterator
+object {}\ttt{itr} is used well past (perhaps thousands of loop iterations)
+where it was created by the statement {}\ttt{itr\_t itr = v.begin()}.  There
+are, however, significant restrictions on how such iterators can be used: a)
+the iterator cannot be accessed after the originating parent object has been
+destroyed, and b) the iterator can not be accessed after the structure of the
+originating parent has changed (e.g.\ {}\ttt{v.resize(...)} was called).  For
+the sake of performance, one has to allow for the use of semi-persisting
+associations such as this where the optimized build of the code lacks the
+machinery to detect invalid usage.  However, note that in the case of the STL
+containers that in a debug-mode checked STL build (suppored by GCC and the
+Microsoft compiles for instance), these types of dangling iterator references
+will typically be detected.  This type of debug-mode runtime checking is the
+saving grace for the use of iterators and other types of semi-persisting
+associations which makes their use acceptable.  If iterators to
+{}\ttt{std::vector} where simply hard-coded as raw pointers, this type of
+debug-mode runtime checking would not be possible.
 
 Semi-persisting associations will also play a role in the use of the
 Teuchos memory management classes in situations where performance is
@@ -1580,6 +1573,8 @@ critical (see Section {}\ref{sec:perf-tuning-strategies} and
 Commandments {}\ref{cmnd:ptr-semi-persisting} and
 {}\ref{cmnd:arrayview-semi-persisting} in Appendix
 {}\ref{apdx:commandments}).
+
+{}\textbf{ToDo: Finished editing from here!}
 
 
 %
