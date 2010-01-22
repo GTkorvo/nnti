@@ -2981,23 +2981,19 @@ large untyped {}\ttt{char} arrays are created and then subviews are
 broken off and reinterpret cast to specific data types.  Examples of
 this can be found in the unit testing code.
 
-{}\textbf{ToDo: Finished editing from here!}
-
 
 %
 {}\subsection{Const versus non-const pointers and objects}
 \label{sec:teuchos-const-nonconst-pointer-objects}
 %
 
-The core pointer encapsulation classes {}\ttt{Ptr},
-{}\ttt{RCP}, {}\ttt{ArrayView} and {}\ttt{ArrayRCP} allow for
-the underlying object (or array of objects) to be const or non-const
-and for the outer pointer type to be const or non-const, just like
-with a regular C++ pointer.  To draw the analogy with raw pointers,
-consider the equivalent declarations of a raw pointer and the pointer
-encapsulation class (using {}\ttt{RCP} as a stand-in to represent
-all four classes) in Table
-{}\ref{tbl:teuchos-const-nonconst-pointer-objects}.
+The core smart-pointer pointer classes {}\ttt{Ptr}, {}\ttt{RCP},
+{}\ttt{ArrayView} and {}\ttt{ArrayRCP} allow for the inner object (or
+array of objects) to be const or non-const and for the outer pointer
+object to be const or non-const, just like with regular C++ pointers.
+To draw the analogy with raw pointers, consider the equivalent
+declarations of a raw pointer and the pointer encapsulation class in
+Table {}\ref{tbl:teuchos-const-nonconst-pointer-objects}.
 
 \begin{table}
 %
@@ -3012,9 +3008,12 @@ all four classes) in Table
 %
 \end{center}
 %} % end fbox
-\caption{\label{tbl:teuchos-const-nonconst-pointer-objects}
+{}\caption[Equivalences between raw pointer and smart pointer types
+for const protection]{
+\label{tbl:teuchos-const-nonconst-pointer-objects}
 Equivalences between raw pointer and smart pointer types for const
-protection.}
+protection.  Here, {}\ttt{RCP} is a stand-in for all four types
+{}\ttt{Ptr}, {}\ttt{RCP}, {}\ttt{ArrayView} and {}\ttt{ArrayRCP}.}
 %
 \end{table}
 
@@ -3025,7 +3024,7 @@ equivalencies between raw pointers and smart pointers shown in Table
 {}\ref{sec:conversion-problems} for specific examples).  It is
 critical that the programmer recognize this equivalence with raw
 pointers because it impacts many things especially implicit type
-conversions to satisfy function calls (again see Section
+conversions to satisfy function calls (again, see Section
 {}\ref{sec:conversions}).
 
 
@@ -3040,16 +3039,23 @@ to {}\ttt{RCP<const Derived>}, {}\ttt{RCP<Base>}, and {}\ttt{RCP<const
 Base>}) and also between different smart pointer types (e.g.\
 {}\ttt{Array} implicitly converts to {}\ttt{ArrayView}).  There are
 implicit conversions and explicit conversions.  These two types of
-conversions are shown in Figures {}\ref{fig:TeuchosPtrConversions} and
-{}\ref{fig:TeuchosArrayConversions} and are described in the following
+conversions are depicted in Figures {}\ref{fig:TeuchosPtrConversions}
+and {}\ref{fig:TeuchosArrayConversions} and shown in more detail in
+more detail in Tables {}\ref{tbl:ConversionsTableSingleObjs} and
+{}\ref{tbl:ConversionsTableArrays}.  (Note: All of the conversions
+shown in Tables {}\ref{tbl:ConversionsTableSingleObjs} and
+{}\ref{tbl:ConversionsTableArrays} are not shown in Figures
+{}\ref{fig:TeuchosPtrConversions} and
+{}\ref{fig:TeuchosArrayConversions} for the sake of not making the
+figures to complex.)  These conversions are described in the following
 two sections.
 
 
 {\bsinglespace
-\begin{figure}[p]
+\begin{figure}
 \begin{center}
 %\fbox{
-\includegraphics*[angle=270,scale=0.50]{TeuchosPtrConversions}
+\includegraphics*[angle=270,scale=0.65]{TeuchosPtrConversions}
 %}
 \end{center}
 \caption{
@@ -3060,10 +3066,10 @@ Conversions between different single-object memory management types.}
 
 
 {\bsinglespace
-\begin{figure}[p]
+\begin{figure}
 \begin{center}
 %\fbox{
-\includegraphics*[angle=270,scale=0.50]{TeuchosArrayConversions}
+\includegraphics*[angle=270,scale=0.65]{TeuchosArrayConversions}
 %}
 \end{center}
 \caption{
@@ -3078,11 +3084,11 @@ Conversions between array memory management types.  }
 \label{sec:raw-pointer-like-type-conversions}
 %
 
-The core Teuchos memory management types {}\ttt{Ptr},
-{}\ttt{RCP}, {}\ttt{ArrayView} and {}\ttt{ArrayRCP} allow all
-of the reasonable implicit and explicit type conversions that are
-allowed by raw C++ pointers.  C++ defines implicit converts for raw
-pointers from non-const to const and from derived to base type.  Table
+The core Teuchos memory management smart pointer types {}\ttt{Ptr},
+{}\ttt{RCP}, {}\ttt{ArrayView} and {}\ttt{ArrayRCP} support all of the
+reasonable implicit and explicit type conversions that are defined by
+raw C++ pointers.  C++ defines implicit conversions for raw pointers
+from non-const to const and from derived to base types.  Table
 {}\ref{tbl:implicit_explicit_conversions} shows what implicit and
 explicit conversions are supported for the four core memory management
 types.
@@ -3098,35 +3104,36 @@ Basic implicit and explicit conversions by smart-pointer types.}
 
 
 As seen in Table {}\ref{tbl:implicit_explicit_conversions}, the smart
-pointer types for single objects do not support the same implicit and
-explicit conversions that are supported for the array smart pointer
-types.  As explained in Section
+pointer types for single objects {}\ttt{Ptr} and {}\ttt{RCP} do not
+support the same implicit and explicit conversions that are supported
+for the array smart pointer types {}\ttt{ArrayView} and
+{}\ttt{ArrayRCP}.  As explained in Section
 {}\ref{sec:problem-with-raw-array-pointers}, it almost always
 incorrect and dangerous to allow implicit conversions from derived to
-base type for pointers that pointers that point into contiguous arrays
-of objects.  Therefore, the types {}\ttt{ArrayView} and
-{}\ttt{ArrayRCP} do not support implicit conversions from derived to
-base types.  Due to similar logic, it almost never makes any sense to
-perform a static cast or a dynamic on a pointer to an array of
-contiguous objects so the types {}\ttt{ArrayView} and {}\ttt{ArrayRCP}
-do not support static and dynamic casts.
+base type for pointers that point into contiguous arrays of objects.
+Therefore, the types {}\ttt{ArrayView} and {}\ttt{ArrayRCP} do not
+support implicit conversions from derived to base types.  Due to
+similar logic, it almost never makes any sense to perform a static
+cast or a dynamic cast on a pointer to an array of contiguous objects
+so the types {}\ttt{ArrayView} and {}\ttt{ArrayRCP} do not support
+static and dynamic casts.
 
 In well formed programs, there is a justification to perform
-reinterpret casts for contiguous arrays of POD (plain old data). It is
-perfectly reasonable to allocate a large array of {}\ttt{char}
-(untyped) data and then create subviews and reinterpret cast to
-separate arrays of {}\ttt{double} and {}\ttt{int} data, for instance.
-However, in a well formed program there is not single valid reason to
-perform a reinterpret cast for single objects and therefore
-reinterpret cast is not supported for the types {}\ttt{Ptr} and
-{}\ttt{RCP}.
+reinterpret casts for contiguous arrays of POD (plain old data)
+types. It is perfectly reasonable to allocate a large array of
+{}\ttt{char} (untyped) data and then create subviews and reinterpret
+cast to separate arrays of {}\ttt{double} and {}\ttt{int} data, for
+instance.  However, in a well formed program in high-level code there
+is not a single valid reason to perform a reinterpret cast for single
+objects and therefore reinterpret cast is not supported for the types
+{}\ttt{Ptr} and {}\ttt{RCP}.
 
 The allowed implicit conversions for {}\ttt{Ptr} and {}\ttt{RCP} are
-supported templated copy constructors (see Sections {}\ref{sec:Ptr}
-and {}\ref{sec:RCP}).  However, the only allowed implicit conversion
-from {}\ttt{T*} to {}\ttt{const T*} for {}\ttt{ArrayView} and
-{}\ttt{ArrayRCP} are instead supported through conversion member
-functions (see Sections {}\ref{sec:ArrayView} and
+implemented through templated copy constructors (see Sections
+{}\ref{sec:Ptr} and {}\ref{sec:RCP}).  However, the only allowed
+implicit conversion for {}\ttt{T*} to {}\ttt{const T*} for
+{}\ttt{ArrayView} and {}\ttt{ArrayRCP} are instead supported through
+conversion member functions (see Sections {}\ref{sec:ArrayView} and
 {}\ref{sec:ArrayRCP}).  The supported explicit conversion operators
 for these four types are shown in the Listings
 {}\ref{listing:Ptr-conversions}, {}\ref{listing:RCP-conversions},
@@ -3176,11 +3183,34 @@ for these four types are shown in the Listings
 \end{listing}
 
 
+These conversion functions are used very similarly as for the built-in
+conversion operations in that only the output type needs to be
+explicitly specified.  For example, Listing
+{}\ref{listing:conversions-examples} shows some example conversions
+involving {}\ttt{RCP} (but the conversion function usage for the other
+types are identical).
+
+
+{}\begin{listing}: Example usage of the explicit conversion functions
+\label{listing:conversions-examples}
+{\small\begin{verbatim}
+  RCP<const Base> = cbase(new Derived);
+  RCP<Base> base = rcp_const_cast<Base>(cbase);
+  RCP<const Derived> cderived = rcp_dynamic_cast<const Derived>(cbase, true);
+  RCP<const Derived> cderived2 = rcp_static_cast<const Derived>(cbase);
+  // NOTE: Static casting of Base to Derived is not safe when
+  // using virtual base classes or multiple inheritance.  Only dynamic
+  // casting is always safe with polymophpic types.
+\end{verbatim}}
+\end{listing}
+
+
 Note that the dynamic cast conversion functions
-{}\ttt{ptr\_dynamic\_cast()} and {}\ttt{ptr\_dynamic\_cast()}
-both take an option extra argument {}\ttt{throw\_on\_fail} that if
-set to {}\ttt{true} will result in an exception being thrown on a
-dynamic cast failure along with a very helpful error message.
+{}\ttt{ptr\_dynamic\_cast()} and {}\ttt{rcp\_dynamic\_cast()} both
+take an option extra argument {}\ttt{throw\_on\_fail} that if set to
+{}\ttt{true} will result in an exception being thrown on a dynamic
+cast failure which is embedded with a very helpful error message
+(accessed through the {}\ttt{std::exception::what()} function).
 
 
 %
@@ -3190,26 +3220,40 @@ dynamic cast failure along with a very helpful error message.
 
 It is critical that all conversions between the various Teuchos memory
 management classes be performed using conversion code provided by the
-memory management classes themselves or by associated helper
-functions.  Client code should never convert between memory management
-types by exposing a raw C++ pointer.  As soon as a raw C++ pointer is
-exposed, nearly all of the debug-mode runtime checking will be
-disabled.
+memory management classes or by associated helper functions in the
+Teuchos library.  Client code should never convert between memory
+management types by exposing a raw C++ pointer.  As soon as a raw C++
+pointer is exposed, nearly all of the debug-mode runtime checking will
+be disabled.  If a raw C++ pointer is exposed in order to perform a
+needed valid conversion, then either the programmer overlooked an
+already provided conversion function or the function needs to be added
+to Teuchos (please contact the developers of Teuchos at
+{}\ttt{teuchos-users@software.sandia.gov}).
 
 Figures {}\ref{fig:TeuchosPtrConversions} and
 {}\ref{fig:TeuchosArrayConversions} show many of the types of
 conversions that are supported between the different memory management
 types.  Specific conversions are shown in more detail in Tables
 {}\ref{tbl:ConversionsTableSingleObjs} and
-{}\ref{tbl:ConversionsTableArrays}.  For single objects, the
-conversions between different {}\ttt{RCP} and {}\ttt{Ptr} objects of
-various kinds shown in Figure {}\ref{fig:TeuchosPtrConversions} and
-Table {}\ref{tbl:ConversionsTableSingleObjs} include both implicit and
-explicit conversions.  Conversions between different array types shown
-in Figure {}\ref{fig:TeuchosArrayConversions} and Table
-{}\ref{tbl:ConversionsTableArrays} include both implicit and explicit
-conversions and view and copy conversions yielding various types of
-conversions.
+{}\ref{tbl:ConversionsTableArrays}.  (Note: All of the conversions
+shown in Tables {}\ref{tbl:ConversionsTableSingleObjs} and
+{}\ref{tbl:ConversionsTableArrays} are not shown in Figures
+{}\ref{fig:TeuchosPtrConversions} and
+{}\ref{fig:TeuchosArrayConversions} for the sake of not making the
+figures to complex.)  For single objects, the conversions between
+different {}\ttt{RCP} and {}\ttt{Ptr} objects of various kinds shown
+in Figure {}\ref{fig:TeuchosPtrConversions} and Table
+{}\ref{tbl:ConversionsTableSingleObjs} include both implicit and
+explicit conversions (but do not show the explicit conversion
+functions already shown in Listings {}\ref{listing:Ptr-conversions}
+and {}\ref{listing:RCP-conversions}).  Conversions between different
+array types shown in Figure {}\ref{fig:TeuchosArrayConversions} and
+Table {}\ref{tbl:ConversionsTableArrays} include both implicit and
+explicit conversions and view and copy conversions yielding various
+types of conversions (but do not show the explicit conversion
+functions already shown in Listings
+{}\ref{listing:ArrayView-conversions} and
+{}\ref{listing:ArrayRCP-conversions}).
 
 
 \begin{table}
@@ -3229,8 +3273,12 @@ Summary of basic conversions supported for contiguous arrays.}
 \end{center}
 \end{table}
 
+
 The conversions shown in Tables {}\ref{tbl:ConversionsTableSingleObjs}
-and {}\ref{tbl:ConversionsTableArrays} are the most basic conversions
+and {}\ref{tbl:ConversionsTableArrays} (and also in Listings
+{}\ref{listing:Ptr-conversions}, {}\ref{listing:RCP-conversions},
+{}\ref{listing:ArrayView-conversions}, and
+{}\ref{listing:ArrayRCP-conversions}) are the most basic conversions
 supported by the Teuchos memory managment types but are not the only
 supported conversions.  The see the full set of type conversions
 supported, consult the Doxygen generated
@@ -3240,12 +3288,13 @@ conversion between Teuchos memory managment types, including full
 dangling-reference detection and reporting when creating
 non-reference-counting types {}\ttt{Ptr} and {}\ttt{ArrayView}.  In
 general, dangling references cannot be detected when converting from
-raw pointers and references or for {}\ttt{std::vector}.  However,
-there are a few special cases where non-owning {}\ttt{Ptr},
-{}\ttt{RCP}, and {}\ttt{ArrayView}, {}\ttt{ArrayRCP} objects created
-from raw C++ pointers (or references) will be able to detect dangling
-references through the sophisticated debug-mode node tracing system
-(see Sections {}\ref{sec:detection-dangling-references} and
+raw C++ pointers {}\ttt{T*} and raw C++ references {}\ttt{T\&} or for
+shallow views involving {}\ttt{std::vector}.  However, there are a few
+special cases where non-owning {}\ttt{Ptr}, {}\ttt{RCP}, and
+{}\ttt{ArrayView}, {}\ttt{ArrayRCP} objects created from raw C++
+pointers (or references) will be able to detect dangling references
+through the sophisticated debug-mode node tracing system (see Sections
+{}\ref{sec:detection-dangling-references} and
 {}\ref{sec:limitations-debug-mode-checking} for details).
 
 
@@ -3263,21 +3312,22 @@ conversions are defined.  An implicit conversion will only be
 performed by the C++ compiler to satisfy the formal arguments for a
 function call when several conditions are satisfied: a) when it is
 needed to call a function where no other better functions provide a
-better match, b) when a only a single implicit conversion for each
+better match, b) when only a single implicit conversion for each
 argument is sufficient, and c) when calling a non-template function
 (or a template function where all of the template arguments are
 explicitly specified).  Also, the C++ compiler will not be able to do
-an implicit conversion when an ambiguous function call exists.
-Explaining the behavior of these implicit conversions in C++ gets down
-to the low-level details of the C++ type system that many C++
-programmers take for grated or don't understand all that well.
+implicit conversions to satisfy a function call when ambiguous
+function calls exists.  Explaining the behavior of these implicit
+conversions in C++ gets down to the low-level details of the C++ type
+system that many C++ programmers take for grated or don't understand
+all that well in the first place.
 
-Almost all of the problems that people have with implicit conversions
-occur when trying to call functions where implicit conversions are
-required to satisfy the signature of the function.  Some of these
-problems occur when developers fail to understand the C++ type system.
-Other problems are due to a fundamental handicap that smart pointer
-types have with respect to raw C++ pointers.
+Almost all of the problems that programmers have with implicit
+conversions occur when trying to call functions where implicit
+conversions are required to satisfy the signature of the function.
+Some of these problems occur when developers fail to understand the
+C++ type system.  Other problems are due to a fundamental handicap
+that smart pointer types have with respect to raw C++ pointers.
 
 Implicit conversions of the Teuchos memory management classes (or any
 other C++ classes in any other library) needed to call a given
@@ -3303,18 +3353,8 @@ pointers or any other class as compared to raw C++ pointers.)
 
 \end{enumerate}
 
-Let's consider each of these types of problems one at a time.  The
-class hierarchy shown in Listing {}\ref{listing:Base-Derived-Classes}
-will be used in demonstration code.
-
-
-{}\begin{listing}: Basic base and derived classes
-\label{listing:Base-Derived-Classes}
-{\small\begin{verbatim}
-  class Base { ... };
-  class Derived : public Base { ... };
-\end{verbatim}}
-\end{listing}
+Each of these types of problems are examined one at a time in the
+following three subsections.
 
 
 %
@@ -3334,7 +3374,10 @@ mistakenly passes an {}\ttt{RCP} by non-const reference.
 reference problem
 \label{listing:someUserFunction-pass-by-non-const-ref}
 {\small\begin{verbatim}
-  void someUserFunction(RCP<const Base> &base); // Should be 'const RCP<...>&'
+  class Base { ... };
+  class Derived : public Base { ... };
+
+  void someUserFunction(RCP<const Base> &base); // Should be 'const RCP<>&'
 
   void someOtherUserFunction()
   {
@@ -3366,21 +3409,22 @@ conversions to facilitate the call of a C++ function will only occur
 for arguments passed by value or by {}\textit{const} reference.  For
 example, a C++ compiler will convert an {}\ttt{int} into a
 {}\ttt{double} to call a function taking a {}\ttt{double} argument but
-only if the double is passed by value or by const reference (i.e.\
-{}\ttt{const double\&}).  The same holds true for C++ pointer types.
-Note that every pointer type (e.g.\ {}\ttt{int*}, {}\ttt{SomeType*})
-is a new C++ value-type data type that is automatically defined by the
-compiler for every defined type.  The C++ compiler also automatically
-defines implicit conversions between pointer types for {}\ttt{T*} to
-{}\ttt{const T*} and for {}\ttt{Base*} to {}\ttt{Derived*} (or
-combinations of both {}\ttt{Derived*} to {}\ttt{const Derived*}).
-While C++ pointer data types have a special place in the C++ language,
-they behave exactly like every other data type in C++ with respect to
-implicit conversions.  That is, if a pointer object is passed by
-non-const reference instead of by value, the compiler will refuse the
-perform the type conversion.  For example, the equivalent code to
-Listing {}\ref{listing:someUserFunction-pass-by-non-const-ref}
-replacing {}\ttt{RCP} with raw pointers shown in Listing
+only if the double is passed by value (i.e.\ {}\ttt{double x}) or by
+const reference (i.e.\ {}\ttt{const double\& x}).  The same holds true
+for C++ pointer types.  Note that every pointer type (e.g.\
+{}\ttt{int*}, {}\ttt{SomeType*}) is a new C++ value data type that is
+automatically defined by the compiler for every defined type.  The C++
+compiler also automatically defines implicit conversions between
+pointer types for {}\ttt{T*} to {}\ttt{const T*} and for {}\ttt{Base*}
+to {}\ttt{Derived*} (or combinations of both with {}\ttt{Derived*} to
+{}\ttt{const Derived*}).  While C++ pointer data types have a special
+place in the C++ language, they behave exactly like every other data
+type in C++ with respect to non-const references and implicit
+conversions.  That is, if a pointer object is passed by non-const
+reference instead of by value, the compiler will refuse the perform
+the type conversion.  For example, the equivalent code to Listing
+{}\ref{listing:someUserFunction-pass-by-non-const-ref} replacing
+{}\ttt{RCP} with raw pointers shown in Listing
 {}\ref{listing:someUserFunction-pass-by-non-const-ref-raw-ptr} will
 also result in code that will not compile.
 
@@ -3403,6 +3447,7 @@ reference problem using raw pointers
      someUserFunction(base);     // Complile error, no implicit conversion!
      const Base *cbase = base;
      someUserFunction(cbase);    // Compliles fine, exact match!
+     delete derived;
   }
 \end{verbatim}}
 \end{listing}
@@ -3445,7 +3490,7 @@ reference
 
 Another situation where implicit conversions will fail to be performed
 to satisfy a function call are when the function being called is a
-template function.  The C++98 standard does not the implicit
+template function.  The C++98 standard does not allow the implicit
 conversion of input arguments in order to call a template function
 {}\cite[Item 45]{EffectiveC++ThirdEdition}.  For example, consider the
 code in Listing {}\ref{listing:implicit-conv-fail-template-func} that
@@ -3502,6 +3547,7 @@ template function works fine when using raw C++ pointers.
     someTemplateUserFunction(base);     // Okay, Base<T>* -> const Base<T>*
     const Base<T> *cbase = base;
     someTemplateUserFunction(cbase);    // Okay, exact match!
+    delete derived;
   }
 \end{verbatim}}
 \end{listing}
@@ -3510,18 +3556,18 @@ template function works fine when using raw C++ pointers.
 Comparing the templated code in Listing
 {}\ref{listing:implicit-conv-fail-template-func} and Listing
 {}\ref{listing:implicit-conv-pass-raw--template-func} it is clear that
-C++ assigns special privileges and abilities to the conversion of
-pointer data types that are not afforded to any other data type.  This
-is the first example of where smart pointer classes in C++ are put at
-a fundamental disadvantage with respect to raw C++ pointers.  This is
-an unfortunate situation but the problem can be dealt with by either
-forcing the conversion of the input arguments or by explicitly
+C++ assigns special privileges and abilities to the conversion of raw
+C++ pointer data types that are not afforded to any other data type.
+This is the first example of where smart pointer classes in C++ are
+put at a fundamental disadvantage with respect to raw C++ pointers.
+This is an unfortunate situation but the problem can be dealt with by
+either forcing the conversion of the input arguments or by explicitly
 specifying the template arguments as shown, for example, in Listing
 {}\ref{listing:implicit-conv-pass-explicit-template-func}.
 
 
-{}\begin{listing}: Explicitly specifying function template arguments
-and forcing conversions to call templated function.
+{}\begin{listing}: Example of methods for addressing implicit
+conversions to allow the call of templated functions
 \label{listing:implicit-conv-pass-explicit-template-func}
 {\small\begin{verbatim}
   template<class T>
@@ -3545,10 +3591,10 @@ and forcing conversions to call templated function.
 As shown in Listing
 {}\ref{listing:implicit-conv-pass-explicit-template-func} typically
 the least verbose way to call a template function that requires a
-conversion of {}\ttt{RCP} input arguments is to just explicitly
-specify the template argument(s) which turns the template function
-into a regular function in the eyes of the C++ compiler and then the
-implicit conversion will be performed.
+conversion of input arguments is to just explicitly specify the
+template argument(s) which turns the template function into a regular
+function in the eyes of the C++ compiler and then implicit conversions
+will be allowed to satify the function call.
 
 
 %
@@ -3594,13 +3640,13 @@ The reason that the first two function calls in Listing
 {}\ttt{RCP<Derived>} and {}\ttt{RCP<const Derived>} result in
 ambiguous function call compile errors is that the C++ compiler is not
 smart enough to know that a conversion from {}\ttt{RCP<Derived>} to
-{}\ttt{RCP<Base>} is better than a conversion to {}\ttt{RCP<const
-Base>} which would allow the first function call to result in a call
-to Overload \#1.  However, if raw C++ pointers are used in same code,
-as shown in Listing
-{}\ref{listing:overloaded-func-implicit-conv-raw-pass}, the compiler
-will make the right implicit conversions and call the right overloaded
-functions just fine.
+{}\ttt{RCP<Base>} is better than a conversion from
+{}\ttt{RCP<Derived>} to {}\ttt{RCP<const Base>} which would allow the
+first function call to result in a call to Overload \#1, for instance.
+However, if raw C++ pointers are used in same code, as shown in
+Listing {}\ref{listing:overloaded-func-implicit-conv-raw-pass}, the
+compiler will make the right implicit conversions and call the right
+overloaded functions just fine.
 
 
 {}\begin{listing}: Example of implicit conversions for overloaded
@@ -3631,14 +3677,18 @@ comparing Listing
 {}\ref{listing:overloaded-func-implicit-conv-raw-pass}, it is clear
 that the conversions of raw C++ pointer types to call overloaded
 functions are given special privileges and abilities that are not
-afforded to any type data type in C++.  The C++ compiler will resolve
+afforded to any other data type in C++.  The C++ compiler will resolve
 overloaded functions for the conversion of C++ pointer types based on
 the least required conversions (e.g.\ {}\ttt{Derived*} to
 {}\ttt{Base*} is better than {}\ttt{Derived*} to {}\ttt{const Base*}).
 This is wonderful behavior for raw C++ pointers (or perhaps confusing
 depending on how one looks at it) but such special abilities are not
 afforded to smart pointer types like {}\ttt{Ptr} or {}\ttt{RCP} (or
-any other smart pointer type including {}\ttt{boost::shared\_ptr}).
+any other smart pointer type including
+{}\ttt{boost::shared\_ptr})\footnote{Fixing the problem of implicit
+conversions for template and overloaded functions to put smart
+pointers at the same level as raw pointers would require a C++
+language extension.}.
 
 Problems in calling overloaded functions like this can be resolved but
 only through explicitly converting the input arguments as shown in
@@ -3699,6 +3749,8 @@ abused in C++ anyway.  In many cases, code can be much more clear by
 using different function names in cases where most developers would
 just use overloaded functions (perhaps because they cannot think of
 better non-overloaded names).
+
+{}\textbf{ToDo: Finished editing from here!}
 
 
 %
