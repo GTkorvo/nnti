@@ -1348,7 +1348,9 @@ To help define these two different types of associations, consider the
 class and function definitions in Listing
 {}\ref{listing:NonPersistingPersistingAssociationsRawPointers}.
 
-\begin{listing}:\\
+
+{}\begin{listing}: Classes using raw pointers with both non-persisting
+and persisting associations
 \label{listing:NonPersistingPersistingAssociationsRawPointers}
 {\small\begin{verbatim}
   class A {
@@ -1379,6 +1381,7 @@ class and function definitions in Listing
   }
 \end{verbatim}}
 \end{listing}
+
 
 The function {}\ttt{B::fooB1(...)} in Listing
 {}\ref{listing:NonPersistingPersistingAssociationsRawPointers} involves a
@@ -1412,7 +1415,9 @@ in Listing {}\ref{listing:NonPersistingPersistingAssociationsRawPointers}
 would be refactored into the code shown in Listing
 {}\ref{listing:NonPersistingPersistingAssociationsRCP}.
 
-\begin{listing}:\\
+
+{}\begin{listing}: Refactored classes to use {}\ttt{RCP} for
+persisting association
 \label{listing:NonPersistingPersistingAssociationsRCP}
 {\small\begin{verbatim}
   class A {
@@ -1443,9 +1448,36 @@ would be refactored into the code shown in Listing
 \end{verbatim}}
 \end{listing}
 
+
+{\bsinglespace
+\begin{figure}
+\begin{center}
+%\fbox{
+\includegraphics*[angle=0,scale=0.65]{UML_A_B_C}
+%}
+\end{center}
+\caption[UML Class Diagram showing non-persisting and presisting associations]{
+\label{fig:UML_A_B_C}
+UML Class Diagram showing non-persisting and presisting associations
+for classes in Listings
+{}\ref{listing:NonPersistingPersistingAssociationsRawPointers} and
+{}\ref{listing:NonPersistingPersistingAssociationsRCP}.}
+\end{figure}
+\esinglespace}
+
+
 Note that the classes {}\ttt{A} and {}\ttt{B} remain unchanged because they do
 not involve any persisting associations.  It is only the class {}\ttt{C} that
 needed to be refactored to handle the persisting association with {}\ttt{B}.
+
+Most programming languages do not provide any means to differentiate
+between non-persisting associations and persisting associations (see
+Section {}\ref{sec:essentail-accidental-complexity} for an expanded
+discussion).  However, note that the Unified Modeling Language (UML
+{}\cite{UMLDistilledThirdEdition04}) does differentiates between them
+in that presisting relationships are shown with a solid line while
+non-persisting relationships are shown with a dotted line as depicted
+for these example classes in Figure {}\ref{fig:UML_A_B_C}.
 
 Another situation where the concepts of persisting and non-persisting
 associations comes up relates to how objects are returned by C++ functions as
@@ -1453,7 +1485,10 @@ return values.  A persisting relationship is made through a function return
 object if that object is remembered past a single statement.  For example,
 consider the following code fragment:
 
-\begin{listing}:\\
+
+{}\begin{listing}: Example of a dangerous type of persisting
+assoication that can result in a segfault
+\label{listing:bad-perist-example}
 {\small\begin{verbatim}
   std::vector<int> v(n);
   ...
@@ -1462,6 +1497,7 @@ consider the following code fragment:
   ele = 5;          // Changes v[0] much later!
 \end{verbatim}}
 \end{listing}
+
 
 The above code fragment shows a presenting relationship between the client
 code that is initializing the local reference {}\ttt{ele} and the
@@ -1501,17 +1537,6 @@ The safe way to change an element is:
 
 Therefore, functions like {}\ttt{std::vector::operator[](size\_type)} should
 only be used for non-persisting associations as shown above.
-
-Most programming languages do not provide any means to differentiate
-between non-persisting associations and persisting associations (see
-Section {}\ref{sec:essentail-accidental-complexity} for an expanded
-discussion).  However, note that the Unified Modeling Language (UML
-{}\cite{UMLDistilledThirdEdition04}) does differentiates between them
-in that presisting relationships are shown with a solid line while
-non-persisting relationships are shown with a dotted line (see Figure
-{}\ref{fig:TeuchosRCPDesign} for exmaples).
-
-ToDo: Provide a UML diagram showing the classes A, B, and C and point to that.
 
 Before leaving the topic of persisting and non-persisting associations, one
 has to recognize that there exists a third category of associations that lie
