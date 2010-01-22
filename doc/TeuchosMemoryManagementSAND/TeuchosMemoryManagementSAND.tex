@@ -985,15 +985,14 @@ Now consider the client code in Listing
 pointer version of {}\ttt{addArrayIntoArray(...)} in Listing
 {}\ref{listing:addArrayIntoArray-raw}.
 
-\begin{listing}:\\
+{}\begin{listing}: Example driver code that uses the raw-pointer
+version of {}\ttt{addArrayIntiArray(...)}
 \label{listing:someBlockAlgo-std-vector-raw-ptr}
-{\small\begin{verbatim}
-  void someBlockAlgo( const int numBlocks, const std::vector<double> &big_a,
-    std::vector<double> &big_b )
-  {
-    DEBUG_MODE_ASSERT_EQUALITY( big_a.size(), big_b.size() );
-    const int totalLen = big_a.size();
-    const int blockSize = totalLen/numBlocks; // Assume no remainder!
+{\small\begin{verbatim} void someBlockAlgo( const int numBlocks, const
+  std::vector<double> &big_a, std::vector<double> &big_b ) {
+  DEBUG_MODE_ASSERT_EQUALITY( big_a.size(), big_b.size() ); const int
+  totalLen = big_a.size(); const int blockSize = totalLen/numBlocks;
+  // Assume no remainder!
     
     const int blockOffset = 0;
     for (int block_k = 0; block_k < numBlocks; ++block_k, blockOffset += blockSize)
@@ -2681,8 +2680,6 @@ objects (see Section {}\ref{sec:detection-dangling-references}).
 {}\ttt{Array} also supports better runtime debug output with better exception
 error messages.
 
-{}\textbf{ToDo: Finished editing from here!}
-
 The class declaration for the {}\ttt{Array} class is shown in
 Listing {}\ref{listing:Array}.
 
@@ -2775,13 +2772,13 @@ Listing {}\ref{listing:Array}.
 \end{listing}
 
 The usage of the {}\ttt{Array} class is identical to the usage of
-{}\ttt{std::vector} except that it natively supports the creation
-of {}\ttt{AraryView} objects that can detect and report dangling
+{}\ttt{std::vector} except that it natively supports the creation of
+{}\ttt{AraryView} objects that can detect and report dangling
 references or attempts to resize the container when one or more
 {}\ttt{ArrayView} objects are active.  The unit tests for
-{}\ttt{Array} provide a complete catalog of all the debug-mode
-runtime checking that {}\ttt{Array} performs.  A more general
-discussion of this can be found at
+{}\ttt{Array} provide a complete catalog of all the debug-mode runtime
+checking that {}\ttt{Array} performs.  A more general discussion of
+debug-mode runtime checking can be found at
 {}\ref{sec:debug-mode-runtime-checking}.
 
 
@@ -2837,42 +2834,34 @@ into a {}\ttt{ArrayView} object.  The class listing for
 \end{listing}
 
 The class {}\ttt{Tuple} is very small and efficient in an optimized
-build.  All the functions are inline and all data is allocated on the
+build.  All the functions are inlined and all data is allocated on the
 stack (or statically) and does not use the free store.  In an debug
-build, however, {}\ttt{Tuple} takes on all the debug checking of
-all the other Teuchos array classes including the detection of
-dangling {}\ttt{ArrayView} views and dangling iterators.
+build, however, {}\ttt{Tuple} takes on all the debug checking of all
+the other Teuchos array classes including the detection of dangling
+{}\ttt{ArrayView} views and dangling iterators.
 
-One of the most useful features of {}\ttt{Tuple} is that a number
-of overloaded non-member constructor functions with name
-{}\ttt{tuple(...)} are provided to make it easy to pass in arrays
-to functions that accept them as {}\ttt{ArrayView} arguments.
-Overloads of {}\ttt{tuple(...)} are currently provided from one up
-through 15 arguments.  For an example using {}\ttt{tuple(...)} in a
-function call, consider the function:
+One of the most useful features of {}\ttt{Tuple} is that a number of
+overloaded non-member constructor functions with name
+{}\ttt{tuple(...)} are provided to make it easy to pass in arrays to
+functions that accept them as {}\ttt{ArrayView} arguments.  Overloads
+of {}\ttt{tuple(...)} are currently provided from one up through 15
+arguments.  For an example for using {}\ttt{tuple(...)} to call a
+function call, consider the function to be called:
 
 {\small\begin{verbatim}
-  template<typename T>
-  void doSomething(const ArrayView<const T>&);
+  void doSomething(const ArrayView<const int>&);
 \end{verbatim}}
 
 To call the function with three int arguments, one would use:
 
 {\small\begin{verbatim}
-  doSomething<int>(tuple(1, 2, 3));
+  doSomething(tuple<int>(1, 2, 3)); // Implicitly converts to ArrayView<int>
 \end{verbatim}}
 
-Note that in order to make the above function call happen and allow
-the implicit conversion from {}\ttt{Tuple<int>} to
-{}\ttt{ArrayView<const int>} that one has to explicitly provide the
-template argument to the {}\ttt{doSomething()} function.  If
-{}\ttt{doSomething()} was not a template function, this would have not
-been necessary.
-
-Also note that in an optimized build for above function call that all
-data would be allocated on the stack and would not involve the
-free-store.  This results in very efficient code which is important
-when this is being used in an inner loop.
+Note that in an optimized build for the above function call that all
+data would be allocated on the stack and would not involve the free
+store.  This results in very efficient code which is important when
+this is being used in an inner loop.
 
 
 %
@@ -2884,35 +2873,36 @@ One of the most powerful features of the Teuchos memory management
 array types is that they allow for the creation of arbitrary
 contiguous subviews of data that have the strongest debug-mode runtime
 checking possible.  All of the array classes {}\ttt{ArrayView},
-{}\ttt{ArrayRCP}, {}\ttt{Array}, and {}\ttt{Tuple} provide
-contiguous views as {}\ttt{ArrayView} objects.  The functions the
-provide {}\ttt{ArrayView} views are shown in Table
-{}\ttt{tbl:common-array-type-members}.  The {}\ttt{ArrayRCP}
-class can also provide persisting contiguous subviews as new
-{}\ttt{ArrayRCP} objects using the function
-{}\ttt{ArrayRCP::persistingView(...)}.  Persisting views will
-remain even if the parent {}\ttt{ArrayRCP} objects have been deleted.
+{}\ttt{ArrayRCP}, {}\ttt{Array}, and {}\ttt{Tuple} provide contiguous
+views as {}\ttt{ArrayView} objects.  The functions the provide
+{}\ttt{ArrayView} views are shown in Table
+{}\ref{tbl:common-array-type-members}.  The {}\ttt{ArrayRCP} class can
+also provide persisting contiguous subviews as new {}\ttt{ArrayRCP}
+objects using the function {}\ttt{ArrayRCP::persistingView(...)}.
+Persisting views will remain even if the parent {}\ttt{ArrayRCP}
+objects have been released.
 
 As soon as a contiguous array of data is correctly captured in
-{}\ttt{Array} or and owning {}\ttt{ArrayRCP} object, all
-children {}\ttt{ArrayView} objects will be protected in that if the
-parent array gets selected, a debug-mode runtime check will detect and
-report a problem if a client tries to access the data after the parent
-has gone away (see Section {}\ref{sec:detection-dangling-references}
-for details).
+{}\ttt{Array} or an owning {}\ttt{ArrayRCP} object, all children
+{}\ttt{ArrayView} objects will be protected in that if the parent
+array gets delected, a debug-mode runtime check will detect and report
+a problem if a client tries to access the data after the parent has
+gone away (see Section {}\ref{sec:detection-dangling-references} for
+details).
 
 To demonstrate the elegance and superior error checking of
-{}\ttt{ArrayView} subviews, consider a refactored version of code
-in Listings {}\ref{listing:addArrayIntoArray-std-vector} and
+{}\ttt{ArrayView} subviews, consider a refactored version of code in
+Listings {}\ref{listing:addArrayIntoArray-std-vector} and
 {}\ref{listing:someBlockAlgo-std-vector} that tried to use
 {}\ttt{std::vector} but resulted in verbose clumsy code that was
 really no more correct or safe than the raw C++ pointer version.  This
-refactored version to use {}\ttt{Array} and {}\ttt{ArrayView} is
-shown in Listings {}\ref{listing:addArrayIntoArray-ArrayView} and
+refactored version to use {}\ttt{ArrayView} is shown in Listings
+{}\ref{listing:addArrayIntoArray-ArrayView} and
 {}\ref{listing:someBlockAlgo-ArrayView}.
 
-\begin{listing}: Refactored version of Listing
-  {}\ref{listing:addArrayIntoArray-std-vector} to use {}\ttt{ArrayView} \\
+{}\begin{listing}: Refactored version of Listing
+{}\ref{listing:addArrayIntoArray-std-vector} to use {}\ttt{ArrayView}
+\\
 \label{listing:addArrayIntoArray-ArrayView}
 {\small\begin{verbatim}
   template<class T>
@@ -2925,8 +2915,8 @@ shown in Listings {}\ref{listing:addArrayIntoArray-ArrayView} and
 \end{verbatim}}
 \end{listing}
 
-\begin{listing}: Refactored version of
-  {}\ref{listing:someBlockAlgo-std-vector} to use {}\ttt{ArrayView} \\
+{}\begin{listing}: Refactored version of
+{}\ref{listing:someBlockAlgo-std-vector} to use {}\ttt{ArrayView} \\
 \label{listing:someBlockAlgo-ArrayView}
 {\small\begin{verbatim}
   void someBlockAlgo( const int numBlocks, const ArrayView<const double> &big_a,
@@ -2948,19 +2938,16 @@ shown in Listings {}\ref{listing:addArrayIntoArray-ArrayView} and
 \end{verbatim}}
 \end{listing}
 
-The refactored code in Listings
-{}\ttt{listing:addArrayIntoArray-ArrayView} and
-{}\ttt{listing:someBlockAlgo-ArrayView} are that they are nearly as
-compact as the raw pointer versions in
-{}\ttt{listing:addArrayIntoArray-raw} and
-{}\ttt{listing:someBlockAlgo-raw} but yet have better debug-mode
-runtime error checking as the {}\ttt{std::vector} versions in
-{}\ttt{listing:addArrayIntoArray-std-vector} and
-{}\ttt{listing:someBlockAlgo-std-vector}.  To see the improved
-safely, let's consider the case where the
-{}\ttt{addArrayIntoArray(...)} function is incorrectly implemented
-with an off-by-one error as shown in Listing
-{}\ref{listing:addArrayIntoArray-ArrayViewError}.
+The advantages of the refactored code in Listings
+{}\ref{listing:addArrayIntoArray-ArrayView} and
+{}\ref{listing:someBlockAlgo-ArrayView} are that they are nearly as
+compact as the raw pointer versions in Listing
+{}\ref{listing:addArrayIntoArray-raw} and
+{}\ref{listing:someBlockAlgo-std-vector-raw-ptr} but yet have full
+debug-mode runtime error checking.  To see the improved safely, let's
+consider the case where the {}\ttt{addArrayIntoArray(...)}  function
+is incorrectly implemented with an off-by-one error as shown in
+Listing {}\ref{listing:addArrayIntoArray-ArrayViewError}.
 
 \begin{listing}: Refactored version of off-by-one error in Listing
   {}\ref{listing:addArrayIntoArray_rawError} to use {}\ttt{ArrayView} \\
@@ -2987,12 +2974,14 @@ Valgrind or Purify will never be able to catch semantic usage errors
 like this but it is trivial to catch these mistakes when using the
 Teuchos memory management classes.
 
-As mentioned in Section {}\ttt{sec:conversions}, subviews can also
+As mentioned in Section {}\ref{sec:conversions}, subviews can also
 be used along with the reinterpret cast functions to create very
 efficient memory management schemes for POD (plain old data) where
 large untyped {}\ttt{char} arrays are created and then subviews are
 broken off and reinterpret cast to specific data types.  Examples of
 this can be found in the unit testing code.
+
+{}\textbf{ToDo: Finished editing from here!}
 
 
 %
@@ -5589,7 +5578,7 @@ The embedded object functions in Listing
 {}\ref{listing:RCP-embedded-obj} simply use a custom templated
 deallocator class shown in Listing
 {}\ref{listing:RCP-EmbeddedObjDealloc} along with the public
-deallocator functions in Listing {}\ttt{listing:RCP-dealloc}.
+deallocator functions in Listing {}\ref{listing:RCP-dealloc}.
 
 \begin{listing}: RCP Decallocator using an embedded object \\
 \label{listing:RCP-EmbeddedObjDealloc}
