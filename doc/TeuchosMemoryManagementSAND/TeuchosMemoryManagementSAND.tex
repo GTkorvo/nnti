@@ -4461,8 +4461,6 @@ detection is implemented without having to perform a more expensive
 node lookup as described in Section
 {}\ref{sec:detection-dangling-references}).
 
-{}\textbf{ToDo: Finish editing from here!}
-
 
 %
 {}\subsubsection{Idioms for returning objects from C++ functions}
@@ -4470,16 +4468,16 @@ node lookup as described in Section
 %
 
 Idioms for how objects are returned from C++ functions are also
-important in order to achieve C++ code that is efficient, safe (both
-compile-time and debug-mode run-time checking), and is as
+important in order to achieve C++ code that is efficient, safe (with
+both compile-time and debug-mode run-time checking), and is as
 self-documenting as possible.  Tables
 {}\ref{fig:func_return_value_type} and
 {}\ref{fig:func_return_reference_type} give common specifications for
 returning single objects and arrays of objects for both value-type and
 reference-type objects for non-persisting, persisting, and
-semi-persisting associations..  Five different types of properties
-that must be defined and considered when returning an object (or array
-of objects) from a function are:
+semi-persisting associations.  Five different types of properties that
+must be defined and considered when returning an object (or array of
+objects) from a function:
 
 \begin{itemize}
 
@@ -4542,59 +4540,57 @@ Idioms for returning reference-type objects from C++ functions.}
 These five different properties are the same five described for formal
 function arguments described in Section
 {}\ref{sec:idioms-for-passing-arguments}.  Again, the first four of
-these properties are mostly clearly defined in the C++ code itself.
-However, again, it is not always possible to directly state in the C++
-code declarations whether the object (or array of objects) is optional
-or required (but in some cases for value-type objects it is as shown
-in Table {}\ref{fig:func_return_value_type}).
+these properties are clearly defined in the C++ code itself.  However,
+again, it is not always possible to directly state in the C++ code
+declarations whether the object (or array of objects) is optional or
+required.
 
 The semantics of return objects is different than for formal function
-arguments and the specifications described in Tables
+arguments.  There are several differences that one can see from
+looking at Tables {}\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}, and Tables
 {}\ref{fig:func_return_value_type} and
-{}\ref{fig:func_return_reference_type}.  There are several differences
-that one can see from looking at Tables
+{}\ref{fig:func_return_reference_type}.  The key difference between
+formal functions arguments and return values relates to using constant
+references for formal arguments versus returning objects by value as
+return types.  While the memory management objects of type
+{}\ttt{Ptr}, {}\ttt{RCP}, {}\ttt{ArrayView}, and {}\ttt{ArrayRCP} are
+all passed by constant reference in Tables
 {}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type},
-and Tables {}\ref{fig:func_return_value_type} and
-{}\ref{fig:func_return_reference_type}.
-
-The first difference to discuss between formal functions arguments and
-return values relates to using constant references for formal
-arguments versus returning objects by value as return types.  While
-the memory management objects of type {}\ttt{Ptr}, {}\ttt{RCP},
-{}\ttt{ArrayView}, and {}\ttt{ArrayRCP} are all passed by constant
-reference in Tables {}\ref{fig:func_args_value_type} and
-{}\ref{fig:func_args_ref_type}, alternatively they are always returned
-as objects (i.e.\ by value) in Tables
-{}\ref{fig:func_return_value_type} and
+alternatively they are always returned as objects (i.e.\ return by
+value) in Tables {}\ref{fig:func_return_value_type} and
 {}\ref{fig:func_return_reference_type}.  The reason that these memory
 management objects should always be returned by value is that this is
 needed to correctly set up the reference counting machinery to
 properly set up persisting relationships and to enable debug runtime
-checking (e.g.\ to detect dangling references).  Note that it is
-critical that semi-persisting associations for single objects must
-always be returned as {}\ttt{Ptr<T>} objects and never as raw
-references {}\ttt{T\&} which is acceptable for non-persisting
-associations.  The reason that {}\ttt{Ptr<T>} objects must always be
-used for semi-persisting associations is that in a debug-mode build,
-the runtime checking machinery will be able to detect dangling
-references or changes in the parent object that would otherwise
-invalidate the semi-persisting view that is impossible to catch when
-using raw C++ references.
+checking (e.g.\ to detect dangling references).
+
+Note that it is critical that semi-persisting associations for single
+objects must always be returned as {}\ttt{Ptr<T>} objects and never as
+raw references {}\ttt{T\&} which is otherwise acceptable for
+non-persisting associations.  The reason that {}\ttt{Ptr<T>} objects
+must always be used for semi-persisting associations is that in a
+debug-mode build, the runtime checking machinery will be able to
+detect dangling references or changes in the parent object that would
+otherwise invalidate the semi-persisting view that is impossible to
+catch when using raw C++ references.
 
 In order to understand the importance of returning memory management
 objects by value instead of by reference, first consider Listing
 {}\ref{listing:unsafe_raw_C++_reference1} that looks to be perfectly
 safe code.
 
-\begin{listing}: A seemingly safe use raw C++ references that is not \\
+
+{}\begin{listing}: A seemingly safe use of raw C++ references
 \label{listing:unsafe_raw_C++_reference1}
 {\small\begin{verbatim}
-  void seeminglySafeFoo(Blob &blob, const Flab &flab)
+  void seeminglySafeFoo(Blob &blob, Flab &flab)
   {
     blob.doGoodStuff(flab);
   }
 \end{verbatim}}
 \end{listing}
+
 
 The code in Listing {}\ref{listing:unsafe_raw_C++_reference1} does not
 itself look unsafe.  However, the reason that it unsafe comes from the
@@ -4602,7 +4598,8 @@ code that calls {}\ttt{seeminglySafeFoo(...)} and the code that
 implements {}\ttt{Blob} shown in Listing
 {}\ref{listing:unsafe_raw_C++_reference2}.
 
-\begin{listing}: Code that makes seeminglySafeFoo(...) fail\\
+
+{}\begin{listing}: Code that makes seeminglySafeFoo(...) fail
 \label{listing:unsafe_raw_C++_reference2}
 {\small\begin{verbatim}
   class Blob
@@ -4611,10 +4608,10 @@ implements {}\ttt{Blob} shown in Listing
   public:
     Blob() : flab_(flab()) {}
     const RCP<Flab>& getFlab() { return flab_; }
-    void doGoodStuff(const Flab &flab_in)
+    void doGoodStuff(Flab &flab_in)
     {
       flab_ = flab(); // Using non-member constructor
-      flab_->conflab(flab_in);
+      flab_in.conflab(*flab_);
     }
   };
 
@@ -4626,6 +4623,7 @@ implements {}\ttt{Blob} shown in Listing
   }
 \end{verbatim}}
 \end{listing}
+
 
 When the code in Listings {}\ref{listing:unsafe_raw_C++_reference1}
 and {}\ref{listing:unsafe_raw_C++_reference2} executes, it will most
@@ -4642,9 +4640,9 @@ reason that the code in Listings
 because it gets destroyed and is replaced by a new object in the
 expression {}\ttt{flab\_ = flab()}.  When this happens, the object now
 represented as the raw C++ reference {}\ttt{flab\_in} is deleted which
-causes the code in the expression {}\ttt{flab\_->conflab(flab\_in)} to
-be in error, and the behavior of the program is undefined (and again
-will segfault if one is lucky).
+causes the code in the expression {}\ttt{flab\_in->conflab(*flab\_)}
+to be in error, and the behavior of the program is undefined (and
+again will segfault if one is lucky).
 
 How did it come to this situation?  What if the raw C++ references
 where replaced with with RCP-wrapped objects?  Well, consider the
@@ -4662,7 +4660,7 @@ updated code in Listing {}\ref{listing:unsafe_raw_C++_reference3}.
     void doGoodStuff(const RCP<Flab> &flab_in)
     {
       flab_ = flab(); // Using non-member constructor
-      flab_->conflab(flab_in);
+      flab_in.conflab(*flab_);
     }
   };
 
@@ -4683,16 +4681,16 @@ updated code in Listing {}\ref{listing:unsafe_raw_C++_reference3}.
 
 Is the code in Listing {}\ref{listing:unsafe_raw_C++_reference3}
 correct?  The sad answer is no, it is not.  The {}\ttt{Flab} object
-returned from {}\ttt{blob.getFlab()} will still get deleted before
-it is used in the expression {}\ttt{flab\_->conflab(flab\_in)}.
-What is going on here?  The core of the problem is that the function
+returned from {}\ttt{blob.getFlab()} will still get deleted before it
+is used in the expression {}\ttt{flab\_->conflab(flab\_in)}.  What is
+going on here?  The core of the problem is that the function
 {}\ttt{Blob::getFlab()} is incorrectly implemented.  Functions must
-always return {}\ttt{RCP} objects by value and never by reference
-as shown in Tables {}\ref{fig:func_return_value_type} and
+always return {}\ttt{RCP} objects by value and never by reference as
+shown in Tables {}\ref{fig:func_return_value_type} and
 {}\ref{fig:func_return_reference_type}.  By returning a raw C++
-reference to the RCP object, a persisting association with the client
-is never properly established and this is the root cause the whole
-problem.
+reference to the {}\ttt{RCP<Flab>} object, a persisting association
+with the client is never properly established and this is the root
+cause of the whole problem.
 
 Now consider the updated code in Listing
 {}\ref{listing:safe_raw_C++_reference3} that goes back to using raw
@@ -4708,15 +4706,15 @@ C++ references where appropriate but now returns the
   public:
     Blob() : flab_(flab()) {}
     RCP<Flab> getFlab() { return flab_; } // Returns by value now!
-    void doGoodStuff(const RCP<Flab> &flab_in)
+    void doGoodStuff(Flab &flab_in)
     {
       flab_ = flab(); // Using non-member constructor
-      flab_->conflab(flab_in);
+      flab_in.conflab(*flab_);
     }
   };
 
 
-  void seeminglySafeFoo(Blob &blob, const Flab &flab)
+  void seeminglySafeFoo(Blob &blob, Flab &flab)
   {
     blob.doGoodStuff(flab);
   }
@@ -4735,57 +4733,63 @@ Is the code represented in Listing
 is.  The reason that it is now safe and correct is that a persisting
 relationship is now being correctly created by the function call
 {}\ttt{blob.getFlab()} in that a new temporary {}\ttt{RCP<Flab>}
-object is created.  From this new temporary {}\ttt{RCP<Flab>}
-object, a raw C++ reference is then returned from
-{}\ttt{*blob.getFlab()} and passed through.  In this case, since
-the reference count on the existing {}\ttt{Flab} object is now two
-instead of one, the expression {}\ttt{flab\_ = flab()} will not
-delete the existing {}\ttt{Flab} object and the following
-expression {}\ttt{flab\_->conflab(flab\_in)} will have two valid
+object is created (which increments the reference count).  From this
+new temporary {}\ttt{RCP<Flab>} object, a raw C++ reference is then
+returned from {}\ttt{*blob.getFlab()} and passed through.  In this
+case, since the reference count on the existing {}\ttt{Flab} object is
+now two instead of one, the expression {}\ttt{flab\_ = flab()} will
+not delete the existing {}\ttt{Flab} object and the following
+expression {}\ttt{flab\_in.conflab(*flab\_)} will have two valid
 {}\ttt{Flab} objects.  After the function
 {}\ttt{seeminglySafeFoo(blob, *blob.getFlab())} exits, the first
 {}\ttt{Flab} object will finally be deleted but that is just fine.
 
-The second difference between formal function arguments and return
-values is what persisting and non-persisting associations mean related
-to function returns.  In the case of objects returned from C++
-functions, a persisting association is one where the object returned
-from a C++ function is remembered past the end of the statement where
-the C++ function returning the objects is called.  For example,
-consider the code in Listing {}\ref{listing:persisting-func-return-1}.
+Another difference between formal function arguments and return values
+is what persisting and non-persisting associations mean related to
+function returns.  In the case of objects returned from C++ functions,
+a persisting association is one where the object returned from a C++
+function is remembered past the end of the statement where the C++
+function returning the objects is called.  For example, consider the
+code in Listing {}\ref{listing:persisting-func-return-1}.
 
-\begin{listing}:\\
+
+{}\begin{listing}: Example of a bad persisting association
+implementated as a raw C++ reference (see the {}\ttt{Grob} class
+defined in Listing {}\ref{listing:bad-Glob-non-persisting})
 \label{listing:persisting-func-return-1}
 {\small\begin{verbatim}
-  void foo(Blob& blob)
+  void foo(Glob& glob)
   {
-    const Flab &flab = blob.getFlab();
-    blob.doStuff();
+    const Flab &flab = glob.getFlab();
+    glob.doStuff();
     flab.doMoreStuff();
   }
 \end{verbatim}}
 \end{listing}
 
+
 The code in Listing {}\ref{listing:persisting-func-return-1}
 represents a persisting association because because the
 {}\ttt{Flab} object returned in the expression {}\ttt{const Flab
-\&flab = blob.getFlab()} is remembered past the statement where it is
-called and is used later in calling {}\ttt{flab.doMoreStuff()}.
-This type of code is all too common in C++ programs (including a lot
-of code I have written over the last 10 years) but it is not safe
-because it is not properly respecting the notion of persisting
-associations.  To see why the code in Listing
-{}\ref{listing:persisting-func-return-1} is so bad, consider a
-possible unfortunate implementation of the {}\ttt{Blob} class shown
-in Listing {}\ref{listing:bad-Blob-non-persisting}:
+\&flab = glob.getFlab()} is remembered past the statement where it is
+called and is used later in calling {}\ttt{flab.doMoreStuff()}.  This
+type of code is all too common in C++ programs (including a lot of
+code I have written over the last 10 years) but it is not safe because
+it is not properly respecting the notion of persisting associations.
+To see why the code in Listing
+{}\ref{listing:persisting-func-return-1} is so bad, consider the
+possible unfortunate implementation of the {}\ttt{Glob} class shown in
+Listing {}\ref{listing:bad-Glob-non-persisting}:
 
-\begin{listing}:\\
-\label{listing:bad-Blob-non-persisting}
+
+{}\begin{listing}: Bad implemention of the {}\ttt{Glob} class with
+respect to persisting associations
+\label{listing:bad-Glob-non-persisting}
 {\small\begin{verbatim}
-  class Blob {
+  class Glob {
     RCP<Flab> flab_;
   public:
-    Blob() : flab_(flab()) {}
+    Glob() : flab_(flab()) {}
     const Flab& getFlab() const { return *flab_; }
     void doStuff()
       {
@@ -4796,13 +4800,14 @@ in Listing {}\ref{listing:bad-Blob-non-persisting}:
 \end{verbatim}}
 \end{listing}
 
+
 What happens of course is that the behavior of the code in Listings
 {}\ref{listing:persisting-func-return-1} and
-{}\ref{listing:bad-Blob-non-persisting} is undefined and will most
+{}\ref{listing:bad-Glob-non-persisting} is undefined and will most
 likely result in a segfault (if one is lucky).  The reason this is bad
 code is that the {}\ttt{Flab} object reference that gets returned from
-{}\ttt{blob.getFlab()} is not used until after the function
-{}\ttt{Blob::doStuff()} gets called which will delete the {}\ttt{Flab}
+{}\ttt{glob.getFlab()} is not used until after the function
+{}\ttt{Glob::doStuff()} gets called which will delete the {}\ttt{Flab}
 object and replace it with another one.  This results in
 {}\ttt{flab.doMoreStuff()} being called on a deleted object.  Again,
 this will typically result in a segfault, but on some systems in some
@@ -4829,16 +4834,18 @@ where the returning function is called.  Therefore, the function in
 Listing {}\ref{listing:persisting-func-return-1} should be rewritten
 as shown in Listing {}\ref{listing:non-persisting-func-return-1}.
 
+
 \begin{listing}:\\
 \label{listing:non-persisting-func-return-1}
 {\small\begin{verbatim}
-  void foo(Blob& blob)
+  void foo(Glob& glob)
   {
-    blob.getFlab().doMoreStuff();
-    blob.doStuff();
+    glob.getFlab().doMoreStuff();
+    glob.doStuff();
   }
 \end{verbatim}}
 \end{listing}
+
 
 Here, of course, one is assuming that the order of evaluation of the
 functions is not important.
@@ -4851,6 +4858,7 @@ user-defined array class object is returned and set in the same
 statements such as shown in Listing
 {}\ref{listing:non-persisting-array-return-1}.
 
+
 \begin{listing}:\\
 \label{listing:non-persisting-array-return-1}
 {\small\begin{verbatim}
@@ -4862,9 +4870,11 @@ statements such as shown in Listing
 \end{verbatim}}
 \end{listing}
 
+
 What is typically not safe, of course, is when one trys to save a
 reference to an object and then use it like in Listing
 {}\ref{listing:bad-persisting-array-return-1}.
+
 
 \begin{listing}:\\
 \label{listing:bad-persisting-array-return-1}
@@ -4879,6 +4889,7 @@ reference to an object and then use it like in Listing
 \end{verbatim}}
 \end{listing}
 
+
 The problem with the code in Listing
 {}\ref{listing:bad-persisting-array-return-1} is that the
 {}\ttt{a.resize(20)} function might cause a new buffer to be
@@ -4890,9 +4901,11 @@ The whole point of the example code Listings
 {}\ref{listing:non-persisting-array-return-1} and
 {}\ref{listing:bad-persisting-array-return-1} is to demonstrate the
 working definition of persisting \& non-persisting associations as
-they relate to objects returned from functions and support the idioms
-shown in Tables {}\ref{fig:func_return_value_type} and
-{}\ref{fig:func_return_reference_type}.
+they relate to objects returned from functions.  This argument
+supports the idioms shown in Tables {}\ref{fig:func_return_value_type}
+and {}\ref{fig:func_return_reference_type}.
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
