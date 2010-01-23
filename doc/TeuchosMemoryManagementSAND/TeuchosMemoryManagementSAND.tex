@@ -5504,8 +5504,6 @@ design patterns (see Sections {}\ref{sec:self-references} and
 {}\ref{sec:generalized-view-design-pattern} for examples) do typical
 programmers need to know anything about weak pointers.
 
-{}\textbf{ToDo: Finish editing from here!}
-
 
 %
 {}\subsubsection{Customized deallocators}
@@ -5524,7 +5522,7 @@ these situations include:
 \begin{enumerate}
 
 {}\item When reference counts for objects are managed by requiring
-clients to explicitly call increment and decrement functions.  This
+clients to explicitly call increment and decrement functions: This
 situation occurs when using CORBA {}\cite{ref:corba} and COM
 {}\cite{ref:com} for instance.  Such an approach is also presented in
 {}\cite[Item 29]{MoreEffectiveC++96} in the subsection ``A
@@ -5539,21 +5537,26 @@ must be explicitly returned to the database in order to allow proper
 object deletion to take place later.
 
 {}\item A different reference-counted pointer class is used to
-initially get access to the managed object.  For example, suppose some
+initially get access to the managed object:  For example, suppose some
 piece of peer software works with {}\ttt{boost::shared\_ptr} (see
 {}\cite{ref:boost}) referenced-counted objects while the resident
-software works with {}\ttt{RCP} objects.  It then becomes critical
-no object is deleted until all the clients using either of these smart
-pointer types remove their references (i.e.\ destroy their smart
-pointers) to this underlying object.
+software works with {}\ttt{RCP} objects.  It then becomes critical no
+object is deleted until all the clients using either of these smart
+pointer types remove their references to this underlying object (i.e.\
+by destroying their smart pointer objects or setting them to null).
+
+{}\item When a C struct object allocated and deallocated with
+{}\ttt{malloc(..)} and {}\ttt{free(...)} through C library defined
+functions: Here, a C library function must be called to deallocate the
+object (examples of this exist in unit test and library code).
 
 \end{enumerate}
 
-There are also other situations where one cannot simply assume that
-calling operator {}\ttt{delete} is used to release an object.  The
-bottom line is that in order to be general, one must allow arbitrary
-policies to be used to deallocate an object after clients are finished
-using the object.
+There are many other additional situations where one cannot simply
+assume that calling operator {}\ttt{delete} is used to release an
+object.  The bottom line is that in order to be general, one must
+allow arbitrary policies to be used to deallocate an object after
+clients are finished using the object.
 
 Perhaps the key differentiating property between a flexible high
 quality reference-counted pointer implementation and a poor
@@ -5566,8 +5569,8 @@ allow the client to specify a user-defined deallocation policy object
 when the first reference-counted object is constructed.
 
 The code associated with customized deallocation policies for
-{}\ttt{RCP} (what are identical for {}\ttt{ArrayRCP}) are shown
-in Listing {}\ref{listing:RCP-dealloc}.
+{}\ttt{RCP} (which are identical for {}\ttt{ArrayRCP} as well) are
+shown in Listing {}\ref{listing:RCP-dealloc}.
 
 \begin{listing}: Declarations for customized deallocation policies
 for {}\ttt{RCP} \\
@@ -5582,6 +5585,13 @@ for {}\ttt{RCP} \\
     void free( T* ptr ) { if(ptr) delete ptr; }
   };
 
+  // Other provided deallocation policy classes
+  class DeallocNull { ... };
+  class DeallocArrayDelete { ... };
+  class DeallocFunctorDelete { ... };
+  class DeallocFunctorHandleDelete { ... };
+  class EmbeddedObjDealloc { ... };
+
   template<class T>
   class RCP {
   public:
@@ -5590,6 +5600,8 @@ for {}\ttt{RCP} \\
     RCP(T* p, Dealloc_T dealloc, bool has_ownership);
     ...
   };
+
+  // Non-member constructors for deallocators and extraction functions
   
   template<class T, class Dealloc_T>
   RCP<T> rcp(T* p, Dealloc_T dealloc, bool owns_mem);
@@ -5609,16 +5621,19 @@ for {}\ttt{RCP} \\
 \end{verbatim}}
 \end{listing}
 
-All deallocator objects must support the typedef member
-{}\ttt{ptr\_t} and function member {}\ttt{free()}.  The concept
-of a template policy interface (also called a function object
-\cite[Section 18.4]{stroustrup97}) should be familiar to
+All deallocator objects must support the typedef member {}\ttt{ptr\_t}
+and function member {}\ttt{free(...)}.  The concept of a template
+policy interface (also called a function object
+\cite[Section 18.4]{stroustrup97}) should hopefully be familiar to
 semi-advanced users of the STL (part of the standard C++ library).
 
-To demonstrate the use of a deallocator object, let us assume that we
-must wrap objects of type {}\ttt{A} managed by the the following
-object database
+To demonstrate the use of a deallocator object, let us assume that the
+code must wrap objects of type {}\ttt{A} managed by the object
+database shown in Listing {}\ref{listing:ObjectADB}.
 
+
+{}\begin{listing}: Example of a simple object database
+\label{listing:ObjectADB}
 {\small\begin{verbatim}
   class ObjectADB {
     ...
@@ -5627,52 +5642,67 @@ object database
     ...
   };
 \end{verbatim}}
+\end{listing}
 
-In the above object database, objects are accessed and released using
-an id.  How this id is specified and determined is not important here.
-Let us suppose that one wants to define an abstract factory that
-returns objects of type {}\ttt{A} wrapped in {}\ttt{RCP<A>} objects
-using a database object of type {}\ttt{ObjectADB} shown above.  For
-this abstract factory, objects of type {}\ttt{A} will be allocated
+
+In the object database in Listing {}\ref{listing:ObjectADB}, objects
+are accessed and released using an integer ID.  How this ID is
+specified and determined is not important here.  Let us suppose that
+one wants to define an abstract factory that returns objects of type
+{}\ttt{A} wrapped in {}\ttt{RCP<A>} objects using a database object of
+type {}\ttt{ObjectADB} shown in Listing {}\ref{listing:ObjectADB}.
+For this abstract factory, objects of type {}\ttt{A} will be allocated
 from a list of ids given to the factory.  The outline of this abstract
-factory subclass looks like:
+factory subclass is shown in Listing {}\ref{listing:ObjectADBFactory}:
 
+
+{}\begin{listing}: Factory subclass that allocates new objects using
+an {}\ttt{ObjectADB} object
+\label{listing:ObjectADBFactory}
 {\small\begin{verbatim}
   class ObjectADBFactory : public AbstractFactory<A> {
+    RCP<ObjectjADB> db_;
+    Array<int> ids_;
   public:
     ObjectADBFactory(const RCP<ObjectADB>& db, const ArrayView<int>& ids)
      : db_(db), ids_(ids) {}
-    RCP<A> create() { ... };  // Overridden from AbstractFactory
-  private:
-    RCP<ObjectjADB> db_;
-    Array<int> ids_;
+    RCP<A> create();  // Overridden from AbstractFactory
   };
 \end{verbatim}}
+\end{listing}
+
 
 The above abstract factory subclass {}\ttt{ObjectADBFactory} inherits
 from a generic {}\ttt{AbstractFactory} base class that defines a pure
 virtual method {}\ttt{create()}.  In order to implement the
 {}\ttt{create()} function, a deallocator class must be defined and
-used.  For this purpose one defines:
+used and is shown in Listing {}\ref{listing:DeallocObjectADB}.
 
+
+{}\begin{listing}: Custom deallocator class for releasing objects
+managed by {}\ttt{ObjectADB}
+\label{listing:DeallocObjectADB}
 {\small\begin{verbatim}
   class DeallocObjectADB
   {
+    RCP<ObjectjADB> db_;
+    int id_;
   public:
     DeallocObjectADB(const RCP<ObjectjADB>& db, int id)
       : db_(db), id_(id) {}
     typedef A ptr_t;
     void free(A* ptr) { db_->release(id_); }
-  private:
-    RCP<ObjectjADB> db_;
-    int id_;
-    DeallocObjectADB(); // not defined and not to be called!
   };
 \end{verbatim}}
+\end{listing}
+
 
 Now one can define the implementation of the {}\ttt{create()} function
-override as:
+override as shown in Listing {}\ref{listing:ObjectADBFactory_create}.
 
+
+{}\begin{listing}: Implementation of the factory create function
+\label{listing:ObjectADBFactory_create}
 {\small\begin{verbatim}
   RCP<A> ObjectADBFactory::create()
   {
@@ -5681,9 +5711,19 @@ override as:
     return rcp(&db_->get(id), DeallocObjectADB(db_, id), true);
   }
 \end{verbatim}}
+\end{listing}
 
-The following program shows the use of the above factory class:
 
+The program in Listing {}\ref{listing:ObjectADBFactory-examplep-main}
+shows the use of the factory subclass {}\ttt{ObjectADBFactory} defined
+in Listings {}\ref{listing:ObjectADB},
+{}\ref{listing:ObjectADBFactory}, {}\ref{listing:DeallocObjectADB},
+and {}\ref{listing:ObjectADBFactory_create}.
+
+
+{}\begin{listing}: Example driver program that transparently uses the
+{}\ttt{ObjectADBFactory} class
+\label{listing:ObjectADBFactory-examplep-main}
 {\small\begin{verbatim}
   int main()
   {
@@ -5699,11 +5739,19 @@ The following program shows the use of the above factory class:
     return 0;
   }
 \end{verbatim}}
+\end{listing}
 
-In the above program, all of the objects of type {}\ttt{A} are
-created and removed seamlessly without the client code that interacts
-with {}\ttt{RCP} and {}\ttt{AbstractFactory} knowing anything
-about what is going on under the hood.
+
+In example program in Listing {}\ref{listing:ObjectADBFactory_create},
+all of the objects of type {}\ttt{A} are created and removed
+seamlessly without the client code that interacts with {}\ttt{RCP} and
+{}\ttt{AbstractFactory} knowing anything about what is going on under
+the hood.
+
+Examples of other types of deallocators are given in the unit test
+suite for the {}\ttt{RCP} class.
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
