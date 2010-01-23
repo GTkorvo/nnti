@@ -4905,8 +4905,6 @@ they relate to objects returned from functions.  This argument
 supports the idioms shown in Tables {}\ref{fig:func_return_value_type}
 and {}\ref{fig:func_return_reference_type}.
 
-{}\textbf{ToDo: Finish editing from here!}
-
 
 %
 {}\subsection{Reference-counting machinery in-depth}
@@ -4926,9 +4924,7 @@ reference counting.
 
 The basic reference counting machinery being used by the classes is
 first described.  Next, the issue of circular references and weak
-pointers are described.  The last issue discussed is the general role
-and responsibilities for the various actors in software using the
-Teuchos reference counting classes.
+pointers are discussed.
 
 
 %
@@ -4977,24 +4973,23 @@ The classes {}\ttt{RCPNode}, {}\ttt{RCPNodeImpl}, and
 {}\ttt{RCP} and {}\ttt{ArrayRCP} classes (however, only the
 {}\ttt{RCP} class is shown for simplicity).
 
-The member functions for {}\ttt{RCP} {}\ttt{ArrayRCP} related to
+The member functions for {}\ttt{RCP} and {}\ttt{ArrayRCP} related to
 reference-counting are shown in Listing
 {}\ref{listing:ref-count-mem-funcs}.  Most of these funtions are never
-called by general clients except in despirate situations.  One
-exception are the member functions {}\ttt{create\_weak()} (which is
-used to create a {}\ttt{WEAK} {}\ttt{RCP} object from a
-{}\ttt{STRONG} object) and and {}\ttt{create\_strong()} (which
-is used to create a {}\ttt{STRONG} {}\ttt{RCP} object from a
-{}\ttt{WEAK} object).  The function {}\ttt{create\_weak()} is
-used to break a circular reference as described in Section
-{}\ref{sec:circular-references-weak-pointers} while
-{}\ttt{create\_strong()} is used in situations like the ``object
+called by general clients except in despirate situations.  Notable
+exceptions are the member functions {}\ttt{create\_weak()} (which is
+used to create a {}\ttt{WEAK} {}\ttt{RCP} object from a {}\ttt{STRONG}
+object) and and {}\ttt{create\_strong()} (which is used to create a
+{}\ttt{STRONG} {}\ttt{RCP} object from a {}\ttt{WEAK} object).  The
+function {}\ttt{create\_weak()} is used to break a circular reference
+as described in Section {}\ref{sec:circular-references-weak-pointers}
+while {}\ttt{create\_strong()} is used in situations like the ``object
 self-reference'' idiom described in Section
 {}\ref{sec:self-references}.
 
 
-\begin{listing}: Reference counting member functions for {}\ttt{RCP}
-{}\ttt{ArrayRCP} \\
+{}\begin{listing}: Reference counting member functions for {}\ttt{RCP}
+and {}\ttt{ArrayRCP}
 \label{listing:ref-count-mem-funcs}
 {\small\begin{verbatim}
   template<class T>
@@ -5053,47 +5048,48 @@ using reference counting is that only one owning {}\ttt{RCPNode}
 object can exist for any object that is shared.  Figure
 {}\ref{fig:RCPEx1} (UML object diagram) shows an example of several
 {}\ttt{RCP} objects pointing to the same concrete object of type
-{}\ttt{C} through different base class interfaces.  If the
-programmer follows the idioms described in Section {}\ref{sec:idioms}
-and outlined in Appendix {}\ref{apdx:summary_of_idioms} and
+{}\ttt{C} through different base class interfaces.  If the programmer
+follows the idioms described in Section {}\ref{sec:idioms} and
+outlined in Appendix {}\ref{apdx:summary_of_idioms} and
 {}\ref{apdx:commandments}, it will always be the case that only one
 reference-counting node object will exist for a given
 reference-counted object.  Exceptions to the one effective owning
-{}\ttt{RCPNode} per reference-counted object guideline are allowed
-to facilitate some more advanced use cases (see Section
+{}\ttt{RCPNode} object per reference-counted object guideline are
+allowed to facilitate some more advanced use cases (see Section
 {}\ref{sec:inverting-obj-ownership} for an example).  As mentioned
 earlier, the {}\ttt{RCPNode} object stores both a strong and a weak
 reference count.  The strong and weak reference counts are equal to
-the number of strong and weak, respectively, {}\ttt{RCP} objects
-pointing to the single {}\ttt{RCP} node object.  When the strong
-count goes to zero, the underlying reference-counted object is
-destroyed but the {}\ttt{RCPNodeImpl} object is not destroyed until
-the strong and weak counts both go to zero.  The motivation and the
-workings of strong versus weak reference counts is discussed in
-Section {}\ref{sec:circular-references-weak-pointers}.
+the number of strong and weak {}\ttt{RCP} objects pointing to the
+single {}\ttt{RCP} node object.  When the strong count goes to zero,
+the underlying reference-counted object is destroyed but the
+{}\ttt{RCPNodeImpl} object is not destroyed until the strong and weak
+counts both go to zero.  The motivation and the workings of strong
+versus weak reference counts is discussed in Section
+{}\ref{sec:circular-references-weak-pointers}.
 
-Finally, one of the key integrated debug-mode eanbled capabilities of
-the Teuchos reference-counting machinery is the ability to trace the
-{}\ttt{RCPNode} objects that are created and destroyed and put them
-in a database.  The {}\ttt{RCPNodeTracer} object is a global object
-that stores all of the {}\ttt{RCPNode} objects in active use.  An
-{}\ttt{std::multimap} object is used to store raw pointers to the
-{}\ttt{RCPNode} objects and the multi-map is keyed by the
-{}\ttt{void*} address of the underlying reference-counted objects
-themselves.  Therefore, one can query to see if any {}\ttt{RCPNode}
-object already exists for a given object.  The cost of this query is
-$O(log(n))$ where $n$ is the number of active {}\ttt{RCPNode}
-objects currently in use.  Therefore, the cost of node tracing very
-scalable with the number of {}\ttt{RCPNode} objects in use.  The
-current implementation requires Boost which provides some trickery for
-determining at compile-time if a type is polymorphic or not and
-thereby allowing the use {}\ttt{dynamic\_cast<const void*>(p)} to
-determine the true base address of any object (no matter if it uses
-virtual base classes and multiple inheritance or not).  The ability to
-trace active {}\ttt{RCPNode} objects and look them up basesd on an
-objects address is crtical for many debug-mode runtime checking
-capabilities including: a) reporting objects involved in circular
-depencencies after a program ends (see Section
+Finally, one of the key integrated debug-mode capabilities of the
+Teuchos reference-counting machinery is the ability to trace the
+{}\ttt{RCPNode} objects that are created and destroyed and put them in
+a low-overhead object database.  The {}\ttt{RCPNodeTracer}
+class/object is a global singleton object that stores all of the
+{}\ttt{RCPNode} objects in active use.  An {}\ttt{std::multimap}
+object is used to store raw pointers to the {}\ttt{RCPNode} objects
+and the multi-map is keyed by the {}\ttt{void*} address of the
+underlying reference-counted objects themselves.  Therefore, one can
+query to see if any {}\ttt{RCPNode} object already exists for a given
+object.  The cost of this query is $O(log(n))$ where $n$ is the number
+of active {}\ttt{RCPNode} objects currently in use.  Therefore, the
+cost of node tracing quite scalable with the number of {}\ttt{RCPNode}
+objects in use.  The current implementation optionally relies on Boost
+code which provides some trickery for determining at compile-time if a
+type is polymorphic or not and thereby allowing the use
+{}\ttt{dynamic\_cast<const void*>(p)} to determine the true base
+address of any object (no matter if it uses virtual base classes and
+multiple inheritance or not).  The ability to trace active
+{}\ttt{RCPNode} objects and look them up basesd on an object's address
+is crtical for many debug-mode runtime checking capabilities
+including: a) reporting objects involved in circular depencencies
+after a program ends (see Section
 {}\ref{sec:detection-circular-references}), b) detection of dangling
 references of non-owning {}\ttt{RCP} objects (see Section
 {}\ref{sec:detection-dangling-references}), and c) detection of the
@@ -5102,9 +5098,9 @@ creation of multiple owning {}\ttt{RCPNode} objects (see Section
 
 Note that node tracing is only an optional debug-mode feature and is
 not required for the correct functioning of the reference-counting
-machinery.  In fact, the observable behavior of correct programs will
-be exactly whether debug-mode node tracing is enabled or not.  For
-correct programs, the only observable consequence of having node
+machinery.  In fact, the observable behavior of correct programs is
+exactly the same whether debug-mode node tracing is enabled or not.
+For correct programs, the only observable consequence of having node
 tracing enabled will be increased runtimes.
 
 
@@ -5163,6 +5159,7 @@ resulting in these types of memory leaks, then obviously one has a
 problem and the system could run out of memory and bring the program
 down.
 
+
 {\bsinglespace
 \begin{figure}
 \begin{center}
@@ -5176,7 +5173,9 @@ Simple circular reference between two objects.  }
 \end{figure}
 \esinglespace}
 
-When debug-mode node tracing is enabled, the system will print out the
+
+When debug-mode node tracing is enabled and circular references exist,
+the reference-counting node tracing machinery will print out the
 remaining {}\ttt{RCPNode} objects when it exists (see Section
 {}\ref{sec:detection-circular-references} for more details).
 
@@ -5185,16 +5184,15 @@ the circular reference problem, there is a fairly simple and cheap
 approach supported by the Teuchos reference-counting machinery that
 can effectively resolve circular references in most cases.  The
 approach described here supported by the Teuchos reference-counted
-classes is to exploit the concept if weak reference-counted pointers.
+classes is to exploit the concept of weak reference-counted pointers.
 As shown in Figure {}\ref{fig:TeuchosRCPDesign}, this is accomplished
-through a {}\ttt{strength} attribute with values {}\ttt{STRONG}
-and {}\ttt{WEAK}.  By default, all {}\ttt{RCP} objects are
-{}\ttt{STRONG}.  When an {}\ttt{RCP} is {}\ttt{STRONG}, then
-the underlying {}\ttt{ConcreteT} object is guaranteed to stay
-around.  However, when the {}\ttt{RCP} is {}\ttt{WEAK}, the
-underlying {}\ttt{ConcreteT} can get deleted when strong count goes
-to zero (by the deletion of other {}\ttt{STRONG} {}\ttt{RCP}
-objects).
+through a {}\ttt{strength} attribute with values {}\ttt{STRONG} and
+{}\ttt{WEAK}.  By default, all {}\ttt{RCP} objects are {}\ttt{STRONG}.
+When an {}\ttt{RCP} is {}\ttt{STRONG}, then the underlying
+{}\ttt{ConcreteT} object is guaranteed to stay around.  However, when
+the {}\ttt{RCP} is {}\ttt{WEAK}, the underlying {}\ttt{ConcreteT} can
+get deleted when strong count goes to zero (by the deletion of other
+{}\ttt{STRONG} {}\ttt{RCP} objects).
 
 {\bsinglespace
 \begin{figure}
@@ -5210,9 +5208,9 @@ Simple circular reference between two objects broken using a
 \end{figure}
 \esinglespace}
 
-So how can deal with circular references like this?  The answer in
-this case is to use a weak {}\ttt{RCP} to break the circular
-reference as shown in Listing {}\ref{listing:CircularRCP_A_B_weak}.
+So how can one deal with circular references like this?  The answer in
+this case is to use a weak {}\ttt{RCP} to break the circular reference
+as shown in Listing {}\ref{listing:CircularRCP_A_B_weak}.
 
 
 \begin{listing}: Breaking a simple circular reference using a weak
@@ -5240,14 +5238,14 @@ The object structure set up by the code in listing Listing
 {}\ref{listing:CircularRCP_A_B_weak} is depicted in Figure
 {}\ref{fig:CircularRCP_A_B_weak}.  With the weak pointer in place, all
 of the objects will get destroyed when {}\ttt{ClientA} and
-{}\ttt{ClientB} remove their {}\ttt{RCP} objects, no mater what
-order they remove them.  The critical assumption is that the
-``useful'' lifetime of {}\ttt{a} is a superset of the ``useful''
-lifetime of {}\ttt{b}.  If {}\ttt{a} gets deleted before
-{}\ttt{b}, then {}\ttt{b} had better not try to access
-{}\ttt{a} anymore!  However, the goal is that whoever gets deleted
-first (i.e.\ {}\ttt{clientA} or {}\ttt{clientB}) the objects
-will go away gracefully and not result in memory leaks.
+{}\ttt{ClientB} remove their {}\ttt{RCP} objects, no mater what order
+they remove them.  The critical assumption is that the ``useful''
+lifetime of {}\ttt{a} is a superset of the ``useful'' lifetime of
+{}\ttt{b}.  If {}\ttt{a} gets deleted before {}\ttt{b}, then {}\ttt{b}
+had better not try to access {}\ttt{a} anymore!  However, the goal is
+that whoever gets deleted first (i.e.\ {}\ttt{clientA} or
+{}\ttt{clientB}) the objects {}\ttt{a} and {}\ttt{b} will go away also
+gracefully be deleted and not result in memory leaks.
 
 
 {\bsinglespace
@@ -5264,16 +5262,20 @@ will go away gracefully and not result in memory leaks.
 \end{center}
 \caption{
 \label{fig:CircularRCP_A_B_ClientA}
-Scenario where {}\ttt{ClientA} is deleted first.  }
+Weak pointer scenario where {}\ttt{ClientA} is deleted first  }
 \end{figure}
 \esinglespace}
 
 
-Consider first the scenario where the {}\ttt{clientA} object goes
-away first (i.e.\ {}\ttt{deleteClientAFirst=true}) as shown in
-Figure {}\ref{fig:CircularRCP_A_B_ClientA} (a UML communication
-diagram).  This scencario is shown in two phases in two separate UML
-communication diagrams:
+{}\textbf{ToDo: Finish editing from here!}
+
+
+Consider first the scenario where the {}\ttt{clientA} object goes away
+first (i.e.\ {}\ttt{deleteClientAFirst=true}) as shown in Figure
+{}\ref{fig:CircularRCP_A_B_ClientA} (UML communication diagram).  This
+scencario is shown in two phases in two separate UML communication
+diagrams in Figure {}\ref{fig:CircularRCP_A_B_ClientA} which depicts
+the scenario with the following steps:
 
 \begin{description}
 
@@ -5346,7 +5348,7 @@ communication diagrams:
 \end{center}
 \caption{
 \label{fig:CircularRCP_A_B_ClientB}
-Scenario where {}\ttt{ClientB} is deleted first.  }
+Weak pointer scenario where {}\ttt{ClientB} is deleted first  }
 \end{figure}
 \esinglespace}
 
