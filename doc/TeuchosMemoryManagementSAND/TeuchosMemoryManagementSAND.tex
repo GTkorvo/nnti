@@ -4132,8 +4132,6 @@ by value but not for a reference-type object.  One can see this in how
 single objects are stored and how arrays of objects are declared in
 Table {}\ref{fig:data_member_reference_type}.
 
-{}\textbf{ToDo: Finished editing from here!}
-
 
 %
 {}\subsubsection{Idioms for the specification of formal arguments for
@@ -4174,13 +4172,15 @@ Idioms for passing reference-type objects to C++ functions.}
 
 
 Described here are idioms for the specification of the formal
-arguments for C++ functions that that maximizes compile-time and
-run-time checking, yields near optimal performance, and is highly self
-documenting.  A key component to this specification is that no raw C++
-pointers are used.  Raw pointers are the cause of almost all memory
-usage problems in C++.  Raw C++ references, on the other hand, are
-safe to use as long as the object reference they are being used to
-point to is valid and no persisting association exists.
+arguments for C++ functions that maximize compile-time and debug-mode
+run-time checking, yield near optimal raw pointer performance for
+non-debug-mode builds, and result in highly self-documenting code.  A
+key component to this specification is that no raw C++ pointers are
+used.  Raw pointers are the cause of almost all memory usage problems
+in C++.  Raw C++ references, on the other hand, are safe to use as
+long as the object reference they are being used to point to is valid
+and no persisting association exists (see Section
+{}\ref{sec:raw-C++-references}).
 
 Tables {}\ref{fig:func_args_value_type} and
 {}\ref{fig:func_args_ref_type} give conventions for passing single
@@ -4194,13 +4194,15 @@ means to pass objects of another type (shown as {}\ttt{S} and
 passing in objects and for passing out objects through the formal
 arguments to C++ functions.  Note that value-type objects can always
 be handled using reference semantics so all of the passing conventions
-in Table {}\ref{fig:func_args_ref_type} apply equality well for
-value-type objects as they do for reference-type objects.  However,
-the conventions in Tables {}\ref{fig:func_args_value_type} only apply
-to value-type objects that can be stored in contiguous arrays.
+in Table {}\ref{fig:func_args_ref_type} apply well for value-type
+objects as they do for reference-type objects.  However, the
+conventions in Tables {}\ref{fig:func_args_value_type} only apply to
+value-type objects that can be stored in contiguous arrays.
 
 This specification addresses the five different properties that must
-be considered when passing an object to a function:
+be considered when passing an object to a function as a formal
+function argument (or passing back an object through a formal function
+argument):
 
 \begin{itemize}
 
@@ -4224,13 +4226,14 @@ code in all cases shown in Tables {}\ref{fig:func_args_value_type} and
 {}\ref{fig:func_args_ref_type}.  The specification for whether an
 argument or object is required or optional must be documented in the
 function's interface specification (i.e.\ in a Doxygen documentation
-{}\ttt{param} field).  It has been declared here that, by default, an
-argument will be assumed to be required unless otherwise stated.  The
-only exception for this implicit assumption for non-null objects is
-{}\ttt{const Ptr<const T>\&} for single, non-changeable,
-non-persisting, objects where these always mean that the argument is
-optional.  If such an argument is required, it is specified as
-{}\ttt{const T\&}.
+{}\ttt{param} field).  It is declared here that, by default, an
+argument passed through an {}\ttt{Ptr}, {}\ttt{RCP},
+{}\ttt{ArrayView}, or {}\ttt{ArrayRCP} object will be assumed to be
+required (i.e.\ non-null) unless otherwise stated.  The only exception
+for this implicit assumption for non-null objects is {}\ttt{const
+Ptr<const T>\&} for single, non-changeable, non-persisting, objects
+where these always mean that the argument is optional.  If such an
+argument is required, it is specified as {}\ttt{const T\&}.
 
 An array of value objects is passed as contiguous storage through an
 {}\ttt{ArrayView<S>} or {}\ttt{ArrayView<const S>} object.  An
@@ -4252,8 +4255,10 @@ objects and arrays of objects.  For example, passing an {}\ttt{RCP<T>}
 object into a function to be set to point to a different {}\ttt{A}
 object would be specified in the function prototype as {}\ttt{const
 Ptr<RCP<A> >\&} or {}\ttt{RCP<A>\&} depending on preference (only the
-case {}\ttt{const Ptr<RCP<A> >\&} is shown in the tables).  Note that
-semi-persisting associations are always passed out as {}\ttt{Ptr} and
+case {}\ttt{const Ptr<RCP<A> >\&} is shown in the tables which is a
+better self-documenting form and provides better debug-mode runtime
+since it can detect dangling references).  Note that semi-persisting
+associations are always passed out as {}\ttt{Ptr} and
 {}\ttt{ArrayView} objects.  These types have essentially zero overhead
 in an optimized build but yet have full runtime checking including
 detection and reporting of dangling references in a debug-mode build
@@ -4278,48 +4283,86 @@ changeable required objects, which seems very reasonable.  However,
 other notable authors {}\cite[Section Section 5.5]{stroustrup97} and
 {}\cite[Section 13.2]{CodeComplete2nd04} recommend passing a pointer
 instead, as it provides a visual clue that the object is being
-modified in the function call.  Of course, the specification does not
-allow raw pointers so one must pass a {}\ttt{const Ptr<T>\&} object
-instead.  To consider the issues, for example, from looking at the
-following function call which (if any) argument(s) is being modified?
+modified in the function call.  Of course, the idioms defined here do
+not allow raw pointers so one must pass a {}\ttt{const Ptr<T>\&}
+object instead.  To consider the issues, for example, from looking at
+the function call in Listing {}\ref{listing:fun-call-raw-refs}, which
+(if any) argument(s) are being modified?
 
+
+{}\begin{listing}: Function call using all raw references where it is
+impossible to determine what objects are modified in the call
+\label{listing:fun-call-raw-refs}
 {\small\begin{verbatim}
   someFunction(a, b, c, d);
 \end{verbatim}}
+\end{listing}
 
-To tell for sure, one would have to look at the function prototype:
 
-{\small\begin{verbatim}
-  void someFunction(const A& a, const B& b, const C& c, D& d);
-\end{verbatim}}
-
+To tell for sure which objects are being modified in Listing
+{}\ref{listing:fun-call-raw-refs}, one would have to look at the
+function prototype shown in Listing {}\ref{listing:fun-decl-raw-refs}
 to see that it is the {}\ttt{d} argument is being modified in the
 function call.
 
-Now consider the convention that all changeable arguments be passed in
-through a pointer as {}\ttt{const Ptr<T>\&}, giving the new
-prototype:
 
+{}\begin{listing}: Function prototype where all objects are passesd as
+raw C++ references
+\label{listing:fun-decl-raw-refs}
+{\small\begin{verbatim}
+  void someFunction(const A& a, const B& b, const C& c, D& d);
+\end{verbatim}}
+\end{listing}
+
+
+Now consider the convention that all changeable arguments be passed in
+through a pointer as {}\ttt{const Ptr<T>\&}, giving the new prototype
+shown in Listing {}\ref{listing:fun-decl-ptr-changed-objs}.
+
+
+{}\begin{listing}: Function prototype where modified objects are
+passed through {}\ttt{Ptr} leading to self-documenting client code
+\label{listing:fun-decl-ptr-changed-objs}
 {\small\begin{verbatim}
   void someFunction(const A& a, const B& b, const C& c,
     const Ptr<D>& d );
 \end{verbatim}}
+\end{listing}
 
-Now the function call looks like:
 
+Now the new function call in Listing
+{}\ref{listing:fun-call-ptr-changed-obj} is self-documenting with
+reguards to which object is modified in the function call by using the
+{}\ttt{outArg(...)} templated non-member function that returns a
+{}\ttt{Ptr<T>} object given a raw reference {}\ttt{T\&}.
+
+
+{}\begin{listing}: Self-documenting function call that shows what
+argument is modified in the function call
+\label{listing:fun-call-ptr-changed-obj}
 {\small\begin{verbatim}
   someFunction(a, b, c, outArg(d));
 \end{verbatim}}
+\end{listing}
 
-where {}\ttt{outArg(...)} is a templated non-member function that
-returns a {}\ttt{Ptr<T>} object given a raw reference {}\ttt{T\&}.
-Now the client function call itself is self documenting.  Also, given
-that this specification states that all {}\ttt{Ptr<T>} arguments are
-required to be non-null by default, this specifies that passing an
-argument as {}\ttt{const Ptr<T>\&} has all of the same meaning by
-default that passing {}\ttt{T\&} does.  Of course now one has given up
-a compile-time check for a non-null argument for {}\ttt{T\&} with a
-debug-only runtime check that {}\ttt{const Ptr<T>\&} is non-null.
+
+Also, given that all {}\ttt{Ptr<T>} arguments are assumed to be
+non-null by default, this specifies that passing an argument as
+{}\ttt{const Ptr<T>\&} has all of the same meaning that passing an
+argument by {}\ttt{T\&}.  Of course now one has given up a
+compile-time check for a non-null argument for {}\ttt{T\&} with a
+debug-mode runtime check that {}\ttt{const Ptr<T>\&} is non-null.
+Theoretically, the compile-time check would appear to be far supperior
+but in reality the debug-mode runtime check is usually what happens
+anyway since the raw object reference would typically be created from
+a smart pointer in most cases (which can be null, resulting in a null
+dereference runtime exception in a debug-mode build).  Therefore the
+issue is not whether a compile-time check will catch passing a
+null-object (because it can't) but instead the issues is how soon a
+debug-mode runtime check will catch a dereference of a null smart
+pointer.
+
+% ToDo: Show example code comparing the issues discussed above.
 
 
 %
@@ -4410,7 +4453,15 @@ the refactored function is shown in Listing
 Again, if a persisting association is accedentally created by copying
 the {}\ttt{RCP<B>} object created in Listing
 {}\ref{listing:convert-from-Ptr-to-RCP} then this can be detected in a
-debug-mode build.
+debug-mode build.  (Note that the conversion from {}\ttt{Ptr<B>} to
+{}\ttt{RCP<B>} shown in in Listing
+{}\ref{listing:convert-from-Ptr-to-RCP} actually generates much more
+efficient code in a debug-mode build because dangling-reference
+detection is implemented without having to perform a more expensive
+node lookup as described in Section
+{}\ref{sec:detection-dangling-references}).
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
@@ -5930,8 +5981,8 @@ ones-self lucky if one never needs to use it.
 
 
 %
-{}\subsubsection{General roles and responsibilities: Factories and
-general clients}
+{}\subsection{Persisting association roles and responsibilities for
+factories and general clients}
 %
 
 There are two fundamentally different sets of actors that play two
