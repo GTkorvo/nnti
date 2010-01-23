@@ -3931,8 +3931,6 @@ of important debug-mode runtime checks can be performed which cannot
 be when the object is first allocated on the stack or managed as a
 static object.
 
-{}\textbf{ToDo: Finished editing from here!}
-
 
 %
 {}\subsubsection{General idioms for handling arrays of objects}
@@ -3951,16 +3949,17 @@ an array of value-type objects one would declare:
   Array<S> valTypeArray;
 \end{verbatim}}
 
-In this case, the array holding value-type objects and the value-type
-objects themselves are one in the same.  The same goes for persisting
-and non-persisting views of array of value-type objects represented as
-{}\ttt{ArrayRCP<[const] S>} and {}\ttt{ArrayView<[const] S>},
-respectively.  It is common for numerical programs to create very
-large arrays of value-type objects such as for integers and floating
-point numbers.  Therefore, it is usually important to share these
-arrays and pass them around instead of creating copies.  Because if
-this, it is typical to see {}\ttt{ArrayRCP<[const] S>} being used
-to share large value-type arrays of objects.
+In this case, the storage for the array holding the value-type objects
+and the storage for the value-type objects themselves are one in the
+same.  This is also true for persisting and non-persisting views of
+array of value-type objects represented as {}\ttt{ArrayRCP<[const] S>}
+and {}\ttt{ArrayView<[const] S>}, respectively.  It is common for
+numerical programs to create very large arrays of value-type objects
+of integers and floating point numbers.  Therefore, it is usually
+important to share these arrays and pass them around instead of
+creating copies.  Because if this, it is typical to see
+{}\ttt{ArrayRCP<[const] S>} being used to share large value-type
+arrays of objects.
 
 On the other hand, one cannot generally allocate a contiguous array of
 reference-type objects.  Instead, one has to allocate and use a
@@ -3974,46 +3973,74 @@ declare:
 \end{verbatim}}
 
 Anyone familiar with object-oriented programming in C++ should already
-knows this, but they might be used to allocating and working with
-arrays of raw pointers like {}\ttt{std::vector<T*>}.  This is a really
-bad idea of course which is mentioned in Item 79 ``Store only values
-and smart pointers in containers'' in {}\cite{C++CodingStandards05}.
-In this case, one can think of the array of {}\ttt{RCP} value-type
-objects and the reference-type objects of type {}\ttt{A} themselves to
-be different objects.  For example, one can change what {}\ttt{A}
-object is pointed to in the {}\ttt{RCP<A>} object stored in the
-contiguous array to without changing the {}\ttt{A} object itself such
-as with:
+knows this, but they might be accustomed to allocating and working
+with arrays of raw pointers like {}\ttt{std::vector<T*>}.  This is a
+really bad idea of course which is mentioned in Item 79 ``Store only
+values and smart pointers in containers'' in
+{}\cite{C++CodingStandards05}.  In this case, one can think of the
+storage for the array of {}\ttt{RCP} value-type objects and the
+storage for the reference-type objects of type {}\ttt{A} themselves to
+be different sets of storage.  For example, one can change what
+{}\ttt{A} object is pointed to in the {}\ttt{RCP<A>} object stored in
+the contiguous array to without changing the {}\ttt{A} object itself
+such as in Listing {}\ref{listing:change-array-not-ref-type-objs}:
 
+
+{}\begin{listing}: Code that changes memory in the contiguous array
+but does not touch the memory in the reference-type objects themselves
+\label{listing:change-array-not-ref-type-objs}
 {\small\begin{verbatim}
   void foo(Array<RCP<A> > &refTypeArray, const RCP<A> &someA)
   {
     refTypeArray[0] = someA;
   }
 \end{verbatim}}
+\end{listing}
 
-Likewise, one can change an {}\ttt{A} object itself without disturbing
-the {}\ttt{Array<RCP<A> >} object itself such as with:
 
+Note in Listing {}\ref{listing:change-array-not-ref-type-objs} that
+technically the memory stored in the array (of {}\ttt{RCP<A>} objects)
+was changed but the memory stored in the reference-type objects being
+pointed to where not changed at all.  Likewise, one can change an
+{}\ttt{A} object itself without disturbing the array storage inside of
+the {}\ttt{Array<RCP<A> >} object itself such as shown in Listing
+{}\ref{listing:change-ref-type-objs-not-array}:
+
+
+{}\begin{listing}: Code that changes the memory associated with the
+reference-type objects but does not change the memory of the
+contiguous array at all
+\label{listing:change-ref-type-objs-not-array}
 {\small\begin{verbatim}
   void foo(const Array<RCP<A> > &refTypeArray)
   {
     refTypeArray[0]->someChange();
   }
 \end{verbatim}}
+\end{listing}
 
-As opposed to value-type arrays, one typically does not create large
-arrays of reference-type objects.  As a result, one usually does not
-care to share the array storage of {}\ttt{Ptr} or {}\ttt{RCP} objects
-itself, only the reference-type objects they point to.  Because of
-this, one typically will not see {}\ttt{ArrayRCP<[const] RCP<[const]
-A> >} objects being passed around and stored.  Instead, one would
-typically just pass {}\ttt{ArrayView<[const] RCP<[const] A> >} objects
-and then use this array to create a new {}\ttt{Array<[const]
-RCP<[const] A> >} object to copy the smart pointers.  In general, we
-use arrays of {}\ttt{RCP} objects for representing persisting
-associations and arrays of {}\ttt{Ptr} objects for representing
-non-persisting associations when dealing with reference-type objects.
+
+As opposed to arrays used to store value-type objects (e.g.\
+{}\ttt{int}, {}\ttt{float}, {}\ttt{double},
+{}\ttt{std::complex<double>}, etc.) which can be huge (with millions
+of elements) one typically does not create large arrays of
+reference-type objects.  (Note that creating large arrays of
+reference-type objects would generally imply that the reference-type
+objects are small and cheap and therefore creating a large array of
+{}\ttt{RCP} objects could impart a large storage and runtime overhead
+as described in Section {}\ref{sec:reference-counting-overhead}.)
+Since arrays of reference-type objects tend to be small in well
+designed programs, one usually does not care to share the array
+storage of {}\ttt{Ptr} or {}\ttt{RCP} objects itself, only the
+reference-type objects they point to.  Because of this, one typically
+will not see {}\ttt{ArrayRCP<[const] RCP<[const] A> >} objects being
+passed around and stored.  Instead, one would typically just pass
+{}\ttt{ArrayView<[const] RCP<[const] A> >} objects and then use this
+array to create a new {}\ttt{Array<[const] RCP<[const] A> >} object to
+copy the smart pointers.  In general, we use arrays of {}\ttt{RCP}
+objects for representing persisting associations and arrays of
+{}\ttt{Ptr} objects for representing non-persisting associations when
+dealing with reference-type objects.
 
 
 %
@@ -4026,10 +4053,14 @@ persisting relationship and therefore should have unique ownership or
 use reference counting.  That means that the types {}\ttt{Ptr} and
 {}\ttt{ArrayView} should almost never be used for class object data
 members or local variables (especially not for data members).
-However, local variables of type {}\ttt{Ptr} and
-{}\ttt{ArrayView} will be created in a function when that are
-created off of other {}\ttt{Ptr} and {}\ttt{ArrayView} objects
-(passed through the formal argument list).
+However, local variables of type {}\ttt{Ptr} and {}\ttt{ArrayView}
+will be created in a function when that are created off of other
+{}\ttt{Ptr} and {}\ttt{ArrayView} objects (passed through the formal
+argument list).  The types {}\ttt{Ptr} and {}\ttt{ArrayView} will also
+be used as local varaibles when semi-persisting associations are
+involved (see Section {}\ref{sec:perf-tuning-strategies} for an
+example).
+
 
 \begin{table}
 %
@@ -4048,6 +4079,7 @@ created off of other {}\ttt{Ptr} and {}\ttt{ArrayView} objects
 Idioms for class data member declarations for value-type objects.}
 %
 \end{table}
+
 
 \begin{table}
 %
@@ -4078,23 +4110,29 @@ shows use cases involving reference-type objects.  Every possible use
 case is not shown in these tables, only the most common ones.  There
 is almost no end to the number of different types of data structures
 that can be created by embedding these memory management types in each
-other.  When creating these composite data structures one just needs
-to understand the implications for the selections of the class type
-and the use of const.
+other to address different needs.  When creating these composite data
+structures one just needs to understand the implications for the
+selections of the class types and for the use of const.
 
 It is important to note that an {}\ttt{RCP<S>} data member for a
 value-type object is not shown in Table
 {}\ref{fig:data_member_value_type}.  That is because once one declares
 an {}\ttt{RCP} object pointing to a value-type object, at that point
-one is treating the value-type object with reference Semitics so it
-would be considere to be a reference-type object (which takes one to
-Table {}\ref{fig:data_member_reference_type}).
+one is treating the value-type object with reference semitics so it
+would be considered to be a reference-type object (which takes one to
+Table {}\ref{fig:data_member_reference_type}).  Again, most value-type
+class objects can be treated as reference-types in certain contexts
+(e.g.\ such as when dynamically allocating a large {}\ttt{Array}
+object so it can be shared and avoid expensive deep copy semantics).
 
 Note that there are a few other important differences between the way
 that value-type objects and reference-type objects are handled.  The
 main difference, obviously, is that one can hold a value-type object
 by value but not for a reference-type object.  One can see this in how
-single objects are stored and how arrays of objects are declared.
+single objects are stored and how arrays of objects are declared in
+Table {}\ref{fig:data_member_reference_type}.
+
+{}\textbf{ToDo: Finished editing from here!}
 
 
 %
