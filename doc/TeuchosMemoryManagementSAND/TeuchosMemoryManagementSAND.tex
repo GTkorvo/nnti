@@ -5267,19 +5267,16 @@ Weak pointer scenario where {}\ttt{ClientA} is deleted first  }
 \esinglespace}
 
 
-{}\textbf{ToDo: Finish editing from here!}
-
-
-Consider first the scenario where the {}\ttt{clientA} object goes away
-first (i.e.\ {}\ttt{deleteClientAFirst=true}) as shown in Figure
+Consider the scenario where the {}\ttt{clientA} object goes away first
+(i.e.\ {}\ttt{deleteClientAFirst=true}) depicted in Figure
 {}\ref{fig:CircularRCP_A_B_ClientA} (UML communication diagram).  This
-scencario is shown in two phases in two separate UML communication
-diagrams in Figure {}\ref{fig:CircularRCP_A_B_ClientA} which depicts
-the scenario with the following steps:
+scenario is shown in two phases in two separate UML communication
+diagrams in Figure {}\ref{fig:CircularRCP_A_B_ClientA} with the
+following steps:
 
 \begin{description}
 
-{}\item[a)] {}\ttt{ClientA} is deleted
+{}\item[a)] {}\ttt{ClientA} goes away first
 
   \begin{description}
 
@@ -5297,25 +5294,24 @@ the scenario with the following steps:
   {}\item[a.4)] Since {}\ttt{rcpB1} is a strong pointer, it
   deincrements {}\ttt{nodeB::strongCount} from 2 to 1.  Therefore,
   neither {}\ttt{nodeB} or {}\ttt{b} gets deleted at this point.
-
   NOTE: At this point, the object {}\ttt{a} has been deleted and
-  {}\ttt{nodeA}~s internal pointer has been set to {}\ttt{NULL}.
-  If the {}\ttt{b} object trys to access {}\ttt{a} after this,
-  it will result in an exception being thrown in a debug build.  In a
-  non-debug build, any access of {}\ttt{a} from {}\ttt{b} will
-  result in a segfault.
+  {}\ttt{nodeA}'s internal pointer has been set to {}\ttt{NULL}.  If
+  the {}\ttt{b} object trys to access {}\ttt{a} after this, it will
+  result in an exception being thrown in a debug build.  In a
+  non-debug build, any access of {}\ttt{a} from {}\ttt{b} will result
+  in a segfault.
 
   \end{description}
 
-{}\item[b)] {}\ttt{ClientB} is deleted
+{}\item[b)] {}\ttt{ClientB} goes away second
 
   \begin{description}
 
-  {}\item[b.1)] As {}\ttt{clientB} goes away, it takes
-  {}\ttt{rcpB2} with it.  Since rcpB2 is a strong pointer, it
-  deincrements {}\ttt{nodeB::strongCount} from 1 to 0.  Since
-  {}\ttt{nodeB::strongCount} and {}\ttt{nodeB::weakCount} are
-  both 0 this results in {}\ttt{nodeB} being deleted.
+  {}\item[b.1)] As {}\ttt{clientB} goes away, it takes {}\ttt{rcpB2}
+  with it.  Since {}\ttt{rcpB2} is a strong pointer, it deincrements
+  {}\ttt{nodeB::strongCount} from 1 to 0.  Since
+  {}\ttt{nodeB::strongCount} and {}\ttt{nodeB::weakCount} are both 0
+  this results in {}\ttt{nodeB} being deleted.
 
   {}\item[b.2)] As {}\ttt{nodeB} is being deleted, it deletes the
   {}\ttt{b} object.
@@ -5353,24 +5349,25 @@ Weak pointer scenario where {}\ttt{ClientB} is deleted first  }
 \esinglespace}
 
 
-Now consider the scenario where the {}\ttt{clientB} object goes
-away first (i.e.\ {}\ttt{deleteClientAFirst=false}) depicted in
-Figure {}\ref{fig:CircularRCP_A_B_ClientB}:
+Now consider the scenario where the {}\ttt{clientB} object goes away
+first (i.e.\ {}\ttt{deleteClientAFirst=false}) depicted in Figure
+{}\ref{fig:CircularRCP_A_B_ClientB} which involves the following
+steps:
 
 \begin{description}
 
-{}\item[a)] {}\ttt{ClientB} is deleted
+{}\item[a)] {}\ttt{ClientB} goes away first
 
   \begin{description}
 
   {}\item[a.1)] The {}\ttt{clientB} object goes away first and takes
-  its {}\ttt{RCP} {}\ttt{rcpB2} with it.  This reduces
+  its {}\ttt{RCP} object {}\ttt{rcpB2} with it.  This reduces
   {}\ttt{nodeB::strongCount} from 2 to 1.  No other objects are
   deleted yet.
 
   \end{description}
 
-{}\item[b)] {}\ttt{ClientA} is deleted
+{}\item[b)] {}\ttt{ClientA} goes away second
 
   \begin{description}
 
@@ -5379,7 +5376,7 @@ Figure {}\ref{fig:CircularRCP_A_B_ClientB}:
   {}\ttt{nodeA::weakCount > 0}, the node is not deleted but the
   referenced object {}\ttt{a} is deleted.
 
-  {}\item[b.2)] {}\ttt{a} is deleted.
+  {}\item[b.2)] The object {}\ttt{a} is deleted.
 
   {}\item[b.3)] As {}\ttt{a} is deleted, it deletes its
   {}\ttt{RCP} object {}\ttt{rcpB1}.
@@ -5423,38 +5420,41 @@ reference-counted object.
 With respect the weak pointers, the Teuchos class {}\ttt{RCP} differs
 substantially from the Boost and therefore C++0x standard
 reference-counting classes.  With the class {}\ttt{RCP}, the
-attribution of strong or weak is made at runtime.  At runtime, an
-external client can decide to make {}\ttt{a}'s reference to {}\ttt{b}
-weak or {}\ttt{b}'s reference to {}\ttt{a} weak depending on the given
-circumstance.  With the Boost and C++0x {}\ttt{shared\_ptr} class, one
-has to use a separate class {}\ttt{weak\_ptr} to represent a weak
-pointer.  The problem with the Boost approach then is that one has to
-decide at compile time if a particular reference is going to be weak
-or strong.  While there are some cases where one can always assume the
-reference needs be weak (like in the self-reference case described in
-Section {}\ref{sec:self-references}), there are more complex cases
-where one cannot decide this so easily at compile time.  For example,
-if one were to use the {}\ttt{shared\_ptr} and {}\ttt{weak\_ptr}
-classes, one would have to decide at compile time to make {}\ttt{a}'s
-reference or {}\ttt{b}'s reference weak.  The decision one makes make
-might work for one set of use cases that one currently know about, but
-for more complex use cases not discovered yet, one may need to switch
-it.  In fact, in the same compiled program there may be some use cases
-where {}\ttt{a} will be deleted before {}\ttt{b} and other use cases
-where {}\ttt{b} will be deleted before {}\ttt{a}.  With the classes
-{}\ttt{shared\_ptr} and {}\ttt{weak\_ptr}, this is impossible (at
-least not without storing both smart pointer types in each class
-{}\ttt{A} and {}\ttt{B} object and then using one or the other which
-is not very elegant or efficient).  The only argument for the
-compile-time approach used by Boost and C++0x is performance in both
-speed and memory overhead but the results in Section
-{}\ref{sec:reference-counting-overhead} show that this extra runtime
-overhead is minimal.  Overall, the overhead induced by the flexible
-runtime approach of the {}\ttt{[Array]RCP} classes is well worth the
-minimal extra overhead.  Typically, the classes {}\ttt{[Array]RCP} are
-used to manage objects (or blocks of array data) much larger than what
-is contained in the infrastructure for the {}\ttt{[Array]RCP} objects
-so the additional memory is insignificant.
+attribution of strong or weak is made at runtime.  This allows an
+external client to decide at runtime to make {}\ttt{a}'s reference to
+{}\ttt{b} weak or {}\ttt{b}'s reference to {}\ttt{a} weak depending on
+the given circumstance.  With the Boost and C++0x {}\ttt{shared\_ptr}
+class, one has to use a separate class {}\ttt{weak\_ptr} to represent
+a weak pointer.  The problem with the Boost approach then is that one
+has to decide at compile time if a particular reference is going to be
+weak or strong.  While there are some cases where one can always
+assume the reference needs be weak (like in the self-reference case
+described in Section {}\ref{sec:self-references}), there are more
+complex cases where one cannot decide this so easily at compile time.
+For example, if one were to use the {}\ttt{shared\_ptr} and
+{}\ttt{weak\_ptr} classes, one would have to decide at compile time to
+make {}\ttt{a}'s reference or {}\ttt{b}'s reference weak.  The
+decision one makes make might work for one set of use cases that one
+currently know about, but for more complex use cases not discovered
+yet, one may need to switch it.  In fact, in the same compiled program
+there may be some use cases where {}\ttt{a} will be deleted before
+{}\ttt{b} and other use cases where {}\ttt{b} will be deleted before
+{}\ttt{a}.  With the classes {}\ttt{shared\_ptr} and
+{}\ttt{weak\_ptr}, this is impossible (at least not without storing
+both smart pointer types in each class {}\ttt{A} and {}\ttt{B} object
+and then using one or the other which is not very elegant or
+efficient).  The only argument for the compile-time approach used by
+Boost and C++0x is improved performance in both speed and memory
+overhead but the results in Section
+{}\ref{sec:reference-counting-overhead} show that this extra overhead
+is faily minimal.  Overall, the overhead induced by the flexible
+runtime approach of the {}\ttt{RCP} class (and therefore also the
+{}\ttt{ArrayRCP} class) is well worth this small extra overhead.
+Typically, the classes {}\ttt{RCP} and {}\ttt{ArrayRCP} are used to
+manage objects (or blocks of array data for {}\ttt{ArrayRCP}) much
+larger than what is contained in the infrastructure for the
+reference-counting objects so the additional memory overhead is
+usually insignificant as well.
 
 
 {\bsinglespace
@@ -5471,17 +5471,19 @@ Example of a circular chain involving many objects and many classes.}
 \esinglespace}
 
 
-While this section has focused on a simple example involving a circular
-reference between two classes and to objects, in reality circular
-references typically involve many different objects and classes which
-may be in very distant parts of the code base which makes spotting
-them very difficult.  For example, Figure {}\ref{fig:CircularChain} (a
-UML object diagram) depicts a circular reference involving eight
-objects.  When the external {}\ttt{someClient} object removes its
-{}\ttt{RCP<H>} object, the chain of objects from {}\ttt{a} to
-{}\ttt{h} will not be deleted an will leak memory.  These types of
-chains of circular references can be very difficult to track down and
-that is where the debug-mode runtime node tracing described in Section
+While this section has focused on a simple example involving a
+circular reference between two classes and two objects, in reality
+circular references typically involve many different objects and
+classes which may be in very distant parts of the code base which make
+them very difficult to find by just examining the static code or
+running the code in a debugger.  For example, Figure
+{}\ref{fig:CircularChain} (UML object diagram) depicts a circular
+reference involving eight objects.  When the external
+{}\ttt{someClient} object removes its {}\ttt{RCP<H>} object, the chain
+of objects from {}\ttt{a} to {}\ttt{h} will not be deleted which
+results in a memory leak.  These types of chains of circular
+references can be very difficult to track down and that is where the
+debug-mode runtime node tracing described in Section
 {}\ref{sec:detection-circular-references} comes in most handy.
 
 Section {}\ref{sec:detection-dangling-references} describes how weak
@@ -5489,15 +5491,20 @@ pointers are used in runtime debug checking for dangling
 non-persisting references.  Section {}\ref{sec:self-references}
 describes how weak pointers are used in dealing with object
 self-references.  In summary, the Teuchos reference-counting machinery
-addressing both strong and weak references is a very powerful tool but
-to use it effectively, one needs to understand the basic semantics.
-The good news is that 99\% of the people who use the classes
-{}\ttt{[Array]RCP} will never need to know the difference between a
-strong and weak reference and will by default use just strong
-references.  Weak references will get used under the hood for some
-debug-mode runtime checking but they are totally transparent to client
-code and the programmer.  It is only in cases of circular references
-do typical programmers need to know anything about weak pointers.
+dynamically addresses both strong and weak references and is a very
+powerful tool but to use it effectively, one needs to understand the
+basic semantics for its use.  The good news is that 99\% of the people
+who use the classes {}\ttt{RCP} and {}\ttt{ArrayRCP} will never need
+to know the difference between a strong and weak reference and will by
+default use just strong references.  Weak references will get used
+under the hood for some debug-mode runtime checking but they are
+totally transparent to client code and the programmer.  It is only in
+cases of circular references and with some more advanced idioms and
+design patterns (see Sections {}\ref{sec:self-references} and
+{}\ref{sec:generalized-view-design-pattern} for examples) do typical
+programmers need to know anything about weak pointers.
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
