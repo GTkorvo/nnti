@@ -5751,31 +5751,30 @@ the hood.
 Examples of other types of deallocators are given in the unit test
 suite for the {}\ttt{RCP} class.
 
-{}\textbf{ToDo: Finish editing from here!}
-
 
 %
 {}\subsubsection{Embedded objects}
 \label{sec:embedded-objecs}
 %
 
-Support for customized deallocator policy objects described in Section
-{}\ref{sec:deallocators} turns out to be a pretty flexible feature.
-The ability to embed any arbitrary object in the {}\ttt{RCPNode}
-object gives one an efficient way to define a different deallocation
-policy that is invoked by the destructor on the object instead of
-requiring an explicit deallocation policy object.  In addition, one
-can also tack on any extra data desired and embed it in the underlying
-{}\ttt{RCPNodeImpl} object.  The only restriction is that one has to
-make the choice of what to embed it in the {}\ttt{RCPNode} object when
-the very first {}\ttt{RCP} object is created (which in turn creates
-the concrete templated {}\ttt{RCPNodeImpl} object ).  If one wants the
-flexibility to embed other data in the underlying {}\ttt{RCPNode}
-object after it has been created then the ``extra data'' feature needs
-to used which is described in Section {}\ref{sec:extra-data}.  The
-advantage of embedding objects in the {}\ttt{RCPNodeImpl} object is
-that it can be quite a bit more efficient than using the ``extra
-data'' feature which requires more runtime-support.
+Support for customized template deallocator policy objects described
+in Section {}\ref{sec:deallocators} turns out to be a pretty flexible
+feature.  The ability to embed any arbitrary object in the
+{}\ttt{RCPNode} object gives one an efficient way to define a
+different deallocation policy that is invoked by the destructor on the
+object instead of requiring an explicit deallocation policy object.
+In addition, one can also tack on any extra data desired and embed it
+in the underlying {}\ttt{RCPNodeImpl} object.  The only restriction is
+that one has to make the choice of what to embed it in the
+{}\ttt{RCPNode} object when the very first {}\ttt{RCP} object is
+created (which in turn creates the concrete templated
+{}\ttt{RCPNodeImpl} object ).  If one wants the flexibility to embed
+other data in the underlying {}\ttt{RCPNode} object after it has been
+created then the ``extra data'' feature needs to used which is
+described in Section {}\ref{sec:extra-data}.  The advantage of
+embedding objects in the {}\ttt{RCPNodeImpl} object is that it can be
+quite a bit more efficient than using the ``extra data'' feature which
+requires more runtime-support and greater overhead.
 
 The functions that are used to embed objects when creating
 {}\ttt{RCP} objects and retrieve them again are shown in Listing
@@ -5811,11 +5810,13 @@ The functions that are used to embed objects when creating
 \end{verbatim}}
 \end{listing}
 
+
 The embedded object functions in Listing
-{}\ref{listing:RCP-embedded-obj} simply use a custom templated
-deallocator class shown in Listing
+{}\ref{listing:RCP-embedded-obj} simply use the custom templated
+deallocator class {}\ttt{EmbeddedObjDealloc} shown in Listing
 {}\ref{listing:RCP-EmbeddedObjDealloc} along with the public
 deallocator functions in Listing {}\ref{listing:RCP-dealloc}.
+
 
 \begin{listing}: RCP Decallocator using an embedded object \\
 \label{listing:RCP-EmbeddedObjDealloc}
@@ -5827,21 +5828,17 @@ deallocator functions in Listing {}\ref{listing:RCP-dealloc}.
     typedef typename Dealloc::ptr_t ptr_t;
     EmbeddedObjDealloc(
       const Embedded &embedded, EPrePostDestruction prePostDestroy,
-      Dealloc dealloc, bool hasOwnership )
-      : embedded_(embedded), prePostDestroy_(prePostDestroy), dealloc_(dealloc),
-        hasOwnership_(hasOwnership)
+      Dealloc dealloc
+      ) : embedded_(embedded), prePostDestroy_(prePostDestroy), dealloc_(dealloc)
       {}
     void setObj( const Embedded &embedded ) { embedded_ = embedded; }
     const Embedded& getObj() const { return embedded_; }
     Embedded& getNonconstObj() { return embedded_; }
-    void hasOwnership(bool hasOwnership_in) { hasOwnership_ = hasOwnership_in; }
-    bool hasOwnership() const { return hasOwnership_; }
     void free( T* ptr )
       {
         if (prePostDestroy_ == PRE_DESTROY)
           embedded_ = Embedded();
-        if (hasOwnership_)
-          dealloc_.free(ptr);
+        dealloc_.free(ptr);
         if (prePostDestroy_ == POST_DESTROY)
           embedded_ = Embedded();
       }
@@ -5849,57 +5846,60 @@ deallocator functions in Listing {}\ref{listing:RCP-dealloc}.
     Embedded embedded_;
     EPrePostDestruction prePostDestroy_;
     Dealloc dealloc_;
-    bool hasOwnership_;
     EmbeddedObjDealloc(); // Not defined and not to be called!
   };
 \end{verbatim}}
 \end{listing}
 
+
 The customized deallocator class in Listing
-{}\ref{listing:RCP-EmbeddedObjDealloc} is them templated with
-{}\ttt{DeallocDelete} (see Listing {}\ref{listing:RCP-dealloc}) is set
-by the non-member constructor functions in Listing
+{}\ref{listing:RCP-EmbeddedObjDealloc} is then templated with
+{}\ttt{DeallocDelete} (see Listing {}\ref{listing:RCP-dealloc}) and
+set by the non-member constructor functions in Listing
 {}\ref{listing:RCP-embedded-obj}.  The distiction between pre- and
 post-destroy can be critical depending on how the embedded data is
-used (many examples will be given here).  In most cases, the order the
+used (many examples will be given).  In most cases, the order the
 embedded object is reset to the default value is not important and
 therefore the client would just use {}\ttt{rcpWithEmbeddedObj(...)} to
-set the extra data (in which case it uses post-destruction by
-default).  As shown in Listing {}\ref{listing:RCP-EmbeddedObjDealloc},
-the official ownership of the underlying reference-counted object of
-type {}\ttt{T} that is freed using {}\ttt{dealloc\_} is controlled by
-the {}\ttt{bool} member {}\ttt{hasOwnership\_}.  If ownership of the
-object is given to the embedded object itself, then
-{}\ttt{hasOwnership=false} must be set.
+set the embedded object (in which case it uses post-destruction by
+default).
 
-Typically, the embedded object will be some {}\ttt{RCP} such that
-when the embedded object is default constructed as in
+Typically, the embedded object will be some {}\ttt{RCP} such that when
+the embedded object is assigned to the default state as in
 {}\ttt{embedded\_ = Embedded()} then the destructor on that object
-will be called.  A simple example of embedding an {}\ttt{RCP} that
-controls the memory is shown below:
+will be called (which is what happens when the strong count goes to
+zero with {}\ttt{RCP}).  A simple example of embedding an {}\ttt{RCP}
+that controls the memory is shown in Listing
+{}\ref{listsing:embedded-obj-simple-rcp-clone}:
 
-\begin{listing}: \\
+
+{}\begin{listing}: A simple example of using embedded objects
+\label{listsing:embedded-obj-simple-rcp-clone}
 {\small\begin{verbatim}
   RCP<A> a_ptr1(new A);
   RCP<A> a_ptr2 = rcpWithEmbeddedObj(a_ptr1.getRawPtr(), a_rcp1, false);
 \end{verbatim}}
 \end{listing}
 
-The use case used in the above example looks silly and trivial but it
-is the foundation for several more advanced use cases (see Section
-{}\ref{sec:inverting-obj-ownership} for a related example).  As a
-result of this code, the underlying {}\ttt{A} object will not be
-deleted until the {}\ttt{RCPNodeImpl} object associated with
-{}\ttt{a\_ptr2} (and all of the {}\ttt{RCP} objects created from it)
-is destroyed.  Even the above simple use case can be useful if one
+
+The use case used in Listing
+{}\ref{listsing:embedded-obj-simple-rcp-clone} may look silly and
+trivial but it is the foundation for several more advanced use cases
+(see Section {}\ref{sec:inverting-obj-ownership} for a related
+example).  As a result of this code, the underlying {}\ttt{A} object
+will not be deleted until the {}\ttt{RCPNodeImpl} object associated
+with {}\ttt{a\_ptr2} (and all of the {}\ttt{RCP} objects created from
+it) is destroyed.  Even the above simple use case can be useful if one
 wants to be able to use the reference count on {}\ttt{RCP} objects
 derived from {}\ttt{a\_ptr2} to determine usage of the object by other
-clients.  There are concrete examples of this exact usage in Trilinos
-code.
+clients.  There are concrete examples of this exact simple usage in
+production code.
 
 A more general usage of embedded objects to perform arbitrary actions
 is demonstrated in the context of the ``generalized view'' design
 pattern in Section {}\ref{sec:generalized-view-design-pattern}.
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
