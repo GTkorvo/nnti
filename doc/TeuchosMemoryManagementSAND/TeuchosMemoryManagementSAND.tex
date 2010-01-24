@@ -6110,8 +6110,6 @@ arrays) by accepting and storing {}\ttt{RCP} objects (or
 {}\ttt{ArrayRCP} objects) and then setting them to null when they are
 finished using the object(s).
 
-{}\textbf{ToDo: Finish editing from here!}
-
 
 %
 {}\subsection{Debug-mode runtime checking}
@@ -6119,15 +6117,17 @@ finished using the object(s).
 %
 
 The primary reason that these Teuchos memory management classes need
-to be developed in tandem and know each other's internal
-implementations to some extend is to be able to implement robust and
-effective debug-mode runtime testing.  The debug-mode runtime testing
-that is built into these classes is very strong and will catch nearly
-every type of programmer error that is possible, as long as raw C++
-pointers are never externally exposed and if raw C++ references are
-only used for persisting associations.  The different categories of
-debug-mode runtime testing are described below along with what the
-typical diagnostic error messages look like.
+to be developed in tandem with each other and know each other's
+internal implementations to some extend is to be able to implement
+robust and effective debug-mode runtime testing.  The debug-mode
+runtime testing that is built into these classes is very strong and
+will catch nearly every type of programmer error that is possible, as
+long as raw C++ pointers are never externally exposed and if raw C++
+references are only used for persisting associations.  The different
+categories of debug-mode runtime testing are described in the
+following subsections along with what the typical diagnostic error
+messages look like that are attached to exceptions when they are
+thown.
 
 
 %
@@ -6142,11 +6142,11 @@ dereference a null pointer and range checking of arrays and iterators.
 \begin{listing}: Debug-mode null dereference checking (all types) \\
 \label{listing:null-deref}
 {\small\begin{verbatim}
-  RCP<A> a_ptr;
+  RCP<A> a_ptr;        // Default constructs to null
   A &a_ref = *a_ptr;   // Throws!
   a_ptr->someFunc();   // Throws!
 
-  ArrayRCP<int> aa;
+  ArrayRCP<int> aa;        // Default constructs to null
   a[0];                    // Throws!
   int &i_ref = *a.begin(); // Throws!
 
@@ -6156,8 +6156,8 @@ dereference a null pointer and range checking of arrays and iterators.
 
 All of the Teuchos memory management classes throw on null
 dereferences.  While most systems will abort the program on null
-dereferences there are some platforms (some Intel C++ compilers) that
-will not and it will result in memory errors that may not be seen
+dereferences there are some platforms (e.g.\ some Intel C++ compilers)
+that will not and it will result in memory errors that may not be seen
 until later in the program.
 
 The Teuchos array classes {}\ttt{Array}, {}\ttt{ArrayView},
@@ -6167,7 +6167,7 @@ checking in debug-mode builds:
 \begin{listing}: Debug-mode array-bounds checking (all Teuchos array types) \\
 \label{listing:array-bounds-checking}
 {\small\begin{verbatim}
-  Array a(n);
+  Array<int> a(n);
   a[-1];   // Throws!
   a[n];    // Throws!
 \end{verbatim}}
@@ -6177,23 +6177,45 @@ In a debug-mode build of the code, all the iterators returned by the
 {}\ttt{begin()} and {}\ttt{end()} functions of the classes
 {}\ttt{Array}, {}\ttt{ArrayView}, {}\ttt{ArrayRCP}, and
 {}\ttt{Tuple} are of the type {}\ttt{ArrayRCP} which is a fully
-ranged checked iterator.  For example:
+ranged checked iterator.
 
-\begin{listing}: Debug-mode iterator range checking (all Teuchos array types) \\
+
+{}\begin{listing}: Debug-mode iterator range checking (all Teuchos
+array types)
 \label{listing:iterator-checking}
 {\small\begin{verbatim}
-  Array a(n);
+  Array<int> a(n);
   *(a.begin()-1);           // Throws!
   *(a.begin() + a.size());  // Throws!
   *a.end();                 // Throws!
 \end{verbatim}}
 \end{listing}
 
-This type of checking is fairly straightforward but is extremely
-useful and works on every platform.  This checking is built into
-programs automatically in a debug build of the code.  However, in an
-non-debug build of the code, there is none of this checking to yield
-the fastest code.
+
+In addition, comparisions between iterators will thrown if they do not
+point into the same underlying contiguous array of memory.
+
+
+{}\begin{listing}: Debug-mode iterator matching checking (all Teuchos
+array types)
+\label{listing:iterator-matching-checking}
+{\small\begin{verbatim}
+  ArrayRCP<int> a_arcp = arcp<int>(n);
+  Array<int> a(n);
+  // Simple mistake calling standard STL algorithm
+  std::copy( a.begin(), a_arcp.begin(), a_arcp.end() ); // Throws!
+\end{verbatim}}
+\end{listing}
+
+
+These types of checks are fairly straightforward but are extremely
+useful and work on every platform.  This checking is built into
+programs automatically in a debug-mode build of the code.  Contrast
+this to checked STL implementions that may nor may not exist on a
+given platform and if they do exist, the quality of the
+implementations can vary widely.  Note that in an non-debug build of
+the code, none of these checks are performed which leads to the
+fastest code possible.
 
 
 %
@@ -6203,22 +6225,25 @@ the fastest code.
 
 One of the more sophisticated types of debug-mode runtime checking is
 the detection and reporting of circular {}\ttt{RCP} references that
-results in memory leaks.  The issue of circular references and the
+result in memory leaks.  The issue of circular references and the
 concept of weak pointers was outlined in Section
 {}\ref{sec:circular-references-weak-pointers}.  When debug-mode node
 tracing is enabled, the reference-counting machinery keeps track of
 all the {}\ttt{RCPNode} objects that are created and destroyed.  If
 node tracing is enabled and the program ends and there are one or more
-{}\ttt{RCPNode} objects that are still remaining, then a error
-message is printed to {}\ttt{std::cerr} that gives all the details
-of the objects involved in the cicular reference.
+{}\ttt{RCPNode} objects that are still remaining, then a error message
+is printed to {}\ttt{std::cerr} that gives all the details of the
+objects involved in the cicular reference.
 
-For example, consider the simple circular reference shown in Figure
-{}\ref{fig:CircularRCP_A_B}.  If left this way, if debug-mode node
-tracing is enbled, then the program ends an error message like the
+For example, consider the simple circular reference created in Listing
+{}\ref{listing:CircularRCP_A_B} and shown in Figure
+{}\ref{fig:CircularRCP_A_B}.  If left this way, when debug-mode node
+tracing is enbled, the program ends an error message like the
 following will be printed to {}\ttt{std::cerr}:
 
-\begin{listing}: Example error message for circular references \\
+
+{}\begin{listing}: Example error message printed after a program ends
+when there are unresolved strong circular references
 \label{listing:curcular-ref-error-msg}
 {\small\begin{verbatim}
   ***
@@ -6239,16 +6264,19 @@ following will be printed to {}\ttt{std::cerr}:
 \end{verbatim}}
 \end{listing}
 
+
 This error message is enough information to allow one to open a
 debugger, and set a breakpoint in the function
 {}\ttt{RCPNodeTracer::addNewRCPNode(...)} and then exame where these
 objects are getting created that result in the cicular reference
-(Note: one will need to run the program again in the debugger which
-will produce different pointer addresses).
+(Note: one will need to first run the program again in the debugger
+which will produce different pointer addresses before using the
+addresses to set breakpoints).
 
 Note that in reality, the cicular references will involve many objects
-(sometimes more than a dozen) and therefore this output will contain
-many {}\ttt{RCPNode} objects.
+(sometimes more than a dozen as shown in Figure
+{}\ref{fig:CircularChain}) and therefore this output will contain many
+{}\ttt{RCPNode} objects.
 
 
 %
@@ -6257,7 +6285,7 @@ many {}\ttt{RCPNode} objects.
 %
 
 Another useful and necessary form of debug-mode runtime checking
-involves detection and reporting of access to invalid objects and
+involves the detection and reporting of access to invalid objects and
 arrays made through dangling references.  A dangling reference is a
 catch-all term that refers to any pointer or reference that points to
 a no-longer valid object or array.  For example, the following code
@@ -6341,13 +6369,15 @@ A few other examples of dangling references are shown in Listings
 \end{verbatim}}
 \end{listing}
 
+
 In general, {}\ttt{Ptr}, {}\ttt{ArrayView} and iterators (returned
 from the {}\ttt{begin()} member functions) all can be involved in
 dangling references since they lack support for reference-counting
 machinery in a non-debug build.  Therefore, anytime a {}\ttt{Ptr},
 {}\ttt{ArrayView}, or iterator object is created from some other
 Teuchos memory management object, one can expect that in a debug build
-that dangling references will checked for.
+that dangling references will checked for and if detected will result
+in exceptions being thrown with very good error messages.
 
 Note that the ability to detect a dangling {}\ttt{ArrayView} of an
 {}\ttt{Array} object as shown in Listing
@@ -6355,10 +6385,11 @@ Note that the ability to detect a dangling {}\ttt{ArrayView} of an
 debug-mode internal implementation of {}\ttt{Array} is designed to
 support this.  Compare this to {}\ttt{ArrayView} views of
 {}\ttt{std::vector}, as shown in Listing
-{}\ref{listing:vector-dangling-ArrayView}, here dangling references
+{}\ref{listing:vector-dangling-ArrayView} where dangling references
 can not be detected.
 
-\begin{listing}: Dangling {}\ttt{ArrayView} of {}\ttt{std::vector}
+
+{}\begin{listing}: Dangling {}\ttt{ArrayView} of {}\ttt{std::vector}
 (can not detect dangling references) \\
 \label{listing:vector-dangling-ArrayView}
 {\small\begin{verbatim}
@@ -6371,62 +6402,65 @@ can not be detected.
 \end{verbatim}}
 \end{listing}
 
+
 The code in Listing {}\ref{listing:vector-dangling-ArrayView} will
 most likely segfault if one is lucky.  If unlucky, the program may
 actually appear to run correctly on the main development and testing
 platforms and it will not be until moved to a production platform that
-the ill-effects of this erroneous code will seen.  This is one example
-of why it is so important to use {}\ttt{Array} instead of raw
-{}\ttt{std::vector} objects.  Strong debug-mode runtime checking with
-{}\ttt{Array} object is not possible with {}\ttt{std::vector}.
+the ill-effects of this erroneous code will be seen.  This is one
+example of why it is so important to use {}\ttt{Array} instead of raw
+{}\ttt{std::vector} objects.  Strong debug-mode runtime checking of
+{}\ttt{ArrayView} views are not possible when using
+{}\ttt{std::vector}.
 
 Another type of more sophisitcated debug-mode dangling reference
 detection involves non-owning {}\ttt{RCP} objects to existing
-reference-counted objects.  Consider like shown in Listing
+reference-counted objects.  Consider code like shown in Listing
 {}\ref{listing:RCP-nonowning-dangling-ref}.
 
-\begin{listing}: Example of a dangling non-owning {}\ttt{RCP} object
-(node tracing only) \\
+
+{}\begin{listing}: Example of a dangling non-owning {}\ttt{RCP} object
+detected through node tracing
 \label{listing:RCP-nonowning-dangling-ref}
 {\small\begin{verbatim}
-  RCP<A> a_ptr = createA();
-  A &a_ref = *a_ptr;
-  RCP<A> a_ptr2 = rcpFromRef(a_ref);  // Same as rcp(a_ref.getRawPtr(), false)
-  a_ptr = null;   // The 'A' object gets deleted (a_ptr2 is a dangling pointer)
-  a_ptr2->someFunction();  // Invalid reference to deleted 'A' object (throws)
+  RCP<A> a_rcp = createA();
+  A &a_ref = *a_rcp;
+  RCP<A> a_rcp2 = rcpFromRef(a_ref);  // Same as rcp(a_ref.getRawPtr(), false)
+  a_rcp = null;   // The 'A' object gets deleted (a_rcp2 is a dangling pointer)
+  a_rcp2->someFunction();  // Invalid reference to deleted 'A' object (throws)
 \end{verbatim}}
 \end{listing}
 
+
 In a debug-mode build with node tracing turned on, the dangling
-non-owning {}\ttt{RCP} reference in Listing
+non-owning {}\ttt{RCP} reference {}\ttt{a\_rcp2} in Listing
 {}\ref{listing:RCP-nonowning-dangling-ref} will be caught by the
-system.  This works because the statement
-{}\ttt{rcpFromRef(a\_ref)} results in a call to
-{}\ttt{RCPNodeTracer::getExistingRCPNode(...)} to lookup the
-existing {}\ttt{RCPNode} object that points to the same
-{}\ttt{A} object.  In this case, the existing {}\ttt{RCPNode}
-object is found and it is used to create a weak {}\ttt{RCP} object
-(see Section {}\ref{sec:circular-references-weak-pointers}) that can
-then detect if the original {}\ttt{RCP} object has been deleted.
-Again, this more sophisicated type of debug-mode runtime checking
-requires that node tracing be enabled\footnote{In order to handle
-multiple inheritance and virtual bases classes and still get the
-correct base object address, Boost support must also be configured
-which is needed to use {}\ttt{boost::is\_polymophic} to allow the
-use of {}\ttt{dynamic\_cast<void*>(...)} to determine the true base
-address of an object.  Otherwise, without this, the system will not be
-able to determine if two abstract interfaces really point to the same
-object and therefore the lookup of the {}\ttt{RCPNode} object will
-fail.}.
+system.  This works because the statement {}\ttt{rcpFromRef(a\_ref)}
+results in a call to {}\ttt{RCPNodeTracer::getExistingRCPNode(...)} to
+lookup the existing {}\ttt{RCPNode} object that points to the same
+{}\ttt{A} object.  In this case, the existing {}\ttt{RCPNode} object
+is found and it is used to create a weak {}\ttt{RCP} object (see
+Section {}\ref{sec:circular-references-weak-pointers}) that can then
+detect if the original {}\ttt{RCP} object has been deleted.  Again,
+this more sophisicated type of debug-mode runtime checking requires
+that node tracing be enabled\footnote{In order to handle multiple
+inheritance and virtual bases classes and still get the correct base
+object address, Boost support must also be configured which is needed
+to use {}\ttt{boost::is\_polymophic} to allow the use of
+{}\ttt{dynamic\_cast<void*>(...)} to determine the true base address
+of a polympphic object.  Otherwise, without this, the system will not
+be able to determine if two abstract interfaces really point to the
+same object and therefore the lookup of the {}\ttt{RCPNode} object may
+fail to detect when two addresses are pointing to the same object.}.
 
 Debug-mode runtime detection and reporting of dangling references is
 built on the foundation of weak {}\ttt{RCP} and {}\ttt{ArrayRCP}
-objects.  Basically, all non-perisisting views use a weak
-{}\ttt{RCP} or {}\ttt{ArrayRCP} object (see Section
+objects.  Basically, all non-perisisting views use a weak {}\ttt{RCP}
+or {}\ttt{ArrayRCP} object (see Section
 {}\ref{sec:circular-references-weak-pointers}) internally to allow the
 parent object to be changed or be deleted and to detect this if a
 client tries to access the now invalid object through the dangling
-reference view.
+reference.
 
 
 %
@@ -6449,14 +6483,16 @@ Example of duplicate owning {}\ttt{RCPNodeImpl} objects}
 
 There are other types of invalid usage that can be detected and caught
 in debug-mode with node tracing enabled.  Consider, for example, what
-happens when one or more of the commandments are broken and more than
-one owning {}\ttt{RCPNode} object exists pointing to the same
-underlying {}\ttt{ConcreteT} object as shown if Figure
-{}\ref{fig:RCPEx2}.  This type of structure can be generated with the
-sloppy code shown in Listing {}\ref{listing:duplicate_owning_rcp}.
+happens when one or more of the commandments in Appendix
+{}\ref{apdx:commandments} are broken and more than one owning
+{}\ttt{RCPNode} object is created pointing to the same underlying
+{}\ttt{ConcreteT} object as shown in Figure {}\ref{fig:RCPEx2}
+generated by the sloppy code shown in Listing
+{}\ref{listing:duplicate_owning_rcp}.
+
 
 {}\begin{listing}: Invalid creation of dual owning {}\ttt{RCPNodeImpl}
-objects
+objects (shown in Figure {}\ref{fig:RCPEx2})
 \label{listing:duplicate_owning_rcp}
 {\small\begin{verbatim}
   C *c_raw_ptr = new C;
@@ -6468,24 +6504,26 @@ objects
 \end{verbatim}}
 \end{listing}
 
-The problem is that the two {}\ttt{RCPNodeImpl} objects shown in
-Figure {}\ref{fig:RCPEx2} generated by Listing
-{}\ref{listing:duplicate_owning_rcp} do not know about each other and
-the first one who has its strong reference count go to zero will
-result in the underlying {}\ttt{C} object being deleted.  In this
-case, the other remaining {}\ttt{RCPNodeImpl<A>} object, and all of
-the resulting {}\ttt{RCP} objects pointing to it will be left with a
-non-null pointer to a now deleted {}\ttt{C} object.  If the client
-tries to access the underlying object through one of these now invalid
+
+The problem is that the two {}\ttt{RCPNodeImpl} objects generated by
+Listing {}\ref{listing:duplicate_owning_rcp} (shown in Figure
+{}\ref{fig:RCPEx2}) do not know about each other and the first one who
+has its strong reference count go to zero will result in the
+underlying {}\ttt{C} object being deleted.  In this case, the other
+remaining {}\ttt{RCPNodeImpl<A>} object, and all of the resulting
+{}\ttt{RCP} objects pointing to it will be left with a non-null
+pointer to a now deleted {}\ttt{C} object.  If the client tries to
+access the underlying object through one of these now invalid
 references, it will likely result in a segfault (if one is lucky).
-Or, if unlucky, the program might seem to work okay on the platform we
-are currently testing on but will eventually explode at the worst
-possible time.
+Or, if unlucky, the program might seem to work okay on the current
+platform on but will eventually explode (and at the worst possible
+time according to Murphy's Law).
 
 Not to fear, in a debug-mode build with node tracing enabled, the
 {}\ttt{RCPNodeTracing} object automatically detects the creation of
 the second owning {}\ttt{RCPNodeImpl<A>} object and will thrown an
 exception with an error message that looks something like:
+
 
 {\small\begin{verbatim}
   Trilinos/packages/teuchos/src/Teuchos_RCPNode.cpp:240:
@@ -6510,10 +6548,11 @@ exception with an error message that looks something like:
   or an equivalent function.
 \end{verbatim}}
 
+
 A debugger can be opened, a breakpoint can be set in the function
-{}\ttt{TestForException\_break(...)}, and the program can be run
-again to see the context under which the second illegal
-{}\ttt{RCPNodeImpl} is created.
+{}\ttt{TestForException\_break(...)}, and the program can be run again
+and break at the time the exception is thrown to see the context under
+which the second illegal {}\ttt{RCPNodeImpl} is created.
 
 If one is willing to pay for a little extra overhead of
 {}\ttt{RCPNode} tracing (see Section
@@ -6522,7 +6561,12 @@ overhead), then node tracing will detect the erroneous creation of
 multiple owning {}\ttt{RCPNode} objects and respond in a graceful way.
 Note that creating multiple {}\underline{non-owning} {}\ttt{RCPNode}
 objects is just fine and is allowed both when node tracing is enabled
-and when it is not enabled.
+and when it is not enabled (however, see Commandment
+{}\ref{cmnd:owning-rcp-first} in Appendix {}\ref{apdx:commandments}
+for restructions on the creation of owning and non-owning {}\ttt{RCP}
+objects).
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
