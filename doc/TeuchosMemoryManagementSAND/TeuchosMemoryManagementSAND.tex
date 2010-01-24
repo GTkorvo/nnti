@@ -7758,10 +7758,9 @@ wrapping a complex {}\ttt{A} object \\
 \end{verbatim}}
 \end{listing}
 
-Up to now, this is pretty standard code.  The client would typically
-hold an {}\ttt{RCP<B>} object to the {}\ttt{B} object and would
-manage the lifetime of the {}\ttt{A} object implicitly wrapped in
-the {}\ttt{B} object.
+Up to now, this is pretty standard code.  The client would typically hold an
+{}\ttt{RCP<B>} object and would manage the lifetime of the {}\ttt{A} object
+implicitly wrapped in the {}\ttt{B} object.
 
 However, now consider a rare use case where a client may only want to
 deal directly with the {}\ttt{A} object but still maintain the
@@ -7796,7 +7795,7 @@ object ownership'' idiom \\
   {
     using std::make_pair;
     typedef std::pair<RCP<T>, RCP<ParentT> > Pair_t;
-    return rcpWithEmbeddedObj(child.getRawPtr(), make_pair(child, parent), false);
+    return rcpWithEmbeddedObj(child.getRawPtr(), Pair_t(child, parent), false);
   }
 \end{verbatim}}
 \end{listing}
@@ -7807,21 +7806,19 @@ object ownership'' idiom \\
 
 Without going into a lot of detail, what the code in Listings
 {}\ref{listing:A_owns_B_owns_A} and
-{}\ref{listing:rcpWithInvertedObjOwnership} accomplishes is that it
-defines a new {}\ttt{RCP<A>} object with a new {}\ttt{RCPNode} object
-that uses the other existing {}\ttt{RCP<A>} and {}\ttt{RCP<B>} objects
-to define ownership and ensure that the underlying {}\ttt{A} object
-and {}\ttt{B} do not go away until the last {}\ttt{RCP<A>} object
-copied from the object returned by the function
-{}\ttt{createAFactory(...)} has gone away.  The reason that
-{}\ttt{false} is passed into the {}\ttt{rcpWithEmbeddedObj(...)} is
-because it is the embedded objects {}\ttt{RCP<A>} and {}\ttt{RCP<B>}
-that define the deallocation and not the default behavior which calls
-{}\ttt{delete}.  The reason that both {}\ttt{RCP<A>} and
-{}\ttt{RCP<B>} are passed as an embedded object (stored in an
-{}\ttt{std::pair} object) is that one needs to make sure the {}\ttt{A}
-object does not get deleted in case some client calls the
-{}\ttt{B::unsetA()} function.
+{}\ref{listing:rcpWithInvertedObjOwnership} accomplishes is that it defines a
+new {}\ttt{RCP<A>} object with a new {}\ttt{RCPNode} object that uses the
+other existing {}\ttt{RCP<A>} and {}\ttt{RCP<B>} objects to define ownership
+and ensure that the underlying {}\ttt{A} and {}\ttt{B} objects do not go away
+until the last {}\ttt{RCP<A>} object copied from the object returned by the
+function {}\ttt{createAFactory(...)} has gone away.  The reason that
+{}\ttt{false} is passed into the {}\ttt{rcpWithEmbeddedObj(...)} call is
+because it is the embedded objects {}\ttt{RCP<A>} and {}\ttt{RCP<B>} that
+define the deallocation and not the embedded deallocator which calls
+{}\ttt{delete}.  The reason that both {}\ttt{RCP<A>} and {}\ttt{RCP<B>} are
+passed as an embedded object (stored in an {}\ttt{std::pair} object) is that
+one needs to make sure the {}\ttt{A} object does not get deleted in case some
+client calls the {}\ttt{B::unsetA()} function.
 
 Given this data-structure, another piece of code can then extract the
 underlying {}\ttt{RCP<B>} object as shown in Listing
@@ -7855,19 +7852,12 @@ Listing {}\ref{listing:getInvertedObjOwnershipParent}.
 \end{listing}
 
 
-That is all there is to it.  Now this is not the sort of thing that
-one wants to expose to general clients but it can be very handy to
-have this type of flexibility when implementing the guts of library
-code.  Note that the function {}\ttt{createAFactory(...)} in Listing
-{}\ref{listing:A_owns_B_owns_A} has to expose a raw C++ pointer but it
-does so only in a single statement and therefore is not to serious a
-violation of the idioms defined in this paper.  This would be consider
-specialized low level code and is not recommended unless it is
-absolutely necessary.
-
-However, The example shown above just shows the flexibility of these
-memory management classes and what some of the possibilities if one
-understands the underlying reference-counting machinery a little.
+That is all there is to it.  This is not the sort of thing that one wants to
+expose to general clients but it can be very handy to have this type of
+flexibility when implementing the guts of library code.  The example shown
+above just shows the flexibility of these memory management classes and what
+some of the possibilities are if one understands the underlying
+reference-counting machinery a little.
 
 
 %
@@ -7877,11 +7867,10 @@ initialization idioms}
 %
 
 The ``separate construction and initialization'' and ``just-in-time
-initialization'' idioms described here are not specific to the use of
-the Teuchos memory management classes but it does provide the basic
-foundation for the next idiom described, the ``object self-reference''
-idiom.  The set up the context for the discussion, consider a typical
-design for a class shown in Listing
+initialization'' idioms described here are not specific to the use of the
+Teuchos memory management classes but they do provide the basic foundation for
+the next idiom described, the ``object self-reference'' idiom.  To set up the
+context for the discussion, consider a typical class design shown in Listing
 {}\ref{listing:sci:SomeClass-before}.
 
 
@@ -7890,6 +7879,12 @@ initialization  \\
 \label{listing:sci:SomeClass-before}
 {\small\begin{verbatim}
   class SomeClass : public SomeBaseClass {
+    int member1_;
+    double member2_;
+    RCP<A> a_;
+    RCP<B> b_;
+    RCP<C> c_;
+    void finalInitialization() { ...} // Can't call virtual functions on SomeBaseClass
   public:
     SomeClass(): member1_(1), member2_(5.0) {}
     SomeClass(const RCP<A> &a) : member1_(1), member2_(5.0), a_(a)
@@ -7904,13 +7899,6 @@ initialization  \\
     RCP<B> get_B() { return b_; }
     RCP<C> get_C() { return c_; }
     void doSomeOperation(...) {}
-  private:
-    int member1_;
-    double member2_;
-    RCP<A> a_;
-    RCP<B> b_;
-    RCP<C> c_;
-    void finalInitialization() { ...} // Can't call virtual functions on SomeBaseClass
   };
 
 \end{verbatim}}
@@ -7918,52 +7906,48 @@ initialization  \\
 
 
 So what is wrong with the design of {}\ttt{SomeClass} in Listing
-{}\ref{listing:sci:SomeClass-before}?  First, there is the duplication
-of default values for {}\ttt{member1\_}, {}\ttt{member2\_} in all of
-the constructors.  This makes it labor intensive and error-prone to
-change the values later.  Yes, one could create static constants of
-some type to be reused in all the constructor initialization lists but
-one still has to list all of these arguments in every
-constructor\footnote{The C++0x will address the problem of duplicate
-constructor initialization lists by allowing constructors to call each
-other but we will not see such a feature in wide spread use until many
-years after the C++0x standard is finalized.}.
+{}\ref{listing:sci:SomeClass-before}?  First, there is the duplication of
+default values for {}\ttt{member1\_}, {}\ttt{member2\_} in all of the
+constructors.  This makes it labor intensive and error-prone to change the
+values later.  Yes, one could create static constants of some type to be
+reused in all the constructor initialization lists but one still has to list
+all of these arguments in every constructor\footnote{The new C++0x standard
+will address the problem of duplicate constructor initialization lists by
+allowing constructors to call each other but we will not see such a feature in
+wide spread use until many years after the C++0x standard is finalized.}.
 
 The second problem with the class {}\ttt{SomeClass} that it can not
 call any virtual functions in the base class {}\ttt{SomeBaseClass} to
 help initialize its state in the constructors {}\cite[Item
 49]{C++CodingStandards05}.
 
-The third problem with the design of {}\ttt{SomeClass} shown in
-Listing {}\ref{listing:sci:SomeClass-before} is that the {}\ttt{C}
-object that is created in the thrid constructor that takes
-{}\ttt{A} and {}\ttt{B} objects is not properly setting up a
-persisting relationship between the {}\ttt{C} object and the
-{}\ttt{SomeClass} object.  When this {}\ttt{C} object is exposed
-through the {}\ttt{get\_C()} member function, this sets up a
-dangerous situration where the {}\ttt{SomeClass} object may be
-deleted leaving a client with a dangling {}\ttt{RCP<C>} object with
-no way for the reference-counting machinery described in Section
-{}\ref{sec:reference-counting-machinary} do detect the the problem.
-This issue will be discussed more in the context of the ``object
-self-reference'' idiom in Section {}\ref{sec:self-references}.
+The third problem with the design of {}\ttt{SomeClass} shown in Listing
+{}\ref{listing:sci:SomeClass-before} is that the {}\ttt{C} object that is
+created in the thrid constructor that takes {}\ttt{A} and {}\ttt{B} objects is
+not properly setting up a persisting relationship between the {}\ttt{C} object
+and the {}\ttt{SomeClass} object.  When this {}\ttt{C} object is exposed
+through the {}\ttt{get\_C()} member function, this creates a dangerous
+situration where the {}\ttt{SomeClass} object may be deleted leaving a client
+with a dangling {}\ttt{RCP<C>} object with no way for the reference-counting
+machinery described in Section {}\ref{sec:reference-counting-machinary} do
+detect the the problem.  This issue will be discussed more in the context of
+the ``object self-reference'' idiom in Section {}\ref{sec:self-references}.
 
-Lastly, the class {}\ttt{SomeClass} is inflexible in that it
-requires the client creating the {}\ttt{SomeClass} object to know
-the concrete types of {}\ttt{A} and or {}\ttt{B} (which could be
-abstract interfaces in this example) right when the
-{}\ttt{SomeClass} object is first created.  This creates a
-three-way coupling of the client with a) defining the time when the
-{}\ttt{SomeClass} object is first created, b) needing fully
-constructed {}\ttt{A} and {}\ttt{B} objects right when
-{}\ttt{SomeClass} is first created.  In complex programs, it is
-very hard to and very constraining have to fully initialized a web
-interconnected objects before constructing the downstream objects.
+Lastly, the class {}\ttt{SomeClass} is inflexible in that it requires the
+client creating the {}\ttt{SomeClass} object to know the concrete types of
+{}\ttt{A} and or {}\ttt{B} (which could be abstract interfaces in this
+example) right when the {}\ttt{SomeClass} object is first created.  This
+creates a three-way coupling between a) the client, with b) defining the time
+when the {}\ttt{SomeClass} object is first created, and c) needing fully
+constructed {}\ttt{A} and {}\ttt{B} objects right when {}\ttt{SomeClass} is
+first created.  In complex programs, it is very hard and very constraining to
+have to fully initialize a web interconnected objects before constructing
+downstream objects.
 
 Without further ado, the use of the ``separate construction and
-initialization'' idiom applied to {}\ttt{SomeClass} shown in
-Listing {}\ref{listing:sci:SomeClass-before} gives the new refactored
-class in Listing {}\ref{listing:sci:SomeClass-refactored}.
+initialization'' and ``just-in-time initialization'' idioms applied to
+{}\ttt{SomeClass} shown in Listing {}\ref{listing:sci:SomeClass-before} gives
+the new refactored class in Listing {}\ref{listing:sci:SomeClass-refactored}.
 
 
 \begin{listing}: Example of the use of the ``separate construction and
@@ -7978,7 +7962,7 @@ initialization'' and ``just-in-time initialization'' idioms  \\
     RCP<A> get_A() { return a_; }
     RCP<B> get_B() { return b_; }
     RCP<C> get_C() { justInTimeInitialization(); return c_; }
-    void uninitialize() { a_ = null, b_ = null; c_ = null; }
+    void uninitialize() { a_ = null, b_ = null; c_ = null; isIntialized_=false; }
     void doSomeOperation(...)
       {
         justInTimeInitialization();
@@ -8015,18 +7999,16 @@ initialization'' and ``just-in-time initialization'' idioms  \\
 \end{listing}
 
 
-Side Note: Before describing the specific advantages of the refactored
-class in Listing {}\ref{listing:sci:SomeClass-refactored}, first
-note that the issue of the creation of the {}\ttt{C} object and
-dangling references of {}\ttt{c\_} returned from
-{}\ttt{get\_C()} have not been addressesd in this design.  That
-issue will be addressed with the ``object self-reference'' idiom
-described in Section {}\ref{sec:self-references}.
+SIDE NOTE: Before describing the specific advantages of the refactored class
+in Listing {}\ref{listing:sci:SomeClass-refactored}, first note that the issue
+of the creation of the {}\ttt{C} object and dangling references of {}\ttt{c\_}
+returned from {}\ttt{get\_C()} have not been addressesd in this design.  That
+issue will be addressed with the ``object self-reference'' idiom described in
+Section {}\ref{sec:self-references}.
 
-Now, some of the specific advantages of the usage of the ``separate
-construction and initailization'' idiom as applied to the design of
-{}\ttt{SomeClass} shown in Listing
-{}\ref{listing:sci:SomeClass-refactored} are described below.
+Some of the specific advantages of the usage of the ``separate construction
+and initailization'' idiom as applied to the design of {}\ttt{SomeClass} shown
+in Listing {}\ref{listing:sci:SomeClass-refactored} are described below.
 
 a) The default values for {}\ttt{member1\_} and
 {}\ttt{member2\_} are defined in only one constructor
@@ -8045,45 +8027,41 @@ the code by different clients.  This breaks a fundamental dependency
 which couples these objects and the clients together and can massively
 simplify the structure of complex programs.
 
-d) The ``separate construction and initialization'' idiom naturally
-leads to the ``just-in-time initialization'' idiom where the
-{}\ttt{justInTimeInitialization()} function is not called until the
-functions {}\ttt{doSomeOperation(...)} or {}\ttt{get\_C()} are
-called by a client.  This allows the objects {}\ttt{a} and/or
-{}\ttt{b} to be passed into the functions {}\ttt{set\_A(...)} 
-and {}\ttt{set\_B(...)} in a partially-initialized state.  These
-objects do not need to be fully initialized until the
-{}\ttt{doSomeOperation(...)} or {}\ttt{get\_C()} functions are
-called.  This can massively simplify and robustify the design of
-complex problems by separating code that creates the links between
-objects and the code that fully initializes the objects.  This avoids
-the constraints of needing to use a factory object to create fully
-initialized ``aggregate'' objects as described in
-{}\cite{DomainDrivenDesign}.
+d) The ``separate construction and initialization'' idiom naturally leads to
+the ``just-in-time initialization'' idiom where the
+{}\ttt{justInTimeInitialization()} function is not called until the functions
+{}\ttt{doSomeOperation(...)} or {}\ttt{get\_C()} are called by a client.  This
+allows the objects {}\ttt{a} and/or {}\ttt{b} to be passed into the functions
+{}\ttt{set\_A(...)}  and {}\ttt{set\_B(...)} in a partially-initialized state.
+These objects do not need to be fully initialized until the
+{}\ttt{doSomeOperation(...)} or {}\ttt{get\_C()} functions are called.  This
+can massively simplify and robustify the design of complex programs by
+separating code that creates the links between objects from the code that
+fully initializes the objects.  This avoids the constraints of needing to use
+a factory object to create fully initialized ``aggregate'' objects described
+in {}\cite{DomainDrivenDesign}.
 
-e) An object of type {}\ttt{SomeClass} is not any harder to create
-since the non-member constructor functions allow the object to be
+e) An object of type {}\ttt{SomeClass} is not any harder for a client to
+create because the non-member constructor functions allow the object to be
 constructed in a single function call (see Section
-{}\ref{sec:nonmember-constructor-idiom}).
+{}\ref{sec:nonmember-constructor-idiom}) for all the usage cases given in the
+orginal class constructor design.
 
-The only real disadvantage of the ``separate construction and
-initialization'' idiom is some small decrease in performance in using
-assignment instead of member initialization lists.  However, this type
-of low-level perforamnce is almost never an issue in higher-level
-classes like {}\ttt{SomeClass} shown in Listing
-{}\ref{listing:sci:SomeClass-refactored}.  Most classes in a complex
-program are higher-level classes where low-level perforamnce
-considerations like this are not an issue so the the ``separate
-construction and initialization'' idiom is applicable in more cases
-than not.
+The only real disadvantage of the ``separate construction and initialization''
+idiom is some small decrease in performance in using assignment instead of
+member initialization lists.  However, this type of low-level perforamnce is
+almost never an issue in higher-level classes like {}\ttt{SomeClass} shown in
+Listing {}\ref{listing:sci:SomeClass-refactored}.  Most classes in a complex
+program are higher-level classes where low-level performance considerations
+like this are not an issue so the the ``separate construction and
+initialization'' idiom is applicable in more cases than not.
 
-The main disadvantage of the ``just-in-time initialization'' idiom is
-the need to have a call to a function like
-{}\ttt{justInTimeInitialization()} in every operation that requires the
-object to be fully initialized.  This is minor programming
-inconvenience and a minor perforamnce overhead.  The more significant
-disadvantage is that more unit testing is needed to test the behavior
-of the user functions for when the object is not ready to be fully
+The main disadvantage of the ``just-in-time initialization'' idiom is the need
+to have a call the function {}\ttt{justInTimeInitialization()} in every
+operation that requires the object to be fully initialized.  This is minor
+programming inconvenience and a minor perforamnce overhead.  The more
+significant disadvantage is that more unit testing is needed to test the
+behavior of the user functions for when the object is not ready to be fully
 initialized.  However, good class design makes this fairly easy.
 
 
