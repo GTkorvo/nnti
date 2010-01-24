@@ -5899,8 +5899,6 @@ A more general usage of embedded objects to perform arbitrary actions
 is demonstrated in the context of the ``generalized view'' design
 pattern in Section {}\ref{sec:generalized-view-design-pattern}.
 
-{}\textbf{ToDo: Finish editing from here!}
-
 
 %
 {}\subsubsection{Extra data}
@@ -5937,16 +5935,16 @@ shown in Listing {}\ref{listing:RCP-extra-data} (the functions for
 \end{verbatim}}
 \end{listing}
 
-Given the support for embedded objects as described in Section
+Given the support for embedded objects described in Section
 {}\ref{sec:embedded-objecs}, extra data rarely needs to be used.
-Embedding and retrieving objects in the templated
-{}\ttt{RCPNodeImpl} object is more efficient that using the more
-general {}\ttt{std::map} object and {}\ttt{any} wrapper that are
-used to implement the ``extra data'' feature and therefore embedded
-objects should be used whenever possible instead of extra data.
-However, there are a few advantages to using extra data over embedded
-objects that may be worth the performance overhead or extra data may
-be the only way to address an issue:
+Embedding and retrieving objects in the templated {}\ttt{RCPNodeImpl}
+object is more efficient that using the more general {}\ttt{std::map}
+object and {}\ttt{any} wrapper that are used to implement the ``extra
+data'' feature and therefore embedded objects should be used whenever
+possible instead of extra data.  However, there are a few advantages
+to using extra data over embedded objects that may be worth the
+performance overhead or extra data may be the only way to address an
+issue and some examples include:
 
 \begin{itemize}
 
@@ -5958,7 +5956,7 @@ is created.
 {}\item\textit{One can retrieve data without having to know the
 concrete template types in the {}\ttt{RCPNodeImpl} object.}  With
 extra data, one only needs to know the string name and the type of the
-extra data that needs to be retrieve.  With embedded objects, the
+extra data that needs to be retrieved.  With embedded objects, the
 origianl type of the underling reference-counted object that is used
 to template the {}\ttt{RCPNodeImpl} class also needs to be known.  If
 this type changes (i.e.\ if the creating code changes the subclass
@@ -5990,9 +5988,9 @@ the wrong deallocation policy to an allocated object shown in Listing
 \end{verbatim}}
 \end{listing}
 
-Hopefully no-one would write code like is shown in Listing
+Hopefully no one would write code like is shown in Listing
 {}\ref{listing:createRCPWithBadDealloc}.  However, let's suppose that
-one as to use the function {}\ttt{createRCPWithBadDealloc()} to
+one has to use the function {}\ttt{createRCPWithBadDealloc()} to
 allocate {}\ttt{A} objects and are stuck with a pre-compiled library
 and one cannot access the soruce code to fix the problem.  On most
 systems an error like this will be tolerated and not cause problems
@@ -6006,30 +6004,30 @@ create a class that will call {}\ttt{delete []} on the pointer
 correctly as shown in Listing
 {}\ref{listing:DeallocArrayDeleteExtraData}.
 
+
 \begin{listing}: Dealllocator class for extra data deallocation \\
 \label{listing:DeallocArrayDeleteExtraData}
 {\small\begin{verbatim}
   template<typename T>
   class DeallocArrayDeleteExtraData {
   public:
-    static RCP<DeallocArrayDeleteExtraData<T> > create(T *ptr)
+    static RCP<DeallocArrayDeleteExtraData<T> > create(const Ptr<T> &ptr)
       { return rcp(new DeallocArrayDeleteExtraData(ptr)); }
-    ~DeallocArrayDeleteExtraData() { delete [] ptr_; }
+    ~DeallocArrayDeleteExtraData() { delete [] ptr_.getRawPtr(); }
   private:
-    T *ptr_;
-    DeallocArrayDeleteExtraData(T *ptr) : ptr_(ptr) {}
-    // Not defined!
-    DeallocArrayDeleteExtraData();
-    DeallocArrayDeleteExtraData(const DeallocArrayDeleteExtraData&);
-    DeallocArrayDeleteExtraData& operator=(const DeallocArrayDeleteExtraData&);
+    Ptr<T> ptr_;
+    DeallocArrayDeleteExtraData(const Ptr<T> &ptr) : ptr_(ptr) {}
   };
 \end{verbatim}}
 \end{listing}
 
+
 The client code can then fix the deallocation policy as shown in
 Listing {}\ref{listing:using-DeallocArrayDeleteExtraData}.
 
-\begin{listing}: Using {}\ttt{DeallocArrayDeleteExtraData} as extra data \\
+
+{}\begin{listing}: Using {}\ttt{DeallocArrayDeleteExtraData} as extra
+data to fix deallocation policy
 \label{listing:using-DeallocArrayDeleteExtraData}
 {\small\begin{verbatim}
   // Create object with bad deallocator
@@ -6037,75 +6035,82 @@ Listing {}\ref{listing:using-DeallocArrayDeleteExtraData}.
 
   // Disable default (incorrect) dealloc and set a new deallocation policy as extra data!
   a.release();
-  set_extra_data( DeallocArrayDeleteExtraData<A>::create(a.getRawPtr()), "dealloc",
+  set_extra_data( DeallocArrayDeleteExtraData<A>::create(a.ptr()), "dealloc",
     inOutArg(a));
 \end{verbatim}}
 \end{listing}
 
+
 The kind of flexibility shown in the above example is not possible
-with using embedded objects and is not possible with classes like
+using embedded objects and is not possible with classes like
 {}\ttt{boost:shared\_ptr}.  There are numerous other uses for extra
 data to fix nasty memory management problems.  However, in well
-designed software, there is no need for a feature like this so count
-ones-self lucky if one never needs to use it.
+designed software, there is no need for a feature like this so a
+developer should count themselves lucky if they never need to use the
+extra data feature.
 
 
 %
 {}\subsection{Roles and responsibilities for persisting associations:
-factories and general clients}
+factories and clients}
 %
 
 There are two fundamentally different sets of actors that play two
 different roles in the use of the reference-counted classes used for
 persisting associations: a) factory entities that first create the
-reference-counted object {}\ttt{RCP<A>}, and b) general clients that
-accept and use a shared reference-counted object {}\ttt{A} through a
-passed-in reference-counted class object of type {}\ttt{RCP<A>}.
+reference-counted object {}\ttt{RCP<A>} which define the deallocation
+policy, and b) general clients that accept and use a shared
+reference-counted object {}\ttt{A} through a passed-in
+reference-counted class object of type {}\ttt{RCP<A>}.
 
-Factory entities first create the reference-counted object/array
-and/or construct the first {}\ttt{[Array]RCP} object containing it.
-The most basic type of factory are the non-member constructor
-functions described in Section
-{}\ref{sec:nonmember-constructor-idiom}.  When the first
-{}\ttt{[Array]RCP object} is created, the factory gets to decide
-exactly how object/array will be released when the last reference
-count goes to zero.  The default, of course, is to just simply call
-{}\ttt{delete} or {}\ttt{delete []} on the contained raw pointer
-which is the default behavior.  However, the factory can also choose
-any arbitrary action imaginable to occur when the reference-count goes
-to zero.  This is set up using a template deallocator policy object as
-described in Section {}\ref{sec:deallocators}.
+Factory entities first create the reference-counted object (or array)
+and construct the first {}\ttt{RCP} (or {}\ttt{ArrayRCP}) object
+containing it.  The most basic type of factories are the non-member
+constructor functions described in Section
+{}\ref{sec:nonmember-constructor-idiom}.  When the first {}\ttt{RCP}
+object is created, the factory gets to decide exactly how object (or
+array) will be released when the strong reference count goes to zero.
+The default behavior, of course, is to just simply call {}\ttt{delete}
+(or {}\ttt{delete []} for arrays) on the contained raw pointer.
+However, the factory can also choose any arbitrary action imaginable
+to occur when the reference-count goes to zero.  This is set up using
+a template deallocator policy object as described in Section
+{}\ref{sec:deallocators}.
 
-On the other side, the responsibilities of the general client that
-shares and uses a reference-counted object are very simple.  These
+Alternatively, the responsibilities of general clients that use and
+share a reference-counted object are very simple and these
 responsibilities are:
 
 \begin{itemize}
 
 {}\item Accept the persisting relationship for a shared
-reference-counted object/array through an {}\ttt{[Array]RCP} object
-(as described in Section {}\ref{sec:idioms-for-passing-arguments}).
+reference-counted object through an {}\ttt{RCP} object (or
+{}\ttt{ArrayRCP} for arrays) as described in Section
+{}\ref{sec:idioms-for-passing-arguments}.
 
-{}\item Share the reference-counted object/array with other clients by
-creating a copy of ones {}\ttt{[Array]RCP} object and giving it to
-them.
+{}\item Share the reference-counted object with other clients by
+creating a copy of one's {}\ttt{RCP} (or {}\ttt{ArrayRCP}) object and
+giving it to them.
 
 {}\item When one is finished using the object, simply delete or set to
-null all of ones {}\ttt{[Array]RCP} objects.  If some other client is
-still using the object, it will still remain.  If the client's is the
-last reference, then the deallocator policy object that is embedded in
-the underlying {}\ttt{RCPNodeImpl} object will know exactly how to
-clean up and reclaim the object/array.
+null all of one's {}\ttt{RCP} objects.  If some other client is still
+using the object, it will remain alive.  If the client's is the last
+(strong) reference, then the deallocator policy object that is
+embedded in the underlying {}\ttt{RCPNodeImpl} object is invoked which
+knows exactly how to clean up and reclaim the underlying object (or
+array of memory).
 
 \end{itemize}
 
 That is all there is to it.  Factories create the underlying object(s)
-wrapped in the first {}\ttt{[Array]RCP} object and define how the
-referenced object(s) will be reclaimed when it is time.  General
-clients just accept and maintain their references to shared
-objects/arrays by accepting and storing {}\ttt{[Array]RCP} object
-and then setting them to null when they are finished using the
-object(s).
+wrapped in the first {}\ttt{RCP} object and define how the referenced
+object(s) will be reclaimed when it is time to do so.  General clients
+just accept and maintain their references to shared objects (or
+arrays) by accepting and storing {}\ttt{RCP} objects (or
+{}\ttt{ArrayRCP} objects) and then setting them to null when they are
+finished using the object(s).
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
