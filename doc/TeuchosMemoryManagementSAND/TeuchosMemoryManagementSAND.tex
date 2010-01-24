@@ -6566,8 +6566,6 @@ and when it is not enabled (however, see Commandment
 for restructions on the creation of owning and non-owning {}\ttt{RCP}
 objects).
 
-{}\textbf{ToDo: Finish editing from here!}
-
 
 %
 {}\subsubsection{Performance of debug-mode checking versus memory
@@ -6581,22 +6579,22 @@ affect non-debug optimized builds.  To speed up debug-mode runtime
 checking, one can compile with optimized compiler options (e.g.\
 {}\ttt{-O3}) which significantly speeds up the code.  Also, one has to
 consider the relative cost of built-in debug-mode runtime checking
-versus running a memory checking tool like valgrind or purify.
+versus running a memory checking tool like Valgrind or Purify.
 
-To investigate the cost of debug-mode runtime checking the Trilinos
+To investigate the cost of debug-mode runtime checking, the Trilinos
 package
 Tpetra\footnote{{}\ttt{http://trilinos.sandia.gov/packages/tpetra/}}
 is used since it relies the Teuchos memory management classes at a
 very low level and therefore would be expected to show the largest
-runtime overhead of debug-mode checking.  Table
+runtime overhead for debug-mode checking.  Table
 {}\ref{tbl:overhead-of-runtime-checking} shows the runtime of the
 Tpetra serial test suite (12 test programs) for several different
 build and runtime configurations.  In all of these builds, optimized
-compiler options were used.  All of these timing tests were performed
-on an a 3.2GHz AMD machine with 8 cores running Linux
+compiler options (-O3) were used.  All of these timing tests were
+performed on an a 3.2GHz AMD machine with 8 cores running Linux
 2.6.9-78.0.1.ELsmp using GCC 3.4.6.  Valgrind tests were run using
-version 3.2.1.  All of the test executables were run in serial with an
-unloaded machine.
+version 3.2.1.  All of the test executables were run in serial on the
+unloaded Linux machine.
 
 \begin{table}
 %
@@ -6664,8 +6662,8 @@ that while the cost incured by debug-mode runtime checking can be
 significant (a factor of 3.1 for basic debug-mode runtime checking) it
 is still quite reasonable.  When node tracing is enabled, the cost
 more than doubles to a factor of 6.8 times the basic optimized build.
-While to cost of full debug-mode runtime checking with node tracing is
-a factor of 6.8 over the basic optimized build, the cost of running
+While the cost of full debug-mode runtime checking with node tracing
+is a factor of 6.8 over the basic optimized build, the cost of running
 with valgrind is a factor of over 300!  The increased cost of running
 valgrind is a factor of 431.5 for the basic debug-mode executables.  A
 factor of 300 can make running a tool like valgrind prohibitive for
@@ -6675,16 +6673,17 @@ in a standard optimized build may take 2 hours 15 minutes to run with
 full debug-mode runtime checking with node tracing enabled but that
 same program may take 100 hours or more than 4 days to run with
 valgrind!  Also, as has been mentioned several times before, the level
-of runtime checking provided in a Teuchos debug-mode is arguably more
-effective that what one gets with just valgrind\footnote{However,
-valgrind does perform a number of other types of checks including
-usage of uninitialized memory that are very useful and can not be
-duplicated by the Teuchos memory management classes.}.  In order to
-perform the most detailed runtime checking possible, one can run with
-valgrind with debug-mode runtime checking with node tracing enabled.
-However, the overhead of this maximal checking is staggering at more
-than 23K times the cost of the basic optimized build!  At this level
-of overhead, only very small test problems can be run.
+of runtime checking provided by Teucohs in a debug-mode build is
+arguably more effective that what one gets with just
+valgrind\footnote{However, valgrind does perform a number of other
+types of checks including usage of uninitialized memory that are very
+useful and can not be duplicated by the Teuchos memory management
+classes.}.  In order to perform the most detailed runtime checking
+possible, one can run with valgrind with debug-mode runtime checking
+with node tracing enabled.  However, the overhead of this maximal
+checking is staggering at more than 23,000 times the cost of the basic
+optimized build!  At this level of overhead, only very small test
+problems can be run.
 
 What these timing results suggest is that the cost of debug-mode
 runtime checking for programs using the Teuchos memory management
@@ -6726,7 +6725,7 @@ involve some types of conversions of raw pointers (and raw references)
 to Teuchos memory management objects.  However, before discussing
 situations where the debug-mode runtime checking will not catch
 errors, first note that if an object is dynamically allocated and is
-immediately given over to a strong owning {}\ttt{RCP} object (or
+immediately given over to a strong owning {}\ttt{RCP} object (or an
 {}\ttt{ArrayRCP} object in the case of arrays) then many different
 types of bad conversions from raw pointers (and raw references) to
 memory management types will be caught.  That is because when an
@@ -6742,8 +6741,9 @@ memory management class object that result in multiple owning
 to require that a classes' objects be dynamically allocated through
 its non-member constructors (Section
 {}\ref{sec:nonmember-constructor-idiom}) which returned the new
-objects wrapped in {}\ttt{RCP}s.  In this way, the object is
-immediately tracked under the debug-mode node tracing system.
+objects wrapped in strong owning {}\ttt{RCP}s.  In this way, the
+object is immediately tracked under the debug-mode node tracing
+system.
 
 However, not every class can or should employ the non-member
 constructor idiom to force the creation of strong owning {}\ttt{RCP}
@@ -6805,11 +6805,11 @@ problem should never occur.
 The other category of programming errors that the debug-mode runtime
 checking cannot detect and report involves exposing and then misusing
 raw C++ pointers and references.  As soon as client code exposes a raw
-C++ pointer and start copying it around, all bets are off.  However,
+C++ pointer and starts copying it around, all bets are off.  However,
 even if client code never exposes a C++ pointer, one can still get
 into trouble.  One unfortunate case involves the use of raw C++
-references.  If C++ references are only used as formal arguments to
-C++ functions, one will almost never have a problem.  However,
+references.  If raw C++ references are only used as formal arguments
+to C++ functions, one will almost never have a problem.  However,
 incorrectly returning an {}\ttt{RCP} object by reference instead of by
 value, as is described in Section
 {}\ref{sec:idioms-returning-objects}, can result in invalid C++
@@ -6844,6 +6844,8 @@ a raw C++ pointer (except for the situations described in Section
 references in strictly non-persisting associations.  Also, great care
 must be taken in first constructing Teuchos memory management class
 objects such they have the correct memory management properties.
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
