@@ -6845,8 +6845,6 @@ references in strictly non-persisting associations.  Also, great care
 must be taken in first constructing Teuchos memory management class
 objects such they have the correct memory management properties.
 
-{}\textbf{ToDo: Finish editing from here!}
-
 
 %
 {}\subsubsection{Exception handling and debugging}
@@ -6889,8 +6887,8 @@ have one set breakpoints in other functions.  For example, a dangling
 reference exception (as shown in Section
 {}\ref{sec:detection-dangling-references}) would contain addresses of
 objects that one would use to set conditional breakpoints.  For
-example, to examine the context under which a {}\ttt{RCPNode} is first
-created, one would set a breakpoint in the function
+example, to examine the context under which an {}\ttt{RCPNode} is
+first created, one would set a breakpoint in the function
 {}\ttt{Teuchos::RCPNodeTracer::addNewRCPNode(...)} and set a condition
 to only break when the {}\ttt{RCPNode} has the address that is printed
 in the exception message.  For example, for the exception message
@@ -6915,7 +6913,7 @@ new pointer addresses when setting conditional breakpoints like this.
 
 The Teuchos memory management classes are all fully exception safe in
 that they provide either the basic guarantee (retain some valid object
-state and no leaked memory when exception is thrown), the strong
+state and no leaked memory when an exception is thrown), the strong
 guarantee (retain original state when exception is thrown), or the
 no-throw guarantee (see {}\cite[Item 71]{C++CodingStandards05}).
 However, if exceptions are thrown from destructors when objects are
@@ -6935,9 +6933,9 @@ Note that throwing exceptions differs from what other class libraries
 do which is typically to call {}\ttt{assert(...)} when a runtime
 failure is discovered.  For example, the checked STL for g++ will call
 assert when a usage violation is discovered.  There are pros and cons
-for throwing exceptions versus halting the program but if one can make
-ones code exception safe, then one can argue that throwing exceptions
-is better because it allows the program to recover in case of a
+for throwing exceptions versus halting the program but if code can be
+made exception safe, then one can argue that throwing exceptions is
+better because it allows the program to recover in case of a
 catastrophic failure of a submodule while calling {}\ttt{assert(...)} 
 does not.  Also, writing unit tests for code that throws exceptions is
 much easier and more efficient than trying to write unit tests for
@@ -7017,13 +7015,10 @@ be minimized by not applying it at too low a level.  The optimized
 performance of the Teuchos array classes is given in Section
 {}\ref{sec:array-overhead}.  The timing results shown that the basic
 bracket operator (i.e.\ {}\ttt{a[i]}) and iterator (i.e.\
-{}\ttt{a.begin()}) access methods all yield raw pointer
-performance.  Finally, in Section {}\ref{sec:perf-tuning-strategies},
-performance tuning strategies are discussed, including the need to
-relax the strict use of reference-counting classes {}\ttt{RCP} and
-especially {}\ttt{ArrayRCP} in use cases where technically
-persisting associations are present but reference-counting machinery
-is not needed and the overhead of reference-counting is too high.
+{}\ttt{a.begin()}) access methods all yield raw pointer performance.
+Finally, in Section {}\ref{sec:perf-tuning-strategies}, performance
+tuning strategies are discussed primarily addressing the issue of
+performance optimizations related to semi-persisting associations.
 
 
 %
@@ -7051,8 +7046,7 @@ the times.  With naive code, some compilers (e.g.\ Microsoft Visual
 C++) will just optimize away the entire loop.  Therefore, the
 operation must be performed in the context of a loop over an array
 where the result of the loop gets used in some way to accumulate a
-final result.  Otherwise, some compilers will just optimize away the
-entire loop.  Examples of these types of timing loops will be given
+final result.  Examples of these types of timing loops will be given
 below.  Because of the loop and iterator overhead and this extra
 (minimal) computation, the timings listed for each operation are
 higher that what they would be otherwise.  Therefore, the overhead
@@ -7074,9 +7068,9 @@ reference counting machinery only depends on pointers so the memory
 usage overhead is the same no mater what type of object is used.  From
 looking at Table {}\ref{tbl:RCP-SP-sizes}, one can see that the static
 size of {}\ttt{std::vector<double>} is 24 bytes for this compiler.
-Consider allocating an {}\ttt{std::vector<double>} with only one
-element.  This would dynamically allocate one {}\ttt{double} object in
-an array giving a total of 32 bytes.  Now consider the
+Consider allocating an {}\ttt{std::vector<double>} object with only
+one element.  This would dynamically allocate one {}\ttt{double}
+object in an array giving a total of 32 bytes.  Now consider the
 reference-counting machinery overhead.  For every allocated
 {}\ttt{std::vector<double>} object, there is a reference-counting node
 object of type {}\ttt{RCPNodeImpl<std::vector<double>, ... >} which is
@@ -7181,22 +7175,25 @@ Timings for allocating and deallocating objects using RCP}
 \esinglespace}
 
 
-Finally, timings for dereferencing ({}\ttt{RCP::operator*()}),
-member access through the arrow operator
-{}\ttt{RCP::operator->()}, and assignment
-({}\ttt{RCP::operator=(...)}) which changes the reference counts)
-are shown in Figure {}\ref{fig:RCPTimings}.  These timings are the
-average CPU time (in seconds) per inner loop iteration (see Listing
-{}\ref{listing:RCP-assignment-timing} for example of loops).  These
-timing results show that dereferencing and member access for
-{}\ttt{RCP} yield raw pointer performance on all the compilers
-because these member functions are trivially inlined to expose the raw
+Now consider timings for dereferencing using {}\ttt{RCP::operator*()},
+member access through the arrow operator {}\ttt{RCP::operator->()},
+and assignment through {}\ttt{RCP::operator=(...)} (which changes the
+reference counts) shown in Figure {}\ref{fig:RCPTimings}.  These
+timings are the average CPU time (in seconds) per inner loop iteration
+(see Listing {}\ref{listing:RCP-assignment-timing} for an example).
+These timing results show that dereferencing and member access for
+{}\ttt{RCP} yield raw pointer performance on all the compilers because
+these member functions are trivially inlined to expose the raw
 pointer.
 
 The assignment operator, however, imposes significant overhead because
 of the need to increment and deincrement the reference counts.  The
 timing code fragment that exercises {}\ttt{RCP::operator=(...)} is
-shown in Listing {}\ref{listing:RCP-assignment-timing}.
+shown in Listing {}\ref{listing:RCP-assignment-timing}.  (Note that
+{}\ttt{std::vector} is used instead of {}\ttt{Array} in Listing
+{}\ref{listing:RCP-assignment-timing} in order to avoid timing
+overhead that might result from a bad implemention of
+{}\ttt{Array::operator[](...)} that would affect the timing results.)
 
 
 \begin{listing}: Performance timing loops for {}\ttt{RCP::operator=(...)} \\
@@ -7242,16 +7239,19 @@ raw pointers and {}\ttt{boost::shared\_ptr}.  The full timing
 results for other sizes are show in in Appendix
 {}\ref{apdx:raw-rcp-perf-data}.
 
-There are a few interesting points to note about these timing results.
+Seveal interesting points to note about these timing results are
+described below.
 
-First, the array timing results shown in Section
-{}\ref{sec:array-overhead} suggest that these two machines have nearly
-identical processors.  Therefore, the CPU times on the Y-axis for each
-of these compiler/machine bar charts is made to same to allow for
-absolute comparisons.  This allows for direct comparisons of the
-optimizing capabilities of these three compilers.  This suggests that
-GCC 4.1.2 is better than the rest and that MSVC++ 2008 is quite bad at
-optimizing {}\ttt{RCP} code.
+First, the timing results for the simple raw-pointer loops shown in
+Figure {}\ref{fig:RCPTimings} suggest that these two machines have
+nearly identical processor speeds.  Therefore, the CPU times on the
+Y-axis scale for each of these compiler/machine bar charts is made the
+same to allow for absolute comparisons.  This allows for direct
+comparisons of the optimizing capabilities of these three compilers
+with respect to dealing with general C++ code (and not just C-like raw
+pointer loops).  This suggests that GCC 4.1.2 is better than the rest
+and that MSVC++ 2008 is quite bad at optimizing general {}\ttt{RCP}
+code.
 
 Second, note that the cost of manipulating the reference count in
 {}\ttt{RCP::operator=(...)} is an order of magnitude higher than
@@ -7262,42 +7262,45 @@ pointer code run in a loop getting better optimization.  The
 reference-count manipulation code involves if statements that may
 disable certain loop optimizations.
 
-Third, node that {}\ttt{RCP::operator=(...)} is about 30\% slower
-on GCC 4.1.2 than for {}\ttt{boost::shared\_ptr} due to the extra
-overhead of dynamically handling a strong and weak reference counts.
-The overhead of {}\ttt{RCP} over {}\ttt{boost::shared\_ptr} goes
-up to 50\% on on ICC 10.1 and then falls off a cliff going up to 300\%
-for MSVC++ 2008.  Clearly the MSVC++ compiler is not inlining the
+Third, note that {}\ttt{RCP::operator=(...)} is about 30\% slower on
+GCC 4.1.2 than for {}\ttt{boost::shared\_ptr} due to the extra
+overhead of dynamically handling strong and weak reference counts.
+The overhead of {}\ttt{RCP} over {}\ttt{boost::shared\_ptr} goes up to
+50\% on on ICC 10.1 and then falls off a cliff going up to 300\% for
+MSVC++ 2008.  Clearly the MSVC++ compiler is not inlining the
 {}\ttt{RCP} functions as well in this case.  However, there may be
 compiler options that would cause the MSVC++ compiler to be more
-aggressive in inlining.
+aggressive in inlining but none could be found after a moderate level
+of experimentation.
 
 Fourth, note that for GCC 4.1.2, the cost of manipulating the
 reference count (at {}\ttt{5.59-09 sec}) is two orders of magnitude
 less than the cost to allocate and deallocate an
 {}\ttt{std::vector<double>} object with only one element (at
-{}\ttt{1.39-07 sec}) and is three orders of magnitude less for
-16384 elements (at {}\ttt{5.84-06 sec}) as shown in Appendix
+{}\ttt{1.39-07 sec}) and is three orders of magnitude less for 16384
+elements (at {}\ttt{5.84-06 sec}) as shown in Appendix
 {}\ref{apdx:raw-rcp-perf-data}.  Therefore, just the memory allocation
 overhead can dominate these other costs in some cases.  Also, if a
-large object is being used with expensive operations, the the
-reference-counting overhead will be insignificant.  Again, this argues
-that classes like {}\ttt{RCP} should only be used to manage larger
-objects that have more expensive operations associated with them.  The
-same argument can be made that {}\ttt{ArrayRCP} should only be used
-for managing larger arrays of data where the cost of loops over the
-data overwhelm the reference-counting costs.
+large object is being used with expensive operations, then the
+reference-counting overhead will be insignificant compared to using
+the object.  Again, this argues that classes like {}\ttt{RCP} should
+only be used to manage larger objects that have more expensive
+operations associated with them.  The same argument can be made that
+{}\ttt{ArrayRCP} should only be used for managing larger arrays of
+data where the cost of loops over the data overwhelm the
+reference-counting costs.
 
-Lastly, note that the {}\ttt{RCP::operator=(...)} implementation
-both deincrements and increments the reference count while the copy
+Lastly, note that the {}\ttt{RCP::operator=(...)} implementation both
+deincrements and increments the reference count while the copy
 constructor only has to increment the reference count.  Therefore, we
 might expect that the copy constructor would be about twice as fast as
 the assignment operator.  The performance of the copy constructor is
 not measured in a loop because it is hard write a loop that tests it
 without other overhead.  However, the fastest approach is to avoid the
-copy of the {}\ttt{RCP} object at all by passing in a constant
-reference the {}\ttt{RCP} object as formal function arguments as
-advocated in Section {}\ref{sec:idioms-for-passing-arguments}.
+copy of the {}\ttt{RCP} objects at all by passing in constant
+references to the {}\ttt{RCP} objects as formal function arguments
+which is advocated in Section
+{}\ref{sec:idioms-for-passing-arguments}.
 
 
 %
@@ -7307,21 +7310,22 @@ advocated in Section {}\ref{sec:idioms-for-passing-arguments}.
 
 Another important type of performance (perhaps more important than the
 performance of {}\ttt{RCP} for handling single objects) is the
-performance of the Teuchos array classes.  In an optimized debug build
-these classes must yield the same performance as using raw pointers or
-the performance of the application will definitely be affected.
+performance of the Teuchos array classes.  In an optimized non-debug
+build these classes must yield the same performance as using raw
+pointers or the performance of the application will definitely be
+affected.
 
 Performance timing experiments for the braket operator
 {}\ttt{operator[](size\_type)} and iterators (returned from the
-{}\ttt{begin()} and {}\ttt{end()} functions) were performed
-using simple timing loops.  Unlike the performance tests for
-{}\ttt{RCP} described in the previous section, timing array
-operations naturally lends themselves to performance timings.  The
-performance timing code fragments for the {}\ttt{Array} class are
-shown in Listing {}\ref{listing:Array-bracket-timing} and
+{}\ttt{begin()} and {}\ttt{end()} functions) were performed using
+simple timing loops.  Unlike the performance tests for {}\ttt{RCP}
+described in the previous section, timing array operations naturally
+lends themselves to performance timings.  The performance timing code
+fragments for the {}\ttt{Array} class are shown in Listing
+{}\ref{listing:Array-bracket-timing} and
 {}\ref{listing:Array-iterator-timing}.  The timing loops for raw
-pointers and the {}\ttt{ArrayRCP} and {}\ttt{ArrayView} classes
-are identical.
+pointers and the {}\ttt{ArrayRCP} and {}\ttt{ArrayView} classes are
+nearly identical.
 
 
 \begin{listing}: Performance timing loops for
@@ -7354,14 +7358,6 @@ are identical.
 \end{listing}
 
 
-Figure {}\ref{fig:ArrayTimings} shows the CPU timings for
-{}\ttt{operator[](size\_type)} and iterators for the performance
-tests with sizes {}\ttt{numActualLoops=230574} and
-{}\ttt{arraySize=1600} shown in Listing
-{}\ref{listing:Array-bracket-timing} and
-{}\ref{listing:Array-iterator-timing}.
-
-
 {\bsinglespace
 \begin{figure}
 \begin{center}
@@ -7375,17 +7371,24 @@ Timings for basic Array, ArrayRCP, and ArrayView operations}
 \end{figure}
 \esinglespace}
 
+
+Figure {}\ref{fig:ArrayTimings} shows the CPU timings for
+{}\ttt{operator[](size\_type)} and iterators for the performance tests
+with sizes {}\ttt{numActualLoops=230574} and {}\ttt{arraySize=1600}.
 These timing results are fairly interesting and there are a few
 important details to note.
 
 First, the performance of the raw pointer iterator loops on all three
 platforms is almost identical.  The CPU time per inner loop iteration
 for the raw iterator form of the loop for all three compilers on the
-two different Linux and Windows machines is about {}\ttt{3.5e-10}.
-This suggests that the CPUs on these two machines are basically
-identical for low level operations.  It is therefore only the
-compilers that result in different performance for the other
-operations.
+two different Linux and Windows machines is about {}\ttt{3.5e-10}
+seconds.  This suggests that the CPUs on these two machines are
+basically identical for low level operations.  It is therefore only
+the compilers that result in different performance for the other
+operations.  Because these processors appear to be giving the same raw
+perforamnce, the Y-axis scales on all the timing bar charts are made
+the same in Figure {}\ref{fig:ArrayTimings} to allow for direct
+comparison between each of the platforms.
 
 Second, the ICC 4.1.2 compiler does not optimize the GNU
 {}\ttt{std::vector::iterator} type\footnote{The data-type for the
@@ -7417,9 +7420,10 @@ The take-away points from these timing results are that all compilers
 do not fully optimize the array indexing form of the loops and only
 raw pointers used as iterators will yield the optimal performance.
 The Teuchos array classes perform at least as well as
-{}\ttt{std::vector} and actually out-perform {}\ttt{std::vector}
-in some cases.  This is only because the Teuchos array classes use raw
-C++ pointers in an optimized non-debug build.
+{}\ttt{std::vector} and actually out-perform {}\ttt{std::vector} in
+some cases.  This is only because the Teuchos array classes use raw
+C++ pointers for iterators in an optimized non-debug build while the
+GNU implementation {}\ttt{std::vector} uses a library-defined class.
 
 
 %
@@ -7443,7 +7447,7 @@ small arrays since the memory overhead could be significant.
 
 {}\item The extra runtime overhead of reference-counting machinery
 does not significantly increase dynamic memory allocation and
-deallocation runtime costs.
+deallocation runtime costs for moderately large objects.
 
 {}\item The runtime reference-counting overhead of {}\ttt{RCP} with
 respect to {}\ttt{boost::shared\_ptr} can vary from as little as 30\%
@@ -7454,14 +7458,14 @@ reference-counting types at as high a level of granularity as one can
 such that it does not damage the quality of the software (i.e.\
 flexibility, usability, maintainability).
 
-{}\item The most portable way to achieve high performance of raw array
+{}\item The most portable way to achieve high performance in array
 operations is to use iterators on {}\ttt{ArrayRCP} and
-{}\ttt{ArrayView} objects.  The timing results on ICC 10.1 show
-that some compilers will not even given optimize performace for
+{}\ttt{ArrayView} objects.  The timing results on ICC 10.1 show that
+some compilers will not even given optimize performace for
 {}\ttt{std::vector::iterator}!  Also, all compilers do not
 automatically fully optimize the array bracket form of an array-based
-loop so an iterator loop is the only full-proof way to get optimized
-performance across platforms.
+loop so an iterator loop is the only full-proof way to get the best
+optimized performance across platforms.
 
 \end{itemize}
 
@@ -7492,8 +7496,8 @@ types {}\ttt{Ptr} and {}\ttt{ArrayView} instead of raw pointers for
 all semi-persisting associations one still gets all of the strong
 debug-mode runtime checking that is described in Section
 {}\ref{sec:debug-mode-runtime-checking} (e.g.\ dangling reference
-checking, null checking, range checking, etc.) yet remove all
-reference-counting overhead in a non-debug optimized build.
+checking, null checking, range checking, etc.) yet these types remove
+all overhead over raw pointers in a non-debug optimized build.
 
 As an example, consider the design of a sparse matrix class that
 stores its data as compressed sparse rows and allows access to the
@@ -7657,28 +7661,31 @@ until months or years later where it will do untold harm.
 Note that there may be some extreme cases where the overhead of an
 extra size data member in {}\ttt{ArrayView} is too high.  In these
 cases, one can instead use an iterator type such as
-{}\ttt{Array::iterator} or {}\ttt{ArrayRCP::iterator} (depending
-on type type of the underlying container class).  In a debug-mode
-build, the iterator objects will be fully checked {}\ttt{ArrayRCP}
-objects while in a non-debug optimized build, the iterators will be
-raw pointers (or {}\ttt{std::vector::iterator} in the case of
-{}\ttt{Array::iterator}).  This yields raw pointer performance in a
-non-debug optimized build with no space or time overhead (becuase all
-the object actually are raw pointers in this case).
+{}\ttt{Array::iterator} or {}\ttt{ArrayRCP::iterator} (depending on
+type of the underlying container class).  In a debug-mode build, the
+iterator objects will be fully checked {}\ttt{ArrayRCP} objects while
+in a non-debug optimized build, the iterators will be raw pointers (or
+{}\ttt{std::vector::iterator} in the case of {}\ttt{Array::iterator}).
+This yields raw pointer performance in a non-debug optimized build
+with no space or time overhead (because all the objects actually are
+raw pointers in this case).
 
 The point of this section is to acknowlege that there will be
 situations in low-level code where the strict adherence to using
 reference-counted types {}\ttt{RCP} and {}\ttt{ArrayRCP} for
-persisting associations may yield acceptable performance and therefore
-one must instead provide for semi-persisting views.  However, as
-demonstrated above, the solution to the performance problem is not to
-ever fall back to using raw pointers but instead to fall back on the
-non-reference-counted types {}\ttt{Ptr} and {}\ttt{ArrayView} (or
-{}\ttt{Array[RCP]::iterator}).  By using the types {}\ttt{Ptr} and
-{}\ttt{ArrayView} (or {}\ttt{Array[RCP]::iterator}), one maintains all
-the desirable debug-mode runtime checking without any of the
-reference-counting overhead in a non-debug optimized build.  We can
-have our cake and eat it too!
+persisting associations may not yield acceptable performance and
+therefore one must instead provide for semi-persisting views.
+However, as demonstrated above, the solution to the performance
+problem is not to ever fall back to using raw pointers but instead to
+fall back on the non-reference-counted types {}\ttt{Ptr} and
+{}\ttt{ArrayView} (or {}\ttt{Array[RCP]::iterator}).  By using the
+types {}\ttt{Ptr} and {}\ttt{ArrayView} (or
+{}\ttt{Array[RCP]::iterator}), one maintains all the desirable
+debug-mode runtime checking without any of the reference-counting
+overhead in a non-debug optimized build.  We can have our cake and eat
+it too!
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
