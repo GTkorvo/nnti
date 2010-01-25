@@ -8691,8 +8691,6 @@ views are active.  Likewise, any bulk modifying operation (like
 assigning all the matrix entries to zero) must be locked out when any
 views are active.
 
-{}\textbf{ToDo: Finish editing from here!}
-
 
 %
 {}\subsubsection*{Example implementation of generalized views for
@@ -8763,10 +8761,8 @@ of multi-vector views as ``generalized views''  \\
     )
   {
     return Teuchos::rcp(
-      new DefaultSpmdMultiVector<Scalar>(
-        spmdRangeSpace, domainSpace, localValues, leadingDim
-        )
-      );
+       new DefaultSpmdMultiVector<Scalar>(
+        spmdRangeSpace, domainSpace, localValues, leadingDim ) );
   }
 \end{verbatim}}
 \end{listing}
@@ -8784,10 +8780,10 @@ The generalized views returned by the functions
 {}\ttt{nonContigSubViewImpl(...)} and
 {}\ttt{nonconstNonContigSubViewImpl(...)} are of the type
 {}\ttt{MultiVectorBase} which is the upper-most base class for
-{}\ttt{DefaultSpmdMultiVector}.  (As shown below, the concrete types
-of the views are actually {}\ttt{DefaultSpmdMultiVector}.) Therefore,
-this is an instance where the class types of the parent and view are
-actually the same.
+{}\ttt{DefaultSpmdMultiVector}.  (The concrete types of the views are
+actually {}\ttt{DefaultSpmdMultiVector}.) Therefore, this is an
+instance where the class types of the parent and view are actually the
+same.
 
 The implementations of the functions {}\ttt{nonContigSubViewImpl(...)} 
 and {}\ttt{nonconstNonContigSubViewImpl(...)} are given in Listing
@@ -8802,19 +8798,18 @@ functions {}\ttt{nonContigSubViewImpl(...)} and
   template<class Scalar>
   RCP<const MultiVectorBase<Scalar> >
   DefaultSpmdMultiVector<Scalar>::nonContigSubViewImpl(
-    const ArrayView<const int> &cols
-    ) const
+    const ArrayView<const int> &cols ) const
   {
     THYRA_DEBUG_ASSERT_MV_COLS("nonContigSubViewImpl(cols)", cols);
     const int numCols = cols.size();
     const ArrayRCP<Scalar> localValuesView = createContiguousCopy(cols);
     return defaultSpmdMultiVector<Scalar>(
       spmdRangeSpace_,
-      createSmallScalarProdVectorSpaceBase<Scalar>(spmdRangeSpace_, numCols),
-      localValuesView
-      );
+      createSmallScalarProdVectorSpaceBase<Scalar>(*spmdRangeSpace_, numCols),
+      localValuesView );
   }
   
+
   template<class Scalar>
   RCP<MultiVectorBase<Scalar> >
   DefaultSpmdMultiVector<Scalar>::nonconstNonContigSubViewImpl(
@@ -8830,10 +8825,9 @@ functions {}\ttt{nonContigSubViewImpl(...)} and
     return Teuchos::rcpWithEmbeddedObjPreDestroy(
       new DefaultSpmdMultiVector<Scalar>(
         spmdRangeSpace_,
-        createSmallScalarProdVectorSpaceBase<Scalar>(spmdRangeSpace_, numCols),
+        createSmallScalarProdVectorSpaceBase<Scalar>(*spmdRangeSpace_, numCols),
         localValuesView),
-      copyBackView
-      );
+      copyBackView );
   }
 \end{verbatim}}
 \end{listing}
@@ -8942,6 +8936,7 @@ is destroyed.  The implementation of the class
     Ordinal leadingDim_;
   };
 
+
   // Non-member constructor  
   template<class Scalar>
   RCP<CopyBackSpmdMultiVectorEntries<Scalar> >
@@ -8991,23 +8986,27 @@ able to implement the copy-back-to-parent functionality without having
 to write a new {}\ttt{MultiVector} subclass just for the view.  The
 {}\ttt{DefaultSpmdMultiVector} objects that are returned as views have
 no idea they are being used as views into other
-{}\ttt{DefaultSpmdMultiVector} objects and they need not care.
-Without the embedded object feature described in Section
-{}\ref{sec:embedded-objecs}, a different {}\ttt{MultiVector} subclass
-would have to be created with a destructor that would copy back the
-data.  Second, the constraints imposed by the generalized view design
-pattern shown in Figure {}\ref{fig:GeneralizedViewStateDiagram} ensure
-that no problems will arise due to the fact that the views are stored
-in detached copies of the data.  If changes to the parent
-{}\ttt{DefaultSpmdMultiVector} were allowed while a non-const
-{}\ttt{DefaultSpmdMultiVector} view was active, then all of the
-changes in the parent would be overwritten when the
-{}\ttt{DefaultSpmdMultiVector} view was destroyed.  Third, this
-example demonstrates why const views are fundamentally more efficient
-than non-const views.  In the case of a const view, the temporary
-contiguous copy of data must just be released and does not need to be
-copied back to the parent.  This saves the work imposed by the
-destructor on the {}\ttt{CopyBackSpmdMultiVectorEntries} object.
+{}\ttt{DefaultSpmdMultiVector} objects.  Without the embedded object
+feature described in Section {}\ref{sec:embedded-objecs}, a different
+{}\ttt{MultiVector} subclass would have to be created with a
+destructor that would copy back the data.  Second, the constraints
+imposed by the generalized view design pattern shown in Figure
+{}\ref{fig:GeneralizedViewStateDiagram} ensure that no problems will
+arise due to the fact that the views are stored in detached copies of
+the data.  If changes to the parent {}\ttt{DefaultSpmdMultiVector}
+were allowed while a non-const {}\ttt{DefaultSpmdMultiVector} view was
+active, then all of the changes in the parent would be overwritten
+when the {}\ttt{DefaultSpmdMultiVector} view was destroyed.  Third,
+this example demonstrates why const views are fundamentally more
+efficient than non-const views.  In the case of a const view, the
+temporary contiguous copy of data must just be released and does not
+need to be copied back to the parent.  This saves the work imposed by
+the destructor on the {}\ttt{CopyBackSpmdMultiVectorEntries} object.
+
+
+%
+{}\subsubsection*{Summary of the generalizezd view design pattern}
+%
 
 In summary, the main properties and features of the generalized view
 design pattern are:
@@ -9038,25 +9037,27 @@ allocated and to allow for specialized copy-back behavior when
 non-const views are destroyed.
 
 {}\item The flexibility and performance gains allowed by the
-generalized view design pattern come at the expense of more restricted usage
-patterns of the parent and views.
+generalized view design pattern come at the expense of more restricted
+usage patterns of the parent and view objects.
 
   \begin{itemize}
 
   {}\item Only one non-const view can be active for any logically
   district part of the parent object at any one time and the parent
-  object must be locked down (or at least any functionality that
-  relates to the viewed part) while a non-const view is active.
+  object (or at least any functionality that relates to the viewed
+  part) must be locked down while a non-const view is active.
 
   {}\item Multiple const views can be active for any logically
   district part of the parent object at any one time but the non-const
-  interface of the parent object (at least functionality that relates
-  to that viewed part) must be locked down while any const views are
-  active.
+  interface of the parent object (at least any non-const functionality
+  that relates to that viewed part) must be locked down while any
+  const views are active.
 
   \end{itemize}
 
 \end{itemize}
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
