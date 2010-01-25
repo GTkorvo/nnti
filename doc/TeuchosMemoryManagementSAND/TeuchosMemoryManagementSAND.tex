@@ -9057,8 +9057,6 @@ usage patterns of the parent and view objects.
 
 \end{itemize}
 
-{}\textbf{ToDo: Finish editing from here!}
-
 
 %
 {}\subsection{Comparison with other class libraries and the standard
@@ -9076,43 +9074,43 @@ the {}\ttt{boost::shared\_ptr} class and therefore the
 class {}\ttt{RCP} was developed back in 1998 under the name
 {}\ttt{MemMngPack::ref\_count\_ptr} as part of the development of the
 rSQP++ package {}\cite{rSQP++} (now called MOOCHO {}\cite{MOOCHO}).
-At that time, there was no general purpose high quality reference
-counted pointer class available and most compilers at the time could
-not even support template member functions needed for implicit
-smart-pointer conversions.  After 1998, the first
-{}\ttt{boost::shared\_ptr} class appeared (which did not allow a
-customized deallocation policy and was therefore not very flexible).
-Over the years, the two classes independently evolved in very similar
-ways.  The current version of {}\ttt{boost::shared\_ptr} is a high
-quality flexible reference-counted pointer class.  Because it support
-custom template deallocator policy objects (which are called
-``deleters'' in {}\ttt{boost::shared\_ptr}) it allows for great
-flexibility in how it is used.
+At that time, there was no general purpose high-quality
+reference-counted smart pointer class available and many compilers at
+the time (e.g.\ MSVC++ 6.0) could not even support template member
+functions needed for implicit smart-pointer conversions.  After 1998,
+the first {}\ttt{boost::shared\_ptr} class appeared (which did not
+allow a customized deallocation policy and was therefore not very
+flexible).  Over the years, the two classes independently evolved in
+very similar ways.  The current version of {}\ttt{boost::shared\_ptr}
+is a high-quality flexible reference-counted smart pointer class.
+Because it now supports custom template deallocator policy objects
+(which are called ``deleters'' in {}\ttt{boost::shared\_ptr}) it
+allows for great flexibility in how it is used.
 
 The key advantages of the {}\ttt{RCP} class over the current
 {}\ttt{boost::shared\_ptr} class are greater functionality, greater
 flexibility, and better debug-mode runtime checking. The few of the
-key advantages of the {}\ttt{RCP} class that can not be replicated
-with the {}\ttt{boost::shared\_ptr} class without changing its design
-include:
+specific key advantages of the {}\ttt{RCP} class that can not be
+replicated with the {}\ttt{boost::shared\_ptr} class without changing
+its design include:
 
 \begin{itemize}
 
 {}\item The {}\ttt{RCP} class has built-in support for debug-mode
 runtime tracing of reference-counting nodes which is used to implement
 a whole host runtime checking including the detection and reporting of
-circular references (Section
-{}\ref{sec:detection-circular-references}), and multiple owning
+a) circular references (Section
+{}\ref{sec:detection-circular-references}) and b) multiple owning
 reference-counted objects (Section
 {}\ref{sec:detection-dual-owning-rcps}).
 
 {}\item The {}\ttt{RCP} class allows the association and retrieval of
-extra data attached to an already created reference-counting node
+extra data attached to an already-created reference-counting node
 object (see Section {}\ref{sec:extra-data}).
 
 {}\item The {}\ttt{RCP} class allows a client call {}\ttt{release()}
-to remove the deletion ownership from an already created {}\ttt{RCP}
-object (the need for this is described in Section
+to remove the deletion ownership from an already-created {}\ttt{RCP}
+object (the extremely rare need for this is described in Section
 {}\ref{sec:extra-data}).
 
 {}\item The {}\ttt{RCP} class has built-in support for both strong and
@@ -9123,7 +9121,7 @@ Section {}\ref{sec:circular-references-weak-pointers}).  The
 less flexible.  The {}\ttt{RCP} approach allows the debug-mode runtime
 detection and reporting of dangling non-owning references while
 {}\ttt{boost::shared\_ptr} class can not when using a null deleter
-(see Section {}\ref{sec:detection-dangling-references})
+(see Section {}\ref{sec:detection-dangling-references}).
 
 \end{itemize}
 
@@ -9131,19 +9129,24 @@ The key advantages of the current {}\ttt{boost::shared\_ptr} class
 over the current {}\ttt{RCP} class are that it has lower storage and
 runtime overhead (see Section
 {}\ref{sec:reference-counting-overhead}), and it has native support
-for shared reference-counting nodes across different threads in a
+for sharing reference-counting nodes across different threads in a
 multi-threaded program.  The {}\ttt{RCP} class does not yet have
 support for thread-safe sharing across multiple threads but some
 reasonable solution will be implemented (perhaps borrowing form the
 {}\ttt{boost::shared\_ptr} implementation) when it is needed.  The
 {}\ttt{RCP} class has been developed in the context of computational
-science and engineering applications where parallelism is handled
-using distributed memory MPI implementations where no
+science and engineering applications where up till now parallelism has
+been handled using distributed memory MPI implementations where no
 multi-threading is used.  Given that even the best non-locking
 {}\ttt{boost::shared\_ptr} implementation imparts a significant
-overhead in manipulating the reference count, it is not clear if the
-right solution to the multi-threading problem is to make all
-{}\ttt{RCP} objects thread safe in an entire program.
+overhead in manipulating the reference count (a factor of 4x overhead
+for GCC in a recent timing test), it is not clear if the right
+solution to the multi-threading problem is to make all {}\ttt{RCP}
+objects thread safe in an entire program.  Multi-threading is coming
+to computation science codes with the multi-core revolution so this
+issue may need to be addressed soon in the {}\ttt{RCP} and
+{}\ttt{ArrayRCP} classes.  Until then, {}\ttt{boost::shared\_ptr} can
+be used in cases where sharing across threads is required.
 
 Because both the Teuchos {}\ttt{RCP} and {}\ttt{boost::shared\_ptr}
 classes support customized deallocation policy objects, one can embed
@@ -9151,31 +9154,35 @@ an {}\ttt{RCP} object in a {}\ttt{boost::shared\_ptr} object and vice
 versa.  This is already supported in Teuchos using the overloaded
 non-member helper functions {}\ttt{Teuchos::rcp(const
 boost::shared\_ptr \&p)} and {}\ttt{Teuchos::shared\_pointer(const
-RCP<T> \&rcp)}.  This allows the developer to mix and match
-{}\ttt{RCP} and {}\ttt{boost::shared\_ptr} in the same code and still
-have correct memory management.  However, since {}\ttt{RCP} has better
-debug-mode runtime checking and is more flexible it should be preferred
-to {}\ttt{boost::shared\_ptr} in most high-level code.  However,
-because {}\ttt{boost::shared\_ptr} has lower overhead and has native
-support for sharing across threads is has valid uses.  Also, of
-course, one may need to convert back and forth between {}\ttt{RCP} and
-{}\ttt{boost::shared\_ptr} to glue together different pieces of
-separately developed code.
+RCP<T> \&rcp)} (see Table {}\ref{tbl:ConversionsTableSingleObjs}).
+This allows the developer to mix and match {}\ttt{RCP} and
+{}\ttt{boost::shared\_ptr} objects in the same code and still have
+correct memory management.  However, since {}\ttt{RCP} has better
+debug-mode runtime checking and is more flexible it should be
+preferred to {}\ttt{boost::shared\_ptr} in most high-level code.
+Alternatively, because {}\ttt{boost::shared\_ptr} has lower overhead
+and has native support for sharing across threads it also has valid
+uses.  Additionally, of course, one may need to convert back and forth
+between {}\ttt{RCP} and {}\ttt{boost::shared\_ptr} objects to glue
+together different pieces of separately developed code that use
+different smart pointer classes.
 
 Another smart pointer class for single objects is
 {}\ttt{std::auto\_ptr}.  This class does not support sharing and has
-only the minimal functionality needed to support the RAII idiom
-{}\cite[Item 13]{C++CodingStandards05}.  Given that reference-counting
-overhead is low compared to raw allocations and deallocations (see
-Section {}\ref{sec:reference-counting-overhead}) there is little
-reason to ever use {}\ttt{std::auto\_ptr} instead of {}\ttt{RCP} (or
-{}\ttt{boost::shared\_ptr} for that matter).
+only the minimal functionality needed to support the Resource
+Allocation Is Initialization (RAII) idiom {}\cite[Item
+13]{C++CodingStandards05}.  Given that reference-counting overhead is
+low compared to raw allocations and deallocations (see Section
+{}\ref{sec:reference-counting-overhead}) there is little reason to
+ever use {}\ttt{std::auto\_ptr} instead of {}\ttt{RCP} (or
+{}\ttt{boost::shared\_ptr} for that matter) except for perhaps the
+handling of RAII for small objects.
 
 The Teuchos class {}\ttt{Array} is of course equivalent to
 {}\ttt{std::vector} by design and uses an {}\ttt{std::vector}
 internally.  The main advantages of using {}\ttt{Array} instead of
 directly using {}\ttt{std::vector} are a) {}\ttt{Array} has better
-debug-mode runtime checking and produces better exception messages, b)
+debug-mode runtime checking and produces better error messages, b)
 conversion to the other Teuchos array types {}\ttt{ArrayView} and
 {}\ttt{ArrayRCP} includes full runtime debug-mode detection and
 reporting of dangling references (which is not possible with with
@@ -9185,7 +9192,7 @@ and {}\ttt{std::vector} is that {}\ttt{Array} uses an unsigned integer
 for its {}\ttt{size\_type} (see Appendix
 {}\ref{sec:unsigned_size_type} for the justification).
 
-The Teuchos class {}\ttt{ArrayRCP} really has not equivalent class in
+The Teuchos class {}\ttt{ArrayRCP} really has no equivalent class in
 Boost or the C++0x standard libraries.  There is a Boost class called
 {}\ttt{boost::shared\_array} which uses the {}\ttt{boost::shared\_ptr}
 reference-counting machinery and has an overloaded
@@ -9212,21 +9219,26 @@ remaining holes in safety and performance without the {}\ttt{Ptr} and
 
 What makes the Teuchos memory management classes unique across all
 other class libraries is that they form a complete coordinated system
-of types to replace all raw C++ pointers in high-level code.  This is
-only possible because these classes are developed as a system and the
-level of debug-mode runtime checking that exists is only possible
-because these types have access to each others private implementation
-(in some appropriate way).  In general, One can not mix and match
-Boost, standard C++, and Teuchos classes together at the top level and
-get a safe C++ program with the full extend of debug-mode runtime
-checking that the integrated set of Teuchos classes provide.  Many
-examples of this have been given through this document.  For example,
-if one creates an {}\ttt{ArrayView} object from a {}\ttt{std::vector}
-object it can not detect a dangling reference (see Section
-{}\ref{sec:detection-dangling-references}).  However, there are some
-specialized cases where Boost and standard C++ types can be used
-safely with the Teuchos memory management classes and some of these
-cases have already been discussed above.
+of types to replace all raw C++ pointers in high-level code while at
+the same time providing 100\% secure debug-mode checking.  This is
+only possible because these classes are developed as a system of types
+and the level of debug-mode runtime checking that exists is only
+possible because these types have access to each others private
+implementation (in some appropriate way).  In general, one cannot mix
+and match Boost, standard C++, and Teuchos classes together at the top
+level and get safe C++ programs with the full extent of debug-mode
+runtime checking that the integrated set of Teuchos classes provide.
+Many examples of this have been given through this document.  For
+example, if one creates an {}\ttt{ArrayView} object from a
+{}\ttt{std::vector} object it can not detect a dangling reference (see
+Section {}\ref{sec:detection-dangling-references}).  However, there
+are some specialized cases where Boost and standard C++ types can be
+used safely with the Teuchos memory management classes and some of
+these cases have already been discussed above (e.g.\ {}\ttt{RCP} and
+{}\ttt{boost::shared\_ptr} objects can be embeded in each other and
+deep copies of array objects are always safe).
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
