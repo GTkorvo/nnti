@@ -7685,8 +7685,6 @@ debug-mode runtime checking without any of the reference-counting
 overhead in a non-debug optimized build.  We can have our cake and eat
 it too!
 
-{}\textbf{ToDo: Finish editing from here!}
-
 
 %
 {}\subsection{Related idioms and design patterns}
@@ -8070,25 +8068,22 @@ initialized.  However, good class design makes this fairly easy.
 \label{sec:self-references}
 %
 
-There are occasions where an object needs to provide an {}\ttt{RCP}
-to itself with the full protection of the debug-mode checking with
-node-tracing enabled.  However, for an object to hold a strong
-{}\ttt{RCP} to itself would set up a cicular reference and the
-object would never be deleted.  The issue of self references was
-mentioned in the previous section in the context of the ``separate
-construction and initialization'' idiom.
+There are occasions where an object needs to provide an {}\ttt{RCP} to itself
+with the full protection of the debug-mode checking with node-tracing enabled.
+However, for an object to hold a strong {}\ttt{RCP} to itself would set up a
+cicular reference and the object would never be deleted.  The issue of self
+references was mentioned in the previous section in the context of the
+``separate construction and initialization'' idiom.
 
-The most straightforward example of where the ``object
-self-reference'' idiom is needed is when a factory object creates a
-product that must in turn store a strong owning {}\ttt{RCP} to the
-factory that created it.  This is the exact use case that exists in
-the Thyra packages for {}\ttt{VectorBase} and {}\ttt{VectorSpaceBase}
-objects {}\cite{ThyraOperatorVectorSAND}.  In this case,
-{}\ttt{VectorSpaceBase} acts as the factory and {}\ttt{VectorBase}
-acts as the product.  Also, every {}\ttt{VectorBase} object has a
-function {}\ttt{space()} that returns the {}\ttt{VectorSpaceBase}
-object that created it to be used to create other {}\ttt{VectorBase}
-objects.
+The most straightforward example of where the ``object self-reference'' idiom
+is needed is when a factory object creates a product that must in turn store a
+strong owning {}\ttt{RCP} to the factory that created it.  This is the exact
+use case that exists in the Thyra package for {}\ttt{VectorBase} and
+{}\ttt{VectorSpaceBase} objects {}\cite{ThyraOperatorVectorSAND}.  In this
+case, {}\ttt{VectorSpaceBase} acts as the factory and {}\ttt{VectorBase} acts
+as the product.  Also, every {}\ttt{VectorBase} object has a function
+{}\ttt{space()} that returns an {}\ttt{RCP} to the {}\ttt{VectorSpaceBase}
+object that created it to be used to create other {}\ttt{VectorBase} objects.
 
 A simplified version of the implemention of the
 {}\ttt{VectorSpaceBase} standard subclass
@@ -8101,6 +8096,9 @@ factory must give a strong owning {}\ttt{RCP} self reference to its products.  \
 \label{listing:osr:DefaultSpmdVectorSpace}
 {\small\begin{verbatim}
   class DefaultSpmdVectorSpace : public VectorSpaceBase {
+    RCP<DefaultSpmdVectorSpace> weakSelfPtr_;
+    Ordinal localDim_;
+    DefaultSpmdVectorSpace() : localDim_(0) {}
   public:
     static RCP<DefaultSpmdVectorSpace> create()
       {
@@ -8114,10 +8112,6 @@ factory must give a strong owning {}\ttt{RCP} self reference to its products.  \
       {
          return defaultSpmdVector(weakSelfPtr_.create_strong());
        }
-  private:
-    RCP<DefaultSpmdVectorSpace> weakSelfPtr_;
-    Ordinal localDim_;
-    DefaultSpmdVectorSpace() : localDim_(0) {}
   };
 
   // Nonmeber constructor
@@ -8131,86 +8125,82 @@ factory must give a strong owning {}\ttt{RCP} self reference to its products.  \
 \end{listing}
 
 
-The way the ``object self-reference'' idiom works is that a static
-function {}\ttt{create()} allocates an default-initialized
-{}\ttt{DefaultSpmdVectorSpace} object and stores it in a strong
-owning {}\ttt{RCP} object.  It then creates a weak {}\ttt{RCP}
-object that it sets as the self reference on the newly created
-{}\ttt{DefaultSpmdVectorSpace} object.  The default constructor is
-made private so the only way for a client to create an
-{}\ttt{DefaultSpmdVectorSpace} object is to use use the static
-{}\ttt{create()} function (or call it indirectly through the
-non-member constructor {}\ttt{defaultSpmdVectorSpace()} function).
-Because this self reference is a weak tracing {}\ttt{RCP}, it can
-detect dangling references or can be used to create a strong
-{}\ttt{RCP} when needed while at the same time not creating a
-circular reference that would result in a memory leak.
+The way the ``object self-reference'' idiom works is that a static function
+{}\ttt{create()} allocates an default-initialized
+{}\ttt{DefaultSpmdVectorSpace} object and stores it in a strong owning
+{}\ttt{RCP} object.  It then creates a weak {}\ttt{RCP} object that it sets as
+the self reference on the newly created {}\ttt{DefaultSpmdVectorSpace} object.
+The default constructor is made private so the only way for a client to create
+an {}\ttt{DefaultSpmdVectorSpace} object is to use use the static
+{}\ttt{create()} function (or call it indirectly through the non-member
+constructor function {}\ttt{defaultSpmdVectorSpace()}).  Because this self
+reference is a weak tracing {}\ttt{RCP}, it can detect dangling references or
+can be used to create a strong {}\ttt{RCP} when needed while at the same time
+not creating a circular reference that would result in a memory leak.
 
-The code in Listing {}\ref{listing:osr:DefaultSpmdVectorSpace} shows
-the creation of a strong owning {}\ttt{RCP} which is given to the
-newly created {}\ttt{DefaultSpmdVector} object in the statement
-{}\ttt{defaultSpmdVector( weakSelfPtr\_.create\_strong())}.  This
-allows the resulting product {}\ttt{DefaultSpmdVector} object to
-outlive the client's code that created the factory
-{}\ttt{DefaultSpmdVectorSpace} object.  A simple example of this is
-shown in Listing
+The memory function {}\ttt{createMember()} shown in Listing
+{}\ref{listing:osr:DefaultSpmdVectorSpace} creates a strong owning {}\ttt{RCP}
+to itself which is given to the newly created {}\ttt{DefaultSpmdVector} object
+in the statement {}\ttt{defaultSpmdVector( weakSelfPtr\_.create\_strong())}.
+This allows the resulting product {}\ttt{DefaultSpmdVector} object to outlive
+the client's {}\ttt{RCP} references to the factory object
+{}\ttt{DefaultSpmdVectorSpace}.  A simple example of this is shown in Listing
 {}\ref{listing:osr:DefaultSpmdVectorSpace-use-delete}.
 
 
-\begin{listing}: Example of client code that creates a factory, uses it to
-create a product and lets the factory go away.  \\
+{}\begin{listing}: Example of client code that creates a factory, uses it to
+create a product and lets the factory go away where the factory is remembered
+in the product
 \label{listing:osr:DefaultSpmdVectorSpace-use-delete}
 {\small\begin{verbatim}
-  RCP<VectorBase> createMyector(const Ordinal localDim)
+  RCP<VectorBase> createMyVector(const Ordinal localDim)
   {
      RCP<DefaultSpmdVectorSpace> vs = defaultSpmdVectorSpace();
      return vs.createMember();
+     // NOTE: The DefaultSpmVectorSpace object is embedded in the returned
+     // DefaultSpmdVector object and will not be deleted
   }
 \end{verbatim}}
 \end{listing}
 
 
 Code like shown in Listing
-{}\ref{listing:osr:DefaultSpmdVectorSpace-use-delete} may seem
-contrived but there have been several use cases for Thyra over the
-years that required code just like this to work or it would have
-resulted in a much more complex design of the client's code.
+{}\ref{listing:osr:DefaultSpmdVectorSpace-use-delete} may seem contrived but
+there have been several use cases for Thyra over the years that required code
+just like this to work or it would have resulted in a much more complex design
+of the client's code to work around this.
 
-There are also other less obvious examples where the ``object
-self-reference'' idiom is useful.  For one such case, consider Listing
-{}\ref{listing:osr:SomeClass-before} which shows a simplified version
-of the class shown in Listing {}\ref{listing:sci:SomeClass-before}
-that has to pass a self reference to an object it creates and holds
-internally.
+There are also other less obvious examples where the ``object self-reference''
+idiom is useful.  For one such case, consider Listing
+{}\ref{listing:osr:SomeClass-before} which shows a simplified version of the
+class shown in Listing {}\ref{listing:sci:SomeClass-before} that has to pass a
+self reference to an object it creates and holds internally.
 
 
 \begin{listing}: Example of an class with {}\ttt{RCP} to self problems  \\
 \label{listing:osr:SomeClass-before}
 {\small\begin{verbatim}
   class SomeClass : public SomeBaseClass {
+    RCP<C> c_;
+    void finalInitialization() { ...}
   public:
     SomeClass() {}
       { c_ = createC(rcp(this, false)); finalInitialization(); }
     RCP<C> get_C() { return c_; }
     ...
-  private:
-    RCP<C> c_;
-    void finalInitialization() { ...}
   };
 \end{verbatim}}
 \end{listing}
 
 
-The problem with the code in Listing
-{}\ref{listing:osr:SomeClass-before} is that it gives up an
-{}\ttt{RCP<C>} object to its internal {}\ttt{C} object that is
-constructed internally but a proper node tracing relationship has not
-been established between the {}\ttt{C} object and the
-{}\ttt{SomeClass} object.  (Even if {}\ttt{SomeClass} does not
-intentionally give up its {}\ttt{RCP<C>} object, it is still very
-easy to do it by accident so this scencario still applies.)  The see
-problem with this, consider the client code in Listing
-{}\ref{listing:osr:bad-use-SomeClass}.
+The problem with the code in Listing {}\ref{listing:osr:SomeClass-before} is
+that it gives up an {}\ttt{RCP<C>} object to its internal {}\ttt{C} object
+that is constructed internally but a proper node tracing relationship has not
+been established between the {}\ttt{C} object and the {}\ttt{SomeClass}
+object.  (Even if {}\ttt{SomeClass} does not intentionally give up its
+{}\ttt{RCP<C>} object, it is still very easy to do it by accident so this
+scencario still applies.)  To see the problem with this, consider the client
+code in Listing {}\ref{listing:osr:bad-use-SomeClass}.
 
 
 \begin{listing}: Client code that results in a segfault  \\
@@ -8224,26 +8214,25 @@ problem with this, consider the client code in Listing
 \end{listing}
 
 
-The problem with the code in Listing
-{}\ref{listing:osr:bad-use-SomeClass} is that when the
-{}\ttt{SomeClass} object {}\ttt{sc} is destroyed, there is no way for
-the reference-counting machinery in to catch the dangling reference.
-This code will segfault if one is lucky but like any memory usage
-error, if one is unlucking the code will appear to work correctly but
-will be a ticking time-bomb that will go off eventually.  The reason
-for this behavior is that the statement {}\ttt{c\_ = createC(rcp(this,
-false))} in the constructor {}\ttt{SomeClass()} creates a non-owing
-{}\ttt{RCPNode} object {}\underline{before} the owning {}\ttt{RCPNode}
-object is created by the client code {}\ttt{RCP<SomeClass> sc(new
-SomeClass)}.  This violates Commandment {}\ref{cmnd:owning-rcp-first}
-in Section {}\ref{apdx:commandments}.  The node-tracing
-reference-counting machinery would have to be {}\underline{much} more
-complex and expensive to catch dangling reference errors where the
-strong owning {}\ttt{RCPNode} object was not the first created.
+The problem with the code in Listing {}\ref{listing:osr:bad-use-SomeClass} is
+that when the {}\ttt{SomeClass} object {}\ttt{sc} is destroyed, there is no
+way for the reference-counting machinery in to catch the dangling reference.
+This code will segfault if one is lucky but like any memory usage error, if
+one is unlucking the code will appear to work correctly but will be a ticking
+time-bomb that will go off eventually.  The reason for this behavior is that
+the statement {}\ttt{c\_ = createC(rcp(this, false))} in the constructor
+{}\ttt{SomeClass()} creates a non-owing {}\ttt{RCPNode} object
+{}\underline{before} the owning {}\ttt{RCPNode} object is created by the
+client code {}\ttt{RCP<SomeClass> sc(new SomeClass)}.  This violates
+Commandment {}\ref{cmnd:owning-rcp-first} in Section
+{}\ref{apdx:commandments}.  The node-tracing reference-counting machinery
+would have to be {}\underline{much} more complex and expensive to catch
+dangling reference errors where the strong owning {}\ttt{RCPNode} object was
+not the first {}\ttt{RCPNode} object created.
 
 The solution to this problem is to use a variation of the ``object
-self-reference'' idiom.  The updated design that accomplishes this is
-shown in Listing {}\ref{listing:osr:SomeClass-refactored}.
+self-reference'' idiom.  The updated design that accomplishes this is shown in
+Listing {}\ref{listing:osr:SomeClass-refactored}.
 
 
 \begin{listing}:  Example of the ``object self-reference'' idiom for
@@ -8251,6 +8240,10 @@ detecting dangling references to internally held objects  \\
 \label{listing:osr:SomeClass-refactored}
 {\small\begin{verbatim}
   class SomeClass : public SomeBaseClass {
+    RCP<SomeClass> weakSelfPtr_;
+    RCP<C> c_;
+    SomeClass() {}
+    void justInTimeInitialization() { c_ = createC(weakSelfPtr_); }
   public:
     static RCP<SomeClass> create()
       {
@@ -8260,14 +8253,6 @@ detecting dangling references to internally held objects  \\
       }
     RCP<C> get_C() { justInTimeInitialization(); return c_; }
     ...
-  private:
-    RCP<SomeClass> weakSelfPtr_;
-    RCP<C> c_;
-    SomeClass() {}
-    void justInTimeInitialization() { c_ = createC(weakSelfPtr_); }
-    // Note defined and not to be called
-    SomeClass(const SomeClass&);
-    SomeClass operator=(const SomeClass&);
   };
 
   // Nonmeber constructor
@@ -8327,11 +8312,9 @@ using a true presisting association  \\
 \end{listing}
 
 
-It is required to create a strong {}\ttt{RCP} in this case and
-invert the object ownership using in
-{}\ref{listing:osr:SomeClass-get_C-persisting} (which is an instance
-of the ``inverted object ownership'' idiom which is described in
-Section {}\ref{sec:inverting-obj-ownership}).
+It is required to create a strong {}\ttt{RCP} in this case and invert the
+object ownership (which is an instance of the ``inverted object ownership''
+idiom which is described in Section {}\ref{sec:inverting-obj-ownership}).
 
 Given the implementation in Listing
 {}\ref{listing:osr:SomeClass-get_C-persisting}, client code like in
@@ -8339,6 +8322,8 @@ Listing {}\ref{listing:osr:dangling-ref-SomeClass} will allow the
 {}\ttt{C} object can be used after the client's
 {}\ttt{RCP<SomeClass>} object is made {}\ttt{null} without
 thrown a dangling reference exception.
+
+{}\textbf{ToDo: Finish editing from here!}
 
 
 %
