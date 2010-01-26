@@ -9246,12 +9246,12 @@ deep copies of array objects are always safe).
 %
 
 The easiest way to incorporate the full use of the Teuchos memory
-management classes it to develop new code and use them from the very
+management classes is to develop new code and use them from the very
 beginning.  In this mode of development, the debug-mode runtime
 checking makes development fast and productive with one never seeing a
 segfault or other memory usage error.  However, the more typical
-situation is that a large existing code-base must be continued to be
-developed and current code must be modified and new code must
+situation is that a large existing code-base must continued to be
+developed , current code must be modified, and new code must
 integrated with current code.  For existing code bases, the code will
 need to be refactored to use the Teuchos memory management classes,
 replacing the use of raw pointers and raw calls to {}\ttt{new} and
@@ -9275,7 +9275,7 @@ interface functions but leave the existing unsafe raw-pointer versions
 when possible and have them call the new safe versions (by converting
 between raw pointers to the memory management types as needed).  This
 avoids duplication which simplifies further maintenance and also
-provides for smooth upgrades for client code to incrementally switch
+provides for smooth upgrades of client code to incrementally switch
 over from raw pointers to the Teuchos memory management classes.  The
 help facilitate the transition of client code, the deprecated raw
 pointer interface functions and other code can be marked as deprecated
@@ -9285,47 +9285,48 @@ on some compilers which generates warning messages while compiling
 While the most critical code to refactor to use the Teuchos memory
 management types are major module and class interfaces, the next most
 important software to refactor is any software that needs to be
-changed.  However, if there is existing well-encapsulated code that
-uses raw C++ pointers and that code does not need to change any time
-soon then refactoring that code to use the Teuchos memory management
-classes should be very low priority.  It is not until such code needs
-to be changed that it should be refactored to use the safer memory
-management types (which will make adding new features much easier and
-safer).
+changed or extended.  Other code is lower priority to refactor,
+especially existing well-encapsulated code that uses raw C++ pointers
+internally that does not need to be changed to add new features any
+time soon.  It is not until such code needs to be changed that it
+should be refactored to use the safer memory management types (which
+will make adding new features much easier and safer).
 
 While the final state of code refactored to use the Teuchos memory
-management types is an excellent state (as described throughout this
-document), great care must be exercised in refactoring the software.
-In general, before any piece of software is refactored to use the
-Teuchos memory management types, it should first be covered with high
-quality unit tests (see {}\cite{WorkingEffectivelyWithLegacyCode05}
-for a great treatment on how to add unit tests to existing code bases
-to facilitate adding new features).  The general process that should
-be followed to refactor existing software to use the Teuchos memory
-management types includes the following major steps:
+management types is excellent (as described throughout this document),
+great care must be exercised in refactoring the software.  In general,
+before any piece of software is refactored to use the Teuchos memory
+management types, it should first be covered with high-quality unit
+tests (see {}\cite{WorkingEffectivelyWithLegacyCode05} for a great
+treatment on how to add unit tests to existing code bases to
+facilitate adding new features).  The general process that should be
+followed to refactor existing software to use the Teuchos memory
+management types includes the following major steps (consistent with
+the advice in {}\cite{WorkingEffectivelyWithLegacyCode05}):
 
 \begin{enumerate}
 
-{}\item Break dependencies to allow unit tests to be written.
+{}\item Break dependencies to allow unit tests to be written
 
 {}\item Add unit tests to cover behavior of the code that is to be
-refactored.
+refactored
 
-{}\item Refactor the targeted code incrementally (running the unit
-tests constantly including using Valgrind and Purify) to use the
-Teuchos memory management classes by:
+{}\item Refactor the targeted code incrementally to use the Teuchos
+memory management classes (all the while running the unit tests
+constantly including using Valgrind and Purify to ensure defects are
+not being created) by:
 
   \begin{enumerate}
 
   {}\item Replacing raw pointers internally with Teuchos memory
-  management types until all raw pointers are gone.
+  management types until all raw pointers are gone
 
   {}\item Writing new versions of the interface functions in terms of
-  the safer Teuchos memory management types.
+  the safer Teuchos memory management types
 
   {}\item Keeping the existing raw-pointer interface functions which
   are called by the unit tests but have them call the new functions
-  that take the safer memory management types.
+  that take the safer memory management types
 
   {}\item Marking the deprecated functions as so to facilitate
   refactoring of client code (e.g.\ using GCC's {}\ttt{
@@ -9346,8 +9347,8 @@ tests in place.)  As more and more code is refactored to use the safe
 Teuchos memory management types, the easier and safer this type of
 refactoring will become.
 
-{}\item Add the desired new features in the selected code safely and
-easily.
+{}\item Write new unit tests (using test-drived development) and add
+the desired new features in the selected code safely and easily
 
 \end{enumerate}
 
@@ -9364,8 +9365,8 @@ attempted in large batches, no matter what
 
 The above process was followed with great success to refactor the
 Trilinos package Thyra over a period of more than a year.  This
-process can be followed for an code base very safely and productively
-if the above process is well followed.
+process can be followed for a code base very safely and productively
+if the above incremental unit-testing refactoring process is followed.
 
 
 %
@@ -9375,12 +9376,15 @@ if the above process is well followed.
 
 When thinking about memory management in C++ it is helpful to take a
 step back and consider a few different higher-level issues.  In the
-following section, the philosophy of memory management is discussed
-and some analogies are used to help put things in perspective and
-provide a solid foundation for the approach used in the Teuchos memory
-management classes.  Then, the issue essential and accedential
-complexity is discussed and what role the Teuchos memory management
-classes play in addressing accidental complexity.
+following section, the issue essential and accedential complexity is
+discussed and what role the Teuchos memory management classes play in
+addressing accidental complexity and helping to make implicit concepts
+explicit.  Then, the philosophy of memory management is discussed and
+some analogies are used to help put things in perspective and provide
+a solid foundation for the approach used in the Teuchos memory
+management classes as compared to approaches that start with safer
+language but arrive at a similar balance between safety, speed, and
+flexibility.
 
 
 %
@@ -9389,26 +9393,27 @@ concepts explicit}
 \label{sec:essentail-accidental-complexity}
 %
 
-While the idioms described in this document (outlined in Section
-{}\ref{sec:idioms}) may look complex, one has to consider that it is
-not really the idioms that are complex but the essential attributes of
-object relationships that are complex.  Frederick Brooks refers to
-this as {}\textit{essential complexity} as opposed to
-{}\textit{accidental complexity} {}\cite{MythicalManMonth95}.
-{}\textit{Accidental complexity} in programming refers to complexity
-resulting from the details of the programming language or environment
-which are not directly related to solving the problem at hand.
-Accidental complexity has largely been removed as higher level
-languages have been developed {}\cite[Chapter 16]{MythicalManMonth95}.
-However, raw pointers in C and C++ and manual resource management
-(when that is not the main focus of the program) are definitely a
-lingering category of accidental complexity\footnote{
+While the idioms described in this document (largely outlined in
+Section {}\ref{sec:idioms}) may appear complex at first sight, one has
+to consider that it is not really the idioms that are complex but the
+essential attributes of object relationships that are complex.
+Frederick Brooks refers to this as {}\textit{essential complexity} as
+opposed to {}\textit{accidental complexity}
+{}\cite{MythicalManMonth95}.  {}\textit{Accidental complexity} in
+programming refers to complexity resulting from complicating details
+of the programming language or environment which are not directly
+related to solving the problem at hand.  Accidental complexity has
+largely been removed as higher level languages have been developed
+{}\cite[Chapter 16]{MythicalManMonth95}.  However, raw pointers in C
+and C++ and manual resource management (when that is not the main
+focus of the program) are definitely a lingering category of
+accidental complexity\footnote{
 {}\ttt{http://discuss.joelonsoftware.com/default.asp?joel.3.278613.51}}.
 Alternatively, {}\textit{essential complexity} exists because of the
-nature of the problem at hand and no programming language will remove
-it (but we can use object-oriented and other design approaches to
-partition and abstract this essential complexity such that we can
-write and maintain large-scale programs).
+nature of the problem at hand that no programming language will ever
+be able to fully remove.  (However, can use object-oriented and other
+design approaches to partition and abstract essential complexity such
+that we can write and maintain large-scale programs.)
 
 What the Teuchos Memory Management classes do is that they remove much
 of the accidental complexity of using raw pointers and manual resource
@@ -9426,23 +9431,23 @@ essential questions:
 is there just one object or are there more than one object at the
 other end of the association?).  In UML class diagrams, a singular
 multiplicity relationship is represented using a {}\ttt{1} and
-multiplicity greater than one is represented using {}\ttt{1..*}
-(See Figure {}\ref{fig:TeuchosRCPDesign} for examples).
+multiplicity greater than one is represented using {}\ttt{1..*} (see
+Figure {}\ref{fig:TeuchosRCPDesign} for examples).
 
 {}\item\textit{Is the object optional or required?}  In a UML class
-diagram, an optional object is represented using {}\ttt{0..1} while
-a required object is represented as {}\ttt{1} (see Figure
+diagram, an optional object is represented using {}\ttt{0..1} while a
+required object is represented as {}\ttt{1} (see Figure
 {}\ref{fig:TeuchosRCPDesign} for examples).
 
 {}\item\textit{Is the object changeable or non-changeable?}  In UML
 class diagrams, a non-changeable object is given the attribute
-{}\ttt{\{readOnly\}}.  In UML, by default, all objects at the end
-of an association are assumed changeable.
+{}\ttt{\{readOnly\}}.  In UML, by default, all objects at the end of
+an association are assumed changeable.
 
 {}\item\textit{Is the association persisting or non-persisting?}  In a
 UML class diagram, non-persisting associations are referred to as
-``dependency associations'' and can be given the keyword
-{}\ttt{$\ll$parameter$\gg$} and are represented with a dotted line.
+``dependency associations'' are represented with a dotted line (and
+can also be given the keyword {}\ttt{$\ll$parameter$\gg$}).
 Persisting associations are referred to as ``relationships'' and are
 represented as solid lines (see Figure {}\ref{fig:TeuchosRCPDesign}
 for examples)?
@@ -9480,47 +9485,49 @@ executable languages (not withstanding executable XML {}\cite[Chapter
 concepts explicit.  The Teuchos memory management classes and the
 associated idioms described in this paper provide a means to make many
 of these essential concepts explicit in C++ in a way that is not
-possible in any other widely used high-level programming language,
-period.  
+possible in any other widely used programming language.
 
-While the Teuchos memory management classes go a long way in
-removing some of the accidental complexity of programing in C++ due to
-manual memory management, some of the (of the many others) types of
-remaining accidental complexity include:
+While the Teuchos memory management classes go a long way in removing
+some of the accidental complexity of programing in C++ due to manual
+memory management, some of the types of remaining accidental
+complexity (among many other types not mentioned) include:
 
 \begin{itemize}
 
 {}\item\textit{Value semantics versus reference semantics}: The
-distinction between value semantics versus reference semantics in a
+distinction between value semantics versus reference semantics is a
 C++ concept that does not directly relate to solving a problem or
 representing a model in code and is therefore accidental complexity.
 In Java and Python, all user-defined types use reference semantics but
-in C++ we can take advantage of objects with value semantics which
-gives us more efficient code and more control in C++ than what is
-possible in Java or Python.  However, this extra control could be
-classified as Accidental complexity (which we tolerate for the sake
-of added control and improved performance).
+in C++ programmers can take advantage of value-types which gives more
+efficient code and more control in C++ than what is possible in these
+other languages.  However, this extra control could be classified as
+accidental complexity (which we tolerate for the sake of added control
+and improved performance).
 
 {}\item\textit{Pointer syntax for memory management types {}\ttt{Ptr},
 and {}\ttt{RCP}}: In order to access the underlying object through the
-types {}\ttt{Ptr}, and {}\ttt{RCP}, one has to use pointer syntax
-using {}\ttt{*a} and {}\ttt{a->someMember()}.  The C++ language makes
-it impossible to allow direct access to the underlying type like raw
-C++ references allow.  Pointer syntax is not essential to the nature
-of problem solving (as proven by all the languages that don't have
-pointers including Java and Python) and must therefore be categorized
-as accidental complexity.  Note, however, that the types
+smart pointer types {}\ttt{Ptr} and {}\ttt{RCP}, one has to use
+pointer syntax using {}\ttt{func(*a)} and {}\ttt{a->someMember()}.
+The C++ language makes it impossible to define abstract data types
+that allow direct access to the underlying object (i.e. using
+{}\ttt{func(a)} and {}\ttt{a.someMember()}) like raw C++ references
+allow.  Pointer syntax is not essential to the nature of problem
+solving (as proven by all the languages that don't have pointers
+including Java and Python) and must therefore be categorized as
+accidental complexity.  Note, however, that the types
 {}\ttt{ArrayView} and {}\ttt{ArrayRCP} were not listed in this
 category because one can use these array classes using just the
-{}\ttt{operator[](size\_type)} function and do not need to use any
+{}\ttt{operator[](size\_type)} function and one does not need to use
 pointer syntax.  In fact, {}\ttt{ArrayView} does not even support any
 pointer-like functions and the pointer-like functions on
 {}\ttt{ArrayRCP} are only really there to allow it to be used as a
-general purpose checked iterator in a debug build.  While pointer
+general purpose checked iterator in a debug-mode build.  While pointer
 syntax is not an essential concept they do actually come in handy to
 define iterators into containers and present a much more compact
-iterator interface that what one will find in other languages.
-Pointers syntax are not all bad.
+iterator interface that what one will find in other languages.  In
+other words, pointers syntax can be concidered to be a nice
+enhancement when considering iterators.
 
 \end{itemize}
 
@@ -9574,10 +9581,10 @@ cars on the road but we do it anyway.  The reason that we get into our
 cars every day is that we take reasonable precautions like purchasing
 a car with a good safely design, wearing seat-belts, obeying the
 traffic laws, driving a reasonable speed, and practicing defensive
-driving.  What is going to be argued is that the approach to memory
-management that is being advocated in this paper is the equivalent of
-driving a car, wearing one's seat belt, and taking other reasonable
-safety precautions.
+driving.  What is going to be argued here is that the approach to
+memory management that is being advocated in this paper is the
+equivalent of driving a car, wearing one's seat belt, and taking other
+reasonable safety precautions.
 
 Now let's talk about the safety versus speed/efficiently extremes in
 the Transportation Analogy and in the areas of memory management.  At
@@ -9585,16 +9592,16 @@ one extreme, writing all high-level code in C++ (or C) using raw
 pointers for everything is like riding a high-performance motorcycle
 on a crowded interstate going 150 mph, without wearing a helmet or any
 other safety gear, while doing a wheelie.  At this extreme, one wrong
-move and one is dead.
+move means certain death.
 
 At the other extreme, writing all code in a language like Python is
 like driving around in a reinforced tank that does a maximum of 10 mph
 where one sits inside wearing a car racing helmet with the Hans
-device, full racing safety gear, and have a massive air bag system to
-encase one's entire body in foam three feet thick in case of a
+device, full racing safety gear, and having a massive air bag system
+to encase one's entire body in foam three feet thick in case of a
 collision.  On this side of extreme safely, we could hit a Mac truck
-head on and be just fine.  The only way to really kill ourselves is if
-we were to dive off of a shear cliff.
+head on and be just fine.  The only way to really kill one's self to
+drive off a shear cliff.
 
 If we all required a near 100\% safely guarantee, we would all be
 driving around in reinforced tanks like the one described above but we
@@ -9602,12 +9609,12 @@ don't.  We don't because we are not willing to pay the price of the
 near 100\% guarantee provided by the tank.  We can't afford it
 financially and it would take forever to get back and forth to
 work. Instead, we are content with our less than 100\% safe cars
-because they are affordable and fast and do not pose unreasonable
+because they are affordable and fast and yet do not pose unreasonable
 risks.
 
-Now, we can incrementally go from either extreme to the more balanced
-position in both the Transportation Analogy and with memory management
-in C++ and Python.
+Now, we can incrementally go from either extreme to a more balanced
+state in both the Transportation Analogy and with memory management in
+C++ and Python.
 
 From the extreme of safety with less speed and flexibility represented
 by the reinforced tank (and Python) one can incrementally move toward
@@ -9622,8 +9629,9 @@ rewriting them in C/C++, and then calling them from Python.  This is
 an approach that many Python enthusiasts are advocating
 {}\cite{PythonForSCPerforamnce08} but make no mistake that in going
 down this road that one is sacrificing safety in Python in the name of
-speed and flexibility.  One is giving up Python's nearly 100\%
-guarantee when one does this.
+speed and flexibility.  One is giving up Python's near 100\% guarantee
+when one does this and will therefore have to deal with difficult and
+dangerous memory errors croping up in the code.
 
 From the extreme of speed and flexibility with little regard for
 safety represented by the motorcycle (and C/C++ raw pointers) one can
@@ -9638,18 +9646,19 @@ trend that the C++ community has been following for more than the last
 decade.  We see it first in the introduction of {}\ttt{std::auto\_ptr}
 and {}\ttt{std::vector}.  This was then followed by the development of
 {}\ttt{boost::shared\_ptr} (and therefore {}\ttt{std::shared\_ptr} in
-C++0x) and {}\ttt{boost::array\_ptr}.  What is being suggested in this
-paper is the logical conclusion of this journey which is the
-development of a complete set of utility classes in order to remove
-all raw C++ pointers from high-level C++ code; i.e.\ complete the
-transition from the motorcycle (C/C++ raw pointers) to the car
-(Teuchos C++ memory management classes).
+C++0x).  What is being suggested in this paper is the logical
+conclusion of this journey which is the development of a complete set
+of utility classes in order to remove all raw C++ pointers from
+high-level C++ code; i.e.\ complete the transition from the motorcycle
+(C/C++ raw pointers) to the car (Teuchos C++ memory management
+classes).
 
-With the approach being advocated in this paper for the Teuchos Memory
-Management classes, using the debug mode is like driving around in the
+With the approach being advocated in this paper, using the Teuchos
+memory management classes in debug-mode is like driving around in the
 tank where one is protected from almost any danger.  However, using
-the optimized mode is like driving around with the high-performance
-motorcycle.  Try that with a car!
+the Teuchos memory management classes in non-debug optimized builds is
+like driving around with the fast high-performance motorcycle.  Try
+turning a car into a motorcycle and then back again that easily!
 
 
 %
@@ -9657,8 +9666,8 @@ motorcycle.  Try that with a car!
 \label{sec:conclusions}
 %
 
-Using reference-counting in Teuchos Memory Management classes allows
-one to remove unnecessary constraints in the use of objects in
+Using the Teuchos reference-counted memory management classes allows
+one to remove unnecessary constraints in the use of objects by
 removing arbitrary lifetime ordering constraints which are a type of
 unnecessary coupling {}\cite{CodeComplete2nd04}.  The code one writes
 with these classes will be more likely to be correct on first writing,
@@ -9682,14 +9691,16 @@ is to teach these classes and idioms and expand their usage in C++
 codes.  The long-term viability of C++ as a usable and productive
 language depends on it.  Otherwise, if C++ is no safer than C, then is
 the greater complexity of C++ worth what one gets as extra features?
-C is smaller and easier to learn and since most programmers don't know
-object-orientation all that well anyway then what are they really
-getting out of C++ other than more complexity?  C++ zealots will argue
-this point but the reality is that C++ is becoming less popular while
-the popularity of C has remained fairly stable over the last decade.
-The idioms like are advocated here can help to avert this trend but it
-will require wide community buy-in and a change in the way C++ is
-taught.
+Given that C is smaller and easier to learn than C++ and since most
+programmers don't know object-orientation (or templates or X, Y, and Z
+feataures of C++) all that well anyway, then what these types of
+programmers really getting extra out of C++ that would outweigh the
+exta complexity of C++ over C?  C++ zealots will argue this point but
+the reality is that C++ is becoming less popular while the popularity
+of C has remained fairly stable over the last decade.  Idioms like are
+advocated in this paper can help to avert this trend but it will
+require wide community buy-in and a change in the way C++ is taught in
+order to have the greatest impact.
 
 To make these programs more secure, compiler vendors or static
 analysis tools (e.g.\ klocwork) could implement a preprocessor-like
@@ -9783,11 +9794,11 @@ classes}
 %
 
 Here are stated commandments (i.e.\ very strongly recommended
-guidelines) that if followed, along with the idioms defined in
-Section {}\ref{sec:idioms}, then client code will be 100\% safe
-through debug-mode runtime checking and will never result in a
-segfault or other memory usage error (except for circular references
-as described in Section {}\ref{sec:detection-circular-references}).
+guidelines) that if followed, along with the idioms defined in Section
+{}\ref{sec:idioms}, then client code will be nearly 100\% safe through
+debug-mode runtime checking and will almost never result in a segfault
+or other memory usage error (except for circular references as
+described in Section {}\ref{sec:detection-circular-references}).
 While there will be situations where it is justified to violate almost
 all of these commandments, they should be valid in 99\% of a well
 written code base.
@@ -9828,8 +9839,8 @@ a strong owning {}\ttt{RCP} object first before any non-owning
 machinery to detect dangling non-owning references in a debug-mode
 build, the first {}\ttt{RCP} object created must have ownership to
 delete.  The system can not detect dangling references from non-owning
-{}\ttt{RCPNode} objects created before the owning
-{}\ttt{RCPNode} object is created.
+{}\ttt{RCPNode} objects created before an owning {}\ttt{RCPNode}
+object is created.
 
 \begin{commandment}\label{cmnd:ptr-semi-persisting}
 Thou shall use {}\ttt{Ptr} for handling single objects for all
@@ -9837,18 +9848,19 @@ semi-persisting associations (see Section
 {}\ref{sec:nonpersisting-persisting-associations}).
 \end{commandment}
 {}\textit{Justification:} When performance constraints do not allow
-the reference-counting overhead of {}\ttt{RCP}, then {}\ttt{Ptr} can
-be used instead to form a semi-persisting association which should be
-accompanied with the appropriate documentation about the performance
-optimization.  One should never have to retreat back to using a raw
-pointer in these cases.  At least with {}\ttt{Ptr}, invalid usage will
-be checked for in a debug build so one does not loose any debug-mode
-runtime checking when using {}\ttt{Ptr} instead of {}\ttt{RCP} if one
-really does not need reference-counting machinery.
+for the reference-counting overhead of {}\ttt{RCP}, then {}\ttt{Ptr}
+can be used instead to form a semi-persisting association (which
+should be accompanied with the appropriate documentation about the
+performance optimization).  One should never have to retreat back to
+using a raw pointer in these cases.  At least with {}\ttt{Ptr},
+invalid usage will be checked for in a debug build so one does not
+loose any debug-mode runtime checking when using {}\ttt{Ptr} instead
+of {}\ttt{RCP} if one really does not need reference-counting
+machinery.
 
 \begin{commandment}
 Thou shall use {}\ttt{ArrayRCP} for handling contiguous arrays of
-objects for all persisting associations (see Section
+objects for shared all persisting associations (see Section
 {}\ref{sec:nonpersisting-persisting-associations}).
 \end{commandment}
 
@@ -9858,10 +9870,10 @@ objects for all semi-persisting associations (see Section
 {}\ref{sec:nonpersisting-persisting-associations}).
 \end{commandment}
 {}\textit{Justification:} When performance constraints do not allow
-the reference-counting overhead of {}\ttt{ArrayRCP}, then
+for the reference-counting overhead of {}\ttt{ArrayRCP}, then
 {}\ttt{ArrayView} can be used instead to form a semi-persisting
-association which should be accompanied with the appropriate
-documentation about the performance optimization.  One should never
+association (which should be accompanied with the appropriate
+documentation about the performance optimization).  One should never
 have to retreat back to using a raw pointer in these cases.  At least
 with {}\ttt{ArrayView}, invalid usage will be checked for in a debug
 build so one does not loose any debug-mode runtime checking when using
@@ -9897,9 +9909,11 @@ contiguous container instead of {}\ttt{std::vector} (see Section
 \end{commandment}
 
 \begin{commandment}
-Thou shall only convert between different memory management objects
-using the provided implicit and explicit conversion functions.  Thou
-shall never expose a raw C++ pointer to perform a conversion.
+Thou shall only convert or cast between different memory management
+objects (of the same or different types) using the provided implicit
+and explicit conversion functions (see Section
+{}\ref{sec:conversions}).  Thou shall never expose a raw C++ pointer
+to perform a conversion.
 \end{commandment}
 {}\textit{Exception}: Some very advanced and rare use cases might have
 one exposing a raw C++ pointer (see Section
@@ -9907,9 +9921,9 @@ one exposing a raw C++ pointer (see Section
 this paper).
 
 \begin{commandment}
-Thou shall only pass in the types {}\ttt{Teuchos::Ptr},
-{}\ttt{Teuchos::RCP}, {}\ttt{Teuchos::ArrayView}, and
-{}\ttt{Teuchos::ArrayRCP} by constant reference (e.g.\
+Thou shall only pass in the types {}\ttt{Ptr},
+{}\ttt{RCP}, {}\ttt{ArrayView}, and
+{}\ttt{ArrayRCP} by constant reference (e.g.\
 {}\ttt{const RCP<T> \&a}) and never by non-const reference (e.g.\
 never do {}\ttt{RCP<T> \&a}).
 \end{commandment}
@@ -9917,16 +9931,9 @@ never do {}\ttt{RCP<T> \&a}).
 non-const reference to one of these types (e.g.\ {}\ttt{RCP<T>
 \&a}) is when the function will modify what data the object points to.
 However, if this is the case, it is typically better and more clear to
-pass in the object through a {}\ttt{Teuchos::Ptr} object (e.g.\
+pass in the object through a {}\ttt{Ptr} object (e.g.\
 {}\ttt{const Ptr<RCP<T> > \&a}) using the {}\ttt{outArg(...)} function
 (see Section {}\ref{sec:vars-passing-single-objs}).
-
-\begin{commandment}\label{cmnd:conversions}
-Thou shall only cast between the different Teuchos memory management
-types using the provided implicit and explicit conversion functions
-(see Section {}\ref{sec:conversions}).  Thou shall never cast between
-types by exposing raw C++ pointers.
-\end{commandment}
 
 
 %
@@ -9940,12 +9947,12 @@ The Teuchos array memory management classes {}\ttt{Array},
 for {}\ttt{size\_type} ({}\ttt{ptrdiff\_t} by default).  This breaks
 from the C++ standard library convention of the standard containers
 like {}\ttt{std::vector} that all use an unsigned integer for
-{}\ttt{std::vector::size\_type} (which is {}\ttt{size\_t} on most
-machines).  The primary disadvantage for using an unsigned integral
-type is that subtractions that would normally produce a negative number
-instead rolls over into a huge positive number, making it more
-difficult to debug problems.  For example, consider the simple program
-shown in Listing {}\ref{listing:unsigned-int-problem}:
+{}\ttt{size\_type} (which is {}\ttt{size\_t} on most machines).  The
+primary disadvantage for using an unsigned integral type is that
+subtractions that would normally produce a negative number instead
+roll over into a huge positive number, making it more difficult to
+debug problems.  For example, consider the simple program shown in
+Listing {}\ref{listing:unsigned-int-problem}:
 
 
 {}\begin{listing}: Example program showing the problem with unsigned
@@ -9995,12 +10002,13 @@ debugger does not exactly give a great hint as to what the problem
 might be.  Was uninitialized memory used to produce this result?  Is
 there some other memory usage problem that would cause the program to
 produce a ridiculous result such as this?  It is problems like this
-that greatly contribute to the accidental complexity that is C/C++
-programing (see Section {}\ref{sec:essentail-accidental-complexity}).
+that greatly contribute to the accidental complexity that is inherit
+in C/C++ programing (see Section
+{}\ref{sec:essentail-accidental-complexity}).
 
 However, when {}\ttt{unsigned long int} is replaced with {}\ttt{long
 int} in Listing {}\ref{listing:unsigned-int-problem} and the code is
-rebuilt one gets:
+rebuilt and run one gets:
 
 
 {\small\begin{verbatim}
@@ -10015,29 +10023,29 @@ Now, getting output like {}\ttt{-2} when a positive number is expected
 is much easier to debug.  The chance of getting {}\ttt{-2} as the
 result of a memory usage error is very unlikely.  This would
 immediately be flagged as a subtraction error in the program and
-quickly traced down.  Therefore, from a program correctness and
-debugging perspective, signed integral types are far superior to
-unsigned types and signed types maintain basic mathematical properties
-of integral numbers.
+quickly traced down and fixed.  Therefore, from a program correctness
+and debugging perspective, signed integral types are far superior to
+unsigned types.
 
 So if programs with unsigned integers are harder to debug when things
 go wrong, then what are the advantages of using an unsigned type?
 Well, some might argue that using an unsigned type for integral
 objects that that can only be non-negative in valid programs helps to
 make the code self documenting.  This is partially true but one can
-achieve the same result by using a typedef to make the usage clear
-(e.g.\ {}\ttt{size\_type}).
+achieve the same result by using a typedef to make the usage
+expectation clear (e.g.\ {}\ttt{size\_type}).
 
-So then what then is left as the real advantage for using an unsigned
+So what then is left as the real advantage for using an unsigned
 integral type?  The only real advantage of an unsigned integral type
 (e.g.\ {}\ttt{unsigned int}) over a signed integral type (e.g.\
-{}\ttt{int}) is that object of the unsigned integral type can
-represent twice the positive range.  For smaller integral types like
-{}\ttt{char} and and {}\ttt{short int} having twice the range can be
-quite useful.  However, on 32 bit and 64 bit modern computers, using a
-an {}\ttt{unsigned int} instead of an {}\ttt{int} as the size for a
-container is quite worthless.  On a 64 bit Linux machine with GCC
-3.4.6, the sizes of several integral types pertinent to this
+{}\ttt{int}) is that unsigned integral type objects can represent
+twice the positive range as the equivalent signed integral type
+objects.  For smaller integral types like {}\ttt{char} and and
+{}\ttt{short int}, having twice the range can be quite useful.
+However, on 32 bit and 64 bit modern computers, using an
+{}\ttt{unsigned [long] int} instead of a {}\ttt{[long] int} as the
+size for a container is quite worthless.  On a 64 bit Linux machine
+with GCC 3.4.6, the sizes of several integral types pertinent to this
 discussion are shown in Listing {}\ref{listing:integral-type-sizes}.
 
 
@@ -10055,15 +10063,15 @@ GCC on a 64 bit Linux machine
   std::numeric_limits<unsigned int>::max()= 4294967295
   std::log10(std::numeric_limits<unsigned int>::max())= 9.63296
   
-  sizeof(long long int) = 8
-  std::numeric_limits<long long int>::min()= -9223372036854775808
-  std::numeric_limits<long long int>::max()= 9223372036854775807
-  std::log10(std::numeric_limits<long long int>::max())= 18.9649
+  sizeof(long int) = 8
+  std::numeric_limits<long int>::min()= -9223372036854775808
+  std::numeric_limits<long int>::max()= 9223372036854775807
+  std::log10(std::numeric_limits<long int>::max())= 18.9649
   
-  sizeof(unsigned long long int) = 8
-  std::numeric_limits<unsigned long long int>::min()= 0
-  std::numeric_limits<unsigned long long int>::max()= 18446744073709551615
-  std::log10(std::numeric_limits<unsigned long long int>::max())= 19.2659
+  sizeof(unsigned long int) = 8
+  std::numeric_limits<unsigned long int>::min()= 0
+  std::numeric_limits<unsigned long int>::max()= 18446744073709551615
+  std::log10(std::numeric_limits<unsigned long int>::max())= 19.2659
   
   sizeof(size_t) = 8
   std::numeric_limits<size_t>::min()= 0
@@ -10120,12 +10128,12 @@ incompatibility of {}\ttt{size\_t} and {}\ttt{ptrdiff\_t}.
 
 The program in Listing
 {}\ref{listing:size_t-ptrdiff_t-incompatibility} allocates a
-{}\ttt{char} array 75\% the size of the maximum.  In this program,
-{}\ttt{size} is 50\% larger than the largest value that can be
-represented by the signed type {}\ttt{ptrdiff\_t} (which is the same
-thing as {}\ttt{int}).  When this program is compiled with GCC 3.4.6
-in 32 bit mode (i.e.\ with {}\ttt{-m32}) and run it produces the
-following output:
+{}\ttt{char} array 75\% the size of the maximum allowed by
+{}\ttt{size\_t}.  In this program, {}\ttt{size} is 50\% larger than
+the largest value that can be represented by the signed type
+{}\ttt{ptrdiff\_t} (which is the type as {}\ttt{int} in this case).
+When this program is compiled with GCC 3.4.6 in 32 bit mode (i.e.\
+with {}\ttt{-m32}) and run it produces the following output:
 
 {\small\begin{verbatim}
   maxSize = 4294967295
@@ -10139,49 +10147,53 @@ in a single array of data.  Perhaps that was true on the machines when
 C was first developed the early 1970's but it is not true today where
 machines with 4+ GB of memory are common.
 
-Now consider practical usage of types like {}\ttt{std::vector} modern
-machines.  First, consider what it would mean to allocate the largest
-{}\ttt{std::vector} of even {}\ttt{char}s.  A {}\ttt{char} is 1 byte
-so on a 32 bit machine, an {}\ttt{std::vector<char>} of max size would
-have {}\ttt{4294967295 / 1e+9} = 4.3 GB of memory.  That would exhaust
-all of the memory of a 4 GB machine and more.  Being limited to only
-half the range of {}\ttt{size\_t} (which is the same thing as
-{}\ttt{ptrdiff\_t}) would give an {}\ttt{std::vector<char>} that takes
-up 2.3 GB of memory.  No real 32 bit program is ever going to allocate
-a single {}\ttt{std::vector} of {}\ttt{char}s takes up more than half
-of the addressable memory!  It is hard to imagine what useful task
-such a program would perform.
+Now consider practical usage of types like {}\ttt{std::vector} on
+modern machines.  First, consider what it would mean to allocate the
+largest {}\ttt{std::vector} of even {}\ttt{char}s.  A {}\ttt{char} is
+1 byte so on a 32 bit machine, an {}\ttt{std::vector<char>} of max
+size would have {}\ttt{4294967295} bytes = 4.3 GB of memory.  That
+would exhaust all of the memory of a 4 GB machine and more.  Being
+limited to only half the range of {}\ttt{size\_t} (which is the
+positive range representable by {}\ttt{ptrdiff\_t}) would give an
+{}\ttt{std::vector<char>} that takes up 2.3 GB of memory.  No real 32
+bit program is ever going to allocate a single {}\ttt{std::vector} of
+{}\ttt{char}s that takes up more than half of the addressable memory
+of the entire machine!  It is hard to imagine what useful task such a
+program would perform.
 
 When one moves up to an {}\ttt{std::vector<int>} for a 32 bit (4 byte)
 {}\ttt{int} the maximum size of array that one can create is
 {}\ttt{4294967295 * 4 / 1e+9} = 17.2 GB.  Being limited to the
-{}\ttt{unsigned int} {}\ttt{ptrdiff\_t} would limit one to an
+{}\ttt{unsigned int} type {}\ttt{ptrdiff\_t} would limit one to an
 {}\ttt{std::vector<int>} of size 8.6 GB which is already twice the
 addressable memory of a 32 bit system.
 
 Therefore, even on a 32 bit machine, limiting the maximum size of
 {}\ttt{std::vector} objects to have only
-{}\ttt{std::numeric\_limits<ptrdiff\_t)>::max()} elements is really
-not any kind of real limit at all.  For any reasonable program on any
-reasonable machine one cannot even store that much memory.
+{}\ttt{std::numeric\_limits<ptrdiff\_t)>::max()} = $2.3\times{}10^9$
+elements is really not any kind of real limit at all.  For any
+reasonable program on any reasonable 32 bit machine one cannot even
+store that much memory.
 
-On a 64 bit machine this of course becomes silly.  By limited the
-maximum number of elements in an {}\ttt{std::vector<char>} to be
+On a 64 bit machine this of course becomes silly.  By limiting the
+maximum number of elements in an {}\ttt{std::vector<char>} (not to
+mention arrays with larger data types) to be
 {}\ttt{std::numeric\_limits<ptrdiff\_t)>::max()} on 64 bit machine
-would mean that one would take up {}\ttt{(18446744073709551615 / 2 /
-1e+9)} = {}\ttt{9.2e+9} GB of memory!
+would mean that one would take up {}\ttt{18446744073709551615 / 2} =
+{}\ttt{9.2e+9} GB of memory to allocate a single array!
 
 In summary, limiting the maximum number of elements in an
-{}\ttt{std::vector} (and therefore {}\ttt{Teuchos::Array}) to be half
-of {}\ttt{size\_t} with a {}\ttt{signed int} {}\ttt{ptrdiff\_t} is
-not any kind of limit at all in any realistic 32 bit program and
-especially not a 64 bit program.
+{}\ttt{std::vector} (and therefore Teuchos {}\ttt{Array}) to be half
+of {}\ttt{size\_t} using the {}\ttt{signed int} type
+{}\ttt{ptrdiff\_t} for {}\ttt{size\_type} is not any kind of limit at
+all in any realistic 32 bit program and especially not a 64 bit
+program.
 
 Therefore, the Teuchos array memory management classes all use by
 default {}\ttt{ptrdiff\_t} as {}\ttt{size\_type} because of the
-inherent advantages of using a signed integral type instead of an
-unsigned type and with no real advantages at all for using
-{}\ttt{size\_t} over {}\ttt{ptrdiff\_t}.
+inherent debugging and other advantages of using a signed integral
+type instead of an unsigned type and with no real advantages at all
+for using {}\ttt{size\_t} over {}\ttt{ptrdiff\_t}.
 
 
 %
