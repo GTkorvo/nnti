@@ -525,6 +525,54 @@ pointer.
 with {}\texttt{Teuchos::\-RCP}.
 
 
+{}\item\GCGNonmemberConstructors: Using non-member constructors gives
+greater flexibilty in how a class object is initialized, simplifies
+the maintenance of the class, and makes the debug-mode node tracing
+checking bullet-proof {}\cite{TeuchosMemoryManagementGuide}.
+
+Non-member constructors take the form:
+
+{\small\begin{verbatim}
+  class SomeClass {
+  public:
+    // No public constructors!
+    ..
+  };
+
+  // Non-member constructor
+  RCP<SomeClass> someClass(...);
+\end{verbatim}}
+
+Note that views of concrete classes do not have ot use ``generalized
+view'' semantics and can instead use ``direct view'' semantics where
+appropriate.  See all the details about the ``non-member constructor''
+idiom and ``direct views'' in {}\cite{TeuchosMemoryManagementGuide}.
+
+
+{}\item\GCGGeneralizedViews: Using ``generalized view'' semantics
+leads to the greatest implementation freedom and the best performance
+in all cases; abet with more strict usage patterns (see the
+``generalized view'' design pattern in
+{}\cite{TeuchosMemoryManagementGuide}.
+
+If {}\ttt{SomeBaseClass} provides a view if itself as {}\ttt{Part}
+objects, then applying the generalized view design pattern results in
+the interface functions:
+
+{\small\begin{verbatim}
+  class SomeBaseClass {
+  public:
+    virtual RCP<Part> getNonconstPart() = 0;
+    virtual RCP<const Part> getPart() const = 0;
+    ...
+  };
+\end{verbatim}}
+
+The ``generalized view'' design pattern and a concrete example from
+Thyra is described in great detail in
+{}\cite{TeuchosMemoryManagementGuide}.
+
+
 {}\item ToDo: Present items for return values from C++ functions:
 
 (*) Return value-types by value
