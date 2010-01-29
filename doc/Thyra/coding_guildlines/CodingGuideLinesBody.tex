@@ -573,25 +573,6 @@ Thyra is described in great detail in
 {}\cite{TeuchosMemoryManagementGuide}.
 
 
-{}\item ToDo: Present items for return values from C++ functions:
-
-(*) Return value-types by value
-
-(*) Return RCPs and ArrayRCPs by value, not by reference (see Blob,
-Flab example code)
-
-(*) Only return raw C++ references to objects in cases where the
-return object is required and the overhead of an RCP object would be
-too great.  Misuse would not be detected in an debug build
-
-(*) Only return Ptr objects in cases where the return object might be
-optional and where the overhead of an RCP object would be too great.
-However, in debug mode, misuse would be detected.
-
-(*) Only return ArrayView objects in cases where the overhead of an ArrayRCP
-object would be too great.  However, in debug mode, misuse would be detected.
-
-
 {}\item\GCGTeuchosArrayView: (see Tables~\ref{fig:func_args_value_type} and
 {}\ref{fig:func_args_ref_type}): This class allows all of the useful
 capabilities of a {}\texttt{std::vector} which do not include adding or
@@ -626,6 +607,30 @@ sharing of an array of data of fixed size and provide subviews of contiguous
 parts of the managed array.  All access to data (both through
 {}\texttt{Teuchos::\-ArrayRCP::\-operator[]} and iterators) is runtime checked
 in a debug build.
+
+
+{}\item\GCGReturnSmartPointersByValue: (see
+Tables~\ref{fig:func_return_value_type} and
+{}\ref{fig:func_return_reference_type}): Returning smart pointer
+objects by value is critical for properly setting up the machinery for
+persisting and semi-persisting associations and to fully enabled
+debug-mode checking {}\cite{TeuchosMemoryManagementGuide}.
+
+
+{}\item\GCGRawReferencesNonPersisting: (see Tables
+{}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type}):
+Raw C++ references cannot be used to detect dangling references in a
+debug-mode build and therefore should only be used for non-persisting
+associations {}\cite{TeuchosMemoryManagementGuide}.
+
+
+{}\item\GCGSemiPersisting: (see Tables
+{}\ref{fig:func_args_value_type}, {}\ref{fig:func_args_ref_type},
+{}\ref{fig:func_return_value_type}, and
+{}\ref{fig:func_return_reference_type}): Objects of type {}\ttt{Ptr}
+and {}\ttt{ArrayView} are light-weight and efficient in a non-debug
+mode build but are fully checked in a debug-mode build and therefore
+lead to safe efficient code {}\cite{TeuchosMemoryManagementGuide}.
 
 
 {}\item\GCGPostponeRawPointers: When raw C++ pointers must be exposed to
