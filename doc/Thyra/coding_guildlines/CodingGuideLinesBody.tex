@@ -3,39 +3,43 @@
 %
 
 This document deals with C++ coding guidelines starting from the foundation of
-the guildelines in the book ``C++ Coding Standards'' by Sutter and
+the guidelines in the book ``C++ Coding Standards'' by Sutter and
 Alexandrescu {}\cite{C++CodingStandards05} (the 101 items are outlined in
-Appendix~\ref{sec:cpp_coding_standards}) and the memory management approach
-described in {}\cite{TeuchosMemoryManagementGuide}.  The guidelines in this
-document are specifically designed to address the development of
-object-oriented numerical C++ libraries and to utilize the tools in the
-Trilinos package {}\texttt{Teuchos}.  While the main purpose of of this
-document is to define guidelines for Thyra software (for both interfaces and
-adapters), it is also general enough to be applied to many other projects
-that, for instance, might interact with Thyra.
+Appendix~\ref{sec:cpp_coding_standards}) and the Teuchos-based memory
+management approach described in {}\cite{TeuchosMemoryManagementGuide}.  The
+guidelines in this document are specifically designed to address the
+development of object-oriented numerical C++ libraries and to utilize the
+tools in the Trilinos package {}\texttt{Teuchos}.  While the main purpose of
+of this document is to define guidelines for Thyra software (for both
+interfaces and adapters), it is also general enough to be applied to many
+other projects that, for instance, might interact with Thyra.
 
-The goal of this document is not to restate what is in
-{}\cite{C++CodingStandards05} but instead to fill in some gaps intentionally
-left by the authors and to provide amendments to specific items in the book
-and tailor them for numerical libraries.  The zeroth item (first item, zero
-based) ``Don't sweat the small stuff'' intentionally avoids specific
-recommendations on issues such as the conventions for naming identifiers and
-the formatting of code since these are arbitrary.  While issues related to
-coding style are much less important that other issues, there are arguments
-for adopting a more consistent code formatting style and some of these
-arguments are outlined in Appendix~\ref{sec:arguments-for-consistent-style}.
-Therefore, one of the purposes of this document is to suggest reasonable and
-minimal guidelines for naming conventions and code formatting that provide for
-enough code uniformity to facilitate collaborative code development, code
-reviews, and maintenance.
+The book ``C++ Coding Standards'' {}\cite{C++CodingStandards05} covers many
+topics that are more general than C++ and can be consider to be general design
+issues.  As a result, this book provides a fairly comprehensive foundation for
+creating well designed, high-quality C++ software.  The goal of this document
+is not to restate what is in {}\cite{C++CodingStandards05} but instead to fill
+in some gaps intentionally left by the authors and to provide amendments to
+specific items in the book and tailor them for numerical libraries.  The
+zeroth item (first item, zero based) ``Don't sweat the small stuff''
+intentionally avoids specific recommendations on issues such as the
+conventions for naming identifiers and the formatting of code since these are
+arbitrary.  While issues related to coding style are much less important that
+other issues, there are arguments for adopting a more consistent code
+formatting style and some of these arguments are outlined in
+Appendix~\ref{sec:arguments-for-consistent-style}.  Therefore, one of the
+purposes of this document is to suggest reasonable and minimal guidelines for
+naming conventions and code formatting that provide for enough code uniformity
+to facilitate collaborative code development, code reviews, and maintenance.
 
 More important than code formatting, a consistent set of naming conventions
 for C++ classes, functions, variables, and other entities also helps to
 improve collaborative software development and quality.  Also, since clients
 of the software must interact with these names, it is even more important that
-a set of naming conventions be used as consistently as makes sense.
+a set of naming conventions be used as consistently as possible in the client
+interfaces.
 
-Lastly, more important general C++ coding guidelines are covered that append
+Finally, more important general C++ coding guidelines are covered that append
 and amend those described in {}\cite{C++CodingStandards05}.  While formatting
 and naming recommendations do not affect the meaning of C++ code, other coding
 guidelines do and therefore they will receive more attention and should be
@@ -58,15 +62,17 @@ Section~\ref{sec:DocumentionGuidelines}.
 
 Several appendices are included that deal with a number of topics.  The
 guidelines presented in this document are summarized in
-Appendix~\ref{sec:summary_guidelines}.  Similarly, the 101 guidelines from
+Appendix~\ref{sec:summary_guidelines}.  The 101 guidelines from
 {}\cite{C++CodingStandards05} are listed in
 Appendix~\ref{sec:cpp_coding_standards} along with specifying which items are
-amended or invalidated by the guidelines in the current document.
-Appendix~\ref{sec:misc_amendments} discusses the items from
-{}\cite{C++CodingStandards05} that are amended or invalidated here.  Most
-importantly, a clarification of the use of {}\texttt{using} declarations is
-given that is both stronger in some ways and weaker in other ways than what is
-described in {}\cite[Item 59]{C++CodingStandards05}.
+amended or invalidated by the guidelines in the current document.  A summary
+of the idioms and conventions surrounding the use of the Teuchos memory
+management classes are presented in Appendix~\ref{apdx:summary_of_idioms}.
+Appendix~\ref{sec:misc_amendments} contains discussions of items from
+{}\cite{C++CodingStandards05} that are amended or invalidated in the Thyra
+coding guidelines.  Most importantly, a clarification of {}\texttt{using}
+declarations is given that is both more rigid in some ways and less rigid in
+other ways than what is described in {}\cite[Item 59]{C++CodingStandards05}.
 Appendix~\ref{sec:arguments-for-consistent-style} gives arguments for adopting
 a consisting code formatting style in a single development team or single
 project (which is more consistent with current Agile development methods).
@@ -110,7 +116,7 @@ common practice as exemplified in {}\cite{EffectiveC++3rd05}.
 
 {}\item\NCClassNames: Names for C++ classes and structs should
 generally be capitalized and separate words should be concatenated and
-capitalized (i.e.\ ``Cammel Case'').  For example:
+capitalized (i.e.\ ``Camel Case'').  For example:
 
 {\small\begin{verbatim}
   class SomeClass {...};
@@ -205,13 +211,13 @@ with an underscore.  For example:
 
 
 {}\textit{Justification:} Using an underscore after a data variable name helps
-to define the scope of the variable and differentate that name from a local
-varaible or a member function that may otherwise result and result in
-``shadowing'' which causes protability problems on some compilers.
+to define the scope of the variable and differentiate that name from a local
+variable or a member function that may otherwise result and result in
+``shadowing'' which causes portability problems on some compilers.
 
 
 {}\textit{Exception}: Public date members in simple C++ structs (i.e.\ where
-no invarients need to be maintained) should not contain underscores.  For
+no invariants need to be maintained) should not contain underscores.  For
 example:
 
 {\small\begin{verbatim}
@@ -374,7 +380,7 @@ and source files would be named
 {}\texttt{NameSpaceA\-\_InnerNamespace\-\_SomeClass.[hpp,cpp]}.  This
 convention assures that the file names will be globally unique.  In addition,
 having a single set of files for each class helps to keep a single
-encapculation unit of code together which makes searching the encapsulation
+encapsulation unit of code together which makes searching the encapsulation
 unit easier.
 
 
@@ -407,13 +413,13 @@ are used.
 This is a very minor amendment to Item 24 in {}\cite{C++CodingStandards05}.
 
 
-{}\item\NOSFTemplateFiles: The template delcaration code and inline function
+{}\item\NOSFTemplateFiles: The template declaration code and inline function
 definitions are placed in {}\ttt{FileName\_decl.hpp}, the template function
 defintions are placed in {}\ttt{FileName\_def.hpp}, the general client
 interface that automatically switches between implicit and explicit
 instantiation is {}\ttt{FileName.hpp}, and the explicit instantiations are
 placed in {}\ttt{FileName.cpp}.  Specific details about how these files should
-be layed out are given in ???.
+be laid out are given in Section~\ref{gcg:template-instantation-files}.
 
 
 \end{itemize}
@@ -456,17 +462,17 @@ personal preference or style.
 derived from {}\texttt{std\-::logic\-\_error} instead of using the
 {}\texttt{assert(...)}  macro as recommended in {}\cite[Item
 68]{C++CodingStandards05}.  A ``logic error'' would be treated differently
-from a real runtime error and would therefore come with different assumptions
+from a real run-time error and would therefore come with different assumptions
 about the state of the object after the exception was thrown.  In particular,
 a ``real error'' (i.e. not just an internal developer error) should always
 provide the basic guarantee to leave the object in a valid state {}\cite[Item
 71]{C++CodingStandards05}, while code that throws a ``logic error'' can not
 make any such guarantees in general.  Therefore, objects that throw exceptions
 derived from {}\texttt{std\-::logic\-\_error} should generally be viewed as
-unusable and should be deleted immediately.  To enable debugging, a breakpoint
+unusable and should be deleted immediately.  To enable debugging, a break-point
 can always be placed on function
 {}\texttt{Test\-For\-Exception\-\_break()}\footnote{In {}\texttt{gdb}, a
-breakpoint would be set as {}\texttt{b Test\-For\-Exception\-\_break()}.} 
+break-point would be set as {}\texttt{b Test\-For\-Exception\-\_break()}.} 
 which will be called just before an exception is thrown through these macros.
 In the future, more sophisticated features like automatically attaching a
 debugger or printing the call stack may be added for some systems.  Therefore
@@ -495,7 +501,7 @@ the standard C++ container classes (when using a checked STL implementation),
 {}\texttt{Teuchos::\-Array}, {}\texttt{Teuchos::\-Array\-RCP}, and
 {}\texttt{Teuchos::\-Array\-View} allow most code to be written without any
 explicit raw C++ pointers.  In debug mode, these classes allow for full
-runtime checking that result in exceptions being thrown and excellent error
+run-time checking that result in exceptions being thrown and excellent error
 messages (i.e.\ instead of segfaults).  When a check C++ standard library is
 used (e.g.\ when {}\texttt{\_GXXLIB\_DEBUG} is defined with g++), then all of
 the standard C++ library classes are checked as well.
@@ -526,7 +532,7 @@ with {}\texttt{Teuchos::\-RCP}.
 
 
 {}\item\GCGNonmemberConstructors: Using non-member constructors gives
-greater flexibilty in how a class object is initialized, simplifies
+greater flexibility in how a class object is initialized, simplifies
 the maintenance of the class, and makes the debug-mode node tracing
 checking bullet-proof {}\cite{TeuchosMemoryManagementGuide}.
 
@@ -543,7 +549,7 @@ Non-member constructors take the form:
   RCP<SomeClass> someClass(...);
 \end{verbatim}}
 
-Note that views of concrete classes do not have ot use ``generalized
+Note that views of concrete classes do not have not use ``generalized
 view'' semantics and can instead use ``direct view'' semantics where
 appropriate.  See all the details about the ``non-member constructor''
 idiom and ``direct views'' in {}\cite{TeuchosMemoryManagementGuide}.
@@ -586,13 +592,13 @@ raw pointers anyway).
 {}\ref{fig:func_args_ref_type}): The primary reason to use
 {}\texttt{Teuchos::\-Array} instead of {}\texttt{std::\-vector} is that
 {}\texttt{Teuchos::\-Array} is part of the system memory management types and
-results in stronger runtime checking.  While {}\texttt{Teuchos::\-Array} gets
+results in stronger run-time checking.  While {}\texttt{Teuchos::\-Array} gets
 all of its real functionality from {}\texttt{std::\-vector}, prefer to use
 {}\texttt{Teuchos::\-Array} as we provide more capabilities and portable debug
 checking.  For instance {}\texttt{Teuchos::\-Array::\-operator[]} is range
 checked in debug mode regardless whether there is an underling checked STL
 implementation or not (see {}\cite[Item 83]{C++CodingStandards05}).  In debug
-mode, the iterator is also runtime checked.  In addition,
+mode, the iterator is also run-time checked.  In addition,
 {}\texttt{Teuchos\-::Array} will automatically convert into an
 {}\texttt{Teuchos\-::ArrayView} object safely when used in function calls and
 in debug mode, will catch dangling references.
@@ -603,9 +609,9 @@ in debug mode, will catch dangling references.
 {}\underline{not} take the place of a contiguous container class such as
 {}\texttt{Teuchos::\-Array}.  A {}\texttt{Teuchos::ArrayRCP} object can not
 change the size of the array, it can only provide for reference-counted
-sharing of an array of data of fixed size and provide subviews of contiguous
+sharing of an array of data of fixed size and provide sub-views of contiguous
 parts of the managed array.  All access to data (both through
-{}\texttt{Teuchos::\-ArrayRCP::\-operator[]} and iterators) is runtime checked
+{}\texttt{Teuchos::\-ArrayRCP::\-operator[]} and iterators) is run-time checked
 in a debug build.
 
 
@@ -674,15 +680,15 @@ Teuchos documentation for more details).  The
 flexible protocol for setting and managing a parameter list.
 
 
-{}\item\GCGTeuchosParamterListValidation: All user parameters and sublists
+{}\item\GCGTeuchosParamterListValidation: All user parameters and sub-lists
 passed in through a {}\texttt{Teuchos\-::Parameter\-List\-Acceptor} should be
 fully validated.  The mail tool for this is the member function
 {}\texttt{validateParameters(...)}.  Using this function and other other
-approaches, when a user mispells a parameter or sublist, uses the wrong type
+approaches, when a user misspells a parameter or sub-list, uses the wrong type
 for a parameter, or provides an invalid parameter value, they will get an
 exception thrown with a helpful error message.  Also, objects are only
-responsible for validating their own parameters and sublists, and not those of
-other objects that they hold sublists for.
+responsible for validating their own parameters and sub-lists, and not those of
+other objects that they hold sub-lists for.
 
 
 \end{itemize}
@@ -762,7 +768,7 @@ template argument(s) as:
 
 {}\item\GCGTeuchosAs: The templated C++ function
 {}\texttt{Teuchos::as<T\_to>(T\_from)} and the class specializations that it
-calls will contain runtime tests, in debug mode, for the results of a
+calls will contain run-time tests, in debug mode, for the results of a
 conversion to ensure correctness.  This includes the conversion of strings
 into numbers (i.e.\ replacing {}\texttt{atof()} and {}\texttt{atoi()}) as well
 as conversions that can result in loss of precision or meaning (such as
@@ -770,14 +776,14 @@ as conversions that can result in loss of precision or meaning (such as
 {}\texttt{int} to {}\texttt{char}, {}\texttt{unsigned int} to {}\texttt{int},
 etc.).  The optimized implementations of these conversion functions are
 typically unchecked for speed.  A version this function which always does
-runtime checking is also available called
+run-time checking is also available called
 {}\texttt{Teuchos\-::asSafe\-<\-T\_to\->\-(\-T\_from\-)} in order to validate
 user data.
 
 
 {}\textit{Justification}: Unchecked conversions are the result of many
 different types of errors and a fully safe program needs to be able to check
-all such potentially unsafe conversions at runtime.  The implicit conversion
+all such potentially unsafe conversions at run-time.  The implicit conversion
 rules allowed in C which where carried over to C++ can result in very unsafe
 code.
 
@@ -960,17 +966,175 @@ clarification of Item 59 in {}\cite{C++CodingStandards05} dealing with the
 issue of {}\texttt{using} declarations and directives.
 
 
-{}\item\GCGTemplateHeaders: Breaking up templated C++ into the four files
+{}\item\GCGTemplateHeaders\label{gcg:template-instantation-files}: Breaking up
+templated C++ code into the four files
 {}\texttt{SomeClass[\_decl,\_def].[hpp,cpp]} (as described below) allows for a
 portable and bullet-proof solution to handing templated C++ code which allows
 for a) controlled explicit or implicit template instantiation, b) minimization
-of recompilations, and c) handling of any and all types of cicular
-dependancies in declarations and definitions (same as are allowed with
-non-templated C++ code).
+of first-time compilation, c) minimization of recompilations, and d) handling
+of any and all types of circular dependencies in declarations and definitions
+(same as are allowed with non-templated C++ code).
 
-{}\textbf{ToDo:} Give the code examples and explain when to include the
-XXX\_decl.hpp versions of header files and when you can just include the
-XXX.hpp versions.
+As an example, consider three classes {}\ttt{A}, {}\ttt{B}, and {}\ttt{C}
+where {}\ttt{A} and {}\ttt{B} refer to each other and where {}\ttt{C} has no
+chance of being involved in a circular reference involving {}\ttt{A} and
+{}\ttt{B}.  The four files {}\texttt{A[\_decl,\_def].[hpp,cpp]} for class
+{}\ttt{A} as well as the file {}\texttt{B\_decl.hpp} are shown below (the
+other files for class {}\ttt{B} are similar):
+
+
+{\small\begin{verbatim}
+  ----------------------------------
+  // A.hpp
+
+  #include "A_decl.hpp"
+  #ifndef HAVE_THYRA_EXPLICIT_INSTANTIATION
+  #  include "A_def.hpp"
+  #endif
+
+
+  ----------------------------------
+  // A_decl.hpp
+
+  #ifndef A_DECL_HPP
+  #define A_DECL_HPP
+
+  #include "B_decl.hpp"  // Only include decl in case of circular ref
+  #include "C.hpp"       // No chance of cicular ref
+
+  namespace Thyra {
+
+  template<class Scalar>
+  class A {
+  pubic:
+    void doSomething(const B<T> &b) const;
+    ...
+  private:
+    RCP<C<T> > c_;
+  };
+
+  } // namespace Thyra
+
+  #endif // A_DECL_HPP
+
+
+  ----------------------------------
+  // B_decl.hpp
+
+  #ifndef B_DECL_HPP
+  #define B_DECL_HPP
+
+  namespace Thyra {
+
+  template<class Scalar> class A; // Forward only due to circular ref!
+
+  template<class Scalar>
+  class B {
+  pubic:
+    void doSomething(const A<T> &a) const;
+  };
+
+  } // namespace Thyra
+
+  #endif // B_DECL_HPP
+
+
+  ----------------------------------
+  // A_def.hpp
+
+  #ifndef A_DEF_HPP
+  #define A_DEF_HPP
+
+  #include "B.hpp" // Must include for implicit instant to work!
+
+  namespace Thyra {
+
+  template<class Scalar>
+  void A::doSomething(const B<T>& b)
+  {
+     b.doSomething(*this);
+  }
+
+  } // namespace Thyra
+
+  #endif // A_DEF_HPP
+
+
+  ----------------------------------
+  // A.cpp
+
+  #include "A_decl.hpp"  // Helps test header sufficiency
+
+  #ifdef HAVE_THYRA_EXPLICIT_INSTANTIATION
+  #include "A_def.hpp"
+  #include "Teuchos_ExplicitInstantiationHelpers.hpp"
+  namespace Thyra {TEUCHOS_CLASS_TEMPLATE_INSTANT_SCALAR_TYPES(A)}
+  #endif // HAVE_THYRA_EXPLICIT_INSTANTIATION
+\end{verbatim}}
+
+
+General client code {}\underline{always} includes the {}\ttt{A.hpp} form of
+the file without regard for whether implicit or explicit instantiation is
+enabled or not (i.e.\ whether {}\ttt{HAVE\_THYRA\_EXPLICIT\_INSTANTIATION} is
+defined or not defined).
+
+The 100\% bullet-proof rules for breaking up template code like this are:
+
+\begin{itemize}
+
+{}\item All header-like declarations that would go into an ordinary
+non-template {}\ttt{*.hpp} header file go into {}\ttt{SomeClass\_decl.hpp}
+including class declarations and inline function definitions.
+
+{}\item All implementation code that would go into an ordinary non-template
+{}\ttt{*.cpp} source file go into {}\ttt{SomeClass\_def.hpp} including class
+member definitions and non-member function definitions.
+
+{}\item Always include {}\ttt{SomeOtherClasss\_decl.hpp} in the
+{}\ttt{SomeClass\_decl.hpp} file if there is any chance that a circular
+dependency between the two types {}\ttt{SomeOtherClasss} and {}\ttt{SomeClass}
+might exist.  Otherwise, if there is no chance of a circular dependence then
+the header {}\ttt{SomeOtherClasss.hpp} can be included.  If the two classes
+are in different libraries then there is no chance of a circular type
+dependency {}\cite{AgileSoftwareDevelopment}.
+
+{}\item If {}\ttt{SomeClass\_decl.hpp} included
+{}\ttt{SomeOtherClass\_decl.hpp}, then {}\ttt{SomeClass\_def.hpp} must include
+{}\ttt{SomeOtherClass.hpp}.  This is needed in order for implicit
+instantiation to work correctly.
+
+{}\item The header file {}\ttt{SomeClass.hpp} is designed to be included by
+general clients and either includes only {}\ttt{SomeClass\_decl.hpp} or also
+includes {}\ttt{SomeClass\_def.hpp} depending on if implicit or explicit
+instantiation is being used.  When explicit instantiation is being used the
+file {}\ttt{SomeClass\_def.hpp} is hidden from general clients and changes in
+it do not require recompilation of client code.
+
+{}\item All required instantiations must be provided in the file
+{}\ttt{SomeClass.cpp}.  For standard scalar types (e.g.\ {}\ttt{double},
+{}\ttt{float}, {}\ttt{std::complex<double>}, {}\ttt{std::complex<float>},
+etc.) the standard macro
+{}\ttt{TEUCHOS\_CLASS\_TEMPLATE\_INSTANT\_SCALAR\_TYPES(...)} is provided
+which is set at configure time to determine the desired/required explicit
+instantiations.  More general instantiations can also be performed by defining
+a macro in the file {}\ttt{SomeClass\_def.hpp} file and then instantiating
+this macro using the helper macro
+{}\ttt{TEUCHOS\_MACRO\_TEMPLATE\_INSTANT\_SCALAR\_TYPES(...)} (See examples
+from real Thyra source code).
+
+\end{itemize}
+
+If you follow the guidelines above, you will never have problems with
+templated code.  The partitioning the template code into the four files
+{}\texttt{SomeClass[\_decl,\_def].[hpp,cpp]} gives template code all the
+desirable compilation properties of non-template code.  That is, changes to
+the implementation of {}\ttt{SomeClass} only require the recompilation of the
+source file {}\texttt{SomeClass.cpp} and not any other source files.  Also,
+the amount of code that a C++ compiler has to see to compile any single
+{}\ttt{*.cpp} file is much less when explicit instantiation is enabled and
+this can massively speed up first-time compilation.  Overall, explicit
+instantiation can massively speed up first-time compilation and later
+recompilations as code is modified.
 
 
 \end{itemize}
@@ -982,9 +1146,9 @@ objects from functions}
 \label{sec:func_arguments}
 %
 
-The guidelines for specifying local variables and data membes, passing objects
+The guidelines for specifying local variables and data members, passing objects
 to and from functions, and returning objects from functions given in
-{}\cite{TeuchosMemoryManagementGuide} are sumarized in
+{}\cite{TeuchosMemoryManagementGuide} are summarized in
 Tables~\ref{fig:data_member_value_type}--\ref{fig:func_return_reference_type}.
 In general, it is assumed by default that arguments passed through the smart
 pointer types {}\ttt{Ptr}, {}\ttt{RCP}, {}\ttt{ArrayView}, and
