@@ -34,6 +34,9 @@
 #endif
 #include "Teuchos_DefaultSerialComm.hpp"
 
+#include "Thyra_apply_op_helper.hpp"
+#include "RTOpPack_SPMD_apply_op.hpp"
+#include "RTOp_parallel_helpers.h"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 #include "TSFVectorImpl.hpp"
