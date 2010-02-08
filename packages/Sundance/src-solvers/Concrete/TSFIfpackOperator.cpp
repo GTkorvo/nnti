@@ -88,12 +88,16 @@ IfpackOperator::IfpackOperator(const EpetraMatrix* A,
                      << ierr);
 }
 
+bool IfpackOperator::opSupportedImpl(Thyra::ETransp M_trans) const
+{
+  return (M_trans == Thyra::NOTRANS);
+}
 
 void IfpackOperator::generalApply(const Thyra::ETransp M_trans,
-                                  const Thyra::VectorBase<double>& x,
-                                  Thyra::VectorBase<double>* y,
-                                  const double alpha,
-                                  const double beta) const
+  const Thyra::VectorBase<double>& x,
+  Thyra::VectorBase<double>* y,
+  const double alpha,
+  const double beta) const
 {
 //  std::cerr << "Applying Ifpack operator" << std::endl;
   /* grab the epetra vector objects underlying the input and output vectors */

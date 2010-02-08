@@ -117,7 +117,7 @@ LinearOperator<Scalar> transposedOperator(
 
 
   /* Return a transposed operator */
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > A
+  RefCountPtr<LinearOpBase<Scalar> > A
     = rcp(new SimpleTransposedOp<Scalar>(op));
       
   return A;

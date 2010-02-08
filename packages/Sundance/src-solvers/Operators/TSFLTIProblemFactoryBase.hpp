@@ -236,7 +236,7 @@ protected:
   /** */
   virtual LinearOperator<Scalar> createBigAInv() const 
     {
-      RefCountPtr<LinearOpBase<Scalar, Scalar> > rtn 
+      RefCountPtr<LinearOpBase<Scalar> > rtn 
         = rcp(new InverseLTIOp<Scalar>(nSteps_, getA(), getAt()));
       return rtn;
     }

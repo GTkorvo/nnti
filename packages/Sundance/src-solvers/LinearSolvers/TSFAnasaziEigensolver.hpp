@@ -115,8 +115,8 @@ inline void AnasaziEigensolver<Scalar>::solve(
   VectorSpace<Scalar> KDomain = K.domain();
   
   /* Get a Thyra representation of the stiffness matrix */
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > KPtr = K.ptr();
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > MPtr = M.ptr();
+  RefCountPtr<LinearOpBase<Scalar> > KPtr = K.ptr();
+  RefCountPtr<LinearOpBase<Scalar> > MPtr = M.ptr();
   RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > mvSpace = KPtr->domain();
   
   

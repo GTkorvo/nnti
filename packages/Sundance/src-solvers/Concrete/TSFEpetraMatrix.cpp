@@ -31,14 +31,15 @@
 #include "TSFVectorSpaceDecl.hpp"  // changed from Impl
 #include "TSFVectorDecl.hpp"
 #include "TSFLinearOperatorDecl.hpp"  // changed from Impl
-#include "Teuchos_Array.hpp"
-#include "Teuchos_MPIComm.hpp"
 #include "TSFIfpackOperator.hpp"
 #include "TSFPreconditioner.hpp"
 #include "TSFGenericLeftPreconditioner.hpp"
 #include "TSFGenericRightPreconditioner.hpp"
+#include "Thyra_VectorStdOps.hpp"
 #include "Teuchos_dyn_cast.hpp"
 #include "Teuchos_getConst.hpp"
+#include "Teuchos_Array.hpp"
+#include "Teuchos_MPIComm.hpp"
 
 #include "Thyra_EpetraThyraWrappers.hpp"
 
@@ -55,8 +56,7 @@ using namespace Thyra;
 EpetraMatrix::EpetraMatrix(const Epetra_CrsGraph& graph,
   const RefCountPtr<const EpetraVectorSpace>& domain,
   const RefCountPtr<const EpetraVectorSpace>& range)
-  : EuclideanOpWithBackwardsCompatibleApply<double>(domain, range),
-    matrix_(rcp(new Epetra_CrsMatrix(Copy, graph))),
+  : matrix_(rcp(new Epetra_CrsMatrix(Copy, graph))),
     range_(range),
     domain_(domain)
 {}
@@ -64,64 +64,75 @@ EpetraMatrix::EpetraMatrix(const Epetra_CrsGraph& graph,
 EpetraMatrix::EpetraMatrix(const RefCountPtr<Epetra_CrsMatrix>& mat,
   const RefCountPtr<const EpetraVectorSpace>& domain,
   const RefCountPtr<const EpetraVectorSpace>& range)
-  : EuclideanOpWithBackwardsCompatibleApply<double>(domain, range),
-    matrix_(mat),
+  : matrix_(mat),
     range_(range),
     domain_(domain)
 {}
 
 
-
-
-void EpetraMatrix::generalApply(const Thyra::ETransp M_trans,
-  const Thyra::VectorBase<double>    &x,
-  Thyra::VectorBase<double>          *y,
-  const double            alpha,
-  const double            beta) const
+bool EpetraMatrix::opSupportedImpl(Thyra::ETransp M_trans) const
 {
-  const EpetraVector* tx = dynamic_cast<const EpetraVector*>(&x);
-  TEST_FOR_EXCEPTION(tx==0, std::runtime_error, 
-    "EpetraMatrix::generalApply() could not convert " 
-    << x.description() << " to an EpetraVector");
-
-  EpetraVector* ty = dynamic_cast<EpetraVector*>(y);
-  TEST_FOR_EXCEPTION(ty==0, std::runtime_error, 
-    "EpetraMatrix::generalApply() could not convert " 
-    << y->description() << " to an EpetraVector");
-
-  const Epetra_Vector* epx = tx->epetraVec().get();
-  Epetra_Vector* epy = ty->epetraVec().get();
-
-  bool trans = M_trans==Thyra::TRANS;
-  int ierr=0;
-  if (beta==0.0)
-  {
-    ierr = matrix_->Multiply(trans, *epx, *epy);
-    TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, 
-      "EpetraMatrix::generalApply() detected ierr="
-      << ierr << " in matrix_->Multiply()");
-    if (alpha != 1.0)
-    {
-      Thyra::Vt_S(y, alpha);
-    }
-  }
-  else
-  {
-    Epetra_Vector tmp(M_trans == NOTRANS 
-      ? matrix_->OperatorRangeMap() 
-      : matrix_->OperatorDomainMap(), 
-      false);
-    ierr = matrix_->Multiply(trans, *epx, tmp);
-    TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, 
-      "EpetraMatrix::generalApply() detected ierr="
-      << ierr << " in matrix_->Multiply()");
-    epy->Update(alpha, tmp, beta);
-    TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, 
-      "EpetraMatrix::generalApply() detected ierr="
-      << ierr << " in epy->update()");
-  }
+  return true;
 }
 
+
+void EpetraMatrix::applyImpl(
+  const Thyra::ETransp M_trans,
+  const Thyra::MultiVectorBase<double> &X,
+  const Teuchos::Ptr<Thyra::MultiVectorBase<double> > &Y,
+  const double alpha,
+  const double beta
+  ) const
+{
+
+  using Teuchos::rcp_dynamic_cast;
+  typedef Thyra::Ordinal Ordinal;
+
+  const Ordinal numMvCols = X.domain()->dim();
+
+  for (Ordinal col_j = 0; col_j < numMvCols; ++col_j) {
+
+    const RCP<const VectorBase<double> > x = X.col(col_j);
+    const RCP<VectorBase<double> > y = Y->col(col_j);
+
+    const RCP<const EpetraVector> tx = rcp_dynamic_cast<const EpetraVector>(x, true);
+    const RCP<EpetraVector> ty = rcp_dynamic_cast<EpetraVector>(y, true);
+
+    const Epetra_Vector* epx = tx->epetraVec().get();
+    Epetra_Vector* epy = ty->epetraVec().get();
+    
+    bool trans = M_trans==Thyra::TRANS;
+    int ierr=0;
+    if (beta==0.0)
+    {
+      ierr = matrix_->Multiply(trans, *epx, *epy);
+      TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, 
+        "EpetraMatrix::generalApply() detected ierr="
+        << ierr << " in matrix_->Multiply()");
+      if (alpha != 1.0)
+      {
+        Thyra::Vt_S(y.ptr(), alpha);
+      }
+    }
+    else
+    {
+      Epetra_Vector tmp(M_trans == NOTRANS 
+        ? matrix_->OperatorRangeMap() 
+        : matrix_->OperatorDomainMap(), 
+        false);
+      ierr = matrix_->Multiply(trans, *epx, tmp);
+      TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, 
+        "EpetraMatrix::generalApply() detected ierr="
+        << ierr << " in matrix_->Multiply()");
+      epy->Update(alpha, tmp, beta);
+      TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, 
+        "EpetraMatrix::generalApply() detected ierr="
+        << ierr << " in epy->update()");
+    }
+
+  }
+
+}
 
 
 void EpetraMatrix::getEpetraOpView(RefCountPtr<Epetra_Operator> *epetraOp,
@@ -170,17 +181,12 @@ EpetraMatrix::rangeScalarProdVecSpc() const
   return rcp_dynamic_cast<const ScalarProdVectorSpaceBase<double> >(range_);
 }
 
+
 RefCountPtr<const ScalarProdVectorSpaceBase<double> >
 EpetraMatrix::domainScalarProdVecSpc() const
 {
   return rcp_dynamic_cast<const ScalarProdVectorSpaceBase<double> >(domain_);
 }
-
-bool EpetraMatrix::opSupported(Thyra::ETransp M_trans) const
-{
-  return true;
-}
-
 
 
 void EpetraMatrix::addToRow(int globalRowIndex,

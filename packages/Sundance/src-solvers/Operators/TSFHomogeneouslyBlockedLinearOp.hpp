@@ -46,7 +46,7 @@ using namespace Teuchos;
  */
 template <class Scalar>
 class HomogeneouslyBlockedLinearOp :
-    public virtual LinearOpBase<Scalar, Scalar>
+    public virtual LinearOpBase<Scalar>
 {
 public:
 

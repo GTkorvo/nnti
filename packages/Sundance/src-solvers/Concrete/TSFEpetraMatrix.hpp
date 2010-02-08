@@ -33,13 +33,12 @@
 #include "TSFEpetraMatrixFactory.hpp"
 #include "TSFLoadableMatrix.hpp"
 #include "TSFLinearOperatorDecl.hpp"
-#include "TSFEuclideanOpWithBackwardsCompatibleApply.hpp"
 #include "TSFRowAccessibleOp.hpp"
 #include "SundanceHandleable.hpp"
 #include "SundancePrintable.hpp"
 #include "TSFILUFactorizableOp.hpp"
 #include "Epetra_CrsMatrix.h"
-#include "Thyra_ConfigDefs.hpp"
+#include "Thyra_LinearOpDefaultBase.hpp"
 #include "Thyra_EpetraLinearOpBase.hpp"
 
 namespace TSFExtended
@@ -47,7 +46,7 @@ namespace TSFExtended
 using namespace Teuchos;
 using namespace Thyra;
 
-class EpetraMatrix : virtual public EuclideanOpWithBackwardsCompatibleApply<double>,
+class EpetraMatrix : virtual public LinearOpDefaultBase<double>,
                      public LoadableMatrix<double>,
                      public RowAccessibleOp<double>,
                      public Printable,
@@ -74,25 +73,17 @@ public:
   /** */
   RefCountPtr< const VectorSpaceBase<double> > range() const {return range_;}
 
+  /** \brief . */
+	bool opSupportedImpl(Thyra::ETransp M_trans) const;
 
-  /**
-   * generalApply() applies either the operator or the transpose
-   * according to the value of the transpose flag. This method is
-   * backwards compatible with TSFCore-based code.
-   */
-  virtual void generalApply(const Thyra::ETransp M_trans,
-    const Thyra::VectorBase<double>    &x,
-    Thyra::VectorBase<double>          *y,
-    const double            alpha,
-    const double            beta) const ;
-
-
-  virtual bool applyTransposeSupports(const Thyra::EConj conj) const
-    {
-      if (conj==Thyra::NONCONJ_ELE) return true;
-      return false;
-    }
-
+  /** */
+  void applyImpl(
+    const Thyra::EOpTransp M_trans,
+    const Thyra::MultiVectorBase<double> &x,
+    const Teuchos::Ptr<Thyra::MultiVectorBase<double> > &y,
+    const double alpha,
+    const double beta
+    ) const ;
 
   /** \name Epetra-Thyra adapter interface */
   //@{
@@ -117,9 +108,6 @@ public:
 
 
   //@}
-
-  /** \brief . */
-	bool opSupported(Thyra::ETransp M_trans) const;
 
   /** Insert a set of elements in a row, adding to any previously
    * existing values. 

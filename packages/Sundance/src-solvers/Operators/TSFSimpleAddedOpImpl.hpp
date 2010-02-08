@@ -140,7 +140,7 @@ LinearOperator<Scalar> addedOperator(
   TEST_FOR_EXCEPT(strippedOps.size() < 1U);
   if (strippedOps.size()==1U) return strippedOps[0];
   
-  RCP<LinearOpBase<Scalar,Scalar> > op 
+  RCP<LinearOpBase<Scalar> > op 
     = rcp(new SimpleAddedOp<Scalar>(strippedOps));
   
   return op;

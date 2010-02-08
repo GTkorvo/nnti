@@ -68,7 +68,7 @@ using namespace Thyra;
  */
 template <class Scalar> 
 class InverseLTIOp
-  : public virtual LinearOpBase<Scalar,Scalar>,
+  : public virtual LinearOpBase<Scalar>,
     public virtual HomogeneouslyBlockedLinearOp<Scalar>,
     public virtual SimplifiedLinearOpBase<Scalar>
 {

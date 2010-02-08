@@ -188,7 +188,7 @@ LinearOperator<Scalar> composedOperator(
   TEST_FOR_EXCEPT(strippedOps.size() < 1U);
   if (strippedOps.size()==1U) return strippedOps[0];
   
-  RCP<LinearOpBase<Scalar,Scalar> > op 
+  RCP<LinearOpBase<Scalar> > op 
     = rcp(new SimpleComposedOp<Scalar>(strippedOps));
   return op;
 }

@@ -85,7 +85,7 @@ LinearOperator<Scalar> zeroOperator(
   const VectorSpace<Scalar>& domain,
   const VectorSpace<Scalar>& range)
 {
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > op 
+  RefCountPtr<LinearOpBase<Scalar> > op 
     = rcp(new SimpleZeroOp<Scalar>(domain, range));
 
   return op;

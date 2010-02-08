@@ -151,7 +151,7 @@ LinearOperator<Scalar> makeBlockOperator(
 {
   RefCountPtr<SimpleBlockOp<Scalar> > b = 
     rcp(new SimpleBlockOp<Scalar>(domain, range));
-  RefCountPtr<Thyra::LinearOpBase<Scalar, Scalar> > p = b;
+  RefCountPtr<Thyra::LinearOpBase<Scalar> > p = b;
   return p;
 }
 

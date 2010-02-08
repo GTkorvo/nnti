@@ -57,13 +57,13 @@ class InverseOperator;
 //=======================================================================
 template <class Scalar>
 LinearOperator<Scalar>::LinearOperator() 
-  : Handle<Thyra::LinearOpBase<Scalar, Scalar> >(), verb_(0) {;}
+  : Handle<Thyra::LinearOpBase<Scalar> >(), verb_(0) {;}
 
 
 //=======================================================================
 template <class Scalar>
-LinearOperator<Scalar>::LinearOperator(const RefCountPtr<Thyra::LinearOpBase<Scalar, Scalar> >& smartPtr) 
-  : Handle<Thyra::LinearOpBase<Scalar, Scalar> >(smartPtr), verb_(0) {;}
+LinearOperator<Scalar>::LinearOperator(const RefCountPtr<Thyra::LinearOpBase<Scalar> >& smartPtr) 
+  : Handle<Thyra::LinearOpBase<Scalar> >(smartPtr), verb_(0) {;}
 
 
 

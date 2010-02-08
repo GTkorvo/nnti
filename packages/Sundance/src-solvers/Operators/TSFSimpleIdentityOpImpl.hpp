@@ -76,7 +76,7 @@ template <class Scalar> inline
 LinearOperator<Scalar> identityOperator(
   const VectorSpace<Scalar>& space)
 {
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > op 
+  RefCountPtr<LinearOpBase<Scalar> > op 
     = rcp(new SimpleIdentityOp<Scalar>(space));
 
   return op;

@@ -155,7 +155,7 @@ LinearOperator<Scalar> multiVectorOperator(
   const Teuchos::Array<Vector<Scalar> >& cols,
   const VectorSpace<Scalar>& domain)
 {
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > A
+  RefCountPtr<LinearOpBase<Scalar> > A
     = rcp(new MultiVectorOperator<Scalar>(cols, domain));
 
   return A;

@@ -111,7 +111,7 @@ LinearOperator<Scalar> scaledOperator(
   const Scalar& scale,
   const LinearOperator<Scalar>& op)
 {
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > A 
+  RefCountPtr<LinearOpBase<Scalar> > A 
     = rcp(new SimpleScaledOp<Scalar>(scale, op));
 
   return A;

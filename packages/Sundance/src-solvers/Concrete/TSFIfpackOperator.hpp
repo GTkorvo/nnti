@@ -53,30 +53,8 @@ public:
     double relativeThreshold,
     double absoluteThreshold);
 
-   /** Thyra apply method */
-  void apply(
-    const Thyra::EConj                             conj,
-    const Thyra::MultiVectorBase<double>    &X,
-    Thyra::MultiVectorBase<double>           *Y,
-    const double alpha,
-    const double beta
-    ) const 
-    {
-      OpWithBackwardsCompatibleApply<double>::apply(conj,X,Y,alpha,beta);
-    }
-
-
-  /** Thyra apply transpose method */
-  void applyTranspose(
-    const Thyra::EConj                            conj,
-    const Thyra::MultiVectorBase<double>    &X,
-    Thyra::MultiVectorBase<double>         *Y,
-    const double                     alpha,
-    const double                     beta
-    ) const 
-    {
-      OpWithBackwardsCompatibleApply<double>::applyTranspose(conj,X,Y,alpha,beta);
-    }
+  /** */
+  virtual bool opSupportedImpl(Thyra::ETransp M_trans) const;
 
   /** 
    * Apply operator to a vector in the domain space and return a vector

@@ -149,7 +149,7 @@ LinearOperator<Scalar>
 inverse(const LinearOperator<Scalar>& op, 
   const LinearSolver<Scalar>& solver)
 {
-  RCP<LinearOpBase<Scalar,Scalar> > rtn 
+  RCP<LinearOpBase<Scalar> > rtn 
     = rcp(new InverseOperator<Scalar>(op, solver));
   return rtn;
 }

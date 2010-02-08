@@ -31,6 +31,7 @@
 
 #include "Thyra_VectorBase.hpp"
 #include "Thyra_MultiVectorBase.hpp"
+#include "Thyra_AssertOp.hpp"
 #include "Thyra_DefaultColumnwiseMultiVector.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "SundanceObjectWithVerbosity.hpp"
@@ -46,105 +47,28 @@ using namespace SundanceUtils;
 /** */
 template <class Scalar>
 class OpWithBackwardsCompatibleApply :
-    public LinearOpBase<Scalar, Scalar>,
+    public LinearOpBase<Scalar>,
     public DefaultObjectWithVerbosity,
     public NamedObject
 {
 public:
 
+  /** \brief . */
+	bool opSupportedImpl(Thyra::ETransp M_trans) const
+    {
+      return (M_trans == Thyra::NOTRANS);
+    }
+
   /** Thyra apply method */
-  virtual void apply(
-    const Thyra::EConj                             conj,
+  virtual void applyImpl(
+    const Thyra::EOpTransp M_trans,
     const Thyra::MultiVectorBase<Scalar>    &X,
-    Thyra::MultiVectorBase<Scalar>           *Y,
+    const Ptr<Thyra::MultiVectorBase<Scalar> > &Y,
     const Scalar alpha,
     const Scalar beta
     ) const 
     {
-      const Thyra::VectorBase<Scalar>* xVec 
-        = dynamic_cast<const Thyra::VectorBase<Scalar>*>(&X);
-      
-      Thyra::VectorBase<Scalar>* yVec 
-        = dynamic_cast<Thyra::VectorBase<Scalar>*>(Y);
-      
-      if (xVec != 0 && yVec != 0)
-      {
-        generalApply(applyConjToTrans(conj), *xVec, yVec, alpha, beta);
-      }
-      else if (xVec == 0 && yVec == 0 && X.domain()->dim()==1 && Y->domain()->dim()==1)
-      {
-        generalApply(applyConjToTrans(conj), *(X.col(0)), Y->col(0).get(), alpha, beta);
-      }
-      else if (xVec == 0 && yVec == 0)
-      {
-        generalApply(applyConjToTrans(conj), X, Y, alpha, beta);
-      }
-      else if (X.domain()->dim()==1 && yVec != 0)
-      {
-        generalApply(applyConjToTrans(conj), *(X.col(0)), yVec, alpha, beta);
-      }
-      else if (xVec != 0 && Y->domain()->dim()==1)
-      {
-        generalApply(applyConjToTrans(conj), *xVec, Y->col(0).get(), alpha, beta);
-      }
-      else
-      {
-        Out::os() << "nX=" << X.domain()->dim()
-                  << ", nY=" << Y->domain()->dim() << std::endl;
-        TEST_FOR_EXCEPTION(true, std::runtime_error,
-          "mix of vectors and multivectors in "
-          "OpWithBackwardsCompatibleApply::apply()");
-      }
-    }
-
-  /** Thyra apply transpose method */
-  virtual void applyTranspose(
-    const Thyra::EConj                            conj,
-    const Thyra::MultiVectorBase<Scalar>    &X,
-    Thyra::MultiVectorBase<Scalar>         *Y,
-    const Scalar                     alpha,
-    const Scalar                     beta
-    ) const 
-    {
-//      std::cerr << "applyTranspose()" << std::endl;
-//      std::cerr << "A=" << this->description() << std::endl;
-//      std::cerr << "X=" << X.description() << std::endl;
-//      std::cerr << "Y=" << Y->description() << std::endl;
-      const Thyra::VectorBase<Scalar>* xVec 
-        = dynamic_cast<const Thyra::VectorBase<Scalar>*>(&X);
-
-      Thyra::VectorBase<Scalar>* yVec 
-        = dynamic_cast<Thyra::VectorBase<Scalar>*>(Y);
-
-      if (xVec != 0 && yVec != 0)
-      {
-        generalApply(applyTransposeConjToTrans(conj), *xVec, yVec, alpha, beta);
-      }
-      else if (xVec == 0 && yVec == 0 && X.domain()->dim()==1 && Y->domain()->dim()==1)
-      {
-        generalApply(applyTransposeConjToTrans(conj), *(X.col(0)), Y->col(0).get(), alpha, beta);    
-      }
-      else if (xVec == 0 && yVec == 0)
-      {
-        generalApply(applyTransposeConjToTrans(conj), X, Y, alpha, beta);
-      }
-      else if (X.domain()->dim()==1 && yVec != 0)
-      {
-        generalApply(applyTransposeConjToTrans(conj), *(X.col(0)), yVec, alpha, beta);
-      }
-      else if (xVec != 0 && Y->domain()->dim()==1)
-      {
-        generalApply(applyTransposeConjToTrans(conj), *xVec, Y->col(0).get(), 
-          alpha, beta);
-      }
-      else
-      {
-        Out::os() << "nX=" << X.domain()->dim()
-                  << ", nY=" << Y->domain()->dim() << std::endl;
-        TEST_FOR_EXCEPTION(true, std::runtime_error,
-          "mix of vectors and multivectors in "
-          "OpWithBackwardsCompatibleApply::applyTranspose()");
-      }
+      generalApply(M_trans, X, &*Y, alpha, beta);
     }
 
   /**
@@ -158,33 +82,27 @@ public:
     const Scalar            alpha,
     const Scalar            beta) const 
     {
-      const Thyra::DefaultColumnwiseMultiVector<Scalar>* xVec 
-        = dynamic_cast<const Thyra::DefaultColumnwiseMultiVector<Scalar>*>(&x);
+
+      using Teuchos::dyn_cast;
+
+      THYRA_ASSERT_LINEAR_OP_MULTIVEC_APPLY_SPACES(
+        "OpWithBackwardsCompatibleApply<Scalar>::applyImpl(...)",
+        *this, M_trans, x, y );
+
+/*
+      const Thyra::DefaultColumnwiseMultiVector<Scalar> &xVec =
+        dyn_cast<const Thyra::DefaultColumnwiseMultiVector<Scalar> >(x);
       
-      Thyra::DefaultColumnwiseMultiVector<Scalar>* yVec 
-        = dynamic_cast<Thyra::DefaultColumnwiseMultiVector<Scalar>*>(y);
-      
-      TEST_FOR_EXCEPTION(xVec==0, std::runtime_error, 
-        "default implementation of "
-        "OpWithBackwardsCompatibleApply::generalApply() requires a "
-        "DefaultColumnwiseMultiVector");
-      
-      TEST_FOR_EXCEPTION(yVec==0, std::runtime_error, 
-        "default implementation of "
-        "OpWithBackwardsCompatibleApply::generalApply() requires a "
-        "DefaultColumnwiseMultiVector");
+      Thyra::DefaultColumnwiseMultiVector<Scalar> &yVec = 
+        dyn_cast<Thyra::DefaultColumnwiseMultiVector<Scalar> >(*y);
+*/
       
       int nXCols = x.domain()->dim();
-      int nYCols = y->domain()->dim();
       
-      TEST_FOR_EXCEPTION(nXCols != nYCols, std::runtime_error, 
-        "mismatched multivector sizes nX=" << nXCols 
-        << " and nY=" << nYCols);
-      
-      for (int i=0; i<nXCols; i++)
+      for (int i=0; i < nXCols; i++)
       {
-        generalApply(M_trans, *(xVec->col(i).get()), 
-          (yVec->col(i).get()), alpha, beta);
+        generalApply(M_trans, *x.col(i), &*y->col(i), alpha, beta);
+        //generalApply(M_trans, *xVec.col(i), &*yVec.col(i), alpha, beta);
       }
     }
 

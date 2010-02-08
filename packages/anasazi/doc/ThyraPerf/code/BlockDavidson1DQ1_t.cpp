@@ -50,11 +50,11 @@
 #include "Thyra_EpetraThyraWrappers.hpp"
 #include "Thyra_EpetraLinearOp.hpp"
 #ifdef EPETRA_MPI
-#include "Thyra_MPIMultiVectorStdDecl.hpp"
-#include "Thyra_MPIVectorSpaceStdDecl.hpp"
+#include "Thyra_MPIMultiVectorStd.hpp"
+#include "Thyra_MPIVectorSpaceStd.hpp"
 #else
-#include "Thyra_SerialMultiVectorStdDecl.hpp"
-#include "Thyra_SerialVectorSpaceStdDecl.hpp"
+#include "Thyra_SerialMultiVectorStd.hpp"
+#include "Thyra_SerialVectorSpaceStd.hpp"
 #endif
 #endif
 

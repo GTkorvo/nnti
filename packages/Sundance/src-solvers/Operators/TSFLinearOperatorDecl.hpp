@@ -54,7 +54,7 @@ template <class Scalar>  class VectorType;
  * User-level linear operator class
  */
 template <class Scalar>
-class LinearOperator : public SundanceUtils::Handle<LinearOpBase<Scalar, Scalar> >
+class LinearOperator : public SundanceUtils::Handle<LinearOpBase<Scalar> >
 {
 public:
   /** \name Constructors, Destructors, and Assignment Operators */
@@ -63,7 +63,7 @@ public:
   LinearOperator();
 
   /** Constructor with smart pointer */
-  LinearOperator(const RefCountPtr<LinearOpBase<Scalar, Scalar> >& smartPtr);
+  LinearOperator(const RefCountPtr<LinearOpBase<Scalar> >& smartPtr);
   //@}
 
   /** Return the domain */

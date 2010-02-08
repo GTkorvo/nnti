@@ -60,7 +60,7 @@ inline RandomBlockMatrixBuilder<Scalar>
 {
   RefCountPtr<SimpleBlockOp<Scalar> > b = 
     rcp(new SimpleBlockOp<Scalar>(this->domain(), this->range()));
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > p = b;
+  RefCountPtr<LinearOpBase<Scalar> > p = b;
   op_ = p;
 
   for (int i=0; i<this->range().numBlocks(); i++)

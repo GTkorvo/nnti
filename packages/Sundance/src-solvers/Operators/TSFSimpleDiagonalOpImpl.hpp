@@ -101,7 +101,7 @@ template <class Scalar> inline
 LinearOperator<Scalar> diagonalOperator(
   const Vector<Scalar>& diag)
 {
-  RefCountPtr<LinearOpBase<Scalar, Scalar> > A 
+  RefCountPtr<LinearOpBase<Scalar> > A 
     = rcp(new SimpleDiagonalOp<Scalar>(diag));
 
   return A;

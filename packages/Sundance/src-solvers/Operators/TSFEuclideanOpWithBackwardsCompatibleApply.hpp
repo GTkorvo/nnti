@@ -31,7 +31,7 @@
 
 #include "Thyra_VectorBase.hpp"
 #include "Thyra_MultiVectorBase.hpp"
-#include "Thyra_SingleScalarEuclideanLinearOpBase.hpp"
+#include "Thyra_LinearOpDefaultBase.hpp"
 #include "Thyra_DefaultColumnwiseMultiVector.hpp"
 #include "Teuchos_TestForException.hpp"
 

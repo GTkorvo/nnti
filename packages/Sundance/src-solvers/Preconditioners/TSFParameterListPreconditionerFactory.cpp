@@ -29,7 +29,7 @@ createPreconditioner(const LinearOperator<double>& A) const
       const ParameterEntry& entry = mlSettings.entry(iter);
       mlParams.setEntry(name, entry);
     }
-    RefCountPtr<LinearOpBase<double,double> > mlp 
+    RefCountPtr<LinearOpBase<double> > mlp 
       = rcp(new MLOperator(A, mlParams));
     LinearOperator<double> P = mlp;
     rtn = new GenericRightPreconditioner<double>(P);

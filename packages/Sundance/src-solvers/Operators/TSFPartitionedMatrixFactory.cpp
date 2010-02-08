@@ -168,7 +168,7 @@ void PartitionedMatrixFactory::finalize()
 LinearOperator<double> PartitionedMatrixFactory::createMatrix() const
 {
 
-  RefCountPtr<LinearOpBase<double, double> > op 
+  RefCountPtr<LinearOpBase<double> > op 
     = rcp(new TSFExtended::LoadableBlockOperator<double>(domain_, lowestLocalCol_, isBCCol_, remoteBCCols_, range_, lowestLocalRow_, isBCRow_));
   LinearOperator<double> A = op;
 
