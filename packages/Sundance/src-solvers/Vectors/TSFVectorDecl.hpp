@@ -59,7 +59,7 @@ enum LCSign {LCAdd = 1, LCSubtract = -1};
 
 namespace TSFExtended
 {
-  using Thyra::Index;
+  using Thyra::Ordinal;
 
   /** 
    * User-level vector class. 
@@ -302,11 +302,11 @@ namespace TSFExtended
     /** \name Element loading interface */
     //@{
     /** set a single element at the given global index */
-    void setElement(Index globalIndex, const Scalar& value) ;
+    void setElement(Ordinal globalIndex, const Scalar& value) ;
 
     /** add to the existing value of 
      * a single element at the given global index */
-    void addToElement(Index globalIndex, const Scalar& value) ;
+    void addToElement(Ordinal globalIndex, const Scalar& value) ;
 
     /** set a group of elements */
     void setElements(size_t numElems, const int* globalIndices, 
@@ -327,7 +327,7 @@ namespace TSFExtended
     /** \name Element access interface */
     //@{
     /** get the element at the given global index */
-    Scalar getElement(Index globalIndex) const ;
+    Scalar getElement(Ordinal globalIndex) const ;
     //{return castToAccessible()->getElement(globalIndex);}
 
     /** Get a batch of elements */
@@ -409,13 +409,13 @@ namespace TSFExtended
     RawDataAccessibleVector<Scalar>* castToRawDataAccessible();
 
     /** Test for valid index */
-    void boundscheck(Index i, int dim) const ;
+    void boundscheck(Ordinal i, int dim) const ;
 
     /** */
-    const Scalar& localElement(const Index& blockIndex, const Index& indexInBlock) const ;
+    const Scalar& localElement(const Ordinal& blockIndex, const Ordinal& indexInBlock) const ;
 
     /** */
-    Scalar& localElement(const Index& blockIndex, const Index& indexInBlock) ;
+    Scalar& localElement(const Ordinal& blockIndex, const Ordinal& indexInBlock) ;
       
       
   };

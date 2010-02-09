@@ -34,7 +34,7 @@
 
 namespace TSFExtended
 {
-using Thyra::Index;
+using Thyra::Ordinal;
 using Teuchos::RCP;
 
 /* Forward declare VectorSpace */
@@ -79,15 +79,15 @@ public:
   std::ostream& print(std::ostream& os) const ;
 
   /** */
-  const Index& globalIndex() const {return globalIndex_;}
+  const Ordinal& globalIndex() const {return globalIndex_;}
 
 private:
 
   /** */
-  const Index& indexInBlock() const {return indexInCurrentBlock_;}
+  const Ordinal& indexInBlock() const {return indexInCurrentBlock_;}
 
   /** */
-  const Index& blockIndex() const {return blockIndex_;}
+  const Ordinal& blockIndex() const {return blockIndex_;}
 
   /** Constructor is private: the construction is always done inside
    * the begin and end methods of vector space. */
@@ -101,9 +101,9 @@ private:
   /* This is odd but necessary: we store the VectorSpace handle in an RCP
    * because we can only forward declare VectorSpace at this point. */
   RCP<VectorSpace<Scalar> > space_;
-  Index blockIndex_;
-  Index indexInCurrentBlock_;
-  Index globalIndex_;
+  Ordinal blockIndex_;
+  Ordinal indexInCurrentBlock_;
+  Ordinal globalIndex_;
   bool atEnd_;
 };
 

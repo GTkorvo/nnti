@@ -64,7 +64,7 @@ SimpleScaledOp<Scalar>::SimpleScaledOp(const Scalar& alpha,
   
 /* */
 template <class Scalar> inline
-void SimpleScaledOp<Scalar>::applyOp(const Thyra::ETransp M_trans,
+void SimpleScaledOp<Scalar>::applyOp(const Thyra::EOpTransp M_trans,
   const Vector<Scalar>& in,
   Vector<Scalar> out) const
 {

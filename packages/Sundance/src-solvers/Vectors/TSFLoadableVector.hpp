@@ -36,7 +36,7 @@
 
 namespace TSFExtended
 {
-  using Thyra::Index;
+  using Thyra::Ordinal;
   /**
    * LoadableVector defines an interface through which elements can 
    * be loaded into a vector. Element loading is used extensively
@@ -70,11 +70,11 @@ namespace TSFExtended
       virtual ~LoadableVector() {;}
 
       /** set a single element at the given global index */
-      virtual void setElement(Index globalIndex, const Scalar& value) = 0 ;
+      virtual void setElement(Ordinal globalIndex, const Scalar& value) = 0 ;
 
       /** add to the existing value of 
        * a single element at the given global index */
-      virtual void addToElement(Index globalIndex, const Scalar& value) = 0 ;
+      virtual void addToElement(Ordinal globalIndex, const Scalar& value) = 0 ;
 
       /** set a group of elements */
       virtual void setElements(size_t numElems, const int* globalIndices, 

@@ -69,7 +69,7 @@ InverseOperator<Scalar>::InverseOperator(const LinearOperator<Scalar>& op,
  */
 template <class Scalar> inline
 void InverseOperator<Scalar>::generalApply(
-  const Thyra::ETransp            M_trans
+  const Thyra::EOpTransp            M_trans
   ,const Thyra::VectorBase<Scalar>    &x
   ,Thyra::VectorBase<Scalar>          *y
   ,const Scalar            alpha 

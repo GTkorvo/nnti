@@ -73,7 +73,7 @@ SimpleComposedOp<Scalar>::SimpleComposedOp(const Array<LinearOperator<Scalar> >&
 
 
 template <class Scalar> inline
-void SimpleComposedOp<Scalar>::applyOp(const Thyra::ETransp M_trans,
+void SimpleComposedOp<Scalar>::applyOp(const Thyra::EOpTransp M_trans,
   const Vector<Scalar>& in,
   Vector<Scalar> out) const
 {

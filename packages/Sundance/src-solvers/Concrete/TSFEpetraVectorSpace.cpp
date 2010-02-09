@@ -47,10 +47,11 @@
 
 
 using namespace TSFExtended;
-using namespace Teuchos;
 using namespace Thyra;
+using Thyra::Ordinal;
+using Teuchos::RCP;
 
-EpetraVectorSpace::EpetraVectorSpace(const RefCountPtr<const Epetra_Map>& m)
+EpetraVectorSpace::EpetraVectorSpace(const RCP<const Epetra_Map>& m)
   : ScalarProdVectorSpaceBase<double>(),
     SpmdVectorSpaceBase<double>(),
     smallVecSpcFactory_(rcp(new DefaultSpmdVectorSpaceFactory<double>())),
@@ -61,7 +62,7 @@ EpetraVectorSpace::EpetraVectorSpace(const RefCountPtr<const Epetra_Map>& m)
 {}
 
 
-Index EpetraVectorSpace::dim() const 
+Thyra::Ordinal EpetraVectorSpace::dim() const 
 {
   return epetraMap_->NumGlobalElements();
 }
@@ -76,7 +77,7 @@ bool EpetraVectorSpace::isCompatible(const VectorSpaceBase<double>& other) const
   return false;
 }
 
-RefCountPtr<const VectorSpaceFactoryBase<double> > 
+RCP<const VectorSpaceFactoryBase<double> > 
 EpetraVectorSpace::smallVecSpcFcty() const 
 {
   return smallVecSpcFactory_;
@@ -86,7 +87,7 @@ EpetraVectorSpace::smallVecSpcFcty() const
 
 // Overridden from VectorSpace
 
-Teuchos::RefCountPtr<VectorBase<double> >
+Teuchos::RCP<VectorBase<double> >
 EpetraVectorSpace::createMember() const
 {
 //  cout << "creating vector" << endl;
@@ -95,13 +96,13 @@ EpetraVectorSpace::createMember() const
 
 
 
-Teuchos::RefCountPtr<MultiVectorBase<double> >
+Teuchos::RCP<MultiVectorBase<double> >
 EpetraVectorSpace::createMembers(int n) const
 {
-  RefCountPtr<const VectorSpaceBase<double> > self = rcp(this, false);
-  RefCountPtr<const VectorSpaceBase<double> > small 
+  RCP<const VectorSpaceBase<double> > self = rcp(this, false);
+  RCP<const VectorSpaceBase<double> > small 
     = Thyra::defaultSpmdVectorSpace<double>(n);
-  Array<RefCountPtr<VectorBase<double> > > vecs(n);
+  Array<RCP<VectorBase<double> > > vecs(n);
   for (unsigned int i=0; i<vecs.size(); i++)
     {
       vecs[i] = createMember();
@@ -120,7 +121,7 @@ EpetraVectorSpace::createMembers(int n) const
 
 
 
-Teuchos::RefCountPtr< const VectorSpaceBase<double> >
+Teuchos::RCP< const VectorSpaceBase<double> >
 EpetraVectorSpace::clone() const
 {
   return Teuchos::rcp(new EpetraVectorSpace(epetraMap_));
@@ -139,10 +140,10 @@ string EpetraVectorSpace::description() const
 
 
 
-Teuchos::RefCountPtr<const Teuchos::Comm<Index> > 
+Teuchos::RCP<const Teuchos::Comm<Thyra::Ordinal> > 
 EpetraVectorSpace::epetraCommToTeuchosComm(const Epetra_Comm& epComm) const 
 {
-  RefCountPtr<const Comm<Index> > rtn;
+  RCP<const Comm<Thyra::Ordinal> > rtn;
 
 #ifdef HAVE_MPI
   const Epetra_MpiComm* mpiComm 
@@ -154,15 +155,15 @@ EpetraVectorSpace::epetraCommToTeuchosComm(const Epetra_Comm& epComm) const
 
   if (serialComm != 0)
   {
-    rtn  = rcp(new SerialComm<Index>());
+    rtn  = rcp(new SerialComm<Thyra::Ordinal>());
   }
 #ifdef HAVE_MPI
   else if (mpiComm != 0)
   {
     MPI_Comm rawMpiComm = mpiComm->GetMpiComm();
-    RefCountPtr<const OpaqueWrapper<MPI_Comm> > ptr 
+    RCP<const OpaqueWrapper<MPI_Comm> > ptr 
       = rcp(new OpaqueWrapper<MPI_Comm>(rawMpiComm));
-    rtn  = rcp(new MpiComm<Index>(ptr));
+    rtn  = rcp(new MpiComm<Ordinal>(ptr));
   }
 #endif
   else

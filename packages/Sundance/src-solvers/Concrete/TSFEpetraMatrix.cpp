@@ -70,14 +70,14 @@ EpetraMatrix::EpetraMatrix(const RefCountPtr<Epetra_CrsMatrix>& mat,
 {}
 
 
-bool EpetraMatrix::opSupportedImpl(Thyra::ETransp M_trans) const
+bool EpetraMatrix::opSupportedImpl(Thyra::EOpTransp M_trans) const
 {
   return true;
 }
 
 
 void EpetraMatrix::applyImpl(
-  const Thyra::ETransp M_trans,
+  const Thyra::EOpTransp M_trans,
   const Thyra::MultiVectorBase<double> &X,
   const Teuchos::Ptr<Thyra::MultiVectorBase<double> > &Y,
   const double alpha,
@@ -136,7 +136,7 @@ void EpetraMatrix::applyImpl(
 
 
 void EpetraMatrix::getEpetraOpView(RefCountPtr<Epetra_Operator> *epetraOp,
-  Thyra::ETransp *epetraOpTransp,
+  Thyra::EOpTransp *epetraOpTransp,
   Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
   Thyra::EAdjointEpetraOp *epetraOpAdjointSupport)
 {
@@ -156,7 +156,7 @@ void EpetraMatrix::getEpetraOpView(RefCountPtr<Epetra_Operator> *epetraOp,
 }
 
 void EpetraMatrix::getEpetraOpView(RefCountPtr<const Epetra_Operator> *epetraOp,
-  Thyra::ETransp *epetraOpTransp,
+  Thyra::EOpTransp *epetraOpTransp,
   Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
   Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) const 
 {

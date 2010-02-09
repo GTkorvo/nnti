@@ -92,7 +92,7 @@ public:
    * Apply the operator
    */
   void applyOp(
-    const Thyra::ETransp M_trans,
+    const Thyra::EOpTransp M_trans,
     const Vector<Scalar>& in,
     Vector<Scalar> out
     ) const 

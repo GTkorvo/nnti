@@ -102,7 +102,7 @@ void SimpleBlockOp<Scalar>::setBlock(int i, int j,
 }
 
 template <class Scalar> inline
-void SimpleBlockOp<Scalar>::applyOp(const Thyra::ETransp M_trans,
+void SimpleBlockOp<Scalar>::applyOp(const Thyra::EOpTransp M_trans,
   const Vector<Scalar>& in,
   Vector<Scalar> out) const
 {

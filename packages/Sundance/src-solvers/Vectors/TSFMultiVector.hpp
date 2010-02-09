@@ -48,7 +48,7 @@ namespace TSFExtended
 {
   using Thyra::Index;
   using Thyra::Range1D;
-  using Thyra::ETransp;
+  using Thyra::EOpTransp;
   using namespace Teuchos;
   
 
@@ -192,7 +192,7 @@ namespace TSFExtended
         /** This method is implemented in terms of the mulit-vector
 	    <tt>applyOp( )</tt> method. */
        void apply( 
-                const ETransp            M_trans 
+                const EOpTransp            M_trans 
                 ,const Vector<Scalar>    &x 
                 ,Vector<Scalar>          *y 
                 ,const Scalar            alpha 

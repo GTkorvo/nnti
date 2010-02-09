@@ -54,13 +54,13 @@ public:
     double absoluteThreshold);
 
   /** */
-  virtual bool opSupportedImpl(Thyra::ETransp M_trans) const;
+  virtual bool opSupportedImpl(Thyra::EOpTransp M_trans) const;
 
   /** 
    * Apply operator to a vector in the domain space and return a vector
    * in the range space.
    */
-  virtual void generalApply(const Thyra::ETransp M_trans,
+  virtual void generalApply(const Thyra::EOpTransp M_trans,
     const Thyra::VectorBase<double>    &x,
     Thyra::VectorBase<double>          *y,
     const double            alpha=1.0,

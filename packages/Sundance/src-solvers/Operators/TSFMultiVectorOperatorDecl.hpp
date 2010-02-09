@@ -66,7 +66,7 @@ public:
    * vector, x, and the diagonal values.
    */
   virtual void generalApply(
-    const Thyra::ETransp            M_trans,
+    const Thyra::EOpTransp            M_trans,
     const Thyra::VectorBase<Scalar>    &x,
     Thyra::VectorBase<Scalar>          *y,
     const Scalar            alpha = 1.0,

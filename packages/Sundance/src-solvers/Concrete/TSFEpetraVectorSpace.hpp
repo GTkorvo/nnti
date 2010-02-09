@@ -38,7 +38,7 @@ namespace TSFExtended
 {
 using namespace Teuchos;
 using namespace Thyra;
-
+using Thyra::Ordinal;
 
 /**
  * Adaptor wrapping Epetra map in the Thyra vector space system.
@@ -63,7 +63,7 @@ public:
   //@{
 
   /** */
-  Index dim() const ;
+  Ordinal dim() const ;
 
   /** */
   bool isCompatible(const VectorSpaceBase<double>& other) const ;
@@ -83,17 +83,17 @@ public:
   /** \name Overidden from SpmdVectorSpaceBase */
   //@{
   /** */
-  Teuchos::RefCountPtr<const Teuchos::Comm<Index> > getComm() const
+  Teuchos::RefCountPtr<const Teuchos::Comm<Ordinal> > getComm() const
     {return comm_;}
 
   /** */
-  Index localSubDim() const {return localSubDim_;}
+  Ordinal localSubDim() const {return localSubDim_;}
 
   /** */
-  Index localOffset() const {return localOffset_;}
+  Ordinal localOffset() const {return localOffset_;}
 
   /** */
-  Index mapCode() const {return -1;}
+  Ordinal mapCode() const {return -1;}
   //@}
 
 
@@ -104,7 +104,7 @@ public:
 
 protected:
   /** */
-  Teuchos::RefCountPtr<const Teuchos::Comm<Index> > 
+  Teuchos::RefCountPtr<const Teuchos::Comm<Ordinal> > 
   epetraCommToTeuchosComm(const Epetra_Comm& epComm) const ;
   
   /** @name Protected overridden from VectorSpace */
@@ -120,11 +120,11 @@ private:
   /** */
   RefCountPtr<const Epetra_Map> epetraMap_;
 
-  Teuchos::RefCountPtr<const Teuchos::Comm<Index> > comm_;
+  Teuchos::RefCountPtr<const Teuchos::Comm<Ordinal> > comm_;
 
-  Index localSubDim_;
+  Ordinal localSubDim_;
 
-  Index localOffset_;
+  Ordinal localOffset_;
 };
   
 }

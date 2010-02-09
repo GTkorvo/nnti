@@ -65,7 +65,7 @@ SimpleTransposedOp<Scalar>::SimpleTransposedOp(const LinearOperator<Scalar>& A)
   
 /* */
 template <class Scalar> inline
-void SimpleTransposedOp<Scalar>::applyOp(const Thyra::ETransp M_trans,
+void SimpleTransposedOp<Scalar>::applyOp(const Thyra::EOpTransp M_trans,
   const Vector<Scalar>& in,
   Vector<Scalar> out) const
 {

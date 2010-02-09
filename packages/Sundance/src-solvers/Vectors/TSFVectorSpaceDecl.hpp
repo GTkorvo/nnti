@@ -39,6 +39,7 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
+using Thyra::Ordinal;
 template<class Scalar> class Vector;
 
 /**
@@ -106,7 +107,7 @@ public:
   SequentialIterator<Scalar> end() const ;
 
   /** */
-  bool advanceIndex(Index& blockIndex, Index& indexInCurrentBlock, Index& globalIndex) const ;
+  bool advanceIndex(Ordinal& blockIndex, Ordinal& indexInCurrentBlock, Ordinal& globalIndex) const ;
 };
 
 template <class Scalar>

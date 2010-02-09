@@ -46,7 +46,7 @@
 using namespace Teuchos;
 using namespace TSFExtended;
 using namespace Thyra;
-using Thyra::Index;
+using Thyra::Ordinal;
 using Teuchos::Range1D;
 
 
@@ -116,9 +116,9 @@ void EpetraVector::applyOpImpl(const RTOpPack::RTOpT< double >& op,
 		const ArrayView< const Ptr< const VectorBase< double > > > &  	vecs,
 		const ArrayView< const Ptr< VectorBase< double > > > &  	targ_vecs,
 		const Ptr< RTOpPack::ReductTarget > &  	reduct_obj,
-		const Index  	first_ele_offset_in,
-		const Index  	sub_dim_in,
-		const Index  	global_offset_in	 
+		const Ordinal  	first_ele_offset_in,
+		const Ordinal  	sub_dim_in,
+		const Ordinal  	global_offset_in	 
   ) const 
 {
   using Teuchos::null;
@@ -164,11 +164,11 @@ void EpetraVector::applyOpImpl(const RTOpPack::RTOpT< double >& op,
     );
 #endif
 
-  const Teuchos::RefCountPtr<const Teuchos::Comm<Index> >& comm
+  const Teuchos::RefCountPtr<const Teuchos::Comm<Ordinal> >& comm
     = epetraVecSpace_->getComm();
 
-  const SerialComm<Index>* serialComm = 
-    dynamic_cast<const SerialComm<Index>* >(comm.get());
+  const SerialComm<Ordinal>* serialComm = 
+    dynamic_cast<const SerialComm<Ordinal>* >(comm.get());
 
 
   // Flag that we are in applyOp()
@@ -180,9 +180,9 @@ void EpetraVector::applyOpImpl(const RTOpPack::RTOpT< double >& op,
 
   // Get the overlap in the current process with the input logical sub-vector
   // from (first_ele_offset_in,sub_dim_in,global_offset_in)
-  Index  overlap_first_local_ele_off = 0;
-  Index  overlap_local_sub_dim = 0;
-  Index  overlap_global_off = 0;
+  Ordinal  overlap_first_local_ele_off = 0;
+  Ordinal  overlap_local_sub_dim = 0;
+  Ordinal  overlap_global_off = 0;
   if(localSubDim_) {
     RTOp_parallel_calc_overlap(
       globalDim_, localSubDim_, localOffset_,
@@ -268,9 +268,9 @@ void EpetraVector::applyOp(
   const int num_targ_vecs,
   VectorBase<double>*const targ_vecs[],
   RTOpPack::ReductTarget *reduct_obj,
-  const Index first_ele_offset_in,
-  const Index sub_dim_in,
-  const Index global_offset_in
+  const Ordinal first_ele_offset_in,
+  const Ordinal sub_dim_in,
+  const Ordinal global_offset_in
   ) const 
 {
 #ifdef THYRA_SPMD_VECTOR_BASE_DUMP
@@ -309,11 +309,11 @@ void EpetraVector::applyOp(
     );
 #endif  
 
-  const Teuchos::RefCountPtr<const Teuchos::Comm<Index> >& comm
+  const Teuchos::RefCountPtr<const Teuchos::Comm<Ordinal> >& comm
     = epetraVecSpace_->getComm();
 
-  const SerialComm<Index>* serialComm = 
-    dynamic_cast<const SerialComm<Index>* >(comm.get());
+  const SerialComm<Ordinal>* serialComm = 
+    dynamic_cast<const SerialComm<Ordinal>* >(comm.get());
 
 
   // Flag that we are in applyOp()
@@ -325,9 +325,9 @@ void EpetraVector::applyOp(
   
   // Get the overlap in the current process with the input logical sub-vector
   // from (first_ele_offset_in,sub_dim_in,global_offset_in)
-  Index  overlap_first_local_ele_off  = 0;
-  Index  overlap_local_sub_dim        = 0;
-  Index  overlap_global_off           = 0;
+  Ordinal  overlap_first_local_ele_off  = 0;
+  Ordinal  overlap_local_sub_dim        = 0;
+  Ordinal  overlap_global_off           = 0;
   if(localSubDim_) {
     RTOp_parallel_calc_overlap(
       globalDim_, localSubDim_, localOffset_, first_ele_offset_in, sub_dim_in, global_offset_in
@@ -428,7 +428,7 @@ void EpetraVector::acquireDetachedVectorViewImpl(
 
   /* All requested elements are on-processor. */
   const double* localValues = &(epetraVec_->operator[](0));
-  Index stride = 1;
+  Ordinal stride = 1;
   
   sub_vec->initialize(rng.lbound(), rng.size(),
     localValues+(rng.lbound()-localOffset_), stride);
@@ -482,7 +482,7 @@ void EpetraVector::acquireNonconstDetachedVectorViewImpl(
 
   /* All requested elements are on-processor. */
   double* localValues = &(epetraVec_->operator[](0));
-  Index stride = 1;
+  Ordinal stride = 1;
 
   sub_vec->initialize(rng.lbound(), rng.size(),
     localValues+(rng.lbound()-localOffset_),stride);
@@ -526,20 +526,20 @@ Teuchos::Range1D EpetraVector::validateRange(const Teuchos::Range1D& rng_in) con
 
 
 
-double& EpetraVector::operator[](Index globalIndex) 
+double& EpetraVector::operator[](Ordinal globalIndex) 
 {
   const Epetra_BlockMap& myMap = epetraVec()->Map();
   return (*epetraVec())[myMap.LID(globalIndex)];
 }
 
-void EpetraVector::setElement(Index index, const double& value)
+void EpetraVector::setElement(Ordinal index, const double& value)
 {
   int loc_index[1] = { index };
   epetraVec()->ReplaceGlobalValues(1, const_cast<double*>(&value), 
     loc_index);
 }
 
-void EpetraVector::addToElement(Index index, const double& value)
+void EpetraVector::addToElement(Ordinal index, const double& value)
 {
 //  cout << "adding (" << index << ", " << value << ")" << endl;
   int loc_index[1] = { index };
@@ -547,13 +547,13 @@ void EpetraVector::addToElement(Index index, const double& value)
     loc_index);
 }
 
-const double& EpetraVector::getElement(Index index) const 
+const double& EpetraVector::getElement(Ordinal index) const 
 {
   const Epetra_BlockMap& myMap = epetraVec()->Map();
   return (*epetraVec())[myMap.LID(index)];
 }
 
-void EpetraVector::getElements(const Index* globalIndices, int numElems,
+void EpetraVector::getElements(const Ordinal* globalIndices, int numElems,
   Teuchos::Array<double>& elems) const
 {
   elems.resize(numElems);

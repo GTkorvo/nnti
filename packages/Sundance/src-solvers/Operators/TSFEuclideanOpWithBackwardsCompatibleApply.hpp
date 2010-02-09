@@ -65,7 +65,7 @@ public:
 
   /** Thyra EuclideanOp apply method */
   void euclideanApply(
-    const Thyra::ETransp                             transp,
+    const Thyra::EOpTransp                             transp,
     const Thyra::MultiVectorBase<Scalar>    &X,
     Thyra::MultiVectorBase<Scalar>           *Y,
     const Scalar alpha,
@@ -106,7 +106,7 @@ public:
 
   /** Thyra EuclideanOp apply transpose method */
   void euclideanApplyTranspose(
-    const Thyra::ETransp                            transp,
+    const Thyra::EOpTransp                            transp,
     const Thyra::MultiVectorBase<Scalar>    &X,
     Thyra::MultiVectorBase<Scalar>         *Y,
     const Scalar                     alpha,
@@ -149,7 +149,7 @@ public:
   /** 
    * 
    */
-  bool opSupported(Thyra::ETransp tr) const 
+  bool opSupported(Thyra::EOpTransp tr) const 
     {
       return true;
     }
@@ -160,7 +160,7 @@ public:
    * according to the value of the transpose flag. This method is
    * backwards compatible with TSFCore-based code.
    */
-  virtual void generalApply(const Thyra::ETransp M_trans,
+  virtual void generalApply(const Thyra::EOpTransp M_trans,
     const Thyra::MultiVectorBase<Scalar>    &x,
     Thyra::MultiVectorBase<Scalar>          *y,
     const Scalar            alpha,
@@ -202,7 +202,7 @@ public:
   /**
    *
    */
-  virtual void generalApply(const Thyra::ETransp M_trans,
+  virtual void generalApply(const Thyra::EOpTransp M_trans,
     const Thyra::VectorBase<Scalar>    &x,
     Thyra::VectorBase<Scalar>* y,
     const Scalar alpha = Teuchos::ScalarTraits<Scalar>::one(),

@@ -38,7 +38,7 @@
 
 namespace TSFExtended
 {
-  using Thyra::Index;
+  using Thyra::Ordinal;
 
   /**
    * TSFExtended::IndexableVector defines an interface through which
@@ -59,22 +59,22 @@ namespace TSFExtended
       virtual ~IndexableVector() {;}
 
       /** read the element at the given global index */
-      virtual const Scalar& operator[](Index globalIndex) const = 0 ;
+      virtual const Scalar& operator[](Ordinal globalIndex) const = 0 ;
 
       /** writable access to the element at the given global index */
-      virtual Scalar& operator[](Index globalIndex) = 0 ;
+      virtual Scalar& operator[](Ordinal globalIndex) = 0 ;
 
       /** set a single element at the given global index */
-      virtual void setElement(Index globalIndex, const Scalar& value) 
+      virtual void setElement(Ordinal globalIndex, const Scalar& value) 
       {operator[](globalIndex) = value;}
 
       /** add to the existing value of 
        * a single element at the given global index */
-      virtual void addToElement(Index globalIndex, const Scalar& value) 
+      virtual void addToElement(Ordinal globalIndex, const Scalar& value) 
       {operator[](globalIndex) += value;}
 
       /** get the element at the given global index */
-      virtual const Scalar& getElement(Index globalIndex) const 
+      virtual const Scalar& getElement(Ordinal globalIndex) const 
       {return operator[](globalIndex);}
     };
 }

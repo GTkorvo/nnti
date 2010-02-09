@@ -88,12 +88,12 @@ IfpackOperator::IfpackOperator(const EpetraMatrix* A,
                      << ierr);
 }
 
-bool IfpackOperator::opSupportedImpl(Thyra::ETransp M_trans) const
+bool IfpackOperator::opSupportedImpl(Thyra::EOpTransp M_trans) const
 {
   return (M_trans == Thyra::NOTRANS);
 }
 
-void IfpackOperator::generalApply(const Thyra::ETransp M_trans,
+void IfpackOperator::generalApply(const Thyra::EOpTransp M_trans,
   const Thyra::VectorBase<double>& x,
   Thyra::VectorBase<double>* y,
   const double alpha,

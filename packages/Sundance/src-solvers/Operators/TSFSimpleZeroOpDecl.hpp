@@ -48,7 +48,7 @@ public:
     const VectorSpace<Scalar>& range);
 
   /** */
-  void applyOp(const Thyra::ETransp M_trans,
+  void applyOp(const Thyra::EOpTransp M_trans,
     const Vector<Scalar>& in,
     Vector<Scalar> out) const;
 

@@ -36,7 +36,7 @@
 
 namespace TSFExtended
 {
-  using Thyra::Index;
+  using Thyra::Ordinal;
   /**
    * LoadableBlockVector provides a LoadableVector interface to a 
    * physically-partitioned block 1x2 vector, making it appear to the
@@ -74,7 +74,7 @@ namespace TSFExtended
       virtual ~LoadableBlockVector() {;}
 
       /** set a single element at the given global index */
-      void setElement(Index globalIndex, const double& value) 
+      void setElement(Ordinal globalIndex, const double& value) 
         {
           if (globalIndex < lowestLocalRow_ || globalIndex >= highestLocalRow_)
           {
@@ -92,7 +92,7 @@ namespace TSFExtended
 
       /** add to the existing value of 
        * a single element at the given global index */
-      void addToElement(Index globalIndex, const double& value) 
+      void addToElement(Ordinal globalIndex, const double& value) 
         {
           if (globalIndex >= lowestLocalRow_ && globalIndex < highestLocalRow_)
           {

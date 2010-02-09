@@ -31,7 +31,7 @@
 using namespace Teuchos;
 using namespace TSFExtended;
 
-const double& EpetraGhostView::getElement(Index globalIndex) const 
+const double& EpetraGhostView::getElement(Ordinal globalIndex) const 
 {
   const Epetra_BlockMap& myMap = ghostView_->Map();
   return (*ghostView_)[myMap.LID(globalIndex)];

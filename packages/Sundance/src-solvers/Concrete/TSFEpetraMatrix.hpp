@@ -74,7 +74,7 @@ public:
   RefCountPtr< const VectorSpaceBase<double> > range() const {return range_;}
 
   /** \brief . */
-	bool opSupportedImpl(Thyra::ETransp M_trans) const;
+	bool opSupportedImpl(Thyra::EOpTransp M_trans) const;
 
   /** */
   void applyImpl(
@@ -90,13 +90,13 @@ public:
 
   /** */
   void getEpetraOpView(RefCountPtr<Epetra_Operator> *epetraOp,
-    Thyra::ETransp *epetraOpTransp,
+    Thyra::EOpTransp *epetraOpTransp,
     Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
     Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) ;
 
   /** */
   void getEpetraOpView(RefCountPtr<const Epetra_Operator> *epetraOp,
-    Thyra::ETransp *epetraOpTransp,
+    Thyra::EOpTransp *epetraOpTransp,
     Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
     Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) const ;
 

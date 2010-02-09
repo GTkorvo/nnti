@@ -59,7 +59,9 @@ public:
     const double beta
     ) const 
     {
-      OpWithBackwardsCompatibleApply<double>::apply(conj,X,Y,alpha,beta);
+      Ptr<Thyra::MultiVectorBase<double> > yp(Y);
+      OpWithBackwardsCompatibleApply<double>::apply(applyConjToTrans(conj),X,
+        yp, alpha,beta);
     }
 
 
@@ -72,14 +74,15 @@ public:
     const double                     beta
     ) const 
     {
-      OpWithBackwardsCompatibleApply<double>::applyTranspose(conj,X,Y,alpha,beta);
+      Ptr<Thyra::MultiVectorBase<double> > yp(Y);
+      OpWithBackwardsCompatibleApply<double>::apply(applyTransposeConjToTrans(conj),X,yp,alpha,beta);
     }
 
   /** 
    * Apply operator to a vector in the domain space and return a vector
    * in the range space.
    */
-  virtual void generalApply(const Thyra::ETransp M_trans,
+  virtual void generalApply(const Thyra::EOpTransp M_trans,
     const Thyra::VectorBase<double>    &x,
     Thyra::VectorBase<double>          *y,
     const double            alpha=1.0,

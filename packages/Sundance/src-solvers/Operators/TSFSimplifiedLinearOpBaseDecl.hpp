@@ -58,7 +58,7 @@ public:
   /** 
    *
    */
-  virtual void applyOp(const Thyra::ETransp M_trans,
+  virtual void applyOp(const Thyra::EOpTransp M_trans,
     const Vector<Scalar>& in,
     Vector<Scalar> out) const = 0 ;
 
@@ -68,7 +68,7 @@ public:
    * according to the value of the transpose flag. This method is
    * backwards compatible with TSFCore-based code.
    */
-  void generalApply(const Thyra::ETransp M_trans,
+  void generalApply(const Thyra::EOpTransp M_trans,
     const Thyra::VectorBase<Scalar>    &x,
     Thyra::VectorBase<Scalar>* y,
     const Scalar alpha = Teuchos::ScalarTraits<Scalar>::one(),

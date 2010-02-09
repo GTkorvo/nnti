@@ -54,7 +54,7 @@ class OpWithBackwardsCompatibleApply :
 public:
 
   /** \brief . */
-	bool opSupportedImpl(Thyra::ETransp M_trans) const
+	bool opSupportedImpl(Thyra::EOpTransp M_trans) const
     {
       return (M_trans == Thyra::NOTRANS);
     }
@@ -76,7 +76,7 @@ public:
    * according to the value of the transpose flag. This method is
    * backwards compatible with TSFCore-based code.
    */
-  virtual void generalApply(const Thyra::ETransp M_trans,
+  virtual void generalApply(const Thyra::EOpTransp M_trans,
     const Thyra::MultiVectorBase<Scalar>    &x,
     Thyra::MultiVectorBase<Scalar>          *y,
     const Scalar            alpha,
@@ -109,7 +109,7 @@ public:
 /**
  *
  */
-  virtual void generalApply(const Thyra::ETransp M_trans,
+  virtual void generalApply(const Thyra::EOpTransp M_trans,
     const Thyra::VectorBase<Scalar>    &x,
     Thyra::VectorBase<Scalar>* y,
     const Scalar alpha = Teuchos::ScalarTraits<Scalar>::one(),

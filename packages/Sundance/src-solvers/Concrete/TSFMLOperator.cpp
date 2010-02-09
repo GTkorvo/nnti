@@ -55,7 +55,7 @@ MLOperator::MLOperator(
 }
 
 
-void MLOperator::generalApply(const Thyra::ETransp M_trans,
+void MLOperator::generalApply(const Thyra::EOpTransp M_trans,
   const Thyra::VectorBase<double>& x,
   Thyra::VectorBase<double>* y,
   const double alpha,

@@ -73,7 +73,7 @@ MultiVectorOperator<Scalar>
 template <class Scalar> inline
 void MultiVectorOperator<Scalar>
 ::generalApply(
-  const Thyra::ETransp            M_trans,
+  const Thyra::EOpTransp            M_trans,
   const Thyra::VectorBase<Scalar>    &x,
   Thyra::VectorBase<Scalar>          *y,
   const Scalar            alpha ,

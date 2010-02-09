@@ -44,7 +44,7 @@ using namespace Thyra;
 
 template <class Scalar>
 void SimplifiedLinearOpBase<Scalar>
-::generalApply(const Thyra::ETransp M_trans,
+::generalApply(const Thyra::EOpTransp M_trans,
   const Thyra::VectorBase<Scalar>    &x,
   Thyra::VectorBase<Scalar>* y,
   const Scalar alpha, 

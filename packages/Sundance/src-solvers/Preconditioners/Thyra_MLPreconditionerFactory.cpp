@@ -104,7 +104,7 @@ RefCountPtr<ParameterList> MLPreconditionerFactory
 bool MLPreconditionerFactory::isCompatible( const LinearOpBase<double> &fwdOp ) const
 {
   Teuchos::RefCountPtr<const Epetra_Operator> epetraFwdOp;
-  ETransp                                     epetraFwdOpTransp;
+  EOpTransp                                     epetraFwdOpTransp;
   EApplyEpetraOpAs                            epetraFwdOpApplyAs;
   EAdjointEpetraOp                            epetraFwdOpAdjointSupport;
   double                                      epetraFwdOpScalar;
@@ -166,7 +166,7 @@ void MLPreconditionerFactory::initializePrec(
   // Unwrap and get the forward Epetra_Operator object
   //
   Teuchos::RefCountPtr<const Epetra_Operator> epetraFwdOp;
-  ETransp                                     epetraFwdOpTransp;
+  EOpTransp                                     epetraFwdOpTransp;
   EApplyEpetraOpAs                            epetraFwdOpApplyAs;
   EAdjointEpetraOp                            epetraFwdOpAdjointSupport;
   double                                      epetraFwdOpScalar;

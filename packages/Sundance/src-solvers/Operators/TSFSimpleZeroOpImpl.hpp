@@ -59,7 +59,7 @@ SimpleZeroOp<Scalar>::SimpleZeroOp(const VectorSpace<Scalar>& domain,
 
 
 template <class Scalar> inline
-void SimpleZeroOp<Scalar>::applyOp(const Thyra::ETransp M_trans,
+void SimpleZeroOp<Scalar>::applyOp(const Thyra::EOpTransp M_trans,
   const Vector<Scalar>& in,
   Vector<Scalar> out) const
 {

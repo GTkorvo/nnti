@@ -72,7 +72,7 @@ public:
   void setBlock(int i, int j, const LinearOperator<Scalar>& Aij) ; 
 
   /** */
-  void applyOp(const Thyra::ETransp M_trans,
+  void applyOp(const Thyra::EOpTransp M_trans,
     const Vector<Scalar>& in,
     Vector<Scalar> out) const ;
 
