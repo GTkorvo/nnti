@@ -225,6 +225,7 @@ Vector<Scalar>& Vector<Scalar>::acceptCopyOf(const Vector<Scalar>& x)
     {
       Vector<Scalar> me = x.space().createMember();
       this->ptr() = me.ptr();
+      p = this->ptr().get();
     }
     Thyra::assign(p, *px);
   }
