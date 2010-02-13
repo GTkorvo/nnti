@@ -46,25 +46,26 @@ using namespace TSFExtended;
 using namespace Teuchos;
 
 EpetraVectorType::EpetraVectorType()
-#ifdef HAVE_MPI
-  : epetraComm_(rcp(new Epetra_MpiComm(MPI_COMM_WORLD)))
-#else
-    : epetraComm_(rcp(new Epetra_SerialComm()))
-#endif
 {;}
 
 
 RefCountPtr<const Thyra::VectorSpaceBase<double> > 
 EpetraVectorType::createSpace(int /*dimension*/,
-                              int nLocal,
-                              const int* localIndices) const
+  int nLocal,
+  const int* localIndices,
+  const MPIComm& comm) const
 {
-  TEST_FOR_EXCEPTION(nLocal < 0, std::runtime_error, "negative vector size n=" << nLocal);
-	RefCountPtr<Epetra_Map> map = rcp(new Epetra_Map(-1, nLocal,
-                                                   (int*) localIndices,
-                                                   0, *epetraComm()));
+#ifdef HAVE_MPI
+  Epetra_MpiComm epComm(comm.getComm());
+#else
+  Epetra_SerialComm epComm(comm.getComm());
+#endif
 
-//  map->Print(Out::os());
+  TEST_FOR_EXCEPTION(nLocal < 0, std::runtime_error, "negative vector size n=" << nLocal);
+
+	RefCountPtr<Epetra_Map> map = rcp(new Epetra_Map(-1, nLocal,
+      (int*) localIndices,
+      0, epComm));
 
 	return rcp(new EpetraVectorSpace(map));
 }

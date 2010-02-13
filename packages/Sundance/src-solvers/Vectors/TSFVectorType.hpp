@@ -62,8 +62,9 @@ namespace TSFExtended
      * @param locallyOwnedIndices array of indices owned by this processor  
      */
     VectorSpace<Scalar> createSpace(int dimension, 
-                                    int nLocal,
-                                    const int* locallyOwnedIndices) const ;
+      int nLocal,
+      const int* locallyOwnedIndices,
+      const MPIComm& comm) const ;
 
 
     /** 
@@ -103,9 +104,9 @@ namespace TSFExtended
   template <class Scalar> inline 
   VectorSpace<Scalar> VectorType<Scalar>::createSpace(int dimension,
                                                       int nLocal,
-                                                      const int* locallyOwnedIndices) const
+    const int* locallyOwnedIndices, const MPIComm& comm) const
   {
-    return this->ptr()->createSpace(dimension, nLocal, locallyOwnedIndices);
+    return this->ptr()->createSpace(dimension, nLocal, locallyOwnedIndices, comm);
   }
 
   template <class Scalar> inline 
@@ -122,7 +123,7 @@ namespace TSFExtended
       {
         locallyOwnedIndices[i] = lowestLocalRow + i;
       }
-    return this->ptr()->createSpace(dimension, nLocal, &(locallyOwnedIndices[0]));
+    return this->ptr()->createSpace(dimension, nLocal, &(locallyOwnedIndices[0]), comm);
   }
 
   template <class Scalar> inline 

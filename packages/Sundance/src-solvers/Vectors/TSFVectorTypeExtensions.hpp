@@ -78,7 +78,8 @@ namespace TSFExtended
     virtual RefCountPtr<const Thyra::VectorSpaceBase<Scalar> >
     createSpace(int dimension, 
                 int nLocal,
-                const int* locallyOwnedIndices) const = 0 ;
+      const int* locallyOwnedIndices,
+      const MPIComm& comm) const = 0 ;
 
     /**  
      * Create an importer for accessing ghost elements.

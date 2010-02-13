@@ -56,7 +56,7 @@ namespace TSFExtended
                            public Describable
   {
   public:
-    /** Ctor needs no arguments */
+    /** Construct a vector type */
     EpetraVectorType();
       
     /** virtual dtor */
@@ -69,8 +69,9 @@ namespace TSFExtended
      */
     RefCountPtr<const Thyra::VectorSpaceBase<double> > 
     createSpace(int dimension, 
-                int nLocal,
-                const int* locallyOwnedIndices) const ;
+      int nLocal,
+      const int* locallyOwnedIndices,
+      const MPIComm& comm) const ;
 
     /**  
      * Create an importer for accessing ghost elements.
@@ -104,15 +105,6 @@ namespace TSFExtended
     //@}
 
     GET_RCP(VectorTypeExtensions<double>);
-
-
-  protected:
-    /** */
-    const RefCountPtr<Epetra_Comm>& epetraComm() const {return epetraComm_;}
-    
-  private:
-    
-    RefCountPtr<Epetra_Comm> epetraComm_;
   };
   
 }

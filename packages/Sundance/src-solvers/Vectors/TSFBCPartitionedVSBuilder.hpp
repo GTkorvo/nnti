@@ -78,9 +78,9 @@ template <class Scalar>
 
 
     VectorSpace<double> bcSpace = bcType.createSpace(nTotalBCDofs, nBCDofs,
-      &(bcDofs[0]));
+      &(bcDofs[0]), comm);
     VectorSpace<double> interiorSpace = internalType.createSpace(nTotalInteriorDofs, nLocalDofs-nBCDofs,
-      &(interiorDofs[0]));
+      &(interiorDofs[0]), comm);
 
     return productSpace<double>(interiorSpace, bcSpace);
   }
