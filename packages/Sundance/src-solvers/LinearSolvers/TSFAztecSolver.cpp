@@ -42,7 +42,6 @@ AztecSolver::AztecSolver(const ParameterList& params)
     aztec_status(AZ_STATUS_SIZE),
     aztec_proc_config(AZ_PROC_SIZE)
 {
-  Out::os() << "in AztecSolver ctor" << endl;
   setName("AztecSolver");
   initParamMap();
 
@@ -125,7 +124,6 @@ AztecSolver::AztecSolver(const ParameterList& params)
       parameters_[aztecCode] = val;
     }
   }
-  Out::os() << "done AztecSolver ctor" << endl;
 }
 
 
@@ -142,7 +140,6 @@ AztecSolver::AztecSolver(const Teuchos::map<int, int>& aztecOptions,
     aztec_status(AZ_STATUS_SIZE),
     aztec_proc_config(AZ_PROC_SIZE)
 {
-  Out::os() << "in AztecSolver ctor" << endl;
   setName("AztecSolver");
   if (aztecOptions.find(AZ_recursive_iterate) != aztecOptions.end())
   {
@@ -171,7 +168,6 @@ AztecSolver::AztecSolver(const Teuchos::map<int, int>& aztecOptions,
     double parValue = parIter->second;
     parameters_[parKey] = parValue;
   }
-  Out::os() << "done AztecSolver ctor" << endl;
 }
 
 
@@ -184,7 +180,6 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   const Vector<double>& rhs, 
   Vector<double>& soln) const
 {
-  Out::os() << "in AztecSolver::solve" << endl;
   RCP<ostream> out;
   if (verb()==0)
   {
@@ -306,7 +301,6 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   }
   SolverState<double> rtn(state, "Aztec solver " + msg, (int) status[AZ_its],
     status[AZ_r]);
-  Out::os() << "done AztecSolver::solve" << endl;
   return rtn;
 }
 
