@@ -207,6 +207,8 @@ private:
 } // namespace NOX
 
 //! Function for printing
+namespace std{
 ostream& operator<<(ostream& stream, const NOX::TSF::Vector& v);
+}
 
 #endif

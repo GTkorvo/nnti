@@ -335,15 +335,20 @@ int NOX::TSF::Vector::length() const
   return (x.space()).dim();
 }
 
+
+
 ostream& NOX::TSF::Vector::leftshift(ostream& stream) const
 {
   x.print(stream);
   return stream;
 }
 
+namespace std
+{
 ostream& operator<<(ostream& stream, const NOX::TSF::Vector& v)
 {
   return v.leftshift(stream);
+}
 }
 
 void NOX::TSF::Vector::print() const
