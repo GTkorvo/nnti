@@ -58,7 +58,7 @@ EpetraVectorType::createSpace(int /*dimension*/,
 #ifdef HAVE_MPI
   Epetra_MpiComm epComm(comm.getComm());
 #else
-  Epetra_SerialComm epComm(comm.getComm());
+  Epetra_SerialComm epComm();
 #endif
 
   TEST_FOR_EXCEPTION(nLocal < 0, std::runtime_error, "negative vector size n=" << nLocal);
