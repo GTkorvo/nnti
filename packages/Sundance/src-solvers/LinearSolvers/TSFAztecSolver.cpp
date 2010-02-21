@@ -195,7 +195,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
 	TSFExtended::Vector<double> bCopy = rhs.copy();
 	TSFExtended::Vector<double> xCopy = rhs.copy();
 
-  if (verb() > 2) 
+  if (verb() > 4) 
   {
     *out << "rhs=" << bCopy << std::endl;
   }

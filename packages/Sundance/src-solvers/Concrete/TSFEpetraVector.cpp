@@ -38,6 +38,7 @@
 #include "RTOpPack_SPMD_apply_op.hpp"
 #include "RTOp_parallel_helpers.h"
 
+
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 #include "TSFVectorImpl.hpp"
 #include "TSFLinearOperatorImpl.hpp"
@@ -401,7 +402,6 @@ void EpetraVector::applyOp(
 
 
 
-
 void EpetraVector::acquireDetachedVectorViewImpl(
   const Teuchos::Range1D& rng_in,
   RTOpPack::ConstSubVectorView<double>* sub_vec) const
@@ -409,7 +409,7 @@ void EpetraVector::acquireDetachedVectorViewImpl(
   /* if range is empty, return a null view */
   if (rng_in == Range1D::Invalid)
   {
-    sub_vec->initialize(rng_in.lbound(), 0, 0, 1);
+    sub_vec->initialize(rng_in.lbound(), 0, Teuchos::ArrayRCP<double>(), 1);
     return ;
   }
 
@@ -428,10 +428,14 @@ void EpetraVector::acquireDetachedVectorViewImpl(
 
   /* All requested elements are on-processor. */
   const double* localValues = &(epetraVec_->operator[](0));
+  Teuchos::ArrayRCP<const double> locVals(localValues, rng.lbound()-localOffset_,
+    rng.ubound()-localOffset_, false);
+
   Ordinal stride = 1;
   
   sub_vec->initialize(rng.lbound(), rng.size(),
-    localValues+(rng.lbound()-localOffset_), stride);
+    locVals, stride);
+//    localValues+(rng.lbound()-localOffset_), stride);
 }
 
 
@@ -450,7 +454,7 @@ void EpetraVector::releaseDetachedVectorViewImpl(
     return;
   }
   // Nothing to deallocate!
-  sub_vec->set_uninitialized();
+  sub_vec->uninitialize();
 }
 
 
@@ -462,7 +466,7 @@ void EpetraVector::acquireNonconstDetachedVectorViewImpl(
 {
   if( rng_in == Range1D::Invalid ) {
     // Just return an null view
-    sub_vec->initialize(rng_in.lbound(), 0, 0, 1);
+    sub_vec->initialize(rng_in.lbound(), 0, Teuchos::ArrayRCP<double>(), 1);
     return;
   }
   
@@ -482,10 +486,13 @@ void EpetraVector::acquireNonconstDetachedVectorViewImpl(
 
   /* All requested elements are on-processor. */
   double* localValues = &(epetraVec_->operator[](0));
+  Teuchos::ArrayRCP<double> locVals(localValues, rng.lbound()-localOffset_,
+    rng.ubound()-localOffset_, false);
   Ordinal stride = 1;
 
   sub_vec->initialize(rng.lbound(), rng.size(),
-    localValues+(rng.lbound()-localOffset_),stride);
+    locVals, stride);
+//    localValues+(rng.lbound()-localOffset_),stride);
 }
 
 
@@ -504,7 +511,7 @@ void EpetraVector::commitNonconstDetachedVectorViewImpl(
     VectorDefaultBase<double>::commitNonconstDetachedVectorViewImpl(sub_vec);
     return;
   }
-  sub_vec->set_uninitialized();  // Nothing to deallocate!
+  sub_vec->uninitialize();  // Nothing to deallocate!
 }
 
 

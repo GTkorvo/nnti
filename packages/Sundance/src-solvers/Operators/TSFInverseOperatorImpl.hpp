@@ -107,7 +107,7 @@ void InverseOperator<Scalar>::generalApply(
       std::runtime_error,
       "InverseOperator<Scalar>::apply() " 
       << haveSoln.stateDescription());
-    Vt_S(result.ptr().get(), alpha);
+    Vt_S(result.ptr().ptr(), alpha);
     V_StVpV(y, beta, *y, *result.ptr().get());
   }      
   SUNDANCE_MSG2(this->verb(), tab << "done InverseOperator::generalApply()");

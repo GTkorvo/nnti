@@ -107,8 +107,8 @@ void LinearOperator<Scalar>::apply(const Vector<Scalar>& in,
     SUNDANCE_MSG3(this->verb(), tab2 << "using preallocated output vector");
   }
 
-  this->ptr()->apply(Thyra::NONCONJ_ELE, *(in.ptr().get()),
-    out.ptr().get(), alpha, beta);
+  this->ptr()->apply(Thyra::NOTRANS, *(in.ptr().ptr()),
+    out.ptr().ptr(), alpha, beta);
 
   
   
@@ -171,8 +171,8 @@ void LinearOperator<Scalar>::applyTranspose(const Vector<Scalar>& in,
     SUNDANCE_MSG3(this->verb(), tab2 << "using preallocated output vector");
   }
 
-  this->ptr()->applyTranspose(Thyra::NONCONJ_ELE, *(in.ptr().get()),
-    out.ptr().get(), alpha, beta);
+  this->ptr()->apply(Thyra::TRANS, *(in.ptr().ptr()),
+    out.ptr().ptr(), alpha, beta);
 
   
   
