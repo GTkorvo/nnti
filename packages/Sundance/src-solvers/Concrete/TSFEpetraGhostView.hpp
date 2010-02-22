@@ -72,7 +72,7 @@ namespace TSFExtended
       /** */
       void print(ostream& os) const ;
     private:
-      RefCountPtr<Epetra_Vector> ghostView_;
+      RCP<Epetra_Vector> ghostView_;
     };
   
 }

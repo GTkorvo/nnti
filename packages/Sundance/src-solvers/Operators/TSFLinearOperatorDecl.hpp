@@ -43,7 +43,7 @@ namespace TSFExtended
 using Thyra::Index;
 using namespace Teuchos;
 using namespace Thyra;
-using namespace SundanceUtils;
+using namespace Sundance;
 
 template <class Scalar>  class LinearSolver;
 template <class Scalar>  class VectorSpace;
@@ -54,7 +54,7 @@ template <class Scalar>  class VectorType;
  * User-level linear operator class
  */
 template <class Scalar>
-class LinearOperator : public SundanceUtils::Handle<LinearOpBase<Scalar> >
+class LinearOperator : public Sundance::Handle<LinearOpBase<Scalar> >
 {
 public:
   /** \name Constructors, Destructors, and Assignment Operators */
@@ -63,7 +63,7 @@ public:
   LinearOperator();
 
   /** Constructor with smart pointer */
-  LinearOperator(const RefCountPtr<LinearOpBase<Scalar> >& smartPtr);
+  LinearOperator(const RCP<LinearOpBase<Scalar> >& smartPtr);
   //@}
 
   /** Return the domain */
@@ -101,7 +101,7 @@ public:
       
       
   /** Get a stopwatch for timing vector operations */
-  RefCountPtr<Time>& opTimer();
+  RCP<Time>& opTimer();
 
   /**
    * Return a TransposeOperator.

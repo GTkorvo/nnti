@@ -38,7 +38,7 @@ namespace TSFExtended
 /** */
 template <class Scalar>
 class BlockTriangularSolver : public LinearSolverBase<Scalar>,
-                              public SundanceUtils::Handleable<LinearSolverBase<Scalar> >
+                              public Sundance::Handleable<LinearSolverBase<Scalar> >
 {
 public:
   /** */

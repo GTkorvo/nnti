@@ -64,7 +64,7 @@ void MatrixLaplacian1D::init(int nLocalRows,
 {
   int rank = MPIComm::world().getRank();
   int nProc = MPIComm::world().getNProc();
-  RefCountPtr<MatrixFactory<double> > mFact;
+  RCP<MatrixFactory<double> > mFact;
   mFact = vecType().createMatrixFactory(domain(), range());
 
   
@@ -100,7 +100,7 @@ void MatrixLaplacian1D::init(int nLocalRows,
       
   op_ = mFact->createMatrix();
       
-  RefCountPtr<LoadableMatrix<double> > mat = op_.matrix();
+  RCP<LoadableMatrix<double> > mat = op_.matrix();
 
   /* fill in with the Laplacian operator */
   for (int i=0; i<nLocalRows; i++)

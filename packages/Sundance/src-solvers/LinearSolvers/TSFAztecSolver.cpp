@@ -189,8 +189,8 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   {
     out = rcp(&Out::os(), false);
   }
-  RefCountPtr<MultiLevelPreconditioner> mlPrec;
-  RefCountPtr<Ifpack_Preconditioner> ifpackPrec;
+  RCP<MultiLevelPreconditioner> mlPrec;
+  RCP<Ifpack_Preconditioner> ifpackPrec;
 
 	TSFExtended::Vector<double> bCopy = rhs.copy();
 	TSFExtended::Vector<double> xCopy = rhs.copy();

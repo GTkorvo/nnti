@@ -52,7 +52,7 @@ using Teuchos::ParameterList;
 template <class Scalar>
 class AnasaziEigensolver
   : public EigensolverBase<Scalar>,
-    public SundanceUtils::Handleable<EigensolverBase<Scalar> >
+    public Sundance::Handleable<EigensolverBase<Scalar> >
 {
 public:
 
@@ -81,7 +81,7 @@ public:
   /** \name Handleable interface */
   //@{
   /** Return a ref counted pointer to a newly created object */
-  virtual RefCountPtr<EigensolverBase<Scalar> > getRcp() 
+  virtual RCP<EigensolverBase<Scalar> > getRcp() 
     {return rcp(this);}
     //@}
   
@@ -89,14 +89,14 @@ private:
 
   static Time& solveTimer() 
     {
-      static RefCountPtr<Time> rtn 
+      static RCP<Time> rtn 
         = TimeMonitor::getNewTimer("AnasaziEigensolver solve()"); 
       return *rtn;
     }
 
   static Time& precondBuildTimer() 
     {
-      static RefCountPtr<Time> rtn 
+      static RCP<Time> rtn 
         = TimeMonitor::getNewTimer("AnasaziEigensolver building preconditioner"); 
       return *rtn;
     }
@@ -115,9 +115,9 @@ inline void AnasaziEigensolver<Scalar>::solve(
   VectorSpace<Scalar> KDomain = K.domain();
   
   /* Get a Thyra representation of the stiffness matrix */
-  RefCountPtr<LinearOpBase<Scalar> > KPtr = K.ptr();
-  RefCountPtr<LinearOpBase<Scalar> > MPtr = M.ptr();
-  RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > mvSpace = KPtr->domain();
+  RCP<LinearOpBase<Scalar> > KPtr = K.ptr();
+  RCP<LinearOpBase<Scalar> > MPtr = M.ptr();
+  RCP<const Thyra::VectorSpaceBase<Scalar> > mvSpace = KPtr->domain();
   
   
   // Eigensolver parameters
@@ -135,7 +135,7 @@ inline void AnasaziEigensolver<Scalar>::solve(
   
   /* Make a multivector with row space = domain of K, column 
    * space = multiVec Space*/
-  RefCountPtr<MV> mv = Thyra::createMembers( *mvSpace, blockSize );
+  RCP<MV> mv = Thyra::createMembers( *mvSpace, blockSize );
   
   /* Fill the multivector with random values */
   MVT::MvRandom( *mv );
@@ -153,7 +153,7 @@ inline void AnasaziEigensolver<Scalar>::solve(
   }
 
   /* Create eigenproblem */
-  RefCountPtr<Anasazi::Eigenproblem<Scalar,MV,OP> > problem;
+  RCP<Anasazi::Eigenproblem<Scalar,MV,OP> > problem;
 
   if (MPtr.get() != 0)
   {
@@ -176,7 +176,7 @@ inline void AnasaziEigensolver<Scalar>::solve(
   
 
   // Create the solver manager
-  RefCountPtr<Anasazi::SolverManager<Scalar,MV,OP> > MySolverMan;
+  RCP<Anasazi::SolverManager<Scalar,MV,OP> > MySolverMan;
   if (method=="Block Davidson")
   {
     MySolverMan = rcp(new Anasazi::BlockDavidsonSolMgr<Scalar,MV,OP>(problem, eigParams));
@@ -206,7 +206,7 @@ inline void AnasaziEigensolver<Scalar>::solve(
   
   // Get the eigenvalues and eigenvectors from the eigenproblem
   Anasazi::Eigensolution<Scalar,MV> sol = problem->getSolution();
-  RefCountPtr<MV> evecs_mv = sol.Evecs;
+  RCP<MV> evecs_mv = sol.Evecs;
   int numev = sol.numVecs;
   
   /* Copy the columns of the eigenvector MV into an array of TSF vectors */

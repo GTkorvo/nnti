@@ -48,7 +48,7 @@ namespace TSFExtended
    *
    */
   class BelosSolver : public LinearSolverBase<double>,
-                      public SundanceUtils::Handleable<LinearSolverBase<double> >,
+                      public Sundance::Handleable<LinearSolverBase<double> >,
                       public Printable,
                       public Describable
   {
@@ -87,7 +87,7 @@ namespace TSFExtended
     /** \name Handleable interface */
     //@{
     /** Return a ref count pointer to a newly created object */
-    virtual RefCountPtr<LinearSolverBase<double> > getRcp() 
+    virtual RCP<LinearSolverBase<double> > getRcp() 
     {return rcp(this);}
     //@}
 

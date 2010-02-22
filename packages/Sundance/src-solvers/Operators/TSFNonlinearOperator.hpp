@@ -43,7 +43,7 @@ namespace TSFExtended
    * User-level nonlinear operator class
    */
   template <class Scalar>
-  class NonlinearOperator : public SundanceUtils::Handle<NonlinearOperatorBase<Scalar> >
+  class NonlinearOperator : public Sundance::Handle<NonlinearOperatorBase<Scalar> >
     {
     public:
       /* boilerplate ctors */

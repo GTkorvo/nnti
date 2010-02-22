@@ -44,23 +44,23 @@ namespace TSFExtended
   using Teuchos::RefCountPtr;
   /** */
   template <class Scalar>
-  Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
+  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
   productSpace(const Array<VectorSpace<Scalar> >& spaces);
 
   /** */
   template <class Scalar>
-  Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
+  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
   productSpace(VectorSpace<Scalar>& s1);
 
   /** */
   template <class Scalar>
-  Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
+  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
   productSpace(VectorSpace<Scalar>& s1, 
                VectorSpace<Scalar>& s2);
 
   /** */
   template <class Scalar>
-  Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
+  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
   productSpace(VectorSpace<Scalar>& s1,VectorSpace<Scalar>& s2,
                VectorSpace<Scalar>& s3);
 

@@ -49,7 +49,7 @@ SolverState<double> AmesosSolver::solve(const LinearOperator<double>& op,
   Epetra_LinearProblem prob(&A, x, b);
 
   Amesos amFactory;
-  RefCountPtr<Amesos_BaseSolver> solver 
+  RCP<Amesos_BaseSolver> solver 
     = rcp(amFactory.Create("Amesos_" + kernel_, prob));
   TEST_FOR_EXCEPTION(solver.get()==0, std::runtime_error, 
                      "AmesosSolver::solve() failed to instantiate "

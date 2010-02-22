@@ -71,7 +71,7 @@ namespace TSFExtended
      * as specified during construction of this object. 
      */
     virtual void importView(const Vector<Scalar>& x,
-                            RefCountPtr<GhostView<Scalar> >& ghostView) const = 0 ;
+                            RCP<GhostView<Scalar> >& ghostView) const = 0 ;
 
   };
 

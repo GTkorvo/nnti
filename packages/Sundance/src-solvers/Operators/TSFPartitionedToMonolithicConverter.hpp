@@ -47,7 +47,7 @@ namespace TSFExtended
     /**  */
     PartitionedToMonolithicConverter(
       const VectorSpace<double>& partitionedSpace,
-      const RefCountPtr<Array<int> >& isBCCol,
+      const RCP<Array<int> >& isBCCol,
       const VectorSpace<double>& monolithicSpace
       ) : partitionedSpace_(partitionedSpace),
           monolithicSpace_(monolithicSpace),

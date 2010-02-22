@@ -37,7 +37,7 @@ using namespace Teuchos;
 using namespace TSFExtended;
 
 EpetraGhostImporter
-::EpetraGhostImporter(const RefCountPtr<const Epetra_Map>& localMap,
+::EpetraGhostImporter(const RCP<const Epetra_Map>& localMap,
                       int nGhost,
                       const int* ghostElements)
   : localMap_(localMap),
@@ -70,7 +70,7 @@ EpetraGhostImporter
 
 void EpetraGhostImporter
 ::importView(const Vector<double>& x,
-             RefCountPtr<GhostView<double> >& ghostView) const
+             RCP<GhostView<double> >& ghostView) const
 {
   /* If given an uninitialized ghost view, create a EpetraGhostView */
   if (ghostView.get()==0) 

@@ -46,11 +46,11 @@ namespace TSFExtended
   using namespace Thyra;
 
   /** */
-  RefCountPtr<const Epetra_Map> tsfVectorSpace2EpetraMap(const VectorSpace<double>& tsfSpace);
+  RCP<const Epetra_Map> tsfVectorSpace2EpetraMap(const VectorSpace<double>& tsfSpace);
   
   /** */
 void getComm(const TSFExtended::VectorSpace<double>& tsfSpace,
-  Teuchos::RefCountPtr<Epetra_Comm>& comm);
+  Teuchos::RCP<Epetra_Comm>& comm);
 	       
 }
 

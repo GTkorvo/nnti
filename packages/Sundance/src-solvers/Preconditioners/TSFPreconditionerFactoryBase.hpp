@@ -45,7 +45,7 @@ using namespace Teuchos;
  */
 template <class Scalar>
 class PreconditionerFactoryBase 
-  : public SundanceUtils::Handleable<PreconditionerFactoryBase<Scalar> >
+  : public Sundance::Handleable<PreconditionerFactoryBase<Scalar> >
 {
 public:
   /** empty ctor */

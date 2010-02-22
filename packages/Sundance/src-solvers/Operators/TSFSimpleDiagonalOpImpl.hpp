@@ -44,7 +44,7 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 using std::endl;
 using namespace std;
 
@@ -101,7 +101,7 @@ template <class Scalar> inline
 LinearOperator<Scalar> diagonalOperator(
   const Vector<Scalar>& diag)
 {
-  RefCountPtr<LinearOpBase<Scalar> > A 
+  RCP<LinearOpBase<Scalar> > A 
     = rcp(new SimpleDiagonalOp<Scalar>(diag));
 
   return A;

@@ -49,7 +49,7 @@ namespace TSFExtended
    * The base class implements neither a left nor a right preconditioner.
    */
   template <class Scalar>
-  class PreconditionerBase : public SundanceUtils::Handleable<PreconditionerBase<Scalar> >
+  class PreconditionerBase : public Sundance::Handleable<PreconditionerBase<Scalar> >
   {
   public:
     /** empty ctor */

@@ -45,7 +45,7 @@ namespace TSFExtended
    */
   template <class Scalar>
   class GMRESSolver : public KrylovSolver<Scalar>,
-                      public SundanceUtils::Handleable<LinearSolverBase<Scalar> >,
+                      public Sundance::Handleable<LinearSolverBase<Scalar> >,
                       public Printable,
                       public Describable
   {
@@ -84,7 +84,7 @@ namespace TSFExtended
     /** \name Handleable interface */
     //@{
     /** Return a ref count pointer to a newly created object */
-    virtual RefCountPtr<LinearSolverBase<Scalar> > getRcp() 
+    virtual RCP<LinearSolverBase<Scalar> > getRcp() 
     {return rcp(this);}
     //@}
     
@@ -155,7 +155,7 @@ namespace TSFExtended
 
 
 
-    for (unsigned int k = 0; k < V.size(); k++) 
+    for (int k = 0; k < V.size(); k++) 
       {		
         V[k] = A.domain().createMember(); // V = n x (m+1)
         W[k] = A.domain().createMember(); // W = n x (m+1)
@@ -186,16 +186,16 @@ namespace TSFExtended
     int j = 0;
     while (iter < maxiters)
       {
-        for (unsigned int z=0; z<h.size(); z++) 
+        for (int z=0; z<h.size(); z++) 
           {
             h[z]=0.0;
             f[z]=0.0;
           }
-        for (unsigned int z = 0; z < V.size(); z++) 
+        for (int z = 0; z < V.size(); z++) 
           {
             V[z].zero();
             W[z].zero();
-            for (unsigned int zz=0; zz<QT[z].size(); zz++) 
+            for (int zz=0; zz<QT[z].size(); zz++) 
               {QT[z][zz]=0.0; R[z][zz]=0.0;}
           }
 
@@ -276,7 +276,7 @@ namespace TSFExtended
               }
             else
               {
-                for (unsigned int zz=0; zz<mtmp.size(); zz++) mtmp[zz]=0.0;
+                for (int zz=0; zz<mtmp.size(); zz++) mtmp[zz]=0.0;
                 // back solve to get tmp vector to form vrf
                 mtmp[j] = f[j] / R[j][j];
                 for(int k=j-1; k>=0; k--)
@@ -315,7 +315,7 @@ namespace TSFExtended
                 if (j < kSpace-1)
                   {
                     // compute more accurate soln to test convergence
-                    for (unsigned int zz=0; zz<y.size(); zz++) y[zz]=0.0;
+                    for (int zz=0; zz<y.size(); zz++) y[zz]=0.0;
 
                     // back solve to get y(0:j) = R(0:j,0:j) \ f(0:j);
                     y[j] = f[j] / R[j][j];

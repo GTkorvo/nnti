@@ -48,7 +48,7 @@ namespace NOX
     class StatusTestBuilder
     {
     public:
-      static Teuchos::RefCountPtr<NOX::StatusTest::Generic> 
+      static Teuchos::RCP<NOX::StatusTest::Generic> 
       makeStatusTest(const Teuchos::ParameterList& params) ;
 
     };

@@ -43,12 +43,12 @@ using namespace Teuchos;
 PartitionedMatrixFactory::PartitionedMatrixFactory(
   const VectorSpace<double>& domain,
   int lowestLocalCol,
-  const RefCountPtr<Array<int> >& isBCCol,
-  const RefCountPtr<std::set<int> >& remoteBCCols,
+  const RCP<Array<int> >& isBCCol,
+  const RCP<std::set<int> >& remoteBCCols,
   const VectorType<double>& domainVecType,
   const VectorSpace<double>& range,
   int lowestLocalRow,
-  const RefCountPtr<Array<int> >& isBCRow,
+  const RCP<Array<int> >& isBCRow,
   const VectorType<double>& rangeVecType
   )
   : 
@@ -130,12 +130,12 @@ void PartitionedMatrixFactory::initializeNonzerosInRow(int globalRowIndex,
 
   if ((*isBCRow_)[globalRowIndex - lowestLocalRow_])
   {
-    if (intCols.size() > 0U) /* do (BC, internal) block */
+    if (intCols.size() > 0) /* do (BC, internal) block */
     {
       TEST_FOR_EXCEPTION(true, std::logic_error,
         "There should be no entries in the (BC, internal) block");
     }
-    if (bcCols.size() > 0U) /* do (BC, BC) block */
+    if (bcCols.size() > 0) /* do (BC, BC) block */
     {
       blockICMF_[1][1]->initializeNonzerosInRow(globalRowIndex, 
         bcCols.size(), &(bcCols[0]));
@@ -143,12 +143,12 @@ void PartitionedMatrixFactory::initializeNonzerosInRow(int globalRowIndex,
   }
   else
   {
-    if (intCols.size() > 0U) /* do (internal, internal) block */
+    if (intCols.size() > 0) /* do (internal, internal) block */
     {
       blockICMF_[0][0]->initializeNonzerosInRow(globalRowIndex, 
         intCols.size(), &(intCols[0]));
     }
-    if (bcCols.size() > 0U) /* do (internal, BC) block */
+    if (bcCols.size() > 0) /* do (internal, BC) block */
     {
       blockICMF_[0][1]->initializeNonzerosInRow(globalRowIndex, 
         bcCols.size(), &(bcCols[0]));
@@ -168,7 +168,7 @@ void PartitionedMatrixFactory::finalize()
 LinearOperator<double> PartitionedMatrixFactory::createMatrix() const
 {
 
-  RefCountPtr<LinearOpBase<double> > op 
+  RCP<LinearOpBase<double> > op 
     = rcp(new TSFExtended::LoadableBlockOperator<double>(domain_, lowestLocalCol_, isBCCol_, remoteBCCols_, range_, lowestLocalRow_, isBCRow_));
   LinearOperator<double> A = op;
 

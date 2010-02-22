@@ -43,11 +43,11 @@ namespace TSFExtended
 
 /** */
 template <class Scalar> inline
-Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
+Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
 productSpace(const Array<VectorSpace<Scalar> >& spaces)
 {
-  Array<RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > > data(spaces.size());
-  for (unsigned int i=0; i<spaces.size(); i++)
+  Array<RCP<const Thyra::VectorSpaceBase<Scalar> > > data(spaces.size());
+  for (int i=0; i<spaces.size(); i++)
   {
     data[i] = spaces[i].ptr();
   }
@@ -57,7 +57,7 @@ productSpace(const Array<VectorSpace<Scalar> >& spaces)
 
 /** */
 template <class Scalar> inline
-Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
+Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
 productSpace(VectorSpace<Scalar>& s1)
 {
   Array<VectorSpace<Scalar> > s;
@@ -67,7 +67,7 @@ productSpace(VectorSpace<Scalar>& s1)
 
 /** */
 template <class Scalar> inline
-Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
+Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
 productSpace(VectorSpace<Scalar>& s1, 
   VectorSpace<Scalar>& s2)
 {
@@ -79,7 +79,7 @@ productSpace(VectorSpace<Scalar>& s1,
 
 /** */
 template <class Scalar> inline
-Teuchos::RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > 
+Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
 productSpace(VectorSpace<Scalar>& s1,VectorSpace<Scalar>& s2,
   VectorSpace<Scalar>& s3)
 {

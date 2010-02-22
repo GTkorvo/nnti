@@ -54,16 +54,16 @@ using namespace Teuchos;
 using namespace Thyra;
 
 EpetraMatrix::EpetraMatrix(const Epetra_CrsGraph& graph,
-  const RefCountPtr<const EpetraVectorSpace>& domain,
-  const RefCountPtr<const EpetraVectorSpace>& range)
+  const RCP<const EpetraVectorSpace>& domain,
+  const RCP<const EpetraVectorSpace>& range)
   : matrix_(rcp(new Epetra_CrsMatrix(Copy, graph))),
     range_(range),
     domain_(domain)
 {}
 
-EpetraMatrix::EpetraMatrix(const RefCountPtr<Epetra_CrsMatrix>& mat,
-  const RefCountPtr<const EpetraVectorSpace>& domain,
-  const RefCountPtr<const EpetraVectorSpace>& range)
+EpetraMatrix::EpetraMatrix(const RCP<Epetra_CrsMatrix>& mat,
+  const RCP<const EpetraVectorSpace>& domain,
+  const RCP<const EpetraVectorSpace>& range)
   : matrix_(mat),
     range_(range),
     domain_(domain)
@@ -135,7 +135,7 @@ void EpetraMatrix::applyImpl(
 }
 
 
-void EpetraMatrix::getEpetraOpView(RefCountPtr<Epetra_Operator> *epetraOp,
+void EpetraMatrix::getEpetraOpView(RCP<Epetra_Operator> *epetraOp,
   Thyra::EOpTransp *epetraOpTransp,
   Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
   Thyra::EAdjointEpetraOp *epetraOpAdjointSupport)
@@ -155,7 +155,7 @@ void EpetraMatrix::getEpetraOpView(RefCountPtr<Epetra_Operator> *epetraOp,
   
 }
 
-void EpetraMatrix::getEpetraOpView(RefCountPtr<const Epetra_Operator> *epetraOp,
+void EpetraMatrix::getEpetraOpView(RCP<const Epetra_Operator> *epetraOp,
   Thyra::EOpTransp *epetraOpTransp,
   Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
   Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) const 
@@ -175,14 +175,14 @@ void EpetraMatrix::getEpetraOpView(RefCountPtr<const Epetra_Operator> *epetraOp,
 }
 
 
-RefCountPtr<const ScalarProdVectorSpaceBase<double> >
+RCP<const ScalarProdVectorSpaceBase<double> >
 EpetraMatrix::rangeScalarProdVecSpc() const
 {
   return rcp_dynamic_cast<const ScalarProdVectorSpaceBase<double> >(range_);
 }
 
 
-RefCountPtr<const ScalarProdVectorSpaceBase<double> >
+RCP<const ScalarProdVectorSpaceBase<double> >
 EpetraMatrix::domainScalarProdVecSpc() const
 {
   return rcp_dynamic_cast<const ScalarProdVectorSpaceBase<double> >(domain_);
@@ -255,7 +255,7 @@ void EpetraMatrix::getILUKPreconditioner(int fillLevels,
   LeftOrRight leftOrRight,
   Preconditioner<double>& rtn) const
 {
-  RefCountPtr<LinearOpBase<double> > a = rcp(new IfpackOperator(this, 
+  RCP<LinearOpBase<double> > a = rcp(new IfpackOperator(this, 
       fillLevels,
       overlapFill,
       relaxationValue,
@@ -311,7 +311,7 @@ Epetra_CrsMatrix& EpetraMatrix::getConcrete(const LinearOperator<double>& A)
 }
 
 
-RefCountPtr<const Epetra_CrsMatrix>
+RCP<const Epetra_CrsMatrix>
 EpetraMatrix::getConcretePtr(const LinearOperator<double>& A)
 {
   return Teuchos::rcp_dynamic_cast<EpetraMatrix>(A.ptr())->matrix_;

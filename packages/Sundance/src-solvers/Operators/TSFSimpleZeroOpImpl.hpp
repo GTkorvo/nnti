@@ -44,7 +44,7 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 using std::endl;
 using namespace std;
 
@@ -85,7 +85,7 @@ LinearOperator<Scalar> zeroOperator(
   const VectorSpace<Scalar>& domain,
   const VectorSpace<Scalar>& range)
 {
-  RefCountPtr<LinearOpBase<Scalar> > op 
+  RCP<LinearOpBase<Scalar> > op 
     = rcp(new SimpleZeroOp<Scalar>(domain, range));
 
   return op;

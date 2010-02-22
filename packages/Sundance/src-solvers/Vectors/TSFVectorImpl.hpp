@@ -44,7 +44,7 @@
 #endif
 
 
-using namespace SundanceUtils;
+using namespace Sundance;
 
 namespace TSFExtended
 {
@@ -75,8 +75,8 @@ Vector<Scalar> Vector<Scalar>::getBlock(int i) const
       "a product vector");
     return *this;
   }
-  Teuchos::RefCountPtr<const Thyra::VectorBase<Scalar> > b = pv->getVectorBlock(i);
-  Teuchos::RefCountPtr<Thyra::VectorBase<Scalar> > bb 
+  Teuchos::RCP<const Thyra::VectorBase<Scalar> > b = pv->getVectorBlock(i);
+  Teuchos::RCP<Thyra::VectorBase<Scalar> > bb 
     = rcp_const_cast<Thyra::VectorBase<Scalar> >(b);
   return bb;
 }
@@ -588,7 +588,7 @@ Scalar Vector<Scalar>::getElement(Ordinal globalIndex) const
       int blockIndex=-1;
       Ordinal globOffsetInBlock=-1;
       dpvs->getVecSpcPoss(globalIndex, &blockIndex, &globOffsetInBlock);
-      RefCountPtr<Thyra::VectorBase<Scalar> > vec_i 
+      RCP<Thyra::VectorBase<Scalar> > vec_i 
         = p->getNonconstVectorBlock(blockIndex);
       Vector<Scalar> vv(vec_i);
       return vv.getElement(globOffsetInBlock);
@@ -598,7 +598,7 @@ Scalar Vector<Scalar>::getElement(Ordinal globalIndex) const
       int k = 0;
       for (int i = 0; i < pvs->numBlocks(); i++)
       {
-        RefCountPtr<Thyra::VectorBase<Scalar> > vec_i 
+        RCP<Thyra::VectorBase<Scalar> > vec_i 
           = p->getNonconstVectorBlock(i);
         int len = vec_i->space()->dim();
         if (globalIndex < k + len )
@@ -657,7 +657,7 @@ void Vector<Scalar>::setElement(Ordinal globalIndex, const Scalar& value)
       int blockIndex=-1;
       Ordinal globOffsetInBlock=-1;
       dpvs->getVecSpcPoss(globalIndex, &blockIndex, &globOffsetInBlock);
-      RefCountPtr<Thyra::VectorBase<Scalar> > vec_i 
+      RCP<Thyra::VectorBase<Scalar> > vec_i 
         = p->getNonconstVectorBlock(blockIndex);
       Vector<Scalar> vv(vec_i);
       vv.setElement(globOffsetInBlock, value);
@@ -667,7 +667,7 @@ void Vector<Scalar>::setElement(Ordinal globalIndex, const Scalar& value)
       int k = 0;
       for (int i = 0; i < pvs->numBlocks(); i++)
       {
-        RefCountPtr<Thyra::VectorBase<Scalar> > vec_i 
+        RCP<Thyra::VectorBase<Scalar> > vec_i 
           = p->getNonconstVectorBlock(i);
         int len = vec_i->space()->dim();
         if (globalIndex < k + len )
@@ -735,7 +735,7 @@ const Scalar& Vector<Scalar>::localElement(const Ordinal& blockIndex, const Ordi
 {
   const Thyra::ProductVectorBase<Scalar>* p 
     = dynamic_cast<const Thyra::ProductVectorBase<Scalar>*>(&*this->ptr());
-  RefCountPtr<const Thyra::VectorBase<Scalar> > vec;
+  RCP<const Thyra::VectorBase<Scalar> > vec;
   if (p)
   {
     vec = p->getVectorBlock(blockIndex);
@@ -761,7 +761,7 @@ Scalar& Vector<Scalar>::localElement(const Ordinal& blockIndex, const Ordinal& i
 {
   Thyra::ProductVectorBase<Scalar>* p 
     = dynamic_cast<Thyra::ProductVectorBase<Scalar>*>(&*this->ptr());
-  RefCountPtr<Thyra::VectorBase<Scalar> > vec;
+  RCP<Thyra::VectorBase<Scalar> > vec;
   if (p)
   {
     vec = p->getNonconstVectorBlock(blockIndex);
@@ -809,7 +809,7 @@ void Vector<Scalar>::addToElement(Ordinal globalIndex, const Scalar& value)
       int blockIndex=-1;
       Ordinal globOffsetInBlock=-1;
       dpvs->getVecSpcPoss(globalIndex, &blockIndex, &globOffsetInBlock);
-      RefCountPtr<Thyra::VectorBase<Scalar> > vec_i 
+      RCP<Thyra::VectorBase<Scalar> > vec_i 
         = p->getNonconstVectorBlock(blockIndex);
       Vector<Scalar> vv(vec_i);
       vv.addToElement(globOffsetInBlock, value);
@@ -819,7 +819,7 @@ void Vector<Scalar>::addToElement(Ordinal globalIndex, const Scalar& value)
       int k = 0;
       for (int i = 0; i < pvs->numBlocks(); i++)
       {
-        RefCountPtr<Thyra::VectorBase<Scalar> > vec_i 
+        RCP<Thyra::VectorBase<Scalar> > vec_i 
           = p->getNonconstVectorBlock(i);
         int len = vec_i->space()->dim();
         if (globalIndex < k + len )

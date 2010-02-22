@@ -43,16 +43,16 @@ using Teuchos::ParameterList;
  * Handle class for eigensolvers
  */
 template <class Scalar>
-class Eigensolver : public SundanceUtils::Handle<EigensolverBase<Scalar> >
+class Eigensolver : public Sundance::Handle<EigensolverBase<Scalar> >
 {
 public:
   /** */
   Eigensolver() : Handle<EigensolverBase<Scalar> >() {;}
   /** */
-  Eigensolver( SundanceUtils::Handleable<EigensolverBase<Scalar> >* rawPtr) 
+  Eigensolver( Sundance::Handleable<EigensolverBase<Scalar> >* rawPtr) 
     : Handle<EigensolverBase<Scalar> >(rawPtr) {;}
   /** */
-  Eigensolver(const RefCountPtr<EigensolverBase<Scalar> >& smartPtr)
+  Eigensolver(const RCP<EigensolverBase<Scalar> >& smartPtr)
     : Handle<EigensolverBase<Scalar> >(smartPtr) {;}
   
 

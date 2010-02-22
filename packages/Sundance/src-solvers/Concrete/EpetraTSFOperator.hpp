@@ -84,9 +84,9 @@ namespace Epetra
     LinearOperator<double> A_;
     LinearSolver<double> solver_;
     bool useTranspose_;
-    RefCountPtr<Epetra_Comm> comm_;
-    RefCountPtr<const Epetra_Map> domain_;
-    RefCountPtr<const Epetra_Map> range_;
+    RCP<Epetra_Comm> comm_;
+    RCP<const Epetra_Map> domain_;
+    RCP<const Epetra_Map> range_;
     bool isNativeEpetra_;
     bool isCompoundEpetra_;
     string label_;

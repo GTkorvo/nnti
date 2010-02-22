@@ -75,11 +75,11 @@ public:
 
 
   /** Return the domain of the operator */
-  RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > domain() const ;
+  RCP< const Thyra::VectorSpaceBase<Scalar> > domain() const ;
 
 
   /** Return the range of the operator */
-  RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > range() const ;
+  RCP< const Thyra::VectorSpaceBase<Scalar> > range() const ;
 
 
 

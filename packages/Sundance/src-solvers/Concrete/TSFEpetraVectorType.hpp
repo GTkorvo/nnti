@@ -51,7 +51,7 @@ namespace TSFExtended
 
 
   class EpetraVectorType : public VectorTypeExtensions<double>,
-                           public SundanceUtils::Handleable<VectorTypeExtensions<double> >,
+                           public Sundance::Handleable<VectorTypeExtensions<double> >,
                            public Printable,
                            public Describable
   {
@@ -67,7 +67,7 @@ namespace TSFExtended
      * @param nLocal number of indices owned by the local processor
      * @param locallyOwnedIndices array of indices owned by this processor  
      */
-    RefCountPtr<const Thyra::VectorSpaceBase<double> > 
+    RCP<const Thyra::VectorSpaceBase<double> > 
     createSpace(int dimension, 
       int nLocal,
       const int* locallyOwnedIndices,
@@ -82,7 +82,7 @@ namespace TSFExtended
      * by this processor.
      * @return A RCP to a GhostImporter object.
      */
-    RefCountPtr<GhostImporter<double> > 
+    RCP<GhostImporter<double> > 
     createGhostImporter(const VectorSpace<double>& space,
                         int nGhost,
                         const int* ghostIndices) const ;
@@ -92,7 +92,7 @@ namespace TSFExtended
      * Create a matrix factory of type compatible with this vector type,
      * sized according to the given domain and range spaces.
      */
-    RefCountPtr<MatrixFactory<double> >
+    RCP<MatrixFactory<double> >
     createMatrixFactory(const VectorSpace<double>& domain,
                  const VectorSpace<double>& range) const ;
 

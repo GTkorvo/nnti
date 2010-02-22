@@ -52,7 +52,7 @@ using Teuchos::Range1D;
 
 
 EpetraVector::EpetraVector(
-  const RefCountPtr<const VectorSpaceBase<double> >& vs)
+  const RCP<const VectorSpaceBase<double> >& vs)
   : VectorDefaultBase<double>(), 
     epetraVec_(), 
     vecSpace_(vs), 
@@ -80,8 +80,8 @@ EpetraVector::EpetraVector(
 
 
 EpetraVector
-::EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs,
-  const RefCountPtr<Epetra_Vector>& vec)
+::EpetraVector(const RCP<const VectorSpaceBase<double> >& vs,
+  const RCP<Epetra_Vector>& vec)
   : VectorDefaultBase<double>(), 
     epetraVec_(vec), 
     vecSpace_(vs), 
@@ -130,7 +130,7 @@ void EpetraVector::applyOpImpl(const RTOpPack::RTOpT< double >& op,
   const int num_targ_vecs = targ_vecs.size();
 
 #ifdef THYRA_SPMD_VECTOR_BASE_DUMP
-  Teuchos::RefCountPtr<Teuchos::FancyOStream>
+  Teuchos::RCP<Teuchos::FancyOStream>
     out = Teuchos::VerboseObjectBase::getDefaultOStream();
   Teuchos::OSTab tab(out);
   if(show_dump) {
@@ -165,7 +165,7 @@ void EpetraVector::applyOpImpl(const RTOpPack::RTOpT< double >& op,
     );
 #endif
 
-  const Teuchos::RefCountPtr<const Teuchos::Comm<Ordinal> >& comm
+  const Teuchos::RCP<const Teuchos::Comm<Ordinal> >& comm
     = epetraVecSpace_->getComm();
 
   const SerialComm<Ordinal>* serialComm = 
@@ -310,7 +310,7 @@ void EpetraVector::applyOp(
     );
 #endif  
 
-  const Teuchos::RefCountPtr<const Teuchos::Comm<Ordinal> >& comm
+  const Teuchos::RCP<const Teuchos::Comm<Ordinal> >& comm
     = epetraVecSpace_->getComm();
 
   const SerialComm<Ordinal>* serialComm = 
@@ -565,7 +565,7 @@ void EpetraVector::getElements(const Ordinal* globalIndices, int numElems,
 {
   elems.resize(numElems);
   const Epetra_BlockMap& myMap = epetraVec()->Map();
-  RefCountPtr<const Epetra_Vector> epv = epetraVec();
+  RCP<const Epetra_Vector> epv = epetraVec();
 
   for (int i=0; i<numElems; i++)
   {
@@ -573,7 +573,7 @@ void EpetraVector::getElements(const Ordinal* globalIndices, int numElems,
   }
 }
 
-void EpetraVector::setElements(size_t numElems, const int* globalIndices,
+void EpetraVector::setElements(int numElems, const int* globalIndices,
   const double* values)
 {
   Epetra_FEVector* vec = dynamic_cast<Epetra_FEVector*>(epetraVec().get());
@@ -582,7 +582,7 @@ void EpetraVector::setElements(size_t numElems, const int* globalIndices,
     "ierr=" << ierr << " in EpetraVector::setElements()");
 }
 
-void EpetraVector::addToElements(size_t numElems, const int* globalIndices,
+void EpetraVector::addToElements(int numElems, const int* globalIndices,
   const double* values)
 {
   Epetra_FEVector* vec = dynamic_cast<Epetra_FEVector*>(epetraVec().get());

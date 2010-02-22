@@ -153,7 +153,7 @@ public:
 #ifdef TRILINOS_6
   NOX::Abstract::Vector* clone(NOX::CopyType type = NOX::DeepCopy) const;
 #else
-  RefCountPtr<NOX::Abstract::Vector> clone(NOX::CopyType type = NOX::DeepCopy) const ;
+  RCP<NOX::Abstract::Vector> clone(NOX::CopyType type = NOX::DeepCopy) const ;
 #endif
   
   //@}

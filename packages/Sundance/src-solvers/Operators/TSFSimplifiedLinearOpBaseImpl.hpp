@@ -53,8 +53,8 @@ void SimplifiedLinearOpBase<Scalar>
   bool useA = alpha != Teuchos::ScalarTraits<Scalar>::one();
   bool useB = beta != Teuchos::ScalarTraits<Scalar>::zero();
 
-  RefCountPtr<const Thyra::VectorBase<Scalar> > cxp = rcp(&x, false);
-  RefCountPtr<Thyra::VectorBase<Scalar> > xp 
+  RCP<const Thyra::VectorBase<Scalar> > cxp = rcp(&x, false);
+  RCP<Thyra::VectorBase<Scalar> > xp 
     = rcp_const_cast<Thyra::VectorBase<Scalar> >(cxp);
   Vector<Scalar> in = xp;
   Vector<Scalar> opOut;

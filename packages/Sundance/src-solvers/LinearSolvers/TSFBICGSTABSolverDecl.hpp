@@ -40,13 +40,13 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 /**
  *
  */
 template <class Scalar>
 class BICGSTABSolver : public KrylovSolver<Scalar>,
-                       public SundanceUtils::Handleable<LinearSolverBase<Scalar> >,
+                       public Sundance::Handleable<LinearSolverBase<Scalar> >,
                        public Printable,
                        public Describable
 {
@@ -76,7 +76,7 @@ public:
   /** \name Handleable interface */
   //@{
   /** Return a ref count pointer to a newly created object */
-  virtual RefCountPtr<LinearSolverBase<Scalar> > getRcp() 
+  virtual RCP<LinearSolverBase<Scalar> > getRcp() 
     {return rcp(this);}
   //@}
     

@@ -39,7 +39,7 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 using std::endl;
 
 

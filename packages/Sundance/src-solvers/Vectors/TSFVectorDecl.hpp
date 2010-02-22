@@ -102,7 +102,7 @@ namespace TSFExtended
    * \endcode
    */
   template <class Scalar>
-  class Vector : public SundanceUtils::Handle<Thyra::VectorBase<Scalar> >
+  class Vector : public Sundance::Handle<Thyra::VectorBase<Scalar> >
   {
   public:
     /** \name Constructors, Destructors, and Assignment Operators */
@@ -309,12 +309,12 @@ namespace TSFExtended
     void addToElement(Ordinal globalIndex, const Scalar& value) ;
 
     /** set a group of elements */
-    void setElements(size_t numElems, const int* globalIndices, 
+    void setElements(int numElems, const int* globalIndices, 
                      const Scalar* values) 
     {castToLoadable()->setElements(numElems, globalIndices, values);}
 
     /** add to a group of elements */
-    void addToElements(size_t numElems, const int* globalIndices, 
+    void addToElements(int numElems, const int* globalIndices, 
                        const Scalar* values)
     {castToLoadable()->addToElements(numElems, globalIndices, values);}
 
@@ -358,9 +358,9 @@ namespace TSFExtended
 
 
     /** Get a stopwtach for timing vector operations */
-    static RefCountPtr<Time>& opTimer()
+    static RCP<Time>& opTimer()
     {
-      static RefCountPtr<Time> rtn 
+      static RCP<Time> rtn 
         = TimeMonitor::getNewTimer("Low-level vector operations");
       return rtn;
     }

@@ -58,9 +58,9 @@ inline RandomBlockMatrixBuilder<Scalar>
   const VectorType<double>& type)
   : OperatorBuilder<double>(d, r, type), op_()
 {
-  RefCountPtr<SimpleBlockOp<Scalar> > b = 
+  RCP<SimpleBlockOp<Scalar> > b = 
     rcp(new SimpleBlockOp<Scalar>(this->domain(), this->range()));
-  RefCountPtr<LinearOpBase<Scalar> > p = b;
+  RCP<LinearOpBase<Scalar> > p = b;
   op_ = p;
 
   for (int i=0; i<this->range().numBlocks(); i++)

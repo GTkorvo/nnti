@@ -87,17 +87,17 @@ namespace NOX {
       SafeCombo(ComboType t);
 
       //! Constructor with a single test.
-      SafeCombo(ComboType t, const Teuchos::RefCountPtr<Generic>& a);
+      SafeCombo(ComboType t, const Teuchos::RCP<Generic>& a);
 
       //! Constructor with two tests.
-      SafeCombo(ComboType t, const Teuchos::RefCountPtr<Generic>& a,
-            const Teuchos::RefCountPtr<Generic>& b);
+      SafeCombo(ComboType t, const Teuchos::RCP<Generic>& a,
+            const Teuchos::RCP<Generic>& b);
 
       //! Add another test to this combination. 
       /*!
         Calls isSafe() to determine if it is safe to add \c a to the combination.
       */
-      virtual SafeCombo& addStatusTest(const Teuchos::RefCountPtr<Generic>& a);
+      virtual SafeCombo& addStatusTest(const Teuchos::RCP<Generic>& a);
 
       //! Destructor
       virtual ~SafeCombo();
@@ -163,7 +163,7 @@ namespace NOX {
         This is necessary to avoid any infinite recursions 
         (i.e., a test cannot own a copy of itself).
       */
-      bool isSafe(const Teuchos::RefCountPtr<Generic>& a);
+      bool isSafe(const Teuchos::RCP<Generic>& a);
 
     private:
 
@@ -171,7 +171,7 @@ namespace NOX {
       const ComboType type;
 
       //! Vector of generic status tests
-      vector<Teuchos::RefCountPtr<Generic> > tests;
+      vector<Teuchos::RCP<Generic> > tests;
 
       //! %Status
       StatusType status;

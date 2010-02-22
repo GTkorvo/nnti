@@ -48,7 +48,7 @@ using Thyra::Ordinal;
 
 static inline Time& createVecTimer() 
 {
-  static RefCountPtr<Time> rtn 
+  static RCP<Time> rtn 
     = TimeMonitor::getNewTimer("vector allocation"); 
   return *rtn;
 }

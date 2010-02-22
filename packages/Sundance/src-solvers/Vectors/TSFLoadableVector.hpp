@@ -32,8 +32,6 @@
 #include "SundanceDefs.hpp"
 #include "Thyra_VectorBase.hpp"
 
-#ifndef DOXYGEN_DEVELOPER_ONLY
-
 namespace TSFExtended
 {
   using Thyra::Ordinal;
@@ -77,11 +75,11 @@ namespace TSFExtended
       virtual void addToElement(Ordinal globalIndex, const Scalar& value) = 0 ;
 
       /** set a group of elements */
-      virtual void setElements(size_t numElems, const int* globalIndices, 
+      virtual void setElements(Ordinal numElems, const int* globalIndices, 
                                const Scalar* values) ;
 
       /** add to a group of elements */
-      virtual void addToElements(size_t numElems, const int* globalIndices, 
+      virtual void addToElements(Ordinal numElems, const int* globalIndices, 
                          const Scalar* values);
 
       /** Do whatever finalization steps are needed by the implementation,
@@ -94,11 +92,11 @@ namespace TSFExtended
    * setElement(). If at all possible, this should be overridden
    * with a method specialized to the underlying type.  */
   template <class Scalar> 
-  inline void LoadableVector<Scalar>::setElements(size_t numElems, 
+  inline void LoadableVector<Scalar>::setElements(int numElems, 
                                                   const int* globalIndices, 
                                                   const Scalar* values)
   {
-    for (unsigned int i=0; i<numElems; i++)
+    for (int i=0; i<numElems; i++)
       {
         setElement(globalIndices[i], values[i]);
       }
@@ -108,11 +106,11 @@ namespace TSFExtended
    * addToElement(). If at all possible, this should be overridden
    * with a method specialized to the underlying type.  */
   template <class Scalar> 
-  inline void LoadableVector<Scalar>::addToElements(size_t numElems, 
+  inline void LoadableVector<Scalar>::addToElements(int numElems, 
                                                     const int* globalIndices, 
                                                     const Scalar* values)
   {
-    for (unsigned int i=0; i<numElems; i++)
+    for (int i=0; i<numElems; i++)
       {
         addToElement(globalIndices[i], values[i]);
       }
@@ -122,5 +120,4 @@ namespace TSFExtended
   
 }
 
-#endif /* DOXYGEN_DEVELOPER_ONLY */
 #endif

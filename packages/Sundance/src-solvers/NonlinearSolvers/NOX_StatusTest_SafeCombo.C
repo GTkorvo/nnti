@@ -41,7 +41,7 @@ NOX::StatusTest::SafeCombo::SafeCombo(ComboType t) :
 }
 
 NOX::StatusTest::SafeCombo::SafeCombo(ComboType t, 
-                                      const Teuchos::RefCountPtr<Generic>& a) :
+                                      const Teuchos::RCP<Generic>& a) :
   type(t)
 {
   tests.push_back(a);
@@ -49,8 +49,8 @@ NOX::StatusTest::SafeCombo::SafeCombo(ComboType t,
 }
 
 NOX::StatusTest::SafeCombo::SafeCombo(ComboType t, 
-                                      const Teuchos::RefCountPtr<Generic>& a, 
-                                      const Teuchos::RefCountPtr<Generic>& b) :
+                                      const Teuchos::RCP<Generic>& a, 
+                                      const Teuchos::RCP<Generic>& b) :
   type(t)
 {
   tests.push_back(a);
@@ -58,7 +58,7 @@ NOX::StatusTest::SafeCombo::SafeCombo(ComboType t,
   status = Unevaluated;
 }
 
-NOX::StatusTest::SafeCombo& NOX::StatusTest::SafeCombo::addStatusTest(const Teuchos::RefCountPtr<Generic>& a)
+NOX::StatusTest::SafeCombo& NOX::StatusTest::SafeCombo::addStatusTest(const Teuchos::RCP<Generic>& a)
 {
   if (isSafe(a))
     tests.push_back(a);
@@ -75,7 +75,7 @@ NOX::StatusTest::SafeCombo& NOX::StatusTest::SafeCombo::addStatusTest(const Teuc
   return *this;
 }
 
-bool NOX::StatusTest::SafeCombo::isSafe(const Teuchos::RefCountPtr<Generic>& a)
+bool NOX::StatusTest::SafeCombo::isSafe(const Teuchos::RCP<Generic>& a)
 {
   // Are we trying to add "this" to "this"? This would result in an infinite recursion.
   if (a.get() == this)
@@ -83,7 +83,7 @@ bool NOX::StatusTest::SafeCombo::isSafe(const Teuchos::RefCountPtr<Generic>& a)
   
   // Recursively test that we're not adding something that's already
   // in the list because that can also lead to infinite recursions.
-  for (vector<Teuchos::RefCountPtr<Generic> >::iterator i = tests.begin(); 
+  for (vector<Teuchos::RCP<Generic> >::iterator i = tests.begin(); 
        i != tests.end(); ++i) 
   {
     
@@ -142,7 +142,7 @@ void NOX::StatusTest::SafeCombo::orOp(const Solver::Generic& problem, NOX::Statu
 
   // Checks the status of each test. The first test it encounters, if
   // any, that is unconverged is the status that it sets itself too.
-  for (vector<Teuchos::RefCountPtr<Generic> >::const_iterator i = tests.begin(); i != tests.end(); ++i) 
+  for (vector<Teuchos::RCP<Generic> >::const_iterator i = tests.begin(); i != tests.end(); ++i) 
   {
 #ifdef TRILINOS_6
     NOX::StatusTest::StatusType s = (*i)->checkStatusEfficiently(problem, checkType);
@@ -172,7 +172,7 @@ void NOX::StatusTest::SafeCombo::andOp(const Solver::Generic& problem, NOX::Stat
 
   bool isUnconverged = false;
 
-  for (vector<Teuchos::RefCountPtr<Generic> >::const_iterator i = tests.begin(); i != tests.end(); ++i) {
+  for (vector<Teuchos::RCP<Generic> >::const_iterator i = tests.begin(); i != tests.end(); ++i) {
 
 
 #ifdef TRILINOS_6
@@ -222,7 +222,7 @@ ostream& NOX::StatusTest::SafeCombo::print(ostream& stream, int indent) const
   stream << " Combination";
   stream << " -> " << endl;
 
-  for (vector<Teuchos::RefCountPtr<Generic> >::const_iterator i = tests.begin(); i != tests.end(); ++i) 
+  for (vector<Teuchos::RCP<Generic> >::const_iterator i = tests.begin(); i != tests.end(); ++i) 
     (*i)->print(stream, indent+2);
     
   return stream;

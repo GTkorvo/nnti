@@ -55,10 +55,10 @@ MultiVectorOperator<Scalar>
     domain_(domain.ptr()),
     range_()
 {
-  TEST_FOR_EXCEPTION(cols.size() == 0U, std::runtime_error,
+  TEST_FOR_EXCEPTION(cols.size() == 0, std::runtime_error,
     "empty multivector given to MultiVectorOperator ctor");
   range_ = cols[0].space();
-  for (unsigned int i=1; i<cols.size(); i++)
+  for (int i=1; i<cols.size(); i++)
   {
     TEST_FOR_EXCEPTION(cols[i].space() != range_, std::runtime_error,
       "inconsistent vector spaces in  MultiVectorOperator ctor");
@@ -89,7 +89,7 @@ void MultiVectorOperator<Scalar>
     if (beta != 0.0) vy.scale(beta);
     else vy.zero();
 
-    for (unsigned int i=0; i<cols_.size(); i++)
+    for (int i=0; i<cols_.size(); i++)
     {
       vy.update(alpha * vx.getElement(i), cols_[i]);
     }
@@ -103,7 +103,7 @@ void MultiVectorOperator<Scalar>
     if (beta != 0.0) vy.scale(beta);
     else vy.zero();
 
-    for (unsigned int i=0; i<cols_.size(); i++)
+    for (int i=0; i<cols_.size(); i++)
     {
       vy.addToElement(i, alpha * vx.dot(cols_[i]));
     }
@@ -115,7 +115,7 @@ void MultiVectorOperator<Scalar>
 
 /* Return the domain of the operator */
 template <class Scalar> inline
-RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > 
+RCP< const Thyra::VectorSpaceBase<Scalar> > 
 MultiVectorOperator<Scalar>
 ::domain() const 
 {return domain_.ptr();}
@@ -125,7 +125,7 @@ MultiVectorOperator<Scalar>
 
 /* Return the range of the operator */
 template <class Scalar> inline
-RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > 
+RCP< const Thyra::VectorSpaceBase<Scalar> > 
 MultiVectorOperator<Scalar>
 ::range() const 
 {return range_.ptr();}
@@ -141,7 +141,7 @@ void MultiVectorOperator<Scalar>
 {
   indices.resize(cols_.size());
   values.resize(cols_.size());
-  for (unsigned int j=0; j<cols_.size(); j++)
+  for (int j=0; j<cols_.size(); j++)
   {
     indices[j] = j;
     values[j] = cols_[j].getElement(k);
@@ -155,7 +155,7 @@ LinearOperator<Scalar> multiVectorOperator(
   const Teuchos::Array<Vector<Scalar> >& cols,
   const VectorSpace<Scalar>& domain)
 {
-  RefCountPtr<LinearOpBase<Scalar> > A
+  RCP<LinearOpBase<Scalar> > A
     = rcp(new MultiVectorOperator<Scalar>(cols, domain));
 
   return A;

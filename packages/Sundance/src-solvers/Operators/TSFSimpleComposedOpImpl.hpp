@@ -48,7 +48,7 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 using std::endl;
 using namespace std;
 
@@ -64,7 +64,7 @@ SimpleComposedOp<Scalar>::SimpleComposedOp(const Array<LinearOperator<Scalar> >&
   , ops_(ops)
 {
   TEST_FOR_EXCEPT(ops_.size() <= 1);
-  for (unsigned int i=1; i<ops_.size(); i++)
+  for (int i=1; i<ops_.size(); i++)
   {
     TEST_FOR_EXCEPT(!(ops[i].range() == ops[i-1].domain()));
   }
@@ -82,7 +82,7 @@ void SimpleComposedOp<Scalar>::applyOp(const Thyra::EOpTransp M_trans,
   if (M_trans == Thyra::NOTRANS)
   {
     Vector<Scalar> tmpIn = in.copy();
-    for (unsigned int i=0; i<ops_.size(); i++)
+    for (int i=0; i<ops_.size(); i++)
     {
       Tabs tab1;
       Vector<Scalar> tmpOut;
@@ -98,7 +98,7 @@ void SimpleComposedOp<Scalar>::applyOp(const Thyra::EOpTransp M_trans,
   else if (M_trans == Thyra::TRANS)
   {
     Vector<Scalar> tmpIn = in.copy();
-    for (unsigned int i=0; i<ops_.size(); i++)
+    for (int i=0; i<ops_.size(); i++)
     {
       Tabs tab1;
       Vector<Scalar> tmpOut;
@@ -123,9 +123,9 @@ template <class Scalar> inline
 std::string SimpleComposedOp<Scalar>::description() const 
 {
   std::string rtn="(";
-  for (unsigned int i=0; i<ops_.size(); i++)
+  for (int i=0; i<ops_.size(); i++)
   {
-    if (i > 0U) rtn += "*";
+    if (i > 0) rtn += "*";
     rtn += ops_[i].description();
   }
   rtn += ")";
@@ -138,7 +138,7 @@ void SimpleComposedOp<Scalar>::print(std::ostream& os) const
 {
   Tabs tab(0);
   os << tab << "ComposedOperator[" << endl;
-  for (unsigned int i=0; i<ops_.size(); i++)
+  for (int i=0; i<ops_.size(); i++)
   {
     Tabs tab1;
     os << tab1 << "factor #" << i << std::endl;
@@ -158,7 +158,7 @@ LinearOperator<Scalar> composedOperator(
   * operator the whole works becomes a zero operator */ 
   Array<LinearOperator<Scalar> > strippedOps;
 
-  for (unsigned int i=0; i<ops.size(); i++)
+  for (int i=0; i<ops.size(); i++)
   {
     LinearOperator<Scalar> op_i = ops[i];
 
@@ -185,8 +185,8 @@ LinearOperator<Scalar> composedOperator(
     strippedOps.append(op_i);
   }
   
-  TEST_FOR_EXCEPT(strippedOps.size() < 1U);
-  if (strippedOps.size()==1U) return strippedOps[0];
+  TEST_FOR_EXCEPT(strippedOps.size() < 1);
+  if (strippedOps.size()==1) return strippedOps[0];
   
   RCP<LinearOpBase<Scalar> > op 
     = rcp(new SimpleComposedOp<Scalar>(strippedOps));

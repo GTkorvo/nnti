@@ -47,7 +47,7 @@ template<class Scalar> class Vector;
  *  TSFCoreVector
  */
 template <class Scalar>
-class VectorSpace : public SundanceUtils::Handle< const Thyra::VectorSpaceBase<Scalar> >
+class VectorSpace : public Sundance::Handle< const Thyra::VectorSpaceBase<Scalar> >
 {
 public:
   HANDLE_CTORS(VectorSpace<Scalar>, const Thyra::VectorSpaceBase<Scalar>);

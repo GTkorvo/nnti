@@ -60,7 +60,7 @@ public:
   //@{
 
   /** \brief . */
-  MLPreconditionerFactory(const RefCountPtr<ParameterList>& params);
+  MLPreconditionerFactory(const RCP<ParameterList>& params);
   /** \brief . */
   MLPreconditionerFactory(const EMLProblemType& probType,
                           const ParameterList& revisions=ParameterList());
@@ -91,17 +91,17 @@ public:
   /** \brief . */
   bool applyTransposeSupportsConj(EConj conj) const;
   /** \brief . */
-  RefCountPtr<PreconditionerBase<double> > createPrec() const;
+  RCP<PreconditionerBase<double> > createPrec() const;
   /** \brief . */
   void initializePrec(
-    const RefCountPtr<const LinearOpBase<double> >    &fwdOp
+    const RCP<const LinearOpBase<double> >    &fwdOp
     ,PreconditionerBase<double>                                *prec
     ,const ESupportSolveUse                                    supportSolveUse
     ) const;
   /** \brief . */
   void uninitializePrec(
     PreconditionerBase<double>                          *prec
-    ,RefCountPtr<const LinearOpBase<double> >  *fwdOp
+    ,RCP<const LinearOpBase<double> >  *fwdOp
     ,ESupportSolveUse                                   *supportSolveUse
     ) const;
 
@@ -111,13 +111,13 @@ public:
   //@{
 
   /** \brief . */
-  void setParameterList(RefCountPtr<ParameterList> const& paramList);
+  void setParameterList(RCP<ParameterList> const& paramList);
   /** \brief . */
-  RefCountPtr<ParameterList> getNonconstParameterList();
+  RCP<ParameterList> getNonconstParameterList();
   /** \brief . */
-  RefCountPtr<ParameterList> unsetParameterList();
+  RCP<ParameterList> unsetParameterList();
   /** \brief . */
-  RefCountPtr<const ParameterList> getParameterList() const;
+  RCP<const ParameterList> getParameterList() const;
   //@}
 
   /** \name Public functions overridden from Describable. */
@@ -130,25 +130,25 @@ public:
 
 private:
 
-  RefCountPtr<ParameterList> reviseDefaultList(const ParameterList& defaults, 
+  RCP<ParameterList> reviseDefaultList(const ParameterList& defaults, 
                                                const ParameterList& revisions) const;
 
   std::string probToString(const EMLProblemType& probType) const ;
 
-  RefCountPtr<ParameterList> defaultParameters(const EMLProblemType& probType) const ;
+  RCP<ParameterList> defaultParameters(const EMLProblemType& probType) const ;
 
-  RefCountPtr<ParameterList> defaultParameters(const string& probType) const ;
+  RCP<ParameterList> defaultParameters(const string& probType) const ;
 
   // ////////////////////////////////
   // Private data members
 
-  RefCountPtr<ParameterList>       paramList_;
+  RCP<ParameterList>       paramList_;
 
 
   // ////////////////////////////////
   // Private member functions
 
-  static RefCountPtr<const ParameterList> generateAndGetValidParameters();
+  static RCP<const ParameterList> generateAndGetValidParameters();
 
 };
 

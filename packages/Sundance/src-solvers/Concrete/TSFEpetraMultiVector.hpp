@@ -54,7 +54,7 @@ namespace TSFExtended
    * Thyra-based code.
    */
   class EpetraMultiVector : public MPIMultiVectorStd<double>,
-                            public SundanceUtils::Handleable<MultiVectorBase<double> >,
+                            public Sundance::Handleable<MultiVectorBase<double> >,
                             public IndexableVector<double>,
                             public RawDataAccessibleVector<double>,
                             public Printable
@@ -63,12 +63,12 @@ namespace TSFExtended
     GET_RCP(MultiVectorBase<double>);
 
     /** Construct with a smart pointer to an Epetra vector space. */
-    EpetraMultiVector(const RefCountPtr<const VectorSpaceBase<double> >& vs);
+    EpetraMultiVector(const RCP<const VectorSpaceBase<double> >& vs);
 
     /** Construct with smart pointers to an Epetra vector space
         and an existing Epetra vector. */
-    EpetraMultiVector(const RefCountPtr<const VectorSpaceBase<double> >& vs,
-                      const RefCountPtr<Epetra_MultiVector>& vec);
+    EpetraMultiVector(const RCP<const VectorSpaceBase<double> >& vs,
+                      const RCP<Epetra_MultiVector>& vec);
 
     /** \name IndexableVector interface */
     //@{
@@ -97,12 +97,12 @@ namespace TSFExtended
     void addToElement(Ordinal globalIndex, const double& value);
 
     /** set a group of elements */
-    void setElements(size_t numElems, const Ordinal* globalIndices, 
+    void setElements(int numElems, const Ordinal* globalIndices, 
                      const double* values);
 
 
     /** add to a group of elements */
-    void addToElements(size_t numElems, const Ordinal* globalIndices, 
+    void addToElements(int numElems, const Ordinal* globalIndices, 
                        const double* values);
 
     /** */
@@ -140,22 +140,22 @@ namespace TSFExtended
 
     
     /** */
-    const RefCountPtr<Epetra_Vector>& epetraVec() const {return epetraVec_;}
+    const RCP<Epetra_Vector>& epetraVec() const {return epetraVec_;}
     
     /** */
-    RefCountPtr<Epetra_Vector>& epetraVec() {return epetraVec_;}
+    RCP<Epetra_Vector>& epetraVec() {return epetraVec_;}
 
   protected:    
     /** */
-    const RefCountPtr<const Epetra_Map>& epetraMap() const {return epetraMap_;}
+    const RCP<const Epetra_Map>& epetraMap() const {return epetraMap_;}
 
   private:
 
-    RefCountPtr<Epetra_Vector> epetraVec_;
+    RCP<Epetra_Vector> epetraVec_;
 
-    RefCountPtr<const MPIVectorSpaceBase<double> > mpiVecSpace_;
+    RCP<const MPIVectorSpaceBase<double> > mpiVecSpace_;
 
-    RefCountPtr<const Epetra_Map> epetraMap_;
+    RCP<const Epetra_Map> epetraMap_;
   };
   
 }

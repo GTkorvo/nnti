@@ -48,7 +48,7 @@
 
 using namespace TSFExtended;
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 
 template <class Scalar>
 class InverseOperator;
@@ -62,7 +62,7 @@ LinearOperator<Scalar>::LinearOperator()
 
 //=======================================================================
 template <class Scalar>
-LinearOperator<Scalar>::LinearOperator(const RefCountPtr<Thyra::LinearOpBase<Scalar> >& smartPtr) 
+LinearOperator<Scalar>::LinearOperator(const RCP<Thyra::LinearOpBase<Scalar> >& smartPtr) 
   : Handle<Thyra::LinearOpBase<Scalar> >(smartPtr), verb_(0) {;}
 
 
@@ -195,9 +195,9 @@ void LinearOperator<Scalar>::applyTranspose(const Vector<Scalar>& in,
 
 //=======================================================================
 template <class Scalar>
-RefCountPtr<Time>& LinearOperator<Scalar>::opTimer()
+RCP<Time>& LinearOperator<Scalar>::opTimer()
 {
-  static RefCountPtr<Time> rtn 
+  static RCP<Time> rtn 
     = TimeMonitor::getNewTimer("Low-level vector operations");
   return rtn;
 }
@@ -216,9 +216,9 @@ LinearOperator<Scalar> LinearOperator<Scalar>::transpose() const
 
 //=======================================================================
 template <class Scalar>
-RefCountPtr<LoadableMatrix<Scalar> > LinearOperator<Scalar>::matrix()
+RCP<LoadableMatrix<Scalar> > LinearOperator<Scalar>::matrix()
 {
-  RefCountPtr<LoadableMatrix<Scalar> > rtn 
+  RCP<LoadableMatrix<Scalar> > rtn 
     = rcp_dynamic_cast<LoadableMatrix<Scalar> >(this->ptr());
   return rtn;
 }

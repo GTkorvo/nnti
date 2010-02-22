@@ -116,10 +116,10 @@ int Epetra_TSFOperator::Apply(const Epetra_MultiVector& in, Epetra_MultiVector& 
 			 "this should never happen, because we have found "
 			 "Epetra domain and range in the ctor");
 
-      RefCountPtr<Thyra::VectorBase<double> > vpIn 
+      RCP<Thyra::VectorBase<double> > vpIn 
 	= rcp(new EpetraVector(rcp(ed, false), 
 			       rcp(evIn, false)));
-      RefCountPtr<Thyra::VectorBase<double> > vpOut 
+      RCP<Thyra::VectorBase<double> > vpOut 
 	= rcp(new EpetraVector(rcp(er, false), 
 			       rcp(evOut, false)));
       Vector<double> vIn = vpIn;
@@ -159,10 +159,10 @@ int Epetra_TSFOperator::ApplyInverse(const Epetra_MultiVector& in, Epetra_MultiV
   const EpetraVectorSpace* er 
     = dynamic_cast<const EpetraVectorSpace*>(A_.domain().ptr().get());
 
-  RefCountPtr<Thyra::VectorBase<double> > vpIn 
+  RCP<Thyra::VectorBase<double> > vpIn 
     = rcp(new EpetraVector(rcp(ed, false), 
 			   rcp(evIn, false)));
-  RefCountPtr<Thyra::VectorBase<double> > vpOut 
+  RCP<Thyra::VectorBase<double> > vpOut 
     = rcp(new EpetraVector(rcp(er, false), 
 			   rcp(evOut, false)));
   Vector<double> vIn = vpIn;

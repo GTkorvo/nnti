@@ -63,7 +63,7 @@ namespace TSFExtended
 
     mutable PoissonBoltzmannJacobian J_;
     
-    RefCountPtr<GhostImporter<double> > importer_;
+    RCP<GhostImporter<double> > importer_;
 
     double uLeftBC_;
 

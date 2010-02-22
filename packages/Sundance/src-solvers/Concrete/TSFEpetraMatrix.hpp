@@ -59,19 +59,19 @@ public:
   /** Construct an empty EpetraMatrix structured according to the graph 
    * argument */
   EpetraMatrix(const Epetra_CrsGraph& graph,
-    const RefCountPtr<const EpetraVectorSpace>& domain,
-    const RefCountPtr<const EpetraVectorSpace>& range);
+    const RCP<const EpetraVectorSpace>& domain,
+    const RCP<const EpetraVectorSpace>& range);
 
   /** Wrap an existing Epetra CRS Matrix */
-  EpetraMatrix(const RefCountPtr<Epetra_CrsMatrix>& mat,
-    const RefCountPtr<const EpetraVectorSpace>& domain,
-    const RefCountPtr<const EpetraVectorSpace>& range);
+  EpetraMatrix(const RCP<Epetra_CrsMatrix>& mat,
+    const RCP<const EpetraVectorSpace>& domain,
+    const RCP<const EpetraVectorSpace>& range);
 
   /** */
-  RefCountPtr< const VectorSpaceBase<double> > domain() const {return domain_;}
+  RCP< const VectorSpaceBase<double> > domain() const {return domain_;}
 
   /** */
-  RefCountPtr< const VectorSpaceBase<double> > range() const {return range_;}
+  RCP< const VectorSpaceBase<double> > range() const {return range_;}
 
   /** \brief . */
 	bool opSupportedImpl(Thyra::EOpTransp M_trans) const;
@@ -89,22 +89,22 @@ public:
   //@{
 
   /** */
-  void getEpetraOpView(RefCountPtr<Epetra_Operator> *epetraOp,
+  void getEpetraOpView(RCP<Epetra_Operator> *epetraOp,
     Thyra::EOpTransp *epetraOpTransp,
     Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
     Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) ;
 
   /** */
-  void getEpetraOpView(RefCountPtr<const Epetra_Operator> *epetraOp,
+  void getEpetraOpView(RCP<const Epetra_Operator> *epetraOp,
     Thyra::EOpTransp *epetraOpTransp,
     Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
     Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) const ;
 
 
   /// Returns <tt>this->mpiRange()</tt>
-  Teuchos::RefCountPtr< const ScalarProdVectorSpaceBase<double> > rangeScalarProdVecSpc() const;
+  Teuchos::RCP< const ScalarProdVectorSpaceBase<double> > rangeScalarProdVecSpc() const;
   /// Returns <tt>this->mpiDomain()</tt>
-  Teuchos::RefCountPtr< const ScalarProdVectorSpaceBase<double> > domainScalarProdVecSpc() const;
+  Teuchos::RCP< const ScalarProdVectorSpaceBase<double> > domainScalarProdVecSpc() const;
 
 
   //@}
@@ -187,7 +187,7 @@ public:
   static Epetra_CrsMatrix& getConcrete(const LinearOperator<double>& A);
 
   /** */
-  static RefCountPtr<const Epetra_CrsMatrix> getConcretePtr(const LinearOperator<double>& A);
+  static RCP<const Epetra_CrsMatrix> getConcretePtr(const LinearOperator<double>& A);
 
   /** 
    * Read-only access to the underlying crs matrix. Needed for Ifpack.
@@ -205,11 +205,11 @@ private:
 
   Epetra_CrsMatrix* crsMatrix();
 
-  RefCountPtr<Epetra_CrsMatrix> matrix_;
+  RCP<Epetra_CrsMatrix> matrix_;
 
-  RefCountPtr<const VectorSpaceBase<double> > range_;
+  RCP<const VectorSpaceBase<double> > range_;
 
-  RefCountPtr<const VectorSpaceBase<double> > domain_;
+  RCP<const VectorSpaceBase<double> > domain_;
 
   const Epetra_Map& getRangeMap() const;
   const Epetra_Map& getDomainMap() const;

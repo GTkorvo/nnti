@@ -62,7 +62,7 @@ namespace TSFExtended {
   using namespace Thyra;
 
 
-  RefCountPtr<const Epetra_Map> tsfVectorSpace2EpetraMap(const VectorSpace<double>& tsfSpace)
+  RCP<const Epetra_Map> tsfVectorSpace2EpetraMap(const VectorSpace<double>& tsfSpace)
   {
     const EpetraVectorSpace* ep 
       = dynamic_cast<const EpetraVectorSpace*>(tsfSpace.ptr().get());
@@ -80,10 +80,10 @@ namespace TSFExtended {
       }
     int dim = tsfSpace.dim();
 
-    RefCountPtr<Epetra_Comm> comm;
+    RCP<Epetra_Comm> comm;
     TSFExtended::getComm(tsfSpace, comm);
 
-    RefCountPtr<const Epetra_Map> rtn = rcp(new Epetra_Map(dim, globIndices.size(),
+    RCP<const Epetra_Map> rtn = rcp(new Epetra_Map(dim, globIndices.size(),
 						     &(globIndices[0]),
 						     0, *comm));
     return rtn;
@@ -91,14 +91,14 @@ namespace TSFExtended {
 
 
 void getComm(const TSFExtended::VectorSpace<double>& tsfSpace,
-    Teuchos::RefCountPtr<Epetra_Comm>& comm)
+    Teuchos::RCP<Epetra_Comm>& comm)
   {
 #ifdef HAVE_MPI
     if (tsfSpace.numBlocks()==1)
       {
 	const MPIVectorSpaceBase<double>* mv 
 	  = dynamic_cast<const MPIVectorSpaceBase<double>*>(tsfSpace.getBlock(0).ptr().get());
-	RefCountPtr<const Teuchos::Comm<Thyra::Ordinal> > tc = mv->getComm();
+	RCP<const Teuchos::Comm<Thyra::Ordinal> > tc = mv->getComm();
 	const Teuchos::MpiComm<int>* mc 
 	  = dynamic_cast<const Teuchos::MpiComm<int>*>(tc.get());
 	const Teuchos::SerialComm<int>* sc 

@@ -83,7 +83,7 @@ PoissonBoltzmannOp::computeJacobianAndFunction(Vector<double>& functionValue) co
 {
   J_.setEvalPoint(currentEvalPt());
 
-  RefCountPtr<GhostView<double> > u;
+  RCP<GhostView<double> > u;
   importer_->importView(currentEvalPt(), u);
 
   int low = J_.domain().lowestLocallyOwnedIndex();

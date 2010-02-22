@@ -20,7 +20,7 @@
 using namespace Thyra;
 using namespace Teuchos;
 
-RefCountPtr<LinearOpWithSolveFactoryBase<double> >
+RCP<LinearOpWithSolveFactoryBase<double> >
 LOWSFactoryBuilder::createLOWSFactory(const ParameterList& params)
 {
   /* check that we have a linear solver parameter list */
@@ -30,24 +30,24 @@ LOWSFactoryBuilder::createLOWSFactory(const ParameterList& params)
 //                      "to createLOWSFactory()");
 
   
-  RefCountPtr<LinearOpWithSolveFactoryBase<double> > rtn;  
-  RefCountPtr<PreconditionerFactoryBase<double> > prec;  
+  RCP<LinearOpWithSolveFactoryBase<double> > rtn;  
+  RCP<PreconditionerFactoryBase<double> > prec;  
 
   if (params.isSublist("Amesos"))
     {
-      RefCountPtr<ParameterList> p = rcp(new ParameterList(params.sublist("Amesos")));
+      RCP<ParameterList> p = rcp(new ParameterList(params.sublist("Amesos")));
       rtn = rcp(new AmesosLinearOpWithSolveFactory());
       rtn->setParameterList(p);
     }
   else if (params.isSublist("Aztec"))
     {
-      RefCountPtr<ParameterList> p = rcp(new ParameterList(params.sublist("Aztec")));
+      RCP<ParameterList> p = rcp(new ParameterList(params.sublist("Aztec")));
       rtn = rcp(new AztecOOLinearOpWithSolveFactory());
       rtn->setParameterList(p);
     }
   else if (params.isSublist("Belos"))
     {
-      RefCountPtr<ParameterList> p = rcp(new ParameterList(params.sublist("Belos")));
+      RCP<ParameterList> p = rcp(new ParameterList(params.sublist("Belos")));
       rtn = rcp(new BelosLinearOpWithSolveFactory<double>());
       rtn->setParameterList(p);
     }
@@ -71,7 +71,7 @@ LOWSFactoryBuilder::createLOWSFactory(const ParameterList& params)
       else if (precType=="Ifpack")
         {
           string probType = getParameter<string>(precParams, "Prec Type");
-          RefCountPtr<ParameterList> ifpackParams 
+          RCP<ParameterList> ifpackParams 
             = rcp(new ParameterList(precParams.sublist("Ifpack")));
           prec = rcp(new IfpackPreconditionerFactory());
           prec->setParameterList(ifpackParams);

@@ -55,12 +55,12 @@ namespace TSFExtended
     PartitionedMatrixFactory(
       const VectorSpace<double>& domain,
       int lowestLocalCol,
-      const RefCountPtr<Array<int> >& isBCCol,
-      const RefCountPtr<std::set<int> >& remoteBCCols,
+      const RCP<Array<int> >& isBCCol,
+      const RCP<std::set<int> >& remoteBCCols,
       const VectorType<double>& domainVecType,
       const VectorSpace<double>& range,
       int lowestLocalRow,
-      const RefCountPtr<Array<int> >& isBCRow,
+      const RCP<Array<int> >& isBCRow,
       const VectorType<double>& rangeType
       );
 
@@ -91,21 +91,21 @@ namespace TSFExtended
     VectorSpace<double> domain_;
     VectorSpace<double> internalDomain_;
     VectorSpace<double> bcDomain_;
-    RefCountPtr<Array<int> > isBCCol_;
-    RefCountPtr<std::set<int> > remoteBCCols_;
+    RCP<Array<int> > isBCCol_;
+    RCP<std::set<int> > remoteBCCols_;
     VectorType<double> domainVecType_;
     int lowestLocalCol_;
     int highestLocalCol_;
     VectorSpace<double> range_;
     VectorSpace<double> internalRange_;
     VectorSpace<double> bcRange_;
-    RefCountPtr<Array<int> > isBCRow_;
+    RCP<Array<int> > isBCRow_;
     VectorType<double> rangeVecType_;
     int lowestLocalRow_;
     int highestLocalRow_;
 
 
-    Array<Array<RefCountPtr<MatrixFactory<double> > > > blockFactory_;
+    Array<Array<RCP<MatrixFactory<double> > > > blockFactory_;
     Array<Array<IncrementallyConfigurableMatrixFactory*> > blockICMF_;
   };
 }

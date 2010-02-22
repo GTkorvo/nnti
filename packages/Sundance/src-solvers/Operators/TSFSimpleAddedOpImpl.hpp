@@ -49,7 +49,7 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 using std::endl;
 using namespace std;
 
@@ -66,7 +66,7 @@ SimpleAddedOp<Scalar>::SimpleAddedOp(
   , ops_(ops)
 {
   TEST_FOR_EXCEPT(ops_.size() <= 1);
-  for (unsigned int i=1; i<ops_.size(); i++)
+  for (int i=1; i<ops_.size(); i++)
   {
     TEST_FOR_EXCEPT(!(ops[i].range() == ops[0].range()));
     TEST_FOR_EXCEPT(!(ops[i].domain() == ops[0].domain()));
@@ -84,7 +84,7 @@ void SimpleAddedOp<Scalar>::applyOp(const Thyra::EOpTransp M_trans,
 
   Vector<Scalar> tmp=out.copy();
   tmp.zero();
-  for (unsigned int i=0; i<ops_.size(); i++)
+  for (int i=0; i<ops_.size(); i++)
   {
     Tabs tab1;
     Out::os() << tab1 << "applying term i=" << i << " of " 
@@ -106,9 +106,9 @@ template <class Scalar> inline
 std::string SimpleAddedOp<Scalar>::description() const 
 {
   std::string rtn="(";
-  for (unsigned int i=0; i<ops_.size(); i++)
+  for (int i=0; i<ops_.size(); i++)
   {
-    if (i > 0U) rtn += "+";
+    if (i > 0) rtn += "+";
     rtn += ops_[i].description();
   }
   rtn += ")";
@@ -124,7 +124,7 @@ LinearOperator<Scalar> addedOperator(
   /* We will strip out any zero operators */
   Array<LinearOperator<Scalar> > strippedOps;
 
-  for (unsigned int i=0; i<ops.size(); i++)
+  for (int i=0; i<ops.size(); i++)
   {
     LinearOperator<Scalar> op_i = ops[i];
 
@@ -137,8 +137,8 @@ LinearOperator<Scalar> addedOperator(
     strippedOps.append(op_i);
   }
   
-  TEST_FOR_EXCEPT(strippedOps.size() < 1U);
-  if (strippedOps.size()==1U) return strippedOps[0];
+  TEST_FOR_EXCEPT(strippedOps.size() < 1);
+  if (strippedOps.size()==1) return strippedOps[0];
   
   RCP<LinearOpBase<Scalar> > op 
     = rcp(new SimpleAddedOp<Scalar>(strippedOps));

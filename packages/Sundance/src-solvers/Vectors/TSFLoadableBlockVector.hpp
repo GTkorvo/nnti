@@ -54,7 +54,7 @@ namespace TSFExtended
         const Vector<double>& vec,
         int lowestLocalRow,
         int highestLocalRow,
-        const RefCountPtr<Array<int> >& isBCRow
+        const RCP<Array<int> >& isBCRow
         ) : lowestLocalRow_(lowestLocalRow), 
             highestLocalRow_(highestLocalRow),
             bcVec_(),
@@ -116,7 +116,7 @@ namespace TSFExtended
       int highestLocalRow_;
       Vector<double> bcVec_;
       Vector<double> internalVec_;
-      RefCountPtr<Array<int> > isBCRow_;
+      RCP<Array<int> > isBCRow_;
   };
   
 }

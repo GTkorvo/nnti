@@ -52,7 +52,7 @@ void PoissonBoltzmannJacobian::setEvalPoint(const Vector<double>& x)
   
   int rank = MPIComm::world().getRank();
   int nProc = MPIComm::world().getNProc();
-  RefCountPtr<MatrixFactory<double> > mFact 
+  RCP<MatrixFactory<double> > mFact 
     = vecType().createMatrixFactory(domain(), range());
   
   int lowestLocalRow = nLocalRows_ * rank;
@@ -78,7 +78,7 @@ void PoissonBoltzmannJacobian::setEvalPoint(const Vector<double>& x)
       
   op_ = mFact->createMatrix();
       
-  RefCountPtr<LoadableMatrix<double> > mat = op_.matrix();
+  RCP<LoadableMatrix<double> > mat = op_.matrix();
 
   /* fill in with the Laplacian operator plus exp(-x) */
   for (int i=0; i<nLocalRows_; i++)

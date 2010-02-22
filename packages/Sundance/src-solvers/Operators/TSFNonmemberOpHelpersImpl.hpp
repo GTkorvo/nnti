@@ -54,7 +54,7 @@ LinearOperator<Scalar> zeroOperator(
   const VectorSpace<Scalar>& domain,
   const VectorSpace<Scalar>& range)
 {
-  RefCountPtr<LinearOpBase<Scalar> > op 
+  RCP<LinearOpBase<Scalar> > op 
     = rcp(new SimpleZeroOp<Scalar>(domain, range));
 
   return op;
@@ -65,7 +65,7 @@ template <class Scalar> inline
 LinearOperator<Scalar> identityOperator(
   const VectorSpace<Scalar>& space)
 {
-  RefCountPtr<LinearOpBase<Scalar> > op 
+  RCP<LinearOpBase<Scalar> > op 
     = rcp(new SimpleIdentityOp<Scalar>(space));
 
   return op;
@@ -76,7 +76,7 @@ template <class Scalar> inline
 LinearOperator<Scalar> diagonalOperator(
   const Vector<Scalar>& vec)
 {
-  RefCountPtr<LinearOpBase<Scalar> > op 
+  RCP<LinearOpBase<Scalar> > op 
     = rcp(new DefaultDiagonalLinearOp<Scalar>(vec.ptr()));
 
   return op;
@@ -92,7 +92,7 @@ LinearOperator<Scalar> composedOperator(
   * operator the whole works becomes a zero operator */ 
   Array<LinearOperator<Scalar> > strippedOps;
 
-  for (unsigned int i=0; i<ops.size(); i++)
+  for (int i=0; i<ops.size(); i++)
   {
     LinearOperator<Scalar> op_i = ops[i];
 
@@ -119,8 +119,8 @@ LinearOperator<Scalar> composedOperator(
     strippedOps.append(op_i);
   }
   
-  TEST_FOR_EXCEPT(strippedOps.size() < 1U);
-  if (strippedOps.size()==1U) return strippedOps[0];
+  TEST_FOR_EXCEPT(strippedOps.size() < 1);
+  if (strippedOps.size()==1) return strippedOps[0];
   
   RCP<LinearOpBase<Scalar> > op 
     = rcp(new SimpleComposedOp<Scalar>(strippedOps));
@@ -138,7 +138,7 @@ LinearOperator<Scalar> addedOperator(
   /* We will strip out any zero operators */
   Array<LinearOperator<Scalar> > strippedOps;
 
-  for (unsigned int i=0; i<ops.size(); i++)
+  for (int i=0; i<ops.size(); i++)
   {
     LinearOperator<Scalar> op_i = ops[i];
 
@@ -151,8 +151,8 @@ LinearOperator<Scalar> addedOperator(
     strippedOps.append(op_i);
   }
   
-  TEST_FOR_EXCEPT(strippedOps.size() < 1U);
-  if (strippedOps.size()==1U) return strippedOps[0];
+  TEST_FOR_EXCEPT(strippedOps.size() < 1);
+  if (strippedOps.size()==1) return strippedOps[0];
   
   RCP<LinearOpBase<Scalar> > op 
     = rcp(new SimpleAddedOp<Scalar>(strippedOps));
@@ -167,7 +167,7 @@ LinearOperator<Scalar> scaledOperator(
   const Scalar& scale,
   const LinearOperator<Scalar>& op)
 {
-  RefCountPtr<LinearOpBase<Scalar> > A 
+  RCP<LinearOpBase<Scalar> > A 
     = rcp(new DefaultScaledAdjointLinearOp<Scalar>(scale, Thyra::NOTRANS, op.ptr()));
 
   return A;
@@ -180,7 +180,7 @@ LinearOperator<Scalar> scaledTransposedOperator(
   const Scalar& scale,
   const LinearOperator<Scalar>& op)
 {
-  RefCountPtr<LinearOpBase<Scalar> > A 
+  RCP<LinearOpBase<Scalar> > A 
     = rcp(new DefaultScaledAdjointLinearOp<Scalar>(scale, Thyra::TRANS, op.ptr()));
 
   return A;
@@ -214,7 +214,7 @@ LinearOperator<Scalar> transposedOperator(
 
 
   /* Return a transposed operator */
-  RefCountPtr<LinearOpBase<Scalar> > A
+  RCP<LinearOpBase<Scalar> > A
     = rcp(new SimpleTransposedOp<Scalar>(op));
       
   return A;
@@ -226,7 +226,7 @@ LinearOperator<Scalar> multiVectorOperator(
   const Teuchos::Array<Vector<Scalar> >& cols,
   const VectorSpace<Scalar>& domain)
 {
-  RefCountPtr<LinearOpBase<Scalar> > A
+  RCP<LinearOpBase<Scalar> > A
     = rcp(new MultiVectorOperator<Scalar>(cols, domain));
 
   return A;

@@ -49,8 +49,8 @@ public:
 
   /** */
   EuclideanOpWithBackwardsCompatibleApply(
-    const RefCountPtr<const ScalarProdVectorSpaceBase<Scalar> >& domain,
-    const RefCountPtr<const ScalarProdVectorSpaceBase<Scalar> >& range)
+    const RCP<const ScalarProdVectorSpaceBase<Scalar> >& domain,
+    const RCP<const ScalarProdVectorSpaceBase<Scalar> >& range)
     : scalarProdDomain_(domain),
       scalarProdRange_(range)
     {}
@@ -210,8 +210,8 @@ public:
   
 
 private:
-  RefCountPtr<const ScalarProdVectorSpaceBase<Scalar> > scalarProdDomain_;
-  RefCountPtr<const ScalarProdVectorSpaceBase<Scalar> > scalarProdRange_;
+  RCP<const ScalarProdVectorSpaceBase<Scalar> > scalarProdDomain_;
+  RCP<const ScalarProdVectorSpaceBase<Scalar> > scalarProdRange_;
 };
 
 }

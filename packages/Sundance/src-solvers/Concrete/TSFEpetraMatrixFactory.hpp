@@ -50,14 +50,14 @@ namespace TSFExtended
   public:
 
     /** Construct an uninitialized EpetraMatrixFactory */
-    EpetraMatrixFactory(const RefCountPtr<const EpetraVectorSpace>& domain,
-                const RefCountPtr<const EpetraVectorSpace>& range);
+    EpetraMatrixFactory(const RCP<const EpetraVectorSpace>& domain,
+                const RCP<const EpetraVectorSpace>& range);
 
     /** */
-    const RefCountPtr<const EpetraVectorSpace>& epRange() const {return range_;}
+    const RCP<const EpetraVectorSpace>& epRange() const {return range_;}
 
     /** */
-    const RefCountPtr<const EpetraVectorSpace>& epDomain() const {return domain_;}
+    const RCP<const EpetraVectorSpace>& epDomain() const {return domain_;}
 
 
     /** Initialize a set of nonzero elements in the matrix's graph.
@@ -102,13 +102,13 @@ namespace TSFExtended
   private:
 
     /** */
-    RefCountPtr<Epetra_CrsGraph> graph_;
+    RCP<Epetra_CrsGraph> graph_;
 
     /** */
-    RefCountPtr<const EpetraVectorSpace> range_;
+    RCP<const EpetraVectorSpace> range_;
 
     /** */
-    RefCountPtr<const EpetraVectorSpace> domain_;
+    RCP<const EpetraVectorSpace> domain_;
   };
 }
 

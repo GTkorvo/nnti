@@ -66,7 +66,7 @@ namespace TSFExtended
   private:
 
     LinearSolver<double> linSolver_;
-    mutable RefCountPtr<NOX::StatusTest::Generic> statusTest_;
+    mutable RCP<NOX::StatusTest::Generic> statusTest_;
     mutable ParameterList params_;
     mutable ParameterList printParams_;
   };

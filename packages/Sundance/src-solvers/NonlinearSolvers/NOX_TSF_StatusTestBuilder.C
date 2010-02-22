@@ -41,7 +41,7 @@ using namespace NOX;
 using namespace NOX::TSF;
 using namespace Teuchos;
 
-RefCountPtr<StatusTest::Generic> 
+RCP<StatusTest::Generic> 
 StatusTestBuilder::makeStatusTest(const ParameterList& params)
 {
   TEST_FOR_EXCEPTION(!params.isSublist("Status Test"), runtime_error,
@@ -69,12 +69,12 @@ StatusTestBuilder::makeStatusTest(const ParameterList& params)
       maxiters = getParameter<int>(testSublist, "Max Iterations");
     }
 
-  RefCountPtr<StatusTest::Generic> A = rcp(new StatusTest::NormF(fTol));
-  RefCountPtr<StatusTest::Generic> B = rcp(new StatusTest::MaxIters(maxiters));
-  RefCountPtr<StatusTest::Generic> C = rcp(new StatusTest::NormUpdate(dxTol));
-  RefCountPtr<StatusTest::Generic> AB 
+  RCP<StatusTest::Generic> A = rcp(new StatusTest::NormF(fTol));
+  RCP<StatusTest::Generic> B = rcp(new StatusTest::MaxIters(maxiters));
+  RCP<StatusTest::Generic> C = rcp(new StatusTest::NormUpdate(dxTol));
+  RCP<StatusTest::Generic> AB 
     = rcp(new StatusTest::SafeCombo(StatusTest::SafeCombo::OR, A, B));
-  RefCountPtr<StatusTest::Generic> ABC 
+  RCP<StatusTest::Generic> ABC 
     = rcp(new StatusTest::SafeCombo(StatusTest::SafeCombo::OR, AB, C));
   
   return ABC;

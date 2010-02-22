@@ -46,7 +46,7 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 using std::endl;
 using namespace std;
 
@@ -59,10 +59,10 @@ SimpleBlockOp<Scalar>::SimpleBlockOp(
   const VectorSpace<Scalar>& range)
   : SimplifiedLinearOpWithSpaces<Scalar>(domain, range), blocks_(range.numBlocks())
 {
-  for (unsigned int i=0; i<blocks_.size(); i++) 
+  for (int i=0; i<blocks_.size(); i++) 
   {
     blocks_[i] = Array<LinearOperator<Scalar> >(domain.numBlocks());
-    for (unsigned int j=0; j<blocks_[i].size(); j++)
+    for (int j=0; j<blocks_[i].size(); j++)
     {
       blocks_[i][j] = zeroOperator(domain.getBlock(j), range.getBlock(i));
     }
@@ -149,9 +149,9 @@ LinearOperator<Scalar> makeBlockOperator(
   const VectorSpace<Scalar>& range
   )
 {
-  RefCountPtr<SimpleBlockOp<Scalar> > b = 
+  RCP<SimpleBlockOp<Scalar> > b = 
     rcp(new SimpleBlockOp<Scalar>(domain, range));
-  RefCountPtr<Thyra::LinearOpBase<Scalar> > p = b;
+  RCP<Thyra::LinearOpBase<Scalar> > p = b;
   return p;
 }
 

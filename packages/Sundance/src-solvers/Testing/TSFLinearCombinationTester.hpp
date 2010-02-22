@@ -53,7 +53,7 @@
 
 using namespace TSFExtended;
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 using namespace std;
 using std::ostream;
 using Thyra::TestSpecifier;

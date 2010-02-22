@@ -75,7 +75,7 @@ inline void RandomSparseMatrixBuilder<Scalar>
   int rank = MPIComm::world().getRank();
   int nProc = MPIComm::world().getNProc();
 
-  RefCountPtr<MatrixFactory<double> > mFact 
+  RCP<MatrixFactory<double> > mFact 
     = this->vecType().createMatrixFactory(this->domain(), this->range());
 
   int colDimension = this->domain().dim();
@@ -97,7 +97,7 @@ inline void RandomSparseMatrixBuilder<Scalar>
 
     Array<int>& cols = colIndices[i];
 
-    while (cols.size() == 0U)
+    while (cols.size() == 0)
     {
       for (int j=0; j<colDimension; j++)
       {
@@ -117,7 +117,7 @@ inline void RandomSparseMatrixBuilder<Scalar>
           cols.append(j);
         }
       }
-      if (cols.size()>0U)
+      if (cols.size()>0)
       {
         icmf->initializeNonzerosInRow(row, colIndices[i].size(),
           &(colIndices[i][0]));
@@ -129,7 +129,7 @@ inline void RandomSparseMatrixBuilder<Scalar>
       
   op_ = mFact->createMatrix();
       
-  RefCountPtr<LoadableMatrix<double> > mat = op_.matrix();
+  RCP<LoadableMatrix<double> > mat = op_.matrix();
 
   /* fill in with the Laplacian operator */
   for (int i=0; i<numLocalRows; i++)
@@ -137,7 +137,7 @@ inline void RandomSparseMatrixBuilder<Scalar>
     int row = lowestLocalRow + i;
     const Array<int>& cols = colIndices[i];
     Array<Scalar> colVals(cols.size());
-    for (unsigned int j=0; j<cols.size(); j++)
+    for (int j=0; j<cols.size(); j++)
     {
       colVals[j] = ScalarTraits<Scalar>::random();
     }

@@ -49,7 +49,7 @@ EpetraVectorType::EpetraVectorType()
 {;}
 
 
-RefCountPtr<const Thyra::VectorSpaceBase<double> > 
+RCP<const Thyra::VectorSpaceBase<double> > 
 EpetraVectorType::createSpace(int /*dimension*/,
   int nLocal,
   const int* localIndices,
@@ -63,14 +63,14 @@ EpetraVectorType::createSpace(int /*dimension*/,
 
   TEST_FOR_EXCEPTION(nLocal < 0, std::runtime_error, "negative vector size n=" << nLocal);
 
-	RefCountPtr<Epetra_Map> map = rcp(new Epetra_Map(-1, nLocal,
+	RCP<Epetra_Map> map = rcp(new Epetra_Map(-1, nLocal,
       (int*) localIndices,
       0, epComm));
 
 	return rcp(new EpetraVectorSpace(map));
 }
 
-RefCountPtr<GhostImporter<double> > 
+RCP<GhostImporter<double> > 
 EpetraVectorType::createGhostImporter(const VectorSpace<double>& space,
                                       int nGhost,
                                       const int* ghostIndices) const
@@ -86,14 +86,14 @@ EpetraVectorType::createGhostImporter(const VectorSpace<double>& space,
   
 }
 
-RefCountPtr<MatrixFactory<double> >
+RCP<MatrixFactory<double> >
 EpetraVectorType::createMatrixFactory(const VectorSpace<double>& domain,
                                       const VectorSpace<double>& range) const
 {
-  RefCountPtr<const EpetraVectorSpace> pd 
+  RCP<const EpetraVectorSpace> pd 
     = rcp_dynamic_cast<const EpetraVectorSpace>(domain.ptr());
 
-  RefCountPtr<const EpetraVectorSpace> pr 
+  RCP<const EpetraVectorSpace> pr 
     = rcp_dynamic_cast<const EpetraVectorSpace>(range.ptr());
 
 
@@ -105,7 +105,7 @@ EpetraVectorType::createMatrixFactory(const VectorSpace<double>& domain,
                      "incompatible range space given to "
                      "EpetraVectorType::createMatrix()");
 
-  //  RefCountPtr<SingleScalarTypeOp<double> > A = rcp(new EpetraMatrix(pd, pr));
+  //  RCP<SingleScalarTypeOp<double> > A = rcp(new EpetraMatrix(pd, pr));
 
   return rcp(new EpetraMatrixFactory(pd, pr));
 }

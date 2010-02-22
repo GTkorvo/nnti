@@ -47,7 +47,7 @@ using namespace Teuchos;
  */
 template <class Scalar>
 class NonlinearOperatorBase 
-  : public SundanceUtils::Handleable<NonlinearOperatorBase<Scalar> >,
+  : public Sundance::Handleable<NonlinearOperatorBase<Scalar> >,
     public ObjectWithClassVerbosity<NonlinearOperatorBase<Scalar> >
 {
 public:
@@ -74,11 +74,11 @@ public:
     {;}
                             
   /** Return the domain space */
-  const RefCountPtr<const Thyra::VectorSpaceBase<Scalar> >& domain() const 
+  const RCP<const Thyra::VectorSpaceBase<Scalar> >& domain() const 
     {return domain_;}
 
   /** Return the range space */
-  const RefCountPtr<const Thyra::VectorSpaceBase<Scalar> >& range() const 
+  const RCP<const Thyra::VectorSpaceBase<Scalar> >& range() const 
     {return range_;}
 
   /** Set the evaluation point */
@@ -209,10 +209,10 @@ protected:
 
 private:
   /** */
-  RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > domain_;
+  RCP<const Thyra::VectorSpaceBase<Scalar> > domain_;
 
   /** */
-  RefCountPtr<const Thyra::VectorSpaceBase<Scalar> > range_;
+  RCP<const Thyra::VectorSpaceBase<Scalar> > range_;
 
   /** */
   mutable bool jacobianIsValid_;

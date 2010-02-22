@@ -140,8 +140,8 @@ protected:
        * dynamic cast into Epetra VectorSpace objects. This cast should
        * always work. 
        */ 
-      RefCountPtr<const EpetraVectorSpace> epXRange = rcp_dynamic_cast<const EpetraVectorSpace>(X.range().ptr());
-      RefCountPtr<const EpetraVectorSpace> epXDomain = rcp_dynamic_cast<const EpetraVectorSpace>(X.domain().ptr());
+      RCP<const EpetraVectorSpace> epXRange = rcp_dynamic_cast<const EpetraVectorSpace>(X.range().ptr());
+      RCP<const EpetraVectorSpace> epXDomain = rcp_dynamic_cast<const EpetraVectorSpace>(X.domain().ptr());
 
 
       /* We can now create a TSF linear operator for the transpose. We need 
@@ -149,7 +149,7 @@ protected:
        * Epetra_CrsMatrix because the transposed matrix is
        * owned by the transposer. We also swap the original operator's 
        * domain and range spaces in creating the transpose. */
-      RefCountPtr<LinearOpBase<Scalar> > XtPtr = rcp(new EpetraMatrix(rcp(epXt, false), 
+      RCP<LinearOpBase<Scalar> > XtPtr = rcp(new EpetraMatrix(rcp(epXt, false), 
           epXRange, epXDomain));
       LinearOperator<Scalar> Xt = XtPtr;
 
@@ -168,7 +168,7 @@ private:
   LinearOperator<Scalar> inputAt_;
   /** Hack hack hack.... we need to keep the Epetra_Transposer object around
    * because it manages the memory of the transposed matrix. */
-  mutable RefCountPtr<EpetraExt::RowMatrix_Transpose> transposer_;
+  mutable RCP<EpetraExt::RowMatrix_Transpose> transposer_;
 };
 }
 

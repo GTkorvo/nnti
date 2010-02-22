@@ -50,7 +50,7 @@ namespace TSFExtended
    */
   template <class Scalar> 
   class PreconditionerFactory 
-    : public SundanceUtils::Handle<PreconditionerFactoryBase<Scalar> >
+    : public Sundance::Handle<PreconditionerFactoryBase<Scalar> >
   {
   public:
     /* Boilerplate ctors */

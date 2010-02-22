@@ -52,7 +52,7 @@ namespace TSFExtended
     LinearOperator<double> getOp() const ;
 
   private:
-    RefCountPtr<MatrixFactory<double> > matrixFactory_;
+    RCP<MatrixFactory<double> > matrixFactory_;
     double cj_;
     double h_;
     int nLocalRows_;

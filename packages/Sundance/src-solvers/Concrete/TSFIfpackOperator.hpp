@@ -68,20 +68,20 @@ public:
 
 
   /** Return the domain of the operator */
-  virtual RefCountPtr< const Thyra::VectorSpaceBase<double> > domain() const {return domain_;}
+  virtual RCP< const Thyra::VectorSpaceBase<double> > domain() const {return domain_;}
 
   /** Return the range of the operator */
-  virtual RefCountPtr< const Thyra::VectorSpaceBase<double> > range() const {return range_;}
+  virtual RCP< const Thyra::VectorSpaceBase<double> > range() const {return range_;}
 
 
 private:
-  RefCountPtr<Ifpack_IlukGraph> precondGraph_;
+  RCP<Ifpack_IlukGraph> precondGraph_;
 
-  RefCountPtr<Ifpack_CrsRiluk> precond_;
+  RCP<Ifpack_CrsRiluk> precond_;
 
-  RefCountPtr<const Thyra::VectorSpaceBase<double> > domain_;
+  RCP<const Thyra::VectorSpaceBase<double> > domain_;
 
-  RefCountPtr<const Thyra::VectorSpaceBase<double> > range_;
+  RCP<const Thyra::VectorSpaceBase<double> > range_;
 };
 }
 

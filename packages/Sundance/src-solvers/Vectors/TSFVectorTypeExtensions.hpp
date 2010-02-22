@@ -75,7 +75,7 @@ namespace TSFExtended
      * @param nLocal number of indices owned by the local processor
      * @param locallyOwnedIndices array of indices owned by this processor  
      */
-    virtual RefCountPtr<const Thyra::VectorSpaceBase<Scalar> >
+    virtual RCP<const Thyra::VectorSpaceBase<Scalar> >
     createSpace(int dimension, 
                 int nLocal,
       const int* locallyOwnedIndices,
@@ -90,7 +90,7 @@ namespace TSFExtended
      * by this processor.
      * @return A RCP to a GhostImporter object.
      */
-    virtual RefCountPtr<GhostImporter<Scalar> > 
+    virtual RCP<GhostImporter<Scalar> > 
     createGhostImporter(const VectorSpace<Scalar>& space,
                         int nGhost,
                         const int* ghostIndices) const = 0 ;
@@ -100,7 +100,7 @@ namespace TSFExtended
      * Create a matrix factory of type compatible with this vector type,
      * sized according to the given domain and range spaces.
      */
-    virtual RefCountPtr<MatrixFactory<Scalar> >
+    virtual RCP<MatrixFactory<Scalar> >
     createMatrixFactory(const VectorSpace<Scalar>& domain,
                         const VectorSpace<Scalar>& range) const = 0 ;
 

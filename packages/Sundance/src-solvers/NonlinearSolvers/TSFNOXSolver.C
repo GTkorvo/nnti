@@ -52,7 +52,7 @@ using namespace TSFExtended;
 
 static Time& noxSolverTimer() 
 {
-  static RefCountPtr<Time> rtn 
+  static RCP<Time> rtn 
     = TimeMonitor::getNewTimer("NOX solve"); 
   return *rtn;
 }
@@ -76,8 +76,8 @@ NOXSolver::NOXSolver(const ParameterList& params)
     }
   else
     {
-      RefCountPtr<StatusTest::Generic> A = rcp(new StatusTest::NormF(1.0e-12));
-      RefCountPtr<StatusTest::Generic> B = rcp(new StatusTest::MaxIters(20));
+      RCP<StatusTest::Generic> A = rcp(new StatusTest::NormF(1.0e-12));
+      RCP<StatusTest::Generic> B = rcp(new StatusTest::MaxIters(20));
       statusTest_ = 
         rcp(new StatusTest::SafeCombo(StatusTest::SafeCombo::OR, A, B));
     }
@@ -109,9 +109,9 @@ NOXSolver::solve(const NonlinearOperator<double>& F,
 
   Vector<double> x0 = F.getInitialGuess();
   RCP<NOX::TSF::Group> grp = rcp(new NOX::TSF::Group(x0, F, linSolver_));
-  RefCountPtr<Teuchos::ParameterList> noxParams 
+  RCP<Teuchos::ParameterList> noxParams 
     = Teuchos::rcp(&params_, false);
-  RefCountPtr<NOX::Solver::Generic> solver 
+  RCP<NOX::Solver::Generic> solver 
     = NOX::Solver::buildSolver(grp, statusTest_, noxParams);
 
   NOX::StatusTest::StatusType rtn = solver->solve();

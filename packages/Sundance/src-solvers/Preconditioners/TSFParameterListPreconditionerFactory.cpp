@@ -29,7 +29,7 @@ createPreconditioner(const LinearOperator<double>& A) const
       const ParameterEntry& entry = mlSettings.entry(iter);
       mlParams.setEntry(name, entry);
     }
-    RefCountPtr<LinearOpBase<double> > mlp 
+    RCP<LinearOpBase<double> > mlp 
       = rcp(new MLOperator(A, mlParams));
     LinearOperator<double> P = mlp;
     rtn = new GenericRightPreconditioner<double>(P);
@@ -37,7 +37,7 @@ createPreconditioner(const LinearOperator<double>& A) const
   else if (pType=="Ifpack")
   {
     ParameterList iluSettings = params_.sublist("Ifpack Settings");
-    RefCountPtr<PreconditionerFactoryBase<double> > pf 
+    RCP<PreconditionerFactoryBase<double> > pf 
       = rcp(new ILUKPreconditionerFactory<double>(iluSettings));
     rtn = pf->createPreconditioner(A);
   }

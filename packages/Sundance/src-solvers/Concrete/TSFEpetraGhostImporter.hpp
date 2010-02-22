@@ -48,7 +48,7 @@ namespace TSFExtended
     {
     public:
       /** */
-      EpetraGhostImporter(const RefCountPtr<const Epetra_Map>& epetraMap,
+      EpetraGhostImporter(const RCP<const Epetra_Map>& epetraMap,
                           int nGhost,
                           const int* ghostElements);
       /** virtual dtor */
@@ -59,14 +59,14 @@ namespace TSFExtended
        * as specified during construction of this object. 
        */
       virtual void importView(const Vector<double>& x,
-                              RefCountPtr<GhostView<double> >& ghostView) const ;
+                              RCP<GhostView<double> >& ghostView) const ;
 
     private:
-      RefCountPtr<const Epetra_Map> localMap_;
+      RCP<const Epetra_Map> localMap_;
 
-      RefCountPtr<const Epetra_Map> ghostMap_;
+      RCP<const Epetra_Map> ghostMap_;
 
-      RefCountPtr<Epetra_Import> importer_;
+      RCP<Epetra_Import> importer_;
     };
   
 }

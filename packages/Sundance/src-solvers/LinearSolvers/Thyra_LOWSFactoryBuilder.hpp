@@ -49,7 +49,7 @@ namespace Thyra
   {
   public:
     /** */
-    static RefCountPtr<LinearOpWithSolveFactoryBase<double> >
+    static RCP<LinearOpWithSolveFactoryBase<double> >
     createLOWSFactory(const ParameterList& params);
   };
 }  

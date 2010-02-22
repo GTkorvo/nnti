@@ -52,23 +52,23 @@ using namespace Teuchos;
 class EpetraVector : public Thyra::VectorDefaultBase<double>,
                      public IndexableVector<double>,
                      public RawDataAccessibleVector<double>,
-                     public SundanceUtils::Printable
+                     public Sundance::Printable
 {
 public:
 
   /** Construct with a smart pointer to an Epetra vector space. */
-  EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs);
+  EpetraVector(const RCP<const VectorSpaceBase<double> >& vs);
 
   /** Construct with smart pointers to an Epetra vector space
       and an existing Epetra vector. */
-  EpetraVector(const RefCountPtr<const VectorSpaceBase<double> >& vs,
-    const RefCountPtr<Epetra_Vector>& vec);
+  EpetraVector(const RCP<const VectorSpaceBase<double> >& vs,
+    const RCP<Epetra_Vector>& vec);
 
 
   /** \name VectorBase interface */
   //@{
   /** */
-   RefCountPtr< const VectorSpaceBase<double> > 
+   RCP< const VectorSpaceBase<double> > 
    space() const {return vecSpace_;}
 
 #ifndef TRILINOS_8
@@ -141,12 +141,12 @@ public:
   void addToElement(Ordinal globalIndex, const double& value);
 
   /** set a group of elements */
-  void setElements(size_t numElems, const int* globalIndices, 
+  void setElements(int numElems, const int* globalIndices, 
     const double* values);
 
 
   /** add to a group of elements */
-  void addToElements(size_t numElems, const int* globalIndices, 
+  void addToElements(int numElems, const int* globalIndices, 
     const double* values);
 
   /** */
@@ -171,11 +171,11 @@ public:
       
 
   /** */
-  const RefCountPtr<Epetra_Vector>& epetraVec() const 
+  const RCP<Epetra_Vector>& epetraVec() const 
     {return epetraVec_;}
 
   /** */
-  RefCountPtr<Epetra_Vector>& epetraVec() {return epetraVec_;}
+  RCP<Epetra_Vector>& epetraVec() {return epetraVec_;}
 
   /** Get a read-only Epetra_Vector */
   static const Epetra_Vector& getConcrete(const TSFExtended::Vector<double>& tsfVec);
@@ -190,20 +190,20 @@ public:
 
 protected:    
   /** */
-  const RefCountPtr<const Epetra_Map>& epetraMap() const {return epetraMap_;}
+  const RCP<const Epetra_Map>& epetraMap() const {return epetraMap_;}
 
   /** */
   Range1D validateRange(const Range1D& rng) const ;
 
 private:
 
-  RefCountPtr<Epetra_Vector> epetraVec_;
+  RCP<Epetra_Vector> epetraVec_;
 
-  RefCountPtr<const Thyra::VectorSpaceBase<double> > vecSpace_;
+  RCP<const Thyra::VectorSpaceBase<double> > vecSpace_;
 
-  RefCountPtr<const EpetraVectorSpace> epetraVecSpace_;
+  RCP<const EpetraVectorSpace> epetraVecSpace_;
 
-  RefCountPtr<const Epetra_Map> epetraMap_;
+  RCP<const Epetra_Map> epetraMap_;
 
   int localOffset_;
 

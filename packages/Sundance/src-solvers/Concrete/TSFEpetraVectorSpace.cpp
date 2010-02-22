@@ -103,7 +103,7 @@ EpetraVectorSpace::createMembers(int n) const
   RCP<const VectorSpaceBase<double> > small 
     = Thyra::defaultSpmdVectorSpace<double>(n);
   Array<RCP<VectorBase<double> > > vecs(n);
-  for (unsigned int i=0; i<vecs.size(); i++)
+  for (int i=0; i<vecs.size(); i++)
     {
       vecs[i] = createMember();
     }

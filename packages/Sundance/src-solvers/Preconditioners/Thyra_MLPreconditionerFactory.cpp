@@ -45,7 +45,7 @@ using namespace Thyra ;
 // Constructors/initializers/accessors
   
 MLPreconditionerFactory
-::MLPreconditionerFactory(const RefCountPtr<ParameterList>& params)
+::MLPreconditionerFactory(const RCP<ParameterList>& params)
   :epetraFwdOpViewExtractor_(Teuchos::rcp(new EpetraOperatorViewExtractorStd())),
    paramList_(params)
 {}
@@ -80,17 +80,17 @@ std::string MLPreconditionerFactory
     }
 }
   
-RefCountPtr<ParameterList> MLPreconditionerFactory
+RCP<ParameterList> MLPreconditionerFactory
 ::defaultParameters(const EMLProblemType& probType) const 
 {
   return defaultParameters(probToString(probType));
 }
 
   
-RefCountPtr<ParameterList> MLPreconditionerFactory
+RCP<ParameterList> MLPreconditionerFactory
 ::defaultParameters(const string& probType) const 
 {
-  RefCountPtr<ParameterList> rtn = rcp(new ParameterList());
+  RCP<ParameterList> rtn = rcp(new ParameterList());
   int err = ML_Epetra::SetDefaults(probType, *rtn);
   TEST_FOR_EXCEPTION(err != 0, std::runtime_error,
                      "unable to find default parameters for problem type "
@@ -103,7 +103,7 @@ RefCountPtr<ParameterList> MLPreconditionerFactory
 
 bool MLPreconditionerFactory::isCompatible( const LinearOpBase<double> &fwdOp ) const
 {
-  Teuchos::RefCountPtr<const Epetra_Operator> epetraFwdOp;
+  Teuchos::RCP<const Epetra_Operator> epetraFwdOp;
   EOpTransp                                     epetraFwdOpTransp;
   EApplyEpetraOpAs                            epetraFwdOpApplyAs;
   EAdjointEpetraOp                            epetraFwdOpAdjointSupport;
@@ -130,14 +130,14 @@ bool MLPreconditionerFactory::applyTransposeSupportsConj(EConj conj) const
   return false; // See comment below
 }
 
-Teuchos::RefCountPtr<PreconditionerBase<double> >
+Teuchos::RCP<PreconditionerBase<double> >
 MLPreconditionerFactory::createPrec() const
 {
   return Teuchos::rcp(new DefaultPreconditioner<double>());
 }
 
 void MLPreconditionerFactory::initializePrec(
-                                             const Teuchos::RefCountPtr<const LinearOpBase<double> >    &fwdOp
+                                             const Teuchos::RCP<const LinearOpBase<double> >    &fwdOp
                                              ,PreconditionerBase<double>                                *prec
                                              ,const ESupportSolveUse                                    supportSolveUse
                                              ) const
@@ -153,7 +153,7 @@ void MLPreconditionerFactory::initializePrec(
   using Teuchos::get_optional_extra_data;
   Teuchos::Time totalTimer(""), timer("");
   totalTimer.start(true);
-  const Teuchos::RefCountPtr<Teuchos::FancyOStream> out       = this->getOStream();
+  const Teuchos::RCP<Teuchos::FancyOStream> out       = this->getOStream();
   const Teuchos::EVerbosityLevel                    verbLevel = this->getVerbLevel();
   Teuchos::OSTab tab(out);
   if(out.get() && static_cast<int>(verbLevel) >= static_cast<int>(Teuchos::VERB_LOW))
@@ -165,7 +165,7 @@ void MLPreconditionerFactory::initializePrec(
   //
   // Unwrap and get the forward Epetra_Operator object
   //
-  Teuchos::RefCountPtr<const Epetra_Operator> epetraFwdOp;
+  Teuchos::RCP<const Epetra_Operator> epetraFwdOp;
   EOpTransp                                     epetraFwdOpTransp;
   EApplyEpetraOpAs                            epetraFwdOpApplyAs;
   EAdjointEpetraOp                            epetraFwdOpAdjointSupport;
@@ -174,7 +174,7 @@ void MLPreconditionerFactory::initializePrec(
                                              fwdOp,&epetraFwdOp,&epetraFwdOpTransp,&epetraFwdOpApplyAs,&epetraFwdOpAdjointSupport,&epetraFwdOpScalar
                                              );
   // Validate what we get is what we need
-  RefCountPtr<const Epetra_RowMatrix>
+  RCP<const Epetra_RowMatrix>
     epetraFwdRowMat = rcp_dynamic_cast<const Epetra_RowMatrix>(epetraFwdOp,true);
   TEST_FOR_EXCEPTION(
                      epetraFwdOpApplyAs != EPETRA_OP_APPLY_APPLY, std::logic_error
@@ -188,12 +188,12 @@ void MLPreconditionerFactory::initializePrec(
   //
   // Get the EpetraLinearOp object that is used to implement the preconditoner linear op
   //
-  RefCountPtr<EpetraLinearOp>
+  RCP<EpetraLinearOp>
     epetra_precOp = rcp_dynamic_cast<EpetraLinearOp>(defaultPrec->getNonconstUnspecifiedPrecOp(),true);
   //
   // Get the embedded ML_Epetra::MultiLevelPreconditioner object if it exists
   //
-  Teuchos::RefCountPtr<ML_Epetra::MultiLevelPreconditioner> ml_precOp;
+  Teuchos::RCP<ML_Epetra::MultiLevelPreconditioner> ml_precOp;
   if(epetra_precOp.get())
     ml_precOp = rcp_dynamic_cast<ML_Epetra::MultiLevelPreconditioner>(epetra_precOp->epetra_op(),true);
   //
@@ -284,7 +284,7 @@ void MLPreconditionerFactory::initializePrec(
 
 void MLPreconditionerFactory::uninitializePrec(
                                                PreconditionerBase<double>                          *prec
-                                               ,Teuchos::RefCountPtr<const LinearOpBase<double> >  *fwdOp
+                                               ,Teuchos::RCP<const LinearOpBase<double> >  *fwdOp
                                                ,ESupportSolveUse                                   *supportSolveUse
                                                ) const
 {
@@ -293,7 +293,7 @@ void MLPreconditionerFactory::uninitializePrec(
 
 // Overridden from ParameterListAcceptor
 
-void MLPreconditionerFactory::setParameterList(Teuchos::RefCountPtr<Teuchos::ParameterList> const& paramList)
+void MLPreconditionerFactory::setParameterList(Teuchos::RCP<Teuchos::ParameterList> const& paramList)
 {
   TEST_FOR_EXCEPT(paramList.get()==NULL);
   // Don't know how to validate an ML list
@@ -301,21 +301,21 @@ void MLPreconditionerFactory::setParameterList(Teuchos::RefCountPtr<Teuchos::Par
   paramList_ = paramList;
 }
 
-Teuchos::RefCountPtr<Teuchos::ParameterList>
+Teuchos::RCP<Teuchos::ParameterList>
 MLPreconditionerFactory::getNonconstParameterList()
 {
   return paramList_;
 }
 
-Teuchos::RefCountPtr<Teuchos::ParameterList>
+Teuchos::RCP<Teuchos::ParameterList>
 MLPreconditionerFactory::unsetParameterList()
 {
-  Teuchos::RefCountPtr<Teuchos::ParameterList> _paramList = paramList_;
+  Teuchos::RCP<Teuchos::ParameterList> _paramList = paramList_;
   paramList_ = Teuchos::null;
   return _paramList;
 }
 
-Teuchos::RefCountPtr<const Teuchos::ParameterList>
+Teuchos::RCP<const Teuchos::ParameterList>
 MLPreconditionerFactory::getParameterList() const
 {
   return paramList_;
@@ -331,10 +331,10 @@ std::string MLPreconditionerFactory::description() const
   return oss.str();
 }
 
-RefCountPtr<ParameterList> MLPreconditionerFactory
+RCP<ParameterList> MLPreconditionerFactory
 ::reviseDefaultList(const ParameterList& defaults, const ParameterList& revisions) const
 {
-  RefCountPtr<ParameterList> rtn = rcp(new ParameterList(defaults));
+  RCP<ParameterList> rtn = rcp(new ParameterList(defaults));
 
   for (ParameterList::ConstIterator i=revisions.begin(); i != revisions.end(); i++)
     {

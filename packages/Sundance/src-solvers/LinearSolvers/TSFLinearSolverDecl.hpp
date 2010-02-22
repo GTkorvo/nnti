@@ -41,7 +41,7 @@
 
 inline static Teuchos::Time& solveTimer() 
 {
-  static Teuchos::RefCountPtr<Teuchos::Time> rtn 
+  static Teuchos::RCP<Teuchos::Time> rtn 
     = Teuchos::TimeMonitor::getNewTimer("linear solve"); 
   return *rtn;
 }
@@ -49,23 +49,23 @@ inline static Teuchos::Time& solveTimer()
 namespace TSFExtended
 {
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
   
 /**
  *
  */
 template <class Scalar>
-class LinearSolver : public SundanceUtils::Handle<LinearSolverBase<Scalar> >
+class LinearSolver : public Sundance::Handle<LinearSolverBase<Scalar> >
 {
 public:
   /** */
-  LinearSolver() : SundanceUtils::Handle<LinearSolverBase<Scalar> >() {;}
+  LinearSolver() : Sundance::Handle<LinearSolverBase<Scalar> >() {;}
   /** */
-  LinearSolver( SundanceUtils::Handleable<LinearSolverBase<Scalar> >* rawPtr) 
-    : SundanceUtils::Handle<LinearSolverBase<Scalar> >(rawPtr) {;}
+  LinearSolver( Sundance::Handleable<LinearSolverBase<Scalar> >* rawPtr) 
+    : Sundance::Handle<LinearSolverBase<Scalar> >(rawPtr) {;}
   /** */
-  LinearSolver(const RefCountPtr<LinearSolverBase<Scalar> >& smartPtr)
-    : SundanceUtils::Handle<LinearSolverBase<Scalar> >(smartPtr) {;}
+  LinearSolver(const RCP<LinearSolverBase<Scalar> >& smartPtr)
+    : Sundance::Handle<LinearSolverBase<Scalar> >(smartPtr) {;}
 
 
   /** Change the convergence tolerance. Default does nothing. */

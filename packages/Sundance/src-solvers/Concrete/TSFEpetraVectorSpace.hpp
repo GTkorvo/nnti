@@ -50,7 +50,7 @@ class EpetraVectorSpace
 public:
 
   /** */
-  EpetraVectorSpace(const RefCountPtr<const Epetra_Map>& map);
+  EpetraVectorSpace(const RCP<const Epetra_Map>& map);
     
 
   /** @name Overridden form Teuchos::Describable */
@@ -69,11 +69,11 @@ public:
   bool isCompatible(const VectorSpaceBase<double>& other) const ;
 
   /** */
-  RefCountPtr<const VectorSpaceFactoryBase<double> > 
+  RCP<const VectorSpaceFactoryBase<double> > 
   smallVecSpcFcty() const ;
 
   /** \brief clone the space */
-  RefCountPtr< const VectorSpaceBase<double> > clone() const ;
+  RCP< const VectorSpaceBase<double> > clone() const ;
 
   //@}
 
@@ -83,7 +83,7 @@ public:
   /** \name Overidden from SpmdVectorSpaceBase */
   //@{
   /** */
-  Teuchos::RefCountPtr<const Teuchos::Comm<Ordinal> > getComm() const
+  Teuchos::RCP<const Teuchos::Comm<Ordinal> > getComm() const
     {return comm_;}
 
   /** */
@@ -98,29 +98,29 @@ public:
 
 
  /** */
-  const RefCountPtr<const Epetra_Map>& epetraMap() const 
+  const RCP<const Epetra_Map>& epetraMap() const 
     {return epetraMap_;}
 
 
 protected:
   /** */
-  Teuchos::RefCountPtr<const Teuchos::Comm<Ordinal> > 
+  Teuchos::RCP<const Teuchos::Comm<Ordinal> > 
   epetraCommToTeuchosComm(const Epetra_Comm& epComm) const ;
   
   /** @name Protected overridden from VectorSpace */
   //@{
   /** \brief create a vector */
-  RefCountPtr<VectorBase<double> > createMember() const;
+  RCP<VectorBase<double> > createMember() const;
   /** \brief create a multivector */
-  RefCountPtr<MultiVectorBase<double> > createMembers(int numVecs) const;
+  RCP<MultiVectorBase<double> > createMembers(int numVecs) const;
   //@}
 private:
   /** */
-  RefCountPtr<const VectorSpaceFactoryBase<double> > smallVecSpcFactory_;
+  RCP<const VectorSpaceFactoryBase<double> > smallVecSpcFactory_;
   /** */
-  RefCountPtr<const Epetra_Map> epetraMap_;
+  RCP<const Epetra_Map> epetraMap_;
 
-  Teuchos::RefCountPtr<const Teuchos::Comm<Ordinal> > comm_;
+  Teuchos::RCP<const Teuchos::Comm<Ordinal> > comm_;
 
   Ordinal localSubDim_;
 

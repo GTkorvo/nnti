@@ -77,14 +77,14 @@ public:
    * \brief Return a smart pointer for the range space 
    * for <tt>this</tt> operator.
    */
-  Teuchos::RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > range() const 
+  Teuchos::RCP< const Thyra::VectorSpaceBase<Scalar> > range() const 
     {
       return range_;
     }
 
   /** \brief Return a smart pointer for the domain space for <tt>this</tt> operator.
    */
-  Teuchos::RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > domain() const 
+  Teuchos::RCP< const Thyra::VectorSpaceBase<Scalar> > domain() const 
     {
       return domain_;
     }
@@ -116,8 +116,8 @@ private:
   int numDomainBlocks_;
   VectorSpace<Scalar> singleBlockRange_;
   int numRangeBlocks_;
-  Teuchos::RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > domain_;
-  Teuchos::RefCountPtr< const Thyra::VectorSpaceBase<Scalar> > range_;
+  Teuchos::RCP< const Thyra::VectorSpaceBase<Scalar> > domain_;
+  Teuchos::RCP< const Thyra::VectorSpaceBase<Scalar> > range_;
 }; 
 }
 

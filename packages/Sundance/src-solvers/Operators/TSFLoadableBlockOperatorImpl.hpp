@@ -46,11 +46,11 @@ template <class Scalar> inline
 LoadableBlockOperator<Scalar>:: LoadableBlockOperator(
   const VectorSpace<Scalar>& domain,
   int lowestLocalCol,
-  const RefCountPtr<Array<int> >& isBCCol,
-  const RefCountPtr<std::set<int> >& remoteBCCols,
+  const RCP<Array<int> >& isBCCol,
+  const RCP<std::set<int> >& remoteBCCols,
   const VectorSpace<Scalar>& range,
   int lowestLocalRow,
-  const RefCountPtr<Array<int> >& isBCRow)
+  const RCP<Array<int> >& isBCRow)
   : SimpleBlockOp<Scalar>(domain, range),
     isBCCol_(isBCCol),
     isBCRow_(isBCRow),
@@ -106,12 +106,12 @@ void LoadableBlockOperator<Scalar>::addToRow(int globalRowIndex,
         
   if ((*isBCRow_)[globalRowIndex - lowestLocalRow_])
   {
-    if (intCols.size() > 0U) /* do (BC, internal) block */
+    if (intCols.size() > 0) /* do (BC, internal) block */
     {
       TEST_FOR_EXCEPTION(true, std::logic_error,
         "There should be no entries in the (BC, internal) block");
     }
-    if (bcCols.size() > 0U) /* do (BC, BC) block */
+    if (bcCols.size() > 0) /* do (BC, BC) block */
     {
       loadableBlock(1,1)->addToRow(globalRowIndex, bcCols.size(), 
         &(bcCols[0]), &(bcVals[0]));
@@ -119,12 +119,12 @@ void LoadableBlockOperator<Scalar>::addToRow(int globalRowIndex,
   }
   else
   {
-    if (intCols.size() > 0U) /* do (internal, internal) block */
+    if (intCols.size() > 0) /* do (internal, internal) block */
     {
       loadableBlock(0,0)->addToRow(globalRowIndex, intCols.size(), 
         &(intCols[0]), &(intVals[0]));
     }
-    if (bcCols.size() > 0U) /* do (internal, BC) block */
+    if (bcCols.size() > 0) /* do (internal, BC) block */
     {
       loadableBlock(0,1)->addToRow(globalRowIndex, bcCols.size(), 
         &(bcCols[0]), &(bcVals[0]));

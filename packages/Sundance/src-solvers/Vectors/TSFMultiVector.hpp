@@ -53,7 +53,7 @@ namespace TSFExtended
   
 
   template <class Scalar>
-  class MultiVector : public SundanceUtils::Handle<Thyra::MultiVectorBase<Scalar> >
+  class MultiVector : public Sundance::Handle<Thyra::MultiVectorBase<Scalar> >
     {
     public:
 
@@ -63,38 +63,38 @@ namespace TSFExtended
 
 
       /** Get mutable view of column vector  */
-      //      virtual Teuchos::RefCountPtr<Vector<Scalar> > col(Index j) const;
+      //      virtual Teuchos::RCP<Vector<Scalar> > col(Index j) const;
       virtual Vector<Scalar> col(Index j) const;
 
 
 
       /** Get nonmutable view of column vector  */
-      //virtual Teuchos::RefCountPtr<const Vector<Scalar> > col(Index j) const;
+      //virtual Teuchos::RCP<const Vector<Scalar> > col(Index j) const;
       virtual const Vector<Scalar> col(Index j) const;
 
 
 
       /** Clone the multivector, if supported  */
-      //virtual Teuchos::RefCountPtr<MultiVector<Scalar> > clone_mv() const;
+      //virtual Teuchos::RCP<MultiVector<Scalar> > clone_mv() const;
       virtual MultiVector<Scalar> clone_mv() const;
 
 
         /** Returns a const sub-view of a contiguous set of columns of
 	    the this multi-vector. */
-//        virtual Teuchos::RefCountPtr<const MultiVector<Scalar> > 
+//        virtual Teuchos::RCP<const MultiVector<Scalar> > 
 //               subView( const Range1D& col_rng ) const;
        virtual const MultiVector<Scalar> subView(const Range1D& col_rng) const;
 
 
        /** Returns a non-const sub-view of a contiguous set of columns
 	   of the t his multi-vector. */
-//        virtual Teuchos::RefCountPtr<MultiVector<Scalar> > 
+//        virtual Teuchos::RCP<MultiVector<Scalar> > 
 //               subView( const Range1D& col_rng );
        virtual MultiVector<Scalar> subView(const Range1D& col_rng);
 
         /** Returns a const sub-view of a non-contiguous set of columns of this
 	    multi-vector. */
-//       virtual Teuchos::RefCountPtr<const MultiVector<Scalar> > 
+//       virtual Teuchos::RCP<const MultiVector<Scalar> > 
 //             subView( const int numCols, const int cols[] ) const;
        virtual const MultiVector<Scalar> subView( const int numCols, 
 
@@ -201,7 +201,7 @@ namespace TSFExtended
 
     /// This method is simply overridden to return <tt>this->clone_lons()</tt>.
 
-       //Teuchos::RefCountPtr<const LinearOp<Scalar> > clone() const;
+       //Teuchos::RCP<const LinearOp<Scalar> > clone() const;
         LinearOperator<Scalar> clone() const;
 
         //@}

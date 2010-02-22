@@ -46,7 +46,7 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 
 /* */
 template <class Scalar> inline

@@ -84,7 +84,7 @@ LinearOperator<double> HeatOperator1D::getOp() const
   int nProc = MPIComm::world().getNProc();
   LinearOperator<double> rtn = matrixFactory_->createMatrix();
       
-  RefCountPtr<LoadableMatrix<double> > mat = rtn.matrix();
+  RCP<LoadableMatrix<double> > mat = rtn.matrix();
 
   /* fill in with the heat operator given the current value of c_j */
   for (int i=0; i<nLocalRows_; i++)

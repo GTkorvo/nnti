@@ -54,11 +54,11 @@ using namespace Teuchos;
     LoadableBlockOperator(
       const VectorSpace<Scalar>& domain,
       int lowestLocalCol,
-      const RefCountPtr<Array<int> >& isBCCol,
-      const RefCountPtr<std::set<int> >& remoteBCCols,
+      const RCP<Array<int> >& isBCCol,
+      const RCP<std::set<int> >& remoteBCCols,
       const VectorSpace<Scalar>& range,
       int lowestLocalRow,
-      const RefCountPtr<Array<int> >& isBCRow);
+      const RCP<Array<int> >& isBCRow);
       
     /** Virtual dtor */
     virtual ~LoadableBlockOperator(){;}
@@ -91,9 +91,9 @@ using namespace Teuchos;
     /** Cast a block to LoadableMatrix, with safety checks */
     RCP<LoadableMatrix<Scalar> > loadableBlock(int i, int j);
 
-    RefCountPtr<Array<int> > isBCCol_;
-    RefCountPtr<Array<int> > isBCRow_;
-    RefCountPtr<std::set<int> > remoteBCCols_;
+    RCP<Array<int> > isBCCol_;
+    RCP<Array<int> > isBCRow_;
+    RCP<std::set<int> > remoteBCCols_;
     int lowestLocalRow_;
     int lowestLocalCol_;
     int highestLocalRow_;

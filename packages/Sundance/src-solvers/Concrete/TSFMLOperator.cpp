@@ -78,7 +78,7 @@ void MLOperator::generalApply(const Thyra::EOpTransp M_trans,
 
   /* if beta != 0, we have to create a temporary vector to hold the
    * intermediate result beta*y. */
-  RefCountPtr<Thyra::VectorBase<double> > tsfOut;
+  RCP<Thyra::VectorBase<double> > tsfOut;
   Epetra_Vector* tmp;
 
   if (beta!=0.0) /* we need to have storage for the result of op*x */

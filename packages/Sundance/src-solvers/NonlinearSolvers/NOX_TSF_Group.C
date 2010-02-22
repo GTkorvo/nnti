@@ -36,7 +36,7 @@
 #include "SundanceOut.hpp"
 
 
-using namespace SundanceUtils;
+using namespace Sundance;
 
 NOX::TSF::Group::Group(const TSFExtended::Vector<double>& initcond, 
   const TSFExtended::NonlinearOperator<double>& nonlinOp,
@@ -168,7 +168,7 @@ NOX::Abstract::Group* NOX::TSF::Group::clone(NOX::CopyType type) const
   return new NOX::TSF::Group(*this, type);
 }
 #else
-RefCountPtr<NOX::Abstract::Group> NOX::TSF::Group::clone(NOX::CopyType type) const 
+RCP<NOX::Abstract::Group> NOX::TSF::Group::clone(NOX::CopyType type) const 
 {
   return rcp(new NOX::TSF::Group(*this, type));
 }

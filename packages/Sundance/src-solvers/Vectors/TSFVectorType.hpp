@@ -40,7 +40,7 @@ namespace TSFExtended
    * vector spaces and operators of a given type.
    */
   template <class Scalar>
-  class VectorType : public SundanceUtils::Handle<VectorTypeExtensions<Scalar> >
+  class VectorType : public Sundance::Handle<VectorTypeExtensions<Scalar> >
   {
   public:
     HANDLE_CTORS(VectorType<Scalar>, VectorTypeExtensions<Scalar>);
@@ -70,7 +70,7 @@ namespace TSFExtended
     /** 
      * Create an importer for ghost elements
      **/
-    RefCountPtr<GhostImporter<Scalar> > 
+    RCP<GhostImporter<Scalar> > 
     createGhostImporter(const VectorSpace<Scalar>& space,
                         int nGhost,
                         const int* ghostIndices) const ;
@@ -79,7 +79,7 @@ namespace TSFExtended
      * Create a matrix factory of type compatible with this vector type,
      * sized according to the given domain and range spaces.
      */
-    virtual RefCountPtr<MatrixFactory<Scalar> >
+    virtual RCP<MatrixFactory<Scalar> >
     createMatrixFactory(const VectorSpace<Scalar>& domain,
                         const VectorSpace<Scalar>& range) const ;
                                                       
@@ -127,7 +127,7 @@ namespace TSFExtended
   }
 
   template <class Scalar> inline 
-  RefCountPtr<GhostImporter<Scalar> > 
+  RCP<GhostImporter<Scalar> > 
   VectorType<Scalar>::createGhostImporter(const VectorSpace<Scalar>& space,
                                          int nGhost,
                                          const int* ghostIndices) const
@@ -136,7 +136,7 @@ namespace TSFExtended
   }
 
   template <class Scalar> inline
-  RefCountPtr<MatrixFactory<Scalar> >
+  RCP<MatrixFactory<Scalar> >
   VectorType<Scalar>::createMatrixFactory(const VectorSpace<Scalar>& domain,
                                           const VectorSpace<Scalar>& range) const
   {

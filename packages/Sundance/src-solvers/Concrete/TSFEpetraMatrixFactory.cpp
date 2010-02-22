@@ -45,8 +45,8 @@ using namespace TSFExtended;
 using namespace Teuchos;
 using namespace Thyra;
 
-EpetraMatrixFactory::EpetraMatrixFactory(const RefCountPtr<const EpetraVectorSpace>& domain,
-                         const RefCountPtr<const EpetraVectorSpace>& range)
+EpetraMatrixFactory::EpetraMatrixFactory(const RCP<const EpetraVectorSpace>& domain,
+                         const RCP<const EpetraVectorSpace>& range)
   : graph_(rcp(new Epetra_CrsGraph(Copy, *(range->epetraMap()), 0))),
     range_(range),
     domain_(domain)
@@ -137,7 +137,7 @@ const Epetra_CrsGraph& EpetraMatrixFactory::graph() const
 
 LinearOperator<double> EpetraMatrixFactory::createMatrix() const
 {
-  RefCountPtr<LinearOpBase<double> > A 
+  RCP<LinearOpBase<double> > A 
     = rcp(new EpetraMatrix(graph(), epDomain(), epRange()));
   return A;
 }

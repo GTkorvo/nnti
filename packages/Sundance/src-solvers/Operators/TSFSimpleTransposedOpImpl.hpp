@@ -46,7 +46,7 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 using std::endl;
 using namespace std;
 
@@ -117,7 +117,7 @@ LinearOperator<Scalar> transposedOperator(
 
 
   /* Return a transposed operator */
-  RefCountPtr<LinearOpBase<Scalar> > A
+  RCP<LinearOpBase<Scalar> > A
     = rcp(new SimpleTransposedOp<Scalar>(op));
       
   return A;

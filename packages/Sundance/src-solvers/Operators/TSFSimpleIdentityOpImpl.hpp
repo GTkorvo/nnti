@@ -44,7 +44,7 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
-using namespace SundanceUtils;
+using namespace Sundance;
 using std::endl;
 using namespace std;
 
@@ -76,7 +76,7 @@ template <class Scalar> inline
 LinearOperator<Scalar> identityOperator(
   const VectorSpace<Scalar>& space)
 {
-  RefCountPtr<LinearOpBase<Scalar> > op 
+  RCP<LinearOpBase<Scalar> > op 
     = rcp(new SimpleIdentityOp<Scalar>(space));
 
   return op;
