@@ -75,12 +75,14 @@ namespace TSFExtended
       virtual void addToElement(Ordinal globalIndex, const Scalar& value) = 0 ;
 
       /** set a group of elements */
-      virtual void setElements(Ordinal numElems, const int* globalIndices, 
-                               const Scalar* values) ;
+      virtual void setElements(Ordinal numElems, 
+        const Ordinal* globalIndices, 
+        const Scalar* values) ;
 
       /** add to a group of elements */
-      virtual void addToElements(Ordinal numElems, const int* globalIndices, 
-                         const Scalar* values);
+      virtual void addToElements(Ordinal numElems, 
+        const Ordinal* globalIndices, 
+        const Scalar* values);
 
       /** Do whatever finalization steps are needed by the implementation,
        for instance, synchronizing border elements. The default implementation
@@ -92,8 +94,8 @@ namespace TSFExtended
    * setElement(). If at all possible, this should be overridden
    * with a method specialized to the underlying type.  */
   template <class Scalar> 
-  inline void LoadableVector<Scalar>::setElements(int numElems, 
-                                                  const int* globalIndices, 
+  inline void LoadableVector<Scalar>::setElements(Ordinal numElems, 
+                                                  const Ordinal* globalIndices, 
                                                   const Scalar* values)
   {
     for (int i=0; i<numElems; i++)

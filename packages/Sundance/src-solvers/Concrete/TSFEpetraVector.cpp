@@ -28,6 +28,7 @@
 #include "TSFEpetraVectorSpace.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_dyn_cast.hpp"
+#include "Teuchos_Workspace.hpp"
 #include "Thyra_DefaultSpmdVector.hpp"
 #ifdef HAVE_MPI
 #include "Teuchos_DefaultMpiComm.hpp"
