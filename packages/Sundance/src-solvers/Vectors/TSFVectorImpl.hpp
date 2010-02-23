@@ -37,6 +37,8 @@
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultSpmdVector.hpp"
 #include "SundancePrintable.hpp"
+#include "SundanceOut.hpp"
+#include "SundanceTabs.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 #include "TSFVectorSpaceImpl.hpp"
@@ -44,10 +46,14 @@
 #endif
 
 
-using namespace Sundance;
+
 
 namespace TSFExtended
 {
+using Sundance::Out;
+using Sundance::Tabs;
+using Sundance::Printable;
+using std::endl;
 
 //===========================================================================
 template <class Scalar> 
@@ -57,7 +63,7 @@ void Vector<Scalar>::setBlock(int i, const Vector<Scalar>& v)
     dynamic_cast<Thyra::DefaultProductVector<Scalar>* >(this->ptr().get());
   TEST_FOR_EXCEPTION(pv == 0, std::runtime_error,
     "vector is not a product vector");
-  Thyra::assign(pv->getNonconstVectorBlock(i).get(), *(v.ptr().get()));
+  Thyra::assign(pv->getNonconstVectorBlock(i).ptr(), *(v.ptr().ptr()));
 }  
 
 
@@ -181,10 +187,9 @@ RawDataAccessibleVector<Scalar>* Vector<Scalar>::castToRawDataAccessible()
 template <class Scalar> inline 
 Vector<Scalar>& Vector<Scalar>::scale(const Scalar& alpha)
 {
-  Thyra::VectorBase<Scalar>* p = this->ptr().get();
   {
     TimeMonitor t(*opTimer());
-    Thyra::Vt_S(p, alpha);
+    Thyra::Vt_S(this->ptr().ptr(), alpha);
   }
   return *this;
 }
@@ -197,8 +202,8 @@ template <class Scalar> inline
 Vector<Scalar>& Vector<Scalar>::update(const Scalar& alpha, 
   const Vector<Scalar>& x)
 {
-  Thyra::VectorBase<Scalar>* p = this->ptr().get();
-  TEST_FOR_EXCEPT(p==0);
+  Ptr<Thyra::VectorBase<Scalar> > p = this->ptr().ptr();
+  p.assert_not_null();
   const Thyra::VectorBase<Scalar>* px = x.ptr().get();
   TEST_FOR_EXCEPT(px==0);
   {
@@ -217,18 +222,15 @@ Vector<Scalar>& Vector<Scalar>::update(const Scalar& alpha,
 template <class Scalar> inline 
 Vector<Scalar>& Vector<Scalar>::acceptCopyOf(const Vector<Scalar>& x)
 {
-  Thyra::VectorBase<Scalar>* p = this->ptr().get();
-  const Thyra::VectorBase<Scalar>* px = x.ptr().get();
+  TimeMonitor t(*opTimer());
+  if (this->ptr().get()==0) 
   {
-    TimeMonitor t(*opTimer());
-    if (p==0) 
-    {
-      Vector<Scalar> me = x.space().createMember();
-      this->ptr() = me.ptr();
-      p = this->ptr().get();
-    }
-    Thyra::assign(p, *px);
+    Vector<Scalar> me = x.space().createMember();
+    this->ptr() = me.ptr();
   }
+  
+  Thyra::assign(this->ptr().ptr(), *(x.ptr()));
+
   return *this;
 }
 
@@ -252,7 +254,8 @@ Vector<Scalar> Vector<Scalar>::dotStar(const Vector<Scalar>& other) const
   Vector<Scalar> rtn = space().createMember();
   {
     TimeMonitor t(*opTimer());
-    Thyra::ele_wise_prod(1.0, *(this->ptr)(), *(other.ptr()), rtn.ptr().get());
+//    Thyra::ele_wise_prod(1.0, *(this->ptr()), *(other.ptr()), rtn.ptr().get());
+    Thyra::ele_wise_prod(1.0, *(this->ptr()), *(other.ptr()), rtn.ptr().ptr());
   }
   return rtn;
 }
@@ -265,7 +268,8 @@ void Vector<Scalar>::dotStarInto(
   const Vector<Scalar>& a, const Vector<Scalar>& b) const 
 {
   TimeMonitor t(*opTimer());
-  Thyra::ele_wise_prod(1.0, *(a.ptr()), *(b.ptr()), this->ptr().get());
+//  Thyra::ele_wise_prod(1.0, *(a.ptr()), *(b.ptr()), this->ptr().get());
+  Thyra::ele_wise_prod(1.0, *(a.ptr()), *(b.ptr()), this->ptr().ptr());
 }
 
 
@@ -279,7 +283,7 @@ Vector<Scalar> Vector<Scalar>::dotSlash(const Vector<Scalar>& other) const
   Vector<Scalar> rtn = space().createMember();
   {
     TimeMonitor t(*opTimer());
-    Thyra::ele_wise_divide(1.0, *(this->ptr)(), *(other.ptr()), rtn.ptr().get());
+    Thyra::ele_wise_divide(1.0, *(this->ptr)(), *(other.ptr()), rtn.ptr().ptr());
   }
   return rtn;
 }
@@ -325,11 +329,9 @@ Vector<Scalar> Vector<Scalar>::reciprocal() const
 template <class Scalar> inline 
 Vector<Scalar>& Vector<Scalar>::abs()
 {
-  Thyra::VectorBase<Scalar>* p = this->ptr().get();
-  const Thyra::VectorBase<Scalar>* px = this->ptr().get();
   {
     TimeMonitor t(*opTimer());
-    Thyra::abs(p, *px);
+    Thyra::abs(this->ptr().ptr(), *(this->ptr()));
   }
   return *this;
 }
@@ -342,12 +344,9 @@ Vector<Scalar>& Vector<Scalar>::abs()
 template <class Scalar> inline 
 Vector<Scalar>& Vector<Scalar>::reciprocal()
 {
-  Thyra::VectorBase<Scalar>* p = this->ptr().get();
-  const Thyra::VectorBase<Scalar>* px = this->ptr().get();
-  {
-    TimeMonitor t(*opTimer());
-    Thyra::reciprocal(p, *px);
-  }
+  TimeMonitor t(*opTimer());
+  Thyra::reciprocal(this->ptr().ptr(), *(this->ptr()));
+
   return *this;
 }
 
@@ -359,12 +358,14 @@ Vector<Scalar>& Vector<Scalar>::update(const Scalar& alpha,
   const Vector<Scalar>& x, 
   const Scalar& gamma)
 {
-  Thyra::VectorBase<Scalar>* p = this->ptr().get();
-  const Thyra::VectorBase<Scalar>* px = x.ptr().get();
-  {
-    TimeMonitor t(*opTimer());
-    Thyra::linear_combination(1, &alpha, &px, gamma, p);
-  }
+  TimeMonitor t(*opTimer());
+
+  ArrayView<const Scalar> a(&alpha, 1);
+  Teuchos::Ptr<const Thyra::VectorBase<Scalar> > px = x.ptr().ptr();
+  ArrayView<const Teuchos::Ptr<const Thyra::VectorBase<Scalar> > > apx(&px,1);
+  
+  Thyra::linear_combination(a, apx, gamma, this->ptr().ptr());
+
   return *this;
 }
 
@@ -379,19 +380,20 @@ Vector<Scalar>& Vector<Scalar>::update(const Scalar& alpha,
   const Vector<Scalar>& y, 
   const Scalar& gamma)
 {
-  Thyra::VectorBase<Scalar>* p = this->ptr().get();
-  const Thyra::VectorBase<Scalar>* px = x.ptr().get();
-  const Thyra::VectorBase<Scalar>* py = y.ptr().get();
-  {
-    TimeMonitor t(*opTimer());
-    double a[2];
-    a[0] = alpha;
-    a[1] = beta;
-    const Thyra::VectorBase<Scalar>* vecs[2];
-    vecs[0] = px;
-    vecs[1] = py;
-    Thyra::linear_combination(2, a, vecs, gamma, p);
-  }
+  TimeMonitor t(*opTimer());
+
+  Scalar a[2];
+  a[0] = alpha;
+  a[1] = beta;
+  ArrayView<const Scalar> av(a,2);
+
+  Ptr<const Thyra::VectorBase<Scalar> > vecs[2];
+  vecs[0] = x.ptr().ptr().getConst();
+  vecs[1] = y.ptr().ptr().getConst();
+  ArrayView<const Ptr<const Thyra::VectorBase<Scalar> > > vv(vecs,2);
+
+  Thyra::linear_combination(av, vv, gamma, this->ptr().ptr());
+
   return *this;
 }
 
@@ -472,7 +474,7 @@ void Vector<Scalar>::zero()
 {
   TimeMonitor t(*opTimer());
     
-  Thyra::assign(this->ptr().get(), 0.0);
+  Thyra::assign(this->ptr().ptr(), 0.0);
 }
 
 
@@ -484,7 +486,7 @@ void Vector<Scalar>::setToConstant(const Scalar& alpha)
 {
   TimeMonitor t(*opTimer());
     
-  Thyra::assign(this->ptr().get(), alpha);
+  Thyra::assign(this->ptr().ptr(), alpha);
 }
 
 
@@ -506,9 +508,10 @@ Scalar Vector<Scalar>::max(int& index)const
 {
   TimeMonitor t(*opTimer());
   Scalar maxEl;
-  Scalar* maxElP = &maxEl;
+  Ptr<Scalar> maxElP(&maxEl);
   Ordinal loc_index = -1;
-  Thyra::max(*(this->ptr)(), maxElP, &loc_index); 
+  Ptr<Ordinal> pind(&loc_index);
+  Thyra::max(*(this->ptr()), maxElP, pind); 
   index = loc_index;
   return maxEl;
 }
@@ -520,9 +523,10 @@ Scalar Vector<Scalar>::max(const Scalar& bound, int& index)const
 {
   TimeMonitor t(*opTimer());
   Scalar maxEl;
-  Scalar* maxElP = &maxEl;
+  Ptr<Scalar> maxElP(&maxEl);
   Ordinal loc_index = -1;
-  Thyra::maxLessThanBound(*(this->ptr)(), bound, maxElP, &loc_index); 
+  Ptr<Ordinal> pind(&loc_index);
+  Thyra::maxLessThanBound(*(this->ptr()), bound, maxElP, pind); 
   index = loc_index;
   return maxEl;
 
@@ -534,7 +538,7 @@ template <class Scalar> inline
 Scalar Vector<Scalar>::min()const
 {
   TimeMonitor t(*opTimer());
-  return Thyra::min(*(this->ptr)());
+  return Thyra::min(*(this->ptr()));
 }
 
 
@@ -544,9 +548,10 @@ Scalar Vector<Scalar>::min(int& index)const
 {
   TimeMonitor t(*opTimer());
   Scalar minEl;
-  Scalar* minElP = &minEl;
+  Ptr<Scalar> minElP(&minEl);
   Ordinal loc_index = -1;
-  Thyra::min(*(this->ptr)(), minElP, &loc_index); 
+  Ptr<Ordinal> pind(&loc_index);
+  Thyra::min(*(this->ptr()), minElP, pind); 
   index = loc_index;
   return minEl;
 }
@@ -558,9 +563,11 @@ Scalar Vector<Scalar>::min(const Scalar& bound, int& index)const
 {
   TimeMonitor t(*opTimer());
   Scalar minEl;
-  Scalar* minElP = &minEl;
+  Ptr<Scalar> minElP(&minEl);
   Ordinal loc_index = -1;
-  Thyra::minGreaterThanBound(*(this->ptr)(), bound, minElP, &loc_index); 
+  Ptr<Ordinal> pind(&loc_index);
+
+  Thyra::minGreaterThanBound(*(this->ptr)(), bound, minElP, pind); 
   index = loc_index;
   return minEl;
 }

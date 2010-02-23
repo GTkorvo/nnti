@@ -147,6 +147,8 @@ namespace TSFExtended
         cout << "y = " << y << endl;
         randomizeVec(a);
         randomizeVec(b);
+        cout << "a = " << a << endl;
+        cout << "b = " << b << endl;
 
         /* do the operation elementwise */
         for (SequentialIterator<Scalar> i=space_.begin(); i!=space_.end(); i++)
@@ -157,8 +159,8 @@ namespace TSFExtended
         /* do the operation with member functions */
         x = a + b ;
 
-        cout << "x=" << endl << x << endl;
-        cout << "y=" << endl << y << endl;
+        cout << "op   (a+b)=" << endl << x << endl;
+        cout << "loop (a+b)=" << endl << y << endl;
 	
         double err = (x-y).normInf();
 

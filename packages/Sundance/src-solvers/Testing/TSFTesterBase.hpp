@@ -75,7 +75,7 @@ namespace TSFExtended
   ::randomizeVec(Vector<Scalar>& x) const
   {
     typedef Teuchos::ScalarTraits<Scalar> ST;
-    Thyra::randomize(Scalar(-ST::one()),Scalar(+ST::one()),x.ptr().get());
+    Thyra::randomize(Scalar(-ST::one()),Scalar(+ST::one()),x.ptr().ptr());
     
   }
 

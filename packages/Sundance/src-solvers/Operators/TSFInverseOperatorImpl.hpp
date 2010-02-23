@@ -87,13 +87,14 @@ void InverseOperator<Scalar>::generalApply(
 
   if (alpha==Teuchos::ScalarTraits<Scalar>::zero())
   {
-    Vt_S(y, beta);
+    Ptr<VectorBase<Scalar> > yp(y);
+    Vt_S(yp, beta);
   }
   else
   {
     Vector<Scalar> temp = createMember(*(x.space()));
     Vector<Scalar> result;
-    assign(temp.ptr().get(), x);
+    assign(temp.ptr().ptr(), x);
     SolverState<Scalar> haveSoln;
     if (M_trans==Thyra::NOTRANS)
     {
@@ -108,7 +109,8 @@ void InverseOperator<Scalar>::generalApply(
       "InverseOperator<Scalar>::apply() " 
       << haveSoln.stateDescription());
     Vt_S(result.ptr().ptr(), alpha);
-    V_StVpV(y, beta, *y, *result.ptr().get());
+    Ptr<VectorBase<Scalar> > yp(y);
+    V_StVpV(yp, beta, *y, *(result.ptr()));
   }      
   SUNDANCE_MSG2(this->verb(), tab << "done InverseOperator::generalApply()");
 }

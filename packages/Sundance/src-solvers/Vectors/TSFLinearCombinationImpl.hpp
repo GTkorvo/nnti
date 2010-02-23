@@ -30,6 +30,8 @@
 #define TSFLINEARCOMBINATIONIMPL_HPP
 
 #include "SundanceDefs.hpp"
+#include "SundanceOut.hpp"
+#include "SundanceTabs.hpp"
 #include "TSFLinearCombinationDecl.hpp"
 
 
@@ -41,6 +43,11 @@
 
 namespace TSFExtendedOps
 {
+
+using Sundance::Out;
+using Sundance::Tabs;
+using std::endl;
+
 /* -------- methods of OpTimesLC ------ */
 
 template <class Scalar, class Node> inline
@@ -129,6 +136,7 @@ bool LC2<Scalar, Node1, Node2>::containsVector(const Thyra::VectorBase<Scalar>* 
 template <class Scalar, class Node1, class Node2> inline
 void LC2<Scalar, Node1, Node2>::evalInto(TSFExtended::Vector<Scalar>& result) const
 {
+  Tabs tab;
   x1_.evalInto(result);
   x2_.addInto(result, sign_);
 } 
