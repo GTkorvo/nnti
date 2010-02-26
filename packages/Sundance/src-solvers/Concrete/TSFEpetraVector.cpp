@@ -118,11 +118,14 @@ void EpetraVector::applyOpImpl(const RTOpPack::RTOpT< double >& op,
 		const ArrayView< const Ptr< const VectorBase< double > > > &  	vecs,
 		const ArrayView< const Ptr< VectorBase< double > > > &  	targ_vecs,
 		const Ptr< RTOpPack::ReductTarget > &  	reduct_obj,
-		const Ordinal  	first_ele_offset_in,
-		const Ordinal  	sub_dim_in,
 		const Ordinal  	global_offset_in	 
   ) const 
 {
+  
+  // ToDo: Remove this!
+  const Ordinal	first_ele_offset_in = 0;
+  const Ordinal	sub_dim_in = -1;
+
   using Teuchos::null;
   using Teuchos::dyn_cast;
   using Teuchos::Workspace;
@@ -162,7 +165,7 @@ void EpetraVector::applyOpImpl(const RTOpPack::RTOpT< double >& op,
   Thyra::apply_op_validate_input(
     "SpmdVectorBase<>::applyOp(...)",*space(),
     op, vecs, targ_vecs, reduct_obj,
-    first_ele_offset_in, sub_dim_in, global_offset_in
+    global_offset_in
     );
 #endif
 

@@ -77,8 +77,6 @@ public:
 		const ArrayView< const Ptr< const VectorBase< double > > > &  	vecs,
 		const ArrayView< const Ptr< VectorBase< double > > > &  	targ_vecs,
 		const Ptr< RTOpPack::ReductTarget > &  	reduct_obj,
-		const Ordinal  	first_ele_offset,
-		const Ordinal  	sub_dim,
 		const Ordinal  	global_offset	 
     ) const ;
 #else
