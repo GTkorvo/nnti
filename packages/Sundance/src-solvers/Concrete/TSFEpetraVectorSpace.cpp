@@ -30,6 +30,7 @@
 
 #include "Teuchos_DefaultSerialComm.hpp"
 #include "Thyra_DefaultSpmdVectorSpaceFactory.hpp"
+#include "Thyra_DefaultSpmdVectorSpace_decl.hpp"
 #include "Thyra_DefaultColumnwiseMultiVector.hpp"
 #include "SundanceOut.hpp"
 #include "Epetra_SerialComm.h"
