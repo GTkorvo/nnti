@@ -59,7 +59,7 @@ enum LCSign {LCAdd = 1, LCSubtract = -1};
 
 namespace TSFExtended
 {
-  using Thyra::Ordinal;
+  
 
   /** 
    * User-level vector class. 
@@ -302,19 +302,19 @@ namespace TSFExtended
     /** \name Element loading interface */
     //@{
     /** set a single element at the given global index */
-    void setElement(Ordinal globalIndex, const Scalar& value) ;
+    void setElement(OrdType globalIndex, const Scalar& value) ;
 
     /** add to the existing value of 
      * a single element at the given global index */
-    void addToElement(Ordinal globalIndex, const Scalar& value) ;
+    void addToElement(OrdType globalIndex, const Scalar& value) ;
 
     /** set a group of elements */
-    void setElements(int numElems, const int* globalIndices, 
+    void setElements(OrdType numElems, const OrdType* globalIndices, 
                      const Scalar* values) 
     {castToLoadable()->setElements(numElems, globalIndices, values);}
 
     /** add to a group of elements */
-    void addToElements(int numElems, const int* globalIndices, 
+    void addToElements(OrdType numElems, const OrdType* globalIndices, 
                        const Scalar* values)
     {castToLoadable()->addToElements(numElems, globalIndices, values);}
 
@@ -327,7 +327,7 @@ namespace TSFExtended
     /** \name Element access interface */
     //@{
     /** get the element at the given global index */
-    Scalar getElement(Ordinal globalIndex) const ;
+    Scalar getElement(OrdType globalIndex) const ;
     //{return castToAccessible()->getElement(globalIndex);}
 
     /** Get a batch of elements */
@@ -409,13 +409,13 @@ namespace TSFExtended
     RawDataAccessibleVector<Scalar>* castToRawDataAccessible();
 
     /** Test for valid index */
-    void boundscheck(Ordinal i, int dim) const ;
+    void boundscheck(OrdType i, int dim) const ;
 
     /** */
-    const Scalar& localElement(const Ordinal& blockIndex, const Ordinal& indexInBlock) const ;
+    const Scalar& localElement(const OrdType& blockIndex, const OrdType& indexInBlock) const ;
 
     /** */
-    Scalar& localElement(const Ordinal& blockIndex, const Ordinal& indexInBlock) ;
+    Scalar& localElement(const OrdType& blockIndex, const OrdType& indexInBlock) ;
       
       
   };

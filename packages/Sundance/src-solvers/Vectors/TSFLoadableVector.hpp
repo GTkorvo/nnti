@@ -34,7 +34,6 @@
 
 namespace TSFExtended
 {
-  using Thyra::Ordinal;
   /**
    * LoadableVector defines an interface through which elements can 
    * be loaded into a vector. Element loading is used extensively
@@ -68,20 +67,20 @@ namespace TSFExtended
       virtual ~LoadableVector() {;}
 
       /** set a single element at the given global index */
-      virtual void setElement(Ordinal globalIndex, const Scalar& value) = 0 ;
+      virtual void setElement(OrdType globalIndex, const Scalar& value) = 0 ;
 
       /** add to the existing value of 
        * a single element at the given global index */
-      virtual void addToElement(Ordinal globalIndex, const Scalar& value) = 0 ;
+      virtual void addToElement(OrdType globalIndex, const Scalar& value) = 0 ;
 
       /** set a group of elements */
-      virtual void setElements(Ordinal numElems, 
-        const Ordinal* globalIndices, 
+      virtual void setElements(OrdType numElems, 
+        const OrdType* globalIndices, 
         const Scalar* values) ;
 
       /** add to a group of elements */
-      virtual void addToElements(Ordinal numElems, 
-        const Ordinal* globalIndices, 
+      virtual void addToElements(OrdType numElems, 
+        const OrdType* globalIndices, 
         const Scalar* values);
 
       /** Do whatever finalization steps are needed by the implementation,
@@ -94,8 +93,8 @@ namespace TSFExtended
    * setElement(). If at all possible, this should be overridden
    * with a method specialized to the underlying type.  */
   template <class Scalar> 
-  inline void LoadableVector<Scalar>::setElements(Ordinal numElems, 
-                                                  const Ordinal* globalIndices, 
+  inline void LoadableVector<Scalar>::setElements(OrdType numElems, 
+                                                  const OrdType* globalIndices, 
                                                   const Scalar* values)
   {
     for (int i=0; i<numElems; i++)
@@ -108,11 +107,11 @@ namespace TSFExtended
    * addToElement(). If at all possible, this should be overridden
    * with a method specialized to the underlying type.  */
   template <class Scalar> 
-  inline void LoadableVector<Scalar>::addToElements(int numElems, 
-                                                    const int* globalIndices, 
+  inline void LoadableVector<Scalar>::addToElements(OrdType numElems, 
+                                                    const OrdType* globalIndices, 
                                                     const Scalar* values)
   {
-    for (int i=0; i<numElems; i++)
+    for (OrdType i=0; i<numElems; i++)
       {
         addToElement(globalIndices[i], values[i]);
       }

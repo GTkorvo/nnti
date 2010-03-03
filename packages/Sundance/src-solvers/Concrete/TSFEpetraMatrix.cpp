@@ -86,11 +86,10 @@ void EpetraMatrix::applyImpl(
 {
 
   using Teuchos::rcp_dynamic_cast;
-  typedef Thyra::Ordinal Ordinal;
 
-  const Ordinal numMvCols = X.domain()->dim();
+  const OrdType numMvCols = X.domain()->dim();
 
-  for (Ordinal col_j = 0; col_j < numMvCols; ++col_j) {
+  for (OrdType col_j = 0; col_j < numMvCols; ++col_j) {
 
     const RCP<const VectorBase<double> > x = X.col(col_j);
     const RCP<VectorBase<double> > y = Y->col(col_j);

@@ -35,7 +35,7 @@
 
 namespace TSFExtended
 {
-  using Thyra::Ordinal;
+  
 
   /**
    * TSFExtended::AccessibleVector defines an interface through which
@@ -54,7 +54,7 @@ namespace TSFExtended
       virtual ~AccessibleVector() {;}
 
       /** get the element at the given global index */
-      virtual const Scalar& getElement(Ordinal globalIndex) const = 0 ;
+      virtual const Scalar& getElement(OrdType globalIndex) const = 0 ;
 
       /** get a batch of elements. Slow default implementation loops
        * over calls to getElement(). */

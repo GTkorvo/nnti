@@ -44,7 +44,7 @@
 
 using namespace TSFExtended;
 using namespace Teuchos;
-using Thyra::Ordinal;
+
 
 static inline Time& createVecTimer() 
 {
@@ -213,9 +213,9 @@ VectorSpace<Scalar> VectorSpace<Scalar>::getBlock(const int i) const
 template <class Scalar> inline
 SequentialIterator<Scalar> VectorSpace<Scalar>::begin() const
 {
-  Ordinal blockIndex = -1;
-  Ordinal indexInCurrentBlock = -1;
-  Ordinal globalIndex = -1;
+  OrdType blockIndex = -1;
+  OrdType indexInCurrentBlock = -1;
+  OrdType globalIndex = -1;
 
   /* we need to check for remaining data to deal with the case where 
    * a space is empty */
@@ -245,9 +245,9 @@ SequentialIterator<Scalar> VectorSpace<Scalar>::end() const
 
 template <class Scalar> inline
 bool VectorSpace<Scalar>::advanceIndex(
-  Ordinal& blockIndex, 
-  Ordinal& indexInCurrentBlock,
-  Ordinal& globalIndex) const 
+  OrdType& blockIndex, 
+  OrdType& indexInCurrentBlock,
+  OrdType& globalIndex) const 
 {
   /* block index == -1 indicates the initialization call */
   if (blockIndex < 0)
@@ -289,7 +289,7 @@ bool VectorSpace<Scalar>::advanceIndex(
   {
     /* If we are a product space, first try to advance within 
      * the current block. */
-    Ordinal subBlock = 0;
+    OrdType subBlock = 0;
     if (getBlock(blockIndex).advanceIndex(subBlock, indexInCurrentBlock, globalIndex))
     {
       /* Advance was successful. */

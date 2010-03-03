@@ -77,7 +77,7 @@ public:
 		const ArrayView< const Ptr< const VectorBase< double > > > &  	vecs,
 		const ArrayView< const Ptr< VectorBase< double > > > &  	targ_vecs,
 		const Ptr< RTOpPack::ReductTarget > &  	reduct_obj,
-		const Ordinal  	global_offset	 
+		const OrdType  	global_offset	 
     ) const ;
 #else
   virtual void applyOp(
@@ -87,9 +87,9 @@ public:
     const int num_targ_vecs,
     VectorBase<double>*const targ_vecs[],
     RTOpPack::ReductTarget *reduct_obj,
-    const Ordinal first_ele_offset,
-    const Ordinal sub_dim,
-    const Ordinal global_offset
+    const OrdType first_ele_offset,
+    const OrdType sub_dim,
+    const OrdType global_offset
     ) const ;
 #endif
 
@@ -115,11 +115,11 @@ public:
   /** \name IndexableVector interface */
   //@{
   /** read the element at the given global index */
-  virtual const double& operator[](Ordinal globalIndex) const 
+  virtual const double& operator[](OrdType globalIndex) const 
     {return getElement(globalIndex);}
 
   /** writable access to the element at the given global index */
-  virtual double& operator[](Ordinal globalIndex) ;
+  virtual double& operator[](OrdType globalIndex) ;
   //@}
 
   /** \name Raw data access interface */
@@ -133,10 +133,10 @@ public:
   /** \name LoadableVector interface */
   //@{
   /** set a single element */
-  void setElement(Ordinal globalIndex, const double& value);
+  void setElement(OrdType globalIndex, const double& value);
 
   /** add to a single element */
-  void addToElement(Ordinal globalIndex, const double& value);
+  void addToElement(OrdType globalIndex, const double& value);
 
   /** set a group of elements */
   void setElements(int numElems, const int* globalIndices, 
@@ -154,10 +154,10 @@ public:
   /** \name AccessibleVector interface */
   //@{
   /** */
-  const double& getElement(Ordinal globalIndex) const ;
+  const double& getElement(OrdType globalIndex) const ;
 
   /** */
-  void getElements(const Ordinal* globalIndices, int numElems,
+  void getElements(const OrdType* globalIndices, int numElems,
     Teuchos::Array<double>& elems) const ;
   //@}
 

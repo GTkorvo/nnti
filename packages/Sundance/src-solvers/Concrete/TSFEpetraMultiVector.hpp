@@ -73,11 +73,11 @@ namespace TSFExtended
     /** \name IndexableVector interface */
     //@{
     /** read the element at the given global index */
-    virtual const double& operator[](Ordinal globalIndex) const 
+    virtual const double& operator[](OrdType globalIndex) const 
     {return getElement(globalIndex);}
 
     /** writable access to the element at the given global index */
-    virtual double& operator[](Ordinal globalIndex) ;
+    virtual double& operator[](OrdType globalIndex) ;
     //@}
 
     /** \name Raw data access interface */
@@ -91,18 +91,18 @@ namespace TSFExtended
     /** \name LoadableVector interface */
     //@{
     /** set a single element */
-    void setElement(Ordinal globalIndex, const double& value);
+    void setElement(OrdType globalIndex, const double& value);
 
     /** add to a single element */
-    void addToElement(Ordinal globalIndex, const double& value);
+    void addToElement(OrdType globalIndex, const double& value);
 
     /** set a group of elements */
-    void setElements(int numElems, const Ordinal* globalIndices, 
+    void setElements(int numElems, const OrdType* globalIndices, 
                      const double* values);
 
 
     /** add to a group of elements */
-    void addToElements(int numElems, const Ordinal* globalIndices, 
+    void addToElements(int numElems, const OrdType* globalIndices, 
                        const double* values);
 
     /** */
@@ -112,10 +112,10 @@ namespace TSFExtended
     /** \name AccessibleVector interface */
     //@{
     /** */
-    const double& getElement(Ordinal globalIndex) const ;
+    const double& getElement(OrdType globalIndex) const ;
 
     /** */
-    void getElements(const Ordinal* globalIndices, int numElems,
+    void getElements(const OrdType* globalIndices, int numElems,
                      vector<double>& elems) const ;
     //@}
       

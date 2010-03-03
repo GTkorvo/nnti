@@ -49,7 +49,7 @@
 
 using namespace TSFExtended;
 using namespace Thyra;
-using Thyra::Ordinal;
+
 using Teuchos::RCP;
 
 EpetraVectorSpace::EpetraVectorSpace(const RCP<const Epetra_Map>& m)
@@ -63,7 +63,7 @@ EpetraVectorSpace::EpetraVectorSpace(const RCP<const Epetra_Map>& m)
 {}
 
 
-Thyra::Ordinal EpetraVectorSpace::dim() const 
+OrdType EpetraVectorSpace::dim() const 
 {
   return epetraMap_->NumGlobalElements();
 }
@@ -141,10 +141,10 @@ string EpetraVectorSpace::description() const
 
 
 
-Teuchos::RCP<const Teuchos::Comm<Thyra::Ordinal> > 
+Teuchos::RCP<const Teuchos::Comm<OrdType> > 
 EpetraVectorSpace::epetraCommToTeuchosComm(const Epetra_Comm& epComm) const 
 {
-  RCP<const Comm<Thyra::Ordinal> > rtn;
+  RCP<const Comm<OrdType> > rtn;
 
 #ifdef HAVE_MPI
   const Epetra_MpiComm* mpiComm 
@@ -156,7 +156,7 @@ EpetraVectorSpace::epetraCommToTeuchosComm(const Epetra_Comm& epComm) const
 
   if (serialComm != 0)
   {
-    rtn  = rcp(new SerialComm<Thyra::Ordinal>());
+    rtn  = rcp(new SerialComm<OrdType>());
   }
 #ifdef HAVE_MPI
   else if (mpiComm != 0)
@@ -164,7 +164,7 @@ EpetraVectorSpace::epetraCommToTeuchosComm(const Epetra_Comm& epComm) const
     MPI_Comm rawMpiComm = mpiComm->GetMpiComm();
     RCP<const OpaqueWrapper<MPI_Comm> > ptr 
       = rcp(new OpaqueWrapper<MPI_Comm>(rawMpiComm));
-    rtn  = rcp(new MpiComm<Ordinal>(ptr));
+    rtn  = rcp(new MpiComm<OrdType>(ptr));
   }
 #endif
   else

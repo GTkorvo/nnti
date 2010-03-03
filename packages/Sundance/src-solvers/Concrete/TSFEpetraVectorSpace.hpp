@@ -38,7 +38,7 @@ namespace TSFExtended
 {
 using namespace Teuchos;
 using namespace Thyra;
-using Thyra::Ordinal;
+
 
 /**
  * Adaptor wrapping Epetra map in the Thyra vector space system.
@@ -63,7 +63,7 @@ public:
   //@{
 
   /** */
-  Ordinal dim() const ;
+  OrdType dim() const ;
 
   /** */
   bool isCompatible(const VectorSpaceBase<double>& other) const ;
@@ -83,17 +83,17 @@ public:
   /** \name Overidden from SpmdVectorSpaceBase */
   //@{
   /** */
-  Teuchos::RCP<const Teuchos::Comm<Ordinal> > getComm() const
+  Teuchos::RCP<const Teuchos::Comm<OrdType> > getComm() const
     {return comm_;}
 
   /** */
-  Ordinal localSubDim() const {return localSubDim_;}
+  OrdType localSubDim() const {return localSubDim_;}
 
   /** */
-  Ordinal localOffset() const {return localOffset_;}
+  OrdType localOffset() const {return localOffset_;}
 
   /** */
-  Ordinal mapCode() const {return -1;}
+  OrdType mapCode() const {return -1;}
   //@}
 
 
@@ -104,7 +104,7 @@ public:
 
 protected:
   /** */
-  Teuchos::RCP<const Teuchos::Comm<Ordinal> > 
+  Teuchos::RCP<const Teuchos::Comm<OrdType> > 
   epetraCommToTeuchosComm(const Epetra_Comm& epComm) const ;
   
   /** @name Protected overridden from VectorSpace */
@@ -120,11 +120,11 @@ private:
   /** */
   RCP<const Epetra_Map> epetraMap_;
 
-  Teuchos::RCP<const Teuchos::Comm<Ordinal> > comm_;
+  Teuchos::RCP<const Teuchos::Comm<OrdType> > comm_;
 
-  Ordinal localSubDim_;
+  OrdType localSubDim_;
 
-  Ordinal localOffset_;
+  OrdType localOffset_;
 };
   
 }
