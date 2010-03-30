@@ -121,7 +121,7 @@ protected:
       Epetra_CrsMatrix& epX = EpetraMatrix::getConcrete(X);
 
       /* Do the transpose operation, which returns a Crs matrix but in the
-       * form of its base class, an EpetraRowMatrix.  */
+       * form of its base class, an Epetra_RowMatrix.  */
       Epetra_RowMatrix& eprXt = (*transposer_)(epX);
 
       /* The TSF EpetraMatrix works with Epetra_CrsMatrix, so we need
