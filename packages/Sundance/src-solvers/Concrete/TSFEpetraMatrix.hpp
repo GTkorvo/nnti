@@ -88,24 +88,24 @@ public:
   /** \name Epetra-Thyra adapter interface */
   //@{
 
-  /** */
-  void getEpetraOpView(RCP<Epetra_Operator> *epetraOp,
-    Thyra::EOpTransp *epetraOpTransp,
-    Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
-    Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) ;
-
-  /** */
-  void getEpetraOpView(RCP<const Epetra_Operator> *epetraOp,
-    Thyra::EOpTransp *epetraOpTransp,
-    Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
-    Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) const ;
-
-
+  /** \brief . */
+  void getNonconstEpetraOpView(
+    const Teuchos::Ptr<Teuchos::RCP<Epetra_Operator> > &epetraOp,
+    const Teuchos::Ptr<Thyra::EOpTransp> &epetraOpTransp,
+    const Teuchos::Ptr<Thyra::EApplyEpetraOpAs> &epetraOpApplyAs,
+    const Teuchos::Ptr<Thyra::EAdjointEpetraOp> &epetraOpAdjointSupport
+    );
+  /** \brief . */
+  void getEpetraOpView(
+    const Teuchos::Ptr<Teuchos::RCP<const Epetra_Operator> > &epetraOp,
+    const Teuchos::Ptr<Thyra::EOpTransp> &epetraOpTransp,
+    const Teuchos::Ptr<Thyra::EApplyEpetraOpAs> &epetraOpApplyAs,
+    const Teuchos::Ptr<Thyra::EAdjointEpetraOp> &epetraOpAdjointSupport
+    ) const;
   /// Returns <tt>this->mpiRange()</tt>
   Teuchos::RCP< const ScalarProdVectorSpaceBase<double> > rangeScalarProdVecSpc() const;
   /// Returns <tt>this->mpiDomain()</tt>
   Teuchos::RCP< const ScalarProdVectorSpaceBase<double> > domainScalarProdVecSpc() const;
-
 
   //@}
 

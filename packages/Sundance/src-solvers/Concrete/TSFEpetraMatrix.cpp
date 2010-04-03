@@ -134,41 +134,33 @@ void EpetraMatrix::applyImpl(
 }
 
 
-void EpetraMatrix::getEpetraOpView(RCP<Epetra_Operator> *epetraOp,
-  Thyra::EOpTransp *epetraOpTransp,
-  Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
-  Thyra::EAdjointEpetraOp *epetraOpAdjointSupport)
+void EpetraMatrix::getNonconstEpetraOpView(
+  const Teuchos::Ptr<Teuchos::RCP<Epetra_Operator> > &epetraOp,
+  const Teuchos::Ptr<Thyra::EOpTransp> &epetraOpTransp,
+  const Teuchos::Ptr<Thyra::EApplyEpetraOpAs> &epetraOpApplyAs,
+  const Teuchos::Ptr<Thyra::EAdjointEpetraOp> &epetraOpAdjointSupport
+  )
 {
-  TEST_FOR_EXCEPT(epetraOp==NULL);
-  TEST_FOR_EXCEPT(epetraOpTransp==NULL);
-  TEST_FOR_EXCEPT(epetraOpApplyAs==NULL);
-  TEST_FOR_EXCEPT(epetraOpAdjointSupport==NULL);
-
   *epetraOp = rcp_dynamic_cast<Epetra_Operator>(matrix_);
   *epetraOpTransp = NOTRANS;
   *epetraOpApplyAs = EPETRA_OP_APPLY_APPLY;
   *epetraOpAdjointSupport = EPETRA_OP_ADJOINT_SUPPORTED;
-
   TEST_FOR_EXCEPTION(epetraOp->get()==0, std::runtime_error,
     "null operator in getEpetraOpView()");
-  
 }
 
-void EpetraMatrix::getEpetraOpView(RCP<const Epetra_Operator> *epetraOp,
-  Thyra::EOpTransp *epetraOpTransp,
-  Thyra::EApplyEpetraOpAs *epetraOpApplyAs,
-  Thyra::EAdjointEpetraOp *epetraOpAdjointSupport) const 
-{
-  TEST_FOR_EXCEPT(epetraOp==NULL);
-  TEST_FOR_EXCEPT(epetraOpTransp==NULL);
-  TEST_FOR_EXCEPT(epetraOpApplyAs==NULL);
-  TEST_FOR_EXCEPT(epetraOpAdjointSupport==NULL);
 
+void EpetraMatrix::getEpetraOpView(
+  const Teuchos::Ptr<Teuchos::RCP<const Epetra_Operator> > &epetraOp,
+  const Teuchos::Ptr<Thyra::EOpTransp> &epetraOpTransp,
+  const Teuchos::Ptr<Thyra::EApplyEpetraOpAs> &epetraOpApplyAs,
+  const Teuchos::Ptr<Thyra::EAdjointEpetraOp> &epetraOpAdjointSupport
+  ) const
+{
   *epetraOp = rcp_dynamic_cast<const Epetra_Operator>(matrix_);
   *epetraOpTransp = NOTRANS;
   *epetraOpApplyAs = EPETRA_OP_APPLY_APPLY;
   *epetraOpAdjointSupport = EPETRA_OP_ADJOINT_SUPPORTED;
-
   TEST_FOR_EXCEPTION(epetraOp->get()==0, std::runtime_error,
     "null operator in getEpetraOpView()");
 }
