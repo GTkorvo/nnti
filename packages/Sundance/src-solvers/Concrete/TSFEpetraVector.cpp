@@ -433,7 +433,8 @@ void EpetraVector::acquireDetachedVectorViewImpl(
   /* All requested elements are on-processor. */
   const double* localValues = &(epetraVec_->operator[](0));
   Teuchos::ArrayRCP<const double> locVals(localValues, rng.lbound()-localOffset_,
-    rng.ubound()-localOffset_, false);
+    rng.size(), false);
+//    rng.ubound()-localOffset_, false);
 
   OrdType stride = 1;
   
@@ -491,7 +492,8 @@ void EpetraVector::acquireNonconstDetachedVectorViewImpl(
   /* All requested elements are on-processor. */
   double* localValues = &(epetraVec_->operator[](0));
   Teuchos::ArrayRCP<double> locVals(localValues, rng.lbound()-localOffset_,
-    rng.ubound()-localOffset_, false);
+//    rng.ubound()-localOffset_, false);
+    rng.size(), false);
   OrdType stride = 1;
 
   sub_vec->initialize(rng.lbound(), rng.size(),
