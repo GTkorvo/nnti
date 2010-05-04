@@ -7,6 +7,7 @@
 \usepackage[light]{draftcopy}
 \input{rab_commands}
 \setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
 \newtheorem{listing}{Listing}
 \usepackage{hyperref}
 
@@ -597,7 +598,7 @@ In the following examples, the simple classes shown in Listing
 \end{verbatim}}
 \end{listing}
 
-The concrete class hierarchy in Listing {}\ref{listing:Simple_A_B} was
+The concrete class hierarchy in Listing~\ref{listing:Simple_A_B} was
 chosen to demonstrate some insidious and perhaps less well known flaws
 in the C++ type system when dealing with raw C++ pointers.
 
@@ -608,7 +609,7 @@ in the C++ type system when dealing with raw C++ pointers.
 
 There are a number of problems with using raw C++ pointers to manage
 single objects.  For example, given a class object of type {}\ttt{B}
-in Listing {}\ref{listing:Simple_A_B} consider a pointer declared as:
+in Listing~\ref{listing:Simple_A_B} consider a pointer declared as:
 
 {\small\begin{verbatim}
   B some_b(...);
@@ -676,7 +677,7 @@ pointers falls flat on its face when dealing with arrays of memory.
 
 One particularly troubling example where the C++ type system fails
 when dealing with raw C++ pointers to contiguous arrays of memory is
-shown in Listing {}\ref{listing:BadArrayPointerConversion}.
+shown in Listing~\ref{listing:BadArrayPointerConversion}.
 
 \begin{listing}:\\
 \label{listing:BadArrayPointerConversion}
@@ -933,7 +934,7 @@ The VISITOR interface shown in
 Listing~\ref{listing:addArrayIntoArray-raw} allows clients to accept
 any {}\texttt{BlockTransformerBase} object and allow it to
 transparently implement any nubmer of user-defined transforamtions.
-Note that virtual funtions can not be templated so it is not possible
+Note that virtual funtions cannot be templated so it is not possible
 for the {}\texttt{transform(...)} function to be templated on an
 iterator type but must instead accept some fixed representation of the
 arrays of data to be operated on.  The advantages of the
@@ -1005,7 +1006,7 @@ allocating big arrays of data is to avoid memory fragmentation and
 improve data locality.  Now consider in Listing
 {}\ref{listing:someBlockAlgo-std-vector} what the client code would
 have to look like when using the form of {}\ttt{transform(...)} in
-Listing {}\ref{listing:addArrayIntoArray-std-vector} which takes in
+Listing~\ref{listing:addArrayIntoArray-std-vector} which takes in
 {}\ttt{std::vector} objects.
 
 {}\begin{listing}: Client code that has to create temporary
@@ -1154,7 +1155,7 @@ larger blocks of data.  To demonstrate this type of error, consider
 the example code in the function {}\ttt{someBlockAlgo(...)} in Listing
 {}\ref{listing:someBlockAlgo-std-vector-raw-ptr} which uses the raw
 C++ pointer version of the function {}\ttt{transform(...)} in
-Listing {}\ref{listing:addArrayIntoArray-raw}.  Now consider what
+Listing~\ref{listing:addArrayIntoArray-raw}.  Now consider what
 happens when a developer introduces an off-by-one error such as shown
 in {}\ttt{transform(...)} in Listing
 {}\ref{listing:addArrayIntoArray_rawError}.
@@ -1177,7 +1178,7 @@ loop termination statement {}\ttt{i < n} with {}\ttt{i <= n} which is
 a very common C++ programming error.
 
 Now let's consider the implications that the off-by-one error shown in
-Listing {}\ref{listing:addArrayIntoArray_rawError} will have on the
+Listing~\ref{listing:addArrayIntoArray_rawError} will have on the
 data in {}\ttt{big\_b} as driven by the code in Listing
 {}\ref{listing:someBlockAlgo-std-vector-raw-ptr}.  If the last block
 {}\ttt{block\_k=numBlocks-1} of data is processed, then there is a
@@ -1482,7 +1483,7 @@ effect because it calls the {}\ttt{C::fooC1(...)} function.
 In the idioms advocated in this paper, smart reference counted pointers are
 used for all persisting associations and never for non-persisting
 associations.  Using the basic Teuchos {}\ttt{RCP} class, the raw pointer code
-in Listing {}\ref{listing:NonPersistingPersistingAssociationsRawPointers}
+in Listing~\ref{listing:NonPersistingPersistingAssociationsRawPointers}
 would be refactored into the code shown in Listing
 {}\ref{listing:NonPersistingPersistingAssociationsRCP}.
 
@@ -1649,12 +1650,12 @@ access an STL container as shown in Listing
 \end{listing}
 
 
-As shown in Listing {}\ref{listing:SemiPersistingIterators}, the iterator
+As shown in Listing~\ref{listing:SemiPersistingIterators}, the iterator
 object {}\ttt{itr} is used well past (perhaps thousands of loop iterations)
 where it was created by the statement {}\ttt{itr\_t itr = v.begin()}.  There
 are, however, significant restrictions on how such iterators can be used: a)
 the iterator cannot be accessed after the originating parent object has been
-destroyed, and b) the iterator can not be accessed after the structure of the
+destroyed, and b) the iterator cannot be accessed after the structure of the
 originating parent has changed (e.g.\ {}\ttt{v.resize(...)} was called).  For
 the sake of performance, one has to allow for the use of semi-persisting
 associations such as this where the optimized build of the code lacks the
@@ -1893,13 +1894,14 @@ maximally self-documenting.
 \label{sec:role-of-raw-pointers}
 %
 
-The thesis of this paper is that the use of all raw C++ pointers should be
-eliminated in all high-level C++ code and instead a system of safe specially
-designed types tailored to specific use cases should be used instead.  Does
-that mean that raw C++ pointers should never be used in any C++ code?  The
-answer of course is {}\underline{no}, since raw C++ pointers will always have
-to be used in some special situations (but perhaps not directly used as
-described below).
+The main thesis of this paper is that the use of all raw C++ pointers
+should be fully encapsulated in all high-level C++ code and instead a
+system of safe specially designed types tailored to specific use cases
+should be used instead.  Does that mean that raw C++ pointers should
+never be used in any C++ code?  The answer of course is
+{}\underline{no}, since raw C++ pointers will always have to be used
+in some special situations (but perhaps not directly used as described
+below).
 
 Given the full use of the Teuchos memory management classes, here are the
 valid situations where it is appropriate (or required) to use raw C++ pointers
@@ -1910,34 +1912,37 @@ in fully compliant C++ programs:
 {}\item{}\textit{Use raw C++ pointers (indirectly) for extremely
 well-encapsulated, low-level, high-performance algorithms}
 
-In order to achieve high performance in computationally intensive code, one
-will always have to use raw C++ pointers (at least indirectly) in a non-debug
-optimized build.  This includes using raw C++ pointers to build complex
-specialized data structures and similar purposes.  In this context, one can
-think of raw C++ pointers as a fairly compact and efficient way to communicate
-with the compiler about how one wants to manage memory at the hardware level.
-The ability to do this type if fine-grained manipulation of memory has always
-been one of the strengths of C and C++ in systems-level programming.
-Therefore, one can think of using raw pointers in C++ as a kind of portable
-assembly language that one always has at one's disposal on every platform and
-with every compiler.  However, instead of using raw pointers, one can always
-use the types {}\ttt{Ptr}, {}\ttt{ArrayView} or {}\ttt{ArrayType::iterator}
-(where {}\ttt{ArrayType} is {}\ttt{Array}, {}\ttt{ArrayRCP}, or
-{}\ttt{ArrayView}) to yield raw pointer performance in a non-debug optimized
-build but still maintain strong debug-mode runtime checking.  This approach is
-discuss in more detail in Section~\ref{sec:perf-tuning-strategies}.
+In order to achieve high performance in computationally intensive
+code, one will always have to use raw C++ pointers (at least
+indirectly) in a non-debug optimized build.  This includes using raw
+C++ pointers to build specialized data structures and similar
+purposes.  In this context, one can think of raw C++ pointers as a
+fairly compact and efficient way to communicate with the compiler
+about how one wants to manage memory at the hardware level.  The
+ability to do this type of fine-grained manipulation of memory has
+always been one of the strengths of C and C++ in systems-level
+programming.  Therefore, one can think of using raw pointers in C++ as
+a kind of portable assembly language that one always has at one's
+disposal on every platform and with every compiler.  However, instead
+of using raw pointers, one can always use the types {}\ttt{Ptr},
+{}\ttt{ArrayView} or {}\ttt{ArrayType::iterator} (where
+{}\ttt{ArrayType} is {}\ttt{Array}, {}\ttt{ArrayRCP}, or
+{}\ttt{ArrayView}) to yield raw pointer performance in a non-debug
+optimized build but still maintain strong debug-mode runtime checking.
+This approach is discuss in more detail in
+Section~\ref{sec:perf-tuning-strategies}.
 
 {}\item{}\textit{Use raw C++ pointers to communicate with legacy C++
 code and with other languages through C bindings}
 
-The only remaining valid reason to use a raw C++ pointer is to reuse and
-communicate with legacy C++ code and to call functions in other languages
-through the now-universal approach of using C bindings.  However, one must
-endeavor to minimize the amount of C++ code that has naked raw C++ pointers
-and one should only expose a raw C++ pointer at the last possible moment (such
-as in the call to the external functions themselves).  Again, one must
-carefully encapsulate access to non-compliant code that requires the exposure
-of raw C++ pointers.
+The only remaining valid reason to use raw C++ pointers is to reuse
+and communicate with legacy C++ code and to call functions in other
+languages through the now-universal approach of using C bindings.
+However, one must endeavor to minimize the amount of C++ code that has
+naked raw C++ pointers and one should only expose a raw C++ pointer at
+the last possible moment (such as in the call to the external
+functions themselves).  Again, one must carefully encapsulate access
+to non-compliant code that requires the exposure of raw C++ pointers.
 
 \end{itemize}
 
@@ -2008,14 +2013,14 @@ single objects}
 \label{sec:mem-mng-classes-single-objs}
 %
 
-The templated classes {}\ttt{Ptr} and {}\ttt{RCP} are described in more detail
-in the next two sections which are used to encapsulate raw C++ pointers to
-single objects.  Again, {}\ttt{Ptr} is used for non-persisting (and
-semi-persisting) associations and {}\ttt{RCP} is for persisting associations.
-Below, and in all of the code listings, it is assumed that such code is
-enclosed in the {}\ttt{Teuchos} namespace or there are appropriate
-{}\ttt{using Teuchos::XXX} declarations for the various names in place (as is
-safe and appropriate).
+The templated classes {}\ttt{Ptr} and {}\ttt{RCP} described in the
+next two sections are used to encapsulate raw C++ pointers to single
+objects.  Again, {}\ttt{Ptr} is used for non-persisting (and
+semi-persisting) associations and {}\ttt{RCP} is used for persisting
+associations.  Below, and in all of the code listings, it is assumed
+that the code is enclosed in the {}\ttt{Teuchos} namespace or there
+are appropriate {}\ttt{using Teuchos::XXX} declarations (as is safe
+and appropriate) for the various names in place.
 
 %
 {}\subsubsection{\ttt{Teuchos::Ptr<T>}}
@@ -2024,7 +2029,7 @@ safe and appropriate).
 
 The templated class {}\ttt{Ptr} is the simplest of all the Teuchos
 memory management classes.  In optimized mode it is just the thinnest
-of wrappers around a raw C++ pointer.  Listing {}\ref{listing:Ptr}
+of wrappers around a raw C++ pointer.  Listing~\ref{listing:Ptr}
 shows what the implementation of {}\ttt{Ptr} looks like in
 optimized mode:
 
@@ -2051,10 +2056,10 @@ optimized mode:
 \end{listing}
 
 In optimized mode, the only overhead imparted by {}\ttt{Ptr} is the
-default initialization to null.  All other functions are just inline
-accessors to the underlying raw C++ pointer member {}\ttt{ptr\_}.
-Therefore, the performance when using this type is the same as when
-using a raw C++ pointer.
+default initialization to null (0).  All other functions are just
+inline accessors to the underlying raw C++ pointer member
+{}\ttt{ptr\_}.  Therefore, the performance when using this type is the
+same as when using a raw C++ pointer.
 
 However, in debug mode (enabled when {}\ttt{TEUCHOS\_DEBUG} is defined), the
 {}\ttt{Ptr} class becomes more complex and performs a number of runtime checks
@@ -2097,13 +2102,14 @@ input/output, and output arguments where no persisting relationship is
 present.  (the class {}\ttt{Ptr} should also be used for
 semi-persisting associations where single objects are involved.)  For
 example, consider the function that modifies a type {}\ttt{A}
-object shown in Listing {}\ref{listing:modifyA-rawPtr}.
+object shown in Listing~\ref{listing:modifyA-rawPtr}.
 
 {}\begin{listing}: Simple function using unsafe raw pointer
 \label{listing:modifyA-rawPtr}
 {\small\begin{verbatim}
   void modifyA( A *a )
   {
+    assert(a);
     a->increment();
   }
 \end{verbatim}}
@@ -2111,7 +2117,7 @@ object shown in Listing {}\ref{listing:modifyA-rawPtr}.
 
 Using {}\ttt{Ptr}, the function {}\ttt{modifyA(...)} in Listing
 {}\ref{listing:modifyA-rawPtr} would be changed to the form shown in
-Listing {}\ref{listing:modifyA-Ptr}.
+Listing~\ref{listing:modifyA-Ptr}.
 
 {}\begin{listing}: Simple function refactored to use safe {}\ttt{Ptr} wrapped
 pointer
@@ -2126,27 +2132,29 @@ pointer
 
 In this context, the primary advantage of the form shown in Listing
 {}\ref{listing:modifyA-Ptr} as apposed to Listing
-{}\ref{listing:modifyA-rawPtr} is that in debug mode, a check for a null
-pointer or a dangling reference would be performed automatically.  If a null
-dereference occurred, then an exception would be thrown with a very good error
-message.  I have seen platforms where a null dereference did not automatically
-result in a graceful assert, stopping the program.  I have seen cases where
-somehow memory was corrupted and the program continued!  My general philosophy
-is to make as few assumptions as possible about the behavior of the compiler
-and platform because I have found that ``typical and obvious'' behavior is not
-universal.  Many have learned the hard way that one will pay a price for such
-assumptions in lost time debugging obscure things like a null pointer
-dereference that should have stopped the program but did not.  Don't take
-chances with undefined behavior in the code, take control!
+{}\ref{listing:modifyA-rawPtr} is that in debug mode, a check for a
+null pointer or a dangling reference would be performed automatically.
+If a null dereference occurred, then an exception would be thrown with
+a very good error message.  I have seen platforms where a null
+dereference did not automatically result in a graceful assert,
+stopping the program.  I have seen cases where somehow memory was
+corrupted and the program continued!  A good philosophy is to make as
+few assumptions as possible about undefined behavior of the compiler
+and platform because I have found that ``typical and obvious''
+behavior for undefined behavior is not universal.  Many have learned
+the hard way that one will pay a price for such assumptions in lost
+time debugging obscure things like a null pointer dereference that
+should have stopped the program but did not.  Don't take chances with
+undefined behavior in the code, take control!
 
 When all of the high-level code has been converted over to use these
 memory management classes and there are no more raw C++ pointers, then
-client code should never have to construct a {}\ttt{Ptr} using a
-raw C++ pointer.  However, as code is being transitioned over and
+client code should never have to construct a {}\ttt{Ptr} object using
+a raw C++ pointer.  However, as code is being transitioned over and
 when such code is called by non-compliant code, construction from a
 raw pointer is needed.  The recommended way to convert from a raw C++
-pointers to {}\ttt{Ptr} is to use the following templated
-non-member function:
+pointer to {}\ttt{Ptr} is to use the following templated non-member
+function:
 
 \begin{listing}: Teuchos::ptr(...)\\
 \label{listing:ptr}
@@ -2156,7 +2164,7 @@ non-member function:
 \end{listing}
 
 Using this non-member constructor function, client code would then be
-written as shown in Listing {}\ref{listing:using-ptr}.
+written as shown in Listing~\ref{listing:using-ptr}.
 
 \begin{listing}:\\
 \label{listing:using-ptr}
@@ -2214,9 +2222,10 @@ strong debug runtime checking such as detecting multiple non-related
 
 Because the class {}\ttt{RCP} is described in
 {}\cite{RefCountPtrBeginnersGuide} and is so similar in use to
-{}\ttt{boost::shared\_ptr}, this class will not be described in too
-much detail here.  However, a fairly complete definition of the class
-{}\ttt{RCP} is shown in Listing {}\ref{listing:RCP} (the full
+{}\ttt{boost::shared\_ptr} (described some in
+{}\cite{EffectiveC++ThirdEdition}), this class will not be described
+in too much detail here.  However, a fairly complete definition of the
+class {}\ttt{RCP} is shown in Listing~\ref{listing:RCP} (the full
 listing can be found in the Doxygen documentation).
 
 \begin{listing}: Class and helper function listing for {}\ttt{RCP} \\
@@ -2278,13 +2287,14 @@ listing can be found in the Doxygen documentation).
 Again, basic usage of the {}\ttt{RCP} class is described in
 {}\cite{RefCountPtrBeginnersGuide} and the functions for decallocation
 policies, embedded objects, extra data, conversion functions and other
-functions are discussed in other sections in a more general setting.  The
-basic idiom of smart pointers and reference counting is fairly well known and
-is well documented in the literature and there is a good overview in
-{}\cite{RefCountPtrBeginnersGuide} so basic information will not be replicated
-here.  However, some of the more advanced functionality for {}\ttt{RCP} that
-is not described in {}\cite{RefCountPtrBeginnersGuide} or an any of the
-existing C++ literature is described in later sections of this document.
+functions are discussed in other sections in a more general setting.
+The basic idioms for smart pointers and reference counting are fairly
+well known, are well documented in the literature, and there is a good
+overview in {}\cite{RefCountPtrBeginnersGuide} so basic information
+will not be replicated here.  However, some of the more advanced
+functionality for {}\ttt{RCP} that is not described in
+{}\cite{RefCountPtrBeginnersGuide} or an any of the existing C++
+literature is described in later sections of this document.
 
 
 %
@@ -2292,11 +2302,12 @@ existing C++ literature is described in later sections of this document.
 \label{sec:raw-C++-references}
 %
 
-Why is there a subsection on raw C++ references under the a section describing
-Teuchos Memory Management classes for single objects?  The reason is that raw
-C++ references to single objects are used in the idioms described in this
-paper for non-persisting associations for single objects and this was a
-reasonable place to discuss them.
+Why is there a subsection on raw C++ references under the a section
+describing Teuchos Memory Management classes for single objects?  The
+reason is that raw C++ references to single objects are used in the
+idioms described in this paper for non-persisting associations for
+single objects and this was a reasonable place to discuss issues with
+raw C++ references.
 
 While this paper argues that raw C++ pointers have no place in
 application-level code because they are fundamentally unsafe, are C++
@@ -2322,16 +2333,19 @@ be valid when the reference is first created (at least in a debug build where
 dereferencing null smart pointers throws).  While raw C++ references are
 fairly safe when used with the idioms described in this paper, there are no
 100\% guarantees.  There are typically no guarantees that the object pointed
-to by a raw reference will stay valid (because dangling references can not be
+to by a raw reference will stay valid (because dangling references cannot be
 detected as described in Section~\ref{sec:limitations-debug-mode-checking}).
 This can happen when one breaks one or more of the idioms or guidelines
 defined in this paper (which will happen because programmers make mistakes).
 
 Note that raw C++ references should never be used for representing
-semi-persisting associations because it is impossible to catch invalid usage
-like dangling references.  Instead, when a semi-persisting association is
-involved, always use {}\ttt{Ptr} instead of a raw C++ reference (even if the
-object being represented is not allowed to be null).
+semi-persisting associations because it is impossible to catch invalid
+usage like dangling references.  Instead, when a semi-persisting
+association is involved, always use {}\ttt{Ptr} instead of a raw C++
+reference (even if the object being represented is not allowed to be
+null).  Semi-persisting associations are described in more detail in
+Section~\ref{sec:nonpersisting-persisting-associations} and
+Section~\ref{sec:perf-tuning-strategies}.
 
 
 %
@@ -2416,25 +2430,27 @@ iterator access.  This helps in migrating current code that uses
 {}\item{}All of the array classes support returning \ttt{ArrayView} subviews
 of contiguous ranges of elements.
 
-{}\item{}All of the array classes support a handy {}\ttt{getRawPtr()} function
-that allows a client to get the base pointer address, or null, to the array.
-The standard {}\ttt{std::vector} class supports no such function which is very
-painful for users since it makes it hard to get a null pointer then the
-container can legitimately be unsized in some use cases.
+{}\item{}All of the array classes support a handy {}\ttt{getRawPtr()}
+function that allows a client to get the base pointer address to the
+array or null.  The standard {}\ttt{std::vector} class supports no
+such function which is very painful for users since it makes it hard
+to get a null pointer then the container can legitimately be unsized
+in some use cases.
 
 \end{itemize}
 
-The exact functions shown in Table~\ref{tbl:common-array-type-members} for
-{}\ttt{ArrayView} and {}\ttt{ArrayRCP} are a little different than for
-{}\ttt{Array} due to the different nature of these view classes as apposed to
-the container class {}\ttt{Array}.  As described in Section
+The exact functions shown in Table~\ref{tbl:common-array-type-members}
+for {}\ttt{ArrayView} and {}\ttt{ArrayRCP} are a little different than
+for {}\ttt{Array} due to the different nature of these view classes as
+apposed to the container class {}\ttt{Array}.  As described in Section
 {}\ref{sec:teuchos-const-nonconst-pointer-objects}, the classes
-{}\ttt{ArrayView} and {}\ttt{ArrayRCP} can encapsulate both non-const and
-const types {}\ttt{T} as their template argument while {}\ttt{Array} can only
-accept a non-const type {}\ttt{T}.  Therefore, the {}\ttt{std::vector}
-compatible functions in {}\ttt{ArrayView} and {}\ttt{ArrayRCP} are all
-{}\ttt{const} functions since they don't change what data these objects point
-to, but only change the data themselves.
+{}\ttt{ArrayView} and {}\ttt{ArrayRCP} can encapsulate both non-const
+and const types {}\ttt{T} as their template argument while
+{}\ttt{Array} can only accept a non-const type {}\ttt{T}.  Therefore,
+the {}\ttt{std::vector} compatible functions in {}\ttt{ArrayView} and
+{}\ttt{ArrayRCP} are all {}\ttt{const} functions since they don't
+change what data these objects point to, but only change the data
+itself.
 
 One other aspect to note about the Teuchos array classes is that they deviate
 from the standard C++ library convention of using an unsigned integer for
@@ -2453,13 +2469,13 @@ described in Appendix {}\ref{sec:unsigned_size_type}.
 \label{sec:ArrayView}
 %
 
-The class {}\ttt{ArrayView}, the simplest of the Teuchos array
-memory management classes, is designed to replace raw pointers in
+The class {}\ttt{ArrayView}, the simplest of the Teuchos array memory
+management classes, is designed to replace raw pointers in
 non-persisting associations primarily for formal function array
-arguments.  ({}\ttt{ArrayView} is also to be used for semi-persisting
+arguments.  ({}\ttt{ArrayView} is to be used for semi-persisting
 associations as well.)  In an optimized build, an {}\ttt{ArrayView}
 object simply holds a raw base array pointer and an integer size.  In
-an optimized build, {}\ttt{ArrayView} looks like in Listing
+an optimized build, {}\ttt{ArrayView} looks like Listing
 {}\ref{listing:ArrayView}.
 
 {}\begin{listing}: {}\ttt{Teuchos::ArrayView} declaration (See
@@ -2486,7 +2502,7 @@ Table~\ref{tbl:common-array-type-members} for common array members.)
     // Deep copy  
     void assign(const ArrayView<const T>& array) const;
 
-    // Common array class members (see above) and other functions
+    // Common array class members and other functions
     ...
 
   private:
@@ -2536,8 +2552,9 @@ carrying only a pointer and an integer size.  This allows one to replace the
 typical pointer and separate size argument with a single aggregate
 light-weight object.  Therefore, it yields very efficient code.
 
-{}\item{}\ttt{ArrayView} in optimized mode has all trivial inlined functions
-that work with the raw pointer so it is as efficient has raw pointer code.
+{}\item{}\ttt{ArrayView} in optimized mode has all trivial inlined
+functions that work with the raw pointer so it is as efficient as raw
+pointer code (Section~\ref{sec:array-overhead}).
 
 {}\item{}{}\ttt{ArrayView} is a drop in replacement for any code that uses
 {}\ttt{std::vector} that does not grow or shrink the container by supporting
@@ -2556,11 +2573,12 @@ contiguous ranges of elements.
 
 \end{itemize}
 
-What makes {}\ttt{ArrayView} non-trivial and special, however, is that in a
-debug build, the implementation takes on a variety of runtime checking to
-catch all sorts of errors such as dangling iterators and dangling sub-views
-(Section~\ref{sec:detection-dangling-references}), range checking (Section
-{}\ref{sec:null-dereferences-range-checking}), and other types of checking.
+What makes {}\ttt{ArrayView} non-trivial and special, however, is that
+in a debug build, the implementation takes on a variety of runtime
+checking to catch all sorts of errors such as dangling iterators,
+dangling sub-views (Section~\ref{sec:detection-dangling-references}),
+range checking (Section {}\ref{sec:null-dereferences-range-checking}),
+and other types of runtime checking.
 
 It should be noted that one should almost never create an {}\ttt{ArrayView}
 object directly from a raw pointer but instead create them as views of
@@ -2569,11 +2587,11 @@ objects.  If client code is routinely creating {}\ttt{ArrayView} objects from
 raw pointers, then the code is not safe and one needs to study the core idioms
 described in Section~\ref{sec:idioms}.
 
-The class {}\ttt{ArrayView} has no equivalent in boost or the current C++ or
-proposed C++0x standard.  This is a critical class needed to allow for
-flexibility, high-performance, safety, and maximal self-documenting code.  One
-can not develop such an effective type system without an integrated type like
-{}\ttt{ArrayView}.
+The class {}\ttt{ArrayView} has no equivalent in boost or the current
+C++ or proposed C++0x standard.  This is a critical class needed to
+allow for flexibility, high-performance, safety, and maximaly
+self-documenting code.  One cannot develop an effective type system
+without an integrated type like {}\ttt{ArrayView}.
 
 
 %
@@ -2721,9 +2739,10 @@ Some of the main features of the {}\ttt{ArrayRCP} class are:
 anyway they would like and can define how that array is deallocated anyway
 they would like.
 
-{}\ttt{ArrayRCP} returns persisting subviews of data through the member
-function {}\ttt{persistingView(...)}.  This means that the underlying array of
-data will not be deleted until all the subviews are destroyed.
+{}\ttt{ArrayRCP} returns persisting subviews of data through the
+member function {}\ttt{persistingView(...)}.  This means that the
+underlying array of data will not be deleted until all the persisting
+subviews are destroyed.
 
 {}\ttt{ArrayRCP} is a full replacement for a general raw pointer and can be
 used as a general iterator that always remembers the allowed upper and lower
@@ -2739,34 +2758,36 @@ its {}\ttt{const} interface which disables all of the pointer-like functions
 that change the frame of reference (e.g. {}\ttt{ptr+=i}, {}\ttt{ptr-=i}, ,
 {}\ttt{ptr++}, and {}\ttt{ptr--} are disabled in the {}\ttt{const} interface).
 
-{}\ttt{ArrayRCP} can be used in place of {}\ttt{std::vector} (and therefore
-{}\ttt{Array}) that only needs to size or resize the array in baulk and does
-not need to flexibly grow or shrink the array.  It does this by supporting
-functions like {}\ttt{assign(...)}, {}\ttt{resize(...)}, and {}\ttt{clear()}.
-Because of the reference counting machinery that is always part of
-{}\ttt{ArrayRCP} and support for all raw C++ pointer functionality (e.g.,
-{}\ttt{ptr++}), one may not want to use {}\ttt{ArrayRCP} instead of
-{}\ttt{Array} in may types of code.  However, if the overhead is not going to
-be significant, then going with {}\ttt{ArrayRCP} instead of {}\ttt{Array} can
-be a good choice because it is much more flexible in how memory is allocated
-and has built-in support for shared ownership (again, which you may not want).
-The class {}\ttt{ArrayRCP} does not attempt to replace {}\ttt{Array} but can
-be a better choice in many cases where an {}\ttt{Array} may otherwise be used.
+{}\ttt{ArrayRCP} can be used in place of {}\ttt{std::vector} (and
+therefore {}\ttt{Array}) that only needs to size or resize the array
+in baulk and does not need to flexibly grow or shrink the array.  It
+does this by supporting functions like {}\ttt{assign(...)},
+{}\ttt{resize(...)}, and {}\ttt{clear()}.  Because of the reference
+counting machinery that is always part of {}\ttt{ArrayRCP} and support
+for all raw C++ pointer functionality (e.g., {}\ttt{ptr++}), one may
+not want to use {}\ttt{ArrayRCP} instead of {}\ttt{Array} in many
+types of code.  However, if the overhead is not going to be
+significant, then going with {}\ttt{ArrayRCP} instead of {}\ttt{Array}
+can be a good choice because it is much more flexible in how memory is
+allocated and has built-in support for shared ownership (again, which
+may not be needed).  The class {}\ttt{ArrayRCP} does not attempt to
+replace {}\ttt{Array} but can be a better choice in many cases where
+an {}\ttt{Array} may otherwise be used.
 
-{}\ttt{ArrayRCP} supports explicit shallow conversion to {}\ttt{ArrayView}.
-Requiring an explicit conversion from {}\ttt{ArrayRCP} to {}\ttt{ArrayView} in
-consistent with the required explicit conversion from {}\ttt{RCP} to
-{}\ttt{Ptr}.  As explained in Section
-{}\ref{sec:idioms-for-passing-arguments}, requiring type type of explicit
-conversion is meant to increase the self-documenting nature of all code
-(including the calling code as well).  Note that the
-{}\ttt{ArrayRCP::operator()()} function is a very short-hand way to perform
-this conversion.
+{}\ttt{ArrayRCP} supports explicit shallow conversion to
+{}\ttt{ArrayView}.  Requiring an explicit conversion from
+{}\ttt{ArrayRCP} to {}\ttt{ArrayView} in consistent with the required
+explicit conversion from {}\ttt{RCP} to {}\ttt{Ptr}.  As explained in
+Section {}\ref{sec:idioms-for-passing-arguments}, requiring this type
+of explicit conversion is meant to increase the type safety and
+self-documenting nature of all code (including the calling code as
+well).  Note that the {}\ttt{ArrayRCP::operator()()} function is a
+very short-hand way to perform conversion to {}\ttt{ArrayView}.
 
-{}\ttt{ArrayRCP} supports owning conversions from
-{}\ttt{RCP}-wrapped {}\ttt{Array} and {}\ttt{std::vector}
-objects.  This allows for better interoperability between code that
-still uses solid reference-counting ownership semantics.
+{}\ttt{ArrayRCP} supports owning conversions from {}\ttt{RCP}-wrapped
+{}\ttt{Array} and {}\ttt{std::vector} objects.  This allows for better
+interoperability between code and uses solid reference-counting
+ownership semantics.
 
 Some of the other features of the {}\ttt{ArrayRCP} class that are
 common with the other classes are discussed in Sections
@@ -2797,7 +2818,7 @@ objects (see Section~\ref{sec:detection-dangling-references}).
 error messages.
 
 The class declaration for the {}\ttt{Array} class is shown in
-Listing {}\ref{listing:Array}.
+Listing~\ref{listing:Array}.
 
 \begin{listing}: {}\ttt{Teuchos::Array} declaration (optimized build) \\
 \label{listing:Array}
@@ -2877,7 +2898,6 @@ Listing {}\ref{listing:Array}.
   template<class T> ArrayRCP<const T> arcpFromArray( const Array<T> &a );
   template<typename T> std::ostream& operator<<(std::ostream& os,
     const Array<T>& array);
-  template<typename T> int hashCode(const Array<T>& array);
   template<typename T> std::vector<T> createVector( const Array<T> &a );
   std::string toString(const Array<T>& array);
   template<typename T> Array<T> fromStringToArray(const std::string& arrayStr);
@@ -2902,10 +2922,10 @@ debug-mode runtime checking can be found at
 {}\subsubsection{\ttt{Teuchos::Tuple<T,N>}}
 %
 
-The last array class discussed here is the {}\ttt{Tuple} class
-which represents a compile-time sized array that implicitly converts
-into a {}\ttt{ArrayView} object.  The class listing for
-{}\ttt{Tuple} is shown in Listing {}\ref{listing:Tuple}.
+The last array class discussed here is the {}\ttt{Tuple} class which
+represents a compile-time sized array that implicitly converts into an
+{}\ttt{ArrayView} object.  The class listing for {}\ttt{Tuple} is
+shown in Listing~\ref{listing:Tuple}.
 
 \begin{listing}: {}\ttt{Teuchos::Tuple} declaration (optimized build) \\
 \label{listing:Tuple}
@@ -2958,11 +2978,12 @@ the other Teuchos array classes including the detection of dangling
 
 One of the most useful features of {}\ttt{Tuple} is that a number of
 overloaded non-member constructor functions with name
-{}\ttt{tuple(...)} are provided to make it easy to pass in arrays to
-functions that accept them as {}\ttt{ArrayView} arguments.  Overloads
-of {}\ttt{tuple(...)} are currently provided from one up through 15
-arguments.  For an example for using {}\ttt{tuple(...)} to call a
-function call, consider the function to be called:
+{}\ttt{tuple(...)} are provided (show above) to make it easy to pass
+in arrays to functions that accept them as {}\ttt{ArrayView}
+arguments.  Overloads of {}\ttt{tuple(...)} are currently provided
+from one up through 15 arguments.  For an example for using
+{}\ttt{tuple(...)} to call a function call, consider the function to
+be called:
 
 {\small\begin{verbatim}
   void doSomething(const ArrayView<const int>&);
@@ -3002,9 +3023,9 @@ As soon as a contiguous array of data is correctly captured in
 {}\ttt{Array} or an owning {}\ttt{ArrayRCP} object, all children
 {}\ttt{ArrayView} objects will be protected in that if the parent
 array gets deleted, a debug-mode runtime check will detect and report
-a problem if a client tries to access the data after the parent has
-gone away (see Section~\ref{sec:detection-dangling-references} for
-details).
+a dangling reference if a client tries to access the data after the
+parent has gone away (see
+Section~\ref{sec:detection-dangling-references} for details).
 
 To demonstrate the elegance and superior error checking of
 {}\ttt{ArrayView} subviews, consider a refactored version of code in
@@ -3074,7 +3095,7 @@ compact as the raw pointer versions in Listing
 debug-mode runtime error checking.  To see the improved safety, let's
 consider the case where the {}\ttt{transform(...)}  function
 is incorrectly implemented with an off-by-one error as shown in
-Listing {}\ref{listing:addArrayIntoArray-ArrayViewError}.
+Listing~\ref{listing:addArrayIntoArray-ArrayViewError}.
 
 {}\begin{listing}: Refactored version of off-by-one error in
 Listing~{}\ref{listing:addArrayIntoArray_rawError} to use
@@ -3086,14 +3107,14 @@ Listing~{}\ref{listing:addArrayIntoArray_rawError} to use
   {
     DEBUG_MODE_ASSERT_EQUALITY( a.size(), b.size() );
     for (int i = 0; i <= a.size(); ++i)
-      b[i] += a[i];
+      b[i] += a[i]; // Throws when i == a.size()
   }
 \end{verbatim}}
 \end{listing}
 
 If the erroneous {}\ttt{transform(...)} function in Listing
 {}\ref{listing:addArrayIntoArray-ArrayViewError} were called from
-Listing {}\ref{listing:someBlockAlgo-ArrayView} then in debug-mode, a
+Listing~\ref{listing:someBlockAlgo-ArrayView} then in debug-mode, a
 runtime exception would immediately be raised when the
 {}\ttt{transform(...)} function tried to access one past the last
 element.  As mentioned in Section
@@ -3219,7 +3240,7 @@ raw C++ pointers.  C++ defines implicit conversions for raw pointers
 from non-const to const and from derived to base types.  Table
 {}\ref{tbl:implicit_explicit_conversions} shows what implicit and
 explicit conversions are supported for the four core memory management
-types.
+smart pointer types.
 
 
 \begin{table}
@@ -3259,7 +3280,7 @@ objects and therefore reinterpret cast is not supported for the types
 The allowed implicit conversions for {}\ttt{Ptr} and {}\ttt{RCP} are
 implemented through templated copy constructors (see Sections
 {}\ref{sec:Ptr} and {}\ref{sec:RCP}).  However, the only allowed
-implicit conversion for {}\ttt{T*} to {}\ttt{const T*} for
+implicit conversion for {}\ttt{<T*>} to {}\ttt{<const T*>} for
 {}\ttt{ArrayView} and {}\ttt{ArrayRCP} are instead supported through
 conversion member functions (see Sections {}\ref{sec:ArrayView} and
 {}\ref{sec:ArrayRCP}).  The supported explicit conversion operators
@@ -3468,7 +3489,7 @@ management types are not passed by const reference (or by value) and
 are mistakenly (or on purpose) passed by non-const reference. (This is
 a programming error.)
 
-{}\item{}Implicit conversions fail because templated functions can not
+{}\item{}Implicit conversions fail because templated functions cannot
 perform implicit conversions in order to satisfy a call. (This is a
 language usability annoyance associated with templates but also
 represents a fundamental shortcoming of smart pointers compared to raw
@@ -3494,7 +3515,7 @@ non-const reference}
 First, consider implicit conversion problems caused by erroneously
 passing Teuchos memory management objects by non-const references
 instead of by const reference.  Consider the user-written function in
-Listing {}\ref{listing:someUserFunction-pass-by-non-const-ref} that
+Listing~\ref{listing:someUserFunction-pass-by-non-const-ref} that
 mistakenly passes an {}\ttt{RCP} by non-const reference.
 
 
@@ -3523,7 +3544,7 @@ reference problem
 
 
 When user code tries to call {}\ttt{someUserFunction(...)} as shown in
-Listing {}\ref{listing:someUserFunction-pass-by-non-const-ref}, the
+Listing~\ref{listing:someUserFunction-pass-by-non-const-ref}, the
 C++ compiler refuses to perform the implicit type conversions because
 the compiler will never perform an implicit type conversion for an
 argument passed by non-const reference.  This type of error is made at
@@ -3543,16 +3564,16 @@ for C++ pointer types.  Note that every pointer type (e.g.\
 {}\ttt{int*}, {}\ttt{SomeType*}) is a new C++ value data type that is
 automatically defined by the compiler for every defined type.  The C++
 compiler also automatically defines implicit conversions between
-pointer types for {}\ttt{T*} to {}\ttt{const T*} and for {}\ttt{Base*}
-to {}\ttt{Derived*} (or combinations of both with {}\ttt{Derived*} to
-{}\ttt{const Derived*}).  While C++ pointer data types have a special
-place in the C++ language, they behave exactly like every other data
-type in C++ with respect to non-const references and implicit
-conversions.  That is, if a pointer object is passed by non-const
-reference instead of by value, the compiler will refuse the perform
-the type conversion.  For example, the equivalent code to Listing
-{}\ref{listing:someUserFunction-pass-by-non-const-ref} replacing
-{}\ttt{RCP} with raw pointers shown in Listing
+pointer types for {}\ttt{T*} to {}\ttt{const T*} and for
+{}\ttt{Derived*} to {}\ttt{Base*} (or combinations of both with
+{}\ttt{Derived*} to {}\ttt{const Base*}).  While C++ pointer data
+types have a special place in the C++ language, they behave exactly
+like every other data type in C++ with respect to non-const references
+and implicit conversions.  That is, if a pointer object is passed by
+non-const reference instead of by value, the compiler will refuse the
+perform the implicit conversion.  For example, the equivalent code to
+Listing~\ref{listing:someUserFunction-pass-by-non-const-ref}
+replacing {}\ttt{RCP} with raw pointers shown in Listing
 {}\ref{listing:someUserFunction-pass-by-non-const-ref-raw-ptr} will
 also result in code that will not compile.
 
@@ -3584,7 +3605,7 @@ reference problem using raw pointers
 The way to fix this problem is to pass the Teuchos memory management
 types (or any other type one wants the compiler to perform an implicit
 conversion on) by const reference.  For example, fixing the code in
-Listing {}\ref{listing:someUserFunction-pass-by-non-const-ref} to pass
+Listing~\ref{listing:someUserFunction-pass-by-non-const-ref} to pass
 by const reference shown in Listing
 {}\ref{listing:someUserFunction-pass-by-const-ref} results in code
 that compiles just fine with the C++ compiler performing all of the
@@ -3621,7 +3642,7 @@ to satisfy a function call are when the function being called is a
 template function.  The C++98 standard does not allow the implicit
 conversion of input arguments in order to call a template function
 {}\cite[Item 45]{EffectiveC++ThirdEdition}.  For example, consider the
-code in Listing {}\ref{listing:implicit-conv-fail-template-func} that
+code in Listing~\ref{listing:implicit-conv-fail-template-func} that
 fails to compile:
 
 
@@ -3653,7 +3674,7 @@ template function.
 
 What is frustrating and yet interesting about this situation is that
 if the {}\ttt{RCP}s are replaced with raw pointers, as shown in
-Listing {}\ref{listing:implicit-conv-pass-raw--template-func}, the C++
+Listing~\ref{listing:implicit-conv-pass-raw--template-func}, the C++
 compiler will perform the implicit type conversions just fine.
 
 
@@ -3716,13 +3737,16 @@ conversions to allow the call of templated functions
 \end{listing}
 
 
-As shown in Listing
-{}\ref{listing:implicit-conv-pass-explicit-template-func} typically
-the least verbose way to call a template function that requires a
-conversion of input arguments is to just explicitly specify the
-template argument(s) which turns the template function into a regular
-function in the eyes of the C++ compiler and then implicit conversions
-will be allowed to satisfy the function call.
+As shown in
+Listing~\ref{listing:implicit-conv-pass-explicit-template-func},
+typically the least verbose way to call a template function that
+requires a conversion of input arguments is to just explicitly specify
+the template argument(s) which turns the template function into a
+regular function in the eyes of the C++ compiler and then implicit
+conversions will be allowed to satisfy the function
+call\footnote{Enabling emplicit conversions of input arguments for
+template functions with explicitly defined template arguments does not
+work on always work on even recent versions of the Sun C++ compiler.}.
 
 
 %
@@ -3772,7 +3796,7 @@ smart enough to know that a conversion from {}\ttt{RCP<Derived>} to
 {}\ttt{RCP<Derived>} to {}\ttt{RCP<const Base>} which would allow the
 first function call to result in a call to Overload \#1, for instance.
 However, if raw C++ pointers are used in same code, as shown in
-Listing {}\ref{listing:overloaded-func-implicit-conv-raw-pass}, the
+Listing~\ref{listing:overloaded-func-implicit-conv-raw-pass}, the
 compiler will make the right implicit conversions and call the right
 overloaded functions just fine.
 
@@ -3794,6 +3818,7 @@ functions that work just fine for raw pointers
      someUserFunction(base);     // Okay, exact match for Overload #1
      const Base *cbase = base;
      someUserFunction(cbase);    // Okay, exact match for Overload #2
+     delete derived;
   }
 \end{verbatim}}
 \end{listing}
@@ -3820,7 +3845,7 @@ language extension.}.
 
 Problems in calling overloaded functions like this can be resolved but
 only through explicitly converting the input arguments as shown in
-Listing {}\ref{listing:overloaded-func-implicit-conv-explicit-pass}.
+Listing~\ref{listing:overloaded-func-implicit-conv-explicit-pass}.
 
 
 {}\begin{listing}: Example of resolving ambiguous calls to overloaded
@@ -3926,7 +3951,7 @@ consider the C++ class {}\ttt{Blaget} shown in Listing
 Now consider how one might go about constructing a {}\ttt{Blaget}
 object on the stack given newly dynamically allocated {}\ttt{Widget}
 objects.  A compact, clean, and seemingly safe way to do so is shown
-in Listing {}\ref{listing:BlagetConstruct1}.
+in Listing~\ref{listing:BlagetConstruct1}.
 
 \begin{listing}: A leaky way to construct \\
 \label{listing:BlagetConstruct1}
@@ -3935,7 +3960,7 @@ in Listing {}\ref{listing:BlagetConstruct1}.
 \end{verbatim}}
 \end{listing}
 
-The problem with the code in Listing {}\ref{listing:BlagetConstruct1}
+The problem with the code in Listing~\ref{listing:BlagetConstruct1}
 is that it might result in a memory leak if an exception is thrown by
 one of the constructors for {}\ttt{Widget} (see {}\cite[Item
 13]{C++CodingStandards05}).  The reason that a memory leak might occur
@@ -3949,8 +3974,8 @@ the first {}\ttt{new Widget()} will never be reclaimed.
 
 The current C++ literature (see {}\cite[Item
 13]{C++CodingStandards05}) recommends rewriting constructor code like
-shown in Listing {}\ref{listing:BlagetConstruct1} using temporary local
-variables as shown in Listing {}\ref{listing:BlagetConstruct2}.
+shown in Listing~\ref{listing:BlagetConstruct1} using temporary local
+variables as shown in Listing~\ref{listing:BlagetConstruct2}.
 
 \begin{listing}: A sound but verbose way to construct \\
 \label{listing:BlagetConstruct2}
@@ -3961,23 +3986,23 @@ variables as shown in Listing {}\ref{listing:BlagetConstruct2}.
 \end{verbatim}}
 \end{listing}
 
-While the code in Listing {}\ref{listing:BlagetConstruct2} will avoid a
+While the code in Listing~\ref{listing:BlagetConstruct2} will avoid a
 memory leak being created in case an exception is thrown, competent
 Java and Python programs will rightfully be disgusted that they have
 to create temporary variables just to call another constructor.  From
 a software engineering perspective, it is undesirable to create
-useless local {}\ttt{RCP} objects like {}\ttt{widgetA} and
-{}\ttt{widgetB} because they might be inadvertently copied and used
-for other purposes, resulting in undesirable side-effects.
+useless local variables like {}\ttt{widgetA} and {}\ttt{widgetB}
+because they might be inadvertently copied and used for other
+purposes, resulting in undesirable side-effects.
 
 The way to solve the problems described above is to provide non-member
 constructor functions for all dynamically allocatable reference-type
 classes and then always call them to create {}\ttt{RCP}-wrapped
 objects in client code.  In fact, to avoid mistakes when using
-reference-type classes, one should disallow the creation of the
-objects except through a provided non-member constructor.  A
-{}\textit{non-member constructor} compliant {}\ttt{Widget} class
-declaration is shown in Listing
+reference-type classes, one should disallow the creation of
+reference-type objects except through a provided non-member
+constructor.  A {}\textit{non-member constructor} compliant
+{}\ttt{Widget} class declaration is shown in Listing
 {}\ref{listing:WidgetNonmemberConstructor}.
 
 {}\begin{listing}: The non-member constructor idiom for reference-type
@@ -4001,8 +4026,8 @@ classes
 \end{listing}
 
 Using the non-member constructor function {}\ttt{createWidget()}, the
-unsafe constructor call in Listing {}\ref{listing:BlagetConstruct1}
-can be written as shown in Listing {}\ref{listing:BlagetConstruct3}.
+unsafe constructor call in Listing~\ref{listing:BlagetConstruct1}
+can be written as shown in Listing~\ref{listing:BlagetConstruct3}.
 
 {}\begin{listing}: Clean and bullet-proof way to construct dynamically
 allocated objects using the ``non-member constructor function'' idiom
@@ -4011,15 +4036,15 @@ allocated objects using the ``non-member constructor function'' idiom
 \end{verbatim}}
 \end{listing}
 
-The code in Listing {}\ref{listing:BlagetConstruct3} will never result
+The code in Listing~\ref{listing:BlagetConstruct3} will never result
 in a memory leak if an exception is thrown because each argument is
 returned as a fully formed {}\ttt{RCP} object which will clean up
 memory if any exception is thrown.
 
 Note that the use of the {}\textit{non-member constructor idiom} not
-only means that raw calls to {}\ttt{delete} are eliminated from all
-high-level C++ code, but it also means that raw calls to {}\ttt{new}
-should be largely eliminated as well!
+only means that raw calls to {}\ttt{delete} are encapsulated in all
+high-level C++ code (due to the use of {}\ttt{RCP}), but it also means
+that raw calls to {}\ttt{new} should be largely encapsulated as well!
 
 The non-member constructor idiom as shown in Listing
 {}\ref{listing:WidgetNonmemberConstructor} where a reference-type
@@ -4084,7 +4109,7 @@ storage for the reference-type objects of type {}\ttt{A} themselves to
 be different sets of storage.  For example, one can change what
 {}\ttt{A} object is pointed to in the {}\ttt{RCP<A>} object stored in
 the contiguous array to without changing the {}\ttt{A} object itself
-such as in Listing {}\ref{listing:change-array-not-ref-type-objs}:
+such as in Listing~\ref{listing:change-array-not-ref-type-objs}:
 
 
 {}\begin{listing}: Code that changes memory in the contiguous array
@@ -4099,7 +4124,7 @@ but does not touch the memory in the reference-type objects themselves
 \end{listing}
 
 
-Note in Listing {}\ref{listing:change-array-not-ref-type-objs} that
+Note in Listing~\ref{listing:change-array-not-ref-type-objs} that
 technically the memory stored in the array (of {}\ttt{RCP<A>} objects)
 was changed but the memory stored in the reference-type objects being
 pointed to where not changed at all.  Likewise, one can change an
@@ -4155,7 +4180,7 @@ use reference counting.  That means that the types {}\ttt{Ptr} and
 {}\ttt{ArrayView} should almost never be used for class object data
 members or local variables (especially not for data members).
 However, local variables of type {}\ttt{Ptr} and {}\ttt{ArrayView}
-will be created in a function when that are created off of other
+will be created in a function when that are created off other
 {}\ttt{Ptr} and {}\ttt{ArrayView} objects (passed through the formal
 argument list).  The types {}\ttt{Ptr} and {}\ttt{ArrayView} will also
 be used as local variables when semi-persisting associations are
@@ -4203,14 +4228,14 @@ objects.}
 
 
 Tables {}\ref{fig:data_member_value_type} and
-{}\ref{fig:data_member_reference_type} gives idioms for class object
-data members.  Usages for local variables are similar.  Table
+{}\ref{fig:data_member_reference_type} give some idioms for class
+object data members.  Usages for local variables are similar.  Table
 {}\ref{fig:data_member_value_type} shows a few use cases involving
-value-type objects.  Table~\ref{fig:data_member_reference_type}
-shows use cases involving reference-type objects.  Every possible use
-case is not shown in these tables, only the most common ones.  There
-is almost no end to the number of different types of data structures
-that can be created by embedding these memory management types in each
+value-type objects.  Table~\ref{fig:data_member_reference_type} shows
+use cases involving reference-type objects.  Every possible use case
+is not shown in these tables, only the most common ones.  There is
+almost no end to the number of different types of data structures that
+can be created by embedding these memory management types in each
 other to address different needs.  When creating these composite data
 structures one just needs to understand the implications for the
 selections of the class types and for the use of const.
@@ -4295,10 +4320,10 @@ means to pass objects of another type (shown as {}\ttt{S} and
 passing in objects and for passing out objects through the formal
 arguments to C++ functions.  Note that value-type objects can always
 be handled using reference semantics so all of the passing conventions
-in Table~\ref{fig:func_args_ref_type} apply well for value-type
-objects as they do for reference-type objects.  However, the
-conventions in Tables {}\ref{fig:func_args_value_type} only apply to
-value-type objects that can be stored in contiguous arrays.
+in Table~\ref{fig:func_args_ref_type} apply equally as well for
+value-type objects as they do for reference-type objects.  However,
+the conventions in Tables {}\ref{fig:func_args_value_type} only apply
+to value-type objects that can be stored in contiguous arrays.
 
 This specification addresses the five different properties that must
 be considered when passing an object to a function as a formal
@@ -4358,13 +4383,13 @@ object would be specified in the function prototype as {}\ttt{const
 Ptr<RCP<A> >\&} or {}\ttt{RCP<A>\&} depending on preference (only the
 case {}\ttt{const Ptr<RCP<A> >\&} is shown in the tables which is a
 better self-documenting form and provides better debug-mode runtime
-since it can detect dangling references).  Note that semi-persisting
-associations are always passed out as {}\ttt{Ptr} and
+checking since it can detect dangling references).  Note that
+semi-persisting associations are always passed out as {}\ttt{Ptr} and
 {}\ttt{ArrayView} objects.  These types have essentially zero overhead
 in an optimized build but yet have full runtime checking including
 detection and reporting of dangling references in a debug-mode build
-(see Section~\ref{sec:perf-tuning-strategies} for a discussion of
-the motivation and usage of semi-persisting associations).  The types
+(see Section~\ref{sec:perf-tuning-strategies} for a discussion of the
+motivation and usage of semi-persisting associations).  The types
 {}\ttt{RCP} and {}\ttt{ArrayRCP} are always used to establish
 persisting associations.
 
@@ -4382,13 +4407,15 @@ described here allows either passing them through a smart pointer as
 recommend passing a raw non-const object reference {}\ttt{T\&} for
 changeable required objects, which seems very reasonable.  However,
 other notable authors {}\cite[Section Section 5.5]{stroustrup97} and
-{}\cite[Section 13.2]{CodeComplete2nd04} recommend passing a pointer
-instead, as it provides a visual clue that the object is being
-modified in the function call.  Of course, the idioms defined here do
-not allow raw pointers so one must pass a {}\ttt{const Ptr<T>\&}
-object instead.  To consider the issues, for example, from looking at
-the function call in Listing {}\ref{listing:fun-call-raw-refs}, which
-(if any) argument(s) are being modified?
+{}\cite[Section 13.2]{CodeComplete2nd04} and the Google C++ coding
+standard\footnote{\ttt{http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml}}
+recommend passing a pointer instead, as it provides a visual clue that
+the object is being modified in the function call.  Of course, the
+idioms defined here do not allow raw pointers so one must pass a
+{}\ttt{const Ptr<T>\&} object instead.  To consider the issues, for
+example, looking at the function call in
+Listing~\ref{listing:fun-call-raw-refs}, which (if any) argument(s)
+are being modified?
 
 
 {}\begin{listing}: Function call using all raw references where it is
@@ -4402,8 +4429,8 @@ impossible to determine what objects are modified in the call
 
 To tell for sure which objects are being modified in Listing
 {}\ref{listing:fun-call-raw-refs}, one would have to look at the
-function prototype shown in Listing {}\ref{listing:fun-decl-raw-refs}
-to see that it is the {}\ttt{d} argument is being modified in the
+function prototype shown in Listing~\ref{listing:fun-decl-raw-refs} to
+see that it is the {}\ttt{d} argument that is being modified in the
 function call.
 
 
@@ -4418,7 +4445,7 @@ raw C++ references
 
 Now consider the convention that all changeable arguments be passed in
 through a pointer as {}\ttt{const Ptr<T>\&}, giving the new prototype
-shown in Listing {}\ref{listing:fun-decl-ptr-changed-objs}.
+shown in Listing~\ref{listing:fun-decl-ptr-changed-objs}.
 
 
 {}\begin{listing}: Function prototype where modified objects are
@@ -4434,8 +4461,9 @@ passed through {}\ttt{Ptr} leading to self-documenting client code
 Now the new function call in Listing
 {}\ref{listing:fun-call-ptr-changed-obj} is self-documenting with
 regards to which object is modified in the function call by using the
-{}\ttt{outArg(...)} templated non-member function that returns a
-{}\ttt{Ptr<T>} object given a raw reference {}\ttt{T\&}.
+{}\ttt{outArg(...)} templated non-member function (see
+{}\ttt{outArg(...)} in
+Listing~\ref{listing:ptr-from-ref-nonmember-constructors}).
 
 
 {}\begin{listing}: Self-documenting function call that shows what
@@ -4453,13 +4481,13 @@ non-null by default, this specifies that passing an argument as
 argument by {}\ttt{T\&}.  Of course now one has given up a
 compile-time check for a non-null argument for {}\ttt{T\&} with a
 debug-mode runtime check that {}\ttt{const Ptr<T>\&} is non-null.
-Theoretically, the compile-time check would appear to be far superiors
+Theoretically, the compile-time check would appear to be far superior
 but in reality the debug-mode runtime check is usually what happens
 anyway since the raw object reference would typically be created from
 a smart pointer in most cases (which can be null, resulting in a null
 dereference runtime exception in a debug-mode build).  Therefore the
 issue is not whether a compile-time check will catch passing a
-null-object (because it can't) but instead the issues is how soon a
+null-object (because it can't) but instead the issue is how soon a
 debug-mode runtime check will catch a dereference of a null smart
 pointer.
 
@@ -4511,7 +4539,7 @@ idioms.
 \end{listing}
 
 
-In Listing {}\ref{listing:convert-from-raw-ref-to-RCP}, the standard
+In Listing~\ref{listing:convert-from-raw-ref-to-RCP}, the standard
 conversion function {}\ttt{rcpFromRef(...)} converts from a raw C++
 reference to a non-owning {}\ttt{RCP} object.  Creating an {}\ttt{RCP}
 like is perfectly safe and correct.  The lifetime of the created
@@ -4520,7 +4548,7 @@ like is perfectly safe and correct.  The lifetime of the created
 persisting association inherent in the functions prototype (i.e.\
 passing the {}\ttt{B} object as a raw C++ reference) is being
 correctly kept.  Note that if the created non-owning {}\ttt{RCP} is
-accidentally used to create a persisting association then in many
+accidentally used to create a persisting association then, in many
 cases, the dangling reference will be caught by the built-in
 debug-mode runtime checking (see Section
 {}\ref{sec:detection-dangling-references}).
@@ -4554,13 +4582,13 @@ the refactored function is shown in Listing
 Again, if a persisting association is accidentally created by copying
 the {}\ttt{RCP<B>} object created in Listing
 {}\ref{listing:convert-from-Ptr-to-RCP} then this can be detected in a
-debug-mode build.  (Note that the conversion from {}\ttt{Ptr<B>} to
+debug-mode build.  Note that the conversion from {}\ttt{Ptr<B>} to
 {}\ttt{RCP<B>} shown in in Listing
 {}\ref{listing:convert-from-Ptr-to-RCP} actually generates much more
 efficient code in a debug-mode build because dangling-reference
 detection is implemented without having to perform a more expensive
 node look-up as described in Section
-{}\ref{sec:detection-dangling-references}).
+{}\ref{sec:detection-dangling-references}.
 
 
 %
@@ -4644,7 +4672,10 @@ function arguments described in Section
 these properties are clearly defined in the C++ code itself.  However,
 again, it is not always possible to directly state in the C++ code
 declarations whether the object (or array of objects) is optional or
-required.
+required.  Here, we state by default that all array arguments of type
+{}\ttt{ArrayView} and {}\ttt{ArrayRCP} are assumed to be required
+non-null arguments by default.  Otherwise, documentation must exist
+stating that the arguments are optional.
 
 The semantics of return objects is different than for formal function
 arguments.  There are several differences that one can see from
@@ -4664,7 +4695,8 @@ value) in Tables {}\ref{fig:func_return_value_type} and
 management objects should always be returned by value is that this is
 needed to correctly set up the reference counting machinery to
 properly set up persisting relationships and to enable debug runtime
-checking (e.g.\ to detect dangling references).
+checking (e.g.\ to detect dangling references with semi-persisting
+associations).
 
 Note that it is critical that semi-persisting associations for single
 objects must always be returned as {}\ttt{Ptr<T>} objects and never as
@@ -4675,6 +4707,15 @@ debug-mode build, the runtime checking machinery will be able to
 detect dangling references or changes in the parent object that would
 otherwise invalidate the semi-persisting view that is impossible to
 catch when using raw C++ references.
+
+In the following section, an extended example is given highlighting
+the need to return the Teuchos memory management smart pointer objects
+by value.  If one already accepts the need for this, the example can
+be skipped.
+
+%
+{}\subsubsection*{Extended example for the need to return smart pointers by value}
+%
 
 In order to understand the importance of returning memory management
 objects by value instead of by reference, first consider Listing
@@ -4693,7 +4734,7 @@ safe code.
 \end{listing}
 
 
-The code in Listing {}\ref{listing:unsafe_raw_C++_reference1} does not
+The code in Listing~\ref{listing:unsafe_raw_C++_reference1} does not
 itself look unsafe.  However, the reason that it unsafe comes from the
 code that calls {}\ttt{seeminglySafeFoo(...)} and the code that
 implements {}\ttt{Blob} shown in Listing
@@ -4747,7 +4788,7 @@ again will segfault if one is lucky).
 
 How did it come to this situation?  What if the raw C++ references
 were replaced with with RCP-wrapped objects?  Well, consider the
-updated code in Listing {}\ref{listing:unsafe_raw_C++_reference3}.
+updated code in Listing~\ref{listing:unsafe_raw_C++_reference3}.
 
 \begin{listing}: Still unsafe code  \\
 \label{listing:unsafe_raw_C++_reference3}
@@ -4780,7 +4821,7 @@ updated code in Listing {}\ref{listing:unsafe_raw_C++_reference3}.
 \end{verbatim}}
 \end{listing}
 
-Is the code in Listing {}\ref{listing:unsafe_raw_C++_reference3}
+Is the code in Listing~\ref{listing:unsafe_raw_C++_reference3}
 correct?  The sad answer is no, it is not.  The {}\ttt{Flab} object
 returned from {}\ttt{blob.getFlab()} will still get deleted before it
 is used in the expression {}\ttt{flab\_->conflab(flab\_in)}.  What is
@@ -4838,12 +4879,17 @@ object is created (which increments the reference count).  From this
 new temporary {}\ttt{RCP<Flab>} object, a raw C++ reference is then
 returned from {}\ttt{*blob.getFlab()} and passed through.  In this
 case, since the reference count on the existing {}\ttt{Flab} object is
-now two instead of one, the expression {}\ttt{flab\_ = createFlab()} will
-not delete the existing {}\ttt{Flab} object and the following
+now two instead of one, the expression {}\ttt{flab\_ = createFlab()}
+will not delete the existing {}\ttt{Flab} object and the following
 expression {}\ttt{flab\_in.conflab(*flab\_)} will have two valid
 {}\ttt{Flab} objects.  After the function
 {}\ttt{seeminglySafeFoo(blob, *blob.getFlab())} exits, the first
-{}\ttt{Flab} object will finally be deleted but that is just fine.
+{}\ttt{Flab} object will finally be deleted (but that is just fine).
+
+
+%
+{}\subsubsection*{More exmaples of function return issues}
+%
 
 Another difference between formal function arguments and return values
 is what persisting and non-persisting associations mean related to
@@ -4851,12 +4897,12 @@ function returns.  In the case of objects returned from C++ functions,
 a persisting association is one where the object returned from a C++
 function is remembered past the end of the statement where the C++
 function returning the objects is called.  For example, consider the
-code in Listing {}\ref{listing:persisting-func-return-1}.
+code in Listing~\ref{listing:persisting-func-return-1}.
 
 
 {}\begin{listing}: Example of a bad persisting association
 implemented as a raw C++ reference (see the {}\ttt{Grob} class
-defined in Listing {}\ref{listing:bad-Glob-non-persisting})
+defined in Listing~\ref{listing:bad-Glob-non-persisting})
 \label{listing:persisting-func-return-1}
 {\small\begin{verbatim}
   void foo(Glob& glob)
@@ -4869,7 +4915,7 @@ defined in Listing {}\ref{listing:bad-Glob-non-persisting})
 \end{listing}
 
 
-The code in Listing {}\ref{listing:persisting-func-return-1}
+The code in Listing~\ref{listing:persisting-func-return-1}
 represents a persisting association because because the
 {}\ttt{Flab} object returned in the expression {}\ttt{const Flab
 \&flab = glob.getFlab()} is remembered past the statement where it is
@@ -4880,7 +4926,7 @@ it is not properly respecting the notion of persisting associations.
 To see why the code in Listing
 {}\ref{listing:persisting-func-return-1} is so bad, consider the
 possible unfortunate implementation of the {}\ttt{Glob} class shown in
-Listing {}\ref{listing:bad-Glob-non-persisting}:
+Listing~\ref{listing:bad-Glob-non-persisting}:
 
 
 {}\begin{listing}: Bad implementation of the {}\ttt{Glob} class with
@@ -4932,8 +4978,8 @@ return objects.
 What this means is that any object that is returned as a raw C++
 reference from a function must be used in the same statement from
 where the returning function is called.  Therefore, the function in
-Listing {}\ref{listing:persisting-func-return-1} should be rewritten
-as shown in Listing {}\ref{listing:non-persisting-func-return-1}.
+Listing~\ref{listing:persisting-func-return-1} should be rewritten
+as shown in Listing~\ref{listing:non-persisting-func-return-1}.
 
 
 \begin{listing}:\\
@@ -5075,18 +5121,7 @@ The classes {}\ttt{RCPNode}, {}\ttt{RCPNodeImpl}, and
 {}\ttt{RCP} class is shown for simplicity).
 
 The member functions for {}\ttt{RCP} and {}\ttt{ArrayRCP} related to
-reference-counting are shown in Listing
-{}\ref{listing:ref-count-mem-funcs}.  Most of these functions are never
-called by general clients except in desperate situations.  Notable
-exceptions are the member functions {}\ttt{create\_weak()} (which is
-used to create a {}\ttt{WEAK} {}\ttt{RCP} object from a {}\ttt{STRONG}
-object) and and {}\ttt{create\_strong()} (which is used to create a
-{}\ttt{STRONG} {}\ttt{RCP} object from a {}\ttt{WEAK} object).  The
-function {}\ttt{create\_weak()} is used to break a circular reference
-as described in Section~\ref{sec:circular-references-weak-pointers}
-while {}\ttt{create\_strong()} is used in situations like the ``object
-self-reference'' idiom described in Section
-{}\ref{sec:self-references}.
+reference-counting are shown in Listing~\ref{listing:ref-count-mem-funcs}.
 
 
 {}\begin{listing}: Reference counting member functions for {}\ttt{RCP}
@@ -5117,6 +5152,19 @@ and {}\ttt{ArrayRCP}
 \end{listing}
 
 
+Most of the functions in Listing~\ref{listing:ref-count-mem-funcs} are
+never called by general clients except in desperate situations.
+Notable exceptions are the member functions {}\ttt{create\_weak()}
+(which is used to create a {}\ttt{WEAK} {}\ttt{RCP} object from a
+{}\ttt{STRONG} object) and and {}\ttt{create\_strong()} (which is used
+to create a {}\ttt{STRONG} {}\ttt{RCP} object from a {}\ttt{WEAK}
+object).  The function {}\ttt{create\_weak()} is used to break a
+circular reference as described in
+Section~\ref{sec:circular-references-weak-pointers} while
+{}\ttt{create\_strong()} is used in situations like the ``object
+self-reference'' idiom described in Section
+{}\ref{sec:self-references}.
+
 Figure~\ref{fig:TeuchosRCPDesign} also shows that every
 {}\ttt{RCPNode} object has an optional {}\ttt{std::map} object
 that can be used to store and retrieve arbitrary extra data
@@ -5127,6 +5175,27 @@ default.  Therefore, if no extra data is used, the only overhead for
 this feature is an extra pointer member and its initialization to
 null.  The motivation for and the usage of extra data is discussed in
 Section~\ref{sec:extra-data}.
+
+It is critical to understand that the foundation for sharing objects
+using reference counting is that only one owning {}\ttt{RCPNode}
+object can exist for any object that is shared.  Consider the code in
+Listing~\ref{listing:rcp-example-4} that creates the
+reference-counting objects shown in Figure~\ref{fig:RCPEx1}.  All of
+these {}\ttt{RCP} objects share the same {}\ttt{RCPNode} object.
+
+
+{}\begin{listing}: Example of setting up several {}\ttt{RCP} objects
+pointing to the same reference-counted object shown in
+Figure~\ref{fig:RCPEx1}.
+\label{listing:rcp-example-4}
+{\small\begin{verbatim}
+  RCP<C> c(new C);
+  RCP<B1> b1 = c;
+  RCP<B2> b2 = c;
+  RCP<A> a1 = c;
+  RCP<A> a2 = a.create_weak();
+\end{verbatim}}
+\end{listing}
 
 
 {\bsinglespace
@@ -5144,19 +5213,13 @@ Example of several {}\ttt{RCP} objects pointing to the same
 \esinglespace}
 
 
-It is critical to understand that the foundation for sharing objects
-using reference counting is that only one owning {}\ttt{RCPNode}
-object can exist for any object that is shared.  Figure
-{}\ref{fig:RCPEx1} (UML object diagram) shows an example of several
-{}\ttt{RCP} objects pointing to the same concrete object of type
-{}\ttt{C} through different base class interfaces.  If the programmer
-follows the idioms described in Section~\ref{sec:idioms} and
-outlined in Appendix {}\ref{apdx:summary_of_idioms} and
-{}\ref{apdx:commandments}, it will always be the case that only one
-reference-counting node object will exist for a given
-reference-counted object.  Exceptions to the one effective owning
-{}\ttt{RCPNode} object per reference-counted object guideline are
-allowed to facilitate some more advanced use cases (see Section
+If the programmer follows the idioms described in
+Section~\ref{sec:idioms} and outlined in Appendix
+{}\ref{apdx:summary_of_idioms} and {}\ref{apdx:commandments}, it will
+always be the case that only one reference-counting node object will
+exist for a given reference-counted object.  Exceptions to the one
+owning {}\ttt{RCPNode} object per reference-counted object guideline
+are allowed to facilitate some more advanced use cases (see Section
 {}\ref{sec:inverting-obj-ownership} for an example).  As mentioned
 earlier, the {}\ttt{RCPNode} object stores both a strong and a weak
 reference count.  The strong and weak reference counts are equal to
@@ -5225,7 +5288,7 @@ specific points in the program and changing the time of deletion of
 the object (and the call of the destructor) would break the program.
 
 To understand the problem with circular references, consider the code
-in Listing {}\ref{listing:CircularRCP_A_B} which sets up a simple
+in Listing~\ref{listing:CircularRCP_A_B} which sets up a simple
 circular reference between two objects.
 
 
@@ -5239,13 +5302,14 @@ circular reference between two objects.
     b->set_A(a);
     RCP<ClientA> clientA = createClientA(a);
     RCP<ClientB> clientB = createClientB(b);
+    ...
   }
   // The A and B objects will not be deleted when the above code block ends!
 \end{verbatim}}
 \end{listing}
 
 
-The code fragment in Listing {}\ref{listing:CircularRCP_A_B} sets up
+The code fragment in Listing~\ref{listing:CircularRCP_A_B} sets up
 the objects in Figure~\ref{fig:CircularRCP_A_B} showing the circular
 reference.  Here object {}\ttt{a} contains an {}\ttt{RCP} pointing to
 object {}\ttt{b}, and object {}\ttt{b} contains an {}\ttt{RCP}
@@ -5280,14 +5344,15 @@ the reference-counting node tracing machinery will print out the
 remaining {}\ttt{RCPNode} objects when it exists (see Section
 {}\ref{sec:detection-circular-references} for more details).
 
-While there is no completely general and bullet proof way to address
+While there is no completely general and bullet-proof way to address
 the circular reference problem, there is a fairly simple and cheap
 approach supported by the Teuchos reference-counting machinery that
-can effectively resolve circular references in most cases.  The
-approach described here supported by the Teuchos reference-counted
-classes is to exploit the concept of weak reference-counted pointers.
-As shown in Figure~\ref{fig:TeuchosRCPDesign}, this is accomplished
-through a {}\ttt{strength} attribute with values {}\ttt{STRONG} and
+developers can use to effectively resolve circular references in most
+cases.  The approach described here supported by the Teuchos
+reference-counted classes is to exploit the concept of weak
+reference-counted pointers.  As shown in
+Figure~\ref{fig:TeuchosRCPDesign}, this is accomplished through a
+{}\ttt{strength} attribute with values {}\ttt{STRONG} and
 {}\ttt{WEAK}.  By default, all {}\ttt{RCP} objects are {}\ttt{STRONG}.
 When an {}\ttt{RCP} is {}\ttt{STRONG}, then the underlying
 {}\ttt{ConcreteT} object is guaranteed to stay around.  However, when
@@ -5311,7 +5376,7 @@ Simple circular reference between two objects broken using a
 
 So how can one deal with circular references like this?  The answer in
 this case is to use a weak {}\ttt{RCP} to break the circular reference
-as shown in Listing {}\ref{listing:CircularRCP_A_B_weak}.
+as shown in Listing~\ref{listing:CircularRCP_A_B_weak}.
 
 
 \begin{listing}: Breaking a simple circular reference using a weak
@@ -5325,12 +5390,14 @@ as shown in Listing {}\ref{listing:CircularRCP_A_B_weak}.
     b->set_A(a.create_weak());
     RCP<ClientA> clientA = createClientA(a);
     RCP<ClientB> clientB = createClientB(b);
+    ...
     if (deleteClientAFirst)
       clientA = null;
     else
       clientB = null;
   }
-  // Now all the objects will be deleted correctly!
+  // Now all the objects will be deleted correctly no matter if
+  // clientA or clientB goes away first.
 \end{verbatim}}
 \end{listing}
 
@@ -5345,8 +5412,8 @@ lifetime of {}\ttt{a} is a super-set of the ``useful'' lifetime of
 {}\ttt{b}.  If {}\ttt{a} gets deleted before {}\ttt{b}, then {}\ttt{b}
 had better not try to access {}\ttt{a} anymore!  However, the goal is
 that whoever gets deleted first (i.e.\ {}\ttt{clientA} or
-{}\ttt{clientB}) the objects {}\ttt{a} and {}\ttt{b} will go away also
-gracefully be deleted and not result in memory leaks.
+{}\ttt{clientB}), then the objects {}\ttt{a} and {}\ttt{b} will also
+be deleted gracefully and not result in memory leaks.
 
 
 {\bsinglespace
@@ -5368,10 +5435,23 @@ Weak pointer scenario where {}\ttt{ClientA} is deleted first  }
 \esinglespace}
 
 
+In the next section, detailed scenarios are given for the deletion of
+the objects shown in Figure~\ref{fig:CircularRCP_A_B_weak}.  This
+information is important if one wants to understand exactly how the
+weak pointers can allow the objects to be deleted correctly while
+still catching mistakes gracefully and avoiding undefined behavior.
+However, this information is not critical to understand for basic
+usage of the classes.
+
+
+%
+{}\subsubsection*{Detail scenarios for weak pointers and cicular references}
+%
+
 Consider the scenario where the {}\ttt{clientA} object goes away first
-(i.e.\ {}\ttt{deleteClientAFirst=true}) depicted in Figure
-{}\ref{fig:CircularRCP_A_B_ClientA} (UML communication diagram).  This
-scenario is shown in two phases in two separate UML communication
+(i.e.\ {}\ttt{deleteClientAFirst=true}) depicted in
+Figure~\ref{fig:CircularRCP_A_B_ClientA} (UML communication diagram).
+This scenario is shown in two phases in two separate UML communication
 diagrams in Figure~\ref{fig:CircularRCP_A_B_ClientA} with the
 following steps:
 
@@ -5518,8 +5598,13 @@ correctly, the {}\ttt{RCPNodeImpl::deleteObj()} function has some
 special logic to avoid a double delete call being performed on the
 reference-counted object.
 
+
+%
+{}\subsubsection*{Comparison to weak pointers in Boost}
+%
+
 With respect the weak pointers, the Teuchos class {}\ttt{RCP} differs
-substantially from the Boost and therefore C++0x standard
+substantially from the Boost and therefore the C++0x standard
 reference-counting classes.  With the class {}\ttt{RCP}, the
 attribution of strong or weak is made at runtime.  This allows an
 external client to decide at runtime to make {}\ttt{a}'s reference to
@@ -5536,26 +5621,26 @@ For example, if one were to use the {}\ttt{shared\_ptr} and
 {}\ttt{weak\_ptr} classes, one would have to decide at compile time to
 make {}\ttt{a}'s reference or {}\ttt{b}'s reference weak.  The
 decision one makes make might work for one set of use cases that one
-currently know about, but for more complex use cases not discovered
+currently knows about, but for more complex use cases not discovered
 yet, one may need to switch it.  In fact, in the same compiled program
 there may be some use cases where {}\ttt{a} will be deleted before
 {}\ttt{b} and other use cases where {}\ttt{b} will be deleted before
 {}\ttt{a}.  With the classes {}\ttt{shared\_ptr} and
-{}\ttt{weak\_ptr}, this is impossible (at least not without storing
-both smart pointer types in each class {}\ttt{A} and {}\ttt{B} object
-and then using one or the other which is not very elegant or
+{}\ttt{weak\_ptr}, this is impossible to handle (at least not without
+storing both smart pointer types in each class {}\ttt{A} and {}\ttt{B}
+object and then using one or the other which is not very elegant or
 efficient).  The only argument for the compile-time approach used by
 Boost and C++0x is improved performance in both speed and memory
 overhead but the results in Section
 {}\ref{sec:reference-counting-overhead} show that this extra overhead
 is fairly minimal.  Overall, the overhead induced by the flexible
-runtime approach of the {}\ttt{RCP} class (and therefore also the
-{}\ttt{ArrayRCP} class) is well worth this small extra overhead.
-Typically, the classes {}\ttt{RCP} and {}\ttt{ArrayRCP} are used to
-manage objects (or blocks of array data for {}\ttt{ArrayRCP}) much
-larger than what is contained in the infrastructure for the
-reference-counting objects so the additional memory overhead is
-usually insignificant as well.
+runtime approach to weak pointers of the {}\ttt{RCP} class (and
+therefore also the {}\ttt{ArrayRCP} class) is well worth this small
+extra overhead.  Typically, the classes {}\ttt{RCP} and
+{}\ttt{ArrayRCP} are used to manage objects (or blocks of array data
+for {}\ttt{ArrayRCP}) much larger than what is contained in the
+infrastructure for the reference-counting objects so the additional
+memory overhead is usually insignificant as well.
 
 
 {\bsinglespace
@@ -5572,6 +5657,10 @@ Example of a circular chain involving many objects and many classes.}
 \esinglespace}
 
 
+%
+{}\subsubsection*{Summary of circular references and weak pointers}
+%
+
 While this section has focused on a simple example involving a
 circular reference between two classes and two objects, in reality
 circular references typically involve many different objects and
@@ -5584,26 +5673,28 @@ reference involving eight objects.  When the external
 of objects from {}\ttt{a} to {}\ttt{h} will not be deleted which
 results in a memory leak.  These types of chains of circular
 references can be very difficult to track down and that is where the
-debug-mode runtime node tracing described in Section
+debug-mode runtime node tracing described in more detail in Section
 {}\ref{sec:detection-circular-references} comes in most handy.
 
 Section~\ref{sec:detection-dangling-references} describes how weak
 pointers are used in runtime debug checking for dangling
-non-persisting references.  Section~\ref{sec:self-references}
+(non-persisting) references.  Section~\ref{sec:self-references}
 describes how weak pointers are used in dealing with object
-self-references.  In summary, the Teuchos reference-counting machinery
-dynamically addresses both strong and weak references and is a very
-powerful tool but to use it effectively, one needs to understand the
-basic semantics for its use.  The good news is that 99\% of the people
-who use the classes {}\ttt{RCP} and {}\ttt{ArrayRCP} will never need
-to know the difference between a strong and weak reference and will by
-default use just strong references.  Weak references will get used
-under the hood for some debug-mode runtime checking but they are
-totally transparent to client code and the programmer.  It is only in
-cases of circular references and with some more advanced idioms and
-design patterns (see Sections {}\ref{sec:self-references} and
-{}\ref{sec:generalized-view-design-pattern} for examples) do typical
-programmers need to know anything about weak pointers.
+self-references.
+
+In summary, the Teuchos reference-counting machinery dynamically
+addresses both strong and weak references and is a very powerful tool
+but to use it effectively, one needs to understand the basic semantics
+for its use.  The good news is that likely 90\% of more casual
+developers who use the classes {}\ttt{RCP} and {}\ttt{ArrayRCP} will
+never need to know the difference between a strong and weak reference
+and will by default just use strong references.  Weak references will
+get used under the hood for some debug-mode runtime checking but they
+are totally transparent to client code and the programmer.  It is only
+in cases of circular references and with some more advanced idioms and
+design patterns (see Section~\ref{sec:self-references} and
+Section~\ref{sec:generalized-view-design-pattern} for examples) do
+typical programmers need to know anything about weak pointers.
 
 
 %
@@ -5671,7 +5762,7 @@ when the first reference-counted object is constructed.
 
 The code associated with customized deallocation policies for
 {}\ttt{RCP} (which are identical for {}\ttt{ArrayRCP} as well) are
-shown in Listing {}\ref{listing:RCP-dealloc}.
+shown in Listing~\ref{listing:RCP-dealloc}.
 
 \begin{listing}: Declarations for customized deallocation policies
 for {}\ttt{RCP} \\
@@ -5730,7 +5821,7 @@ semi-advanced users of the STL (part of the standard C++ library).
 
 To demonstrate the use of a deallocator object, let us assume that the
 code must wrap objects of type {}\ttt{A} managed by the object
-database shown in Listing {}\ref{listing:ObjectADB}.
+database shown in Listing~\ref{listing:ObjectADB}.
 
 
 {}\begin{listing}: Example of a simple object database
@@ -5746,15 +5837,15 @@ database shown in Listing {}\ref{listing:ObjectADB}.
 \end{listing}
 
 
-In the object database in Listing {}\ref{listing:ObjectADB}, objects
+In the object database in Listing~\ref{listing:ObjectADB}, objects
 are accessed and released using an integer ID.  How this ID is
 specified and determined is not important here.  Let us suppose that
 one wants to define an abstract factory that returns objects of type
 {}\ttt{A} wrapped in {}\ttt{RCP<A>} objects using a database object of
-type {}\ttt{ObjectADB} shown in Listing {}\ref{listing:ObjectADB}.
+type {}\ttt{ObjectADB} shown in Listing~\ref{listing:ObjectADB}.
 For this abstract factory, objects of type {}\ttt{A} will be allocated
 from a list of ids given to the factory.  The outline of this abstract
-factory subclass is shown in Listing {}\ref{listing:ObjectADBFactory}:
+factory subclass is shown in Listing~\ref{listing:ObjectADBFactory}:
 
 
 {}\begin{listing}: Factory subclass that allocates new objects using
@@ -5777,7 +5868,7 @@ The above abstract factory subclass {}\ttt{ObjectADBFactory} inherits
 from a generic {}\ttt{AbstractFactory} base class that defines a pure
 virtual method {}\ttt{create()}.  In order to implement the
 {}\ttt{create()} function, a deallocator class must be defined and
-used and is shown in Listing {}\ref{listing:DeallocObjectADB}.
+used and is shown in Listing~\ref{listing:DeallocObjectADB}.
 
 
 {}\begin{listing}: Custom deallocator class for releasing objects
@@ -5799,7 +5890,7 @@ managed by {}\ttt{ObjectADB}
 
 
 Now one can define the implementation of the {}\ttt{create()} function
-override as shown in Listing {}\ref{listing:ObjectADBFactory_create}.
+override as shown in Listing~\ref{listing:ObjectADBFactory_create}.
 
 
 {}\begin{listing}: Implementation of the factory create function
@@ -5815,7 +5906,7 @@ override as shown in Listing {}\ref{listing:ObjectADBFactory_create}.
 \end{listing}
 
 
-The program in Listing {}\ref{listing:ObjectADBFactory-examplep-main}
+The program in Listing~\ref{listing:ObjectADBFactory-examplep-main}
 shows the use of the factory subclass {}\ttt{ObjectADBFactory} defined
 in Listings {}\ref{listing:ObjectADB},
 {}\ref{listing:ObjectADBFactory}, {}\ref{listing:DeallocObjectADB},
@@ -5843,7 +5934,7 @@ and {}\ref{listing:ObjectADBFactory_create}.
 \end{listing}
 
 
-In example program in Listing {}\ref{listing:ObjectADBFactory_create},
+In example program in Listing~\ref{listing:ObjectADBFactory_create},
 all of the objects of type {}\ttt{A} are created and removed
 seamlessly without the client code that interacts with {}\ttt{RCP} and
 {}\ttt{AbstractFactory} knowing anything about what is going on under
@@ -5916,7 +6007,7 @@ The embedded object functions in Listing
 {}\ref{listing:RCP-embedded-obj} simply use the custom templated
 deallocator class {}\ttt{EmbeddedObjDealloc} shown in Listing
 {}\ref{listing:RCP-EmbeddedObjDealloc} along with the public
-deallocator functions in Listing {}\ref{listing:RCP-dealloc}.
+deallocator functions in Listing~\ref{listing:RCP-dealloc}.
 
 
 \begin{listing}: RCP Deallocator using an embedded object \\
@@ -5955,7 +6046,7 @@ deallocator functions in Listing {}\ref{listing:RCP-dealloc}.
 
 The customized deallocator class in Listing
 {}\ref{listing:RCP-EmbeddedObjDealloc} is then templated with
-{}\ttt{DeallocDelete} (see Listing {}\ref{listing:RCP-dealloc}) and
+{}\ttt{DeallocDelete} (see Listing~\ref{listing:RCP-dealloc}) and
 set by the non-member constructor functions in Listing
 {}\ref{listing:RCP-embedded-obj}.  The distinction between pre- and
 post-destroy can be critical depending on how the embedded data is
@@ -6011,7 +6102,7 @@ As mentioned in Section
 reference-counting machinery supports storing and retrieving arbitrary
 objects as extra data stored on the {}\ttt{RCPNode} object itself.
 The functions supporting extra data for the {}\ttt{RCP} class are
-shown in Listing {}\ref{listing:RCP-extra-data} (the functions for
+shown in Listing~\ref{listing:RCP-extra-data} (the functions for
 {}\ttt{ArrayRCP} are identical).
 
 \begin{listing}:  {}\ttt{RCP} extra data functions \\
@@ -6124,7 +6215,7 @@ correctly as shown in Listing
 
 
 The client code can then fix the deallocation policy as shown in
-Listing {}\ref{listing:using-DeallocArrayDeleteExtraData}.
+Listing~\ref{listing:using-DeallocArrayDeleteExtraData}.
 
 
 {}\begin{listing}: Using {}\ttt{DeallocArrayDeleteExtraData} as extra
@@ -6488,11 +6579,11 @@ debug-mode internal implementation of {}\ttt{Array} is designed to
 support this.  Compare this to {}\ttt{ArrayView} views of
 {}\ttt{std::vector}, as shown in Listing
 {}\ref{listing:vector-dangling-ArrayView} where dangling references
-can not be detected.
+cannot be detected.
 
 
 {}\begin{listing}: Dangling {}\ttt{ArrayView} of {}\ttt{std::vector}
-(can not detect dangling references) \\
+(cannot detect dangling references) \\
 \label{listing:vector-dangling-ArrayView}
 {\small\begin{verbatim}
   ArrayView<int> av;
@@ -6505,7 +6596,7 @@ can not be detected.
 \end{listing}
 
 
-The code in Listing {}\ref{listing:vector-dangling-ArrayView} has
+The code in Listing~\ref{listing:vector-dangling-ArrayView} has
 undefined behavior and will most likely segfault if one is lucky.  If
 unlucky, the program may actually appear to run correctly on the main
 development and testing platforms and it will not be until moved to a
@@ -6608,7 +6699,7 @@ objects (shown in Figure~\ref{fig:RCPEx2})
 
 
 The problem is that the two {}\ttt{RCPNodeImpl} objects generated by
-Listing {}\ref{listing:duplicate_owning_rcp} (shown in Figure
+Listing~\ref{listing:duplicate_owning_rcp} (shown in Figure
 {}\ref{fig:RCPEx2}) do not know about each other and the first one who
 has its strong reference count go to zero will result in the
 underlying {}\ttt{C} object being deleted.  In this case, the other
@@ -6779,7 +6870,7 @@ of runtime checking provided by Teuchos in a debug-mode build is
 arguably more effective that what one gets with just
 Valgrind\footnote{However, Valgrind does perform a number of other
 types of checks including usage of uninitialized memory that are very
-useful and can not be duplicated by the Teuchos memory management
+useful and cannot be duplicated by the Teuchos memory management
 classes.}.  In order to perform the most detailed runtime checking
 possible, one can run with Valgrind with debug-mode runtime checking
 with node tracing enabled.  However, the overhead of this maximal
@@ -6858,7 +6949,7 @@ value-type class objects to be dynamically allocated and managed with
 {}\ttt{RCP} is that it allows client code to try to create an owning
 {}\ttt{RCP} to a stack (or otherwise non-dynamically) allocated object
 which the debug-mode runtime checking will not be able to detect as
-shown, for example, in Listing {}\ref{listing:bad-delete-error}.
+shown, for example, in Listing~\ref{listing:bad-delete-error}.
 
 
 {}\begin{listing}: Example where debug-mode checking cannot detect an
@@ -6933,7 +7024,7 @@ disables debug-mode runtime checking
 \end{verbatim}}
 \end{listing}
 
-The code in Listing {}\ref{listing:raw-ref-dangling-ref} violates the
+The code in Listing~\ref{listing:raw-ref-dangling-ref} violates the
 use of raw C++ references only for non-persisting associations.  The
 statement {}\ttt{A \&a = *a\_ptr} results in the creation of a
 persisting relationship in that it extends past the statement where it
@@ -7283,7 +7374,7 @@ member access through the arrow operator {}\ttt{RCP::operator->()},
 and assignment through {}\ttt{RCP::operator=(...)} (which changes the
 reference counts) shown in Figure~\ref{fig:RCPTimings}.  These
 timings are the average CPU time (in seconds) per inner loop iteration
-(see Listing {}\ref{listing:RCP-assignment-timing} for an example).
+(see Listing~\ref{listing:RCP-assignment-timing} for an example).
 These timing results show that dereferencing and member access for
 {}\ttt{RCP} yield raw pointer performance on all the compilers because
 these member functions are trivially inlined to expose the raw
@@ -7292,7 +7383,7 @@ pointer.
 The assignment operator, however, imposes significant overhead because
 of the need to increment and deincrement the reference counts.  The
 timing code fragment that exercises {}\ttt{RCP::operator=(...)} is
-shown in Listing {}\ref{listing:RCP-assignment-timing}.  (Note that
+shown in Listing~\ref{listing:RCP-assignment-timing}.  (Note that
 {}\ttt{std::vector} is used instead of {}\ttt{Array} in Listing
 {}\ref{listing:RCP-assignment-timing} in order to avoid timing
 overhead that might result from a bad implementation of
@@ -7587,7 +7678,7 @@ persisting associations need to be relaxed or the design must be
 changed to raise the level of granularity where the reference-counted
 types are used.
 
-However, just because one can not use {}\ttt{RCP} and {}\ttt{ArrayRCP}
+However, just because one cannot use {}\ttt{RCP} and {}\ttt{ArrayRCP}
 and still achieve high performance does not mean that this code should
 use raw pointers.  Instead, {}\ttt{Ptr} can be used instead of
 {}\ttt{RCP} and {}\ttt{ArrayView} can be used instead of
@@ -7615,7 +7706,7 @@ of the idioms defined in Sections
 {}\ref{sec:idioms-for-passing-arguments} and
 {}\ref{sec:idioms-returning-objects} would require the use of
 {}\ttt{ArrayRCP} yielding the sparse matrix class interface shown
-in Listing {}\ref{listing:SparseMatrix-ArrayRCP}.
+in Listing~\ref{listing:SparseMatrix-ArrayRCP}.
 
 
 \begin{listing}: Sparse matrix class interface adhering to strict
@@ -7635,7 +7726,7 @@ interpretation of idioms for persisting relationships  \\
 
 The {}\ttt{SparseMatrix} class shown in Listing
 {}\ref{listing:SparseMatrix-ArrayRCP} would be used as shown in
-Listing {}\ref{listing:zeroOutSparseMatrix-ArrayRCP}.
+Listing~\ref{listing:zeroOutSparseMatrix-ArrayRCP}.
 
 
 \begin{listing}: Client code using {}\ttt{ArrayRCP} form of the
@@ -7663,7 +7754,7 @@ safe and bullet-proof idioms on persisting associations described in
 Section~\ref{sec:idioms-for-passing-arguments}, the reference
 counting overhead (in memory size and speed) of this code can be quite
 high if the rows are very sparse.  Looking at code such as shown in
-Listing {}\ref{listing:zeroOutSparseMatrix-ArrayRCP} and similar use
+Listing~\ref{listing:zeroOutSparseMatrix-ArrayRCP} and similar use
 cases, it never seems reasonable that a client would grab
 {}\ttt{ArrayRCP} objects to internal rows and expect to have the row
 data persist even if the matrix changed structure or was deleted.
@@ -7693,7 +7784,7 @@ association for row views for the sake of performance \\
 
 
 The updated client code zeroing out the rows of the matrix would then
-look like Listing {}\ref{listing:zeroOutSparseMatrix-ArrayView}.
+look like Listing~\ref{listing:zeroOutSparseMatrix-ArrayView}.
 
 
 \begin{listing}: Client code using {}\ttt{ArrayView} form of the
@@ -7751,7 +7842,7 @@ to a dangling reference exception in a debug-mode build  \\
 \end{listing}
 
 
-As shown in Listing {}\ref{listing:SparseMatrix-dangling-ref}, using
+As shown in Listing~\ref{listing:SparseMatrix-dangling-ref}, using
 {}\ttt{ArrayView} allows all types of programming errors to be
 detected in a debug-mode build.  If raw pointers would have been used,
 this dangling reference may not be detected right away.  On some
@@ -7810,7 +7901,7 @@ A rare situation that can occur is when one has an object that
 maintains an {}\ttt{RCP} to another object but one wants to expose the
 second object and have it remember the first object; in other words,
 one wants to invert the object ownership.  To demonstrate, consider
-the two classes in Listing {}\ref{listing:B_owns_A_decl}.
+the two classes in Listing~\ref{listing:B_owns_A_decl}.
 
 \begin{listing}: Two classes where one maintains an RCP to the other \\
 \label{listing:B_owns_A_decl}
@@ -7836,7 +7927,7 @@ the two classes in Listing {}\ref{listing:B_owns_A_decl}.
 \end{verbatim}}
 \end{listing}
 
-The class {}\ttt{A} in Listing {}\ref{listing:B_owns_A_decl} may
+The class {}\ttt{A} in Listing~\ref{listing:B_owns_A_decl} may
 involve some complex initialization or it may only be an abstract
 interface with multiple subclasses.  In either case, it may make sense
 to provide a factory function (or a set of such functions) that
@@ -7871,8 +7962,8 @@ is a way to enable this that is 100\% bullet-proof without having to
 change the existing {}\ttt{A} or {}\ttt{B} classes or any other
 code at all.  The way to do this is to use the
 {}\ttt{rcpWithInvertedObjOwnership(...)} function (defined in
-Listing {}\ref{listing:rcpWithInvertedObjOwnership}) as shown in
-Listing {}\ref{listing:A_owns_B_owns_A}.
+Listing~\ref{listing:rcpWithInvertedObjOwnership}) as shown in
+Listing~\ref{listing:A_owns_B_owns_A}.
 
 \begin{listing}: A factory function that returns an {}\ttt{A} object
 embedded with a {}\ttt{B} object (inverting the ownership relationship) \\
@@ -7925,7 +8016,7 @@ Given this data-structure, another piece of code can then extract the
 underlying {}\ttt{RCP<B>} object as shown in Listing
 {}\ref{listing:Extract_B_from_A} which uses the standard Teuchos
 function {}\ttt{getInvertedObjOwnershipParent(...)} defined in
-Listing {}\ref{listing:getInvertedObjOwnershipParent}.
+Listing~\ref{listing:getInvertedObjOwnershipParent}.
 
 \begin{listing}: A function that extracts the B object from the A object \\
 \label{listing:Extract_B_from_A}
@@ -8017,7 +8108,7 @@ will address the problem of duplicate constructor initialization lists by
 allowing constructors to call each other but we will not see such a feature in
 wide spread use until many years after the C++0x standard is finalized.}.
 
-The second problem with the class {}\ttt{SomeClass} that it can not
+The second problem with the class {}\ttt{SomeClass} that it cannot
 call any virtual functions in the base class {}\ttt{SomeBaseClass} to
 help initialize its state in the constructors {}\cite[Item
 49]{C++CodingStandards05}.
@@ -8047,8 +8138,8 @@ downstream objects.
 
 Without further ado, the use of the ``separate construction and
 initialization'' and ``just-in-time initialization'' idioms applied to
-{}\ttt{SomeClass} shown in Listing {}\ref{listing:sci:SomeClass-before} gives
-the new refactored class in Listing {}\ref{listing:sci:SomeClass-refactored}.
+{}\ttt{SomeClass} shown in Listing~\ref{listing:sci:SomeClass-before} gives
+the new refactored class in Listing~\ref{listing:sci:SomeClass-refactored}.
 
 
 \begin{listing}: Example of the use of the ``separate construction and
@@ -8101,7 +8192,7 @@ initialization'' and ``just-in-time initialization'' idioms  \\
 
 
 SIDE NOTE: Before describing the specific advantages of the refactored class
-in Listing {}\ref{listing:sci:SomeClass-refactored}, first note that the issue
+in Listing~\ref{listing:sci:SomeClass-refactored}, first note that the issue
 of the creation of the {}\ttt{C} object and dangling references of {}\ttt{c\_}
 returned from {}\ttt{get\_C()} have not been addressed in this design.  That
 issue will be addressed with the ``object self-reference'' idiom described in
@@ -8109,7 +8200,7 @@ Section~\ref{sec:self-references}.
 
 Some of the specific advantages of the usage of the ``separate construction
 and initialization'' idiom as applied to the design of {}\ttt{SomeClass} shown
-in Listing {}\ref{listing:sci:SomeClass-refactored} are described below.
+in Listing~\ref{listing:sci:SomeClass-refactored} are described below.
 
 a) The default values for {}\ttt{member1\_} and
 {}\ttt{member2\_} are defined in only one constructor
@@ -8152,7 +8243,7 @@ The only real disadvantage of the ``separate construction and initialization''
 idiom is some small decrease in performance in using assignment instead of
 member initialization lists.  However, this type of low-level performance is
 almost never an issue in higher-level classes like {}\ttt{SomeClass} shown in
-Listing {}\ref{listing:sci:SomeClass-refactored}.  Most classes in a complex
+Listing~\ref{listing:sci:SomeClass-refactored}.  Most classes in a complex
 program are higher-level classes where low-level performance considerations
 like this are not an issue so the the ``separate construction and
 initialization'' idiom is applicable in more cases than not.
@@ -8191,7 +8282,7 @@ object that created it to be used to create other {}\ttt{VectorBase} objects.
 A simplified version of the implementation of the
 {}\ttt{VectorSpaceBase} standard subclass
 {}\ttt{DefaultSpmdVectorSpace} using the ``object self-reference''
-idiom is shown in Listing {}\ref{listing:osr:DefaultSpmdVectorSpace}.
+idiom is shown in Listing~\ref{listing:osr:DefaultSpmdVectorSpace}.
 
 
 \begin{listing}: Example of the ``object self-reference'' idiom where a
@@ -8276,7 +8367,7 @@ of the client's code to work around this.
 There are also other less obvious examples where the ``object self-reference''
 idiom is useful.  For one such case, consider Listing
 {}\ref{listing:osr:SomeClass-before} which shows a simplified version of the
-class shown in Listing {}\ref{listing:sci:SomeClass-before} that has to pass a
+class shown in Listing~\ref{listing:sci:SomeClass-before} that has to pass a
 self reference to an object it creates and holds internally.
 
 
@@ -8296,14 +8387,14 @@ self reference to an object it creates and holds internally.
 \end{listing}
 
 
-The problem with the code in Listing {}\ref{listing:osr:SomeClass-before} is
+The problem with the code in Listing~\ref{listing:osr:SomeClass-before} is
 that it gives up an {}\ttt{RCP<C>} object to its internal {}\ttt{C} object
 that is constructed internally but a proper node tracing relationship has not
 been established between the {}\ttt{C} object and the {}\ttt{SomeClass}
 object.  (Even if {}\ttt{SomeClass} does not intentionally give up its
 {}\ttt{RCP<C>} object, it is still very easy to do it by accident so this
 scenario still applies.)  To see the problem with this, consider the client
-code in Listing {}\ref{listing:osr:bad-use-SomeClass}.
+code in Listing~\ref{listing:osr:bad-use-SomeClass}.
 
 
 {}\begin{listing}: Client code that results in undefined behavior
@@ -8339,7 +8430,7 @@ created.
 
 The solution to this problem is to use a variation of the ``object
 self-reference'' idiom.  The updated design that accomplishes this is shown in
-Listing {}\ref{listing:osr:SomeClass-refactored}.
+Listing~\ref{listing:osr:SomeClass-refactored}.
 
 
 \begin{listing}:  Example of the ``object self-reference'' idiom for
@@ -8369,7 +8460,7 @@ detecting dangling references to internally held objects  \\
 
 The advantage of the design in Listing
 {}\ref{listing:osr:SomeClass-refactored} is that now client code like
-shown in Listing {}\ref{listing:osr:dangling-ref-SomeClass} below will
+shown in Listing~\ref{listing:osr:dangling-ref-SomeClass} below will
 result in a dangling reference exception in a node-tracing debug-mode
 build.
 
@@ -8425,7 +8516,7 @@ idiom which is described in Section~\ref{sec:inverting-obj-ownership}).
 
 Given the implementation in Listing
 {}\ref{listing:osr:SomeClass-get_C-persisting}, client code like in
-Listing {}\ref{listing:osr:dangling-ref-SomeClass} will allow the
+Listing~\ref{listing:osr:dangling-ref-SomeClass} will allow the
 {}\ttt{C} object can be used after the client's
 {}\ttt{RCP<SomeClass>} object is made {}\ttt{null} without
 thrown a dangling reference exception.
@@ -8605,7 +8696,7 @@ pattern.}
 \end{listing}
 
 
-The code in Listing {}\ref{listing:generalized-view-ex1} demonstrates
+The code in Listing~\ref{listing:generalized-view-ex1} demonstrates
 that the parent is only guaranteed to be updated after the non-const
 generalized view has been destroyed.  The state of the parent is
 undefined while a non-const view is active.  One of three
@@ -8634,8 +8725,8 @@ parent is `no views'.  In this state, either a const or a non-const
 view can be created.  When a const view is created, the parent enters
 the state `has const view(s)'.  In this state, the parent object is
 still allowed to be queried and other const-views can be created.
-However, while there are active const views, a non-const view can not
-be created.  The reason that non-const views can not be allowed while
+However, while there are active const views, a non-const view cannot
+be created.  The reason that non-const views cannot be allowed while
 const views are active is that creating a non-const view and then
 changing it while const views are active would put the const views
 into an undefined state.  If the const and non-const views happened to
@@ -8688,7 +8779,7 @@ still active and the view is not expected to live on past the lifetime
 of the parent.  Therefore, any access to generalized views that remain
 after the last strong {}\ttt{RCP<Parent>} object is released should
 result in dangling reference exceptions in a debug-mode build as shown
-in Listing {}\ref{listing:generalized-view-dangling}.
+in Listing~\ref{listing:generalized-view-dangling}.
 
 
 \begin{listing}:  Example of a dangling reference generalized view  \\
@@ -8876,7 +8967,7 @@ of multi-vector views as ``generalized views''  \\
 
 
 The internal private data-structure for a multi-vector is very simple
-as shown in Listing {}\ref{listing:DefaultSpmdMultiVector-decl}.  A
+as shown in Listing~\ref{listing:DefaultSpmdMultiVector-decl}.  A
 standard column-major Fortran-style dense matrix format is used where
 all of the data in the local processes is stored in a single
 contiguous {}\ttt{ArrayRCP<Scalar>} object.  The number of rows in the
@@ -9062,7 +9153,7 @@ is destroyed.  The implementation of the class
 
 
 The implementation of {}\ttt{CopyBackSpmdMultiVectorEntries} in
-Listing {}\ref{listing:CopyBackSpmdMultiVectorEntries} is
+Listing~\ref{listing:CopyBackSpmdMultiVectorEntries} is
 straightforward.  When the destructor is called, it copies the data in
 the non-const view back to the native storage of the parent
 {}\ttt{DefaultSpmdMultiVector} object.
@@ -9198,7 +9289,7 @@ allows for great flexibility in how it is used.
 The key advantages of the {}\ttt{RCP} class over the current
 {}\ttt{boost::shared\_ptr} class are greater functionality, greater
 flexibility, and better debug-mode runtime checking. The few of the
-specific key advantages of the {}\ttt{RCP} class that can not be
+specific key advantages of the {}\ttt{RCP} class that cannot be
 replicated with the {}\ttt{boost::shared\_ptr} class without changing
 its design include:
 
@@ -9228,7 +9319,7 @@ Section~\ref{sec:circular-references-weak-pointers}).  The
 {}\ttt{boost::weak\_ptr} class to represent weak references which is
 less flexible.  The {}\ttt{RCP} approach allows the debug-mode runtime
 detection and reporting of dangling non-owning references while
-{}\ttt{boost::shared\_ptr} class can not when using a null deleter
+{}\ttt{boost::shared\_ptr} class cannot when using a null deleter
 (see Section~\ref{sec:detection-dangling-references}).
 
 \end{itemize}
@@ -9321,7 +9412,7 @@ paper, these classes are key to creating C++ code that is maximally
 self documenting (by distinguishing between persisting and
 non-persisting associations), maximally safe in terms of debug-mode
 runtime checking, and while at the same time allowing for the highest
-performance in non-debug optimized builds.  One can not plug the
+performance in non-debug optimized builds.  One cannot plug the
 remaining holes in safety and performance without the {}\ttt{Ptr} and
 {}\ttt{ArrayView} classes.
 
@@ -9338,7 +9429,7 @@ level and get safe C++ programs with the full extent of debug-mode
 runtime checking that the integrated set of Teuchos classes provide.
 Many examples of this have been given through this document.  For
 example, if one creates an {}\ttt{ArrayView} object from a
-{}\ttt{std::vector} object it can not detect a dangling reference (see
+{}\ttt{std::vector} object it cannot detect a dangling reference (see
 Section~\ref{sec:detection-dangling-references}).  However, there
 are some specialized cases where Boost and standard C++ types can be
 used safely with the Teuchos memory management classes and some of
@@ -9894,7 +9985,7 @@ a strong owning {}\ttt{RCP} object first before any non-owning
 {}\textit{Justification:} In order for the reference-counting
 machinery to detect dangling non-owning references in a debug-mode
 build, the first {}\ttt{RCP} object created must have ownership to
-delete.  The system can not detect dangling references from non-owning
+delete.  The system cannot detect dangling references from non-owning
 {}\ttt{RCPNode} objects created before an owning {}\ttt{RCPNode}
 object is created.
 
@@ -10021,7 +10112,7 @@ primary disadvantage for using an unsigned integral type is that
 subtractions that would normally produce a negative number instead
 roll over into a huge positive number, making it more difficult to
 debug problems.  For example, consider the simple program shown in
-Listing {}\ref{listing:unsigned-int-problem}:
+Listing~\ref{listing:unsigned-int-problem}:
 
 
 {}\begin{listing}: Example program showing the problem with unsigned
@@ -10076,7 +10167,7 @@ in C/C++ programing (see Section
 {}\ref{sec:essentail-accidental-complexity}).
 
 However, when {}\ttt{unsigned long int} is replaced with {}\ttt{long
-int} in Listing {}\ref{listing:unsigned-int-problem} and the code is
+int} in Listing~\ref{listing:unsigned-int-problem} and the code is
 rebuilt and run one gets:
 
 
@@ -10115,7 +10206,7 @@ However, on 32 bit and 64 bit modern computers, using an
 {}\ttt{unsigned [long] int} instead of a {}\ttt{[long] int} as the
 size for a container is quite worthless.  On a 64 bit Linux machine
 with GCC 3.4.6, the sizes of several integral types pertinent to this
-discussion are shown in Listing {}\ref{listing:integral-type-sizes}.
+discussion are shown in Listing~\ref{listing:integral-type-sizes}.
 
 
 {}\begin{listing}: Sizes and ranges of some common integral types of
