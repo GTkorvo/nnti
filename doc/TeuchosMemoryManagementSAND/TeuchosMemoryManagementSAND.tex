@@ -1807,21 +1807,24 @@ However, in debug mode, the iterators are implemented as
 Teuchos array container classes.}
 \end{table}
 
-In addition to the four basic memory management classes shown in Table~\ref{tbl:BasicSingleArrayTypes} (which provide the most fundamental
-replacements for all raw C++ pointers in all high-level code) Teuchos
-also contains a few other array container classes for a few more
-specific use cases shown in Table~\ref{tbl:ExtendedArrayTypes}.  The
-array container classes {}\ttt{Array} and {}\ttt{Tuple} pretty much
-cover the majority of use cases in C++ where raw C++ pointer arrays
-are used for containers.  The class {}\ttt{Array} is a directly
-replacement for {}\ttt{std::vector} and actually wraps it internally.
+In addition to the four basic memory management classes shown in
+Table~\ref{tbl:BasicSingleArrayTypes} (which provide the most
+fundamental encapsulations for all raw C++ pointers in all high-level
+code) Teuchos also contains a few other array container classes for a
+few more specific use cases shown in
+Table~\ref{tbl:ExtendedArrayTypes}.  The array container classes
+{}\ttt{Array} and {}\ttt{Tuple} pretty much cover the majority of use
+cases in C++ where raw C++ pointer arrays are used for containers.
+The class {}\ttt{Array} is a directly replacement for
+{}\ttt{std::vector} and actually wraps it internally.
 
 Note that all of these classes are templated on value types and are
-themselves value-types (see Section~\ref{sec:value-and-reference-types}).  This means that one can embed
-these types in each other in any arbitrary order to create any type of
-data structure that one would like.  For example, one could have
-{}\ttt{Array<RCP<ArrayRCP<ArrayView<Tuple<Ptr<T>,5> > > > > >}.  By
-understanding what each of these types provide and what each type
+themselves value-types (see
+Section~\ref{sec:value-and-reference-types}).  This means that one can
+embed these types in each other in any arbitrary order to create any
+type of data structure that one would like.  For example, one could
+have {}\ttt{Array<RCP<ArrayRCP<ArrayView<Tuple<Ptr<T>,5> > > > > >}.
+By understanding what each of these types provide and what each type
 means (in terms of the idioms defined in Section~\ref{sec:idioms}),
 one can achieve almost anything in a way that is self documenting.
 
@@ -2382,17 +2385,17 @@ Table~\ref{tbl:common-array-type-members} include:
 
 \begin{itemize}
 
-{}\item{}All of the Teuchos array classes are drop-in replacements for any
-code that uses {}\ttt{std::vector} that does not grow or shrink the container
-by supporting the necessary typedefs, query functions, element access, and
-iterator access.  This helps in migrating current code that uses
-{}\ttt{std::vector} but should be using {}\ttt{Array}, {}\ttt{ArrayView},
-{}\ttt{ArrayRCP} or {}\ttt{Tuple}.
+{}\item All of the Teuchos array classes are drop-in replacements for
+any code that uses {}\ttt{std::vector} that does not grow or shrink
+the container by supporting the necessary typedefs, query functions,
+element access, and iterator access.  This helps in migrating current
+code that uses {}\ttt{std::vector} but should be using {}\ttt{Array},
+{}\ttt{ArrayView}, {}\ttt{ArrayRCP} or {}\ttt{Tuple}.
 
-{}\item{}All of the array classes support returning \ttt{ArrayView} subviews
-of contiguous ranges of elements.
+{}\item All of the array classes support returning \ttt{ArrayView}
+subviews of contiguous ranges of elements.
 
-{}\item{}All of the array classes support a handy {}\ttt{getRawPtr()}
+{}\item All of the array classes support a handy {}\ttt{getRawPtr()}
 function that allows a client to get the base pointer address to the
 array or null.  The standard {}\ttt{std::vector} class supports no
 such function which is very painful for users since it makes it hard
@@ -2431,12 +2434,13 @@ described in Appendix~\ref{sec:unsigned_size_type}.
 %
 
 The class {}\ttt{ArrayView}, the simplest of the Teuchos array memory
-management classes, is designed to replace raw pointers in
+management classes, is designed to encapsulate raw pointers in
 non-persisting associations primarily for formal function array
 arguments.  ({}\ttt{ArrayView} is to be used for semi-persisting
 associations as well.)  In an optimized build, an {}\ttt{ArrayView}
 object simply holds a raw base array pointer and an integer size.  In
-an optimized build, {}\ttt{ArrayView} looks like Listing~\ref{listing:ArrayView}.
+an optimized build, {}\ttt{ArrayView} looks like
+Listing~\ref{listing:ArrayView}.
 
 {}\begin{listing}: {}\ttt{Teuchos::ArrayView} declaration (See
 Table~\ref{tbl:common-array-type-members} for common array members.)
@@ -3997,6 +4001,7 @@ static object.
 
 %
 {}\subsubsection{General idioms for handling arrays of objects}
+\label{sec:general-array-idioms}
 %
 
 Before describing specific idioms for class data members, formal
@@ -8486,25 +8491,26 @@ to the use of the Teuchos memory management classes is the
 pattern' and not `idiom' is used to describe the ``generalized view''
 design pattern.  The reason that the more general term `design
 pattern' is being used is that the majority of the pattern is really
-language independent and the behaviors are more general that what one
+language independent and the behaviors are more general then what one
 will find in a typical language-specific idiom.  It is only the
 {}\ttt{RCP} details that would classify this as a C++ idiom.  However,
 this is an important example of the use of {}\ttt{RCP} so it is worthy
 to be discussed in this document.}.  In this context, a ``view'' is
 some object that is created off of a parent object and provides some
-type of access to some part of the the parent.  Views can be const or
-non-const and can be persisting or semi-persisting (see Section~\ref{sec:nonpersisting-persisting-associations} for the definition
-of persisting and semi-persisting associations).  Views can also be
-direct views or ``generalized views'' (i.e.\ potentially detached
-non-direct views).
+type of access to some part of the parent.  Views can be const or
+non-const and can be persisting or semi-persisting (see
+Section~\ref{sec:nonpersisting-persisting-associations} for the
+definition of persisting and semi-persisting associations).  Views can
+also be direct views or ``generalized views'' (i.e.\ potentially
+detached non-direct views).
 
 A direct view is one which directly points into the the internal data
-structures of the parent so a change of the view instantaneously
+structures of the parent so that a change of the view instantaneously
 changes the parent and changes to the parent instantaneously changes
-the view.  An example of a direct view is an iterator into an
+the view(s).  An example of a direct view is an iterator into an
 container such as is returned from {}\ttt{std::vector::begin()} or
 {}\ttt{std::list::begin()}.  Other examples of direct views include
-{}\ttt{ArrayView}s of {}\ttt{Array} and {}\ttt{ArrayRCP} objects.
+{}\ttt{ArrayView} views of {}\ttt{Array} and {}\ttt{ArrayRCP} objects.
 Direct views can be non-const or const as is demonstrated with
 iterators and {}\ttt{ArrayView}s.  Direct views are a pleasure to work
 with but they also fundamentally constrain the implementation of the
@@ -8514,7 +8520,7 @@ contiguous array containers like {}\ttt{std::vector} and
 to a contiguous array of data internally is not a problem, that is an
 important and proper design constraint for these classes.  However,
 for more general classes, the rigid constraints imposed by direct
-views are unacceptable and break the abstraction in most cases.  For
+views are unacceptable and break the abstraction in many cases.  For
 example, if an abstract matrix object provides direct views of the
 rows of a matrix then the matrix must necessarily be stored in a
 row-major data-structure, precluding other possibilities.  Once a
@@ -8538,21 +8544,22 @@ view of a parent object that is not guaranteed to be a direct view
 such that changes to the view may not be instantaneously propagated to
 the parent and vice versa.  One example of a case where a
 ``generalized view'' is needed is when creating a view of
-non-contiguous columns of a dense matrix where for the sake of
-efficiency one must create a temporary contiguous copy as a new dense
+non-contiguous columns of a dense matrix where, for the sake of
+efficiency, one must create a temporary contiguous copy as a new dense
 matrix.  This type of generalized view is used in the implementation
 of Thyra MultiVector non-contiguous column views
-{}\cite{ThyraOperatorVectorSAND} which is depicted in Figure~\ref{fig:MultiVectorView}. In the Thyra MultiVector implementation,
-when the client requests a view of a set of non-contiguous columns,
-the implementation will create a temporary contiguous copy which
-results in improved performance of many types of
+{}\cite{ThyraOperatorVectorSAND} which is depicted in
+Figure~\ref{fig:MultiVectorView}. In the Thyra MultiVector
+implementation, when the client requests a view of a set of
+non-contiguous columns, the implementation will create a temporary
+contiguous copy which results in improved performance of many types of
 operations\footnote{Using contiguous columns of a Fortran-style
 column-major dense matrix is required in order to take advantage of
-high performance Basic Linear Algebra Subroutines (BLAS) software.}.
-The Thyra example of non-contiguous column views is a good example
-because it is a simple case to describe yet has all the features
-needed to demonstrate the workings of the generalized view design
-pattern.
+high performance Basic Linear Algebra Subroutines (BLAS)
+software~\cite{ref:demmel_1997}.}.  The Thyra example of
+non-contiguous column views is a good example because it is a simple
+case to describe yet has all the features needed to demonstrate the
+workings of the generalized view design pattern.
 
 
 {\bsinglespace
@@ -8572,23 +8579,27 @@ Depiction of contiguous and non-contiguous multi-vector column views.}
 Before describing the Thyra MultiVector example in more detail, first,
 a generic description of the ``generalized view'' design pattern is
 presented.  The most general description of the ``generalized view''
-design pattern is shown in Figure~\ref{fig:GeneralizedViewClassDiagram} (UML class diagram) and Figure~\ref{fig:GeneralizedViewStateDiagram} (UML state diagram).  Figure~\ref{fig:GeneralizedViewClassDiagram} shows two generic classes, a
-{}\ttt{Parent} and a {}\ttt{View}.  In this case, only one type of the
-view is shown but in reality there can be several different types of
-views into a single parent object (as there are in the Thyra
-MultiVector case).  A view is created using either the
+design pattern is shown in
+Figure~\ref{fig:GeneralizedViewClassDiagram} (UML class diagram) and
+Figure~\ref{fig:GeneralizedViewStateDiagram} (UML state diagram).
+Figure~\ref{fig:GeneralizedViewClassDiagram} shows two generic
+classes; a {}\ttt{Parent} and a {}\ttt{View}.  In this case, only one
+type of the view is shown but in reality there can be several
+different types of views into a single parent object (as there are in
+the Thyra MultiVector case).  A view is created using either the
 {}\ttt{createNonconstView(...)} or the {}\ttt{createView(...)} 
 functions.  In either case, the returned view is wrapped in an
 {}\ttt{RCP} object.  There are two purposes for wrapping the view in
 an {}\ttt{RCP} object.  First, a new {}\ttt{View} object may need to
 be dynamically allocated to satisfy the view request (and therefore
 needs {}\ttt{RCP} to take care to control the lifetime of the
-dynamically allocated object).  Second, the action needed to re-sync
-the parent up with the view can be set as an embedded object on the
-returned {}\ttt{RCP} (see Section~\ref{sec:embedded-objecs}).  In
-fact, the {}\ttt{Parent} object is not guaranteed to be updated after
-changes to a non-const view are made until the view is destroyed.  To
-demonstrate, consider the client code in Listing~\ref{listing:generalized-view-ex1}.
+dynamically allocated view object).  Second, the action needed to
+re-sync the parent up with the view can be set as an embedded object
+on the returned {}\ttt{RCP} (see Section~\ref{sec:embedded-objecs}).
+In fact, the {}\ttt{Parent} object is not guaranteed to be updated
+after changes to a non-const view are made until the view is
+destroyed/released.  To demonstrate, consider the client code in
+Listing~\ref{listing:generalized-view-ex1}.
 
 
 {\bsinglespace
@@ -8628,13 +8639,13 @@ pattern.}
     // Create a non-const view
     const RCP<View> view = parent->createNonconstView(...);
 
-    // Chnage the parent through the view
+    // Change the parent through the view
     view->makeChange(...);
     view->makeChange(...);
     ...
 
     // Destroy the view which resycs the view with the parent
-    view = null
+    view = null;
 
     // Now the parent has been updated for changes through the view!
 
@@ -8664,40 +8675,42 @@ non-const view is active.
 In order to allow complete freedom in how a generalized view is
 implemented and to allow the implementation to change at will, a
 relatively strict usage protocol must be defined as shown in the
-parent's state diagram in Figure~\ref{fig:GeneralizedViewStateDiagram}.  With respect to generalized
-views, the {}\ttt{Parent} has one of three states; `no views', `has
-const views(s)', and `has non-const view'.  The default state of the
-parent is `no views'.  In this state, either a const or a non-const
-view can be created.  When a const view is created, the parent enters
-the state `has const view(s)'.  In this state, the parent object is
-still allowed to be queried and other const-views can be created.
-However, while there are active const views, a non-const view cannot
-be created.  The reason that non-const views cannot be allowed while
-const views are active is that creating a non-const view and then
-changing it while const views are active would put the const views
-into an undefined state.  If the const and non-const views happened to
-be implemented as direct views, then changes to the non-const view
-would not only change the parent but it would also change the const
-views.  However, if the views are implemented as detached copies of
-data, then changes to the non-const view would not be expected to be
-propagated to the existing const views\footnote{Actually, one could
-implement a OBSERVER {}\cite{AgileSoftwareDevelopment} type of
-implementation where changes to the views would automatically be
-written back and forth to keep the parent and the views in sync but
-this would lead to complex possibly fragile implementations and could
-significantly degrade performance if frequent small changes to data
-resulted in lots of syncs.  Therefore, to allow for a simple
-implementation and the highest performance, the generalized view
-design pattern discourages this type of more complex less efficient
-OBSERVER-type of implementation.}.  Since this type of ambiguity would
-destroy the abstraction, the generalized view design pattern simply
-states that creating non-const views on the parent while const views
-are active is just not allowed.  Likewise, any operations on the
-parent that might change the state in a way that would affect the
-views must also be disallowed.  In summary, when const views are
-active, the non-const interface of the parent must be locked down.
-When the last const view is destroyed, the parent goes back to the `no
-views' state.
+parent's state diagram in
+Figure~\ref{fig:GeneralizedViewStateDiagram}.  With respect to
+generalized views, the {}\ttt{Parent} has one of three states; `no
+views', `has const views(s)', and `has non-const view'.  The default
+state of the parent is `no views'.  In this state, either a const or a
+non-const view can be created and all types of query and modifying
+functioins can then be called.  When a const view is created, the
+parent enters the state `has const view(s)'.  In this state, the
+parent object is still allowed to be queried and other const-views can
+be created.  However, while there are active const views, a non-const
+view cannot be created.  The reason that non-const views cannot be
+allowed while const views are active is that creating a non-const view
+and then changing it while const views are active would put the const
+views into an undefined state.  If the const and non-const views
+happened to be implemented as direct views, then changes to the
+non-const view would not only change the parent but it would also
+change the direct const views.  However, if the views are implemented
+as detached copies of data, then changes to the non-const view would
+not be expected to be propagated to the existing const
+views\footnote{Actually, one could implement an
+OBSERVER~\cite{AgileSoftwareDevelopment} type of implementation where
+changes to the views would automatically be written back and forth to
+keep the parent and the views in sync but this would lead to complex
+and fragile implementations and could significantly degrade
+performance if frequent small changes to data resulted in lots of
+syncs.  Therefore, to allow for a simple implementation and the
+highest performance, the generalized view design pattern discourages
+this type of more complex less efficient OBSERVER-type of
+implementation.}.  Since this type of ambiguity would destroy the
+abstraction, the generalized view design pattern simply states that
+creating non-const views on the parent while const views are active is
+just not allowed.  Likewise, any operations on the parent that might
+change the state in a way that would affect the views must also be
+disallowed.  In summary, when const views are active, the non-const
+interface of the parent must be locked down.  When the last const view
+is destroyed, the parent goes back to the `no views' state.
 
 When a non-const view is created the parent goes into the `has
 non-const view' state.  In this state, no other non-const or const
@@ -8716,16 +8729,17 @@ the non-const view is destroyed, any changes in the data are written
 back to the parent's internal data structures and the parent goes back
 to the state `no views'.
 
-In order to allow for the highest performance and the simplest
+In order to allow for the highest performance, the simplest
 implementations of the parent and the view classes in all cases, and
-to help catch errors in client code, the generalized view design
-pattern states that views should be semi-persisting; that is, the
-views are only valid while the client's {}\ttt{RCP} to the parent is
-still active and the view is not expected to live on past the lifetime
-of the parent.  Therefore, any access to generalized views that remain
-after the last strong {}\ttt{RCP<Parent>} object is released should
-result in dangling reference exceptions in a debug-mode build as shown
-in Listing~\ref{listing:generalized-view-dangling}.
+to help catch errors in client code, therefore by default the
+generalized view design pattern states that views should be
+semi-persisting; that is, the views are only valid while the client's
+{}\ttt{RCP} to the parent is still active and the view is not expected
+to live on past the lifetime of the parent.  Therefore, any access to
+generalized views that remain after the last strong
+{}\ttt{RCP<Parent>} object is released should result in dangling
+reference exceptions in a debug-mode build as shown in
+Listing~\ref{listing:generalized-view-dangling}.
 
 
 \begin{listing}:  Example of a dangling reference generalized view  \\
@@ -8736,7 +8750,7 @@ in Listing~\ref{listing:generalized-view-dangling}.
   ...
 
   // Create a view
-  RCP<const View> view = parent->createView(...);
+  RCP<View> view = parent->createNonconstView(...);
 
   // Destroy the parent (invalidating the existing view)
   parent = null;
@@ -8762,12 +8776,13 @@ errors in client code.
 However, if it makes sense in the particular setting, an
 implementation of the generalized view design pattern can choose to
 implement the views as full persisting views that will persist even
-after all the external parent references are removed, thereby avoiding
-dangling-reference exceptions.  Note that if the parent class
-implements the ``object self-reference'' idiom described in Section~\ref{sec:self-references} then a strong {}\ttt{RCP} to the parent
-object can always be attached to the {}\ttt{RCP} of the view, thereby
-providing for persisting generalized views no mater what internal data
-structures are used.
+after all the external parent references are removed (thereby avoiding
+dangling-reference exceptions).  Note that if the parent class
+implements the ``object self-reference'' idiom described in
+Section~\ref{sec:self-references} then a strong {}\ttt{RCP} to the
+parent object can always be attached to the {}\ttt{RCP} of the view,
+thereby providing for persisting generalized views no mater what
+internal data structures are used.
 
 Another aspect of the generalized view design pattern is that it is
 important to distinguish between non-const views and const views.  In
@@ -8788,11 +8803,12 @@ the developer will need to change the client code to create a
 non-const view through {}\ttt{createNonconstView(...)}.
 
 Because the parent object gets locked down (or is in an undefined
-state when checking is not enabled) when generalized views are active,
-it is important that client code only create views at the last
-possible moment and then release them at the earliest possible moment.
-The best way to do this, when possible, is to create the view in the
-same statement where the view will be used as demonstrated in Listing~\ref{listing:generalized-view-min-lifetime}.
+state when debug usage checking is not enabled) when generalized views
+are active, it is important that client code only create views at the
+last possible moment and then release them at the earliest possible
+moment.  The best way to do this, when possible, is to create and
+release the view in the same statement where the view will be used as
+demonstrated in Listing~\ref{listing:generalized-view-min-lifetime}.
 
 
 \begin{listing}:  Example of minimizing the lifetime of a generalized
@@ -8819,17 +8835,16 @@ The last issue to discuss related to the generalized view design
 pattern is that, depending on the nature of the parent and the view
 classes, it may be reasonable to have the parent object partitioned
 into different logical pieces and then apply the behaviors shown in
-Figure~\ref{fig:GeneralizedViewStateDiagram} to each of these
-logical pieces separately.  For example, one can treat each row or
-each column in a matrix object as a separate logical piece such that
-one can allow separate views of each of the rows or columns
-independent of each other.  This is the case with the Thyra
-MultiVector example (mentioned earlier to be described in more detail
-below).  However, any bulk query operations on the parent object (like
-taking an induced matrix norm) must be locked out while non-const
-views are active.  Likewise, any bulk modifying operation (like
-assigning all the matrix entries to zero) must be locked out when any
-views are active.
+Figure~\ref{fig:GeneralizedViewStateDiagram} to each of these logical
+pieces separately.  For example, one can treat each row or each column
+in a matrix object as a separate logical piece such that one can allow
+separate views of each of the rows or columns independent of each
+other.  This is the case with the Thyra MultiVector example (mentioned
+earlier and to be described in more detail below).  However, any bulk
+query operations on the parent object (like taking an induced matrix
+norm) must be locked out while non-const views are active.  Likewise,
+any bulk modifying operation (like assigning all the matrix entries to
+zero) must be locked out when any views are active.
 
 
 %
@@ -8922,10 +8937,12 @@ The generalized views returned by the functions
 {}\ttt{DefaultSpmdMultiVector}.  (The concrete types of the views are
 actually {}\ttt{DefaultSpmdMultiVector}.) Therefore, this is an
 instance where the class types of the parent and view are actually the
-same.
+same (an interesting example of CLOSURE OF OPERATIONS principle
+{}\cite[Chapter 10]{DomainDrivenDesign})!
 
 The implementations of the functions {}\ttt{nonContigSubViewImpl(...)} 
-and {}\ttt{nonconstNonContigSubViewImpl(...)} are given in Listing~\ref{listing:DefaultSpmdMultiVector-subivew-impl}.
+and {}\ttt{nonconstNonContigSubViewImpl(...)} are given in
+Listing~\ref{listing:DefaultSpmdMultiVector-subivew-impl}.
 
 
 {}\begin{listing}: Implementation of {}\ttt{DefaultSpmdMultiVector}
@@ -8971,14 +8988,16 @@ functions {}\ttt{nonContigSubViewImpl(...)} and
 \end{listing}
 
 
-The implementation of the sub-view functions in Listing~\ref{listing:DefaultSpmdMultiVector-subivew-impl} is fairly simple.
-First, the private helper function {}\ttt{createContiguousCopy(...)}
-creates an {}\ttt{ArrayRCP<Scalar>} object for a contiguous copy of
-the non-contiguous columns being requested.  This contiguous copy of
-data is then given over to to create a new
-{}\ttt{DefaultSpmdMultiVector} object which represents the view.  The
-implementation of the function {}\ttt{createContiguousCopy(...)} is
-simple enough and is given in Listing~\ref{listing:DefaultSpmdMultiVector-createContiguousCopy}.
+The implementation of the sub-view functions in
+Listing~\ref{listing:DefaultSpmdMultiVector-subivew-impl} is fairly
+simple.  First, the private helper function
+{}\ttt{createContiguousCopy(...)}  creates an {}\ttt{ArrayRCP<Scalar>}
+object for a contiguous copy of the non-contiguous columns being
+requested.  This contiguous copy of data is then given over to create
+a new {}\ttt{DefaultSpmdMultiVector} object which represents the view.
+The implementation of the function {}\ttt{createContiguousCopy(...)} 
+is simple enough and is given in
+Listing~\ref{listing:DefaultSpmdMultiVector-createContiguousCopy}.
 
 
 {}\begin{listing}: Implementation of {}\ttt{DefaultSpmdMultiVector}
@@ -9010,21 +9029,26 @@ function {}\ttt{createContiguousCopy(...)}
 \end{listing}
 
 
-Note how iterators are used to perform the raw data copy in Listing~\ref{listing:DefaultSpmdMultiVector-createContiguousCopy}.  This
-results in very well checked code in a debug-mode build (see Section~\ref{sec:debug-mode-runtime-checking}) but very high performance
-code in a non-debug optimized build (see Section~\ref{sec:optimized-performance}).
+Note how iterators are used to perform the raw data copy in
+Listing~\ref{listing:DefaultSpmdMultiVector-createContiguousCopy}.
+This results in very well checked code in a debug-mode build (see
+Section~\ref{sec:debug-mode-runtime-checking}) but very high
+performance code in a non-debug optimized build (see
+Section~\ref{sec:optimized-performance}).
 
 Note that the key difference between the implementation of the
 functions {}\ttt{nonContigSubViewImpl(...)} and
-{}\ttt{nonconstNonContigSubViewImpl(...)} in Listing~\ref{listing:DefaultSpmdMultiVector-subivew-impl} is that
+{}\ttt{nonconstNonContigSubViewImpl(...)} in
+Listing~\ref{listing:DefaultSpmdMultiVector-subivew-impl} is that
 {}\ttt{nonconstNonContigSubViewImpl(...)} creates an {}\ttt{RCP} to an
 object of type {}\ttt{CopyBackSpmdMultiVectorEntries} and attaches it
-to the created {}\ttt{RCP<DefaultSpmdMultiVector<Scalar> > } as an
-embedded object (see Section~\ref{sec:embedded-objecs}).  The
+to the created {}\ttt{RCP<DefaultSpmdMultiVector<Scalar> > } object as
+an embedded object (see Section~\ref{sec:embedded-objecs}).  The
 destructor for {}\ttt{CopyBackSpmdMultiVectorEntries} performs the
 copy-back of the non-const view after the last {}\ttt{RCP} to the view
 is destroyed.  The implementation of the class
-{}\ttt{CopyBackSpmdMultiVectorEntries} is given in Listing~\ref{listing:CopyBackSpmdMultiVectorEntries}.
+{}\ttt{CopyBackSpmdMultiVectorEntries} is given in
+Listing~\ref{listing:CopyBackSpmdMultiVectorEntries}.
 
 
 {}\begin{listing}: Implementation of the class
@@ -9104,7 +9128,8 @@ strong count of 0, thereby resulting in the skipping of the copy-back
 of data.  This this a performance optimization since there is no point
 in copying back the data if the parent object is gone.  This design
 allows both const and non-const multi-vector views to be persisting
-and still have the highest performance.
+(past the lifetime of the parent) and still have the highest
+performance.
 
 % ToDo: Write a Teuchos utility class to implement the guts of the
 % debug-mode runtime checking needed to enforce the semantics of the
@@ -9112,26 +9137,28 @@ and still have the highest performance.
 % object and in the Thyra::DefaultSpmdMultiVector class.
 
 There are several things that are interesting about this example.
-First, by using the embedded object feature of {}\ttt{RCP} the code is
-able to implement the copy-back-to-parent functionality without having
-to write a new {}\ttt{MultiVector} subclass just for the view.  The
-{}\ttt{DefaultSpmdMultiVector} objects that are returned as views have
-no idea they are being used as views into other
+First, by using the embedded object feature of {}\ttt{RCP}, the code
+is able to implement the copy-back-to-parent functionality without
+having to write a new {}\ttt{MultiVector} subclass just for the view.
+The {}\ttt{DefaultSpmdMultiVector} objects that are returned as views
+have no idea they are being used as views into other
 {}\ttt{DefaultSpmdMultiVector} objects.  Without the embedded object
 feature described in Section~\ref{sec:embedded-objecs}, a different
 {}\ttt{MultiVector} subclass would have to be created with a
 destructor that would copy back the data.  Second, the constraints
-imposed by the generalized view design pattern shown in Figure~\ref{fig:GeneralizedViewStateDiagram} ensure that no problems will
-arise due to the fact that the views are stored in detached copies of
-the data.  If changes to the parent {}\ttt{DefaultSpmdMultiVector}
-were allowed while a non-const {}\ttt{DefaultSpmdMultiVector} view was
-active, then all of the changes in the parent would be overwritten
-when the {}\ttt{DefaultSpmdMultiVector} view was destroyed.  Third,
-this example demonstrates why const views are fundamentally more
-efficient than non-const views.  In the case of a const view, the
-temporary contiguous copy of data must just be released and does not
-need to be copied back to the parent.  This saves the work imposed by
-the destructor on the {}\ttt{CopyBackSpmdMultiVectorEntries} object.
+imposed by the generalized view design pattern shown in
+Figure~\ref{fig:GeneralizedViewStateDiagram} ensure that no problems
+will arise due to the fact that the views are stored in detached
+copies of the data.  If changes to the parent
+{}\ttt{DefaultSpmdMultiVector} were allowed while a non-const
+{}\ttt{DefaultSpmdMultiVector} view was active, then all of the
+changes in the parent would be overwritten when the
+{}\ttt{DefaultSpmdMultiVector} view was destroyed.  Third, this
+example demonstrates why const views are fundamentally more efficient
+than non-const views.  In the case of a const view, the temporary
+contiguous copy of data is just released and does not need to be
+copied back to the parent.  This saves the work imposed by the
+destructor on the {}\ttt{CopyBackSpmdMultiVectorEntries} object.
 
 
 %
@@ -9153,7 +9180,7 @@ state of the parent after the view object has been released.
 {}\item A single parent object can provide more than one type of
 generalized view and views can be applied separately to different
 logically distinct parts of the parent object (e.g.\ views to the rows
-or columns of an abstract matrix object can be create and handled
+or columns of an abstract matrix object can be created and handled
 separately).
 
 {}\item It is important to differentiate between non-const views and
@@ -9200,9 +9227,10 @@ throughout this document.  Here, these comparisons are summarized and
 extended.  Comparisons with Boost classes are for version 1.40.
 
 The Teuchos class {}\ttt{RCP} is almost identical in most respects to
-the {}\ttt{boost::shared\_ptr} class and therefore the
-{}\ttt{std::shared\_ptr} class in C++0x.  The first version of the
-class {}\ttt{RCP} was developed back in 1998 under the name
+the {}\ttt{boost::shared\_ptr} class and therefore also the
+{}\ttt{std::tr1::shared\_ptr} in C++03 and {}\ttt{std::shared\_ptr}
+class in C++0x.  The first version of the class {}\ttt{RCP} was
+developed back in 1998 under the name
 {}\ttt{MemMngPack::ref\_count\_ptr} as part of the development of the
 rSQP++ package {}\cite{rSQP++} (now called MOOCHO {}\cite{MOOCHO}).
 At that time, there was no general purpose high-quality
@@ -9228,18 +9256,22 @@ its design include:
 \begin{itemize}
 
 {}\item The {}\ttt{RCP} class has built-in support for debug-mode
-runtime tracing of reference-counting nodes which is used to implement
-a whole host runtime checking including the detection and reporting of
-a) circular references (Section~\ref{sec:detection-circular-references}) and b) multiple owning
-reference-counted objects (Section~\ref{sec:detection-dual-owning-rcps}).
+runtime tracing of reference-counting nodes
+(Section~\ref{sec:basic-reference-counting-machinery}) which is used
+to implement a whole host runtime checking including the detection and
+reporting of a) circular references
+(Section~\ref{sec:detection-circular-references}) and b) multiple
+owning reference-counted objects
+(Section~\ref{sec:detection-dual-owning-rcps}).
 
 {}\item The {}\ttt{RCP} class allows the association and retrieval of
 extra data attached to an already-created reference-counting node
-object (see Section~\ref{sec:extra-data}).
+object (Section~\ref{sec:extra-data}).
 
-{}\item The {}\ttt{RCP} class allows a client call {}\ttt{release()}
-to remove the deletion ownership from an already-created {}\ttt{RCP}
-object (the extremely rare need for this is described in Section~\ref{sec:extra-data}).
+{}\item The {}\ttt{RCP} class allows a client to call
+{}\ttt{release()} to remove deletion ownership from an already-created
+{}\ttt{RCP} object (the rare need for this is described in
+Section~\ref{sec:extra-data}).
 
 {}\item The {}\ttt{RCP} class has built-in support for both strong and
 weak reference-counted pointer handles right in the same class (see
@@ -9249,40 +9281,41 @@ Section~\ref{sec:circular-references-weak-pointers}).  The
 less flexible.  The {}\ttt{RCP} approach allows the debug-mode runtime
 detection and reporting of dangling non-owning references while
 {}\ttt{boost::shared\_ptr} class cannot when using a null deleter
-(see Section~\ref{sec:detection-dangling-references}).
+(Section~\ref{sec:detection-dangling-references}).
 
 \end{itemize}
 
 The key advantages of the current {}\ttt{boost::shared\_ptr} class
 over the current {}\ttt{RCP} class are that it has lower storage and
-runtime overhead (see Section~\ref{sec:reference-counting-overhead}), and it has native support
-for sharing reference-counting nodes across different threads in a
-multi-threaded program.  The {}\ttt{RCP} class does not yet have
-support for thread-safe sharing across multiple threads but some
-reasonable solution will be implemented (perhaps borrowing form the
-{}\ttt{boost::shared\_ptr} implementation) when it is needed.  The
-{}\ttt{RCP} class has been developed in the context of computational
-science and engineering applications where up till now parallelism has
-been handled using distributed memory MPI implementations where no
-multi-threading is used.  Given that even the best non-locking
-{}\ttt{boost::shared\_ptr} implementation imparts a significant
-overhead in manipulating the reference count (a factor of 4x overhead
-for GCC in a recent timing test), it is not clear if the right
-solution to the multi-threading problem is to make all {}\ttt{RCP}
-objects thread safe in an entire program.  Multi-threading is coming
-to computation science codes with the multi-core revolution so this
-issue may need to be addressed soon in the {}\ttt{RCP} and
-{}\ttt{ArrayRCP} classes.  Until then, {}\ttt{boost::shared\_ptr} can
-be used in cases where sharing across threads is required.
+runtime overhead (Section~\ref{sec:reference-counting-overhead}), and
+it has native support for sharing reference-counting nodes across
+different threads in a multi-threaded program.  The {}\ttt{RCP} class
+does not yet have support for thread-safe sharing across multiple
+threads but some reasonable solution will be implemented (perhaps
+borrowing form the {}\ttt{boost::shared\_ptr} implementation) when it
+is needed.  The {}\ttt{RCP} class has been developed in the context of
+computational science and engineering applications where up till now
+parallelism has been handled using distributed memory MPI
+implementations where no multi-threading is used.  Given that even the
+best non-locking {}\ttt{boost::shared\_ptr} implementation imparts a
+significant overhead in manipulating the reference count (a factor of
+4x overhead for GCC in a recent timing test), it is not clear if the
+right solution to the multi-threading problem is to make all
+{}\ttt{RCP} objects thread safe in an entire program.  Multi-threading
+is coming to computational science codes with the multi-core
+revolution~\cite{DesignIssuesForMultiCore08} so this issue may need to
+be addressed soon in the {}\ttt{RCP} and {}\ttt{ArrayRCP} classes.
+Until then, {}\ttt{boost::shared\_ptr} can be used in cases where
+sharing across threads is required.
 
 Because both the Teuchos {}\ttt{RCP} and {}\ttt{boost::shared\_ptr}
 classes support customized deallocation policy objects, one can embed
 an {}\ttt{RCP} object in a {}\ttt{boost::shared\_ptr} object and vice
 versa.  This is already supported in Teuchos using the overloaded
-non-member helper functions {}\ttt{Teuchos::rcp(const
-boost::shared\_ptr \&p)} and {}\ttt{Teuchos::shared\_pointer(const
-RCP<T> \&rcp)} (see Table~\ref{tbl:ConversionsTableSingleObjs}).
-This allows the developer to mix and match {}\ttt{RCP} and
+non-member template helper functions {}\ttt{Teuchos::rcp(const
+boost::shared\_ptr<T> \&p)} and {}\ttt{Teuchos::shared\_pointer(const
+RCP<T> \&rcp)} (see Table~\ref{tbl:ConversionsTableSingleObjs}).  This
+allows the developer to mix and match {}\ttt{RCP} and
 {}\ttt{boost::shared\_ptr} objects in the same code and still have
 correct memory management.  However, since {}\ttt{RCP} has better
 debug-mode runtime checking and is more flexible it should be
@@ -9292,7 +9325,9 @@ and has native support for sharing across threads it also has valid
 uses.  Additionally, of course, one may need to convert back and forth
 between {}\ttt{RCP} and {}\ttt{boost::shared\_ptr} objects to glue
 together different pieces of separately developed code that use
-different smart pointer classes.
+different smart pointer classes.  The class {}\ttt{boost::scoped\_ptr}
+is identical to {}\ttt{std::auto\_ptr} but does not allow copying or
+assignment and is therefore safer to use in more limited scopes.
 
 Another smart pointer class for single objects is
 {}\ttt{std::auto\_ptr}.  This class does not support sharing and has
@@ -9312,10 +9347,11 @@ debug-mode runtime checking and produces better error messages, b)
 conversion to the other Teuchos array types {}\ttt{ArrayView} and
 {}\ttt{ArrayRCP} includes full runtime debug-mode detection and
 reporting of dangling references (which is not possible with with
-{}\ttt{std::vector}, and c) is more consistent with the usage of the
+{}\ttt{std::vector}), and c) is more consistent with the usage of the
 other Teuchos array types.  A major difference between {}\ttt{Array}
 and {}\ttt{std::vector} is that {}\ttt{Array} uses an unsigned integer
-for its {}\ttt{size\_type} (see Appendix~\ref{sec:unsigned_size_type} for the justification).
+for its {}\ttt{size\_type} (see Appendix~\ref{sec:unsigned_size_type}
+for the justification).
 
 The Teuchos class {}\ttt{ArrayRCP} really has no equivalent class in
 Boost or the C++0x standard libraries.  There is a Boost class called
@@ -9333,19 +9369,19 @@ array types {}\ttt{ArrayView} and {}\ttt{ArrayRCP} support full
 runtime debug-mode detection and reporting of dangling references.
 
 Finally, the Teuchos classes {}\ttt{Ptr} and {}\ttt{ArrayView} have no
-equivalent classes in Boost or C++0x.  As described throughout this
-paper, these classes are key to creating C++ code that is maximally
-self documenting (by distinguishing between persisting and
-non-persisting associations), maximally safe in terms of debug-mode
-runtime checking, and while at the same time allowing for the highest
-performance in non-debug optimized builds.  One cannot plug the
-remaining holes in safety and performance without the {}\ttt{Ptr} and
-{}\ttt{ArrayView} classes.
+equivalent in Boost or C++0x.  As described throughout this paper,
+these classes are key to creating C++ code that is maximally self
+documenting (by distinguishing between persisting and non-persisting
+associations), maximally safe in terms of debug-mode runtime checking,
+and while at the same time allowing for the highest performance in
+non-debug optimized builds.  One cannot plug the remaining holes in
+safety and performance without the {}\ttt{Ptr} and {}\ttt{ArrayView}
+classes.
 
 What makes the Teuchos memory management classes unique across all
 other class libraries is that they form a complete coordinated system
-of types to replace all raw C++ pointers in high-level code while at
-the same time providing 100\% secure debug-mode checking.  This is
+of types to encapsulate all raw C++ pointers in high-level code while
+at the same time providing 100\% secure debug-mode checking.  This is
 only possible because these classes are developed as a system of types
 and the level of debug-mode runtime checking that exists is only
 possible because these types have access to each others private
@@ -9353,13 +9389,13 @@ implementation (in some appropriate way).  In general, one cannot mix
 and match Boost, standard C++, and Teuchos classes together at the top
 level and get safe C++ programs with the full extent of debug-mode
 runtime checking that the integrated set of Teuchos classes provide.
-Many examples of this have been given through this document.  For
-example, if one creates an {}\ttt{ArrayView} object from a
+Many examples of this have been given through this document.  One
+example is that if one creates an {}\ttt{ArrayView} object from a
 {}\ttt{std::vector} object it cannot detect a dangling reference (see
-Section~\ref{sec:detection-dangling-references}).  However, there
-are some specialized cases where Boost and standard C++ types can be
-used safely with the Teuchos memory management classes and some of
-these cases have already been discussed above (e.g.\ {}\ttt{RCP} and
+Section~\ref{sec:detection-dangling-references}).  However, there are
+some specialized cases where Boost and standard C++ types can be used
+safely with the Teuchos memory management classes and some of these
+cases have already been discussed above (e.g.\ {}\ttt{RCP} and
 {}\ttt{boost::shared\_ptr} objects can be embedded in each other and
 deep copies of array objects are always safe).
 
@@ -9374,8 +9410,8 @@ beginning.  In this mode of development, the debug-mode runtime
 checking makes development fast and productive with one never seeing a
 segfault or other memory usage error that comes from undefined
 behavior.  However, the more typical situation is that a large
-existing code-base must continued to be developed , current code must
-be modified, and new code must integrated with current code.  For
+existing code-base must continue to be developed, current code must be
+modified, and new code must integrated with existing code.  For
 existing code bases, the code will need to be refactored to use the
 Teuchos memory management classes, replacing the use of raw pointers
 and raw calls to {}\ttt{new} and {}\ttt{delete} along the way.
@@ -9389,7 +9425,7 @@ approaches.  It is not recommended that all work on new capabilities
 stop and the existing code base be refactored all at once to switch
 over to the complete use of the Teuchos memory management classes.
 Instead, the code should be refactored to use the Teuchos memory
-management classes in small, iterative cycles as needed.  The highest
+management classes in small iterative cycles as needed.  The highest
 priority code to refactor are the heavily used major module and class
 interfaces.  It is these major interfaces where mistakes and memory
 usage problems are most likely to be made.  However, rather than break
@@ -9431,13 +9467,12 @@ the advice in {}\cite{WorkingEffectivelyWithLegacyCode05}):
 
 {}\item Break dependencies to allow unit tests to be written
 
-{}\item Add unit tests to cover behavior of the code that is to be
-refactored
+{}\item Add unit tests to cover behavior of the code to be refactored
 
 {}\item Refactor the targeted code incrementally to use the Teuchos
 memory management classes (all the while running the unit tests
-constantly including using Valgrind and Purify to ensure defects are
-not being created) by:
+constantly including using Valgrind and/or Purify to ensure defects
+are not being created) by:
 
   \begin{enumerate}
 
@@ -9487,9 +9522,10 @@ attempted in large batches, no matter what
 {}\cite{WorkingEffectivelyWithLegacyCode05}.
 
 The above process was followed with great success to refactor the
-Trilinos package Thyra over a period of more than a year.  This
-process can be followed for a code base very safely and productively
-if the above incremental unit-testing refactoring process is followed.
+Trilinos package Thyra~\cite{ThyraOperatorVectorSAND} over a period of
+more than a year.  This process can be followed for a code base very
+safely and productively if the above incremental unit-testing
+refactoring process is followed.
 
 
 %
@@ -9499,7 +9535,7 @@ if the above incremental unit-testing refactoring process is followed.
 
 When thinking about memory management in C++ it is helpful to take a
 step back and consider a few different higher-level issues.  In the
-following section, the issue essential and accidental complexity is
+following section, the issue of essential and accidental complexity is
 discussed and what role the Teuchos memory management classes play in
 addressing accidental complexity and helping to make implicit concepts
 explicit.  Then, the philosophy of memory management is discussed and
@@ -9551,8 +9587,8 @@ essential questions:
 \begin{itemize}
 
 {}\item\textit{What is the multiplicity of the relationship?}  (i.e.\
-is there just one object or are there more than one object at the
-other end of the association?).  In UML class diagrams, a singular
+is there just one object or is there more than one object at the other
+end of the association?).  In UML class diagrams, a singular
 multiplicity relationship is represented using a {}\ttt{1} and
 multiplicity greater than one is represented using {}\ttt{1..*} (see
 Figure~\ref{fig:TeuchosRCPDesign} for examples).
@@ -9568,11 +9604,11 @@ an association are assumed changeable.
 
 {}\item\textit{Is the association persisting or non-persisting?}  In a
 UML class diagram, non-persisting associations are referred to as
-``dependency associations'' are represented with a dotted line (and
-can also be given the keyword {}\ttt{$\ll$parameter$\gg$}).
+``dependency associations'' and are represented with a dotted line
+(and can also be given the keyword {}\ttt{$\ll$parameter$\gg$}).
 Persisting associations are referred to as ``relationships'' and are
-represented as solid lines (see Figure~\ref{fig:TeuchosRCPDesign}
-for examples)?
+represented as solid lines (see Figure~\ref{fig:TeuchosRCPDesign} for
+examples).
 
 \end{itemize}
 
@@ -9584,14 +9620,15 @@ persisting and non-persisting associations because every user-defined
 object is always managed through an indirect reference handed by the
 garbage-collected language.  This causes big problems when it comes
 time to try to understand a complex program written in these
-languages.  For example, consider the agony that Feathers goes through
-in many refactorings described in
+languages.  For example, consider the agony that Micheal Feathers goes
+through in many refactorings described in
 {}\cite{WorkingEffectivelyWithLegacyCode05} in trying to determine the
 nature of objects as to whether they are actually embedded in each
-other (persisting) or are just passed to each other (non-persisting).
-Python has no user-definable concept of {}\ttt{const} but the Python
-language itself understands the need for {}\ttt{const} by having
-built-in immutable data-types like strings and tuples.
+other (i.e.\ persisting) or are just passed to each other (i.e.\
+non-persisting).  Python has no user-definable concept of
+{}\ttt{const} but the Python language itself understands the need for
+{}\ttt{const} by having built-in immutable data-types like strings and
+tuples.
 
 One of the goals of the idioms defined in this paper is to change the
 above essential complexities from implicit concepts to explicit
@@ -9612,7 +9649,7 @@ possible in any other widely used programming language.
 While the Teuchos memory management classes go a long way in removing
 some of the accidental complexity of programing in C++ due to manual
 memory management, some of the types of remaining accidental
-complexity (among many other types not mentioned) include:
+complexity (among many others not mentioned) include:
 
 \begin{itemize}
 
@@ -9636,27 +9673,29 @@ that allow direct access to the underlying object (i.e. using
 {}\ttt{func(a)} and {}\ttt{a.someMember()}) like raw C++ references
 allow.  Pointer syntax is not essential to the nature of problem
 solving (as proven by all the languages that don't have pointers
-including Java and Python) and must therefore be categorized as
-accidental complexity.  Note, however, that the types
+including Java and Python) and therefore pointer syntax must be
+categorized as accidental complexity.  Note, however, that the types
 {}\ttt{ArrayView} and {}\ttt{ArrayRCP} were not listed in this
 category because one can use these array classes using just the
 {}\ttt{operator[](size\_type)} function and one does not need to use
 pointer syntax.  In fact, {}\ttt{ArrayView} does not even support any
 pointer-like functions and the pointer-like functions on
 {}\ttt{ArrayRCP} are only really there to allow it to be used as a
-general purpose checked iterator in a debug-mode build.  While pointer
+general-purpose checked iterator in a debug-mode build.  While pointer
 syntax is not an essential concept they do actually come in handy to
 define iterators into containers and present a much more compact
 iterator interface that what one will find in other languages.  In
 other words, pointers syntax can be considered to be a nice
-enhancement when considering iterators.
+enhancement when considering iterators.  In most other contexts,
+however, we must consider pointer syntax to contribute to accidental
+complexity.
 
 \end{itemize}
 
 
 %
 {}\subsection{Philosophy of memory management: Safety, speed,
-generality and 100\% guarantees}
+flexibility and 100\% guarantees}
 \label{sec:phylosophy-of-mem-mng}
 %
 
@@ -9666,13 +9705,14 @@ level which can actually help put the issues involved in perspective.
 
 When looking at the different memory management approaches implemented
 in various programming languages, the core issues come down to
-trade-offs in safety and correctness versus speed and generality.  For
-example, a language like C sacrifices safety and correctness for speed
-and generality.  Because C is so ``close'' to the hardware, one can
-implement very specialized memory management approaches tailored to
-very specific types of domains.  However, the price one pays for this
-raw speed and flexibility in C is the fact that there is very little
-compiler-supported checking needed to assert correct memory usage.
+trade-offs in safety and correctness versus speed and flexibility.
+For example, a language like C sacrifices safety and correctness for
+speed and flexibility.  Because C is so ``close'' to the hardware, one
+can implement very specialized memory management approaches tailored
+to very specific types of domains.  However, the price one pays for
+this raw speed and flexibility in C is the fact that there is very
+little compiler-supported checking that would otherwise be needed to
+assert correct memory usage.
 
 Now take Python on the other extreme.  If one writes code only in
 Python, one will almost never experience and memory leak or segfault
@@ -9706,10 +9746,10 @@ traffic laws, driving a reasonable speed, and practicing defensive
 driving.  What is going to be argued here is that the approach to
 memory management that is being advocated in this paper is the
 equivalent of driving a car, wearing one's seat belt, and taking other
-reasonable safety precautions.
+reasonable safety precautions but does not provide a 100\% guarantee.
 
 Now let's talk about the safety versus speed/efficiently extremes in
-the Transportation Analogy and in the areas of memory management.  At
+the Transportation Analogy and in the area of memory management.  At
 one extreme, writing all high-level code in C++ (or C) using raw
 pointers for everything is like riding a high-performance motorcycle
 on a crowded interstate going 150 mph, without wearing a helmet or any
@@ -9722,8 +9762,8 @@ where one sits inside wearing a car racing helmet with the Hans
 device, full racing safety gear, and having a massive air bag system
 to encase one's entire body in foam three feet thick in case of a
 collision.  On this side of extreme safely, we could hit a Mac truck
-head on and be just fine.  The only way to really kill one's self to
-drive off a shear cliff.
+head on and be just fine.  The only way to really kill one's self
+would be to drive off a shear cliff.
 
 If we all required a near 100\% safely guarantee, we would all be
 driving around in reinforced tanks like the one described above but we
@@ -9780,7 +9820,7 @@ memory management classes in debug-mode is like driving around in the
 tank where one is protected from almost any danger.  However, using
 the Teuchos memory management classes in non-debug optimized builds is
 like driving around with the fast high-performance motorcycle.  Try
-turning a car into a motorcycle and then back again that easily!
+turning a tank into a motorcycle and then back again that easily!
 
 
 %
@@ -9815,23 +9855,26 @@ language depends on it.  Otherwise, if C++ is no safer than C, then is
 the greater complexity of C++ worth what one gets as extra features?
 Given that C is smaller and easier to learn than C++ and since most
 programmers don't know object-orientation (or templates or X, Y, and Z
-features of C++) all that well anyway, then what these types of
-programmers really getting extra out of C++ that would outweigh the
-extra complexity of C++ over C?  C++ zealots will argue this point but
-the reality is that C++ is becoming less popular while the popularity
-of C has remained fairly stable over the last decade.  Idioms like are
-advocated in this paper can help to avert this trend but it will
-require wide community buy-in and a change in the way C++ is taught in
-order to have the greatest impact.
+features of C++) all that well anyway, then what really are most
+programmers getting extra out of C++ that would outweigh the extra
+complexity of C++ over C?  C++ zealots will argue this point but the
+reality is that C++ popularity has peaked and is becoming less popular
+while the popularity of C has remained fairly stable over the last
+decade\footnote{See the Tiobe index of programming language popularity
+at {}\ttt{http://www.tiobe.com}.}.  Idioms like are advocated in this
+paper can help to avert this trend but it will require wide community
+buy-in and a change in the way C++ is taught in order to have the
+greatest impact.
 
 To make these programs more secure, compiler vendors or static
-analysis tools (e.g.\ klocwork) could implement a preprocessor-like
-language similar to OpenMP\footnote{{}\ttt{http://openmp.org}} that
-would allow the programmer to declare (in comments) that certain
-blocks of code should be ``pointer-free'' or allow smaller blocks to
-be ``pointers allowed''.  This would significantly improve the
-robustness of code that uses the memory management classes described
-here.
+analysis tools (e.g.\
+klocwork\footnote{\ttt{http://www.klocwork.com}}) could implement a
+preprocessor-like language similar to
+OpenMP\footnote{{}\ttt{http://openmp.org}} that would allow the
+programmer to declare (in comments) that certain blocks of code should
+be ``pointer-free'' or allow smaller blocks to be ``pointers
+allowed''.  This would significantly improve the robustness of code
+that uses the memory management classes described here.
 
 
 
@@ -9865,12 +9908,13 @@ classes}
 %
 
 Here are stated commandments (i.e.\ very strongly recommended
-guidelines) that if followed, along with the idioms defined in Section~\ref{sec:idioms}, then client code will be nearly 100\% safe through
-debug-mode runtime checking and will almost never result in undefined
-behavior (e.g.\ segfaults) or a memory leak (except for circular
-references as described in
+guidelines) that if followed, along with the idioms defined in
+Section~\ref{sec:idioms}, then client code will be nearly 100\% safe
+through debug-mode runtime checking and will almost never result in
+undefined behavior (e.g.\ segfaults) or a memory leak (except for
+circular references as described in
 Section~\ref{sec:detection-circular-references}).  While there will be
-situations where it is justified to violate almost all of these
+situations where it is justified to violate almost any of these
 commandments, they should be valid in 99\% of a well written code
 base.
 
@@ -9885,12 +9929,14 @@ encapsulated as low-level code.
 
 \begin{commandment}
 Thou shall only use raw C++ references for non-persisting associations
-(see Section~\ref{sec:nonpersisting-persisting-associations}).
+(see Sections~\ref{sec:nonpersisting-persisting-associations}
+and~\ref{sec:raw-C++-references}).
 \end{commandment}
 
 \begin{commandment}
 Thou shall use {}\ttt{RCP} for handling single objects for all
-persisting associations (see Section~\ref{sec:nonpersisting-persisting-associations}).
+persisting associations (see
+Section~\ref{sec:nonpersisting-persisting-associations}).
 \end{commandment}
 
 \begin{commandment}\label{cmnd:rcp-new}
@@ -9901,10 +9947,12 @@ by directly calling {}\ttt{new} right in the constructor for the
 \end{commandment}
 
 \begin{commandment}\label{cmnd:owning-rcp-first}
-When wrapping an object inside of an {}\ttt{RCP}, thou shall create
-a strong owning {}\ttt{RCP} object first before any non-owning
-{}\ttt{RCP} objects.
+When wrapping an object inside of an {}\ttt{RCP}, thou shall create a
+strong owning {}\ttt{RCP} object first before any non-owning
+{}\ttt{RCP} objects (see Sections~\ref{sec:detection-dual-owning-rcps}
+and~\ref{sec:self-references}).
 \end{commandment}
+
 {}\textit{Justification:} In order for the reference-counting
 machinery to detect dangling non-owning references in a debug-mode
 build, the first {}\ttt{RCP} object created must have ownership to
@@ -9914,8 +9962,10 @@ object is created.
 
 \begin{commandment}\label{cmnd:ptr-semi-persisting}
 Thou shall use {}\ttt{Ptr} for handling single objects for all
-semi-persisting associations (see Section~\ref{sec:nonpersisting-persisting-associations}).
+semi-persisting associations (see
+Section~\ref{sec:nonpersisting-persisting-associations}).
 \end{commandment}
+
 {}\textit{Justification:} When performance constraints do not allow
 for the reference-counting overhead of {}\ttt{RCP}, then {}\ttt{Ptr}
 can be used instead to form a semi-persisting association (which
@@ -9928,16 +9978,20 @@ of {}\ttt{RCP} if one really does not need reference-counting
 machinery.
 
 \begin{commandment}
-Thou shall use {}\ttt{ArrayRCP} for handling contiguous arrays of
-objects for shared all persisting associations where the array does
-not need to be incrementally resized while sharing the array (see
-Section~\ref{sec:nonpersisting-persisting-associations}).
+Thou shall use {}\ttt{ArrayRCP} for handling all contiguous arrays of
+objects for all persisting associations where the array does not need
+to be incrementally resized while sharing the array (see
+Sections~\ref{sec:nonpersisting-persisting-associations}
+and~\ref{sec:general-array-idioms}).
 \end{commandment}
 
 \begin{commandment}\label{cmnd:arrayview-semi-persisting}
 Thou shall use {}\ttt{ArrayView} for handling contiguous arrays of
-objects for all semi-persisting associations (see Section~\ref{sec:nonpersisting-persisting-associations}).
+objects for all semi-persisting associations (see
+Sections~\ref{sec:nonpersisting-persisting-associations}
+and~\ref{sec:perf-tuning-strategies}).
 \end{commandment}
+
 {}\textit{Justification:} When performance constraints do not allow
 for the reference-counting overhead of {}\ttt{ArrayRCP}, then
 {}\ttt{ArrayView} can be used instead to form a semi-persisting
@@ -9956,11 +10010,17 @@ objects.  Instead, create memory using a user-defined non-member
 constructor function (see Section~\ref{sec:nonmember-constructor-idiom}).
 \end{commandment}
 
+{}\textit{Exception}: Calling raw {}\ttt{new} in okay when an
+appropriate non-member constructor is missing.  In general, value-type
+classes (e.g.\ {}\ttt{std::vector}) will not have non-member
+constructor functions that return {}\ttt{RCP}-wrapped objects.
+
 \begin{commandment}
-Thou shall not call raw operator {}\ttt{new []} or {}\ttt{delete
-[]} in any high-level C++ code to dynamically allocate and destroy
+Thou shall not call raw operator {}\ttt{new []} or {}\ttt{delete []}
+in any high-level C++ code to dynamically allocate and destroy
 contiguous arrays of data.  Instead, use functions such as
-{}\ttt{Teuchos::Array<T>(n)} and {}\ttt{Teuchos::arcp<T>(n)}.
+{}\ttt{Teuchos::Array<T>(n)} and {}\ttt{Teuchos::arcp<T>(n)} to
+dynamically allocate arrays.
 \end{commandment}
 
 \begin{commandment}
@@ -9973,18 +10033,21 @@ using {}\ttt{Teuchos::Tuple<T,N>} and convert to
 \begin{commandment}
 Thou shall use {}\ttt{Teuchos::Array} as a general purpose contiguous
 container instead of {}\ttt{std::vector} in order maximize debug-mode
-runtime checking (see Section~\ref{sec:Array}).
+runtime checking (see Sections~\ref{sec:Array}
+and~\ref{sec:detection-dangling-references}).
 \end{commandment}
 
 \begin{commandment}
 Thou shall only convert or cast between different memory management
 objects (of the same or different types) using the provided implicit
-and explicit conversion functions (see Section~\ref{sec:conversions}).  Thou shall never expose a raw C++ pointer
-to perform a conversion.
+and explicit conversion functions (see Section~\ref{sec:conversions}).
+Thou shall never expose a raw C++ pointer to perform a conversion.
 \end{commandment}
+
 {}\textit{Exception}: Some very advanced and rare use cases might have
-one exposing a raw C++ pointer (see Section~\ref{sec:inverting-obj-ownership} for the only example described in
-this paper).
+one exposing a raw C++ pointer (see
+Section~\ref{sec:inverting-obj-ownership} for the only example
+described in this paper).
 
 \begin{commandment}
 Thou shall only pass in the types {}\ttt{Ptr},
@@ -9993,6 +10056,7 @@ Thou shall only pass in the types {}\ttt{Ptr},
 {}\ttt{const RCP<T> \&a}) and never by non-const reference (e.g.\
 never do {}\ttt{RCP<T> \&a}).
 \end{commandment}
+
 {}\textit{Exception}: The only time one should ever pass in a
 non-const reference to one of these types (e.g.\ {}\ttt{RCP<T>
 \&a}) is when the function will modify what data the object points to.
@@ -10004,8 +10068,10 @@ pass in the object through a {}\ttt{Ptr} object (e.g.\
 \begin{commandment}
 Thou shall only reutrn objects of type {}\ttt{Ptr}, {}\ttt{RCP},
 {}\ttt{ArrayView}, and {}\ttt{ArrayRCP} from a function by value and
-not constant reference (see Section~\ref{sec:idioms-returning-objects}).
+not a constant reference (see
+Section~\ref{sec:idioms-returning-objects}).
 \end{commandment}
+
 {}\textit{Exception}: Returning one of these types by non-const
 reference makes sense when using the local static variable
 initialization trick described in {}\cite[Item
@@ -10024,8 +10090,8 @@ The Teuchos array memory management classes {}\ttt{Array},
 for {}\ttt{size\_type} ({}\ttt{ptrdiff\_t} by default).  This breaks
 from the C++ standard library convention of the standard containers
 like {}\ttt{std::vector} that all use an unsigned integer for
-{}\ttt{size\_type} (which is {}\ttt{size\_t} on most machines).  The
-primary disadvantage for using an unsigned integral type is that
+{}\ttt{size\_type} (which is {}\ttt{size\_t} in most implementations).
+The primary disadvantage for using an unsigned integral type is that
 subtractions that would normally produce a negative number instead
 roll over into a huge positive number, making it more difficult to
 debug problems.  For example, consider the simple program shown in
@@ -10099,7 +10165,7 @@ Now, getting output like {}\ttt{-2} when a positive number is expected
 is much easier to debug.  The chance of getting {}\ttt{-2} as the
 result of a memory usage error is very unlikely.  This would
 immediately be flagged as a subtraction error in the program and
-quickly traced down and fixed.  Therefore, from a program correctness
+quickly tracked down and fixed.  Therefore, from a program correctness
 and debugging perspective, signed integral types are far superior to
 unsigned types.
 
@@ -10215,11 +10281,17 @@ with {}\ttt{-m32}) and run it produces the following output:
   a+size - a = -1073741825
 \end{verbatim}}
 
-What the above 32 bit output confirms is that it false to claim that
-{}\ttt{ptrdiff\_t} can store the difference between any two pointers
-in a single array of data.  Perhaps that was true on the machines when
-C was first developed the early 1970's but it is not true today where
-machines with 4+ GB of memory are common.
+The value of {}\ttt{ptr2 - ptr1 = -1073741825} where {}\ttt{ptr1 = a}
+and {}\ttt{ptr2 = a+size} is totally wrong.  What this output suggests
+is that {}\ttt{ptr2 = a+size} is {}\ttt{1073741825} elements
+{}\underline{in front of} {}\ttt{ptr1 = a} which is completely wrong
+when in actuality {}\ttt{ptr2 = a+size} is {}\ttt{size = 3221225471}
+elements {}\underline{after} {}\ttt{ptr1 = a}.  What this 32 bit
+output confirms is that it false to claim that {}\ttt{ptrdiff\_t} can
+store the difference between any two pointers in a single array of
+data.  Perhaps that was true on the machines when C was first
+developed the early 1970's but it is not true today where machines
+with 4+ GB of memory are common.
 
 Now consider practical usage of types like {}\ttt{std::vector} on
 modern machines.  First, consider what it would mean to allocate the
@@ -10245,20 +10317,22 @@ addressable memory of a 32 bit system.
 Therefore, even on a 32 bit machine, limiting the maximum size of
 {}\ttt{std::vector} objects to have only
 {}\ttt{std::numeric\_limits<ptrdiff\_t)>::max()} = $2.3\times{}10^9$
-elements is really not any kind of real limit at all.  For any
-reasonable program on any reasonable 32 bit machine one cannot even
-store that much memory.
+elements is really not any kind of limit at all.  For any reasonable
+program on any reasonable 32 bit machine one cannot even store that
+much memory.
 
 On a 64 bit machine this of course becomes silly.  By limiting the
 maximum number of elements in an {}\ttt{std::vector<char>} (not to
 mention arrays with larger data types) to be
 {}\ttt{std::numeric\_limits<ptrdiff\_t)>::max()} on 64 bit machine
 would mean that one would take up {}\ttt{18446744073709551615 / 2} =
-{}\ttt{9.2e+9} GB of memory to allocate a single array!
+{}\ttt{9.2e+9} GB of memory to allocate a single array!  We will
+likely never in human history ever see a machine with $2\times{}10^9$
+GB of memory in a single address space.
 
 In summary, limiting the maximum number of elements in an
 {}\ttt{std::vector} (and therefore Teuchos {}\ttt{Array}) to be half
-of {}\ttt{size\_t} using the {}\ttt{signed int} type
+of {}\ttt{size\_t} using the {}\ttt{long signed int} type
 {}\ttt{ptrdiff\_t} for {}\ttt{size\_type} is not any kind of limit at
 all in any realistic 32 bit program and especially not a 64 bit
 program.
