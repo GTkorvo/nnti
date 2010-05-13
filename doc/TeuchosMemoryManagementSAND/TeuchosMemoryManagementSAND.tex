@@ -4,7 +4,7 @@
 \usepackage{graphicx}
 \usepackage{latexsym}
 \usepackage{color}
-\usepackage[light]{draftcopy}
+%\usepackage[light]{draftcopy}
 \input{rab_commands}
 \setcounter{tocdepth}{3}
 \setcounter{secnumdepth}{3}
@@ -6470,9 +6470,23 @@ when there are unresolved strong circular references
 {\small\begin{verbatim}
   ***
   *** Warning! The following Teuchos::RCPNode objects were created but have
-  *** not been destroyed yet.  This may be an indication that these objects may
-  *** be involved in a circular dependency!  A memory checking tool may complain
-  *** that these objects are not destroyed correctly.
+  *** not been destroyed yet.  A memory checking tool may complain that these
+  *** objects are not destroyed correctly.
+  ***
+  *** There can be many possible reasons that this might occur including:
+  ***
+  ***   a) The program called abort() or exit() before main() was finished.
+  ***      All of the objects that would have been freed through destructors
+  ***      are not freed but some compilers (e.g. GCC) will still call the
+  ***      destructors on static objects (which is what causes this message
+  ***      to be printed).
+  ***
+  ***   b) The program is using raw new/delete to manage some objects and
+  ***      delete was not called correctly and the objects not deleted hold
+  ***      other objects through reference-counted pointers.
+  ***
+  ***   c) This may be an indication that these objects may be involved in
+  ***      a circular dependency of reference-counted managed objects.
   ***
   
     0: RCPNode (map_key_void_ptr=0x4a3ff50)
