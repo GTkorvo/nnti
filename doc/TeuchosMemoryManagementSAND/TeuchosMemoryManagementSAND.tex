@@ -3347,15 +3347,25 @@ Listings~\ref{listing:Ptr-conversions},
 {\small\begin{verbatim}
   template<class T2, class T1> ArrayRCP<T2> arcp_const_cast(const ArrayRCP<T1>& p1);
   template<class T2, class T1> ArrayRCP<T2> arcp_reinterpret_cast(const ArrayRCP<T1>& p1);
+  template<class T2, class T1> ArrayRCP<T2> arcp_reinterpret_cast_nonpod(
+    const ArrayRCP<T1>& p1, const T2& val = T2());
 \end{verbatim}}
 \end{listing}
 
 
 These conversion functions are used very similarly as for the built-in
 conversion operations in that only the output type needs to be
-explicitly specified.  For example, Listing~\ref{listing:conversions-examples} shows some example conversions
-involving {}\ttt{RCP} (but the conversion function usage for the other
-types are identical).
+explicitly specified.  For example,
+Listing~\ref{listing:conversions-examples} shows some example
+conversions involving {}\ttt{RCP} (but the conversion function usage
+for the other types are identical).  One function worth noting in
+Listing~\ref{listing:ArrayRCP-conversions} is
+{}\ttt{arcp\_reinterpret\_cast\_nonpod(...)} which performs a
+reinterpret cast from a POD (plain old data) datatype (e.g.\
+{}\ttt{char}) to a non-POD datatype (e.g. {}\ttt{std::vector<int>}).
+This function calls (copy) constructors on the array elements and
+defines a specialized deallocation policy to call destructors on the
+elements when the last {}\ttt{ArrayRCP<T2>} object is released.
 
 
 {}\begin{listing}: Example usage of the explicit conversion functions
