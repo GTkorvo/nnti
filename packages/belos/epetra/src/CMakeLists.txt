@@ -42,5 +42,5 @@ PACKAGE_ADD_LIBRARY(
   belosepetra
   HEADERS ${HEADERS}
   SOURCES ${SOURCES}
-  DEPLIBS belos
+  DEPLIBS belos epetra
   )

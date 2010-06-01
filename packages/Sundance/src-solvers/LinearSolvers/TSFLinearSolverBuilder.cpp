@@ -34,6 +34,7 @@
 #include "TSFBICGSTABSolverDecl.hpp"
 #include "TSFBlockTriangularSolverDecl.hpp"
 #include "Teuchos_XMLParameterListReader.hpp"
+#include "Teuchos_ParameterXMLFileReader.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 #include "TSFVectorImpl.hpp"
@@ -47,6 +48,13 @@ using namespace TSFExtended;
 using namespace TSFExtendedOps;
 using namespace Teuchos;
 
+
+LinearSolver<double> LinearSolverBuilder::createSolver(const std::string& filename)
+{
+  ParameterXMLFileReader reader(filename);
+  ParameterList solverParams = reader.getParameters();
+  return createSolver(solverParams);
+}
 
 
 LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& params, int verb)

@@ -30,6 +30,8 @@
 #define KOKKOS_NODEAPICONFIGDEFS_HPP
 
 #include <Kokkos_ConfigDefs.hpp>
+#include <sstream>
+#include <Teuchos_TypeTraits.hpp>
 
 namespace Kokkos {
 

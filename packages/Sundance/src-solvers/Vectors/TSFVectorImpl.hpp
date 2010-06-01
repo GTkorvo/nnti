@@ -98,6 +98,7 @@ void Vector<Scalar>::print(std::ostream& os) const
   if (p != 0)
   {
     p->print(os);
+    return;
   }
   const Thyra::ProductMultiVectorBase<Scalar>* pv = 
     dynamic_cast <const Thyra::ProductMultiVectorBase<Scalar>* >(this->ptr().get());
