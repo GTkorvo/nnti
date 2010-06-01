@@ -45,6 +45,8 @@ namespace TSFExtended
     /** */
     static LinearSolver<double> createSolver(const ParameterList& params,
       int verb=0);
+    /** */
+    static LinearSolver<double> createSolver(const std::string& filename);
   };
   
 }
