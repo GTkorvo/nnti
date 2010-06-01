@@ -40,10 +40,18 @@ SolverState<double> BelosSolver::solve(const LinearOperator<double>& A,
   typedef Thyra::LinearOpBase<double>            OP;
   typedef Belos::LinearProblem<double, MV, OP>   LP;
 
+  TEST_FOR_EXCEPT(!A.ptr().get());
+  TEST_FOR_EXCEPT(!rhs.ptr().get());
+
   /* get Thyra objects */
   RCP<OP> APtr = A.ptr();
   RCP<MV> bPtr = rhs.ptr(); 
+
+  if (!soln.ptr().get()) soln = rhs.copy();
+
   RCP<MV> ansPtr = soln.ptr();
+
+  
   
   RCP<LP> prob = rcp(new LP(APtr, ansPtr, bPtr));
 
