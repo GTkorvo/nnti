@@ -27,7 +27,7 @@
  /* @HEADER@ */
 
 #include "TSFEpetraMatrix.hpp"
-#include "TSFEpetraMatrixMatrix.hpp"
+#include "TSFEpetraMatrixMatrixProduct.hpp"
 #include "TSFEpetraVector.hpp"
 #include "SundanceExceptions.hpp"
 #include "EpetraExt_MatrixMatrix.h"
@@ -74,6 +74,38 @@ LinearOperator<double> epetraLeftScale(
   return rtn;
   
 }
+
+LinearOperator<double> epetraRightScale(
+  const LinearOperator<double>& A,
+  const Vector<double>& d)
+{
+  /* Extract the underlying Epetra matrix. Type checking is done
+   * ny rcp_dynamic_cast, so we need no error check here. */
+  RCP<const Epetra_CrsMatrix> A_crs = EpetraMatrix::getConcretePtr(A);
+  
+  /* Make a deep copy of A */
+  RCP<Epetra_CrsMatrix> mtxCopy = rcp(new Epetra_CrsMatrix(*A_crs));
+
+  /* Extract the underlying Epetra vector. Type checking is done
+   * internally, so we need no error check here. */
+  const Epetra_Vector& epv = EpetraVector::getConcrete(d);
+  
+  /* Scale the copy */
+  mtxCopy->RightScale(epv);
+
+  /* Prepare an operator object for the scaled matrix */
+  RCP<const EpetraVectorSpace> domain 
+    = rcp_dynamic_cast<const EpetraVectorSpace>(A.domain().ptr());
+
+  RCP<const EpetraVectorSpace> range 
+    = rcp_dynamic_cast<const EpetraVectorSpace>(A.range().ptr());
+
+  RCP<LinearOpBase<double> > rtn 
+    = rcp(new EpetraMatrix(mtxCopy, domain, range));
+  return rtn;
+  
+}
+
 
 LinearOperator<double> epetraMatrixMatrixProduct(
   const LinearOperator<double>& A,

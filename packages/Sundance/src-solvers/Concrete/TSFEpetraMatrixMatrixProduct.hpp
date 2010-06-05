@@ -45,6 +45,11 @@ LinearOperator<double> epetraLeftScale(
   const Vector<double>& d,
   const LinearOperator<double>& A);
 
+/** \relates LinearOperator */
+LinearOperator<double> epetraRightScale(
+  const LinearOperator<double>& A,
+  const Vector<double>& d);
+
 }
 
 #endif

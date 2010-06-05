@@ -3249,6 +3249,123 @@ This method of finding lumped diagonals is a special case of a more general
  sequence of vectors.
 \end_layout
 
+\begin_layout Subsection
+Matrix-matrix operations
+\end_layout
+
+\begin_layout Standard
+Multiplication of matrices is expensive, and explicit calculation of 
+\begin_inset Formula $AB$
+\end_inset
+
+ should almost always be avoided if an implicit calculation of 
+\begin_inset Formula $ABx$
+\end_inset
+
+ will suffice.
+ However, in some cases there is no alternative but to form 
+\begin_inset Formula $AB$
+\end_inset
+
+ explicitly.
+ The function 
+\family typewriter
+epetraMatrixMatrixProduct
+\family default
+ will multiply two Epetra CRS matrices, returning the result (also stored
+ as an Epetra CRS matrix) as a LinearOperator.
+ This example does the operation 
+\begin_inset Formula $C=AB.$
+\end_inset
+
+ 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+LinearOperator<double> C = epetraMatrixMatrixProduct(A, B);
+\end_layout
+
+\end_inset
+
+An important special case where some performance optimzations are possible
+ is that of multiplication of a matrix 
+\begin_inset Formula $A$
+\end_inset
+
+ with a diagonal matrix 
+\begin_inset Formula $D$
+\end_inset
+
+.
+ The product 
+\begin_inset Formula $DA$
+\end_inset
+
+ is equivalent to scaling the rows of 
+\begin_inset Formula $A$
+\end_inset
+
+ by the corresponding diagonal entry of 
+\begin_inset Formula $D$
+\end_inset
+
+, whereas the product 
+\begin_inset Formula $AD$
+\end_inset
+
+ scales the columns.
+ The diagonal matrix 
+\begin_inset Formula $D$
+\end_inset
+
+ can be represented by a vector 
+\begin_inset Formula $d$
+\end_inset
+
+ containing its diagonal elements.
+ The computation of 
+\begin_inset Formula $DA$
+\end_inset
+
+ is done as shown: 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+LinearOperator<double> DA = epetraLeftScale(d, A);
+\end_layout
+
+\end_inset
+
+The matrix 
+\begin_inset Formula $A$
+\end_inset
+
+ is unchanged.
+ Calculation of 
+\begin_inset Formula $AD$
+\end_inset
+
+ is, similarly,
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+LinearOperator<double> AD = epetraRightScale(A,d );
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Linear solvers
 \end_layout
@@ -3375,7 +3492,7 @@ explicit
 \begin_inset Formula $A^{-1}x$
 \end_inset
 
- we never actually form the matrices 
+ with overloaded operators we never actually form the matrices 
 \begin_inset Formula $AB$
 \end_inset
 
@@ -3384,6 +3501,8 @@ explicit
 \end_inset
 
 .
+ Explicit matrix-matrix products are available for those rare cases when
+ they are needed.
  
 \end_layout
 

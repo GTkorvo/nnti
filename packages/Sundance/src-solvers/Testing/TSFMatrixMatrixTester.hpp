@@ -63,7 +63,8 @@ public:
   MatrixMatrixTester(const LinearOperator<Scalar>& A,
     const LinearOperator<Scalar>& B,
     const TestSpecifier<Scalar>& prodSpec,
-    const TestSpecifier<Scalar>& diagProdSpec);
+    const TestSpecifier<Scalar>& diagLeftProdSpec,
+    const TestSpecifier<Scalar>& diagRightProdSpec);
 
   /** */
   bool runAllTests() const ;
@@ -72,7 +73,10 @@ public:
   bool prodTest() const ;
 
   /** */
-  bool diagProdTest() const ;
+  bool diagLeftProdTest() const ;
+
+  /** */
+  bool diagRightProdTest() const ;
 
 
 private:
@@ -83,7 +87,9 @@ private:
 
   TestSpecifier<Scalar> prodSpec_;
 
-  TestSpecifier<Scalar> diagProdSpec_;
+  TestSpecifier<Scalar> diagLeftProdSpec_;
+
+  TestSpecifier<Scalar> diagRightProdSpec_;
 
 };
 
@@ -92,12 +98,14 @@ inline MatrixMatrixTester<Scalar>
 ::MatrixMatrixTester(const LinearOperator<Scalar>& A,
   const LinearOperator<Scalar>& B,
   const TestSpecifier<Scalar>& prodSpec,
-  const TestSpecifier<Scalar>& diagProdSpec)
+  const TestSpecifier<Scalar>& diagRightProdSpec,
+  const TestSpecifier<Scalar>& diagLeftProdSpec)
   : TesterBase<Scalar>(), 
     A_(A),
     B_(B),
     prodSpec_(prodSpec),
-    diagProdSpec_(diagProdSpec)
+    diagLeftProdSpec_(diagLeftProdSpec),
+    diagRightProdSpec_(diagRightProdSpec)
 {;}
 
 template <class Scalar> 
@@ -106,8 +114,9 @@ inline bool MatrixMatrixTester<Scalar>
 {
   bool pass = true;
 
-  pass = prodTest() && pass;
-  pass = diagProdTest() && pass;
+  pass = this->prodTest() && pass;
+  pass = this->diagLeftProdTest() && pass;
+  pass = this->diagRightProdTest() && pass;
 
   return pass;
 }
@@ -141,11 +150,11 @@ inline bool MatrixMatrixTester<Scalar>
 
 template <class Scalar> 
 inline bool MatrixMatrixTester<Scalar>
-::diagProdTest() const 
+::diagLeftProdTest() const 
 {
-  if (diagProdSpec_.doTest())
+  if (diagLeftProdSpec_.doTest())
   {
-    Out::root() << "running diagonal matrix multiplication test..." << endl;
+    Out::root() << "running diagonal*matrix multiplication test..." << endl;
 
     Vector<Scalar> x = A_.domain().createMember();
     randomizeVec(x);
@@ -164,7 +173,41 @@ inline bool MatrixMatrixTester<Scalar>
     ScalarMag err = (y1 - y2).norm2();
 
     Out::root() << "|y1-y2| = " << err << endl;
-    return checkTest(diagProdSpec_, err, "diagonal matrix multiplication");
+
+    return checkTest(diagLeftProdSpec_, err, "diagonal*matrix multiplication");
+  }
+  Out::root() << "skipping diagonal matrix-matrix test..." << endl;
+  return true;
+}
+
+  
+template <class Scalar> 
+inline bool MatrixMatrixTester<Scalar>
+::diagRightProdTest() const 
+{
+  if (diagRightProdSpec_.doTest())
+  {
+    Out::root() << "running diagonal*matrix multiplication test..." << endl;
+
+    Vector<Scalar> x = A_.domain().createMember();
+    randomizeVec(x);
+
+    Vector<Scalar> d = A_.domain().createMember();
+    randomizeVec(d);
+        
+    LinearOperator<Scalar> D = diagonalOperator(d);
+    LinearOperator<Scalar> AD = epetraRightScale(A_, d);
+
+    Out::root() << "computing implicit y1 = A*D*x..." << endl;
+    Vector<Scalar> y1 = A_*D*x;
+    Out::root() << "computing explicit y2 = A*D*x..." << endl;
+    Vector<Scalar> y2 = AD*x;
+
+    ScalarMag err = (y1 - y2).norm2();
+
+    Out::root() << "|y1-y2| = " << err << endl;
+
+    return checkTest(diagLeftProdSpec_, err, "matrix*diagonal multiplication");
   }
   Out::root() << "skipping diagonal matrix-matrix test..." << endl;
   return true;
