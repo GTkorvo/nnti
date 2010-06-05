@@ -140,23 +140,23 @@ inline bool CompoundTester<Scalar>
 {
   if (sumSpec_.doTest())
   {
-    Out::os() << "running operator addition test..." << endl;
+    Out::root() << "running operator addition test..." << endl;
     LinearOperator<Scalar> sum = A_ + B_;
 
     Vector<Scalar> x = A_.domain().createMember();
     randomizeVec(x);
-    Out::os() << "computing y1 = (A+B)*x..." << endl;
+    Out::root() << "computing y1 = (A+B)*x..." << endl;
     Vector<Scalar> y1 = sum*x;
-    Out::os() << "computing y2 = A*x + B*x..." << endl;
+    Out::root() << "computing y2 = A*x + B*x..." << endl;
     Vector<Scalar> y2 = A_*x + B_*x;
     
     ScalarMag err = (y1 - y2).norm2();
 
-    Out::os() << "|y1-y2| = " << err << endl;
+    Out::root() << "|y1-y2| = " << err << endl;
         
     return checkTest(sumSpec_, err, "operator addition");
   }
-  Out::os() << "skipping operator addition test..." << endl;
+  Out::root() << "skipping operator addition test..." << endl;
   return true;
 }
 
@@ -167,24 +167,24 @@ inline bool CompoundTester<Scalar>
 {
   if (composedSpec_.doTest())
   {
-    Out::os() << "running operator composition test..." << endl;
+    Out::root() << "running operator composition test..." << endl;
     LinearOperator<Scalar> composed = A_ * B_;
 
     Vector<Scalar> x = B_.domain().createMember();
     randomizeVec(x);
-    Out::os() << "computing y1 = (A*B)*x..." << endl;
+    Out::root() << "computing y1 = (A*B)*x..." << endl;
     Vector<Scalar> y1 = composed*x;
-    Out::os() << "computing y2 = B*x..." << endl;
+    Out::root() << "computing y2 = B*x..." << endl;
     Vector<Scalar> y2 = B_*x;
-    Out::os() << "computing y3 = A*y2..." << endl;
+    Out::root() << "computing y3 = A*y2..." << endl;
     Vector<Scalar> y3 = A_*y2;
 
     ScalarMag err = (y1 - y3).norm2();
 
-    Out::os() << "|y1-y3| = " << err << endl;
+    Out::root() << "|y1-y3| = " << err << endl;
     return checkTest(composedSpec_, err, "operator composition");
   }
-  Out::os() << "skipping operator composition test..." << endl;
+  Out::root() << "skipping operator composition test..." << endl;
   return true;
 }
 
@@ -195,25 +195,25 @@ inline bool CompoundTester<Scalar>
 {
   if (scaledSpec_.doTest())
   {
-    Out::os() << "running operator scaling test..." << endl;
+    Out::root() << "running operator scaling test..." << endl;
     Scalar alpha = sqrt(2.0);
     LinearOperator<Scalar> scaled = alpha*A_;
 
     Vector<Scalar> x = A_.domain().createMember();
     randomizeVec(x);
-    Out::os() << "computing y1 = (alpha*A)*x..." << endl;
+    Out::root() << "computing y1 = (alpha*A)*x..." << endl;
     Vector<Scalar> y1 = scaled*x;
-    Out::os() << "computing y2 = A*x..." << endl;
+    Out::root() << "computing y2 = A*x..." << endl;
     Vector<Scalar> y2 = A_*x;
-    Out::os() << "computing y3 = alpha*y2..." << endl;
+    Out::root() << "computing y3 = alpha*y2..." << endl;
     Vector<Scalar> y3 = alpha*y2;
 
     ScalarMag err = (y1 - y3).norm2();
 
-    Out::os() << "|y1-y3| = " << err << endl;
+    Out::root() << "|y1-y3| = " << err << endl;
     return checkTest(composedSpec_, err, "operator scaling");
   }
-  Out::os() << "skipping operator scaling test..." << endl;
+  Out::root() << "skipping operator scaling test..." << endl;
   return true;
 }
 
@@ -225,7 +225,7 @@ inline bool CompoundTester<Scalar>
 {
   if (diagSpec_.doTest())
   {
-    Out::os() << "running diagonal operator test..." << endl;
+    Out::root() << "running diagonal operator test..." << endl;
 
     Vector<Scalar> x = A_.domain().createMember();
     randomizeVec(x);
@@ -235,17 +235,17 @@ inline bool CompoundTester<Scalar>
         
     LinearOperator<Scalar> D = diagonalOperator(d);
 
-    Out::os() << "computing y1 = D*x..." << endl;
+    Out::root() << "computing y1 = D*x..." << endl;
     Vector<Scalar> y1 = D*x;
-    Out::os() << "computing y2 = d .* x..." << endl;
+    Out::root() << "computing y2 = d .* x..." << endl;
     Vector<Scalar> y2 = x.dotStar(d);
 
     ScalarMag err = (y1 - y2).norm2();
 
-    Out::os() << "|y1-y2| = " << err << endl;
+    Out::root() << "|y1-y2| = " << err << endl;
     return checkTest(diagSpec_, err, "diagonal operator");
   }
-  Out::os() << "skipping diagonal operator test..." << endl;
+  Out::root() << "skipping diagonal operator test..." << endl;
   return true;
 }
 

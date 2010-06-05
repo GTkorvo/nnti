@@ -33,6 +33,7 @@
 #include "TSFLinearOperatorDecl.hpp"
 #include "Thyra_TestSpecifier.hpp"
 #include "Teuchos_ScalarTraits.hpp"
+#include "SundanceOut.hpp"
 
 using namespace TSFExtended;
 using namespace Teuchos;
@@ -88,19 +89,19 @@ namespace TSFExtended
     bool rtn = true;
     if (err > spec.errorTol())
       {
-        cerr << testName << " test FAILED: err=" << err << ", tol = " 
+        Out::root() << testName << " test FAILED: err=" << err << ", tol = " 
              << spec.errorTol() << endl;
         rtn = false;
       }
     else if (err > spec.warningTol())
       {
-        cerr << "WARNING: " << testName << " test err="
+        Out::root() << "WARNING: " << testName << " test err="
              << err << " could not beat tol = " 
              << spec.warningTol() << endl;
       }
     else
       {
-        cerr << "test " << testName << " PASSED with tol=" << spec.errorTol() << endl;
+        Out::root() << "test " << testName << " PASSED with tol=" << spec.errorTol() << endl;
       }
     return rtn;
   }
