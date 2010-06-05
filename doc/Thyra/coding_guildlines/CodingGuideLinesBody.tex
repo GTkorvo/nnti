@@ -230,7 +230,7 @@ with an underscore.  For example:
 name helps to define the scope of the variable and differentiate that
 name from a local variable or a member function that may otherwise
 result in ``shadowing'' which causes portability problems on some
-compilers or when warnings are elevated to errors.
+compilers especially when warnings are elevated to errors.
 
 
 {}\textit{Exception}: Public data members in simple C++ structs (i.e.\
@@ -290,17 +290,19 @@ names separated by underscores {}\texttt{\_}.  For example:
 {}\textit{Justification:} See {}\textbf{NC 4} above.
 
 
-{}\item\NCBaseDefaultClassNames: In general, the top-level C++ base class for
-some abstraction should use the post-fix {}\texttt{Base} appended to the class
-name (e.g.\ {}\texttt{Vector\-Base}) and the base class should contain
-(almost) no implementations and certainly no object data (see Item 36 in
-{}\cite{C++CodingStandards05}).  If a default implementation of some of the
-aspects of the base class are desired (to make it easier to define concrete
-subclasses), then they should be put in a derived node subclass with the
-post-fix {}\texttt{DefaultBase} (e.g.\ {}\texttt{Vector\-Default\-Base}).  Any
-default concrete implementation of an abstraction should generally use the
-prefix {}\texttt{Default} appended to the beginning of the name along with any
-other important prefixes (e.g.\ {}\texttt{DefaultSpmdVector}).  For example:
+{}\item\NCBaseDefaultClassNames: In general, the top-level C++ base
+class for some abstraction should use the post-fix {}\texttt{Base}
+prepended to the class name (e.g.\ {}\texttt{Vector\-Base}) and the
+base class should contain (almost) no implementations and certainly no
+object data (see Item 36 in {}\cite{C++CodingStandards05}).  If a
+default implementation of some of the aspects of the base class are
+desired (to make it easier to define concrete subclasses), then they
+should be put in a derived node subclass with the post-fix
+{}\texttt{DefaultBase} (e.g.\ {}\texttt{Vector\-Default\-Base}).  Any
+default concrete implementation of an abstraction should generally use
+the prefix {}\texttt{Default} prepended to the beginning of the name
+along with any other important prefixes (e.g.\
+{}\texttt{DefaultSpmdVector}).  For example:
 
 {\small\begin{verbatim}
   // Pure virtual base class 
@@ -430,15 +432,6 @@ are used.
 This is a very minor amendment to Item 24 in {}\cite{C++CodingStandards05}.
 
 
-{}\item\NOSFTemplateFiles: The template declaration code and inline function
-definitions are placed in {}\ttt{FileName\_decl.hpp}, the template function
-defintions are placed in {}\ttt{FileName\_def.hpp}, the general client
-interface that automatically switches between implicit and explicit
-instantiation is {}\ttt{FileName.hpp}, and the explicit instantiations are
-placed in {}\ttt{FileName.cpp}.  Specific details about how these files should
-be laid out are given in Section~\ref{gcg:template-instantation-files}.
-
-
 \end{itemize}
 
 
@@ -447,16 +440,18 @@ be laid out are given in Section~\ref{gcg:template-instantation-files}.
 \label{thyracodingguidelines:codingguidelines:sec}
 %
 
-Coding guidelines, unlike formatting guidelines, greatly influence the meaning
-of C++ programs and therefore require a high priority level.  The book ``C++
-Coding Standards'' {}\cite{C++CodingStandards05} that this document is
-primarily based on provides many good and important coding guidelines that
-should be followed and by default all of the items in this book are assumed in
-this document.  Here, we provide additional coding guidelines and, in some
-cases, amend items in {}\cite{C++CodingStandards05}.  Where this document is
-silent, {}\cite{C++CodingStandards05} is to be considered the authoritative
-source for guidance.  Some miscellaneous amendments to the items in
-{}\cite{C++CodingStandards05} are given in Appendix~\ref{sec:misc_amendments}.
+Coding guidelines, unlike formatting guidelines, greatly influence the
+meaning of C++ programs and therefore require a high priority level.
+The book ``C++ Coding Standards'' {}\cite{C++CodingStandards05} that
+this document is primarily based on provides many good and important
+coding guidelines that should be followed and by default all of the
+items in {}\cite{C++CodingStandards05} are assumed in this document.
+Here, we provide additional coding guidelines and, in some cases,
+amend items in {}\cite{C++CodingStandards05}.  Where this document is
+silent, {}\cite{C++CodingStandards05} is to be considered the
+authoritative source for guidance.  Some miscellaneous amendments to
+the items in {}\cite{C++CodingStandards05} are given in
+Appendix~\ref{sec:cpp_coding_standards} and~\ref{sec:misc_amendments}.
 
 
 %
@@ -475,29 +470,32 @@ personal preference or style.
 \begin{itemize}
 
 
-{}\item\GCGTestForException: For developer errors, prefer to throw exceptions
-derived from {}\texttt{std\-::logic\-\_error} instead of using the
-{}\texttt{assert(...)}  macro as recommended in {}\cite[Item
-68]{C++CodingStandards05}.  A ``logic error'' would be treated differently
-from a real run-time error and would therefore come with different assumptions
-about the state of the object after the exception was thrown.  In particular,
-a ``real error'' (i.e. not just an internal developer error) should always
-provide the basic guarantee to leave the object in a valid state {}\cite[Item
-71]{C++CodingStandards05}, while code that throws a ``logic error'' can not
-make any such guarantees in general.  Therefore, objects that throw exceptions
-derived from {}\texttt{std\-::logic\-\_error} should generally be viewed as
-unusable and should be deleted immediately.  To enable debugging, a break-point
-can always be placed on function
-{}\texttt{Test\-For\-Exception\-\_break()}\footnote{In {}\texttt{gdb}, a
-break-point would be set as {}\texttt{b Test\-For\-Exception\-\_break()}.} 
-which will be called just before an exception is thrown through these macros.
-In the future, more sophisticated features like automatically attaching a
-debugger or printing the call stack may be added for some systems.  Therefore
-throwing an exception derived from {}\texttt{std\-::logic\-\_error} using
-these macros should be preferred to using the {}\texttt{assert(...)} macro as
-it gives us more control over what happens when one of these types of
-programming errors occurs.  Also, these exception macros make it much easier
-to generate good error messages that you would get from a simple use of the
+{}\item\GCGTestForException: For developer errors, prefer to throw
+exceptions derived from {}\texttt{std\-::logic\-\_error} instead of
+using the {}\texttt{assert(...)}  macro as recommended in {}\cite[Item
+68]{C++CodingStandards05}.  A ``logic error'' would be treated
+differently from a real run-time error and would therefore come with
+different assumptions about the state of the object after the
+exception was thrown.  In particular, a ``real error'' (i.e. not just
+an internal developer error) should always provide the basic guarantee
+to leave the object in a valid state {}\cite[Item
+71]{C++CodingStandards05}, while code that throws a ``logic error''
+cannot make any such guarantees in general.  Therefore, objects that
+throw exceptions derived from {}\texttt{std\-::logic\-\_error} should
+generally be viewed as unusable and should be deleted immediately.  To
+debug exceptions, a break-point can be placed on function
+{}\texttt{Test\-For\-Exception\-\_break()}\footnote{In {}\texttt{gdb},
+a break-point would be set as {}\texttt{b
+Test\-For\-Exception\-\_break()}.} which will be called just before an
+exception is thrown through these macros.  In the future, more
+sophisticated features like automatically attaching a debugger or
+printing the call stack may be added for some systems.  Therefore
+throwing an exception derived from {}\texttt{std\-::logic\-\_error}
+using these macros should be preferred to using the
+{}\texttt{assert(...)} macro as it gives us more control over what
+happens when one of these types of programming errors occurs.  Also,
+these exception macros make it much easier to generate better error
+messages than what you would get from a simple use of the
 {}\texttt{assert(...)} macro.
 
 
@@ -512,16 +510,19 @@ to generate good error messages that you would get from a simple use of the
 \begin{itemize}
 
 
-{}\item\GCGAvoidRawPointers: The tools mentioned below which include all of
-the standard C++ container classes (when using a checked STL implementation),
-{}\texttt{Teuchos::\-Ptr}, {}\texttt{Teuchos::\-RCP},
-{}\texttt{Teuchos::\-Array}, {}\texttt{Teuchos::\-Array\-RCP}, and
-{}\texttt{Teuchos::\-Array\-View} allow most code to be written without any
-explicit raw C++ pointers.  In debug mode, these classes allow for full
-run-time checking that result in exceptions being thrown and excellent error
-messages (i.e.\ instead of segfaults).  When a check C++ standard library is
-used (e.g.\ when {}\texttt{\_GXXLIB\_DEBUG} is defined with g++), then all of
-the standard C++ library classes are checked as well.
+{}\item\GCGAvoidRawPointers: The Teuchos memory management approach
+described in {}\cite{TeuchosMemoryManagementGuide} mentioned below
+which include all of the standard C++ container classes (when using a
+checked STL implementation), {}\texttt{Teuchos::\-Ptr},
+{}\texttt{Teuchos::\-RCP}, {}\texttt{Teuchos::\-Array},
+{}\texttt{Teuchos::\-Array\-RCP}, and
+{}\texttt{Teuchos::\-Array\-View} allow all code to be written without
+any explicit raw C++ pointers.  In debug mode, these classes provide
+full run-time checking that result in exceptions being thrown and
+excellent error messages (i.e.\ instead of segfaults).  When a check
+C++ standard library is used (e.g.\ when {}\texttt{\_GXXLIB\_DEBUG} is
+defined with g++), then all of the standard C++ library classes are
+checked as well.
 
 
 {}\item\GCGUseStdString: While {}\texttt{std\-::string} is not debug checked
@@ -537,7 +538,7 @@ is very safe.
 {}\ref{fig:func_args_ref_type}): The class {}\texttt{Teuchos\-::Ptr} simply
 takes the place of a raw pointer to a single object but is always default
 initialized to NULL.  In debug mode, it throws exceptions when trying to
-dereference a null pointer.  Using this class helps to eliminates the need for
+dereference a null pointer.  Using this class helps to eliminate the need for
 checking for NULL to avoid undefined behavior when one dereferences a NULL
 pointer.
 
@@ -566,17 +567,12 @@ Non-member constructors take the form:
   RCP<SomeClass> someClass(...);
 \end{verbatim}}
 
-Note that views of concrete classes do not have not use ``generalized
-view'' semantics and can instead use ``direct view'' semantics where
-appropriate.  See all the details about the ``non-member constructor''
-idiom and ``direct views'' in {}\cite{TeuchosMemoryManagementGuide}.
-
 
 {}\item\GCGGeneralizedViews: Using ``generalized view'' semantics
 leads to the greatest implementation freedom and the best performance
 in all cases; abet with more strict usage patterns (see the
 ``generalized view'' design pattern in
-{}\cite{TeuchosMemoryManagementGuide}.
+{}\cite{TeuchosMemoryManagementGuide}).
 
 If {}\ttt{SomeBaseClass} provides a view if itself as {}\ttt{Part}
 objects, then applying the generalized view design pattern results in
@@ -591,9 +587,14 @@ the interface functions:
   };
 \end{verbatim}}
 
-The ``generalized view'' design pattern and a concrete example from
-Thyra is described in great detail in
+The ``generalized view'' design pattern along with a concrete example
+from Thyra is described in great detail in
 {}\cite{TeuchosMemoryManagementGuide}.
+
+Note that views of concrete classes do not have to use ``generalized
+view'' semantics and can instead use ``direct view'' semantics where
+appropriate.  See all the details about the ``non-member constructor''
+idiom in {}\cite{TeuchosMemoryManagementGuide}.
 
 
 {}\item\GCGTeuchosArrayView: (see Tables~\ref{fig:func_args_value_type} and
@@ -605,26 +606,29 @@ used and the only overhead is a size argument (which is usually passed with
 raw pointers anyway).
 
 
-{}\item\GCGTeuchosArray: (see Tables~\ref{fig:func_args_value_type} and
-{}\ref{fig:func_args_ref_type}): The primary reason to use
-{}\texttt{Teuchos::\-Array} instead of {}\texttt{std::\-vector} is that
-{}\texttt{Teuchos::\-Array} is part of the system memory management types and
-results in stronger run-time checking.  While {}\texttt{Teuchos::\-Array} gets
-all of its real functionality from {}\texttt{std::\-vector}, prefer to use
-{}\texttt{Teuchos::\-Array} as we provide more capabilities and portable debug
-checking.  For instance {}\texttt{Teuchos::\-Array::\-operator[]} is range
-checked in debug mode regardless whether there is an underling checked STL
-implementation or not (see {}\cite[Item 83]{C++CodingStandards05}).  In debug
-mode, the iterator is also run-time checked.  In addition,
+{}\item\GCGTeuchosArray: (see Tables~\ref{fig:func_args_value_type}
+and {}\ref{fig:func_args_ref_type}): The primary reason to use
+{}\texttt{Teuchos::\-Array} instead of {}\texttt{std::\-vector} is
+that {}\texttt{Teuchos::\-Array} is part of the Teuchos system of
+memory management types and results in stronger run-time checking.
+While {}\texttt{Teuchos::\-Array} gets all of its real functionality
+from {}\texttt{std::\-vector}, prefer to use
+{}\texttt{Teuchos::\-Array} as it provides more capabilities and
+portable debug checking.  For instance
+{}\texttt{Teuchos::\-Array::\-operator[]} is range checked in debug
+mode regardless whether there is an underling checked STL
+implementation or not (see {}\cite[Item 83]{C++CodingStandards05}).
+In debug mode, the iterator is also run-time checked.  In addition,
 {}\texttt{Teuchos\-::Array} will automatically convert into an
-{}\texttt{Teuchos\-::ArrayView} object safely when used in function calls and
-in debug mode, will catch dangling references.
+{}\texttt{Teuchos\-::ArrayView} object safely when used in function
+calls and in debug mode, will catch dangling references
+{}\cite{TeuchosMemoryManagementGuide}.
 
 
 {}\item\GCGTeuchosArrayRCP: (see Tables~\ref{fig:func_args_value_type} and
 {}\ref{fig:func_args_ref_type}): Note that {}\texttt{Teuchos::ArrayRCP} does
 {}\underline{not} take the place of a contiguous container class such as
-{}\texttt{Teuchos::\-Array}.  A {}\texttt{Teuchos::ArrayRCP} object can not
+{}\texttt{Teuchos::\-Array}.  A {}\texttt{Teuchos::ArrayRCP} object cannot
 change the size of the array, it can only provide for reference-counted
 sharing of an array of data of fixed size and provide sub-views of contiguous
 parts of the managed array.  All access to data (both through
@@ -697,15 +701,17 @@ Teuchos documentation for more details).  The
 flexible protocol for setting and managing a parameter list.
 
 
-{}\item\GCGTeuchosParamterListValidation: All user parameters and sub-lists
-passed in through a {}\texttt{Teuchos\-::Parameter\-List\-Acceptor} should be
-fully validated.  The mail tool for this is the member function
-{}\texttt{validateParameters(...)}.  Using this function and other other
-approaches, when a user misspells a parameter or sub-list, uses the wrong type
-for a parameter, or provides an invalid parameter value, they will get an
-exception thrown with a helpful error message.  Also, objects are only
-responsible for validating their own parameters and sub-lists, and not those of
-other objects that they hold sub-lists for.
+{}\item\GCGTeuchosParamterListValidation: All user parameters and
+sub-lists passed in through a
+{}\texttt{Teuchos\-::Parameter\-List\-Acceptor} should be fully
+validated.  The main tool for this is the member function
+{}\texttt{validateParameters(...)}.  Using this function and other
+other approaches, when a user misspells a parameter or sub-list, uses
+the wrong type for a parameter, or provides an invalid parameter
+value, they will get an exception thrown with a helpful error message.
+Also, objects are only responsible for validating their own parameters
+and sub-lists, and not those of other objects that they hold sub-lists
+for.
 
 
 \end{itemize}
@@ -825,7 +831,7 @@ defined within a namespace enclosure.  For example, given the declaration of
   ----------------------------------
 \end{verbatim}}
 
-the safest and one of the tersest ways to define the member functions in the
+the safest and tersest ways to define the member functions in the
 source file is
 
 {\small\begin{verbatim}
@@ -946,14 +952,15 @@ becomes:
   apply( A, 2.0, USE_TRANSPOSE, x, y );
 \end{verbatim}}
 
-the meaning is much more clear.  Therefore, when self documentation and
-compile-time safety are important, prefer to define and use {}\texttt{enum}s
-over {}\texttt{bool}s as formal function arguments (see {}\cite[Section
-12.6]{CodeComplete2nd04}).
+and the meaning is much more clear.  Therefore, when self
+documentation and compile-time safety are important, prefer to define
+and use {}\texttt{enum}s over {}\texttt{bool}s as formal function
+arguments (see {}\cite[Section 12.6]{CodeComplete2nd04}).
 
-{}\item\GCGOverloadedVirtualFunctions: Overloaded virtual functions cause
-sever portability problems with many compilers and result in shadowing
-warnings that are elevated to errors in may systems.
+{}\item\GCGOverloadedVirtualFunctions: Overloaded virtual functions
+cause sever portability problems with many compilers and result in
+shadowing warnings that are elevated to errors in may systems
+{}\cite[Item 33]{EffectiveC++3rd05}.
 
 
 {}\item\GCGAvoidSmartPtrFuncOverloads: Overloading functions on different
@@ -983,14 +990,15 @@ clarification of Item 59 in {}\cite{C++CodingStandards05} dealing with the
 issue of {}\texttt{using} declarations and directives.
 
 
-{}\item\GCGTemplateHeaders\label{gcg:template-instantation-files}: Breaking up
-templated C++ code into the four files
-{}\texttt{SomeClass[\_decl,\_def].[hpp,cpp]} (as described below) allows for a
-portable and bullet-proof solution to handing templated C++ code which allows
-for a) controlled explicit or implicit template instantiation, b) minimization
-of first-time compilation, c) minimization of recompilations, and d) handling
-of any and all types of circular dependencies in declarations and definitions
-(same as are allowed with non-templated C++ code).
+{}\item\GCGTemplateHeaders\label{gcg:template-instantation-files}:
+Breaking up templated C++ code into the four files
+{}\texttt{SomeClass[\_decl,\_def].[hpp,cpp]} (as described below)
+allows for a portable and bullet-proof solution to handing templated
+C++ code which allows for a) controlled explicit or implicit template
+instantiation, b) minimization of first-time compilation, c)
+minimization of recompilations, and d) handling of any and all types
+of circular dependency in declarations and definitions (same as are
+allowed with non-templated C++ code).
 
 As an example, consider three classes {}\ttt{A}, {}\ttt{B}, and {}\ttt{C}
 where {}\ttt{A} and {}\ttt{B} refer to each other and where {}\ttt{C} has no
@@ -1108,24 +1116,31 @@ including class declarations and inline function definitions.
 member definitions and non-member function definitions.
 
 {}\item Always include {}\ttt{SomeOtherClasss\_decl.hpp} in the
-{}\ttt{SomeClass\_decl.hpp} file if there is any chance that a circular
-dependency between the two types {}\ttt{SomeOtherClasss} and {}\ttt{SomeClass}
-might exist.  Otherwise, if there is no chance of a circular dependence then
-the header {}\ttt{SomeOtherClasss.hpp} can be included.  If the two classes
-are in different libraries then there is no chance of a circular type
-dependency {}\cite{AgileSoftwareDevelopment}.
+{}\ttt{SomeClass\_decl.hpp} file if there is any chance that a
+circular dependency may exist between the two types
+{}\ttt{SomeOtherClasss} and {}\ttt{SomeClass}.  Otherwise, if there is
+no chance of a circular dependence then the header
+{}\ttt{SomeOtherClasss.hpp} should be included (instead of the
+possible {}\ttt{\_decl.hpp} form).  If the two classes are in
+different libraries then there is no chance of a circular type
+dependency (because well designed software does not allow this
+{}\cite{AgileSoftwareDevelopment}).
 
-{}\item If {}\ttt{SomeClass\_decl.hpp} included
-{}\ttt{SomeOtherClass\_decl.hpp}, then {}\ttt{SomeClass\_def.hpp} must include
-{}\ttt{SomeOtherClass.hpp}.  This is needed in order for implicit
-instantiation to work correctly.
+{}\item If {}\ttt{SomeClass\_decl.hpp} includes
+{}\ttt{SomeOtherClass\_decl.hpp}, then {}\ttt{SomeClass\_def.hpp} must
+include {}\ttt{SomeOtherClass.hpp}.  This is needed in order for
+implicit instantiation to work correctly.
 
-{}\item The header file {}\ttt{SomeClass.hpp} is designed to be included by
-general clients and either includes only {}\ttt{SomeClass\_decl.hpp} or also
-includes {}\ttt{SomeClass\_def.hpp} depending on if implicit or explicit
-instantiation is being used.  When explicit instantiation is being used the
-file {}\ttt{SomeClass\_def.hpp} is hidden from general clients and changes in
-it do not require recompilation of client code.
+{}\item The header file {}\ttt{SomeClass.hpp} is designed to be
+included by general clients and either includes only
+{}\ttt{SomeClass\_decl.hpp} or also includes
+{}\ttt{SomeClass\_def.hpp} depending on if implicit or explicit
+instantiation is being used.  When explicit instantiation is being
+used the file {}\ttt{SomeClass\_def.hpp} is hidden from general
+clients and changes in it do not require recompilation of client code.
+The file {}\ttt{SomeClass.hpp} can (and should) be automatically
+configured by the CMake build system (see examples in
+thyra/src/CMakeLists.txt).
 
 {}\item All required instantiations must be provided in the file
 {}\ttt{SomeClass.cpp}.  For standard scalar types (e.g.\ {}\ttt{double},
@@ -1141,17 +1156,18 @@ from real Thyra source code).
 
 \end{itemize}
 
-If you follow the guidelines above, you will never have problems with
-templated code.  The partitioning the template code into the four files
-{}\texttt{SomeClass[\_decl,\_def].[hpp,cpp]} gives template code all the
-desirable compilation properties of non-template code.  That is, changes to
-the implementation of {}\ttt{SomeClass} only require the recompilation of the
-source file {}\texttt{SomeClass.cpp} and not any other source files.  Also,
-the amount of code that a C++ compiler has to see to compile any single
-{}\ttt{*.cpp} file is much less when explicit instantiation is enabled and
-this can massively speed up first-time compilation.  Overall, explicit
-instantiation can massively speed up first-time compilation and later
-recompilations as code is modified.
+If one follows the above guidelines, one will never have dependency
+ordering problems with templated code.  The partitioning the template
+code into the four files {}\texttt{SomeClass[\_decl,\_def].[hpp,cpp]}
+gives template code all the desirable compilation properties of
+non-template code.  That is, changes to the implementation of
+{}\ttt{SomeClass} only require the recompilation of the source file
+{}\texttt{SomeClass.cpp} and not any other source files.  Also, the
+amount of code that a C++ compiler has to see to compile any single
+{}\ttt{*.cpp} file is much less when explicit instantiation is enabled
+and this can massively speed up first-time compilation.  Overall,
+explicit instantiation can massively speed up first-time compilation
+and later recompilations as code is modified.
 
 
 \end{itemize}
@@ -1163,15 +1179,16 @@ objects from functions}
 \label{sec:func_arguments}
 %
 
-The guidelines for specifying local variables and data members, passing objects
-to and from functions, and returning objects from functions given in
-{}\cite{TeuchosMemoryManagementGuide} are summarized in
+The guidelines for specifying local variables and data members,
+passing objects to and from functions, and returning objects from
+functions given in {}\cite{TeuchosMemoryManagementGuide} are
+summarized in
 Tables~\ref{fig:data_member_value_type}--\ref{fig:func_return_reference_type}.
-In general, it is assumed by default that arguments passed through the smart
+In general, it is assumed that arguments passed through the smart
 pointer types {}\ttt{Ptr}, {}\ttt{RCP}, {}\ttt{ArrayView}, and
-{}\ttt{ArrayRCP} are non-null by default.  If the argument is allowed to be
-null, then that must be documented in the Doxygen $\backslash$\ttt{param}
-field for that argument.
+{}\ttt{ArrayRCP} are non-null by default.  If the argument is allowed
+to be null, then that must be documented in the Doxygen
+$\backslash$\ttt{param} field for that argument.
 
 
 \begin{table}
@@ -1567,7 +1584,7 @@ function definitions and function calls.
   or some other style for white-space within '(...)' but the opening '(' should
   come directly after the function name in all cases.
 
-  {}\item\FSCLongFunctionPrototypesIndent: Function prototypes that can not
+  {}\item\FSCLongFunctionPrototypesIndent: Function prototypes that cannot
   approximately fit on a single line in the first 80 character columns should
   have the function arguments listed starting on the second line with one unit
   of indentation (e.g. two spaces) from the function return type and function
@@ -1637,12 +1654,13 @@ function definitions and function calls.
 
 
 {}\item\FSCOrderFunctionDefinitions: For example, one should order the
-definitions of a set of member functions the same as the ordering of the
-declarations in the class definition.  Maintaining the ordering of definitions
-and declarations makes the code more readable and more maintainable.  For
-example, if the function definitions are ordered the same as the declarations,
-it can be easy to spot that a function definition is missing (i.e.\ which
-could be the cause of the link error that you are seeing).
+definitions of a set of functions the same as the ordering of the
+declarations.  Maintaining the ordering of definitions and
+declarations makes the code more readable and more maintainable.  For
+example, if the function definitions are ordered the same as the
+declarations, it can be easy to spot that a function definition is
+missing (i.e.\ which could be the cause of the link error that you are
+seeing).
 
 
 {}\item\FSCBracePlacement: Two basic styles of brace placement and indentation
@@ -1652,7 +1670,7 @@ immediately after the control statement on the same line shown as:
 
 {\small\begin{verbatim}
   // Modified K&R Style (recommended)
-  if(someCondition) {
+  if (someCondition) {
     ...
   }
   else {
@@ -1665,7 +1683,7 @@ Note that the pure K\&R style (for example, as defined by Artistic Style
 
 {\small\begin{verbatim}
   // Pure K&R Style (*NOT* recommended)
-  if(someCondition) {
+  if (someCondition) {
     ...
   } else {
     ...
@@ -1684,7 +1702,7 @@ line from the control statement shown as:
 
 {\small\begin{verbatim}
   // ANSI Style (recommended)
-  if(someCondition)
+  if (someCondition)
   {
     ...
   }
@@ -1703,7 +1721,7 @@ the modified K\&R style with line continuations looks like:
 
 {\small\begin{verbatim}
   // Modified K&R Style with line continuations (*NOT* recommended)
-  if( someLongCondition &&
+  if ( someLongCondition &&
     anotherVeryLongCondition &&
     theLongestConditionThatWillFitOnOneLine ) {
     // Statements
@@ -1716,7 +1734,7 @@ code.  One could argue that the ANSI style which looks like:
 
 {\small\begin{verbatim}
   // ANSI Style with line continuations (recommended)
-  if( someLongCondition &&
+  if ( someLongCondition &&
     anotherVeryLongCondition &&
     theLongestConditionThatWillFitOnOneLine )
   {
@@ -1750,10 +1768,10 @@ structures.
 
   {\small\begin{verbatim}
   // Modified K&R Style (recommended)
-  if(someCondition) {
+  if (someCondition) {
     ...
   }
-  else if(someOtherCondition) {
+  else if (someOtherCondition) {
     ...
   }
   else {
@@ -1765,11 +1783,11 @@ structures.
   
   {\small\begin{verbatim}
   // ANSI Style (recommended)
-  if(someCondition)
+  if (someCondition)
   {
     ...
   }
-  else if(someOtherCondition)
+  else if (someOtherCondition)
   {
     ...
   }
@@ -1784,7 +1802,7 @@ structures.
 
   {\small\begin{verbatim}
   // Modified K&R Style (recommended)
-  switch(someEnumValue) {
+  switch (someEnumValue) {
     case ENUM_VALUE1:
       ...
       break;
@@ -1800,7 +1818,7 @@ structures.
 
   {\small\begin{verbatim}
   // ANSI Style (recommended)
-  switch(someEnumValue)
+  switch (someEnumValue)
   {
     case ENUM_VALUE1:
       ...
@@ -1821,7 +1839,7 @@ structures.
 
   {\small\begin{verbatim}
   // Modified K&R Style (recommended)
-  switch(someEnumValue) {
+  switch (someEnumValue) {
     case ENUM_VALUE1: {
       ...
       break;
@@ -1840,7 +1858,7 @@ structures.
 
   {\small\begin{verbatim}
   // ANSI Style (recommended)
-  switch(someEnumValue)
+  switch (someEnumValue)
   {
     case ENUM_VALUE1:
     {
@@ -1949,26 +1967,28 @@ non-Doxygen) documentation to describe the basics of what is going on.
 
 
 {}\item\DOXPFullyDocumentInterfaces: In the case of important abstract
-interfaces, the full specification of behavior for the compliant objects
-(i.e. invariants, preconditions, post-conditions) must be clearly stated
-{}\cite[Item 69]{C++CodingStandards05}.  In some cases, this must be done
-completely within the Doxygen documentation for the interface.  In other
-cases, a standard unit testing code can be used to help specify the behavior
-of the interface.  In fact, compiled and verified unit testing code may be
-superior to standard Doxygen documentation since it can not be ignored and
-cannot become invalid.  On the other hand, it may be difficult for readers to
-wade through unit testing code to find the specification of behavior and
-therefore both Doxygen documentation and unit testing code should be used to
-provide the fullest benefit.  Also, Doxygen documentation can automatically
-include bits and pieces of compiled and tested code using the
-{}\texttt{$\backslash$dontinclude} and related Doxygen commands.
+interfaces, the full specification of behavior for the compliant
+objects (i.e. invariants, preconditions, postconditions) must be
+clearly stated {}\cite[Item 69]{C++CodingStandards05}.  In some cases,
+this must be done completely within the Doxygen documentation for the
+interface.  In other cases, standard unit testing code can be used to
+help specify the behavior of the interface.  In fact, compiled and
+verified unit testing code may be superior to standard Doxygen
+documentation since it cannot be ignored and cannot become invalid.
+On the other hand, it may be difficult for readers to wade through
+unit testing code to find the specification of behavior and therefore
+both Doxygen documentation and unit testing code should be used to
+provide the fullest benefit.  Also, Doxygen documentation can
+automatically include bits and pieces of compiled and tested code
+using the {}\texttt{$\backslash$dontinclude} and related Doxygen
+commands.
 
 
 {}\item\DOXPFullyDocumentUserIntefaces: This item is an amendment to the above
 item as a special case for ``user'' interfaces.  A "user" could be someone
 that simply writes client code to the interface or one that provides
 implementations of the interface or both.  User's should not be expected to
-study unit testing code to figure out the preconditions and/or post-conditions
+study unit testing code to figure out the preconditions and/or postconditions
 for a function call.
 
 
@@ -2001,7 +2021,70 @@ used to help verify the code fragments in our Doxygen documentation.
 %
 
 Now that some of the general goals for our Doxygen documentation have
-been presented, more detailed guidelines are given below:
+been presented, more detailed guidelines are given below.
+
+
+\begin{figure}
+%
+{\small\begin{verbatim}
+/** \brief Apply the linear operator to a multi-vector : <tt>Y =
+ * alpha*op(M)*X + beta*Y</tt>.
+ *
+ * \param M_trans [in] Determines whether the operator is applied or the
+ * adjoint for <tt>op(M)</tt>.
+ *
+ * \param X [in] The right hand side multi-vector.
+ *
+ * \param Y [in/out] The target multi-vector being transformed.  When
+ * <tt>beta==0.0</tt>, this multi-vector can have uninitialized elements.
+ *
+ * \param alpha [in] Scalar multiplying <tt>M</tt>, where <tt>M==*this</tt>.
+ * The default value of <tt>alpha</tt> is </tt>1.0</tt>
+ *
+ * \param beta [in] The multiplier for the target multi-vector <tt>Y</tt>.
+ * The default value of <tt>beta</tt> is <tt>0.0</tt>.
+ * 
+ * <b>Preconditions:</b><ul>
+ *
+ * <li> <tt>nonnull(this->domain()) && nonnull(this->range())</tt>
+ *
+ * <li> <tt>this->opSupported(M_trans)==true</tt> (throw
+ * <tt>Exceptions::OpNotSupported</tt>)
+ *
+ * <li> <tt>X.range()->isCompatible(*op(this)->domain()) == true</tt> (throw
+ * <tt>Exceptions::IncompatibleVectorSpaces</tt>)
+ *
+ * <li> <tt>Y->range()->isCompatible(*op(this)->range()) == true</tt> (throw
+ * <tt>Exceptions::IncompatibleVectorSpaces</tt>)
+ *
+ * <li> <tt>Y->domain()->isCompatible(*X.domain()) == true</tt> (throw
+ * <tt>Exceptions::IncompatibleVectorSpaces</tt>)
+ *
+ * <li> <tt>Y</tt> can not alias <tt>X</tt>.  It is up to the client to
+ * ensure that <tt>Y</tt> and <tt>X</tt> are distinct since in general this
+ * can not be verified by the implementation until, perhaps, it is too late.
+ * If possible, an exception will be thrown if aliasing is detected.
+ *
+ * </ul>
+ *
+ * <b>Postconditions:</b><ul>
+ * <li> Is it not obvious?  After the function returns the multi-vector <tt>Y</tt>
+ *      is transformed as indicated above.
+ * </ul>
+ */
+void apply(
+  const EOpTransp M_trans,
+  const MultiVectorBase<Scalar> &X,
+  const Ptr<MultiVectorBase<Scalar> > &Y,
+  const Scalar alpha,
+  const Scalar beta
+  ) const;
+\end{verbatim}}
+%
+\caption{\label{fig:complete_func_doc}
+Example of more complete doxygen documentation for a function.}
+%
+\end{figure}
 
 
 \begin{itemize}
@@ -2042,7 +2125,7 @@ a central place and avoid listing them on a function-by-function basis unless
 they change for an individual function.  For a C++ class, place descriptions
 for these common arguments in the main class documentation under a
 {}\texttt{$\backslash$section} named ``Common Function Arguments and
-Pre/Post-Conditions''.  Only include preconditions for these arguments in
+Pre/Postconditions''.  Only include preconditions for these arguments in
 specific function documentation sections if it is different from the most
 common preconditions.
 
@@ -2083,13 +2166,13 @@ identifier {}\texttt{returnVal} for the return value, user's will immediately
 know what this is referring to.
 
 
-{}\item\DOXPreferPostconditionsInParam: The post-conditions for output
+{}\item\DOXPreferPostconditionsInParam: The postconditions for output
 arguments can be listed directly in the {}\texttt{$\backslash$param} field for
 the argument if they only involve just that argument in a fairly simple way.
-Otherwise, if the post-conditions are more complex or involve multiple
-arguments in order to specify, then they can be listed in the Post-conditions
+Otherwise, if the postconditions are more complex or involve multiple
+arguments in order to specify, then they can be listed in the postconditions
 list.  It may be difficult to objectively determine the best place to list the
-post-conditions for an output argument.
+postconditions for an output argument.
 
 
 {}\item\DOXOrderOfDocFieds: A consistent ordering of sections of documentation
@@ -2135,7 +2218,6 @@ would look like:
 
     /** \name Overriden from Teuchos::ParameterListAccpetor */
     //@{
-
     /** \brief . */
     void setParameterList(
       Teuchos::RCP<Teuchos::ParameterList> const& paramList);
@@ -2147,7 +2229,6 @@ would look like:
     Teuchos::RCP<const Teuchos::ParameterList> getParameterList() const;
     /** \brief . */
     Teuchos::RCP<const Teuchos::ParameterList> getValidParameters() const;
-
     //@}
 
     ...
