@@ -33,6 +33,7 @@
 #include "TSFLinearOperatorDecl.hpp"
 #include "TSFEpetraMatrixMatrixProduct.hpp"
 #include "TSFEpetraMatrixMatrixSum.hpp"
+#include "TSFEpetraMatrix.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "TSFLinearCombinationImpl.hpp"
 
@@ -65,6 +66,7 @@ public:
     const LinearOperator<Scalar>& B,
     const TestSpecifier<Scalar>& sumSpec,
     const TestSpecifier<Scalar>& prodSpec,
+    const TestSpecifier<Scalar>& diagSpec,
     const TestSpecifier<Scalar>& diagLeftProdSpec,
     const TestSpecifier<Scalar>& diagRightProdSpec);
 
@@ -76,6 +78,9 @@ public:
 
   /** */
   bool prodTest() const ;
+
+  /** */
+  bool diagTest() const ;
 
   /** */
   bool diagLeftProdTest() const ;
@@ -94,6 +99,8 @@ private:
 
   TestSpecifier<Scalar> prodSpec_;
 
+  TestSpecifier<Scalar> diagSpec_;
+
   TestSpecifier<Scalar> diagLeftProdSpec_;
 
   TestSpecifier<Scalar> diagRightProdSpec_;
@@ -106,6 +113,7 @@ inline MatrixMatrixTester<Scalar>
   const LinearOperator<Scalar>& B,
   const TestSpecifier<Scalar>& sumSpec,
   const TestSpecifier<Scalar>& prodSpec,
+  const TestSpecifier<Scalar>& diagSpec,
   const TestSpecifier<Scalar>& diagRightProdSpec,
   const TestSpecifier<Scalar>& diagLeftProdSpec)
   : TesterBase<Scalar>(), 
@@ -113,6 +121,7 @@ inline MatrixMatrixTester<Scalar>
     B_(B),
     sumSpec_(sumSpec),
     prodSpec_(prodSpec),
+    diagSpec_(diagSpec),
     diagLeftProdSpec_(diagLeftProdSpec),
     diagRightProdSpec_(diagRightProdSpec)
 {;}
@@ -125,11 +134,48 @@ inline bool MatrixMatrixTester<Scalar>
 
   pass = this->sumTest() && pass;
   pass = this->prodTest() && pass;
+  pass = this->diagTest() && pass;
   pass = this->diagLeftProdTest() && pass;
   pass = this->diagRightProdTest() && pass;
 
   return pass;
 }
+
+template <class Scalar> 
+inline bool MatrixMatrixTester<Scalar>
+::diagTest() const 
+{
+  if (diagSpec_.doTest())
+  {
+    Vector<Scalar> x = B_.domain().createMember();
+    Vector<Scalar> d = B_.domain().createMember();
+    randomizeVec(x);
+    randomizeVec(d);
+    LinearOperator<Scalar> D0 = diagonalOperator(d);
+    LinearOperator<Scalar> D = makeEpetraDiagonalMatrix(d);
+    Vector<Scalar> d1 = getEpetraDiagonal(D);
+
+    Out::root() << "computing implicit product y1 = D*x..." << endl;
+    Vector<Scalar> y1 = D0*x;
+    Out::root() << "computing explicit product y2 = D*x..." << endl;
+    Vector<Scalar> y2 = D*x;
+
+    ScalarMag err = (y1 - y2).norm2();
+
+    Out::root() << "|y1-y2| = " << err << endl;
+    
+    Out::root() << "comparing recovered and original diagonals" << endl;
+    ScalarMag err2 = (d - d1).norm2();
+    Out::root() << "|d1-d2| = " << err2 << endl;
+    
+    return checkTest(prodSpec_, err+err2, "matrix-matrix multiply");
+    
+  }
+  Out::root() << "skipping matrix-matrix multiply test..." << endl;
+  return true;
+}
+
+
 
 template <class Scalar> 
 inline bool MatrixMatrixTester<Scalar>
