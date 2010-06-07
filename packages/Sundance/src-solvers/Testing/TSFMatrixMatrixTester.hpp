@@ -32,6 +32,7 @@
 
 #include "TSFLinearOperatorDecl.hpp"
 #include "TSFEpetraMatrixMatrixProduct.hpp"
+#include "TSFEpetraMatrixMatrixSum.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "TSFLinearCombinationImpl.hpp"
 
@@ -62,12 +63,16 @@ public:
   /** */
   MatrixMatrixTester(const LinearOperator<Scalar>& A,
     const LinearOperator<Scalar>& B,
+    const TestSpecifier<Scalar>& sumSpec,
     const TestSpecifier<Scalar>& prodSpec,
     const TestSpecifier<Scalar>& diagLeftProdSpec,
     const TestSpecifier<Scalar>& diagRightProdSpec);
 
   /** */
   bool runAllTests() const ;
+
+  /** */
+  bool sumTest() const ;
 
   /** */
   bool prodTest() const ;
@@ -85,6 +90,8 @@ private:
 
   LinearOperator<Scalar> B_;
 
+  TestSpecifier<Scalar> sumSpec_;
+
   TestSpecifier<Scalar> prodSpec_;
 
   TestSpecifier<Scalar> diagLeftProdSpec_;
@@ -97,12 +104,14 @@ template <class Scalar>
 inline MatrixMatrixTester<Scalar>
 ::MatrixMatrixTester(const LinearOperator<Scalar>& A,
   const LinearOperator<Scalar>& B,
+  const TestSpecifier<Scalar>& sumSpec,
   const TestSpecifier<Scalar>& prodSpec,
   const TestSpecifier<Scalar>& diagRightProdSpec,
   const TestSpecifier<Scalar>& diagLeftProdSpec)
   : TesterBase<Scalar>(), 
     A_(A),
     B_(B),
+    sumSpec_(sumSpec),
     prodSpec_(prodSpec),
     diagLeftProdSpec_(diagLeftProdSpec),
     diagRightProdSpec_(diagRightProdSpec)
@@ -114,12 +123,49 @@ inline bool MatrixMatrixTester<Scalar>
 {
   bool pass = true;
 
+  pass = this->sumTest() && pass;
   pass = this->prodTest() && pass;
   pass = this->diagLeftProdTest() && pass;
   pass = this->diagRightProdTest() && pass;
 
   return pass;
 }
+
+template <class Scalar> 
+inline bool MatrixMatrixTester<Scalar>
+::sumTest() const 
+{
+  if (sumSpec_.doTest())
+  {
+    /* skip incompatible matrices. This will occur when we're testing
+     * multiplication of rectangular matrices */
+    if (A_.range() != B_.range() || A_.domain() != B_.domain())
+    {
+      Out::root() << "skipping sum on incompatible matrices" << endl;
+      return true;
+    }
+    /* If here, the sum should work */
+    Out::root() << "running matrix-matrix multiply test..." << endl;
+    LinearOperator<Scalar> implicitAdd = A_ + B_;
+    LinearOperator<Scalar> explicitAdd = epetraMatrixMatrixSum(A_, B_);
+
+    Vector<Scalar> x = B_.domain().createMember();
+    randomizeVec(x);
+    Out::root() << "computing implicit sum y1 = (A+B)*x..." << endl;
+    Vector<Scalar> y1 = implicitAdd*x;
+    Out::root() << "computing explicit sum y2 = (A+B)*x..." << endl;
+    Vector<Scalar> y2 = explicitAdd*x;
+
+    ScalarMag err = (y1 - y2).norm2();
+
+    Out::root() << "|y1-y2| = " << err << endl;
+    return checkTest(prodSpec_, err, "matrix-matrix multiply");
+    
+  }
+  Out::root() << "skipping matrix-matrix multiply test..." << endl;
+  return true;
+}
+
 
 template <class Scalar> 
 inline bool MatrixMatrixTester<Scalar>

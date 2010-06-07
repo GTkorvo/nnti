@@ -90,6 +90,7 @@ APPEND_SET(HEADERS
   Concrete/TSFEpetraMatrixFactory.hpp
   Concrete/TSFEpetraMatrix.hpp
   Concrete/TSFEpetraMatrixMatrixProduct.hpp
+  Concrete/TSFEpetraMatrixMatrixSum.hpp
   Concrete/TSFEpetraVector.hpp
   Concrete/TSFEpetraVectorSpace.hpp
   Concrete/TSFEpetraVectorType.hpp
@@ -107,6 +108,7 @@ APPEND_SET(SOURCES
   Concrete/TSFEpetraMatrix.cpp
   Concrete/TSFEpetraMatrixFactory.cpp
   Concrete/TSFEpetraMatrixMatrixProduct.cpp
+  Concrete/TSFEpetraMatrixMatrixSum.cpp
   Concrete/TSFEpetraVector.cpp
   Concrete/TSFEpetraVectorSpace.cpp
   Concrete/TSFEpetraVectorType.cpp
