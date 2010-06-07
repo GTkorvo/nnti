@@ -33,6 +33,7 @@
 #include "TSFLinearOperatorDecl.hpp"
 #include "TSFEpetraMatrixMatrixProduct.hpp"
 #include "TSFEpetraMatrixMatrixSum.hpp"
+#include "TSFEpetraMatrixOps.hpp"
 #include "TSFEpetraMatrix.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "TSFLinearCombinationImpl.hpp"

@@ -215,11 +215,6 @@ private:
   const Epetra_Map& getDomainMap() const;
 };
 
-/** \relates EpetraMatrix */
-Vector<double> getEpetraDiagonal(const LinearOperator<double>& A);
-
-/** \relates EpetraMatrix */
-LinearOperator<double> makeEpetraDiagonalMatrix(const Vector<double>& d);
   
 
 }
