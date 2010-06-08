@@ -3181,6 +3181,26 @@ Access to the nonzeros in a row
 Access to values on the diagonal
 \end_layout
 
+\begin_layout Standard
+You can extract the diagonal from an operator 
+\begin_inset Formula $A$
+\end_inset
+
+ that is stored in Epetra form
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Vector<double> d = getEpetraDiagonal(A);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsubsection
 Getting a lumped diagonal
 \end_layout
@@ -3253,6 +3273,10 @@ This method of finding lumped diagonals is a special case of a more general
 Matrix-matrix operations
 \end_layout
 
+\begin_layout Subsubsection
+Matrix-matrix products
+\end_layout
+
 \begin_layout Standard
 Multiplication of matrices is expensive, and explicit calculation of 
 \begin_inset Formula $AB$
@@ -3290,7 +3314,7 @@ LinearOperator<double> C = epetraMatrixMatrixProduct(A, B);
 
 \end_inset
 
-An important special case where some performance optimzations are possible
+An important special case where some performance optimizations are possible
  is that of multiplication of a matrix 
 \begin_inset Formula $A$
 \end_inset
@@ -3359,6 +3383,57 @@ status open
 \begin_layout Plain Layout
 
 LinearOperator<double> AD = epetraRightScale(A,d );
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Matrix-matrix sums
+\end_layout
+
+\begin_layout Standard
+Explicit matrix-matrix addition is done with the function epetraMatrixMatrixSum
+ as follows:
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+LinearOperator<double> APlusB = epetraMatrixMatrixSum(A, B);
+\end_layout
+
+\end_inset
+
+The two operands must have compatible shapes, but need not have the same
+ sparsity graph.
+\end_layout
+
+\begin_layout Subsubsection
+Explicit diagonal matrix formation
+\end_layout
+
+\begin_layout Standard
+If for some reason you need to work with an explicit Epetra matrix representatio
+n of a diagonal operator, you can create one from a 
+\family typewriter
+Vector
+\family default
+ 
+\begin_inset Formula $d$
+\end_inset
+
+ as shown
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+LinearOperator<double> D = makeEpetraDiagonalMatrix(d);
 \end_layout
 
 \end_inset
@@ -6262,11 +6337,619 @@ Diagnostics
 \end_layout
 
 \begin_layout Subsection
-Verbosity level
+Watch flags
+\end_layout
+
+\begin_layout Standard
+Any 
+\family typewriter
+Integral
+\family default
+ or 
+\family typewriter
+EssentialBC
+\family default
+ function can accept an optional 
+\family typewriter
+WatchFlag
+\family default
+ argument that controls the amount and type of diagnostic information to
+ be printed.
+ The type of information requested A verbosity level of zero means no output
+ will be printed.
+ Amount of diagnostic information increases as the verbosity level increases;
+ typically, level one gives a top-level view of what's being done, whereas
+ level four or above provides considerable detail and values of intermediate
+ calculations such as element integrations and symbolic evaluations.
+ 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+WatchFlag watchSource("source term");
+\end_layout
+
+\begin_layout Plain Layout
+
+watchSource.setParam("evaluation", 4);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr eqn = Integral(interior, (grad*v)*(grad*u), quad)
+\end_layout
+
+\begin_layout Plain Layout
+
+	+ Integral(interior, v*f, quad, watchSource);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Global watch flags
+\end_layout
+
+\begin_layout Standard
+These diagnostic types can't be localized to a single term in a problem.
+ Setting one of these in any term will enable it for all other terms given
+ to a problem 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Tabular
+<lyxtabular version="3" rows="9" columns="2">
+<features>
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="4in">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Name
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Description
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+solve control
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+High-level progress reports from solver drivers such as 
+\family typewriter
+LinearProblem
+\family default
+.
+ For details of linear or nonlinear solver progress, use the solver object's
+ verbosity setting.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+eval mediator
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Details of communication between symbolic objects and discrete objects.
+ 
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+assembler setup
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+High-level progress report on the construction of the Assembler object
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+dof map setup
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Details on setup of DOF map.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+equation set setup
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+High-level progress report on setup of the EquationSet, the object that
+ organizes the symbolic equations, drives symbolic preprocessing, and determines
+ maps from cell filters to equations and functions
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+matrix config
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Configuration of sparse matrix
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+vector config
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Configuration of vector
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+assembly loop
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+High-level progress report on assembly loop.
+ 
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Term-specific watch flags
+\end_layout
+
+\begin_layout Standard
+These watch flags will request increased detail for the expression in which
+ they are used.
+ In order to put the information in context, they may also turn on low-verbosity
+ output tracking at the high level.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Tabular
+<lyxtabular version="3" rows="8" columns="2">
+<features>
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="4in">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Name
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Description
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+evaluation
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Details of evaluation of symbolic expressions during assembly loop.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+discrete function evaluation
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Details of evaluation of discrete functions during symbolic calculations
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+symbolic preprocessing
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Details of expression graph determination and evaluation construction during
+ equation set setup
+\family typewriter
+.
+ 
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+integration setup
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Details about construction of element integrals during assembler setup
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+integration
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Details on evaluation of element integrals during assembly loop
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+integral transformation
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Details on coordinate transformations during element integration
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\begin_inset Quotes eld
+\end_inset
+
+fill
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Details on target (
+\emph on
+e.g.
+\emph default
+, matrix) loading during assembly loop
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
-Watch flags
+Viewing low-level data structures
+\end_layout
+
+\begin_layout Subsubsection
+Viewing a problem's DOF map
+\end_layout
+
+\begin_layout Subsubsection
+Viewing a discrete function's DOF map
+\end_layout
+
+\begin_layout Subsubsection
+Viewing a problem's matrices and vectors
 \end_layout
 
 \begin_layout Section

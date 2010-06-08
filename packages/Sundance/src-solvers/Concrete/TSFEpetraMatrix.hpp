@@ -214,6 +214,9 @@ private:
   const Epetra_Map& getRangeMap() const;
   const Epetra_Map& getDomainMap() const;
 };
+
+  
+
 }
 
 #endif

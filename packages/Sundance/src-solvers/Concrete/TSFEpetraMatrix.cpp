@@ -344,3 +344,6 @@ const Epetra_Map& EpetraMatrix::getDomainMap() const
 {
 	return matrix_->OperatorDomainMap();
 }
+
+
+
