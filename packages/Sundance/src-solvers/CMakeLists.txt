@@ -89,6 +89,7 @@ APPEND_SET(HEADERS
   Concrete/TSFEpetraGhostView.hpp
   Concrete/TSFEpetraMatrixFactory.hpp
   Concrete/TSFEpetraMatrix.hpp
+  Concrete/TSFEpetraMatrixMatrixProduct.hpp
   Concrete/TSFEpetraVector.hpp
   Concrete/TSFEpetraVectorSpace.hpp
   Concrete/TSFEpetraVectorType.hpp
@@ -105,6 +106,7 @@ APPEND_SET(SOURCES
   Concrete/TSFEpetraGhostView.cpp
   Concrete/TSFEpetraMatrix.cpp
   Concrete/TSFEpetraMatrixFactory.cpp
+  Concrete/TSFEpetraMatrixMatrixProduct.cpp
   Concrete/TSFEpetraVector.cpp
   Concrete/TSFEpetraVectorSpace.cpp
   Concrete/TSFEpetraVectorType.cpp
@@ -259,6 +261,7 @@ APPEND_SET(HEADERS
   Testing/TSFHeatOperator1D.hpp
   Testing/TSFLinearCombinationTester.hpp
   Testing/TSFMatrixLaplacian1D.hpp
+  Testing/TSFMatrixMatrixTester.hpp
   Testing/TSFOperatorBuilder.hpp
   Testing/TSFPoissonBoltzmannJacobian.hpp
   Testing/TSFPoissonBoltzmannOp.hpp

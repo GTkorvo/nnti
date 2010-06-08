@@ -3249,6 +3249,123 @@ This method of finding lumped diagonals is a special case of a more general
  sequence of vectors.
 \end_layout
 
+\begin_layout Subsection
+Matrix-matrix operations
+\end_layout
+
+\begin_layout Standard
+Multiplication of matrices is expensive, and explicit calculation of 
+\begin_inset Formula $AB$
+\end_inset
+
+ should almost always be avoided if an implicit calculation of 
+\begin_inset Formula $ABx$
+\end_inset
+
+ will suffice.
+ However, in some cases there is no alternative but to form 
+\begin_inset Formula $AB$
+\end_inset
+
+ explicitly.
+ The function 
+\family typewriter
+epetraMatrixMatrixProduct
+\family default
+ will multiply two Epetra CRS matrices, returning the result (also stored
+ as an Epetra CRS matrix) as a LinearOperator.
+ This example does the operation 
+\begin_inset Formula $C=AB.$
+\end_inset
+
+ 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+LinearOperator<double> C = epetraMatrixMatrixProduct(A, B);
+\end_layout
+
+\end_inset
+
+An important special case where some performance optimzations are possible
+ is that of multiplication of a matrix 
+\begin_inset Formula $A$
+\end_inset
+
+ with a diagonal matrix 
+\begin_inset Formula $D$
+\end_inset
+
+.
+ The product 
+\begin_inset Formula $DA$
+\end_inset
+
+ is equivalent to scaling the rows of 
+\begin_inset Formula $A$
+\end_inset
+
+ by the corresponding diagonal entry of 
+\begin_inset Formula $D$
+\end_inset
+
+, whereas the product 
+\begin_inset Formula $AD$
+\end_inset
+
+ scales the columns.
+ The diagonal matrix 
+\begin_inset Formula $D$
+\end_inset
+
+ can be represented by a vector 
+\begin_inset Formula $d$
+\end_inset
+
+ containing its diagonal elements.
+ The computation of 
+\begin_inset Formula $DA$
+\end_inset
+
+ is done as shown: 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+LinearOperator<double> DA = epetraLeftScale(d, A);
+\end_layout
+
+\end_inset
+
+The matrix 
+\begin_inset Formula $A$
+\end_inset
+
+ is unchanged.
+ Calculation of 
+\begin_inset Formula $AD$
+\end_inset
+
+ is, similarly,
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+LinearOperator<double> AD = epetraRightScale(A,d );
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Linear solvers
 \end_layout
@@ -3375,7 +3492,7 @@ explicit
 \begin_inset Formula $A^{-1}x$
 \end_inset
 
- we never actually form the matrices 
+ with overloaded operators we never actually form the matrices 
 \begin_inset Formula $AB$
 \end_inset
 
@@ -3384,6 +3501,8 @@ explicit
 \end_inset
 
 .
+ Explicit matrix-matrix products are available for those rare cases when
+ they are needed.
  
 \end_layout
 
@@ -3413,15 +3532,904 @@ Poisson's equation
 \end_layout
 
 \begin_layout Section
-Poisson-Boltzmann equation
+Poisson's equation with a nonlinear source
+\end_layout
+
+\begin_layout Standard
+In this example we'll solve the nonlinear equation 
+\begin_inset Formula \begin{equation}
+\nabla^{2}u=\alpha u^{2}+x\;\;\;\mbox{in }\Omega\label{eq:quadraticPoisson}\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula \[
+u=0\;\;\;\mbox{on }\Gamma.\]
+
+\end_inset
+
+We can't solve a nonlinear equation directly.
+\end_layout
+
+\begin_layout Subsection
+Solution by fixed-point iteration
+\end_layout
+
+\begin_layout Standard
+The simplest approach is fixed-point iteration on the problem
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\nabla^{2}u_{n}=\alpha u_{n-1}^{2}+x\;\;\;\mbox{in }\Omega\]
+
+\end_inset
+
+
+\begin_inset Formula \[
+u_{n}=0\;\;\;\mbox{on }\Gamma\]
+
+\end_inset
+
+in which we have replaced the nonlinear term 
+\begin_inset Formula $u^{2}$
+\end_inset
+
+ by its value at a previous iterate, 
+\begin_inset Formula $u_{n-1}^{2}$
+\end_inset
+
+.
+ We solve this problem until
+\begin_inset Formula \[
+\left\Vert u_{n}-u_{n-1}\right\Vert \le\epsilon\]
+
+\end_inset
+
+for some specified tolerance 
+\begin_inset Formula $\epsilon$
+\end_inset
+
+ and norm 
+\begin_inset Formula $\left\Vert \cdot\right\Vert $
+\end_inset
+
+.
+ The new features of this problem are
+\end_layout
+
+\begin_layout Enumerate
+We need a way to represent the previous solution 
+\begin_inset Formula $u_{n-1}$
+\end_inset
+
+ as a symbolic object.
+ There is an object type, 
+\family typewriter
+DiscreteFunction
+\family default
+
+\begin_inset Index
+status open
+
+\begin_layout Plain Layout
+DiscreteFunction
+\end_layout
+
+\end_inset
+
+, designed for exactly this purpose.
+ 
+\end_layout
+
+\begin_layout Enumerate
+We won't store all the previous solutions: we only need one, which we'll
+ call 
+\family typewriter
+uPrev
+\family default
+.
+ After each step, we'll write the solution into 
+\family typewriter
+uPrev
+\family default
+.
+ 
+\end_layout
+
+\begin_layout Enumerate
+In order to check convergence, we need to compute a norm of a symbolic expressio
+n.
+ 
+\end_layout
+
+\begin_layout Standard
+Let's first look at the code to create a discrete function.
+ A discrete function is based on a 
+\family typewriter
+DiscreteSpace
+\begin_inset Index
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+DiscreteSpace
+\end_layout
+
+\end_inset
+
+
+\family default
+ object.
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+DiscreteSpace discSpace(mesh, basis, vecType);
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr uPrev = new DiscreteFunction(discSpace, 0.0);
+\end_layout
+
+\end_inset
+
+The discrete function has been initialized to the constant value zero.
+ We will see later how to create a non-constant discrete function.
+\end_layout
+
+\begin_layout Standard
+With the discrete function ready, we can write the weak form and the linear
+ problem.
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Expr eqn = Integral(interior, 
+\end_layout
+
+\begin_layout Plain Layout
+
+	(grad*v)*(grad*v)+v*(alpha*pow(uPrev,2.0)+x), quad);
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr bc = EssentialBC(bdry, v*u, quad);
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+LinearProblem prob(mesh, eqn, bc, v, u, vecType);
+\end_layout
+
+\end_inset
+
+We now write the fixed-point iteration loop, which involves the norm check
+ and the updating of the solution vector.
+ There are a number of norms we can use in the convergence check, and in
+ the next examples we'll show several norm computation methods.
+ In the present example, we'll use the 
+\begin_inset Formula $L^{2}$
+\end_inset
+
+ norm.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int maxIters = 20;
+\end_layout
+
+\begin_layout Plain Layout
+
+double tol = 1.0e-12;
+\end_layout
+
+\begin_layout Plain Layout
+
+bool converged = false;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr soln;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+for (int i=0; i<maxIters; i++)
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+	soln = prob.solve(solver);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	/* Set up an expression for computation of the norm */
+\end_layout
+
+\begin_layout Plain Layout
+
+	Expr normIntExpr = Integral(interior, pow(soln-uPrev,2.0), quad);
+\end_layout
+
+\begin_layout Plain Layout
+
+	/* Compute the norm */
+\end_layout
+
+\begin_layout Plain Layout
+
+	double stepNorm = sqrt(evaluateIntegral(mesh, normExpr));
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	/* Check for convergence */
+\end_layout
+
+\begin_layout Plain Layout
+
+	if (stepNorm < tol) 
+\end_layout
+
+\begin_layout Plain Layout
+
+	{
+\end_layout
+
+\begin_layout Plain Layout
+
+		converged = true;
+\end_layout
+
+\begin_layout Plain Layout
+
+		break;
+\end_layout
+
+\begin_layout Plain Layout
+
+	}	
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	/* Write the current solution into the previous solution */
+\end_layout
+
+\begin_layout Plain Layout
+
+	Vector<double> solnVec = DiscreteFunction::discFunc(soln)->getVector();
+\end_layout
+
+\begin_layout Plain Layout
+
+	DiscreteFunction::discFunc(uPrev)->getVector();
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+TEST_FOR_EXCEPTION(!converged, RuntimeError,
+\end_layout
+
+\begin_layout Plain Layout
+
+	"Fixed-point iterations did not converge after " << maxIters 
+\end_layout
+
+\begin_layout Plain Layout
+
+	<< " iterations.");
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+If the algorithm has converged, the expression 
+\family typewriter
+soln
+\family default
+ now contains the approximate solution.
+ 
+\end_layout
+
+\begin_layout Subsection
+Solution by Newton's method
+\end_layout
+
+\begin_layout Standard
+In Newton's method for solving a nonlinear equation 
+\begin_inset Formula $F(u)=0$
+\end_inset
+
+, we linearize the problem about an estimated solution 
+\begin_inset Formula $u_{n-1}$
+\end_inset
+
+,
+\begin_inset Formula \[
+F(u_{n-1})+\left.\pd{F}{u}\right|_{u_{n-1}}\left(u_{n}-u_{n-1}\right)=0.\]
+
+\end_inset
+
+This linear equation is solved for 
+\begin_inset Formula $w=\left(u_{n}-u_{n-1}\right)$
+\end_inset
+
+, and then 
+\begin_inset Formula $u_{n}=u_{n-1}+w$
+\end_inset
+
+ is the next estimate for the solution.
+ Provided the initial guess is sufficiently close to the solution, the algorithm
+ will converge quadratically.
+ Without a good initial guess, the method can fail to converge.
+ High-quality nonlinear solvers will have a method for improving global
+ convergence.
+ One class of globalization methods, the 
+\emph on
+line search
+\emph default
+ methods, limit the size of the step, 
+\emph on
+i.e.
+\emph default
+, they update the solution estimate by
+\begin_inset Formula \[
+u_{n}=u_{n-1}+\alpha w\]
+
+\end_inset
+
+for some 
+\begin_inset Formula $\alpha\in(0,1]$
+\end_inset
+
+ chosen to ensure improvement in the solution.
+ Refer to a text on nonlinear solvers (
+\emph on
+e.g.
+
+\emph default
+ Dennis and Schnabel, or Kelley) for information on globalization methods.
+ 
+\end_layout
+
+\begin_layout Standard
+Our example problem is to solve
+\begin_inset Formula \[
+F(u)=u^{2}+x-\nabla^{2}u=0.\]
+
+\end_inset
+
+The derivative 
+\begin_inset Formula $\pd{F}{u}$
+\end_inset
+
+ is the Frechet derivative, computed implicitly through the Gateaux differential
+\begin_inset Formula \[
+d_{w}F=\pd{F}{u}w.\]
+
+\end_inset
+
+Note that the Gateaux differential is exactly what appears in the equation
+ for the Newton step, so we can write the linearized problem as
+\begin_inset Formula \[
+F(u_{n-1})+d_{w}F(u_{n-1})=0.\]
+
+\end_inset
+
+The Gateaux differential is defined by
+\begin_inset Formula \[
+d_{w}F(u_{n-1})=\lim_{\epsilon\to0}\frac{F(u_{n-1}+\epsilon w)-F(u_{n-1})}{\epsilon}\]
+
+\end_inset
+
+from which the usual rules of calculus can be derived.
+ For our example problem, we find
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+d_{w}F(u_{n-1})=2u_{n-1}w-\nabla^{2}w.\]
+
+\end_inset
+
+Therefore the linearized equation for the Newton step 
+\begin_inset Formula $w$
+\end_inset
+
+ is
+\begin_inset Formula \[
+\left[u_{n-1}^{2}+x-\nabla^{2}u_{n-1}\right]+\left[2u_{n-1}w-\nabla^{2}w\right]=0.\]
+
+\end_inset
+
+While we can do linearization by hand, it is difficult and error-prone for
+ complicated problems.
+ Sundance has a built-in automated differentiation capability so that linearized
+ equations can be derived automatically from a symbolic specification of
+ the nonlinear equations.
+ We will show examples of Newton's method with hand-coded linearized equations
+ and with automated linearization.
+\end_layout
+
+\begin_layout Subsubsection
+Newton's method with hand-coded derivatives
+\end_layout
+
+\begin_layout Standard
+First, we set up Newton's method by setting up a 
+\family typewriter
+LinearProblem
+\family default
+ object for the equation
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\nabla^{2}u_{n}+\nabla^{2}w=u_{n}^{2}+2u_{n}w+x\]
+
+\end_inset
+
+
+\begin_inset Formula \[
+u_{n}+w=0\]
+
+\end_inset
+
+for the step 
+\begin_inset Formula $w$
+\end_inset
+
+.
+ The unknown function is the step 
+\begin_inset Formula $w$
+\end_inset
+
+.
+ The previous iterate 
+\begin_inset Formula $u_{n}$
+\end_inset
+
+ is represented by a 
+\family typewriter
+DiscreteFunction
+\family default
+.
+ Here are the steps for creating the linear problem.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Expr w = new UnknownFunction(basis);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+/* other symbolic code omitted */
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr stepEqn = Integral(interior, 
+\end_layout
+
+\begin_layout Plain Layout
+
+	(grad*v)*(grad*(uPrev+w)) + v*(uPrev*uPrev + 2.0*uPrev*w+x), quad);
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr stepBC = EssentialBC(bdry, v*(uPrev + w), quad);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+LinearProblem stepProb(mesh, stepEqn, stepBC, v, w, vecType);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Now we can write the Newton algorithm.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int maxIters = 20;
+\end_layout
+
+\begin_layout Plain Layout
+
+double tol = 1.0e-12;
+\end_layout
+
+\begin_layout Plain Layout
+
+bool converged = false;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+for (int i=0; i<maxIters; i++)
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+	Expr step = stepProb.solve(solver);
+\end_layout
+
+\begin_layout Plain Layout
+
+	Vector<double> stepVec = DiscreteFunction::discFunc(step)->getVector();
+\end_layout
+
+\begin_layout Plain Layout
+
+	Vector<double> uPrevVec = DiscreteFunction::discFunc(uPrev)->getVector();
+\end_layout
+
+\begin_layout Plain Layout
+
+	DiscreteFunction::discFunc(uPrev)->setVector(uPrevVec + stepVec);
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	if (stepVec.norm2() < tol)
+\end_layout
+
+\begin_layout Plain Layout
+
+	{
+\end_layout
+
+\begin_layout Plain Layout
+
+		converged = true;
+\end_layout
+
+\begin_layout Plain Layout
+
+		break;
+\end_layout
+
+\begin_layout Plain Layout
+
+	}
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+TEST_FOR_EXCEPTION(!converged, RuntimeError, 
+\end_layout
+
+\begin_layout Plain Layout
+
+	"Newton's method did not converge after " << maxIters << " steps");
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr soln = uPrev;
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Newton's method is done.
+ The remainder of the code is for output of the solution and is unchanged
+ from the fixed-point code.
+\end_layout
+
+\begin_layout Subsubsection
+Newton's method with automated derivatives
+\begin_inset CommandInset label
+LatexCommand label
+name "par:Newton's-method-with"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+One of the most useful features of Sundance is its built-in automatic differenti
+ation capability.
+ You can write a nonlinear PDE as a Sundance 
+\family typewriter
+Expr
+\family default
+, and Sundance will do the Newton linearization for you.
+ 
+\end_layout
+
+\begin_layout Standard
+The weak form for equation 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:quadraticPoisson"
+
+\end_inset
+
+ is written
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Expr eqn = Integral(interior, (grad*u)*(grad*v) + (alpha*u*u + x)*v, quad);
+\end_layout
+
+\end_inset
+
+and the boundary conditions are written
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Expr bc = EssentialBC(bdry, v*u/h, quad); 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We use these to construct a 
+\family typewriter
+NonlinearProblem
+\family default
+ object, 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+NonlinearProblem nlp(mesh, eqn, bc, v, u, uPrev, vecType);
+\end_layout
+
+\end_inset
+
+Now we can write the Newton loop.
+ We obtain the Jacobian as a 
+\family typewriter
+LinearOperator
+\family default
+ and the residual as a 
+\family typewriter
+Vector
+\family default
+ through a member function of the 
+\family typewriter
+NonlinearProblem
+\family default
+.
+ We then solve the equation 
+\begin_inset Formula $Jw=-F(u_{n-1})$
+\end_inset
+
+ for the step 
+\begin_inset Formula $w$
+\end_inset
+
+.
+ 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+for (int i=0; i<maxIters; i++)     
+\end_layout
+
+\begin_layout Plain Layout
+
+{       
+\end_layout
+
+\begin_layout Plain Layout
+
+	Vector<double> stepVec;
+\end_layout
+
+\begin_layout Plain Layout
+
+	nlp.setInitialGuess(uPrev);
+\end_layout
+
+\begin_layout Plain Layout
+
+	nlp.computeJacobianAndFunction(J, residVec);
+\end_layout
+
+\begin_layout Plain Layout
+
+	solver.solve(J, -1.0*residVec, stepVec);
+\end_layout
+
+\begin_layout Plain Layout
+
+    
+\end_layout
+
+\begin_layout Plain Layout
+
+	double stepNorm = stepVec.norm2();              
+\end_layout
+
+\begin_layout Plain Layout
+
+	Vector<double> uPrevVec =DiscreteFunction::discFunc(uPrev)->getVector();
+\end_layout
+
+\begin_layout Plain Layout
+
+	DiscreteFunction::discFunc(uPrev)->setVector(uPrevVec + stepVec);
+\end_layout
+
+\begin_layout Plain Layout
+
+    
+\end_layout
+
+\begin_layout Plain Layout
+
+	Out::root() << "Iter=" << setw(5) << i << " ||Delta u||=" << setw(20) 
+                  << stepNorm << endl;              
+\end_layout
+
+\begin_layout Plain Layout
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	if (stepNorm < tol)        
+\end_layout
+
+\begin_layout Plain Layout
+
+	{ converged = true; break; }     
+\end_layout
+
+\begin_layout Plain Layout
+
+} 
+\end_layout
+
+\end_inset
+
+Notice that in this loop we 
+\end_layout
+
+\begin_layout Subsubsection
+Black-box Newton's method with automated derivatives
 \end_layout
 
 \begin_layout Section
 Steady-state Navier-Stokes equations
-\end_layout
-
-\begin_layout Section
-Time-dependent heat equation
 \end_layout
 
 \begin_layout Section
@@ -3430,6 +4438,192 @@ Time-dependent Burgers equation
 
 \begin_layout Section
 Time-dependent Navier-Stokes equations
+\end_layout
+
+\begin_layout Subsection
+Fully-implicit solution
+\end_layout
+
+\begin_layout Subsection
+Pressure projection solution
+\end_layout
+
+\begin_layout Section
+Exercises
+\end_layout
+
+\begin_layout Enumerate
+Let 
+\begin_inset Formula $V$
+\end_inset
+
+ be a vector space of functions on a spatial domain 
+\begin_inset Formula $\Omega.$
+\end_inset
+
+ The least-squares approximation in 
+\begin_inset Formula $V$
+\end_inset
+
+ to a function 
+\begin_inset Formula $f$
+\end_inset
+
+ is given by the orthogonal projection of 
+\begin_inset Formula $f$
+\end_inset
+
+ onto 
+\begin_inset Formula $V$
+\end_inset
+
+.
+ The solution 
+\begin_inset Formula $u$
+\end_inset
+
+ to 
+\begin_inset Formula \begin{equation}
+\int_{\Omega}\left(f-u\right)v\, d\Omega=0\;\;\;\forall v\in V\label{eq:orthoProjExerciseEqn}\end{equation}
+
+\end_inset
+
+is the orthogonal projection.
+ Let 
+\begin_inset Formula $\Omega$
+\end_inset
+
+ be the unit square, and take 
+\begin_inset Formula $f=\sin\left(2x\right)e^{y}$
+\end_inset
+
+.
+ Let 
+\begin_inset Formula $V$
+\end_inset
+
+ be the first-order Lagrange polynomials defined on a mesh of 
+\begin_inset Formula $\Omega$
+\end_inset
+
+.
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Write a program that sets up and solves a 
+\family typewriter
+LinearProblem
+\family default
+ representing equation 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:orthoProjExerciseEqn"
+
+\end_inset
+
+.
+ Your program should compute the 
+\begin_inset Formula $L^{2}$
+\end_inset
+
+ norm of the approximation error, 
+\begin_inset Formula $e_{h}=\left\Vert u-f\right\Vert _{2}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Run the program on a sequence of meshes with decreasing 
+\begin_inset Formula $h$
+\end_inset
+
+.
+ Plot 
+\begin_inset Formula $e_{h}$
+\end_inset
+
+ versus 
+\begin_inset Formula $h$
+\end_inset
+
+ on a log-log plot, and use these results to find the order of accuracy
+ 
+\begin_inset Formula $p$
+\end_inset
+
+ such that 
+\begin_inset Formula $e_{h}=O(h^{p})$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Consider the steady-state radiation diffusion equation,
+\begin_inset Formula \[
+\nabla^{2}\left(u^{4}\right)=0\]
+
+\end_inset
+
+on the unit square with boundary conditions
+\begin_inset Formula \[
+u=\left(1+\sin\left(\pi x\right)\right)^{1/4}\;\;\;\;\mbox{along the line }y=1\]
+
+\end_inset
+
+
+\begin_inset Formula \[
+u=1\;\;\mbox{elsewhere on }\Gamma.\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Derive a weak form of the problem
+\end_layout
+
+\begin_layout Enumerate
+Derive a linearized weak form for the Newton step 
+\begin_inset Formula $w=u_{n}-u_{n-1}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Suppose you were to use an initial guess 
+\begin_inset Formula $u_{0}=0$
+\end_inset
+
+ in Newton's method.
+ What would happen, and why? 
+\end_layout
+
+\begin_layout Enumerate
+Write a program to set up and solve this problem using Newton's method.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Modify the Newton loop in example 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "par:Newton's-method-with"
+
+\end_inset
+
+ so that the convergence test uses the 
+\begin_inset Formula $L^{2}$
+\end_inset
+
+ norm of the step, rather than the 2-norm of the step vector.
 \end_layout
 
 \begin_layout Chapter
