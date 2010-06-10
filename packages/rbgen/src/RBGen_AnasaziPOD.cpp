@@ -172,7 +172,9 @@ namespace RBGen {
       // Retrieve eigenvectors
       std::vector<int> index(numev);
       for (i=0; i<numev; i++) { index[i] = i; }
-      Anasazi::EpetraMultiVec* evecs = dynamic_cast<Anasazi::EpetraMultiVec* >(sol.Evecs->CloneView( index )); 
+      Teuchos::RCP<const Anasazi::EpetraMultiVec> evecs = Teuchos::rcp_dynamic_cast<const Anasazi::EpetraMultiVec>( 
+        Anasazi::MultiVecTraits<double,MV>::CloneView(*sol.Evecs, index) );
+      // const Anasazi::EpetraMultiVec* evecs = dynamic_cast<const Anasazi::EpetraMultiVec *>(sol.Evecs->CloneView( index )); 
       //
       // Compute singular values which are the square root of the eigenvalues
       //
