@@ -38,7 +38,7 @@ AztecSolver::AztecSolver(const ParameterList& params)
     useUserPrec_(false),
     aztec_recursive_iterate_(false),
     precParams_(),
-    prec_(),
+    userPrec_(),
     aztec_status(AZ_STATUS_SIZE),
     aztec_proc_config(AZ_PROC_SIZE)
 {
@@ -134,9 +134,10 @@ AztecSolver::AztecSolver(const Teuchos::map<int, int>& aztecOptions,
     parameters_(AZ_PARAMS_SIZE),
     useML_(false),
     useIfpack_(false),
+    useUserPrec_(false),
     aztec_recursive_iterate_(false),
     precParams_(),
-    prec_(),
+    userPrec_(),
     aztec_status(AZ_STATUS_SIZE),
     aztec_proc_config(AZ_PROC_SIZE)
 {
@@ -191,6 +192,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   }
   RCP<MultiLevelPreconditioner> mlPrec;
   RCP<Ifpack_Preconditioner> ifpackPrec;
+  RCP<Epetra_Operator> prec;
 
 	TSFExtended::Vector<double> bCopy = rhs.copy();
 	TSFExtended::Vector<double> xCopy = rhs.copy();
@@ -233,7 +235,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
     }
     //#endif
     mlPrec = rcp(new ML_Epetra::MultiLevelPreconditioner(A, mlParams));
-    prec_ = rcp_dynamic_cast<Epetra_Operator>(mlPrec);
+    prec = rcp_dynamic_cast<Epetra_Operator>(mlPrec);
   }
   else if (useIfpack_)
   {
@@ -244,14 +246,19 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
     ParameterList ifpackParams = precParams_.sublist("Ifpack Settings");
 
     ifpackPrec = rcp(precFactory.Create(precType, &A, overlap));
-    prec_ = rcp_dynamic_cast<Epetra_Operator>(ifpackPrec);
+    prec = rcp_dynamic_cast<Epetra_Operator>(ifpackPrec);
     ifpackPrec->SetParameters(ifpackParams);
     ifpackPrec->Initialize();
     ifpackPrec->Compute();
   }
+  else if (useUserPrec_)
+  {
+    TEST_FOR_EXCEPT(userPrec_.get() == 0);
+    prec = userPrec_;
+  }
   
   
-  if (prec_.get() != 0) aztec.SetPrecOperator(prec_.get());  
+  if (prec.get() != 0) aztec.SetPrecOperator(prec.get());  
   
   aztec.CheckInput();
   
@@ -310,7 +317,7 @@ void AztecSolver::setUserPrec(const LinearOperator<double>& P,
 {
   if (useUserPrec_)
   {
-    prec_ = rcp(new Epetra::Epetra_TSFOperator(P, pSolver));
+    userPrec_ = rcp(new Epetra::Epetra_TSFOperator(P, pSolver));
   }
   else
   {

@@ -136,8 +136,8 @@ namespace TSFExtended
     /** Parameter list for preconditioner */
     mutable ParameterList precParams_;
 
-    /** Preconditioner object */
-    mutable RCP<Epetra_Operator> prec_;
+    /** User-defined preconditioner object */
+    mutable RCP<Epetra_Operator> userPrec_;
 
     /** Aztec status */
     mutable Array<double> aztec_status;
