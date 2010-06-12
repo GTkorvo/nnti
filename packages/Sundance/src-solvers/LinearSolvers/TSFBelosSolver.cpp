@@ -73,7 +73,7 @@ SolverState<double> BelosSolver::solve(const LinearOperator<double>& A,
   }
 
   ParameterList plist = parameters();
-  Out::os() << "Belos parameters = " << plist << endl;
+
   RCP<ParameterList> belosList = rcp(&plist, false);
   RCP<Belos::SolverManager<double, MV, OP> > solver ;
   string solverType = parameters().get<string>("Method");
@@ -91,17 +91,16 @@ SolverState<double> BelosSolver::solve(const LinearOperator<double>& A,
     TEST_FOR_EXCEPT(!(solverType=="GMRES" || solverType=="CG"));
   }
 
-  Out::os() << "Belos thinks that parameters are " << *(solver->getCurrentParameters()) << endl;
-
   Belos::ReturnType rtn = solver->solve();
+  Out::root() << "belos rtn = " << rtn << endl;
+  Out::root() << "belos converged = " << Belos::Converged << endl;
 
   int numIters = solver->getNumIters();
-  cerr << "num iters=" << numIters << endl;
   double resid = -1.0;
   
   SolverStatusCode code = SolveFailedToConverge;
   if (rtn==Belos::Converged) code = SolveConverged;
-  else cerr << "solver failed to converge!" << endl;
+  else Out::root() << "solver failed to converge!" << endl;
   SolverState<double> state(code, "Belos solver completed", numIters, resid);
   
   return state;
