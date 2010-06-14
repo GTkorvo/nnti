@@ -53,6 +53,9 @@ namespace TSFExtended
     NOXSolver(){;}
     /** */
     NOXSolver(const ParameterList& params);
+    /** */
+    NOXSolver(const ParameterList& nonlinParams,
+      const LinearSolver<double>& linSolver);
 
     /** */
     NOX::StatusTest::StatusType solve(const NonlinearOperator<double>& F, 
