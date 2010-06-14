@@ -632,6 +632,12 @@ Operations such as norms and definite integrals on discrete functions are
 Some preliminaries
 \end_layout
 
+\begin_layout Standard
+Herein are some dull but useful code management topics collected for reference.
+ You can skim over this chapter for now, then return to it as you encounter
+ output, error handling, and command-line processing in the examples.
+\end_layout
+
 \begin_layout Section
 Structure of a user's program
 \end_layout
@@ -810,6 +816,13 @@ with several processors.
 
 \begin_layout Subsection
 Error checks
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Error-checks"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -912,6 +925,268 @@ break TestForException_break
 
 Then, when an error occurs the debugger will stop the breakpoint, letting
  you trace back to the point of failure.
+ See 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Debugger-helpers"
+
+\end_inset
+
+ for more information on configuring debuggers to work with Sundance.
+\end_layout
+
+\begin_layout Subsection
+Working with command-line arguments
+\end_layout
+
+\begin_layout Standard
+Command-line arguments to main() are processed by the Teuchos 
+\family typewriter
+CommandLineProcessor
+\family default
+ utility class (hereafter, CLP).
+ The CLP class parses command-line arguments set with the Posix standard
+ double-dash format.
+ Parsing is done inside the 
+\family typewriter
+Sundance::init()
+\family default
+ function, so all command-line setup should be done before 
+\family typewriter
+init()
+\family default
+ is called.
+ Here is an example of setting several options of different data types.
+ Note that the syntax for 
+\family typewriter
+bool
+\family default
+ options differs slightly from that for 
+\family typewriter
+string
+\family default
+, 
+\family typewriter
+int
+\family default
+, and 
+\family typewriter
+double
+\family default
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int main(int argc, char** argv)
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+	try
+\end_layout
+
+\begin_layout Plain Layout
+
+	{
+\end_layout
+
+\begin_layout Plain Layout
+
+		/* Set default values for the options */
+\end_layout
+
+\begin_layout Plain Layout
+
+		int nSteps = 100;
+\end_layout
+
+\begin_layout Plain Layout
+
+		double reynolds = 500.0;
+\end_layout
+
+\begin_layout Plain Layout
+
+		string outFilename = "flow";
+\end_layout
+
+\begin_layout Plain Layout
+
+		bool useSUPG = false;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+		
+/* Register the options with the command-line parser */
+\end_layout
+
+\begin_layout Plain Layout
+
+		Sundance::setOption("steps", nSteps, "Number of timesteps");
+\end_layout
+
+\begin_layout Plain Layout
+
+		Sundance::setOption("Re", reynolds, "Reynolds number");
+\end_layout
+
+\begin_layout Plain Layout
+		Sundance::setOption("
+o
+\lang english
+", 
+outFilename
+\lang english
+, "
+Filename for output
+\lang english
+");
+\end_layout
+
+\begin_layout Plain Layout
+
+		Sundance::setOption("supg", "no-supg", useSUPG, 
+\end_layout
+
+\begin_layout Plain Layout
+
+			"Whether to use SUPG stabilization (recommended at high "
+\end_layout
+
+\begin_layout Plain Layout
+
+			"Reynolds numbers)"); 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+		
+/* Call init as usual */
+\end_layout
+
+\begin_layout Plain Layout
+
+		Sundance::init(&argc, &argv);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+		
+/* ----- remainder of code --- */
+\end_layout
+
+\end_inset
+
+If you run the executable with flags set as shown, 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./myCode.exe --o="flow-2000.0" --supg --Re=2000.0
+\end_layout
+
+\end_inset
+
+then 
+\emph on
+after
+\emph default
+ the call to 
+\family typewriter
+Sundance::init()
+\family default
+ the variable 
+\family typewriter
+outFilename
+\family default
+ will be set to 
+\family typewriter
+
+\begin_inset Quotes eld
+\end_inset
+
+flow-2000.0
+\begin_inset Quotes erd
+\end_inset
+
+
+\family default
+, the variable 
+\family typewriter
+reynolds
+\family default
+ will be set to 
+\begin_inset Formula $2000$
+\end_inset
+
+, and 
+\family typewriter
+useSUPG
+\family default
+ will be set to true.
+ The option 
+\family typewriter
+steps
+\family default
+ was never used, so the variable 
+\family typewriter
+nSteps
+\family default
+ will be left at its default value of 100.
+ 
+\emph on
+Before
+\emph default
+ the call to Sundance::init() the command line has not been parsed so the
+ variables still contain their default values.
+ 
+\end_layout
+
+\begin_layout Standard
+The example above used high-level wrapper functions, 
+\family typewriter
+Sundance::setOption()
+\family default
+, for the lower-level functions of CLP.
+ Should you prefer to work directly with the CLP object, it can be accessed
+ through the static function 
+\family typewriter
+Sundance::clp()
+\family default
+.
+ 
+\end_layout
+
+\begin_layout Subsection
+Working with XML files
+\end_layout
+
+\begin_layout Standard
+An alternative to command line arguments is specification of options in
+ an XML file.
  
 \end_layout
 
@@ -6134,7 +6409,11 @@ A weak form is an expression such as
 \end_layout
 
 \begin_layout Standard
-The integrands can be composed out of objects (type Expr) such as 
+The integrands can be composed out of objects (type 
+\family typewriter
+Expr
+\family default
+) such as 
 \family typewriter
 kappa
 \family default
@@ -6146,7 +6425,11 @@ v
 \family typewriter
 u
 \family default
-, and g representing the mathematical quantities 
+, and 
+\family typewriter
+g
+\family default
+ representing the mathematical quantities 
 \begin_inset Formula $\kappa,v,u$
 \end_inset
 
@@ -6172,8 +6455,17 @@ omega
 gamma
 \family default
 .
- Additionally, it is necessary to specify how the integrations are to be
- done
+ Additionally, it is necessary to specify how the integrals are to be computed;
+ this specification is done by a QuadratureFamily object, called, say, 
+\family typewriter
+quad
+\family default
+.
+ An object 
+\family typewriter
+wf
+\family default
+ for the weak form shown above would then be created by the following code
 \end_layout
 
 \begin_layout Standard
@@ -6200,8 +6492,384 @@ Expr wf = Integral(omega, kappa*(grad*v)*(grad*u), quad)
 Quadrature
 \end_layout
 
+\begin_layout Standard
+Specification of a weak form must include specification of a method for
+ computing the necessary integrals.
+ This is done through the 
+\family typewriter
+QuadratureFamily
+\family default
+ class hierarchy, which provides an interface for building quadrature rules
+ appropriate to a cell type.
+ The most widely used quadrature family is 
+\family typewriter
+GaussianQuadrature
+\family default
+, which produces Gauss rules on lines, and
+\end_layout
+
+\begin_layout Itemize
+Gauss-Dunavant symmetric rules on triangles and tets, if such a rule is
+ available for the order requested
+\end_layout
+
+\begin_layout Itemize
+Collapsed (non-symmetric) tensor product Gauss rules on triangles and tets,
+ if no Gauss-Dunavant rule is available.
+ These rules will integrate polynomials exactly up to the specified order,
+ but may perform poorly on other functions (including higher-order polynomials)
+ because the points are biased towards one of the corners.
+\end_layout
+
+\begin_layout Itemize
+Tensor-product Gauss rules on quads and hexes.
+\end_layout
+
+\begin_layout Standard
+Other families include Fekete and low-order Newton-Cotes quadrature, sometimes
+ preferred for specialized purposes.
+ An example of quadrature specification is
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+QuadratureFamily quad4 = new GaussianQuadrature(4);
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr wk = Integral(someCells, someExpr, quad4);
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+In some cases, the quadrature order required can't be determined at runtime,
+ so a 
+\family typewriter
+QuadratureFamily
+\family default
+ object can't be constructed directly.
+ The 
+\family typewriter
+QuadratureType
+\family default
+ class heirarchy provides factory objects that can build 
+\family typewriter
+QuadratureFamily
+\family default
+ objects dynamically given a specification of order.
+ 
+\end_layout
+
+\begin_layout Subsection
+Integral expressions
+\end_layout
+
+\begin_layout Standard
+Definite integrals play a central role in finite element methods so you
+ will use integral expressions in nearly every simulation.
+ Integrals are represented internally by an expression subtype that is rarely
+ constructed directly.
+ Almost always you will build integrals using the 
+\family typewriter
+Integral
+\family default
+ function, as in the first example in this section.
+ There is a limited set of operations on integral expressions: you can add
+ or subtract two integrals, and you can multiply integrals by an expression
+ that is constant in space.
+ Other operations, even mathematically well-defined operations such as 
+\begin_inset Formula $\sqrt{\int_{0}^{1}f^{2}\, dx}$
+\end_inset
+
+, cannot be done using integral expressions.
+ Here is an example of some operations, valid and not: 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Expr I1 = Integral(omega1, v*f, quad1);
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr I2 = Integral(omega2, v*g, quad2);
+\end_layout
+
+\begin_layout Plain Layout
+Expr I
+3
+\lang english
+ = Integral(
+omega1
+\lang english
+, v*g, quad
+2
+\lang english
+);
+\end_layout
+
+\begin_layout Plain Layout
+Expr I
+4
+\lang english
+ = Integral(
+omega2
+\lang english
+, v*
+f
+\lang english
+, quad2);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr total = I1 + 2.0*I2 - I3 + 3.0*I4;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr crash = I1*I2;        // mathematically valid, but not defined in code
+   
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr burn = sqrt(I1);      // mathematically valid, but not defined in code
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr nonsense = dx*I3;     // mathematically undefined (I3 is definite!)
+\end_layout
+
+\end_inset
+
+It is worth commenting on several points in this example.
+ 
+\end_layout
+
+\begin_layout Itemize
+There are two different quadrature methods used, 
+\family typewriter
+quad1
+\family default
+ and 
+\family typewriter
+quad2
+\family default
+.
+ Therefore, although 
+\family typewriter
+I1
+\family default
+ and 
+\family typewriter
+I3
+\family default
+ are defined on the same cell filter, their difference 
+\family typewriter
+I1-I3
+\family default
+ 
+\emph on
+cannot
+\emph default
+ be combined into a single function call 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Integral(omega1, v*(f-g), doh)
+\end_layout
+
+\end_inset
+
+Upon computing I1-I3, the integrands are stored separately, each associated
+ with its unique combination of cell filter and quadrature family
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Advanced users who explore Sundance's internals will encounter objects called
+ region-quad combinations (RQC) which are used to tag integrands.
+\end_layout
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Itemize
+Integral expressions having the same cell filters and the same quadrature
+ rules are, when added or subtracted, collected into a single object.
+ In the example, I2 and I4 have the same cell filter (omega1) and the same
+ quadrature family (quad2) so that 2.0*I2 + 3.0*I4 is exactly equivalent to
+ 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Integral(omega1, v*(2.0*f + 3.0*g), quad2)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Be careful: Note that
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Integral(omega1, v*f, quad1)+Integral(omega2, v*f, quad2)
+\end_layout
+
+\end_inset
+
+is equivalent to 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Integral(omega1+omega2, v*f, quad1)
+\end_layout
+
+\end_inset
+
+but that 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Integral(omega1, v*f, quad1)-Integral(omega2, v*f, quad2)
+\end_layout
+
+\end_inset
+
+is 
+\emph on
+not
+\emph default
+ equivalent to 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Integral(omega1-omega2, v*f, quad1)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Neumann and Robin BC
+\end_layout
+
+\begin_layout Standard
+With a Neumann BC we specify the normal derivative of the unknown 
+\begin_inset Formula $u$
+\end_inset
+
+, for example, 
+\begin_inset Formula \[
+\kappa\mathbf{n\cdot\nabla}u=g\]
+
+\end_inset
+
+In a Galerkin formulation these are easily implemented because the normal
+ derivative appears explictly after integration by parts.
+ For example, the weak Poisson equation is
+\begin_inset Formula \[
+\int_{\Omega}\kappa\nabla v\cdot\nabla u\, d\Omega-\int_{\Gamma}v\kappa\mathbf{n\cdot}\nabla u\, d\Gamma=0.\]
+
+\end_inset
+
+Substituting 
+\begin_inset Formula $g$
+\end_inset
+
+ for 
+\begin_inset Formula $\kappa\mathbf{n\cdot\nabla}u$
+\end_inset
+
+ in the surface term
+\begin_inset Formula \[
+\int_{\Omega}\kappa\nabla v\cdot\nabla u\, d\Omega-\int_{\Gamma}vg\, d\Gamma=0\]
+
+\end_inset
+
+gives consistency.
+ Note that the expression 
+\begin_inset Formula $g$
+\end_inset
+
+ may be an arbitrary function of 
+\begin_inset Formula $u$
+\end_inset
+
+, so that nonlinear boundary conditions such as the radiative condition
+\begin_inset Formula \[
+\kappa\mathbf{n\cdot\nabla}u=-\sigma\left(u^{4}-u_{0}^{4}\right)\]
+
+\end_inset
+
+may be implemented in this way.
+ 
+\end_layout
+
+\begin_layout Standard
+A Robin BC specifies a linear combination of the unknown and its normal
+ derivative, for example
+\begin_inset Formula \[
+-\alpha\left(u-u_{R}\right)+\kappa\mathbf{n}\cdot\nabla u=0.\]
+
+\end_inset
+
+As with a Neumann BC, we can substitute for 
+\begin_inset Formula $\kappa\mathbf{n\cdot\nabla}u$
+\end_inset
+
+ in the surface term to obtain
+\begin_inset Formula \[
+\int_{\Omega}\kappa\nabla v\cdot\nabla u\, d\Omega-\int_{\Gamma}\alpha v\left(u-u_{R}\right)\, d\Gamma=0.\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -6212,8 +6880,149 @@ Dirichlet BC
 Nitsche's method
 \end_layout
 
+\begin_layout Standard
+Nitsche devised a clever method for applying Dirichlet BC in such a way
+ that symmetry and coercivity are preserved.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\int_{\Omega}\kappa\nabla v\cdot\nabla u\, d\Omega-\int_{\Gamma_{D}}v\kappa\mathbf{n}\cdot\nabla u\, d\Gamma\underbrace{-\int_{\Gamma_{D}}\left(u-u_{D}\right)\kappa\mathbf{n}\cdot\nabla v\, d\Gamma+\gamma\int_{\Gamma_{D}}h^{-1}\kappa v\left(u-u_{D}\right)\, d\Gamma}=0.\]
+
+\end_inset
+
+The terms indicated by the underbrace are zero when the BC are satisfied,
+ so the modified problem is consistent.
+ Clearly the weak form is symmetric.
+ Nitsche proved that there is a 
+\begin_inset Formula $\gamma_{0}>0$
+\end_inset
+
+ such that coercivity is obtained for all 
+\begin_inset Formula $\gamma>\gamma_{0}$
+\end_inset
+
+.
+ Coercivity implies stability, which together with consistency and the Lax-Milgr
+am lemma implies convergence.
+\end_layout
+
+\begin_layout Standard
+One can easily code the boundary terms by hand, however, it is a common
+ enough operation to warrant a packaged solution
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Expr nitscheBC = NitschePoisson(diriSurf, v, u, uD, kappa, h, gamma);
+\end_layout
+
+\end_inset
+
+which returns all three surface terms in the weak form above.
+ 
+\end_layout
+
+\begin_layout Standard
+Note that this operation is specific to BC arising in Poisson's equation
+ and variants thereof, for example the steady radiation diffusion equation
+ in which case 
+\begin_inset Formula $\kappa=u^{3}.$
+\end_inset
+
+ Dirichlet BCs when 
+\begin_inset Formula $\kappa=u^{3}$
+\end_inset
+
+ would be implemented through 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Expr nitscheBC = NitschePoisson(diriSurf, v, u, uD, pow(u,3.0), h, gamma);
+\end_layout
+
+\end_inset
+
+The convergence theory requires 
+\begin_inset Formula $u>0$
+\end_inset
+
+ (which is, of course, also required on physical grounds because the temperature
+ must be positive).
+\end_layout
+
+\begin_layout Standard
+In general, a Nitsche method must be derived for each operator.
+ Methods for many common operators are available in the literature, for
+ example, a Nitsche method has been formulated for the Stokes equations.
+\end_layout
+
 \begin_layout Subsection
 Replacement method
+\end_layout
+
+\begin_layout Standard
+When Nitsche's method cannot be used, an alternative suitable for certain
+ problems is to force the Dirichlet boundary conditions through a side condition
+ that replaces a subset of the discrete equations with equations that impose
+ the Dirichlet BC.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Expr replaceBC = EssentialBC(diriSurf, v*(u-uD)/h, quad);
+\end_layout
+
+\end_inset
+
+Division by the cell diameter 
+\begin_inset Formula $h$
+\end_inset
+
+ is optional, but helps improve conditioning of the resulting linear system.
+ 
+\end_layout
+
+\begin_layout Standard
+The most significant drawback of this method is that it destroys any symmetry
+ of the original problem.
+ Nitsche's method is therefore preferred when possible.
+ Note also that the replacement method cannot be used directly on an eigenvalue
+ problem.
+\end_layout
+
+\begin_layout Subsection
+Lagrange multiplier method
+\end_layout
+
+\begin_layout Standard
+In problems arising from a variational principle, Dirichlet boundary conditions
+ can be enforced as a constraint through the method of Lagrange multipliers.
+ Some disadvantages of this method are that the resulting linear system
+ is indefinite, that one must introduce a new variable for the Lagrange
+ multiplier, and that the basis for the multiplier function must be chosen
+ carefully to be consistent with the LBB condition.
+ Indefiniteness can be addressed through the use of an augmented Lagrangian
+ method.
+ 
+\end_layout
+
+\begin_layout Standard
+Because of the close connection to optimization, further discussion of this
+ method is deferred until the section on PDE-constrained optimization.
+ 
 \end_layout
 
 \begin_layout Section
@@ -6221,7 +7030,68 @@ Miscellaneous
 \end_layout
 
 \begin_layout Subsection
-Point loads and Dirac functionals
+Point loads and Dirac delta functions
+\end_layout
+
+\begin_layout Standard
+A point source is most conveniently, and accurately, modeled when it is
+ located at a vertex in the mesh.
+ Let 
+\begin_inset Formula $\mathbf{a}$
+\end_inset
+
+ be the location and 
+\begin_inset Formula $q$
+\end_inset
+
+ be the strength of a point load, which enters a weak form through an integral
+ involving the Dirac delta function, 
+\begin_inset Formula \[
+\int_{\Omega}vq\delta(\mathbf{x-a})\, d\Omega\]
+
+\end_inset
+
+which evaluates to 
+\begin_inset Formula $v(\mathbf{a})q(\mathbf{a})$
+\end_inset
+
+.
+ Rather than representing the Dirac delta function we write this integral
+ using a Dirac measure 
+\begin_inset Formula $d\mu_{\mathbf{a}}$
+\end_inset
+
+ so that
+\begin_inset Formula \[
+\int_{\Omega}vq\delta\left(\mathbf{x-a}\right)\, d\Omega=\int_{\Omega}vq\, d\mu_{\mathbf{a}}=\int_{\mathbf{a}}vq\, d\mu_{\mathbf{a}}.\]
+
+\end_inset
+
+Introduce a cell filter 
+\family typewriter
+pointA
+\family default
+ that selects the vertex located at 
+\begin_inset Formula $\mathbf{a}$
+\end_inset
+
+.
+ The above integral would be written
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Expr ptTerm = Integral(pointA, v*q, quad);
+\end_layout
+
+\end_inset
+
+The quadrature argument is an unused placeholder, needed only to maintain
+ consistent syntax.
+ Any integral taken over a zero-cell is interpreted to use the Dirac measure.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -6252,8 +7122,24 @@ Forward problems
 Linear problems
 \end_layout
 
+\begin_layout Subsubsection
+Blocked variables
+\end_layout
+
+\begin_layout Subsubsection
+Problems with some variables held fixed
+\end_layout
+
 \begin_layout Subsection
 Nonlinear problems
+\end_layout
+
+\begin_layout Subsubsection
+Blocked variables
+\end_layout
+
+\begin_layout Subsubsection
+Problems with some variables held fixed
 \end_layout
 
 \begin_layout Subsection
@@ -6941,23 +7827,281 @@ Viewing low-level data structures
 \end_layout
 
 \begin_layout Subsubsection
-Viewing a problem's DOF map
+Viewing a problem's DOF maps
+\end_layout
+
+\begin_layout Standard
+A 
+\family typewriter
+LinearProblem
+\family default
+ or 
+\family typewriter
+NonlinearProblem
+\family default
+ will have two arrays of DOF maps, one array for the row maps and one for
+ the column maps.
+ The arrays are to deal with block operators: In a problem where the test
+ and unknown functions are grouped into blocks, there will be one row map
+ for each block of test functions and one column map for each block of unknown
+ functions.
+ In the example we show how to print the row maps for a problem (linear
+ or nonlinear) named 
+\family typewriter
+prob
+\family default
+.
+ 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+for (int r=0; r<prob.numBlockRows(); r++)
+\end_layout
+
+\begin_layout Plain Layout
+
+{
+\end_layout
+
+\begin_layout Plain Layout
+
+	Out::root() << "showing DOF map for block row r=" << r << endl;
+\end_layout
+
+\begin_layout Plain Layout
+
+	prob.rowMap(r)->print(Out::os());
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+ 
 \end_layout
 
 \begin_layout Subsubsection
-Viewing a discrete function's DOF map
+Viewing a discrete space's DOF map
+\end_layout
+
+\begin_layout Standard
+A DiscreteSpace has an associated DOF map, which may be accessed through
+ the map() member function.
+ 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+DiscreteSpace discSpace(mesh, basis, vecType);
+\end_layout
+
+\begin_layout Plain Layout
+
+Out::root() << "showing DOF map for discrete space" << endl;
+\end_layout
+
+\begin_layout Plain Layout
+
+discSpace.map()->print(Out::os());
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
 Viewing a problem's matrices and vectors
 \end_layout
 
+\begin_layout Standard
+The matrix and RHS vector for a discretized 
+\family typewriter
+LinearProblem
+\family default
+ can be obtained by the 
+\family typewriter
+getOperator()
+\family default
+ and 
+\family typewriter
+getSingleRHS()
+\family default
+ member functions.
+ In sensitivity analysis, there may be multiple RHS vectors which can be
+ obtained (as an array) by the 
+\family typewriter
+getRHS()
+\family default
+ member function.
+ 
+\end_layout
+
+\begin_layout Standard
+When working with a nonlinear problem, the current Jacobian and residual
+ can be obtained by calling the 
+\family typewriter
+computeJacobianAndFunction()
+\family default
+ member function.
+ If only the function value is desired, it can be obtained (in 
+\family typewriter
+Vector
+\family default
+ form) by the 
+\family typewriter
+computeFunctionValue()
+\family default
+ function.
+ The current evaluation point in 
+\family typewriter
+Expr
+\family default
+ form may be obtained by the 
+\family typewriter
+getU0()
+\family default
+ member function, or in 
+\family typewriter
+Vector
+\family default
+ form by the 
+\family typewriter
+getInitialGuess()
+\family default
+ function.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Testing differentiation
+\end_layout
+
+\begin_layout Standard
+Differentiation of a functional can be tested against a finite-difference
+ calculation by the 
+\family typewriter
+fdGradientCheck()
+\family default
+ member function of 
+\family typewriter
+FunctionalEvaluator
+\family default
+.
+ While running, it prints detailed information on the gradient vectors obtained
+ through both finite difference and in-place differentiation.
+ The finite difference stepsize is specified as an argument to 
+\family typewriter
+fdGradientCheck()
+\family default
+.
+ The return value is the maximum component of the vector of errors.
+ 
+\end_layout
+
 \begin_layout Section
 Debugger helpers
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Debugger-helpers"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Debugger configuration
+\end_layout
+
+\begin_layout Standard
+The 
+\family typewriter
+gdb
+\family default
+ debugger and its various front ends (such as DDD) can be given startup
+ options through the 
+\family typewriter
+.gdbinit
+\family default
+ file.
+ Some useful startup options are 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+set breakpoint pending on
+\end_layout
+
+\begin_layout Plain Layout
+
+break TestForException_break
+\end_layout
+
+\begin_layout Plain Layout
+
+break abort 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The first line is needed for deferred setting of breakpoints when working
+ with dynamically-loaded libraries.
+ The second and third lines set breakpoints in the standard C 
+\family typewriter
+abort()
+\family default
+ function and in the Teuchos 
+\family typewriter
+TestForException_break()
+\family default
+ function.
+ All errors detected by Sundance components are handled by the TEST_FOR_EXCEPTIO
+N() macro described in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Error-checks"
+
+\end_inset
+
+, which internally calls 
+\family typewriter
+TestForException_break()
+\family default
+.
+ The
+\family typewriter
+ abort()
+\family default
+ function may be called by sufficiently catastrophic errors in low-level
+ code.
+ 
 \end_layout
 
 \begin_layout Subsection
 Parallel debugging
+\end_layout
+
+\begin_layout Standard
+The most convenient way to debug in parallel is to use a parallel debugger
+ such as Totalview.
+ If a parallel debugger is not available, it is possible to bind multiple
+ sessions of a gdb-based debugger to multiple jobs running on a single host.
+ 
 \end_layout
 
 \begin_layout Chapter

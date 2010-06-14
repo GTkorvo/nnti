@@ -37,7 +37,9 @@
 #include "TSFLinearSolverBuilder.hpp"
 #include "Teuchos_Time.hpp"
 #include "Teuchos_TimeMonitor.hpp"
-
+#include "SundanceOut.hpp"
+#include "SundanceTabs.hpp"
+#include "SundanceExceptions.hpp"
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 #include "TSFVectorImpl.hpp"
 #include "TSFLinearOperatorImpl.hpp"
@@ -86,6 +88,11 @@ NOXSolver::NOXSolver(const ParameterList& params)
     {
       linSolver_ = LinearSolverBuilder::createSolver(params_);
     }
+  else
+  {
+    TEST_FOR_EXCEPTION(!params_.isSublist("Linear Solver"),
+      RuntimeError, "no linear solver specified in NOX parameters");
+  }
   
   if (params_.isSublist("Printing"))
     {
@@ -99,6 +106,54 @@ NOXSolver::NOXSolver(const ParameterList& params)
                      "null status test object in NOXSolver ctor");
 
 }
+
+NOXSolver::NOXSolver(const ParameterList& nonlinParams,
+      const LinearSolver<double>& linSolver)
+  : linSolver_(linSolver),
+    statusTest_(),
+    params_(),
+    printParams_()
+{
+  Tabs tab(0);
+  TEST_FOR_EXCEPTION(!nonlinParams.isSublist("NOX Solver"), runtime_error,
+                     "did not find NOX Solver sublist in " << nonlinParams);
+  
+  params_ = nonlinParams.sublist("NOX Solver");
+  /* NOX wants to have the process ID in a parameter list???? */
+  params_.sublist("Printing").set("MyPID", MPIComm::world().getRank());
+
+  if (params_.isSublist("Status Test"))
+    {
+      statusTest_ = StatusTestBuilder::makeStatusTest(params_);
+    }
+  else
+    {
+      RCP<StatusTest::Generic> A = rcp(new StatusTest::NormF(1.0e-12));
+      RCP<StatusTest::Generic> B = rcp(new StatusTest::MaxIters(20));
+      statusTest_ = 
+        rcp(new StatusTest::SafeCombo(StatusTest::SafeCombo::OR, A, B));
+    }
+  
+  if (params_.isSublist("Linear Solver"))
+    {
+      Out::root() << tab << "WARNING: linear solver in NOX parameter list "
+        "will be overridden by alternate solver" << endl;
+    }
+  
+  if (params_.isSublist("Printing"))
+    {
+      printParams_ = params_.sublist("Printing");
+    }
+  
+  TEST_FOR_EXCEPTION(linSolver_.ptr().get()==0, runtime_error,
+                     "null linear solver object in NOXSolver ctor");
+
+  TEST_FOR_EXCEPTION(statusTest_.get()==0, runtime_error,
+                     "null status test object in NOXSolver ctor");
+
+}
+
+
 
 
 NOX::StatusTest::StatusType 
