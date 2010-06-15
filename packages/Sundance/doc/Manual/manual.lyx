@@ -1031,8 +1031,8 @@ int main(int argc, char** argv)
 \end_layout
 
 \begin_layout Plain Layout
-		
-/* Register the options with the command-line parser */
+
+		/* Register the options with the command-line parser */
 \end_layout
 
 \begin_layout Plain Layout
@@ -1046,16 +1046,8 @@ int main(int argc, char** argv)
 \end_layout
 
 \begin_layout Plain Layout
-		Sundance::setOption("
-o
-\lang english
-", 
-outFilename
-\lang english
-, "
-Filename for output
-\lang english
-");
+
+		Sundance::setOption("o", outFilename, "Filename for output");
 \end_layout
 
 \begin_layout Plain Layout
@@ -1078,8 +1070,8 @@ Filename for output
 \end_layout
 
 \begin_layout Plain Layout
-		
-/* Call init as usual */
+
+		/* Call init as usual */
 \end_layout
 
 \begin_layout Plain Layout
@@ -1092,8 +1084,8 @@ Filename for output
 \end_layout
 
 \begin_layout Plain Layout
-		
-/* ----- remainder of code --- */
+
+		/* ----- remainder of code --- */
 \end_layout
 
 \end_inset
@@ -4751,6 +4743,7 @@ for (int i=0; i<maxIters; i++)
 \end_layout
 
 \begin_layout Plain Layout
+
 	
 \end_layout
 
@@ -6304,11 +6297,6 @@ Expr curlU = curl(u);
 Expr divU = div(u);
 \end_layout
 
-\begin_layout Plain Layout
-
-Expr gradU = grad(u);
-\end_layout
-
 \end_inset
 
 is equivalent to
@@ -6329,9 +6317,34 @@ Expr curlU = cross(del, u);
 Expr divU = del*u;
 \end_layout
 
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Tensor expressions such as 
+\begin_inset Formula $\nabla\mathbf{v}\colon\nabla\mathbf{u}$
+\end_inset
+
+ appearing in the weak Navier-Stokes equations can be carried out with the
+ 
+\family typewriter
+outerProduct
+\family default
+ and 
+\family typewriter
+colonProduct
+\family default
+ functions
+\begin_inset listings
+inline false
+status open
+
 \begin_layout Plain Layout
 
-Expr gradU = outer(del, u);
+Expr gradVColonGradU = colonProduct( outerProduct(del, v), outerProduct(del,
+ u) );
 \end_layout
 
 \end_inset
@@ -6605,29 +6618,13 @@ Expr I2 = Integral(omega2, v*g, quad2);
 \end_layout
 
 \begin_layout Plain Layout
-Expr I
-3
-\lang english
- = Integral(
-omega1
-\lang english
-, v*g, quad
-2
-\lang english
-);
+
+Expr I3 = Integral(omega1, v*g, quad2);
 \end_layout
 
 \begin_layout Plain Layout
-Expr I
-4
-\lang english
- = Integral(
-omega2
-\lang english
-, v*
-f
-\lang english
-, quad2);
+
+Expr I4 = Integral(omega2, v*f, quad2);
 \end_layout
 
 \begin_layout Plain Layout
@@ -6833,7 +6830,29 @@ Substituting
 \end_inset
 
 gives consistency.
- Note that the expression 
+ The surface integral is implemented just like any other integral: with
+ the 
+\family typewriter
+Integral
+\family default
+ function.
+ For example,
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Expr neumSurfIntegral = Integral(gammaNeum, v*g, quad);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that the expression 
 \begin_inset Formula $g$
 \end_inset
 
@@ -6848,7 +6867,15 @@ gives consistency.
 \end_inset
 
 may be implemented in this way.
- 
+ Simply replace 
+\begin_inset Formula $g$
+\end_inset
+
+ with 
+\begin_inset Formula $-\sigma\left(u^{4}-u_{0}^{4}\right)$
+\end_inset
+
+ in the code above.
 \end_layout
 
 \begin_layout Standard
@@ -6876,6 +6903,12 @@ As with a Neumann BC, we can substitute for
 Dirichlet BC
 \end_layout
 
+\begin_layout Standard
+Imposing Dirichlet BCs is less straightforward than imposing Neumann and
+ Robin BCs.
+ There are several alternatives 
+\end_layout
+
 \begin_layout Subsection
 Nitsche's method
 \end_layout
@@ -6883,6 +6916,7 @@ Nitsche's method
 \begin_layout Standard
 Nitsche devised a clever method for applying Dirichlet BC in such a way
  that symmetry and coercivity are preserved.
+ Modify the weak Poisson equation by adding the terms indicated by an underbrace.
  
 \end_layout
 
@@ -6892,8 +6926,8 @@ Nitsche devised a clever method for applying Dirichlet BC in such a way
 
 \end_inset
 
-The terms indicated by the underbrace are zero when the BC are satisfied,
- so the modified problem is consistent.
+The additional terms are zero when the BC are satisfied, so the modified
+ problem is consistent.
  Clearly the weak form is symmetric.
  Nitsche proved that there is a 
 \begin_inset Formula $\gamma_{0}>0$
@@ -6906,6 +6940,7 @@ The terms indicated by the underbrace are zero when the BC are satisfied,
 .
  Coercivity implies stability, which together with consistency and the Lax-Milgr
 am lemma implies convergence.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -6917,7 +6952,12 @@ status open
 
 \begin_layout Plain Layout
 
-Expr nitscheBC = NitschePoisson(diriSurf, v, u, uD, kappa, h, gamma);
+Expr nitscheBC = NitschePoissonDirichletBC(dim, diriSurf, quad, kappa, 
+\end_layout
+
+\begin_layout Plain Layout
+
+	v, u, uD, gamma);
 \end_layout
 
 \end_inset
@@ -6933,7 +6973,11 @@ Note that this operation is specific to BC arising in Poisson's equation
 \begin_inset Formula $\kappa=u^{3}.$
 \end_inset
 
- Dirichlet BCs when 
+ Dirichlet BCs 
+\begin_inset Formula $u=u_{D}$
+\end_inset
+
+ when 
 \begin_inset Formula $\kappa=u^{3}$
 \end_inset
 
@@ -6944,7 +6988,12 @@ status open
 
 \begin_layout Plain Layout
 
-Expr nitscheBC = NitschePoisson(diriSurf, v, u, uD, pow(u,3.0), h, gamma);
+Expr nitscheBC = NitschePoissonDirichletBC(dim, diriSurf, quad, pow(u,3),
+\end_layout
+
+\begin_layout Plain Layout
+
+	v, u, uD, gamma);
 \end_layout
 
 \end_inset
@@ -6959,8 +7008,57 @@ The convergence theory requires
 
 \begin_layout Standard
 In general, a Nitsche method must be derived for each operator.
- Methods for many common operators are available in the literature, for
- example, a Nitsche method has been formulated for the Stokes equations.
+ Methods for some common operators are available in the literature, for
+ example, a Nitsche method has been formulated for no-slip BC 
+\begin_inset Formula $\mathbf{u=u_{BC}}$
+\end_inset
+
+ for the Stokes or Navier-Stokes equations.
+ This is also available as a packaged function in the Sundance library,
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Expr bc = NitscheStokesNoSlipBC(diriSurf, quad, nu, v, q, u, p, uBC, C1,
+ C2);
+\end_layout
+
+\end_inset
+
+where 
+\begin_inset Formula $\nu$
+\end_inset
+
+ is the viscosity and 
+\begin_inset Formula $C_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $C_{2}$
+\end_inset
+
+ are positive constants.
+ 
+\end_layout
+
+\begin_layout Standard
+When available, the Nitsche method preserves symmetry and obtains good scaling.
+ A minor disadvantage is the need to estimate constants such as 
+\begin_inset Formula $\gamma$
+\end_inset
+
+ or 
+\begin_inset Formula $C_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $C_{2}$
+\end_inset
+
+.
+ 
 \end_layout
 
 \begin_layout Subsection
