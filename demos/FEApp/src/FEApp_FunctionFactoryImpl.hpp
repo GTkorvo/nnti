@@ -28,29 +28,43 @@
 // 
 // ***********************************************************************
 // @HEADER
-#include <iostream>
+#include "Teuchos_TestForException.hpp"
+#include "FEApp_ConstantFunction.hpp"
+#include "FEApp_KLExponentialFunction.hpp"
 
-// Cppunit includes
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/ui/text/TestRunner.h>
+template <typename EvalT>
+FEApp::FunctionFactory<EvalT>::FunctionFactory(
+	    const Teuchos::RCP<Teuchos::ParameterList>& funcParams_,
+	    const Teuchos::RCP<ParamLib>& paramLib_) :
+  funcParams(funcParams_), paramLib(paramLib_)
+{
+}
 
-int main(int argc, char *argv[]) {
-  bool wasSuccessful = false;
+template <typename EvalT>
+Teuchos::RCP< FEApp::AbstractFunction<EvalT> >
+FEApp::FunctionFactory<EvalT>::create()
+{
+  Teuchos::RCP< FEApp::AbstractFunction<EvalT> > strategy;
 
-  try {
-    CppUnit::TextUi::TestRunner runner;
-    CppUnit::TestFactoryRegistry &registry = 
-      CppUnit::TestFactoryRegistry::getRegistry();
-    
-    runner.addTest(registry.makeTest());
-    wasSuccessful = runner.run("", false,true,true);
+  std::string& method = funcParams->get("Name", "Constant");
+  if (method == "Constant") {
+    double value = funcParams->get("Constant Value", 1.0);
+    strategy = 
+      Teuchos::rcp(new FEApp::ConstantFunction<EvalT>(value, paramLib));
   }
-  catch (std::exception& e) {
-    std::cout << e.what() << std::endl;
-  }
-  catch (...) {
-    std::cout << "Caught unknown exception!" << std::endl;
+#ifdef HAVE_FEAPP_STOKHOS
+  else if (method == "KL Exponential Random Field")
+    strategy = 
+      Teuchos::rcp(new FEApp::KLExponentialFunction<EvalT>(*funcParams, 
+							   paramLib));
+#endif
+  else {
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                       std::endl << 
+                       "Error!  Unknown function " << method << 
+                       "!" << std::endl << "Supplied parameter list is " << 
+                       std::endl << *funcParams);
   }
 
-  return wasSuccessful;
+  return strategy;
 }
