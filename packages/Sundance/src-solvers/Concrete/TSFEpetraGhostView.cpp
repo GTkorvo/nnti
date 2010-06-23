@@ -37,7 +37,7 @@ const double& EpetraGhostView::getElement(OrdType globalIndex) const
   return (*ghostView_)[myMap.LID(globalIndex)];
 }
 
-void EpetraGhostView::getElements(const int* globalIndices, int numElems,
+void EpetraGhostView::getElements(const OrdType* globalIndices, int numElems,
                                   Array<double>& elems) const
 {
   elems.resize(numElems);

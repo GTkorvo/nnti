@@ -54,7 +54,7 @@ namespace TSFExtended
       virtual ~SerialGhostView(){;}
 
       /** Indicate whether the given global index is accessible in this view */
-      bool isAccessible(int globalIndex) const 
+      bool isAccessible(OrdType globalIndex) const 
       {return true;}
 
       /** get the element at the given global index */
@@ -62,7 +62,7 @@ namespace TSFExtended
         {return vec_->getElement(globalIndex);}
 
       /** get the batch of elements at the given global indices */
-      void getElements(const int* globalIndices, int numElems,
+      void getElements(const OrdType* globalIndices, OrdType numElems,
                        Array<double>& elems) const 
         {
           vec_->getElements(globalIndices, numElems, elems);
