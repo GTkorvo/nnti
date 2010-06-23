@@ -39,7 +39,7 @@ using namespace Teuchos;
 using std::ostream;
 
 MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows, 
-                                     const VectorType<double>& type, bool symBC)
+  const VectorType<double>& type, bool symBC)
   : OperatorBuilder<double>(nLocalRows, type), op_()
 {
   MatrixLaplacianBCStyle bcStyle = Normal;
@@ -51,7 +51,7 @@ MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows,
 
 
 MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows, 
-                                     const VectorType<double>& type, 
+  const VectorType<double>& type, 
   MatrixLaplacianBCStyle bcStyle)
   : OperatorBuilder<double>(nLocalRows, type), op_()
 {
@@ -67,36 +67,43 @@ void MatrixLaplacian1D::init(int nLocalRows,
   RCP<MatrixFactory<double> > mFact;
   mFact = vecType().createMatrixFactory(domain(), range());
 
-  
+  if (domain().dim() == domain().numLocalElements())
+  {
+    rank = 0;
+    nProc = 1;
+  }
 
   int lowestLocalRow = nLocalRows * rank;
 
   IncrementallyConfigurableMatrixFactory* icmf 
     = dynamic_cast<IncrementallyConfigurableMatrixFactory*>(mFact.get());
-  for (int i=0; i<nLocalRows; i++)
+  if (icmf)
+  {
+    for (int i=0; i<nLocalRows; i++)
     {
       int row = lowestLocalRow + i;
       Array<int> colIndices;
       if ((rank==0 && i==0) || (rank==nProc-1 && i==nLocalRows-1))
-        {
-          colIndices = tuple(row);
-        }
+      {
+        colIndices = tuple(row);
+      }
       else if (bcStyle==Symmetrized && rank==0 && i==1)
-        {
-          colIndices = tuple(row, row+1);
-        }
+      {
+        colIndices = tuple(row, row+1);
+      }
       else if (bcStyle==Symmetrized && rank==nProc-1 && i==nLocalRows-2)
-        {
-          colIndices = tuple(row-1, row);
-        }
+      {
+        colIndices = tuple(row-1, row);
+      }
       else
-        {
-          colIndices = tuple(row-1, row, row+1);
-        }
+      {
+        colIndices = tuple(row-1, row, row+1);
+      }
       icmf->initializeNonzerosInRow(row, colIndices.size(),
-                                    &(colIndices[0]));
+        &(colIndices[0]));
     }
-  icmf->finalize();
+    icmf->finalize();
+  }
       
   op_ = mFact->createMatrix();
       
@@ -104,31 +111,31 @@ void MatrixLaplacian1D::init(int nLocalRows,
 
   /* fill in with the Laplacian operator */
   for (int i=0; i<nLocalRows; i++)
+  {
+    int row = lowestLocalRow + i;
+    Array<int> colIndices;
+    Array<double> colVals;
+    if ((rank==0 && i==0) || (rank==nProc-1 && i==nLocalRows-1))
     {
-      int row = lowestLocalRow + i;
-      Array<int> colIndices;
-      Array<double> colVals;
-      if ((rank==0 && i==0) || (rank==nProc-1 && i==nLocalRows-1))
-        {
-          colIndices = tuple(row);
-          colVals = tuple(1.0);
-        }
-      else if (bcStyle==Symmetrized && rank==0 && i==1)
-        {
-          colIndices = tuple(row, row+1);
-          colVals = tuple(2.0, -1.0);
-        }
-      else if (bcStyle==Symmetrized  && rank==nProc-1 && i==nLocalRows-2)
-        {
-          colIndices = tuple(row-1, row);
-          colVals = tuple(-1.0, 2.0);
-        }
-      else
-        {
-          colIndices = tuple(row-1, row, row+1);
-          colVals = tuple(-1.0, 2.0, -1.0);
-        }
-      mat->addToRow(row, colIndices.size(), 
-                    &(colIndices[0]), &(colVals[0]));
+      colIndices = tuple(row);
+      colVals = tuple(1.0);
     }
+    else if (bcStyle==Symmetrized && rank==0 && i==1)
+    {
+      colIndices = tuple(row, row+1);
+      colVals = tuple(2.0, -1.0);
+    }
+    else if (bcStyle==Symmetrized  && rank==nProc-1 && i==nLocalRows-2)
+    {
+      colIndices = tuple(row-1, row);
+      colVals = tuple(-1.0, 2.0);
+    }
+    else
+    {
+      colIndices = tuple(row-1, row, row+1);
+      colVals = tuple(-1.0, 2.0, -1.0);
+    }
+    mat->addToRow(row, colIndices.size(), 
+      &(colIndices[0]), &(colVals[0]));
+  }
 }

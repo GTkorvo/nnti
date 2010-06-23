@@ -48,8 +48,7 @@ using namespace Sundance;
 template <class Scalar>
 class OpWithBackwardsCompatibleApply :
     public LinearOpBase<Scalar>,
-    public DefaultObjectWithVerbosity,
-    public NamedObject
+    public DefaultObjectWithVerbosity
 {
 public:
 
