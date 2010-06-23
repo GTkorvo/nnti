@@ -59,6 +59,8 @@ APPEND_SET(HEADERS
   Vectors/TSFSequentialIteratorImpl.hpp
   Vectors/TSFVectorDecl.hpp
   Vectors/TSFVectorImpl.hpp
+  Vectors/TSFVectorOpsDecl.hpp
+  Vectors/TSFVectorOpsImpl.hpp
   Vectors/TSFVectorSpaceDecl.hpp
   Vectors/TSFVectorSpaceImpl.hpp
   Vectors/TSFVectorType.hpp
@@ -71,6 +73,7 @@ APPEND_SET(SOURCES
   Vectors/TSFProductVectorSpace.cpp
   Vectors/TSFSequentialIterator.cpp
   Vectors/TSFVector.cpp
+  Vectors/TSFVectorOps.cpp
   Vectors/TSFVectorSpace.cpp
 )
 
@@ -84,6 +87,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Concrete)
 
 APPEND_SET(HEADERS
   Concrete/EpetraTSFOperator.hpp
+  Concrete/TSFDenseSerialMatrix.hpp
+  Concrete/TSFDenseSerialMatrixFactory.hpp
   Concrete/TSFDenseSerialVector.hpp
   Concrete/TSFEpetraGhostImporter.hpp
   Concrete/TSFEpetraGhostView.hpp
@@ -98,12 +103,19 @@ APPEND_SET(HEADERS
   Concrete/TSFIfpackOperator.hpp
   Concrete/TSFMLOperator.hpp
   Concrete/TSFLAPACKGeneralMatrix.hpp
+  Concrete/TSFSerialVector.hpp
+  Concrete/TSFSerialVectorSpace.hpp
+  Concrete/TSFSerialGhostView.hpp
+  Concrete/TSFSerialGhostImporter.hpp
+  Concrete/TSFSerialVectorType.hpp
   Concrete/TSFVectorSpace2EpetraMap.hpp
   )
 
 APPEND_SET(SOURCES
   Concrete/EpetraTSFOperator.cpp
   Concrete/TSFDenseSerialVector.cpp
+  Concrete/TSFDenseSerialMatrix.cpp
+  Concrete/TSFDenseSerialMatrixFactory.cpp
   Concrete/TSFEpetraGhostImporter.cpp
   Concrete/TSFEpetraGhostView.cpp
   Concrete/TSFEpetraMatrix.cpp
@@ -117,6 +129,10 @@ APPEND_SET(SOURCES
   Concrete/TSFIfpackOperator.cpp
   Concrete/TSFMLOperator.cpp
   Concrete/TSFLAPACKGeneralMatrix.cpp
+  Concrete/TSFSerialVector.cpp
+  Concrete/TSFSerialVectorSpace.cpp
+  Concrete/TSFSerialGhostImporter.cpp
+  Concrete/TSFSerialVectorType.cpp
   Concrete/TSFVectorSpace2EpetraMap.cpp
   )
 
@@ -207,6 +223,7 @@ APPEND_SET(HEADERS
   LinearSolvers/TSFBICGSTABSolverImpl.hpp
   LinearSolvers/TSFBlockTriangularSolverDecl.hpp
   LinearSolvers/TSFBlockTriangularSolverImpl.hpp
+  LinearSolvers/TSFDenseLUSolver.hpp
   LinearSolvers/TSFEigensolver.hpp
   LinearSolvers/TSFEigensolverBase.hpp
   LinearSolvers/TSFIterativeSolver.hpp
@@ -225,6 +242,7 @@ APPEND_SET(SOURCES
   LinearSolvers/TSFBelosSolver.cpp
   LinearSolvers/TSFBICGSTABSolver.cpp
   LinearSolvers/TSFBlockTriangularSolver.cpp
+  LinearSolvers/TSFDenseLUSolver.cpp
   LinearSolvers/TSFLinearSolver.cpp
   LinearSolvers/TSFLinearSolverBase.cpp
   LinearSolvers/TSFLinearSolverBuilder.cpp
@@ -262,6 +280,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Testing)
 APPEND_SET(HEADERS
   Testing/Thyra_TestSpecifier.hpp
   Testing/TSFCompoundTester.hpp
+  Testing/TSFGlobalAnd.hpp
   Testing/TSFHeatOperator1D.hpp
   Testing/TSFLinearCombinationTester.hpp
   Testing/TSFMatrixLaplacian1D.hpp
@@ -278,6 +297,7 @@ APPEND_SET(HEADERS
   )
 
 APPEND_SET(SOURCES
+  Testing/TSFGlobalAnd.cpp
   Testing/TSFHeatOperator1D.cpp
   Testing/TSFMatrixLaplacian1D.cpp
   Testing/TSFPoissonBoltzmannJacobian.cpp

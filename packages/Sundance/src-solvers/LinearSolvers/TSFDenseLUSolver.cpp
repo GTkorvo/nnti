@@ -1,3 +1,4 @@
+/* @HEADER@ */
 /* ***********************************************************************
 // 
 //           TSFExtended: Trilinos Solver Framework Extended
@@ -23,41 +24,31 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
+ /* @HEADER@ */
 
-#ifndef TSFGHOSTVIEW_HPP
-#define TSFGHOSTVIEW_HPP
+#include "TSFDenseLUSolver.hpp"
+#include "TSFDenseSerialMatrix.hpp"
+#include "TSFLinearOperatorDecl.hpp"
 
-#include "TSFAccessibleVector.hpp"
-#include "TSFVectorDecl.hpp"
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFVectorImpl.hpp"
+#endif
 
-namespace TSFExtended
+using namespace TSFExtended;
+using namespace Teuchos;
+using namespace Thyra;
+using std::setw;
+
+
+DenseLUSolver::DenseLUSolver()
+  : LinearSolverBase<double>(ParameterList())
 {
-  using namespace Teuchos;
-
-  /**
-   * GhostView is an interface for read-only views
-   * of vector elements including selected
-   * off-processor elements. GhostView has no standard constructor; subclasses
-   * should be constructed using the importView() method of GhostImporter.
-   */
-  template <class Scalar>
-  class GhostView : public AccessibleVector<Scalar>,
-                    public Sundance::Printable
-  {
-  public:
-    /** Virtual dtor */
-    virtual ~GhostView(){;}
-    
-    /** Indicate whether the value at the given global index is accessible
-     * in this view. */
-    virtual bool isAccessible(OrdType globalIndex) const = 0 ;
-    
-    /**  */
-    virtual void print(std::ostream& os) const = 0 ;
-
-  private:
-  };
-
 }
 
-#endif
+SolverState<double> DenseLUSolver::solve(const LinearOperator<double>& op,
+  const Vector<double>& rhs,
+  Vector<double>& soln) const
+{
+  return denseSolve(op, rhs, soln);
+}

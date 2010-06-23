@@ -24,54 +24,25 @@
 // 
 // **********************************************************************/
 
-#include "TSFEpetraGhostView.hpp"
-#include "Epetra_Import.h"
+#include "TSFSerialGhostImporter.hpp"
+#include "TSFSerialGhostView.hpp"
+#include "TSFSerialVector.hpp"
 
+
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFVectorImpl.hpp"
+#endif
 
 using namespace Teuchos;
 using namespace TSFExtended;
 
-const double& EpetraGhostView::getElement(OrdType globalIndex) const 
+
+
+void SerialGhostImporter
+::importView(const Vector<double>& x,
+             RCP<GhostView<double> >& ghostView) const
 {
-  const Epetra_BlockMap& myMap = ghostView_->Map();
-  return (*ghostView_)[myMap.LID(globalIndex)];
+  RCP<SerialVector> xPtr = rcp_dynamic_cast<SerialVector>(x.ptr());
+  ghostView = rcp(new SerialGhostView(xPtr));
 }
-
-void EpetraGhostView::getElements(const OrdType* globalIndices, int numElems,
-                                  Array<double>& elems) const
-{
-  elems.resize(numElems);
-  const Epetra_BlockMap& myMap = ghostView_->Map();
-
-  for (int i=0; i<numElems; i++)
-    {
-      elems[i] = (*ghostView_)[myMap.LID(globalIndices[i])];
-    }
-}
-
-void  EpetraGhostView::import(const Epetra_Import& importer,
-                              const Epetra_Vector& srcObject)
-{
-  /* If my vector does not yet exist, create it using the target map of the
-   * importer */
-  if (ghostView_.get()==0)
-    {
-      ghostView_ = rcp(new Epetra_Vector(importer.TargetMap()));
-    }
-
-  /* do the import */
-  int ierr = ghostView_->Import(srcObject, importer, Insert);
-  TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, "ierr=" << ierr << " in EpetraGhostView::import()");
-}
-
-void EpetraGhostView::print(ostream& os) const
-{
-  if (ghostView_.get()==0) 
-    {
-      os << "[null Epetra ghost view]" << endl;
-    }
-  else
-    {
-      ghostView_->Print(os);
-    }
-}
+    

@@ -46,12 +46,6 @@ namespace TSFExtended
     HANDLE_CTORS(VectorType<Scalar>, VectorTypeExtensions<Scalar>);
    
 
-    /** Create a vector space in which all elements are replicated on
-     * all processors. This is used when creating multivector-based
-     * operators. */
-    VectorSpace<Scalar> createReplicatedSpace(int dimension) const ;
-   
-
     /** create a vector space having nLocal elements on each processor */
     VectorSpace<Scalar> createEvenlyPartitionedSpace(const MPIComm& comm,
                                                      int nLocal) const ;
@@ -90,18 +84,6 @@ namespace TSFExtended
 
 
   template <class Scalar> inline 
-  VectorSpace<Scalar> VectorType<Scalar>::createReplicatedSpace(int dimension) const
-  {
-    const Thyra::VectorSpaceFactoryBase<Scalar>* f
-      = dynamic_cast<const Thyra::VectorSpaceFactoryBase<Scalar>*>(this->ptr().get());
-    
-    TEST_FOR_EXCEPTION(f==0, std::runtime_error, 
-                       "failed cast to Thyra::VectorSpaceFactoryBase in "
-                       "VectorType<Scalar>::createReplicatedSpace()");
-    return f->createVecSpc(dimension);
-  }
-
-  template <class Scalar> inline 
   VectorSpace<Scalar> VectorType<Scalar>::createSpace(int dimension,
                                                       int nLocal,
     const int* locallyOwnedIndices, const MPIComm& comm) const
@@ -114,16 +96,7 @@ namespace TSFExtended
   ::createEvenlyPartitionedSpace(const MPIComm& comm,
                                  int nLocal) const
   {
-    int rank = comm.getRank();
-    int nProc = comm.getNProc();
-    int dimension = nLocal * nProc;
-    Array<int> locallyOwnedIndices(nLocal);
-    int lowestLocalRow = rank*nLocal;
-    for (int i=0; i<nLocal; i++)
-      {
-        locallyOwnedIndices[i] = lowestLocalRow + i;
-      }
-    return this->ptr()->createSpace(dimension, nLocal, &(locallyOwnedIndices[0]), comm);
+    return this->ptr()->createEvenlyPartitionedSpace(comm, nLocal);
   }
 
   template <class Scalar> inline 

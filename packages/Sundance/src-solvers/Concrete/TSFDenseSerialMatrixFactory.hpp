@@ -1,3 +1,4 @@
+/* @HEADER@ */
 /* ***********************************************************************
 // 
 //           TSFExtended: Trilinos Solver Framework Extended
@@ -23,41 +24,38 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
+/* @HEADER@ */
 
-#ifndef TSFGHOSTVIEW_HPP
-#define TSFGHOSTVIEW_HPP
+#ifndef TSF_DENSE_SERIAL_MATRIXFACTORY_HPP
+#define TSF_DENSE_SERIAL_MATRIXFACTORY_HPP
 
-#include "TSFAccessibleVector.hpp"
-#include "TSFVectorDecl.hpp"
+#include "SundanceDefs.hpp"
+#include "TSFMatrixFactory.hpp"
+#include "TSFSerialVectorSpace.hpp"
 
 namespace TSFExtended
 {
-  using namespace Teuchos;
-
-  /**
-   * GhostView is an interface for read-only views
-   * of vector elements including selected
-   * off-processor elements. GhostView has no standard constructor; subclasses
-   * should be constructed using the importView() method of GhostImporter.
+  /** 
+   * 
    */
-  template <class Scalar>
-  class GhostView : public AccessibleVector<Scalar>,
-                    public Sundance::Printable
-  {
-  public:
-    /** Virtual dtor */
-    virtual ~GhostView(){;}
-    
-    /** Indicate whether the value at the given global index is accessible
-     * in this view. */
-    virtual bool isAccessible(OrdType globalIndex) const = 0 ;
-    
-    /**  */
-    virtual void print(std::ostream& os) const = 0 ;
+class DenseSerialMatrixFactory : public MatrixFactory<double>
+{
+public:
+  /** */
+  DenseSerialMatrixFactory(
+    const RCP<const SerialVectorSpace>& domain,
+    const RCP<const SerialVectorSpace>& range);
 
-  private:
-  };
+  /** Virtual dtor */
+  virtual ~DenseSerialMatrixFactory(){;}
+  
+  /** */
+  virtual LinearOperator<double> createMatrix() const ;
 
+public:
+  RCP<const SerialVectorSpace> domain_;
+  RCP<const SerialVectorSpace> range_;
+};
 }
 
 #endif

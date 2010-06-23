@@ -1,3 +1,4 @@
+/* @HEADER@ */
 /* ***********************************************************************
 // 
 //           TSFExtended: Trilinos Solver Framework Extended
@@ -23,41 +24,33 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
+ /* @HEADER@ */
 
-#ifndef TSFGHOSTVIEW_HPP
-#define TSFGHOSTVIEW_HPP
 
-#include "TSFAccessibleVector.hpp"
-#include "TSFVectorDecl.hpp"
+#include "TSFGlobalAnd.hpp"
+#include "Teuchos_MPIComm.hpp"
+#include "Teuchos_TestForException.hpp"
+#include "SundanceOut.hpp"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#endif
+
 
 namespace TSFExtended
 {
-  using namespace Teuchos;
+bool globalAnd(bool localVal)
+{
+  int out = localVal;
 
-  /**
-   * GhostView is an interface for read-only views
-   * of vector elements including selected
-   * off-processor elements. GhostView has no standard constructor; subclasses
-   * should be constructed using the importView() method of GhostImporter.
-   */
-  template <class Scalar>
-  class GhostView : public AccessibleVector<Scalar>,
-                    public Sundance::Printable
-  {
-  public:
-    /** Virtual dtor */
-    virtual ~GhostView(){;}
-    
-    /** Indicate whether the value at the given global index is accessible
-     * in this view. */
-    virtual bool isAccessible(OrdType globalIndex) const = 0 ;
-    
-    /**  */
-    virtual void print(std::ostream& os) const = 0 ;
-
-  private:
-  };
-
-}
-
+  
+#ifdef HAVE_MPI
+  int in = localVal;
+  int ierr = ::MPI_Allreduce((void*) &in, (void*) &out, 1, MPI_INT,
+    MPI_LAND, MPI_COMM_WORLD);
+  TEST_FOR_EXCEPTION(ierr != 0, std::runtime_error,
+    "MPI_Allreduce returned error code=" << ierr);
 #endif
+
+  return out;
+}
+}

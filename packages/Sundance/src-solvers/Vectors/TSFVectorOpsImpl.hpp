@@ -1,3 +1,4 @@
+/* @HEADER@ */
 /* ***********************************************************************
 // 
 //           TSFExtended: Trilinos Solver Framework Extended
@@ -23,41 +24,38 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
+ /* @HEADER@ */
 
-#ifndef TSFGHOSTVIEW_HPP
-#define TSFGHOSTVIEW_HPP
+#ifndef TSFVECTOR_OPS_IMPL_HPP
+#define TSFVECTOR_OPS_IMPL_HPP
 
-#include "TSFAccessibleVector.hpp"
+#include "SundanceDefs.hpp"
 #include "TSFVectorDecl.hpp"
+#include "Thyra_VectorStdOps.hpp"
+#include "Teuchos_ScalarTraits.hpp"
 
+ /* nonmember vector functions */
 namespace TSFExtended
 {
-  using namespace Teuchos;
 
-  /**
-   * GhostView is an interface for read-only views
-   * of vector elements including selected
-   * off-processor elements. GhostView has no standard constructor; subclasses
-   * should be constructed using the importView() method of GhostImporter.
-   */
-  template <class Scalar>
-  class GhostView : public AccessibleVector<Scalar>,
-                    public Sundance::Printable
+/* */
+template <class Scalar> inline
+void randomize(Vector<Scalar>& x)
+{
+  VectorSpace<Scalar> space = x.space();
+  /* do the operation elementwise */
+  SequentialIterator<Scalar> i;
+  for (i=space.begin(); i != space.end(); i++)
   {
-  public:
-    /** Virtual dtor */
-    virtual ~GhostView(){;}
-    
-    /** Indicate whether the value at the given global index is accessible
-     * in this view. */
-    virtual bool isAccessible(OrdType globalIndex) const = 0 ;
-    
-    /**  */
-    virtual void print(std::ostream& os) const = 0 ;
+    x[i] = 2.0*(drand48()-0.5);
+  }    
+}
 
-  private:
-  };
+
 
 }
+
+
+
 
 #endif

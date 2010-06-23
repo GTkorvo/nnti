@@ -24,40 +24,67 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFGHOSTVIEW_HPP
-#define TSFGHOSTVIEW_HPP
+#ifndef TSF_SERIAL_VECTORSPACE_HPP
+#define TSF_SERIAL_VECTORSPACE_HPP
 
-#include "TSFAccessibleVector.hpp"
-#include "TSFVectorDecl.hpp"
+#include "SundanceDefs.hpp"
+#include "Teuchos_RefCountPtr.hpp"
+#include "Thyra_DefaultSpmdVectorSpace.hpp"
 
 namespace TSFExtended
 {
-  using namespace Teuchos;
+using namespace Teuchos;
+using namespace Thyra;
 
-  /**
-   * GhostView is an interface for read-only views
-   * of vector elements including selected
-   * off-processor elements. GhostView has no standard constructor; subclasses
-   * should be constructed using the importView() method of GhostImporter.
-   */
-  template <class Scalar>
-  class GhostView : public AccessibleVector<Scalar>,
-                    public Sundance::Printable
-  {
-  public:
-    /** Virtual dtor */
-    virtual ~GhostView(){;}
+
+/**
+ * 
+ */
+class SerialVectorSpace 
+  : public Thyra::DefaultSpmdVectorSpace<double>
+{
+public:
+
+  /** */
+  SerialVectorSpace(int dim);
     
-    /** Indicate whether the value at the given global index is accessible
-     * in this view. */
-    virtual bool isAccessible(OrdType globalIndex) const = 0 ;
-    
-    /**  */
-    virtual void print(std::ostream& os) const = 0 ;
 
-  private:
-  };
+  /** @name Overridden form Teuchos::Describable */
+  //@{
+  /** \brief . */
+  std::string description() const;
+  //@}
 
+  /** @name Public overridden from VectorSpace */
+  //@{
+
+  /** */
+  bool isCompatible(const VectorSpaceBase<double>& other) const ;
+
+  /** */
+  RCP<const VectorSpaceFactoryBase<double> > 
+  smallVecSpcFcty() const ;
+
+
+  /** \brief clone the space */
+  RCP< const VectorSpaceBase<double> > clone() const ;
+
+  //@}
+
+
+protected:
+  /** @name Protected overridden from VectorSpace */
+  //@{
+  /** \brief create a vector */
+  RCP<VectorBase<double> > createMember() const;
+  /** \brief create a multivector */
+  RCP<MultiVectorBase<double> > createMembers(int numVecs) const;
+  //@}
+private:
+  /** */
+  RCP<const VectorSpaceFactoryBase<double> > smallVecSpcFactory_;
+};
+  
 }
 
 #endif

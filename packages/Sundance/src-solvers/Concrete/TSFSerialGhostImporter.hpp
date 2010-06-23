@@ -24,40 +24,44 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFGHOSTVIEW_HPP
-#define TSFGHOSTVIEW_HPP
+#ifndef TSF_SERIAL_GHOSTIMPORTER_HPP
+#define TSF_SERIAL_GHOSTIMPORTER_HPP
 
-#include "TSFAccessibleVector.hpp"
-#include "TSFVectorDecl.hpp"
+#include "SundanceDefs.hpp"
+#include "TSFGhostImporter.hpp"
+#include "TSFSerialGhostView.hpp"
+#include "Teuchos_Utils.hpp"
+
+
 
 namespace TSFExtended
 {
   using namespace Teuchos;
 
+
   /**
-   * GhostView is an interface for read-only views
-   * of vector elements including selected
-   * off-processor elements. GhostView has no standard constructor; subclasses
-   * should be constructed using the importView() method of GhostImporter.
+   * Ghost element importer for serial vectors. This class doesn't have
+   * much to do, but is necessary to maintain a consistent interface.
    */
-  template <class Scalar>
-  class GhostView : public AccessibleVector<Scalar>,
-                    public Sundance::Printable
-  {
-  public:
-    /** Virtual dtor */
-    virtual ~GhostView(){;}
-    
-    /** Indicate whether the value at the given global index is accessible
-     * in this view. */
-    virtual bool isAccessible(OrdType globalIndex) const = 0 ;
-    
-    /**  */
-    virtual void print(std::ostream& os) const = 0 ;
+  class SerialGhostImporter : public GhostImporter<double>
+    {
+    public:
+      /** */
+      SerialGhostImporter(){;}
+      /** virtual dtor */
+      virtual ~SerialGhostImporter() {;}
 
-  private:
-  };
+      /** 
+       * Import the ghost elements of the given vector
+       * as specified during construction of this object. 
+       */
+      virtual void importView(const Vector<double>& x,
+                              RCP<GhostView<double> >& ghostView) const ;
 
+    private:
+      
+    };
+  
 }
 
 #endif

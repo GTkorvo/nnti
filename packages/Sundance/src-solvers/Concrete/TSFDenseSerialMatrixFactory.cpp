@@ -1,3 +1,4 @@
+/* @HEADER@ */
 /* ***********************************************************************
 // 
 //           TSFExtended: Trilinos Solver Framework Extended
@@ -23,41 +24,38 @@
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // **********************************************************************/
+ /* @HEADER@ */
 
-#ifndef TSFGHOSTVIEW_HPP
-#define TSFGHOSTVIEW_HPP
-
-#include "TSFAccessibleVector.hpp"
+#include "TSFDenseSerialMatrixFactory.hpp"
+#include "TSFDenseSerialMatrix.hpp"
+#include "TSFSerialVector.hpp"
+#include "TSFVectorSpaceDecl.hpp"  
 #include "TSFVectorDecl.hpp"
+#include "Teuchos_Array.hpp"
+#include "Teuchos_MPIComm.hpp"
+#include "TSFLinearOperatorDecl.hpp"
 
-namespace TSFExtended
-{
-  using namespace Teuchos;
-
-  /**
-   * GhostView is an interface for read-only views
-   * of vector elements including selected
-   * off-processor elements. GhostView has no standard constructor; subclasses
-   * should be constructed using the importView() method of GhostImporter.
-   */
-  template <class Scalar>
-  class GhostView : public AccessibleVector<Scalar>,
-                    public Sundance::Printable
-  {
-  public:
-    /** Virtual dtor */
-    virtual ~GhostView(){;}
-    
-    /** Indicate whether the value at the given global index is accessible
-     * in this view. */
-    virtual bool isAccessible(OrdType globalIndex) const = 0 ;
-    
-    /**  */
-    virtual void print(std::ostream& os) const = 0 ;
-
-  private:
-  };
-
-}
-
+#ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
+#include "TSFLinearOperatorImpl.hpp"
+#include "TSFVectorImpl.hpp"
 #endif
+
+
+using namespace TSFExtended;
+using namespace Teuchos;
+using namespace Thyra;
+
+DenseSerialMatrixFactory::DenseSerialMatrixFactory(
+  const RCP<const SerialVectorSpace>& domain,
+  const RCP<const SerialVectorSpace>& range)
+  : range_(range),
+    domain_(domain)
+{}
+
+
+LinearOperator<double> DenseSerialMatrixFactory::createMatrix() const
+{
+  RCP<LinearOpBase<double> > A 
+    = rcp(new DenseSerialMatrix(domain_, range_));
+  return A;
+}

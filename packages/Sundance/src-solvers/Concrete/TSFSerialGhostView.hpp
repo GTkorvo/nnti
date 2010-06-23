@@ -24,40 +24,56 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFGHOSTVIEW_HPP
-#define TSFGHOSTVIEW_HPP
+#ifndef TSF_SERIAL_GHOSTVIEW_HPP
+#define TSF_SERIAL_GHOSTVIEW_HPP
 
-#include "TSFAccessibleVector.hpp"
-#include "TSFVectorDecl.hpp"
+#include "SundanceDefs.hpp"
+#include "TSFGhostView.hpp"
+#include "TSFSerialVector.hpp"
+#include "Teuchos_Utils.hpp"
+
+
 
 namespace TSFExtended
 {
   using namespace Teuchos;
 
+
   /**
-   * GhostView is an interface for read-only views
-   * of vector elements including selected
-   * off-processor elements. GhostView has no standard constructor; subclasses
-   * should be constructed using the importView() method of GhostImporter.
+   * Dummy ghost element viewer for serial vectors. 
    */
-  template <class Scalar>
-  class GhostView : public AccessibleVector<Scalar>,
-                    public Sundance::Printable
-  {
-  public:
-    /** Virtual dtor */
-    virtual ~GhostView(){;}
-    
-    /** Indicate whether the value at the given global index is accessible
-     * in this view. */
-    virtual bool isAccessible(OrdType globalIndex) const = 0 ;
-    
-    /**  */
-    virtual void print(std::ostream& os) const = 0 ;
+  class SerialGhostView : public GhostView<double>
+    {
+    public:
+      /** */
+      SerialGhostView(const RCP<SerialVector>& vec)
+        : vec_(vec) 
+      {;}
 
-  private:
-  };
+      /** virtual dtor */
+      virtual ~SerialGhostView(){;}
 
+      /** Indicate whether the given global index is accessible in this view */
+      bool isAccessible(OrdType globalIndex) const 
+      {return true;}
+
+      /** get the element at the given global index */
+      const double& getElement(OrdType globalIndex) const 
+        {return vec_->getElement(globalIndex);}
+
+      /** get the batch of elements at the given global indices */
+      void getElements(const OrdType* globalIndices, OrdType numElems,
+                       Array<double>& elems) const 
+        {
+          vec_->getElements(globalIndices, numElems, elems);
+        }
+
+      /** */
+      void print(std::ostream& os) const {vec_->print(os);}
+    private:
+      RCP<const SerialVector> vec_;
+    };
+  
 }
 
 #endif
