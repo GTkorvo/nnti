@@ -56,3 +56,26 @@ $(BASE_NAME).ps: $(BASE_NAME).dvi
 $(BASE_NAME).pdf: $(BASE_NAME).ps
 	ps2pdf $(BASE_NAME).ps $(BASE_NAME).pdf
 
+
+#
+# Make the sample namespace program
+#
+# NOTE: Define CC on the env to run these targets
+#
+
+CCFLAGS=-ansi -pedantic -Wall
+
+
+ns-std:
+	$(CC) $(CCFLAGS) -o NamespaceClassUsingIssues.exe NamespaceClassUsingIssues.cpp
+
+ns-dup-class:
+	$(CC) $(CCFLAGS) -DSHOW_DUPLICATE_CLASS_A -o NamespaceClassUsingIssues.exe NamespaceClassUsingIssues.cpp
+
+ns-missing-using-decl:
+	$(CC) $(CCFLAGS) -DSHOW_MISSING_USING_DECL -o NamespaceClassUsingIssues.exe NamespaceClassUsingIssues.cpp
+
+ns-bad-using-direc:
+	$(CC) $(CCFLAGS) -DSHOW_ERRONEOUS_USING_DIRECTIVE -o NamespaceClassUsingIssues.exe NamespaceClassUsingIssues.cpp
+
+
