@@ -127,11 +127,6 @@ inline void AnasaziEigensolver<Scalar>::solve(
   bool usePrec = this->params().get<bool>("Use Preconditioner");
   bool hermitian = this->params().get<bool>("Is Hermitian");
 
-  int verbosity = Anasazi::Errors + Anasazi::Warnings + Anasazi::FinalSummary;
-  if (this->params().get<int>("Verbose"))
-  {
-    verbosity += Anasazi::Debug + Anasazi::IterationDetails;
-  }
   
   /* Make a multivector with row space = domain of K, column 
    * space = multiVec Space*/
