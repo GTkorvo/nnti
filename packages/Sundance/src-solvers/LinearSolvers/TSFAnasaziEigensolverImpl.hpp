@@ -26,14 +26,13 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFANASAZIEIGENSOLVER_HPP
-#define TSFANASAZIEIGENSOLVER_HPP
+#ifndef TSFANASAZIEIGENSOLVER_IMPL_HPP
+#define TSFANASAZIEIGENSOLVER_IMPL_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFVectorDecl.hpp" 
-#include "TSFSolverState.hpp"
-#include "Teuchos_ParameterList.hpp"
-#include "TSFEigensolverBase.hpp"
+#include "TSFAnasaziEigensolverDecl.hpp" 
+#include "TSFParameterListPreconditionerFactory.hpp" 
+#include "TSFPreconditionerFactory.hpp" 
 #include "AnasaziBlockKrylovSchurSolMgr.hpp"
 #include "AnasaziBlockDavidsonSolMgr.hpp"
 #include "AnasaziSimpleLOBPCGSolMgr.hpp"
@@ -46,63 +45,6 @@ namespace TSFExtended
 {
 using Teuchos::ParameterList;
 
-/**
- * Object wrapper for Anasazi eigenvalue solver.
- */
-template <class Scalar>
-class AnasaziEigensolver
-  : public EigensolverBase<Scalar>,
-    public Sundance::Handleable<EigensolverBase<Scalar> >
-{
-public:
-
-  /** */
-  typedef Thyra::MultiVectorBase<Scalar>         MV;
-  /** */
-  typedef Thyra::LinearOpBase<Scalar>            OP;
-  /** */
-  typedef Anasazi::MultiVecTraits<Scalar,MV>     MVT;
-  /** */
-  typedef Anasazi::OperatorTraits<Scalar,MV,OP>  OPT;
-
-  /** */
-  AnasaziEigensolver(const ParameterList& params) 
-    : EigensolverBase<Scalar>(params) {;}
-
-  /**
-   * Solve a generalized eigenvalue problem \f$ K x = \lambda M x \f$
-   */
-  virtual void solve(
-    const LinearOperator<Scalar>& K,
-    const LinearOperator<Scalar>& M,
-    Array<Vector<Scalar> >& ev,
-    Array<std::complex<Scalar> >& ew) const ;
-
-  /** \name Handleable interface */
-  //@{
-  /** Return a ref counted pointer to a newly created object */
-  virtual RCP<EigensolverBase<Scalar> > getRcp() 
-    {return rcp(this);}
-    //@}
-  
-private:
-
-  static Time& solveTimer() 
-    {
-      static RCP<Time> rtn 
-        = TimeMonitor::getNewTimer("AnasaziEigensolver solve()"); 
-      return *rtn;
-    }
-
-  static Time& precondBuildTimer() 
-    {
-      static RCP<Time> rtn 
-        = TimeMonitor::getNewTimer("AnasaziEigensolver building preconditioner"); 
-      return *rtn;
-    }
-
-};
-
 
 template <class Scalar>  
 inline void AnasaziEigensolver<Scalar>::solve(
@@ -111,6 +53,12 @@ inline void AnasaziEigensolver<Scalar>::solve(
   Array<Vector<Scalar> >& evecs,
   Array<std::complex<Scalar> >& ew) const 
 {
+
+  typedef Thyra::MultiVectorBase<Scalar>         MV;
+  typedef Thyra::LinearOpBase<Scalar>            OP;
+  typedef Anasazi::MultiVecTraits<Scalar,MV>     MVT;
+  typedef Anasazi::OperatorTraits<Scalar,MV,OP>  OPT;
+
   TimeMonitor timer(solveTimer());
   VectorSpace<Scalar> KDomain = K.domain();
   
