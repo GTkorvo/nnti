@@ -49,8 +49,10 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-// AztecOO solver
-#include "AztecOO.h"
+// NOX
+#include "NOX.H"
+#include "NOX_Epetra.H"
+#include "NOX_Epetra_LinearSystem_SGJacobi.hpp"
 
 // Stokhos Stochastic Galerkin
 #include "Stokhos.hpp"
@@ -61,9 +63,10 @@
 int main(int argc, char *argv[]) {
   int nelem = 100;
   double h = 1.0/nelem;
-  int num_KL = 10;
+  int num_KL = 5;
   int p = 5;
   bool full_expansion = false;
+  bool matrix_free = true;
 
 // Initialize MPI
 #ifdef HAVE_MPI
@@ -192,11 +195,14 @@ int main(int argc, char *argv[]) {
       sgParams->set("Parameter Expansion Type", "Linear");
       sgParams->set("Jacobian Expansion Type", "Linear");
     }
-    sgParams->set("Jacobian Method", "Matrix Free");
-    sgParams->set("Mean Preconditioner Type", "ML");
-    Teuchos::ParameterList& precParams = 
+    if (matrix_free)
+      sgParams->set("Jacobian Method", "Matrix Free");
+    else
+      sgParams->set("Jacobian Method", "Fully Assembled");
+    Teuchos::ParameterList& sg_precParams = 
       sgParams->sublist("Preconditioner Parameters");
-    precParams.set("default values", "DD");
+    sgParams->set("Mean Preconditioner Type", "ML");
+    sg_precParams.set("default values", "DD");
 
     // Create stochastic Galerkin model evaluator
     Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =
@@ -204,64 +210,132 @@ int main(int argc, char *argv[]) {
 						 expansion, Cijk, sgParams,
 						 Comm));
 
-    // Create vectors and operators
-    Teuchos::RCP<const Epetra_Vector> sg_p = sg_model->get_p_init(2);
-    Teuchos::RCP<Epetra_Vector> sg_x = 
-      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_x_map())));
-    *sg_x = *(sg_model->get_x_init());
-    Teuchos::RCP<Epetra_Vector> sg_f = 
-      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_f_map())));
-    Teuchos::RCP<Epetra_Vector> sg_dx = 
-      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_x_map())));
-    Teuchos::RCP<Epetra_Operator> sg_J = sg_model->create_W();
-    Teuchos::RCP<Epetra_Operator> sg_M = sg_model->create_WPrec()->PrecOp;
+    // Set up NOX parameters
+    Teuchos::RCP<Teuchos::ParameterList> noxParams =
+      Teuchos::rcp(&(appParams->sublist("NOX")),false);
 
-    // Setup InArgs and OutArgs
+    // Set the nonlinear solver method
+    noxParams->set("Nonlinear Solver", "Line Search Based");
+
+    // Set the printing parameters in the "Printing" sublist
+    Teuchos::ParameterList& printParams = noxParams->sublist("Printing");
+    printParams.set("MyPID", MyPID); 
+    printParams.set("Output Precision", 3);
+    printParams.set("Output Processor", 0);
+    printParams.set("Output Information", 
+                    NOX::Utils::OuterIteration + 
+                    NOX::Utils::OuterIterationStatusTest + 
+                    NOX::Utils::InnerIteration +
+                    //NOX::Utils::Parameters + 
+                    //NOX::Utils::Details + 
+//                    NOX::Utils::LinearSolverDetails +
+                    NOX::Utils::Warning + 
+                    NOX::Utils::Error);
+
+    // Create printing utilities
+    NOX::Utils utils(printParams);
+
+    // Sublist for line search 
+    Teuchos::ParameterList& searchParams = noxParams->sublist("Line Search");
+    searchParams.set("Method", "Full Step");
+
+    // Sublist for direction
+    Teuchos::ParameterList& dirParams = noxParams->sublist("Direction");
+    dirParams.set("Method", "Newton");
+    Teuchos::ParameterList& newtonParams = dirParams.sublist("Newton");
+    newtonParams.set("Forcing Term Method", "Constant");
+
+    // Sublist for linear solver for the Newton method
+    Teuchos::ParameterList& lsParams = newtonParams.sublist("Linear Solver");
+    Teuchos::ParameterList& det_lsParams = lsParams.sublist("Deterministic Solver");
+    det_lsParams.set("Aztec Solver", "GMRES");  
+    det_lsParams.set("Max Iterations", 100);
+    det_lsParams.set("Size of Krylov Subspace", 100);
+    det_lsParams.set("Tolerance", 1e-12); 
+    det_lsParams.set("Output Frequency", 10);
+    det_lsParams.set("Preconditioner", "ML");
+    Teuchos::ParameterList& precParams = 
+      det_lsParams.sublist("ML");
+    ML_Epetra::SetDefaults("DD", precParams);
+
+    // Sublist for convergence tests
+    Teuchos::ParameterList& statusParams = noxParams->sublist("Status Tests");
+    statusParams.set("Test Type", "Combo");
+    statusParams.set("Number of Tests", 2);
+    statusParams.set("Combo Type", "OR");
+    Teuchos::ParameterList& normF = statusParams.sublist("Test 0");
+    normF.set("Test Type", "NormF");
+    normF.set("Tolerance", 1e-10);
+    normF.set("Scale Type", "Scaled");
+    Teuchos::ParameterList& maxIters = statusParams.sublist("Test 1");
+    maxIters.set("Test Type", "MaxIters");
+    maxIters.set("Maximum Iterations", 1);
+
+    // Create deterministic NOX interface
+    Teuchos::RCP<NOX::Epetra::ModelEvaluatorInterface> det_nox_interface = 
+       Teuchos::rcp(new NOX::Epetra::ModelEvaluatorInterface(model));
+
+    // Parameter list for SG Jacobi iterations 
+    lsParams.set("Max Iterations", 500);
+    lsParams.set("Tolerance", 1e-12);
+
+    // Create NOX linear system object
+    Teuchos::RCP<const Epetra_Vector> det_u = model->get_x_init();
+    Teuchos::RCP<Epetra_Operator> det_A = model->create_W();
+    Teuchos::RCP<NOX::Epetra::Interface::Required> det_iReq = det_nox_interface;
+    Teuchos::RCP<NOX::Epetra::Interface::Jacobian> det_iJac = det_nox_interface;
+    Teuchos::RCP<NOX::Epetra::LinearSystemAztecOO> det_linsys =
+      Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams, det_lsParams,
+							det_iReq, det_iJac, det_A, 
+							*det_u));
+
+    // Create NOX interface
+    Teuchos::RCP<NOX::Epetra::ModelEvaluatorInterface> nox_interface = 
+       Teuchos::rcp(new NOX::Epetra::ModelEvaluatorInterface(sg_model));
+
+    // Create NOX linear system object
+    Teuchos::RCP<const Epetra_Vector> u = sg_model->get_x_init();
+    Teuchos::RCP<Epetra_Operator> A = sg_model->create_W();
+    Teuchos::RCP<NOX::Epetra::Interface::Required> iReq = nox_interface;
+    Teuchos::RCP<NOX::Epetra::Interface::Jacobian> iJac = nox_interface;
+    Teuchos::RCP<NOX::Epetra::LinearSystemSGJacobi> linsys =
+      Teuchos::rcp(new NOX::Epetra::LinearSystemSGJacobi(printParams, lsParams,
+						 	 det_linsys, Cijk,
+                                                         iReq, iJac, A, *u, *det_u));
+
+
+    // Build NOX group
+    Teuchos::RCP<NOX::Epetra::Group> grp = 
+      Teuchos::rcp(new NOX::Epetra::Group(printParams, iReq, *u, linsys));
+
+    // Create the Solver convergence test
+    Teuchos::RCP<NOX::StatusTest::Generic> statusTests =
+      NOX::StatusTest::buildStatusTests(statusParams, utils);
+
+    // Create the solver
+    Teuchos::RCP<NOX::Solver::Generic> solver = 
+      NOX::Solver::buildSolver(grp, statusTests, noxParams);
+
+    // Solve the system
+    NOX::StatusTest::StatusType status = solver->solve();
+
+    // Get final solution
+    const NOX::Epetra::Group& finalGroup = 
+      dynamic_cast<const NOX::Epetra::Group&>(solver->getSolutionGroup());
+    const Epetra_Vector& finalSolution = 
+      (dynamic_cast<const NOX::Epetra::Vector&>(finalGroup.getX())).getEpetraVector();
+      
+    // Evaluate SG responses at SG parameters
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_model->createInArgs();
-    EpetraExt::ModelEvaluator::OutArgs sg_outArgs = sg_model->createOutArgs();
-    sg_inArgs.set_p(2, sg_p);
-    sg_inArgs.set_x(sg_x);
-    sg_outArgs.set_f(sg_f);
-    sg_outArgs.set_W(sg_J);
-    sg_outArgs.set_WPrec(sg_M);
-
-    // Evaluate model
-    sg_model->evalModel(sg_inArgs, sg_outArgs);
-
-    // Print initial residual norm
-    double norm_f;
-    sg_f->Norm2(&norm_f);
-    std::cout << "\nInitial residual norm = " << norm_f << std::endl;
-
-    // Setup AztecOO solver
-    AztecOO aztec;
-    aztec.SetAztecOption(AZ_solver, AZ_gmres);
-    aztec.SetAztecOption(AZ_precond, AZ_none);
-    aztec.SetAztecOption(AZ_kspace, 20);
-    aztec.SetAztecOption(AZ_conv, AZ_r0);
-    aztec.SetAztecOption(AZ_output, 1);
-    aztec.SetUserOperator(sg_J.get());
-    aztec.SetPrecOperator(sg_M.get());
-    aztec.SetLHS(sg_dx.get());
-    aztec.SetRHS(sg_f.get());
-
-    // Solve linear system
-    aztec.Iterate(100, 1e-12);
-
-    // Update x
-    sg_x->Update(-1.0, *sg_dx, 1.0);
-
-    // Compute new residual & response function
+    EpetraExt::ModelEvaluator::OutArgs sg_outArgs = 
+      sg_model->createOutArgs();
+    Teuchos::RCP<const Epetra_Vector> sg_p = sg_model->get_p_init(2);
     Teuchos::RCP<Epetra_Vector> sg_g = 
       Teuchos::rcp(new Epetra_Vector(*(sg_model->get_g_map(1))));
-    EpetraExt::ModelEvaluator::OutArgs sg_outArgs2 = sg_model->createOutArgs();
-    sg_outArgs2.set_f(sg_f);
-    sg_outArgs2.set_g(1, sg_g);
-    sg_model->evalModel(sg_inArgs, sg_outArgs2);
-
-    // Print initial residual norm
-    sg_f->Norm2(&norm_f);
-    std::cout << "\nFinal residual norm = " << norm_f << std::endl;
+    sg_inArgs.set_p(2, sg_p);
+    sg_inArgs.set_x(Teuchos::rcp(&finalSolution,false));
+    sg_outArgs.set_g(1, sg_g);
+    sg_model->evalModel(sg_inArgs, sg_outArgs);
 
     // Print mean and standard deviation
     Stokhos::EpetraVectorOrthogPoly sg_g_poly(basis, View, 
@@ -275,9 +349,9 @@ int main(int argc, char *argv[]) {
     sg_g_poly.print(std::cout);
     std::cout << "\nResponse Mean =      " << std::endl << mean << std::endl;
     std::cout << "Response Std. Dev. = " << std::endl << std_dev << std::endl;
-
-    if (norm_f < 1.0e-10)
-      std::cout << "Test Passed!" << std::endl;
+      
+    if (status == NOX::StatusTest::Converged) 
+      utils.out() << "Test Passed!" << std::endl;
 
     }
 

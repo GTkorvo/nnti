@@ -40,7 +40,7 @@
 #include <sstream>
 
 // FEApp is defined in Trilinos/packages/sacado/example/FEApp
-#include "FEApp_ModelEvaluator.hpp"
+#include "twoD_diffusion_ME.hpp"
 
 // Epetra communicator
 #ifdef HAVE_MPI
@@ -59,9 +59,8 @@
 #include "Teuchos_TimeMonitor.hpp"
 
 int main(int argc, char *argv[]) {
-  int nelem = 100;
-  double h = 1.0/nelem;
-  int num_KL = 10;
+  int n = 32;
+  int num_KL = 2;
   int p = 5;
   bool full_expansion = false;
 
@@ -86,55 +85,7 @@ int main(int argc, char *argv[]) {
 #endif
 
     MyPID = Comm->MyPID();
-    
-    // Create mesh
-    std::vector<double> x(nelem+1);
-    for (int i=0; i<=nelem; i++)
-      x[i] = h*i;
 
-    // Set up application parameters
-    Teuchos::RCP<Teuchos::ParameterList> appParams = 
-      Teuchos::rcp(new Teuchos::ParameterList);
-
-    // Problem
-    Teuchos::ParameterList& problemParams = 
-      appParams->sublist("Problem");
-    problemParams.set("Name", "Heat Nonlinear Source");
-
-    // Boundary conditions
-    problemParams.set("Left BC", 0.0);
-    problemParams.set("Right BC", 0.0);
-
-    // Source function
-    Teuchos::ParameterList& sourceParams = 
-      problemParams.sublist("Source Function");
-    sourceParams.set("Name", "Constant");
-    sourceParams.set("Constant Value", 1.0);
-
-    // Material
-    Teuchos::ParameterList& matParams = 
-      problemParams.sublist("Material Function");
-    matParams.set("Name", "KL Exponential Random Field");
-    matParams.set("Mean", 1.0);
-    matParams.set("Standard Deviation", 0.5);
-    matParams.set("Number of KL Terms", num_KL);
-    Teuchos::Array<double> a(1), b(1), L(1);
-    a[0] = 0.0; b[0] = 1.0; L[0] = 1.0;
-    matParams.set("Domain Lower Bounds", a);
-    matParams.set("Domain Upper Bounds", b);
-    matParams.set("Correlation Lengths", L);
-
-    // Response functions
-    Teuchos::ParameterList& responseParams =
-      problemParams.sublist("Response Functions");
-    responseParams.set("Number", 1);
-    responseParams.set("Response 0", "Solution Average");
-
-    // Free parameters (determinisic, e.g., for sensitivities)
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > free_param_names =
-	Teuchos::rcp(new Teuchos::Array<std::string>);
-    free_param_names->push_back("Constant Source Function Value");
-    
     // Create Stochastic Galerkin basis and expansion
     Teuchos::Array< Teuchos::RCP<const Stokhos::OneDOrthogPolyBasis<int,double> > > bases(num_KL); 
     for (int i=0; i<num_KL; i++)
@@ -153,41 +104,27 @@ int main(int argc, char *argv[]) {
     std::cout << "Stochastic Galerkin expansion size = " << sz << std::endl;
 
     // Create application
-    appParams->set("SG Method", "AD");
-    Teuchos::RCP<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, Comm, appParams, false));
+    Teuchos::RCP<twoD_diffusion_ME> model = 
+      Teuchos::rcp(new twoD_diffusion_ME(Comm, n, num_KL));
     
     // Set up stochastic parameters
     Epetra_LocalMap p_sg_map(num_KL, 0, *Comm);
-    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p_init = 
-      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, p_sg_map));
+    Teuchos::Array<Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> >sg_p_init(1);
+    sg_p_init[0]= Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, p_sg_map));
     for (int i=0; i<num_KL; i++) {
-      sg_p_init->term(i,0)[i] = 0.0;
-      sg_p_init->term(i,1)[i] = 1.0;
-    }
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
-      Teuchos::rcp(new Teuchos::Array<std::string>);
-    for (int i=0; i<num_KL; i++) {
-      std::stringstream ss;
-      ss << "KL Exponential Function Random Variable " << i;
-      sg_param_names->push_back(ss.str());
+      sg_p_init[0]->term(i,0)[i] = 0.0;
+      sg_p_init[0]->term(i,1)[i] = 1.0;
     }
 
     // Setup stochastic initial guess
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x_init = 
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, 
-						       *(app->getMap())));
+						       *(model->get_x_map())));
     sg_x_init->init(0.0);
-    
-    // Create application model evaluator
-    Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-      Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names,
-					     sg_param_names, sg_x_init, 
-					     sg_p_init));
     
     // Setup stochastic Galerkin algorithmic parameters
     Teuchos::RCP<Teuchos::ParameterList> sgParams = 
-      Teuchos::rcp(&(appParams->sublist("SG Parameters")),false);
+      Teuchos::rcp(new Teuchos::ParameterList);
     if (!full_expansion) {
       sgParams->set("Parameter Expansion Type", "Linear");
       sgParams->set("Jacobian Expansion Type", "Linear");
@@ -196,17 +133,32 @@ int main(int argc, char *argv[]) {
     sgParams->set("Mean Preconditioner Type", "ML");
     Teuchos::ParameterList& precParams = 
       sgParams->sublist("Preconditioner Parameters");
-    precParams.set("default values", "DD");
+    precParams.set("default values", "SA");
+    precParams.set("ML output", 10);
+    precParams.set("max levels",5);
+    precParams.set("increasing or decreasing","increasing");
+    precParams.set("aggregation: type", "Uncoupled");
+    precParams.set("smoother: type","ML symmetric Gauss-Seidel");
+    precParams.set("smoother: sweeps",1);
+    precParams.set("smoother: pre or post", "both");
+    precParams.set("coarse: max size", 200);
+#ifdef HAVE_ML_AMESOS
+    precParams.set("coarse: type","Amesos-KLU");
+#else
+    precParams.set("coarse: type","Jacobi");
+#endif
 
     // Create stochastic Galerkin model evaluator
     Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =
       Teuchos::rcp(new Stokhos::SGModelEvaluator(model, basis, Teuchos::null,
 						 expansion, Cijk, sgParams,
-						 Comm));
+						 Comm, sg_x_init, sg_p_init));
 
     // Create vectors and operators
-    Teuchos::RCP<const Epetra_Vector> sg_p = sg_model->get_p_init(2);
+    Teuchos::RCP<const Epetra_Vector> sg_p = sg_model->get_p_init(1);
     Teuchos::RCP<Epetra_Vector> sg_x = 
+      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_x_map())));
+    Teuchos::RCP<Epetra_Vector> sg_jx = 
       Teuchos::rcp(new Epetra_Vector(*(sg_model->get_x_map())));
     *sg_x = *(sg_model->get_x_init());
     Teuchos::RCP<Epetra_Vector> sg_f = 
@@ -216,10 +168,11 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Epetra_Operator> sg_J = sg_model->create_W();
     Teuchos::RCP<Epetra_Operator> sg_M = sg_model->create_WPrec()->PrecOp;
 
+    
     // Setup InArgs and OutArgs
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_model->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs sg_outArgs = sg_model->createOutArgs();
-    sg_inArgs.set_p(2, sg_p);
+    sg_inArgs.set_p(1, sg_p);
     sg_inArgs.set_x(sg_x);
     sg_outArgs.set_f(sg_f);
     sg_outArgs.set_W(sg_J);
@@ -235,7 +188,7 @@ int main(int argc, char *argv[]) {
 
     // Setup AztecOO solver
     AztecOO aztec;
-    aztec.SetAztecOption(AZ_solver, AZ_gmres);
+    aztec.SetAztecOption(AZ_solver, AZ_cg);
     aztec.SetAztecOption(AZ_precond, AZ_none);
     aztec.SetAztecOption(AZ_kspace, 20);
     aztec.SetAztecOption(AZ_conv, AZ_r0);
@@ -246,35 +199,77 @@ int main(int argc, char *argv[]) {
     aztec.SetRHS(sg_f.get());
 
     // Solve linear system
-    aztec.Iterate(100, 1e-12);
+    aztec.Iterate(1000, 1e-12);
 
     // Update x
     sg_x->Update(-1.0, *sg_dx, 1.0);
+   
+    //sg_J->Apply(*sg_x,*sg_jx);
+    std::cout << "sg_x" <<*sg_x << std::endl;
 
     // Compute new residual & response function
-    Teuchos::RCP<Epetra_Vector> sg_g = 
-      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_g_map(1))));
     EpetraExt::ModelEvaluator::OutArgs sg_outArgs2 = sg_model->createOutArgs();
+    sg_f->PutScalar(0.0);
     sg_outArgs2.set_f(sg_f);
-    sg_outArgs2.set_g(1, sg_g);
     sg_model->evalModel(sg_inArgs, sg_outArgs2);
 
     // Print initial residual norm
     sg_f->Norm2(&norm_f);
     std::cout << "\nFinal residual norm = " << norm_f << std::endl;
 
-    // Print mean and standard deviation
-    Stokhos::EpetraVectorOrthogPoly sg_g_poly(basis, View, 
-					      *(model->get_g_map(0)), *sg_g);
-    Epetra_Vector mean(*(model->get_g_map(0)));
-    Epetra_Vector std_dev(*(model->get_g_map(0)));
-    sg_g_poly.computeMean(mean);
-    sg_g_poly.computeStandardDeviation(std_dev);
-    std::cout << "\nResponse Expansion = " << std::endl;
-    std::cout.precision(12);
-    sg_g_poly.print(std::cout);
-    std::cout << "\nResponse Mean =      " << std::endl << mean << std::endl;
-    std::cout << "Response Std. Dev. = " << std::endl << std_dev << std::endl;
+/*
+    Teuchos::RCP<const Epetra_Vector> p = model->get_p_init(0);
+    Teuchos::RCP<Epetra_Vector> x = 
+      Teuchos::rcp(new Epetra_Vector(*(model->get_x_map())));
+    x->PutScalar(0.0);
+    Teuchos::RCP<Epetra_Vector> f = 
+      Teuchos::rcp(new Epetra_Vector(*(model->get_f_map())));
+    Teuchos::RCP<Epetra_Vector> dx = 
+      Teuchos::rcp(new Epetra_Vector(*(model->get_x_map())));
+    Teuchos::RCP<Epetra_Operator> J = model->create_W();
+ 
+    EpetraExt::ModelEvaluator::InArgs inArgs = model->createInArgs();
+    EpetraExt::ModelEvaluator::OutArgs outArgs = model->createOutArgs();
+    inArgs.set_p(0, p);
+    inArgs.set_x(x);
+    outArgs.set_f(f);
+    outArgs.set_W(J);
+
+    // Evaluate model
+    model->evalModel(inArgs, outArgs);
+
+    // Print initial residual norm
+    double norm_f;
+    f->Norm2(&norm_f);
+    std::cout << "\nInitial residual norm = " << norm_f << std::endl;
+
+    // Setup AztecOO solver
+    AztecOO aztec;
+    aztec.SetAztecOption(AZ_solver, AZ_cg);
+    aztec.SetAztecOption(AZ_precond, AZ_none);
+    aztec.SetAztecOption(AZ_kspace, 20);
+    aztec.SetAztecOption(AZ_conv, AZ_r0);
+    aztec.SetAztecOption(AZ_output, 1);
+    aztec.SetUserOperator(J.get());
+    //aztec.SetPrecOperator(sg_M.get());
+    aztec.SetLHS(dx.get());
+    aztec.SetRHS(f.get());
+
+    // Solve linear system
+    aztec.Iterate(100, 1e-12);
+
+    // Update x
+    x->Update(-1.0, *dx, 1.0);
+
+    // Compute new residual & response function
+    EpetraExt::ModelEvaluator::OutArgs outArgs2 = model->createOutArgs();
+    outArgs2.set_f(f);
+    model->evalModel(inArgs, outArgs2);
+
+    // Print initial residual norm
+    f->Norm2(&norm_f);
+    std::cout << "\nFinal residual norm = " << norm_f << std::endl;
+  */  
 
     if (norm_f < 1.0e-10)
       std::cout << "Test Passed!" << std::endl;

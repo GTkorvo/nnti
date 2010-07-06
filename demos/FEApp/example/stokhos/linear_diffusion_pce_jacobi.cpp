@@ -54,6 +54,7 @@
 
 // Stokhos Stochastic Galerkin
 #include "Stokhos.hpp"
+#include "EpetraExt_BlockVector.h"
 
 // Timing utilities
 #include "Teuchos_TimeMonitor.hpp"
@@ -61,7 +62,7 @@
 int main(int argc, char *argv[]) {
   int nelem = 100;
   double h = 1.0/nelem;
-  int num_KL = 10;
+  int num_KL = 3;
   int p = 5;
   bool full_expansion = false;
 
@@ -208,13 +209,34 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const Epetra_Vector> sg_p = sg_model->get_p_init(2);
     Teuchos::RCP<Epetra_Vector> sg_x = 
       Teuchos::rcp(new Epetra_Vector(*(sg_model->get_x_map())));
+    Teuchos::RCP<Epetra_Vector> sg_y = 
+      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_x_map())));
     *sg_x = *(sg_model->get_x_init());
     Teuchos::RCP<Epetra_Vector> sg_f = 
+      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_f_map())));
+    Teuchos::RCP<Epetra_Vector> sg_df = 
       Teuchos::rcp(new Epetra_Vector(*(sg_model->get_f_map())));
     Teuchos::RCP<Epetra_Vector> sg_dx = 
       Teuchos::rcp(new Epetra_Vector(*(sg_model->get_x_map())));
     Teuchos::RCP<Epetra_Operator> sg_J = sg_model->create_W();
     Teuchos::RCP<Epetra_Operator> sg_M = sg_model->create_WPrec()->PrecOp;
+    
+    // std::cout << "parameter PC expansion:" << std::endl 
+//            << *sg_p_init << std::endl;
+  //  std::cout << "parameter block vector:" << std::endl 
+//            << *sg_p << std::endl;
+//
+  //  std::cout << "parameter PC expansion:" << std::endl 
+//            << *sg_x_init << std::endl;
+  //  std::cout << "parameter block vector:" << std::endl 
+//            << *sg_x << std::endl;
+
+  //  EpetraExt::BlockVector sg_p_block(View, p_sg_map, *sg_p);
+  //  Teuchos::RCP<const Epetra_Vector> sg_p_vec = sg_p_block.GetBlock(2);
+
+//    EpetraExt::BlockVector sg_x_block(View, *(app->getMap()), *sg_x);
+  //  Teuchos::RCP<const Epetra_Vector> sg_x_vec = sg_x_block.GetBlock(2);
+
 
     // Setup InArgs and OutArgs
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_model->createInArgs();
@@ -228,10 +250,53 @@ int main(int argc, char *argv[]) {
     // Evaluate model
     sg_model->evalModel(sg_inArgs, sg_outArgs);
 
+    Teuchos::RCP<Stokhos::MatrixFreeEpetraOp> stokhos_op =
+      Teuchos::rcp_dynamic_cast<Stokhos::MatrixFreeEpetraOp>(sg_J, true);
+    Teuchos::RCP<Stokhos::VectorOrthogPoly<Epetra_Operator> > sg_J_poly
+      = stokhos_op->getOperatorBlocks();
+    // to get k-th matrix:  (*sg_J_poly)[k]
+
+    Teuchos::RCP<Stokhos::MeanEpetraOp> mean_op = 
+      Teuchos::rcp_dynamic_cast<Stokhos::MeanEpetraOp>(sg_M, true);
+
+    Teuchos::RCP<Epetra_Operator> mean_prec
+      = mean_op->getMeanOperator();
+
+    //const Stokhos::VectorOrthogPoly<Epetra_Operator>& sg_J_poly_ref = *sg_J_poly;
+
+    std::vector< Teuchos::RCP<const Epetra_Vector> > sg_p_vec_all ;
+    std::vector< Teuchos::RCP< Epetra_Vector> > sg_x_vec_all ;
+    std::vector< Teuchos::RCP< Epetra_Vector> > sg_dx_vec_all ; 
+    std::vector< Teuchos::RCP< Epetra_Vector> > sg_f_vec_all ;
+
+    // Extract blocks
+    EpetraExt::BlockVector sg_p_block(View, p_sg_map, *sg_p);
+    EpetraExt::BlockVector sg_x_block(View, *(app->getMap()), *sg_x);
+    EpetraExt::BlockVector sg_dx_block(View, *(app->getMap()), *sg_dx);
+    EpetraExt::BlockVector sg_f_block(View, *(app->getMap()), *sg_f);
+
+    // sg_p_vec_all.push_back(sg_p_block.GetBlock(0));
+    for (int i=0; i<sz; i++) {
+      sg_p_vec_all.push_back(sg_p_block.GetBlock(i));
+      sg_x_vec_all.push_back(sg_x_block.GetBlock(i));
+      sg_dx_vec_all.push_back(sg_dx_block.GetBlock(i));
+      sg_f_vec_all.push_back(sg_f_block.GetBlock(i));
+    }
+
+
     // Print initial residual norm
-    double norm_f;
+    double norm_f,norm_df;
     sg_f->Norm2(&norm_f);
     std::cout << "\nInitial residual norm = " << norm_f << std::endl;
+    
+//  Teuchos::RCP< Epetra_Vector> kx ;
+    Teuchos::RCP<Epetra_Vector> kx =
+      Teuchos::rcp(new Epetra_Vector(*(app->getMap())));
+    Teuchos::RCP<Epetra_Vector> dx =
+      Teuchos::rcp(new Epetra_Vector(*(app->getMap())));
+    Teuchos::RCP<Epetra_Vector> df =
+      Teuchos::rcp(new Epetra_Vector(*(app->getMap())));
+
 
     // Setup AztecOO solver
     AztecOO aztec;
@@ -239,17 +304,75 @@ int main(int argc, char *argv[]) {
     aztec.SetAztecOption(AZ_precond, AZ_none);
     aztec.SetAztecOption(AZ_kspace, 20);
     aztec.SetAztecOption(AZ_conv, AZ_r0);
-    aztec.SetAztecOption(AZ_output, 1);
-    aztec.SetUserOperator(sg_J.get());
-    aztec.SetPrecOperator(sg_M.get());
-    aztec.SetLHS(sg_dx.get());
-    aztec.SetRHS(sg_f.get());
+    //aztec.SetAztecOption(AZ_output, 1);
+    aztec.SetAztecOption(AZ_output, AZ_none);
+    aztec.SetUserOperator((*sg_J_poly).getCoeffPtr(0).get());
+    aztec.SetPrecOperator(mean_prec.get());
+    aztec.SetLHS(dx.get());
 
-    // Solve linear system
-    aztec.Iterate(100, 1e-12);
+norm_df = 1.0;
+int iter = 0;
+//for (int iter=0;iter<38;iter++){
+while ((norm_df/norm_f)>1e-12) {
+    TEUCHOS_FUNC_TIME_MONITOR("Total global solve Time");
+    iter++;
+     // Extract blocks
+    EpetraExt::BlockVector sg_f_block(View, *(app->getMap()), *sg_f);
 
-    // Update x
-    sg_x->Update(-1.0, *sg_dx, 1.0);
+    // sg_p_vec_all.push_back(sg_p_block.GetBlock(0));
+    // for (int i=0; i<sz; i++) {
+    //  sg_f_vec_all.push_back(sg_f_block.GetBlock(i));
+    // }
+
+     double c0kk;
+    // Loop over Cijk entries including a non-zero in the graph at
+    // indices (i,j) if there is any k for which Cijk is non-zero
+  //  ordinal_type Cijk_size = Cijk.size();
+    for (int k=0; k<sz; k++) {
+      df->Update(1.0, *sg_f_vec_all[k], 0.0);
+      int nj = Cijk->num_j(k);
+      const Teuchos::Array<int>& j_indices = Cijk->Jindices(k);
+      //std::cout << "j_indices for k =" << k << j_indices << std::endl;
+      for (int jj=0; jj<nj; jj++) {
+        int j = j_indices[jj];
+        const Teuchos::Array<double>& cijk_values = Cijk->values(k,jj);
+        const Teuchos::Array<int>& i_indices = Cijk->Iindices(k,jj);
+        int ni = i_indices.size();
+        for (int ii=0; ii<ni; ii++) {
+          int i = i_indices[ii];
+          double c = cijk_values[ii];  // C(i,j,k)
+//          if (i !=0 && i<num_KL+1) {
+          if (i !=0 ) {
+           (*sg_J_poly)[i].Apply(*(sg_dx_vec_all[j]),*kx);
+           df->Update(-1.0*c,*kx,1.0);          
+          }
+          if (i==0 && j==k) {
+            c0kk = c;
+	    // std::cout << "c0kk in [" << i << j << k << "]th iteration = " << c0kk << std::endl;
+          }
+        }
+      }    
+
+      df->Scale(1/c0kk);
+
+      aztec.SetRHS(df.get());
+      // Solve linear system
+      aztec.Iterate(100, 1e-12);
+
+      // Update x
+      sg_dx_vec_all[k]->Update(1.0, *dx, 0.0);
+
+    } //End of k loop
+    sg_J->Apply(*(sg_dx),*(sg_y));
+    sg_df->Update(1.0,*sg_y,-1.0,*sg_f,0.0);
+    sg_df->Norm2(&norm_df);
+    std::cout << "rel residual norm at iteration "<< iter <<" is " << norm_df/norm_f << std::endl;
+  } //End of iter loop 
+
+  for (int k=0; k<sz; k++) {
+     sg_x_vec_all[k]->Update(-1.0, *sg_dx_vec_all[k], 1.0);
+  }
+
 
     // Compute new residual & response function
     Teuchos::RCP<Epetra_Vector> sg_g = 
@@ -259,7 +382,7 @@ int main(int argc, char *argv[]) {
     sg_outArgs2.set_g(1, sg_g);
     sg_model->evalModel(sg_inArgs, sg_outArgs2);
 
-    // Print initial residual norm
+    // Print Final residual norm
     sg_f->Norm2(&norm_f);
     std::cout << "\nFinal residual norm = " << norm_f << std::endl;
 
