@@ -356,4 +356,5 @@ PACKAGE_ADD_LIBRARY(
   TSFExtended
   HEADERS ${HEADERS}
   SOURCES ${SOURCES}
+  DEPLIBS sundanceUtils
   )
