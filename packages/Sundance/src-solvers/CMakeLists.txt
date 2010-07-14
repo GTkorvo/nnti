@@ -166,6 +166,8 @@ APPEND_SET(HEADERS
   Operators/TSFMultiVectorOperatorImpl.hpp
   Operators/TSFNonlinearOperator.hpp
   Operators/TSFNonlinearOperatorBase.hpp
+  Operators/TSFNonmemberOpHelpersDecl.hpp
+  Operators/TSFNonmemberOpHelpersImpl.hpp
   Operators/TSFOpWithBackwardsCompatibleApply.hpp
   Operators/TSFPartitionedMatrixFactory.hpp
   Operators/TSFPartitionedToMonolithicConverter.hpp
