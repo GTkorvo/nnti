@@ -267,7 +267,7 @@ void EpetraMatrix::getILUKPreconditioner(int fillLevels,
 }
 
 
-void EpetraMatrix::print(ostream& os) const 
+void EpetraMatrix::print(std::ostream& os) const 
 {
   crsMatrix()->Print(os);
 }
@@ -276,7 +276,7 @@ void EpetraMatrix::print(ostream& os) const
 string EpetraMatrix::description() const 
 {
   if (name() != "") return name();
-  string rtn = "EpetraMatrix[nRow=" 
+  std::string rtn = "EpetraMatrix[nRow=" 
     + Teuchos::toString(crsMatrix()->NumGlobalRows())
     + ", nCol=" + Teuchos::toString(crsMatrix()->NumGlobalCols())
     + "]";

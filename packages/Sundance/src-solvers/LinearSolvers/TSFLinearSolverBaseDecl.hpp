@@ -85,13 +85,13 @@ namespace TSFExtended
     ParameterList& parameters();
 
     /** */
-    static string verbosityParam();
+    static std::string verbosityParam();
 
     /** */
     template <typename T>
     static void setParameter(const ParameterList& params,
                              T* valuePtr, 
-                             const string& paramName);
+                             const std::string& paramName);
   private:
     ParameterList params_;
   };

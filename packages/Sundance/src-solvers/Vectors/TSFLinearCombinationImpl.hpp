@@ -46,7 +46,7 @@ namespace TSFExtendedOps
 
 using Sundance::Out;
 using Sundance::Tabs;
-using std::endl;
+
 
 /* -------- methods of OpTimesLC ------ */
 

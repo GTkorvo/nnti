@@ -35,7 +35,7 @@
  
 using namespace TSFExtended;
 using namespace Teuchos;
-using std::ostream;
+
 
 
 namespace TSFExtended

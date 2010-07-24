@@ -64,11 +64,11 @@ void  EpetraGhostView::import(const Epetra_Import& importer,
   TEST_FOR_EXCEPTION(ierr < 0, std::runtime_error, "ierr=" << ierr << " in EpetraGhostView::import()");
 }
 
-void EpetraGhostView::print(ostream& os) const
+void EpetraGhostView::print(std::ostream& os) const
 {
   if (ghostView_.get()==0) 
     {
-      os << "[null Epetra ghost view]" << endl;
+      os << "[null Epetra ghost view]" << std::endl;
     }
   else
     {

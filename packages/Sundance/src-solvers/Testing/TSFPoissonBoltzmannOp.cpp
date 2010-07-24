@@ -36,7 +36,7 @@
 
 using namespace TSFExtended;
 using namespace Teuchos;
-using std::ostream;
+
 
 PoissonBoltzmannOp::PoissonBoltzmannOp(int nLocal, const VectorType<double>& vecType)
   : NonlinearOperatorBase<double>(), J_(nLocal, vecType), importer_(),

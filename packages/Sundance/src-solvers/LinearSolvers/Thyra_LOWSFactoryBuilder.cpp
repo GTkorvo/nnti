@@ -61,16 +61,16 @@ LOWSFactoryBuilder::createLOWSFactory(const ParameterList& params)
   if (params.isSublist("Preconditioner"))
     {
       ParameterList precParams = params.sublist("Preconditioner");
-      string precType = precParams.get<string>("Type");
+      std::string precType = precParams.get<string>("Type");
       if (precType=="ML")
         {
-          string probType = getParameter<string>(precParams, "Problem Type");
+          std::string probType = getParameter<string>(precParams, "Problem Type");
           ParameterList mlParams = precParams.sublist("ML Settings");
           prec = rcp(new MLPreconditionerFactory(probType, mlParams));
         }
       else if (precType=="Ifpack")
         {
-          string probType = getParameter<string>(precParams, "Prec Type");
+          std::string probType = getParameter<string>(precParams, "Prec Type");
           RCP<ParameterList> ifpackParams 
             = rcp(new ParameterList(precParams.sublist("Ifpack")));
           prec = rcp(new IfpackPreconditionerFactory());

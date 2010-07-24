@@ -139,10 +139,10 @@ void InverseOperator<Scalar>::print(std::ostream& os) const
 {
   using namespace std;
   Tabs tab(0);
-  os << tab << "InverseOperator[" << endl;
+  os << tab << "InverseOperator[" << std::endl;
   Tabs tab1;
-  os << tab1 << "op=" << op_ << endl;
-  os << tab << "]" << endl;
+  os << tab1 << "op=" << op_ << std::endl;
+  os << tab << "]" << std::endl;
 }
 
 

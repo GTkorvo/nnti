@@ -69,7 +69,7 @@ inline void AnasaziEigensolver<Scalar>::solve(
   
   
   // Eigensolver parameters
-  string method = this->params().get<string>("Method");
+  std::string method = this->params().get<string>("Method");
   int numEigs = this->params().get<int>("Number of Eigenvalues");
   int blockSize = this->params().get<int>("Block Size");
   bool usePrec = this->params().get<bool>("Use Preconditioner");

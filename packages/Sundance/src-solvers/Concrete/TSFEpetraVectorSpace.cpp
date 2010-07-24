@@ -91,7 +91,7 @@ EpetraVectorSpace::smallVecSpcFcty() const
 Teuchos::RCP<VectorBase<double> >
 EpetraVectorSpace::createMember() const
 {
-//  cout << "creating vector" << endl;
+//  cout << "creating vector" << std::endl;
   return rcp(new EpetraVector(rcp(this, false)));
 }
 
@@ -132,7 +132,7 @@ EpetraVectorSpace::clone() const
 
 string EpetraVectorSpace::description() const
 {
-  string rtn = "EpetraVS[d=" + Teuchos::toString(dim());
+  std::string rtn = "EpetraVS[d=" + Teuchos::toString(dim());
   if (localSubDim() != dim()) rtn += ", local="
     + Teuchos::toString(localSubDim());
   rtn += "]";

@@ -55,7 +55,7 @@ using namespace TSFExtended;
 using namespace Teuchos;
 using namespace Sundance;
 using namespace std;
-using std::ostream;
+
 using Thyra::TestSpecifier;
 
 
@@ -288,7 +288,7 @@ inline bool LinearCombinationTester<Scalar>
   Vector<Scalar> c = z.copy();
     
 
-  Out::os() << "starting linear combination tests" << endl;
+  Out::os() << "starting linear combination tests" << std::endl;
 
   x = 2.0*A*x;
   Scalar err = (x - 2.0*A*a).norm2();

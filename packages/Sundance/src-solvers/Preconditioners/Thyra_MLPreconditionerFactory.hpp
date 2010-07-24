@@ -137,7 +137,7 @@ private:
 
   RCP<ParameterList> defaultParameters(const EMLProblemType& probType) const ;
 
-  RCP<ParameterList> defaultParameters(const string& probType) const ;
+  RCP<ParameterList> defaultParameters(const std::string& probType) const ;
 
   // ////////////////////////////////
   // Private data members

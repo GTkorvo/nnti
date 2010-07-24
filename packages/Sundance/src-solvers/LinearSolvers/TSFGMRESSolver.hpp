@@ -64,11 +64,11 @@ namespace TSFExtended
     /** \name Printable interface */
     //@{
     /** Write to a stream  */
-    void print(ostream& os) const 
+    void print(std::ostream& os) const 
     {
-      os << description() << "[" << endl;
-      os << this->parameters() << endl;
-      os << "]" << endl;
+      os << description() << "[" << std::endl;
+      os << this->parameters() << std::endl;
+      os << "]" << std::endl;
     }
     //@}
 
@@ -78,7 +78,7 @@ namespace TSFExtended
     /** \name Describable interface */
     //@{
     /** Write a brief description */
-    string description() const {return "GMRESSolver";}
+    std::string description() const {return "GMRESSolver";}
     //@}
 
     /** \name Handleable interface */
@@ -113,10 +113,10 @@ namespace TSFExtended
 
     if (verbosity > 1)
       {
-        cerr << "GMRES solver" << endl;
-        cerr << "Max iterations " << maxiters << endl;
-        cerr << "Krylov subspace size " << kSpace<< endl;
-        cerr << "Convergence tolerance " << tol << endl;
+        std::cerr << "GMRES solver" << std::endl;
+        std::cerr << "Max iterations " << maxiters << std::endl;
+        std::cerr << "Krylov subspace size " << kSpace<< std::endl;
+        std::cerr << "Convergence tolerance " << tol << std::endl;
       }
 
     // following GMRES from Matlab
@@ -302,11 +302,11 @@ namespace TSFExtended
 
             if (myRank==0 && verbosity > 1 ) 
               {
-                cerr << "GMRES: iteration=";
-                cerr.width(8);
-                cerr << iter;
-                cerr.width(20);
-                cerr << "scaled resid=" << normOfResidVec/normOfB << endl;
+                std::cerr << "GMRES: iteration=";
+                std::cerr.width(8);
+                std::cerr << iter;
+                std::cerr.width(20);
+                std::cerr << "scaled resid=" << normOfResidVec/normOfB << std::endl;
               }
 
             // check for convergence
@@ -343,9 +343,9 @@ namespace TSFExtended
                     CONV = 1; // converged
                     if (verbosity > 0 && myRank==0)
                       {
-                        cerr << "GMRES converged (1) in " << iter+1
+                        std::cerr << "GMRES converged (1) in " << iter+1
                              << " iters: final scaled resid = " 
-                             <<  normOfResidVec/normOfB << endl;
+                             <<  normOfResidVec/normOfB << std::endl;
                       }
                     SolverState<Scalar> rtn(SolveConverged, 
                                             "yippee!!", iter+1, 
@@ -362,9 +362,9 @@ namespace TSFExtended
           {
             if (verbosity > 0 && myRank==0)
               {
-                cerr << "GMRES converged (1) in " << iter+1
+                std::cerr << "GMRES converged (1) in " << iter+1
                      << " iters: final scaled resid = " 
-                     <<  normOfResidVec/normOfB << endl;
+                     <<  normOfResidVec/normOfB << std::endl;
               }
             SolverState<Scalar> rtn(SolveConverged, 
                                     "yippee!!", iter+1, 
@@ -384,8 +384,8 @@ namespace TSFExtended
             
             if (verbosity > 1 && myRank==0)
               {
-                cerr << "GMRES restarting: current scaled resid = "
-                     << normOfResidVec/normOfB << endl;
+                std::cerr << "GMRES restarting: current scaled resid = "
+                     << normOfResidVec/normOfB << std::endl;
               }
           }
 			

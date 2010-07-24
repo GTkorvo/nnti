@@ -58,7 +58,7 @@ NOX::TSF::Vector::Vector(const NOX::TSF::Vector& source,
     break;
 
   default:
-    cerr << "NOX:TSF::Vector - invalid CopyType for copy constructor." << endl;
+    std::cerr << "NOX:TSF::Vector - invalid CopyType for copy constructor." << std::endl;
     throw "NOX TSF Error";
   }
 }
@@ -80,7 +80,7 @@ NOX::TSF::Vector::Vector(const TSFExtended::Vector<double>& source,
     break;
 
   default:
-    cerr << "NOX:TSF::Vector - invalid CopyType for copy constructor." << endl;
+    std::cerr << "NOX:TSF::Vector - invalid CopyType for copy constructor." << std::endl;
     throw "NOX TSF Error";
   }
 }
@@ -104,7 +104,7 @@ NOX::TSF::Vector::Vector(const NOX::TSF::Vector& source,
     break;
 
   default:
-    cerr << "NOX:TSF::Vector - invalid CopyType for copy constructor." << endl;
+    std::cerr << "NOX:TSF::Vector - invalid CopyType for copy constructor." << std::endl;
     throw "NOX TSF Error";
   }
 }
@@ -127,7 +127,7 @@ NOX::TSF::Vector::Vector(const TSFExtended::Vector<double>& source,
     break;
 
   default:
-    cerr << "NOX:TSF::Vector - invalid CopyType for copy constructor." << endl;
+    std::cerr << "NOX:TSF::Vector - invalid CopyType for copy constructor." << std::endl;
     throw "NOX TSF Error";
   }
 }
@@ -303,7 +303,7 @@ double NOX::TSF::Vector::norm(const NOX::TSF::Vector& weights) const
 {
   if (weights.length() != this->length()) 
   {
-    cerr << "NOX::TSF::Vector::norm - size mismatch for weights vector" << endl;
+    std::cerr << "NOX::TSF::Vector::norm - size mismatch for weights vector" << std::endl;
     throw "NOX::TSF Error";
   }
   return x.norm2(weights.getTSFVector());
@@ -323,7 +323,7 @@ double NOX::TSF::Vector::dot(const NOX::TSF::Vector& y) const
 {
   if (y.length() != this->length()) 
   {
-    cerr << "NOX::TSF::Vector::dot - size mismatch for y vector" << endl;
+    std::cerr << "NOX::TSF::Vector::dot - size mismatch for y vector" << std::endl;
     throw "NOX::TSF Error";
   }
 
@@ -337,7 +337,7 @@ int NOX::TSF::Vector::length() const
 
 
 
-ostream& NOX::TSF::Vector::leftshift(ostream& stream) const
+ostream& NOX::TSF::Vector::leftshift(std::ostream& stream) const
 {
   x.print(stream);
   return stream;
@@ -345,7 +345,7 @@ ostream& NOX::TSF::Vector::leftshift(ostream& stream) const
 
 namespace std
 {
-ostream& operator<<(ostream& stream, const NOX::TSF::Vector& v)
+ostream& operator<<(std::ostream& stream, const NOX::TSF::Vector& v)
 {
   return v.leftshift(stream);
 }
@@ -353,5 +353,5 @@ ostream& operator<<(ostream& stream, const NOX::TSF::Vector& v)
 
 void NOX::TSF::Vector::print() const
 {
-  cout << *this << endl;
+  cout << *this << std::endl;
 }
