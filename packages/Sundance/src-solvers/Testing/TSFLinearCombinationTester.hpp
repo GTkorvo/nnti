@@ -54,7 +54,6 @@
 using namespace TSFExtended;
 using namespace Teuchos;
 using namespace Sundance;
-using namespace std;
 
 using Thyra::TestSpecifier;
 

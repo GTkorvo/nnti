@@ -46,7 +46,6 @@
 namespace TSFExtended
 {
 using Teuchos::RCP;
-using std::endl;
 
 /*
  * Ctor with a linear operator and a solver specified.
@@ -137,7 +136,6 @@ InverseOperator<Scalar>::range() const
 template <class Scalar> 
 void InverseOperator<Scalar>::print(std::ostream& os) const
 {
-  using namespace std;
   Tabs tab(0);
   os << tab << "InverseOperator[" << std::endl;
   Tabs tab1;
