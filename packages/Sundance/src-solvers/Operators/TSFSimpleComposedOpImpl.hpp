@@ -49,8 +49,7 @@ namespace TSFExtended
 {
 using namespace Teuchos;
 using namespace Sundance;
-using std::endl;
-using namespace std;
+
 
 
 /*
@@ -137,16 +136,16 @@ template <class Scalar> inline
 void SimpleComposedOp<Scalar>::print(std::ostream& os) const 
 {
   Tabs tab(0);
-  os << tab << "ComposedOperator[" << endl;
+  os << tab << "ComposedOperator[" << std::endl;
   for (int i=0; i<ops_.size(); i++)
   {
     Tabs tab1;
     os << tab1 << "factor #" << i << std::endl;
     Tabs tab2;
-    os << tab2 << ops_[i].description() << endl;
+    os << tab2 << ops_[i].description() << std::endl;
     os << std::endl;
   }
-  os << tab << "]" <<  endl;
+  os << tab << "]" <<  std::endl;
 }
 
 

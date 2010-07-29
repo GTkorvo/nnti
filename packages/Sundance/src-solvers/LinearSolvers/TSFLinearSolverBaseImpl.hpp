@@ -62,7 +62,7 @@ template <class Scalar>
 template <typename T> inline
 void LinearSolverBase<Scalar>::setParameter(const ParameterList& params,
   T* dataPtr,
-  const string& name)
+  const std::string& name)
 {
   if (!params.isParameter(name)) return;
 

@@ -36,7 +36,7 @@
 
 using namespace TSFExtended;
 using namespace Teuchos;
-using std::ostream;
+
 
 HeatOperator1D::HeatOperator1D(int nLocalRows, const VectorType<double>& type)
   : OperatorBuilder<double>(nLocalRows, type), 

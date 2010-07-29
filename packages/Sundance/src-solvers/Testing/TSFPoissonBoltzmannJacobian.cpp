@@ -36,7 +36,7 @@
 #endif
 using namespace TSFExtended;
 using namespace Teuchos;
-using std::ostream;
+
 
 PoissonBoltzmannJacobian
 ::PoissonBoltzmannJacobian(int nLocalRows, 

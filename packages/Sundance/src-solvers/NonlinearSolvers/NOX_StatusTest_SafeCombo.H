@@ -120,7 +120,7 @@ namespace NOX {
 
       virtual StatusType getStatus() const;
 
-      virtual ostream& print(ostream& stream, int indent = 0) const;
+      virtual ostream& print(std::ostream& stream, int indent = 0) const;
   
     protected:
 

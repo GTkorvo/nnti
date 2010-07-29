@@ -118,7 +118,7 @@ SerialVectorSpace::clone() const
 
 string SerialVectorSpace::description() const
 {
-  string rtn = "SerialVS[d=" + Teuchos::toString(this->dim()) + "]";
+  std::string rtn = "SerialVS[d=" + Teuchos::toString(this->dim()) + "]";
   return rtn;
 }
 

@@ -137,7 +137,7 @@ NOXSolver::NOXSolver(const ParameterList& nonlinParams,
   if (params_.isSublist("Linear Solver"))
     {
       Out::root() << tab << "WARNING: linear solver in NOX parameter list "
-        "will be overridden by alternate solver" << endl;
+        "will be overridden by alternate solver" << std::endl;
     }
   
   if (params_.isSublist("Printing"))

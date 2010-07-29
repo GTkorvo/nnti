@@ -70,7 +70,7 @@ public:
   /** \name Describable interface */
   //@{
   /** Write a brief description */
-  string description() const {return "BICGSTABSolver";}
+  std::string description() const {return "BICGSTABSolver";}
   //@}
 
   /** \name Handleable interface */

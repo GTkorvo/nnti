@@ -8,7 +8,7 @@
 
 namespace TSFExtended
 {
-  using std::string;
+  
 
   /**\ingroup DenseSerial
    * Serial vector with math operations
@@ -146,8 +146,8 @@ namespace TSFExtended
     inline DenseSerialVector operator/(const double& scalar) const ;
     //@}
 
-    /** write a brief description to string */
-    string summary() const ;
+    /** write a brief description to std::string */
+    std::string summary() const ;
 
     /** a BLAS object */
     inline static const Teuchos::BLAS<int, double>& blasObject()
@@ -157,7 +157,7 @@ namespace TSFExtended
     double* x() {return &(operator[](0));}
     const double* x() const {return &(operator[](0));}
     void checkLength(const DenseSerialVector& other, 
-                     const string& funcName) const ;
+                     const std::string& funcName) const ;
 
   };
 
@@ -173,7 +173,7 @@ namespace TSFExtended
   }
 
   inline void DenseSerialVector::checkLength(const DenseSerialVector& other, 
-                                             const string& funcName) const
+                                             const std::string& funcName) const
   {
     TEST_FOR_EXCEPTION(size() != other.size(), std::runtime_error,
                        "mismatch between operands " 

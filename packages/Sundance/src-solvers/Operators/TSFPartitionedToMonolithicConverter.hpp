@@ -80,7 +80,7 @@ namespace TSFExtended
         x[0] = in.getBlock(0);
         x[1] = in.getBlock(1);
 
-        cout << "index array=" << indices_ << endl;
+        cout << "index array=" << indices_ << std::endl;
 
         for (int b=0; b<2; b++)
         {

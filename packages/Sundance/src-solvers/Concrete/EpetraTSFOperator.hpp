@@ -89,7 +89,7 @@ namespace Epetra
     RCP<const Epetra_Map> range_;
     bool isNativeEpetra_;
     bool isCompoundEpetra_;
-    string label_;
+    std::string label_;
   };
 }
 

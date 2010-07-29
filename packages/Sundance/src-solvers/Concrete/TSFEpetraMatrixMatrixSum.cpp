@@ -61,15 +61,15 @@ LinearOperator<double> epetraMatrixMatrixSum(
 
   TEST_FOR_EXCEPTION(A.range() != B.range(), RuntimeError,
     "incompatible operand ranges in epetraMatrixMatrixSum()"
-    << endl << "A.range()=" << A.range()
-    << endl << "B.range()=" << B.range()
+    << std::endl << "A.range()=" << A.range()
+    << std::endl << "B.range()=" << B.range()
     );
   
 
   TEST_FOR_EXCEPTION(A.domain() != B.domain(), RuntimeError,
     "incompatible operand domains in epetraMatrixMatrixSum()"
-    << endl << "A.domain()=" << A.domain()
-    << endl << "B.domain()=" << B.domain()
+    << std::endl << "A.domain()=" << A.domain()
+    << std::endl << "B.domain()=" << B.domain()
     );
   
 

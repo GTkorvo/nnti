@@ -74,7 +74,7 @@ namespace TSFExtended
     /** \name Describable interface */
     //@{
     /** Write a brief description */
-    string description() const {return "BelosSolver";}
+    std::string description() const {return "BelosSolver";}
     //@}
 
     

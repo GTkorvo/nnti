@@ -38,7 +38,7 @@
 using namespace TSFExtended;
 using namespace TSFExtendedOps;
 using namespace Teuchos;
-using std::ostream;
+
 using Thyra::TestSpecifier;
 
 namespace TSFExtended
@@ -135,7 +135,7 @@ namespace TSFExtended
   {
     if (spec_.doTest())
       {
-        cerr << "running vector addition test..." << endl;
+        std::cerr << "running vector addition test..." << std::endl;
 
         Vector<Scalar> a = space_.createMember();
         Vector<Scalar> b = space_.createMember();
@@ -143,12 +143,12 @@ namespace TSFExtended
         Vector<Scalar> y = space_.createMember();
         x.zero();
         y.zero();
-        cout << "x = " << x << endl;
-        cout << "y = " << y << endl;
+        cout << "x = " << x << std::endl;
+        cout << "y = " << y << std::endl;
         randomizeVec(a);
         randomizeVec(b);
-        cout << "a = " << a << endl;
-        cout << "b = " << b << endl;
+        cout << "a = " << a << std::endl;
+        cout << "b = " << b << std::endl;
 
         /* do the operation elementwise */
         for (SequentialIterator<Scalar> i=space_.begin(); i!=space_.end(); i++)
@@ -159,31 +159,31 @@ namespace TSFExtended
         /* do the operation with member functions */
         x = a + b ;
 
-        cout << "op   (a+b)=" << endl << x << endl;
-        cout << "loop (a+b)=" << endl << y << endl;
+        cout << "op   (a+b)=" << std::endl << x << std::endl;
+        cout << "loop (a+b)=" << std::endl << y << std::endl;
 	
         double err = (x-y).normInf();
 
-        cerr << "|sum error|=" << err << endl;
+        std::cerr << "|sum error|=" << err << std::endl;
         if (err > spec_.errorTol())
           {
-            cerr << "vector sum test FAILED: tol = " 
-                 << spec_.errorTol() << endl;
+            std::cerr << "vector sum test FAILED: tol = " 
+                 << spec_.errorTol() << std::endl;
             return false;
           }
         else if (err > spec_.warningTol())
           {
-            cerr << "WARNING: vector sum test could not beat tol = " 
-                 << spec_.warningTol() << endl;
+            std::cerr << "WARNING: vector sum test could not beat tol = " 
+                 << spec_.warningTol() << std::endl;
           }
 	
       }
     else
       {
-        cerr << "skipping vector addition test..." << endl;
+        std::cerr << "skipping vector addition test..." << std::endl;
       }
-    cerr << "vector addition test PASSED: tol = " 
-         << spec_.errorTol() << endl;
+    std::cerr << "vector addition test PASSED: tol = " 
+         << spec_.errorTol() << std::endl;
     return true;
   }
 
@@ -197,7 +197,7 @@ namespace TSFExtended
   {
     if (spec_.doTest())
       {
-        cerr << "running vector dotStar test..." << endl;
+        std::cerr << "running vector dotStar test..." << std::endl;
 
         Vector<Scalar> a = space_.createMember();
         Vector<Scalar> b = space_.createMember();
@@ -218,26 +218,26 @@ namespace TSFExtended
 
         double err = (x-y).normInf();
 
-        cerr << "|dotStar error|=" << err << endl;
+        std::cerr << "|dotStar error|=" << err << std::endl;
         if (err > spec_.errorTol())
           {
-            cerr << "vector dotStar test FAILED: tol = " 
-                 << spec_.errorTol() << endl;
+            std::cerr << "vector dotStar test FAILED: tol = " 
+                 << spec_.errorTol() << std::endl;
             return false;
           }
         else if (err > spec_.warningTol())
           {
-            cerr << "WARNING: vector dotStar test could not beat tol = " 
-                 << spec_.warningTol() << endl;
+            std::cerr << "WARNING: vector dotStar test could not beat tol = " 
+                 << spec_.warningTol() << std::endl;
           }
 	
       }
     else
       {
-        cerr << "skipping vector dotStar test..." << endl;
+        std::cerr << "skipping vector dotStar test..." << std::endl;
       }
-    cerr << "vector dotStar test PASSED: tol = " 
-         << spec_.errorTol() << endl;
+    std::cerr << "vector dotStar test PASSED: tol = " 
+         << spec_.errorTol() << std::endl;
     return true;
   }
 
@@ -248,7 +248,7 @@ namespace TSFExtended
   {
     if (spec_.doTest())
       {
-        cerr << "running vector dotSlash test..." << endl;
+        std::cerr << "running vector dotSlash test..." << std::endl;
 
         Vector<Scalar> a = space_.createMember();
         Vector<Scalar> b = space_.createMember();
@@ -270,26 +270,26 @@ namespace TSFExtended
 	
         double err = (x-y).normInf();
 
-        cerr << "|dotSlash error|=" << err << endl;
+        std::cerr << "|dotSlash error|=" << err << std::endl;
         if (err > spec_.errorTol())
           {
-            cerr << "vector dotSlash test FAILED: tol = " 
-                 << spec_.errorTol() << endl;
+            std::cerr << "vector dotSlash test FAILED: tol = " 
+                 << spec_.errorTol() << std::endl;
             return false;
           }
         else if (err > spec_.warningTol())
           {
-            cerr << "WARNING: vector dotSlash test could not beat tol = " 
-                 << spec_.warningTol() << endl;
+            std::cerr << "WARNING: vector dotSlash test could not beat tol = " 
+                 << spec_.warningTol() << std::endl;
           }
 	
       }
     else
       {
-        cerr << "skipping vector dotSlash test..." << endl;
+        std::cerr << "skipping vector dotSlash test..." << std::endl;
       }
-    cerr << "vector dotSlash test PASSED: tol = " 
-         << spec_.errorTol() << endl;
+    std::cerr << "vector dotSlash test PASSED: tol = " 
+         << spec_.errorTol() << std::endl;
     return true;
   }
 
@@ -300,7 +300,7 @@ namespace TSFExtended
   {
     if (spec_.doTest())
       {
-        cerr << "running vector scalarMult test..." << endl;
+        std::cerr << "running vector scalarMult test..." << std::endl;
 
         Vector<Scalar> a = space_.createMember();
         Vector<Scalar> x = space_.createMember();
@@ -319,26 +319,26 @@ namespace TSFExtended
 
         double err = (x-y).normInf();
 
-        cerr << "|scalarMult error|=" << err << endl;
+        std::cerr << "|scalarMult error|=" << err << std::endl;
         if (err > spec_.errorTol())
           {
-            cerr << "vector scalarMult test FAILED: tol = " 
-                 << spec_.errorTol() << endl;
+            std::cerr << "vector scalarMult test FAILED: tol = " 
+                 << spec_.errorTol() << std::endl;
             return false;
           }
         else if (err > spec_.warningTol())
           {
-            cerr << "WARNING: vector scalarMult test could not beat tol = " 
-                 << spec_.warningTol() << endl;
+            std::cerr << "WARNING: vector scalarMult test could not beat tol = " 
+                 << spec_.warningTol() << std::endl;
           }
 	
       }
     else
       {
-        cerr << "skipping vector scalarMult test..." << endl;
+        std::cerr << "skipping vector scalarMult test..." << std::endl;
       }
-    cerr << "vector scalarMult test PASSED: tol = " 
-         << spec_.errorTol() << endl;
+    std::cerr << "vector scalarMult test PASSED: tol = " 
+         << spec_.errorTol() << std::endl;
     return true;
   }
  
@@ -348,7 +348,7 @@ namespace TSFExtended
   {
     if (spec_.doTest())
       {
-        cerr << "running vector overloadedUpdate test..." << endl;
+        std::cerr << "running vector overloadedUpdate test..." << std::endl;
 
         Vector<Scalar> a = space_.createMember();
         Vector<Scalar> b = space_.createMember();
@@ -369,26 +369,26 @@ namespace TSFExtended
 
         double err = (x-y).normInf();
 
-        cerr << "|overloadedUpdate error|=" << err << endl;
+        std::cerr << "|overloadedUpdate error|=" << err << std::endl;
         if (err > spec_.errorTol())
           {
-            cerr << "vector overloadedUpdate test FAILED: tol = " 
-                 << spec_.errorTol() << endl;
+            std::cerr << "vector overloadedUpdate test FAILED: tol = " 
+                 << spec_.errorTol() << std::endl;
             return false;
           }
         else if (err > spec_.warningTol())
           {
-            cerr << "WARNING: vector overloadedUpdate test could not beat tol = " 
-                 << spec_.warningTol() << endl;
+            std::cerr << "WARNING: vector overloadedUpdate test could not beat tol = " 
+                 << spec_.warningTol() << std::endl;
           }
 	
       }
     else
       {
-        cerr << "skipping vector overloadedUpdate test..." << endl;
+        std::cerr << "skipping vector overloadedUpdate test..." << std::endl;
       }
-    cerr << "vector overloadedUpdate test PASSED: tol = " 
-         << spec_.errorTol() << endl;
+    std::cerr << "vector overloadedUpdate test PASSED: tol = " 
+         << spec_.errorTol() << std::endl;
     return true;
   }
 

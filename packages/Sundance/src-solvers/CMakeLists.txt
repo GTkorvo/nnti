@@ -166,6 +166,8 @@ APPEND_SET(HEADERS
   Operators/TSFMultiVectorOperatorImpl.hpp
   Operators/TSFNonlinearOperator.hpp
   Operators/TSFNonlinearOperatorBase.hpp
+  Operators/TSFNonmemberOpHelpersDecl.hpp
+  Operators/TSFNonmemberOpHelpersImpl.hpp
   Operators/TSFOpWithBackwardsCompatibleApply.hpp
   Operators/TSFPartitionedMatrixFactory.hpp
   Operators/TSFPartitionedToMonolithicConverter.hpp
@@ -215,7 +217,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/LinearSolvers)
 
 APPEND_SET(HEADERS
   LinearSolvers/TSFAmesosSolver.hpp
-  LinearSolvers/TSFAnasaziEigensolver.hpp
+  LinearSolvers/TSFAnasaziEigensolverDecl.hpp
+  LinearSolvers/TSFAnasaziEigensolverImpl.hpp
   LinearSolvers/TSFAztecSolver.hpp
   LinearSolvers/TSFAztecSolver.hpp
   LinearSolvers/TSFBelosSolver.hpp
@@ -238,6 +241,7 @@ APPEND_SET(HEADERS
 
 APPEND_SET(SOURCES
   LinearSolvers/TSFAmesosSolver.cpp
+  LinearSolvers/TSFAnasaziEigensolver.cpp
   LinearSolvers/TSFAztecSolver.cpp
   LinearSolvers/TSFBelosSolver.cpp
   LinearSolvers/TSFBICGSTABSolver.cpp
@@ -354,4 +358,5 @@ PACKAGE_ADD_LIBRARY(
   TSFExtended
   HEADERS ${HEADERS}
   SOURCES ${SOURCES}
+  DEPLIBS sundanceUtils
   )
