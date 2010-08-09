@@ -402,7 +402,7 @@ while ((norm_df/norm_f)>1e-12) {
       // Solve linear system
       {
        TEUCHOS_FUNC_TIME_MONITOR("Total deterministic solve Time");
-       aztec.Iterate(100, 1e-12);
+       aztec.Iterate(100, 3e-13);
       }
       //std::cout << "sg_dx_vec_all[0]" << *(sg_dx_vec_all[0]) << std::endl;
       // Update x

@@ -57,8 +57,11 @@
 #include "BelosLinearProblem.hpp"
 #include "BelosEpetraAdapter.hpp"
 //#include "BelosBlockCGSolMgr.hpp"
-#include "BelosBlockGmresSolMgr.hpp"
+//#include "BelosBlockGmresSolMgr.hpp"
+#include "BelosPseudoBlockGmresSolMgr.hpp"
 //#include "BelosGCRODRSolMgr.hpp"
+//#include "BelosRCGSolMgr.hpp"
+//#include <Epetra_Operator.h>
 
 //Ifpack preconditioner
 #include "Ifpack.h"
@@ -330,7 +333,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Epetra_CrsMatrix> sg_J_poly_Crs =
         Teuchos::rcp_dynamic_cast< Epetra_CrsMatrix>((*sg_J_poly).getCoeffPtr(0),true);
 
-  bool proc_verbose = true;  
+ /* bool proc_verbose = true;  
   bool leftprec = true;      // left preconditioning or right.
   int numrhs = sz;
   //
@@ -373,43 +376,75 @@ int main(int argc, char *argv[]) {
   // NOTE:  This is necessary because Belos expects an operator to apply the
   //        preconditioner with Apply() NOT ApplyInverse().
   Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
+*/
+    ///////////////////////////////////////////////////////////////////////
+    //Construct the mean based preconditioner
+    // create a parameter list for ML options
+    //////////////////////////////////////////////////////////////////////
+    Teuchos::Time PreconConstruct("Preconditioner_construct_time",false);
+    PreconConstruct.start();
+    Teuchos::ParameterList MLList;
+    ML_Epetra::SetDefaults("SA",MLList);
+    MLList.set("ML output", 10);
+    MLList.set("max levels",5);
+    MLList.set("increasing or decreasing","increasing");
+    MLList.set("aggregation: type", "Uncoupled");
+    MLList.set("smoother: type","ML symmetric Gauss-Seidel");
+    MLList.set("smoother: sweeps",1);
+    MLList.set("coarse: max size", 200);
+    MLList.set("smoother: pre or post", "both");
+    #ifdef HAVE_ML_AMESOS
+      MLList.set("coarse: type","Amesos-KLU");
+    #else
+      MLList.set("coarse: type","Jacobi");
+    #endif
+    ML_Epetra::MultiLevelPreconditioner* MLPrec = new ML_Epetra::MultiLevelPreconditioner(*sg_J_poly_Crs, MLList);
 
-/*    Teuchos::RCP< Belos::LinearProblem<double,MV,OP> > myProblem 
-	= Teuchos::rcp( new Belos::LinearProblem<double,MV,OP>(sg_J_poly_Crs, sg_dx_mv, sg_f_mv) );
+     // Kapil
+    // Create preconditioning wrapper
+
+    // This is not the wrong way but is giving runtime error for info = -1.
+    // Thus following the BlockGMRES example.   
+    // RCP<Epetra_Operator> belosPrec = rcp( MLPrec );
+    // problem.setRightPrec( belosPrec );
+
+    Teuchos::RCP<Epetra_Operator> MLPrecWrap = Teuchos::rcp( MLPrec );
+    Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( MLPrecWrap ) );
+    std::cout << "----Preconditioner Constructed------" << endl;
+
+//    Teuchos::RCP< Belos::LinearProblem<double,MV,OP> > myProblem 
+//	= Teuchos::rcp( new Belos::LinearProblem<double,MV,OP>(sg_J_poly_Crs, sg_dx_mv, sg_f_mv) );
 
 //    myProblem->setHermitian();
-    myProblem->setProblem();
-*/
-    int verbosity = Belos::Warnings + Belos::Errors + Belos::FinalSummary + Belos::TimingDetails;
+//    myProblem->setProblem();
+
+    //int verbosity = Belos::Warnings + Belos::Errors + Belos::FinalSummary + Belos::TimingDetails;
 
     // Create the parameter list for the eigensolver
     Teuchos::RCP<Teuchos::ParameterList> myPL = Teuchos::rcp( new Teuchos::ParameterList() );
-    myPL->set( "Verbosity", verbosity );
-    myPL->set( "Block Size", 1 );
-    myPL->set( "Convergence Tolerance", 1.0e-10 );
-
-  myPL->set( "Num Blocks", 101 );            // Maximum number of blocks in Krylov factorization
-  myPL->set( "Maximum Iterations", 1000 );       // Maximum number of iterations allowed
-
-//  myPL->set( "Maximum Restarts", 50 );      // Maximum number of restarts allowed
-//  myPL->set( "Convergence Tolerance", 1.0e-10 );         // Relative convergence tolerance requested
-//  myPL->set( "Num Recycled Blocks", 50 );       // Number of vectors in recycle space
-//  myPL->set( "Orthogonalization", "IMGS" );           // Orthogonalization type
-  if (numrhs > 1) {
+    //myPL->set( "Verbosity", verbosity );
+    myPL->set( "Block Size", 1);
+    myPL->set( "Num Blocks", 101 );            // Maximum number of blocks in Krylov factorization
+    myPL->set( "Maximum Iterations", 1000 );       // Maximum number of iterations allowed
+    myPL->set( "Maximum Restarts", 50 );      // Maximum number of restarts allowed
+    myPL->set( "Convergence Tolerance", 3.0e-13 );         // Relative convergence tolerance requested
+    myPL->set( "Num Recycled Blocks", 50 );       // Number of vectors in recycle space
+  //  myPL->set( "Orthogonalization", "IMGS" );           // Orthogonalization type
+/*  if (numrhs > 1) {
     myPL->set( "Show Maximum Residual Norm Only", true );  // Show only the maximum residual norm 
-  }
+  }*/
 
 
-/*    // Create the Block CG solver
+    // Create the Block CG solver
     // This takes as inputs the linear problem and the solver parameters
-    Belos::BlockGmresSolMgr<double,MV,OP> mySolver(myProblem, myPL);
+    //Belos::BlockGmresSolMgr<double,MV,OP> mySolver(myProblem, myPL);
 
     // Solve the linear problem, and save the return code
 
     // Solve the linear problem, and save the return code
-    Belos::ReturnType solverRet = mySolver.solve(); 
+//    Belos::ReturnType solverRet = mySolver.solve(); 
 
-*/
+
     
 //    std::cout << "residula solution:" << std::endl
   //            << *sg_dx_mv << std::endl;
@@ -521,6 +556,10 @@ while ((norm_df/norm_f)>1e-12) {
     Teuchos::RCP< Belos::LinearProblem<double,MV,OP> > myProblem 
         = Teuchos::rcp( new Belos::LinearProblem<double,MV,OP>(sg_J_poly_Crs, sg_dx_mv, sg_f_mv) );
 
+ /*  for(int i=0; i<sz; i++) {    
+    Teuchos::RCP< Belos::LinearProblem<double,MV,OP> > myProblem 
+        = Teuchos::rcp( new Belos::LinearProblem<double,MV,OP>(sg_J_poly_Crs, sg_dx_vec_all[i], sg_df_vec_all[i]) );
+   */ 
 //    myProblem->setHermitian();
 /*  if (leftprec) {
     myProblem->setLeftPrec( belosPrec );
@@ -528,7 +567,8 @@ while ((norm_df/norm_f)>1e-12) {
   else {
     myProblem->setRightPrec( belosPrec );
   }*/
-  myProblem->setLeftPrec( belosPrec );
+  myProblem->setRightPrec( belosPrec );
+//  myProblem->setLeftPrec( belosPrec );
   myProblem->setProblem();
 /*  bool set = myProblem->setProblem();
   if (set == false) {
@@ -549,17 +589,18 @@ while ((norm_df/norm_f)>1e-12) {
   */  
     // Create the Block Gmres solver
     // This takes as inputs the linear problem and the solver parameters
-    Belos::BlockGmresSolMgr<double,MV,OP> mySolver(myProblem, myPL);
-//    Belos::GCRODRSolMgr<double,MV,OP> mySolver(myProblem, myPL);
+    //Belos::BlockGmresSolMgr<double,MV,OP> mySolver(myProblem, myPL);
+    Belos::PseudoBlockGmresSolMgr<double,MV,OP> mySolver(myProblem, myPL);
+   // Belos::GCRODRSolMgr<double,MV,OP> mySolver(myProblem, myPL);
+//    Belos::RCGSolMgr<double,MV,OP> mySolver(myProblem, myPL);
     
 
-    // Solve the linear problem, and save the return code
-//    Belos::ReturnType solverRet = mySolver.solve();
+   // Solve the linear problem, and save the return code
    {
     TEUCHOS_FUNC_TIME_MONITOR("Total deterministic solve Time");
     mySolver.solve();
    }
-
+//}
     for (int k=0; k<sz; k++) {
       vecind[0] = k;
       dx = MVT::CloneCopy(*sg_dx_mv, vecind);

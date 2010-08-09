@@ -61,7 +61,7 @@
 int main(int argc, char *argv[]) {
   int nelem = 100;
   double h = 1.0/nelem;
-  int num_KL = 10;
+  int num_KL = 3;
   int p = 5;
   bool full_expansion = false;
 
