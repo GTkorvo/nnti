@@ -26,7 +26,7 @@
 // ***********************************************************************
 //@HEADER
 
-#include <SimpleApp_SimpleEpetraFeasStep.hpp>
+#include "SimpleApp_SimpleEpetraFeasStep.hpp"
 #include "Epetra_Map.h"
 
 namespace SimpleApp {

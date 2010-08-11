@@ -131,16 +131,16 @@ int assemble_bdry(const Epetra_Comm & Comm,
     BdryNode[j] = e(j,0);
     BdryNode[j+numLocEdges] = e(j,1);
   }
-  sort(BdryNode.Values(), BdryNode.Values()+2*numLocEdges);
-  lastindx  = unique(BdryNode.Values(), BdryNode.Values()+2*numLocEdges);
+  std::sort(BdryNode.Values(), BdryNode.Values()+2*numLocEdges);
+  lastindx  = std::unique(BdryNode.Values(), BdryNode.Values()+2*numLocEdges);
   numBdryNodes = lastindx - BdryNode.Values();
   BdryNode.Resize(numBdryNodes);  
 
   /* Determine the boundary vertices that belong to this processor. */
   Epetra_IntSerialDenseVector MyBdryNode(numBdryNodes);
-  lastindx  = set_intersection(BdryNode.Values(), BdryNode.Values()+numBdryNodes,
-                               ipindx.Values(), ipindx.Values()+ipindx.M(),
-                               MyBdryNode.Values());
+  lastindx  = std::set_intersection(BdryNode.Values(), BdryNode.Values()+numBdryNodes,
+                                    ipindx.Values(), ipindx.Values()+ipindx.M(),
+                                    MyBdryNode.Values());
   numMyBdryNodes = lastindx - MyBdryNode.Values();
   MyBdryNode.Resize(numMyBdryNodes);
 

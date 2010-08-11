@@ -26,7 +26,8 @@
 // ***********************************************************************
 //@HEADER
 
-#include <SimpleApp_SimpleEpetraConstraints.hpp>
+#include "SimpleApp_SimpleEpetraConstraints.hpp"
+#include "Aristos_EpetraVector.hpp"
 #include "Epetra_Map.h"
 
 namespace SimpleApp {

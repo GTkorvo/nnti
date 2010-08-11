@@ -32,6 +32,7 @@
 #include "Amesos_Umfpack.h"
 // #include "Amesos_Superludist.h"
 // #include "ml_MultiLevelPreconditioner.h"
+#include "Teuchos_Array.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "EpetraExt_Reindex_LinearProblem.h"
 #include "EpetraExt_MatrixMatrix.h"
@@ -117,9 +118,9 @@ int GLdistYUEpetraDataPool::solveAugsys( const Teuchos::RefCountPtr<const Epetra
     Epetra_Vector soln( (Epetra_BlockMap&)Augmat_->RangeMap() );
     soln.PutScalar(1.0);  
 
-    double values[rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength()];
-    int indices[rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength()];
-    ((Epetra_BlockMap&)Augmat_->RangeMap()).MyGlobalElements(indices);
+    Teuchos::Array<double> values(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength());
+    Teuchos::Array<int> indices(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength());
+    ((Epetra_BlockMap&)Augmat_->RangeMap()).MyGlobalElements(indices.getRawPtr());
 
     for (int i=0; i<rhsy->MyLength(); i++) {
       values[i] = (*((*rhsy)(0)))[i];
@@ -131,7 +132,7 @@ int GLdistYUEpetraDataPool::solveAugsys( const Teuchos::RefCountPtr<const Epetra
       values[i+rhsy->MyLength()+rhsu->MyLength()] = (*((*rhsp)(0)))[i];
     }
 
-    rhs.ReplaceGlobalValues(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength(), values, indices);
+    rhs.ReplaceGlobalValues(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength(), values.getRawPtr(), indices.getRawPtr());
 
     if (solverChoice == 11) {
       int Overlap = 3;
@@ -181,7 +182,8 @@ int GLdistYUEpetraDataPool::solveAugsys( const Teuchos::RefCountPtr<const Epetra
       // IFPACK will try to use Amesos' KLU (which is usually always
       // compiled). Amesos' serial solvers are:
       // "Amesos_Klu", "Amesos_Umfpack", "Amesos_Superlu"
-      List.set("amesos: solver type", "Amesos_Umfpack");
+      // List.set("amesos: solver type", "Amesos_Umfpack");
+      List.set("amesos: solver type", "Amesos_Klu");
 
       // sets the parameters
       IFPACK_CHK_ERR(Prec->SetParameters(List));
@@ -232,7 +234,8 @@ int GLdistYUEpetraDataPool::solveAugsys( const Teuchos::RefCountPtr<const Epetra
       EpetraExt::LinearProblem_Reindex reindex(NULL);
       Epetra_LinearProblem newProblem = reindex(Problem);
       
-      Amesos_Umfpack kktsolver(newProblem);
+      //Amesos_Umfpack kktsolver(newProblem);
+      Amesos_Klu kktsolver(newProblem);
    
       AMESOS_CHK_ERR(kktsolver.SymbolicFactorization());
       AMESOS_CHK_ERR(kktsolver.NumericFactorization());
@@ -325,9 +328,9 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
   // Set initial iterate.
   soln.PutScalar(0.0);  
 
-  double values[rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength()];
-  int indices[rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength()];
-  ((Epetra_BlockMap&)Augmat_->RangeMap()).MyGlobalElements(indices);
+  Teuchos::Array<double> values(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength());
+  Teuchos::Array<int> indices(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength());
+  ((Epetra_BlockMap&)Augmat_->RangeMap()).MyGlobalElements(indices.getRawPtr());
 
   for (int i=0; i<rhsy->MyLength(); i++) {
     values[i] = (*((*rhsy)(0)))[i];
@@ -339,7 +342,7 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
     values[i+rhsy->MyLength()+rhsu->MyLength()] = (*((*rhsp)(0)))[i];
   }
 
-  rhs.ReplaceGlobalValues(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength(), values, indices);
+  rhs.ReplaceGlobalValues(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength(), values.getRawPtr(), indices.getRawPtr());
 
 
 /*
@@ -798,7 +801,8 @@ int GLdistYUEpetraDataPool::computePrec()
   // IFPACK will try to use Amesos' KLU (which is usually always
   // compiled). Amesos' serial solvers are:
   // "Amesos_Klu", "Amesos_Umfpack", "Amesos_Superlu"
-  List.set("amesos: solver type", "Amesos_Umfpack");
+  // List.set("amesos: solver type", "Amesos_Umfpack");
+  List.set("amesos: solver type", "Amesos_Klu");
 
   // sets the parameters
   IFPACK_CHK_ERR(Prec_->SetParameters(List));

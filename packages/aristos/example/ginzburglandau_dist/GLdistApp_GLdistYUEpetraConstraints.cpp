@@ -26,7 +26,7 @@
 // ***********************************************************************
 //@HEADER
 
-#include <GLdistApp_GLdistYUEpetraConstraints.hpp>
+#include "GLdistApp_GLdistYUEpetraConstraints.hpp"
 
 namespace GLdistApp {
 

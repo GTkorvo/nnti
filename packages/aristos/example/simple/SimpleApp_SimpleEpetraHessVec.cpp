@@ -26,7 +26,7 @@
 // ***********************************************************************
 //@HEADER
 
-#include <SimpleApp_SimpleEpetraHessVec.hpp>
+#include "SimpleApp_SimpleEpetraHessVec.hpp"
 #include "Epetra_Map.h"
 #include <math.h>
 

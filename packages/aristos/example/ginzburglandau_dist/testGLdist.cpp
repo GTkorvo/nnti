@@ -30,7 +30,7 @@
 
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
-#include "mpi.h"
+//#include "mpi.h"
 #else
 #include "Epetra_SerialComm.h"
 #endif
@@ -50,22 +50,30 @@
 #include "GLdistApp_GLdistYUEpetraConstraints.hpp"
 #include "GLdistApp_GLdistYUEpetraDataPool.hpp"
 
+#include "Teuchos_GlobalMPISession.hpp"
 
 int main(int argc, char *argv[])
 {
 
   // This is a standard communicator declaration.
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv,0);
 #ifdef HAVE_MPI
-  MPI_Init(&argc,&argv);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 #else
   Epetra_SerialComm Comm;
 #endif
 
+//#ifdef HAVE_MPI
+//  MPI_Init(&argc,&argv);
+//  Epetra_MpiComm Comm(MPI_COMM_WORLD);
+//#else
+//  Epetra_SerialComm Comm;
+//#endif
+
   double beta = 1.0;
   
   // Want derivative check?
-  bool derchk = false;
+  bool derchk = true;
 
   bool wantstats = true;   // choose true if output of solver and timing info in file stats.txt is desired
 
@@ -75,7 +83,7 @@ int main(int argc, char *argv[])
 
   // Now we can build the DataPool object ...
   GLdistApp::GLdistYUEpetraDataPool dat ( &Comm, beta, argv[1] );
-  
+
   Epetra_Map statemap((dat.getA())->DomainMap());
   Epetra_Map controlmap((dat.getB())->DomainMap());
 
@@ -140,6 +148,6 @@ int main(int argc, char *argv[])
 
   outfile.close();
 
-  dat.PrintSolutionVTK(exy);
+  //dat.PrintSolutionVTK(exy);
 
 }
