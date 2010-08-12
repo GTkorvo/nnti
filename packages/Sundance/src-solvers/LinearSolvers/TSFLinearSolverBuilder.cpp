@@ -64,7 +64,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
 
   ParameterList solverSublist = params.sublist("Linear Solver");
 
-  const string& solverType = getParameter<string>(solverSublist, "Type");
+  const std::string& solverType = getParameter<string>(solverSublist, "Type");
 
   Tabs tab;
   SUNDANCE_MSG1(verb, tab << "Solver builder creating a solver of type="
@@ -78,7 +78,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
     }
   else if (solverType=="TSF")
     {
-      const string& solverMethod = getParameter<string>(solverSublist, "Method");
+      const std::string& solverMethod = getParameter<string>(solverSublist, "Method");
       if (solverMethod=="BICGSTAB") 
         {
           return new BICGSTABSolver<double>(solverSublist);

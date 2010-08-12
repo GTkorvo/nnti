@@ -64,9 +64,9 @@ BICGSTABSolver<Scalar>::BICGSTABSolver(const ParameterList& params,
 template <class Scalar> inline
 void BICGSTABSolver<Scalar>::print(std::ostream& os) const 
 {
-  os << description() << "[" << endl;
-  os << this->parameters() << endl;
-  os << "]" << endl;
+  os << description() << "[" << std::endl;
+  os << this->parameters() << std::endl;
+  os << "]" << std::endl;
 }
 
     
@@ -201,7 +201,7 @@ SolverState<Scalar> BICGSTABSolver<Scalar>
       Out::os().width(8);
       Out::os() << k;
       Out::os().width(20);
-      Out::os() << " resid=" << resid << endl;
+      Out::os() << " resid=" << resid << std::endl;
     }
   }
     

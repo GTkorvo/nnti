@@ -53,7 +53,6 @@ namespace TSFExtended
 using Sundance::Out;
 using Sundance::Tabs;
 using Sundance::Printable;
-using std::endl;
 
 //===========================================================================
 template <class Scalar> 

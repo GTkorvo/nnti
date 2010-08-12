@@ -62,10 +62,10 @@ namespace TSFExtended
     {getParameter<double>(this->parameters(), tolParam())=tol;}
 
     /** */
-    static string maxitersParam() {return "Max Iterations";}
+    static std::string maxitersParam() {return "Max Iterations";}
 
     /** */
-    static string tolParam() {return "Tolerance";}
+    static std::string tolParam() {return "Tolerance";}
 
     /** */
     static int defaultMaxiters() {return 500;}

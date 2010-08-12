@@ -48,7 +48,7 @@
 
 using namespace TSFExtended;
 using namespace Teuchos;
-using std::ostream;
+
 using Thyra::TestSpecifier;
 
 namespace TSFExtended
@@ -156,23 +156,23 @@ inline bool MatrixMatrixTester<Scalar>
     LinearOperator<Scalar> D = makeEpetraDiagonalMatrix(d);
     Vector<Scalar> d1 = getEpetraDiagonal(D);
 
-    Out::root() << "computing implicit product y1 = D*x..." << endl;
+    Out::root() << "computing implicit product y1 = D*x..." << std::endl;
     Vector<Scalar> y1 = D0*x;
-    Out::root() << "computing explicit product y2 = D*x..." << endl;
+    Out::root() << "computing explicit product y2 = D*x..." << std::endl;
     Vector<Scalar> y2 = D*x;
 
     ScalarMag err = (y1 - y2).norm2();
 
-    Out::root() << "|y1-y2| = " << err << endl;
+    Out::root() << "|y1-y2| = " << err << std::endl;
     
-    Out::root() << "comparing recovered and original diagonals" << endl;
+    Out::root() << "comparing recovered and original diagonals" << std::endl;
     ScalarMag err2 = (d - d1).norm2();
-    Out::root() << "|d1-d2| = " << err2 << endl;
+    Out::root() << "|d1-d2| = " << err2 << std::endl;
     
     return checkTest(prodSpec_, err+err2, "matrix-matrix multiply");
     
   }
-  Out::root() << "skipping matrix-matrix multiply test..." << endl;
+  Out::root() << "skipping matrix-matrix multiply test..." << std::endl;
   return true;
 }
 
@@ -188,28 +188,28 @@ inline bool MatrixMatrixTester<Scalar>
      * multiplication of rectangular matrices */
     if (A_.range() != B_.range() || A_.domain() != B_.domain())
     {
-      Out::root() << "skipping sum on incompatible matrices" << endl;
+      Out::root() << "skipping sum on incompatible matrices" << std::endl;
       return true;
     }
     /* If here, the sum should work */
-    Out::root() << "running matrix-matrix multiply test..." << endl;
+    Out::root() << "running matrix-matrix multiply test..." << std::endl;
     LinearOperator<Scalar> implicitAdd = A_ + B_;
     LinearOperator<Scalar> explicitAdd = epetraMatrixMatrixSum(A_, B_);
 
     Vector<Scalar> x = B_.domain().createMember();
     randomizeVec(x);
-    Out::root() << "computing implicit sum y1 = (A+B)*x..." << endl;
+    Out::root() << "computing implicit sum y1 = (A+B)*x..." << std::endl;
     Vector<Scalar> y1 = implicitAdd*x;
-    Out::root() << "computing explicit sum y2 = (A+B)*x..." << endl;
+    Out::root() << "computing explicit sum y2 = (A+B)*x..." << std::endl;
     Vector<Scalar> y2 = explicitAdd*x;
 
     ScalarMag err = (y1 - y2).norm2();
 
-    Out::root() << "|y1-y2| = " << err << endl;
+    Out::root() << "|y1-y2| = " << err << std::endl;
     return checkTest(prodSpec_, err, "matrix-matrix multiply");
     
   }
-  Out::root() << "skipping matrix-matrix multiply test..." << endl;
+  Out::root() << "skipping matrix-matrix multiply test..." << std::endl;
   return true;
 }
 
@@ -220,23 +220,23 @@ inline bool MatrixMatrixTester<Scalar>
 {
   if (prodSpec_.doTest())
   {
-    Out::root() << "running matrix-matrix multiply test..." << endl;
+    Out::root() << "running matrix-matrix multiply test..." << std::endl;
     LinearOperator<Scalar> composed = A_ * B_;
     LinearOperator<Scalar> multiplied = epetraMatrixMatrixProduct(A_, B_);
 
     Vector<Scalar> x = B_.domain().createMember();
     randomizeVec(x);
-    Out::root() << "computing implicit product y1 = (A*B)*x..." << endl;
+    Out::root() << "computing implicit product y1 = (A*B)*x..." << std::endl;
     Vector<Scalar> y1 = composed*x;
-    Out::root() << "computing explicit product y2 = (A*B)*x..." << endl;
+    Out::root() << "computing explicit product y2 = (A*B)*x..." << std::endl;
     Vector<Scalar> y2 = multiplied*x;
 
     ScalarMag err = (y1 - y2).norm2();
 
-    Out::root() << "|y1-y2| = " << err << endl;
+    Out::root() << "|y1-y2| = " << err << std::endl;
     return checkTest(prodSpec_, err, "matrix-matrix multiply");
   }
-  Out::root() << "skipping matrix-matrix multiply test..." << endl;
+  Out::root() << "skipping matrix-matrix multiply test..." << std::endl;
   return true;
 }
 
@@ -247,7 +247,7 @@ inline bool MatrixMatrixTester<Scalar>
 {
   if (diagLeftProdSpec_.doTest())
   {
-    Out::root() << "running diagonal*matrix multiplication test..." << endl;
+    Out::root() << "running diagonal*matrix multiplication test..." << std::endl;
 
     Vector<Scalar> x = A_.domain().createMember();
     randomizeVec(x);
@@ -258,18 +258,18 @@ inline bool MatrixMatrixTester<Scalar>
     LinearOperator<Scalar> D = diagonalOperator(d);
     LinearOperator<Scalar> DA = epetraLeftScale(d, A_);
 
-    Out::root() << "computing implicit y1 = D*A*x..." << endl;
+    Out::root() << "computing implicit y1 = D*A*x..." << std::endl;
     Vector<Scalar> y1 = D*A_*x;
-    Out::root() << "computing explicit y2 = D*A*x..." << endl;
+    Out::root() << "computing explicit y2 = D*A*x..." << std::endl;
     Vector<Scalar> y2 = DA*x;
 
     ScalarMag err = (y1 - y2).norm2();
 
-    Out::root() << "|y1-y2| = " << err << endl;
+    Out::root() << "|y1-y2| = " << err << std::endl;
 
     return checkTest(diagLeftProdSpec_, err, "diagonal*matrix multiplication");
   }
-  Out::root() << "skipping diagonal matrix-matrix test..." << endl;
+  Out::root() << "skipping diagonal matrix-matrix test..." << std::endl;
   return true;
 }
 
@@ -280,7 +280,7 @@ inline bool MatrixMatrixTester<Scalar>
 {
   if (diagRightProdSpec_.doTest())
   {
-    Out::root() << "running diagonal*matrix multiplication test..." << endl;
+    Out::root() << "running diagonal*matrix multiplication test..." << std::endl;
 
     Vector<Scalar> x = A_.domain().createMember();
     randomizeVec(x);
@@ -291,18 +291,18 @@ inline bool MatrixMatrixTester<Scalar>
     LinearOperator<Scalar> D = diagonalOperator(d);
     LinearOperator<Scalar> AD = epetraRightScale(A_, d);
 
-    Out::root() << "computing implicit y1 = A*D*x..." << endl;
+    Out::root() << "computing implicit y1 = A*D*x..." << std::endl;
     Vector<Scalar> y1 = A_*D*x;
-    Out::root() << "computing explicit y2 = A*D*x..." << endl;
+    Out::root() << "computing explicit y2 = A*D*x..." << std::endl;
     Vector<Scalar> y2 = AD*x;
 
     ScalarMag err = (y1 - y2).norm2();
 
-    Out::root() << "|y1-y2| = " << err << endl;
+    Out::root() << "|y1-y2| = " << err << std::endl;
 
     return checkTest(diagLeftProdSpec_, err, "matrix*diagonal multiplication");
   }
-  Out::root() << "skipping diagonal matrix-matrix test..." << endl;
+  Out::root() << "skipping diagonal matrix-matrix test..." << std::endl;
   return true;
 }
 

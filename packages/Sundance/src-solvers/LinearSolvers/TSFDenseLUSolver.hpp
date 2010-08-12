@@ -70,7 +70,7 @@ namespace TSFExtended
     /** \name Describable interface */
     //@{
     /** Write a brief description */
-    string description() const {return "DenseLUSolver";}
+    std::string description() const {return "DenseLUSolver";}
     //@}
 
     

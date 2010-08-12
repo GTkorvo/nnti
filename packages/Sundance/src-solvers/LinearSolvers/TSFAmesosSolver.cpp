@@ -60,7 +60,7 @@ SolverState<double> AmesosSolver::solve(const LinearOperator<double>& op,
   soln = xCopy;
 
   SolverStatusCode state;
-  string msg;
+  std::string msg;
 
   switch(ierr)
     {

@@ -45,8 +45,8 @@ namespace TSFExtended
 {
 using namespace Teuchos;
 using namespace Sundance;
-using std::endl;
-using namespace std;
+
+
 
 
 /*
@@ -97,11 +97,11 @@ template <class Scalar> inline
 void SimpleScaledOp<Scalar>::print(std::ostream& os) const 
 {
   Tabs tab(0);
-  os << tab << "ScaledOp[" << endl;
+  os << tab << "ScaledOp[" << std::endl;
   Tabs tab1;
-  os << tab1 << "scale = " << alpha_ << endl;
-  os << tab1 << "operator = " << A_.description() << endl;
-  os << tab << "]" << endl;
+  os << tab1 << "scale = " << alpha_ << std::endl;
+  os << tab1 << "operator = " << A_.description() << std::endl;
+  os << tab << "]" << std::endl;
 }
 
 

@@ -3,7 +3,7 @@ INCLUDE(PackageAddExecutableAndTest)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-IF(FEApp_ENABLE_Stokhos)
+IF(FEApp_ENABLE_Stokhos AND Stokhos_ENABLE_ML)
 
   PACKAGE_ADD_EXECUTABLE_AND_TEST(
     Linear_Diffusion_PCE_Example

@@ -36,7 +36,7 @@
 
 using namespace TSFExtended;
 using namespace Teuchos;
-using std::ostream;
+
 
 MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows, 
   const VectorType<double>& type, bool symBC)

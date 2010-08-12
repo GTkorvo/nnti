@@ -42,6 +42,7 @@
 namespace TSFExtended
 {
 using namespace Teuchos;
+using Sundance::RuntimeError;
 
 
 LinearOperator<double> epetraLeftScale(

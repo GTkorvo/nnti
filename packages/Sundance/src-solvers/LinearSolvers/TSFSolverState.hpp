@@ -52,7 +52,7 @@ class SolverState
 {
 public:
   /** */
-  SolverState(SolverStatusCode finalState, const string& msg, 
+  SolverState(SolverStatusCode finalState, const std::string& msg, 
     int finalIters, const Scalar& finalResid)
     : finalState_(finalState),
       finalResid_(finalResid),
@@ -73,10 +73,10 @@ public:
   const SolverStatusCode& finalState() const {return finalState_;}
 
   /** */
-  const string& finalMsg() const {return msg_;}
+  const std::string& finalMsg() const {return msg_;}
 
   /** */
-  string stateDescription() const 
+  std::string stateDescription() const 
     {
       switch (finalState_)
       {
@@ -98,7 +98,7 @@ private:
 
   int finalIters_;
 
-  string msg_;
+  std::string msg_;
 };
 
 

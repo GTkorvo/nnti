@@ -189,7 +189,7 @@ public:
     \f[ \left[ \; 0.1 \; 2.34 \; 5 \; \right] \f] 
     It will be all on one line, with a single space between each entry, bracketed on either side.
   */
-  ostream& leftshift(ostream& stream) const;
+  ostream& leftshift(std::ostream& stream) const;
 
   // derived
   void print() const;
@@ -208,7 +208,7 @@ private:
 
 //! Function for printing
 namespace std{
-ostream& operator<<(ostream& stream, const NOX::TSF::Vector& v);
+ostream& operator<<(std::ostream& stream, const NOX::TSF::Vector& v);
 }
 
 #endif

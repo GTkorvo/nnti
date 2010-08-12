@@ -46,10 +46,10 @@ namespace TSFExtended
     HANDLE_CTORS(Preconditioner, PreconditionerBase<Scalar>);
 
     /** Change the value of a double parameter */
-    void changeParameter(const string& name, const double& value);
+    void changeParameter(const std::string& name, const double& value);
 
     /** Change the value of an integer parameter */
-    void changeParameter(const string& name, int value);
+    void changeParameter(const std::string& name, int value);
 
     
     

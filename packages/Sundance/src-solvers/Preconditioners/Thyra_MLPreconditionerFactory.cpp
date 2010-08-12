@@ -88,7 +88,7 @@ RCP<ParameterList> MLPreconditionerFactory
 
   
 RCP<ParameterList> MLPreconditionerFactory
-::defaultParameters(const string& probType) const 
+::defaultParameters(const std::string& probType) const 
 {
   RCP<ParameterList> rtn = rcp(new ParameterList());
   int err = ML_Epetra::SetDefaults(probType, *rtn);
@@ -219,7 +219,7 @@ void MLPreconditionerFactory::initializePrec(
       timer.stop();
       if(out.get() && static_cast<int>(verbLevel) >= static_cast<int>(Teuchos::VERB_LOW))
         *OSTab(out).getOStream() <<"\n=> Creation time = "<<timer.totalElapsedTime()<<" sec\n";
-      // RAB: Above, I am just passing a string to ML::Create(...) in order
+      // RAB: Above, I am just passing a std::string to ML::Create(...) in order
       // get this code written.  However, in the future, it would be good to
       // copy the contents of what is in ML::Create(...) into a local
       // function and then use switch(...) to create the initial

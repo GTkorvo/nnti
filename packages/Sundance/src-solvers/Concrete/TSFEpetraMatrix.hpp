@@ -164,7 +164,7 @@ public:
     Preconditioner<double>& rtn) const ;
 
   /** Printable interface */
-  virtual void print(ostream& os) const ;
+  virtual void print(std::ostream& os) const ;
 
 
   /** */
@@ -181,7 +181,7 @@ public:
     
 
   /** */
-  string description() const ;
+  std::string description() const ;
 
   /** */
   static Epetra_CrsMatrix& getConcrete(const LinearOperator<double>& A);

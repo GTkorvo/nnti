@@ -53,7 +53,7 @@ AztecSolver::AztecSolver(const ParameterList& params)
   ParameterList::ConstIterator iter;
   for (iter=params.begin(); iter != params.end(); ++iter)
   {
-    const string& name = params.name(iter);
+    const std::string& name = params.name(iter);
     const ParameterEntry& entry = params.entry(iter);
 
     if (entry.isList())
@@ -97,14 +97,14 @@ AztecSolver::AztecSolver(const ParameterList& params)
 
 
     /* We now need to figure out what to do with the value of the
-     * parameter. If it is a string, then it corresponds to a
+     * parameter. If it is a std::string, then it corresponds to a
      * predefined Aztec option value. If it is an integer, then
      * it is the numerical setting for an Aztec option. If it is
      * a double, then it is the numerical setting for an Aztec
      * parameter. */
     if (entry.isType<string>())
     {
-      string val = getValue<string>(entry);
+      std::string val = getValue<string>(entry);
       TEST_FOR_EXCEPTION(paramMap().find(val) == paramMap().end(),
         std::runtime_error,
         "Aztec solver ctor: [" << val << "] is not a "
@@ -219,7 +219,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
 
   if (useML_)
   {
-    string precType = precParams_.get<string>("Problem Type");
+    std::string precType = precParams_.get<string>("Problem Type");
     ParameterList mlParams;
     ML_Epetra::SetDefaults(precType, mlParams);
     //#ifndef TRILINOS_6
@@ -229,7 +229,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
     ParameterList mlSettings = precParams_.sublist("ML Settings");
     for (iter=mlSettings.begin(); iter!=mlSettings.end(); ++iter)
     {
-      const string& name = mlSettings.name(iter);
+      const std::string& name = mlSettings.name(iter);
       const ParameterEntry& entry = mlSettings.entry(iter);
       mlParams.setEntry(name, entry);
     }
@@ -241,7 +241,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   {
     Ifpack precFactory;
     int overlap = precParams_.get<int>("Overlap");
-    string precType = precParams_.get<string>("Prec Type");
+    std::string precType = precParams_.get<string>("Prec Type");
 
     ParameterList ifpackParams = precParams_.sublist("Ifpack Settings");
 
@@ -278,7 +278,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   const double* status = aztec.GetAztecStatus();
   SolverStatusCode state = SolveCrashed;
 
-  string msg;
+  std::string msg;
   switch((int) status[AZ_why])
   {
     case AZ_normal:

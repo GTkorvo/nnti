@@ -45,8 +45,7 @@ namespace TSFExtended
 {
 using namespace Teuchos;
 using namespace Sundance;
-using std::endl;
-using namespace std;
+
 
 
 /*
@@ -89,10 +88,10 @@ template <class Scalar> inline
 void SimpleDiagonalOp<Scalar>::print(std::ostream& os) const 
 {
   Tabs tab(0);
-  os << tab << "DiagonalOp[" << endl;
+  os << tab << "DiagonalOp[" << std::endl;
   Tabs tab1;
-  os << tab1 << "diag = " << diag_ << endl;
-  os << tab << "]" << endl;
+  os << tab1 << "diag = " << diag_ << std::endl;
+  os << tab << "]" << std::endl;
 }
 
 

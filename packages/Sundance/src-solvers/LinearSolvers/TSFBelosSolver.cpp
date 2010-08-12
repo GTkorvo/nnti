@@ -76,7 +76,7 @@ SolverState<double> BelosSolver::solve(const LinearOperator<double>& A,
 
   RCP<ParameterList> belosList = rcp(&plist, false);
   RCP<Belos::SolverManager<double, MV, OP> > solver ;
-  string solverType = parameters().get<string>("Method");
+  std::string solverType = parameters().get<string>("Method");
   
   if (solverType=="GMRES")
   {

@@ -50,8 +50,6 @@ namespace TSFExtended
 {
 using namespace Teuchos;
 using namespace Sundance;
-using std::endl;
-using namespace std;
 
 
 /*
@@ -88,7 +86,7 @@ void SimpleAddedOp<Scalar>::applyOp(const Thyra::EOpTransp M_trans,
   {
     Tabs tab1;
     Out::os() << tab1 << "applying term i=" << i << " of " 
-              << ops_.size() << endl;
+              << ops_.size() << std::endl;
     if (M_trans == Thyra::NOTRANS)
       tmp = tmp + ops_[i] * in;
     else if (M_trans == Thyra::TRANS)

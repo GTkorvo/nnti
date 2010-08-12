@@ -1,5 +1,6 @@
 #include "ENAT_NOXSolver.hpp"
 #include "NOX_Epetra_MultiVector.H"
+#include "Epetra_Map.h"
 
 ENAT::NOXSolver::NOXSolver(Teuchos::RCP<Teuchos::ParameterList> appParams_,
 			   Teuchos::RCP<EpetraExt::ModelEvaluator> model_,

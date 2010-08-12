@@ -37,7 +37,7 @@
 
 using namespace TSFExtended;
 using namespace Teuchos;
-using std::ostream;
+
 using Thyra::TestSpecifier;
 
 namespace TSFExtended
@@ -64,7 +64,7 @@ namespace TSFExtended
     /** */
     bool checkTest(const TestSpecifier<Scalar>& spec,
                     const ScalarMag& err, 
-                    const string& testName) const ;
+                    const std::string& testName) const ;
 
     /** */
     void randomizeVec(Vector<Scalar>& x) const ;
@@ -84,24 +84,24 @@ namespace TSFExtended
   inline bool TesterBase<Scalar>
   ::checkTest(const TestSpecifier<Scalar>& spec,
               const ScalarMag& err, 
-              const string& testName) const 
+              const std::string& testName) const 
   {
     bool rtn = true;
     if (err > spec.errorTol())
       {
         Out::root() << testName << " test FAILED: err=" << err << ", tol = " 
-             << spec.errorTol() << endl;
+             << spec.errorTol() << std::endl;
         rtn = false;
       }
     else if (err > spec.warningTol())
       {
         Out::root() << "WARNING: " << testName << " test err="
              << err << " could not beat tol = " 
-             << spec.warningTol() << endl;
+             << spec.warningTol() << std::endl;
       }
     else
       {
-        Out::root() << "test " << testName << " PASSED with tol=" << spec.errorTol() << endl;
+        Out::root() << "test " << testName << " PASSED with tol=" << spec.errorTol() << std::endl;
       }
     return rtn;
   }
