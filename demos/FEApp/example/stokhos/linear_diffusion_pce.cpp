@@ -239,7 +239,7 @@ int main(int argc, char *argv[]) {
     aztec.SetAztecOption(AZ_precond, AZ_none);
     aztec.SetAztecOption(AZ_kspace, 20);
     aztec.SetAztecOption(AZ_conv, AZ_r0);
-    aztec.SetAztecOption(AZ_output, 1);
+    aztec.SetAztecOption(AZ_output, 10);
     aztec.SetUserOperator(sg_J.get());
     aztec.SetPrecOperator(sg_M.get());
     aztec.SetLHS(sg_dx.get());
