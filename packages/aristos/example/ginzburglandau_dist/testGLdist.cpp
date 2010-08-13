@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
   double beta = 1.0;
   
   // Want derivative check?
-  bool derchk = true;
+  bool derchk = false;
 
   bool wantstats = true;   // choose true if output of solver and timing info in file stats.txt is desired
 
@@ -134,6 +134,8 @@ int main(int argc, char *argv[])
   // SQP run.
   Teuchos::ParameterList parlist;
   parlist.set("Max Number of SQP Iterations", 50);
+  parlist.set("Gradient of Lagrangian Tolerance", 1e-10);
+  parlist.set("Constraints Tolerance", 1e-10);
 
   int iter, iflag;
   exy->PutScalar(1.0);
