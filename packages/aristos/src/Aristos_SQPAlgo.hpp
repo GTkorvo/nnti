@@ -58,7 +58,7 @@ bool SQPAlgo::run(Vector &x, Vector &c, Vector &l, int &iter, int &iflag, Teucho
   //    norm(c, inf) < ctol) ) OR Delta < stol
   double gtol = parlist.get("Gradient of Lagrangian Tolerance", 1.0e-6);
   double ctol = parlist.get("Constraints Tolerance", 1.0e-6);
-  double stol = parlist.get("Min TR Radius", 1.0e-5);
+  double stol = parlist.get("Min TR Radius", 1.0e-8);
 
   // Other misc. tol's, flags, etc.
   bool   addproj = parlist.get("Additional Projection", true);
@@ -338,8 +338,8 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
                                    bool istolfixed, bool fullortho, bool orthocheck, bool fcdcheck,
                                    int &cgiter, int &iflag)
 {
-  bool iprint = false;  // print flag  = true print output;
-                        // otherwise no output is generated
+  bool iprint = true;  // print flag  = true print output;
+                       // otherwise no output is generated
 
   // Create necessary vectors.
   VectorPtr r     = x.createVector();
