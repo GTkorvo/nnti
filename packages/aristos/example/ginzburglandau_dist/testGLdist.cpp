@@ -150,6 +150,10 @@ int main(int argc, char *argv[])
 
   outfile.close();
 
+  std::cout << "End Result: TEST PASSED\n";
+
+  return 0;
+
   //dat.PrintSolutionVTK(exy);
 
 }

@@ -30,9 +30,9 @@ IF(Trilinos_ENABLE_Amesos AND Trilinos_ENABLE_Ifpack AND Trilinos_ENABLE_AztecOO
   PACKAGE_ADD_EXECUTABLE_AND_TEST(
     testGLdist
     SOURCES ${${PACKAGE_NAME}_TESTGLDIST_SOURCES}
-    DEPLIBS amesos ifpack aztecoo epetraext
-    ARGS
-    NUM_MPI_PROCS 1
+    ARGS "data/square.2 4"
+    COMM mpi
+    NUM_MPI_PROCS 4
     PASS_REGULAR_EXPRESSION "TEST PASSED"
     ADD_DIR_TO_NAME
     )

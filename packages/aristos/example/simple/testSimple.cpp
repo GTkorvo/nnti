@@ -28,6 +28,7 @@
 
 #include "Aristos_EpetraVector.hpp"
 #include "Epetra_SerialComm.h"
+#include "Epetra_MpiComm.h"
 #include "Epetra_Map.h"
 #include "Epetra_Util.h"
 #include "SimpleApp_SimpleEpetraObjective.hpp"
@@ -38,16 +39,23 @@
 #include "SimpleApp_SimpleEpetraDataPool.hpp"
 #include "Aristos_SQPAlgo.hpp"
 
+#include "Teuchos_GlobalMPISession.hpp"
 
-int main ()
+int main(int argc, char *argv[])
 {
-  // create a serial communicator
-  Epetra_SerialComm comm;
+
+  // This is a standard communicator declaration.
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv, 0);
+#ifdef HAVE_MPI
+  Epetra_MpiComm Comm(MPI_COMM_WORLD);
+#else
+  Epetra_SerialComm Comm;
+#endif
 
   // create maps for 3, 5, and 8 dimensions.
-  Epetra_Map map3(3, 0, comm);
-  Epetra_Map map5(5, 0, comm);
-  Epetra_Map map8(8, 0, comm);
+  Epetra_Map map3(3, 0, Comm);
+  Epetra_Map map5(5, 0, Comm);
+  Epetra_Map map8(8, 0, Comm);
 
 
   // create vectors
@@ -193,6 +201,8 @@ int main ()
   // run SQP algorithm
   sqp.run(*resvec5, *resvec3, *resvec3s, iter, iflag, parlist);
   std::cout << endl << *eresvec5 << endl;
+
+  std::cout << "End Result: TEST PASSED\n";
 
   return 0;
 
