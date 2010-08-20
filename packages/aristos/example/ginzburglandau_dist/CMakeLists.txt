@@ -27,16 +27,8 @@ SET(${PACKAGE_NAME}_TESTGLDIST_SOURCES ${${PACKAGE_NAME}_TESTGLDIST_SOURCES}
   )
 
 IF(Trilinos_ENABLE_Amesos AND Trilinos_ENABLE_Ifpack AND Trilinos_ENABLE_AztecOO AND Trilinos_ENABLE_EpetraExt)
-  PACKAGE_ADD_EXECUTABLE_AND_TEST(
-    testGLdist
-    SOURCES ${${PACKAGE_NAME}_TESTGLDIST_SOURCES}
-    ARGS "data/square.2 4"
-    COMM mpi
-    NUM_MPI_PROCS 4
-    PASS_REGULAR_EXPRESSION "TEST PASSED"
-    ADD_DIR_TO_NAME
-    )
-    PACKAGE_COPY_FILES_TO_BINARY_DIR(CopyTestGLdistFiles
+
+  PACKAGE_COPY_FILES_TO_BINARY_DIR(CopyTestGLdistFiles
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
     DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/data
     SOURCE_FILES square.2.000
@@ -44,9 +36,32 @@ IF(Trilinos_ENABLE_Amesos AND Trilinos_ENABLE_Ifpack AND Trilinos_ENABLE_AztecOO
                  square.2.002
                  square.2.003
     )
-    PACKAGE_COPY_FILES_TO_BINARY_DIR(CopyTestGLdistInstructions
+
+  PACKAGE_COPY_FILES_TO_BINARY_DIR(CopyTestGLdistInstructions
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
     DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}
     SOURCE_FILES HOW_TO_RUN
     )
+
+  PACKAGE_ADD_EXECUTABLE_AND_TEST(
+    testGLdist
+    SOURCES ${${PACKAGE_NAME}_TESTGLDIST_SOURCES}
+    ARGS "--geomfile=data/square.2"
+    COMM mpi
+    NUM_MPI_PROCS 4
+    PASS_REGULAR_EXPRESSION "TEST PASSED"
+    ADD_DIR_TO_NAME
+    )
+
+
+  PACKAGE_ADD_TEST(
+    testGLdist
+    NAME_POSTFIX stratimikos
+    ARGS "--geomfile=data/square.2 --use-stratimikos"
+    COMM mpi
+    NUM_MPI_PROCS 4
+    PASS_REGULAR_EXPRESSION "TEST PASSED"
+    ADD_DIR_TO_NAME
+    )
+
 ENDIF()

@@ -131,7 +131,9 @@ private:
 
 public:
 
-  GLdistYUEpetraDataPool( Epetra_Comm * commptr, double beta, char * myfile );
+  static bool useStratimikos;
+
+  GLdistYUEpetraDataPool( Epetra_Comm * commptr, double beta, const std::string &myfile );
 
   /** \brief Calls functions to compute nonlinear quantities and the augmented system matrix.
              These computations are performed after every update of the SQP iterate.

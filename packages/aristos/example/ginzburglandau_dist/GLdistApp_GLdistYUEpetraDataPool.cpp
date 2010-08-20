@@ -39,11 +39,21 @@
 #include "EpetraExt_Transpose_RowMatrix.h"
 #include "GLdistApp_SchurOp.hpp"
 #include "GLdistApp_GLdistYUEpetraDataPool.hpp"
+#include "Thyra_VectorBase.hpp"
+#include "Thyra_EpetraThyraWrappers.hpp"
+#include "Thyra_EpetraLinearOp.hpp"
+#include "Thyra_LinearOpWithSolveFactoryHelpers.hpp"
+#include "Thyra_DefaultPreconditioner.hpp"
+#include "Thyra_PreconditionerFactoryHelpers.hpp"
+#include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 #include <fstream>
 
 namespace GLdistApp {
 
-GLdistYUEpetraDataPool::GLdistYUEpetraDataPool( Epetra_Comm * commptr, double beta, char * myfile )
+bool GLdistYUEpetraDataPool::useStratimikos = false;
+
+GLdistYUEpetraDataPool::GLdistYUEpetraDataPool( Epetra_Comm * commptr,
+  double beta, const std::string &myfile )
   : commptr_(commptr),
     beta_(beta)
 {
@@ -54,10 +64,11 @@ GLdistYUEpetraDataPool::GLdistYUEpetraDataPool( Epetra_Comm * commptr, double be
   t_ = Teuchos::rcp( new Epetra_IntSerialDenseMatrix() );
   e_ = Teuchos::rcp( new Epetra_IntSerialDenseMatrix() );
 
-  strcpy(geomfile_, myfile);  
+  strcpy(geomfile_, myfile.c_str());  
 
   // Read subdomain info.
-  meshreader(*commptr_, *ipindx_, *ipcoords_, *pindx_, *pcoords_, *t_, *e_, myfile);
+  meshreader(*commptr_, *ipindx_, *ipcoords_, *pindx_, *pcoords_, *t_, *e_,
+    myfile.c_str());
 
   // Assemble volume and boundary mass and stiffness matrices, and the right-hand side of the PDE.
   assemble(*commptr, *ipindx_, *ipcoords_, *pindx_, *pcoords_, *t_, *e_, A_, H_, b_);
@@ -102,10 +113,14 @@ int GLdistYUEpetraDataPool::solveAugsys( const Teuchos::RefCountPtr<const Epetra
                                        double * tol )
 {
   int systemChoice = 1;   // 1 for full KKT system solve, 2 for Schur complement solve
-  int solverChoice = 12;  // These options are for the full KKT system solve.
-                          // 11 for AztecOO with built-in Schwarz DD preconditioning and ILU on subdomains
-                          // 12 for AztecOO with IFPACK Schwarz DD preconditioning and Umfpack on subdomains
-                          // 13 for a direct sparse solver (Umfpack, KLU)
+
+  // These options are for the full KKT system solve.
+  // 11 for AztecOO with built-in Schwarz DD preconditioning and ILU on subdomains
+  // 12 for AztecOO with IFPACK Schwarz DD preconditioning and Umfpack on subdomains
+  // 13 for a direct sparse solver (Umfpack, KLU)
+  int solverChoice = 12;
+
+  std::cout << "\nsolverChoice = " << solverChoice << "\n";
   
   if (systemChoice == 1) {
     // We're using the full KKT system formulation to solve the augmented system.
@@ -305,6 +320,8 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
                                          double * tol )
 {
 
+  std::cout << "\nsolveAugsysDyn(...) ...\n";
+
   double minthreshold = 1e-20;  // tolerance threshold for "exact" solves, anything below is computed w/ minprecision
   double minprecision = 1e-12;  // relative tolerance for "exact" solves
   int    maxit        = 200;    // maximum number of Krylov solver iterations
@@ -434,102 +451,141 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
   // =============================== //
 */
 
+  if (useStratimikos) {
 
-  // need an Epetra_LinearProblem to define AztecOO solver
-  Epetra_LinearProblem Problem;
-  Problem.SetOperator(&(*Augmat_));
-  Problem.SetLHS(&soln);
-  Problem.SetRHS(&rhs);
+    using Teuchos::RCP;
+    using Teuchos::rcpFromRef;
 
-  // now we can allocate the AztecOO solver
-  AztecOO kktsolver(Problem);
+    // Wrap the Epetra objects as Thyra objects
 
-  // HERE WE SET THE IFPACK PRECONDITIONER
-  //kktsolver.SetPrecOperator(Prec);
-  //kktsolver.SetPrecOperator(MLPrec);
-  kktsolver.SetPrecOperator(&(*Prec_));
+    RCP<const Thyra::LinearOpBase<double> >
+      thyra_Augmat = Thyra::epetraLinearOp(Augmat_);
+    RCP<const Thyra::LinearOpBase<double> >
+      thyra_Prec = Thyra::epetraLinearOp(Prec_);
+    RCP<Thyra::VectorBase<double> >
+      thyra_soln = Thyra::create_Vector( rcpFromRef(soln), thyra_Augmat->domain() );
+    RCP<const Thyra::VectorBase<double> >
+      thyra_rhs = Thyra::create_Vector( rcpFromRef(rhs), thyra_Augmat->range() );
 
+    // Create the solver
 
-  // specify solver
-  kktsolver.SetAztecOption(AZ_solver,AZ_gmres);
-  kktsolver.SetAztecOption(AZ_output,AZ_none);
+    RCP<Teuchos::ParameterList> pl = Teuchos::parameterList();
+    // ToDo: Set up this parameter list!
+    Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+    linearSolverBuilder.setParameterList(pl);
 
+    RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
+      linearSolverBuilder.createLinearSolveStrategy("");
 
-  // Set up tolerances.
-  if ((mypid==0) && wantstats)
-    outfile << "TOL: " << tolerance << endl;
+    RCP<Thyra::LinearOpWithSolveBase<double> > lows = lowsFactory->createOp();
 
-  if (fabs(tolerance) < minthreshold) {
+    Thyra::initializePreconditionedOp<double>(
+      *lowsFactory, thyra_Augmat, Thyra::unspecifiedPrec<double>(thyra_Prec),
+      &*lows
+      );
 
-    // Almost zero tolerance.
-    kktsolver.SetAztecOption(AZ_conv,AZ_r0);
-    kktsolver.SetAztecOption(AZ_kspace, maxit);
-    // .. and here we solve
-    kktsolver.Iterate(maxit, minprecision);
-    if ((mypid==0) && wantstats)
-      outfile << kktsolver.NumIters() << endl;
+    // Create the SolveStatus and solve
+
+    Thyra::SolveStatus<double> status =
+      lows->solve(Thyra::NOTRANS, *thyra_rhs, thyra_soln.ptr());
+    std::cout << "\nSolve status:\n" << status;
 
   }
-
-  else if (tolerance < 0) {
-
-    if ((mypid==0) && wantstats) {
-      outfile << "\nFIRST CG ITER\n";
-      cout << "\nFIRST CG ITER\n";
-    }
-    
-    double normg  = tol[1];
-    double delta  = tol[2];
-    double smallc = tol[3];
-    /// First iterative solve with dynamic tolerance.
-    // do one solve and then adjust if needed
-    kktsolver.SetAztecOption(AZ_conv,AZ_noscaled);
-    kktsolver.SetAztecOption(AZ_kspace, innerit);
-    // .. and here we solve
-    kktsolver.Iterate(innerit, minprecision);
-    for (int i=1; i <= numcycles; i++) {
-      double normsoln;
-      soln.Norm2(&normsoln);
-      // dynamic stopping criterion
-      double dynmin = 0.0;
-      dynmin = min(normsoln/normg, delta/normg);
-      dynmin = min(dynmin, smallc);
-      dynmin = dynmin*min(normsoln, 1.0);
-      if ((mypid==0) && wantstats) {
-          outfile << "\nTOL: " << dynmin << endl;
-          cout << "\nTOL: " << dynmin << endl;
-      }
-      if (kktsolver.TrueResidual() > dynmin) {
-        if ((mypid==0) && wantstats) {
-          outfile << "\nCYCLE\n";
-          cout << "\nCYCLE\n";
-        }
-        kktsolver.Iterate(innerit, minprecision);
-      }
-    }
-    if ((mypid==0) && wantstats)
-      outfile << kktsolver.NumIters() << endl;
-
-   }
-
   else {
 
-    // Solve to desired preset tolerance, dynamic or fixed.
-    if (tol[1] < 0.1)  // if absolute tolerance chosen, for dynamic solves
-      kktsolver.SetAztecOption(AZ_conv,AZ_noscaled);
-    else               // if relative tolerance chosen, for fixed solves
-      kktsolver.SetAztecOption(AZ_conv,AZ_r0);
-    kktsolver.SetAztecOption(AZ_kspace, maxit);
-    kktsolver.Iterate(maxit, tolerance);
+    // Use AztecOO
+
+    // need an Epetra_LinearProblem to define AztecOO solver
+    Epetra_LinearProblem Problem;
+    Problem.SetOperator(&(*Augmat_));
+    Problem.SetLHS(&soln);
+    Problem.SetRHS(&rhs);
+
+    // now we can allocate the AztecOO solver
+    AztecOO kktsolver(Problem);
+
+    // HERE WE SET THE IFPACK PRECONDITIONER
+    //kktsolver.SetPrecOperator(Prec);
+    //kktsolver.SetPrecOperator(MLPrec);
+    kktsolver.SetPrecOperator(&(*Prec_));
+
+    // specify solver
+    kktsolver.SetAztecOption(AZ_solver,AZ_gmres);
+    kktsolver.SetAztecOption(AZ_output,AZ_none);
+
+    // Set up tolerances.
     if ((mypid==0) && wantstats)
-      outfile << kktsolver.NumIters() << endl;
+      outfile << "TOL: " << tolerance << endl;
+
+    if (fabs(tolerance) < minthreshold) {
+
+      // Almost zero tolerance.
+      kktsolver.SetAztecOption(AZ_conv,AZ_r0);
+      kktsolver.SetAztecOption(AZ_kspace, maxit);
+      // .. and here we solve
+      kktsolver.Iterate(maxit, minprecision);
+      if ((mypid==0) && wantstats)
+        outfile << kktsolver.NumIters() << endl;
+
+    }
+
+    else if (tolerance < 0) {
+
+      if ((mypid==0) && wantstats) {
+        outfile << "\nFIRST CG ITER\n";
+        cout << "\nFIRST CG ITER\n";
+      }
+    
+      double normg  = tol[1];
+      double delta  = tol[2];
+      double smallc = tol[3];
+      // First iterative solve with dynamic tolerance.
+      // do one solve and then adjust if needed
+      kktsolver.SetAztecOption(AZ_conv,AZ_noscaled);
+      kktsolver.SetAztecOption(AZ_kspace, innerit);
+      // .. and here we solve
+      kktsolver.Iterate(innerit, minprecision);
+      for (int i=1; i <= numcycles; i++) {
+        double normsoln;
+        soln.Norm2(&normsoln);
+        // dynamic stopping criterion
+        double dynmin = 0.0;
+        dynmin = min(normsoln/normg, delta/normg);
+        dynmin = min(dynmin, smallc);
+        dynmin = dynmin*min(normsoln, 1.0);
+        if ((mypid==0) && wantstats) {
+          outfile << "\nTOL: " << dynmin << endl;
+          cout << "\nTOL: " << dynmin << endl;
+        }
+        if (kktsolver.TrueResidual() > dynmin) {
+          if ((mypid==0) && wantstats) {
+            outfile << "\nCYCLE\n";
+            cout << "\nCYCLE\n";
+          }
+          kktsolver.Iterate(innerit, minprecision);
+        }
+      }
+      if ((mypid==0) && wantstats)
+        outfile << kktsolver.NumIters() << endl;
+      
+    }
+    else {
+      
+      // Solve to desired preset tolerance, dynamic or fixed.
+      if (tol[1] < 0.1)  // if absolute tolerance chosen, for dynamic solves
+        kktsolver.SetAztecOption(AZ_conv,AZ_noscaled);
+      else               // if relative tolerance chosen, for fixed solves
+        kktsolver.SetAztecOption(AZ_conv,AZ_r0);
+      kktsolver.SetAztecOption(AZ_kspace, maxit);
+      kktsolver.Iterate(maxit, tolerance);
+      if ((mypid==0) && wantstats)
+        outfile << kktsolver.NumIters() << endl;
+
+    }
 
   }
-    
 
-  // delete the preconditioner
-  //delete Prec;
-  //delete MLPrec;
+  // Pull the solution out into three vectors y, u, and p
     
   for (int i=0; i<rhsy->MyLength(); i++) {
     (*((*y)(0)))[i] = soln[i];
@@ -543,9 +599,8 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
 
   outfile.close();
   return 0;
+
 }
-
-
 
 Epetra_Comm * GLdistYUEpetraDataPool::getCommPtr()   { return commptr_; }
 
