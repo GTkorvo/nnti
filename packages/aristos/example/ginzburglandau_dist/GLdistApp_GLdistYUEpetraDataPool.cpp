@@ -39,12 +39,6 @@
 #include "EpetraExt_Transpose_RowMatrix.h"
 #include "GLdistApp_SchurOp.hpp"
 #include "GLdistApp_GLdistYUEpetraDataPool.hpp"
-#include "Thyra_VectorBase.hpp"
-#include "Thyra_EpetraThyraWrappers.hpp"
-#include "Thyra_EpetraLinearOp.hpp"
-#include "Thyra_LinearOpWithSolveFactoryHelpers.hpp"
-#include "Thyra_DefaultPreconditioner.hpp"
-#include "Thyra_PreconditionerFactoryHelpers.hpp"
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 #include <fstream>
 
