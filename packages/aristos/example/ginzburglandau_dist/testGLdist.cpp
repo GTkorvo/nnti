@@ -155,8 +155,8 @@ int main(int argc, char *argv[])
   // SQP run.
   Teuchos::ParameterList parlist;
   parlist.set("Max Number of SQP Iterations", 50);
-  parlist.set("Gradient of Lagrangian Tolerance", 1e-10);
-  parlist.set("Constraints Tolerance", 1e-10);
+  parlist.set("Gradient of Lagrangian Tolerance", 1e-6);
+  parlist.set("Constraints Tolerance", 1e-6);
 
   int iter, iflag;
   exy->PutScalar(1.0);

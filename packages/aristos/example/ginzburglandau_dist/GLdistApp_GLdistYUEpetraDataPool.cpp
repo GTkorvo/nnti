@@ -40,6 +40,8 @@
 #include "GLdistApp_SchurOp.hpp"
 #include "GLdistApp_GLdistYUEpetraDataPool.hpp"
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
+#include "Teuchos_XMLParameterListHelpers.hpp"
+
 #include <fstream>
 
 namespace GLdistApp {
@@ -120,9 +122,7 @@ int GLdistYUEpetraDataPool::solveAugsys( const Teuchos::RefCountPtr<const Epetra
     // We're using the full KKT system formulation to solve the augmented system.
    
     Epetra_Map standardmap(A_->DomainMap());
-    int numstates = standardmap.NumGlobalElements();
     Epetra_Map bdryctrlmap(B_->DomainMap());
-    int numcontrols = bdryctrlmap.NumGlobalElements();
     Epetra_Vector rhs( (Epetra_BlockMap&)Augmat_->RangeMap() );
     Epetra_Vector soln( (Epetra_BlockMap&)Augmat_->RangeMap() );
     soln.PutScalar(1.0);  
@@ -314,7 +314,11 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
                                          double * tol )
 {
 
-  std::cout << "\nsolveAugsysDyn(...) ...\n";
+  const RCP<FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+
+  *out << "\nsolveAugsysDyn(...) ...\n";
+
+  Teuchos::OSTab tab(out);
 
   double minthreshold = 1e-20;  // tolerance threshold for "exact" solves, anything below is computed w/ minprecision
   double minprecision = 1e-12;  // relative tolerance for "exact" solves
@@ -331,9 +335,7 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
   // will need to set up state-control-adjoint splitting and corresponding maps
 
   Epetra_Map standardmap(A_->DomainMap());
-  int numstates = standardmap.NumGlobalElements();
   Epetra_Map bdryctrlmap(B_->DomainMap());
-  int numcontrols = bdryctrlmap.NumGlobalElements();
   Epetra_Vector rhs( (Epetra_BlockMap&)Augmat_->RangeMap() );
   Epetra_Vector soln( (Epetra_BlockMap&)Augmat_->RangeMap() );
   // Set initial iterate.
@@ -445,49 +447,103 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
   // =============================== //
 */
 
-  if (useStratimikos) {
+  // Solve the system
 
-    using Teuchos::RCP;
-    using Teuchos::rcpFromRef;
+  if (useStratimikos) {
+    
+    *out << "\nUsing Stratimikos!\n";
+
+    using Teuchos::RCP; using Teuchos::FancyOStream; using Teuchos::describe;
+    using Teuchos::rcpFromRef; using Teuchos::constOptInArg;
 
     // Wrap the Epetra objects as Thyra objects
 
-    RCP<const Thyra::LinearOpBase<double> >
-      thyra_Augmat = Thyra::epetraLinearOp(Augmat_);
-    RCP<const Thyra::LinearOpBase<double> >
-      thyra_Prec = Thyra::epetraLinearOp(Prec_);
-    RCP<Thyra::VectorBase<double> >
-      thyra_soln = Thyra::create_Vector( rcpFromRef(soln), thyra_Augmat->domain() );
-    RCP<const Thyra::VectorBase<double> >
-      thyra_rhs = Thyra::create_Vector( rcpFromRef(rhs), thyra_Augmat->range() );
+    RCP<const Thyra::LinearOpBase<double> > thyra_Augmat =
+      Thyra::epetraLinearOp(Augmat_);
+    RCP<const Thyra::LinearOpBase<double> > thyra_Prec =
+      Thyra::epetraLinearOp(Prec_);
+    RCP<Thyra::VectorBase<double> > thyra_soln =
+      Thyra::create_Vector( rcpFromRef(soln), thyra_Augmat->domain() );
+    RCP<const Thyra::VectorBase<double> > thyra_rhs =
+      Thyra::create_Vector( rcpFromRef(rhs), thyra_Augmat->range() );
 
     // Create the solver
 
-    RCP<Teuchos::ParameterList> pl = Teuchos::parameterList();
-    // ToDo: Set up this parameter list!
+    RCP<Teuchos::ParameterList> pl = Teuchos::getParametersFromXmlString(
+      "<ParameterList>"
+      "  <Parameter name=\"Linear Solver Type\" type=\"string\" value=\"AztecOO\"/>"
+      "  <ParameterList name=\"Linear Solver Types\">"
+      "    <ParameterList name=\"Belos\">"
+      "      <Parameter name=\"Solver Type\" type=\"string\" value=\"Pseudo Block GMRES\"/>"
+      "      <ParameterList name=\"Solver Types\">"
+      "        <ParameterList name=\"Pseudo Block GMRES\">"
+      "          <Parameter name=\"Convergence Tolerance\" type=\"double\" value=\"1e-6\"/>"
+      "          <Parameter name=\"Show Maximum Residual Norm Only\" type=\"bool\" value=\"0\"/>"
+      "          <Parameter name=\"Maximum Iterations\" type=\"int\" value=\"400\"/>"
+      "          <Parameter name=\"Verbosity\" type=\"int\" value=\"100\"/>"
+      "        </ParameterList>"
+      "      </ParameterList>"
+      "    </ParameterList>"
+      "    <ParameterList name=\"AztecOO\">"
+      "      <ParameterList name=\"Forward Solve\">"
+      "        <ParameterList name=\"AztecOO Settings\">"
+      "          <Parameter name=\"Aztec Solver\" type=\"string\" value=\"GMRES\"/>"
+      "          <Parameter name=\"Convergence Test\" type=\"string\" value=\"r0\"/>"
+      "          <Parameter name=\"Size of Krylov Subspace\" type=\"int\" value=\"300\"/>"
+      "        </ParameterList>"
+      "        <Parameter name=\"Max Iterations\" type=\"int\" value=\"400\"/>"
+      "        <Parameter name=\"Tolerance\" type=\"double\" value=\"1e-15\"/>"
+      "      </ParameterList>"
+      "      <Parameter name=\"Output Every RHS\" type=\"bool\" value=\"1\"/>"
+      "    </ParameterList>"
+      "  </ParameterList>"
+      "  <Parameter name=\"Preconditioner Type\" type=\"string\" value=\"None\"/>"
+      "  <ParameterList name=\"Preconditioner Types\">"
+      "    <ParameterList name=\"Ifpack\">"
+      "      <Parameter name=\"Prec Type\" type=\"string\" value=\"ILU\"/>"
+      "      <Parameter name=\"Overlap\" type=\"int\" value=\"1\"/>"
+      "      <ParameterList name=\"Ifpack Settings\">"
+      "        <Parameter name=\"fact: level-of-fill\" type=\"int\" value=\"2\"/>"
+      "      </ParameterList>"
+      "    </ParameterList>"
+      "  </ParameterList>"
+      "</ParameterList>"
+      );
+    // NOTE: The above preconditioner will get ignored due to passing in the
+    // pre-formed preconditioner below.
+
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     linearSolverBuilder.setParameterList(pl);
 
     RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
       linearSolverBuilder.createLinearSolveStrategy("");
+    
+    lowsFactory->setOStream(out);
+    lowsFactory->setVerbLevel(Teuchos::VERB_LOW);
 
     RCP<Thyra::LinearOpWithSolveBase<double> > lows = lowsFactory->createOp();
+    Thyra::initializePreconditionedOp<double>(*lowsFactory,
+      thyra_Augmat, Thyra::unspecifiedPrec<double>(thyra_Prec), &*lows);
+    //Thyra::initializeOp<double>(*lowsFactory, thyra_Augmat, &*lows);
+    *out << "\nlows = " << describe(*lows, Teuchos::VERB_MEDIUM);
 
-    Thyra::initializePreconditionedOp<double>(
-      *lowsFactory, thyra_Augmat, Thyra::unspecifiedPrec<double>(thyra_Prec),
-      &*lows
-      );
+    // Create the SolveCriteria and solve
 
-    // Create the SolveStatus and solve
+    Thyra::SolveCriteria<double> solveCriteria;
+    solveCriteria.solveMeasureType.numerator = Thyra::SOLVE_MEASURE_NORM_RESIDUAL;
+    //solveCriteria.numeratorReductionFunc = createMockNormReductionFunctional<Scalar>();
+    solveCriteria.solveMeasureType.denominator = Thyra::SOLVE_MEASURE_NORM_INIT_RESIDUAL;
+    //solveCriteria.denominatorReductionFunc = createMockMaxNormInfEpsReductionFunctional<Scalar>();
+    solveCriteria.requestedTol = 1e-6;
 
     Thyra::SolveStatus<double> status =
-      lows->solve(Thyra::NOTRANS, *thyra_rhs, thyra_soln.ptr());
-    std::cout << "\nSolve status:\n" << status;
+      lows->solve(Thyra::NOTRANS, *thyra_rhs, thyra_soln.ptr(), constOptInArg(solveCriteria));
+    *out << "\nSolve status:\n" << status;
 
   }
   else {
 
-    // Use AztecOO
+    *out << "\nUsing AztecOO!\n";
 
     // need an Epetra_LinearProblem to define AztecOO solver
     Epetra_LinearProblem Problem;
@@ -661,7 +717,6 @@ void GLdistYUEpetraDataPool::computeAugmat()
   int indexBase = 1;
 
   int numstates = standardmap.NumGlobalElements();
-  int numcontrols = bdryctrlmap.NumGlobalElements();
   int nummystates = standardmap.NumMyElements();
   int nummycontrols = bdryctrlmap.NumMyElements();
 
@@ -869,6 +924,8 @@ int GLdistYUEpetraDataPool::computePrec()
   // =================================================== //
   // E N D   O F   I F P A C K   C O N S T R U C T I O N //
   // =================================================== //
+
+  return 0;
 }
 
 
@@ -883,7 +940,6 @@ void GLdistYUEpetraDataPool::PrintSolutionVTK( const Teuchos::RefCountPtr<const 
 {
   Epetra_Map standardmap(A_->DomainMap());
   int numstates = standardmap.NumGlobalElements();
-  int nummystates = standardmap.NumMyElements();
   int IndexBase = 1;
 
   Teuchos::RefCountPtr<Epetra_Map> printmap;
