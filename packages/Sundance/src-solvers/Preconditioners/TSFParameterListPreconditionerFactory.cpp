@@ -18,14 +18,14 @@ createPreconditioner(const LinearOperator<double>& A) const
     
   if (pType=="ML")
   {
-    string precType = params_.get<string>("Problem Type");
+    std::string precType = params_.get<string>("Problem Type");
     ParameterList mlParams;
     ML_Epetra::SetDefaults(precType, mlParams);
     ParameterList::ConstIterator iter;
     ParameterList mlSettings = params_.sublist("ML Settings");
     for (iter=mlSettings.begin(); iter!=mlSettings.end(); ++iter)
     {
-      const string& name = mlSettings.name(iter);
+      const std::string& name = mlSettings.name(iter);
       const ParameterEntry& entry = mlSettings.entry(iter);
       mlParams.setEntry(name, entry);
     }

@@ -123,7 +123,7 @@ namespace TSFExtended
     /** \name Printable interface */
     //@{
     /** Write to a stream  */
-    void print(ostream& os) const 
+    void print(std::ostream& os) const 
     {
       epetraVec()->Print(os);
     }

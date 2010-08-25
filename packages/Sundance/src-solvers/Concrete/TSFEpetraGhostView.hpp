@@ -70,7 +70,7 @@ namespace TSFExtended
                   const Epetra_Vector& srcObject);
 
       /** */
-      void print(ostream& os) const ;
+      void print(std::ostream& os) const ;
     private:
       RCP<Epetra_Vector> ghostView_;
     };

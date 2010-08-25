@@ -380,7 +380,7 @@ namespace TSFExtended
     }
 
     /** Describe the vector  */
-    string description() const
+    std::string description() const
     {
       const Describable* d = 
         dynamic_cast<const Describable* >(this->ptr().get());

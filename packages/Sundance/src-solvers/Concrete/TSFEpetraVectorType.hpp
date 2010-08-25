@@ -101,7 +101,7 @@ namespace TSFExtended
     /** \name Printable interface */
     //@{
     /** Print to stream */
-    void print(ostream& os) const {os << description();}
+    void print(std::ostream& os) const {os << description();}
     //@}
 
     GET_RCP(VectorTypeExtensions<double>);

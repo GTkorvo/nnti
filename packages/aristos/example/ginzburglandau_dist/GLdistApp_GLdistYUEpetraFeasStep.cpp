@@ -26,7 +26,7 @@
 // ***********************************************************************
 //@HEADER
 
-#include <GLdistApp_GLdistYUEpetraFeasStep.hpp>
+#include "GLdistApp_GLdistYUEpetraFeasStep.hpp"
 
 namespace GLdistApp {
 

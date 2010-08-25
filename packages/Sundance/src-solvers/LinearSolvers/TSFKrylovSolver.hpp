@@ -76,7 +76,7 @@ KrylovSolver<Scalar>::KrylovSolver(const ParameterList& params)
 {
   if (!params.isParameter("Precond")) return;
 
-  const string& precondType = params.template get<string>("Precond");
+  const std::string& precondType = params.template get<string>("Precond");
 
   if (precondType=="ILUK")
   {

@@ -26,7 +26,7 @@
 // ***********************************************************************
 //@HEADER
 
-#include <GLdistApp_GLdistYUEpetraLagMult.hpp>
+#include "GLdistApp_GLdistYUEpetraLagMult.hpp"
 
 namespace GLdistApp {
 

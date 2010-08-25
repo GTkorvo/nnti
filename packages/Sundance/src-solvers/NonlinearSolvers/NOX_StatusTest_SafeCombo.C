@@ -206,7 +206,7 @@ void NOX::StatusTest::SafeCombo::andOp(const Solver::Generic& problem, NOX::Stat
 }
 
 
-ostream& NOX::StatusTest::SafeCombo::print(ostream& stream, int indent) const
+ostream& NOX::StatusTest::SafeCombo::print(std::ostream& stream, int indent) const
 {
   for (int j = 0; j < indent; j ++)
     stream << ' ';
@@ -220,7 +220,7 @@ ostream& NOX::StatusTest::SafeCombo::print(ostream& stream, int indent) const
   stream << status;
   stream << ((type == OR) ? "OR" : "AND");
   stream << " Combination";
-  stream << " -> " << endl;
+  stream << " -> " << std::endl;
 
   for (vector<Teuchos::RCP<Generic> >::const_iterator i = tests.begin(); i != tests.end(); ++i) 
     (*i)->print(stream, indent+2);

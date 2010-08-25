@@ -138,7 +138,7 @@ void DenseSerialMatrix::print(std::ostream& os) const
       for (int j=0; j<numCols(); j++)
       {
         os << setw(6) << i << setw(6) << j << setw(20) << data_[i+numRows()*j]
-           << endl;
+           << std::endl;
       }
     }
   }

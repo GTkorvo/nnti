@@ -554,7 +554,7 @@ void EpetraVector::setElement(OrdType index, const double& value)
 
 void EpetraVector::addToElement(OrdType index, const double& value)
 {
-//  cout << "adding (" << index << ", " << value << ")" << endl;
+//  cout << "adding (" << index << ", " << value << ")" << std::endl;
   int loc_index[1] = { index };
   epetraVec()->SumIntoGlobalValues(1, const_cast<double*>(&value), 
     loc_index);

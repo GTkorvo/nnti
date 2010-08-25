@@ -26,7 +26,7 @@
 // ***********************************************************************
 //@HEADER
 
-#include <SimpleApp_SimpleEpetraLagMult.hpp>
+#include "SimpleApp_SimpleEpetraLagMult.hpp"
 #include "Epetra_Map.h"
 
 namespace SimpleApp {

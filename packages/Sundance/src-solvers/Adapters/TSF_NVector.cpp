@@ -92,7 +92,7 @@ extern "C"
 
   void N_VPrint_Trilinos(N_Vector x)
   {
-    cout << toTrilinos(x) << endl;
+    cout << toTrilinos(x) << std::endl;
   }
 
   /*
