@@ -490,6 +490,7 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
       "          <Parameter name=\"Aztec Solver\" type=\"string\" value=\"GMRES\"/>"
       "          <Parameter name=\"Convergence Test\" type=\"string\" value=\"r0\"/>"
       "          <Parameter name=\"Size of Krylov Subspace\" type=\"int\" value=\"300\"/>"
+      "          <Parameter name=\"Output Frequency\" type=\"int\" value=\"1\"/>"
       "        </ParameterList>"
       "        <Parameter name=\"Max Iterations\" type=\"int\" value=\"400\"/>"
       "        <Parameter name=\"Tolerance\" type=\"double\" value=\"1e-15\"/>"
@@ -497,12 +498,13 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
       "      <Parameter name=\"Output Every RHS\" type=\"bool\" value=\"1\"/>"
       "    </ParameterList>"
       "  </ParameterList>"
-      "  <Parameter name=\"Preconditioner Type\" type=\"string\" value=\"None\"/>"
+      "  <Parameter name=\"Preconditioner Type\" type=\"string\" value=\"Ifpack\"/>"
       "  <ParameterList name=\"Preconditioner Types\">"
       "    <ParameterList name=\"Ifpack\">"
-      "      <Parameter name=\"Prec Type\" type=\"string\" value=\"ILU\"/>"
-      "      <Parameter name=\"Overlap\" type=\"int\" value=\"1\"/>"
+      "      <Parameter name=\"Prec Type\" type=\"string\" value=\"Amesos\"/>"
+      "      <Parameter name=\"Overlap\" type=\"int\" value=\"4\"/>"
       "      <ParameterList name=\"Ifpack Settings\">"
+      "        <Parameter name=\"amesos: solver type\" type=\"string\" value=\"Amesos_Klu\"/>"
       "        <Parameter name=\"fact: level-of-fill\" type=\"int\" value=\"2\"/>"
       "      </ParameterList>"
       "    </ParameterList>"
@@ -522,9 +524,9 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
     lowsFactory->setVerbLevel(Teuchos::VERB_LOW);
 
     RCP<Thyra::LinearOpWithSolveBase<double> > lows = lowsFactory->createOp();
-    Thyra::initializePreconditionedOp<double>(*lowsFactory,
-      thyra_Augmat, Thyra::unspecifiedPrec<double>(thyra_Prec), &*lows);
-    //Thyra::initializeOp<double>(*lowsFactory, thyra_Augmat, &*lows);
+    //Thyra::initializePreconditionedOp<double>(*lowsFactory,
+    //  thyra_Augmat, Thyra::unspecifiedPrec<double>(thyra_Prec), &*lows);
+    Thyra::initializeOp<double>(*lowsFactory, thyra_Augmat, &*lows);
     *out << "\nlows = " << describe(*lows, Teuchos::VERB_MEDIUM);
 
     // Create the SolveCriteria and solve
@@ -561,7 +563,8 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
 
     // specify solver
     kktsolver.SetAztecOption(AZ_solver,AZ_gmres);
-    kktsolver.SetAztecOption(AZ_output,AZ_none);
+    //kktsolver.SetAztecOption(AZ_output,AZ_none);
+    kktsolver.SetAztecOption(AZ_output,AZ_all);
 
     // Set up tolerances.
     if ((mypid==0) && wantstats)
