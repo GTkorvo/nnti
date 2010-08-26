@@ -81,6 +81,10 @@ int main(int argc, char *argv[])
   clp.setOption("use-stratimikos", "use-aztecoo",
     &GLdistApp::GLdistYUEpetraDataPool::useStratimikos,
     "Use Stratimikos or AztecOO");
+
+  clp.setOption("stratimikos-params-file",
+    &GLdistApp::GLdistYUEpetraDataPool::stratimikosXmlFile,
+    "Stratimikos input file.");
   
   // Want derivative check?
   bool derchk = false;
