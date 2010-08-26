@@ -455,7 +455,7 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
     *out << "\nUsing Stratimikos!\n";
 
     using Teuchos::RCP; using Teuchos::FancyOStream; using Teuchos::describe;
-    using Teuchos::rcpFromRef; using Teuchos::constOptInArg;
+    using Teuchos::rcpFromRef;
 
     // Wrap the Epetra objects as Thyra objects
 
@@ -475,7 +475,7 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
 
     Thyra::SolveStatus<double> status = Augmat_lows_->solve(
       Thyra::NOTRANS, *thyra_rhs, thyra_soln.ptr(),
-      constOptInArg(solveCriteria));
+      optInArg(solveCriteria));
     *out << "\nSolve status:\n" << status;
 
   }
@@ -825,59 +825,13 @@ int GLdistYUEpetraDataPool::computePrec()
     
     //*out << "\nUsing Stratimikos!\n";
 
-    using Teuchos::RCP; using Teuchos::FancyOStream; using Teuchos::describe;
-    using Teuchos::rcpFromRef; using Teuchos::constOptInArg;
+    using Teuchos::RCP; using Teuchos::FancyOStream;
+    using Teuchos::describe; using Teuchos::rcpFromRef;
 
     if (is_null(Augmat_lowsFactory_)) {
 
-/*
-      RCP<Teuchos::ParameterList> pl = Teuchos::getParametersFromXmlString(
-        "<ParameterList>"
-        "  <Parameter name=\"Linear Solver Type\" type=\"string\" value=\"AztecOO\"/>"
-        "  <ParameterList name=\"Linear Solver Types\">"
-        "    <ParameterList name=\"Belos\">"
-        "      <Parameter name=\"Solver Type\" type=\"string\" value=\"Pseudo Block GMRES\"/>"
-        "      <ParameterList name=\"Solver Types\">"
-        "        <ParameterList name=\"Pseudo Block GMRES\">"
-        "          <Parameter name=\"Convergence Tolerance\" type=\"double\" value=\"1e-6\"/>"
-        "          <Parameter name=\"Show Maximum Residual Norm Only\" type=\"bool\" value=\"0\"/>"
-        "          <Parameter name=\"Maximum Iterations\" type=\"int\" value=\"400\"/>"
-        "          <Parameter name=\"Verbosity\" type=\"int\" value=\"100\"/>"
-        "        </ParameterList>"
-        "      </ParameterList>"
-        "    </ParameterList>"
-        "    <ParameterList name=\"AztecOO\">"
-        "      <ParameterList name=\"Forward Solve\">"
-        "        <ParameterList name=\"AztecOO Settings\">"
-        "          <Parameter name=\"Aztec Solver\" type=\"string\" value=\"GMRES\"/>"
-        "          <Parameter name=\"Convergence Test\" type=\"string\" value=\"r0\"/>"
-        "          <Parameter name=\"Size of Krylov Subspace\" type=\"int\" value=\"300\"/>"
-        "          <Parameter name=\"Output Frequency\" type=\"int\" value=\"1\"/>"
-        "        </ParameterList>"
-        "        <Parameter name=\"Max Iterations\" type=\"int\" value=\"400\"/>"
-        "        <Parameter name=\"Tolerance\" type=\"double\" value=\"1e-15\"/>"
-        "      </ParameterList>"
-        "      <Parameter name=\"Output Every RHS\" type=\"bool\" value=\"1\"/>"
-        "    </ParameterList>"
-        "  </ParameterList>"
-        "  <Parameter name=\"Preconditioner Type\" type=\"string\" value=\"Ifpack\"/>"
-        "  <ParameterList name=\"Preconditioner Types\">"
-        "    <ParameterList name=\"Ifpack\">"
-        "      <Parameter name=\"Prec Type\" type=\"string\" value=\"Amesos\"/>"
-        "      <Parameter name=\"Overlap\" type=\"int\" value=\"4\"/>"
-        "      <ParameterList name=\"Ifpack Settings\">"
-        "        <Parameter name=\"amesos: solver type\" type=\"string\" value=\"Amesos_Klu\"/>"
-        "        <Parameter name=\"fact: level-of-fill\" type=\"int\" value=\"2\"/>"
-        "      </ParameterList>"
-        "    </ParameterList>"
-        "  </ParameterList>"
-        "</ParameterList>"
-        );
-      // NOTE: The above preconditioner will get ignored due to passing in the
-      // pre-formed preconditioner below.
-      */
-
-      RCP<Teuchos::ParameterList> pl = Teuchos::getParametersFromXmlFile(stratimikosXmlFile);
+      RCP<Teuchos::ParameterList> pl =
+        Teuchos::getParametersFromXmlFile(stratimikosXmlFile);
 
       Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
       linearSolverBuilder.setParameterList(pl);
@@ -892,10 +846,9 @@ int GLdistYUEpetraDataPool::computePrec()
     Augmat_lows_ = Augmat_lowsFactory_->createOp();
     thyra_Augmat_ = Thyra::epetraLinearOp(Augmat_);
 
-    Thyra::initializeOp<double>(*Augmat_lowsFactory_, thyra_Augmat_, &*Augmat_lows_);
+    Thyra::initializeOp<double>(*Augmat_lowsFactory_, thyra_Augmat_,
+      Augmat_lows_.ptr());
     *out << "\nlows = " << describe(*Augmat_lows_, Teuchos::VERB_MEDIUM);
-
-    // ToDo: Above, get teh reuse of the preconditioner working!
 
   }
   else {
