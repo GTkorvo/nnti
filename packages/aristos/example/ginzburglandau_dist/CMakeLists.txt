@@ -26,7 +26,7 @@ SET(${PACKAGE_NAME}_TESTGLDIST_SOURCES ${${PACKAGE_NAME}_TESTGLDIST_SOURCES}
     testGLdist.cpp
   )
 
-IF(Trilinos_ENABLE_Amesos AND Trilinos_ENABLE_Ifpack AND Trilinos_ENABLE_AztecOO AND Trilinos_ENABLE_EpetraExt)
+IF(Trilinos_ENABLE_Amesos AND Trilinos_ENABLE_Ifpack AND Trilinos_ENABLE_AztecOO AND Trilinos_ENABLE_Belos AND Trilinos_ENABLE_EpetraExt AND Trilinos_ENABLE_Stratimikos AND Trilinos_ENABLE_Thyra)
 
   PACKAGE_COPY_FILES_TO_BINARY_DIR(CopyTestGLdistFiles
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
