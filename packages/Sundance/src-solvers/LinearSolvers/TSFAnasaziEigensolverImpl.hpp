@@ -137,7 +137,7 @@ inline void AnasaziEigensolver<Scalar>::solve(
   Array<Vector<Scalar> >& evecs,
   Array<std::complex<Scalar> >& ew) const 
 {
-#define USE_THYRA_MV
+//#define USE_THYRA_MV
 
 #ifdef USE_THYRA_MV
   typedef Thyra::MultiVectorBase<Scalar>         MV;

@@ -148,8 +148,6 @@ public:
   */      
   static RCP< _MV > CloneViewNonConst(  _MV & mv, const std::vector<int>& index )
     {
-      Out::os() << "CloneViewNonConst()" << endl;
-
       int numvecs = index.size();
       //Out::os() << "index.size() = " << numvecs << endl;
       //Out::os() << "input size = " << mv.size() << endl;
@@ -163,13 +161,9 @@ public:
 
       for (int i=0; i<numvecs; i++)
       {
-        //Out::os() << "index=" << index[i] << endl;
-        Out::os() << "in ptr=" << mv[index[i]].ptr().get() << endl;
         (*rtn)[i] = mv[index[i]]; // shallow copy
-        Out::os() << "out ptr=" << (*rtn)[i].ptr().get() << endl;
-        
       }
-      Out::os() << "done CloneViewNonConst()" << endl;
+
       return rtn;
     }
 
@@ -238,12 +232,10 @@ public:
         Vector<double> tmp;
         if (beta==one())
         {
-//          Out::os() << "beta = one" << endl;
           tmp = mv[j].copy();
         }
         else if (beta==zero())
         {
-          //        Out::os() << "beta = zero" << endl;
           tmp = mv[j].copy();
           tmp.setToConstant(zero());
         }
@@ -267,7 +259,6 @@ public:
   static void MvAddMv( const double alpha, const  _MV & A, 
     const double beta,  const  _MV & B,  _MV & mv )
     { 
-      //Out::os() << "MvAddMv()" << endl;
       TEST_FOR_EXCEPT(A.size() != B.size());
       mv.resize(A.size());
       for (int i=0; i<A.size(); i++)
@@ -289,24 +280,19 @@ public:
   static void MvTransMv( const double alpha, const  _MV & A, const  _MV & mv, 
     Teuchos::SerialDenseMatrix<int,double>& B )
     { 
-      Out::os() << "MvTransMv()" << endl;
       // Create a multivector to hold the result (m by n)
       int m = A.size();
       int n = mv.size();
-      B.shape(m, n);
+//      B.shape(m, n);
       //Out::os() << "m=" << m << ", n=" << n << endl;
       for (int i=0; i<m; i++)
       {
         for (int j=0; j<n; j++)
         {
           B(i,j) = alpha * (A[i] * mv[j]);
-          Out::os() << "i=" << i << " j="<< j << " B=" << B(i,j) << endl;
         }
       }
     
-      Out::os() << "result={" << endl;
-      B.print(cerr);
-      Out::os() << "}" << endl;
     }
 
   /**
@@ -444,7 +430,8 @@ public:
       y.resize(x.size());
       for (int i=0; i<x.size(); i++) 
       {
-        y[i] = Op * x[i];
+//        y[i] = Op * x[i];
+        y[i].acceptCopyOf(Op * x[i]);
 //        Out::os() << "i=" << i << " x=" << endl;
 //        Out::os() << x[i] << endl;
 //        Out::os() << "i=" << i << " y=" << endl;
