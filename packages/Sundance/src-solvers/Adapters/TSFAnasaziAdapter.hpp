@@ -60,7 +60,7 @@ private:
 
 
 
-std::ostream& operator<<(std::ostream& os, const SimpleMV& mv)
+inline std::ostream& operator<<(std::ostream& os, const SimpleMV& mv)
 {
   os << "MV (size=" << mv.size() << ")" << std::endl;
   for (int i=0; i<mv.size(); i++)
