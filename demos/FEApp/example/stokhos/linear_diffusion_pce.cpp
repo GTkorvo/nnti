@@ -53,7 +53,7 @@
 #include "AztecOO.h"
 
 // Stokhos Stochastic Galerkin
-#include "Stokhos.hpp"
+#include "Stokhos_Epetra.hpp"
 
 // Timing utilities
 #include "Teuchos_TimeMonitor.hpp"
@@ -192,11 +192,16 @@ int main(int argc, char *argv[]) {
       sgParams->set("Parameter Expansion Type", "Linear");
       sgParams->set("Jacobian Expansion Type", "Linear");
     }
-    sgParams->set("Jacobian Method", "Matrix Free");
-    sgParams->set("Mean Preconditioner Type", "ML");
+    Teuchos::ParameterList& sgOpParams = 
+      sgParams->sublist("SG Operator");
+    sgOpParams.set("Operator Method", "Matrix Free");
+    Teuchos::ParameterList& sgPrecParams = 
+      sgParams->sublist("SG Preconditioner");
+    sgPrecParams.set("Preconditioner Method", "Mean-based");
+    sgPrecParams.set("Mean Preconditioner Type", "ML");
     Teuchos::ParameterList& precParams = 
-      sgParams->sublist("Preconditioner Parameters");
-    precParams.set("default values", "DD");
+      sgPrecParams.sublist("Mean Preconditioner Parameters");
+    precParams.set("default values", "SA");
 
     // Create stochastic Galerkin model evaluator
     Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =

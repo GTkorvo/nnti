@@ -54,7 +54,7 @@
 #include "NOX_Epetra.H"
 
 // Stokhos Stochastic Galerkin
-#include "Stokhos.hpp"
+#include "Stokhos_Epetra.hpp"
 
 // Timing utilities
 #include "Teuchos_TimeMonitor.hpp"
@@ -195,14 +195,19 @@ int main(int argc, char *argv[]) {
       sgParams->set("Parameter Expansion Type", "Linear");
       sgParams->set("Jacobian Expansion Type", "Linear");
     }
+    Teuchos::ParameterList& sgOpParams = 
+      sgParams->sublist("SG Operator");
     if (matrix_free)
-      sgParams->set("Jacobian Method", "Matrix Free");
+      sgOpParams.set("Operator Method", "Matrix Free");
     else
-      sgParams->set("Jacobian Method", "Fully Assembled");
-    Teuchos::ParameterList& sg_precParams = 
-      sgParams->sublist("Preconditioner Parameters");
-    sgParams->set("Mean Preconditioner Type", "ML");
-    sg_precParams.set("default values", "DD");
+      sgOpParams.set("Operator Method", "Fully Assembled");
+    Teuchos::ParameterList& sgPrecParams = 
+      sgParams->sublist("SG Preconditioner");
+    sgPrecParams.set("Preconditioner Method", "Mean-based");
+    sgPrecParams.set("Mean Preconditioner Type", "ML");
+    Teuchos::ParameterList& precParams = 
+      sgPrecParams.sublist("Mean Preconditioner Parameters");
+    precParams.set("default values", "SA");
 
     // Create stochastic Galerkin model evaluator
     Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =
@@ -252,10 +257,7 @@ int main(int argc, char *argv[]) {
     lsParams.set("Size of Krylov Subspace", 100);
     lsParams.set("Tolerance", 1e-12); 
     lsParams.set("Output Frequency", 10);
-    lsParams.set("Preconditioner", "ML");
-    Teuchos::ParameterList& precParams = 
-      lsParams.sublist("ML");
-    ML_Epetra::SetDefaults("DD", precParams);
+    lsParams.set("Preconditioner", "None");
     lsParams.set("Write Linear System", write_linear_system);
 
     // Sublist for convergence tests
