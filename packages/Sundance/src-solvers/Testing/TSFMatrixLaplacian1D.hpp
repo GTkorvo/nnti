@@ -38,7 +38,6 @@ using namespace Teuchos;
 
 namespace TSFExtended
 {
-enum MatrixLaplacianBCStyle {Normal, Symmetrized};
 
 /** */
 class MatrixLaplacian1D : public OperatorBuilder<double>
@@ -46,20 +45,14 @@ class MatrixLaplacian1D : public OperatorBuilder<double>
 public:
     
   /** */
-  MatrixLaplacian1D(int nLocal, const VectorType<double>& vecType,
-    bool symBC=false);
-    
-  /** */
-  MatrixLaplacian1D(int nLocal, const VectorType<double>& vecType,
-    MatrixLaplacianBCStyle bcStyle);
+  MatrixLaplacian1D(int nLocal, const VectorType<double>& vecType);
 
   /** */
   LinearOperator<double> getOp() const {return op_;}
 
 private:
   /** */
-  void init(int nLocal, const VectorType<double>& vecType,
-    MatrixLaplacianBCStyle bcStyle);
+  void init(int nLocal, const VectorType<double>& vecType);
   
   LinearOperator<double> op_;
 };

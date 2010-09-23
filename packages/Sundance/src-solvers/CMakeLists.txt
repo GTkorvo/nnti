@@ -317,6 +317,7 @@ APPEND_SET(SOURCES
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Adapters)
 
 APPEND_SET(HEADERS
+  Adapters/TSFAnasaziAdapter.hpp
   Adapters/TSF_NVector.hpp
   )
 

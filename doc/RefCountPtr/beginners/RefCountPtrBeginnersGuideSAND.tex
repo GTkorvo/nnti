@@ -41,8 +41,8 @@ under Contract DE-AC04-94AL85000.}, Albuquerque NM 87185 USA, \\
 % ---------------------------------------------------------------------------- %
 % Set some things we need for SAND reports. These are mandatory
 %
-\SANDnum{SAND2004-3268 (Updated Novenber 2008)}
-\SANDprintDate{November 2008}
+\SANDnum{SAND2004-3268 (Updated September 2010)}
+\SANDprintDate{September 2010}
 \SANDauthor{
 Roscoe A. Bartlett \\ Department of Optimization and Uncertainty Estimation
 }
@@ -1111,7 +1111,7 @@ See the class {}\texttt{Teuchos::ArrayRCP} and the function
   RCP<const C> c_ptr;
 \end{verbatim}}
 %
-\item {\bf Constant pointer to constant object }
+\item {\bf Constant pointer to constant object}
 {\small\begin{verbatim}
   const RCP<const C> c_ptr;
 \end{verbatim}}
@@ -1566,21 +1566,25 @@ holder for an actual (abstract) C++ base class.
 \end{center}
 %} % end fbox
 
+
 %
-\section{Listing: Example C++ program using raw dynamic memory management}
+{}\section{Listing: Example C++ program using raw dynamic memory management}
 \label{rcpqs:apdx:ex-prg}
 %
 
+% Below is a raw copy of what is in ../example/example_raw_cpp_pointers.cpp
 {\small\begin{verbatim}
 #include "example_get_args.hpp"
 
 // Abstract interfaces
 class UtilityBase {
 public:
+  virtual ~UtilityBase() {}
   virtual void f() const = 0;
 };
 class UtilityBaseFactory {
 public:
+  virtual ~UtilityBaseFactory() {}
   virtual UtilityBase* createUtility() const = 0;
 };
 
@@ -1605,7 +1609,7 @@ public:
 // Client classes
 class ClientA {
 public:
-  void f( const UtilityBase &utility ) const { utility.f(); }
+  void f(const UtilityBase &utility) const { utility.f(); }
 };
 class ClientB {
   UtilityBase *utility_;
@@ -1613,21 +1617,21 @@ public:
   ClientB() : utility_(0) {}
   ~ClientB() { delete utility_; }
   void initialize( UtilityBase *utility ) { utility_ = utility; }
-  void g( const ClientA &a ) { a.f(*utility_); }
+  void g(const ClientA &a) { a.f(*utility_); }
 };
 class ClientC {
   const UtilityBaseFactory *utilityFactory_;
   UtilityBase *utility_;
   bool shareUtility_;
 public:
-  ClientC( const UtilityBaseFactory *utilityFactory, bool shareUtility )
-    :utilityFactory_(utilityFactory)
-    ,utility_(utilityFactory->createUtility())
-    ,shareUtility_(shareUtility) {}
+  ClientC(const UtilityBaseFactory *utilityFactory, bool shareUtility)
+    :utilityFactory_(utilityFactory),
+     utility_(utilityFactory->createUtility()),
+     shareUtility_(shareUtility) {}
   ~ClientC() { delete utilityFactory_; delete utility_; }
-  void h( ClientB *b ) {
-    if( shareUtility_ ) b->initialize(utility_);
-    else b->initialize(utilityFactory_->createUtility());
+  void h(ClientB *b) {
+    if (shareUtility_) { b->initialize(utility_); }
+    else { b->initialize(utilityFactory_->createUtility()); }
   }
 };
 
@@ -1655,27 +1659,32 @@ int main( int argc, char* argv[] )
 }
 \end{verbatim}}
 
+
 %
-\section{Listing: Refactored example C++ program using {}\texttt{RCP}}
+{}\section{Listing: Refactored example C++ program using {}\texttt{RCP}}
 \label{rcpqs:apdx:ex-prg-refactored}
 %
 
+% Below is a raw copy if what is in ../example/example_ref_count_ptr.cpp
 {\small\begin{verbatim}
 #include "Teuchos_RCP.hpp"
 #include "example_get_args.hpp"
 
 // Inject symbols for RCP so we don't need Teuchos:: qualification
 using Teuchos::RCP;
-using Teuchos::rcp; // Warning! This can be dangerous and is not to be used in general!
+using Teuchos::rcp;
 using Teuchos::Ptr;
+using Teuchos::outArg;
 
 // Abstract interfaces
 class UtilityBase {
 public:
+  virtual ~UtilityBase() {}
   virtual void f() const = 0;
 };
 class UtilityBaseFactory {
 public:
+  virtual ~UtilityBaseFactory() {}
   virtual RCP<UtilityBase> createUtility() const = 0;
 };
 
@@ -1706,7 +1715,7 @@ class ClientB {
   RCP<UtilityBase> utility_;
 public:
   void initialize(const RCP<UtilityBase> &utility) { utility_=utility; }
-  void g( const ClientA &a ) { a.f(*utility_); }
+  void g(const ClientA &a) { a.f(*utility_); }
 };
 class ClientC {
   RCP<const UtilityBaseFactory> utilityFactory_;
@@ -1714,12 +1723,12 @@ class ClientC {
   bool shareUtility_;
 public:
   ClientC( const RCP<const UtilityBaseFactory> &utilityFactory, bool shareUtility )
-    :utilityFactory_(utilityFactory)
-    ,utility_(utilityFactory->createUtility())
-    ,shareUtility_(shareUtility) {}
+    :utilityFactory_(utilityFactory),
+     utility_(utilityFactory->createUtility()),
+     shareUtility_(shareUtility) {}
   void h( const Ptr<ClientB> &b ) {
-    if( shareUtility_ ) b->initialize(utility_);
-    else b->initialize(utilityFactory_->createUtility());
+    if (shareUtility_) { b->initialize(utility_); }
+    else { b->initialize(utilityFactory_->createUtility()); }
   }
 };
 
@@ -1736,14 +1745,15 @@ int main( int argc, char* argv[] )
   // Create clients
   ClientA a;
   ClientB b1, b2;
-  ClientC c(utilityFactory,shareUtility);
+  ClientC c(utilityFactory, shareUtility);
   // Do some stuff
-  c.h(&b1);
-  c.h(&b2);
+  c.h(outArg(b1));
+  c.h(outArg(b2));
   b1.g(a);
   b2.g(a);
 }
 \end{verbatim}}
+
 
 %
 % The Glossary

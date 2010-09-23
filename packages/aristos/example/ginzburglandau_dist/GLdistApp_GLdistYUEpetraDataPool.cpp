@@ -47,6 +47,7 @@
 namespace GLdistApp {
 
 bool GLdistYUEpetraDataPool::useStratimikos = false;
+std::string GLdistYUEpetraDataPool::stratimikosXmlFile = "";
 
 GLdistYUEpetraDataPool::GLdistYUEpetraDataPool( Epetra_Comm * commptr,
   double beta, const std::string &myfile )
@@ -316,7 +317,7 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
 
   const RCP<FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
-  *out << "\nsolveAugsysDyn(...) ...\n";
+  //*out << "\nsolveAugsysDyn(...) ...\n";
 
   Teuchos::OSTab tab(out);
 
@@ -454,78 +455,14 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
     *out << "\nUsing Stratimikos!\n";
 
     using Teuchos::RCP; using Teuchos::FancyOStream; using Teuchos::describe;
-    using Teuchos::rcpFromRef; using Teuchos::constOptInArg;
+    using Teuchos::rcpFromRef;
 
     // Wrap the Epetra objects as Thyra objects
 
-    RCP<const Thyra::LinearOpBase<double> > thyra_Augmat =
-      Thyra::epetraLinearOp(Augmat_);
-    RCP<const Thyra::LinearOpBase<double> > thyra_Prec =
-      Thyra::epetraLinearOp(Prec_);
     RCP<Thyra::VectorBase<double> > thyra_soln =
-      Thyra::create_Vector( rcpFromRef(soln), thyra_Augmat->domain() );
+      Thyra::create_Vector( rcpFromRef(soln), thyra_Augmat_->domain() );
     RCP<const Thyra::VectorBase<double> > thyra_rhs =
-      Thyra::create_Vector( rcpFromRef(rhs), thyra_Augmat->range() );
-
-    // Create the solver
-
-    RCP<Teuchos::ParameterList> pl = Teuchos::getParametersFromXmlString(
-      "<ParameterList>"
-      "  <Parameter name=\"Linear Solver Type\" type=\"string\" value=\"AztecOO\"/>"
-      "  <ParameterList name=\"Linear Solver Types\">"
-      "    <ParameterList name=\"Belos\">"
-      "      <Parameter name=\"Solver Type\" type=\"string\" value=\"Pseudo Block GMRES\"/>"
-      "      <ParameterList name=\"Solver Types\">"
-      "        <ParameterList name=\"Pseudo Block GMRES\">"
-      "          <Parameter name=\"Convergence Tolerance\" type=\"double\" value=\"1e-6\"/>"
-      "          <Parameter name=\"Show Maximum Residual Norm Only\" type=\"bool\" value=\"0\"/>"
-      "          <Parameter name=\"Maximum Iterations\" type=\"int\" value=\"400\"/>"
-      "          <Parameter name=\"Verbosity\" type=\"int\" value=\"100\"/>"
-      "        </ParameterList>"
-      "      </ParameterList>"
-      "    </ParameterList>"
-      "    <ParameterList name=\"AztecOO\">"
-      "      <ParameterList name=\"Forward Solve\">"
-      "        <ParameterList name=\"AztecOO Settings\">"
-      "          <Parameter name=\"Aztec Solver\" type=\"string\" value=\"GMRES\"/>"
-      "          <Parameter name=\"Convergence Test\" type=\"string\" value=\"r0\"/>"
-      "          <Parameter name=\"Size of Krylov Subspace\" type=\"int\" value=\"300\"/>"
-      "        </ParameterList>"
-      "        <Parameter name=\"Max Iterations\" type=\"int\" value=\"400\"/>"
-      "        <Parameter name=\"Tolerance\" type=\"double\" value=\"1e-15\"/>"
-      "      </ParameterList>"
-      "      <Parameter name=\"Output Every RHS\" type=\"bool\" value=\"1\"/>"
-      "    </ParameterList>"
-      "  </ParameterList>"
-      "  <Parameter name=\"Preconditioner Type\" type=\"string\" value=\"None\"/>"
-      "  <ParameterList name=\"Preconditioner Types\">"
-      "    <ParameterList name=\"Ifpack\">"
-      "      <Parameter name=\"Prec Type\" type=\"string\" value=\"ILU\"/>"
-      "      <Parameter name=\"Overlap\" type=\"int\" value=\"1\"/>"
-      "      <ParameterList name=\"Ifpack Settings\">"
-      "        <Parameter name=\"fact: level-of-fill\" type=\"int\" value=\"2\"/>"
-      "      </ParameterList>"
-      "    </ParameterList>"
-      "  </ParameterList>"
-      "</ParameterList>"
-      );
-    // NOTE: The above preconditioner will get ignored due to passing in the
-    // pre-formed preconditioner below.
-
-    Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-    linearSolverBuilder.setParameterList(pl);
-
-    RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
-      linearSolverBuilder.createLinearSolveStrategy("");
-    
-    lowsFactory->setOStream(out);
-    lowsFactory->setVerbLevel(Teuchos::VERB_LOW);
-
-    RCP<Thyra::LinearOpWithSolveBase<double> > lows = lowsFactory->createOp();
-    Thyra::initializePreconditionedOp<double>(*lowsFactory,
-      thyra_Augmat, Thyra::unspecifiedPrec<double>(thyra_Prec), &*lows);
-    //Thyra::initializeOp<double>(*lowsFactory, thyra_Augmat, &*lows);
-    *out << "\nlows = " << describe(*lows, Teuchos::VERB_MEDIUM);
+      Thyra::create_Vector( rcpFromRef(rhs), thyra_Augmat_->range() );
 
     // Create the SolveCriteria and solve
 
@@ -536,8 +473,9 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
     //solveCriteria.denominatorReductionFunc = createMockMaxNormInfEpsReductionFunctional<Scalar>();
     solveCriteria.requestedTol = 1e-6;
 
-    Thyra::SolveStatus<double> status =
-      lows->solve(Thyra::NOTRANS, *thyra_rhs, thyra_soln.ptr(), constOptInArg(solveCriteria));
+    Thyra::SolveStatus<double> status = Augmat_lows_->solve(
+      Thyra::NOTRANS, *thyra_rhs, thyra_soln.ptr(),
+      optInArg(solveCriteria));
     *out << "\nSolve status:\n" << status;
 
   }
@@ -561,7 +499,8 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
 
     // specify solver
     kktsolver.SetAztecOption(AZ_solver,AZ_gmres);
-    kktsolver.SetAztecOption(AZ_output,AZ_none);
+    //kktsolver.SetAztecOption(AZ_output,AZ_none);
+    kktsolver.SetAztecOption(AZ_output,AZ_all);
 
     // Set up tolerances.
     if ((mypid==0) && wantstats)
@@ -879,53 +818,85 @@ void GLdistYUEpetraDataPool::computeAugmat()
 
 int GLdistYUEpetraDataPool::computePrec()
 {
-  // =============================================================== //
-  // B E G I N N I N G   O F   I F P A C K   C O N S T R U C T I O N //
-  // =============================================================== //
 
-  Teuchos::ParameterList List;
+  const RCP<FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
-  // allocates an IFPACK factory. No data is associated
-  // to this object (only method Create()).
-  Ifpack Factory;
+  if (useStratimikos) {
+    
+    //*out << "\nUsing Stratimikos!\n";
 
-  // create the preconditioner. For valid PrecType values,
-  // please check the documentation
-  string PrecType = "Amesos";
-  int OverlapLevel = 4; // must be >= 0. If Comm.NumProc() == 1,
-                        // it is ignored.
+    using Teuchos::RCP; using Teuchos::FancyOStream;
+    using Teuchos::describe; using Teuchos::rcpFromRef;
 
-  //if (Prec_ != 0)
-  //  delete Prec_;
-  Prec_ = rcp(Factory.Create(PrecType, &(*Augmat_), OverlapLevel));
-  assert(Prec_ != null);
+    if (is_null(Augmat_lowsFactory_)) {
 
-  // specify the Amesos solver to be used.
-  // If the selected solver is not available,
-  // IFPACK will try to use Amesos' KLU (which is usually always
-  // compiled). Amesos' serial solvers are:
-  // "Amesos_Klu", "Amesos_Umfpack", "Amesos_Superlu"
-  // List.set("amesos: solver type", "Amesos_Umfpack");
-  List.set("amesos: solver type", "Amesos_Klu");
+      RCP<Teuchos::ParameterList> pl =
+        Teuchos::getParametersFromXmlFile(stratimikosXmlFile);
 
-  // sets the parameters
-  IFPACK_CHK_ERR(Prec_->SetParameters(List));
+      Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+      linearSolverBuilder.setParameterList(pl);
 
-  // initialize the preconditioner. At this point the matrix must
-  // have been FillComplete()'d, but actual values are ignored.
-  // At this call, Amesos will perform the symbolic factorization.
-  IFPACK_CHK_ERR(Prec_->Initialize());
+      Augmat_lowsFactory_ = linearSolverBuilder.createLinearSolveStrategy("");
+    
+      Augmat_lowsFactory_->setOStream(out);
+      Augmat_lowsFactory_->setVerbLevel(Teuchos::VERB_LOW);
 
-  // Builds the preconditioners, by looking for the values of
-  // the matrix. At this call, Amesos will perform the
-  // numeric factorization.
-  IFPACK_CHK_ERR(Prec_->Compute());
+    }
 
-  // =================================================== //
-  // E N D   O F   I F P A C K   C O N S T R U C T I O N //
-  // =================================================== //
+    Augmat_lows_ = Augmat_lowsFactory_->createOp();
+    thyra_Augmat_ = Thyra::epetraLinearOp(Augmat_);
+
+    Thyra::initializeOp<double>(*Augmat_lowsFactory_, thyra_Augmat_,
+      Augmat_lows_.ptr());
+    *out << "\nlows = " << describe(*Augmat_lows_, Teuchos::VERB_MEDIUM);
+
+  }
+  else {
+
+    // Create Ifpack preconditioner for AztecOO!
+
+    Teuchos::ParameterList List;
+
+    // allocates an IFPACK factory. No data is associated
+    // to this object (only method Create()).
+    Ifpack Factory;
+
+    // create the preconditioner. For valid PrecType values,
+    // please check the documentation
+    string PrecType = "Amesos";
+    int OverlapLevel = 4; // must be >= 0. If Comm.NumProc() == 1,
+    // it is ignored.
+
+    //if (Prec_ != 0)
+    //  delete Prec_;
+    Prec_ = rcp(Factory.Create(PrecType, &(*Augmat_), OverlapLevel));
+    assert(Prec_ != null);
+
+    // specify the Amesos solver to be used.
+    // If the selected solver is not available,
+    // IFPACK will try to use Amesos' KLU (which is usually always
+    // compiled). Amesos' serial solvers are:
+    // "Amesos_Klu", "Amesos_Umfpack", "Amesos_Superlu"
+    // List.set("amesos: solver type", "Amesos_Umfpack");
+    List.set("amesos: solver type", "Amesos_Klu");
+
+    // sets the parameters
+    IFPACK_CHK_ERR(Prec_->SetParameters(List));
+
+    // initialize the preconditioner. At this point the matrix must
+    // have been FillComplete()'d, but actual values are ignored.
+    // At this call, Amesos will perform the symbolic factorization.
+    IFPACK_CHK_ERR(Prec_->Initialize());
+
+    // Builds the preconditioners, by looking for the values of
+    // the matrix. At this call, Amesos will perform the
+    // numeric factorization.
+    IFPACK_CHK_ERR(Prec_->Compute());
+
+  }
 
   return 0;
+
 }
 
 

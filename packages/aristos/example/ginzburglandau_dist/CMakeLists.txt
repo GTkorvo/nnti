@@ -26,15 +26,17 @@ SET(${PACKAGE_NAME}_TESTGLDIST_SOURCES ${${PACKAGE_NAME}_TESTGLDIST_SOURCES}
     testGLdist.cpp
   )
 
-IF(Trilinos_ENABLE_Amesos AND Trilinos_ENABLE_Ifpack AND Trilinos_ENABLE_AztecOO AND Trilinos_ENABLE_EpetraExt)
+IF(Trilinos_ENABLE_Amesos AND Trilinos_ENABLE_Ifpack AND Trilinos_ENABLE_AztecOO AND Trilinos_ENABLE_Belos AND Trilinos_ENABLE_EpetraExt AND Trilinos_ENABLE_Stratimikos AND Trilinos_ENABLE_Thyra)
 
   PACKAGE_COPY_FILES_TO_BINARY_DIR(CopyTestGLdistFiles
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
     DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/data
-    SOURCE_FILES square.2.000
-                 square.2.001
-                 square.2.002
-                 square.2.003
+    SOURCE_FILES
+      square.2.000
+      square.2.001
+      square.2.002
+      square.2.003
+      stratimikos_aztecoo_ifpack.xml
     )
 
   PACKAGE_COPY_FILES_TO_BINARY_DIR(CopyTestGLdistInstructions
@@ -56,8 +58,9 @@ IF(Trilinos_ENABLE_Amesos AND Trilinos_ENABLE_Ifpack AND Trilinos_ENABLE_AztecOO
 
   PACKAGE_ADD_TEST(
     testGLdist
-    NAME_POSTFIX stratimikos
-    ARGS "--geomfile=data/square.2 --use-stratimikos"
+    POSTFIX_AND_ARGS_0 stratimikos
+      --geomfile=data/square.2 --use-stratimikos
+      --stratimikos-params-file=data/stratimikos_aztecoo_ifpack.xml
     COMM mpi
     NUM_MPI_PROCS 4
     PASS_REGULAR_EXPRESSION "TEST PASSED"
