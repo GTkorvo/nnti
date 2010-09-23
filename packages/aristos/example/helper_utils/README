@@ -1,0 +1,92 @@
+This README file describes the procedure of generating and partitioning
+mesh files used in the current Epetra advection-diffusion code by
+Matthias Heinkenschloss and Denis Ridzal (Rice University).
+
+*************************************************************************
+STEP 1
+
+1) Generate or obtain a Triangle readable 'mydomain.poly' file. See
+   Triangle web site for more info on  .poly files. PLEASE denote
+   Neumann BC's with number 2 in the last field, denote Dirichlet BC's
+   with number 1 in the last field, and mixed BC's with number 3.
+   This is an example:
+
+     6 2 0 0       ---> 6 vertices, 2-D, no attributes, no vertex markers
+     1 0.00 0.00   ---> vertex 1 has coordinates (0,0)
+     2 1.59 0.00   ---> vertex 2 has coordinates (1.59,0)
+     3 2.00 1.00   etc.
+     4 3.00 1.41
+     5 3.00 3.00
+     6 0.00 3.00
+     6 1           ---> 6 segments, boundary markers ARE included
+     1 1 2 2       ---> segment 1 goes from vert 1 to vert 2, marked w/ 2
+     2 2 3 1       ---> segment 2 goes from vert 2 to vert 3, marked w/ 1
+     3 3 4 1       etc.
+     4 4 5 2
+     5 5 6 1
+     6 6 1 1
+     0             ---> no holes in the domain
+
+   Please note that marker 2 above denotes Neumann boundary, marker 1
+   denotes Dirichlet boundary.
+
+2) Run the following command:
+     % triangle -pe mydomain.poly
+     OR
+     % triangle -peo2 mydomain.poly
+   This should have created the files
+     mydomain.1.ele
+     mydomain.1.edge
+     mydomain.1.node
+     mydomain.1.poly
+   Note that the o2 options also creates three additional points per
+   triangle, used for quadratic FE's.
+
+3) Now run the refinement (again, see Triangle web site for more info on
+   command-line options):
+     % triangle -pera0.2 mydomain.1
+     OR
+     % triangle -peo2ra0.2 mydomain.1
+   This should have created the files
+     mydomain.2.ele
+     mydomain.2.edge
+     mydomain.2.node
+     mydomain.2.poly
+   The refinement can be run multiple times.
+
+
+*************************************************************************
+STEP 2
+
+   Get the output of Triangle ready for Metis using the tri2metis.pl perl
+   script:
+
+   perl tri2metis.pl < mydomain.2.ele > mydomain.2
+
+
+*************************************************************************
+STEP 3
+
+   Run the Metis routine partnmesh on the generated file mydomain.2:
+
+   partnmesh mydomain.2 4
+
+   This will create 4 partitions.
+
+
+*************************************************************************
+STEP 4
+
+   Run metis2cpp.exe (written in C++) as follows:
+
+   ./metis2cpp.exe mydomain.2 nNODES nPARTITIONS
+
+   This should create the files
+   mydomain.2.000
+   mydomain.2.001
+   mydomain.2.002
+   mydomain.2.003
+
+
+********************************* END ***********************************
+

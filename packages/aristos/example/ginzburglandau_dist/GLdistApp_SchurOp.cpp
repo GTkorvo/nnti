@@ -57,6 +57,6 @@ int SchurOp::Apply(const Epetra_MultiVector& x, Epetra_MultiVector& y) const
   y.Update(1.0, bb, 1.0);
 
   return 0;
-};
+}
 
 }  // End namespace GLdistApp.

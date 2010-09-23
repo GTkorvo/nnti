@@ -30,7 +30,7 @@
 
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
-#include "mpi.h"
+//#include "mpi.h"
 #else
 #include "Epetra_SerialComm.h"
 #endif
@@ -50,32 +50,65 @@
 #include "GLdistApp_GLdistYUEpetraConstraints.hpp"
 #include "GLdistApp_GLdistYUEpetraDataPool.hpp"
 
+#include "Teuchos_GlobalMPISession.hpp"
+#include "Teuchos_CommandLineProcessor.hpp"
 
 int main(int argc, char *argv[])
 {
 
   // This is a standard communicator declaration.
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv,0);
 #ifdef HAVE_MPI
-  MPI_Init(&argc,&argv);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 #else
   Epetra_SerialComm Comm;
 #endif
 
+//#ifdef HAVE_MPI
+//  MPI_Init(&argc,&argv);
+//  Epetra_MpiComm Comm(MPI_COMM_WORLD);
+//#else
+//  Epetra_SerialComm Comm;
+//#endif
+
+  Teuchos::CommandLineProcessor clp;
+
   double beta = 1.0;
+
+  std::string geomfile;
+  clp.setOption("geomfile", &geomfile, "The geometry file base name.");
+
+  clp.setOption("use-stratimikos", "use-aztecoo",
+    &GLdistApp::GLdistYUEpetraDataPool::useStratimikos,
+    "Use Stratimikos or AztecOO");
+
+  clp.setOption("stratimikos-params-file",
+    &GLdistApp::GLdistYUEpetraDataPool::stratimikosXmlFile,
+    "Stratimikos input file.");
   
   // Want derivative check?
   bool derchk = false;
 
   bool wantstats = true;   // choose true if output of solver and timing info in file stats.txt is desired
 
+  Teuchos::CommandLineProcessor::EParseCommandLineReturn
+    parseReturn= clp.parse(argc, argv);
+  if( parseReturn == Teuchos::CommandLineProcessor::PARSE_HELP_PRINTED ) {
+    return 0;
+  }
+  if( parseReturn != Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL   ) {
+    return 1; // Error!
+  }
+
+  TEUCHOS_ASSERT(geomfile.length());
+
   int mypid = Comm.MyPID();
 
   ofstream outfile("stats.txt", ios_base::app);
 
   // Now we can build the DataPool object ...
-  GLdistApp::GLdistYUEpetraDataPool dat ( &Comm, beta, argv[1] );
-  
+  GLdistApp::GLdistYUEpetraDataPool dat ( &Comm, beta, const_cast<char*>(geomfile.c_str()) );
+
   Epetra_Map statemap((dat.getA())->DomainMap());
   Epetra_Map controlmap((dat.getB())->DomainMap());
 
@@ -126,13 +159,15 @@ int main(int argc, char *argv[])
   // SQP run.
   Teuchos::ParameterList parlist;
   parlist.set("Max Number of SQP Iterations", 50);
+  parlist.set("Gradient of Lagrangian Tolerance", 1e-6);
+  parlist.set("Constraints Tolerance", 1e-6);
 
   int iter, iflag;
   exy->PutScalar(1.0);
   exu->PutScalar(1.0);
 
   if ((mypid==0) && wantstats)
-    outfile << "Geometry: " << argv[1] << " , Subdomains: " << argv[2] << "   *************************" << endl;
+    outfile << "Geometry: " << geomfile << " , Subdomains: " << Teuchos::GlobalMPISession::getNProc() << "   *************************" << endl;
   Epetra_Time timer(Comm);
   sqp.run(*x, *c, *l, iter, iflag, parlist);
   if ((mypid==0) && wantstats)
@@ -140,6 +175,10 @@ int main(int argc, char *argv[])
 
   outfile.close();
 
-  dat.PrintSolutionVTK(exy);
+  std::cout << "End Result: TEST PASSED\n";
+
+  return 0;
+
+  //dat.PrintSolutionVTK(exy);
 
 }

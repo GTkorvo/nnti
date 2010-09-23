@@ -362,7 +362,6 @@ int assemble(const Epetra_Comm & Comm,
   /* ************************  Done building M.  ************************ */
 
 
-
   // Call global assemble and FillComplete at the same time.
 
   err = A->GlobalAssemble();

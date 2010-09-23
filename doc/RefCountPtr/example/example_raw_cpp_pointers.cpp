@@ -3,10 +3,12 @@
 // Abstract interfaces
 class UtilityBase {
 public:
+  virtual ~UtilityBase() {}
   virtual void f() const = 0;
 };
 class UtilityBaseFactory {
 public:
+  virtual ~UtilityBaseFactory() {}
   virtual UtilityBase* createUtility() const = 0;
 };
 
@@ -31,7 +33,7 @@ public:
 // Client classes
 class ClientA {
 public:
-  void f( const UtilityBase &utility ) const { utility.f(); }
+  void f(const UtilityBase &utility) const { utility.f(); }
 };
 class ClientB {
   UtilityBase *utility_;
@@ -39,21 +41,21 @@ public:
   ClientB() : utility_(0) {}
   ~ClientB() { delete utility_; }
   void initialize( UtilityBase *utility ) { utility_ = utility; }
-  void g( const ClientA &a ) { a.f(*utility_); }
+  void g(const ClientA &a) { a.f(*utility_); }
 };
 class ClientC {
   const UtilityBaseFactory *utilityFactory_;
-  UtilityBase              *utility_;
-  bool                     shareUtility_;
+  UtilityBase *utility_;
+  bool shareUtility_;
 public:
-  ClientC( const UtilityBaseFactory *utilityFactory, bool shareUtility )
-    :utilityFactory_(utilityFactory)
-    ,utility_(utilityFactory->createUtility())
-    ,shareUtility_(shareUtility) {}
+  ClientC(const UtilityBaseFactory *utilityFactory, bool shareUtility)
+    :utilityFactory_(utilityFactory),
+     utility_(utilityFactory->createUtility()),
+     shareUtility_(shareUtility) {}
   ~ClientC() { delete utilityFactory_; delete utility_; }
-  void h( ClientB *b ) {
-    if( shareUtility_ ) b->initialize(utility_);
-    else                b->initialize(utilityFactory_->createUtility());
+  void h(ClientB *b) {
+    if (shareUtility_) { b->initialize(utility_); }
+    else { b->initialize(utilityFactory_->createUtility()); }
   }
 };
 

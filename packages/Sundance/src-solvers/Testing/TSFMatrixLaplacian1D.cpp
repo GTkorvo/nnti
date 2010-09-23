@@ -39,28 +39,17 @@ using namespace Teuchos;
 
 
 MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows, 
-  const VectorType<double>& type, bool symBC)
+  const VectorType<double>& type)
   : OperatorBuilder<double>(nLocalRows, type), op_()
 {
-  MatrixLaplacianBCStyle bcStyle = Normal;
-  if (symBC) bcStyle = Symmetrized;
-
-  init(nLocalRows, type, bcStyle);
+  init(nLocalRows, type);
 }
 
 
 
-MatrixLaplacian1D::MatrixLaplacian1D(int nLocalRows, 
-  const VectorType<double>& type, 
-  MatrixLaplacianBCStyle bcStyle)
-  : OperatorBuilder<double>(nLocalRows, type), op_()
-{
-  init(nLocalRows, type, bcStyle);
-}
 
 void MatrixLaplacian1D::init(int nLocalRows, 
-  const VectorType<double>& type,
-  MatrixLaplacianBCStyle bcStyle)
+  const VectorType<double>& type)
 {
   int rank = MPIComm::world().getRank();
   int nProc = MPIComm::world().getNProc();
@@ -83,15 +72,11 @@ void MatrixLaplacian1D::init(int nLocalRows,
     {
       int row = lowestLocalRow + i;
       Array<int> colIndices;
-      if ((rank==0 && i==0) || (rank==nProc-1 && i==nLocalRows-1))
-      {
-        colIndices = tuple(row);
-      }
-      else if (bcStyle==Symmetrized && rank==0 && i==1)
+      if (rank==0 && i==0)
       {
         colIndices = tuple(row, row+1);
       }
-      else if (bcStyle==Symmetrized && rank==nProc-1 && i==nLocalRows-2)
+      else if (rank==nProc-1 && i==nLocalRows-1)
       {
         colIndices = tuple(row-1, row);
       }
@@ -106,6 +91,8 @@ void MatrixLaplacian1D::init(int nLocalRows,
   }
       
   op_ = mFact->createMatrix();
+
+  double h = 1.0/((double) domain().dim() + 1);
       
   RCP<LoadableMatrix<double> > mat = op_.matrix();
 
@@ -115,25 +102,20 @@ void MatrixLaplacian1D::init(int nLocalRows,
     int row = lowestLocalRow + i;
     Array<int> colIndices;
     Array<double> colVals;
-    if ((rank==0 && i==0) || (rank==nProc-1 && i==nLocalRows-1))
-    {
-      colIndices = tuple(row);
-      colVals = tuple(1.0);
-    }
-    else if (bcStyle==Symmetrized && rank==0 && i==1)
+    if (rank==0 && i==0)
     {
       colIndices = tuple(row, row+1);
-      colVals = tuple(2.0, -1.0);
+      colVals = tuple(2.0/h/h, -1.0/h/h);
     }
-    else if (bcStyle==Symmetrized  && rank==nProc-1 && i==nLocalRows-2)
+    else if (rank==nProc-1 && i==nLocalRows-1)
     {
       colIndices = tuple(row-1, row);
-      colVals = tuple(-1.0, 2.0);
+      colVals = tuple(-1.0/h/h, 2.0/h/h);
     }
     else
     {
       colIndices = tuple(row-1, row, row+1);
-      colVals = tuple(-1.0, 2.0, -1.0);
+      colVals = tuple(-1.0/h/h, 2.0/h/h, -1.0/h/h);
     }
     mat->addToRow(row, colIndices.size(), 
       &(colIndices[0]), &(colVals[0]));

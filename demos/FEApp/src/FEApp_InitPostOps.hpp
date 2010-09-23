@@ -44,6 +44,8 @@
 #if SG_ACTIVE
 #include "Stokhos_VectorOrthogPoly.hpp"
 #include "Stokhos_VectorOrthogPolyTraitsEpetra.hpp"
+#include "Stokhos_EpetraVectorOrthogPoly.hpp"
+#include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #endif
 
 namespace FEApp {

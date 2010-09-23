@@ -58,7 +58,7 @@ bool SQPAlgo::run(Vector &x, Vector &c, Vector &l, int &iter, int &iflag, Teucho
   //    norm(c, inf) < ctol) ) OR Delta < stol
   double gtol = parlist.get("Gradient of Lagrangian Tolerance", 1.0e-6);
   double ctol = parlist.get("Constraints Tolerance", 1.0e-6);
-  double stol = parlist.get("Min TR Radius", 1.0e-5);
+  double stol = parlist.get("Min TR Radius", 1.0e-8);
 
   // Other misc. tol's, flags, etc.
   bool   addproj = parlist.get("Additional Projection", true);
@@ -338,8 +338,8 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
                                    bool istolfixed, bool fullortho, bool orthocheck, bool fcdcheck,
                                    int &cgiter, int &iflag)
 {
-  bool iprint = false;  // print flag  = true print output;
-                        // otherwise no output is generated
+  bool iprint = true;  // print flag  = true print output;
+                       // otherwise no output is generated
 
   // Create necessary vectors.
   VectorPtr r     = x.createVector();
@@ -353,9 +353,9 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
   VectorPtr stmp  = x.createVector();
   VectorPtr vtmp1 = x.createVector();
   VectorPtr vtmp2 = x.createVector();
-  vector<VectorPtr> pvecs;
-  vector<VectorPtr> rvecs;
-  vector<VectorPtr> Wrvecs;
+  std::vector<VectorPtr> pvecs;
+  std::vector<VectorPtr> rvecs;
+  std::vector<VectorPtr> Wrvecs;
 
 
   // Initialization of the CG step.
@@ -364,7 +364,7 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
   hessvec_->getValue(x, l, v, *r);
   r->linComb(1.0, g, 1.0);
 
-  vector<double> normWr(cgitmax+1);  // will keep track of norms of projected residuals
+  std::vector<double> normWr(cgitmax+1);  // will keep track of norms of projected residuals
   double normWg = 0.0;               // norm of inexact reduced gradient, to be computed
   double smallc = 1e-2*cgtol;        // small heuristic constant
   double rptol = 1e-12;              // another small constant
@@ -411,9 +411,9 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
         normWg = sqrt(z->innerProd(*z));
       }
       else {
-        vartols[0] = min(normWg/normg, delta/normg);
-        vartols[0] = min(vartols[0], smallc);
-        vartols[0] = vartols[0] * min(normWr[cgiter-1], 1.0);
+        vartols[0] = std::min(normWg/normg, delta/normg);
+        vartols[0] = std::min(vartols[0], smallc);
+        vartols[0] = vartols[0] * std::min(normWr[cgiter-1], 1.0);
         vartols[1] = 0.0;     // solver will use absolute residuals
         constr_->applyNullSp(false, x, *r, *z, vartols);
         if (orthocheck) {
@@ -454,9 +454,9 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
       }
       if (Tm1.normOne() >= 0.5) {
         Teuchos::LAPACK<int,double> lapack;
-        vector<int>    ipiv(cgiter);
-        int            info;
-        vector<double> work(3*cgiter);
+        std::vector<int>    ipiv(cgiter);
+        int                 info;
+        std::vector<double> work(3*cgiter);
         // compute inverse of T
         lapack.GETRF(cgiter, cgiter, T.values(), T.stride(), &ipiv[0], &info);
         lapack.GETRI(cgiter, T.values(), T.stride(), &ipiv[0], &work[0], 3*cgiter, &info);
@@ -483,7 +483,7 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
       }
     }
     else {
-      for (int j=max(0,cgiter-2); j < cgiter-1; j++)  {  // use this to simulate true CG
+      for (int j=std::max(0,cgiter-2); j < cgiter-1; j++)  {  // use this to simulate true CG
         hessvec_->getValue(x, l, *pvecs[j], *Hpj);
         double scal = ((pvecs[cgiter-1])->innerProd(*Hpj)) / ((pvecs[j])->innerProd(*Hpj));
         (pvecs[cgiter-1])->linComb( -scal, *pvecs[j], 1.0 );
@@ -538,7 +538,7 @@ bool SQPAlgo::runTangentialStepInx(const Vector &x, const Vector &g, const Vecto
        double sHs   = s.innerProd(*Hs);
        double wrHwr = (Wrvecs[0])->innerProd(*Hwr);
        double qval  = 0.5 * sHs + (rvecs[0])->innerProd(s);
-       double fcd   = 0.5 * normWr[0] * min( normWr[0]/(1.0 + wrHwr/(normWr[0]*normWr[0])) ,  delta);
+       double fcd   = 0.5 * normWr[0] * std::min( normWr[0]/(1.0 + wrHwr/(normWr[0]*normWr[0])) ,  delta);
        if (-qval < fcd_const*fcd) {
          printf("\n Fraction of Cauchy decrease condition violated in tangential step. \n");
          printf(" Check accuracy of iterative linear system solver in the first null-space projection. \n");
@@ -789,13 +789,13 @@ bool SQPAlgo::runAcceptStepInx(Vector &x, const Vector &l, double f, const Vecto
   if (r >= eta) {
     x.linComb(1.0, *s, 1.0);
     if (r >= 0.9)
-        delta = max(7*ns, delta);
+        delta = std::max(7*ns, delta);
     else if (r >= 0.3)
-        delta = max(2*ns, delta);
+        delta = std::max(2*ns, delta);
     iaccept = 1;
   }
   else
-    delta = 0.5*max( sqrt(v.innerProd(v)), sqrt(w.innerProd(w)) );
+    delta = 0.5*std::max( sqrt(v.innerProd(v)), sqrt(w.innerProd(w)) );
     
   return true;
 

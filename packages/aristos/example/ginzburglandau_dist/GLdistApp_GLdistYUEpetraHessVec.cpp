@@ -26,7 +26,7 @@
 // ***********************************************************************
 //@HEADER
 
-#include <GLdistApp_GLdistYUEpetraHessVec.hpp>
+#include "GLdistApp_GLdistYUEpetraHessVec.hpp"
 
 namespace GLdistApp {
 

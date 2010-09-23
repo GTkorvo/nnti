@@ -399,9 +399,6 @@ int main(int argc, char *argv[]) {
 	sgSolverParams->set("Number of KL Terms", num_KL+1);
 	Teuchos::ParameterList& precParams = 
 	  sgSolverParams->sublist("Preconditioner Parameters");
-	// sgSolverParams->set("Mean Preconditioner Type", "Ifpack");
-	// precParams.set("Ifpack Preconditioner", "ILU");
-	// precParams.set("Overlap", 0);
 	sgSolverParams->set("Mean Preconditioner Type", "ML");
 	ML_Epetra::SetDefaults("DD", precParams);
 	sgSolverParams->set("Evaluate W with F", false);

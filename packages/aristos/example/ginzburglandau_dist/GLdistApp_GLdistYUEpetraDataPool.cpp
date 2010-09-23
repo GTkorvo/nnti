@@ -32,17 +32,25 @@
 #include "Amesos_Umfpack.h"
 // #include "Amesos_Superludist.h"
 // #include "ml_MultiLevelPreconditioner.h"
+#include "Teuchos_Array.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "EpetraExt_Reindex_LinearProblem.h"
 #include "EpetraExt_MatrixMatrix.h"
 #include "EpetraExt_Transpose_RowMatrix.h"
 #include "GLdistApp_SchurOp.hpp"
 #include "GLdistApp_GLdistYUEpetraDataPool.hpp"
+#include "Stratimikos_DefaultLinearSolverBuilder.hpp"
+#include "Teuchos_XMLParameterListHelpers.hpp"
+
 #include <fstream>
 
 namespace GLdistApp {
 
-GLdistYUEpetraDataPool::GLdistYUEpetraDataPool( Epetra_Comm * commptr, double beta, char * myfile )
+bool GLdistYUEpetraDataPool::useStratimikos = false;
+std::string GLdistYUEpetraDataPool::stratimikosXmlFile = "";
+
+GLdistYUEpetraDataPool::GLdistYUEpetraDataPool( Epetra_Comm * commptr,
+  double beta, const std::string &myfile )
   : commptr_(commptr),
     beta_(beta)
 {
@@ -53,10 +61,11 @@ GLdistYUEpetraDataPool::GLdistYUEpetraDataPool( Epetra_Comm * commptr, double be
   t_ = Teuchos::rcp( new Epetra_IntSerialDenseMatrix() );
   e_ = Teuchos::rcp( new Epetra_IntSerialDenseMatrix() );
 
-  strcpy(geomfile_, myfile);  
+  strcpy(geomfile_, myfile.c_str());  
 
   // Read subdomain info.
-  meshreader(*commptr_, *ipindx_, *ipcoords_, *pindx_, *pcoords_, *t_, *e_, myfile);
+  meshreader(*commptr_, *ipindx_, *ipcoords_, *pindx_, *pcoords_, *t_, *e_,
+    myfile.c_str());
 
   // Assemble volume and boundary mass and stiffness matrices, and the right-hand side of the PDE.
   assemble(*commptr, *ipindx_, *ipcoords_, *pindx_, *pcoords_, *t_, *e_, A_, H_, b_);
@@ -101,25 +110,27 @@ int GLdistYUEpetraDataPool::solveAugsys( const Teuchos::RefCountPtr<const Epetra
                                        double * tol )
 {
   int systemChoice = 1;   // 1 for full KKT system solve, 2 for Schur complement solve
-  int solverChoice = 12;  // These options are for the full KKT system solve.
-                          // 11 for AztecOO with built-in Schwarz DD preconditioning and ILU on subdomains
-                          // 12 for AztecOO with IFPACK Schwarz DD preconditioning and Umfpack on subdomains
-                          // 13 for a direct sparse solver (Umfpack, KLU)
+
+  // These options are for the full KKT system solve.
+  // 11 for AztecOO with built-in Schwarz DD preconditioning and ILU on subdomains
+  // 12 for AztecOO with IFPACK Schwarz DD preconditioning and Umfpack on subdomains
+  // 13 for a direct sparse solver (Umfpack, KLU)
+  int solverChoice = 12;
+
+  std::cout << "\nsolverChoice = " << solverChoice << "\n";
   
   if (systemChoice == 1) {
     // We're using the full KKT system formulation to solve the augmented system.
    
     Epetra_Map standardmap(A_->DomainMap());
-    int numstates = standardmap.NumGlobalElements();
     Epetra_Map bdryctrlmap(B_->DomainMap());
-    int numcontrols = bdryctrlmap.NumGlobalElements();
     Epetra_Vector rhs( (Epetra_BlockMap&)Augmat_->RangeMap() );
     Epetra_Vector soln( (Epetra_BlockMap&)Augmat_->RangeMap() );
     soln.PutScalar(1.0);  
 
-    double values[rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength()];
-    int indices[rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength()];
-    ((Epetra_BlockMap&)Augmat_->RangeMap()).MyGlobalElements(indices);
+    Teuchos::Array<double> values(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength());
+    Teuchos::Array<int> indices(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength());
+    ((Epetra_BlockMap&)Augmat_->RangeMap()).MyGlobalElements(indices.getRawPtr());
 
     for (int i=0; i<rhsy->MyLength(); i++) {
       values[i] = (*((*rhsy)(0)))[i];
@@ -131,7 +142,7 @@ int GLdistYUEpetraDataPool::solveAugsys( const Teuchos::RefCountPtr<const Epetra
       values[i+rhsy->MyLength()+rhsu->MyLength()] = (*((*rhsp)(0)))[i];
     }
 
-    rhs.ReplaceGlobalValues(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength(), values, indices);
+    rhs.ReplaceGlobalValues(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength(), values.getRawPtr(), indices.getRawPtr());
 
     if (solverChoice == 11) {
       int Overlap = 3;
@@ -181,7 +192,8 @@ int GLdistYUEpetraDataPool::solveAugsys( const Teuchos::RefCountPtr<const Epetra
       // IFPACK will try to use Amesos' KLU (which is usually always
       // compiled). Amesos' serial solvers are:
       // "Amesos_Klu", "Amesos_Umfpack", "Amesos_Superlu"
-      List.set("amesos: solver type", "Amesos_Umfpack");
+      // List.set("amesos: solver type", "Amesos_Umfpack");
+      List.set("amesos: solver type", "Amesos_Klu");
 
       // sets the parameters
       IFPACK_CHK_ERR(Prec->SetParameters(List));
@@ -232,7 +244,8 @@ int GLdistYUEpetraDataPool::solveAugsys( const Teuchos::RefCountPtr<const Epetra
       EpetraExt::LinearProblem_Reindex reindex(NULL);
       Epetra_LinearProblem newProblem = reindex(Problem);
       
-      Amesos_Umfpack kktsolver(newProblem);
+      //Amesos_Umfpack kktsolver(newProblem);
+      Amesos_Klu kktsolver(newProblem);
    
       AMESOS_CHK_ERR(kktsolver.SymbolicFactorization());
       AMESOS_CHK_ERR(kktsolver.NumericFactorization());
@@ -302,6 +315,12 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
                                          double * tol )
 {
 
+  const RCP<FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+
+  //*out << "\nsolveAugsysDyn(...) ...\n";
+
+  Teuchos::OSTab tab(out);
+
   double minthreshold = 1e-20;  // tolerance threshold for "exact" solves, anything below is computed w/ minprecision
   double minprecision = 1e-12;  // relative tolerance for "exact" solves
   int    maxit        = 200;    // maximum number of Krylov solver iterations
@@ -317,17 +336,15 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
   // will need to set up state-control-adjoint splitting and corresponding maps
 
   Epetra_Map standardmap(A_->DomainMap());
-  int numstates = standardmap.NumGlobalElements();
   Epetra_Map bdryctrlmap(B_->DomainMap());
-  int numcontrols = bdryctrlmap.NumGlobalElements();
   Epetra_Vector rhs( (Epetra_BlockMap&)Augmat_->RangeMap() );
   Epetra_Vector soln( (Epetra_BlockMap&)Augmat_->RangeMap() );
   // Set initial iterate.
   soln.PutScalar(0.0);  
 
-  double values[rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength()];
-  int indices[rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength()];
-  ((Epetra_BlockMap&)Augmat_->RangeMap()).MyGlobalElements(indices);
+  Teuchos::Array<double> values(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength());
+  Teuchos::Array<int> indices(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength());
+  ((Epetra_BlockMap&)Augmat_->RangeMap()).MyGlobalElements(indices.getRawPtr());
 
   for (int i=0; i<rhsy->MyLength(); i++) {
     values[i] = (*((*rhsy)(0)))[i];
@@ -339,7 +356,7 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
     values[i+rhsy->MyLength()+rhsu->MyLength()] = (*((*rhsp)(0)))[i];
   }
 
-  rhs.ReplaceGlobalValues(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength(), values, indices);
+  rhs.ReplaceGlobalValues(rhsy->MyLength() + rhsu->MyLength() + rhsp->MyLength(), values.getRawPtr(), indices.getRawPtr());
 
 
 /*
@@ -431,102 +448,133 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
   // =============================== //
 */
 
+  // Solve the system
 
-  // need an Epetra_LinearProblem to define AztecOO solver
-  Epetra_LinearProblem Problem;
-  Problem.SetOperator(&(*Augmat_));
-  Problem.SetLHS(&soln);
-  Problem.SetRHS(&rhs);
+  if (useStratimikos) {
+    
+    *out << "\nUsing Stratimikos!\n";
 
-  // now we can allocate the AztecOO solver
-  AztecOO kktsolver(Problem);
+    using Teuchos::RCP; using Teuchos::FancyOStream; using Teuchos::describe;
+    using Teuchos::rcpFromRef;
 
-  // HERE WE SET THE IFPACK PRECONDITIONER
-  //kktsolver.SetPrecOperator(Prec);
-  //kktsolver.SetPrecOperator(MLPrec);
-  kktsolver.SetPrecOperator(&(*Prec_));
+    // Wrap the Epetra objects as Thyra objects
 
+    RCP<Thyra::VectorBase<double> > thyra_soln =
+      Thyra::create_Vector( rcpFromRef(soln), thyra_Augmat_->domain() );
+    RCP<const Thyra::VectorBase<double> > thyra_rhs =
+      Thyra::create_Vector( rcpFromRef(rhs), thyra_Augmat_->range() );
 
-  // specify solver
-  kktsolver.SetAztecOption(AZ_solver,AZ_gmres);
-  kktsolver.SetAztecOption(AZ_output,AZ_none);
+    // Create the SolveCriteria and solve
 
+    Thyra::SolveCriteria<double> solveCriteria;
+    solveCriteria.solveMeasureType.numerator = Thyra::SOLVE_MEASURE_NORM_RESIDUAL;
+    //solveCriteria.numeratorReductionFunc = createMockNormReductionFunctional<Scalar>();
+    solveCriteria.solveMeasureType.denominator = Thyra::SOLVE_MEASURE_NORM_INIT_RESIDUAL;
+    //solveCriteria.denominatorReductionFunc = createMockMaxNormInfEpsReductionFunctional<Scalar>();
+    solveCriteria.requestedTol = 1e-6;
 
-  // Set up tolerances.
-  if ((mypid==0) && wantstats)
-    outfile << "TOL: " << tolerance << endl;
-
-  if (fabs(tolerance) < minthreshold) {
-
-    // Almost zero tolerance.
-    kktsolver.SetAztecOption(AZ_conv,AZ_r0);
-    kktsolver.SetAztecOption(AZ_kspace, maxit);
-    // .. and here we solve
-    kktsolver.Iterate(maxit, minprecision);
-    if ((mypid==0) && wantstats)
-      outfile << kktsolver.NumIters() << endl;
+    Thyra::SolveStatus<double> status = Augmat_lows_->solve(
+      Thyra::NOTRANS, *thyra_rhs, thyra_soln.ptr(),
+      optInArg(solveCriteria));
+    *out << "\nSolve status:\n" << status;
 
   }
-
-  else if (tolerance < 0) {
-
-    if ((mypid==0) && wantstats) {
-      outfile << "\nFIRST CG ITER\n";
-      cout << "\nFIRST CG ITER\n";
-    }
-    
-    double normg  = tol[1];
-    double delta  = tol[2];
-    double smallc = tol[3];
-    /// First iterative solve with dynamic tolerance.
-    // do one solve and then adjust if needed
-    kktsolver.SetAztecOption(AZ_conv,AZ_noscaled);
-    kktsolver.SetAztecOption(AZ_kspace, innerit);
-    // .. and here we solve
-    kktsolver.Iterate(innerit, minprecision);
-    for (int i=1; i <= numcycles; i++) {
-      double normsoln;
-      soln.Norm2(&normsoln);
-      // dynamic stopping criterion
-      double dynmin = 0.0;
-      dynmin = min(normsoln/normg, delta/normg);
-      dynmin = min(dynmin, smallc);
-      dynmin = dynmin*min(normsoln, 1.0);
-      if ((mypid==0) && wantstats) {
-          outfile << "\nTOL: " << dynmin << endl;
-          cout << "\nTOL: " << dynmin << endl;
-      }
-      if (kktsolver.TrueResidual() > dynmin) {
-        if ((mypid==0) && wantstats) {
-          outfile << "\nCYCLE\n";
-          cout << "\nCYCLE\n";
-        }
-        kktsolver.Iterate(innerit, minprecision);
-      }
-    }
-    if ((mypid==0) && wantstats)
-      outfile << kktsolver.NumIters() << endl;
-
-   }
-
   else {
 
-    // Solve to desired preset tolerance, dynamic or fixed.
-    if (tol[1] < 0.1)  // if absolute tolerance chosen, for dynamic solves
-      kktsolver.SetAztecOption(AZ_conv,AZ_noscaled);
-    else               // if relative tolerance chosen, for fixed solves
-      kktsolver.SetAztecOption(AZ_conv,AZ_r0);
-    kktsolver.SetAztecOption(AZ_kspace, maxit);
-    kktsolver.Iterate(maxit, tolerance);
+    *out << "\nUsing AztecOO!\n";
+
+    // need an Epetra_LinearProblem to define AztecOO solver
+    Epetra_LinearProblem Problem;
+    Problem.SetOperator(&(*Augmat_));
+    Problem.SetLHS(&soln);
+    Problem.SetRHS(&rhs);
+
+    // now we can allocate the AztecOO solver
+    AztecOO kktsolver(Problem);
+
+    // HERE WE SET THE IFPACK PRECONDITIONER
+    //kktsolver.SetPrecOperator(Prec);
+    //kktsolver.SetPrecOperator(MLPrec);
+    kktsolver.SetPrecOperator(&(*Prec_));
+
+    // specify solver
+    kktsolver.SetAztecOption(AZ_solver,AZ_gmres);
+    //kktsolver.SetAztecOption(AZ_output,AZ_none);
+    kktsolver.SetAztecOption(AZ_output,AZ_all);
+
+    // Set up tolerances.
     if ((mypid==0) && wantstats)
-      outfile << kktsolver.NumIters() << endl;
+      outfile << "TOL: " << tolerance << endl;
+
+    if (fabs(tolerance) < minthreshold) {
+
+      // Almost zero tolerance.
+      kktsolver.SetAztecOption(AZ_conv,AZ_r0);
+      kktsolver.SetAztecOption(AZ_kspace, maxit);
+      // .. and here we solve
+      kktsolver.Iterate(maxit, minprecision);
+      if ((mypid==0) && wantstats)
+        outfile << kktsolver.NumIters() << endl;
+
+    }
+
+    else if (tolerance < 0) {
+
+      if ((mypid==0) && wantstats) {
+        outfile << "\nFIRST CG ITER\n";
+        cout << "\nFIRST CG ITER\n";
+      }
+    
+      double normg  = tol[1];
+      double delta  = tol[2];
+      double smallc = tol[3];
+      // First iterative solve with dynamic tolerance.
+      // do one solve and then adjust if needed
+      kktsolver.SetAztecOption(AZ_conv,AZ_noscaled);
+      kktsolver.SetAztecOption(AZ_kspace, innerit);
+      // .. and here we solve
+      kktsolver.Iterate(innerit, minprecision);
+      for (int i=1; i <= numcycles; i++) {
+        double normsoln;
+        soln.Norm2(&normsoln);
+        // dynamic stopping criterion
+        double dynmin = 0.0;
+        dynmin = min(normsoln/normg, delta/normg);
+        dynmin = min(dynmin, smallc);
+        dynmin = dynmin*min(normsoln, 1.0);
+        if ((mypid==0) && wantstats) {
+          outfile << "\nTOL: " << dynmin << endl;
+          cout << "\nTOL: " << dynmin << endl;
+        }
+        if (kktsolver.TrueResidual() > dynmin) {
+          if ((mypid==0) && wantstats) {
+            outfile << "\nCYCLE\n";
+            cout << "\nCYCLE\n";
+          }
+          kktsolver.Iterate(innerit, minprecision);
+        }
+      }
+      if ((mypid==0) && wantstats)
+        outfile << kktsolver.NumIters() << endl;
+      
+    }
+    else {
+      
+      // Solve to desired preset tolerance, dynamic or fixed.
+      if (tol[1] < 0.1)  // if absolute tolerance chosen, for dynamic solves
+        kktsolver.SetAztecOption(AZ_conv,AZ_noscaled);
+      else               // if relative tolerance chosen, for fixed solves
+        kktsolver.SetAztecOption(AZ_conv,AZ_r0);
+      kktsolver.SetAztecOption(AZ_kspace, maxit);
+      kktsolver.Iterate(maxit, tolerance);
+      if ((mypid==0) && wantstats)
+        outfile << kktsolver.NumIters() << endl;
+
+    }
 
   }
-    
 
-  // delete the preconditioner
-  //delete Prec;
-  //delete MLPrec;
+  // Pull the solution out into three vectors y, u, and p
     
   for (int i=0; i<rhsy->MyLength(); i++) {
     (*((*y)(0)))[i] = soln[i];
@@ -540,9 +588,8 @@ int GLdistYUEpetraDataPool::solveAugsysDyn( const Teuchos::RefCountPtr<const Epe
 
   outfile.close();
   return 0;
+
 }
-
-
 
 Epetra_Comm * GLdistYUEpetraDataPool::getCommPtr()   { return commptr_; }
 
@@ -609,7 +656,6 @@ void GLdistYUEpetraDataPool::computeAugmat()
   int indexBase = 1;
 
   int numstates = standardmap.NumGlobalElements();
-  int numcontrols = bdryctrlmap.NumGlobalElements();
   int nummystates = standardmap.NumMyElements();
   int nummycontrols = bdryctrlmap.NumMyElements();
 
@@ -772,50 +818,85 @@ void GLdistYUEpetraDataPool::computeAugmat()
 
 int GLdistYUEpetraDataPool::computePrec()
 {
-  // =============================================================== //
-  // B E G I N N I N G   O F   I F P A C K   C O N S T R U C T I O N //
-  // =============================================================== //
 
-  Teuchos::ParameterList List;
+  const RCP<FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
-  // allocates an IFPACK factory. No data is associated
-  // to this object (only method Create()).
-  Ifpack Factory;
+  if (useStratimikos) {
+    
+    //*out << "\nUsing Stratimikos!\n";
 
-  // create the preconditioner. For valid PrecType values,
-  // please check the documentation
-  string PrecType = "Amesos";
-  int OverlapLevel = 4; // must be >= 0. If Comm.NumProc() == 1,
-                        // it is ignored.
+    using Teuchos::RCP; using Teuchos::FancyOStream;
+    using Teuchos::describe; using Teuchos::rcpFromRef;
 
-  //if (Prec_ != 0)
-  //  delete Prec_;
-  Prec_ = rcp(Factory.Create(PrecType, &(*Augmat_), OverlapLevel));
-  assert(Prec_ != null);
+    if (is_null(Augmat_lowsFactory_)) {
 
-  // specify the Amesos solver to be used.
-  // If the selected solver is not available,
-  // IFPACK will try to use Amesos' KLU (which is usually always
-  // compiled). Amesos' serial solvers are:
-  // "Amesos_Klu", "Amesos_Umfpack", "Amesos_Superlu"
-  List.set("amesos: solver type", "Amesos_Umfpack");
+      RCP<Teuchos::ParameterList> pl =
+        Teuchos::getParametersFromXmlFile(stratimikosXmlFile);
 
-  // sets the parameters
-  IFPACK_CHK_ERR(Prec_->SetParameters(List));
+      Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+      linearSolverBuilder.setParameterList(pl);
 
-  // initialize the preconditioner. At this point the matrix must
-  // have been FillComplete()'d, but actual values are ignored.
-  // At this call, Amesos will perform the symbolic factorization.
-  IFPACK_CHK_ERR(Prec_->Initialize());
+      Augmat_lowsFactory_ = linearSolverBuilder.createLinearSolveStrategy("");
+    
+      Augmat_lowsFactory_->setOStream(out);
+      Augmat_lowsFactory_->setVerbLevel(Teuchos::VERB_LOW);
 
-  // Builds the preconditioners, by looking for the values of
-  // the matrix. At this call, Amesos will perform the
-  // numeric factorization.
-  IFPACK_CHK_ERR(Prec_->Compute());
+    }
 
-  // =================================================== //
-  // E N D   O F   I F P A C K   C O N S T R U C T I O N //
-  // =================================================== //
+    Augmat_lows_ = Augmat_lowsFactory_->createOp();
+    thyra_Augmat_ = Thyra::epetraLinearOp(Augmat_);
+
+    Thyra::initializeOp<double>(*Augmat_lowsFactory_, thyra_Augmat_,
+      Augmat_lows_.ptr());
+    *out << "\nlows = " << describe(*Augmat_lows_, Teuchos::VERB_MEDIUM);
+
+  }
+  else {
+
+    // Create Ifpack preconditioner for AztecOO!
+
+    Teuchos::ParameterList List;
+
+    // allocates an IFPACK factory. No data is associated
+    // to this object (only method Create()).
+    Ifpack Factory;
+
+    // create the preconditioner. For valid PrecType values,
+    // please check the documentation
+    string PrecType = "Amesos";
+    int OverlapLevel = 4; // must be >= 0. If Comm.NumProc() == 1,
+    // it is ignored.
+
+    //if (Prec_ != 0)
+    //  delete Prec_;
+    Prec_ = rcp(Factory.Create(PrecType, &(*Augmat_), OverlapLevel));
+    assert(Prec_ != null);
+
+    // specify the Amesos solver to be used.
+    // If the selected solver is not available,
+    // IFPACK will try to use Amesos' KLU (which is usually always
+    // compiled). Amesos' serial solvers are:
+    // "Amesos_Klu", "Amesos_Umfpack", "Amesos_Superlu"
+    // List.set("amesos: solver type", "Amesos_Umfpack");
+    List.set("amesos: solver type", "Amesos_Klu");
+
+    // sets the parameters
+    IFPACK_CHK_ERR(Prec_->SetParameters(List));
+
+    // initialize the preconditioner. At this point the matrix must
+    // have been FillComplete()'d, but actual values are ignored.
+    // At this call, Amesos will perform the symbolic factorization.
+    IFPACK_CHK_ERR(Prec_->Initialize());
+
+    // Builds the preconditioners, by looking for the values of
+    // the matrix. At this call, Amesos will perform the
+    // numeric factorization.
+    IFPACK_CHK_ERR(Prec_->Compute());
+
+  }
+
+  return 0;
+
 }
 
 
@@ -830,7 +911,6 @@ void GLdistYUEpetraDataPool::PrintSolutionVTK( const Teuchos::RefCountPtr<const 
 {
   Epetra_Map standardmap(A_->DomainMap());
   int numstates = standardmap.NumGlobalElements();
-  int nummystates = standardmap.NumMyElements();
   int IndexBase = 1;
 
   Teuchos::RefCountPtr<Epetra_Map> printmap;

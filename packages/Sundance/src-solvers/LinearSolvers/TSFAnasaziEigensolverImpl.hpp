@@ -39,11 +39,95 @@
 #include "AnasaziLOBPCGSolMgr.hpp"
 #include "AnasaziBasicEigenproblem.hpp"
 #include "AnasaziThyraAdapter.hpp"
+#include "TSFAnasaziAdapter.hpp"
 
 
 namespace TSFExtended
 {
 using Teuchos::ParameterList;
+using Anasazi::SimpleMV;
+/** */
+template <class MV, class OP> 
+class InitTraits
+{
+public:
+  /** */
+  static RCP<OP> opPtr(const LinearOperator<double>& A);
+
+  /** */
+  static RCP<MV> makeMV(int numVecs, const VectorSpace<double>& space);
+
+  /** */
+  static Vector<double> vec(const RCP<MV>& mv, int i);
+};
+
+
+/** */
+template <> class InitTraits<SimpleMV, LinearOperator<double> >
+{
+public:
+  typedef SimpleMV            MV;
+  typedef LinearOperator<double>            OP;
+
+  /** */
+  static RCP<OP> opPtr(const LinearOperator<double>& A)
+    {
+      if (A.ptr().get() != 0)
+        return rcp(new LinearOperator<double>(A));
+      else
+      {
+        RCP<LinearOperator<double> > rtn;
+        return rtn;
+      }
+    }
+
+  /** */
+  static RCP<MV> makeMV(int blockSize, const VectorSpace<double>& space)
+    {
+      RCP<MV> mv = rcp(new MV(blockSize));
+      for (int i=0; i<blockSize; i++) (*mv)[i] = space.createMember();
+      return mv;
+    }
+
+  /** */
+  static Vector<double> vec(const RCP<MV>& mv, int i)
+    {
+      return (*mv)[i];
+    }
+
+  
+};
+
+
+/** */
+template <> class InitTraits<MultiVectorBase<double>, LinearOpBase<double> >
+{
+public:
+  typedef Thyra::MultiVectorBase<double>         MV;
+  typedef Thyra::LinearOpBase<double>            OP;
+
+  /** */
+  static RCP<OP> opPtr(const LinearOperator<double>& A)
+    {
+      return A.ptr();
+    }
+
+  /** */
+  static RCP<MV> makeMV(int blockSize, const VectorSpace<double>& space)
+    {
+      RCP<const Thyra::VectorSpaceBase<double> > mvSpace = space.ptr();
+      return Thyra::createMembers( *mvSpace, blockSize );
+    }
+
+  /** */
+  static Vector<double> vec(const RCP<MV>& mv, int i)
+    {
+      return mv->col(i);
+    }
+};
+
+
+
 
 
 template <class Scalar>  
@@ -53,20 +137,26 @@ inline void AnasaziEigensolver<Scalar>::solve(
   Array<Vector<Scalar> >& evecs,
   Array<std::complex<Scalar> >& ew) const 
 {
+//#define USE_THYRA_MV
 
+#ifdef USE_THYRA_MV
   typedef Thyra::MultiVectorBase<Scalar>         MV;
   typedef Thyra::LinearOpBase<Scalar>            OP;
+#else
+  typedef SimpleMV            MV;
+  typedef LinearOperator<Scalar>            OP;
+#endif
   typedef Anasazi::MultiVecTraits<Scalar,MV>     MVT;
   typedef Anasazi::OperatorTraits<Scalar,MV,OP>  OPT;
 
   TimeMonitor timer(solveTimer());
   VectorSpace<Scalar> KDomain = K.domain();
-  
-  /* Get a Thyra representation of the stiffness matrix */
-  RCP<LinearOpBase<Scalar> > KPtr = K.ptr();
-  RCP<LinearOpBase<Scalar> > MPtr = M.ptr();
-  RCP<const Thyra::VectorSpaceBase<Scalar> > mvSpace = KPtr->domain();
-  
+
+  RCP<OP> KPtr = InitTraits<MV, OP>::opPtr(K);
+  RCP<OP> MPtr = InitTraits<MV, OP>::opPtr(M);
+
+
+
   
   // Eigensolver parameters
   std::string method = this->params().get<string>("Method");
@@ -75,11 +165,12 @@ inline void AnasaziEigensolver<Scalar>::solve(
   bool usePrec = this->params().get<bool>("Use Preconditioner");
   bool hermitian = this->params().get<bool>("Is Hermitian");
 
+
   
   /* Make a multivector with row space = domain of K, column 
    * space = multiVec Space*/
-  RCP<MV> mv = Thyra::createMembers( *mvSpace, blockSize );
-  
+  RCP<MV> mv = InitTraits<MV, OP>::makeMV(blockSize, KDomain);
+
   /* Fill the multivector with random values */
   MVT::MvRandom( *mv );
 
@@ -112,7 +203,8 @@ inline void AnasaziEigensolver<Scalar>::solve(
   ParameterList eigParams = this->params();
   problem->setHermitian(hermitian);
   problem->setNEV(numEigs);
-  if (usePrec) problem->setPrec(P.ptr());
+  if (usePrec) problem->setPrec(InitTraits<MV, OP>::opPtr(P));
+
   bool ret = problem->setProblem();
   TEST_FOR_EXCEPTION(!ret, std::runtime_error,
     "Eigenproblem not setup correctly");
@@ -144,6 +236,7 @@ inline void AnasaziEigensolver<Scalar>::solve(
 
   // Solve the problem to the specified tolerances or length
   Anasazi::ReturnType returnCode = MySolverMan->solve();
+  Out::os() << "return code = " << returnCode << endl;
   TEST_FOR_EXCEPTION(returnCode != Anasazi::Converged, 
     std::runtime_error, "Anasazi did not converge!");
   
@@ -158,7 +251,8 @@ inline void AnasaziEigensolver<Scalar>::solve(
 
   for (int i=0; i<numev; i++)
   {
-    Vector<Scalar> tmp = evecs_mv->col(i);
+    Vector<Scalar> tmp = InitTraits<MV, OP>::vec(evecs_mv, i);
+
     evecs[i] = KDomain.createMember();
     evecs[i].acceptCopyOf(tmp);
     /* record the associated eigenvalue. The matrix is Hermitian so
