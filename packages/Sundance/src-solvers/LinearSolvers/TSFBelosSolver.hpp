@@ -35,6 +35,14 @@
 #include "SundanceHandleable.hpp"
 #include "SundancePrintable.hpp"
 #include "Teuchos_Describable.hpp"
+#include "BelosBlockGmresSolMgr.hpp"
+#include "BelosBlockCGSolMgr.hpp"
+#include "BelosGCRODRSolMgr.hpp"
+#include "BelosRCGSolMgr.hpp"
+#include "BelosTFQMRSolMgr.hpp"
+#include "BelosConfigDefs.hpp"
+#include "BelosLinearProblem.hpp"
+#include "BelosThyraAdapter.hpp"
 
 #include "Teuchos_RefCountPtr.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -98,7 +106,10 @@ namespace TSFExtended
     
     /** */
     PreconditionerFactory<double> pf_;
-
+    /** */
+    mutable RCP<Belos::SolverManager<double,Thyra::MultiVectorBase<double>,Thyra::LinearOpBase<double> > > solver_ ;
+    /** */
+    mutable bool hasSolver_;
   };
   
 }
