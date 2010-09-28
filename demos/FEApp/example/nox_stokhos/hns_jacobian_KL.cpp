@@ -52,12 +52,8 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-#include "Stokhos.hpp"
-#include "Stokhos_SGModelEvaluator.hpp"
-#include "Stokhos_SGQuadModelEvaluator.hpp"
-#include "Stokhos_SparseGridQuadrature.hpp"
-#include "Sacado_PCE_OrthogPoly.hpp"
-#include "Ifpack.h"
+#include "Stokhos_Epetra.hpp"
+#include "Stokhos_IfpackPreconditionerFactory.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "AztecOO.h"
 
@@ -70,30 +66,6 @@
 #include "EpetraExt_MultiSerialComm.h"
 #endif
 #include "EpetraExt_BlockUtility.h"
-
-// The preconditioner we will use for PCE
-class IfpackPreconditionerFactory : public Stokhos::PreconditionerFactory {
-public:
-  IfpackPreconditionerFactory(const Teuchos::RCP<Teuchos::ParameterList>& p) :
-    precParams(p) {}
-  virtual ~IfpackPreconditionerFactory() {}
-  virtual Teuchos::RCP<Epetra_Operator> 
-  compute(const Teuchos::RCP<Epetra_Operator>& op) {
-    Teuchos::RCP<Epetra_RowMatrix> mat = 
-      Teuchos::rcp_dynamic_cast<Epetra_RowMatrix>(op, true);
-    Ifpack Factory;
-    std::string prec = precParams->get("Ifpack Preconditioner", "ILU");
-    int overlap = precParams->get("Overlap", 0);
-    ifpackPrec = Teuchos::rcp(Factory.Create(prec, mat.get(), overlap));
-    ifpackPrec->SetParameters(*precParams);
-    int err = ifpackPrec->Initialize();   
-    err = ifpackPrec->Compute();
-    return ifpackPrec;
-  }
-protected:
-  Teuchos::RCP<Teuchos::ParameterList> precParams;
-  Teuchos::RCP<Ifpack_Preconditioner> ifpackPrec;
-};
 
 int main(int argc, char *argv[]) {
   unsigned int nelem = 100;
@@ -328,14 +300,16 @@ int main(int argc, char *argv[]) {
 
     Teuchos::RCP<Teuchos::ParameterList> sgParams = 
       Teuchos::rcp(&(appParams->sublist("SG Parameters")),false);
-    sgParams->set("Jacobian Method", "Matrix Free");
-    Teuchos::RCP<Teuchos::ParameterList> precParams = 
-      Teuchos::rcp(&(sgParams->sublist("SG Preconditioner")),false);
-    precParams->set("Ifpack Preconditioner", "ILU");
-    precParams->set("Overlap", 0);
-    Teuchos::RCP<Stokhos::PreconditionerFactory> sg_prec = 
-      Teuchos::rcp(new IfpackPreconditionerFactory(precParams));
-    sgParams->set("Preconditioner Factory", sg_prec);
+     Teuchos::ParameterList& sgOpParams = 
+      sgParams->sublist("SG Operator");
+    Teuchos::ParameterList& sgPrecParams = 
+      sgParams->sublist("SG Preconditioner");
+    sgOpParams.set("Operator Method", "Matrix Free");
+    sgPrecParams.set("Preconditioner Method", "Mean-based");
+     sgPrecParams.set("Mean Preconditioner Type", "Ifpack");
+    Teuchos::ParameterList& precParams = 
+      sgPrecParams.sublist("Mean Preconditioner Parameters");
+    precParams.set("Ifpack Preconditioner", "ILU");
     sgParams->set("Evaluate W with F", false);
     Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =
       Teuchos::rcp(new Stokhos::SGModelEvaluator(model, basis, quad,
@@ -394,10 +368,10 @@ int main(int argc, char *argv[]) {
     while (norm_dx > 1e-5 && nit < 5) {
 
     // Get Jacobian blocks
-    Teuchos::RCP<Stokhos::MatrixFreeEpetraOp> sg_J_op = 
-      Teuchos::rcp_dynamic_cast<Stokhos::MatrixFreeEpetraOp>(sg_J);
+    Teuchos::RCP<Stokhos::SGOperator> sg_J_op = 
+      Teuchos::rcp_dynamic_cast<Stokhos::SGOperator>(sg_J);
     Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_Operator> > sg_J_poly =
-      sg_J_op->getOperatorBlocks();
+      sg_J_op->getSGPolynomial();
     Teuchos::RCP<const Epetra_CrsMatrix> J_mean = 
       Teuchos::rcp_dynamic_cast<const Epetra_CrsMatrix>(
 	sg_J_poly->getCoeffPtr(0));
@@ -549,21 +523,15 @@ int main(int argc, char *argv[]) {
 
     // Create linear system operator
     std::cout << "Setting up operators..." << std::endl;
-    // Stokhos::MatrixFreeEpetraOp kl_jac_op(
-    //   base_f_map, sg_model->get_f_map(),
-    //   kl_basis, kl_basis->getTripleProductTensor(), 
-    //   Teuchos::rcp(&sg_J_kl_poly,false));
-    Teuchos::Array<Teuchos::RCP<Epetra_Operator> > sg_J_kl_mats(num_KL+1);
-    for (int coeff=0; coeff < num_KL + 1; coeff++)
-      sg_J_kl_mats[coeff] = sg_J_kl_poly.getCoeffPtr(coeff);
-     Stokhos::KLMatrixFreeEpetraOp kl_jac_op(
-      base_x_map, sg_x_kl_map,
-      kl_basis, kl_basis->computeTripleProductTensor(num_KL+1), 
-      sg_J_kl_mats);
+    Stokhos::MatrixFreeOperator kl_jac_op(
+      base_x_map, base_x_map, sg_x_kl_map, sg_x_kl_map);
+    kl_jac_op.setupOperator(Teuchos::rcp(&sg_J_kl_poly,false), 
+			    kl_basis->computeTripleProductTensor(num_KL+1));
+    Stokhos::IfpackPreconditionerFactory ifpack_factory(Teuchos::rcp(&precParams,false));
     Teuchos::RCP<Epetra_Operator> kl_mean_prec = 
-      sg_prec->compute(sg_J_kl_poly.getCoeffPtr(0));
-    Stokhos::MeanEpetraOp kl_prec_op(base_x_map, sg_x_kl_map, sz2, 
-				     kl_mean_prec);
+      ifpack_factory.compute(sg_J_kl_poly.getCoeffPtr(0));
+    Stokhos::MeanBasedPreconditioner kl_prec_op(base_x_map, sg_x_kl_map, sz2, 
+						kl_mean_prec);
 
     // Solve KL linear system
     std::cout << "Solving linear system..." << std::endl;

@@ -24,12 +24,16 @@ IF(NOX_ENABLE_ABSTRACT_IMPLEMENTATION_EPETRA AND NOX_ENABLE_EpetraExt AND
     PASS_REGULAR_EXPRESSION "Test Passed"
     )
 
-  IF(Stokhos_ENABLE_Anasazi)	
-    PACKAGE_ADD_EXECUTABLE(
-      NOX_Jacobian_KL_Example
-      SOURCES hns_jacobian_KL.cpp ENAT_NOXSolver.hpp ENAT_NOXSolver.cpp
-      COMM serial mpi
-      )
-  ENDIF()
+ENDIF()
+
+IF(NOX_ENABLE_ABSTRACT_IMPLEMENTATION_EPETRA AND NOX_ENABLE_EpetraExt AND 
+  FEApp_ENABLE_NOX AND FEApp_ENABLE_Stokhos AND Stokhos_ENABLE_Ifpack AND
+  Stokhos_ENABLE_Anasazi)
+
+  PACKAGE_ADD_EXECUTABLE(
+    NOX_Jacobian_KL_Example
+    SOURCES hns_jacobian_KL.cpp ENAT_NOXSolver.hpp ENAT_NOXSolver.cpp
+    COMM serial mpi
+    )
 
 ENDIF()
