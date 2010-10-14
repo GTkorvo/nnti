@@ -38,6 +38,7 @@
 
 #include "NOX_Common.H"             // class data element (string)
 #include "NOX_TSF_Vector.H"	    // class data element
+#include "Teuchos_RCP.hpp"
 #include "TSFVectorType.hpp"
 #include "TSFVectorSpaceDecl.hpp"
 #include "TSFLinearSolverDecl.hpp"
@@ -56,6 +57,9 @@ namespace Teuchos
 
 namespace NOX {
   namespace TSF {
+
+    using Teuchos::rcp;
+    using Teuchos::rcp_dynamic_cast;
 
     class Group : public virtual NOX::Abstract::Group,
     public TSFExtended::DefaultObjectWithVerbosity
@@ -209,6 +213,23 @@ namespace NOX {
 
       const NOX::Abstract::Vector& getNewton() const;
 
+  //! Return RCP to solution vector.  
+   virtual Teuchos::RCP< const NOX::Abstract::Vector > getXPtr() const 
+      {return rcp_dynamic_cast<const NOX::Abstract::Vector>(xVector);}
+
+  //! Return RCP to F(x)
+   virtual Teuchos::RCP< const NOX::Abstract::Vector > getFPtr() const 
+      {return rcp_dynamic_cast<const NOX::Abstract::Vector>(fVector);}
+
+
+
+  //! Return RCP to gradient.
+   virtual Teuchos::RCP< const NOX::Abstract::Vector > getGradientPtr() const
+      {return rcp_dynamic_cast<const NOX::Abstract::Vector>(gradientVector);}
+
+  //! Return RCP to Newton direction.
+   virtual Teuchos::RCP< const NOX::Abstract::Vector > getNewtonPtr() const 
+      {return rcp_dynamic_cast<const NOX::Abstract::Vector>(newtonVector);}
       //@}
 
 #ifdef TRILINOS_6
@@ -233,13 +254,13 @@ namespace NOX {
       /** @name Vectors */
       //@{
       //! Solution vector.
-      NOX::TSF::Vector xVector;
+      RCP<NOX::TSF::Vector> xVector;
       //! Right-hand-side vector (function evaluation).
-      NOX::TSF::Vector fVector;
+      RCP<NOX::TSF::Vector> fVector;
       //! Newton direction vector.
-      NOX::TSF::Vector newtonVector;
+      RCP<NOX::TSF::Vector> newtonVector;
       //! Gradient vector (steepest descent vector).
-      NOX::TSF::Vector gradientVector;
+      RCP<NOX::TSF::Vector> gradientVector;
       //@}
 
       //! Linear solver that will be used to solve J*step = resid
