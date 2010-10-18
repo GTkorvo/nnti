@@ -46,6 +46,9 @@
 
 // Include all of our AD types
 #include "Sacado_MathFunctions.hpp"
+#if SG_ACTIVE
+#include "Stokhos_Sacado_MathFunctions.hpp"
+#endif
 #include "Sacado.hpp"
 #include "Sacado_CacheFad_DFad.hpp"
 #if SG_ACTIVE

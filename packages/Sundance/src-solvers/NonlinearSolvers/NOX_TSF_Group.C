@@ -43,16 +43,16 @@ NOX::TSF::Group::Group(const TSFExtended::Vector<double>& initcond,
   const TSFExtended::LinearSolver<double>& linsolver) 
   :
   precision(3),  // 3 digits of accuracy is default
-  xVector(initcond, precision, DeepCopy),
-  fVector(xVector, precision, ShapeCopy),
-  newtonVector(xVector, precision, ShapeCopy),
-  gradientVector(xVector, precision, ShapeCopy),
+  xVector(rcp(new NOX::TSF::Vector(initcond, precision, DeepCopy))),
+  fVector(rcp(new NOX::TSF::Vector(initcond, precision, ShapeCopy))),
+  newtonVector(rcp(new NOX::TSF::Vector(initcond, precision, ShapeCopy))),
+  gradientVector(rcp(new NOX::TSF::Vector(initcond, precision, ShapeCopy))),
   solver(linsolver),
   jacobian(),
   nonlinearOp(nonlinOp),
   normF(0.0)
 {  
-  nonlinearOp.setEvalPt(xVector.getTSFVector());
+  nonlinearOp.setEvalPt(xVector->getTSFVector());
   resetIsValid();
 }
 
@@ -60,16 +60,16 @@ NOX::TSF::Group::Group(const TSFExtended::NonlinearOperator<double>& nonlinOp,
   const TSFExtended::LinearSolver<double>& linsolver) 
   :
   precision(3), // 3 digits of accuracy is default
-  xVector(nonlinOp.getInitialGuess(), precision, DeepCopy),
-  fVector(xVector, precision, ShapeCopy),
-  newtonVector(xVector, precision, ShapeCopy),
-  gradientVector(xVector, precision, ShapeCopy),
+  xVector(rcp(new NOX::TSF::Vector(nonlinOp.getInitialGuess(), precision, DeepCopy))),
+  fVector(rcp(new NOX::TSF::Vector(nonlinOp.getInitialGuess(), precision, ShapeCopy))),
+  newtonVector(rcp(new NOX::TSF::Vector(nonlinOp.getInitialGuess(), precision, ShapeCopy))),
+  gradientVector(rcp(new NOX::TSF::Vector(nonlinOp.getInitialGuess(), precision, ShapeCopy))),
   solver(linsolver),
   jacobian(),
   nonlinearOp(nonlinOp),
   normF(0.0)
 {  
-  nonlinearOp.setEvalPt(xVector.getTSFVector());
+  nonlinearOp.setEvalPt(xVector->getTSFVector());
   resetIsValid();
 }
 
@@ -79,16 +79,16 @@ NOX::TSF::Group::Group(const TSFExtended::Vector<double>& initcond,
   int numdigits) 
   :
   precision(numdigits),
-  xVector(initcond, precision, DeepCopy),
-  fVector(xVector, precision, ShapeCopy),
-  newtonVector(xVector, precision, ShapeCopy),
-  gradientVector(xVector, precision, ShapeCopy),
+  xVector(rcp(new NOX::TSF::Vector(initcond, precision, DeepCopy))),
+  fVector(rcp(new NOX::TSF::Vector(initcond, precision, ShapeCopy))),
+  newtonVector(rcp(new NOX::TSF::Vector(initcond, precision, ShapeCopy))),
+  gradientVector(rcp(new NOX::TSF::Vector(initcond, precision, ShapeCopy))),
   solver(linsolver),
   jacobian(),
   nonlinearOp(nonlinOp),
   normF(0.0)
 {  
-  nonlinearOp.setEvalPt(xVector.getTSFVector());
+  nonlinearOp.setEvalPt(xVector->getTSFVector());
   resetIsValid();
 }
 
@@ -97,26 +97,26 @@ NOX::TSF::Group::Group(const TSFExtended::NonlinearOperator<double>& nonlinOp,
   int numdigits) 
   :
   precision(numdigits),
-  xVector(nonlinOp.getInitialGuess(), precision, DeepCopy),
-  fVector(xVector, precision, ShapeCopy),
-  newtonVector(xVector, precision, ShapeCopy),
-  gradientVector(xVector, precision, ShapeCopy),
+  xVector(rcp(new NOX::TSF::Vector(nonlinOp.getInitialGuess(), precision, DeepCopy))),
+  fVector(rcp(new NOX::TSF::Vector(nonlinOp.getInitialGuess(), precision, ShapeCopy))),
+  newtonVector(rcp(new NOX::TSF::Vector(nonlinOp.getInitialGuess(), precision, ShapeCopy))),
+  gradientVector(rcp(new NOX::TSF::Vector(nonlinOp.getInitialGuess(), precision, ShapeCopy))),
   solver(linsolver),
   jacobian(),
   nonlinearOp(nonlinOp),
   normF(0.0)
 {  
-  nonlinearOp.setEvalPt(xVector.getTSFVector());
+  nonlinearOp.setEvalPt(xVector->getTSFVector());
   resetIsValid();
 }
 
 
 NOX::TSF::Group::Group(const NOX::TSF::Group& source, NOX::CopyType type) :
   precision(source.precision),
-  xVector(source.xVector, precision, type), 
-  fVector(source.fVector, precision, type),  
-  newtonVector(source.newtonVector, precision, type),
-  gradientVector(source.gradientVector, precision, type),
+  xVector(rcp(new NOX::TSF::Vector(*(source.xVector), precision, type))), 
+  fVector(rcp(new NOX::TSF::Vector(*(source.fVector), precision, type))),  
+  newtonVector(rcp(new NOX::TSF::Vector(*(source.newtonVector), precision, type))),
+  gradientVector(rcp(new NOX::TSF::Vector(*(source.gradientVector), precision, type))),
   solver(source.solver),
   jacobian(source.jacobian),
   nonlinearOp(source.nonlinearOp),
@@ -185,7 +185,7 @@ NOX::Abstract::Group& NOX::TSF::Group::operator=(const NOX::TSF::Group& source)
   {
 
     // Deep Copy of the xVector
-    xVector = source.xVector;
+    *xVector = *(source.xVector);
     nonlinearOp = source.nonlinearOp;
     solver = source.solver;
     jacobian = source.jacobian;
@@ -200,15 +200,15 @@ NOX::Abstract::Group& NOX::TSF::Group::operator=(const NOX::TSF::Group& source)
     // Only copy vectors that are valid
     if (isValidF) 
     {
-      fVector = source.fVector;
+      *fVector = *(source.fVector);
       normF = source.normF;
     }
 
     if (isValidGradient)
-      gradientVector = source.gradientVector;
+      *gradientVector = *(source.gradientVector);
     
     if (isValidNewton)
-      newtonVector = source.newtonVector;
+      *newtonVector = *(source.newtonVector);
     
     if (isValidJacobian)
       jacobian = source.jacobian;
@@ -225,7 +225,7 @@ void NOX::TSF::Group::setX(const NOX::TSF::Vector& y)
 {
   resetIsValid();
   nonlinearOp.setEvalPt(y.getTSFVector());
-  xVector = y;
+  *xVector = y;
 }
 
 void NOX::TSF::Group::computeX(const NOX::Abstract::Group& grp, 
@@ -241,7 +241,7 @@ void NOX::TSF::Group::computeX(const NOX::Abstract::Group& grp,
 void NOX::TSF::Group::computeX(const Group& grp, const Vector& d, double step) 
 {
   resetIsValid();
-  xVector.update(1.0, grp.xVector, step, d);
+  xVector->update(1.0, *(grp.xVector), step, d);
 }
 
 NOX::Abstract::Group::ReturnType NOX::TSF::Group::computeF() 
@@ -266,10 +266,10 @@ NOX::Abstract::Group::ReturnType NOX::TSF::Group::computeF()
     {
       Out::os() << "computing new F" << std::endl;
     }
-    nonlinearOp.setEvalPt(xVector.getTSFVector());
-    fVector = nonlinearOp.getFunctionValue();
+    nonlinearOp.setEvalPt(xVector->getTSFVector());
+    *fVector = nonlinearOp.getFunctionValue();
     isValidF = true;
-    normF = fVector.norm();
+    normF = fVector->norm();
   }
 
   return (isValidF) ? (NOX::Abstract::Group::Ok) : (NOX::Abstract::Group::Failed);
@@ -290,7 +290,7 @@ NOX::Abstract::Group::ReturnType NOX::TSF::Group::computeJacobian()
   }
   else
   {
-    nonlinearOp.setEvalPt(xVector.getTSFVector());
+    nonlinearOp.setEvalPt(xVector->getTSFVector());
     jacobian = nonlinearOp.getJacobian();
 
     isValidJacobian = true;
@@ -325,7 +325,7 @@ NOX::Abstract::Group::ReturnType NOX::TSF::Group::computeGradient()
     // Compute Gradient = J' * F
 
     NOX::Abstract::Group::ReturnType status 
-      = applyJacobianTranspose(fVector,gradientVector);
+      = applyJacobianTranspose(*fVector,*gradientVector);
     isValidGradient = (status == NOX::Abstract::Group::Ok);
 
     // Return result
@@ -364,17 +364,17 @@ NOX::TSF::Group::computeNewton(Teuchos::ParameterList& p)
 */
 
     NOX::Abstract::Group::ReturnType status 
-      = applyJacobianInverse(p, fVector, newtonVector);
+      = applyJacobianInverse(p, *fVector, *newtonVector);
     isValidNewton = (status == NOX::Abstract::Group::Ok);
 
     
     // Scale soln by -1
-    newtonVector.scale(-1.0);
+    newtonVector->scale(-1.0);
 
     if (verb() > 0)
     {
       Out::os() << "newton step" << std::endl;
-      newtonVector.getTSFVector().print(Out::os());
+      newtonVector->getTSFVector().print(Out::os());
     }
       
     // Return solution
@@ -515,7 +515,7 @@ bool NOX::TSF::Group::isNewton() const
 
 const NOX::Abstract::Vector& NOX::TSF::Group::getX() const 
 {
-  return xVector;
+  return *xVector;
 }
 
 const NOX::Abstract::Vector& NOX::TSF::Group::getF() const 
@@ -526,7 +526,7 @@ const NOX::Abstract::Vector& NOX::TSF::Group::getF() const
   }
   TEST_FOR_EXCEPTION(!isF(), runtime_error, 
     "calling getF() with invalid function value");
-  return fVector;
+  return *fVector;
 }
 
 double NOX::TSF::Group::getNormF() const
@@ -542,20 +542,20 @@ double NOX::TSF::Group::getNormF() const
 
 const NOX::Abstract::Vector& NOX::TSF::Group::getGradient() const 
 { 
-  return gradientVector;
+  return *gradientVector;
 }
 
 const NOX::Abstract::Vector& NOX::TSF::Group::getNewton() const 
 {
-  return newtonVector;
+  return *newtonVector;
 }
 
 void NOX::TSF::Group::print() const
 {
-  cout << "x = " << xVector << "\n";
+  cout << "x = " << *xVector << "\n";
 
   if (isValidF) {
-    cout << "F(x) = " << fVector << "\n";
+    cout << "F(x) = " << *fVector << "\n";
     cout << "|| F(x) || = " << normF << "\n";
   }
   else
