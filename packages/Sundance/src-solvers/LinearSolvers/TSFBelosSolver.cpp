@@ -1,9 +1,4 @@
 #include "TSFBelosSolver.hpp"
-#include "BelosBlockGmresSolMgr.hpp"
-#include "BelosBlockCGSolMgr.hpp"
-#include "BelosConfigDefs.hpp"
-#include "BelosLinearProblem.hpp"
-#include "BelosThyraAdapter.hpp"
 #include "TSFPreconditioner.hpp"
 #include "TSFPreconditionerFactory.hpp"
 #include "TSFParameterListPreconditionerFactory.hpp"
@@ -20,7 +15,7 @@ using namespace Teuchos;
 
 
 BelosSolver::BelosSolver(const ParameterList& params)
-  : LinearSolverBase<double>(params), pf_()
+  : LinearSolverBase<double>(params), pf_(), hasSolver_(false)
 {
   setName("BelosSolver");
   if (params.isSublist("Preconditioner"))
@@ -72,28 +67,50 @@ SolverState<double> BelosSolver::solve(const LinearOperator<double>& A,
     }
   }
 
-  ParameterList plist = parameters();
+  if (!hasSolver_)
+    {
 
-  RCP<ParameterList> belosList = rcp(&plist, false);
-  RCP<Belos::SolverManager<double, MV, OP> > solver ;
-  std::string solverType = parameters().get<string>("Method");
+      ParameterList plist = parameters();
+
+      RCP<ParameterList> belosList = rcp(&plist, false);
+
+      std::string solverType = parameters().get<string>("Method");
+      
+      if (solverType=="GMRES")
+	{
+	  solver_=rcp(new Belos::BlockGmresSolMgr<double, MV, OP>(prob, belosList));
+	}
+      else if (solverType=="CG")
+	{
+	  solver_=rcp(new Belos::BlockCGSolMgr<double, MV, OP>(prob, belosList));
+	}
+      else if (solverType=="TFQMR")
+	{
+	  solver_=rcp(new Belos::TFQMRSolMgr<double, MV, OP>(prob, belosList));
+	}
+      else if (solverType=="GCRODR")
+	{
+	  solver_=rcp(new Belos::GCRODRSolMgr<double, MV, OP>(prob, belosList));
+	  hasSolver_ = true; // only cache recycling solvers
+	}
+      else if (solverType=="RCG")
+	{
+	  solver_=rcp(new Belos::RCGSolMgr<double, MV, OP>(prob, belosList));
+	  hasSolver_ = true; // only cache recycling solvers
+	}
+      else
+	{
+	  TEST_FOR_EXCEPT(!(solverType=="GMRES" || solverType=="CG"));
+	}
+    }
+  else // reset problem
+    {
+      solver_->setProblem( prob );
+    }
   
-  if (solverType=="GMRES")
-  {
-    solver=rcp(new Belos::BlockGmresSolMgr<double, MV, OP>(prob, belosList));
-  }
-  else if (solverType=="CG")
-  {
-    solver=rcp(new Belos::BlockCGSolMgr<double, MV, OP>(prob, belosList));
-  }
-  else
-  {
-    TEST_FOR_EXCEPT(!(solverType=="GMRES" || solverType=="CG"));
-  }
+  Belos::ReturnType rtn = solver_->solve();
 
-  Belos::ReturnType rtn = solver->solve();
-
-  int numIters = solver->getNumIters();
+  int numIters = solver_->getNumIters();
   double resid = -1.0;
   
   SolverStatusCode code = SolveFailedToConverge;

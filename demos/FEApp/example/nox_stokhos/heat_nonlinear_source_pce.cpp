@@ -52,11 +52,7 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-#include "Stokhos.hpp"
-#include "Stokhos_SGModelEvaluator.hpp"
-#include "Stokhos_SGQuadModelEvaluator.hpp"
-#include "Stokhos_SparseGridQuadrature.hpp"
-#include "Sacado_PCE_OrthogPoly.hpp"
+#include "Stokhos_Epetra.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
 #include "Stokhos_PCEAnasaziKL.hpp"
@@ -392,15 +388,20 @@ int main(int argc, char *argv[]) {
 
       Teuchos::RCP<Teuchos::ParameterList> sgSolverParams = 
 	Teuchos::rcp(&sgParams.sublist("Solver"), false);
+      Teuchos::ParameterList& sgOpParams = 
+	sgSolverParams->sublist("SG Operator");
+      Teuchos::ParameterList& sgPrecParams = 
+	sgSolverParams->sublist("SG Preconditioner");
       if (SG_Method != SG_NI) {
-	sgSolverParams->set("Jacobian Method", "Matrix Free");
-	//sgSolverParams->set("Jacobian Method", "KL Reduced Matrix Free");
-	//sgSolverParams->set("Jacobian Method", "Fully Assembled");
-	sgSolverParams->set("Number of KL Terms", num_KL+1);
+	//sgOpParams.set("Operator Method", "Matrix Free");
+	sgOpParams.set("Operator Method", "KL Reduced Matrix Free");
+	//sgOpParams.set("Operator Method", "Fully Assembled");
+	sgOpParams.set("Number of KL Terms", num_KL+1);
+	sgPrecParams.set("Preconditioner Method", "Mean-based");
+	sgPrecParams.set("Mean Preconditioner Type", "ML");
 	Teuchos::ParameterList& precParams = 
-	  sgSolverParams->sublist("Preconditioner Parameters");
-	sgSolverParams->set("Mean Preconditioner Type", "ML");
-	ML_Epetra::SetDefaults("DD", precParams);
+	  sgPrecParams.sublist("Mean Preconditioner Parameters");
+	precParams.set("default values", "SA");
 	sgSolverParams->set("Evaluate W with F", false);
       }
       Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =
@@ -414,7 +415,7 @@ int main(int argc, char *argv[]) {
       if (SG_Method != SG_NI) {
 	Teuchos::RCP<Epetra_Operator> M;
 	std::string jac_method = 
-	  sgSolverParams->get<std::string>("Jacobian Method");
+	  sgOpParams.get<std::string>("Operator Method");
 	if (jac_method == "Matrix Free" || 
 	    jac_method == "KL Reduced Matrix Free")
 	  M = sg_model->create_WPrec()->PrecOp;
