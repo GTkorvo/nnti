@@ -62,8 +62,9 @@
 typedef double RealType;
 typedef Sacado::ELRFad::DFad<double> FadType;
 #if SG_ACTIVE
-typedef Sacado::PCE::OrthogPoly<double> SGType;
-typedef Sacado::ELRCacheFad::DFad< Sacado::PCE::OrthogPoly<double> > SGFadType;
+typedef Stokhos::StandardStorage<int,double> StorageType;
+typedef Sacado::PCE::OrthogPoly<double,StorageType> SGType;
+typedef Sacado::ELRCacheFad::DFad<SGType > SGFadType;
 #endif
 
 // Set up evaluation traits
