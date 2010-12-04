@@ -81,14 +81,13 @@ int main(int argc, char *argv[]) {
     TEUCHOS_FUNC_TIME_MONITOR("Total PCE Calculation Time");
 
     // Create a communicator for Epetra objects
-    Teuchos::RCP<Epetra_Comm> Comm;
+    Teuchos::RCP<const Epetra_Comm> globalComm;
 #ifdef HAVE_MPI
-    Comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+    globalComm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
 #else
-    Comm = Teuchos::rcp(new Epetra_SerialComm);
+    globalComm = Teuchos::rcp(new Epetra_SerialComm);
 #endif
-
-    MyPID = Comm->MyPID();
+    MyPID = globalComm->MyPID();
     
     // Create mesh
     std::vector<double> x(nelem+1);
@@ -153,15 +152,31 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > expansion = 
       Teuchos::rcp(new Stokhos::AlgebraicOrthogPolyExpansion<int,double>(basis,
 									 Cijk));
-    std::cout << "Stochastic Galerkin expansion size = " << sz << std::endl;
+    
+    if (MyPID == 0)
+      std::cout << "Stochastic Galerkin expansion size = " << sz << std::endl;
+
+    // Create stochastic parallel distribution
+    int num_spatial_procs = -1;
+    if (argc > 1)
+      num_spatial_procs = std::atoi(argv[1]);
+    Teuchos::ParameterList parallelParams;
+    parallelParams.set("Number of Spatial Processors", num_spatial_procs);
+    Teuchos::RCP<Stokhos::ParallelData> sg_parallel_data =
+      Teuchos::rcp(new Stokhos::ParallelData(basis, Cijk, globalComm,
+					     parallelParams));
+    Teuchos::RCP<const EpetraExt::MultiComm> sg_comm = 
+      sg_parallel_data->getMultiComm();
+    Teuchos::RCP<const Epetra_Comm> app_comm = 
+      sg_parallel_data->getSpatialComm();
 
     // Create application
     appParams->set("SG Method", "AD");
     Teuchos::RCP<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, Comm, appParams, false));
+      Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false));
     
     // Set up stochastic parameters
-    Epetra_LocalMap p_sg_map(num_KL, 0, *Comm);
+    Epetra_LocalMap p_sg_map(num_KL, 0, *sg_comm);
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p_init = 
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, p_sg_map));
     for (int i=0; i<num_KL; i++) {
@@ -212,8 +227,8 @@ int main(int argc, char *argv[]) {
     // Create stochastic Galerkin model evaluator
     Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =
       Teuchos::rcp(new Stokhos::SGModelEvaluator(model, basis, Teuchos::null,
-						 expansion, Cijk, sgParams,
-						 Comm));
+						 expansion, sg_parallel_data, 
+						 sgParams));
 
     // Set up NOX parameters
     Teuchos::RCP<Teuchos::ParameterList> noxParams =
@@ -345,7 +360,7 @@ int main(int argc, char *argv[]) {
     std::cout << "\nResponse Mean =      " << std::endl << mean << std::endl;
     std::cout << "Response Std. Dev. = " << std::endl << std_dev << std::endl;
       
-    if (status == NOX::StatusTest::Converged) 
+    if (status == NOX::StatusTest::Converged && MyPID == 0) 
       utils.out() << "Test Passed!" << std::endl;
 
     }
