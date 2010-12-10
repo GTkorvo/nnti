@@ -332,7 +332,7 @@ void ENAT::NOXSolver::evalModel(const InArgs& inArgs,
 	model_outargs.get_DfDp(i).getMultiVector();
       if (dfdp != Teuchos::null) {
 	int numParameters = dfdp->NumVectors();
-	
+
 	// (2) Calculate dx/dp multivector from -(J^{-1}*df/dp)
 	Teuchos::RCP<Epetra_MultiVector> dxdp = 
 	  Teuchos::rcp(new Epetra_MultiVector(*(model->get_x_map()), 
