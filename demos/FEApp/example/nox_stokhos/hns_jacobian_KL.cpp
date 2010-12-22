@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
   double rightBC = 0.1;
   unsigned int numalpha = 3;
   unsigned int p = 7;
+  unsigned int d = numalpha;
 
   int MyPID;
 
@@ -86,13 +87,29 @@ int main(int argc, char *argv[]) {
 #endif
 
     // Create a communicator for Epetra objects
-    Teuchos::RCP<Epetra_Comm> Comm;
+    Teuchos::RCP<Epetra_Comm> globalComm;
 #ifdef HAVE_MPI
-    Comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+    globalComm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
 #else
-    Comm = Teuchos::rcp(new Epetra_SerialComm);
+    globalComm = Teuchos::rcp(new Epetra_SerialComm);
 #endif
-    MyPID = Comm->MyPID();
+    MyPID = globalComm->MyPID();
+
+    // Create SG basis to setup parallel correctly
+    typedef Stokhos::LegendreBasis<int,double> basis_type;
+    Teuchos::Array< Teuchos::RCP<const Stokhos::OneDOrthogPolyBasis<int,double> > > bases(d); 
+    for (unsigned int i=0; i<d; i++)
+      bases[i] = Teuchos::rcp(new basis_type(p));
+    Teuchos::RCP<const Stokhos::CompletePolynomialBasis<int,double> > basis = 
+      Teuchos::rcp(new Stokhos::CompletePolynomialBasis<int,double>(bases));
+
+    // Create multi-level comm and spatial comm
+    int num_spatial_procs = -1;
+    if (argc > 1)
+      num_spatial_procs = std::atoi(argv[1]);
+    Teuchos::RCP<const EpetraExt::MultiComm> sg_comm =
+      Stokhos::buildMultiComm(*globalComm, basis->size(), num_spatial_procs);
+    Teuchos::RCP<const Epetra_Comm> app_comm = Stokhos::getSpatialComm(sg_comm);
     
     // Create mesh
     vector<double> x(nelem+1);
@@ -207,7 +224,7 @@ int main(int argc, char *argv[]) {
 
     // Create application
     Teuchos::RCP<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, Comm, appParams, false));
+      Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false));
 
     // Create model evaluator
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
@@ -233,23 +250,15 @@ int main(int argc, char *argv[]) {
     outArgs.set_DgDp(0, 0, dgdp);
     solver.evalModel(inArgs, outArgs);
 
-    g->Print(std::cout);
-    dgdp->Print(std::cout);
+    g->Print(utils.out());
+    dgdp->Print(utils.out());
 
     Teuchos::TimeMonitor::summarize(std::cout);
     Teuchos::TimeMonitor::zeroOutTimers();
 
     //TEUCHOS_FUNC_TIME_MONITOR("Total PCE Calculation Time");
 
-    unsigned int d = numalpha;
-    
-    // Create SG basis and expansion
-    typedef Stokhos::LegendreBasis<int,double> basis_type;
-    Teuchos::Array< Teuchos::RCP<const Stokhos::OneDOrthogPolyBasis<int,double> > > bases(d); 
-    for (unsigned int i=0; i<d; i++)
-      bases[i] = Teuchos::rcp(new basis_type(p));
-    Teuchos::RCP<const Stokhos::CompletePolynomialBasis<int,double> > basis = 
-      Teuchos::rcp(new Stokhos::CompletePolynomialBasis<int,double>(bases));
+    // Create SG quadrature and expansion
     Teuchos::RCP<const Stokhos::Quadrature<int,double> > quad = 
       Teuchos::rcp(new Stokhos::TensorProductQuadrature<int,double>(basis));
     // Teuchos::RCP<const Stokhos::Quadrature<int,double> > quad = 
@@ -265,15 +274,21 @@ int main(int argc, char *argv[]) {
     // 	Teuchos::rcp(new Stokhos::ForUQTKOrthogPolyExpansion<int,double>(basis, 
     // 								      Stokhos::ForUQTKOrthogPolyExpansion<int,double>::INTEGRATION, 1e-6));
     
-    std::cout << "sz = " << sz << std::endl;
+    utils.out() << "sz = " << sz << std::endl;
     appParams->set("SG Method", "AD");
+
+    // Create stochastic parallel distribution
+    Teuchos::ParameterList parallelParams;
+    Teuchos::RCP<Stokhos::ParallelData> sg_parallel_data =
+      Teuchos::rcp(new Stokhos::ParallelData(basis, Cijk, sg_comm,
+					     parallelParams));
       
     // Create new app for Stochastic Galerkin solve
-    app = Teuchos::rcp(new FEApp::Application(x, Comm, appParams, false,
+    app = Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false,
 					      finalSolution.get()));
 
     // Set up stochastic parameters
-    Epetra_LocalMap p_sg_map(d, 0, *Comm);
+    Epetra_LocalMap p_sg_map(d, 0, *sg_comm);
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p = 
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, p_sg_map));
     for (unsigned int i=0; i<d; i++) {
@@ -313,8 +328,8 @@ int main(int argc, char *argv[]) {
     sgParams->set("Evaluate W with F", false);
     Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =
       Teuchos::rcp(new Stokhos::SGModelEvaluator(model, basis, quad,
-						 expansion, Cijk, sgParams,
-						 Comm));
+						 expansion, sg_parallel_data, 
+						 sgParams));
   
     // Evaluate SG responses at SG parameters
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_model->createInArgs();
@@ -363,7 +378,7 @@ int main(int argc, char *argv[]) {
     double normf;
     sg_f->Norm2(&normf);
     int nit = 0;
-    std::cout << "nit = " << nit << " normf = " << normf << std::endl;
+    utils.out() << "nit = " << nit << " normf = " << normf << std::endl;
     double norm_dx = 1.0;
     while (norm_dx > 1e-5 && nit < 5) {
 
@@ -377,7 +392,8 @@ int main(int argc, char *argv[]) {
 	sg_J_poly->getCoeffPtr(0));
 
     // Build a vector polynomial out of matrix nonzeros
-    Epetra_Map J_vec_map(-1, J_mean->NumMyNonzeros(), 0, *Comm);
+    Epetra_Map J_vec_map(-1, J_mean->NumMyNonzeros(), 0, 
+			 sg_comm->SubDomainComm());
     Stokhos::VectorOrthogPoly<Epetra_Vector> sg_J_vec_poly(
       basis, Stokhos::EpetraVectorCloner(J_vec_map));
     for (unsigned int coeff=0; coeff<sz; coeff++) {
@@ -415,7 +431,7 @@ int main(int argc, char *argv[]) {
 	sg_J_vec_poly[coeff].Dot(*((*evecs)(rv)), &dot);
 	rv_pce[rv][coeff] = dot/std::sqrt(evals[rv]);
       }
-      //std::cout << "rv[" << rv << "] = " << rv_pce[rv] << std::endl;
+      //utils.out() << "rv[" << rv << "] = " << rv_pce[rv] << std::endl;
     }
 
     // Compute Stieltjes-Gram-Schmidt basis for KL expansion
@@ -435,42 +451,52 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Stokhos::Quadrature<int,double> > kl_quad =
       gs_builder.getReducedQuadrature();
     unsigned int sz2 = kl_basis->size();
-    std::cout << "sz2 = " << sz2 << std::endl;
+    utils.out() << "sz2 = " << sz2 << std::endl;
 
     // Compute new block vectors
-#ifdef HAVE_MPI
-    Teuchos::RCP<EpetraExt::MultiComm> multiComm =
-      Teuchos::rcp(new EpetraExt::MultiMpiComm(MPI_COMM_WORLD, 
-					       Comm->NumProc(), 
-					       sz2));
-#else
-    Teuchos::RCP<EpetraExt::MultiComm> multiComm =
-      Teuchos::rcp(new EpetraExt::MultiSerialComm(sz2));
-#endif
-    int myBlockRows  =  multiComm->NumTimeStepsOnDomain();
-    int myFirstBlockRow = multiComm->FirstTimeStepOnDomain();
-    std::vector<int> rowIndex(myBlockRows);
-    for (int i=0; i < myBlockRows; i++)
-      rowIndex[i] = (i + myFirstBlockRow);
+    Teuchos::RCP<const EpetraExt::MultiComm> kl_comm =
+      Stokhos::buildMultiComm(*globalComm, sz2, num_spatial_procs);
+    Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > kl_Cijk =
+      kl_basis->computeTripleProductTensor(num_KL+1);
+    Teuchos::RCP<Stokhos::EpetraSparse3Tensor> kl_epetraCijk =
+      Teuchos::rcp(new Stokhos::EpetraSparse3Tensor(kl_basis, kl_Cijk, 
+						    kl_comm));
+    kl_epetraCijk->transformToLocal();
+    Teuchos::RCP<const Epetra_BlockMap> kl_stoch_row_map =
+      kl_epetraCijk->getStochasticRowMap();
+    Teuchos::RCP<const Epetra_BlockMap> kl_ov_stoch_row_map = 
+      Teuchos::rcp(new Epetra_LocalMap(sz2, 0, kl_comm->TimeDomainComm()));
+    
     Teuchos::RCP<const Epetra_Map> base_x_map = model->get_x_map();
     Teuchos::RCP<const Epetra_Map> base_f_map = model->get_f_map();
     Teuchos::RCP<Epetra_Map> sg_x_kl_map = 
       Teuchos::rcp(EpetraExt::BlockUtility::GenerateBlockMap(*base_x_map,
-    							     rowIndex,
-    							     *multiComm));
+    							     *kl_stoch_row_map,
+    							     *kl_comm));
+    Teuchos::RCP<Epetra_Map> sg_ov_x_kl_map = 
+      Teuchos::rcp(EpetraExt::BlockUtility::GenerateBlockMap(*base_x_map,
+    							     *kl_ov_stoch_row_map,
+    							     *kl_comm));
     Teuchos::RCP<Epetra_Map> sg_f_kl_map = 
       Teuchos::rcp(EpetraExt::BlockUtility::GenerateBlockMap(*base_f_map,
-    							     rowIndex,
-    							     *multiComm));
+    							     *kl_stoch_row_map,
+    							     *kl_comm));
+    Teuchos::RCP<Epetra_Map> sg_ov_f_kl_map = 
+      Teuchos::rcp(EpetraExt::BlockUtility::GenerateBlockMap(*base_f_map,
+    							     *kl_ov_stoch_row_map,
+    							     *kl_comm));
     // Teuchos::RCP<const Epetra_Map> sg_x_kl_map = sg_model->get_x_map();
     // Teuchos::RCP<const Epetra_Map> sg_f_kl_map = sg_model->get_f_map();
 
+    Epetra_Import sg_x_kl_importer(*sg_ov_x_kl_map, *sg_x_kl_map);
+    Epetra_Import sg_f_kl_importer(*sg_ov_f_kl_map, *sg_f_kl_map);
+
     // Map Jacobian to KL basis
-    std::cout << "Mapping Jacobian to KL basis..." << std::endl;
+    utils.out() << "Mapping Jacobian to KL basis..." << std::endl;
     Teuchos::Array< Stokhos::OrthogPolyApprox<int,double> > rv_kl_pce(num_KL);
     gs_builder.computeReducedPCEs(rv_pce, rv_kl_pce);
     // for (unsigned int rv=0; rv < num_KL; rv++)
-    //   std::cout << "rv_kl[" << rv << "] = " << rv_kl_pce[rv] << std::endl;
+    //   utils.out() << "rv_kl[" << rv << "] = " << rv_kl_pce[rv] << std::endl;
     Stokhos::VectorOrthogPoly<Epetra_Vector> sg_J_kl_vec_poly(
       kl_basis, Stokhos::EpetraVectorCloner(J_vec_map));
     for (int rv=0; rv < num_KL; rv++) {
@@ -498,7 +524,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Map RHS to KL basis
-    std::cout << "Mapping RHS to KL basis..." << std::endl;
+    utils.out() << "Mapping RHS to KL basis..." << std::endl;
     const Teuchos::Array<double>& weights = quad2->getQuadWeights();
     const Teuchos::Array< Teuchos::Array<double> >& basis_vals = 
       quad2->getBasisAtQuadPoints();
@@ -506,35 +532,42 @@ int main(int argc, char *argv[]) {
       kl_quad->getBasisAtQuadPoints();
     int nqp = weights.size();
     const Teuchos::Array<double>& kl_norms = kl_basis->norm_squared();
-    EpetraExt::BlockVector sg_f_block(View, *base_f_map, *sg_f);
-    EpetraExt::BlockVector sg_f_kl_block(*base_f_map, *sg_f_kl_map);
-    Stokhos::VectorOrthogPoly<Epetra_Vector> sg_f_poly(basis);
-    Stokhos::VectorOrthogPoly<Epetra_Vector> sg_f_kl_poly(kl_basis);
-    for (unsigned int coeff=0; coeff < sz; coeff++)
-      sg_f_poly.setCoeffPtr(coeff, sg_f_block.GetBlock(coeff));
-    for (unsigned int coeff=0; coeff < sz2; coeff++)
-      sg_f_kl_poly.setCoeffPtr(coeff, sg_f_kl_block.GetBlock(coeff));
+    Teuchos::RCP<EpetraExt::BlockVector> sg_f_ov = 
+      sg_model->import_residual(*sg_f);
+    Stokhos::EpetraVectorOrthogPoly sg_f_poly(basis, View, *base_f_map, 
+					      *sg_f_ov);
+    Stokhos::EpetraVectorOrthogPoly sg_f_kl_poly(kl_basis, *base_f_map, 
+						 *sg_ov_f_kl_map);
     Epetra_Vector f_val(*base_f_map);
     for (int qp=0; qp < nqp; qp++) {
       sg_f_poly.evaluate(basis_vals[qp], f_val);
       sg_f_kl_poly.sumIntoAllTerms(weights[qp], kl_basis_vals[qp], kl_norms, 
 				   f_val);
     }
+    Teuchos::RCP<EpetraExt::BlockVector> sg_ov_f_kl_block = 
+      sg_f_kl_poly.getBlockVector();
+    EpetraExt::BlockVector sg_f_kl_block(*base_f_map, *sg_f_kl_map);
+    sg_f_kl_block.Export(*sg_ov_f_kl_block, sg_f_kl_importer, Insert);
 
     // Create linear system operator
-    std::cout << "Setting up operators..." << std::endl;
+    utils.out() << "Setting up operators..." << std::endl;
+    Teuchos::RCP<Teuchos::ParameterList> pl = 
+      Teuchos::rcp(new Teuchos::ParameterList);
     Stokhos::MatrixFreeOperator kl_jac_op(
-      base_x_map, base_x_map, sg_x_kl_map, sg_x_kl_map);
-    kl_jac_op.setupOperator(Teuchos::rcp(&sg_J_kl_poly,false), 
-			    kl_basis->computeTripleProductTensor(num_KL+1));
-    Stokhos::IfpackPreconditionerFactory ifpack_factory(Teuchos::rcp(&precParams,false));
-    Teuchos::RCP<Epetra_Operator> kl_mean_prec = 
-      ifpack_factory.compute(sg_J_kl_poly.getCoeffPtr(0));
-    Stokhos::MeanBasedPreconditioner kl_prec_op(base_x_map, sg_x_kl_map, sz2, 
-						kl_mean_prec);
+      kl_comm, kl_basis, kl_epetraCijk, base_x_map, base_f_map, 
+      sg_x_kl_map, sg_f_kl_map, pl);
+    kl_jac_op.setupOperator(Teuchos::rcp(&sg_J_kl_poly,false));
+    Teuchos::RCP<Stokhos::IfpackPreconditionerFactory> ifpack_factory = 
+      Teuchos::rcp(new Stokhos::IfpackPreconditionerFactory(Teuchos::rcp(&precParams,false)));
+    Stokhos::MeanBasedPreconditioner kl_prec_op(
+      kl_comm, kl_basis, kl_epetraCijk, base_x_map, sg_x_kl_map, ifpack_factory,
+      pl);
+    kl_prec_op.setupPreconditioner(Teuchos::rcp(&kl_jac_op,false), 
+				   *sg_x);
+				   
 
     // Solve KL linear system
-    std::cout << "Solving linear system..." << std::endl;
+    utils.out() << "Solving linear system..." << std::endl;
     EpetraExt::BlockVector sg_dx_kl_block(*base_x_map, *sg_x_kl_map);
     AztecOO kl_aztec;
     aztec.SetAztecOption(AZ_solver, AZ_gmres);
@@ -549,32 +582,36 @@ int main(int argc, char *argv[]) {
     aztec.Iterate(70, 1e-4);
 
     // Map solution back to original basis
-    std::cout << "Mapping solution back to original basis..." << std::endl;
+    utils.out() << "Mapping solution back to original basis..." << std::endl;
     const Teuchos::Array<double>& norms = basis->norm_squared();
-    EpetraExt::BlockVector sg_dx_block2(*base_f_map, sg_f->Map());
-    Stokhos::VectorOrthogPoly<Epetra_Vector> sg_dx_poly2(basis);
-    Stokhos::VectorOrthogPoly<Epetra_Vector> sg_dx_kl_poly(kl_basis);
-    for (unsigned int coeff=0; coeff < sz; coeff++)
-      sg_dx_poly2.setCoeffPtr(coeff, sg_dx_block2.GetBlock(coeff));
-    for (unsigned int coeff=0; coeff < sz2; coeff++)
-      sg_dx_kl_poly.setCoeffPtr(coeff, sg_dx_kl_block.GetBlock(coeff));
+    EpetraExt::BlockVector sg_ov_dx_kl_block(*base_x_map, *sg_ov_x_kl_map);
+    sg_ov_dx_kl_block.Import(sg_dx_kl_block, sg_x_kl_importer, Insert);
+    Teuchos::RCP<EpetraExt::BlockVector> sg_ov_dx_block = 
+      sg_model->import_solution(*sg_x);
+    sg_ov_dx_block->PutScalar(0.0);
+    Stokhos::EpetraVectorOrthogPoly sg_dx_poly2(basis, View, *base_x_map, 
+						*sg_ov_dx_block);
+    Stokhos::EpetraVectorOrthogPoly sg_dx_kl_poly(kl_basis, View, *base_x_map, 
+						  sg_ov_dx_kl_block);
     Epetra_Vector dx_val(*base_x_map);
     for (int qp=0; qp < nqp; qp++) {
       sg_dx_kl_poly.evaluate(kl_basis_vals[qp], dx_val);
       sg_dx_poly2.sumIntoAllTerms(weights[qp], basis_vals[qp], norms, dx_val);
     }
+    Teuchos::RCP<EpetraExt::BlockVector> sg_dx_block2 =
+      sg_model->export_solution(*sg_ov_dx_block);
 
     // Epetra_Vector sg_dx_err(*sg_dx);
     // sg_dx_err.Update(1.0, *sg_dx, -1.0, sg_dx_block2, 0.0);
-    // sg_dx_err.Print(std::cout);
+    // sg_dx_err.Print(utils.out());
 
-    sg_x->Update(-1.0, sg_dx_block2, 1.0);
+    sg_x->Update(-1.0, *sg_dx_block2, 1.0);
     sg_model->evalModel(sg_inArgs, sg_outArgs);
 
     sg_f->Norm2(&normf);
-    sg_dx_block2.Norm2(&norm_dx);
+    sg_dx_block2->Norm2(&norm_dx);
     nit++;
-    std::cout << "nit = " << nit << " norm_f = " << normf << " norm_dx = " 
+    utils.out() << "nit = " << nit << " norm_f = " << normf << " norm_dx = " 
 	      << norm_dx << std::endl;
 
     }
@@ -588,7 +625,7 @@ int main(int argc, char *argv[]) {
 
     // Print mean and standard deviation
     utils.out().precision(12);
-    sg_g->Print(std::cout);
+    sg_g->Print(utils.out());
     double mean = (*sg_g)[0];
     double std_dev = 0.0;
     const Teuchos::Array<double>& nrm2 = basis->norm_squared();
