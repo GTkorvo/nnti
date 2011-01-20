@@ -42,11 +42,11 @@
 #include "Teuchos_TestForException.hpp"
 
 FEApp::Application::Application(
-		   const std::vector<double>& coords,
-		   const Teuchos::RCP<const Epetra_Comm>& comm,
-		   const Teuchos::RCP<Teuchos::ParameterList>& params_,
-		   bool is_transient,
-		   const Epetra_Vector* initial_soln) :
+  const std::vector<double>& coords,
+  const Teuchos::RCP<const Epetra_Comm>& comm,
+  const Teuchos::RCP<Teuchos::ParameterList>& params_,
+  bool is_transient,
+  const Epetra_Vector* initial_soln) :
   params(params_),
   transient(is_transient)
 {
@@ -158,7 +158,8 @@ void
 FEApp::Application::init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
       const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
-      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& exp)
+      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& exp,
+      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm)
 {
   TEST_FOR_EXCEPTION(basis == Teuchos::null, std::logic_error,
 		     "Error!  FEApp::Application::init_sg():  " <<
@@ -172,16 +173,23 @@ FEApp::Application::init_sg(
 
   // Create Epetra orthogonal polynomial objects
   if (sg_overlapped_x == Teuchos::null) {
+    sg_overlap_map =
+      Teuchos::rcp(new Epetra_LocalMap(sg_basis->size(), 0, 
+				       multiComm->TimeDomainComm()));
+
     sg_overlapped_x = 
-      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(sg_basis,
-						       overlapped_x->Map()));
+      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
+		     sg_basis, sg_overlap_map, disc->getOverlapMap(),
+		     multiComm));
     if (transient)
       sg_overlapped_xdot = 
-	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(sg_basis,
-							 overlapped_xdot->Map()));
+	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
+		       sg_basis, sg_overlap_map, disc->getOverlapMap(),
+		       multiComm));
     sg_overlapped_f = 
-      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(sg_basis,
-						       overlapped_f->Map()));
+      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
+		     sg_basis, sg_overlap_map, disc->getOverlapMap(),
+		     multiComm));
     // Delay creation of sg_overlapped_jac until needed
   }
 
@@ -737,12 +745,14 @@ FEApp::Application::computeGlobalSGJacobian(
 
   // Create, resize and initialize overlapped Jacobians
   if (sg_overlapped_jac == Teuchos::null || 
-      sg_overlapped_jac->size() < sg_jac.size())
+      sg_overlapped_jac->size() < sg_jac.size()) {
+    sg_overlap_jac_map = 
+      Teuchos::rcp(new Epetra_LocalMap(sg_basis->size(), 0, 
+				       sg_overlap_map->Comm()));
     sg_overlapped_jac = 
       Teuchos::rcp(new Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>(
-		     sg_basis,  *overlapped_jac, sg_jac.size()));
-  else if (sg_overlapped_jac->size() > sg_jac.size())
-    sg_overlapped_jac->resize(sg_jac.size());
+		     sg_basis,  sg_overlap_jac_map, *overlapped_jac));
+  }
   for (int i=0; i<sg_overlapped_jac->size(); i++)
     (*sg_overlapped_jac)[i].PutScalar(0.0);
 
@@ -868,7 +878,8 @@ FEApp::Application::computeGlobalSGTangent(
   if (sg_JVx != NULL) {
     sg_overlapped_JVx = 
       Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
-		     sg_basis, *(disc->getOverlapMap()), 
+		     sg_basis, sg_overlap_map, disc->getOverlapMap(),
+		     sg_x.productComm(),
 		     (*sg_JVx)[0].NumVectors()));
     sg_JVx->init(0.0);
   }
@@ -877,7 +888,8 @@ FEApp::Application::computeGlobalSGTangent(
   if (sg_fVp != NULL) {
     sg_overlapped_fVp = 
       Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
-		     sg_basis, *(disc->getOverlapMap()), 
+		     sg_basis, sg_overlap_map, disc->getOverlapMap(),
+		     sg_x.productComm(), 
 		     (*sg_fVp)[0].NumVectors()));
     sg_fVp->init(0.0);
   }
@@ -953,11 +965,13 @@ evaluateSGResponses(const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
 
     // Create Epetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, comm);
+    Teuchos::RCP<Epetra_LocalMap> local_response_map = 
+      Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, comm));
 
     // Create Epetra_Vector for response function
-    Stokhos::EpetraVectorOrthogPoly local_sg_g(basis,
-							local_response_map);
+    Stokhos::EpetraVectorOrthogPoly local_sg_g(
+      basis, sg_overlap_map, local_response_map,
+      sg_x.productComm());
 
     // Evaluate response function
     responses[i]->evaluateSGResponses(sg_xdot, sg_x, p, sg_p_vals, local_sg_g);
@@ -996,19 +1010,22 @@ evaluateSGResponseTangents(
 
     // Create Epetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, comm);
+    Teuchos::RCP<Epetra_LocalMap> local_response_map = 
+      Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, comm));
 
     // Create Epetra_Vectors for response function
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly > local_sg_g;
     if (sg_g != NULL)
       local_sg_g = 
 	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		       basis, local_response_map));
+		       basis, sg_overlap_map, local_response_map,
+		       sg_x.productComm()));
     for (int j=0; j<sg_gt.size(); j++)
       if (sg_gt[j] != Teuchos::null)
 	local_sg_gt[j] = 
 	  Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
-			 basis, local_response_map, 
+			 basis, sg_overlap_map, local_response_map,
+			 sg_x.productComm(), 
 			 (*sg_gt[j])[0].NumVectors()));
 
     // Evaluate response function
@@ -1057,30 +1074,35 @@ evaluateSGResponseGradients(
 
     // Create Epetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, comm);
+    Teuchos::RCP<Epetra_LocalMap> local_response_map = 
+      Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, comm));
 
     // Create Epetra_Vectors for response function
     Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > local_sg_g;
     if (sg_g != NULL)
       local_sg_g = 
 	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		       basis, local_response_map));
+		       basis, sg_overlap_map, local_response_map,
+		       sg_x.productComm()));
     Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > local_sg_dgdx;
     if (sg_dg_dx != NULL)
       local_sg_dgdx = 
 	Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
-		       basis, (*sg_dg_dx)[0].Map(), num_responses));
+		       basis, sg_overlap_map, disc->getMap(), 
+		       sg_x.productComm(), num_responses));
     Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > local_sg_dgdxdot;
     if (sg_dg_dxdot != NULL)
       local_sg_dgdxdot = 
 	Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
-		       basis, (*sg_dg_dxdot)[0].Map(), num_responses));
+		       basis, sg_overlap_map, disc->getMap(), 
+		       sg_x.productComm(), num_responses));
 
     for (int j=0; j<sg_dg_dp.size(); j++)
       if (sg_dg_dp[j] != Teuchos::null)
 	local_sg_dgdp[j] = 
 	  Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
-			 basis, local_response_map,
+			 basis, sg_overlap_map, local_response_map,
+			 sg_x.productComm(),
 			 (*sg_dg_dp[j])[0].NumVectors()));
 
     // Evaluate response function
@@ -1111,6 +1133,432 @@ evaluateSGResponseGradients(
 
     // Increment offset in combined result
     offset += num_responses;
+  }
+}
+
+void
+FEApp::Application::computeGlobalMPResidual(
+			const Stokhos::ProductEpetraVector* mp_xdot,
+			const Stokhos::ProductEpetraVector& mp_x,
+			const ParamVec* p,
+			const ParamVec* mp_p,
+			const Teuchos::Array<MPType>* mp_p_vals,
+			Stokhos::ProductEpetraVector& mp_f)
+{
+  TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalMPResidual");
+
+  // Create overlapped multi-point Epetra objects
+  if (mp_overlapped_x == Teuchos::null || 
+      mp_overlapped_x->size() != mp_x.size())
+    mp_overlapped_x = 
+      Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
+						    disc->getOverlapMap(),
+						    mp_x.productComm()));
+  if (transient && (mp_overlapped_xdot == Teuchos::null || 
+		    mp_overlapped_xdot->size() != mp_x.size()))
+    mp_overlapped_xdot = 
+      Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
+						    disc->getOverlapMap(),
+						    mp_x.productComm()));
+
+  if (mp_overlapped_f == Teuchos::null || 
+      mp_overlapped_f->size() != mp_x.size())
+    mp_overlapped_f = 
+      Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
+						    disc->getOverlapMap(),
+						    mp_x.productComm()));
+
+  for (int i=0; i<mp_x.size(); i++) {
+
+    // Scatter x to the overlapped distrbution
+    (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
+
+    // Scatter xdot to the overlapped distribution
+    if (transient)
+      (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
+
+    // Zero out overlapped residual
+    (*mp_overlapped_f)[i].PutScalar(0.0);
+    mp_f[i].PutScalar(0.0);
+
+  }
+
+  // Set real parameters
+  if (p != NULL) {
+    for (unsigned int i=0; i<p->size(); ++i) {
+      (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
+    }
+  }
+
+  // Set MP parameters
+  if (mp_p != NULL && mp_p_vals != NULL) {
+    for (unsigned int i=0; i<mp_p->size(); ++i) {
+      (*mp_p)[i].family->setValue<FEApp::MPResidualType>((*mp_p_vals)[i]);
+    }
+  }
+
+  // Create residual init/post op
+  Teuchos::RCP<FEApp::MPResidualOp> mp_res_fill_op = 
+    Teuchos::rcp(new FEApp::MPResidualOp(mp_overlapped_xdot, 
+					 mp_overlapped_x, 
+					 mp_overlapped_f));
+    
+  // Get template PDE instantiation
+  Teuchos::RCP< FEApp::AbstractPDE<FEApp::MPResidualType> > pde = 
+    pdeTM.getAsObject<FEApp::MPResidualType>();
+
+  // Instantiate global fill
+  if (mp_res_global_fill == Teuchos::null) {
+    mp_res_global_fill = 
+      Teuchos::rcp(new FEApp::GlobalFill<FEApp::MPResidualType>(
+		     disc->getMesh(), quad, pde, bc, transient));
+  }
+
+  // Do global fill
+  mp_res_global_fill->computeGlobalFill(*mp_res_fill_op);
+
+  // Assemble global residual
+  for (int i=0; i<mp_f.size(); i++)
+    mp_f[i].Export((*mp_overlapped_f)[i], *exporter, Add);
+}
+
+void
+FEApp::Application::computeGlobalMPJacobian(
+			double alpha, double beta,
+			const Stokhos::ProductEpetraVector* mp_xdot,
+			const Stokhos::ProductEpetraVector& mp_x,
+			const ParamVec* p,
+			const ParamVec* mp_p,
+			const Teuchos::Array<MPType>* mp_p_vals,
+			Stokhos::ProductEpetraVector* mp_f,
+			Stokhos::ProductContainer<Epetra_Operator>& mp_jac)
+{
+  TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalMPJacobian");
+
+  // Create overlapped multi-point Epetra objects
+  if (mp_overlapped_x == Teuchos::null || 
+      mp_overlapped_x->size() != mp_x.size())
+    mp_overlapped_x = 
+      Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
+						    disc->getOverlapMap(),
+						    mp_x.productComm()));
+  if (transient && (mp_overlapped_xdot == Teuchos::null || 
+		    mp_overlapped_xdot->size() != mp_x.size()))
+    mp_overlapped_xdot = 
+      Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
+						    disc->getOverlapMap(),
+						    mp_x.productComm()));
+
+  if (mp_overlapped_f == Teuchos::null || 
+      mp_overlapped_f->size() != mp_x.size())
+    mp_overlapped_f = 
+      Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
+						    disc->getOverlapMap(),
+						    mp_x.productComm()));
+
+  if (mp_overlapped_jac == Teuchos::null || 
+      mp_overlapped_jac->size() != mp_x.size())
+    mp_overlapped_jac = 
+      Teuchos::rcp(new Stokhos::ProductContainer<Epetra_CrsMatrix>(
+		     mp_x.map(), 
+		     *overlapped_jac));
+
+  for (int i=0; i<mp_x.size(); i++) {
+
+    // Scatter x to the overlapped distrbution
+    (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
+
+    // Scatter xdot to the overlapped distribution
+    if (transient)
+      (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
+
+    // Zero out overlapped residual
+    if (mp_f != NULL) {
+      (*mp_overlapped_f)[i].PutScalar(0.0);
+      (*mp_f)[i].PutScalar(0.0);
+    }
+
+    // Zero out overlapped Jacobian
+    (*mp_overlapped_jac)[i].PutScalar(0.0);
+
+  } 
+
+  // Set real parameters
+  if (p != NULL) {
+    for (unsigned int i=0; i<p->size(); ++i) {
+      (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
+    }
+  }
+
+  // Set MP parameters
+  if (mp_p != NULL && mp_p_vals != NULL) {
+    for (unsigned int i=0; i<mp_p->size(); ++i) {
+      (*mp_p)[i].family->setValue<FEApp::MPJacobianType>((*mp_p_vals)[i]);
+    }
+  }
+
+  // Create Jacobian init/post op
+  Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_ff;
+  if (mp_f != NULL)
+    mp_overlapped_ff = mp_overlapped_f;
+  Teuchos::RCP<FEApp::MPJacobianOp> mp_jac_fill_op = 
+    Teuchos::rcp(new FEApp::MPJacobianOp(alpha, beta, 
+					 mp_overlapped_xdot, 
+					 mp_overlapped_x, 
+					 mp_overlapped_ff, 
+					 mp_overlapped_jac));
+
+  // Get template PDE instantiation
+  Teuchos::RCP< FEApp::AbstractPDE<FEApp::MPJacobianType> > pde = 
+    pdeTM.getAsObject<FEApp::MPJacobianType>();
+
+  // Instantiate global fill
+  if (mp_jac_global_fill == Teuchos::null) {
+    mp_jac_global_fill = 
+      Teuchos::rcp(new FEApp::GlobalFill<FEApp::MPJacobianType>(
+		     disc->getMesh(), quad, pde, bc,transient));
+  }
+
+  // Do global fill
+  mp_jac_global_fill->computeGlobalFill(*mp_jac_fill_op);
+  
+  // Assemble global residual
+  if (mp_f != NULL)
+    for (int i=0; i<mp_f->size(); i++)
+      (*mp_f)[i].Export((*mp_overlapped_f)[i], *exporter, Add);
+    
+  // Assemble block Jacobians
+  Teuchos::RCP<Epetra_CrsMatrix> jac;
+  for (int i=0; i<mp_jac.size(); i++) {
+    jac = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(mp_jac.getCoeffPtr(i), 
+						      true);
+    jac->PutScalar(0.0);
+    jac->Export((*mp_overlapped_jac)[i], *exporter, Add);
+    jac->FillComplete(true);
+  }
+}
+
+void
+FEApp::Application::computeGlobalMPTangent(
+      double alpha, double beta, bool sum_derivs,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const ParamVec* p, ParamVec* deriv_p, const ParamVec* mp_p, 
+      const Teuchos::Array<MPType>* mp_p_vals,   
+      const Epetra_MultiVector* Vx,
+      const Teuchos::SerialDenseMatrix<int,double>* Vp,
+      Stokhos::ProductEpetraVector* mp_f,
+      Stokhos::ProductEpetraMultiVector* mp_JVx,
+      Stokhos::ProductEpetraMultiVector* mp_fVp)
+{
+  TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalMPTangent");
+
+  // Create overlapped multi-point Epetra objects
+  if (mp_overlapped_x == Teuchos::null || 
+      mp_overlapped_x->size() != mp_x.size())
+    mp_overlapped_x = 
+      Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
+						    disc->getOverlapMap(),
+						    mp_x.productComm()));
+  if (transient && (mp_overlapped_xdot == Teuchos::null || 
+		    mp_overlapped_xdot->size() != mp_x.size()))
+    mp_overlapped_xdot = 
+      Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
+						    disc->getOverlapMap(),
+						    mp_x.productComm()));
+
+  if (mp_overlapped_f == Teuchos::null || 
+      mp_overlapped_f->size() != mp_x.size())
+    mp_overlapped_f = 
+      Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
+						    disc->getOverlapMap(),
+						    mp_x.productComm()));
+
+  for (int i=0; i<mp_x.size(); i++) {
+
+    // Scatter x to the overlapped distrbution
+    (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
+
+    // Scatter xdot to the overlapped distribution
+    if (transient)
+      (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
+
+    // Zero out overlapped residual
+    if (mp_f != NULL) {
+      (*mp_overlapped_f)[i].PutScalar(0.0);
+      (*mp_f)[i].PutScalar(0.0);
+    }
+
+  }
+
+  // Set real parameters
+  if (p != NULL) {
+    for (unsigned int i=0; i<p->size(); ++i) {
+      (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
+    }
+  }
+
+  // Set MP parameters
+  if (mp_p != NULL && mp_p_vals != NULL) {
+    for (unsigned int i=0; i<mp_p->size(); ++i) {
+      (*mp_p)[i].family->setValue<FEApp::MPTangentType>((*mp_p_vals)[i]);
+    }
+  }
+
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_overlapped_JVx;
+  if (mp_JVx != NULL) {
+    mp_overlapped_JVx = 
+      Teuchos::rcp(new Stokhos::ProductEpetraMultiVector(
+		     mp_x.map(), disc->getOverlapMap(), mp_x.productComm(), 
+		     (*mp_JVx)[0].NumVectors()));
+    mp_JVx->init(0.0);
+  }
+  
+  Teuchos::RCP<Stokhos::ProductEpetraMultiVector > mp_overlapped_fVp;
+  if (mp_fVp != NULL) {
+    mp_overlapped_fVp = 
+      Teuchos::rcp(new Stokhos::ProductEpetraMultiVector(
+		     mp_x.map(), disc->getOverlapMap(), mp_x.productComm(),
+		     (*mp_fVp)[0].NumVectors()));
+    mp_fVp->init(0.0);
+  }
+
+  Teuchos::RCP<Epetra_MultiVector> overlapped_Vx;
+  if (Vx != NULL) {
+    overlapped_Vx = 
+      Teuchos::rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), 
+                                          Vx->NumVectors()));
+  }
+
+  Teuchos::RCP<const Teuchos::SerialDenseMatrix<int,double> > vp =
+    Teuchos::rcp(Vp, false);
+  Teuchos::RCP<ParamVec> params = 
+    Teuchos::rcp(deriv_p, false);
+
+  // Create Jacobian init/post op
+   Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_ff;
+  if (mp_f != NULL)
+    mp_overlapped_ff = mp_overlapped_f;
+  Teuchos::RCP<FEApp::MPTangentOp> op = 
+    Teuchos::rcp(new FEApp::MPTangentOp(alpha, beta, sum_derivs,
+					mp_overlapped_xdot, 
+					mp_overlapped_x,
+					params,
+					overlapped_Vx,
+					overlapped_Vx,
+					vp,
+					mp_overlapped_ff, 
+					mp_overlapped_JVx,
+					mp_overlapped_fVp));
+
+  // Get template PDE instantiation
+  Teuchos::RCP< FEApp::AbstractPDE<FEApp::MPTangentType> > pde = 
+    pdeTM.getAsObject<FEApp::MPTangentType>();
+
+  // Do global fill
+  FEApp::GlobalFill<FEApp::MPTangentType> globalFill(disc->getMesh(), 
+						     quad, pde, bc, 
+						     transient);
+  globalFill.computeGlobalFill(*op);
+
+  // Assemble global residual
+  if (mp_f != NULL)
+    for (int i=0; i<mp_f->size(); i++)
+      (*mp_f)[i].Export((*mp_overlapped_f)[i], *exporter, Add);
+
+  // Assemble derivatives
+  if (mp_JVx != NULL)
+    for (int i=0; i<mp_JVx->size(); i++)
+      (*mp_JVx)[i].Export((*mp_overlapped_JVx)[i], *exporter, Add);
+  if (mp_fVp != NULL)
+    for (int i=0; i<mp_fVp->size(); i++)
+      (*mp_fVp)[i].Export((*mp_overlapped_fVp)[i], *exporter, Add);
+}
+
+void
+FEApp::Application::
+evaluateMPResponses(const Stokhos::ProductEpetraVector* mp_xdot,
+		    const Stokhos::ProductEpetraVector& mp_x,
+		    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+		    const Teuchos::Array<MPType>* mp_p_vals,
+		    Stokhos::ProductEpetraVector& mp_g)
+{
+  TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::evaluateMPResponses");
+  const Epetra_Vector* xdot = NULL;
+  for (int i=0; i<mp_x.size(); i++) {
+    if (mp_xdot != NULL)
+      xdot = mp_xdot->getCoeffPtr(i).get();
+
+    evaluateResponses(xdot, mp_x[i], p, mp_g[i]);
+  }
+}
+
+void
+FEApp::Application::
+evaluateMPResponseTangents(
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+      const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+      const Teuchos::Array<MPType>* mp_p_vals,
+      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
+      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
+      Stokhos::ProductEpetraVector* mp_g,
+      const Teuchos::Array< Teuchos::RCP< Stokhos::ProductEpetraMultiVector > >& mp_gt)
+{
+  TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::evaluateMPResponseTangents");
+  const Epetra_Vector* xdot = NULL;
+  Epetra_Vector* g = NULL;
+  Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> > gt(mp_gt.size());
+  for (int i=0; i<mp_x.size(); i++) {
+    if (mp_xdot != NULL)
+      xdot = mp_xdot->getCoeffPtr(i).get();
+    if (mp_g != NULL)
+      g = mp_g->getCoeffPtr(i).get();
+    for (int j=0; j<mp_gt.size(); j++)
+      if (mp_gt[j] != Teuchos::null)
+	gt[j] = mp_gt[j]->getCoeffPtr(i);
+    
+    evaluateResponseTangents(xdot, mp_x[i], p, deriv_p, dxdot_dp, dx_dp, 
+			     g, gt);
+  }
+}
+
+void
+FEApp::Application::
+evaluateMPResponseGradients(
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+      const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+      const Teuchos::Array<MPType>* mp_p_vals,
+      Stokhos::ProductEpetraVector* mp_g,
+      Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+      Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+      const Teuchos::Array< Teuchos::RCP< Stokhos::ProductEpetraMultiVector > >& mp_dg_dp)
+{
+  TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::evaluateMPResponseGradients");
+
+  const Epetra_Vector* xdot = NULL;
+  Epetra_Vector* g = NULL;
+  Epetra_MultiVector* dg_dx = NULL;
+  Epetra_MultiVector* dg_dxdot = NULL;
+  Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> > dg_dp(mp_dg_dp.size());
+  for (int i=0; i<mp_x.size(); i++) {
+    if (mp_xdot != NULL)
+      xdot = mp_xdot->getCoeffPtr(i).get();
+    if (mp_g != NULL)
+      g = mp_g->getCoeffPtr(i).get();
+    if (mp_dg_dx != NULL)
+      dg_dx = mp_dg_dx->getCoeffPtr(i).get();
+    if (mp_dg_dxdot != NULL)
+      dg_dxdot = mp_dg_dxdot->getCoeffPtr(i).get();
+    for (int j=0; j<mp_dg_dp.size(); j++)
+      if (mp_dg_dp[j] != Teuchos::null)
+	dg_dp[j] = mp_dg_dp[j]->getCoeffPtr(i);
+    
+    evaluateResponseGradients(xdot, mp_x[i], p, deriv_p, g, dg_dx, dg_dxdot,
+			      dg_dp);
   }
 }
 

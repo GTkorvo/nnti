@@ -37,19 +37,11 @@ FEApp::ModelEvaluator::ModelEvaluator(
   const Teuchos::RCP<FEApp::Application>& app_,
   const Teuchos::RCP< Teuchos::Array<std::string> >& free_param_names,
   const Teuchos::RCP< Teuchos::Array<std::string> >& sg_param_names
-#if SG_ACTIVE
-  ,const Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly>& initial_x_sg_,
-  const Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly>& initial_p_sg_
-#endif
 ) 
   : app(app_),
     supports_p(false),
     supports_g(false),
     supports_sg(false),
-#if SG_ACTIVE
-    initial_x_sg(initial_x_sg_),
-    initial_p_sg(initial_p_sg_),
-#endif
     eval_W_with_f(false)
 {
   // Compute number of parameter vectors
@@ -102,8 +94,10 @@ FEApp::ModelEvaluator::ModelEvaluator(
 
     // Create storage for SG parameter values
 #if SG_ACTIVE
-    if (supports_sg)
+    if (supports_sg) {
       p_sg_vals.resize(sg_param_names->size());
+      p_mp_vals.resize(sg_param_names->size());
+    }
 #endif
   }
 
@@ -161,6 +155,23 @@ FEApp::ModelEvaluator::get_p_sg_map(int l) const
 }
 
 Teuchos::RCP<const Epetra_Map>
+FEApp::ModelEvaluator::get_p_mp_map(int l) const
+{
+  TEST_FOR_EXCEPTION(supports_sg == false, 
+                     Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  FEApp::ModelEvaluator::get_p_mp_map():  " <<
+                     "SG is not enabled.");
+  TEST_FOR_EXCEPTION(l != 0, 
+		     Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  FEApp::ModelEvaluator::get_p_mp_map():  " <<
+                     "Invalid parameter index l = " << l << std::endl);
+
+  return epetra_param_map[1];
+}
+
+Teuchos::RCP<const Epetra_Map>
 FEApp::ModelEvaluator::get_g_map(int l) const
 {
   TEST_FOR_EXCEPTION(supports_g == false, 
@@ -195,6 +206,23 @@ FEApp::ModelEvaluator::get_g_sg_map(int l) const
   return app->getResponseMap();
 }
 
+Teuchos::RCP<const Epetra_Map>
+FEApp::ModelEvaluator::get_g_mp_map(int l) const
+{
+  TEST_FOR_EXCEPTION(supports_sg == false, 
+                     Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  FEApp::ModelEvaluator::get_g_mp_map():  " <<
+                     "SG is not enabled.");
+  TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  FEApp::ModelEvaluator::get_g_mp_map() only " <<
+                     " supports 1 response vector.  Supplied index l = " << 
+                     l << std::endl);
+
+  return app->getResponseMap();
+}
+
 Teuchos::RCP<const Teuchos::Array<std::string> >
 FEApp::ModelEvaluator::get_p_names(int l) const
 {
@@ -219,7 +247,7 @@ FEApp::ModelEvaluator::get_p_sg_names(int l) const
   TEST_FOR_EXCEPTION(supports_sg == false, 
                      Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_names():  " <<
+                     "Error!  FEApp::ModelEvaluator::get_p_sg_names():  " <<
                      "SG is not enabled.");
   TEST_FOR_EXCEPTION(l != 0, 
 		     Teuchos::Exceptions::InvalidParameter,
@@ -230,29 +258,28 @@ FEApp::ModelEvaluator::get_p_sg_names(int l) const
   return param_names[1];
 }
 
+Teuchos::RCP<const Teuchos::Array<std::string> >
+FEApp::ModelEvaluator::get_p_mp_names(int l) const
+{
+  TEST_FOR_EXCEPTION(supports_sg == false, 
+                     Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  FEApp::ModelEvaluator::get_p_mp_names():  " <<
+                     "SG is not enabled.");
+  TEST_FOR_EXCEPTION(l != 0, 
+		     Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  FEApp::ModelEvaluator::get_p_mp_names():  " <<
+                     "Invalid parameter index l = " << l << std::endl);
+
+  return param_names[1];
+}
+
 Teuchos::RCP<const Epetra_Vector>
 FEApp::ModelEvaluator::get_x_init() const
 {
   return app->getInitialSolution();
 }
-
-#if SG_ACTIVE
-Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly>
-FEApp::ModelEvaluator::get_x_sg_init() const
-{
-  TEST_FOR_EXCEPTION(supports_sg == false, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_x_sg_init():  " <<
-                     "SG is not enabled.");
-  TEST_FOR_EXCEPTION(initial_x_sg == Teuchos::null, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_x_sg_init():  " <<
-                     "initial_x_sg is NULL!");
-  return initial_x_sg;
-}
-#endif
 
 Teuchos::RCP<const Epetra_Vector>
 FEApp::ModelEvaluator::get_p_init(int l) const
@@ -271,29 +298,6 @@ FEApp::ModelEvaluator::get_p_init(int l) const
   
   return epetra_param_vec[l];
 }
-
-#if SG_ACTIVE
-Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly>
-FEApp::ModelEvaluator::get_p_sg_init(int l) const
-{
-  TEST_FOR_EXCEPTION(supports_sg == false, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_sg_init():  " <<
-                     "SG is not enabled.");
-  TEST_FOR_EXCEPTION(l != 0, 
-		     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_sg_init():  " <<
-                     "Invalid parameter index l = " << l << std::endl);
-  TEST_FOR_EXCEPTION(initial_p_sg == Teuchos::null, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_sg_init():  " <<
-                     "initial_x_sg is NULL!");
-  return initial_p_sg;
-}
-#endif
 
 Teuchos::RCP<Epetra_Operator>
 FEApp::ModelEvaluator::create_W() const
@@ -315,16 +319,23 @@ FEApp::ModelEvaluator::createInArgs() const
     inArgs.setSupports(IN_ARG_sg_basis,true);
     inArgs.setSupports(IN_ARG_sg_quadrature,true);
     inArgs.setSupports(IN_ARG_sg_expansion,true);
+
+    inArgs.setSupports(IN_ARG_x_mp,true);
+    inArgs.set_Np_mp(1); // 1 MP parameter vector
   }
-  else
+  else {
     inArgs.set_Np_sg(0);
+    inArgs.set_Np_mp(0);
+  }
   if (app->isTransient()) {
     inArgs.setSupports(IN_ARG_t,true);
     inArgs.setSupports(IN_ARG_x_dot,true);
     inArgs.setSupports(IN_ARG_alpha,true);
     inArgs.setSupports(IN_ARG_beta,true);
-    if (supports_sg)
+    if (supports_sg) {
       inArgs.setSupports(IN_ARG_x_dot_sg,true);
+      inArgs.setSupports(IN_ARG_x_dot_mp,true);
+    }
   }
   
   return inArgs;
@@ -395,6 +406,34 @@ FEApp::ModelEvaluator::createOutArgs() const
     if (supports_p)
       for (int i=0; i<param_names.size(); i++)
 	outArgs.setSupports(OUT_ARG_DfDp_sg, i, 
+			    DerivativeSupport(DERIV_MV_BY_COL));
+
+    outArgs.setSupports(OUT_ARG_f_mp,true);
+    outArgs.setSupports(OUT_ARG_W_mp,true);
+
+    if (supports_p && supports_g) {
+      outArgs.set_Np_Ng_mp(param_names.size(), 1);
+      for (int i=0; i<param_names.size(); i++)
+	outArgs.setSupports(OUT_ARG_DgDp_mp, 0, i, 
+			    DerivativeSupport(DERIV_MV_BY_COL));
+    }
+    else if (supports_p)
+      outArgs.set_Np_Ng_mp(1, 0);
+    else if (supports_g)
+      outArgs.set_Np_Ng_mp(0, 1);
+    else
+      outArgs.set_Np_Ng_mp(0, 0);
+
+    if (supports_g) {
+      outArgs.setSupports(OUT_ARG_DgDx_mp, 0, 
+			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+      if (app->isTransient())
+	outArgs.setSupports(OUT_ARG_DgDx_dot_mp, 0, 
+			    DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+    }
+    if (supports_p)
+      for (int i=0; i<param_names.size(); i++)
+	outArgs.setSupports(OUT_ARG_DfDp_mp, i, 
 			    DerivativeSupport(DERIV_MV_BY_COL));
   }
 
@@ -541,8 +580,10 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
     InArgs::sg_const_vector_t x_sg = 
       inArgs.get_x_sg();
     if (x_sg != Teuchos::null) {
-      app->init_sg(inArgs.get_sg_basis(), inArgs.get_sg_quadrature(), 
-		   inArgs.get_sg_expansion());
+      app->init_sg(inArgs.get_sg_basis(), 
+		   inArgs.get_sg_quadrature(), 
+		   inArgs.get_sg_expansion(),
+		   x_sg->productComm());
       InArgs::sg_const_vector_t x_dot_sg;
       if (app->isTransient())
 	x_dot_sg = inArgs.get_x_dot_sg();
@@ -658,6 +699,130 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
 	else if (g_sg != Teuchos::null)
 	  app->evaluateSGResponses(x_dot_sg.get(), *x_sg, 
 				   sacado_param_vec, p_sg_ptr, *g_sg);
+      }
+    }
+
+    //
+    // Multi-point evaluation
+    //
+    mp_const_vector_t x_mp = 
+      inArgs.get_x_mp();
+    if (x_mp != Teuchos::null) {
+      mp_const_vector_t x_dot_mp;
+      if (app->isTransient())
+	x_dot_mp = inArgs.get_x_dot_mp();
+      mp_const_vector_t epetra_p_mp = 
+	inArgs.get_p_mp(0);
+      Teuchos::Array<MPType> *p_mp_ptr = NULL;
+      if (epetra_p_mp != Teuchos::null) {
+	for (int i=0; i<p_mp_vals.size(); i++) {
+	  int num_mp_blocks = epetra_p_mp->size();
+	  p_mp_vals[i].reset(num_mp_blocks);
+	  p_mp_vals[i].copyForWrite();
+	  for (int j=0; j<num_mp_blocks; j++) {
+	    p_mp_vals[i].fastAccessCoeff(j) = (*epetra_p_mp)[j][i];
+	  }
+	}
+	p_mp_ptr = &p_mp_vals;
+      }
+
+      mp_vector_t f_mp = outArgs.get_f_mp();
+      mp_operator_t W_mp = outArgs.get_W_mp();
+      bool f_mp_computed = false;
+      
+      // W_mp
+      if (W_mp != Teuchos::null) {
+	app->computeGlobalMPJacobian(alpha, beta, x_dot_mp.get(), *x_mp, 
+				     sacado_param_vec[0].get(), 
+				     sacado_param_vec[1].get(), p_mp_ptr,
+				     f_mp.get(), *W_mp);
+	f_mp_computed = true;
+      }
+
+      // df/dp_mp
+      if (supports_p) {
+	for (int i=0; i<outArgs.Np_mp(); i++) {
+	  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dfdp_mp 
+	    = outArgs.get_DfDp_mp(i).getMultiVector();
+	  if (dfdp_mp != Teuchos::null) {
+	    Teuchos::Array<int> p_indexes = 
+	      outArgs.get_DfDp_mp(i).getDerivativeMultiVector().getParamIndexes();
+	    unsigned int n_params = p_indexes.size();
+	    Teuchos::RCP<ParamVec> p_vec;
+	    if (n_params > 0) {
+	      Teuchos::Array<std::string> p_names(n_params);
+	      for (unsigned int j=0; j<n_params; j++)
+		p_names[j] = (*(param_names[i]))[p_indexes[j]];
+	      p_vec = Teuchos::rcp(new ParamVec);
+	      app->getParamLib()->fillVector<FEApp::ResidualType>(p_names, *p_vec);
+	      for (unsigned int j=0; j<p_vec->size(); j++)
+		(*p_vec)[j].baseValue = 
+		  (*(sacado_param_vec[i]))[p_indexes[j]].baseValue;
+	    }
+	    else
+	      p_vec = Teuchos::rcp(sacado_param_vec[0].get(), false);
+	    
+	    app->computeGlobalMPTangent(0.0, 0.0, false, x_dot_mp.get(), *x_mp, 
+					sacado_param_vec[0].get(), p_vec.get(), 
+					sacado_param_vec[1].get(), p_mp_ptr,
+					NULL, NULL, f_mp.get(), NULL, 
+					dfdp_mp.get());
+
+	    f_mp_computed = true;
+	  }
+	}
+      }
+
+      if (f_mp != Teuchos::null && !f_mp_computed)
+	app->computeGlobalMPResidual(x_dot_mp.get(), *x_mp, 
+				     sacado_param_vec[0].get(), 
+				     sacado_param_vec[1].get(), p_mp_ptr,
+				     *f_mp);
+
+      // Response functions
+      if (outArgs.Ng_mp() > 0 && supports_g) {
+	Teuchos::RCP< Stokhos::ProductEpetraVector > g_mp 
+	  = outArgs.get_g_mp(0);
+	Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdx_mp 
+	  = outArgs.get_DgDx_mp(0).getMultiVector();
+	Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdxdot_mp;
+	if (app->isTransient())
+	  dgdxdot_mp = outArgs.get_DgDx_dot_mp(0).getMultiVector();
+    
+	Teuchos::Array< Teuchos::RCP<ParamVec> > p_vec(outArgs.Np());
+	Teuchos::Array< Teuchos::RCP< Stokhos::ProductEpetraMultiVector > > dgdp_mp(outArgs.Np());
+	bool have_dgdp = false;
+	for (int i=0; i<outArgs.Np(); i++) {
+	  dgdp_mp[i] = outArgs.get_DgDp_mp(0,i).getMultiVector();
+	  if (dgdp_mp[i] != Teuchos::null)
+	    have_dgdp = true;
+	  Teuchos::Array<int> p_indexes = 
+	    outArgs.get_DgDp_mp(0,i).getDerivativeMultiVector().getParamIndexes();
+	  unsigned int n_params = p_indexes.size();
+	  if (n_params > 0) {
+	    Teuchos::Array<std::string> p_names(n_params);
+	    for (unsigned int j=0; j<n_params; j++)
+	      p_names[i] = (*(param_names[i]))[p_indexes[j]];
+	    p_vec[i] = Teuchos::rcp(new ParamVec);
+	    app->getParamLib()->fillVector<FEApp::ResidualType>(p_names, 
+								*(p_vec[i]));
+	    for (unsigned int j=0; j<p_vec[i]->size(); j++)
+	      (*(p_vec[i]))[j].baseValue = (*(sacado_param_vec[i]))[p_indexes[j]].baseValue;
+	  }
+	  else
+	    p_vec[i] = sacado_param_vec[i];
+	}
+
+	if (have_dgdp ||dgdx_mp != Teuchos::null || 
+	    dgdxdot_mp != Teuchos::null) {
+	  app->evaluateMPResponseGradients(x_dot_mp.get(), *x_mp, 
+					   sacado_param_vec, p_vec, p_mp_ptr,
+					   g_mp.get(), dgdx_mp.get(), 
+					   dgdxdot_mp.get(), dgdp_mp);
+	}
+	else if (g_mp != Teuchos::null)
+	  app->evaluateMPResponses(x_dot_mp.get(), *x_mp, 
+				   sacado_param_vec, p_mp_ptr, *g_mp);
       }
     }
   }
