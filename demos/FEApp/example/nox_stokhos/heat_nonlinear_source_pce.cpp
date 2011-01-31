@@ -86,30 +86,51 @@ int main(int argc, char *argv[]) {
     MPI_Init(&argc,&argv);
 #endif
 
-    // Create a communicator for Epetra objects
-    Teuchos::RCP<Epetra_Comm> Comm;
+     // Create a communicator for Epetra objects
+    Teuchos::RCP<Epetra_Comm> globalComm;
 #ifdef HAVE_MPI
-    Comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+    globalComm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
 #else
-    Comm = Teuchos::rcp(new Epetra_SerialComm);
+    globalComm = Teuchos::rcp(new Epetra_SerialComm);
 #endif
+    MyPID = globalComm->MyPID();
 
-    // Get filenames for Dakota runs
-    if (argc > 1 && argc != 3) {
-      std::cout << "Usage:  pce.exe [input_file] [output file]" << std::endl;
+    // Parse args
+    if (argc > 2 && argc != 3) {
+      std::cout << "Usage:  pce.exe [num_spatial_procs] [input_file] [output file]" << std::endl;
       exit(-1);
     }
 
+    int num_spatial_procs = -1;
     std::string input_filename, output_filename;
-    if (argc == 3) {
+    if (argc == 2) 
+      num_spatial_procs = std::atoi(argv[1]);
+    else if (argc == 3) {
       input_filename = std::string(argv[1]);
       output_filename = std::string(argv[2]);
       do_pce = false;
       do_dakota = true;
     }
 
-    MyPID = Comm->MyPID();
-    
+    // Create SG basis to setup parallel correctly
+    Teuchos::ParameterList sgParams;
+    Teuchos::ParameterList& basisParams = sgParams.sublist("Basis");
+    basisParams.set("Dimension", num_KL);
+    for (int i=0; i<num_KL; i++) {
+      std::ostringstream ss;
+      ss << "Basis " << i;
+      Teuchos::ParameterList& bp = basisParams.sublist(ss.str());
+      bp.set("Type", "Legendre");
+      bp.set("Order", p);
+    }
+    Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis = 
+      Stokhos::BasisFactory<int,double>::create(sgParams);
+
+    // Create multi-level comm and spatial comm
+    Teuchos::RCP<const EpetraExt::MultiComm> sg_comm =
+      Stokhos::buildMultiComm(*globalComm, basis->size(), num_spatial_procs);
+    Teuchos::RCP<const Epetra_Comm> app_comm = Stokhos::getSpatialComm(sg_comm);
+
     // Create mesh
     vector<double> x(nelem+1);
     for (unsigned int i=0; i<=nelem; i++)
@@ -241,7 +262,7 @@ int main(int argc, char *argv[]) {
 
     // Create application
     Teuchos::RCP<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, Comm, appParams, false));
+      Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false));
 
     // Create model evaluator
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
@@ -267,8 +288,8 @@ int main(int argc, char *argv[]) {
     outArgs.set_DgDp(0, 0, dgdp);
     solver.evalModel(inArgs, outArgs);
 
-    g->Print(std::cout);
-    dgdp->Print(std::cout);
+    g->Print(utils.out());
+    dgdp->Print(utils.out());
 
     // Print objective function to file for Dakota
     if (do_dakota) {
@@ -287,20 +308,8 @@ int main(int argc, char *argv[]) {
 
       TEUCHOS_FUNC_TIME_MONITOR("Total PCE Calculation Time");
     
-      // Create SG basis
-      Teuchos::ParameterList& sgParams = 
-	appParams->sublist("Stochastic Galerkin Parameters");
-      Teuchos::ParameterList& basisParams = sgParams.sublist("Basis");
-      basisParams.set("Dimension", num_KL);
-      for (int i=0; i<num_KL; i++) {
-	std::ostringstream ss;
-	ss << "Basis " << i;
-	Teuchos::ParameterList& bp = basisParams.sublist(ss.str());
-	bp.set("Type", "Legendre");
-	bp.set("Order", p);
-      }
-      Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis = 
-        Stokhos::BasisFactory<int,double>::create(sgParams);
+      // Copy in params from above
+      appParams->sublist("Stochastic Galerkin Parameters") = sgParams;
       
       // Create SG quadrature
       Teuchos::ParameterList& quadParams = sgParams.sublist("Quadrature");
@@ -320,7 +329,15 @@ int main(int argc, char *argv[]) {
 	("Triple Product Tensor");
 
       int sz = basis->size();
-      std::cout << "sz = " << sz << std::endl;
+      if (MyPID == 0)
+	std::cout << "sz = " << sz << std::endl;
+
+      // Create stochastic parallel distribution
+      Teuchos::ParameterList parallelParams;
+      Teuchos::RCP<Stokhos::ParallelData> sg_parallel_data =
+	Teuchos::rcp(new Stokhos::ParallelData(basis, Cijk, sg_comm,
+					       parallelParams));
+      
 
       if (SG_Method == SG_AD)
 	appParams->set("SG Method", "AD");
@@ -328,11 +345,11 @@ int main(int argc, char *argv[]) {
 	appParams->set("SG Method", "Gauss Quadrature");
 
       // Create new app for Stochastic Galerkin solve
-      app = Teuchos::rcp(new FEApp::Application(x, Comm, appParams, false,
+      app = Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false,
 						finalSolution.get()));
 
       // Set up stochastic parameters
-      Epetra_LocalMap p_sg_map(num_KL, 0, *Comm);
+      Epetra_LocalMap p_sg_map(num_KL, 0, *sg_comm);
       Teuchos::Array< Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> > sg_p;
       int sg_p_index;
       if (SG_Method == SG_AD || SG_Method == SG_ELEMENT) {
@@ -406,9 +423,8 @@ int main(int argc, char *argv[]) {
       }
       Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =
 	Teuchos::rcp(new Stokhos::SGModelEvaluator(model, basis, quad, 
-						   expansion, Cijk, 
-						   sgSolverParams, Comm, 
-						   sg_x, sg_p));
+						   expansion, sg_parallel_data, 
+						   sgSolverParams, sg_x, sg_p));
 
       // Create SG NOX solver
       Teuchos::RCP<EpetraExt::ModelEvaluator> sg_block_solver;
@@ -460,7 +476,8 @@ int main(int argc, char *argv[]) {
 		       basis, *(sg_solver->get_g_sg_map(0))));
       Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u = 
 	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		       basis, *(sg_solver->get_g_sg_map(1))));
+		       basis, *(sg_solver->get_g_sg_map(1)),
+		       sg_parallel_data->getEpetraCijk()->numMyRows()));
       Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> sg_dgdp = 
 	Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
 		       basis, *(sg_solver->get_g_sg_map(0)),
@@ -473,14 +490,14 @@ int main(int argc, char *argv[]) {
 
       // Print mean and standard deviation
       utils.out().precision(12);
-      std::cout << "SG expansion of response:" << std::endl << *sg_g;
+      utils.out() << "SG expansion of response:" << std::endl << *sg_g;
       Epetra_Vector mean(*(sg_solver->get_g_sg_map(0)));
       Epetra_Vector std_dev(*(sg_solver->get_g_sg_map(0)));
       sg_g->computeMean(mean);
       sg_g->computeStandardDeviation(std_dev);
       utils.out() << "Mean =      " << mean[0] << std::endl;
       utils.out() << "Std. Dev. = " << std_dev[0] << std::endl;
-      std::cout << "SG expansion of sensitivity:" << std::endl << *sg_dgdp;
+      utils.out() << "SG expansion of sensitivity:" << std::endl << *sg_dgdp;
 
 #ifdef HAVE_STOKHOS_ANASAZI
       if (SG_Method != SG_NI) {
@@ -489,8 +506,10 @@ int main(int argc, char *argv[]) {
 	X = Teuchos::rcp(new EpetraExt::BlockVector(finalSolution->Map(),
 						    *(sg_model->get_x_map())));
 	sg_u->assignToBlockVector(*X);
-	Teuchos::RCP<const EpetraExt::BlockVector> cX = X;
-	Stokhos::PCEAnasaziKL pceKL(cX, *basis, 20);
+	Teuchos::RCP<EpetraExt::BlockVector> X_ov = 
+	  sg_model->import_solution(*X);
+	Teuchos::RCP<const EpetraExt::BlockVector> cX_ov = X_ov;
+	Stokhos::PCEAnasaziKL pceKL(cX_ov, *basis, 20);
 	Teuchos::ParameterList anasazi_params = pceKL.getDefaultParams();
 	//anasazi_params.set("Num Blocks", 10);
 	//anasazi_params.set("Step Size", 50);
@@ -522,18 +541,18 @@ int main(int argc, char *argv[]) {
 	  rvs[i].reset(basis);
 	  rvs[i][0] = 0.0;
 	  for (int j=1; j<sz; j++)
-	    X->GetBlock(j)->Dot(*((*evecs)(i)), &(rvs[i][j]));
+	    X_ov->GetBlock(j)->Dot(*((*evecs)(i)), &(rvs[i][j]));
 	  val_rvs[i] = rvs[i].evaluate(point, basis_vals);
 	}
 	
 	Epetra_Vector val_kl(finalSolution->Map());
-	val_kl.Update(1.0, *(X->GetBlock(0)), 0.0);
+	val_kl.Update(1.0, *(X_ov->GetBlock(0)), 0.0);
 	for (int i=0; i<evals.size(); i++)
 	  val_kl.Update(val_rvs[i], *((*evecs)(i)), 1.0);
 	
 	Stokhos::VectorOrthogPoly<Epetra_Vector> sg_u_poly(basis);
 	for (int i=0; i<sz; i++)
-	  sg_u_poly.setCoeffPtr(i, X->GetBlock(i));
+	  sg_u_poly.setCoeffPtr(i, X_ov->GetBlock(i));
 	Epetra_Vector val(finalSolution->Map());
 	sg_u_poly.evaluate(basis_vals, val);
 	
@@ -552,7 +571,7 @@ int main(int argc, char *argv[]) {
       NOX::StatusTest::StatusType status = NOX::StatusTest::Converged;
       if (SG_Method != SG_NI)
       	status = Teuchos::rcp_dynamic_cast<ENAT::NOXSolver>(sg_block_solver)->getSolverStatus();
-      if (status == NOX::StatusTest::Converged) 
+      if (status == NOX::StatusTest::Converged && MyPID == 0) 
 	utils.out() << "Test Passed!" << endl;
 
     }
