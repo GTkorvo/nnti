@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,25 +26,25 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFMULTIVECTOR_HPP
-#define TSFMULTIVECTOR_HPP
+#ifndef PlayaMULTIVECTOR_HPP
+#define PlayaMULTIVECTOR_HPP
 
 #include "SundanceDefs.hpp"
-#include "SundanceHandle.hpp"
+#include "PlayaHandle.hpp"
 #include "Thyra_MultiVectorBase.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
-#include "TSFVectorSpaceDecl.hpp"
-#include "TSFLoadableVector.hpp"
-#include "TSFAccessibleVector.hpp"
+#include "PlayaVectorSpaceDecl.hpp"
+#include "PlayaLoadableVector.hpp"
+#include "PlayaAccessibleVector.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Range1D.hpp"
 #include "Teuchos_RefCountPtr.hpp"
-#include "TSFLinearOperatorDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
 
 
 
-namespace TSFExtended
+namespace Playa
 {
   using Thyra::Index;
   using Thyra::Range1D;
@@ -53,7 +53,7 @@ namespace TSFExtended
   
 
   template <class Scalar>
-  class MultiVector : public Sundance::Handle<Thyra::MultiVectorBase<Scalar> >
+  class MultiVector : public Playa::Handle<Thyra::MultiVectorBase<Scalar> >
     {
     public:
 

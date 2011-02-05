@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,19 +26,19 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#include "TSFEpetraMatrix.hpp"
-#include "TSFEpetraVector.hpp"
-#include "TSFVectorSpaceDecl.hpp"  // changed from Impl
-#include "TSFVectorDecl.hpp"
-#include "TSFLinearOperatorDecl.hpp"  // changed from Impl
+#include "PlayaEpetraMatrix.hpp"
+#include "PlayaEpetraVector.hpp"
+#include "PlayaVectorSpaceDecl.hpp"  // changed from Impl
+#include "PlayaVectorDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"  // changed from Impl
 #include "Teuchos_Array.hpp"
 #include "Teuchos_MPIComm.hpp"
-#include "TSFIfpackOperator.hpp"
-#include "TSFGenericLeftPreconditioner.hpp"
-#include "TSFGenericRightPreconditioner.hpp"
+#include "PlayaIfpackOperator.hpp"
+#include "PlayaGenericLeftPreconditioner.hpp"
+#include "PlayaGenericRightPreconditioner.hpp"
 #include "Teuchos_dyn_cast.hpp"
 #include "Teuchos_getConst.hpp"
-#include "EpetraTSFOperator.hpp"
+#include "EpetraPlayaOperator.hpp"
 #include "Epetra_Comm.h"
 #include "Epetra_CrsMatrix.h"
 #include "Thyra_Config.h"
@@ -48,18 +48,18 @@
 #endif
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearCombinationImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
-#include "TSFLinearSolverImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearCombinationImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
+#include "PlayaLinearSolverImpl.hpp"
 #endif
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 using namespace Thyra;
 using namespace Epetra;
 
-Epetra_TSFOperator::Epetra_TSFOperator(const LinearOperator<double>& A,
+Epetra_PlayaOperator::Epetra_PlayaOperator(const LinearOperator<double>& A,
 				       const LinearSolver<double>& solver)
   : A_(A), solver_(solver), useTranspose_(false), comm_(), domain_(), range_(),
     isNativeEpetra_(false), isCompoundEpetra_(false), label_(A.description())
@@ -91,7 +91,7 @@ Epetra_TSFOperator::Epetra_TSFOperator(const LinearOperator<double>& A,
 }
 
 
-int Epetra_TSFOperator::Apply(const Epetra_MultiVector& in, Epetra_MultiVector& out) const
+int Epetra_PlayaOperator::Apply(const Epetra_MultiVector& in, Epetra_MultiVector& out) const
 {
   if (isNativeEpetra_)
     {
@@ -103,9 +103,9 @@ int Epetra_TSFOperator::Apply(const Epetra_MultiVector& in, Epetra_MultiVector& 
       const Epetra_Vector* cevIn = dynamic_cast<const Epetra_Vector*>(&in);
       Epetra_Vector* evIn = const_cast<Epetra_Vector*>(cevIn);
       Epetra_Vector* evOut = dynamic_cast<Epetra_Vector*>(&out);
-      TEST_FOR_EXCEPTION(evIn==0, std::runtime_error, "Epetra_TSFOperator::Apply "
+      TEST_FOR_EXCEPTION(evIn==0, std::runtime_error, "Epetra_PlayaOperator::Apply "
 			 "cannot deal with multivectors");
-      TEST_FOR_EXCEPTION(evOut==0, std::runtime_error, "Epetra_TSFOperator::Apply "
+      TEST_FOR_EXCEPTION(evOut==0, std::runtime_error, "Epetra_PlayaOperator::Apply "
 			 "cannot deal with multivectors");
 
       const EpetraVectorSpace* ed 
@@ -136,22 +136,22 @@ int Epetra_TSFOperator::Apply(const Epetra_MultiVector& in, Epetra_MultiVector& 
     }
 }
 
-int Epetra_TSFOperator::ApplyInverse(const Epetra_MultiVector& in, Epetra_MultiVector& out) const
+int Epetra_PlayaOperator::ApplyInverse(const Epetra_MultiVector& in, Epetra_MultiVector& out) const
 {
   
   TEST_FOR_EXCEPTION(solver_.ptr().get()==0, std::runtime_error,
-		     "no solver provided for Epetra_TSFOperator::ApplyInverse");
+		     "no solver provided for Epetra_PlayaOperator::ApplyInverse");
   TEST_FOR_EXCEPTION(!isNativeEpetra_ && !isCompoundEpetra_, std::runtime_error,
-		     "Epetra_TSFOperator::ApplyInverse expects either "
+		     "Epetra_PlayaOperator::ApplyInverse expects either "
 		     "a native epetra operator or a compound operator with "
 		     "Epetra domain and range spaces");
   const Epetra_Vector* cevIn = dynamic_cast<const Epetra_Vector*>(&in);
   Epetra_Vector* evIn = const_cast<Epetra_Vector*>(cevIn);
   Epetra_Vector* evOut = dynamic_cast<Epetra_Vector*>(&out);
 
-  TEST_FOR_EXCEPTION(evIn==0, std::runtime_error, "Epetra_TSFOperator::Apply "
+  TEST_FOR_EXCEPTION(evIn==0, std::runtime_error, "Epetra_PlayaOperator::Apply "
 		     "cannot deal with multivectors");
-  TEST_FOR_EXCEPTION(evOut==0, std::runtime_error, "Epetra_TSFOperator::Apply "
+  TEST_FOR_EXCEPTION(evOut==0, std::runtime_error, "Epetra_PlayaOperator::Apply "
 		     "cannot deal with multivectors");
 
   const EpetraVectorSpace* ed 
@@ -180,13 +180,13 @@ int Epetra_TSFOperator::ApplyInverse(const Epetra_MultiVector& in, Epetra_MultiV
 
 
 
-double Epetra_TSFOperator::NormInf() const 
+double Epetra_PlayaOperator::NormInf() const 
 {
   TEST_FOR_EXCEPT(true);
   return -1; // -Wall
 }
 
-const char* Epetra_TSFOperator::Label() const 
+const char* Epetra_PlayaOperator::Label() const 
 {
   return label_.c_str();
 }

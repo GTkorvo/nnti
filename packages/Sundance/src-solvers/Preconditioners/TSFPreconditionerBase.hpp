@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,16 +26,16 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFPRECONDITIONERBASE_HPP
-#define TSFPRECONDITIONERBASE_HPP
+#ifndef PlayaPRECONDITIONERBASE_HPP
+#define PlayaPRECONDITIONERBASE_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFVectorDecl.hpp"
-#include "TSFLinearOperatorDecl.hpp"
+#include "PlayaVectorDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
 
@@ -49,7 +49,7 @@ namespace TSFExtended
    * The base class implements neither a left nor a right preconditioner.
    */
   template <class Scalar>
-  class PreconditionerBase : public Sundance::Handleable<PreconditionerBase<Scalar> >
+  class PreconditionerBase : public Playa::Handleable<PreconditionerBase<Scalar> >
   {
   public:
     /** empty ctor */

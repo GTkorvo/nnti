@@ -1,16 +1,16 @@
-#include "TSFBelosSolver.hpp"
-#include "TSFPreconditioner.hpp"
-#include "TSFPreconditionerFactory.hpp"
-#include "TSFParameterListPreconditionerFactory.hpp"
+#include "PlayaBelosSolver.hpp"
+#include "PlayaPreconditioner.hpp"
+#include "PlayaPreconditionerFactory.hpp"
+#include "PlayaParameterListPreconditionerFactory.hpp"
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
-#include "TSFLinearSolverImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
+#include "PlayaLinearSolverImpl.hpp"
 #endif
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 

@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,19 +24,19 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFLINEARSOLVERDECL_HPP
-#define TSFLINEARSOLVERDECL_HPP
+#ifndef PlayaLINEARSOLVERDECL_HPP
+#define PlayaLINEARSOLVERDECL_HPP
 
-#include "SundanceTabs.hpp"
-#include "SundanceHandle.hpp"
-#include "SundanceHandleable.hpp"
-#include "TSFLinearSolverBaseDecl.hpp"
+#include "PlayaTabs.hpp"
+#include "PlayaHandle.hpp"
+#include "PlayaHandleable.hpp"
+#include "PlayaLinearSolverBaseDecl.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFLinearSolverBaseImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
+#include "PlayaLinearSolverBaseImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
 #endif
 
 inline static Teuchos::Time& solveTimer() 
@@ -46,7 +46,7 @@ inline static Teuchos::Time& solveTimer()
   return *rtn;
 }
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 using namespace Sundance;
@@ -55,17 +55,17 @@ using namespace Sundance;
  *
  */
 template <class Scalar>
-class LinearSolver : public Sundance::Handle<LinearSolverBase<Scalar> >
+class LinearSolver : public Playa::Handle<LinearSolverBase<Scalar> >
 {
 public:
   /** */
-  LinearSolver() : Sundance::Handle<LinearSolverBase<Scalar> >() {;}
+  LinearSolver() : Playa::Handle<LinearSolverBase<Scalar> >() {;}
   /** */
-  LinearSolver( Sundance::Handleable<LinearSolverBase<Scalar> >* rawPtr) 
-    : Sundance::Handle<LinearSolverBase<Scalar> >(rawPtr) {;}
+  LinearSolver( Playa::Handleable<LinearSolverBase<Scalar> >* rawPtr) 
+    : Playa::Handle<LinearSolverBase<Scalar> >(rawPtr) {;}
   /** */
   LinearSolver(const RCP<LinearSolverBase<Scalar> >& smartPtr)
-    : Sundance::Handle<LinearSolverBase<Scalar> >(smartPtr) {;}
+    : Playa::Handle<LinearSolverBase<Scalar> >(smartPtr) {;}
 
 
   /** Change the convergence tolerance. Default does nothing. */

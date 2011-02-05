@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,15 +26,15 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFPARTITIONED_TO_MONOLITHIC_CONVERTER_HPP
-#define TSFPARTITIONED_TO_MONOLITHIC_CONVERTER_HPP
+#ifndef PlayaPARTITIONED_TO_MONOLITHIC_CONVERTER_HPP
+#define PlayaPARTITIONED_TO_MONOLITHIC_CONVERTER_HPP
 
-#include "TSFVectorSpaceImpl.hpp"
-#include "TSFVectorImpl.hpp"
-#include "TSFVectorType.hpp"
+#include "PlayaVectorSpaceImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaVectorType.hpp"
 #include <set>
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
   using namespace Thyra;

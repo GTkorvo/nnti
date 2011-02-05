@@ -1,11 +1,11 @@
-#ifndef TSFLAPACKGENERALMATRIX_H
-#define TSFLAPACKGENERALMATRIX_H
+#ifndef PlayaLAPACKGENERALMATRIX_H
+#define PlayaLAPACKGENERALMATRIX_H
 
 #include "SundanceDefs.hpp"
-#include "TSFDenseSerialVector.hpp"
+#include "PlayaDenseSerialVector.hpp"
 #include "Teuchos_Array.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   /**
    * Linear operator implemented as a LAPACK dense matrix.

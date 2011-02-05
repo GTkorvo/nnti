@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,12 +26,12 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFLOADABLEMATRIX_HPP
-#define TSFLOADABLEMATRIX_HPP
+#ifndef PlayaLOADABLEMATRIX_HPP
+#define PlayaLOADABLEMATRIX_HPP
 
 #include "SundanceDefs.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   /** 
    * Class LoadableMatrix provides an abstract interface for 

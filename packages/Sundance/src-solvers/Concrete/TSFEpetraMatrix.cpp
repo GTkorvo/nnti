@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,15 +26,15 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#include "TSFEpetraMatrix.hpp"
-#include "TSFEpetraVector.hpp"
-#include "TSFVectorSpaceDecl.hpp"  // changed from Impl
-#include "TSFVectorDecl.hpp"
-#include "TSFLinearOperatorDecl.hpp"  // changed from Impl
-#include "TSFIfpackOperator.hpp"
-#include "TSFPreconditioner.hpp"
-#include "TSFGenericLeftPreconditioner.hpp"
-#include "TSFGenericRightPreconditioner.hpp"
+#include "PlayaEpetraMatrix.hpp"
+#include "PlayaEpetraVector.hpp"
+#include "PlayaVectorSpaceDecl.hpp"  // changed from Impl
+#include "PlayaVectorDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"  // changed from Impl
+#include "PlayaIfpackOperator.hpp"
+#include "PlayaPreconditioner.hpp"
+#include "PlayaGenericLeftPreconditioner.hpp"
+#include "PlayaGenericRightPreconditioner.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Teuchos_dyn_cast.hpp"
 #include "Teuchos_getConst.hpp"
@@ -45,11 +45,11 @@
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
 #endif
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 using namespace Thyra;
 

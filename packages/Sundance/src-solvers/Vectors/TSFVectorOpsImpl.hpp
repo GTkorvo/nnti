@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,16 +26,16 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFVECTOR_OPS_IMPL_HPP
-#define TSFVECTOR_OPS_IMPL_HPP
+#ifndef PlayaVECTOR_OPS_IMPL_HPP
+#define PlayaVECTOR_OPS_IMPL_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFVectorDecl.hpp"
+#include "PlayaVectorDecl.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 
  /* nonmember vector functions */
-namespace TSFExtended
+namespace Playa
 {
 
 /* */

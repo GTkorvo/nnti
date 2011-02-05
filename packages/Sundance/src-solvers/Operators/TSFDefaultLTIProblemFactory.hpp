@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,15 +26,15 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSF_DEFAULT_LTI_PROBLEMFACTORY_HPP
-#define TSF_DEFAULT_LTI_PROBLEMFACTORY_HPP
+#ifndef Playa_DEFAULT_LTI_PROBLEMFACTORY_HPP
+#define Playa_DEFAULT_LTI_PROBLEMFACTORY_HPP
 
 
 #include "SundanceDefs.hpp"
-#include "TSFLTIProblemFactoryBase.hpp"
+#include "PlayaLTIProblemFactoryBase.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 using namespace Thyra;

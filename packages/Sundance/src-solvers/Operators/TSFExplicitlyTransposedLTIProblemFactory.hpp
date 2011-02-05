@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,17 +26,17 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSF_EXPLICITLYTRANSPOSED_LTI_PROBLEMFACTORY_HPP
-#define TSF_EXPLICITLYTRANSPOSED_LTI_PROBLEMFACTORY_HPP
+#ifndef Playa_EXPLICITLYTRANSPOSED_LTI_PROBLEMFACTORY_HPP
+#define Playa_EXPLICITLYTRANSPOSED_LTI_PROBLEMFACTORY_HPP
 
 
 #include "SundanceDefs.hpp"
-#include "TSFDefaultLTIProblemFactory.hpp"
-#include "TSFEpetraMatrix.hpp"
+#include "PlayaDefaultLTIProblemFactory.hpp"
+#include "PlayaEpetraMatrix.hpp"
 #include "EpetraExt_Transpose_RowMatrix.h"
 
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 using namespace Thyra;
@@ -124,7 +124,7 @@ protected:
        * form of its base class, an Epetra_RowMatrix.  */
       Epetra_RowMatrix& eprXt = (*transposer_)(epX);
 
-      /* The TSF EpetraMatrix works with Epetra_CrsMatrix, so we need
+      /* The Playa EpetraMatrix works with Epetra_CrsMatrix, so we need
        * to cast the RowMatrix to a CrsMatrix. This should always work, 
        * because the transposer is implemented in terms of CrsMatrix. If it
        * doesn't work, there's been an error somehere in Trilinos. */
@@ -144,7 +144,7 @@ protected:
       RCP<const EpetraVectorSpace> epXDomain = rcp_dynamic_cast<const EpetraVectorSpace>(X.domain().ptr());
 
 
-      /* We can now create a TSF linear operator for the transpose. We need 
+      /* We can now create a Playa linear operator for the transpose. We need 
        * to pass an ownership flag of "false" for the RCP of the 
        * Epetra_CrsMatrix because the transposed matrix is
        * owned by the transposer. We also swap the original operator's 

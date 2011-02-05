@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,13 +26,13 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFROWACCESSIBLEOP_HPP
-#define TSFROWACCESSIBLEOP_HPP
+#ifndef PlayaROWACCESSIBLEOP_HPP
+#define PlayaROWACCESSIBLEOP_HPP
 
 #include "SundanceDefs.hpp"
 #include "Teuchos_Array.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   /** 
    * Base interface for operators for which a row may be extracted.

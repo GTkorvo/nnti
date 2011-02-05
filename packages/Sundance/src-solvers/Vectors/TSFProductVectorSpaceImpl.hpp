@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -27,67 +27,67 @@
  /* @HEADER@ */
 
 
-#ifndef TSFPRODUCTVECTORSPACEIMPL_HPP
-#define TSFPRODUCTVECTORSPACEIMPL_HPP
+#ifndef PlayaPRODUCTVECTORSPACEIMPL_HPP
+#define PlayaPRODUCTVECTORSPACEIMPL_HPP
 
-#include "Thyra_DefaultProductVectorSpace.hpp"
-#include "TSFVectorSpaceDecl.hpp"
+#include "Thyra_DefaultBlockVectorSpace.hpp"
+#include "PlayaVectorSpaceDecl.hpp"
  
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 
 
-namespace TSFExtended
+namespace Playa
 {
 
 /** */
 template <class Scalar> inline
 Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
-productSpace(const Array<VectorSpace<Scalar> >& spaces)
+blockSpace(const Array<VectorSpace<Scalar> >& spaces)
 {
   Array<RCP<const Thyra::VectorSpaceBase<Scalar> > > data(spaces.size());
   for (int i=0; i<spaces.size(); i++)
   {
     data[i] = spaces[i].ptr();
   }
-  return rcp(new Thyra::DefaultProductVectorSpace<Scalar>(data.size(), &(data[0])));
+  return rcp(new Thyra::DefaultBlockVectorSpace<Scalar>(data.size(), &(data[0])));
 }
 
 
 /** */
 template <class Scalar> inline
 Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
-productSpace(VectorSpace<Scalar>& s1)
+blockSpace(VectorSpace<Scalar>& s1)
 {
   Array<VectorSpace<Scalar> > s;
   s.append(s1);
-  return productSpace(s);
+  return blockSpace(s);
 }
 
 /** */
 template <class Scalar> inline
 Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
-productSpace(VectorSpace<Scalar>& s1, 
+blockSpace(VectorSpace<Scalar>& s1, 
   VectorSpace<Scalar>& s2)
 {
   Array<VectorSpace<Scalar> > s;
   s.append(s1);
   s.append(s2);
-  return productSpace(s);
+  return blockSpace(s);
 }
 
 /** */
 template <class Scalar> inline
 Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
-productSpace(VectorSpace<Scalar>& s1,VectorSpace<Scalar>& s2,
+blockSpace(VectorSpace<Scalar>& s1,VectorSpace<Scalar>& s2,
   VectorSpace<Scalar>& s3)
 {
   Array<VectorSpace<Scalar> > s;
   s.append(s1);
   s.append(s2);
   s.append(s3);
-  return productSpace(s);
+  return blockSpace(s);
 }
 
   

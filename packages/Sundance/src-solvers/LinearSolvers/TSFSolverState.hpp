@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,15 +26,15 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFSOLVERSTATE_HPP
-#define TSFSOLVERSTATE_HPP
+#ifndef PlayaSOLVERSTATE_HPP
+#define PlayaSOLVERSTATE_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFVectorDecl.hpp"
-#include "TSFLinearOperatorDecl.hpp"
+#include "PlayaVectorDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 
@@ -104,7 +104,7 @@ private:
 
 template <class Scalar> inline
 std::ostream& operator<<(std::ostream& os, 
-  const TSFExtended::SolverState<Scalar>& state)
+  const Playa::SolverState<Scalar>& state)
 {
   os << "Solver final state: " << state.stateDescription() << std::endl;
   os << "message: " << state.finalMsg() << std::endl;

@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,15 +24,15 @@
 // 
 // **********************************************************************/
 
-#include "TSFSerialVectorType.hpp"
-#include "TSFSerialVectorSpace.hpp"
-#include "TSFDenseSerialMatrixFactory.hpp"
-#include "TSFSerialGhostImporter.hpp"
+#include "PlayaSerialVectorType.hpp"
+#include "PlayaSerialVectorSpace.hpp"
+#include "PlayaDenseSerialMatrixFactory.hpp"
+#include "PlayaSerialGhostImporter.hpp"
 #include "SundanceOut.hpp"
 
 #include "Teuchos_RefCountPtr.hpp"
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 SerialVectorType::SerialVectorType()

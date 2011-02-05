@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,23 +26,23 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFANASAZIEIGENSOLVER_IMPL_HPP
-#define TSFANASAZIEIGENSOLVER_IMPL_HPP
+#ifndef PlayaANASAZIEIGENSOLVER_IMPL_HPP
+#define PlayaANASAZIEIGENSOLVER_IMPL_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFAnasaziEigensolverDecl.hpp" 
-#include "TSFParameterListPreconditionerFactory.hpp" 
-#include "TSFPreconditionerFactory.hpp" 
+#include "PlayaAnasaziEigensolverDecl.hpp" 
+#include "PlayaParameterListPreconditionerFactory.hpp" 
+#include "PlayaPreconditionerFactory.hpp" 
 #include "AnasaziBlockKrylovSchurSolMgr.hpp"
 #include "AnasaziBlockDavidsonSolMgr.hpp"
 #include "AnasaziSimpleLOBPCGSolMgr.hpp"
 #include "AnasaziLOBPCGSolMgr.hpp"
 #include "AnasaziBasicEigenproblem.hpp"
 #include "AnasaziThyraAdapter.hpp"
-#include "TSFAnasaziAdapter.hpp"
+#include "PlayaAnasaziAdapter.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
 using Teuchos::ParameterList;
 using Anasazi::SimpleMV;
@@ -245,7 +245,7 @@ inline void AnasaziEigensolver<Scalar>::solve(
   RCP<MV> evecs_mv = sol.Evecs;
   int numev = sol.numVecs;
   
-  /* Copy the columns of the eigenvector MV into an array of TSF vectors */
+  /* Copy the columns of the eigenvector MV into an array of Playa vectors */
   ew.resize(numev);
   evecs.resize(numev);
 

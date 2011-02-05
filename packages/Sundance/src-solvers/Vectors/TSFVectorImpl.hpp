@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,40 +26,40 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFVECTORIMPL_HPP
-#define TSFVECTORIMPL_HPP
+#ifndef PlayaVECTORIMPL_HPP
+#define PlayaVECTORIMPL_HPP
 
 
-#include "TSFVectorDecl.hpp"
+#include "PlayaVectorDecl.hpp"
 #include "Thyra_SUNDIALS_Ops.hpp"
-#include "TSFIndexableVector.hpp"
-#include "Thyra_DefaultProductVectorSpace.hpp"
-#include "Thyra_DefaultProductVector.hpp"
+#include "PlayaIndexableVector.hpp"
+#include "Thyra_DefaultBlockVectorSpace.hpp"
+#include "Thyra_DefaultBlockVector.hpp"
 #include "Thyra_DefaultSpmdVector.hpp"
-#include "SundancePrintable.hpp"
+#include "PlayaPrintable.hpp"
 #include "SundanceOut.hpp"
-#include "SundanceTabs.hpp"
+#include "PlayaTabs.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorSpaceImpl.hpp"
-#include "TSFSequentialIteratorImpl.hpp"
+#include "PlayaVectorSpaceImpl.hpp"
+#include "PlayaSequentialIteratorImpl.hpp"
 #endif
 
 
 
 
-namespace TSFExtended
+namespace Playa
 {
 using Sundance::Out;
 using Sundance::Tabs;
-using Sundance::Printable;
+using Playa::Printable;
 
 //===========================================================================
 template <class Scalar> 
 void Vector<Scalar>::setBlock(int i, const Vector<Scalar>& v)
 {
-  Thyra::DefaultProductVector<Scalar>* pv = 
-    dynamic_cast<Thyra::DefaultProductVector<Scalar>* >(this->ptr().get());
+  Thyra::DefaultBlockVector<Scalar>* pv = 
+    dynamic_cast<Thyra::DefaultBlockVector<Scalar>* >(this->ptr().get());
   TEST_FOR_EXCEPTION(pv == 0, std::runtime_error,
     "vector is not a product vector");
   Thyra::assign(pv->getNonconstVectorBlock(i).ptr(), *(v.ptr().ptr()));
@@ -71,8 +71,8 @@ void Vector<Scalar>::setBlock(int i, const Vector<Scalar>& v)
 template <class Scalar> 
 Vector<Scalar> Vector<Scalar>::getBlock(int i) const
 {
-  const Thyra::DefaultProductVector<Scalar>* pv = 
-    dynamic_cast <const Thyra::DefaultProductVector<Scalar>* >(this->ptr().get());
+  const Thyra::DefaultBlockVector<Scalar>* pv = 
+    dynamic_cast <const Thyra::DefaultBlockVector<Scalar>* >(this->ptr().get());
   if (pv==0) 
   {
     TEST_FOR_EXCEPTION(i != 0, std::runtime_error,
@@ -92,8 +92,8 @@ template <class Scalar>
 void Vector<Scalar>::print(std::ostream& os) const 
 {
 
-  const Printable* p = 
-    dynamic_cast<const Printable* >(this->ptr().get());
+  const Playa::Printable* p = 
+    dynamic_cast<const Playa::Printable* >(this->ptr().get());
   if (p != 0)
   {
     p->print(os);
@@ -103,7 +103,7 @@ void Vector<Scalar>::print(std::ostream& os) const
     dynamic_cast <const Thyra::ProductMultiVectorBase<Scalar>* >(this->ptr().get());
   if (pv != 0)
   {
-    os << "ProductVector[" << std::endl;
+    os << "BlockVector[" << std::endl;
     for (int i=0; i<this->space().numBlocks(); i++)
     {
       os << "block=" << i << std::endl;
@@ -579,17 +579,17 @@ Scalar Vector<Scalar>::min(const Scalar& bound, int& index)const
 template <class Scalar> inline 
 Scalar Vector<Scalar>::getElement(OrdType globalIndex) const
 { 
-  Thyra::ProductVectorBase<Scalar>* p 
-    = dynamic_cast<Thyra::ProductVectorBase<Scalar>*>(&*this->ptr());
+  Thyra::BlockVectorBase<Scalar>* p 
+    = dynamic_cast<Thyra::BlockVectorBase<Scalar>*>(&*this->ptr());
 
   if (p)
   {
-    const Thyra::ProductVectorSpaceBase<Scalar>* pvs 
-      = dynamic_cast<const Thyra::ProductVectorSpaceBase<Scalar>*>(space().ptr().get());
+    const Thyra::BlockVectorSpaceBase<Scalar>* pvs 
+      = dynamic_cast<const Thyra::BlockVectorSpaceBase<Scalar>*>(space().ptr().get());
     TEST_FOR_EXCEPT(pvs == 0);
 
-    const Thyra::DefaultProductVectorSpace<Scalar>* dpvs 
-      = dynamic_cast<const Thyra::DefaultProductVectorSpace<Scalar>*>(pvs);
+    const Thyra::DefaultBlockVectorSpace<Scalar>* dpvs 
+      = dynamic_cast<const Thyra::DefaultBlockVectorSpace<Scalar>*>(pvs);
     if (dpvs)
     {
       int blockIndex=-1;
@@ -648,17 +648,17 @@ Scalar Vector<Scalar>::getElement(OrdType globalIndex) const
 template <class Scalar> inline 
 void Vector<Scalar>::setElement(OrdType globalIndex, const Scalar& value)
 { 
-  Thyra::ProductVectorBase<Scalar>* p 
-    = dynamic_cast<Thyra::ProductVectorBase<Scalar>*>(&*this->ptr());
+  Thyra::BlockVectorBase<Scalar>* p 
+    = dynamic_cast<Thyra::BlockVectorBase<Scalar>*>(&*this->ptr());
 
   if (p)
   {
-    const Thyra::ProductVectorSpaceBase<Scalar>* pvs 
-      = dynamic_cast<const Thyra::ProductVectorSpaceBase<Scalar>*>(space().ptr().get());
+    const Thyra::BlockVectorSpaceBase<Scalar>* pvs 
+      = dynamic_cast<const Thyra::BlockVectorSpaceBase<Scalar>*>(space().ptr().get());
     TEST_FOR_EXCEPT(pvs == 0);
 
-    const Thyra::DefaultProductVectorSpace<Scalar>* dpvs 
-      = dynamic_cast<const Thyra::DefaultProductVectorSpace<Scalar>*>(pvs);
+    const Thyra::DefaultBlockVectorSpace<Scalar>* dpvs 
+      = dynamic_cast<const Thyra::DefaultBlockVectorSpace<Scalar>*>(pvs);
     if (dpvs)
     {
       int blockIndex=-1;
@@ -740,8 +740,8 @@ const Scalar& Vector<Scalar>::operator[](const SequentialIterator<Scalar>& iter)
 template <class Scalar> inline 
 const Scalar& Vector<Scalar>::localElement(const OrdType& blockIndex, const OrdType& indexInBlock) const
 {
-  const Thyra::ProductVectorBase<Scalar>* p 
-    = dynamic_cast<const Thyra::ProductVectorBase<Scalar>*>(&*this->ptr());
+  const Thyra::BlockVectorBase<Scalar>* p 
+    = dynamic_cast<const Thyra::BlockVectorBase<Scalar>*>(&*this->ptr());
   RCP<const Thyra::VectorBase<Scalar> > vec;
   if (p)
   {
@@ -766,8 +766,8 @@ const Scalar& Vector<Scalar>::localElement(const OrdType& blockIndex, const OrdT
 template <class Scalar> inline 
 Scalar& Vector<Scalar>::localElement(const OrdType& blockIndex, const OrdType& indexInBlock) 
 {
-  Thyra::ProductVectorBase<Scalar>* p 
-    = dynamic_cast<Thyra::ProductVectorBase<Scalar>*>(&*this->ptr());
+  Thyra::BlockVectorBase<Scalar>* p 
+    = dynamic_cast<Thyra::BlockVectorBase<Scalar>*>(&*this->ptr());
   RCP<Thyra::VectorBase<Scalar> > vec;
   if (p)
   {
@@ -784,7 +784,7 @@ Scalar& Vector<Scalar>::localElement(const OrdType& blockIndex, const OrdType& i
   {
     return dsv->getPtr()[indexInBlock*dsv->getStride()];
   }
-  TSFExtended::RawDataAccessibleVector<Scalar>* d 
+  Playa::RawDataAccessibleVector<Scalar>* d 
     = this->castToRawDataAccessible();
   return d->dataPtr()[indexInBlock];
 } 
@@ -800,17 +800,17 @@ Scalar& Vector<Scalar>::localElement(const OrdType& blockIndex, const OrdType& i
 template <class Scalar> inline 
 void Vector<Scalar>::addToElement(OrdType globalIndex, const Scalar& value)
 {
-  Thyra::ProductVectorBase<Scalar>* p 
-    = dynamic_cast<Thyra::ProductVectorBase<Scalar>*>(&*this->ptr());
+  Thyra::BlockVectorBase<Scalar>* p 
+    = dynamic_cast<Thyra::BlockVectorBase<Scalar>*>(&*this->ptr());
 
   if (p)
   {
-    const Thyra::ProductVectorSpaceBase<Scalar>* pvs 
-      = dynamic_cast<const Thyra::ProductVectorSpaceBase<Scalar>*>(space().ptr().get());
+    const Thyra::BlockVectorSpaceBase<Scalar>* pvs 
+      = dynamic_cast<const Thyra::BlockVectorSpaceBase<Scalar>*>(space().ptr().get());
     TEST_FOR_EXCEPT(pvs == 0);
 
-    const Thyra::DefaultProductVectorSpace<Scalar>* dpvs 
-      = dynamic_cast<const Thyra::DefaultProductVectorSpace<Scalar>*>(pvs);
+    const Thyra::DefaultBlockVectorSpace<Scalar>* dpvs 
+      = dynamic_cast<const Thyra::DefaultBlockVectorSpace<Scalar>*>(pvs);
     if (dpvs)
     {
       int blockIndex=-1;

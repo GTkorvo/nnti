@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,22 +26,22 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFLINEARCOMBINATIONIMPL_HPP
-#define TSFLINEARCOMBINATIONIMPL_HPP
+#ifndef PlayaLINEARCOMBINATIONIMPL_HPP
+#define PlayaLINEARCOMBINATIONIMPL_HPP
 
 #include "SundanceDefs.hpp"
 #include "SundanceOut.hpp"
-#include "SundanceTabs.hpp"
-#include "TSFLinearCombinationDecl.hpp"
+#include "PlayaTabs.hpp"
+#include "PlayaLinearCombinationDecl.hpp"
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
 #endif
 
 
-namespace TSFExtendedOps
+namespace PlayaOps
 {
 
 using Sundance::Out;
@@ -59,14 +59,14 @@ OpTimesLC<Scalar, Node>::OpTimesLC(const Scalar& alpha,
 template <class Scalar, class Node> inline
 OpTimesLC<Scalar, Node>
 ::OpTimesLC(const Scalar& alpha,
-  const TSFExtended::LinearOperator<Scalar>& op, 
+  const Playa::LinearOperator<Scalar>& op, 
   const Node& x)
   : alpha_(alpha), op_(op), x_(x) 
 {;}
   
   
 template <class Scalar, class Node> inline
-void OpTimesLC<Scalar, Node>::evalInto(TSFExtended::Vector<Scalar>& result) const
+void OpTimesLC<Scalar, Node>::evalInto(Playa::Vector<Scalar>& result) const
 {
   if (op_.ptr().get() != 0)
   {
@@ -80,7 +80,7 @@ void OpTimesLC<Scalar, Node>::evalInto(TSFExtended::Vector<Scalar>& result) cons
 }
 
 template <class Scalar, class Node> inline
-void OpTimesLC<Scalar, Node>::addInto(TSFExtended::Vector<Scalar>& result,
+void OpTimesLC<Scalar, Node>::addInto(Playa::Vector<Scalar>& result,
   LCSign sign) const
 {
   if (op_.ptr().get() != 0)
@@ -96,9 +96,9 @@ void OpTimesLC<Scalar, Node>::addInto(TSFExtended::Vector<Scalar>& result,
 } 
 
 template <class Scalar, class Node> inline
-TSFExtended::Vector<Scalar> OpTimesLC<Scalar, Node>::eval() const 
+Playa::Vector<Scalar> OpTimesLC<Scalar, Node>::eval() const 
 {
-  TSFExtended::Vector<Scalar> result;
+  Playa::Vector<Scalar> result;
   if (op_.ptr().get() != 0)
   {
     result = op_.range().createMember();
@@ -134,7 +134,7 @@ bool LC2<Scalar, Node1, Node2>::containsVector(const Thyra::VectorBase<Scalar>* 
 {return x1_.containsVector(vec) || x2_.containsVector(vec);}
 
 template <class Scalar, class Node1, class Node2> inline
-void LC2<Scalar, Node1, Node2>::evalInto(TSFExtended::Vector<Scalar>& result) const
+void LC2<Scalar, Node1, Node2>::evalInto(Playa::Vector<Scalar>& result) const
 {
   Tabs tab;
   x1_.evalInto(result);
@@ -142,8 +142,8 @@ void LC2<Scalar, Node1, Node2>::evalInto(TSFExtended::Vector<Scalar>& result) co
 } 
 
 template <class Scalar, class Node1, class Node2> inline
-void LC2<Scalar, Node1, Node2>::addInto(TSFExtended::Vector<Scalar>& result,
-  TSFExtendedOps::LCSign sign) const
+void LC2<Scalar, Node1, Node2>::addInto(Playa::Vector<Scalar>& result,
+  PlayaOps::LCSign sign) const
 {
   x1_.addInto(result, sign);
   if (sign_*sign < 0) x2_.addInto(result, LCSubtract);
@@ -151,20 +151,20 @@ void LC2<Scalar, Node1, Node2>::addInto(TSFExtended::Vector<Scalar>& result,
 }
 
 template <class Scalar, class Node1, class Node2> inline
-TSFExtended::Vector<Scalar> LC2<Scalar, Node1, Node2>::eval() const
+Playa::Vector<Scalar> LC2<Scalar, Node1, Node2>::eval() const
 {
-  TSFExtended::Vector<Scalar> result = x1_.eval();
+  Playa::Vector<Scalar> result = x1_.eval();
   x2_.addInto(result, sign_);
   return result;
 }
 }
 
-namespace TSFExtended
+namespace Playa
 {
-using TSFExtendedOps::OpTimesLC;
-using TSFExtendedOps::LC2;
-using TSFExtendedOps::LCAdd;
-using TSFExtendedOps::LCSubtract;
+using PlayaOps::OpTimesLC;
+using PlayaOps::LC2;
+using PlayaOps::LCAdd;
+using PlayaOps::LCSubtract;
 
 /* ------------------------ global methods ----------------------- */
 
@@ -520,7 +520,7 @@ operator-(const LC2<Scalar, Node1, Node2>& x1,
 /* definition of assignment from 1-term linear combination to a vector */
 template <class Scalar> 
 template <class Node> inline
-Vector<Scalar>& Vector<Scalar>::operator=(const TSFExtendedOps::OpTimesLC<Scalar, Node>& x)
+Vector<Scalar>& Vector<Scalar>::operator=(const PlayaOps::OpTimesLC<Scalar, Node>& x)
 {
   if (this->ptr().get()==0)
   {
@@ -542,7 +542,7 @@ Vector<Scalar>& Vector<Scalar>::operator=(const TSFExtendedOps::OpTimesLC<Scalar
 /* definition of assignment from N-term linear combination to a vector */
 template <class Scalar>
 template <class Node1, class Node2> inline
-Vector<Scalar>& Vector<Scalar>::operator=(const TSFExtendedOps::LC2<Scalar, Node1, Node2>& x)
+Vector<Scalar>& Vector<Scalar>::operator=(const PlayaOps::LC2<Scalar, Node1, Node2>& x)
 {
   if (this->ptr().get()==0)
   {
@@ -571,13 +571,13 @@ Vector<Scalar>& Vector<Scalar>::operator=(const TSFExtendedOps::LC2<Scalar, Node
 
 template <class Scalar>
 template <class Node1, class Node2> inline
-Vector<Scalar>::Vector(const TSFExtendedOps::LC2<Scalar, Node1, Node2>& x)
+Vector<Scalar>::Vector(const PlayaOps::LC2<Scalar, Node1, Node2>& x)
   : Handle<Thyra::VectorBase<Scalar> >(x.eval().ptr())
 {;}
 
 template <class Scalar> 
 template <class Node> inline
-Vector<Scalar>::Vector(const TSFExtendedOps::OpTimesLC<Scalar, Node>& x)
+Vector<Scalar>::Vector(const PlayaOps::OpTimesLC<Scalar, Node>& x)
   : Handle<Thyra::VectorBase<Scalar> >(x.eval().ptr())
 {;}
 

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,23 +26,23 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFVECTORSPACEIMPL_HPP
-#define TSFVECTORSPACEIMPL_HPP
+#ifndef PlayaVECTORSPACEIMPL_HPP
+#define PlayaVECTORSPACEIMPL_HPP
 
 
-#include "Thyra_ProductVectorSpaceBase.hpp"
-#include "TSFVectorSpaceDecl.hpp"
-#include "TSFVectorDecl.hpp"
+#include "Thyra_BlockVectorSpaceBase.hpp"
+#include "PlayaVectorSpaceDecl.hpp"
+#include "PlayaVectorDecl.hpp"
 #include "Thyra_SpmdVectorSpaceBase.hpp"
 #include "Teuchos_Describable.hpp"
 #include "Teuchos_Time.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFSequentialIteratorImpl.hpp"
+#include "PlayaSequentialIteratorImpl.hpp"
 #endif
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 
@@ -165,8 +165,8 @@ bool VectorSpace<Scalar>::contains(const Vector<Scalar> &vec) const
 template <class Scalar>
 int VectorSpace<Scalar>::numBlocks() const
 {
-  const Thyra::ProductVectorSpaceBase<Scalar>* pvs = 
-    dynamic_cast<const Thyra::ProductVectorSpaceBase<Scalar>* > (this->ptr().get());
+  const Thyra::BlockVectorSpaceBase<Scalar>* pvs = 
+    dynamic_cast<const Thyra::BlockVectorSpaceBase<Scalar>* > (this->ptr().get());
   if (pvs != 0)
     {
       return pvs->numBlocks();
@@ -180,10 +180,10 @@ int VectorSpace<Scalar>::numBlocks() const
 template <class Scalar>
 VectorSpace<Scalar> VectorSpace<Scalar>::getBlock(const int i) const
 {
-  const Thyra::ProductVectorSpaceBase<Scalar>* pvs = 
-    dynamic_cast<const Thyra::ProductVectorSpaceBase<Scalar>* > (this->ptr().get());
+  const Thyra::BlockVectorSpaceBase<Scalar>* pvs = 
+    dynamic_cast<const Thyra::BlockVectorSpaceBase<Scalar>* > (this->ptr().get());
   TEST_FOR_EXCEPTION(pvs == 0 && numBlocks()!=1, std::runtime_error,
-		     "Space not a ProductVectorSpace" << std::endl);
+		     "Space not a BlockVectorSpace" << std::endl);
   if (pvs != 0)
     {
       return pvs->getBlock(i);
@@ -197,14 +197,14 @@ VectorSpace<Scalar> VectorSpace<Scalar>::getBlock(const int i) const
 // void VectorSpace<Scalar>::setBlock(int i, 
 // 				   const VectorSpace<Scalar>& space)
 // {
-//   const Thyra::ProductVectorSpace<Scalar>*  pvs = 
-//     dynamic_cast<const Thyra::ProductVectorSpace<Scalar>* >  (this->ptr().get());
+//   const Thyra::BlockVectorSpace<Scalar>*  pvs = 
+//     dynamic_cast<const Thyra::BlockVectorSpace<Scalar>* >  (this->ptr().get());
 
 //   TEST_FOR_EXCEPTION(pvs == 0, std::runtime_error,
 // 		     "Can't set block of vector space that is " <<
-// 		     "not a ProductVectorSpace.");
+// 		     "not a BlockVectorSpace.");
 
-//   Thyra::ProductVectorSpace<Scalar>* pvsc = const_cast<ProductVectorSpace<Scalar>*> (pvs);
+//   Thyra::BlockVectorSpace<Scalar>* pvsc = const_cast<BlockVectorSpace<Scalar>*> (pvs);
 //   pvsc->setBlock(i, space);
 // }
 
@@ -274,7 +274,7 @@ bool VectorSpace<Scalar>::advanceIndex(
    * like an advanceIndex() function. 
    */
   bool isProductSpace = (0 != 
-    dynamic_cast<const Thyra::ProductVectorSpaceBase<Scalar>* > (this->ptr().get()));
+    dynamic_cast<const Thyra::BlockVectorSpaceBase<Scalar>* > (this->ptr().get()));
   if (!isProductSpace)
   {
     indexInCurrentBlock++;

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,20 +26,20 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFPRECONDITIONER_HPP
-#define TSFPRECONDITIONER_HPP
+#ifndef PlayaPRECONDITIONER_HPP
+#define PlayaPRECONDITIONER_HPP
 
 #include "SundanceDefs.hpp"
-#include "SundanceHandle.hpp"
-#include "TSFPreconditionerBase.hpp"
+#include "PlayaHandle.hpp"
+#include "PlayaPreconditionerBase.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   /**
    * 
    */
   template <class Scalar> 
-  class Preconditioner : public Sundance::Handle<PreconditionerBase<Scalar> >
+  class Preconditioner : public Playa::Handle<PreconditionerBase<Scalar> >
   {
   public:
     /* Boilerplate ctors */

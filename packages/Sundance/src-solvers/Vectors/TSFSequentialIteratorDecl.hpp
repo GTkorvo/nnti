@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,13 +26,13 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFSEQUENTIALITERATORDECL_HPP
-#define TSFSEQUENTIALITERATORDECL_HPP
+#ifndef PlayaSEQUENTIALITERATORDECL_HPP
+#define PlayaSEQUENTIALITERATORDECL_HPP
 
 #include "SundanceDefs.hpp"
 #include "Thyra_OperatorVectorTypes.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 
 using Teuchos::RCP;
@@ -109,11 +109,11 @@ private:
 
 }
 
-namespace TSFExtended
+namespace Playa
 {
 template <class Scalar> inline
 std::ostream& operator<<(std::ostream& os, 
-  const TSFExtended::SequentialIterator<Scalar>& i)
+  const Playa::SequentialIterator<Scalar>& i)
 {
   return i.print(os);
 }

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,19 +26,19 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFLINEAROPERATORDECL_HPP
-#define TSFLINEAROPERATORDECL_HPP
+#ifndef PlayaLINEAROPERATORDECL_HPP
+#define PlayaLINEAROPERATORDECL_HPP
 
 #include "SundanceDefs.hpp"
-#include "SundanceHandle.hpp"
-#include "SundanceHandleable.hpp"
+#include "PlayaHandle.hpp"
+#include "PlayaHandleable.hpp"
 #include "Thyra_LinearOpBase.hpp"
-#include "TSFLoadableMatrix.hpp"
+#include "PlayaLoadableMatrix.hpp"
 #include "Teuchos_TimeMonitor.hpp"
-#include "TSFRowAccessibleOp.hpp"
+#include "PlayaRowAccessibleOp.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
 using Thyra::Index;
 using namespace Teuchos;
@@ -54,7 +54,7 @@ template <class Scalar>  class VectorType;
  * User-level linear operator class
  */
 template <class Scalar>
-class LinearOperator : public Sundance::Handle<LinearOpBase<Scalar> >
+class LinearOperator : public Playa::Handle<LinearOpBase<Scalar> >
 {
 public:
   /** \name Constructors, Destructors, and Assignment Operators */

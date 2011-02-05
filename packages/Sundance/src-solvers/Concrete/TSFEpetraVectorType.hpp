@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,23 +24,23 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFEPETRAVECTORTYPE_HPP
-#define TSFEPETRAVECTORTYPE_HPP
+#ifndef PlayaEPETRAVECTORTYPE_HPP
+#define PlayaEPETRAVECTORTYPE_HPP
 
-#include "TSFEpetraVectorSpace.hpp"
-#include "SundanceHandleable.hpp"
-#include "SundancePrintable.hpp"
+#include "PlayaEpetraVectorSpace.hpp"
+#include "PlayaHandleable.hpp"
+#include "PlayaPrintable.hpp"
 #include "Teuchos_Describable.hpp"
-#include "TSFVectorTypeExtensions.hpp"
- //#include "TSFLinearOperatorDecl.hpp"
+#include "PlayaVectorTypeExtensions.hpp"
+ //#include "PlayaLinearOperatorDecl.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
   using namespace Thyra;
   /**
-   * TSF extension of Thyra::EpetraVectorSpaceFactory, allowing 
+   * Playa extension of Thyra::EpetraVectorSpaceFactory, allowing 
    * use in handles and more extensive capability for creating
    * distributed spaces.
    * This class derives
@@ -51,8 +51,8 @@ namespace TSFExtended
 
 
   class EpetraVectorType : public VectorTypeExtensions<double>,
-                           public Sundance::Handleable<VectorTypeExtensions<double> >,
-                           public Printable,
+                           public Playa::Handleable<VectorTypeExtensions<double> >,
+                           public Playa::Printable,
                            public Describable
   {
   public:

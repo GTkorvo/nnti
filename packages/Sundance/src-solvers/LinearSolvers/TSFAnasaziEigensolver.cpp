@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -30,9 +30,9 @@
 
 #ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 
-#include "TSFAnasaziEigensolverImpl.hpp"
+#include "PlayaAnasaziEigensolverImpl.hpp"
 
-template class TSFExtended::AnasaziEigensolver<double>;
+template class Playa::AnasaziEigensolver<double>;
 
 #endif
 

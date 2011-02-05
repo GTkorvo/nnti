@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,12 +26,12 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFNONMEMBEROPHELPERS_IMPL_HPP
-#define TSFNONMEMBEROPHELPERS_IMPL_HPP
+#ifndef PlayaNONMEMBEROPHELPERS_IMPL_HPP
+#define PlayaNONMEMBEROPHELPERS_IMPL_HPP
 
 
-#include "TSFMultiVectorOperator.hpp"
-#include "TSFCommonOperatorsDecl.hpp"
+#include "PlayaMultiVectorOperator.hpp"
+#include "PlayaCommonOperatorsDecl.hpp"
 #include "Thyra_DefaultZeroLinearOp.hpp"
 #include "Thyra_DefaultDiagonalLinearOp.hpp"
 #include "Thyra_DefaultAddedLinearOp.hpp"
@@ -42,11 +42,11 @@
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFCommonOperatorsImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
+#include "PlayaCommonOperatorsImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
 #endif
 
-namespace TSFExtended
+namespace Playa
 {
 
 template <class Scalar> inline

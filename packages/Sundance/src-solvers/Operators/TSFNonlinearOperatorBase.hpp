@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,18 +26,18 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFNONLINEAROPERATORBASE_HPP
-#define TSFNONLINEAROPERATORBASE_HPP
+#ifndef PlayaNONLINEAROPERATORBASE_HPP
+#define PlayaNONLINEAROPERATORBASE_HPP
 
 #include "SundanceDefs.hpp"
-#include "SundanceHandleable.hpp"
+#include "PlayaHandleable.hpp"
 #include "SundanceOut.hpp"
 #include "SundanceObjectWithVerbosity.hpp"
-#include "TSFVectorDecl.hpp"
-#include "TSFLinearOperatorDecl.hpp"
-#include "TSFLinearCombinationDecl.hpp"
+#include "PlayaVectorDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
+#include "PlayaLinearCombinationDecl.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using Thyra::Index;
 using namespace Teuchos;
@@ -47,7 +47,7 @@ using namespace Teuchos;
  */
 template <class Scalar>
 class NonlinearOperatorBase 
-  : public Sundance::Handleable<NonlinearOperatorBase<Scalar> >,
+  : public Playa::Handleable<NonlinearOperatorBase<Scalar> >,
     public ObjectWithClassVerbosity<NonlinearOperatorBase<Scalar> >
 {
 public:

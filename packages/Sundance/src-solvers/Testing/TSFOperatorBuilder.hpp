@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -27,22 +27,22 @@
  /* @HEADER@ */
 
 
-#ifndef TSFOPERATORBUILDER_HPP
-#define TSFOPERATORBUILDER_HPP
+#ifndef PlayaOPERATORBUILDER_HPP
+#define PlayaOPERATORBUILDER_HPP
 
-#include "TSFLinearOperatorDecl.hpp"
-#include "TSFLinearCombinationDecl.hpp"
-#include "TSFVectorType.hpp"
-#include "TSFVectorSpaceDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
+#include "PlayaLinearCombinationDecl.hpp"
+#include "PlayaVectorType.hpp"
+#include "PlayaVectorSpaceDecl.hpp"
 #include "Teuchos_Array.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 
-namespace TSFExtended
+namespace Playa
 {
   /** Base class for building test operators */
   template <class Scalar>

@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,15 +24,15 @@
 // 
 // **********************************************************************/
 
-#include "TSFVectorSpace2EpetraMap.hpp"
-#include "TSFEpetraVectorSpace.hpp"
-#include "TSFEpetraVector.hpp"
+#include "PlayaVectorSpace2EpetraMap.hpp"
+#include "PlayaEpetraVectorSpace.hpp"
+#include "PlayaEpetraVector.hpp"
 #include "Teuchos_Utils.hpp"
 #include "Teuchos_DefaultSerialComm.hpp"
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorSpaceImpl.hpp"
+#include "PlayaVectorSpaceImpl.hpp"
 #endif
 
 #ifdef HAVE_MPI
@@ -57,7 +57,7 @@
 #define MPIVectorSpaceBase SpmdVectorSpaceDefaultBase
 #endif
 
-namespace TSFExtended {
+namespace Playa {
   using namespace Teuchos;
   using namespace Thyra;
 
@@ -81,7 +81,7 @@ namespace TSFExtended {
     int dim = tsfSpace.dim();
 
     RCP<Epetra_Comm> comm;
-    TSFExtended::getComm(tsfSpace, comm);
+    Playa::getComm(tsfSpace, comm);
 
     RCP<const Epetra_Map> rtn = rcp(new Epetra_Map(dim, globIndices.size(),
 						     &(globIndices[0]),
@@ -90,7 +90,7 @@ namespace TSFExtended {
   }
 
 
-void getComm(const TSFExtended::VectorSpace<double>& tsfSpace,
+void getComm(const Playa::VectorSpace<double>& tsfSpace,
     Teuchos::RCP<Epetra_Comm>& comm)
   {
 #ifdef HAVE_MPI

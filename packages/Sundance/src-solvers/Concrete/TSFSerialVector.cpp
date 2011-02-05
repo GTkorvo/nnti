@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,8 +24,8 @@
 // 
 // **********************************************************************/
 
-#include "TSFSerialVector.hpp"
-#include "TSFSerialVectorSpace.hpp"
+#include "PlayaSerialVector.hpp"
+#include "PlayaSerialVectorSpace.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_dyn_cast.hpp"
 #include "Teuchos_Workspace.hpp"
@@ -37,12 +37,12 @@
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
 #endif
 
 using namespace Teuchos;
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Thyra;
 
 using Teuchos::Range1D;

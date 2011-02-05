@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,20 +26,20 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#include "TSFEpetraMatrix.hpp"
-#include "TSFEpetraMatrixMatrixSum.hpp"
-#include "TSFEpetraVector.hpp"
-#include "SundanceExceptions.hpp"
+#include "PlayaEpetraMatrix.hpp"
+#include "PlayaEpetraMatrixMatrixSum.hpp"
+#include "PlayaEpetraVector.hpp"
+#include "PlayaExceptions.hpp"
 #include "EpetraExt_MatrixMatrix.h"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
 #endif
 
 
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 
@@ -59,14 +59,14 @@ LinearOperator<double> epetraMatrixMatrixSum(
   bool transA = false;
   bool transB = false;
 
-  TEST_FOR_EXCEPTION(A.range() != B.range(), RuntimeError,
+  TEST_FOR_EXCEPTION(A.range() != B.range(), std::runtime_error,
     "incompatible operand ranges in epetraMatrixMatrixSum()"
     << std::endl << "A.range()=" << A.range()
     << std::endl << "B.range()=" << B.range()
     );
   
 
-  TEST_FOR_EXCEPTION(A.domain() != B.domain(), RuntimeError,
+  TEST_FOR_EXCEPTION(A.domain() != B.domain(), std::runtime_error,
     "incompatible operand domains in epetraMatrixMatrixSum()"
     << std::endl << "A.domain()=" << A.domain()
     << std::endl << "B.domain()=" << B.domain()
@@ -86,7 +86,7 @@ LinearOperator<double> epetraMatrixMatrixSum(
     = EpetraExt::MatrixMatrix::Add(
       *A_crs, transA, 1.0, 
       *B_crs, transB, 1.0, CPtr);
-  TEST_FOR_EXCEPTION(ierr != 0, RuntimeError,
+  TEST_FOR_EXCEPTION(ierr != 0, std::runtime_error,
     "EpetraExt Matrix-matrix add failed with error code ierr=" << ierr);
 
   /* Need to call FillComplete on the result */

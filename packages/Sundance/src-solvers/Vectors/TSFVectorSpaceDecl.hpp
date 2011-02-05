@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,17 +26,17 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFVECTORSPACEDECL_HPP
-#define TSFVECTORSPACEDECL_HPP
+#ifndef PlayaVECTORSPACEDECL_HPP
+#define PlayaVECTORSPACEDECL_HPP
 
 #include "SundanceDefs.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
-#include "SundanceHandle.hpp"
-#include "TSFSequentialIteratorDecl.hpp"
+#include "PlayaHandle.hpp"
+#include "PlayaSequentialIteratorDecl.hpp"
 
 
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 
@@ -44,10 +44,10 @@ template<class Scalar> class Vector;
 
 /**
  *  Implementation of the Handle for the Vector class.  This wraps a
- *  TSFCoreVector
+ *  PlayaCoreVector
  */
 template <class Scalar>
-class VectorSpace : public Sundance::Handle< const Thyra::VectorSpaceBase<Scalar> >
+class VectorSpace : public Playa::Handle< const Thyra::VectorSpaceBase<Scalar> >
 {
 public:
   HANDLE_CTORS(VectorSpace<Scalar>, const Thyra::VectorSpaceBase<Scalar>);

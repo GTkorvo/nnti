@@ -28,19 +28,19 @@
 */
 
 
-#ifndef TSF_PARAMETERLIST_PRECONDITIONERFACTORY_HPP
-#define TSF_PARAMETERLIST_PRECONDITIONERFACTORY_HPP
+#ifndef Playa_PARAMETERLIST_PRECONDITIONERFACTORY_HPP
+#define Playa_PARAMETERLIST_PRECONDITIONERFACTORY_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFPreconditionerFactoryBase.hpp"
-#include "TSFILUKPreconditionerFactory.hpp"
-#include "TSFLinearOperatorDecl.hpp"
+#include "PlayaPreconditionerFactoryBase.hpp"
+#include "PlayaILUKPreconditionerFactory.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
 #include "Teuchos_ParameterList.hpp"
-#include "TSFILUFactorizableOp.hpp"
-#include "TSFLinearSolverBaseDecl.hpp"
-#include "TSFMLOperator.hpp"
+#include "PlayaILUFactorizableOp.hpp"
+#include "PlayaLinearSolverBaseDecl.hpp"
+#include "PlayaMLOperator.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 

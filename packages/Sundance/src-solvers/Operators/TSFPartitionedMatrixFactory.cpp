@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,18 +26,18 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#include "TSFPartitionedMatrixFactory.hpp"
-#include "TSFVectorType.hpp"
-#include "TSFLoadableBlockOperatorDecl.hpp"
+#include "PlayaPartitionedMatrixFactory.hpp"
+#include "PlayaVectorType.hpp"
+#include "PlayaLoadableBlockOperatorDecl.hpp"
 #include "Teuchos_MPIComm.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorSpaceImpl.hpp"
-#include "TSFSequentialIteratorImpl.hpp"
-#include "TSFLoadableBlockOperatorImpl.hpp"
+#include "PlayaVectorSpaceImpl.hpp"
+#include "PlayaSequentialIteratorImpl.hpp"
+#include "PlayaLoadableBlockOperatorImpl.hpp"
 #endif
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 PartitionedMatrixFactory::PartitionedMatrixFactory(
@@ -169,7 +169,7 @@ LinearOperator<double> PartitionedMatrixFactory::createMatrix() const
 {
 
   RCP<LinearOpBase<double> > op 
-    = rcp(new TSFExtended::LoadableBlockOperator<double>(domain_, lowestLocalCol_, isBCCol_, remoteBCCols_, range_, lowestLocalRow_, isBCRow_));
+    = rcp(new Playa::LoadableBlockOperator<double>(domain_, lowestLocalCol_, isBCCol_, remoteBCCols_, range_, lowestLocalRow_, isBCRow_));
   LinearOperator<double> A = op;
 
   LinearOperator<double> A_ii = blockFactory_[0][0]->createMatrix();

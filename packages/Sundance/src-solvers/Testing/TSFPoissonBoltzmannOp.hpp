@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,15 +26,15 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSF_POISSONBOLTZMANNOP_HPP
-#define TSF_POISSONBOLTZMANNOP_HPP
+#ifndef Playa_POISSONBOLTZMANNOP_HPP
+#define Playa_POISSONBOLTZMANNOP_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFNonlinearOperatorBase.hpp"
-#include "TSFPoissonBoltzmannJacobian.hpp"
-#include "TSFVectorDecl.hpp"
+#include "PlayaNonlinearOperatorBase.hpp"
+#include "PlayaPoissonBoltzmannJacobian.hpp"
+#include "PlayaVectorDecl.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   /** */
   class PoissonBoltzmannOp : public NonlinearOperatorBase<double>

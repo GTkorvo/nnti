@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,14 +24,14 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFGHOSTIMPORTER_HPP
-#define TSFGHOSTIMPORTER_HPP
+#ifndef PlayaGHOSTIMPORTER_HPP
+#define PlayaGHOSTIMPORTER_HPP
 
-#include "TSFVectorDecl.hpp"
-#include "TSFVectorSpaceDecl.hpp"
-#include "TSFGhostView.hpp"
+#include "PlayaVectorDecl.hpp"
+#include "PlayaVectorSpaceDecl.hpp"
+#include "PlayaGhostView.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
 
@@ -40,7 +40,7 @@ namespace TSFExtended
    * off-processor, or "ghost", elements of a vector. In 
    * matrix-vector multiplications,
    * access to off-processor elements is assumed to be handled internally
-   * by the apply() method of LinearOp subtypes, so the TSF Vector type
+   * by the apply() method of LinearOp subtypes, so the Playa Vector type
    * does not need explicit accessors for ghost elements. However, in 
    * application interfaces such as finite element assembly engines, 
    * read-only access to ghost elements is sometimes required. The abstract

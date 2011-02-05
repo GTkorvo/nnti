@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,13 +24,13 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFGHOSTVIEW_HPP
-#define TSFGHOSTVIEW_HPP
+#ifndef PlayaGHOSTVIEW_HPP
+#define PlayaGHOSTVIEW_HPP
 
-#include "TSFAccessibleVector.hpp"
-#include "TSFVectorDecl.hpp"
+#include "PlayaAccessibleVector.hpp"
+#include "PlayaVectorDecl.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
 
@@ -42,7 +42,7 @@ namespace TSFExtended
    */
   template <class Scalar>
   class GhostView : public AccessibleVector<Scalar>,
-                    public Sundance::Printable
+                    public Playa::Printable
   {
   public:
     /** Virtual dtor */

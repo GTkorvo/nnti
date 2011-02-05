@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,18 +26,18 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#include "TSFIfpackOperator.hpp"
+#include "PlayaIfpackOperator.hpp"
 #include "Teuchos_Array.hpp"
 #include "Teuchos_MPIComm.hpp"
-#include "TSFEpetraVector.hpp"
+#include "PlayaEpetraVector.hpp"
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
 #endif
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 IfpackOperator::IfpackOperator(const EpetraMatrix* A,

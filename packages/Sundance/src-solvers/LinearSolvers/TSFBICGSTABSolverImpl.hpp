@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,24 +26,24 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFBICGSTABSOLVER_IMPL_HPP
-#define TSFBICGSTABSOLVER_IMPL_HPP
+#ifndef PlayaBICGSTABSOLVER_IMPL_HPP
+#define PlayaBICGSTABSOLVER_IMPL_HPP
 
-#include "TSFBICGSTABSolverDecl.hpp"
-#include "TSFLinearCombinationImpl.hpp"
-#include "TSFSimpleScaledOpDecl.hpp"
-#include "TSFSimpleComposedOpDecl.hpp"
+#include "PlayaBICGSTABSolverDecl.hpp"
+#include "PlayaLinearCombinationImpl.hpp"
+#include "PlayaSimpleScaledOpDecl.hpp"
+#include "PlayaSimpleComposedOpDecl.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFLinearOperatorImpl.hpp"
-#include "TSFLinearSolverBaseImpl.hpp"
-#include "TSFSimpleScaledOpImpl.hpp"
-#include "TSFSimpleComposedOpImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
+#include "PlayaLinearSolverBaseImpl.hpp"
+#include "PlayaSimpleScaledOpImpl.hpp"
+#include "PlayaSimpleComposedOpImpl.hpp"
 #endif
 
 
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 using namespace Sundance;

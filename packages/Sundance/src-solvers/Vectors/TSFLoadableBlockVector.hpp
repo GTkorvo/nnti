@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,15 +26,15 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFLOADABLEBLOCKVECTOR_HPP
-#define TSFLOADABLEBLOCKVECTOR_HPP
+#ifndef PlayaLOADABLEBLOCKVECTOR_HPP
+#define PlayaLOADABLEBLOCKVECTOR_HPP
 
 #include "SundanceDefs.hpp"
 #include "Thyra_VectorBase.hpp"
 
 #ifndef DOXYGEN_DEVELOPER_ONLY
 
-namespace TSFExtended
+namespace Playa
 {
   
   /**

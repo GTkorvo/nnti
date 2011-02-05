@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 //
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 //
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,13 +26,13 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFHOMOGENEOUSLYBLOCKEDLINEAROP_HPP
-#define TSFHOMOGENEOUSLYBLOCKEDLINEAROP_HPP
+#ifndef PlayaHOMOGENEOUSLYBLOCKEDLINEAROP_HPP
+#define PlayaHOMOGENEOUSLYBLOCKEDLINEAROP_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFSimplifiedLinearOpBase.hpp"
+#include "PlayaSimplifiedLinearOpBase.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 
@@ -69,8 +69,8 @@ public:
     {
       Array<VectorSpace<Scalar> > d(numDomainBlocks_, singleBlockDomain_);
       Array<VectorSpace<Scalar> > r(numRangeBlocks_, singleBlockRange_);
-      domain_ = productSpace(d);
-      range_ = productSpace(r);
+      domain_ = blockSpace(d);
+      range_ = blockSpace(r);
     }      
 
   /** 

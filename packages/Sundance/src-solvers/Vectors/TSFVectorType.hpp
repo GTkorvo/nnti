@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,15 +24,15 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFVECTORTYPE_HPP
-#define TSFVECTORTYPE_HPP
+#ifndef PlayaVECTORTYPE_HPP
+#define PlayaVECTORTYPE_HPP
 
-#include "SundanceHandle.hpp"
-#include "TSFVectorTypeExtensions.hpp"
-#include "TSFVectorSpaceDecl.hpp"
-#include "TSFGhostImporter.hpp"
+#include "PlayaHandle.hpp"
+#include "PlayaVectorTypeExtensions.hpp"
+#include "PlayaVectorSpaceDecl.hpp"
+#include "PlayaGhostImporter.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
   /**
@@ -40,7 +40,7 @@ namespace TSFExtended
    * vector spaces and operators of a given type.
    */
   template <class Scalar>
-  class VectorType : public Sundance::Handle<VectorTypeExtensions<Scalar> >
+  class VectorType : public Playa::Handle<VectorTypeExtensions<Scalar> >
   {
   public:
     HANDLE_CTORS(VectorType<Scalar>, VectorTypeExtensions<Scalar>);

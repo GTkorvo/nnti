@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,8 +24,8 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFEPETRAVECTORSPACE_HPP
-#define TSFEPETRAVECTORSPACE_HPP
+#ifndef PlayaEPETRAVECTORSPACE_HPP
+#define PlayaEPETRAVECTORSPACE_HPP
 
 #include "SundanceDefs.hpp"
 #include "Epetra_Map.h"
@@ -34,7 +34,7 @@
 #include "Thyra_ScalarProdVectorSpaceBase.hpp"
 #include "Thyra_SpmdVectorSpaceBase.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 using namespace Thyra;

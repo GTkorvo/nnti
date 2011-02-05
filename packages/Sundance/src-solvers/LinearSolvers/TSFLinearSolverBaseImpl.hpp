@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,19 +26,19 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFLINEARSOLVERBASEIMPL_HPP
-#define TSFLINEARSOLVERBASEIMPL_HPP
+#ifndef PlayaLINEARSOLVERBASEIMPL_HPP
+#define PlayaLINEARSOLVERBASEIMPL_HPP
 
-#include "TSFLinearSolverBaseDecl.hpp"
-#include "TSFPreconditioner.hpp"
-#include "TSFPreconditionerFactory.hpp"
+#include "PlayaLinearSolverBaseDecl.hpp"
+#include "PlayaPreconditioner.hpp"
+#include "PlayaPreconditionerFactory.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 
 using namespace Teuchos;
 
 
-namespace TSFExtended
+namespace Playa
 {
 
 template <class Scalar> inline

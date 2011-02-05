@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,17 +24,17 @@
 // 
 // **********************************************************************/
 
-#ifndef TSF_SERIAL_GHOSTVIEW_HPP
-#define TSF_SERIAL_GHOSTVIEW_HPP
+#ifndef Playa_SERIAL_GHOSTVIEW_HPP
+#define Playa_SERIAL_GHOSTVIEW_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFGhostView.hpp"
-#include "TSFSerialVector.hpp"
+#include "PlayaGhostView.hpp"
+#include "PlayaSerialVector.hpp"
 #include "Teuchos_Utils.hpp"
 
 
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
 

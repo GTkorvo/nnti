@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -27,16 +27,16 @@
  /* @HEADER@ */
 
 
-#ifndef TSF_HEATOPERATOR1D_HPP
-#define TSF_HEATOPERATOR1D_HPP
+#ifndef Playa_HEATOPERATOR1D_HPP
+#define Playa_HEATOPERATOR1D_HPP
 
-#include "TSFOperatorBuilder.hpp"
+#include "PlayaOperatorBuilder.hpp"
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 
-namespace TSFExtended
+namespace Playa
 {
   /** */
   class HeatOperator1D : public OperatorBuilder<double>

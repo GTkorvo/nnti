@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -27,10 +27,10 @@
  /* @HEADER@ */
 
 
-#ifndef TSF_ANDREDUCE_HPP
-#define TSF_ANDREDUCE_HPP
+#ifndef Playa_ANDREDUCE_HPP
+#define Playa_ANDREDUCE_HPP
 
-namespace TSFExtended
+namespace Playa
 {
 /** */
 bool globalAnd(bool localVal);

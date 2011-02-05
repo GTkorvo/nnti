@@ -1,19 +1,19 @@
-#include "TSFAmesosSolver.hpp"
-#include "TSFEpetraVector.hpp"
-#include "TSFEpetraMatrix.hpp"
+#include "PlayaAmesosSolver.hpp"
+#include "PlayaEpetraVector.hpp"
+#include "PlayaEpetraMatrix.hpp"
 
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
-#include "TSFLinearSolverImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
+#include "PlayaLinearSolverImpl.hpp"
 #endif
 
 #include "Amesos.h"
 #include "Amesos_BaseSolver.h"
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 
@@ -38,8 +38,8 @@ SolverState<double> AmesosSolver::solve(const LinearOperator<double>& op,
                                        const Vector<double>& rhs, 
                                        Vector<double>& soln) const
 {
-	TSFExtended::Vector<double> bCopy = rhs.copy();
-	TSFExtended::Vector<double> xCopy = rhs.copy();
+	Playa::Vector<double> bCopy = rhs.copy();
+	Playa::Vector<double> xCopy = rhs.copy();
 
   Epetra_Vector* b = EpetraVector::getConcretePtr(bCopy);
   Epetra_Vector* x = EpetraVector::getConcretePtr(xCopy);

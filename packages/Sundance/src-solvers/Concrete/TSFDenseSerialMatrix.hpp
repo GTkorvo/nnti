@@ -1,17 +1,17 @@
-#ifndef TSF_DENSE_SERIAL_MATRIX_H
-#define TSF_DENSE_SERIAL_MATRIX_H
+#ifndef Playa_DENSE_SERIAL_MATRIX_H
+#define Playa_DENSE_SERIAL_MATRIX_H
 
 #include "SundanceDefs.hpp"
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
-#include "SundancePrintable.hpp"
+#include "PlayaPrintable.hpp"
 #include "Teuchos_Describable.hpp"
-#include "TSFSimplifiedLinearOpBaseDecl.hpp"
-#include "TSFSerialVectorSpace.hpp"
-#include "TSFLoadableMatrix.hpp"
-#include "TSFSolverState.hpp"
+#include "PlayaSimplifiedLinearOpBaseDecl.hpp"
+#include "PlayaSerialVectorSpace.hpp"
+#include "PlayaLoadableMatrix.hpp"
+#include "PlayaSolverState.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 
@@ -23,7 +23,7 @@ template <class T> class LinearOperator;
 
 class DenseSerialMatrix : public SimplifiedLinearOpBase<double>,
                           public LoadableMatrix<double>,
-                          public Sundance::Printable
+                          public Playa::Printable
 {
 public:
   /** Construct with domain and range spaces, which should be

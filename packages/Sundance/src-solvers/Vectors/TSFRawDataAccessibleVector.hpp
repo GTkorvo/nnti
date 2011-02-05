@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,17 +26,17 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFRAWDATAACCESSABLEVECTOR_HPP
-#define TSFRAWDATAACCESSABLEVECTOR_HPP
+#ifndef PlayaRAWDATAACCESSABLEVECTOR_HPP
+#define PlayaRAWDATAACCESSABLEVECTOR_HPP
 
 #include "SundanceDefs.hpp"
 
-#include "TSFLoadableVector.hpp"
-#include "TSFAccessibleVector.hpp"
+#include "PlayaLoadableVector.hpp"
+#include "PlayaAccessibleVector.hpp"
 
 
 
-namespace TSFExtended
+namespace Playa
 {
   using Thyra::Index;
 

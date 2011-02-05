@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,25 +26,25 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFINVERSEOPERATOR_DECL_HPP
-#define TSFINVERSEOPERATOR_DECL_HPP
+#ifndef PlayaINVERSEOPERATOR_DECL_HPP
+#define PlayaINVERSEOPERATOR_DECL_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFLinearOperatorDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
 #include "Thyra_ZeroLinearOpBase.hpp"
-#include "TSFOpWithBackwardsCompatibleApply.hpp"
+#include "PlayaOpWithBackwardsCompatibleApply.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 
 #include "Teuchos_RefCountPtr.hpp"
-#include "TSFLinearSolverDecl.hpp"
-#include "TSFSolverState.hpp"
+#include "PlayaLinearSolverDecl.hpp"
+#include "PlayaSolverState.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using Teuchos::RCP;
 
 /** 
- * TSFInverseOperator represents the inverse of some other operator.  An
+ * PlayaInverseOperator represents the inverse of some other operator.  An
  * inverse operator object will contain an operator and a solver.  The 
  * operator data member is the operator whose inverse this represents.  The
  * solver data member is the solver that will be used in applying the
@@ -54,7 +54,7 @@ using Teuchos::RCP;
  */
 template <class Scalar> 
 class InverseOperator : public OpWithBackwardsCompatibleApply<Scalar>,
-  public Printable
+  public Playa::Printable
 {
 public:
   /**

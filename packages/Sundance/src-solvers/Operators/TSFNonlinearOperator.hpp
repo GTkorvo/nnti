@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,15 +26,15 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFNONLINEAROPERATOR_HPP
-#define TSFNONLINEAROPERATOR_HPP
+#ifndef PlayaNONLINEAROPERATOR_HPP
+#define PlayaNONLINEAROPERATOR_HPP
 
 #include "SundanceDefs.hpp"
-#include "SundanceHandle.hpp"
-#include "TSFNonlinearOperatorBase.hpp"
+#include "PlayaHandle.hpp"
+#include "PlayaNonlinearOperatorBase.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   using Thyra::Index;
   using namespace Teuchos;
@@ -43,7 +43,7 @@ namespace TSFExtended
    * User-level nonlinear operator class
    */
   template <class Scalar>
-  class NonlinearOperator : public Sundance::Handle<NonlinearOperatorBase<Scalar> >
+  class NonlinearOperator : public Playa::Handle<NonlinearOperatorBase<Scalar> >
     {
     public:
       /* boilerplate ctors */

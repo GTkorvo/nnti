@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,28 +26,28 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFVECTORDECL_HPP
-#define TSFVECTORDECL_HPP
+#ifndef PlayaVECTORDECL_HPP
+#define PlayaVECTORDECL_HPP
 
 #include "SundanceDefs.hpp"
-#include "SundanceHandle.hpp"
+#include "PlayaHandle.hpp"
 #include "Thyra_VectorBase.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
-#include "TSFVectorSpaceDecl.hpp"
-#include "TSFLoadableVector.hpp"
-#include "TSFAccessibleVector.hpp"
-#include "TSFRawDataAccessibleVector.hpp"
+#include "PlayaVectorSpaceDecl.hpp"
+#include "PlayaLoadableVector.hpp"
+#include "PlayaAccessibleVector.hpp"
+#include "PlayaRawDataAccessibleVector.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
 #ifdef TRILINOS_6
-#include "Thyra_ProductVector.hpp"
+#include "Thyra_BlockVector.hpp"
 #else
-#include "Thyra_DefaultProductVector.hpp"
+#include "Thyra_DefaultBlockVector.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #endif
 
-namespace TSFExtendedOps
+namespace PlayaOps
 {
 template <class Scalar, class Node1, class Node2> class LC2;
 template <class Scalar, class Node> class OpTimesLC; 
@@ -57,7 +57,7 @@ template <class Scalar, class Node> class OpTimesLC;
 enum LCSign {LCAdd = 1, LCSubtract = -1};
 }
 
-namespace TSFExtended
+namespace Playa
 {
   
 
@@ -102,7 +102,7 @@ namespace TSFExtended
    * \endcode
    */
   template <class Scalar>
-  class Vector : public Sundance::Handle<Thyra::VectorBase<Scalar> >
+  class Vector : public Playa::Handle<Thyra::VectorBase<Scalar> >
   {
   public:
     /** \name Constructors, Destructors, and Assignment Operators */
@@ -111,19 +111,19 @@ namespace TSFExtended
 
     /** Construct a vector from a 2-term LC */
     template<class Node1, class Node2>
-    Vector(const TSFExtendedOps::LC2<Scalar, Node1, Node2>& x);
+    Vector(const PlayaOps::LC2<Scalar, Node1, Node2>& x);
 
     /** Construct a vector from an operator times a linear combination */
     template<class Node>
-    Vector(const TSFExtendedOps::OpTimesLC<Scalar, Node>& x);
+    Vector(const PlayaOps::OpTimesLC<Scalar, Node>& x);
 
     /** Assign a linear combination of vectors to this vector */
     template<class Node1, class Node2>
-    Vector& operator=(const TSFExtendedOps::LC2<Scalar, Node1, Node2>& x);
+    Vector& operator=(const PlayaOps::LC2<Scalar, Node1, Node2>& x);
 
     /** Assign a scaled linear combination to this vector */
     template<class Node>
-    Vector& operator=(const TSFExtendedOps::OpTimesLC<Scalar, Node>& x);
+    Vector& operator=(const PlayaOps::OpTimesLC<Scalar, Node>& x);
     //@}
 
     /** */
@@ -137,7 +137,7 @@ namespace TSFExtended
     }
       
 
-    /** \name ProductVector operations */
+    /** \name BlockVector operations */
     //@{
 
     /** set block  */
@@ -374,7 +374,7 @@ namespace TSFExtended
 
     void evalInto(Vector<Scalar>& other) const {other.acceptCopyOf(*this);}
 
-    void addInto(Vector<Scalar>& other, TSFExtendedOps::LCSign sign) const
+    void addInto(Vector<Scalar>& other, PlayaOps::LCSign sign) const
     {
       other.update(sign, *this);
     }
@@ -422,7 +422,7 @@ namespace TSFExtended
 }
 
 template <class Scalar> inline
-std::ostream& operator<<(std::ostream& os, const TSFExtended::Vector<Scalar>& x) 
+std::ostream& operator<<(std::ostream& os, const Playa::Vector<Scalar>& x) 
 {
   x.print(os);
   return os;

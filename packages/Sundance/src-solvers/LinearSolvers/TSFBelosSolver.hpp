@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,14 +26,14 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFBELOSSOLVER_HPP
-#define TSFBELOSSOLVER_HPP
+#ifndef PlayaBELOSSOLVER_HPP
+#define PlayaBELOSSOLVER_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFLinearSolverBaseDecl.hpp"
-#include "TSFPreconditionerFactory.hpp"
-#include "SundanceHandleable.hpp"
-#include "SundancePrintable.hpp"
+#include "PlayaLinearSolverBaseDecl.hpp"
+#include "PlayaPreconditionerFactory.hpp"
+#include "PlayaHandleable.hpp"
+#include "PlayaPrintable.hpp"
 #include "Teuchos_Describable.hpp"
 #include "BelosBlockGmresSolMgr.hpp"
 #include "BelosBlockCGSolMgr.hpp"
@@ -48,7 +48,7 @@
 #include "Teuchos_ParameterList.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
 
@@ -56,8 +56,8 @@ namespace TSFExtended
    *
    */
   class BelosSolver : public LinearSolverBase<double>,
-                      public Sundance::Handleable<LinearSolverBase<double> >,
-                      public Printable,
+                      public Playa::Handleable<LinearSolverBase<double> >,
+                      public Playa::Printable,
                       public Describable
   {
   public:

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,18 +26,18 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFBICGSTABSOLVER_DECL_HPP
-#define TSFBICGSTABSOLVER_DECL_HPP
+#ifndef PlayaBICGSTABSOLVER_DECL_HPP
+#define PlayaBICGSTABSOLVER_DECL_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFKrylovSolver.hpp"
-#include "SundanceHandleable.hpp"
-#include "SundancePrintable.hpp"
+#include "PlayaKrylovSolver.hpp"
+#include "PlayaHandleable.hpp"
+#include "PlayaPrintable.hpp"
 #include "SundanceOut.hpp"
 #include "Teuchos_Describable.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 using namespace Sundance;
@@ -46,8 +46,8 @@ using namespace Sundance;
  */
 template <class Scalar>
 class BICGSTABSolver : public KrylovSolver<Scalar>,
-                       public Sundance::Handleable<LinearSolverBase<Scalar> >,
-                       public Printable,
+                       public Playa::Handleable<LinearSolverBase<Scalar> >,
+                       public Playa::Printable,
                        public Describable
 {
 public:

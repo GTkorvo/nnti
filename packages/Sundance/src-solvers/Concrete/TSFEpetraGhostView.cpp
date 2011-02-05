@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,12 +24,12 @@
 // 
 // **********************************************************************/
 
-#include "TSFEpetraGhostView.hpp"
+#include "PlayaEpetraGhostView.hpp"
 #include "Epetra_Import.h"
 
 
 using namespace Teuchos;
-using namespace TSFExtended;
+using namespace Playa;
 
 const double& EpetraGhostView::getElement(OrdType globalIndex) const 
 {

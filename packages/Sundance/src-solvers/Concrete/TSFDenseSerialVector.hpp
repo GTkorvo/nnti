@@ -1,12 +1,12 @@
-#ifndef TSFDENSESERIALVECTOR_H
-#define TSFDENSESERIALVECTOR_H
+#ifndef PlayaDENSESERIALVECTOR_H
+#define PlayaDENSESERIALVECTOR_H
 
 #include "SundanceDefs.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_Array.hpp"
 #include "Teuchos_BLAS.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   
 

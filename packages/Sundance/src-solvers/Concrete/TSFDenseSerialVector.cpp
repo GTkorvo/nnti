@@ -1,10 +1,10 @@
-#include "TSFDenseSerialVector.hpp"
+#include "PlayaDenseSerialVector.hpp"
 #include "Teuchos_Utils.hpp"
 
 
 
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 

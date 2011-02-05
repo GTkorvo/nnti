@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,16 +26,16 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFEIGENSOLVER_HPP
-#define TSFEIGENSOLVER_HPP
+#ifndef PlayaEIGENSOLVER_HPP
+#define PlayaEIGENSOLVER_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFVectorDecl.hpp" 
-#include "TSFSolverState.hpp"
+#include "PlayaVectorDecl.hpp" 
+#include "PlayaSolverState.hpp"
 #include "Teuchos_ParameterList.hpp"
-#include "TSFEigensolverBase.hpp"
+#include "PlayaEigensolverBase.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using Teuchos::ParameterList;
 
@@ -43,13 +43,13 @@ using Teuchos::ParameterList;
  * Handle class for eigensolvers
  */
 template <class Scalar>
-class Eigensolver : public Sundance::Handle<EigensolverBase<Scalar> >
+class Eigensolver : public Playa::Handle<EigensolverBase<Scalar> >
 {
 public:
   /** */
   Eigensolver() : Handle<EigensolverBase<Scalar> >() {;}
   /** */
-  Eigensolver( Sundance::Handleable<EigensolverBase<Scalar> >* rawPtr) 
+  Eigensolver( Playa::Handleable<EigensolverBase<Scalar> >* rawPtr) 
     : Handle<EigensolverBase<Scalar> >(rawPtr) {;}
   /** */
   Eigensolver(const RCP<EigensolverBase<Scalar> >& smartPtr)

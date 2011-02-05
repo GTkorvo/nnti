@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -31,8 +31,8 @@
 
 #ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 
-#include "TSFVectorImpl.hpp"
+#include "PlayaVectorImpl.hpp"
 
-template class TSFExtended::Vector<double>;
+template class Playa::Vector<double>;
 
 #endif

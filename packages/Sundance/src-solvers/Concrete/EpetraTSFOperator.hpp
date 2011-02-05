@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,13 +26,13 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef EPETRA_TSFOPERATOR_HPP
-#define EPETRA_TSFOPERATOR_HPP
+#ifndef EPETRA_PlayaOPERATOR_HPP
+#define EPETRA_PlayaOPERATOR_HPP
 
-#include "TSFLinearOperatorDecl.hpp"
-#include "TSFLinearSolverDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
+#include "PlayaLinearSolverDecl.hpp"
 #include "Epetra_Operator.h"
-#include "TSFVectorSpace2EpetraMap.hpp"
+#include "PlayaVectorSpace2EpetraMap.hpp"
 
 namespace Epetra
 {
@@ -41,11 +41,11 @@ namespace Epetra
   
 
   /** */
-  class Epetra_TSFOperator : public Epetra_Operator
+  class Epetra_PlayaOperator : public Epetra_Operator
   {
   public:
     /** */
-    Epetra_TSFOperator(const LinearOperator<double>& A,
+    Epetra_PlayaOperator(const LinearOperator<double>& A,
 		       const LinearSolver<double>& solver=LinearSolver<double>());
     
     /** */

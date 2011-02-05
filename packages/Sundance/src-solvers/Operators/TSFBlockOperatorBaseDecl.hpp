@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 //
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 //
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,13 +26,13 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFBLOCKOPERATORBASE_DECL_HPP
-#define TSFBLOCKOPERATORBASE_DECL_HPP
+#ifndef PlayaBLOCKOPERATORBASE_DECL_HPP
+#define PlayaBLOCKOPERATORBASE_DECL_HPP
 
 #include "SundanceDefs.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
 
 

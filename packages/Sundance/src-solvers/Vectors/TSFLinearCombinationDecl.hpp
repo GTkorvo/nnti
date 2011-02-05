@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,21 +26,21 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFLINEARCOMBINATIONDECL_HPP
-#define TSFLINEARCOMBINATIONDECL_HPP
+#ifndef PlayaLINEARCOMBINATIONDECL_HPP
+#define PlayaLINEARCOMBINATIONDECL_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFVectorDecl.hpp"
-#include "TSFLinearOperatorDecl.hpp"
+#include "PlayaVectorDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 
 
 
-namespace TSFExtendedOps
+namespace PlayaOps
 {
-using TSFExtended::Vector;
-using TSFExtended::VectorSpace;
-using TSFExtended::LinearOperator;
+using Playa::Vector;
+using Playa::VectorSpace;
+using Playa::LinearOperator;
 /** 
  *
  */
@@ -125,20 +125,20 @@ public:
 
   /** */
   OpTimesLC(const Scalar& alpha,
-    const TSFExtended::LinearOperator<Scalar>& op, 
+    const Playa::LinearOperator<Scalar>& op, 
     const Node& x);
 
   /** 
    * Evaluate the term into the argument vector, overwriting 
    * the previous value of the argument. */
-  void evalInto(TSFExtended::Vector<Scalar>& result) const ;
+  void evalInto(Playa::Vector<Scalar>& result) const ;
 
   /** Add the term into the argument vector */
-  void addInto(TSFExtended::Vector<Scalar>& result, 
+  void addInto(Playa::Vector<Scalar>& result, 
     LCSign sign = LCAdd) const ;
 
   /** Evaluate the term and return its value */
-  virtual TSFExtended::Vector<Scalar> eval() const ;
+  virtual Playa::Vector<Scalar> eval() const ;
 
   /** Determine whether this term contains the given vector */
   bool containsVector(const Thyra::VectorBase<Scalar>* vec) const ;
@@ -161,7 +161,7 @@ public:
 private:
   Scalar alpha_;
     
-  TSFExtended::LinearOperator<Scalar> op_;
+  Playa::LinearOperator<Scalar> op_;
 
   Node x_;
 
@@ -187,14 +187,14 @@ public:
   LC2(const Node1& x1, const Node2& x2, LCSign sign = LCAdd);
 
   /** */
-  void evalInto(TSFExtended::Vector<Scalar>& result) const ;
+  void evalInto(Playa::Vector<Scalar>& result) const ;
 
   /** */
-  void addInto(TSFExtended::Vector<Scalar>& result, 
+  void addInto(Playa::Vector<Scalar>& result, 
     LCSign sign = LCAdd) const ;
 
   /** */
-  virtual TSFExtended::Vector<Scalar> eval() const ;
+  virtual Playa::Vector<Scalar> eval() const ;
 
   /** */
   bool containsVector(const Thyra::VectorBase<Scalar>* vec) const ;
@@ -217,12 +217,12 @@ private:
 
 }
 
-namespace TSFExtended
+namespace Playa
 {
-using TSFExtendedOps::OpTimesLC;
-using TSFExtendedOps::LC2;
-using TSFExtendedOps::LCAdd;
-using TSFExtendedOps::LCSubtract;
+using PlayaOps::OpTimesLC;
+using PlayaOps::LC2;
+using PlayaOps::LCAdd;
+using PlayaOps::LCSubtract;
 
 /* ------------------------ global methods ----------------------- */
 

@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,19 +24,19 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFEPETRAGHOSTIMPORTER_HPP
-#define TSFEPETRAGHOSTIMPORTER_HPP
+#ifndef PlayaEPETRAGHOSTIMPORTER_HPP
+#define PlayaEPETRAGHOSTIMPORTER_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFGhostImporter.hpp"
-#include "TSFGhostView.hpp"
+#include "PlayaGhostImporter.hpp"
+#include "PlayaGhostView.hpp"
 #include "Epetra_Map.h"
 #include "Epetra_Import.h"
 #include "Teuchos_Utils.hpp"
 
 
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
 

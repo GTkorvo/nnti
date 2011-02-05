@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,23 +26,23 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFACCESSIBLEVECTOR_HPP
-#define TSFACCESSIBLEVECTOR_HPP
+#ifndef PlayaACCESSIBLEVECTOR_HPP
+#define PlayaACCESSIBLEVECTOR_HPP
 
 #include "SundanceDefs.hpp"
 #include "Teuchos_Array.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
   
 
   /**
-   * TSFExtended::AccessibleVector defines an interface through which
+   * Playa::AccessibleVector defines an interface through which
    * elements for a vector can be accessed. Element access is occasionally
    * used by application codes in probing results vectors, 
    * but should rarely be used by high-performance solver codes; this 
-   * capability is therefore in TSFExtended rather than Thyra.
+   * capability is therefore in Playa rather than Thyra.
    *
    * @author Kevin Long (krlong@sandia.gov)
    */

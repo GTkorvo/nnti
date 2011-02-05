@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,18 +24,18 @@
 // 
 // **********************************************************************/
 
-#ifndef TSF_SERIAL_VECTORTYPE_HPP
-#define TSF_SERIAL_VECTORTYPE_HPP
+#ifndef Playa_SERIAL_VECTORTYPE_HPP
+#define Playa_SERIAL_VECTORTYPE_HPP
 
-#include "TSFSerialVectorSpace.hpp"
-#include "SundanceHandleable.hpp"
-#include "SundancePrintable.hpp"
+#include "PlayaSerialVectorSpace.hpp"
+#include "PlayaHandleable.hpp"
+#include "PlayaPrintable.hpp"
 #include "Teuchos_Describable.hpp"
-#include "TSFVectorTypeExtensions.hpp"
- //#include "TSFLinearOperatorDecl.hpp"
+#include "PlayaVectorTypeExtensions.hpp"
+ //#include "PlayaLinearOperatorDecl.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
   using namespace Thyra;
@@ -45,8 +45,8 @@ namespace TSFExtended
 
 
   class SerialVectorType : public VectorTypeExtensions<double>,
-                           public Sundance::Handleable<VectorTypeExtensions<double> >,
-                           public Printable,
+                           public Playa::Handleable<VectorTypeExtensions<double> >,
+                           public Playa::Printable,
                            public Describable
   {
   public:

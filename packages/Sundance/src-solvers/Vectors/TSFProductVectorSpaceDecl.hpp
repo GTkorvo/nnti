@@ -27,41 +27,41 @@
 // @HEADER
 
 // //////////////////////////////////////////////////////////////
-// TSFProductVectorSpaceDecl.hpp
+// PlayaBlockVectorSpaceDecl.hpp
 
-#ifndef TSFPRODUCTVECTORSPACEDECL_HPP
-#define TSFPRODUCTVECTORSPACEDECL_HPP
+#ifndef PlayaPRODUCTVECTORSPACEDECL_HPP
+#define PlayaPRODUCTVECTORSPACEDECL_HPP
 
 #include "Teuchos_Array.hpp"
 #include "Teuchos_dyn_cast.hpp"
-#include "Thyra_ProductVectorSpaceBase.hpp"
+#include "Thyra_BlockVectorSpaceBase.hpp"
 
-#include "TSFVectorSpaceDecl.hpp"
+#include "PlayaVectorSpaceDecl.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   using Teuchos::Tuple;
   using Teuchos::RefCountPtr;
   /** */
   template <class Scalar>
   Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
-  productSpace(const Array<VectorSpace<Scalar> >& spaces);
+  blockSpace(const Array<VectorSpace<Scalar> >& spaces);
 
   /** */
   template <class Scalar>
   Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
-  productSpace(VectorSpace<Scalar>& s1);
+  blockSpace(VectorSpace<Scalar>& s1);
 
   /** */
   template <class Scalar>
   Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
-  productSpace(VectorSpace<Scalar>& s1, 
+  blockSpace(VectorSpace<Scalar>& s1, 
                VectorSpace<Scalar>& s2);
 
   /** */
   template <class Scalar>
   Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > 
-  productSpace(VectorSpace<Scalar>& s1,VectorSpace<Scalar>& s2,
+  blockSpace(VectorSpace<Scalar>& s1,VectorSpace<Scalar>& s2,
                VectorSpace<Scalar>& s3);
 
   
@@ -71,4 +71,4 @@ namespace TSFExtended
 
 
 						 
-#endif // TSF_PRODUCT_VECTOR_SPACE_HPP
+#endif // Playa_PRODUCT_VECTOR_SPACE_HPP

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,24 +26,24 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFBLOCKTRIANGULARSOLVER_IMPL_HPP
-#define TSFBLOCKTRIANGULARSOLVER_IMPL_HPP
+#ifndef PlayaBLOCKTRIANGULARSOLVER_IMPL_HPP
+#define PlayaBLOCKTRIANGULARSOLVER_IMPL_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFLinearSolverDecl.hpp" 
-#include "TSFLinearCombinationImpl.hpp" 
-#include "TSFSimpleZeroOpDecl.hpp" 
-#include "TSFBlockTriangularSolverDecl.hpp" 
+#include "PlayaLinearSolverDecl.hpp" 
+#include "PlayaLinearCombinationImpl.hpp" 
+#include "PlayaSimpleZeroOpDecl.hpp" 
+#include "PlayaBlockTriangularSolverDecl.hpp" 
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFLinearSolverImpl.hpp" 
-#include "TSFSimpleZeroOpDecl.hpp" 
+#include "PlayaLinearSolverImpl.hpp" 
+#include "PlayaSimpleZeroOpDecl.hpp" 
 #endif
 
-namespace TSFExtended
+namespace Playa
 {
-using namespace TSFExtendedOps;
+using namespace PlayaOps;
 
 template <class Scalar> inline
 BlockTriangularSolver<Scalar>

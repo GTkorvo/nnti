@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,14 +26,14 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSF_DENSE_SERIAL_MATRIXFACTORY_HPP
-#define TSF_DENSE_SERIAL_MATRIXFACTORY_HPP
+#ifndef Playa_DENSE_SERIAL_MATRIXFACTORY_HPP
+#define Playa_DENSE_SERIAL_MATRIXFACTORY_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFMatrixFactory.hpp"
-#include "TSFSerialVectorSpace.hpp"
+#include "PlayaMatrixFactory.hpp"
+#include "PlayaSerialVectorSpace.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   /** 
    * 

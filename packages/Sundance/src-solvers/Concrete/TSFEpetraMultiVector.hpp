@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,14 +24,14 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFEPETRAMULTIVECTOR_HPP
-#define TSFEPETRAMULTIVECTOR_HPP
+#ifndef PlayaEPETRAMULTIVECTOR_HPP
+#define PlayaEPETRAMULTIVECTOR_HPP
 
 #include "SundanceDefs.hpp"
-#include "SundancePrintable.hpp"
-#include "TSFIndexableVector.hpp"
-#include "TSFRawDataAccessibleVector.hpp"
-#include "TSFVectorDecl.hpp"
+#include "PlayaPrintable.hpp"
+#include "PlayaIndexableVector.hpp"
+#include "PlayaRawDataAccessibleVector.hpp"
+#include "PlayaVectorDecl.hpp"
 #include "Epetra_FEVector.h"
 #include "Epetra_Vector.h"
 
@@ -42,22 +42,22 @@
 #include "Thyra_DefaultMPIMultiVectorDecl.hpp"
 #endif
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
   using namespace Thyra;
   /**
-   * TSF extension of Thyra::EpetraMultiVector, implementing the 
+   * Playa extension of Thyra::EpetraMultiVector, implementing the 
    * LoadableMultiVector
    * interface allowing an application to access elements. This class derives
    * from Thyra::EpetraVector, so it can be used seamlessly in any 
    * Thyra-based code.
    */
   class EpetraMultiVector : public MPIMultiVectorStd<double>,
-                            public Sundance::Handleable<MultiVectorBase<double> >,
+                            public Playa::Handleable<MultiVectorBase<double> >,
                             public IndexableVector<double>,
                             public RawDataAccessibleVector<double>,
-                            public Printable
+                            public Playa::Printable
   {
   public:
     GET_RCP(MultiVectorBase<double>);
@@ -130,11 +130,11 @@ namespace TSFExtended
     //@}
 
     /** Get a read-only Epetra_Vector */
-    static const Epetra_Vector& getConcrete(const TSFExtended::Vector<double>& tsfVec);
+    static const Epetra_Vector& getConcrete(const Playa::Vector<double>& tsfVec);
     /** Get a read-write Epetra_Vector */
-    static Epetra_Vector& getConcrete(TSFExtended::Vector<double>& tsfVec);
+    static Epetra_Vector& getConcrete(Playa::Vector<double>& tsfVec);
     /** Get a read-write Epetra_Vector pointer */
-    static Epetra_Vector* getConcretePtr(TSFExtended::Vector<double>& tsfVec);
+    static Epetra_Vector* getConcretePtr(Playa::Vector<double>& tsfVec);
 
 
 

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -27,32 +27,32 @@
  /* @HEADER@ */
 
 
-#ifndef TSF_COMPOUNDTESTER_HPP
-#define TSF_COMPOUNDTESTER_HPP
+#ifndef Playa_COMPOUNDTESTER_HPP
+#define Playa_COMPOUNDTESTER_HPP
 
-#include "TSFLinearOperatorDecl.hpp"
-#include "TSFSimpleComposedOpDecl.hpp"
-#include "TSFSimpleScaledOpDecl.hpp"
-#include "TSFSimpleAddedOpDecl.hpp"
-#include "TSFSimpleDiagonalOpDecl.hpp"
-#include "TSFTesterBase.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
+#include "PlayaSimpleComposedOpDecl.hpp"
+#include "PlayaSimpleScaledOpDecl.hpp"
+#include "PlayaSimpleAddedOpDecl.hpp"
+#include "PlayaSimpleDiagonalOpDecl.hpp"
+#include "PlayaTesterBase.hpp"
 #include "Teuchos_ScalarTraits.hpp"
-#include "TSFLinearCombinationImpl.hpp"
+#include "PlayaLinearCombinationImpl.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFSimpleComposedOpImpl.hpp"
-#include "TSFSimpleScaledOpImpl.hpp"
-#include "TSFSimpleAddedOpImpl.hpp"
-#include "TSFSimpleDiagonalOpImpl.hpp"
-#include "TSFRandomSparseMatrixBuilderImpl.hpp"
+#include "PlayaSimpleComposedOpImpl.hpp"
+#include "PlayaSimpleScaledOpImpl.hpp"
+#include "PlayaSimpleAddedOpImpl.hpp"
+#include "PlayaSimpleDiagonalOpImpl.hpp"
+#include "PlayaRandomSparseMatrixBuilderImpl.hpp"
 #endif
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 using Thyra::TestSpecifier;
 
-namespace TSFExtended
+namespace Playa
 {
 
 /** */

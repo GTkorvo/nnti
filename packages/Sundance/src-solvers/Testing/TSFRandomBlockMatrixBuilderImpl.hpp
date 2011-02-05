@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -30,22 +30,22 @@
 #ifndef RANDOMBLOCKMATRIX_BUILDER_IMPL_HPP
 #define RANDOMBLOCKMATRIX_BUILDER_IMPL_HPP
 
-#include "TSFRandomBlockMatrixBuilderDecl.hpp"
-#include "TSFSimpleBlockOpDecl.hpp"
-#include "TSFRandomSparseMatrixBuilderDecl.hpp"
+#include "PlayaRandomBlockMatrixBuilderDecl.hpp"
+#include "PlayaSimpleBlockOpDecl.hpp"
+#include "PlayaRandomSparseMatrixBuilderDecl.hpp"
 
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFSimpleBlockOpImpl.hpp"
-#include "TSFRandomSparseMatrixBuilderImpl.hpp"
+#include "PlayaSimpleBlockOpImpl.hpp"
+#include "PlayaRandomSparseMatrixBuilderImpl.hpp"
 #endif
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 
-namespace TSFExtended
+namespace Playa
 {
 
 template <class Scalar> 

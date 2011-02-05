@@ -1,12 +1,12 @@
-#include "TSFParameterListPreconditionerFactory.hpp"
-#include "TSFGenericRightPreconditioner.hpp"
+#include "PlayaParameterListPreconditionerFactory.hpp"
+#include "PlayaGenericRightPreconditioner.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
 #endif
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 Preconditioner<double>  ParameterListPreconditionerFactory::

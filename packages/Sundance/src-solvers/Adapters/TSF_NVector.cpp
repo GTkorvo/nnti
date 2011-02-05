@@ -1,14 +1,14 @@
-#include "TSF_NVector.hpp"
-#include "TSFLinearCombinationDecl.hpp"
+#include "Playa_NVector.hpp"
+#include "PlayaLinearCombinationDecl.hpp"
 #include "Thyra_SUNDIALS_Ops.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearCombinationImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearCombinationImpl.hpp"
 #endif
 
-using namespace TSFExtended;
-using namespace TSFExtendedOps;
+using namespace Playa;
+using namespace PlayaOps;
 
 #ifdef TRILINOS_6
 

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,14 +26,14 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFMATRIXFACTORY_HPP
-#define TSFMATRIXFACTORY_HPP
+#ifndef PlayaMATRIXFACTORY_HPP
+#define PlayaMATRIXFACTORY_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFLoadableMatrix.hpp"
-#include "TSFLinearOperatorDecl.hpp"
+#include "PlayaLoadableMatrix.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   /** 
    * MatrixFactory is an abstract builder for empty matrices

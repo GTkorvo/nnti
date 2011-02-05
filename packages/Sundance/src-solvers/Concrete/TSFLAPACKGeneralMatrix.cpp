@@ -1,7 +1,7 @@
-#include "TSFLAPACKGeneralMatrix.hpp"
+#include "PlayaLAPACKGeneralMatrix.hpp"
 #include "Teuchos_LAPACK.hpp"
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 LAPACKGeneralMatrix::LAPACKGeneralMatrix()

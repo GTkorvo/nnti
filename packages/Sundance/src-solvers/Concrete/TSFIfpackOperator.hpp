@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,17 +26,17 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFIFPACKOPERATOR_HPP
-#define TSFIFPACKOPERATOR_HPP
+#ifndef PlayaIFPACKOPERATOR_HPP
+#define PlayaIFPACKOPERATOR_HPP
 
 
-#include "TSFEpetraMatrix.hpp"
-#include "TSFOpWithBackwardsCompatibleApply.hpp"
+#include "PlayaEpetraMatrix.hpp"
+#include "PlayaOpWithBackwardsCompatibleApply.hpp"
 #include "Ifpack_IlukGraph.h"
 #include "Ifpack_CrsRiluk.h"
 
 
-namespace TSFExtended
+namespace Playa
 {
 /**
  *
@@ -85,4 +85,4 @@ private:
 };
 }
 
-#endif /* TSFIFPACKOPERATOR_HPP */
+#endif /* PlayaIFPACKOPERATOR_HPP */

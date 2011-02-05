@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,8 +26,8 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFOPWITHBACKWARDSCOMPATIBLEAPPLY_HPP
-#define TSFOPWITHBACKWARDSCOMPATIBLEAPPLY_HPP
+#ifndef PlayaOPWITHBACKWARDSCOMPATIBLEAPPLY_HPP
+#define PlayaOPWITHBACKWARDSCOMPATIBLEAPPLY_HPP
 
 #include "Thyra_VectorBase.hpp"
 #include "Thyra_MultiVectorBase.hpp"
@@ -38,7 +38,7 @@
 #include "SundanceNamedObject.hpp"
 #include "SundanceOut.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 using namespace Thyra;
@@ -73,7 +73,7 @@ public:
   /**
    * generalApply() applies either the operator or the transpose
    * according to the value of the transpose flag. This method is
-   * backwards compatible with TSFCore-based code.
+   * backwards compatible with PlayaCore-based code.
    */
   virtual void generalApply(const Thyra::EOpTransp M_trans,
     const Thyra::MultiVectorBase<Scalar>    &x,

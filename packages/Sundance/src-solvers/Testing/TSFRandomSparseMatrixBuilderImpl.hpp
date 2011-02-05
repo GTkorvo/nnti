@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -30,16 +30,16 @@
 #ifndef RANDOMSPARSEMATRIX_BUILDER_IMPL_HPP
 #define RANDOMSPARSEMATRIX_BUILDER_IMPL_HPP
 
-#include "TSFRandomSparseMatrixBuilderDecl.hpp"
-#include "TSFIncrementallyConfigurableMatrixFactory.hpp"
-#include "TSFLoadableMatrix.hpp"
+#include "PlayaRandomSparseMatrixBuilderDecl.hpp"
+#include "PlayaIncrementallyConfigurableMatrixFactory.hpp"
+#include "PlayaLoadableMatrix.hpp"
 
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 
-namespace TSFExtended
+namespace Playa
 {
 
 template <class Scalar> 

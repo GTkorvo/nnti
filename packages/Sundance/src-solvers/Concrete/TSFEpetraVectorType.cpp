@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,10 +24,10 @@
 // 
 // **********************************************************************/
 
-#include "TSFEpetraVectorType.hpp"
-#include "TSFEpetraVectorSpace.hpp"
-#include "TSFEpetraGhostImporter.hpp"
-#include "TSFEpetraMatrixFactory.hpp"
+#include "PlayaEpetraVectorType.hpp"
+#include "PlayaEpetraVectorSpace.hpp"
+#include "PlayaEpetraGhostImporter.hpp"
+#include "PlayaEpetraMatrixFactory.hpp"
 #include "Epetra_Map.h"
 #include "Epetra_Import.h"
 #include "Epetra_Comm.h"
@@ -40,9 +40,9 @@
 #endif
 
 #include "Teuchos_RefCountPtr.hpp"
-#include "TSFEpetraMatrix.hpp"
+#include "PlayaEpetraMatrix.hpp"
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 EpetraVectorType::EpetraVectorType()

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,17 +26,17 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFSEQUENTIALITERATORIMPL_HPP
-#define TSFSEQUENTIALITERATORIMPL_HPP
+#ifndef PlayaSEQUENTIALITERATORIMPL_HPP
+#define PlayaSEQUENTIALITERATORIMPL_HPP
 
 
-#include "TSFSequentialIteratorDecl.hpp"
-#include "TSFVectorSpaceDecl.hpp"
+#include "PlayaSequentialIteratorDecl.hpp"
+#include "PlayaVectorSpaceDecl.hpp"
 #include "Thyra_SUNDIALS_Ops.hpp"
-#include "TSFIndexableVector.hpp"
+#include "PlayaIndexableVector.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
 
 template <class Scalar> inline

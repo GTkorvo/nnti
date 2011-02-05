@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,25 +24,25 @@
 // 
 // **********************************************************************/
 
-#ifndef TSF_SERIAL_VECTOR_HPP
-#define TSF_SERIAL_VECTOR_HPP
+#ifndef Playa_SERIAL_VECTOR_HPP
+#define Playa_SERIAL_VECTOR_HPP
 
 #include "SundanceDefs.hpp"
-#include "SundancePrintable.hpp"
-#include "TSFIndexableVector.hpp"
-#include "TSFVectorDecl.hpp"
-#include "TSFRawDataAccessibleVector.hpp"
+#include "PlayaPrintable.hpp"
+#include "PlayaIndexableVector.hpp"
+#include "PlayaVectorDecl.hpp"
+#include "PlayaRawDataAccessibleVector.hpp"
 #include "Thyra_VectorDefaultBase.hpp"
-#include "TSFSerialVectorSpace.hpp"
+#include "PlayaSerialVectorSpace.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
 using Teuchos::Range1D;
 using namespace Thyra;
 using namespace Teuchos;
 /**
- * TSF implementation of a serial vector, implementing the LoadableVector
+ * Playa implementation of a serial vector, implementing the LoadableVector
  * interface allowing an application to access elements. This class derives
  * from Thyra::VectorDefaultBase, so it can be used seamlessly in any 
  * Thyra-based code. If created in SPMD, this will be replicated on
@@ -51,7 +51,7 @@ using namespace Teuchos;
 class SerialVector : public Thyra::VectorDefaultBase<double>,
                      public IndexableVector<double>,
                      public RawDataAccessibleVector<double>,
-                     public Sundance::Printable
+                     public Playa::Printable
 {
 public:
 

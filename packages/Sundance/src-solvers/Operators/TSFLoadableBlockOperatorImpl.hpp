@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,19 +26,19 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFLOADABLEBLOCKOPERATOR_IMPL_HPP
-#define TSFLOADABLEBLOCKOPERATOR_IMPL_HPP
+#ifndef PlayaLOADABLEBLOCKOPERATOR_IMPL_HPP
+#define PlayaLOADABLEBLOCKOPERATOR_IMPL_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFLoadableBlockOperatorDecl.hpp"
+#include "PlayaLoadableBlockOperatorDecl.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFSimpleBlockOpImpl.hpp"
+#include "PlayaSimpleBlockOpImpl.hpp"
 #endif
 
 
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 

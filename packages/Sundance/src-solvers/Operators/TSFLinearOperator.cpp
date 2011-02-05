@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -30,8 +30,8 @@
 
 #ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 
-#include "TSFLinearOperatorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
 
-template class TSFExtended::LinearOperator<double>;
+template class Playa::LinearOperator<double>;
 
 #endif

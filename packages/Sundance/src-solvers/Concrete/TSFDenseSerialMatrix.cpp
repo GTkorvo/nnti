@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,17 +26,17 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#include "TSFDenseSerialMatrix.hpp"
-#include "TSFDenseSerialMatrixFactory.hpp"
-#include "TSFSerialVector.hpp"
-#include "TSFVectorSpaceDecl.hpp"  
-#include "TSFVectorDecl.hpp"
-#include "TSFLinearOperatorDecl.hpp"
+#include "PlayaDenseSerialMatrix.hpp"
+#include "PlayaDenseSerialMatrixFactory.hpp"
+#include "PlayaSerialVector.hpp"
+#include "PlayaVectorSpaceDecl.hpp"  
+#include "PlayaVectorDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
 #include "Teuchos_BLAS.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFLinearOperatorImpl.hpp"
-#include "TSFVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
+#include "PlayaVectorImpl.hpp"
 #endif
 
 extern "C"
@@ -51,7 +51,7 @@ void dgesvd_( char* jobu, char* jobvt, int* m, int* n, double* a,
 using std::max;
 using std::min;
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 using namespace Thyra;
 using std::setw;
@@ -157,7 +157,7 @@ void DenseSerialMatrix::setRow(int row, const Array<double>& rowVals)
 }
 
 
-namespace TSFExtended
+namespace Playa
 {
 
 

@@ -1,24 +1,24 @@
-#ifndef ANASAZI_TSF_ADAPTER_HPP
-#define ANASAZI_TSF_ADAPTER_HPP
+#ifndef ANASAZI_Playa_ADAPTER_HPP
+#define ANASAZI_Playa_ADAPTER_HPP
 
 #include "AnasaziMultiVecTraits.hpp"
 #include "AnasaziOperatorTraits.hpp"
 #include "AnasaziConfigDefs.hpp"
 
 
-#include "TSFVectorImpl.hpp"
-#include "TSFVectorOpsImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
-#include "TSFLinearCombinationImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaVectorOpsImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
+#include "PlayaLinearCombinationImpl.hpp"
 
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
 
-#include "SundanceTabs.hpp"
+#include "PlayaTabs.hpp"
 
 namespace Anasazi 
 {
-using TSFExtended::Vector;
+using Playa::Vector;
 using Teuchos::RCP;
 using Teuchos::Array;
 

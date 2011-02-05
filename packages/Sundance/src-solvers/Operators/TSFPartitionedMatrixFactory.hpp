@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,20 +26,20 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFPARTITIONEDMATRIXFACTORYDECL_HPP
-#define TSFPARTITIONEDMATRIXFACTORYDECL_HPP
+#ifndef PlayaPARTITIONEDMATRIXFACTORYDECL_HPP
+#define PlayaPARTITIONEDMATRIXFACTORYDECL_HPP
 
-#include "TSFIncrementallyConfigurableMatrixFactory.hpp"
-#include "TSFCollectivelyConfigurableMatrixFactory.hpp"
-#include "TSFMatrixFactory.hpp"
-#include "TSFVectorSpaceDecl.hpp"
-#include "TSFVectorType.hpp"
-#include "SundanceHandleable.hpp"
-#include "SundancePrintable.hpp"
+#include "PlayaIncrementallyConfigurableMatrixFactory.hpp"
+#include "PlayaCollectivelyConfigurableMatrixFactory.hpp"
+#include "PlayaMatrixFactory.hpp"
+#include "PlayaVectorSpaceDecl.hpp"
+#include "PlayaVectorType.hpp"
+#include "PlayaHandleable.hpp"
+#include "PlayaPrintable.hpp"
 #include "Epetra_CrsGraph.h"
 #include <set>
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
   using namespace Thyra;

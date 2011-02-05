@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,14 +24,14 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFVECTORSPACE2EPETRAMAP_HPP
-#define TSFVECTORSPACE2EPETRAMAP_HPP
+#ifndef PlayaVECTORSPACE2EPETRAMAP_HPP
+#define PlayaVECTORSPACE2EPETRAMAP_HPP
 
 #include "SundanceDefs.hpp"
 #include "Epetra_Map.h"
-#include "SundanceHandleable.hpp"
+#include "PlayaHandleable.hpp"
 #include "Thyra_EpetraThyraWrappers.hpp"
-#include "TSFVectorSpaceImpl.hpp"
+#include "PlayaVectorSpaceImpl.hpp"
 
 #ifdef TRILINOS_6
 #include "Thyra_MPIVectorSpaceBase.hpp"
@@ -40,7 +40,7 @@
 #define MPIVectorSpaceBase SpmdVectorSpaceDefaultBase 
 #endif
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
   using namespace Thyra;
@@ -49,7 +49,7 @@ namespace TSFExtended
   RCP<const Epetra_Map> tsfVectorSpace2EpetraMap(const VectorSpace<double>& tsfSpace);
   
   /** */
-void getComm(const TSFExtended::VectorSpace<double>& tsfSpace,
+void getComm(const Playa::VectorSpace<double>& tsfSpace,
   Teuchos::RCP<Epetra_Comm>& comm);
 	       
 }

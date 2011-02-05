@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -31,12 +31,12 @@
 
 #ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 
-#include "TSFLinearSolverBaseImpl.hpp"
+#include "PlayaLinearSolverBaseImpl.hpp"
 
 
-template class TSFExtended::LinearSolverBase<double>;
-template void TSFExtended::LinearSolverBase<double>::setParameter(const Teuchos::ParameterList& pl, int* val, const std::string& name);
-template void TSFExtended::LinearSolverBase<double>::setParameter(const Teuchos::ParameterList& pl, bool* val, const std::string& name);
-template void TSFExtended::LinearSolverBase<double>::setParameter(const Teuchos::ParameterList& pl, double* val, const std::string& name);
+template class Playa::LinearSolverBase<double>;
+template void Playa::LinearSolverBase<double>::setParameter(const Teuchos::ParameterList& pl, int* val, const std::string& name);
+template void Playa::LinearSolverBase<double>::setParameter(const Teuchos::ParameterList& pl, bool* val, const std::string& name);
+template void Playa::LinearSolverBase<double>::setParameter(const Teuchos::ParameterList& pl, double* val, const std::string& name);
 
 #endif

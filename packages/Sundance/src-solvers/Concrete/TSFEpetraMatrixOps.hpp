@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,12 +26,12 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFEPETRAMATRIXOPS_HPP
-#define TSFEPETRAMATRIXOPS_HPP
+#ifndef PlayaEPETRAMATRIXOPS_HPP
+#define PlayaEPETRAMATRIXOPS_HPP
 
-#include "TSFLinearOperatorDecl.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 
 /** \relates EpetraMatrix */

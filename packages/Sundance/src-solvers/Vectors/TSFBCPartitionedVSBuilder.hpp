@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,15 +24,15 @@
 // 
 // **********************************************************************/
 
-#ifndef TSFBCPARTITIONEDVSBUILDER_HPP
-#define TSFBCPARTITIONEDVSBUILDER_HPP
+#ifndef PlayaBCPARTITIONEDVSBUILDER_HPP
+#define PlayaBCPARTITIONEDVSBUILDER_HPP
 
-#include "TSFVectorSpaceImpl.hpp"
-#include "TSFVectorType.hpp"
+#include "PlayaVectorSpaceImpl.hpp"
+#include "PlayaVectorType.hpp"
 #include "Teuchos_Array.hpp"
-#include "TSFProductVectorSpaceImpl.hpp"
+#include "PlayaBlockVectorSpaceImpl.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 
@@ -82,7 +82,7 @@ template <class Scalar>
     VectorSpace<double> interiorSpace = internalType.createSpace(nTotalInteriorDofs, nLocalDofs-nBCDofs,
       &(interiorDofs[0]), comm);
 
-    return productSpace<double>(interiorSpace, bcSpace);
+    return blockSpace<double>(interiorSpace, bcSpace);
   }
 
 }

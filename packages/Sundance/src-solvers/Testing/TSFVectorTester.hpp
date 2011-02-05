@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -27,21 +27,21 @@
  /* @HEADER@ */
 
 
-#ifndef TSF_VECTORTESTER_HPP
-#define TSF_VECTORTESTER_HPP
+#ifndef Playa_VECTORTESTER_HPP
+#define Playa_VECTORTESTER_HPP
 
-#include "TSFVectorDecl.hpp"
-#include "TSFLinearCombinationImpl.hpp"
+#include "PlayaVectorDecl.hpp"
+#include "PlayaLinearCombinationImpl.hpp"
 #include "Thyra_TestSpecifier.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 
-using namespace TSFExtended;
-using namespace TSFExtendedOps;
+using namespace Playa;
+using namespace PlayaOps;
 using namespace Teuchos;
 
 using Thyra::TestSpecifier;
 
-namespace TSFExtended
+namespace Playa
 {
 
   /** 

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,24 +26,24 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFINVERSEOPERATOR_IMPL_HPP
-#define TSFINVERSEOPERATOR_IMPL_HPP
+#ifndef PlayaINVERSEOPERATOR_IMPL_HPP
+#define PlayaINVERSEOPERATOR_IMPL_HPP
 
 #include "SundanceDefs.hpp"
-#include "SundanceTabs.hpp"
-#include "TSFSolverState.hpp"
-#include "TSFInverseOperatorDecl.hpp"
+#include "PlayaTabs.hpp"
+#include "PlayaSolverState.hpp"
+#include "PlayaInverseOperatorDecl.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 
 #include "Teuchos_RefCountPtr.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFSimpleTransposedOpImpl.hpp"
+#include "PlayaSimpleTransposedOpImpl.hpp"
 #endif
 
 
-namespace TSFExtended
+namespace Playa
 {
 using Teuchos::RCP;
 

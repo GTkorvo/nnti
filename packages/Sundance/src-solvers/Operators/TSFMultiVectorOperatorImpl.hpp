@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,21 +26,21 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFMULTIVECTOROPERATOR_IMPL_HPP
-#define TSFMULTIVECTOROPERATOR_IMPL_HPP
+#ifndef PlayaMULTIVECTOROPERATOR_IMPL_HPP
+#define PlayaMULTIVECTOROPERATOR_IMPL_HPP
 
-#include "TSFMultiVectorOperatorDecl.hpp"
+#include "PlayaMultiVectorOperatorDecl.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_DefaultSpmdVectorSpace.hpp"
-#include "TSFVectorImpl.hpp"
+#include "PlayaVectorImpl.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFLinearOperatorImpl.hpp"
-#include "TSFSimpleTransposedOpImpl.hpp"
-#include "TSFSimplifiedLinearOpBaseImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
+#include "PlayaSimpleTransposedOpImpl.hpp"
+#include "PlayaSimplifiedLinearOpBaseImpl.hpp"
 #endif
 
-namespace TSFExtended
+namespace Playa
 {
 
 /*

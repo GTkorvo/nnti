@@ -1,6 +1,6 @@
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -24,26 +24,26 @@
 // 
 // **********************************************************************/
 
-#ifndef TSF_NVECTOR_HPP
-#define TSF_NVECTOR_HPP
+#ifndef Playa_NVECTOR_HPP
+#define Playa_NVECTOR_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFVectorDecl.hpp"
-#include "TSFVectorSpaceDecl.hpp"
+#include "PlayaVectorDecl.hpp"
+#include "PlayaVectorSpaceDecl.hpp"
 
 #ifdef HAVE_SUNDIALS
 #include "nvector.h"
 #include "sundialstypes.h"
 
  /*
-  * TSF implementation of SUNDIALS NVector interface
+  * Playa implementation of SUNDIALS NVector interface
   */
 
 class _TrilinosVectorContent
 {
 public:
   _TrilinosVectorContent() : data() {;}
-  TSFExtended::Vector<realtype> data;
+  Playa::Vector<realtype> data;
 };
 
 typedef struct _TrilinosVectorContent* TrilinosVectorContent;

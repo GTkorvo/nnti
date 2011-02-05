@@ -1,17 +1,17 @@
-#include "TSFAztecSolver.hpp"
-#include "TSFEpetraVector.hpp"
-#include "TSFEpetraMatrix.hpp"
+#include "PlayaAztecSolver.hpp"
+#include "PlayaEpetraVector.hpp"
+#include "PlayaEpetraMatrix.hpp"
 #include "Ifpack_Preconditioner.h"
 #include "Ifpack.h"
-#include "EpetraTSFOperator.hpp"
+#include "EpetraPlayaOperator.hpp"
 #include "Teuchos_basic_oblackholestream.hpp"
 
 
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
-#include "TSFLinearSolverImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
+#include "PlayaLinearSolverImpl.hpp"
 #endif
 
 #ifdef HAVE_ML
@@ -25,7 +25,7 @@ using namespace ML_Epetra;
 #error blarf
 #endif
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 
@@ -116,7 +116,7 @@ AztecSolver::AztecSolver(const ParameterList& params)
     {
       int val = getValue<int>(entry);
       options_[aztecCode] = val;
-      if (name=="Verbosity") setVerbosity(val);
+      if (name=="Verbosity") setVerb(val);
     }
     else if (entry.isType<double>())
     {
@@ -194,8 +194,8 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   RCP<Ifpack_Preconditioner> ifpackPrec;
   RCP<Epetra_Operator> prec;
 
-	TSFExtended::Vector<double> bCopy = rhs.copy();
-	TSFExtended::Vector<double> xCopy = rhs.copy();
+	Playa::Vector<double> bCopy = rhs.copy();
+	Playa::Vector<double> xCopy = rhs.copy();
 
   if (verb() > 4) 
   {
@@ -317,7 +317,7 @@ void AztecSolver::setUserPrec(const LinearOperator<double>& P,
 {
   if (useUserPrec_)
   {
-    userPrec_ = rcp(new Epetra::Epetra_TSFOperator(P, pSolver));
+    userPrec_ = rcp(new Epetra::Epetra_PlayaOperator(P, pSolver));
   }
   else
   {

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,13 +26,13 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFVECTOR_OPS_DECL_HPP
-#define TSFVECTOR_OPS_DECL_HPP
+#ifndef PlayaVECTOR_OPS_DECL_HPP
+#define PlayaVECTOR_OPS_DECL_HPP
 
 #include "SundanceDefs.hpp"
 
  /* nonmember vector functions */
-namespace TSFExtended
+namespace Playa
 {
 
 template <class Scalar> class Vector;

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,26 +26,26 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#include "SundanceExceptions.hpp"
-#include "TSFLinearSolverBuilder.hpp"
-#include "TSFAmesosSolver.hpp"
-#include "TSFAztecSolver.hpp"
-#include "TSFBelosSolver.hpp"
-#include "TSFBICGSTABSolverDecl.hpp"
-#include "TSFBlockTriangularSolverDecl.hpp"
+#include "PlayaExceptions.hpp"
+#include "PlayaLinearSolverBuilder.hpp"
+#include "PlayaAmesosSolver.hpp"
+#include "PlayaAztecSolver.hpp"
+#include "PlayaBelosSolver.hpp"
+#include "PlayaBICGSTABSolverDecl.hpp"
+#include "PlayaBlockTriangularSolverDecl.hpp"
 #include "Teuchos_XMLParameterListReader.hpp"
 #include "Teuchos_ParameterXMLFileReader.hpp"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
-#include "TSFLinearSolverImpl.hpp"
-#include "TSFBICGSTABSolverImpl.hpp"
-#include "TSFBlockTriangularSolverImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
+#include "PlayaLinearSolverImpl.hpp"
+#include "PlayaBICGSTABSolverImpl.hpp"
+#include "PlayaBlockTriangularSolverImpl.hpp"
 #endif
 
-using namespace TSFExtended;
-using namespace TSFExtendedOps;
+using namespace Playa;
+using namespace PlayaOps;
 using namespace Teuchos;
 
 
@@ -76,7 +76,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
     {
       return new AztecSolver(solverSublist);
     }
-  else if (solverType=="TSF")
+  else if (solverType=="Playa")
     {
       const std::string& solverMethod = getParameter<string>(solverSublist, "Method");
       if (solverMethod=="BICGSTAB") 
@@ -85,7 +85,7 @@ LinearSolver<double> LinearSolverBuilder::createSolver(const ParameterList& para
         }
       else if (solverMethod=="GMRES")
         {
-          TEST_FOR_EXCEPTION(true, RuntimeError, "TSF GMRES solver not implemented");
+          TEST_FOR_EXCEPTION(true, std::runtime_error, "Playa GMRES solver not implemented");
         }
     }
   else if (solverType=="Amesos")

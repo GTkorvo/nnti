@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -30,13 +30,13 @@
 #ifndef MATRIXLAPLACIAN1D_HPP
 #define MATRIXLAPLACIAN1D_HPP
 
-#include "TSFOperatorBuilder.hpp"
+#include "PlayaOperatorBuilder.hpp"
 
-using namespace TSFExtended;
+using namespace Playa;
 using namespace Teuchos;
 
 
-namespace TSFExtended
+namespace Playa
 {
 
 /** */

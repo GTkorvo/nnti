@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,22 +26,22 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFINDEXABLEVECTOR_HPP
-#define TSFINDEXABLEVECTOR_HPP
+#ifndef PlayaINDEXABLEVECTOR_HPP
+#define PlayaINDEXABLEVECTOR_HPP
 
 #include "SundanceDefs.hpp"
 
-#include "TSFLoadableVector.hpp"
-#include "TSFAccessibleVector.hpp"
+#include "PlayaLoadableVector.hpp"
+#include "PlayaAccessibleVector.hpp"
 
 
 
-namespace TSFExtended
+namespace Playa
 {
   
 
   /**
-   * TSFExtended::IndexableVector defines an interface through which
+   * Playa::IndexableVector defines an interface through which
    * elements for a vector can be accessed for both reading and writing
    * through indexing operators.  
    * 

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,17 +26,17 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFGMRESSOLVER_HPP
-#define TSFGMRESSOLVER_HPP
+#ifndef PlayaGMRESSOLVER_HPP
+#define PlayaGMRESSOLVER_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFKrylovSolver.hpp"
-#include "SundanceHandleable.hpp"
-#include "SundancePrintable.hpp"
+#include "PlayaKrylovSolver.hpp"
+#include "PlayaHandleable.hpp"
+#include "PlayaPrintable.hpp"
 #include "Teuchos_Describable.hpp"
-#include "TSFLinearCombinationDecl.hpp"
+#include "PlayaLinearCombinationDecl.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   using namespace Teuchos;
 
@@ -45,8 +45,8 @@ namespace TSFExtended
    */
   template <class Scalar>
   class GMRESSolver : public KrylovSolver<Scalar>,
-                      public Sundance::Handleable<LinearSolverBase<Scalar> >,
-                      public Printable,
+                      public Playa::Handleable<LinearSolverBase<Scalar> >,
+                      public Playa::Printable,
                       public Describable
   {
   public:

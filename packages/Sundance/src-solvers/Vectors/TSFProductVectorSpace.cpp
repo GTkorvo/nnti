@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -32,29 +32,29 @@
 
 #ifdef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
 
-#include "TSFProductVectorSpaceImpl.hpp"
+#include "PlayaBlockVectorSpaceImpl.hpp"
 
-namespace TSFExtended{
-
-template 
-RCP<const Thyra::VectorSpaceBase<double> > 
-productSpace(const Teuchos::Array<TSFExtended::VectorSpace<double> >& spaces);
+namespace Playa{
 
 template 
 RCP<const Thyra::VectorSpaceBase<double> > 
-productSpace(TSFExtended::VectorSpace<double>& s1);
+blockSpace(const Teuchos::Array<Playa::VectorSpace<double> >& spaces);
 
 template 
 RCP<const Thyra::VectorSpaceBase<double> > 
-productSpace(TSFExtended::VectorSpace<double>& s1, 
-  TSFExtended::VectorSpace<double>& s2);
+blockSpace(Playa::VectorSpace<double>& s1);
 
 template 
 RCP<const Thyra::VectorSpaceBase<double> > 
-productSpace(
-  TSFExtended::VectorSpace<double>& s1,
-  TSFExtended::VectorSpace<double>& s2,
-  TSFExtended::VectorSpace<double>& s3);
+blockSpace(Playa::VectorSpace<double>& s1, 
+  Playa::VectorSpace<double>& s2);
+
+template 
+RCP<const Thyra::VectorSpaceBase<double> > 
+blockSpace(
+  Playa::VectorSpace<double>& s1,
+  Playa::VectorSpace<double>& s2,
+  Playa::VectorSpace<double>& s3);
  
 }
 

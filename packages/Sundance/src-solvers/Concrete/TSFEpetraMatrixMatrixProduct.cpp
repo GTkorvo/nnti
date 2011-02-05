@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,23 +26,23 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#include "TSFEpetraMatrix.hpp"
-#include "TSFEpetraMatrixMatrixProduct.hpp"
-#include "TSFEpetraVector.hpp"
-#include "SundanceExceptions.hpp"
+#include "PlayaEpetraMatrix.hpp"
+#include "PlayaEpetraMatrixMatrixProduct.hpp"
+#include "PlayaEpetraVector.hpp"
+#include "PlayaExceptions.hpp"
 #include "EpetraExt_MatrixMatrix.h"
 
 #ifndef HAVE_TEUCHOS_EXPLICIT_INSTANTIATION
-#include "TSFVectorImpl.hpp"
-#include "TSFLinearOperatorImpl.hpp"
+#include "PlayaVectorImpl.hpp"
+#include "PlayaLinearOperatorImpl.hpp"
 #endif
 
 
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
-using Sundance::RuntimeError;
+using Sundance::std::runtime_error;
 
 
 LinearOperator<double> epetraLeftScale(
@@ -134,7 +134,7 @@ LinearOperator<double> epetraMatrixMatrixProduct(
   /* Carry out the multiplication */
   int ierr 
     = EpetraExt::MatrixMatrix::Multiply(*A_crs, transA, *B_crs, transB, *C);
-  TEST_FOR_EXCEPTION(ierr != 0, RuntimeError,
+  TEST_FOR_EXCEPTION(ierr != 0, std::runtime_error,
     "EpetraExt Matrix-matrix multiply failed with error code ierr=" << ierr);
 
   /* Prepare an operator object for the scaled matrix */

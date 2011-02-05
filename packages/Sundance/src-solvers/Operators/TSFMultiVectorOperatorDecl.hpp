@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,18 +26,18 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFMULTIVECTOROPERATOR_DECL_HPP
-#define TSFMULTIVECTOROPERATOR_DECL_HPP
+#ifndef PlayaMULTIVECTOROPERATOR_DECL_HPP
+#define PlayaMULTIVECTOROPERATOR_DECL_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFRowAccessibleOp.hpp"
-#include "TSFOpWithBackwardsCompatibleApply.hpp"
-#include "TSFLinearOperatorDecl.hpp"
-#include "SundanceHandleable.hpp"
+#include "PlayaRowAccessibleOp.hpp"
+#include "PlayaOpWithBackwardsCompatibleApply.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
+#include "PlayaHandleable.hpp"
 #include "Teuchos_RefCountPtr.hpp"
-#include "TSFVectorDecl.hpp"
+#include "PlayaVectorDecl.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 /** 
  * A MultiVectorOperator is a linear operator whose

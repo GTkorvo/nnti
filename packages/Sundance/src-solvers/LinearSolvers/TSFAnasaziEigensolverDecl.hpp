@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,16 +26,16 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFANASAZIEIGENSOLVER_DECL_HPP
-#define TSFANASAZIEIGENSOLVER_DECL_HPP
+#ifndef PlayaANASAZIEIGENSOLVER_DECL_HPP
+#define PlayaANASAZIEIGENSOLVER_DECL_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFVectorDecl.hpp" 
-#include "TSFSolverState.hpp"
+#include "PlayaVectorDecl.hpp" 
+#include "PlayaSolverState.hpp"
 #include "Teuchos_ParameterList.hpp"
-#include "TSFEigensolverBase.hpp"
+#include "PlayaEigensolverBase.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using Teuchos::ParameterList;
 
@@ -45,7 +45,7 @@ using Teuchos::ParameterList;
 template <class Scalar>
 class AnasaziEigensolver
   : public EigensolverBase<Scalar>,
-    public Sundance::Handleable<EigensolverBase<Scalar> >
+    public Playa::Handleable<EigensolverBase<Scalar> >
 {
 public:
   /** */

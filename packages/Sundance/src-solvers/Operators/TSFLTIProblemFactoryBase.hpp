@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,14 +26,14 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFLTIPROBLEMFACTORYBASE_HPP
-#define TSFLTIPROBLEMFACTORYBASE_HPP
+#ifndef PlayaLTIPROBLEMFACTORYBASE_HPP
+#define PlayaLTIPROBLEMFACTORYBASE_HPP
 
 #include "SundanceDefs.hpp"
-#include "TSFInverseLTIOp.hpp"
+#include "PlayaInverseLTIOp.hpp"
 
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 using namespace Thyra;
@@ -209,7 +209,7 @@ protected:
     ) const 
     {
       Array<VectorSpace<Scalar> > s(n, sp);
-      return productSpace(s);
+      return blockSpace(s);
     }
 
   /** Create a block diagonal operator with a single block repeated
@@ -223,7 +223,7 @@ protected:
       Array<VectorSpace<Scalar> > r(n, C.range());
       
       RCP<LinearOpBase<Scalar> > op
-        = rcp(new BlockOperator<Scalar>(productSpace(d), productSpace(r)));
+        = rcp(new BlockOperator<Scalar>(blockSpace(d), blockSpace(r)));
       LinearOperator<Scalar> rtn = op;
       for (int i=0; i<n; i++) rtn.setBlock(i, i, C);
       rtn.endBlockFill();
@@ -250,7 +250,7 @@ protected:
     {
       LinearOperator<Scalar> A = this->getA();
       std::cout << "A.domain().dim() = " << A.domain().dim() << std::endl;
-      VectorSpace<Scalar> littleDomain = productSpace<Scalar>(tuple(A.domain()));
+      VectorSpace<Scalar> littleDomain = blockSpace<Scalar>(tuple(A.domain()));
       
       LinearOperator<Scalar> I = identityOperator<Scalar>(A.domain());
       LinearOperator<Scalar> Z = zeroOperator<Scalar>(A.domain(), A.range());

@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,24 +26,24 @@
 // **********************************************************************/
 /* @HEADER@ */
 
-#ifndef TSFLOADABLEVECTOR_HPP
-#define TSFLOADABLEVECTOR_HPP
+#ifndef PlayaLOADABLEVECTOR_HPP
+#define PlayaLOADABLEVECTOR_HPP
 
 #include "SundanceDefs.hpp"
 #include "Thyra_VectorBase.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
   /**
    * LoadableVector defines an interface through which elements can 
    * be loaded into a vector. Element loading is used extensively
    * by application codes in creating vectors, 
    * but should never be used by high-performance solver codes; this 
-   * capability is therefore in TSFExtended rather than Thyra.
+   * capability is therefore in Playa rather than Thyra.
    *
-   * A TSFExtended vector type that will be
+   * A Playa vector type that will be
    * used in a context where loading is required should multiply inherit
-   * from both Thyra::VectorBase and TSFExtended::LoadableVector.
+   * from both Thyra::VectorBase and Playa::LoadableVector.
    * 
    * Elements can by loaded one at a time
    * or in batches. The methods to load single elements arew pure virtual

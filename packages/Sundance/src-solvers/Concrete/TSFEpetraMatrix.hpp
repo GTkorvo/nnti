@@ -1,7 +1,7 @@
 /* @HEADER@ */
 /* ***********************************************************************
 // 
-//           TSFExtended: Trilinos Solver Framework Extended
+//           Playa: Trilinos Solver Framework Extended
 //                 Copyright (2004) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -26,22 +26,22 @@
 // **********************************************************************/
  /* @HEADER@ */
 
-#ifndef TSFEPETRAMATRIX_HPP
-#define TSFEPETRAMATRIX_HPP
+#ifndef PlayaEPETRAMATRIX_HPP
+#define PlayaEPETRAMATRIX_HPP
 
-#include "TSFEpetraVectorSpace.hpp"
-#include "TSFEpetraMatrixFactory.hpp"
-#include "TSFLoadableMatrix.hpp"
-#include "TSFLinearOperatorDecl.hpp"
-#include "TSFRowAccessibleOp.hpp"
-#include "SundanceHandleable.hpp"
-#include "SundancePrintable.hpp"
-#include "TSFILUFactorizableOp.hpp"
+#include "PlayaEpetraVectorSpace.hpp"
+#include "PlayaEpetraMatrixFactory.hpp"
+#include "PlayaLoadableMatrix.hpp"
+#include "PlayaLinearOperatorDecl.hpp"
+#include "PlayaRowAccessibleOp.hpp"
+#include "PlayaHandleable.hpp"
+#include "PlayaPrintable.hpp"
+#include "PlayaILUFactorizableOp.hpp"
 #include "Epetra_CrsMatrix.h"
 #include "Thyra_LinearOpDefaultBase.hpp"
 #include "Thyra_EpetraLinearOpBase.hpp"
 
-namespace TSFExtended
+namespace Playa
 {
 using namespace Teuchos;
 using namespace Thyra;
@@ -49,7 +49,7 @@ using namespace Thyra;
 class EpetraMatrix : virtual public LinearOpDefaultBase<double>,
                      public LoadableMatrix<double>,
                      public RowAccessibleOp<double>,
-                     public Printable,
+                     public Playa::Printable,
                      public NamedObject,
                      public ILUFactorizableOp<double>,
                      virtual public EpetraLinearOpBase
