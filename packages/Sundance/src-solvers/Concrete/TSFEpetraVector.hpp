@@ -77,7 +77,7 @@ public:
 		const ArrayView< const Ptr< const VectorBase< double > > > &  	vecs,
 		const ArrayView< const Ptr< VectorBase< double > > > &  	targ_vecs,
 		const Ptr< RTOpPack::ReductTarget > &  	reduct_obj,
-		const OrdType  	global_offset	 
+		const int  	global_offset	 
     ) const ;
 #else
   virtual void applyOp(
@@ -87,9 +87,9 @@ public:
     const int num_targ_vecs,
     VectorBase<double>*const targ_vecs[],
     RTOpPack::ReductTarget *reduct_obj,
-    const OrdType first_ele_offset,
-    const OrdType sub_dim,
-    const OrdType global_offset
+    const int first_ele_offset,
+    const int sub_dim,
+    const int global_offset
     ) const ;
 #endif
 
@@ -115,11 +115,11 @@ public:
   /** \name IndexableVector interface */
   //@{
   /** read the element at the given global index */
-  virtual const double& operator[](OrdType globalIndex) const 
+  virtual const double& operator[](int globalIndex) const 
     {return getElement(globalIndex);}
 
   /** writable access to the element at the given global index */
-  virtual double& operator[](OrdType globalIndex) ;
+  virtual double& operator[](int globalIndex) ;
   //@}
 
   /** \name Raw data access interface */
@@ -133,10 +133,10 @@ public:
   /** \name LoadableVector interface */
   //@{
   /** set a single element */
-  void setElement(OrdType globalIndex, const double& value);
+  void setElement(int globalIndex, const double& value);
 
   /** add to a single element */
-  void addToElement(OrdType globalIndex, const double& value);
+  void addToElement(int globalIndex, const double& value);
 
   /** set a group of elements */
   void setElements(int numElems, const int* globalIndices, 
@@ -154,10 +154,10 @@ public:
   /** \name AccessibleVector interface */
   //@{
   /** */
-  const double& getElement(OrdType globalIndex) const ;
+  const double& getElement(int globalIndex) const ;
 
   /** */
-  void getElements(const OrdType* globalIndices, int numElems,
+  void getElements(const int* globalIndices, int numElems,
     Teuchos::Array<double>& elems) const ;
   //@}
 

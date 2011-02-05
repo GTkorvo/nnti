@@ -50,7 +50,7 @@ namespace Playa
     
     /** Indicate whether the value at the given global index is accessible
      * in this view. */
-    virtual bool isAccessible(OrdType globalIndex) const = 0 ;
+    virtual bool isAccessible(int globalIndex) const = 0 ;
     
     /**  */
     virtual void print(std::ostream& os) const = 0 ;

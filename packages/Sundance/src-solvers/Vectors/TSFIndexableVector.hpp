@@ -59,22 +59,22 @@ namespace Playa
       virtual ~IndexableVector() {;}
 
       /** read the element at the given global index */
-      virtual const Scalar& operator[](OrdType globalIndex) const = 0 ;
+      virtual const Scalar& operator[](int globalIndex) const = 0 ;
 
       /** writable access to the element at the given global index */
-      virtual Scalar& operator[](OrdType globalIndex) = 0 ;
+      virtual Scalar& operator[](int globalIndex) = 0 ;
 
       /** set a single element at the given global index */
-      virtual void setElement(OrdType globalIndex, const Scalar& value) 
+      virtual void setElement(int globalIndex, const Scalar& value) 
       {operator[](globalIndex) = value;}
 
       /** add to the existing value of 
        * a single element at the given global index */
-      virtual void addToElement(OrdType globalIndex, const Scalar& value) 
+      virtual void addToElement(int globalIndex, const Scalar& value) 
       {operator[](globalIndex) += value;}
 
       /** get the element at the given global index */
-      virtual const Scalar& getElement(OrdType globalIndex) const 
+      virtual const Scalar& getElement(int globalIndex) const 
       {return operator[](globalIndex);}
     };
 }

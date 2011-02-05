@@ -63,7 +63,7 @@ public:
   //@{
 
   /** */
-  OrdType dim() const ;
+  int dim() const ;
 
   /** */
   bool isCompatible(const VectorSpaceBase<double>& other) const ;
@@ -83,17 +83,17 @@ public:
   /** \name Overidden from SpmdVectorSpaceBase */
   //@{
   /** */
-  Teuchos::RCP<const Teuchos::Comm<OrdType> > getComm() const
+  Teuchos::RCP<const Teuchos::Comm<int> > getComm() const
     {return comm_;}
 
   /** */
-  OrdType localSubDim() const {return localSubDim_;}
+  int localSubDim() const {return localSubDim_;}
 
   /** */
-  OrdType localOffset() const {return localOffset_;}
+  int localOffset() const {return localOffset_;}
 
   /** */
-  OrdType mapCode() const {return -1;}
+  int mapCode() const {return -1;}
   //@}
 
 
@@ -104,7 +104,7 @@ public:
 
 protected:
   /** */
-  Teuchos::RCP<const Teuchos::Comm<OrdType> > 
+  Teuchos::RCP<const Teuchos::Comm<int> > 
   epetraCommToTeuchosComm(const Epetra_Comm& epComm) const ;
   
   /** @name Protected overridden from VectorSpace */
@@ -120,11 +120,11 @@ private:
   /** */
   RCP<const Epetra_Map> epetraMap_;
 
-  Teuchos::RCP<const Teuchos::Comm<OrdType> > comm_;
+  Teuchos::RCP<const Teuchos::Comm<int> > comm_;
 
-  OrdType localSubDim_;
+  int localSubDim_;
 
-  OrdType localOffset_;
+  int localOffset_;
 };
   
 }

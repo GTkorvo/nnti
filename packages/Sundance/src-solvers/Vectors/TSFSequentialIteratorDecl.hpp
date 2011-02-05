@@ -79,15 +79,15 @@ public:
   std::ostream& print(std::ostream& os) const ;
 
   /** */
-  const OrdType& globalIndex() const {return globalIndex_;}
+  const int& globalIndex() const {return globalIndex_;}
 
 private:
 
   /** */
-  const OrdType& indexInBlock() const {return indexInCurrentBlock_;}
+  const int& indexInBlock() const {return indexInCurrentBlock_;}
 
   /** */
-  const OrdType& blockIndex() const {return blockIndex_;}
+  const int& blockIndex() const {return blockIndex_;}
 
   /** Constructor is private: the construction is always done inside
    * the begin and end methods of vector space. */
@@ -101,9 +101,9 @@ private:
   /* This is odd but necessary: we store the VectorSpace handle in an RCP
    * because we can only forward declare VectorSpace at this point. */
   RCP<VectorSpace<Scalar> > space_;
-  OrdType blockIndex_;
-  OrdType indexInCurrentBlock_;
-  OrdType globalIndex_;
+  int blockIndex_;
+  int indexInCurrentBlock_;
+  int globalIndex_;
   bool atEnd_;
 };
 

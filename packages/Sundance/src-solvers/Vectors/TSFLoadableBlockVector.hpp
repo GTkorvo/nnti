@@ -74,7 +74,7 @@ namespace Playa
       virtual ~LoadableBlockVector() {;}
 
       /** set a single element at the given global index */
-      void setElement(OrdType globalIndex, const double& value) 
+      void setElement(int globalIndex, const double& value) 
         {
           if (globalIndex < lowestLocalRow_ || globalIndex >= highestLocalRow_)
           {
@@ -92,7 +92,7 @@ namespace Playa
 
       /** add to the existing value of 
        * a single element at the given global index */
-      void addToElement(OrdType globalIndex, const double& value) 
+      void addToElement(int globalIndex, const double& value) 
         {
           if (globalIndex >= lowestLocalRow_ && globalIndex < highestLocalRow_)
           {

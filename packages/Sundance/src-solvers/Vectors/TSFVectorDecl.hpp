@@ -302,19 +302,19 @@ namespace Playa
     /** \name Element loading interface */
     //@{
     /** set a single element at the given global index */
-    void setElement(OrdType globalIndex, const Scalar& value) ;
+    void setElement(int globalIndex, const Scalar& value) ;
 
     /** add to the existing value of 
      * a single element at the given global index */
-    void addToElement(OrdType globalIndex, const Scalar& value) ;
+    void addToElement(int globalIndex, const Scalar& value) ;
 
     /** set a group of elements */
-    void setElements(OrdType numElems, const OrdType* globalIndices, 
+    void setElements(int numElems, const int* globalIndices, 
                      const Scalar* values) 
     {castToLoadable()->setElements(numElems, globalIndices, values);}
 
     /** add to a group of elements */
-    void addToElements(OrdType numElems, const OrdType* globalIndices, 
+    void addToElements(int numElems, const int* globalIndices, 
                        const Scalar* values)
     {castToLoadable()->addToElements(numElems, globalIndices, values);}
 
@@ -327,7 +327,7 @@ namespace Playa
     /** \name Element access interface */
     //@{
     /** get the element at the given global index */
-    Scalar getElement(OrdType globalIndex) const ;
+    Scalar getElement(int globalIndex) const ;
     //{return castToAccessible()->getElement(globalIndex);}
 
     /** Get a batch of elements */
@@ -409,13 +409,13 @@ namespace Playa
     RawDataAccessibleVector<Scalar>* castToRawDataAccessible();
 
     /** Test for valid index */
-    void boundscheck(OrdType i, int dim) const ;
+    void boundscheck(int i, int dim) const ;
 
     /** */
-    const Scalar& localElement(const OrdType& blockIndex, const OrdType& indexInBlock) const ;
+    const Scalar& localElement(const int& blockIndex, const int& indexInBlock) const ;
 
     /** */
-    Scalar& localElement(const OrdType& blockIndex, const OrdType& indexInBlock) ;
+    Scalar& localElement(const int& blockIndex, const int& indexInBlock) ;
       
       
   };

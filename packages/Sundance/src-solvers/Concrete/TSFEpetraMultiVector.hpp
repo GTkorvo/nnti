@@ -73,11 +73,11 @@ namespace Playa
     /** \name IndexableVector interface */
     //@{
     /** read the element at the given global index */
-    virtual const double& operator[](OrdType globalIndex) const 
+    virtual const double& operator[](int globalIndex) const 
     {return getElement(globalIndex);}
 
     /** writable access to the element at the given global index */
-    virtual double& operator[](OrdType globalIndex) ;
+    virtual double& operator[](int globalIndex) ;
     //@}
 
     /** \name Raw data access interface */
@@ -91,18 +91,18 @@ namespace Playa
     /** \name LoadableVector interface */
     //@{
     /** set a single element */
-    void setElement(OrdType globalIndex, const double& value);
+    void setElement(int globalIndex, const double& value);
 
     /** add to a single element */
-    void addToElement(OrdType globalIndex, const double& value);
+    void addToElement(int globalIndex, const double& value);
 
     /** set a group of elements */
-    void setElements(int numElems, const OrdType* globalIndices, 
+    void setElements(int numElems, const int* globalIndices, 
                      const double* values);
 
 
     /** add to a group of elements */
-    void addToElements(int numElems, const OrdType* globalIndices, 
+    void addToElements(int numElems, const int* globalIndices, 
                        const double* values);
 
     /** */
@@ -112,10 +112,10 @@ namespace Playa
     /** \name AccessibleVector interface */
     //@{
     /** */
-    const double& getElement(OrdType globalIndex) const ;
+    const double& getElement(int globalIndex) const ;
 
     /** */
-    void getElements(const OrdType* globalIndices, int numElems,
+    void getElements(const int* globalIndices, int numElems,
                      vector<double>& elems) const ;
     //@}
       

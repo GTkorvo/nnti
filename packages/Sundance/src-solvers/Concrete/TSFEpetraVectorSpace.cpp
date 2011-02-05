@@ -63,7 +63,7 @@ EpetraVectorSpace::EpetraVectorSpace(const RCP<const Epetra_Map>& m)
 {}
 
 
-OrdType EpetraVectorSpace::dim() const 
+int EpetraVectorSpace::dim() const 
 {
   return epetraMap_->NumGlobalElements();
 }
@@ -141,10 +141,10 @@ string EpetraVectorSpace::description() const
 
 
 
-Teuchos::RCP<const Teuchos::Comm<OrdType> > 
+Teuchos::RCP<const Teuchos::Comm<int> > 
 EpetraVectorSpace::epetraCommToTeuchosComm(const Epetra_Comm& epComm) const 
 {
-  RCP<const Comm<OrdType> > rtn;
+  RCP<const Comm<int> > rtn;
 
 #ifdef HAVE_MPI
   const Epetra_MpiComm* mpiComm 
@@ -156,7 +156,7 @@ EpetraVectorSpace::epetraCommToTeuchosComm(const Epetra_Comm& epComm) const
 
   if (serialComm != 0)
   {
-    rtn  = rcp(new SerialComm<OrdType>());
+    rtn  = rcp(new SerialComm<int>());
   }
 #ifdef HAVE_MPI
   else if (mpiComm != 0)
@@ -164,7 +164,7 @@ EpetraVectorSpace::epetraCommToTeuchosComm(const Epetra_Comm& epComm) const
     MPI_Comm rawMpiComm = mpiComm->GetMpiComm();
     RCP<const OpaqueWrapper<MPI_Comm> > ptr 
       = rcp(new OpaqueWrapper<MPI_Comm>(rawMpiComm));
-    rtn  = rcp(new MpiComm<OrdType>(ptr));
+    rtn  = rcp(new MpiComm<int>(ptr));
   }
 #endif
   else

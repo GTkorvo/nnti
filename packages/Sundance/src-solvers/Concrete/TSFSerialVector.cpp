@@ -68,13 +68,13 @@ void SerialVector::applyOpImpl(const RTOpPack::RTOpT< double >& op,
 		const ArrayView< const Ptr< const VectorBase< double > > > &  	vecs,
 		const ArrayView< const Ptr< VectorBase< double > > > &  	targ_vecs,
 		const Ptr< RTOpPack::ReductTarget > &  	reduct_obj,
-		const OrdType  	global_offset_in	 
+		const int  	global_offset_in	 
   ) const 
 {
   
   // ToDo: Remove this!
-  const OrdType	first_ele_offset_in = 0;
-  const OrdType	sub_dim_in = -1;
+  const int	first_ele_offset_in = 0;
+  const int	sub_dim_in = -1;
 
   using Teuchos::null;
   using Teuchos::dyn_cast;
@@ -129,9 +129,9 @@ void SerialVector::applyOpImpl(const RTOpPack::RTOpT< double >& op,
 
   // Get the overlap in the current process with the input logical sub-vector
   // from (first_ele_offset_in,sub_dim_in,global_offset_in)
-  OrdType  overlap_first_local_ele_off = 0;
-  OrdType  overlap_local_sub_dim = 0;
-  OrdType  overlap_global_off = 0;
+  int  overlap_first_local_ele_off = 0;
+  int  overlap_local_sub_dim = 0;
+  int  overlap_global_off = 0;
   if(localSubDim) {
     RTOp_parallel_calc_overlap(
       globalDim_, localSubDim, localOffset,
@@ -243,7 +243,7 @@ void SerialVector::acquireDetachedVectorViewImpl(
     rng.size(), false);
 //    rng.ubound()-localOffset_, false);
 
-  OrdType stride = 1;
+  int stride = 1;
   
   sub_vec->initialize(rng.lbound(), rng.size(),
     locVals, stride);
@@ -306,7 +306,7 @@ void SerialVector::acquireNonconstDetachedVectorViewImpl(
   Teuchos::ArrayRCP<double> locVals(localValues, rng.lbound()-localOffset,
 //    rng.ubound()-localOffset_, false);
     rng.size(), false);
-  OrdType stride = 1;
+  int stride = 1;
 
   sub_vec->initialize(rng.lbound(), rng.size(),
     locVals, stride);
@@ -353,27 +353,27 @@ Teuchos::Range1D SerialVector::validateRange(const Teuchos::Range1D& rng_in) con
 
 
 
-double& SerialVector::operator[](OrdType globalIndex) 
+double& SerialVector::operator[](int globalIndex) 
 {
   return data_[globalIndex];
 }
 
-void SerialVector::setElement(OrdType index, const double& value)
+void SerialVector::setElement(int index, const double& value)
 {
   data_[index] = value;
 }
 
-void SerialVector::addToElement(OrdType index, const double& value)
+void SerialVector::addToElement(int index, const double& value)
 {
   data_[index] += value;
 }
 
-const double& SerialVector::getElement(OrdType index) const 
+const double& SerialVector::getElement(int index) const 
 {
   return data_[index];
 }
 
-void SerialVector::getElements(const OrdType* globalIndices, int numElems,
+void SerialVector::getElements(const int* globalIndices, int numElems,
   Teuchos::Array<double>& elems) const
 {
   elems.resize(numElems);

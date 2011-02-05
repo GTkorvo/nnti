@@ -213,9 +213,9 @@ VectorSpace<Scalar> VectorSpace<Scalar>::getBlock(const int i) const
 template <class Scalar> inline
 SequentialIterator<Scalar> VectorSpace<Scalar>::begin() const
 {
-  OrdType blockIndex = -1;
-  OrdType indexInCurrentBlock = -1;
-  OrdType globalIndex = -1;
+  int blockIndex = -1;
+  int indexInCurrentBlock = -1;
+  int globalIndex = -1;
 
   /* we need to check for remaining data to deal with the case where 
    * a space is empty */
@@ -245,9 +245,9 @@ SequentialIterator<Scalar> VectorSpace<Scalar>::end() const
 
 template <class Scalar> inline
 bool VectorSpace<Scalar>::advanceIndex(
-  OrdType& blockIndex, 
-  OrdType& indexInCurrentBlock,
-  OrdType& globalIndex) const 
+  int& blockIndex, 
+  int& indexInCurrentBlock,
+  int& globalIndex) const 
 {
   /* block index == -1 indicates the initialization call */
   if (blockIndex < 0)
@@ -289,7 +289,7 @@ bool VectorSpace<Scalar>::advanceIndex(
   {
     /* If we are a product space, first try to advance within 
      * the current block. */
-    OrdType subBlock = 0;
+    int subBlock = 0;
     if (getBlock(blockIndex).advanceIndex(subBlock, indexInCurrentBlock, globalIndex))
     {
       /* Advance was successful. */

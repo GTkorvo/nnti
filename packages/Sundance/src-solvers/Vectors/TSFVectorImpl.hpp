@@ -509,8 +509,8 @@ Scalar Vector<Scalar>::max(int& index)const
   TimeMonitor t(*opTimer());
   Scalar maxEl;
   Ptr<Scalar> maxElP(&maxEl);
-  OrdType loc_index = -1;
-  Ptr<OrdType> pind(&loc_index);
+  int loc_index = -1;
+  Ptr<int> pind(&loc_index);
   Thyra::max(*(this->ptr()), maxElP, pind); 
   index = loc_index;
   return maxEl;
@@ -524,8 +524,8 @@ Scalar Vector<Scalar>::max(const Scalar& bound, int& index)const
   TimeMonitor t(*opTimer());
   Scalar maxEl;
   Ptr<Scalar> maxElP(&maxEl);
-  OrdType loc_index = -1;
-  Ptr<OrdType> pind(&loc_index);
+  int loc_index = -1;
+  Ptr<int> pind(&loc_index);
   Thyra::maxLessThanBound(*(this->ptr()), bound, maxElP, pind); 
   index = loc_index;
   return maxEl;
@@ -549,8 +549,8 @@ Scalar Vector<Scalar>::min(int& index)const
   TimeMonitor t(*opTimer());
   Scalar minEl;
   Ptr<Scalar> minElP(&minEl);
-  OrdType loc_index = -1;
-  Ptr<OrdType> pind(&loc_index);
+  int loc_index = -1;
+  Ptr<int> pind(&loc_index);
   Thyra::min(*(this->ptr()), minElP, pind); 
   index = loc_index;
   return minEl;
@@ -564,8 +564,8 @@ Scalar Vector<Scalar>::min(const Scalar& bound, int& index)const
   TimeMonitor t(*opTimer());
   Scalar minEl;
   Ptr<Scalar> minElP(&minEl);
-  OrdType loc_index = -1;
-  Ptr<OrdType> pind(&loc_index);
+  int loc_index = -1;
+  Ptr<int> pind(&loc_index);
 
   Thyra::minGreaterThanBound(*(this->ptr)(), bound, minElP, pind); 
   index = loc_index;
@@ -577,7 +577,7 @@ Scalar Vector<Scalar>::min(const Scalar& bound, int& index)const
 
 //===========================================================================
 template <class Scalar> inline 
-Scalar Vector<Scalar>::getElement(OrdType globalIndex) const
+Scalar Vector<Scalar>::getElement(int globalIndex) const
 { 
   Thyra::BlockVectorBase<Scalar>* p 
     = dynamic_cast<Thyra::BlockVectorBase<Scalar>*>(&*this->ptr());
@@ -593,7 +593,7 @@ Scalar Vector<Scalar>::getElement(OrdType globalIndex) const
     if (dpvs)
     {
       int blockIndex=-1;
-      OrdType globOffsetInBlock=-1;
+      int globOffsetInBlock=-1;
       dpvs->getVecSpcPoss(globalIndex, &blockIndex, &globOffsetInBlock);
       RCP<Thyra::VectorBase<Scalar> > vec_i 
         = p->getNonconstVectorBlock(blockIndex);
@@ -628,9 +628,9 @@ Scalar Vector<Scalar>::getElement(OrdType globalIndex) const
       
     if (dsv)
     {
-      OrdType stride = dsv->getStride();
-      OrdType low = dsv->spmdSpace()->localOffset();
-      OrdType subdim = dsv->spmdSpace()->localSubDim();
+      int stride = dsv->getStride();
+      int low = dsv->spmdSpace()->localOffset();
+      int subdim = dsv->spmdSpace()->localSubDim();
       TEST_FOR_EXCEPTION( globalIndex < low || globalIndex >= low+subdim, 
         std::runtime_error,
         "Bounds violation: " << globalIndex << "is out of range [low" 
@@ -646,7 +646,7 @@ Scalar Vector<Scalar>::getElement(OrdType globalIndex) const
 
 //===========================================================================
 template <class Scalar> inline 
-void Vector<Scalar>::setElement(OrdType globalIndex, const Scalar& value)
+void Vector<Scalar>::setElement(int globalIndex, const Scalar& value)
 { 
   Thyra::BlockVectorBase<Scalar>* p 
     = dynamic_cast<Thyra::BlockVectorBase<Scalar>*>(&*this->ptr());
@@ -662,7 +662,7 @@ void Vector<Scalar>::setElement(OrdType globalIndex, const Scalar& value)
     if (dpvs)
     {
       int blockIndex=-1;
-      OrdType globOffsetInBlock=-1;
+      int globOffsetInBlock=-1;
       dpvs->getVecSpcPoss(globalIndex, &blockIndex, &globOffsetInBlock);
       RCP<Thyra::VectorBase<Scalar> > vec_i 
         = p->getNonconstVectorBlock(blockIndex);
@@ -696,9 +696,9 @@ void Vector<Scalar>::setElement(OrdType globalIndex, const Scalar& value)
       
     if (dsv)
     {
-      OrdType stride = dsv->getStride();
-      OrdType low = dsv->spmdSpace()->localOffset();
-      OrdType subdim = dsv->spmdSpace()->localSubDim();
+      int stride = dsv->getStride();
+      int low = dsv->spmdSpace()->localOffset();
+      int subdim = dsv->spmdSpace()->localSubDim();
       TEST_FOR_EXCEPTION( globalIndex < low || globalIndex >= low+subdim, 
         std::runtime_error,
         "Bounds violation: " << globalIndex << "is out of range [low" 
@@ -717,8 +717,8 @@ void Vector<Scalar>::setElement(OrdType globalIndex, const Scalar& value)
 template <class Scalar> inline 
 Scalar& Vector<Scalar>::operator[](const SequentialIterator<Scalar>& iter)
 {
-  const OrdType& blockIndex = iter.blockIndex();
-  const OrdType& indexInBlock = iter.indexInBlock();
+  const int& blockIndex = iter.blockIndex();
+  const int& indexInBlock = iter.indexInBlock();
   
   return localElement(blockIndex, indexInBlock);
 } 
@@ -729,8 +729,8 @@ Scalar& Vector<Scalar>::operator[](const SequentialIterator<Scalar>& iter)
 template <class Scalar> inline 
 const Scalar& Vector<Scalar>::operator[](const SequentialIterator<Scalar>& iter) const
 {
-  const OrdType& blockIndex = iter.blockIndex();
-  const OrdType& indexInBlock = iter.indexInBlock();
+  const int& blockIndex = iter.blockIndex();
+  const int& indexInBlock = iter.indexInBlock();
   
   return localElement(blockIndex, indexInBlock);
 } 
@@ -738,7 +738,7 @@ const Scalar& Vector<Scalar>::operator[](const SequentialIterator<Scalar>& iter)
 
 //===========================================================================
 template <class Scalar> inline 
-const Scalar& Vector<Scalar>::localElement(const OrdType& blockIndex, const OrdType& indexInBlock) const
+const Scalar& Vector<Scalar>::localElement(const int& blockIndex, const int& indexInBlock) const
 {
   const Thyra::BlockVectorBase<Scalar>* p 
     = dynamic_cast<const Thyra::BlockVectorBase<Scalar>*>(&*this->ptr());
@@ -764,7 +764,7 @@ const Scalar& Vector<Scalar>::localElement(const OrdType& blockIndex, const OrdT
 
 //===========================================================================
 template <class Scalar> inline 
-Scalar& Vector<Scalar>::localElement(const OrdType& blockIndex, const OrdType& indexInBlock) 
+Scalar& Vector<Scalar>::localElement(const int& blockIndex, const int& indexInBlock) 
 {
   Thyra::BlockVectorBase<Scalar>* p 
     = dynamic_cast<Thyra::BlockVectorBase<Scalar>*>(&*this->ptr());
@@ -798,7 +798,7 @@ Scalar& Vector<Scalar>::localElement(const OrdType& blockIndex, const OrdType& i
 
 //===========================================================================
 template <class Scalar> inline 
-void Vector<Scalar>::addToElement(OrdType globalIndex, const Scalar& value)
+void Vector<Scalar>::addToElement(int globalIndex, const Scalar& value)
 {
   Thyra::BlockVectorBase<Scalar>* p 
     = dynamic_cast<Thyra::BlockVectorBase<Scalar>*>(&*this->ptr());
@@ -814,7 +814,7 @@ void Vector<Scalar>::addToElement(OrdType globalIndex, const Scalar& value)
     if (dpvs)
     {
       int blockIndex=-1;
-      OrdType globOffsetInBlock=-1;
+      int globOffsetInBlock=-1;
       dpvs->getVecSpcPoss(globalIndex, &blockIndex, &globOffsetInBlock);
       RCP<Thyra::VectorBase<Scalar> > vec_i 
         = p->getNonconstVectorBlock(blockIndex);
@@ -853,9 +853,9 @@ void Vector<Scalar>::addToElement(OrdType globalIndex, const Scalar& value)
     }
     else if (dsv)
     {
-      OrdType stride = dsv->getStride();
-      OrdType low = dsv->spmdSpace()->localOffset();
-      OrdType subdim = dsv->spmdSpace()->localSubDim();
+      int stride = dsv->getStride();
+      int low = dsv->spmdSpace()->localOffset();
+      int subdim = dsv->spmdSpace()->localSubDim();
       TEST_FOR_EXCEPTION( globalIndex < low || globalIndex >= low+subdim, 
         std::runtime_error,
         "Bounds violation: " << globalIndex << "is out of range [low" 
@@ -872,7 +872,7 @@ void Vector<Scalar>::addToElement(OrdType globalIndex, const Scalar& value)
 
 
 template <class Scalar> inline 
-void Vector<Scalar>::boundscheck(OrdType i, int dim) const
+void Vector<Scalar>::boundscheck(int i, int dim) const
 {
   TEST_FOR_EXCEPTION( i < 0 || i >= dim, std::runtime_error,
     "Bounds violation: " << i << "is out of range [0" 

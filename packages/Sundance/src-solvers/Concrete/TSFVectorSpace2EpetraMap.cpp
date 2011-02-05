@@ -98,7 +98,7 @@ void getComm(const Playa::VectorSpace<double>& tsfSpace,
       {
 	const MPIVectorSpaceBase<double>* mv 
 	  = dynamic_cast<const MPIVectorSpaceBase<double>*>(tsfSpace.getBlock(0).ptr().get());
-	RCP<const Teuchos::Comm<OrdType> > tc = mv->getComm();
+	RCP<const Teuchos::Comm<int> > tc = mv->getComm();
 	const Teuchos::MpiComm<int>* mc 
 	  = dynamic_cast<const Teuchos::MpiComm<int>*>(tc.get());
 	const Teuchos::SerialComm<int>* sc 

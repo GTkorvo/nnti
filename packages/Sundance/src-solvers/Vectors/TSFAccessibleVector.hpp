@@ -54,7 +54,7 @@ namespace Playa
       virtual ~AccessibleVector() {;}
 
       /** get the element at the given global index */
-      virtual const Scalar& getElement(OrdType globalIndex) const = 0 ;
+      virtual const Scalar& getElement(int globalIndex) const = 0 ;
 
       /** get a batch of elements. Slow default implementation loops
        * over calls to getElement(). */

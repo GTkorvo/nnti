@@ -91,7 +91,7 @@ void DenseSerialMatrix::applyOp(
   const SerialVector* rvIn = SerialVector::getConcrete(in);
   SerialVector* rvOut = SerialVector::getConcrete(out);
 
-  Teuchos::BLAS<OrdType, double> blas;
+  Teuchos::BLAS<int, double> blas;
   int lda = numRows();
   Teuchos::ETransp trans = thyraTransToTeuchosTrans(M_trans);
   blas.GEMV(trans, numRows(), numCols(), 1.0, dataPtr(), 

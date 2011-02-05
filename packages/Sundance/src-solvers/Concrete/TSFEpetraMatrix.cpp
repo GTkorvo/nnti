@@ -87,9 +87,9 @@ void EpetraMatrix::applyImpl(
 
   using Teuchos::rcp_dynamic_cast;
 
-  const OrdType numMvCols = X.domain()->dim();
+  const int numMvCols = X.domain()->dim();
 
-  for (OrdType col_j = 0; col_j < numMvCols; ++col_j) {
+  for (int col_j = 0; col_j < numMvCols; ++col_j) {
 
     const RCP<const VectorBase<double> > x = X.col(col_j);
     const RCP<VectorBase<double> > y = Y->col(col_j);
