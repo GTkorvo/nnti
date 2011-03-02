@@ -60,8 +60,8 @@
 int main(int argc, char *argv[]) {
   int nelem = 100;
   double h = 1.0/nelem;
-  int num_KL = 3;
-  int p = 5;
+  int num_KL = 2;
+  int p = 3;
   bool use_solver = false;
   std::string solver_type = "GMRES";
 
@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new Stokhos::CompletePolynomialBasis<int,double>(bases));
     int sz = basis->size();
     Teuchos::RCP<const Stokhos::Quadrature<int,double> > quad = 
-      Teuchos::rcp(new Stokhos::SparseGridQuadrature<int,double>(basis));
+      Teuchos::rcp(new Stokhos::TensorProductQuadrature<int,double>(basis));
     int num_mp = quad->size();
     
     if (MyPID == 0)
