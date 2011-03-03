@@ -57,12 +57,14 @@
 #if SG_ACTIVE
 #include "EpetraExt_BlockVector.h"
 #include "EpetraExt_BlockCrsMatrix.h"
+#include "Stokhos_ParallelData.hpp"
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Stokhos_Quadrature.hpp"
 #include "Stokhos_VectorOrthogPoly.hpp"
 #include "Stokhos_VectorOrthogPolyTraitsEpetra.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
+#include "EpetraExt_MultiComm.h"
 #endif
 
 namespace FEApp {
@@ -71,11 +73,12 @@ namespace FEApp {
   public:
 
     //! Constructor 
-    Application(const std::vector<double>& coords,
-		const Teuchos::RCP<const Epetra_Comm>& comm,
-		const Teuchos::RCP<Teuchos::ParameterList>& params,
-		bool is_transient,
-		const Epetra_Vector* initial_soln = NULL);
+    Application(
+      const std::vector<double>& coords,
+      const Teuchos::RCP<const Epetra_Comm>& comm,
+      const Teuchos::RCP<Teuchos::ParameterList>& params,
+      bool is_transient,
+      const Epetra_Vector* initial_soln = NULL);
 
     //! Destructor
     ~Application();
@@ -103,7 +106,8 @@ namespace FEApp {
     void init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& sg_basis,
       const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& sg_quad,
-      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& sg_exp);
+      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& sg_exp,
+      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
 #endif
 
     //! Create new W operator
@@ -292,6 +296,91 @@ namespace FEApp {
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
       const Teuchos::Array< Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > >& sg_dg_dp);
 
+    //! Compute global residual for multi-point problem
+    /*!
+     * Set xdot to NULL for steady-state problems
+     */
+    void computeGlobalMPResidual(
+		        const Stokhos::ProductEpetraVector* mp_xdot,
+			const Stokhos::ProductEpetraVector& mp_x,
+			const ParamVec* p,
+			const ParamVec* mp_p,
+			const Teuchos::Array<MPType>* mp_p_vals,
+			Stokhos::ProductEpetraVector& mp_f);
+
+    //! Compute global Jacobian for multi-point problem
+    /*!
+     * Set xdot to NULL for steady-state problems
+     */
+    void computeGlobalMPJacobian(
+			double alpha, double beta,
+			const Stokhos::ProductEpetraVector* mp_xdot,
+			const Stokhos::ProductEpetraVector& mp_x,
+			const ParamVec* p,
+			const ParamVec* mp_p,
+			const Teuchos::Array<MPType>* mp_p_vals,
+			Stokhos::ProductEpetraVector* mp_f,
+			Stokhos::ProductContainer<Epetra_Operator>& mp_jac);
+
+    //! Compute global Tangent for multi-point problem
+    /*!
+     * Set xdot to NULL for steady-state problems
+     */
+    void computeGlobalMPTangent(
+      double alpha, double beta, bool sum_derivs,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const ParamVec* p, ParamVec* deriv_p, const ParamVec* mp_p, 
+      const Teuchos::Array<MPType>* mp_p_vals,   
+      const Epetra_MultiVector* Vx,
+      const Teuchos::SerialDenseMatrix<int,double>* Vp,
+      Stokhos::ProductEpetraVector* mp_f,
+      Stokhos::ProductEpetraMultiVector* mp_JVx,
+      Stokhos::ProductEpetraMultiVector* mp_fVp);
+
+    //! Evaluate multi-point response functions
+    /*!
+     * Set xdot to NULL for steady-state problems
+     */
+    void 
+    evaluateMPResponses(const Stokhos::ProductEpetraVector* mp_xdot,
+			const Stokhos::ProductEpetraVector& mp_x,
+			const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+			const Teuchos::Array<MPType>* mp_p_vals,
+			Stokhos::ProductEpetraVector& mp_g);
+
+    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
+    /*!
+     * Set xdot, dxdot_dp to NULL for steady-state problems
+     */
+    void 
+    evaluateMPResponseTangents(
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+      const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+      const Teuchos::Array<MPType>* mp_p_vals,
+      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
+      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
+      Stokhos::ProductEpetraVector* mp_g,
+      const Teuchos::Array< Teuchos::RCP< Stokhos::ProductEpetraMultiVector > >& mp_gt);
+
+    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
+    /*!
+     * Set xdot, dg_dxdot to NULL for steady-state problems
+     */
+    void 
+    evaluateMPResponseGradients(
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+      const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+      const Teuchos::Array<MPType>* mp_p_vals,
+      Stokhos::ProductEpetraVector* mp_g,
+      Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+      Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+      const Teuchos::Array< Teuchos::RCP< Stokhos::ProductEpetraMultiVector > >& mp_dg_dp);
+
 #endif
 
   private:
@@ -363,6 +452,15 @@ namespace FEApp {
     //! Stochastic Galerking expansion
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
 
+    //! Parallel SG data
+    Teuchos::RCP<const Stokhos::ParallelData> sg_parallel_data;
+
+    //! Overlapped SG map
+    Teuchos::RCP<const Epetra_BlockMap> sg_overlap_map;
+
+    //! Overlapped SG map for Jacobian
+    Teuchos::RCP<const Epetra_BlockMap> sg_overlap_jac_map;
+
     //! SG overlapped solution vector
     Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly >  sg_overlapped_x;
 
@@ -380,6 +478,24 @@ namespace FEApp {
 
     //! SG Jacobian global fill object
     Teuchos::RCP< FEApp::GlobalFill<FEApp::SGJacobianType> > sg_jac_global_fill;
+
+    //! MP overlapped solution vector
+    Teuchos::RCP< Stokhos::ProductEpetraVector >  mp_overlapped_x;
+
+    //! MP overlapped time derivative vector
+    Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_xdot;
+
+    //! MP overlapped residual vector
+    Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_f;
+
+    //! Overlapped Jacobian matrix
+    Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_overlapped_jac;
+
+    //! MP Residual global fill object
+    Teuchos::RCP< FEApp::GlobalFill<FEApp::MPResidualType> > mp_res_global_fill;
+
+    //! MP Jacobian global fill object
+    Teuchos::RCP< FEApp::GlobalFill<FEApp::MPJacobianType> > mp_jac_global_fill;
 
 #endif
 
