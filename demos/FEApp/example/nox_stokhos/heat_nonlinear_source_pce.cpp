@@ -28,12 +28,6 @@
 // Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
-//  CVS Information
-//  $Source$
-//  $Author$
-//  $Date$
-//  $Revision$
-// ************************************************************************
 //@HEADER
 
 #include <iostream>
@@ -44,7 +38,7 @@
 
 // FEApp is defined in Trilinos/packages/sacado/example/FEApp
 #include "FEApp_ModelEvaluator.hpp"
-#include "ENAT_NOXSolver.hpp"
+#include "Piro_Epetra_NOXSolver.hpp"
 
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
@@ -71,7 +65,7 @@ int main(int argc, char *argv[]) {
   double leftBC = 0.0;
   double rightBC = 0.1;
   int num_KL = 3;
-  int p = 5;
+  int p = 3;
 
   bool do_pce = true;
   bool do_dakota = false;
@@ -194,6 +188,14 @@ int main(int argc, char *argv[]) {
 	Teuchos::rcp(new Teuchos::Array<std::string>);
     free_param_names->push_back("Exponential Source Function Nonlinear Factor");
 
+    Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
+	Teuchos::rcp(new Teuchos::Array<std::string>);
+      for (int i=0; i<num_KL; i++) {
+	std::stringstream ss;
+	ss << "KL Exponential Function Random Variable " << i;
+	sg_param_names->push_back(ss.str());
+      }
+
     // Set up NOX parameters
     Teuchos::RCP<Teuchos::ParameterList> noxParams =
       Teuchos::rcp(&(appParams->sublist("NOX")),false);
@@ -229,15 +231,24 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList& newtonParams = dirParams.sublist("Newton");
     newtonParams.set("Forcing Term Method", "Constant");
 
+    // Alternative linear solver list for Stratimikos
+    Teuchos::ParameterList& stratLinSolParams =
+      newtonParams.sublist("Stratimikos Linear Solver");
+    Teuchos::ParameterList& stratParams = 
+      stratLinSolParams.sublist("Stratimikos");
+
     // Sublist for linear solver for the Newton method
-    Teuchos::ParameterList& lsParams = newtonParams.sublist("Linear Solver");
-    lsParams.set("Aztec Solver", "GMRES");  
-    lsParams.set("Max Iterations", 20);
-    lsParams.set("Size of Krylov Subspace", 20);
-    lsParams.set("Tolerance", 1e-4); 
-    lsParams.set("Output Frequency", 50);
-    lsParams.set("Preconditioner", "Ifpack");
-    lsParams.set("RCM Reordering", "Enabled");
+    stratParams.set("Linear Solver Type", "AztecOO");
+    Teuchos::ParameterList& aztecOOParams = 
+      stratParams.sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve");
+    Teuchos::ParameterList& aztecOOSettings =
+      aztecOOParams.sublist("AztecOO Settings");
+    aztecOOSettings.set("Aztec Solver","GMRES");
+    aztecOOParams.set("Max Iterations", 20);
+    aztecOOSettings.set("Size of Krylov Subspace", 20);
+    aztecOOParams.set("Tolerance", 1e-4); 
+    aztecOOSettings.set("Output Frequency", 50);
+    stratParams.set("Preconditioner Type", "Ifpack");
 
     // Sublist for convergence tests
     Teuchos::ParameterList& statusParams = noxParams->sublist("Status Tests");
@@ -269,7 +280,7 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names));
 
     // Create NOX solver
-    ENAT::NOXSolver solver(appParams, model);
+    Piro::Epetra::NOXSolver solver(appParams, model);
 
     // Evaluate responses at parameters
     EpetraExt::ModelEvaluator::InArgs inArgs = solver.createInArgs();
@@ -347,40 +358,6 @@ int main(int argc, char *argv[]) {
       // Create new app for Stochastic Galerkin solve
       app = Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false,
 						finalSolution.get()));
-
-      // Set up stochastic parameters
-      Epetra_LocalMap p_sg_map(num_KL, 0, *sg_comm);
-      Teuchos::Array< Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> > sg_p;
-      int sg_p_index;
-      if (SG_Method == SG_AD || SG_Method == SG_ELEMENT) {
-	sg_p.resize(1);
-	sg_p_index = 0;
-      }
-      else {
-	// When SGQuadModelEvaluator is used, there are 2 SG parameter vectors
-	sg_p.resize(2);
-	sg_p_index = 1;
-      }
-      sg_p[sg_p_index] = 
-	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, p_sg_map));
-      for (int i=0; i<num_KL; i++) {
-	sg_p[sg_p_index]->term(i,0)[i] = 0.0;
-	sg_p[sg_p_index]->term(i,1)[i] = 1.0;
-      }
-      Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
-	Teuchos::rcp(new Teuchos::Array<std::string>);
-      for (int i=0; i<num_KL; i++) {
-	std::stringstream ss;
-	ss << "KL Exponential Function Random Variable " << i;
-	sg_param_names->push_back(ss.str());
-      }
-
-      // Setup stochastic initial guess
-      Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x = 
-	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, 
-							 finalSolution->Map()));
-      (*sg_x)[0] = *finalSolution;
-
       if (SG_Method == SG_AD || SG_Method == SG_ELEMENT) {
 	model = Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names,
 						       sg_param_names));
@@ -396,11 +373,10 @@ int main(int argc, char *argv[]) {
 	    Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names,
 						   sg_param_names));
 	  underlying_model =
-	    Teuchos::rcp(new ENAT::NOXSolver(appParams, base_model));
+	    Teuchos::rcp(new Piro::Epetra::NOXSolver(appParams, base_model));
 	}
 	model =
-	  Teuchos::rcp(new Stokhos::SGQuadModelEvaluator(underlying_model,
-							 basis));
+	  Teuchos::rcp(new Stokhos::SGQuadModelEvaluator(underlying_model));
       }
 
       Teuchos::RCP<Teuchos::ParameterList> sgSolverParams = 
@@ -424,20 +400,40 @@ int main(int argc, char *argv[]) {
       Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =
 	Teuchos::rcp(new Stokhos::SGModelEvaluator(model, basis, quad, 
 						   expansion, sg_parallel_data, 
-						   sgSolverParams, sg_x, sg_p));
+						   sgSolverParams));
+
+      // Set up stochastic parameters
+      int sg_p_index;
+      if (SG_Method == SG_AD || SG_Method == SG_ELEMENT) {
+	sg_p_index = 0;
+      }
+      else {
+	// When SGQuadModelEvaluator is used, there are 2 SG parameter vectors
+	sg_p_index = 1;
+      }
+      Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p_init =
+	sg_model->create_p_sg(sg_p_index);
+      for (int i=0; i<num_KL; i++) {
+	sg_p_init->term(i,0)[i] = 0.0;
+	sg_p_init->term(i,1)[i] = 1.0;
+      }
+      sg_model->set_p_sg_init(sg_p_index, *sg_p_init);
+
+      // Setup stochastic initial guess
+      if (SG_Method != SG_NI) {
+	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x = 
+	  sg_model->create_x_sg();
+	sg_x->init(0.0);
+	if (sg_x->myGID(0))
+	  (*sg_x)[0] = *finalSolution;
+	sg_model->set_x_sg_init(*sg_x);
+      }
 
       // Create SG NOX solver
       Teuchos::RCP<EpetraExt::ModelEvaluator> sg_block_solver;
-      if (SG_Method != SG_NI) {
-	Teuchos::RCP<Epetra_Operator> M;
-	std::string jac_method = 
-	  sgOpParams.get<std::string>("Operator Method");
-	if (jac_method == "Matrix Free" || 
-	    jac_method == "KL Reduced Matrix Free")
-	  M = sg_model->create_WPrec()->PrecOp;
+      if (SG_Method != SG_NI)
 	sg_block_solver = 
-	  Teuchos::rcp(new ENAT::NOXSolver(appParams, sg_model, M));
-      }
+	  Teuchos::rcp(new Piro::Epetra::NOXSolver(appParams, sg_model));
       else
 	sg_block_solver = sg_model;
 
@@ -452,14 +448,14 @@ int main(int argc, char *argv[]) {
 	sg_model->get_p_sg_base_maps();
       Teuchos::Array< Teuchos::RCP<const Epetra_Map> > base_g_maps = 
 	sg_model->get_g_sg_base_maps();
-      // Add sg_u response function supplied by ENAT::NOXSolver
+      // Add sg_u response function supplied by Piro::Epetra::NOXSolver
       if (SG_Method != SG_NI) {
 	sg_inverse_g_index.push_back(sg_inverse_g_index[sg_inverse_g_index.size()-1]+1);
 	base_g_maps.push_back(app->getMap());
       }
       Teuchos::RCP<EpetraExt::ModelEvaluator> sg_solver = 
 	Teuchos::rcp(new Stokhos::SGInverseModelEvaluator(
-		       sg_block_solver, basis, 
+		       sg_block_solver,
 		       sg_inverse_p_index, non_sg_inverse_p_index,
 		       sg_inverse_g_index, non_sg_inverse_g_index,
 		       base_p_maps, base_g_maps));
@@ -468,20 +464,13 @@ int main(int argc, char *argv[]) {
       EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_solver->createInArgs();
       EpetraExt::ModelEvaluator::OutArgs sg_outArgs = 
 	sg_solver->createOutArgs();
-      Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> sg_p_init =
-	sg_solver->get_p_sg_init(sg_p_index);
       sg_inArgs.set_p_sg(sg_p_index, sg_p_init);
       Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_g = 
-	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		       basis, *(sg_solver->get_g_sg_map(0))));
+	sg_model->create_g_sg(0);
       Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u = 
-	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		       basis, *(sg_solver->get_g_sg_map(1)),
-		       sg_parallel_data->getEpetraCijk()->numMyRows()));
+	sg_model->create_x_sg();
       Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> sg_dgdp = 
-	Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
-		       basis, *(sg_solver->get_g_sg_map(0)),
-		       p_init->MyLength()));
+	sg_model->create_g_mv_sg(0, p_init->MyLength());
       sg_outArgs.set_g_sg(0, sg_g);
       sg_outArgs.set_g_sg(1, sg_u);
       sg_outArgs.set_DgDp_sg(0, 0, sg_dgdp);
@@ -550,11 +539,10 @@ int main(int argc, char *argv[]) {
 	for (int i=0; i<evals.size(); i++)
 	  val_kl.Update(val_rvs[i], *((*evecs)(i)), 1.0);
 	
-	Stokhos::VectorOrthogPoly<Epetra_Vector> sg_u_poly(basis);
-	for (int i=0; i<sz; i++)
-	  sg_u_poly.setCoeffPtr(i, X_ov->GetBlock(i));
+	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u_poly = 
+	  sg_model->create_x_sg_overlap(View, X_ov.get());
 	Epetra_Vector val(finalSolution->Map());
-	sg_u_poly.evaluate(basis_vals, val);
+	sg_u_poly->evaluate(basis_vals, val);
 	
 	// val.Print(std::cout);
 	// val_kl.Print(std::cout);
@@ -568,11 +556,9 @@ int main(int argc, char *argv[]) {
       }
 #endif
       
-      NOX::StatusTest::StatusType status = NOX::StatusTest::Converged;
       if (SG_Method != SG_NI)
-      	status = Teuchos::rcp_dynamic_cast<ENAT::NOXSolver>(sg_block_solver)->getSolverStatus();
-      if (status == NOX::StatusTest::Converged && MyPID == 0) 
-	utils.out() << "Test Passed!" << endl;
+	if (!sg_outArgs.isFailed() && MyPID == 0) 
+	  utils.out() << "Test Passed!" << endl;
 
     }
 
