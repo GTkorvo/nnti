@@ -568,7 +568,265 @@ namespace FEApp {
 
   };
 
-#endif // SG_ACTIVE
+  //! Fill operator for multi-point residual
+  class MPResidualOp : 
+    public FEApp::AbstractInitPostOp<FEApp::MPResidualType> {
+  public:
+    
+    //! Constructor
+    /*!
+     * Set xdot to Teuchos::null for steady-state problems
+     */
+    MPResidualOp(
+    const Teuchos::RCP<const Stokhos::ProductEpetraVector >& xdot,
+    const Teuchos::RCP<const Stokhos::ProductEpetraVector >& x,
+    const Teuchos::RCP< Stokhos::ProductEpetraVector >& f);
+
+    //! Destructor
+    virtual ~MPResidualOp();
+    
+    //! Evaulate element init operator
+    virtual void elementInit(const FEApp::AbstractElement& e,
+                             unsigned int neqn,
+                             std::vector<MPType>* elem_xdot,
+                             std::vector<MPType>& elem_x);
+
+    //! Evaluate element post operator
+    virtual void elementPost(const FEApp::AbstractElement& e,
+                             unsigned int neqn,
+                             std::vector<MPType>& elem_f);
+
+    //! Evaulate node init operator
+    virtual void nodeInit(const FEApp::NodeBC& bc,
+                          unsigned int neqn,
+                          std::vector<MPType>* node_xdot,
+                          std::vector<MPType>& node_x);
+
+    //! Evaluate node post operator
+    virtual void nodePost(const FEApp::NodeBC& bc,
+                          unsigned int neqn,
+                          std::vector<MPType>& node_f);
+
+    //! Finalize fill
+    virtual void finalizeFill();
+
+  private:
+    
+    //! Private to prohibit copying
+    MPResidualOp(const MPResidualOp&);
+
+    //! Private to prohibit copying
+    MPResidualOp& operator=(const MPResidualOp&);
+
+  protected:
+
+    //! Number of blocks
+    int nblock;
+
+    //! Time derivative vectors (may be null)
+    Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot;
+
+    //! Solution vectors
+    Teuchos::RCP<const Stokhos::ProductEpetraVector > x;
+
+    //! Residual vectors
+    Teuchos::RCP< Stokhos::ProductEpetraVector > f;
+
+  };
+
+  //! Fill operator for multi-point Jacobian
+  class MPJacobianOp : 
+    public FEApp::AbstractInitPostOp<FEApp::MPJacobianType> {
+  public:
+
+    //! Constructor
+    /*!
+     * Set xdot to Teuchos::null for steady-state problems
+     */
+    MPJacobianOp(
+      double alpha, double beta,
+      const Teuchos::RCP<const Stokhos::ProductEpetraVector >& xdot,
+      const Teuchos::RCP<const Stokhos::ProductEpetraVector >& x,
+      const Teuchos::RCP< Stokhos::ProductEpetraVector >& f,
+      const Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> >& jac);
+
+    //! Destructor
+    virtual ~MPJacobianOp();
+
+    //! Evaulate element init operator
+    virtual void elementInit(const FEApp::AbstractElement& e,
+                             unsigned int neqn,
+                             std::vector< MPFadType >* elem_xdot,
+                             std::vector< MPFadType >& elem_x);
+
+    //! Evaluate element post operator
+    virtual void elementPost(const FEApp::AbstractElement& e,
+                             unsigned int neqn,
+                             std::vector< MPFadType >& elem_f);
+
+    //! Evaulate node init operator
+    virtual void nodeInit(const FEApp::NodeBC& bc,
+                          unsigned int neqn,
+                          std::vector< MPFadType >* node_xdot,
+                          std::vector< MPFadType >& node_x);
+
+    //! Evaluate node post operator
+    virtual void nodePost(const FEApp::NodeBC& bc,
+                          unsigned int neqn,
+                          std::vector< MPFadType >& node_f);
+
+    //! Finalize fill
+    virtual void finalizeFill();
+
+  private:
+    
+    //! Private to prohibit copying
+    MPJacobianOp(const MPJacobianOp&);
+    
+    //! Private to prohibit copying
+    MPJacobianOp& operator=(const MPJacobianOp&);
+
+  protected:
+    
+    //! Number of blocks
+    int nblock;
+
+    //! Coefficient of mass matrix
+    double m_coeff;
+
+    //! Coefficient of Jacobian matrix
+    double j_coeff;
+
+    //! Time derivative vectors (may be null)
+    Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot;
+
+    //! Solution vectors
+    Teuchos::RCP<const Stokhos::ProductEpetraVector > x;
+
+    //! Residual vectors
+    Teuchos::RCP< Stokhos::ProductEpetraVector > f;
+
+    //! Jacobian matrices
+    Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > jac;
+
+  };
+
+  /*!! 
+   * Fill operator for multi-point "tangent":  
+   * alpha*df/dxdot*Vxdot + beta*df/dx*Vx + df/dp*V_p
+   */
+  class MPTangentOp : 
+    public FEApp::AbstractInitPostOp<FEApp::MPTangentType> {
+  public:
+
+    //! Constructor
+    /*!
+     * Set xdot to Teuchos::null for steady-state problems
+     */
+    MPTangentOp(
+      double alpha, double beta, bool sum_derivs,
+      const Teuchos::RCP<const Stokhos::ProductEpetraVector >& xdot,
+      const Teuchos::RCP<const Stokhos::ProductEpetraVector >& x,
+      const Teuchos::RCP<ParamVec>& p,
+      const Teuchos::RCP<const Epetra_MultiVector>& Vx,
+      const Teuchos::RCP<const Epetra_MultiVector>& Vxdot,
+      const Teuchos::RCP<const Teuchos::SerialDenseMatrix<int,double> >& Vp,
+      const Teuchos::RCP< Stokhos::ProductEpetraVector >& f,
+      const Teuchos::RCP< Stokhos::ProductEpetraMultiVector >& JV,
+      const Teuchos::RCP< Stokhos::ProductEpetraMultiVector >& fp);
+
+    //! Destructor
+    virtual ~MPTangentOp();
+
+    //! Evaulate element init operator
+    virtual void elementInit(const FEApp::AbstractElement& e,
+                             unsigned int neqn,
+                             std::vector< MPFadType >* elem_xdot,
+                             std::vector< MPFadType >& elem_x);
+
+    //! Evaluate element post operator
+    virtual void elementPost(const FEApp::AbstractElement& e,
+                             unsigned int neqn,
+                             std::vector< MPFadType >& elem_f);
+
+    //! Evaulate node init operator
+    virtual void nodeInit(const FEApp::NodeBC& bc,
+                          unsigned int neqn,
+                          std::vector< MPFadType >* node_xdot,
+                          std::vector< MPFadType >& node_x);
+
+    //! Evaluate node post operator
+    virtual void nodePost(const FEApp::NodeBC& bc,
+                          unsigned int neqn,
+                          std::vector< MPFadType >& node_f);
+
+    //! Finalize fill
+    virtual void finalizeFill() {}
+
+  private:
+    
+    //! Private to prohibit copying
+    MPTangentOp(const MPTangentOp&);
+    
+    //! Private to prohibit copying
+    MPTangentOp& operator=(const MPTangentOp&);
+
+  protected:
+
+    //! Number of blocks
+    int nblock;
+
+    //! Coefficient of mass matrix
+    double m_coeff;
+
+    //! Coefficient of Jacobian matrix
+    double j_coeff;
+
+    //! Whether to sum derivative terms
+    bool sum_derivs;
+
+    //! Time derivative vectors (may be null)
+    Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot;
+
+    //! Solution vectors
+    Teuchos::RCP<const Stokhos::ProductEpetraVector > x;
+
+    //! Parameter vector for parameter derivatives
+    Teuchos::RCP<ParamVec> params;
+
+    //! Seed matrix for state variables
+    Teuchos::RCP<const Epetra_MultiVector> Vx;
+
+    //! Seed matrix for transient variables
+    Teuchos::RCP<const Epetra_MultiVector> Vxdot;
+
+    //! Seed matrix for parameters
+    Teuchos::RCP<const Teuchos::SerialDenseMatrix<int,double> > Vp;
+
+    //! Residual vectors
+    Teuchos::RCP< Stokhos::ProductEpetraVector > f;
+
+    //! Tangent matrix (alpha*df/dxdot + beta*df/dx)*V
+    Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV;
+    
+    //! Tangent matrix df/dp*V_p
+    Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp;
+
+    //! Stores number of columns in seed matrix V
+    int num_cols_x;
+
+    //! Stores number of columns in seend matrix Vp
+    int num_cols_p;
+
+    //! Stores the total number of columns
+    int num_cols_tot;
+
+    //! Stores the parameter offset
+    int param_offset;
+
+  };
+
+#endif // MP_ACTIVE
 
 }
 

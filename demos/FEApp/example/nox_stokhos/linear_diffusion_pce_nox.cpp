@@ -136,6 +136,15 @@ int main(int argc, char *argv[]) {
     Teuchos::RefCountPtr< Teuchos::Array<std::string> > free_param_names =
 	Teuchos::rcp(new Teuchos::Array<std::string>);
     free_param_names->push_back("Constant Source Function Value");
+
+    // Stochastic parameters
+    Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
+      Teuchos::rcp(new Teuchos::Array<std::string>);
+    for (int i=0; i<num_KL; i++) {
+      std::stringstream ss;
+      ss << "KL Exponential Function Random Variable " << i;
+      sg_param_names->push_back(ss.str());
+    }
     
     // Create Stochastic Galerkin basis and expansion
     Teuchos::Array< Teuchos::RCP<const Stokhos::OneDOrthogPolyBasis<int,double> > > bases(num_KL); 
@@ -175,33 +184,10 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<FEApp::Application> app = 
       Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false));
     
-    // Set up stochastic parameters
-    Epetra_LocalMap p_sg_map(num_KL, 0, *sg_comm);
-    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p_init = 
-      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, p_sg_map));
-    for (int i=0; i<num_KL; i++) {
-      sg_p_init->term(i,0)[i] = 0.0;
-      sg_p_init->term(i,1)[i] = 1.0;
-    }
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
-      Teuchos::rcp(new Teuchos::Array<std::string>);
-    for (int i=0; i<num_KL; i++) {
-      std::stringstream ss;
-      ss << "KL Exponential Function Random Variable " << i;
-      sg_param_names->push_back(ss.str());
-    }
-
-    // Setup stochastic initial guess
-    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x_init = 
-      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, 
-						       *(app->getMap())));
-    sg_x_init->init(0.0);
-    
     // Create application model evaluator
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
       Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names,
-					     sg_param_names, sg_x_init, 
-					     sg_p_init));
+					     sg_param_names));
     
     // Setup stochastic Galerkin algorithmic parameters
     Teuchos::RCP<Teuchos::ParameterList> sgParams = 
@@ -229,6 +215,21 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new Stokhos::SGModelEvaluator(model, basis, Teuchos::null,
 						 expansion, sg_parallel_data, 
 						 sgParams));
+
+    // Set up stochastic parameters
+    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p_init =
+      sg_model->create_p_sg(0);
+    for (int i=0; i<num_KL; i++) {
+      sg_p_init->term(i,0)[i] = 0.0;
+      sg_p_init->term(i,1)[i] = 1.0;
+    }
+    sg_model->set_p_sg_init(0, *sg_p_init);
+
+    // Setup stochastic initial guess
+    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x_init = 
+      sg_model->create_x_sg();
+    sg_x_init->init(0.0);
+    sg_model->set_x_sg_init(*sg_x_init);
 
     // Set up NOX parameters
     Teuchos::RCP<Teuchos::ParameterList> noxParams =
@@ -348,17 +349,17 @@ int main(int argc, char *argv[]) {
     sg_model->evalModel(sg_inArgs, sg_outArgs);
 
     // Print mean and standard deviation
-    Stokhos::EpetraVectorOrthogPoly sg_g_poly(basis, View, 
-					      *(model->get_g_map(0)), *sg_g);
-    Epetra_Vector mean(*(model->get_g_map(0)));
-    Epetra_Vector std_dev(*(model->get_g_map(0)));
-    sg_g_poly.computeMean(mean);
-    sg_g_poly.computeStandardDeviation(std_dev);
+    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_g_poly =
+      sg_model->create_g_sg(0, View, sg_g.get());
+    Epetra_Vector g_mean(*(model->get_g_map(0)));
+    Epetra_Vector g_std_dev(*(model->get_g_map(0)));
+    sg_g_poly->computeMean(g_mean);
+    sg_g_poly->computeStandardDeviation(g_std_dev);
     std::cout << "\nResponse Expansion = " << std::endl;
     std::cout.precision(12);
-    sg_g_poly.print(std::cout);
-    std::cout << "\nResponse Mean =      " << std::endl << mean << std::endl;
-    std::cout << "Response Std. Dev. = " << std::endl << std_dev << std::endl;
+    sg_g_poly->print(std::cout);
+    std::cout << "\nResponse Mean =      " << std::endl << g_mean << std::endl;
+    std::cout << "Response Std. Dev. = " << std::endl << g_std_dev << std::endl;
       
     if (status == NOX::StatusTest::Converged && MyPID == 0) 
       utils.out() << "Test Passed!" << std::endl;

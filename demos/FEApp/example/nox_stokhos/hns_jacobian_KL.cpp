@@ -28,12 +28,6 @@
 // Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
-//  CVS Information
-//  $Source: /space/CVS/Trilinos/packages/nox/examples/epetra/NOX_Sacado_FEApp/pce.C,v $
-//  $Author: agsalin $
-//  $Date: 2009/10/06 16:51:22 $
-//  $Revision: 1.13 $
-// ************************************************************************
 //@HEADER
 
 #include <iostream>
@@ -44,7 +38,7 @@
 
 // FEApp is defined in Trilinos/packages/sacado/example/FEApp
 #include "FEApp_ModelEvaluator.hpp"
-#include "ENAT_NOXSolver.hpp"
+#include "Piro_Epetra_NOXSolver.hpp"
 
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
@@ -156,6 +150,14 @@ int main(int argc, char *argv[]) {
 	Teuchos::rcp(new Teuchos::Array<std::string>);
     free_param_names->push_back("Constant Function Value");
 
+    Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
+      Teuchos::rcp(new Teuchos::Array<std::string>);
+    for (unsigned int i=0; i<d; i++) {
+      std::stringstream ss;
+      ss << "Exponential Source Function Nonlinear Factor " << i;
+      sg_param_names->push_back(ss.str());
+    }
+
     // Set up NOX parameters
     Teuchos::RCP<Teuchos::ParameterList> noxParams =
       Teuchos::rcp(&(appParams->sublist("NOX")),false);
@@ -231,7 +233,7 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names));
 
     // Create NOX solver
-    ENAT::NOXSolver solver(appParams, model);
+    Piro::Epetra::NOXSolver solver(appParams, model);
 
     // Evaluate responses at parameters
     EpetraExt::ModelEvaluator::InArgs inArgs = solver.createInArgs();
@@ -282,36 +284,19 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Stokhos::ParallelData> sg_parallel_data =
       Teuchos::rcp(new Stokhos::ParallelData(basis, Cijk, sg_comm,
 					     parallelParams));
+    Teuchos::RCP<const EpetraExt::MultiComm> multi_comm = 
+      sg_parallel_data->getMultiComm();
+    Teuchos::RCP<const Epetra_Comm> stoch_comm =
+      sg_parallel_data->getStochasticComm();
+    Teuchos::RCP<const Epetra_BlockMap> stoch_overlap_map = 
+      Teuchos::rcp(new Epetra_LocalMap(sz, 0, *stoch_comm));
       
     // Create new app for Stochastic Galerkin solve
     app = Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false,
 					      finalSolution.get()));
 
-    // Set up stochastic parameters
-    Epetra_LocalMap p_sg_map(d, 0, *sg_comm);
-    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p = 
-      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, p_sg_map));
-    for (unsigned int i=0; i<d; i++) {
-      sg_p->term(i,0)[i] = 2.0;
-      sg_p->term(i,1)[i] = 1.0;
-    }
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
-      Teuchos::rcp(new Teuchos::Array<std::string>);
-    for (unsigned int i=0; i<d; i++) {
-      std::stringstream ss;
-      ss << "Exponential Source Function Nonlinear Factor " << i;
-      sg_param_names->push_back(ss.str());
-    }
-
-    // Setup stochastic initial guess
-    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x_init = 
-      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, 
-						       finalSolution->Map()));
-    (*sg_x_init)[0] = *finalSolution;
-
     model = Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names,
-						   sg_param_names,
-						   sg_x_init, sg_p));
+						   sg_param_names));
 
     Teuchos::RCP<Teuchos::ParameterList> sgParams = 
       Teuchos::rcp(&(appParams->sublist("SG Parameters")),false);
@@ -330,6 +315,23 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new Stokhos::SGModelEvaluator(model, basis, quad,
 						 expansion, sg_parallel_data, 
 						 sgParams));
+
+    // Set up stochastic parameters
+    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p = 
+      sg_model->create_p_sg(0);
+    for (unsigned int i=0; i<d; i++) {
+      sg_p->term(i,0)[i] = 2.0;
+      sg_p->term(i,1)[i] = 1.0;
+    }
+    sg_model->set_p_sg_init(0, *sg_p);
+
+    // Setup stochastic initial guess
+    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x_init =
+      sg_model->create_x_sg();
+    sg_x_init->init(0.0);
+    if (sg_x_init->myGID(0))
+      (*sg_x_init)[0] = *finalSolution;
+    sg_model->set_x_sg_init(*sg_x_init);
   
     // Evaluate SG responses at SG parameters
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_model->createInArgs();
@@ -395,7 +397,7 @@ int main(int argc, char *argv[]) {
     Epetra_Map J_vec_map(-1, J_mean->NumMyNonzeros(), 0, 
 			 sg_comm->SubDomainComm());
     Stokhos::VectorOrthogPoly<Epetra_Vector> sg_J_vec_poly(
-      basis, Stokhos::EpetraVectorCloner(J_vec_map));
+      basis, stoch_overlap_map, Stokhos::EpetraVectorCloner(J_vec_map));
     for (unsigned int coeff=0; coeff<sz; coeff++) {
       Teuchos::RCP<const Epetra_CrsMatrix> J_coeff = 
 	Teuchos::rcp_dynamic_cast<const Epetra_CrsMatrix>
@@ -498,7 +500,7 @@ int main(int argc, char *argv[]) {
     // for (unsigned int rv=0; rv < num_KL; rv++)
     //   utils.out() << "rv_kl[" << rv << "] = " << rv_kl_pce[rv] << std::endl;
     Stokhos::VectorOrthogPoly<Epetra_Vector> sg_J_kl_vec_poly(
-      kl_basis, Stokhos::EpetraVectorCloner(J_vec_map));
+      kl_basis, kl_ov_stoch_row_map, Stokhos::EpetraVectorCloner(J_vec_map));
     for (int rv=0; rv < num_KL; rv++) {
       for (int i=0; i<sg_J_kl_vec_poly[0].MyLength(); i++) {
 	sg_J_kl_vec_poly[0][i] = sg_J_vec_poly[0][i] + 
@@ -508,7 +510,8 @@ int main(int argc, char *argv[]) {
 	    std::sqrt(evals[rv])*(*evecs)[rv][i]*rv_kl_pce[rv][j];
       }
     }
-    Stokhos::VectorOrthogPoly<Epetra_Operator> sg_J_kl_poly(kl_basis);
+    Stokhos::VectorOrthogPoly<Epetra_Operator> sg_J_kl_poly(kl_basis, 
+							    kl_ov_stoch_row_map);
     for (int coeff = 0; coeff < kl_basis->size(); coeff++) {
       Teuchos::RCP<Epetra_CrsMatrix> mat = 
 	Teuchos::rcp(new Epetra_CrsMatrix(*J_mean));
@@ -534,10 +537,12 @@ int main(int argc, char *argv[]) {
     const Teuchos::Array<double>& kl_norms = kl_basis->norm_squared();
     Teuchos::RCP<EpetraExt::BlockVector> sg_f_ov = 
       sg_model->import_residual(*sg_f);
-    Stokhos::EpetraVectorOrthogPoly sg_f_poly(basis, View, *base_f_map, 
-					      *sg_f_ov);
-    Stokhos::EpetraVectorOrthogPoly sg_f_kl_poly(kl_basis, *base_f_map, 
-						 *sg_ov_f_kl_map);
+    Stokhos::EpetraVectorOrthogPoly sg_f_poly(
+      basis, stoch_overlap_map, base_f_map, 
+      Teuchos::rcp(&(sg_f_ov->Map()), false),
+      multi_comm, View, *sg_f_ov);
+    Stokhos::EpetraVectorOrthogPoly sg_f_kl_poly(
+      kl_basis, kl_ov_stoch_row_map, base_f_map, sg_ov_f_kl_map, kl_comm);
     Epetra_Vector f_val(*base_f_map);
     for (int qp=0; qp < nqp; qp++) {
       sg_f_poly.evaluate(basis_vals[qp], f_val);
@@ -589,10 +594,13 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<EpetraExt::BlockVector> sg_ov_dx_block = 
       sg_model->import_solution(*sg_x);
     sg_ov_dx_block->PutScalar(0.0);
-    Stokhos::EpetraVectorOrthogPoly sg_dx_poly2(basis, View, *base_x_map, 
-						*sg_ov_dx_block);
-    Stokhos::EpetraVectorOrthogPoly sg_dx_kl_poly(kl_basis, View, *base_x_map, 
-						  sg_ov_dx_kl_block);
+    Stokhos::EpetraVectorOrthogPoly sg_dx_poly2(
+      basis, stoch_overlap_map, base_x_map, 
+      Teuchos::rcp(&(sg_ov_dx_block->Map()), false), multi_comm, 
+      View, *sg_ov_dx_block);
+    Stokhos::EpetraVectorOrthogPoly sg_dx_kl_poly(
+      kl_basis, kl_ov_stoch_row_map, base_x_map, sg_ov_x_kl_map, 
+      kl_comm, View, sg_ov_dx_kl_block);
     Epetra_Vector dx_val(*base_x_map);
     for (int qp=0; qp < nqp; qp++) {
       sg_dx_kl_poly.evaluate(kl_basis_vals[qp], dx_val);
