@@ -1,0 +1,556 @@
+#LyX 1.6.7 created this file. For more info see http://www.lyx.org/
+\lyxformat 345
+\begin_document
+\begin_header
+\textclass extarticle
+\begin_preamble
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\fdo}[1]{\mathcal{D}_{#1}}
+\newcommand{\sdo}[1]{D_{#1}}
+\newcommand{\tdo}[1]{D_{#1}}
+\newcommand{\fd}[2]{\fdo{#1} #2}
+\newcommand{\sd}[2]{\sdo{#1} #2}
+\newcommand{\td}[2]{\tdo{#1} #2}
+\newcommand{\pdd}[2]{\frac{\partial^2 #1}{\partial #2^2}}
+\newcommand{\pddd}[2]{\frac{\partial^3 #1}{\partial #2^3}}
+\newcommand{\pmix}[3]{\frac{\partial^2 #1}{\partial #2 \partial #3}}
+\newcommand{\pmixx}[4]{\frac{\partial^3 #1}{\partial #2 \partial #3 \partial #4}}
+\newcommand{\funcd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\spaced}[2]{{\cal D}^{#1} #2}
+\newcommand{\totald}[2]{{D}^{#1} #2}
+
+\newcommand{\abs}[1]{\left\vert{#1}\right\vert}
+\newcommand{\od}[2]{\frac{d #1}{d #2}}
+\newcommand{\odd}[2]{\frac{d^2 #1}{d #2^2}}
+\newcommand{\R}{\mathbb{R}}
+
+\usepackage{algorithmic}
+\end_preamble
+\use_default_options true
+\begin_modules
+theorems-ams
+theorems-ams-extended
+\end_modules
+\language english
+\inputencoding auto
+\font_roman palatino
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\branch answers
+\selected 1
+\color #5555ff
+\end_branch
+\leftmargin 0.9in
+\topmargin 0.75in
+\rightmargin 0.9in
+\bottommargin 0.75in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Sundance examples: A nonlinear initial-boundary-value problem
+\end_layout
+
+\begin_layout Section
+Statement of problem
+\end_layout
+
+\begin_layout Standard
+In this example we'll solve the time-dependent radiation diffusion equation,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\pd{u}{t}=\pdd{}{x}\left[u^{4}\right]+f(x,t)\]
+
+\end_inset
+
+on 
+\begin_inset Formula $[0,1]$
+\end_inset
+
+ with a homogeneous Neumann boundary condition at 
+\begin_inset Formula $x=0$
+\end_inset
+
+ and an inhomogeneous Dirichlet boundary condition at 
+\begin_inset Formula $x=1$
+\end_inset
+
+, 
+\begin_inset Formula \[
+u(0,t)=1\]
+
+\end_inset
+
+
+\begin_inset Formula \[
+u(1,t)=1+\epsilon\cos\left(2\pi t\right).\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\epsilon$
+\end_inset
+
+ is some constant such that 
+\begin_inset Formula $\left|\epsilon\right|<1$
+\end_inset
+
+.
+ This initial profile is
+\begin_inset Formula \[
+u(x,0)=1+\epsilon x^{2}.\]
+
+\end_inset
+
+Given a choice of 
+\begin_inset Formula $f$
+\end_inset
+
+, finding an exact solution is difficult.
+ To produce an exact solution for validation purposes we'll therefore use
+ the method of manufactured solutions: choose some function 
+\begin_inset Formula $u(x,t)$
+\end_inset
+
+ that obeys the BCs and IC, and then produce a function 
+\begin_inset Formula $f\left(x,t\right)$
+\end_inset
+
+ so that 
+\begin_inset Formula $u$
+\end_inset
+
+ is the solution to the problem.
+\end_layout
+
+\begin_layout Subsection
+Manufactured solution
+\end_layout
+
+\begin_layout Standard
+We'll choose as our solution the simple function
+\begin_inset Formula \[
+u\left(x,t\right)=1+\epsilon x^{2}\cos\left(2\pi t\right)\]
+
+\end_inset
+
+and plug in to the radiation diffusion equation.
+ Using Mathematica to do the differentiation, we find that for 
+\begin_inset Formula $u$
+\end_inset
+
+ to be a solution we must have
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+f(x,t)=\pd{u}{t}-\pdd{}{x}\left[u^{4}\right]=-2\pi\epsilon\sin(2\pi t)x^{2}-8\epsilon\cos(2\pi t)\left(\epsilon\cos(2\pi t)x^{2}+1\right)^{2}\left(7\epsilon\cos(2\pi t)x^{2}+1\right).\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Solution procedure
+\end_layout
+
+\begin_layout Standard
+We begin with a very high-level view of an implicit time integration.
+ A Crank-Nicolson step for some equation
+\begin_inset Formula \[
+y'=g\left(t,y\right)\]
+
+\end_inset
+
+is
+\begin_inset Formula \[
+t_{n+1}=t_{n}+\Delta t\]
+
+\end_inset
+
+
+\begin_inset Formula \[
+y_{n+1}=y_{n}+\frac{\Delta t}{2}\left[g\left(t_{n},y_{n}\right)+g\left(t_{n+1},y_{n+1}\right)\right].\]
+
+\end_inset
+
+When 
+\begin_inset Formula $g$
+\end_inset
+
+ is a nonlinear function of 
+\begin_inset Formula $y$
+\end_inset
+
+, we use Newton's method to solve the implicit equation 
+\begin_inset Formula \[
+R\left(y_{n+1}\right)=0=y_{n+1}-y_{n}-\frac{\Delta t}{2}\left[g\left(t_{n},y_{n}\right)+g\left(t_{n+1},y_{n+1}\right)\right].\]
+
+\end_inset
+
+Let 
+\begin_inset Formula $y_{n+1}^{k}$
+\end_inset
+
+ be the 
+\begin_inset Formula $k-$
+\end_inset
+
+th approximation to 
+\begin_inset Formula $y_{n+1}$
+\end_inset
+
+.
+ The Newton step 
+\begin_inset Formula $w$
+\end_inset
+
+ is found by solving the linear equation 
+\begin_inset Formula \[
+R(y_{n+1}^{k})+d_{w}R\left(y_{n+1}^{k}\right)=0,\]
+
+\end_inset
+
+or, in matrix notation,
+\begin_inset Formula \[
+\mathbf{R}\left(\mathbf{y}_{n+1}^{k}\right)+J\left(\mathbf{y}_{n+1}^{k}\right)\mathbf{w=0}.\]
+
+\end_inset
+
+Then 
+\begin_inset Formula $\mathbf{y}_{n+1}^{k+1}=\mathbf{y}_{n+1}^{k}+\mathbf{w}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The current solution 
+\begin_inset Formula $y_{n}$
+\end_inset
+
+ can be used as an initial guess 
+\begin_inset Formula $y_{n+1}^{0}$
+\end_inset
+
+ in the Newton solve.
+ Because the initial guess is usually quite good, line searching is usually
+ not needed; if Newton's method has trouble converging, the first thing
+ to try is to reduce the timestep.
+ 
+\end_layout
+
+\begin_layout Standard
+The Newton solve takes us from time 
+\begin_inset Formula $t_{n}$
+\end_inset
+
+ to timestep 
+\begin_inset Formula $t_{n+1}$
+\end_inset
+
+.
+ We repeat until the desired endpoint is reached.
+\end_layout
+
+\begin_layout Standard
+An industrial-strength solution algorithm should have accuracy monitoring
+ that reduces the timestep if needed.
+ In this example we show the simplest implementation with constant timestep.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float algorithm
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{algorithmic}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE
+\backslash
+COMMENT{
+\backslash
+textit{Initialization steps}}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE Set $u_{prev}$ to initial conditions
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE Set $N_{step}$ and timestep $
+\backslash
+Delta t$ 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE Set $N_{newt}$, the maximum number of Newton steps allowed
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE
+\backslash
+COMMENT{
+\backslash
+textit{Loop over timesteps}}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+FOR{$n=0$ to $N_{step}$}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE $u_{next}^0
+\backslash
+gets u_{prev}$  
+\backslash
+COMMENT{
+\backslash
+textit{Use $u_{prev}$ as initial guess for Newton solve for $u_{next}$}}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE Initialize Newton iteration count: $k=0$ 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE
+\backslash
+COMMENT{
+\backslash
+textit{Iterate Newton steps until convergence}}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+REPEAT
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE Compute Jacobian $J(u_{next}^k)$ and residual $r(u_{next}^k)$
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE Solve linear equation $J
+\backslash
+cdot w=r$ for the Newton step $w$
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE $u_{next}^{k+1} 
+\backslash
+gets u_{next}^k - w$
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE $k
+\backslash
+gets k+1$
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+UNTIL{$
+\backslash
+Vert w 
+\backslash
+Vert 
+\backslash
+le 
+\backslash
+tau$ or $k
+\backslash
+ge N_{newt}$ }
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE Write $u_{next}^k$ to visualization file
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE $u_{prev} 
+\backslash
+gets u_{next}^k$
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+STATE
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+ENDFOR
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{algorithmic}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Pseudocode for implicit time integration with Newton's method for solving
+ the implicit equations.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Time-discretized equations
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\int_{\Omega}\left[\left(u_{n+1}-u_{n}\right)v+\frac{\Delta t}{2}\pd{v}{x}\left(\pd{u_{n+1}^{4}}{x}+\pd{u_{n}^{4}}{x}\right)-v\frac{\Delta t}{2}\left(f(t_{n},x)+f(t_{n+1},x)\right)\right]\, dx=0\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
