@@ -544,11 +544,183 @@ Time-discretized equations
 \end_layout
 
 \begin_layout Standard
+With the high-level view of the Crank-Nicolson-Newton loop in place, we
+ can now look at the computation of the residual and Jacobian for this problem.
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $u_{n}\left(x\right)=u\left(x,t_{n}\right)$
+\end_inset
+
+ be the solution at a timestep 
+\begin_inset Formula $t_{n}.$
+\end_inset
+
+ We do Crank-Nicolson discretization in time on the strong form of the equation,
 \begin_inset Formula \[
-\int_{\Omega}\left[\left(u_{n+1}-u_{n}\right)v+\frac{\Delta t}{2}\pd{v}{x}\left(\pd{u_{n+1}^{4}}{x}+\pd{u_{n}^{4}}{x}\right)-v\frac{\Delta t}{2}\left(f(t_{n},x)+f(t_{n+1},x)\right)\right]\, dx=0\]
+u_{n+1}(x)-u_{n}(x)=\frac{\Delta t}{2}\pdd{}{x}\left[u_{n+1}^{4}(x)+u_{n}^{4}\left(x\right)\right]+\frac{\Delta t}{2}\left[f\left(t_{n},x\right)+f\left(t_{n+1},x\right)\right].\]
 
 \end_inset
 
+The unknown in this equation is 
+\begin_inset Formula $u_{n+1}$
+\end_inset
+
+; the function 
+\begin_inset Formula $u_{n}$
+\end_inset
+
+ is known from a previous timestep.
+ The BCs are to be applied to 
+\begin_inset Formula $u_{n+1}$
+\end_inset
+
+,
+\begin_inset Formula \[
+u'_{n+1}\left(0\right)=0\]
+
+\end_inset
+
+
+\begin_inset Formula \[
+u_{n+1}\left(1\right)=1+\epsilon\cos\left(2\pi t_{n}\right).\]
+
+\end_inset
+
+As usual, take inner products with a test function 
+\begin_inset Formula $v$
+\end_inset
+
+ and integrate by parts 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\left(v,R\right)=-\left.\frac{\Delta t}{2}v\pd{}{x}\left(u_{n+1}^{4}+u_{n}^{4}\right)\right|_{0}^{1}+\int_{0}^{1}\left[\left(u_{n+1}-u_{n}\right)v+\frac{\Delta t}{2}\pd{v}{x}\left(\pd{u_{n+1}^{4}}{x}+\pd{u_{n}^{4}}{x}\right)-v\frac{\Delta t}{2}\left(f(t_{n},x)+f(t_{n+1},x)\right)\right]\, dx.\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Implementation in code
+\end_layout
+
+\begin_layout Subsubsection
+Discrete function objects 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\sffamily},language={C++},tabsize=2"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+double epsilon = 0.25;       
+\end_layout
+
+\begin_layout Plain Layout
+
+/* The initial profile is u(x,0)=1 + epsilon x^2.
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+* Project this onto a discrete function */    
+\end_layout
+
+\begin_layout Plain Layout
+
+DiscreteSpace discSpace(mesh, bas, vecType);
+\end_layout
+
+\begin_layout Plain Layout
+
+L2Projector projector(discSpace, 1.0 + epsilon*x*x);       
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr uPrev = projector.project();
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Writing the weak form and nonlinear problem
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\sffamily},language={C++},tabsize=2"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+/* Define the weak form, semidiscretized in time */       
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr eqn = Integral(interior, v*(u-uPrev) 
+\end_layout
+
+\begin_layout Plain Layout
+
+	+ dt/2.0*(dx*v)*((dx*pow(u, 4.0))+(dx*pow(uPrev, 4.0)))         
+\end_layout
+
+\begin_layout Plain Layout
+
+	- dt/2.0*v*(force(epsilon, x, t)+force(epsilon, x, tPrev)), quad);     
+   
+\end_layout
+
+\begin_layout Plain Layout
+
+/* Define the Dirichlet BC */
+\end_layout
+
+\begin_layout Plain Layout
+
+Expr bc = EssentialBC(rightPoint, v*(u - 1.0 - epsilon*cos(2.0*pi*t)),quad);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+/* We can now set up the linear problem! */       
+\end_layout
+
+\begin_layout Plain Layout
+
+NonlinearProblem prob(mesh, eqn, bc, v, u, uNewt, vecType); 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 
 \end_layout
 
