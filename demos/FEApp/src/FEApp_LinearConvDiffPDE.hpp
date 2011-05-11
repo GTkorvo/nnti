@@ -52,7 +52,8 @@ namespace FEApp {
     LinearConvDiffPDE(
        const Teuchos::RCP< const FEApp::AbstractFunction<EvalT> >& mat_func,
        const Teuchos::RCP< const FEApp::AbstractSourceFunction<EvalT> >& src_func,
-       const Teuchos::RCP< const FEApp::AbstractFunction<EvalT> >& cnv_func);
+       const Teuchos::RCP< const FEApp::AbstractFunction<EvalT> >& cnv_func,
+       double viscosity);
 
     //! Destructor
     virtual ~LinearConvDiffPDE();
@@ -96,6 +97,8 @@ namespace FEApp {
     //! Number of nodes
     unsigned int num_nodes;
 
+    double baseViscosity;
+
     //! Shape function values
     std::vector< std::vector<double> > phi;
 
@@ -123,6 +126,8 @@ namespace FEApp {
     //! Source function values
     std::vector<ScalarT> f;
 
+    //! Convection function values
+    std::vector<ScalarT> conv;
   };
 
   class LinearConvDiffPDE_TemplateBuilder {
@@ -146,7 +151,7 @@ namespace FEApp {
        Teuchos::RCP< FEApp::AbstractSourceFunction<T> > source = srcFactory.create();
        Teuchos::RCP< FEApp::AbstractFunction<T> > convection = cnvFactory.create();
 
-       return Teuchos::rcp( new FEApp::LinearConvDiffPDE<T>(mat, source, convection));
+       return Teuchos::rcp( new FEApp::LinearConvDiffPDE<T>(mat, source, convection,1.0));
     }
 
   protected:

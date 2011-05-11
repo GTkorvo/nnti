@@ -34,11 +34,14 @@ FEApp::LinearConvDiffPDE<EvalT>::
 LinearConvDiffPDE(
    const Teuchos::RCP< const FEApp::AbstractFunction<EvalT> >& mat_func,
    const Teuchos::RCP< const FEApp::AbstractSourceFunction<EvalT> >& src_func,
-   const Teuchos::RCP< const FEApp::AbstractFunction<EvalT> >& cnv_func) :
+   const Teuchos::RCP< const FEApp::AbstractFunction<EvalT> >& cnv_func,
+   double viscosity) :
    mat(mat_func),
    source(src_func),
+   convection(cnv_func),
    num_qp(0),
    num_nodes(0),
+   baseViscosity(viscosity),
    phi(),
    dphi(),
    jac(),
@@ -82,6 +85,7 @@ init(unsigned int numQuadPoints, unsigned int numNodes)
    udot.resize(num_qp);
    a.resize(num_qp);
    f.resize(num_qp);
+   conv.resize(num_qp);
  
    for(unsigned int i=0; i<num_qp; i++) {
       phi[i].resize(num_nodes);
@@ -118,6 +122,9 @@ evaluateElementResidual(const FEApp::AbstractQuadrature& quadRule,
  
    // Evaluate material values
    mat->evaluate(x, a);
+
+   // Evaluate convection values
+   convection->evaluate(x, conv);
  
    // Compute u
    for (unsigned int qp=0; qp<num_qp; qp++) {
@@ -134,14 +141,16 @@ evaluateElementResidual(const FEApp::AbstractQuadrature& quadRule,
  
    // Evaluate source function
    source->evaluate(u, f);
- 
+
    // Evaluate residual
    for (unsigned int node=0; node<num_nodes; node++) {
       residual[node] = 0.0;
       for (unsigned int qp=0; qp<num_qp; qp++) {
+         // this is a residual: (f - conv*ux,v) - (ux,vx)
          residual[node] += 
-           w[qp]*jac[qp]*(-(1.0/(jac[qp]*jac[qp]))*a[qp]*du[qp]*dphi[qp][node] + 
-                          phi[qp][node]*(f[qp] - udot[qp]));
+           w[qp]*jac[qp]*(-(1.0/(jac[qp]*jac[qp]))*(baseViscosity+exp(a[qp]))*du[qp]*dphi[qp][node] + 
+                          -conv[qp] * (du[qp]/jac[qp]) * phi[qp][node] +
+                          phi[qp][node]*f[qp]);
       }
    }
  
