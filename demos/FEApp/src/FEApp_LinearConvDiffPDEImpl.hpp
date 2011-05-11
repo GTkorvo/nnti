@@ -29,19 +29,59 @@
 // ***********************************************************************
 // @HEADER
 
+namespace {
+   template <typename EvalT>
+   class GenericScalarParameter : 
+      public Sacado::ScalarParameterEntry<EvalT,FEApp::EvaluationTraits> {
+   public:
+      typedef typename Sacado::ScalarParameterEntry<EvalT,FEApp::EvaluationTraits>::ScalarT ScalarT; 
+
+      GenericScalarParameter(ScalarT & modMe) : modMe_(modMe) {}
+
+       //! Set real parameter value
+      virtual void setRealValue(double value) 
+      { modMe_ = value; }
+    
+      //! Set parameter this object represents to \em value
+      virtual void setValue(const ScalarT& value) 
+      { modMe_ = value; }
+
+      //! Get real parameter value
+      virtual double getRealValue() const 
+      { return Sacado::ScalarValue<ScalarT>::eval(modMe_); }
+    
+      //! Get parameter value this object represents
+      virtual const ScalarT& getValue() const 
+      { return modMe_; }
+
+   private:
+      ScalarT & modMe_; // modifiable scalar object
+
+      GenericScalarParameter(); 
+      GenericScalarParameter(const GenericScalarParameter<EvalT> &); 
+   };
+
+}
+
+template <typename EvalT>
+Teuchos::RCP<Sacado::ScalarParameterEntry<EvalT,FEApp::EvaluationTraits> > 
+FEApp::LinearConvDiffPDE<EvalT>::getViscosityPertParameter() 
+{
+   return Teuchos::rcp(new GenericScalarParameter<EvalT>(viscPert));
+}
+
 template <typename EvalT>
 FEApp::LinearConvDiffPDE<EvalT>::
 LinearConvDiffPDE(
-   const Teuchos::RCP< const FEApp::AbstractFunction<EvalT> >& mat_func,
    const Teuchos::RCP< const FEApp::AbstractSourceFunction<EvalT> >& src_func,
    const Teuchos::RCP< const FEApp::AbstractFunction<EvalT> >& cnv_func,
-   double viscosity) :
-   mat(mat_func),
+   double viscosity,double sp) :
    source(src_func),
    convection(cnv_func),
    num_qp(0),
    num_nodes(0),
    baseViscosity(viscosity),
+   scalingParameter(sp),
    phi(),
    dphi(),
    jac(),
@@ -49,7 +89,6 @@ LinearConvDiffPDE(
    u(),
    du(),
    udot(),
-   a(),
    f()
 {
 }
@@ -83,7 +122,6 @@ init(unsigned int numQuadPoints, unsigned int numNodes)
    u.resize(num_qp);
    du.resize(num_qp);
    udot.resize(num_qp);
-   a.resize(num_qp);
    f.resize(num_qp);
    conv.resize(num_qp);
  
@@ -120,9 +158,6 @@ evaluateElementResidual(const FEApp::AbstractQuadrature& quadRule,
    // Evaluate quadrature points
    element.evaluateQuadPoints(xi, x);
  
-   // Evaluate material values
-   mat->evaluate(x, a);
-
    // Evaluate convection values
    convection->evaluate(x, conv);
  
@@ -148,7 +183,7 @@ evaluateElementResidual(const FEApp::AbstractQuadrature& quadRule,
       for (unsigned int qp=0; qp<num_qp; qp++) {
          // this is a residual: (f - conv*ux,v) - (ux,vx)
          residual[node] += 
-           w[qp]*jac[qp]*(-(1.0/(jac[qp]*jac[qp]))*(baseViscosity+exp(a[qp]))*du[qp]*dphi[qp][node] + 
+           w[qp]*jac[qp]*(-(1.0/(jac[qp]*jac[qp]))*(baseViscosity+scalingParameter*exp(viscPert))*du[qp]*dphi[qp][node] + 
                           -conv[qp] * (du[qp]/jac[qp]) * phi[qp][node] +
                           phi[qp][node]*f[qp]);
       }

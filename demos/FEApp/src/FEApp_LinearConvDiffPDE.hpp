@@ -38,6 +38,7 @@
 #include "FEApp_FunctionFactory.hpp"
 #include "FEApp_SourceFunctionFactory.hpp"
 #include "Sacado_ScalarParameterLibrary.hpp"
+#include "Sacado_ScalarParameterEntry.hpp"
 
 namespace FEApp {
 
@@ -50,10 +51,9 @@ namespace FEApp {
   
     //! Constructor
     LinearConvDiffPDE(
-       const Teuchos::RCP< const FEApp::AbstractFunction<EvalT> >& mat_func,
        const Teuchos::RCP< const FEApp::AbstractSourceFunction<EvalT> >& src_func,
        const Teuchos::RCP< const FEApp::AbstractFunction<EvalT> >& cnv_func,
-       double viscosity);
+       double viscosity,double scalingParameter);
 
     //! Destructor
     virtual ~LinearConvDiffPDE();
@@ -72,6 +72,9 @@ namespace FEApp {
                             const std::vector<ScalarT>& solution,
                             std::vector<ScalarT>& residual);
 
+    Teuchos::RCP<Sacado::ScalarParameterEntry<EvalT,EvaluationTraits> > 
+    getViscosityPertParameter();
+ 
   private:
 
     //! Private to prohibit copying
@@ -81,9 +84,6 @@ namespace FEApp {
     LinearConvDiffPDE& operator=(const LinearConvDiffPDE&);
 
   protected:
-
-    //! Pointer to material function
-    Teuchos::RCP< const FEApp::AbstractFunction<EvalT> > mat;
 
     //! Pointer to source function
     Teuchos::RCP< const FEApp::AbstractSourceFunction<EvalT> > source;
@@ -98,6 +98,8 @@ namespace FEApp {
     unsigned int num_nodes;
 
     double baseViscosity;
+    double scalingParameter;
+    ScalarT viscPert;
 
     //! Shape function values
     std::vector< std::vector<double> > phi;
@@ -120,9 +122,6 @@ namespace FEApp {
     //! Discretized time derivative
     std::vector<ScalarT> udot;
 
-    //! Material function values
-    std::vector<ScalarT> a;
-
     //! Source function values
     std::vector<ScalarT> f;
 
@@ -135,29 +134,39 @@ namespace FEApp {
     LinearConvDiffPDE_TemplateBuilder(
 		const Teuchos::RCP<Teuchos::ParameterList>& params_,
 	        const Teuchos::RCP<ParamLib>& paramLib) :
-       mat_params(Teuchos::rcp(&(params_->sublist("Material Function")),false)),
        src_params(Teuchos::rcp(&(params_->sublist("Source Function")),false)),
        cnv_params(Teuchos::rcp(&(params_->sublist("Convection Function")),false)),
+       baseViscosity(params_->get<double>("Base Viscosity",1.0)),
+       scalingParameter(params_->get<double>("Perturbation Scaling",1.0)),
        pl(paramLib) {}
 
     template <typename T>
     Teuchos::RCP<FEApp::AbstractPDE_NTBase> build() const 
     {
-       FEApp::FunctionFactory<T> matFactory(mat_params, pl);
        FEApp::SourceFunctionFactory<T> srcFactory(src_params, pl);
        FEApp::FunctionFactory<T> cnvFactory(cnv_params, pl);
 
-       Teuchos::RCP< FEApp::AbstractFunction<T> > mat = matFactory.create();
        Teuchos::RCP< FEApp::AbstractSourceFunction<T> > source = srcFactory.create();
        Teuchos::RCP< FEApp::AbstractFunction<T> > convection = cnvFactory.create();
 
-       return Teuchos::rcp( new FEApp::LinearConvDiffPDE<T>(mat, source, convection,1.0));
+       Teuchos::RCP<FEApp::LinearConvDiffPDE<T> > pde 
+          = Teuchos::rcp( new FEApp::LinearConvDiffPDE<T>(source,convection,baseViscosity,scalingParameter));
+
+       // add viscosity perturbation parameter to the library
+       std::string name = "Viscosity Perturbation";
+       if(!pl->isParameter(name))
+          pl->addParameterFamily(name, true, false);
+       if(!pl->template isParameterForType<T>(name))
+          pl->template addEntry<T>(name, pde->getViscosityPertParameter());
+
+       return pde;
     }
 
   protected:
-    Teuchos::RCP<Teuchos::ParameterList> mat_params;
     Teuchos::RCP<Teuchos::ParameterList> src_params;
     Teuchos::RCP<Teuchos::ParameterList> cnv_params;
+    double baseViscosity;
+    double scalingParameter;
     Teuchos::RCP<ParamLib> pl;
   };
 
