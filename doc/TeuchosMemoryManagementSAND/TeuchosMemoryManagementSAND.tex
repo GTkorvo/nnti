@@ -111,8 +111,9 @@ the typical reference-counted smart pointer class similar to
 new standard library are non-reference counted classes for remaining
 use cases where raw C++ pointers would need to be used.  These classes
 have a debug build mode where nearly all programmer errors are caught
-and gracefully reported at runtime.  The default optimized build mode
-strips all runtime checks and allows the code to perform as
+and gracefully reported at runtime, i.e. essentially eliminating
+undefined behavior related to memory usage.  The default optimized
+build mode strips all runtime checks and allows the code to perform as
 efficiently as raw C++ pointers with reasonable usage.  Also included
 is a novel approach for dealing with the circular references problem
 that imparts little extra overhead and is almost completely invisible
@@ -121,7 +122,10 @@ Rather than being a radical approach, encapsulating all raw C++
 pointers is simply the logical progression of a trend in the C++
 development and standards community that started with
 {}\ttt{std::auto\_ptr} and is continued (but not finished) with
-{}\ttt{std::shared\_ptr} in C++0x.
+{}\ttt{std::shared\_ptr} in C++0x.  The goal is nothing short of
+eliminating undefiend behavior related to memory usage from C++
+programs without destroying the low-level control and performance of
+C++ programs.
 
 %
 \end{abstract}
@@ -297,48 +301,51 @@ only universally accepted way to deal with memory for single objects
 and arrays of objects is to use raw C++ pointers.  However, raw C++
 pointer facilities for the manipulation and sharing of basic memory
 are inherently unsafe and error prone.  The problem is further
-exacerbated when larger programs composed out of different separately
-developed and maintained components are integrated together.
-Assumptions about the origin, ownership, and process for reclaiming
-memory and other resources remain the most basic problems with
-lower-level C++ programming techniques and are unfortunately still
-ubiquitous in the C++ community and even in the current C++
-best-practices literature {}\cite{C++CodingStandards05,
-EffectiveC++ThirdEdition}.  The general C++ and CS\&E communities
-inability to effectively address the basic problem of the usage of
-memory in large-scale modular C++ codes affects every aspect of
-software quality, productivity and reusabliltiy, and undermines the
-most basic software verification foundation for these codes.  The
-challenges of writing software that uses raw memory management results
-in components that are overly rigid in how they can be used and reused
-which fundamentally detracts from the impact that such software could
-otherwise have and makes it more difficult develop and maintain.  The
-problems created by the use of raw memory management can
-single-handily derail the vision of a large interconnected network of
-reusable CS\&E software components developed and used by many
-different CS\&E organizations {}\cite{HPCNeedsAToolsStrategy05}.
-Therefore, the issue of memory management has as much or more impact
-on the macroscopic properties of CS\&E software components as it does
-on low-level internal software development.
+exacerbated when larger programs composed out of separately developed
+and maintained components are integrated together.  Assumptions about
+the origin, ownership, and process for reclaiming memory and other
+resources remain the most basic problems with lower-level C++
+programming techniques and are unfortunately still ubiquitous in the
+C++ community and even in the current C++ best-practices literature
+{}\cite{C++CodingStandards05, EffectiveC++ThirdEdition}.  The general
+C++ and CS\&E communitie's inability to effectively address the basic
+problem of the usage of memory in large-scale modular C++ codes
+affects every aspect of software quality, productivity, reusabliltiy,
+and undermines the most basic software verification foundation for
+these codes.  The challenges of writing software that uses raw memory
+management results in components that are overly rigid in how they can
+be used and reused which fundamentally detracts from the impact that
+such software could otherwise have and makes it more difficult develop
+and maintain.  The problems created by the use of raw memory
+management can single-handily derail the vision of a large
+interconnected network of reusable CS\&E software components developed
+and used by many different CS\&E organizations
+{}\cite{HPCNeedsAToolsStrategy05}.  Therefore, the issue of memory
+management has as much or more impact on the macroscopic properties of
+CS\&E software components as it does on low-level internal software
+development.
 
-C++ is an incredibility large and complex language that very few
-people really know how to use in a confident and successful way.
-Arguably the most serious problems in C++ are related to dynamic
-memory management which must be used with any moderately complex
-object-oriented program.  The built-in C++ support for dealing with
-dynamic memory allocation with {}\ttt{new} and {}\ttt{delete} is
-fundamentally incompatible with the built-in exception handling
-mechanism using {}\ttt{try}, {}\ttt{throw}, and {}\ttt{catch}.  One
-cannot effectively build large-scale integrated software using just
-these low-level language features at the application programming
-level.  Software developed this way yields undefined behavior (e.g.\
-segfaults) and leaks memory unpredictably and is nearly impossible to
-integrate with other code.  The only successful way to use C++ to
-create complex robust software is to develop and rigorously adopt a
-set of programming idioms for safely dealing with memory.  By
-developing the right support software and associated idioms, we make
-C++ programs safer, better defined, faster to develop, and more
-efficient when run.
+C++ is a large and complex language that very few people really know
+how to use in a confident and successful way.  Arguably the most
+serious problems in C++ are related to dynamic memory management
+(which must be used with any moderately complex object-oriented
+program) and raw access to memory (e.g.\ array and pointer usage
+errors).  The built-in C++ support for dealing with dynamic memory
+allocation with {}\ttt{new} and {}\ttt{delete} is fundamentally
+incompatible with the built-in exception handling mechanism using
+{}\ttt{try}, {}\ttt{throw}, and {}\ttt{catch}.  One cannot effectively
+build large-scale integrated software using just these low-level
+language features at the application programming level.  Software
+developed this way yields undefined behavior (e.g.\ segfaults) and
+leaks memory unpredictably and is extremely difficult to integrate
+with other code.  The only successful way to use C++ to create complex
+robust software is to develop and rigorously adopt a set of
+programming idioms for safely dealing with memory.  By developing the
+right support software and associated idioms, we make C++ programs
+safer, better defined, faster to develop, and more efficient when run.
+The development of {}\ttt{std::vector} and {}\ttt{std::shared\_ptr}
+are steps in the right direction by the C++ standards have not gone
+far enough (as will be explained below).
 
 The reason that C++ is in this state of affairs is due to how C++ came
 into being and how it evolved over many years {}\cite{stroustrup94,
@@ -347,10 +354,10 @@ extension to the popular C programming language and was first called
 ``C with Classes''.  At the time, high efficiency, very low runtime
 overhead, and strong compatibility with C were critical requirements
 to the success of the new language.  Without this, the original
-creator of C++, Bjarne Stroustrup, concluded that C++ would be ``still
-born'' {}\cite{stroustrup97}.  The first C++ compilers were little
-more than preprocessors putting out C code on the back-end which was
-then compiled into executable binary code.
+creator of C++, Bjarne Stroustrup, concluded that C++ would be
+``stillborn'' {}\cite{stroustrup97}.  The first C++ compilers were
+little more than preprocessors putting out C code on the back-end
+which was then compiled into executable binary code.
 
 As the years went on, however, object-oriented programming was
 refined, computers become faster with more memory, and it was realized
@@ -367,14 +374,15 @@ than a decade later {}\cite{stroustrup94}.
 
 Because of the way that C++ ``evolved'' along with a strong need for
 backward compatibility, we have a language that is a disaster when
-used in raw form on complex large-scale programs.  Many programming
-teams have exploited this natural capability of C++ to create
-travesties of software which in turn have dumbfounded many a C++
-programmer (and entire teams) and have resulted in giving C++ a bad
-name in the general software engineering community (see Section 6
-``DDD Matters Today'' in {}\cite{DomainDrivenDesignQuickly} and ``The
-Case of the Construction Blob'' in {}\cite[Chapter
-9]{WorkingEffectivelyWithLegacyCode05} for a few examples).
+used in raw form in undisciplined ways on complex large-scale
+software.  Many programming teams have exploited this natural
+capability of C++ to create travesties of software which in turn have
+dumbfounded many a C++ programmer (and entire teams) and have resulted
+in giving C++ a bad name in the general software engineering community
+(see Section 6 ``DDD Matters Today'' in
+{}\cite{DomainDrivenDesignQuickly} and ``The Case of the Construction
+Blob'' in {}\cite[Chapter 9]{WorkingEffectivelyWithLegacyCode05} for a
+few examples of C++ bashing).
 
 More specifically, using low-level manual memory management (e.g.\
 {}\ttt{new}/{}\ttt{delete}, raw pointers everywhere) at all
@@ -388,8 +396,8 @@ development of C++ (and C) software that other more modern languages
 write and debug because it is difficult to track down invalid memory
 usage that results in undefined behavior (e.g.\ segfaults), double
 deletes, and memory leaks.  (Also, memory checking tools like Valgrind
-and Purify do not catch enough of these types of errors to adequately
-mitigate the problem.)
+and Purify are too slow and do not catch enough of these types of
+errors to adequately mitigate the problem.)
 
 {}\item Programs that use raw memory management can have many
 ``hidden'' memory usage errors (i.e.\ undefined behavior) that can
@@ -414,12 +422,12 @@ dies the slow painful death of software entropy
 {}\cite{MythicalManMonth95}.
 
 {}\item Software that uses raw memory management at all levels
-necessarily have designs that overly constrain how the software is used
-and reused.  For example, in such programs factory objects typically
-have to outlive the products they create and must also be responsible
-for deleting the objects.  This results in large numbers of ``static''
-factory objects that make the software hard to maintain and reuse in
-reasonable contexts.
+necessarily have designs that overly constrain how the software is
+used and reused.  For example, in such programs factory objects
+typically have to outlive the products they create and must also be
+responsible for deleting the objects they create.  This results in
+large numbers of ``static'' factory objects that make the software
+hard to maintain and reuse in reasonable contexts.
 
 \end{itemize}
 
@@ -441,7 +449,7 @@ other language in wide use which include:
 
 {}\item Support for creating very efficient concrete data types with
 efficiency on par with built-in data types that do not require dynamic
-memory management
+memory management (i.e.\ true stack-based objects)
 
 {}\item Support for operator overloading
 
@@ -484,15 +492,18 @@ encapsulating all raw memory usage as well as dynamic memory
 management that is very compatible with the built-in C++ exception
 handling mechanism.  The approach being described here is really just
 the systematic and (arguably) elegant application to the approaches
-advocated in {}\cite[Section 13.2: Pointers]{CodeComplete2nd04} for
-instance.
+advocated in ``Code Complete Second Edition'' {}\cite[Section 13.2:
+Pointers]{CodeComplete2nd04} for instance.
 
 This paper describes a set of low-level C++ classes and supporting
 software in the Trilinos package
 Teuchos\footnote{\ttt{http://trilinos.sandia.gov/packages/teuchos/}}
 that are used to encapsulate all raw pointers and enable strong
 debug-mode runtime checking while allowing for very high performance
-in non-debug-mode optimized builds.
+in non-debug-mode optimized builds.  This ideas and approaches are
+built on the the ideas and foundations of standard C++ classes like
+{}\ttt{std::vector} and {}\ttt{std::shared\_ptr} but fill in all of
+the gaps.
 
 The Teuchos memory management classes and the idioms that they help to
 define (which are described in this paper) do not remove the need for
@@ -1423,7 +1434,8 @@ return objects.
 
 To help define these two different types of associations, consider the
 class and function definitions in
-Listing~\ref{listing:NonPersistingPersistingAssociationsRawPointers}.
+Listing~\ref{listing:NonPersistingPersistingAssociationsRawPointers}
+and shown in Figure~\ref{fig:UML_A_B_C}.
 
 
 {}\begin{listing}: Classes using raw pointers with both non-persisting
@@ -1559,16 +1571,17 @@ Most programming languages do not provide any means to differentiate
 between non-persisting associations and persisting associations (see
 Section~\ref{sec:essentail-accidental-complexity} for an expanded
 discussion).  However, note that the Unified Modeling Language (UML
-{}\cite{UMLDistilledThirdEdition04}) does differentiates between them
+{}\cite{UMLDistilledThirdEdition04}) does differentiate between them
 in that persisting relationships are shown with a solid line while
 non-persisting relationships are shown with a dotted line as depicted
 for these example classes in Figure~\ref{fig:UML_A_B_C}.
 
 Another situation where the concepts of persisting and non-persisting
-associations comes up relates to how objects are returned by C++ functions as
-return values.  A persisting relationship is made through a function return
-object if that object is remembered past a single statement.  For example,
-consider the following code fragment:
+associations comes up relates to how objects are returned by C++
+functions as return values.  A persisting relationship is created
+through a function return object if that object is remembered past a
+single statement.  For example, consider the code fragment in
+Listing~\ref{listing:bad-perist-example}.
 
 
 {}\begin{listing}: Example of a dangerous type of persisting
@@ -1584,14 +1597,15 @@ association that can result in undefined behavior (e.g.\ segfault)
 \end{listing}
 
 
-The above code fragment shows a presenting relationship between the
-client code that is initializing the local reference {}\ttt{ele} and
-the {}\ttt{std::vector} container object {}\ttt{v}.  This is very
-fragile and dangerous code because if {}\ttt{v} is re-sized, grown or
-have some other type of change, then the reference pointed to by
-{}\ttt{ele} can be invalid.  For example, the following code fragment
-will likely result in a runtime memory usage error with undefined
-behavior and (if one is lucky) will segfault:
+The code fragment in Listing~\ref{listing:bad-perist-example} shows a
+presenting relationship between the client code that is initializing
+the local reference {}\ttt{ele} and the {}\ttt{std::vector} container
+object {}\ttt{v}.  This is very fragile and dangerous code because if
+{}\ttt{v} is re-sized, grown or have some other type of change, then
+the reference pointed to by {}\ttt{ele} can become invalid.  For
+example, the following code fragment will likely result in a runtime
+memory usage error with undefined behavior and (if one is lucky) will
+segfault:
 
 \begin{listing}:\\
 {\small\begin{verbatim}
@@ -1660,23 +1674,25 @@ Listing~\ref{listing:SemiPersistingIterators}:
 \end{listing}
 
 
-As shown in Listing~\ref{listing:SemiPersistingIterators}, the iterator
-object {}\ttt{itr} is used well past (perhaps thousands of loop iterations)
-where it was created by the statement {}\ttt{itr\_t itr = v.begin()}.  There
-are, however, significant restrictions on how such iterators can be used: a)
-the iterator cannot be accessed after the originating parent object has been
-destroyed, and b) the iterator cannot be accessed after the structure of the
-originating parent has changed (e.g.\ {}\ttt{v.resize(...)} was called).  For
-the sake of performance, one has to allow for the use of semi-persisting
-associations such as this where the optimized build of the code lacks the
-machinery to detect invalid usage.  However, note that in the case of the STL
-containers that in a debug-mode checked STL build (supported by GCC and the
-Microsoft compiles for instance), these types of dangling iterator references
-will typically be detected.  This type of debug-mode runtime checking is the
-saving grace for the use of iterators and other types of semi-persisting
+As shown in Listing~\ref{listing:SemiPersistingIterators}, the
+iterator object {}\ttt{itr} is used well past (perhaps thousands of
+loop iterations) where it was created by the statement {}\ttt{itr\_t
+itr = v.begin()}.  There are, however, significant restrictions on how
+such iterators can be used: a) the iterator cannot be accessed after
+the originating parent object has been destroyed, and b) the iterator
+cannot be accessed after the structure of the originating parent has
+changed (e.g.\ {}\ttt{v.resize(...)} was called).  For the sake of
+performance, one has to allow for the use of semi-persisting
+associations such as this where the optimized build of the code lacks
+the machinery to detect invalid usage.  However, note that in the case
+of the STL containers that in a debug-mode checked STL build
+(supported by GCC and the Microsoft compiles for instance), these
+types of dangling iterator references will typically be safely
+detected.  This type of debug-mode runtime checking is the saving
+grace for the use of iterators and other types of semi-persisting
 associations which makes their use acceptable.  If iterators to
-{}\ttt{std::vector} where simply hard-coded as raw pointers, this type of
-debug-mode runtime checking would not be possible.
+{}\ttt{std::vector} where simply hard-coded as raw pointers, this type
+of debug-mode runtime checking would not be possible.
 
 Semi-persisting associations also play a role in the use of the
 Teuchos memory management classes in situations where performance is
@@ -1692,11 +1708,12 @@ Appendix~\ref{apdx:commandments}).
 %
 
 The primary purpose for the Teuchos memory management classes is to
-encapsulate all raw C++ pointers in all high-level code.  These
-classes are efficient and general and, in a debug-mode build of the
-code, will catch and gracefully report 99\% or more of the programming
-errors typically made with the ubiquitous high-level use of raw C++
-pointers.
+encapsulate all raw C++ pointers in all high-level code and eliminate
+undefined behavior in C++ programs without sacrificing portability,
+control or efficiency.  These classes are efficient and general and,
+in a debug-mode build of the code, will catch and gracefully report
+99\% or so of the programming errors typically made with the
+ubiquitous high-level use of raw C++ pointers.
 
 
 %
@@ -1719,7 +1736,7 @@ library and application code.
 to safely and conveniently implement all hand-offs of encapsulated raw
 C++ pointers using carefully scrutinized conversion code provided with
 the classes.  Also, never define implicit conversions from these safe
-types to raw C++ pointers (or safety of the entire type safe system
+types to raw C++ pointers (or the safety of the entire type system
 falls apart).
 
 {}\item Differentiate memory management classes for handling single
@@ -1883,21 +1900,22 @@ making it easier to debug and fix the problems.
 What is important to understand is that all of these memory management
 classes must be developed together with knowledge of each other's
 internal implementations in order to provide solid debug-mode runtime
-checking.  For example, in general, one cannot mix in other memory
-management classes like {}\ttt{boost::shared\_ptr} (i.e.\
-{}\ttt{std::shared\_ptr} in C++0x) and {}\ttt{std::vector} and provide
-the same high level of runtime checking that is supported by the
-complete set of Teuchos memory management classes.  More details about
-why this is so are given in
-Section~\ref{sec:debug-mode-runtime-checking} in the context of
-debug-mode runtime checking for and reporting of dangling references.
+checking.  For example, in general, one cannot mix together different
+memory management classes like {}\ttt{boost::shared\_ptr} (i.e.\
+{}\ttt{std::shared\_ptr} in C++0x) and {}\ttt{std::vector} with the
+Teuchos memory management classes at the user level and provide the
+same high level of runtime checking that is supported by the complete
+system of Teuchos memory management classes.  More details about why
+this is so are given in Section~\ref{sec:debug-mode-runtime-checking}
+in the context of debug-mode runtime checking for and reporting of
+dangling references.
 
 As with the development of any set of C++ classes, a set of
 accompanying idioms must also be developed for maximizing their
 effective use.  The idioms described in this paper involving the
 Teuchos memory management classes result in code with maximum
-compile-time checking, maximum debug-mode runtime checking, and
-maximally self-documenting.
+compile-time checking, maximum debug-mode runtime checking, near
+optimal perforamnce, and maximally self-documenting.
 
 
 %
@@ -2009,8 +2027,9 @@ when the container has size zero (such as with {}\ttt{Array}).
 \end{tabular}
 \caption[Common members and non-members for all types]{
 \label{tbl:common-type-members}
-Common members and non-members for {}\ttt{Ptr}, {}\ttt{RCP},
-{}\ttt{Array[RCP,View]}, and {}\ttt{Tuple}}
+Common members and non-members for {}\ttt{Type} = {}\ttt{Ptr},
+{}\ttt{RCP}, {}\ttt{Array} {}\ttt{ArrayRCP}, {}\ttt{ArrayView}, and
+{}\ttt{Tuple}.}
 \end{center}}
 \end{table}
 
@@ -2339,19 +2358,21 @@ return objects.  All in all, the increased expressiveness in using raw
 C++ references is worth the increased risk of misuse (this is still
 going to be C++ after all).
 
-Basically, a raw C++ reference is relatively safe as long as a) it is always
-initialized to point to a valid object, and b) it is only used for
-non-persisting relationships (especially as const input arguments in C++
-functions).  If a raw C++ reference is initialized directly from an object or
-from dereferencing a smart pointer, then it is guaranteed that the object will
-be valid when the reference is first created (at least in a debug build where
-dereferencing null smart pointers throws).  While raw C++ references are
-fairly safe when used with the idioms described in this paper, there are no
-100\% guarantees.  There are typically no guarantees that the object pointed
-to by a raw reference will stay valid (because dangling references cannot be
-detected as described in Section~\ref{sec:limitations-debug-mode-checking}).
-This can happen when one breaks one or more of the idioms or guidelines
-defined in this paper (which will happen because programmers make mistakes).
+Basically, a raw C++ reference is relatively safe as long as a) it is
+always initialized to point to a valid object, and b) it is only used
+for non-persisting relationships (e.g.\ as const input arguments in
+C++ functions).  If a raw C++ reference is initialized directly from
+an object or from dereferencing a smart pointer, then it is guaranteed
+that the object will be valid when the reference is first created (at
+least in a debug build where dereferencing null smart pointers
+throws).  While raw C++ references are fairly safe when used with the
+idioms described in this paper, there are no 100\% guarantees.  There
+are typically no guarantees that the object pointed to by a raw
+reference will stay valid (because dangling references cannot be
+detected as described in
+Section~\ref{sec:limitations-debug-mode-checking}).  This can happen
+when one breaks one or more of the idioms or guidelines defined in
+this paper (which will happen because programmers make mistakes).
 
 Note that raw C++ references should never be used for representing
 semi-persisting associations because it is impossible to catch invalid
@@ -3029,7 +3050,7 @@ array types is that they allow for the creation of arbitrary
 contiguous subviews of data that have the strongest debug-mode runtime
 checking possible.  All of the array classes {}\ttt{ArrayView},
 {}\ttt{ArrayRCP}, {}\ttt{Array}, and {}\ttt{Tuple} provide contiguous
-views as {}\ttt{ArrayView} objects.  The functions the provide
+views as {}\ttt{ArrayView} objects.  The functions that provide
 {}\ttt{ArrayView} views are shown in
 Table~\ref{tbl:common-array-type-members}.  The {}\ttt{ArrayRCP} class
 can also provide persisting contiguous subviews as new
@@ -4920,7 +4941,7 @@ expression {}\ttt{flab\_in.conflab(*flab\_)} will have two valid
 
 
 %
-{}\subsubsection*{More exmaples of function return issues}
+{}\subsubsection*{More examples of function return issues}
 %
 
 Another difference between formal function arguments and return values
@@ -5305,18 +5326,19 @@ tracing enabled will be increased runtimes.
 %
 
 The fundamental weakness of low-overhead reference counting as
-described in this paper and used in the Teuchos memory management
-classes is that there is no bullet-proof way to address circular
-references that otherwise result in memory leaks.  Because of possible
-circular references, only system-level garbage-collection methods,
-such as implemented in languages like Java and Python, can robustly
-clean up memory in every case of circular reference.  As stated
-earlier, given backward compatibility constraints, many existing C++
-programs cannot be used with any C++ implementation that might
-implement garbage collection, not now or ever.  A key issue is that
-many programs require the side-effects of the deletion of objects as
-specific points in the program and changing the time of deletion of
-the object (and the call of the destructor) would break the program.
+described in this paper and used in the Teuchos (and boost and any
+other reference-counting) memory management classes is that there is
+no bullet-proof way to address circular references that otherwise
+result in memory leaks.  Because of possible circular references, only
+system-level garbage-collection methods, such as implemented in
+languages like Java and Python, can robustly clean up memory in every
+case of circular reference.  As stated earlier, given backward
+compatibility constraints, many existing C++ programs cannot be used
+with any C++ implementation that might implement garbage collection,
+not now or ever.  A key issue is that many programs require the
+side-effects of the deletion of objects as specific points in the
+program and changing the time of deletion of the object (and the call
+of the destructor) would break the program.
 
 To understand the problem with circular references, consider the code
 in Listing~\ref{listing:CircularRCP_A_B} which sets up a simple
@@ -5476,7 +5498,8 @@ usage of the classes.
 
 
 %
-{}\subsubsection*{Detail scenarios for weak pointers and cicular references}
+{}\subsubsection*{Detailed scenarios for weak pointers and cicular
+references}
 %
 
 Consider the scenario where the {}\ttt{clientA} object goes away first
@@ -6292,7 +6315,7 @@ factories and clients}
 There are two fundamentally different sets of actors that play two
 different roles in the use of the reference-counted classes used for
 persisting associations: a) factory entities that first create the
-reference-counted object {}\ttt{RCP<A>} which define the deallocation
+reference-counted object {}\ttt{RCP<A>} and defines the deallocation
 policy, and b) general clients that accept and use a shared
 reference-counted object {}\ttt{A} through an {}\ttt{RCP<A>} object.
 
@@ -6352,7 +6375,7 @@ finished using the object(s).
 The primary reason that these Teuchos memory management classes need
 to be developed in tandem with each other and know each other's
 internal implementations to some extend is to be able to implement
-robust and effective debug-mode runtime testing.  The debug-mode
+robust and effective debug-mode runtime checking.  The debug-mode
 runtime testing that is built into these classes is very strong and
 will catch nearly every type of programmer error that is possible, as
 long as raw C++ pointers are never externally exposed and if raw C++
@@ -7150,7 +7173,7 @@ class objects such they have the correct memory management properties.
 The debug-mode runtime checking performed by the Teuchos memory
 management classes throw exceptions when violations are detected.  As
 has been shown throughout this document, these exceptions have
-associated messages that are fairly detailed with lots of information
+associated messages that are fairly detailed with detailed information
 about the nature and context of the problem.
 
 All exceptions thrown by the Teuchos memory management classes (and
@@ -7205,14 +7228,14 @@ first created.
 NOTE: Setting breakpoints based on {}\ttt{insertionNumber} is
 generally better than trying to set breakpoints based on the object
 addresses because the same address can get reused multiple times as
-objects are created and destroyed.  On the {}\ttt{insertionNumber}
+objects are created and destroyed.  Only the {}\ttt{insertionNumber}
 uniquely identifies a particular {}\ttt{RCPNode} object.  In builds
-where there is no node tracing enabled, {}\ttt{insertionNumber} will
-be equal to -1 and will not aid in debugging.
+where node tracing is not enabled, {}\ttt{insertionNumber} will be
+equal to -1 and will not aid in debugging.
 
 NOTE: Before entering a conditional break-point involving an address,
 one must first run the program again in the debugger which will
-typically produce an exception message with different addresses
+typically produce an exception message with different object addresses
 because the debugger moves things around in memory.  One will need to
 use these new pointer addresses when setting conditional breakpoints.
 
@@ -8355,7 +8378,7 @@ leads to the ``just-in-time initialization'' idiom where the
 functions {}\ttt{doSomeOperation(...)} or {}\ttt{get\_C()} are called
 by a client.  This allows the objects {}\ttt{a} and/or {}\ttt{b} to be
 passed into the functions {}\ttt{set\_A(...)}  and {}\ttt{set\_B(...)} 
-in a partially-initialized state.  These objects do not need to be
+in a partially initialized state.  These objects do not need to be
 fully initialized until the {}\ttt{doSomeOperation(...)} or
 {}\ttt{get\_C()} functions are called.  This can massively simplify
 and robustify the design of complex programs by separating code that
@@ -8470,14 +8493,15 @@ detect dangling references or can be used to create a strong
 {}\ttt{RCP} when needed while at the same time not creating a circular
 reference that would result in a memory leak.
 
-The memory function {}\ttt{createMember()} shown in
+The member function {}\ttt{createMember()} shown in
 Listing~\ref{listing:osr:DefaultSpmdVectorSpace} creates a strong
 owning {}\ttt{RCP} to itself which is given to the newly created
 {}\ttt{DefaultSpmdVector} object in the statement
 {}\ttt{defaultSpmdVector(weakSelfPtr\_.create\_strong())}.  This
 allows the resulting product {}\ttt{DefaultSpmdVector} object to
-outlive the client's {}\ttt{RCP} references to the factory object
-{}\ttt{DefaultSpmdVectorSpace}.  A simple example of this is shown in
+outlive the client's {}\ttt{RCP} references to the
+{}\ttt{DefaultSpmdVectorSpace} factory object.  A simple example of
+this is shown in
 Listing~\ref{listing:osr:DefaultSpmdVectorSpace-use-delete}.
 
 
@@ -8488,7 +8512,7 @@ is remembered in the product
 {\small\begin{verbatim}
   RCP<VectorBase> createMyVector(const Ordinal localDim)
   {
-     RCP<DefaultSpmdVectorSpace> vs = defaultSpmdVectorSpace();
+     RCP<DefaultSpmdVectorSpace> vs = defaultSpmdVectorSpace(localDim);
      return vs->createMember();
      // NOTE: The DefaultSpmVectorSpace object is embedded in the returned
      // DefaultSpmdVector object and will not be deleted
@@ -8512,7 +8536,7 @@ Listing~\ref{listing:sci:SomeClass-before} that has to pass a self
 reference to an object it creates and holds internally.
 
 
-{}\begin{listing}: Example of an class with {}\ttt{RCP} to self
+{}\begin{listing}: Example of an class with {}\ttt{RCP}-to-self
 problems (similar to the class in
 Section~\ref{sec:separate-construct-init})
 \label{listing:osr:SomeClass-before}
@@ -8549,7 +8573,7 @@ Listing~\ref{listing:osr:bad-use-SomeClass}.
   RCP<SomeClass> sc(new SomeClass);
   RCP<C> c = sc->get_C();
   sc = null; // The SomeClass object is destroyed which invalidates 'c'!
-  c->someFunc(); // Calls on the now deleted SomeClass object pointed to inside!
+  c->someFunc(); // Undefined behavior of call to deleted SomeClass!
 \end{verbatim}}
 \end{listing}
 
@@ -8567,7 +8591,7 @@ off eventually.  The reason for this behavior is that the statement
 {}\underline{before} the owning {}\ttt{RCPNode} object is created by
 the client code {}\ttt{RCP<SomeClass> sc(new SomeClass)}.  This
 violates Commandment~\ref{cmnd:owning-rcp-first} in
-Section~\ref{apdx:commandments}.  The node-tracing reference-counting
+Appendix~\ref{apdx:commandments}.  The node-tracing reference-counting
 machinery would have to be more complex and much more expensive to
 catch dangling reference errors where the strong owning
 {}\ttt{RCPNode} object was not the first {}\ttt{RCPNode} object
@@ -9479,26 +9503,7 @@ detection and reporting of dangling non-owning references while
 
 The key advantages of the current {}\ttt{boost::shared\_ptr} class
 over the current {}\ttt{RCP} class are that it has lower storage and
-runtime overhead (Section~\ref{sec:reference-counting-overhead}), and
-it has native support for sharing reference-counting nodes across
-different threads in a multi-threaded program.  The {}\ttt{RCP} class
-does not yet have support for thread-safe sharing across multiple
-threads but some reasonable solution will be implemented (perhaps
-borrowing form the {}\ttt{boost::shared\_ptr} implementation) when it
-is needed.  The {}\ttt{RCP} class has been developed in the context of
-computational science and engineering applications where up till now
-parallelism has been handled using distributed memory MPI
-implementations where no multi-threading is used.  Given that even the
-best non-locking {}\ttt{boost::shared\_ptr} implementation imparts a
-significant overhead in manipulating the reference count (a factor of
-4x overhead for GCC in a recent timing test), it is not clear if the
-right solution to the multi-threading problem is to make all
-{}\ttt{RCP} objects thread safe in an entire program.  Multi-threading
-is coming to computational science codes with the multi-core
-revolution~\cite{DesignIssuesForMultiCore08} so this issue may need to
-be addressed soon in the {}\ttt{RCP} and {}\ttt{ArrayRCP} classes.
-Until then, {}\ttt{boost::shared\_ptr} can be used in cases where
-sharing across threads is required.
+runtime overhead (Section~\ref{sec:reference-counting-overhead}).
 
 Because both the Teuchos {}\ttt{RCP} and {}\ttt{boost::shared\_ptr}
 classes support customized deallocation policy objects, one can embed
@@ -9512,9 +9517,9 @@ allows the developer to mix and match {}\ttt{RCP} and
 correct memory management.  However, since {}\ttt{RCP} has better
 debug-mode runtime checking and is more flexible it should be
 preferred to {}\ttt{boost::shared\_ptr} in most high-level code.
-Alternatively, because {}\ttt{boost::shared\_ptr} has lower overhead
-and has native support for sharing across threads it also has valid
-uses.  Additionally, of course, one may need to convert back and forth
+Alternatively, because {}\ttt{boost::shared\_ptr} has slightly lower
+overhead and is present {}\ttt{std::tr1} it also has valid uses.
+Additionally, of course, one may need to convert back and forth
 between {}\ttt{RCP} and {}\ttt{boost::shared\_ptr} objects to glue
 together different pieces of separately developed code that use
 different smart pointer classes.  The class {}\ttt{boost::scoped\_ptr}
@@ -9679,9 +9684,9 @@ are not being created) by:
   are called by the unit tests but have them call the new functions
   that take the safer memory management types
 
-  {}\item Marking the deprecated functions as so to facilitate
-  refactoring of client code (e.g.\ using GCC's {}\ttt{
-  \_\_attribute\_\_((\_\_deprecated\_\_))})
+  {}\item Marking the raw-pointer versions of the functions as
+  deprecated as so to facilitate refactoring of client code (e.g.\
+  using GCC's {}\ttt{ \_\_attribute\_\_((\_\_deprecated\_\_))})
 
   \end{enumerate}
 
@@ -9763,19 +9768,21 @@ accidental complexity\footnote{
 {}\ttt{http://discuss.joelonsoftware.com/default.asp?joel.3.278613.51}}.
 Alternatively, {}\textit{essential complexity} exists because of the
 nature of the problem at hand that no programming language will ever
-be able to fully remove.  (However, can use object-oriented and other
-design approaches to partition and abstract essential complexity such
-that we can write and maintain large-scale programs.)
+be able to fully remove.  (However, one can use object-oriented and
+other design approaches to abstract and partition the essential
+complexity such that we can write and maintain complex large-scale
+programs.)
 
 What the Teuchos Memory Management classes do is that they remove much
 of the accidental complexity of using raw pointers and manual resource
 management and instead they more directly address the essential
-complexity of writing programs in making important concepts explicit
-that are implicit in most languages (including raw C++).  Dealing with
-the nature of relationships between objects is essential complexity
-and for every relationship between two classes (for example in a UML
-class diagram {}\cite{UMLDistilledThirdEdition04}) one must answer the
-essential questions:
+complexity of writing programs in making important concepts of object
+relationships explicit that are instead implicit in most languages
+(including raw C++).  Dealing with the nature of relationships between
+objects is essential complexity and for every relationship between two
+classes (for example in a UML class diagram
+{}\cite{UMLDistilledThirdEdition04}) one must answer the essential
+questions:
 
 \begin{itemize}
 
