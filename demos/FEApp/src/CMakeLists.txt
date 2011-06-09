@@ -48,6 +48,8 @@ APPEND_SET(HEADERS
   FEApp_AbstractPDE.hpp
   FEApp_HeatNonlinearSourcePDE.hpp
   FEApp_HeatNonlinearSourcePDEImpl.hpp
+  FEApp_LinearConvDiffPDE.hpp
+  FEApp_LinearConvDiffPDEImpl.hpp
   FEApp_BrusselatorPDE.hpp
   FEApp_BrusselatorPDEImpl.hpp
   FEApp_AbstractNodeBCStrategy_NTBase.hpp
@@ -61,6 +63,7 @@ APPEND_SET(HEADERS
   FEApp_AbstractProblem.hpp
   FEApp_BrusselatorProblem.hpp
   FEApp_HeatNonlinearSourceProblem.hpp
+  FEApp_LinearConvDiffProblem.hpp
   FEApp_ProblemFactory.hpp
   FEApp_BrusselatorParameters.hpp
   FEApp_Mesh.hpp
@@ -87,11 +90,13 @@ APPEND_SET(SOURCES
   FEApp_SourceFunctionFactory.cpp
   FEApp_FunctionFactory.cpp
   FEApp_HeatNonlinearSourcePDE.cpp
+  FEApp_LinearConvDiffPDE.cpp
   FEApp_BrusselatorPDE.cpp
   FEApp_BrusselatorNodeBCStrategy.cpp
   FEApp_ConstantNodeBCStrategy.cpp
   FEApp_BrusselatorProblem.cpp
   FEApp_HeatNonlinearSourceProblem.cpp
+  FEApp_LinearConvDiffProblem.cpp
   FEApp_ProblemFactory.cpp
   FEApp_Mesh.cpp
   FEApp_InitPostOps.cpp
