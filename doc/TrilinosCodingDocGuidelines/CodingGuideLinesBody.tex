@@ -2,35 +2,38 @@
 \section{Introduction}
 %
 
-This document deals with C++ coding guidelines starting from the
-foundation of the guidelines in the book ``C++ Coding Standards'' by
-Sutter and Alexandrescu {}\cite{C++CodingStandards05} (the 101 items
-are outlined in Appendix~\ref{sec:cpp_coding_standards}) and the
-Teuchos-based memory management approach described in
+This document deals with C++ coding guidelines for Trilinos and
+related software starting from the foundation of the guidelines in the
+book ``C++ Coding Standards'' by Sutter and Alexandrescu
+{}\cite{C++CodingStandards05} (the 101 items are outlined in
+Appendix~\ref{sec:cpp_coding_standards}) and the Teuchos-based memory
+management approach described in
 {}\cite{TeuchosMemoryManagementGuide}.  The guidelines in this
 document are specifically designed to address the development of
 object-oriented numerical C++ libraries and to utilize the tools in
 the Trilinos package Teuchos.  While the main purpose of this document
-is to define guidelines for Thyra software (for both interfaces and
-support software), it is also general enough to be applied to many
-other projects that, for instance, might interact with Thyra.
+is to define guidelines for the common look and feel of Trilinos
+software (for both interfaces and support software), it is also
+general enough to be applied to many other projects that, for
+instance, might interact with Trilinos.
 
-The book ``C++ Coding Standards'' {}\cite{C++CodingStandards05} covers
+The book ``C++ Coding Standards'' {}\cite{C++CodingStandards05}
+distills the C++ community's best practices from a number of authors
+(as of 2004 but still relavent for pre-C++11 software) and also covers
 many topics that are more general than C++ and can be considered to be
-general design topics.  As a result, the book
-{}\cite{C++CodingStandards05} provides a fairly comprehensive
-foundation for creating well designed, high-quality C++ software.  The
-goal of this document is not to restate what is in
-{}\cite{C++CodingStandards05} but instead to fill in some gaps
-intentionally left by the authors and to provide amendments to
-specific items in {}\cite{C++CodingStandards05} and tailor them for
-numerical libraries.  The zeroth item (first item, zero based) ``Don't
-sweat the small stuff'' intentionally avoids specific recommendations
-on issues such as the conventions for naming identifiers and the
-formatting of code since these are arbitrary.  While issues related to
-coding style are less important than other issues, there are arguments
-for adopting a more consistent code formatting style and some of these
-arguments are outlined in
+general design topics.  As a result, {}\cite{C++CodingStandards05}
+provides a fairly comprehensive foundation for creating well designed,
+high-quality C++ software.  The goal of this document is not to
+restate what is in {}\cite{C++CodingStandards05} but instead to fill
+in some gaps intentionally left by the authors and to provide
+amendments to specific items in {}\cite{C++CodingStandards05} and
+tailor them for numerical libraries.  The zeroth item (first item,
+zero based) ``Don't sweat the small stuff'' intentionally avoids
+specific recommendations on issues such as the conventions for naming
+identifiers and the formatting of code since these are arbitrary.
+While issues related to coding style are less important than other
+issues, there are arguments for adopting a more consistent code
+formatting style and some of these arguments are outlined in
 Appendix~\ref{sec:arguments-for-consistent-style}.  Therefore, one of
 the purposes of this document is to suggest reasonable and minimal
 guidelines for naming conventions and code formatting that provide for
@@ -45,7 +48,7 @@ of the software must interact with these names, it is even more important that
 a set of naming conventions be used as consistently as possible in the client
 interfaces.
 
-Finally, more important general C++ coding guidelines are covered that
+Finally, important general C++ coding guidelines are covered that
 append and amend those described in {}\cite{C++CodingStandards05}.
 While formatting and naming recommendations do not affect the meaning
 of C++ code, other coding guidelines do and therefore they will
@@ -62,28 +65,27 @@ conventions are presented in Section~\ref{sec:NamingConventions} and
 they help provide a context for later code examples.  This is followed
 in Section~\ref{sec:NOSF} with guidelines for naming and organizing
 source files.  Next, important general C++ coding guidelines are
-described in Section~\ref{thyracodingguidelines:codingguidelines:sec}
+described in Section~\ref{tcdg:codingguidelines:sec}
 that affect software quality in critical ways.  Following this,
 reasonable and minimal formatting guidelines are covered in
-Section~\ref{thyracodingguidelines:formatting:sec}.  Finally,
+Section~\ref{tcdg:formatting:sec}.  Finally,
 guidelines for Doxygen documentation are provided in
 Section~\ref{sec:DocumentionGuidelines}.
 
 Several appendices are included that deal with a number of topics.
 The guidelines presented in this document are summarized in
-Appendix~\ref{sec:summary_guidelines}.  The 101 guidelines from
-{}\cite{C++CodingStandards05} are listed in
+Appendix~\ref{sec:summary_guidelines}.  A summary of the idioms and
+conventions surrounding the use of the Teuchos memory management
+classes are presented in Appendix~\ref{apdx:summary_of_idioms}.  The
+101 guidelines from {}\cite{C++CodingStandards05} are listed in
 Appendix~\ref{sec:cpp_coding_standards} along with specifying which
-items are amended or invalidated by the guidelines in the current
-document.  A summary of the idioms and conventions surrounding the use
-of the Teuchos memory management classes are presented in
-Appendix~\ref{apdx:summary_of_idioms}.
-Appendix~\ref{sec:misc_amendments} contains discussions of items from
-{}\cite{C++CodingStandards05} that are amended or invalidated in the
-Thyra coding guidelines.  Most importantly, a clarification of
-{}\texttt{using} declarations is given that is both more rigid in some
-ways and less rigid in other ways than what is described in
-{}\cite[Item 59]{C++CodingStandards05}.
+items are amended or invalidated by the Trilinos guidelines described
+in this current document.  Appendix~\ref{sec:misc_amendments} contains
+discussions of items from {}\cite{C++CodingStandards05} that are
+amended or invalidated in this set of coding guidelines for Trilinos.
+Most importantly, a clarification of {}\texttt{using} declarations is
+given that is both more rigid in some ways and less rigid in other
+ways than what is described in {}\cite[Item 59]{C++CodingStandards05}.
 Appendix~\ref{sec:arguments-for-consistent-style} gives arguments for
 adopting a consistent code formatting style in a single development
 team or single project (which is required with current Agile
@@ -99,16 +101,17 @@ agreed upon.
 \label{sec:alpha_numeric_designations}
 %
 
-Specific items in this document are to be refereed to using numerated acronyms
-starting with {}\textbf{\index{TCDG}} and the version number (e.g.\ 1.0).  For
-example, the first naming convention guideline can be refereed to as
-{}\textbf{TCDG 1.0 NC 1}.  In this way, these short precise alpha-numeric
-designation such as {}\textbf{TCDG 1.0 NC 3} can be used in code reviews as
-short-hand references to specific guidelines.  The version number of the
-coding standard is important in order to allow changes in future coding
-guidelines and allow the numbers to change from version to version (e.g.\
-{}\textbf{NC 1} in {}\textbf{TCDG 1.0} might become {}\textbf{NC 3} in
-{}\textbf{TCDG X.Y}).
+Specific items in this document are to be refereed to using numerated
+acronyms starting with {}\textbf{\index{TCDG}} and the version number
+(e.g.\ 1.0).  For example, the first naming convention guideline can
+be refereed to as {}\textbf{TCDG 1.0 NC 1}.  In this way, these short
+precise alpha-numeric designation such as {}\textbf{TCDG 1.0 NC 3} can
+be used in code reviews as short-hand references to specific
+guidelines.  The version number of the coding standard is important in
+order to allow changes in future coding guidelines and allow the
+numbers to change from version to version (e.g.\ {}\textbf{NC 1} in
+{}\textbf{TCDG 1.0} might become {}\textbf{NC 3} in {}\textbf{TCDG
+X.Y}).
 
 In addition, this document is based on {}\cite{C++CodingStandards05}
 and those guidelines will be refereed to using an enumerated acronym
@@ -123,8 +126,8 @@ C++ classes, functions, variables, data members etc. should be named
 and used in a fairly consistent manner.  The following guidelines are
 consistent with common practice as exemplified in
 {}\cite{EffectiveC++3rd05} for example and are also largely consistent
-with the Java naming
-standard\footnote{\ttt{http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html}}.
+with the Java naming standard\footnote{
+{}\ttt{http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html}}.
 
 
 \begin{itemize}
@@ -437,7 +440,7 @@ This is a very minor amendment to Item 24 in {}\cite{C++CodingStandards05}.
 
 %
 \section{Coding guidelines}
-\label{thyracodingguidelines:codingguidelines:sec}
+\label{tcdg:codingguidelines:sec}
 %
 
 Coding guidelines, unlike formatting guidelines, greatly influence the
@@ -1306,7 +1309,7 @@ Idioms for returning reference-type objects from C++ functions.}
 
 %
 \section{Formatting of source code}
-\label{thyracodingguidelines:formatting:sec}
+\label{tcdg:formatting:sec}
 %
 
 At the minimum, source code should be formatted consistently within a single
