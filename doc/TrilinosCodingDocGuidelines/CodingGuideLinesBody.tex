@@ -128,7 +128,19 @@ consistent with common practice as exemplified in
 {}\cite{EffectiveC++3rd05} for example and are also largely consistent
 with the Java naming standard\footnote{
 {}\ttt{http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html}}.
+Naming conventions affecting external interfaces are given in
+Section~\ref{sec:ExternalNamingConventions} while naming convention
+suggestions for internal software entities are given in
+Section~\ref{sec:InternalNamingConventions}.
 
+
+%
+\subsection{External naming conventions}
+\label{sec:ExternalNamingConventions}
+%
+
+Naming conventions are given in this section that affect external
+interfaces that affect the user and affect common look and feel.
 
 \begin{itemize}
 
@@ -140,6 +152,7 @@ capitalized (i.e.\ ``Camel Case'').  For example:
 {\small\begin{verbatim}
   class SomeClass {...};
 \end{verbatim}}
+
 
 {}\item\NCNamespaceNames: C++ namespaces should follow the same naming
 convention as C++ classes and namespace names should not contain too many
@@ -215,54 +228,6 @@ considered bad practice to differentiate variable names by case alone (see
 mathematical software should support this.
 
 
-{}\item\NCDataMemberNames: Names for data members within a class should use the
-same naming convention as for other object identifier names but should end
-with an underscore.  For example:
-
-{\small\begin{verbatim}
-  class SomeClass {
-  public:
-    ...
-  private:
-    int someDataMember_;
-  };
-\end{verbatim}}
-
-
-{}\textit{Justification:} Using an underscore after a data variable
-name helps to define the scope of the variable and differentiate that
-name from a local variable or a member function that may otherwise
-result in ``shadowing'' which causes portability problems on some
-compilers especially when warnings are elevated to errors.
-
-
-{}\textit{Exception}: Public data members in simple C++ structs (i.e.\
-where no invariants need to be maintained) should not contain
-underscores.  For example:
-
-{\small\begin{verbatim}
-  struct SolveStatus {
-    ESolveStatus solveStatus;
-    double achievedTol;
-    std::string message;
-    ...
-  };
-\end{verbatim}}
-
-
-{}\textit{Exception:} Identifiers that have mathematical symbols in them such
-as {}\texttt{x}, {}\texttt{J}, and {}\texttt{alpha} should use lower case
-names separated by underscores {}\texttt{\_}.  For example:
-
-{\small\begin{verbatim}
-  Vector curr_x_;
-  Matrix curr_J_;
-  Scalar curr_alpha_;
-\end{verbatim}}
-
-{}\textit{Justification:} See {}\textbf{NC 4} above.
-
-
 {}\item\NCFunctionNames: Names for functions should use the same naming
 convention as for object identifier.  For example:
 
@@ -294,22 +259,22 @@ names separated by underscores {}\texttt{\_}.  For example:
 
 
 {}\item\NCBaseDefaultClassNames: In general, the top-level C++ base
-class for some abstraction should use the post-fix {}\texttt{Base}
-prepended to the class name (e.g.\ {}\texttt{Vector\-Base}) and the
-base class should contain (almost) no implementations and certainly no
-object data (see Item 36 in {}\cite{C++CodingStandards05}).  If a
-default implementation of some of the aspects of the base class are
-desired (to make it easier to define concrete subclasses), then they
-should be put in a derived node subclass with the post-fix
-{}\texttt{DefaultBase} (e.g.\ {}\texttt{Vector\-Default\-Base}).  Any
-default concrete implementation of an abstraction should generally use
-the prefix {}\texttt{Default} prepended to the beginning of the name
-along with any other important prefixes (e.g.\
-{}\texttt{DefaultSpmdVector}).  For example:
+class for some abstraction should use an unadored name (e.g.\
+{}\texttt{Vector}) and the base class should contain (almost) no
+implementations and certainly no object data (see Item 36 in
+{}\cite{C++CodingStandards05}).  If a default implementation of some
+of the aspects of the base class are desired (to make it easier to
+define concrete subclasses), then they should be put in a derived node
+subclass with the post-fix {}\texttt{DefaultBase} (e.g.\
+{}\texttt{Vector\-Default\-Base}).  Any default concrete
+implementation of an abstraction should generally use the prefix
+{}\texttt{Default} prepended to the beginning of the name along with
+any other important prefixes (e.g.\ {}\texttt{DefaultSpmdVector}).
+For example:
 
 {\small\begin{verbatim}
   // Pure virtual base class 
-  class VectorBase
+  class Vector
     : ... // Other base classes
   {
   public:
@@ -318,8 +283,7 @@ along with any other important prefixes (e.g.\
   };
 
   // Node base class with some default implementations
-  class VectorDefaultBase
-   : virtual public VectorBase
+  class VectorDefaultBase : virtual public Vector
   {
   public:
     void applyOp(...) const; // default implementation
@@ -363,6 +327,73 @@ non-constant view of the part (see the discussion of the ``generalized view''
 design pattern in {}\cite{TeuchosMemoryManagementGuide}) and therefore to be
 safe and error on the side of efficiency, the non-constant access function
 should be harder to call than the constant access function.
+
+
+\end{itemize}
+
+
+%
+\subsection{Internal naming conventions}
+\label{sec:InternalNamingConventions}
+
+Naming conventions that affect internal software entities are given in
+this section.  Such naming conventions do not directly affect users
+(unless they decide to inspect and debug through the code) but such
+internal naming conventions do strongly influence collaborative
+software development and the shared ownership of code.  In fact, such
+internal naming conventions might actually influence collaborative
+development more than external naming conventions due to the amount of
+code involved and are therefore imporant to form cohesive productive
+teams.  The conventions given below are used in the Thyra package as
+well as much of Teuchos.
+
+
+\begin{itemize}
+
+
+{}\item\NCDataMemberNames: Names for data members within a class should use the
+same naming convention as for other object identifier names but should end
+with an underscore.  For example:
+
+{\small\begin{verbatim}
+  class SomeClass {
+  public:
+    ...
+  private:
+    int someDataMember_;
+  };
+\end{verbatim}}
+
+{}\textit{Justification:} Using an underscore after a data variable
+name helps to define the scope of the variable and differentiate that
+name from a local variable or a member function that may otherwise
+result in ``shadowing'' which causes portability problems on some
+compilers especially when warnings are elevated to errors.
+
+{}\textit{Exception}: Public data members in simple C++ structs (i.e.\
+where no invariants need to be maintained) should not contain
+underscores.  For example:
+
+{\small\begin{verbatim}
+  struct SolveStatus {
+    ESolveStatus solveStatus;
+    double achievedTol;
+    std::string message;
+    ...
+  };
+\end{verbatim}}
+
+{}\textit{Exception:} Identifiers that have mathematical symbols in them such
+as {}\texttt{x}, {}\texttt{J}, and {}\texttt{alpha} should use lower case
+names separated by underscores {}\texttt{\_}.  For example:
+
+{\small\begin{verbatim}
+  Vector curr_x_;
+  Matrix curr_J_;
+  Scalar curr_alpha_;
+\end{verbatim}}
+
+{}\textit{Justification:} See {}\textbf{NC 4} above.
 
 
 \end{itemize}
@@ -733,32 +764,38 @@ for.
 not perform well in SPMD programs.  Instead, produce output using one of the
 following approaches.
 
+  \begin{itemize}
+  
+  {}\item\GCGTeuchosFancyOStream: A {}\texttt{Teuchos\-::Fancy\-OStream} class
+  object can wrap any {}\texttt{std\-::ostream} object and helps to produce
+  structured indented output and to create more readable output in an SPMD
+  program (even when every processor produces output).
+  
+  
+  {}\item\GCGTeuchosDescribable: The {}\texttt{Teuchos\-::Describable} interface
+  is the appropriate way to allow clients to print the current state of an
+  object in a flexible way.  The verbosity of the output is controlled by an
+  input enum parameter.
+  
+  
+  {}\item\GCGTeuchosVerboseObject: Clients can set the output stream and the
+  verbosity level through a parameter list (see the
+  {}\texttt{Teuchos\-::ParameterListAcceptor} interface described above) or can
+  set them directly in code.  If no output stream is set, then
+  {}\texttt{Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()} will be
+  used.
+  
+  
+  {}\item\GCGTeuchosVerboseObjectBaseDefaultOStream: The stream provided by
+  {}\texttt{*Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()} is set
+  up by default to do clean printing in an SPMD program and can also be set up
+  through a {}\texttt{Teuchos\-::Command\-Line\-Processor} object to control how
+  output is produced and formatted.
 
-{}\item\GCGTeuchosFancyOStream: A {}\texttt{Teuchos\-::Fancy\-OStream} class
-object can wrap any {}\texttt{std\-::ostream} object and helps to produce
-structured indented output and to create more readable output in an SPMD
-program (even when every processor produces output).
+  \end{itemize}
 
 
-{}\item\GCGTeuchosDescribable: The {}\texttt{Teuchos\-::Describable} interface
-is the appropriate way to allow clients to print the current state of an
-object in a flexible way.  The verbosity of the output is controlled by an
-input enum parameter.
-
-
-{}\item\GCGTeuchosVerboseObject: Clients can set the output stream and the
-verbosity level through a parameter list (see the
-{}\texttt{Teuchos\-::ParameterListAcceptor} interface described above) or can
-set them directly in code.  If no output stream is set, then
-{}\texttt{Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()} will be
-used.
-
-
-{}\item\GCGTeuchosVerboseObjectBaseDefaultOStream: The stream provided by
-{}\texttt{*Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()} is set
-up by default to do clean printing in an SPMD program and can also be set up
-through a {}\texttt{Teuchos\-::Command\-Line\-Processor} object to control how
-output is produced and formatted.
+  {}\item\GCGTeuchosTimers: ToDo: Fill in some details.
 
 
 \end{itemize}
