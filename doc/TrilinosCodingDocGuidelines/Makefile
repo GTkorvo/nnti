@@ -1,5 +1,5 @@
 
-BASE_NAME = ThyraCodingGuideLines
+BASE_NAME = TrilinosCodingDocGuidelines
 LATEX_COMMAND = latex
 MAKEINDEX_COMMAND = makeindex
 MAKEGLOSSARY_COMMAND = makeglossary
