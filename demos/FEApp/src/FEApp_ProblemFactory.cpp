@@ -32,6 +32,7 @@
 #include "FEApp_ProblemFactory.hpp"
 #include "FEApp_BrusselatorProblem.hpp"
 #include "FEApp_HeatNonlinearSourceProblem.hpp"
+#include "FEApp_LinearConvDiffProblem.hpp"
 
 FEApp::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
@@ -55,6 +56,11 @@ FEApp::ProblemFactory::create()
     strategy = 
       Teuchos::rcp(new FEApp::HeatNonlinearSourceProblem(problemParams,
                                                          paramLib));
+  }
+  else if (method == "Convection Diffusion") {
+    strategy = 
+      Teuchos::rcp(new FEApp::LinearConvDiffProblem(problemParams,
+                                                    paramLib));
   }
   else {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
