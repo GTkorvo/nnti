@@ -51,8 +51,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-  unsigned int nelem = 100;
-  double h = 1.0/nelem;
+  int nelem = 100;
   double alpha = 1.0;
   double leftBC = 0.0;
   double rightBC = 0.1;
@@ -74,11 +73,6 @@ int main(int argc, char *argv[]) {
 #endif
 
     int MyPID = Comm->MyPID();
-    
-    // Create mesh
-    vector<double> x(nelem+1);
-    for (unsigned int i=0; i<=nelem; i++)
-      x[i] = h*i;
 
     // Set up application parameters
     Teuchos::RefCountPtr<Teuchos::ParameterList> appParams = 
@@ -92,15 +86,17 @@ int main(int argc, char *argv[]) {
       problemParams.sublist("Source Function");
     sourceParams.set("Name", "Exponential");
     sourceParams.set("Nonlinear Factor", alpha);
-
-    // Create set of free parameters for LOCA to use
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > free_param_names =
-      Teuchos::rcp(new Teuchos::Array<std::string>);
-    free_param_names->push_back("Exponential Source Function Nonlinear Factor");
+    Teuchos::ParameterList& parameterParams = 
+      problemParams.sublist("Parameters");
+    parameterParams.set("Number", 1);
+    parameterParams.set("Parameter 0", 
+			"Exponential Source Function Nonlinear Factor");
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+    discParams.set("Number of Elements", nelem);
 
     // Create application
     Teuchos::RefCountPtr<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, Comm, appParams, true));
+      Teuchos::rcp(new FEApp::Application(Comm, appParams));
 
     // Create initial guess
     Teuchos::RefCountPtr<const Epetra_Vector> u = app->getInitialSolution();
@@ -202,7 +198,7 @@ int main(int argc, char *argv[]) {
 
     // Create model evaluator
     Teuchos::RefCountPtr<FEApp::ModelEvaluator> model = 
-      Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names));
+      Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 
     // Create Epetra factory
     Teuchos::RefCountPtr<LOCA::Abstract::Factory> epetraFactory =

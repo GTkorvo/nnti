@@ -51,8 +51,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-  unsigned int nelem = 100;
-  double h = 1.0/nelem;
+  int nelem = 100;
   double alpha = 0.25;
   double beta = 1.5;
   double D1 = 1.0/40.0;
@@ -76,11 +75,6 @@ int main(int argc, char *argv[]) {
 
     int MyPID = Comm->MyPID();
     
-    // Create mesh
-    vector<double> x(nelem+1);
-    for (unsigned int i=0; i<=nelem; i++)
-      x[i] = h*i;
-
     // Set up application parameters
     Teuchos::RefCountPtr<Teuchos::ParameterList> appParams = 
       Teuchos::rcp(new Teuchos::ParameterList);
@@ -91,16 +85,17 @@ int main(int argc, char *argv[]) {
     problemParams.set("beta", beta);
     problemParams.set("D1", D1);
     problemParams.set("D2", D2);
-
-    // Create set of free parameters for LOCA to use
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > free_param_names =
-      Teuchos::rcp(new Teuchos::Array<std::string>);
-    free_param_names->push_back("Brusselator Alpha");
-    free_param_names->push_back("Brusselator Beta");
+    Teuchos::ParameterList& parameterParams = 
+      problemParams.sublist("Parameters");
+    parameterParams.set("Number", 2);
+    parameterParams.set("Parameter 0", "Brusselator Alpha");
+    parameterParams.set("Parameter 1", "Brusselator Beta");
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+    discParams.set("Number of Elements", nelem);
 
     // Create application
     Teuchos::RefCountPtr<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, Comm, appParams, true));
+      Teuchos::rcp(new FEApp::Application(Comm, appParams));
 
     // Create initial guess
     Teuchos::RefCountPtr<const Epetra_Vector> u = app->getInitialSolution();
@@ -202,7 +197,7 @@ int main(int argc, char *argv[]) {
 
     // Create model evaluator
     Teuchos::RefCountPtr<FEApp::ModelEvaluator> model = 
-      Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names));
+      Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 
     // Create Epetra factory
     Teuchos::RefCountPtr<LOCA::Abstract::Factory> epetraFactory =

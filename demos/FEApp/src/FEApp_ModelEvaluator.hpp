@@ -34,6 +34,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Array.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 #include "EpetraExt_ModelEvaluator.h"
 
@@ -49,11 +50,9 @@ namespace FEApp {
 
     // Constructor
     ModelEvaluator(
-       const Teuchos::RCP<FEApp::Application>& app,
-       const Teuchos::RCP< Teuchos::Array<std::string> >& free_param_names = 
-       Teuchos::null,
-       const Teuchos::RCP< Teuchos::Array<std::string> >& sg_param_names = 
-       Teuchos::null);
+      const Teuchos::RCP<FEApp::Application>& app,
+      const Teuchos::RCP<Teuchos::ParameterList>& params
+      );
 
     /** \name Overridden from EpetraExt::ModelEvaluator . */
     //@{

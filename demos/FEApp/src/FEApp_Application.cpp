@@ -42,13 +42,10 @@
 #include "Teuchos_TestForException.hpp"
 
 FEApp::Application::Application(
-  const std::vector<double>& coords,
   const Teuchos::RCP<const Epetra_Comm>& comm,
   const Teuchos::RCP<Teuchos::ParameterList>& params_,
-  bool is_transient,
   const Epetra_Vector* initial_soln) :
-  params(params_),
-  transient(is_transient)
+  params(params_)
 {
   // Create parameter library
   paramLib = Teuchos::rcp(new ParamLib);
@@ -69,9 +66,16 @@ FEApp::Application::Application(
   FEApp::QuadratureFactory quadFactory(quadParams);
   quad = quadFactory.create();
 
-  // Create discretization object
+  // Create mesh
   Teuchos::RCP<Teuchos::ParameterList> discParams = 
     Teuchos::rcp(&(params->sublist("Discretization")),false);
+  int nelem = discParams->get("Number of Elements", 100);
+  double h = 1.0/nelem;
+  std::vector<double> coords(nelem+1);
+  for (int i=0; i<=nelem; i++)
+    coords[i] = h*i;
+
+  // Create discretization object
   FEApp::DiscretizationFactory discFactory(discParams);
   disc = discFactory.create(coords, num_equations, comm);
   disc->createMesh();
@@ -84,9 +88,8 @@ FEApp::Application::Application(
   exporter = Teuchos::rcp(new Epetra_Export(*(disc->getOverlapMap()), 
                                             *(disc->getMap())));
   overlapped_x = Teuchos::rcp(new Epetra_Vector(*(disc->getOverlapMap())));
-  if (transient)
-    overlapped_xdot = 
-      Teuchos::rcp(new Epetra_Vector(*(disc->getOverlapMap())));
+  overlapped_xdot = 
+    Teuchos::rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_f = Teuchos::rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_jac = 
     Teuchos::rcp(new Epetra_CrsMatrix(Copy, 
@@ -147,12 +150,6 @@ FEApp::Application::getParamLib()
   return paramLib;
 }
 
-bool
-FEApp::Application::isTransient() const
-{
-  return transient;
-}
-
 #if SG_ACTIVE
 void
 FEApp::Application::init_sg(
@@ -181,11 +178,10 @@ FEApp::Application::init_sg(
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
 		     sg_basis, sg_overlap_map, disc->getOverlapMap(),
 		     multiComm));
-    if (transient)
-      sg_overlapped_xdot = 
-	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		       sg_basis, sg_overlap_map, disc->getOverlapMap(),
-		       multiComm));
+    sg_overlapped_xdot = 
+      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
+		     sg_basis, sg_overlap_map, disc->getOverlapMap(),
+		     multiComm));
     sg_overlapped_f = 
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
 		     sg_basis, sg_overlap_map, disc->getOverlapMap(),
@@ -225,7 +221,7 @@ FEApp::Application::computeGlobalResidual(
   overlapped_x->Import(x, *importer, Insert);
 
   // Scatter xdot to the overlapped distribution
-  if (transient)
+  if (xdot)
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
@@ -250,7 +246,7 @@ FEApp::Application::computeGlobalResidual(
 
   // Do global fill
   FEApp::GlobalFill<FEApp::ResidualType> globalFill(disc->getMesh(), quad, 
-                                                    pde, bc, transient);
+                                                    pde, bc, xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual
@@ -275,7 +271,7 @@ FEApp::Application::computeGlobalJacobian(
   overlapped_x->Import(x, *importer, Insert);
 
   // Scatter xdot to the overlapped distribution
-  if (transient)
+  if (xdot)
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
@@ -310,7 +306,7 @@ FEApp::Application::computeGlobalJacobian(
   // Do global fill
   FEApp::GlobalFill<FEApp::JacobianType> globalFill(disc->getMesh(), 
                                                     quad, pde, bc, 
-                                                    transient);
+                                                    xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual
@@ -341,7 +337,7 @@ FEApp::Application::computeGlobalPreconditioner(
   overlapped_x->Import(x, *importer, Insert);
 
   // Scatter xdot to the overlapped distribution
-  if (transient)
+  if (xdot)
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
@@ -376,7 +372,7 @@ FEApp::Application::computeGlobalPreconditioner(
   // Do global fill
   FEApp::GlobalFill<FEApp::JacobianType> globalFill(disc->getMesh(), 
                                                     quad, pde, bc, 
-                                                    transient);
+                                                    xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual
@@ -407,7 +403,7 @@ FEApp::Application::computeGlobalTangent(
   overlapped_x->Import(x, *importer, Insert);
 
   // Scatter xdot to the overlapped distribution
-  if (transient)
+  if (xdot)
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
@@ -475,7 +471,7 @@ FEApp::Application::computeGlobalTangent(
   // Do global fill
   FEApp::GlobalFill<FEApp::TangentType> globalFill(disc->getMesh(), 
                                                    quad, pde, bc, 
-                                                   transient);
+                                                   xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual
@@ -649,7 +645,7 @@ FEApp::Application::computeGlobalSGResidual(
     (*sg_overlapped_x)[i].Import(sg_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (sg_xdot)
       (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -689,7 +685,7 @@ FEApp::Application::computeGlobalSGResidual(
     if (method == "AD") {
       sg_res_global_fill = 
         Teuchos::rcp(new FEApp::GlobalFill<FEApp::SGResidualType>(
-	  disc->getMesh(), quad, pde, bc, transient));
+	  disc->getMesh(), quad, pde, bc, sg_xdot!=NULL));
     }
     else if (method == "Gauss Quadrature") {
       Teuchos::RCP< FEApp::AbstractPDE<FEApp::ResidualType> > res_pde = 
@@ -697,7 +693,7 @@ FEApp::Application::computeGlobalSGResidual(
       sg_res_global_fill = 
         Teuchos::rcp(new FEApp::SGGaussQuadResidualGlobalFill(disc->getMesh(), 
                                                               quad, pde, bc, 
-                                                              transient,
+                                                              sg_xdot!=NULL,
                                                               sg_basis,
 							      sg_quad,
                                                               res_pde,
@@ -732,7 +728,7 @@ FEApp::Application::computeGlobalSGJacobian(
     (*sg_overlapped_x)[i].Import(sg_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (sg_xdot)
       (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -792,7 +788,7 @@ FEApp::Application::computeGlobalSGJacobian(
     if (method == "AD") {
       sg_jac_global_fill = 
 	Teuchos::rcp(new FEApp::GlobalFill<FEApp::SGJacobianType>(
-	    disc->getMesh(), quad, pde, bc,transient));
+	    disc->getMesh(), quad, pde, bc,sg_xdot!=NULL));
     }
     else if (method == "Gauss Quadrature") {
       Teuchos::RCP< FEApp::AbstractPDE<FEApp::JacobianType> > jac_pde = 
@@ -800,7 +796,7 @@ FEApp::Application::computeGlobalSGJacobian(
       sg_jac_global_fill = 
 	Teuchos::rcp(new FEApp::SGGaussQuadJacobianGlobalFill(disc->getMesh(),
 							      quad, pde, bc, 
-							      transient,
+							      sg_xdot!=NULL,
 							      sg_basis,
 							      sg_quad,
 							      jac_pde,
@@ -849,7 +845,7 @@ FEApp::Application::computeGlobalSGTangent(
     (*sg_overlapped_x)[i].Import(sg_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (sg_xdot)
       (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -930,7 +926,7 @@ FEApp::Application::computeGlobalSGTangent(
   // Do global fill
   FEApp::GlobalFill<FEApp::SGTangentType> globalFill(disc->getMesh(), 
 						     quad, pde, bc, 
-						     transient);
+						     sg_xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual
@@ -1154,8 +1150,8 @@ FEApp::Application::computeGlobalMPResidual(
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
 						    mp_x.productComm()));
-  if (transient && (mp_overlapped_xdot == Teuchos::null || 
-		    mp_overlapped_xdot->size() != mp_x.size()))
+  if (mp_xdot && (mp_overlapped_xdot == Teuchos::null || 
+		  mp_overlapped_xdot->size() != mp_x.size()))
     mp_overlapped_xdot = 
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
@@ -1174,7 +1170,7 @@ FEApp::Application::computeGlobalMPResidual(
     (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (mp_xdot)
       (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -1211,7 +1207,7 @@ FEApp::Application::computeGlobalMPResidual(
   if (mp_res_global_fill == Teuchos::null) {
     mp_res_global_fill = 
       Teuchos::rcp(new FEApp::GlobalFill<FEApp::MPResidualType>(
-		     disc->getMesh(), quad, pde, bc, transient));
+		     disc->getMesh(), quad, pde, bc, mp_xdot!=NULL));
   }
 
   // Do global fill
@@ -1242,8 +1238,8 @@ FEApp::Application::computeGlobalMPJacobian(
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
 						    mp_x.productComm()));
-  if (transient && (mp_overlapped_xdot == Teuchos::null || 
-		    mp_overlapped_xdot->size() != mp_x.size()))
+  if (mp_xdot && (mp_overlapped_xdot == Teuchos::null || 
+		  mp_overlapped_xdot->size() != mp_x.size()))
     mp_overlapped_xdot = 
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
@@ -1269,7 +1265,7 @@ FEApp::Application::computeGlobalMPJacobian(
     (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (mp_xdot)
       (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -1316,7 +1312,7 @@ FEApp::Application::computeGlobalMPJacobian(
   if (mp_jac_global_fill == Teuchos::null) {
     mp_jac_global_fill = 
       Teuchos::rcp(new FEApp::GlobalFill<FEApp::MPJacobianType>(
-		     disc->getMesh(), quad, pde, bc,transient));
+		     disc->getMesh(), quad, pde, bc,mp_xdot!=NULL));
   }
 
   // Do global fill
@@ -1360,8 +1356,8 @@ FEApp::Application::computeGlobalMPTangent(
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
 						    mp_x.productComm()));
-  if (transient && (mp_overlapped_xdot == Teuchos::null || 
-		    mp_overlapped_xdot->size() != mp_x.size()))
+  if (mp_xdot && (mp_overlapped_xdot == Teuchos::null || 
+		  mp_overlapped_xdot->size() != mp_x.size()))
     mp_overlapped_xdot = 
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
@@ -1380,7 +1376,7 @@ FEApp::Application::computeGlobalMPTangent(
     (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (mp_xdot)
       (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -1458,7 +1454,7 @@ FEApp::Application::computeGlobalMPTangent(
   // Do global fill
   FEApp::GlobalFill<FEApp::MPTangentType> globalFill(disc->getMesh(), 
 						     quad, pde, bc, 
-						     transient);
+						     mp_xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual

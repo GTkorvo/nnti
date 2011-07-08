@@ -74,10 +74,8 @@ namespace FEApp {
 
     //! Constructor 
     Application(
-      const std::vector<double>& coords,
       const Teuchos::RCP<const Epetra_Comm>& comm,
       const Teuchos::RCP<Teuchos::ParameterList>& params,
-      bool is_transient,
       const Epetra_Vector* initial_soln = NULL);
 
     //! Destructor
@@ -97,9 +95,6 @@ namespace FEApp {
 
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
-
-    //! Return whether problem is transient
-    bool isTransient() const;
 
 #if SG_ACTIVE
     //! Initialize SG expansion data
@@ -395,9 +390,6 @@ namespace FEApp {
 
     //! Parameter list
     Teuchos::RCP<Teuchos::ParameterList> params;
-
-    //! Is problem transient
-    bool transient;
     
     //! Element discretization
     Teuchos::RCP<FEApp::AbstractDiscretization> disc;

@@ -59,7 +59,6 @@
 
 int main(int argc, char *argv[]) {
   int nelem = 100;
-  double h = 1.0/nelem;
   int num_KL = 2;
   int p = 3;
   bool use_solver = false;
@@ -85,11 +84,6 @@ int main(int argc, char *argv[]) {
     globalComm = Teuchos::rcp(new Epetra_SerialComm);
 #endif
     MyPID = globalComm->MyPID();
-    
-    // Create mesh
-    std::vector<double> x(nelem+1);
-    for (int i=0; i<=nelem; i++)
-      x[i] = h*i;
 
     // Set up application parameters
     Teuchos::RCP<Teuchos::ParameterList> appParams = 
@@ -130,9 +124,25 @@ int main(int argc, char *argv[]) {
     responseParams.set("Response 0", "Solution Average");
 
     // Free parameters (determinisic, e.g., for sensitivities)
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > free_param_names =
-	Teuchos::rcp(new Teuchos::Array<std::string>);
-    free_param_names->push_back("Constant Source Function Value");
+    Teuchos::ParameterList& parameterParams = 
+      problemParams.sublist("Parameters");
+    parameterParams.set("Number", 1);
+    parameterParams.set("Parameter 0", "Constant Source Function Value");
+
+    // Stochastic parameters
+    Teuchos::ParameterList& sg_parameterParams = 
+      problemParams.sublist("SG Parameters");
+    sg_parameterParams.set("Number", num_KL);
+    for (int i=0; i<num_KL; i++) {
+      std::stringstream ss1, ss2;
+      ss1 << "Parameter " << i;
+      ss2 << "KL Exponential Function Random Variable " << i;
+      sg_parameterParams.set(ss1.str(), ss2.str());
+    }
+
+    // Mesh
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+    discParams.set("Number of Elements", nelem);
 
     // Set up NOX parameters
     Teuchos::RCP<Teuchos::ParameterList> noxParams =
@@ -257,15 +267,6 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList& maxIters = statusParams.sublist("Test 1");
     maxIters.set("Test Type", "MaxIters");
     maxIters.set("Maximum Iterations", 1);
-
-    // Stochastic parameters 
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
-      Teuchos::rcp(new Teuchos::Array<std::string>);
-    for (int i=0; i<num_KL; i++) {
-      std::stringstream ss;
-      ss << "KL Exponential Function Random Variable " << i;
-      sg_param_names->push_back(ss.str());
-    }
     
     // Create Stochastic Galerkin basis and expansion
     Teuchos::Array< Teuchos::RCP<const Stokhos::OneDOrthogPolyBasis<int,double> > > bases(num_KL); 
@@ -296,13 +297,11 @@ int main(int argc, char *argv[]) {
 
     // Create application
     Teuchos::RCP<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false));
+      Teuchos::rcp(new FEApp::Application(app_comm, appParams));
     
     // Create application model evaluator
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-      Teuchos::rcp(new FEApp::ModelEvaluator(app, 
-					     free_param_names,
-					     sg_param_names));
+      Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
     
     // Wrap application model evaluator with an MP adapter
     Teuchos::RCP<EpetraExt::ModelEvaluator> mp_model = model;

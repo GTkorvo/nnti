@@ -59,8 +59,7 @@ enum SG_METHOD {
 };
 
 int main(int argc, char *argv[]) {
-  unsigned int nelem = 100;
-  double h = 1.0/nelem;
+  int nelem = 100;
   double alpha = 0.5;
   double leftBC = 0.0;
   double rightBC = 0.1;
@@ -125,11 +124,6 @@ int main(int argc, char *argv[]) {
       Stokhos::buildMultiComm(*globalComm, basis->size(), num_spatial_procs);
     Teuchos::RCP<const Epetra_Comm> app_comm = Stokhos::getSpatialComm(sg_comm);
 
-    // Create mesh
-    vector<double> x(nelem+1);
-    for (unsigned int i=0; i<=nelem; i++)
-      x[i] = h*i;
-
     // Set up application parameters
     Teuchos::RCP<Teuchos::ParameterList> appParams = 
       Teuchos::rcp(new Teuchos::ParameterList);
@@ -184,17 +178,16 @@ int main(int argc, char *argv[]) {
       input_file.close();
     }
 
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > free_param_names =
-	Teuchos::rcp(new Teuchos::Array<std::string>);
-    free_param_names->push_back("Exponential Source Function Nonlinear Factor");
+    // Free parameters (determinisic, e.g., for sensitivities)
+    Teuchos::ParameterList& parameterParams = 
+      problemParams.sublist("Parameters");
+    parameterParams.set("Number", 1);
+    parameterParams.set("Parameter 0", 
+			"Exponential Source Function Nonlinear Factor");
 
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
-	Teuchos::rcp(new Teuchos::Array<std::string>);
-      for (int i=0; i<num_KL; i++) {
-	std::stringstream ss;
-	ss << "KL Exponential Function Random Variable " << i;
-	sg_param_names->push_back(ss.str());
-      }
+    // Mesh
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+    discParams.set("Number of Elements", nelem);
 
     // Set up NOX parameters
     Teuchos::RCP<Teuchos::ParameterList> noxParams =
@@ -273,11 +266,11 @@ int main(int argc, char *argv[]) {
 
     // Create application
     Teuchos::RCP<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false));
+      Teuchos::rcp(new FEApp::Application(app_comm, appParams));
 
     // Create model evaluator
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-      Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names));
+      Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 
     // Create NOX solver
     Piro::Epetra::NOXSolver solver(appParams, model);
@@ -355,23 +348,31 @@ int main(int argc, char *argv[]) {
       else if (SG_Method == SG_ELEMENT)
 	appParams->set("SG Method", "Gauss Quadrature");
 
+      // Stochastic parameters
+      Teuchos::ParameterList& sg_parameterParams = 
+	problemParams.sublist("SG Parameters");
+      sg_parameterParams.set("Number", num_KL);
+      for (int i=0; i<num_KL; i++) {
+	std::stringstream ss1, ss2;
+	ss1 << "Parameter " << i;
+	ss2 << "KL Exponential Function Random Variable " << i;
+	sg_parameterParams.set(ss1.str(), ss2.str());
+      }
+
       // Create new app for Stochastic Galerkin solve
-      app = Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false,
+      app = Teuchos::rcp(new FEApp::Application(app_comm, appParams,
 						finalSolution.get()));
       if (SG_Method == SG_AD || SG_Method == SG_ELEMENT) {
-	model = Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names,
-						       sg_param_names));
+	model = Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
       }
       else {
 	Teuchos::RCP<EpetraExt::ModelEvaluator> underlying_model;
 	if (SG_Method == SG_GLOBAL)
 	  underlying_model = 
-	    Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names,
-						   sg_param_names));
+	    Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 	else {
 	  Teuchos::RCP<EpetraExt::ModelEvaluator> base_model =
-	    Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names,
-						   sg_param_names));
+	    Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 	  underlying_model =
 	    Teuchos::rcp(new Piro::Epetra::NOXSolver(appParams, base_model));
 	}

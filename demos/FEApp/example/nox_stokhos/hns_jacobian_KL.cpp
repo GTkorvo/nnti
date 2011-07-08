@@ -62,12 +62,11 @@
 #include "EpetraExt_BlockUtility.h"
 
 int main(int argc, char *argv[]) {
-  unsigned int nelem = 100;
-  double h = 1.0/nelem;
+  int nelem = 100;
   double alpha = 2.0;
   double leftBC = 0.0;
   double rightBC = 0.1;
-  unsigned int numalpha = 3;
+  int numalpha = 3;
   unsigned int p = 7;
   unsigned int d = numalpha;
 
@@ -104,11 +103,6 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const EpetraExt::MultiComm> sg_comm =
       Stokhos::buildMultiComm(*globalComm, basis->size(), num_spatial_procs);
     Teuchos::RCP<const Epetra_Comm> app_comm = Stokhos::getSpatialComm(sg_comm);
-    
-    // Create mesh
-    vector<double> x(nelem+1);
-    for (unsigned int i=0; i<=nelem; i++)
-      x[i] = h*i;
 
     // Set up application parameters
     Teuchos::RCP<Teuchos::ParameterList> appParams = 
@@ -127,7 +121,7 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList& sourceParams = 
       problemParams.sublist("Source Function");
     sourceParams.set("Name", "Multi-Variate Exponential");
-    sourceParams.set("Nonlinear Factor Dimensions", numalpha);
+    sourceParams.set<unsigned int>("Nonlinear Factor Dimensions", numalpha);
     for (unsigned int i=0; i<numalpha; i++) {
       std::stringstream ss;
       ss << "Nonlinear Factor " << i;
@@ -146,17 +140,15 @@ int main(int argc, char *argv[]) {
     responseParams.set("Number", 1);
     responseParams.set("Response 0", "Solution Average");
 
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > free_param_names =
-	Teuchos::rcp(new Teuchos::Array<std::string>);
-    free_param_names->push_back("Constant Function Value");
+    // Free parameters (determinisic, e.g., for sensitivities)
+    Teuchos::ParameterList& parameterParams = 
+      problemParams.sublist("Parameters");
+    parameterParams.set("Number", 1);
+    parameterParams.set("Parameter 0", "Constant Function Value");
 
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
-      Teuchos::rcp(new Teuchos::Array<std::string>);
-    for (unsigned int i=0; i<d; i++) {
-      std::stringstream ss;
-      ss << "Exponential Source Function Nonlinear Factor " << i;
-      sg_param_names->push_back(ss.str());
-    }
+    // Mesh
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+    discParams.set("Number of Elements", nelem);
 
     // Set up NOX parameters
     Teuchos::RCP<Teuchos::ParameterList> noxParams =
@@ -226,11 +218,11 @@ int main(int argc, char *argv[]) {
 
     // Create application
     Teuchos::RCP<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false));
+      Teuchos::rcp(new FEApp::Application(app_comm, appParams));
 
     // Create model evaluator
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-      Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names));
+      Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 
     // Create NOX solver
     Piro::Epetra::NOXSolver solver(appParams, model);
@@ -290,13 +282,23 @@ int main(int argc, char *argv[]) {
       sg_parallel_data->getStochasticComm();
     Teuchos::RCP<const Epetra_BlockMap> stoch_overlap_map = 
       Teuchos::rcp(new Epetra_LocalMap(sz, 0, *stoch_comm));
+
+    // Stochastic parameters
+    Teuchos::ParameterList& sg_parameterParams = 
+      problemParams.sublist("SG Parameters");
+    sg_parameterParams.set("Number", numalpha);
+    for (int i=0; i<numalpha; i++) {
+      std::stringstream ss1, ss2;
+      ss1 << "Parameter " << i;
+      ss2 << "Exponential Source Function Nonlinear Factor " << i;
+      sg_parameterParams.set(ss1.str(), ss2.str());
+    }
       
     // Create new app for Stochastic Galerkin solve
-    app = Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false,
+    app = Teuchos::rcp(new FEApp::Application(app_comm, appParams,
 					      finalSolution.get()));
 
-    model = Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names,
-						   sg_param_names));
+    model = Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 
     Teuchos::RCP<Teuchos::ParameterList> sgParams = 
       Teuchos::rcp(&(appParams->sublist("SG Parameters")),false);

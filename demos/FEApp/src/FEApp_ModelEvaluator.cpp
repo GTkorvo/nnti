@@ -35,8 +35,7 @@
 
 FEApp::ModelEvaluator::ModelEvaluator(
   const Teuchos::RCP<FEApp::Application>& app_,
-  const Teuchos::RCP< Teuchos::Array<std::string> >& free_param_names,
-  const Teuchos::RCP< Teuchos::Array<std::string> >& sg_param_names
+  const Teuchos::RCP<Teuchos::ParameterList>& appParams
 ) 
   : app(app_),
     supports_p(false),
@@ -44,6 +43,36 @@ FEApp::ModelEvaluator::ModelEvaluator(
     supports_sg(false),
     eval_W_with_f(false)
 {
+  Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
+
+  // Free parameters (determinisic, e.g., for sensitivities)
+  Teuchos::ParameterList& parameterParams = 
+    problemParams.sublist("Parameters");
+  int numParameters = parameterParams.get("Number", 0);
+  Teuchos::RCP< Teuchos::Array<std::string> > free_param_names;
+  if (numParameters > 0) {
+    free_param_names = Teuchos::rcp(new Teuchos::Array<std::string>);
+    for (int i=0; i<numParameters; i++) {
+      std::stringstream ss;
+      ss << "Parameter " << i;
+      free_param_names->push_back(parameterParams.get(ss.str(), "??"));
+    }
+  }
+  
+  // Stochastic parameters
+  Teuchos::ParameterList& sg_parameterParams =
+    problemParams.sublist("SG Parameters");
+  numParameters = sg_parameterParams.get("Number", 0);
+  Teuchos::RCP< Teuchos::Array<std::string> > sg_param_names;
+  if (numParameters > 0) {
+    sg_param_names = Teuchos::rcp(new Teuchos::Array<std::string>);
+    for (int i=0; i<numParameters; i++) {
+      std::stringstream ss;
+      ss << "Parameter " << i;
+      sg_param_names->push_back(sg_parameterParams.get(ss.str(), "??"));
+    }
+  }
+
   // Compute number of parameter vectors
   int num_param_vecs = 0;
   if (free_param_names != Teuchos::null) {
@@ -327,15 +356,13 @@ FEApp::ModelEvaluator::createInArgs() const
     inArgs.set_Np_sg(0);
     inArgs.set_Np_mp(0);
   }
-  if (app->isTransient()) {
-    inArgs.setSupports(IN_ARG_t,true);
-    inArgs.setSupports(IN_ARG_x_dot,true);
-    inArgs.setSupports(IN_ARG_alpha,true);
-    inArgs.setSupports(IN_ARG_beta,true);
-    if (supports_sg) {
-      inArgs.setSupports(IN_ARG_x_dot_sg,true);
-      inArgs.setSupports(IN_ARG_x_dot_mp,true);
-    }
+  inArgs.setSupports(IN_ARG_t,true);
+  inArgs.setSupports(IN_ARG_x_dot,true);
+  inArgs.setSupports(IN_ARG_alpha,true);
+  inArgs.setSupports(IN_ARG_beta,true);
+  if (supports_sg) {
+    inArgs.setSupports(IN_ARG_x_dot_sg,true);
+    inArgs.setSupports(IN_ARG_x_dot_mp,true);
   }
   
   return inArgs;
@@ -363,9 +390,8 @@ FEApp::ModelEvaluator::createOutArgs() const
   if (supports_g) {
     outArgs.setSupports(OUT_ARG_DgDx, 0, 
 			DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-    if (app->isTransient())
-      outArgs.setSupports(OUT_ARG_DgDx_dot, 0, 
-                          DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+    outArgs.setSupports(OUT_ARG_DgDx_dot, 0, 
+			DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
   }
   if (supports_p)
     for (int i=0; i<param_names.size(); i++)
@@ -399,9 +425,8 @@ FEApp::ModelEvaluator::createOutArgs() const
     if (supports_g) {
       outArgs.setSupports(OUT_ARG_DgDx_sg, 0, 
 			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-      if (app->isTransient())
-	outArgs.setSupports(OUT_ARG_DgDx_dot_sg, 0, 
-			    DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+      outArgs.setSupports(OUT_ARG_DgDx_dot_sg, 0, 
+			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
     }
     if (supports_p)
       for (int i=0; i<param_names.size(); i++)
@@ -427,9 +452,8 @@ FEApp::ModelEvaluator::createOutArgs() const
     if (supports_g) {
       outArgs.setSupports(OUT_ARG_DgDx_mp, 0, 
 			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-      if (app->isTransient())
-	outArgs.setSupports(OUT_ARG_DgDx_dot_mp, 0, 
-			    DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+      outArgs.setSupports(OUT_ARG_DgDx_dot_mp, 0, 
+			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
     }
     if (supports_p)
       for (int i=0; i<param_names.size(); i++)
@@ -448,15 +472,12 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
   // Get the input arguments
   //
   Teuchos::RCP<const Epetra_Vector> x = inArgs.get_x();
-  Teuchos::RCP<const Epetra_Vector> x_dot;
+  Teuchos::RCP<const Epetra_Vector> x_dot = inArgs.get_x_dot();
   double alpha = 0.0;
   double beta = 1.0;
-  if (app->isTransient()) {
-    x_dot = inArgs.get_x_dot();
-    if (x_dot != Teuchos::null) {
-      alpha = inArgs.get_alpha();
-      beta = inArgs.get_beta();
-    }
+  if (x_dot != Teuchos::null) {
+    alpha = inArgs.get_alpha();
+    beta = inArgs.get_beta();
   }
   for (int i=0; i<inArgs.Np(); i++) {
     Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(i);
@@ -538,9 +559,8 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
     Teuchos::RCP<Epetra_Vector> g_out = outArgs.get_g(0);
     Teuchos::RCP<Epetra_MultiVector> dgdx_out = 
       outArgs.get_DgDx(0).getMultiVector();
-    Teuchos::RCP<Epetra_MultiVector> dgdxdot_out;
-    if (app->isTransient())
-      dgdxdot_out = outArgs.get_DgDx_dot(0).getMultiVector();
+    Teuchos::RCP<Epetra_MultiVector> dgdxdot_out = 
+      outArgs.get_DgDx_dot(0).getMultiVector();
     
     Teuchos::Array< Teuchos::RCP<ParamVec> > p_vec(outArgs.Np());
     Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> > dgdp_out(outArgs.Np());
@@ -584,9 +604,7 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
 		   inArgs.get_sg_quadrature(), 
 		   inArgs.get_sg_expansion(),
 		   x_sg->productComm());
-      InArgs::sg_const_vector_t x_dot_sg;
-      if (app->isTransient())
-	x_dot_sg = inArgs.get_x_dot_sg();
+      InArgs::sg_const_vector_t x_dot_sg = inArgs.get_x_dot_sg();
       InArgs::sg_const_vector_t epetra_p_sg = 
 	inArgs.get_p_sg(0);
       Teuchos::Array<SGType> *p_sg_ptr = NULL;
@@ -661,9 +679,8 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
 	  = outArgs.get_g_sg(0);
 	Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dgdx_sg 
 	  = outArgs.get_DgDx_sg(0).getMultiVector();
-	Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dgdxdot_sg;
-	if (app->isTransient())
-	  dgdxdot_sg = outArgs.get_DgDx_dot_sg(0).getMultiVector();
+	Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dgdxdot_sg = 
+	  outArgs.get_DgDx_dot_sg(0).getMultiVector();
     
 	Teuchos::Array< Teuchos::RCP<ParamVec> > p_vec(outArgs.Np());
 	Teuchos::Array< Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > > dgdp_sg(outArgs.Np());
@@ -708,9 +725,7 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
     mp_const_vector_t x_mp = 
       inArgs.get_x_mp();
     if (x_mp != Teuchos::null) {
-      mp_const_vector_t x_dot_mp;
-      if (app->isTransient())
-	x_dot_mp = inArgs.get_x_dot_mp();
+      mp_const_vector_t x_dot_mp = inArgs.get_x_dot_mp();
       mp_const_vector_t epetra_p_mp = 
 	inArgs.get_p_mp(0);
       Teuchos::Array<MPType> *p_mp_ptr = NULL;
@@ -785,9 +800,8 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
 	  = outArgs.get_g_mp(0);
 	Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdx_mp 
 	  = outArgs.get_DgDx_mp(0).getMultiVector();
-	Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdxdot_mp;
-	if (app->isTransient())
-	  dgdxdot_mp = outArgs.get_DgDx_dot_mp(0).getMultiVector();
+	Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdxdot_mp = 
+	  outArgs.get_DgDx_dot_mp(0).getMultiVector();
     
 	Teuchos::Array< Teuchos::RCP<ParamVec> > p_vec(outArgs.Np());
 	Teuchos::Array< Teuchos::RCP< Stokhos::ProductEpetraMultiVector > > dgdp_mp(outArgs.Np());
