@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
       problemParams.sublist("Source Function");
     sourceParams.set("Name", "Multi-Variate Exponential");
     sourceParams.set<unsigned int>("Nonlinear Factor Dimensions", numalpha);
-    for (unsigned int i=0; i<numalpha; i++) {
+    for (int i=0; i<numalpha; i++) {
       std::stringstream ss;
       ss << "Nonlinear Factor " << i;
       sourceParams.set(ss.str(), alpha/numalpha);
@@ -320,12 +320,12 @@ int main(int argc, char *argv[]) {
 
     // Set up stochastic parameters
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p = 
-      sg_model->create_p_sg(0);
+      sg_model->create_p_sg(1);
     for (unsigned int i=0; i<d; i++) {
       sg_p->term(i,0)[i] = 2.0;
       sg_p->term(i,1)[i] = 1.0;
     }
-    sg_model->set_p_sg_init(0, *sg_p);
+    sg_model->set_p_sg_init(1, *sg_p);
 
     // Setup stochastic initial guess
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x_init =
@@ -338,7 +338,7 @@ int main(int argc, char *argv[]) {
     // Evaluate SG responses at SG parameters
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_model->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs sg_outArgs = sg_model->createOutArgs();
-    Teuchos::RCP<const Epetra_Vector> sg_p_init = sg_model->get_p_init(0);
+    Teuchos::RCP<const Epetra_Vector> sg_p_init = sg_model->get_p_init(2);
     Teuchos::RCP<Epetra_Vector> sg_x = 
       Teuchos::rcp(new Epetra_Vector(*(sg_model->get_x_map())));
     *sg_x = *(sg_model->get_x_init());
@@ -348,7 +348,7 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new Epetra_Vector(*(sg_model->get_x_map())));
     Teuchos::RCP<Epetra_Operator> sg_J = sg_model->create_W();
     Teuchos::RCP<Epetra_Operator> sg_M = sg_model->create_WPrec()->PrecOp;
-    sg_inArgs.set_p(0, sg_p_init);
+    sg_inArgs.set_p(2, sg_p_init);
     sg_inArgs.set_x(sg_x);
     sg_outArgs.set_f(sg_f);
     sg_outArgs.set_W(sg_J);
@@ -512,8 +512,9 @@ int main(int argc, char *argv[]) {
 	    std::sqrt(evals[rv])*(*evecs)[rv][i]*rv_kl_pce[rv][j];
       }
     }
-    Stokhos::VectorOrthogPoly<Epetra_Operator> sg_J_kl_poly(kl_basis, 
-							    kl_ov_stoch_row_map);
+    Stokhos::EpetraOperatorOrthogPoly sg_J_kl_poly(
+      kl_basis, kl_ov_stoch_row_map, base_x_map, base_f_map, 
+      sg_f_kl_map, kl_comm);
     for (int coeff = 0; coeff < kl_basis->size(); coeff++) {
       Teuchos::RCP<Epetra_CrsMatrix> mat = 
 	Teuchos::rcp(new Epetra_CrsMatrix(*J_mean));
@@ -629,8 +630,8 @@ int main(int argc, char *argv[]) {
     EpetraExt::ModelEvaluator::OutArgs sg_outArgs2 = 
 	sg_model->createOutArgs();
     Teuchos::RCP<Epetra_Vector> sg_g = 
-      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_g_map(1))));
-    sg_outArgs2.set_g(1, sg_g);
+      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_g_map(0))));
+    sg_outArgs2.set_g(0, sg_g);
     sg_model->evalModel(sg_inArgs, sg_outArgs2);
 
     // Print mean and standard deviation

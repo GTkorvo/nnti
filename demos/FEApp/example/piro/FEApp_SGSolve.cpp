@@ -204,10 +204,10 @@ int main(int argc, char *argv[]) {
     EpetraExt::ModelEvaluator::OutArgs sg_outArgs = 
       sg_solver->createOutArgs();
     Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> p_sg = 
-      sg_solver->get_p_sg_init(0);
+      sg_solver->get_p_sg_init(1);
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg =
       sg_solver->create_g_sg(0);
-    sg_inArgs.set_p_sg(0, p_sg);
+    sg_inArgs.set_p_sg(1, p_sg);
     sg_outArgs.set_g_sg(0, g_sg);
     sg_solver->evalModel(sg_inArgs, sg_outArgs);
 

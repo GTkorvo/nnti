@@ -718,7 +718,7 @@ FEApp::Application::computeGlobalSGJacobian(
 			const ParamVec* sg_p,
 			const Teuchos::Array<SGType>* sg_p_vals,
 			Stokhos::EpetraVectorOrthogPoly* sg_f,
-			Stokhos::VectorOrthogPoly<Epetra_Operator>& sg_jac)
+			Stokhos::EpetraOperatorOrthogPoly& sg_jac)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalSGJacobian");
 
@@ -1227,7 +1227,7 @@ FEApp::Application::computeGlobalMPJacobian(
 			const ParamVec* mp_p,
 			const Teuchos::Array<MPType>* mp_p_vals,
 			Stokhos::ProductEpetraVector* mp_f,
-			Stokhos::ProductContainer<Epetra_Operator>& mp_jac)
+			Stokhos::ProductEpetraOperator& mp_jac)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalMPJacobian");
 

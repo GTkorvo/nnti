@@ -167,40 +167,6 @@ FEApp::ModelEvaluator::get_p_map(int l) const
 }
 
 Teuchos::RCP<const Epetra_Map>
-FEApp::ModelEvaluator::get_p_sg_map(int l) const
-{
-  TEST_FOR_EXCEPTION(supports_sg == false, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_sg_map():  " <<
-                     "SG is not enabled.");
-  TEST_FOR_EXCEPTION(l != 0, 
-		     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_sg_map():  " <<
-                     "Invalid parameter index l = " << l << std::endl);
-
-  return epetra_param_map[1];
-}
-
-Teuchos::RCP<const Epetra_Map>
-FEApp::ModelEvaluator::get_p_mp_map(int l) const
-{
-  TEST_FOR_EXCEPTION(supports_sg == false, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_mp_map():  " <<
-                     "SG is not enabled.");
-  TEST_FOR_EXCEPTION(l != 0, 
-		     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_mp_map():  " <<
-                     "Invalid parameter index l = " << l << std::endl);
-
-  return epetra_param_map[1];
-}
-
-Teuchos::RCP<const Epetra_Map>
 FEApp::ModelEvaluator::get_g_map(int l) const
 {
   TEST_FOR_EXCEPTION(supports_g == false, 
@@ -212,40 +178,6 @@ FEApp::ModelEvaluator::get_g_map(int l) const
   TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  FEApp::ModelEvaluator::get_g_map() only " <<
-                     " supports 1 response vector.  Supplied index l = " << 
-                     l << std::endl);
-
-  return app->getResponseMap();
-}
-
-Teuchos::RCP<const Epetra_Map>
-FEApp::ModelEvaluator::get_g_sg_map(int l) const
-{
-  TEST_FOR_EXCEPTION(supports_sg == false, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_g_sg_map():  " <<
-                     "SG is not enabled.");
-  TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_g_sg_map() only " <<
-                     " supports 1 response vector.  Supplied index l = " << 
-                     l << std::endl);
-
-  return app->getResponseMap();
-}
-
-Teuchos::RCP<const Epetra_Map>
-FEApp::ModelEvaluator::get_g_mp_map(int l) const
-{
-  TEST_FOR_EXCEPTION(supports_sg == false, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_g_mp_map():  " <<
-                     "SG is not enabled.");
-  TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_g_mp_map() only " <<
                      " supports 1 response vector.  Supplied index l = " << 
                      l << std::endl);
 
@@ -268,40 +200,6 @@ FEApp::ModelEvaluator::get_p_names(int l) const
                      "Invalid parameter index l = " << l << std::endl);
 
   return param_names[l];
-}
-
-Teuchos::RCP<const Teuchos::Array<std::string> >
-FEApp::ModelEvaluator::get_p_sg_names(int l) const
-{
-  TEST_FOR_EXCEPTION(supports_sg == false, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_sg_names():  " <<
-                     "SG is not enabled.");
-  TEST_FOR_EXCEPTION(l != 0, 
-		     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_sg_names():  " <<
-                     "Invalid parameter index l = " << l << std::endl);
-
-  return param_names[1];
-}
-
-Teuchos::RCP<const Teuchos::Array<std::string> >
-FEApp::ModelEvaluator::get_p_mp_names(int l) const
-{
-  TEST_FOR_EXCEPTION(supports_sg == false, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_mp_names():  " <<
-                     "SG is not enabled.");
-  TEST_FOR_EXCEPTION(l != 0, 
-		     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  FEApp::ModelEvaluator::get_p_mp_names():  " <<
-                     "Invalid parameter index l = " << l << std::endl);
-
-  return param_names[1];
 }
 
 Teuchos::RCP<const Epetra_Vector>
@@ -344,17 +242,13 @@ FEApp::ModelEvaluator::createInArgs() const
   inArgs.set_Np(param_names.size());
   if (supports_sg) {
     inArgs.setSupports(IN_ARG_x_sg,true);
-    inArgs.set_Np_sg(1); // 1 SG parameter vector
+    inArgs.setSupports(IN_ARG_p_sg, 1, true); // 1 SG parameter vector
     inArgs.setSupports(IN_ARG_sg_basis,true);
     inArgs.setSupports(IN_ARG_sg_quadrature,true);
     inArgs.setSupports(IN_ARG_sg_expansion,true);
 
     inArgs.setSupports(IN_ARG_x_mp,true);
-    inArgs.set_Np_mp(1); // 1 MP parameter vector
-  }
-  else {
-    inArgs.set_Np_sg(0);
-    inArgs.set_Np_mp(0);
+    inArgs.setSupports(IN_ARG_p_mp, 1, true); // 1 MP parameter vector
   }
   inArgs.setSupports(IN_ARG_t,true);
   inArgs.setSupports(IN_ARG_x_dot,true);
@@ -410,19 +304,12 @@ FEApp::ModelEvaluator::createOutArgs() const
     outArgs.setSupports(OUT_ARG_W_sg,true);
 
     if (supports_p && supports_g) {
-      outArgs.set_Np_Ng_sg(param_names.size(), 1);
       for (int i=0; i<param_names.size(); i++)
 	outArgs.setSupports(OUT_ARG_DgDp_sg, 0, i, 
 			    DerivativeSupport(DERIV_MV_BY_COL));
     }
-    else if (supports_p)
-      outArgs.set_Np_Ng_sg(1, 0);
-    else if (supports_g)
-      outArgs.set_Np_Ng_sg(0, 1);
-    else
-      outArgs.set_Np_Ng_sg(0, 0);
-
     if (supports_g) {
+      outArgs.setSupports(OUT_ARG_g_sg, 0, true);
       outArgs.setSupports(OUT_ARG_DgDx_sg, 0, 
 			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
       outArgs.setSupports(OUT_ARG_DgDx_dot_sg, 0, 
@@ -437,19 +324,12 @@ FEApp::ModelEvaluator::createOutArgs() const
     outArgs.setSupports(OUT_ARG_W_mp,true);
 
     if (supports_p && supports_g) {
-      outArgs.set_Np_Ng_mp(param_names.size(), 1);
       for (int i=0; i<param_names.size(); i++)
 	outArgs.setSupports(OUT_ARG_DgDp_mp, 0, i, 
 			    DerivativeSupport(DERIV_MV_BY_COL));
     }
-    else if (supports_p)
-      outArgs.set_Np_Ng_mp(1, 0);
-    else if (supports_g)
-      outArgs.set_Np_Ng_mp(0, 1);
-    else
-      outArgs.set_Np_Ng_mp(0, 0);
-
     if (supports_g) {
+      outArgs.setSupports(OUT_ARG_g_mp, 0, true);
       outArgs.setSupports(OUT_ARG_DgDx_mp, 0, 
 			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
       outArgs.setSupports(OUT_ARG_DgDx_dot_mp, 0, 
@@ -606,7 +486,7 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
 		   x_sg->productComm());
       InArgs::sg_const_vector_t x_dot_sg = inArgs.get_x_dot_sg();
       InArgs::sg_const_vector_t epetra_p_sg = 
-	inArgs.get_p_sg(0);
+	inArgs.get_p_sg(1);
       Teuchos::Array<SGType> *p_sg_ptr = NULL;
       if (epetra_p_sg != Teuchos::null) {
 	for (int i=0; i<p_sg_vals.size(); i++) {
@@ -635,7 +515,7 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
 
       // df/dp_sg
       if (supports_p) {
-	for (int i=0; i<outArgs.Np_sg(); i++) {
+	for (int i=0; i<outArgs.Np(); i++) {
 	  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dfdp_sg 
 	    = outArgs.get_DfDp_sg(i).getMultiVector();
 	  if (dfdp_sg != Teuchos::null) {
@@ -674,7 +554,7 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
 				     *f_sg);
 
       // Response functions
-      if (outArgs.Ng_sg() > 0 && supports_g) {
+      if (outArgs.Ng() > 0 && supports_g) {
 	Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > g_sg 
 	  = outArgs.get_g_sg(0);
 	Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dgdx_sg 
@@ -727,7 +607,7 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
     if (x_mp != Teuchos::null) {
       mp_const_vector_t x_dot_mp = inArgs.get_x_dot_mp();
       mp_const_vector_t epetra_p_mp = 
-	inArgs.get_p_mp(0);
+	inArgs.get_p_mp(1);
       Teuchos::Array<MPType> *p_mp_ptr = NULL;
       if (epetra_p_mp != Teuchos::null) {
 	for (int i=0; i<p_mp_vals.size(); i++) {
@@ -756,7 +636,7 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
 
       // df/dp_mp
       if (supports_p) {
-	for (int i=0; i<outArgs.Np_mp(); i++) {
+	for (int i=0; i<outArgs.Np(); i++) {
 	  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dfdp_mp 
 	    = outArgs.get_DfDp_mp(i).getMultiVector();
 	  if (dfdp_mp != Teuchos::null) {
@@ -795,7 +675,7 @@ FEApp::ModelEvaluator::evalModel(const InArgs& inArgs,
 				     *f_mp);
 
       // Response functions
-      if (outArgs.Ng_mp() > 0 && supports_g) {
+      if (outArgs.Ng() > 0 && supports_g) {
 	Teuchos::RCP< Stokhos::ProductEpetraVector > g_mp 
 	  = outArgs.get_g_mp(0);
 	Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdx_mp 

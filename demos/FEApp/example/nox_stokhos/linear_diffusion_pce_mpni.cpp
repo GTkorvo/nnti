@@ -59,8 +59,8 @@
 
 int main(int argc, char *argv[]) {
   int nelem = 100;
-  int num_KL = 2;
-  int p = 3;
+  int num_KL = 3;
+  int p = 5;
   bool use_solver = false;
   std::string solver_type = "GMRES";
 
@@ -372,25 +372,18 @@ int main(int argc, char *argv[]) {
 					       linsys));
 
     // Create MP inverse model evaluator to map p_mp -> g_mp
-    Teuchos::Array<int> non_mp_inverse_p_index = 
-      mp_nonlinear_model->get_non_p_mp_indices();
-    Teuchos::Array<int> mp_inverse_p_index = 
-      mp_nonlinear_model->get_p_mp_indices();
-    Teuchos::Array<int> non_mp_inverse_g_index = 
-      mp_nonlinear_model->get_non_g_mp_indices();
-    Teuchos::Array<int> mp_inverse_g_index = 
-      mp_nonlinear_model->get_g_mp_indices();
-    Teuchos::Array< Teuchos::RCP<const Epetra_Map> > base_p_maps = 
-      mp_nonlinear_model->get_p_mp_base_maps();
+    Teuchos::Array<int> mp_p_index_map = 
+      mp_nonlinear_model->get_p_mp_map_indices();
+    Teuchos::Array<int> mp_g_index_map = 
+      mp_nonlinear_model->get_g_mp_map_indices();
     Teuchos::Array< Teuchos::RCP<const Epetra_Map> > base_g_maps = 
       mp_nonlinear_model->get_g_mp_base_maps();
+    mp_g_index_map.push_back(base_g_maps.size());
+    base_g_maps.push_back(model->get_x_map());
     Teuchos::RCP<EpetraExt::ModelEvaluator> mp_inverse_solver =
       Teuchos::rcp(new Stokhos::MPInverseModelEvaluator(mp_solver,
-							mp_inverse_p_index, 
-							non_mp_inverse_p_index,
-							mp_inverse_g_index, 
-							non_mp_inverse_g_index,
-							base_p_maps, 
+							mp_p_index_map,
+							mp_g_index_map,
 							base_g_maps));
 
     // Create MP-based SG Quadrature model evaluator to calculate g_sg
@@ -408,7 +401,7 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new Epetra_LocalMap(sz, 0, *globalComm));
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p_init = 
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		     basis, stoch_map, sg_solver->get_p_sg_map(0), 
+		     basis, stoch_map, sg_solver->get_p_map(1), 
 		     sg_parallel_data->getMultiComm()));
     for (int i=0; i<num_KL; i++) {
       sg_p_init->term(i,0)[i] = 0.0;
@@ -422,19 +415,19 @@ int main(int argc, char *argv[]) {
       sg_solver->createOutArgs();
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_g = 
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		     basis, stoch_map, sg_solver->get_g_sg_map(0), 
+		     basis, stoch_map, sg_solver->get_g_map(0), 
 		     sg_parallel_data->getMultiComm()));
     sg_inArgs.set_sg_basis(basis);
     sg_inArgs.set_sg_quadrature(quad);
-    sg_inArgs.set_p_sg(0, sg_p_init);
+    sg_inArgs.set_p_sg(1, sg_p_init);
     sg_outArgs.set_g_sg(0, sg_g);
     sg_solver->evalModel(sg_inArgs, sg_outArgs);
 
     // Print mean and standard deviation
     std::cout.precision(12);
     std::cout << "SG expansion of response:" << std::endl << *sg_g;
-    Epetra_Vector mean(*(sg_solver->get_g_sg_map(0)));
-    Epetra_Vector std_dev(*(sg_solver->get_g_sg_map(0)));
+    Epetra_Vector mean(*(sg_solver->get_g_map(0)));
+    Epetra_Vector std_dev(*(sg_solver->get_g_map(0)));
     sg_g->computeMean(mean);
     sg_g->computeStandardDeviation(std_dev);
     std::cout << "Mean =      " << mean[0] << std::endl;

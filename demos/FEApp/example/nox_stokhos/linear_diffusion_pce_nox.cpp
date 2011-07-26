@@ -218,12 +218,12 @@ int main(int argc, char *argv[]) {
 
     // Set up stochastic parameters
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p_init =
-      sg_model->create_p_sg(0);
+      sg_model->create_p_sg(1);
     for (int i=0; i<num_KL; i++) {
       sg_p_init->term(i,0)[i] = 0.0;
       sg_p_init->term(i,1)[i] = 1.0;
     }
-    sg_model->set_p_sg_init(0, *sg_p_init);
+    sg_model->set_p_sg_init(1, *sg_p_init);
 
     // Setup stochastic initial guess
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x_init = 
@@ -342,10 +342,10 @@ int main(int argc, char *argv[]) {
       sg_model->createOutArgs();
     Teuchos::RCP<const Epetra_Vector> sg_p = sg_model->get_p_init(2);
     Teuchos::RCP<Epetra_Vector> sg_g = 
-      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_g_map(1))));
+      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_g_map(0))));
     sg_inArgs.set_p(2, sg_p);
     sg_inArgs.set_x(Teuchos::rcp(&finalSolution,false));
-    sg_outArgs.set_g(1, sg_g);
+    sg_outArgs.set_g(0, sg_g);
     sg_model->evalModel(sg_inArgs, sg_outArgs);
 
     // Print mean and standard deviation

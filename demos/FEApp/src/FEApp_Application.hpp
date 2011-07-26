@@ -60,10 +60,9 @@
 #include "Stokhos_ParallelData.hpp"
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Stokhos_Quadrature.hpp"
-#include "Stokhos_VectorOrthogPoly.hpp"
-#include "Stokhos_VectorOrthogPolyTraitsEpetra.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
+#include "Stokhos_EpetraOperatorOrthogPoly.hpp"
 #include "EpetraExt_MultiComm.h"
 #endif
 
@@ -230,7 +229,7 @@ namespace FEApp {
 			const ParamVec* sg_p,
 			const Teuchos::Array<SGType>* sg_p_vals,
 			Stokhos::EpetraVectorOrthogPoly* sg_f,
-			Stokhos::VectorOrthogPoly<Epetra_Operator>& sg_jac);
+			Stokhos::EpetraOperatorOrthogPoly& sg_jac);
 
     //! Compute global Tangent for stochastic Galerkin problem
     /*!
@@ -315,7 +314,7 @@ namespace FEApp {
 			const ParamVec* mp_p,
 			const Teuchos::Array<MPType>* mp_p_vals,
 			Stokhos::ProductEpetraVector* mp_f,
-			Stokhos::ProductContainer<Epetra_Operator>& mp_jac);
+			Stokhos::ProductEpetraOperator& mp_jac);
 
     //! Compute global Tangent for multi-point problem
     /*!
