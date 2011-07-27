@@ -126,21 +126,18 @@ int main(int argc, char *argv[]) {
     responseParams.set("Number", 1);
     responseParams.set("Response 0", "Solution Average");
 
-    // Free parameters (determinisic, e.g., for sensitivities)
+    // Stochastic parameters
     Teuchos::ParameterList& parameterParams = 
       problemParams.sublist("Parameters");
-    parameterParams.set("Number", 1);
-    parameterParams.set("Parameter 0", "Constant Source Function Value");
-
-    // Stochastic parameters
-    Teuchos::ParameterList& sg_parameterParams = 
-      problemParams.sublist("SG Parameters");
-    sg_parameterParams.set("Number", num_KL);
+    parameterParams.set("Number of Parameter Vectors", 1);
+    Teuchos::ParameterList& pParams = 
+      parameterParams.sublist("Parameter Vector 0");
+    pParams.set("Number", num_KL);
     for (int i=0; i<num_KL; i++) {
       std::stringstream ss1, ss2;
       ss1 << "Parameter " << i;
       ss2 << "KL Exponential Function Random Variable " << i;
-      sg_parameterParams.set(ss1.str(), ss2.str());
+      pParams.set(ss1.str(), ss2.str());
     }
 
     // Mesh
@@ -218,12 +215,12 @@ int main(int argc, char *argv[]) {
 
     // Set up stochastic parameters
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p_init =
-      sg_model->create_p_sg(1);
+      sg_model->create_p_sg(0);
     for (int i=0; i<num_KL; i++) {
       sg_p_init->term(i,0)[i] = 0.0;
       sg_p_init->term(i,1)[i] = 1.0;
     }
-    sg_model->set_p_sg_init(1, *sg_p_init);
+    sg_model->set_p_sg_init(0, *sg_p_init);
 
     // Setup stochastic initial guess
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x_init = 
@@ -340,10 +337,10 @@ int main(int argc, char *argv[]) {
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_model->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs sg_outArgs = 
       sg_model->createOutArgs();
-    Teuchos::RCP<const Epetra_Vector> sg_p = sg_model->get_p_init(2);
+    Teuchos::RCP<const Epetra_Vector> sg_p = sg_model->get_p_init(1);
     Teuchos::RCP<Epetra_Vector> sg_g = 
       Teuchos::rcp(new Epetra_Vector(*(sg_model->get_g_map(0))));
-    sg_inArgs.set_p(2, sg_p);
+    sg_inArgs.set_p(1, sg_p);
     sg_inArgs.set_x(Teuchos::rcp(&finalSolution,false));
     sg_outArgs.set_g(0, sg_g);
     sg_model->evalModel(sg_inArgs, sg_outArgs);

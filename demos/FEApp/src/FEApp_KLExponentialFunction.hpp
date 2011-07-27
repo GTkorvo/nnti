@@ -34,8 +34,6 @@
 
 #include "FEApp_AbstractFunction.hpp"
 
-#ifdef HAVE_FEAPP_STOKHOS
-
 #include "Teuchos_RCP.hpp"
 #include "Sacado_ScalarParameterLibrary.hpp"
 #include "Sacado_ParameterRegistration.hpp"
@@ -94,7 +92,5 @@ namespace FEApp {
 
 // Include implementation
 #include "FEApp_KLExponentialFunctionImpl.hpp"
-
-#endif // HAVE_FEAPP_STOKHOS
 
 #endif // FEAPP_KL_EXPONENTIAL_FUNCTION_HPP

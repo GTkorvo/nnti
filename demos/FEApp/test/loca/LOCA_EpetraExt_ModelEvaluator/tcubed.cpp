@@ -97,11 +97,13 @@ int main(int argc, char *argv[]) {
     sourceParams.set("Nonlinear Factor", alpha);
     Teuchos::ParameterList& parameterParams = 
       problemParams.sublist("Parameters");
-    parameterParams.set("Number", 3);
-    parameterParams.set("Parameter 0", "Constant Node BC 1");
-    parameterParams.set("Parameter 1", "Constant Node BC 2");
-    parameterParams.set("Parameter 2", 
-			"Cubic Source Function Nonlinear Factor");
+     parameterParams.set("Number of Parameter Vectors", 1);
+    Teuchos::ParameterList& pParams = 
+      parameterParams.sublist("Parameter Vector 0");
+    pParams.set("Number", 3);
+    pParams.set("Parameter 0", "Constant Node BC 1");
+    pParams.set("Parameter 1", "Constant Node BC 2");
+    pParams.set("Parameter 2",  "Cubic Source Function Nonlinear Factor");
     Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
     discParams.set("Number of Elements", nelem);
 

@@ -4,8 +4,6 @@ INCLUDE(PackageCopyFilesToBinaryDir)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-IF(FEApp_ENABLE_Piro)
-
   PACKAGE_ADD_EXECUTABLE(
     Solve
     SOURCES FEApp_Solve.cpp
@@ -19,8 +17,6 @@ IF(FEApp_ENABLE_Piro)
     EXEDEPS Solve
   )
   
-  IF(Piro_ENABLE_NOX)
-
     PACKAGE_ADD_TEST(
       Solve
       NAME NOX_Brusselator
@@ -47,9 +43,6 @@ IF(FEApp_ENABLE_Piro)
       ARGS "--input=input_loca_bratu.xml"
       PASS_REGULAR_EXPRESSION "Test Passed"
       )
-  ENDIF()
-
-  IF(Piro_ENABLE_Stokhos)
 
     PACKAGE_ADD_EXECUTABLE(
       SolveSG
@@ -64,7 +57,6 @@ IF(FEApp_ENABLE_Piro)
       EXEDEPS SolveSG
     )
 
-    IF(Piro_ENABLE_NOX)
       PACKAGE_ADD_TEST(
         SolveSG
         NAME SG_NOX_Linear
@@ -91,10 +83,3 @@ IF(FEApp_ENABLE_Piro)
         ARGS "--input=input_sg_nox_hns.xml --input_ig=input_nox_hns.xml"
         PASS_REGULAR_EXPRESSION "Test Passed"
         )
-    ENDIF()
-
-  ENDIF()
-
-ENDIF()
-
-

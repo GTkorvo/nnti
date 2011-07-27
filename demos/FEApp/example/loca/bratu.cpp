@@ -88,9 +88,12 @@ int main(int argc, char *argv[]) {
     sourceParams.set("Nonlinear Factor", alpha);
     Teuchos::ParameterList& parameterParams = 
       problemParams.sublist("Parameters");
-    parameterParams.set("Number", 1);
-    parameterParams.set("Parameter 0", 
-			"Exponential Source Function Nonlinear Factor");
+    parameterParams.set("Number of Parameter Vectors", 1);
+    Teuchos::ParameterList& pParams = 
+      parameterParams.sublist("Parameter Vector 0");
+    pParams.set("Number", 1);
+    pParams.set("Parameter 0", 
+		"Exponential Source Function Nonlinear Factor");
     Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
     discParams.set("Number of Elements", nelem);
 

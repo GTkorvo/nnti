@@ -87,9 +87,12 @@ int main(int argc, char *argv[]) {
     problemParams.set("D2", D2);
     Teuchos::ParameterList& parameterParams = 
       problemParams.sublist("Parameters");
-    parameterParams.set("Number", 2);
-    parameterParams.set("Parameter 0", "Brusselator Alpha");
-    parameterParams.set("Parameter 1", "Brusselator Beta");
+    parameterParams.set("Number of Parameter Vectors", 1);
+    Teuchos::ParameterList& pParams = 
+      parameterParams.sublist("Parameter Vector 0");
+    pParams.set("Number", 2);
+    pParams.set("Parameter 0", "Brusselator Alpha");
+    pParams.set("Parameter 1", "Brusselator Beta");
     Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
     discParams.set("Number of Elements", nelem);
 

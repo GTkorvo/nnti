@@ -53,7 +53,7 @@ void
 FEApp::SolutionTwoNormResponseFunction::
 evaluateResponses(const Epetra_Vector* xdot,
 		  const Epetra_Vector& x,
-		  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+		  const Teuchos::Array<ParamVec>& p,
 		  Epetra_Vector& g)
 {
   x.Norm2(&g[0]);
@@ -64,7 +64,7 @@ FEApp::SolutionTwoNormResponseFunction::
 evaluateTangents(
 	   const Epetra_Vector* xdot,
 	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	   const Teuchos::Array<ParamVec>& p,
 	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
 	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
 	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
@@ -92,7 +92,7 @@ FEApp::SolutionTwoNormResponseFunction::
 evaluateGradients(
 	  const Epetra_Vector* xdot,
 	  const Epetra_Vector& x,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	  const Teuchos::Array<ParamVec>& p,
 	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
 	  Epetra_Vector* g,
 	  Epetra_MultiVector* dg_dx,
@@ -124,7 +124,6 @@ evaluateGradients(
       dg_dp[j]->PutScalar(0.0);
 }
 
-#if SG_ACTIVE
 void 
 FEApp::SolutionTwoNormResponseFunction::
 init_sg(
@@ -138,11 +137,13 @@ init_sg(
 
 void
 FEApp::SolutionTwoNormResponseFunction::
-evaluateSGResponses(const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-		    const Stokhos::EpetraVectorOrthogPoly& sg_x,
-		    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-		    const Teuchos::Array<SGType>* sg_p_vals,
-		    Stokhos::EpetraVectorOrthogPoly& sg_g)
+evaluateSGResponses(
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  Stokhos::EpetraVectorOrthogPoly& sg_g)
 {
   // Get basis data
   const Teuchos::Array<double>& norms = sg_basis->norm_squared();
@@ -156,17 +157,12 @@ evaluateSGResponses(const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
   int nqp = points.size();
 
   // Temporaries for storing inputs, outputs evaluated at quad points
+  // We are cheating with p since we know g doesn't depend on p
   Epetra_Vector x(sg_x[0]);
   Teuchos::RCP<Epetra_Vector> xdot;
   if (sg_xdot != NULL)
     xdot = Teuchos::rcp(new Epetra_Vector((*sg_xdot)[0]));
   Epetra_Vector g(sg_g[0]);
-  Teuchos::Array<double> pvals_orig;
-  if (sg_p_vals != NULL && p.size() > 1 && p[1] != Teuchos::null) {
-    pvals_orig.resize(sg_p_vals->size());
-    for (int i=0; i<sg_p_vals->size(); i++)
-      pvals_orig[i] = (*p[1])[i].baseValue;
-  }
 
   // Compute sg_g via quadrature
   sg_g.init(0.0);
@@ -174,31 +170,24 @@ evaluateSGResponses(const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
     sg_x.evaluate(vals[qp], x);
     if (sg_xdot != NULL)
       sg_xdot->evaluate(vals[qp], *xdot);
-    if (sg_p_vals != NULL && p.size() > 1 && p[1] != Teuchos::null) 
-      for (int i=0; i<sg_p_vals->size(); i++)
-	(*p[1])[i].baseValue = (*sg_p_vals)[i].evaluate(points[qp], vals[qp]);
     evaluateResponses(xdot.get(), x, p, g);
     sg_g.sumIntoAllTerms(weights[qp], vals[qp], norms, g);
   }
-
-  // Restore original parameter values
-  if (sg_p_vals != NULL && p.size() > 1 && p[1] != Teuchos::null)
-    for (int i=0; i<sg_p_vals->size(); i++)
-      (*p[1])[i].baseValue = pvals_orig[i];
 }
 
 void
 FEApp::SolutionTwoNormResponseFunction::
 evaluateSGTangents(
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<SGType>* sg_p_vals,
-      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
-      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
-      Stokhos::EpetraVectorOrthogPoly* sg_g,
-      const Teuchos::Array< Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly > >& sg_gt)
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
+  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
+  Stokhos::EpetraVectorOrthogPoly* sg_g,
+  const Teuchos::Array< Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly > >& sg_gt)
 {
   // Get basis data
   const Teuchos::Array<double>& norms = sg_basis->norm_squared();
@@ -212,16 +201,11 @@ evaluateSGTangents(
   int nqp = points.size();
 
   // Temporaries for storing inputs, outputs evaluated at quad points
+  // We are cheating with p since we know g doesn't depend on p
   Epetra_Vector x(sg_x[0]);
   Teuchos::RCP<Epetra_Vector> xdot;
   if (sg_xdot != NULL)
     xdot = Teuchos::rcp(new Epetra_Vector((*sg_xdot)[0]));
-  Teuchos::Array<double> pvals_orig;
-  if (sg_p_vals != NULL && p.size() > 1 && p[1] != Teuchos::null) {
-    pvals_orig.resize(sg_p_vals->size());
-    for (int i=0; i<sg_p_vals->size(); i++)
-      pvals_orig[i] = (*p[1])[i].baseValue;
-  }
   Teuchos::RCP<Epetra_Vector> g;
   if (sg_g != NULL) {
     g = Teuchos::rcp(new Epetra_Vector((*sg_g)[0]));
@@ -239,9 +223,6 @@ evaluateSGTangents(
     sg_x.evaluate(vals[qp], x);
     if (sg_xdot != NULL)
       sg_xdot->evaluate(vals[qp], *xdot);
-    if (sg_p_vals != NULL && p.size() > 1 && p[1] != Teuchos::null) 
-      for (int i=0; i<sg_p_vals->size(); i++)
-	(*p[1])[i].baseValue = (*sg_p_vals)[i].evaluate(points[qp], vals[qp]);
     evaluateTangents(xdot.get(), x, p, deriv_p, dxdot_dp, dx_dp, g.get(), gt);
     if (sg_g != NULL)
       sg_g->sumIntoAllTerms(weights[qp], vals[qp], norms, *g);
@@ -249,25 +230,21 @@ evaluateSGTangents(
       if (sg_gt[i] != Teuchos::null)
 	sg_gt[i]->sumIntoAllTerms(weights[qp], vals[qp], norms, *gt[i]);
   }
-
-  // Restore original parameter values
-  if (sg_p_vals != NULL && p.size() > 1 && p[1] != Teuchos::null)
-    for (int i=0; i<sg_p_vals->size(); i++)
-      (*p[1])[i].baseValue = pvals_orig[i];
 }
 
 void
 FEApp::SolutionTwoNormResponseFunction::
 evaluateSGGradients(
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<SGType>* sg_p_vals,
-      Stokhos::EpetraVectorOrthogPoly* sg_g,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
-      const Teuchos::Array< Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly > >& sg_dg_dp)
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+  Stokhos::EpetraVectorOrthogPoly* sg_g,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+  const Teuchos::Array< Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly > >& sg_dg_dp)
 {
   // Get basis data
   const Teuchos::Array<double>& norms = sg_basis->norm_squared();
@@ -281,16 +258,11 @@ evaluateSGGradients(
   int nqp = points.size();
 
   // Temporaries for storing inputs, outputs evaluated at quad points
+  // We are cheating with p since we know g doesn't depend on p
   Epetra_Vector x(sg_x[0]);
   Teuchos::RCP<Epetra_Vector> xdot;
   if (sg_xdot != NULL)
     xdot = Teuchos::rcp(new Epetra_Vector((*sg_xdot)[0]));
-  Teuchos::Array<double> pvals_orig;
-  if (sg_p_vals != NULL && p.size() > 1 && p[1] != Teuchos::null) {
-    pvals_orig.resize(sg_p_vals->size());
-    for (int i=0; i<sg_p_vals->size(); i++)
-      pvals_orig[i] = (*p[1])[i].baseValue;
-  }
   Teuchos::RCP<Epetra_Vector> g;
   if (sg_g != NULL) {
     g = Teuchos::rcp(new Epetra_Vector((*sg_g)[0]));
@@ -318,9 +290,6 @@ evaluateSGGradients(
     sg_x.evaluate(vals[qp], x);
     if (sg_xdot != NULL)
       sg_xdot->evaluate(vals[qp], *xdot);
-    if (sg_p_vals != NULL && p.size() > 1 && p[1] != Teuchos::null) 
-      for (int i=0; i<sg_p_vals->size(); i++)
-	(*p[1])[i].baseValue = (*sg_p_vals)[i].evaluate(points[qp], vals[qp]);
     evaluateGradients(xdot.get(), x, p, deriv_p, g.get(), dg_dx.get(), 
 		      dg_dxdot.get(), dg_dp);
     if (sg_g != NULL)
@@ -333,10 +302,4 @@ evaluateSGGradients(
       if (sg_dg_dp[i] != Teuchos::null)
 	sg_dg_dp[i]->sumIntoAllTerms(weights[qp], vals[qp], norms, *dg_dp[i]);
   }
-
-  // Restore original parameter values
-  if (sg_p_vals != NULL && p.size() > 1 && p[1] != Teuchos::null)
-    for (int i=0; i<sg_p_vals->size(); i++)
-      (*p[1])[i].baseValue = pvals_orig[i];
 }
-#endif

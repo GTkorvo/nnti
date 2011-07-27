@@ -123,21 +123,18 @@ int main(int argc, char *argv[]) {
     responseParams.set("Number", 1);
     responseParams.set("Response 0", "Solution Average");
 
-    // Free parameters (determinisic, e.g., for sensitivities)
+    // Stochastic parameters
     Teuchos::ParameterList& parameterParams = 
       problemParams.sublist("Parameters");
-    parameterParams.set("Number", 1);
-    parameterParams.set("Parameter 0", "Constant Source Function Value");
-
-    // Stochastic parameters
-    Teuchos::ParameterList& sg_parameterParams = 
-      problemParams.sublist("SG Parameters");
-    sg_parameterParams.set("Number", num_KL);
+    parameterParams.set("Number of Parameter Vectors", 1);
+    Teuchos::ParameterList& pParams = 
+      parameterParams.sublist("Parameter Vector 0");
+    pParams.set("Number", num_KL);
     for (int i=0; i<num_KL; i++) {
       std::stringstream ss1, ss2;
       ss1 << "Parameter " << i;
       ss2 << "KL Exponential Function Random Variable " << i;
-      sg_parameterParams.set(ss1.str(), ss2.str());
+      pParams.set(ss1.str(), ss2.str());
     }
 
     // Mesh
@@ -401,7 +398,7 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new Epetra_LocalMap(sz, 0, *globalComm));
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p_init = 
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		     basis, stoch_map, sg_solver->get_p_map(1), 
+		     basis, stoch_map, sg_solver->get_p_map(0), 
 		     sg_parallel_data->getMultiComm()));
     for (int i=0; i<num_KL; i++) {
       sg_p_init->term(i,0)[i] = 0.0;
@@ -419,7 +416,7 @@ int main(int argc, char *argv[]) {
 		     sg_parallel_data->getMultiComm()));
     sg_inArgs.set_sg_basis(basis);
     sg_inArgs.set_sg_quadrature(quad);
-    sg_inArgs.set_p_sg(1, sg_p_init);
+    sg_inArgs.set_p_sg(0, sg_p_init);
     sg_outArgs.set_g_sg(0, sg_g);
     sg_solver->evalModel(sg_inArgs, sg_outArgs);
 

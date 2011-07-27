@@ -161,6 +161,20 @@ int main(int argc, char *argv[]) {
       problemParams.sublist("Response Functions");
     responseParams.set("Number", 1);
     responseParams.set("Response 0", "Solution Average");
+
+    // Parameters
+    Teuchos::ParameterList& parameterParams = 
+      problemParams.sublist("Parameters");
+    parameterParams.set("Number of Parameter Vectors", 1);
+    Teuchos::ParameterList& pParams = 
+      parameterParams.sublist("Parameter Vector 0");
+    pParams.set("Number", num_KL);
+    for (int i=0; i<num_KL; i++) {
+      std::stringstream ss1, ss2;
+      ss1 << "Parameter " << i;
+      ss2 << "KL Exponential Function Random Variable " << i;
+      pParams.set(ss1.str(), ss2.str());
+    }
     
     // Read in parameter values from input file
     if (do_dakota) {
@@ -177,13 +191,6 @@ int main(int argc, char *argv[]) {
       }
       input_file.close();
     }
-
-    // Free parameters (determinisic, e.g., for sensitivities)
-    Teuchos::ParameterList& parameterParams = 
-      problemParams.sublist("Parameters");
-    parameterParams.set("Number", 1);
-    parameterParams.set("Parameter 0", 
-			"Exponential Source Function Nonlinear Factor");
 
     // Mesh
     Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
@@ -342,22 +349,10 @@ int main(int argc, char *argv[]) {
 	Teuchos::rcp(new Stokhos::ParallelData(basis, Cijk, sg_comm,
 					       parallelParams));
       
-
       if (SG_Method == SG_AD)
 	appParams->set("SG Method", "AD");
       else if (SG_Method == SG_ELEMENT)
 	appParams->set("SG Method", "Gauss Quadrature");
-
-      // Stochastic parameters
-      Teuchos::ParameterList& sg_parameterParams = 
-	problemParams.sublist("SG Parameters");
-      sg_parameterParams.set("Number", num_KL);
-      for (int i=0; i<num_KL; i++) {
-	std::stringstream ss1, ss2;
-	ss1 << "Parameter " << i;
-	ss2 << "KL Exponential Function Random Variable " << i;
-	sg_parameterParams.set(ss1.str(), ss2.str());
-      }
 
       // Create new app for Stochastic Galerkin solve
       app = Teuchos::rcp(new FEApp::Application(app_comm, appParams,
@@ -405,12 +400,12 @@ int main(int argc, char *argv[]) {
 
       // Set up stochastic parameters
       Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p_init =
-	sg_model->create_p_sg(1);
+	sg_model->create_p_sg(0);
       for (int i=0; i<num_KL; i++) {
 	sg_p_init->term(i,0)[i] = 0.0;
 	sg_p_init->term(i,1)[i] = 1.0;
       }
-      sg_model->set_p_sg_init(1, *sg_p_init);
+      sg_model->set_p_sg_init(0, *sg_p_init);
 
       // Setup stochastic initial guess
       if (SG_Method != SG_NI) {
@@ -448,7 +443,7 @@ int main(int argc, char *argv[]) {
       EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_solver->createInArgs();
       EpetraExt::ModelEvaluator::OutArgs sg_outArgs = 
 	sg_solver->createOutArgs();
-      sg_inArgs.set_p_sg(1, sg_p_init);
+      sg_inArgs.set_p_sg(0, sg_p_init);
       Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_g = 
 	sg_model->create_g_sg(0);
       Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u = 

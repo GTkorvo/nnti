@@ -54,7 +54,6 @@
 #include "Sacado_ScalarParameterLibrary.hpp"
 #include "Sacado_ScalarParameterVector.hpp"
 
-#if SG_ACTIVE
 #include "EpetraExt_BlockVector.h"
 #include "EpetraExt_BlockCrsMatrix.h"
 #include "Stokhos_ParallelData.hpp"
@@ -64,7 +63,6 @@
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraOperatorOrthogPoly.hpp"
 #include "EpetraExt_MultiComm.h"
-#endif
 
 namespace FEApp {
 
@@ -95,14 +93,12 @@ namespace FEApp {
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
 
-#if SG_ACTIVE
     //! Initialize SG expansion data
     void init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& sg_basis,
       const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& sg_quad,
       const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& sg_exp,
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
-#endif
 
     //! Create new W operator
     Teuchos::RCP<Epetra_Operator> createW() const;
@@ -114,35 +110,32 @@ namespace FEApp {
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void computeGlobalResidual(
-		      const Epetra_Vector* xdot,
-		      const Epetra_Vector& x,
-		      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-		      Epetra_Vector& f);
+    void computeGlobalResidual(const Epetra_Vector* xdot,
+			       const Epetra_Vector& x,
+			       const Teuchos::Array<ParamVec>& p,
+			       Epetra_Vector& f);
 
     //! Compute global Jacobian
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void computeGlobalJacobian(
-			 double alpha, double beta,
-			 const Epetra_Vector* xdot,
-			 const Epetra_Vector& x,
-			 const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			 Epetra_Vector* f,
-			 Epetra_Operator& jac);
+    void computeGlobalJacobian(double alpha, double beta,
+			       const Epetra_Vector* xdot,
+			       const Epetra_Vector& x,
+			       const Teuchos::Array<ParamVec>& p,
+			       Epetra_Vector* f,
+			       Epetra_Operator& jac);
     
     //! Compute global Preconditioner
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void computeGlobalPreconditioner(
-			    double alpha, double beta,
-			    const Epetra_Vector* xdot,
-			    const Epetra_Vector& x,
-			    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			    Epetra_Vector* f,
-			    Epetra_Operator& jac);
+    void computeGlobalPreconditioner(double alpha, double beta,
+				     const Epetra_Vector* xdot,
+				     const Epetra_Vector& x,
+				     const Teuchos::Array<ParamVec>& p,
+				     Epetra_Vector* f,
+				     Epetra_Operator& jac);
     
     //! Compute global Tangent
     /*!
@@ -152,8 +145,8 @@ namespace FEApp {
                               bool sum_derivs,
                               const Epetra_Vector* xdot,
                               const Epetra_Vector& x,
-			      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-                              ParamVec* deriv_p,
+			      const Teuchos::Array<ParamVec>& p,
+                              const Teuchos::RCP<ParamVec>& deriv_p,
                               const Epetra_MultiVector* Vx,
                               const Teuchos::SerialDenseMatrix<int,double>* Vp,
                               Epetra_Vector* f,
@@ -167,7 +160,7 @@ namespace FEApp {
     void 
     evaluateResponses(const Epetra_Vector* xdot,
                       const Epetra_Vector& x,
-                      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+                      const Teuchos::Array<ParamVec>& p,
                       Epetra_Vector& g);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
@@ -176,31 +169,29 @@ namespace FEApp {
      */
     void 
     evaluateResponseTangents(
-	   const Epetra_Vector* xdot,
-	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
-	   Epetra_Vector* g,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt);
-
+      const Epetra_Vector* xdot,
+      const Epetra_Vector& x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
+      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
+      Epetra_Vector* g,
+      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt);
+    
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     /*!
      * Set xdot, dg_dxdot to NULL for steady-state problems
      */
     void 
     evaluateResponseGradients(
-	    const Epetra_Vector* xdot,
-	    const Epetra_Vector& x,
-	    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	    const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	    Epetra_Vector* g,
-	    Epetra_MultiVector* dg_dx,
-	    Epetra_MultiVector* dg_dxdot,
-	    const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp);
-
-#if SG_ACTIVE
+      const Epetra_Vector* xdot,
+      const Epetra_Vector& x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+      Epetra_Vector* g,
+      Epetra_MultiVector* dg_dx,
+      Epetra_MultiVector* dg_dxdot,
+      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp);
 
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >
     getStochasticExpansion() { return sg_expansion; }
@@ -210,26 +201,26 @@ namespace FEApp {
      * Set xdot to NULL for steady-state problems
      */
     void computeGlobalSGResidual(
-		        const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-			const Stokhos::EpetraVectorOrthogPoly& sg_x,
-			const ParamVec* p,
-			const ParamVec* sg_p,
-			const Teuchos::Array<SGType>* sg_p_vals,
-			Stokhos::EpetraVectorOrthogPoly& sg_f);
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      Stokhos::EpetraVectorOrthogPoly& sg_f);
 
     //! Compute global Jacobian for stochastic Galerkin problem
     /*!
      * Set xdot to NULL for steady-state problems
      */
     void computeGlobalSGJacobian(
-			double alpha, double beta,
-			const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-			const Stokhos::EpetraVectorOrthogPoly& sg_x,
-			const ParamVec* p,
-			const ParamVec* sg_p,
-			const Teuchos::Array<SGType>* sg_p_vals,
-			Stokhos::EpetraVectorOrthogPoly* sg_f,
-			Stokhos::EpetraOperatorOrthogPoly& sg_jac);
+      double alpha, double beta,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      Stokhos::EpetraVectorOrthogPoly* sg_f,
+      Stokhos::EpetraOperatorOrthogPoly& sg_jac);
 
     //! Compute global Tangent for stochastic Galerkin problem
     /*!
@@ -239,8 +230,10 @@ namespace FEApp {
       double alpha, double beta, bool sum_derivs,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const ParamVec* p, ParamVec* deriv_p, const ParamVec* sg_p, 
-      const Teuchos::Array<SGType>* sg_p_vals,   
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Teuchos::RCP<ParamVec>& deriv_p,
       const Epetra_MultiVector* Vx,
       const Teuchos::SerialDenseMatrix<int,double>* Vp,
       Stokhos::EpetraVectorOrthogPoly* sg_f,
@@ -252,11 +245,13 @@ namespace FEApp {
      * Set xdot to NULL for steady-state problems
      */
     void 
-    evaluateSGResponses(const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-			const Stokhos::EpetraVectorOrthogPoly& sg_x,
-			const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			const Teuchos::Array<SGType>* sg_p_vals,
-			Stokhos::EpetraVectorOrthogPoly& sg_g);
+    evaluateSGResponses(
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      Stokhos::EpetraVectorOrthogPoly& sg_g);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     /*!
@@ -266,9 +261,10 @@ namespace FEApp {
     evaluateSGResponseTangents(
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
       const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<SGType>* sg_p_vals,
       const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
       const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
       Stokhos::EpetraVectorOrthogPoly* sg_g,
@@ -282,9 +278,10 @@ namespace FEApp {
     evaluateSGResponseGradients(
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
       const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<SGType>* sg_p_vals,
       Stokhos::EpetraVectorOrthogPoly* sg_g,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
@@ -295,26 +292,26 @@ namespace FEApp {
      * Set xdot to NULL for steady-state problems
      */
     void computeGlobalMPResidual(
-		        const Stokhos::ProductEpetraVector* mp_xdot,
-			const Stokhos::ProductEpetraVector& mp_x,
-			const ParamVec* p,
-			const ParamVec* mp_p,
-			const Teuchos::Array<MPType>* mp_p_vals,
-			Stokhos::ProductEpetraVector& mp_f);
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      Stokhos::ProductEpetraVector& mp_f);
 
     //! Compute global Jacobian for multi-point problem
     /*!
      * Set xdot to NULL for steady-state problems
      */
     void computeGlobalMPJacobian(
-			double alpha, double beta,
-			const Stokhos::ProductEpetraVector* mp_xdot,
-			const Stokhos::ProductEpetraVector& mp_x,
-			const ParamVec* p,
-			const ParamVec* mp_p,
-			const Teuchos::Array<MPType>* mp_p_vals,
-			Stokhos::ProductEpetraVector* mp_f,
-			Stokhos::ProductEpetraOperator& mp_jac);
+      double alpha, double beta,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      Stokhos::ProductEpetraVector* mp_f,
+      Stokhos::ProductEpetraOperator& mp_jac);
 
     //! Compute global Tangent for multi-point problem
     /*!
@@ -324,8 +321,10 @@ namespace FEApp {
       double alpha, double beta, bool sum_derivs,
       const Stokhos::ProductEpetraVector* mp_xdot,
       const Stokhos::ProductEpetraVector& mp_x,
-      const ParamVec* p, ParamVec* deriv_p, const ParamVec* mp_p, 
-      const Teuchos::Array<MPType>* mp_p_vals,   
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      const Teuchos::RCP<ParamVec>& deriv_p,
       const Epetra_MultiVector* Vx,
       const Teuchos::SerialDenseMatrix<int,double>* Vp,
       Stokhos::ProductEpetraVector* mp_f,
@@ -337,11 +336,13 @@ namespace FEApp {
      * Set xdot to NULL for steady-state problems
      */
     void 
-    evaluateMPResponses(const Stokhos::ProductEpetraVector* mp_xdot,
-			const Stokhos::ProductEpetraVector& mp_x,
-			const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			const Teuchos::Array<MPType>* mp_p_vals,
-			Stokhos::ProductEpetraVector& mp_g);
+    evaluateMPResponses(
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      Stokhos::ProductEpetraVector& mp_g);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     /*!
@@ -351,9 +352,10 @@ namespace FEApp {
     evaluateMPResponseTangents(
       const Stokhos::ProductEpetraVector* mp_xdot,
       const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
       const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<MPType>* mp_p_vals,
       const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
       const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
       Stokhos::ProductEpetraVector* mp_g,
@@ -367,15 +369,14 @@ namespace FEApp {
     evaluateMPResponseGradients(
       const Stokhos::ProductEpetraVector* mp_xdot,
       const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
       const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<MPType>* mp_p_vals,
       Stokhos::ProductEpetraVector* mp_g,
       Stokhos::ProductEpetraMultiVector* mp_dg_dx,
       Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
       const Teuchos::Array< Teuchos::RCP< Stokhos::ProductEpetraMultiVector > >& mp_dg_dp);
-
-#endif
 
   private:
     
@@ -432,8 +433,6 @@ namespace FEApp {
     //! Map for combined response functions
     Teuchos::RCP<Epetra_Map> response_map;
 
-#if SG_ACTIVE
-
     //! Stochastic Galerking basis
     Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > sg_basis;
 
@@ -487,8 +486,6 @@ namespace FEApp {
 
     //! MP Jacobian global fill object
     Teuchos::RCP< FEApp::GlobalFill<FEApp::MPJacobianType> > mp_jac_global_fill;
-
-#endif
 
   };
 

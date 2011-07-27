@@ -101,31 +101,23 @@ namespace FEApp {
     //! List of free parameter names
     Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > > param_names;
 
-    //! Sacado parameter vector
-    Teuchos::Array< Teuchos::RCP<ParamVec> > sacado_param_vec;
+    //! Sacado parameter vectors
+    mutable Teuchos::Array<ParamVec> sacado_param_vec;
 
-    //! Epetra map for parameter vector
+    //! Epetra map for parameter vectors
     Teuchos::Array< Teuchos::RCP<Epetra_LocalMap> > epetra_param_map;
 
-    //! Epetra parameter vector
+    //! Epetra parameter vectors
     Teuchos::Array< Teuchos::RCP<Epetra_Vector> > epetra_param_vec;
 
-    //! Supports parameters
-    bool supports_p;
-
-    //! Supports response functions
-    bool supports_g;
-
-    //! Whether we are support SG
-    bool supports_sg;
-
-#if SG_ACTIVE
     //! Stochastic Galerkin parameters
-    mutable Teuchos::Array<SGType> p_sg_vals;
+    mutable Teuchos::Array< Teuchos::Array<SGType> > p_sg_vals;
 
     //! Multi-point parameters
-    mutable Teuchos::Array<MPType> p_mp_vals;
-#endif
+    mutable Teuchos::Array< Teuchos::Array<MPType> > p_mp_vals;
+
+    //! Whether we have response functions
+    bool supports_g;
 
     //! Whether to always evaluate W with f
     bool eval_W_with_f;

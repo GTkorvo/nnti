@@ -143,8 +143,11 @@ int main(int argc, char *argv[]) {
     // Free parameters (determinisic, e.g., for sensitivities)
     Teuchos::ParameterList& parameterParams = 
       problemParams.sublist("Parameters");
-    parameterParams.set("Number", 1);
-    parameterParams.set("Parameter 0", "Constant Function Value");
+    parameterParams.set("Number of Parameter Vectors", 1);
+    Teuchos::ParameterList& pParams = 
+      parameterParams.sublist("Parameter Vector 0");
+    pParams.set("Number", 1);
+    pParams.set("Parameter 0", "Constant Function Value");
 
     // Mesh
     Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
@@ -284,14 +287,15 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new Epetra_LocalMap(sz, 0, *stoch_comm));
 
     // Stochastic parameters
-    Teuchos::ParameterList& sg_parameterParams = 
-      problemParams.sublist("SG Parameters");
-    sg_parameterParams.set("Number", numalpha);
+     parameterParams.set("Number of Parameter Vectors", 2);
+     Teuchos::ParameterList& pParams2 = 
+       parameterParams.sublist("Parameter Vector 1");
+    pParams2.set("Number", numalpha);
     for (int i=0; i<numalpha; i++) {
       std::stringstream ss1, ss2;
       ss1 << "Parameter " << i;
       ss2 << "Exponential Source Function Nonlinear Factor " << i;
-      sg_parameterParams.set(ss1.str(), ss2.str());
+      pParams2.set(ss1.str(), ss2.str());
     }
       
     // Create new app for Stochastic Galerkin solve

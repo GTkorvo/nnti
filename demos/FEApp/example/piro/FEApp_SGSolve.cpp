@@ -203,49 +203,75 @@ int main(int argc, char *argv[]) {
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_solver->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs sg_outArgs = 
       sg_solver->createOutArgs();
-    Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> p_sg = 
-      sg_solver->get_p_sg_init(1);
-    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg =
-      sg_solver->create_g_sg(0);
-    sg_inArgs.set_p_sg(1, p_sg);
-    sg_outArgs.set_g_sg(0, g_sg);
-    sg_solver->evalModel(sg_inArgs, sg_outArgs);
-
-    // Print mean and standard deviation
-    Epetra_Vector g_mean(*(model->get_g_map(0)));
-    Epetra_Vector g_std_dev(*(model->get_g_map(0)));
-    g_sg->computeMean(g_mean);
-    g_sg->computeStandardDeviation(g_std_dev);
-    std::cout.precision(12);
-    // std::cout << "\nResponse Expansion = " << std::endl;
-    // g_sg->print(std::cout);
-    std::cout << "\nResponse Mean =      " << std::endl << g_mean << std::endl;
-    std::cout << "Response Std. Dev. = " << std::endl << g_std_dev << std::endl;
-
-    // Regression tests
-    Teuchos::ParameterList& testParams = appParams->sublist("Regression Tests");
-    int failures = 0;
-    double relTol = testParams.get("Relative Tolerance", 1.0e-3);
-    double absTol = testParams.get("Absolute Tolerance", 1.0e-8);
-    
-    // Test mean
-    bool testMean = 
-      testParams.isType< Teuchos::Array<double> >("Mean Test Values");
-    if (testMean) { 
-      Teuchos::Array<double> testValues =
-	testParams.get<Teuchos::Array<double> >("Mean Test Values");
-      failures += testResponses(g_mean, testValues, absTol, relTol, "Mean", 
-				MyPID==0);
+    int np = sg_inArgs.Np();
+    for (int i=0; i<np; i++) {
+      if (sg_inArgs.supports(EpetraExt::ModelEvaluator::IN_ARG_p_sg, i)) {
+	Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> p_sg = 
+	  sg_solver->get_p_sg_init(i);
+	sg_inArgs.set_p_sg(i, p_sg);
+      }
     }
 
-    // Test std. dev.
-    bool testSD = 
-      testParams.isType< Teuchos::Array<double> >("Standard Deviation Test Values");
-    if (testSD) { 
-      Teuchos::Array<double> testValues =
-	testParams.get<Teuchos::Array<double> >("Standard Deviation Test Values");
-      failures += testResponses(g_std_dev, testValues, absTol, relTol, 
-				"Standard Deviation", MyPID==0);
+    int ng = sg_outArgs.Ng();
+    for (int i=0; i<ng; i++) {
+      if (sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_g_sg, i)) {
+	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg =
+	  sg_solver->create_g_sg(i);
+	sg_outArgs.set_g_sg(i, g_sg);
+      }
+    }
+
+    sg_solver->evalModel(sg_inArgs, sg_outArgs);
+
+    // Regression tests
+    int failures = 0;
+    Teuchos::ParameterList& testParams = appParams->sublist("Regression Tests");
+    double relTol = testParams.get("Relative Tolerance", 1.0e-3);
+    double absTol = testParams.get("Absolute Tolerance", 1.0e-8);
+
+    for (int i=0; i<ng-1; i++) {
+      // Don't loop over last g which is x, since it is a long vector
+      // to print out.
+      if (sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_g_sg, i)) {
+
+	// Print mean and standard deviation      
+	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg = 
+	  sg_outArgs.get_g_sg(i);
+	Epetra_Vector g_mean(*(sg_solver->get_g_map(i)));
+	Epetra_Vector g_std_dev(*(sg_solver->get_g_map(i)));
+	g_sg->computeMean(g_mean);
+	g_sg->computeStandardDeviation(g_std_dev);
+	std::cout.precision(12);
+	std::cout << "Response " << i << " Mean =      " << std::endl 
+		  << g_mean << std::endl;
+	std::cout << "Response " << i << " Std. Dev. = " << std::endl 
+		  << g_std_dev << std::endl;
+
+	// Test mean
+	std::stringstream ss1;
+	ss1 << "Response " << i << " Mean Test Values";
+	bool testMean = 
+	  testParams.isType< Teuchos::Array<double> >(ss1.str());
+	if (testMean) { 
+	  Teuchos::Array<double> testValues =
+	    testParams.get<Teuchos::Array<double> >(ss1.str());
+	  failures += testResponses(g_mean, testValues, absTol, relTol, "Mean", 
+				    MyPID==0);
+	}
+
+	// Test std. dev.
+	std::stringstream ss2;
+	ss2 << "Response " << i << " Standard Deviation Test Values";
+	bool testSD = 
+	  testParams.isType< Teuchos::Array<double> >(ss2.str());
+	if (testSD) { 
+	  Teuchos::Array<double> testValues =
+	    testParams.get<Teuchos::Array<double> >(ss2.str());
+	  failures += testResponses(g_std_dev, testValues, absTol, relTol, 
+				    "Standard Deviation", MyPID==0);
+	}
+
+      }
     }
 
     if (MyPID == 0) {
