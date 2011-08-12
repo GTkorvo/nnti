@@ -11,8 +11,14 @@ PACKAGE_ADD_EXECUTABLE(
   )
 
 PACKAGE_ADD_EXECUTABLE(
-  SolveSG
+  SGSolve
   SOURCES FEApp_SGSolve.cpp
+  COMM serial mpi
+  )
+
+PACKAGE_ADD_EXECUTABLE(
+  SGAnalysis
+  SOURCES FEApp_SGAnalysis.cpp
   COMM serial mpi
   )
 
@@ -27,7 +33,13 @@ PACKAGE_COPY_FILES_TO_BINARY_DIR(copySGTestInputFiles
   DEST_FILES  input_sg_nox_linear.xml
               input_mpni_nox_linear.xml
   	      input_sg_nox_hns.xml input_nox_hns.xml
-  EXEDEPS SolveSG
+  EXEDEPS SGSolve
+  )
+
+PACKAGE_COPY_FILES_TO_BINARY_DIR(copySGAnalysisTestInputFiles
+  DEST_FILES  input_sg_analysis_linear.xml
+              dakota_sg_linear.in dakota_sg_linear_target.txt
+  EXEDEPS SGSolve
   )
 
 
@@ -59,7 +71,7 @@ PACKAGE_ADD_TEST(
   )
 
 PACKAGE_ADD_TEST(
-  SolveSG
+  SGSolve
   NAME SG_NOX_Linear
   COMM serial mpi
   NUM_MPI_PROCS 2
@@ -68,7 +80,7 @@ PACKAGE_ADD_TEST(
   )
 
 PACKAGE_ADD_TEST(
-  SolveSG
+  SGSolve
   NAME MPNI_NOX_Linear
   COMM serial mpi
   NUM_MPI_PROCS 2
@@ -77,7 +89,7 @@ PACKAGE_ADD_TEST(
   )
 
 PACKAGE_ADD_TEST(
-  SolveSG
+  SGSolve
   NAME SG_NOX_HNS
   COMM serial mpi
   NUM_MPI_PROCS 2
