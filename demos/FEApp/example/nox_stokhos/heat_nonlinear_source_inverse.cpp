@@ -47,7 +47,6 @@
 #endif
 
 #include "Stokhos_Epetra.hpp"
-#include "Stokhos_ResponseStatisticModelEvaluator.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
 #include "Stokhos_PCEAnasaziKL.hpp"
@@ -211,9 +210,9 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList& aztecOOSettings =
       aztecOOParams.sublist("AztecOO Settings");
     aztecOOSettings.set("Aztec Solver","GMRES");
-    aztecOOParams.set("Max Iterations", 200);
-    aztecOOSettings.set("Size of Krylov Subspace", 200);
-    aztecOOParams.set("Tolerance", 1e-4); 
+    aztecOOParams.set("Max Iterations", 500);
+    aztecOOSettings.set("Size of Krylov Subspace", 500);
+    aztecOOParams.set("Tolerance", 1e-12); 
     aztecOOSettings.set("Output Frequency", 50);
     stratParams.set("Preconditioner Type", "Ifpack");
 
@@ -314,10 +313,13 @@ int main(int argc, char *argv[]) {
 	sgSolverParams->sublist("SG Operator");
       Teuchos::ParameterList& sgPrecParams = 
       sgSolverParams->sublist("SG Preconditioner");
-      sgOpParams.set("Operator Method", "Matrix Free");
+      //sgOpParams.set("Operator Method", "Matrix Free");
+      sgOpParams.set("Operator Method", "Fully Assembled");
       sgOpParams.set("Number of KL Terms", num_KL+1);
       sgPrecParams.set("Preconditioner Method", "Mean-based");
-      sgPrecParams.set("Mean Preconditioner Type", "ML");
+      //sgPrecParams.set("Preconditioner Method", "Fully Assembled");
+      //sgPrecParams.set("Mean Preconditioner Type", "ML");
+      sgPrecParams.set("Mean Preconditioner Type", "Ifpack");
       Teuchos::ParameterList& precParams = 
         sgPrecParams.sublist("Mean Preconditioner Parameters");
       precParams.set("default values", "SA");
@@ -344,6 +346,8 @@ int main(int argc, char *argv[]) {
         (*sg_x)[0] = *finalSolution;
       sg_model->set_x_sg_init(*sg_x);
 
+      //appParams->set("Transpose Solver Method", "Explicit Transpose");
+
       // Create SG NOX solver
       Teuchos::RCP<EpetraExt::ModelEvaluator> sg_block_solver = 
         Teuchos::rcp(new Piro::Epetra::NOXSolver(appParams, sg_model));
@@ -363,7 +367,7 @@ int main(int argc, char *argv[]) {
       EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_solver->createInArgs();
       EpetraExt::ModelEvaluator::OutArgs sg_outArgs = 
 	sg_solver->createOutArgs();
-      int p_index = 1; // PC expansion coefficients of params
+      int p_index = 0; // PC expansion coefficients of params
       Teuchos::RCP<const Epetra_Vector> p_init = sg_solver->get_p_init(p_index);
       int g_index = 0;
       int num_g = 2;
@@ -400,12 +404,65 @@ int main(int argc, char *argv[]) {
       sg_solver->evalModel(sg_inArgs, sg_outArgs);
 
       // Print mean and standard deviation
-      utils.out().precision(12);
+      //utils.out().precision(12);
       utils.out() << "Mean =     " << (*g_mean)[0] << std::endl;
       utils.out() << "Variance = " << (*g_var)[0] << std::endl;
       utils.out() << "d(Mean)/dp = " << std::endl << *dgdp_mean << std::endl;
       utils.out() << "d(Var)/dp = " << std::endl << *dgdp_var << std::endl;
 
+      /*
+      // Test derivatives with finite differences
+      double delta = 1.0e-6;
+      int num_p = sg_solver->get_p_map(p_index)->NumMyElements();
+      int num_resp = model->get_g_map(g_index)->NumMyElements();
+      Teuchos::RCP<Epetra_Vector> p_pert = 
+	Teuchos::rcp(new Epetra_Vector((*sg_solver->get_p_map(p_index))));
+      Teuchos::RCP<Epetra_Vector> g_mean_pert = 
+        Teuchos::rcp(new Epetra_Vector(*(model->get_g_map(g_index))));
+      Teuchos::RCP<Epetra_Vector> g_var_pert = 
+        Teuchos::rcp(new Epetra_Vector(*(model->get_g_map(g_index))));
+      Teuchos::RCP<Epetra_MultiVector> dgdp_mean_fd = 
+	Teuchos::rcp(new Epetra_MultiVector(*(sg_solver->get_p_map(p_index)),
+					    num_resp));
+      Teuchos::RCP<Epetra_MultiVector> dgdp_var_fd = 
+	Teuchos::rcp(new Epetra_MultiVector(*(sg_solver->get_p_map(p_index)),
+					    num_resp));
+      EpetraExt::ModelEvaluator::InArgs sg_inArgs_pert = 
+	sg_solver->createInArgs();
+      EpetraExt::ModelEvaluator::OutArgs sg_outArgs_pert = 
+	sg_solver->createOutArgs();
+      sg_inArgs_pert.set_p(p_index, p_pert);
+      sg_outArgs_pert.set_g(g_mean_index, g_mean_pert);
+      sg_outArgs_pert.set_g(g_var_index, g_var_pert);
+      for (int i=0; i<num_p; i++) {
+
+	// Perturb p
+	//double h = delta*(std::abs((*p_init)[i])+delta);
+	double h = delta;
+	*p_pert = *p_init;
+	(*p_pert)[i] += h;
+
+	// Init perturbed g
+	g_mean_pert->PutScalar(0.0);
+	g_var_pert->PutScalar(0.0);
+	
+	// Compute perturbed g
+	sg_solver->evalModel(sg_inArgs_pert, sg_outArgs_pert);
+
+	// Compute FD derivatives
+	for (int j=0; j<num_resp; j++) {
+	  (*dgdp_mean_fd)[j][i] = ((*g_mean_pert)[j] - (*g_mean)[j])/h;
+	  (*dgdp_var_fd)[j][i] = ((*g_var_pert)[j] - (*g_var)[j])/h;
+	}
+      }
+
+      utils.out() << "d(Mean)/dp = " << std::endl << *dgdp_mean << std::endl;
+      utils.out() << "d(Mean)/dp FD = " << std::endl << *dgdp_mean_fd 
+		  << std::endl;
+      utils.out() << "d(Var)/dp = " << std::endl << *dgdp_var << std::endl;
+      utils.out() << "d(Var)/dp FD = " << std::endl << *dgdp_var_fd 
+		  << std::endl;
+      */
       if (!sg_outArgs.isFailed() && MyPID == 0) 
         utils.out() << "Test Passed!" << endl;
 
