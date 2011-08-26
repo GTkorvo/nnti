@@ -59,9 +59,8 @@
 
 int main(int argc, char *argv[]) {
   int nelem = 100;
-  double h = 1.0/nelem;
-  int num_KL = 2;
-  int p = 3;
+  int num_KL = 3;
+  int p = 5;
   bool use_solver = false;
   std::string solver_type = "GMRES";
 
@@ -85,11 +84,6 @@ int main(int argc, char *argv[]) {
     globalComm = Teuchos::rcp(new Epetra_SerialComm);
 #endif
     MyPID = globalComm->MyPID();
-    
-    // Create mesh
-    std::vector<double> x(nelem+1);
-    for (int i=0; i<=nelem; i++)
-      x[i] = h*i;
 
     // Set up application parameters
     Teuchos::RCP<Teuchos::ParameterList> appParams = 
@@ -129,10 +123,23 @@ int main(int argc, char *argv[]) {
     responseParams.set("Number", 1);
     responseParams.set("Response 0", "Solution Average");
 
-    // Free parameters (determinisic, e.g., for sensitivities)
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > free_param_names =
-	Teuchos::rcp(new Teuchos::Array<std::string>);
-    free_param_names->push_back("Constant Source Function Value");
+    // Stochastic parameters
+    Teuchos::ParameterList& parameterParams = 
+      problemParams.sublist("Parameters");
+    parameterParams.set("Number of Parameter Vectors", 1);
+    Teuchos::ParameterList& pParams = 
+      parameterParams.sublist("Parameter Vector 0");
+    pParams.set("Number", num_KL);
+    for (int i=0; i<num_KL; i++) {
+      std::stringstream ss1, ss2;
+      ss1 << "Parameter " << i;
+      ss2 << "KL Exponential Function Random Variable " << i;
+      pParams.set(ss1.str(), ss2.str());
+    }
+
+    // Mesh
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+    discParams.set("Number of Elements", nelem);
 
     // Set up NOX parameters
     Teuchos::RCP<Teuchos::ParameterList> noxParams =
@@ -257,15 +264,6 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList& maxIters = statusParams.sublist("Test 1");
     maxIters.set("Test Type", "MaxIters");
     maxIters.set("Maximum Iterations", 1);
-
-    // Stochastic parameters 
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
-      Teuchos::rcp(new Teuchos::Array<std::string>);
-    for (int i=0; i<num_KL; i++) {
-      std::stringstream ss;
-      ss << "KL Exponential Function Random Variable " << i;
-      sg_param_names->push_back(ss.str());
-    }
     
     // Create Stochastic Galerkin basis and expansion
     Teuchos::Array< Teuchos::RCP<const Stokhos::OneDOrthogPolyBasis<int,double> > > bases(num_KL); 
@@ -296,13 +294,11 @@ int main(int argc, char *argv[]) {
 
     // Create application
     Teuchos::RCP<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false));
+      Teuchos::rcp(new FEApp::Application(app_comm, appParams));
     
     // Create application model evaluator
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-      Teuchos::rcp(new FEApp::ModelEvaluator(app, 
-					     free_param_names,
-					     sg_param_names));
+      Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
     
     // Wrap application model evaluator with an MP adapter
     Teuchos::RCP<EpetraExt::ModelEvaluator> mp_model = model;
@@ -373,25 +369,18 @@ int main(int argc, char *argv[]) {
 					       linsys));
 
     // Create MP inverse model evaluator to map p_mp -> g_mp
-    Teuchos::Array<int> non_mp_inverse_p_index = 
-      mp_nonlinear_model->get_non_p_mp_indices();
-    Teuchos::Array<int> mp_inverse_p_index = 
-      mp_nonlinear_model->get_p_mp_indices();
-    Teuchos::Array<int> non_mp_inverse_g_index = 
-      mp_nonlinear_model->get_non_g_mp_indices();
-    Teuchos::Array<int> mp_inverse_g_index = 
-      mp_nonlinear_model->get_g_mp_indices();
-    Teuchos::Array< Teuchos::RCP<const Epetra_Map> > base_p_maps = 
-      mp_nonlinear_model->get_p_mp_base_maps();
+    Teuchos::Array<int> mp_p_index_map = 
+      mp_nonlinear_model->get_p_mp_map_indices();
+    Teuchos::Array<int> mp_g_index_map = 
+      mp_nonlinear_model->get_g_mp_map_indices();
     Teuchos::Array< Teuchos::RCP<const Epetra_Map> > base_g_maps = 
       mp_nonlinear_model->get_g_mp_base_maps();
+    mp_g_index_map.push_back(base_g_maps.size());
+    base_g_maps.push_back(model->get_x_map());
     Teuchos::RCP<EpetraExt::ModelEvaluator> mp_inverse_solver =
       Teuchos::rcp(new Stokhos::MPInverseModelEvaluator(mp_solver,
-							mp_inverse_p_index, 
-							non_mp_inverse_p_index,
-							mp_inverse_g_index, 
-							non_mp_inverse_g_index,
-							base_p_maps, 
+							mp_p_index_map,
+							mp_g_index_map,
 							base_g_maps));
 
     // Create MP-based SG Quadrature model evaluator to calculate g_sg
@@ -409,7 +398,7 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new Epetra_LocalMap(sz, 0, *globalComm));
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p_init = 
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		     basis, stoch_map, sg_solver->get_p_sg_map(0), 
+		     basis, stoch_map, sg_solver->get_p_map(0), 
 		     sg_parallel_data->getMultiComm()));
     for (int i=0; i<num_KL; i++) {
       sg_p_init->term(i,0)[i] = 0.0;
@@ -423,7 +412,7 @@ int main(int argc, char *argv[]) {
       sg_solver->createOutArgs();
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_g = 
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		     basis, stoch_map, sg_solver->get_g_sg_map(0), 
+		     basis, stoch_map, sg_solver->get_g_map(0), 
 		     sg_parallel_data->getMultiComm()));
     sg_inArgs.set_sg_basis(basis);
     sg_inArgs.set_sg_quadrature(quad);
@@ -434,8 +423,8 @@ int main(int argc, char *argv[]) {
     // Print mean and standard deviation
     std::cout.precision(12);
     std::cout << "SG expansion of response:" << std::endl << *sg_g;
-    Epetra_Vector mean(*(sg_solver->get_g_sg_map(0)));
-    Epetra_Vector std_dev(*(sg_solver->get_g_sg_map(0)));
+    Epetra_Vector mean(*(sg_solver->get_g_map(0)));
+    Epetra_Vector std_dev(*(sg_solver->get_g_map(0)));
     sg_g->computeMean(mean);
     sg_g->computeStandardDeviation(std_dev);
     std::cout << "Mean =      " << mean[0] << std::endl;

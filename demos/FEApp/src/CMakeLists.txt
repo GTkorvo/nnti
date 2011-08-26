@@ -80,6 +80,8 @@ APPEND_SET(HEADERS
   FEApp_SolutionTwoNormResponseFunction.hpp
   FEApp_Application.hpp
   FEApp_ModelEvaluator.hpp
+  FEApp_SGGaussQuadResidualGlobalFill.hpp
+  FEApp_SGGaussQuadJacobianGlobalFill.hpp
   ) 
 
 APPEND_SET(SOURCES
@@ -108,18 +110,9 @@ APPEND_SET(SOURCES
   FEApp_SolutionTwoNormResponseFunction.cpp
   FEApp_Application.cpp
   FEApp_ModelEvaluator.cpp
+  FEApp_SGGaussQuadResidualGlobalFill.cpp
+  FEApp_SGGaussQuadJacobianGlobalFill.cpp
   )
-
-IF(FEApp_ENABLE_Stokhos)
-  APPEND_SET(HEADERS
-    FEApp_SGGaussQuadResidualGlobalFill.hpp
-    FEApp_SGGaussQuadJacobianGlobalFill.hpp
-  )
-  APPEND_SET(SOURCES
-    FEApp_SGGaussQuadResidualGlobalFill.cpp
-    FEApp_SGGaussQuadJacobianGlobalFill.cpp
-  )
-ENDIF()
 
 #
 # C) Define the targets for package's library(s)
