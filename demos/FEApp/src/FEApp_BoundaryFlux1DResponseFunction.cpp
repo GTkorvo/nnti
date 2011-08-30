@@ -76,7 +76,7 @@ void
 FEApp::BoundaryFlux1DResponseFunction::
 evaluateResponses(const Epetra_Vector* xdot,
 		  const Epetra_Vector& x,
-		  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+		  const Teuchos::Array<ParamVec>& p,
 		  Epetra_Vector& g)
 {
   // Import boundary values
@@ -92,7 +92,7 @@ FEApp::BoundaryFlux1DResponseFunction::
 evaluateTangents(
 	   const Epetra_Vector* xdot,
 	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	   const Teuchos::Array<ParamVec>& p,
 	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
 	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
 	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
@@ -123,7 +123,7 @@ FEApp::BoundaryFlux1DResponseFunction::
 evaluateGradients(
 	  const Epetra_Vector* xdot,
 	  const Epetra_Vector& x,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	  const Teuchos::Array<ParamVec>& p,
 	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
 	  Epetra_Vector* g,
 	  Epetra_MultiVector* dg_dx,
@@ -160,14 +160,15 @@ evaluateGradients(
       dg_dp[j]->PutScalar(0.0);
 }
 
-#if SG_ACTIVE
 void
 FEApp::BoundaryFlux1DResponseFunction::
-evaluateSGResponses(const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-		    const Stokhos::EpetraVectorOrthogPoly& sg_x,
-		    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-		    const Teuchos::Array<SGType>* sg_p_vals,
-		    Stokhos::EpetraVectorOrthogPoly& sg_g)
+evaluateSGResponses(
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  Stokhos::EpetraVectorOrthogPoly& sg_g)
 {
   int sz = sg_x.size();
   for (int i=0; i<sz; i++) {
@@ -187,16 +188,17 @@ FEApp::BoundaryFlux1DResponseFunction::
 evaluateSGTangents(
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
-  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-  const Teuchos::Array<SGType>* sg_p_vals,
   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
   Stokhos::EpetraVectorOrthogPoly* sg_g,
   const Teuchos::Array< Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly > >& sg_gt)
 {
   if (sg_g != NULL)
-    evaluateSGResponses(sg_xdot, sg_x, p, sg_p_vals, *sg_g);
+    evaluateSGResponses(sg_xdot, sg_x, p, sg_p_index, sg_p_vals, *sg_g);
 
   // For tangent, only mean is non-zero, which is the tangent of the mean
   const Epetra_Vector *xdot_mean = NULL;
@@ -218,16 +220,17 @@ FEApp::BoundaryFlux1DResponseFunction::
 evaluateSGGradients(
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
-  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-  const Teuchos::Array<SGType>* sg_p_vals,
   Stokhos::EpetraVectorOrthogPoly* sg_g,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
   const Teuchos::Array< Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly > >& sg_dg_dp)
 {
   if (sg_g != NULL)
-    evaluateSGResponses(sg_xdot, sg_x, p, sg_p_vals, *sg_g);
+    evaluateSGResponses(sg_xdot, sg_x, p, sg_p_index, sg_p_vals, *sg_g);
 
   // For gradients, only mean is non-zero, which is the gradient of the mean
   const Epetra_Vector *xdot_mean = NULL;
@@ -253,4 +256,3 @@ evaluateSGGradients(
   evaluateGradients(xdot_mean, x_mean, p, deriv_p, NULL, 
 		    dg_dx_mean, dg_dxdot_mean, dg_dp_mean);
 }
-#endif

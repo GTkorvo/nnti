@@ -52,8 +52,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-  unsigned int nelem = 100;
-  double h = 1.0/nelem;
+  int nelem = 100;
   double alpha = 1.0;
   double leftBC = 0.0;
   double rightBC = 0.1;
@@ -83,11 +82,6 @@ int main(int argc, char *argv[]) {
     if (argc>1) 
       if (argv[1][0]=='-' && argv[1][1]=='v') 
         verbose = true;
-    
-    // Create mesh
-    vector<double> x(nelem+1);
-    for (unsigned int i=0; i<=nelem; i++)
-      x[i] = h*i;
 
     // Set up application parameters
     Teuchos::RefCountPtr<Teuchos::ParameterList> appParams = 
@@ -101,18 +95,21 @@ int main(int argc, char *argv[]) {
       problemParams.sublist("Source Function");
     sourceParams.set("Name", "Cubic");
     sourceParams.set("Nonlinear Factor", alpha);
-    
-
-    // Create set of free parameters for LOCA to use
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > free_param_names =
-      Teuchos::rcp(new Teuchos::Array<std::string>);
-    free_param_names->push_back("Constant Node BC 1");
-    free_param_names->push_back("Constant Node BC 2");
-    free_param_names->push_back("Cubic Source Function Nonlinear Factor");
+    Teuchos::ParameterList& parameterParams = 
+      problemParams.sublist("Parameters");
+     parameterParams.set("Number of Parameter Vectors", 1);
+    Teuchos::ParameterList& pParams = 
+      parameterParams.sublist("Parameter Vector 0");
+    pParams.set("Number", 3);
+    pParams.set("Parameter 0", "Constant Node BC 1");
+    pParams.set("Parameter 1", "Constant Node BC 2");
+    pParams.set("Parameter 2",  "Cubic Source Function Nonlinear Factor");
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+    discParams.set("Number of Elements", nelem);
 
     // Create application
     Teuchos::RefCountPtr<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, Comm, appParams, true));
+      Teuchos::rcp(new FEApp::Application(Comm, appParams));
 
     // Create initial guess
     Teuchos::RefCountPtr<const Epetra_Vector> u = app->getInitialSolution();
@@ -208,7 +205,7 @@ int main(int argc, char *argv[]) {
 
     // Create model evaluator
     Teuchos::RefCountPtr<FEApp::ModelEvaluator> model = 
-      Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names));
+      Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 
     // Create Epetra factory
     Teuchos::RefCountPtr<LOCA::Abstract::Factory> epetraFactory =

@@ -58,7 +58,7 @@ namespace FEApp {
     virtual void 
     evaluateResponses(const Epetra_Vector* xdot,
                       const Epetra_Vector& x,
-                      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+                      const Teuchos::Array<ParamVec>& p,
                       Epetra_Vector& g);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
@@ -66,7 +66,7 @@ namespace FEApp {
     evaluateTangents(
 	   const Epetra_Vector* xdot,
 	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	   const Teuchos::Array<ParamVec>& p,
 	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
 	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
 	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
@@ -78,14 +78,13 @@ namespace FEApp {
     evaluateGradients(
 	  const Epetra_Vector* xdot,
 	  const Epetra_Vector& x,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	  const Teuchos::Array<ParamVec>& p,
 	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
 	  Epetra_Vector* g,
 	  Epetra_MultiVector* dg_dx,
 	  Epetra_MultiVector* dg_dxdot,
 	  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp);
 
-#if SG_ACTIVE
     //! Initialize SG expansion data
     virtual void init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& sg_basis,
@@ -94,20 +93,23 @@ namespace FEApp {
 
     //! Evaluate stochastic Galerkin responses
     virtual void 
-    evaluateSGResponses(const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-			const Stokhos::EpetraVectorOrthogPoly& sg_x,
-			const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			const Teuchos::Array<SGType>* sg_p_vals,
-			Stokhos::EpetraVectorOrthogPoly& sg_g);
+    evaluateSGResponses(
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      Stokhos::EpetraVectorOrthogPoly& sg_g);
 
     //! Evaluate SG tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void 
     evaluateSGTangents(
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
       const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<SGType>* sg_p_vals,
       const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
       const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
       Stokhos::EpetraVectorOrthogPoly* sg_g,
@@ -118,14 +120,14 @@ namespace FEApp {
     evaluateSGGradients(
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
       const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<SGType>* sg_p_vals,
       Stokhos::EpetraVectorOrthogPoly* sg_g,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
       const Teuchos::Array< Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly > >& sg_dg_dp);
-#endif
 
   private:
 
@@ -137,13 +139,11 @@ namespace FEApp {
 
   protected:
 
-#if SG_ACTIVE
     //! Stochastic Galerking basis
     Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > sg_basis;
 
     //! Stochastic Galerking quadrature
     Teuchos::RCP<const Stokhos::Quadrature<int,double> > sg_quad;
-#endif
 
   };
 

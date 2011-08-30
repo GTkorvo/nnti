@@ -31,19 +31,17 @@
 
 #include "FEApp_SGGaussQuadResidualGlobalFill.hpp"
 
-#if SG_ACTIVE
-
 FEApp::SGGaussQuadResidualGlobalFill::
 SGGaussQuadResidualGlobalFill(
-      const Teuchos::RCP<const FEApp::Mesh>& elementMesh,
-      const Teuchos::RCP<const FEApp::AbstractQuadrature>& quadRule,
-      const Teuchos::RCP< FEApp::AbstractPDE<FEApp::SGResidualType> >& pdeEquations,
-      const std::vector< Teuchos::RCP<FEApp::NodeBC> >& nodeBCs,
-      bool is_transient,
-      const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& sgBasis,
-      const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& sgQuad,
-      const Teuchos::RCP< FEApp::AbstractPDE<FEApp::ResidualType> >& resPDEEquations,
-      const ParamVec* pvec):
+  const Teuchos::RCP<const FEApp::Mesh>& elementMesh,
+  const Teuchos::RCP<const FEApp::AbstractQuadrature>& quadRule,
+  const Teuchos::RCP< FEApp::AbstractPDE<FEApp::SGResidualType> >& pdeEquations,
+  const std::vector< Teuchos::RCP<FEApp::NodeBC> >& nodeBCs,
+  bool is_transient,
+  const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& sgBasis,
+  const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& sgQuad,
+  const Teuchos::RCP< FEApp::AbstractPDE<FEApp::ResidualType> >& resPDEEquations,
+  const Teuchos::Array< Teuchos::RCP<const ParamVec> >& pvec):
   GlobalFill<SGResidualType>(elementMesh, quadRule, pdeEquations, nodeBCs,
                              is_transient),
   sg_basis(sgBasis),
@@ -61,13 +59,13 @@ SGGaussQuadResidualGlobalFill(
   f(ndof),
   xqp(ndof*nqp),
   xdotqp(),
-  pqp(p->size()*nqp),
+  pqp(p.size()),
   fqp(ndof*nqp),
   qv(nqp*sg_size),
   sqv(nqp*sg_size),
   sg_x(ndof*sg_size),
   sg_xdot(),
-  sg_p(p->size()*sg_size),
+  sg_p(p.size()),
   sg_f(ndof*sg_size)
 {
   if (transient) {
@@ -81,6 +79,13 @@ SGGaussQuadResidualGlobalFill(
       qv[qp*sg_size+i] = quad_values[qp][i];
       sqv[qp*sg_size+i] = quad_values[qp][i]/norms[i];
     }
+
+  for (int i=0; i<p.size(); i++) {
+    if (p[i] != Teuchos::null) {
+      pqp[i].resize(p[i]->size()*nqp);
+      sg_p[i].resize(p[i]->size()*sg_size);
+    }
+  }
 }
 
 FEApp::SGGaussQuadResidualGlobalFill::
@@ -96,13 +101,18 @@ FEApp::SGGaussQuadResidualGlobalFill::
 computeGlobalFill(FEApp::AbstractInitPostOp<FEApp::SGResidualType>& initPostOp)
 {
   // Evaluate parameters at quadrature points
-  for (unsigned int i=0; i<p->size(); i++) {
-    SGType pv = (*p)[i].family->getValue<FEApp::SGResidualType>();
-    for (unsigned int j=0; j<sg_size; j++)
-      sg_p[i*sg_size+j] = pv.fastAccessCoeff(j);
+  for (int l=0; l<p.size(); l++) {
+    if (p[l] != Teuchos::null) {
+      for (unsigned int i=0; i<p[l]->size(); i++) {
+	SGType pv = (*p[l])[i].family->getValue<FEApp::SGResidualType>();
+	for (unsigned int j=0; j<sg_size; j++)
+	  sg_p[l][i*sg_size+j] = pv.fastAccessCoeff(j);
+      }
+      blas.GEMM(Teuchos::TRANS, Teuchos::NO_TRANS, nqp, p[l]->size(), sg_size, 
+		1.0, &qv[0], sg_size, &sg_p[l][0], sg_size, 0.0, &pqp[l][0], 
+		nqp);
+    }
   }
-  blas.GEMM(Teuchos::TRANS, Teuchos::NO_TRANS, nqp, p->size(), sg_size, 1.0, 
-	    &qv[0], sg_size, &sg_p[0], sg_size, 0.0, &pqp[0], nqp);
 
   // Loop over elements
   bool first = true;
@@ -132,8 +142,12 @@ computeGlobalFill(FEApp::AbstractInitPostOp<FEApp::SGResidualType>& initPostOp)
     for (unsigned int qp=0; qp<nqp; qp++) {
 
       // Evaluate parameters
-      for (unsigned int i=0; i<p->size(); i++)
-	(*p)[i].family->setValue<FEApp::ResidualType>(pqp[i*nqp+qp]);
+      for (int l=0; l<p.size(); l++) {
+	if (p[l] != Teuchos::null) {
+	  for (unsigned int i=0; i<p[l]->size(); i++)
+	    (*p[l])[i].family->setValue<FEApp::ResidualType>(pqp[l][i*nqp+qp]);
+	}
+      }
 
       // Get x, xdot at quadrature points
       for (unsigned int i=0; i<ndof; i++) {
@@ -204,5 +218,3 @@ computeGlobalFill(FEApp::AbstractInitPostOp<FEApp::SGResidualType>& initPostOp)
   initPostOp.finalizeFill();
 
 }
-
-#endif

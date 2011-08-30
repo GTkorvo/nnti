@@ -34,21 +34,16 @@
 #include "FEApp_QuadratureFactory.hpp"
 #include "FEApp_DiscretizationFactory.hpp"
 #include "Epetra_LocalMap.h"
-#if SG_ACTIVE
 #include "FEApp_SGGaussQuadResidualGlobalFill.hpp"
 #include "FEApp_SGGaussQuadJacobianGlobalFill.hpp"
-#endif
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_TestForException.hpp"
 
 FEApp::Application::Application(
-  const std::vector<double>& coords,
   const Teuchos::RCP<const Epetra_Comm>& comm,
   const Teuchos::RCP<Teuchos::ParameterList>& params_,
-  bool is_transient,
   const Epetra_Vector* initial_soln) :
-  params(params_),
-  transient(is_transient)
+  params(params_)
 {
   // Create parameter library
   paramLib = Teuchos::rcp(new ParamLib);
@@ -69,9 +64,16 @@ FEApp::Application::Application(
   FEApp::QuadratureFactory quadFactory(quadParams);
   quad = quadFactory.create();
 
-  // Create discretization object
+  // Create mesh
   Teuchos::RCP<Teuchos::ParameterList> discParams = 
     Teuchos::rcp(&(params->sublist("Discretization")),false);
+  int nelem = discParams->get("Number of Elements", 100);
+  double h = 1.0/nelem;
+  std::vector<double> coords(nelem+1);
+  for (int i=0; i<=nelem; i++)
+    coords[i] = h*i;
+
+  // Create discretization object
   FEApp::DiscretizationFactory discFactory(discParams);
   disc = discFactory.create(coords, num_equations, comm);
   disc->createMesh();
@@ -84,9 +86,8 @@ FEApp::Application::Application(
   exporter = Teuchos::rcp(new Epetra_Export(*(disc->getOverlapMap()), 
                                             *(disc->getMap())));
   overlapped_x = Teuchos::rcp(new Epetra_Vector(*(disc->getOverlapMap())));
-  if (transient)
-    overlapped_xdot = 
-      Teuchos::rcp(new Epetra_Vector(*(disc->getOverlapMap())));
+  overlapped_xdot = 
+    Teuchos::rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_f = Teuchos::rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_jac = 
     Teuchos::rcp(new Epetra_CrsMatrix(Copy, 
@@ -147,13 +148,6 @@ FEApp::Application::getParamLib()
   return paramLib;
 }
 
-bool
-FEApp::Application::isTransient() const
-{
-  return transient;
-}
-
-#if SG_ACTIVE
 void
 FEApp::Application::init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
@@ -181,11 +175,10 @@ FEApp::Application::init_sg(
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
 		     sg_basis, sg_overlap_map, disc->getOverlapMap(),
 		     multiComm));
-    if (transient)
-      sg_overlapped_xdot = 
-	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		       sg_basis, sg_overlap_map, disc->getOverlapMap(),
-		       multiComm));
+    sg_overlapped_xdot = 
+      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
+		     sg_basis, sg_overlap_map, disc->getOverlapMap(),
+		     multiComm));
     sg_overlapped_f = 
       Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
 		     sg_basis, sg_overlap_map, disc->getOverlapMap(),
@@ -196,7 +189,6 @@ FEApp::Application::init_sg(
   for (unsigned int i=0; i<responses.size(); i++)
     responses[i]->init_sg(basis, quad, exp);
 }
-#endif
 
 Teuchos::RCP<Epetra_Operator>
 FEApp::Application::createW() const
@@ -213,11 +205,10 @@ FEApp::Application::createPrec() const
 }
 
 void
-FEApp::Application::computeGlobalResidual(
-                          const Epetra_Vector* xdot,
-			  const Epetra_Vector& x,
-			  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			  Epetra_Vector& f)
+FEApp::Application::computeGlobalResidual(const Epetra_Vector* xdot,
+					  const Epetra_Vector& x,
+					  const Teuchos::Array<ParamVec>& p,
+					  Epetra_Vector& f)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalResidual");
 
@@ -225,15 +216,13 @@ FEApp::Application::computeGlobalResidual(
   overlapped_x->Import(x, *importer, Insert);
 
   // Scatter xdot to the overlapped distribution
-  if (transient)
+  if (xdot)
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
-  for (int i=0; i<p.size(); i++) {
-    if (p[i] != Teuchos::null)
-      for (unsigned int j=0; j<p[i]->size(); j++)
-	(*(p[i]))[j].family->setRealValueForAllTypes((*(p[i]))[j].baseValue);
-  }
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // Zero out overlapped residual
   overlapped_f->PutScalar(0.0);
@@ -250,7 +239,7 @@ FEApp::Application::computeGlobalResidual(
 
   // Do global fill
   FEApp::GlobalFill<FEApp::ResidualType> globalFill(disc->getMesh(), quad, 
-                                                    pde, bc, transient);
+                                                    pde, bc, xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual
@@ -258,13 +247,12 @@ FEApp::Application::computeGlobalResidual(
 }
 
 void
-FEApp::Application::computeGlobalJacobian(
-			    double alpha, double beta,
-			    const Epetra_Vector* xdot,
-			    const Epetra_Vector& x,
-			    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			    Epetra_Vector* f,
-			    Epetra_Operator& jacOp)
+FEApp::Application::computeGlobalJacobian(double alpha, double beta,
+					  const Epetra_Vector* xdot,
+					  const Epetra_Vector& x,
+					  const Teuchos::Array<ParamVec>& p,
+					  Epetra_Vector* f,
+					  Epetra_Operator& jacOp)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalJacobian");
 
@@ -275,15 +263,13 @@ FEApp::Application::computeGlobalJacobian(
   overlapped_x->Import(x, *importer, Insert);
 
   // Scatter xdot to the overlapped distribution
-  if (transient)
+  if (xdot)
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
-  for (int i=0; i<p.size(); i++) {
-    if (p[i] != Teuchos::null)
-      for (unsigned int j=0; j<p[i]->size(); j++)
-	(*(p[i]))[j].family->setRealValueForAllTypes((*(p[i]))[j].baseValue);
-  }
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // Zero out overlapped residual
   Teuchos::RCP<Epetra_Vector> overlapped_ff;
@@ -310,7 +296,7 @@ FEApp::Application::computeGlobalJacobian(
   // Do global fill
   FEApp::GlobalFill<FEApp::JacobianType> globalFill(disc->getMesh(), 
                                                     quad, pde, bc, 
-                                                    transient);
+                                                    xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual
@@ -325,12 +311,12 @@ FEApp::Application::computeGlobalJacobian(
 
 void
 FEApp::Application::computeGlobalPreconditioner(
-			    double alpha, double beta,
-			    const Epetra_Vector* xdot,
-			    const Epetra_Vector& x,
-			    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			    Epetra_Vector* f,
-			    Epetra_Operator& jacOp)
+  double alpha, double beta,
+  const Epetra_Vector* xdot,
+  const Epetra_Vector& x,
+  const Teuchos::Array<ParamVec>& p,
+  Epetra_Vector* f,
+  Epetra_Operator& jacOp)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalPreconditioner");
 
@@ -341,15 +327,13 @@ FEApp::Application::computeGlobalPreconditioner(
   overlapped_x->Import(x, *importer, Insert);
 
   // Scatter xdot to the overlapped distribution
-  if (transient)
+  if (xdot)
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
-  for (int i=0; i<p.size(); i++) {
-    if (p[i] != Teuchos::null)
-      for (unsigned int j=0; j<p[i]->size(); j++)
-	(*(p[i]))[j].family->setRealValueForAllTypes((*(p[i]))[j].baseValue);
-  }
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // Zero out overlapped residual
   Teuchos::RCP<Epetra_Vector> overlapped_ff;
@@ -376,7 +360,7 @@ FEApp::Application::computeGlobalPreconditioner(
   // Do global fill
   FEApp::GlobalFill<FEApp::JacobianType> globalFill(disc->getMesh(), 
                                                     quad, pde, bc, 
-                                                    transient);
+                                                    xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual
@@ -391,31 +375,29 @@ FEApp::Application::computeGlobalPreconditioner(
 
 void
 FEApp::Application::computeGlobalTangent(
-			      double alpha, double beta,
-			      bool sum_derivs,
-			      const Epetra_Vector* xdot,
-			      const Epetra_Vector& x,
-			      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			      ParamVec* deriv_p,
-			      const Epetra_MultiVector* Vx,
-			      const Teuchos::SerialDenseMatrix<int,double>* Vp,
-			      Epetra_Vector* f,
-			      Epetra_MultiVector* JVx,
-			      Epetra_MultiVector* fVp)
+  double alpha, double beta,
+  bool sum_derivs,
+  const Epetra_Vector* xdot,
+  const Epetra_Vector& x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::RCP<ParamVec>& deriv_p,
+  const Epetra_MultiVector* Vx,
+  const Teuchos::SerialDenseMatrix<int,double>* Vp,
+  Epetra_Vector* f,
+  Epetra_MultiVector* JVx,
+  Epetra_MultiVector* fVp)
 {
   // Scatter x to the overlapped distrbution
   overlapped_x->Import(x, *importer, Insert);
 
   // Scatter xdot to the overlapped distribution
-  if (transient)
+  if (xdot)
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
-  for (int i=0; i<p.size(); i++) {
-    if (p[i] != Teuchos::null)
-      for (unsigned int j=0; j<p[i]->size(); j++)
-	(*(p[i]))[j].family->setRealValueForAllTypes((*(p[i]))[j].baseValue);
-  }
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // Zero out overlapped residual
   Teuchos::RCP<Epetra_Vector> overlapped_ff;
@@ -452,15 +434,13 @@ FEApp::Application::computeGlobalTangent(
 
   Teuchos::RCP<const Teuchos::SerialDenseMatrix<int,double> > vp =
     Teuchos::rcp(Vp, false);
-  Teuchos::RCP<ParamVec> params = 
-    Teuchos::rcp(deriv_p, false);
-
+  
   // Create Jacobian init/post op
   Teuchos::RCP<FEApp::TangentOp> op = 
     Teuchos::rcp(new FEApp::TangentOp(alpha, beta, sum_derivs,
                                       overlapped_xdot, 
                                       overlapped_x,
-                                      params,
+                                      deriv_p,
                                       overlapped_Vx,
                                       overlapped_Vx,
                                       vp,
@@ -475,7 +455,7 @@ FEApp::Application::computeGlobalTangent(
   // Do global fill
   FEApp::GlobalFill<FEApp::TangentType> globalFill(disc->getMesh(), 
                                                    quad, pde, bc, 
-                                                   transient);
+                                                   xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual
@@ -493,7 +473,7 @@ void
 FEApp::Application::
 evaluateResponses(const Epetra_Vector* xdot,
                   const Epetra_Vector& x,
-                  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+                  const Teuchos::Array<ParamVec>& p,
                   Epetra_Vector& g)
 {
   const Epetra_Comm& comm = x.Map().Comm();
@@ -522,14 +502,14 @@ evaluateResponses(const Epetra_Vector* xdot,
 void
 FEApp::Application::
 evaluateResponseTangents(
-	   const Epetra_Vector* xdot,
-	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
-	   Epetra_Vector* g,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt)
+  const Epetra_Vector* xdot,
+  const Epetra_Vector& x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
+  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
+  Epetra_Vector* g,
+  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt)
 {
   const Epetra_Comm& comm = x.Map().Comm();
   unsigned int offset = 0;
@@ -571,14 +551,14 @@ evaluateResponseTangents(
 void
 FEApp::Application::
 evaluateResponseGradients(
-	    const Epetra_Vector* xdot,
-	    const Epetra_Vector& x,
-	    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	    const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	    Epetra_Vector* g,
-	    Epetra_MultiVector* dg_dx,
-	    Epetra_MultiVector* dg_dxdot,
-	    const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp)
+  const Epetra_Vector* xdot,
+  const Epetra_Vector& x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+  Epetra_Vector* g,
+  Epetra_MultiVector* dg_dx,
+  Epetra_MultiVector* dg_dxdot,
+  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp)
 {
   const Epetra_Comm& comm = x.Map().Comm();
   unsigned int offset = 0;
@@ -631,15 +611,14 @@ evaluateResponseGradients(
   }
 }
 
-#if SG_ACTIVE
 void
 FEApp::Application::computeGlobalSGResidual(
-			const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-			const Stokhos::EpetraVectorOrthogPoly& sg_x,
-			const ParamVec* p,
-			const ParamVec* sg_p,
-			const Teuchos::Array<SGType>* sg_p_vals,
-			Stokhos::EpetraVectorOrthogPoly& sg_f)
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  Stokhos::EpetraVectorOrthogPoly& sg_f)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalSGResidual");
 
@@ -649,7 +628,7 @@ FEApp::Application::computeGlobalSGResidual(
     (*sg_overlapped_x)[i].Import(sg_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (sg_xdot)
       (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -658,19 +637,17 @@ FEApp::Application::computeGlobalSGResidual(
 
   }
 
-  // Set real parameters
-  if (p != NULL) {
-    for (unsigned int i=0; i<p->size(); ++i) {
-      (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
-    }
-  }
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // Set SG parameters
-  if (sg_p != NULL && sg_p_vals != NULL) {
-    for (unsigned int i=0; i<sg_p->size(); ++i) {
-      (*sg_p)[i].family->setValue<FEApp::SGResidualType>((*sg_p_vals)[i]);
+  for (int i=0; i<sg_p_index.size(); i++) {
+    int ii = sg_p_index[i];
+    for (unsigned int j=0; j<p[ii].size(); j++)
+	p[ii][j].family->setValue<FEApp::SGResidualType>(sg_p_vals[ii][j]);
     }
-  }
 
   // Create residual init/post op
   Teuchos::RCP<FEApp::SGResidualOp> sg_res_fill_op = 
@@ -689,15 +666,18 @@ FEApp::Application::computeGlobalSGResidual(
     if (method == "AD") {
       sg_res_global_fill = 
         Teuchos::rcp(new FEApp::GlobalFill<FEApp::SGResidualType>(
-	  disc->getMesh(), quad, pde, bc, transient));
+	  disc->getMesh(), quad, pde, bc, sg_xdot!=NULL));
     }
     else if (method == "Gauss Quadrature") {
       Teuchos::RCP< FEApp::AbstractPDE<FEApp::ResidualType> > res_pde = 
 	pdeTM.getAsObject<FEApp::ResidualType>();
+      Teuchos::Array< Teuchos::RCP<const ParamVec> >sg_p(sg_p_index.size());
+      for (int i=0; i<sg_p_index.size(); i++)
+	sg_p[i] = Teuchos::rcp(&p[sg_p_index[i]], false);
       sg_res_global_fill = 
         Teuchos::rcp(new FEApp::SGGaussQuadResidualGlobalFill(disc->getMesh(), 
                                                               quad, pde, bc, 
-                                                              transient,
+                                                              sg_xdot!=NULL,
                                                               sg_basis,
 							      sg_quad,
                                                               res_pde,
@@ -715,14 +695,14 @@ FEApp::Application::computeGlobalSGResidual(
 
 void
 FEApp::Application::computeGlobalSGJacobian(
-			double alpha, double beta,
-			const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-			const Stokhos::EpetraVectorOrthogPoly& sg_x,
-			const ParamVec* p,
-			const ParamVec* sg_p,
-			const Teuchos::Array<SGType>* sg_p_vals,
-			Stokhos::EpetraVectorOrthogPoly* sg_f,
-			Stokhos::VectorOrthogPoly<Epetra_Operator>& sg_jac)
+  double alpha, double beta,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  Stokhos::EpetraVectorOrthogPoly* sg_f,
+  Stokhos::EpetraOperatorOrthogPoly& sg_jac)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalSGJacobian");
 
@@ -732,7 +712,7 @@ FEApp::Application::computeGlobalSGJacobian(
     (*sg_overlapped_x)[i].Import(sg_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (sg_xdot)
       (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -756,19 +736,17 @@ FEApp::Application::computeGlobalSGJacobian(
   for (int i=0; i<sg_overlapped_jac->size(); i++)
     (*sg_overlapped_jac)[i].PutScalar(0.0);
 
-  // Set real parameters
-  if (p != NULL) {
-    for (unsigned int i=0; i<p->size(); ++i) {
-      (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
-    }
-  }
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // Set SG parameters
-  if (sg_p != NULL && sg_p_vals != NULL) {
-    for (unsigned int i=0; i<sg_p->size(); ++i) {
-      (*sg_p)[i].family->setValue<FEApp::SGJacobianType>((*sg_p_vals)[i]);
+  for (int i=0; i<sg_p_index.size(); i++) {
+    int ii = sg_p_index[i];
+    for (unsigned int j=0; j<p[ii].size(); j++)
+	p[ii][j].family->setValue<FEApp::SGJacobianType>(sg_p_vals[ii][j]);
     }
-  }
 
   // Create Jacobian init/post op
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_overlapped_ff;
@@ -792,15 +770,18 @@ FEApp::Application::computeGlobalSGJacobian(
     if (method == "AD") {
       sg_jac_global_fill = 
 	Teuchos::rcp(new FEApp::GlobalFill<FEApp::SGJacobianType>(
-	    disc->getMesh(), quad, pde, bc,transient));
+	    disc->getMesh(), quad, pde, bc,sg_xdot!=NULL));
     }
     else if (method == "Gauss Quadrature") {
       Teuchos::RCP< FEApp::AbstractPDE<FEApp::JacobianType> > jac_pde = 
 	pdeTM.getAsObject<FEApp::JacobianType>();
+      Teuchos::Array< Teuchos::RCP<const ParamVec> >sg_p(sg_p_index.size());
+      for (int i=0; i<sg_p_index.size(); i++)
+	sg_p[i] = Teuchos::rcp(&p[sg_p_index[i]], false);
       sg_jac_global_fill = 
 	Teuchos::rcp(new FEApp::SGGaussQuadJacobianGlobalFill(disc->getMesh(),
 							      quad, pde, bc, 
-							      transient,
+							      sg_xdot!=NULL,
 							      sg_basis,
 							      sg_quad,
 							      jac_pde,
@@ -830,16 +811,18 @@ FEApp::Application::computeGlobalSGJacobian(
 
 void
 FEApp::Application::computeGlobalSGTangent(
-      double alpha, double beta, bool sum_derivs,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const ParamVec* p, ParamVec* deriv_p, const ParamVec* sg_p, 
-      const Teuchos::Array<SGType>* sg_p_vals,   
-      const Epetra_MultiVector* Vx,
-      const Teuchos::SerialDenseMatrix<int,double>* Vp,
-      Stokhos::EpetraVectorOrthogPoly* sg_f,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_JVx,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_fVp)
+  double alpha, double beta, bool sum_derivs,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  const Teuchos::RCP<ParamVec>& deriv_p,
+  const Epetra_MultiVector* Vx,
+  const Teuchos::SerialDenseMatrix<int,double>* Vp,
+  Stokhos::EpetraVectorOrthogPoly* sg_f,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_JVx,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_fVp)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalSGTangent");
 
@@ -849,7 +832,7 @@ FEApp::Application::computeGlobalSGTangent(
     (*sg_overlapped_x)[i].Import(sg_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (sg_xdot)
       (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -860,19 +843,18 @@ FEApp::Application::computeGlobalSGTangent(
 
   }
 
-  // Set real parameters
-  if (p != NULL) {
-    for (unsigned int i=0; i<p->size(); ++i) {
-      (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
-    }
-  }
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // Set SG parameters
-  if (sg_p != NULL && sg_p_vals != NULL) {
-    for (unsigned int i=0; i<sg_p->size(); ++i) {
-      (*sg_p)[i].family->setValue<FEApp::SGTangentType>((*sg_p_vals)[i]);
-    }
+  for (int i=0; i<sg_p_index.size(); i++) {
+    int ii = sg_p_index[i];
+    for (unsigned int j=0; j<p[ii].size(); j++)
+	p[ii][j].family->setValue<FEApp::SGTangentType>(sg_p_vals[ii][j]);
   }
+
 
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_overlapped_JVx;
   if (sg_JVx != NULL) {
@@ -903,8 +885,6 @@ FEApp::Application::computeGlobalSGTangent(
 
   Teuchos::RCP<const Teuchos::SerialDenseMatrix<int,double> > vp =
     Teuchos::rcp(Vp, false);
-  Teuchos::RCP<ParamVec> params = 
-    Teuchos::rcp(deriv_p, false);
 
   // Create Jacobian init/post op
    Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_overlapped_ff;
@@ -915,7 +895,7 @@ FEApp::Application::computeGlobalSGTangent(
 					alpha, beta, sum_derivs,
 					sg_overlapped_xdot, 
 					sg_overlapped_x,
-					params,
+					deriv_p,
 					overlapped_Vx,
 					overlapped_Vx,
 					vp,
@@ -930,7 +910,7 @@ FEApp::Application::computeGlobalSGTangent(
   // Do global fill
   FEApp::GlobalFill<FEApp::SGTangentType> globalFill(disc->getMesh(), 
 						     quad, pde, bc, 
-						     transient);
+						     sg_xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual
@@ -951,8 +931,9 @@ void
 FEApp::Application::
 evaluateSGResponses(const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
 		    const Stokhos::EpetraVectorOrthogPoly& sg_x,
-		    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-		    const Teuchos::Array<SGType>* sg_p_vals,
+		    const Teuchos::Array<ParamVec>& p,
+		    const Teuchos::Array<int>& sg_p_index,
+		    const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
 		    Stokhos::EpetraVectorOrthogPoly& sg_g)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::evaluateSGResponses");
@@ -974,7 +955,8 @@ evaluateSGResponses(const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
       sg_x.productComm());
 
     // Evaluate response function
-    responses[i]->evaluateSGResponses(sg_xdot, sg_x, p, sg_p_vals, local_sg_g);
+    responses[i]->evaluateSGResponses(sg_xdot, sg_x, p, sg_p_index, sg_p_vals, 
+				      local_sg_g);
 
     // Copy result into combined result
     for (int k=0; k<sg_g.size(); k++)
@@ -991,9 +973,10 @@ FEApp::Application::
 evaluateSGResponseTangents(
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
       const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<SGType>* sg_p_vals,
       const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
       const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
       Stokhos::EpetraVectorOrthogPoly* sg_g,
@@ -1029,8 +1012,8 @@ evaluateSGResponseTangents(
 			 (*sg_gt[j])[0].NumVectors()));
 
     // Evaluate response function
-    responses[i]->evaluateSGTangents(sg_xdot, sg_x, p, deriv_p, sg_p_vals,
-				     dxdot_dp, dx_dp, 
+    responses[i]->evaluateSGTangents(sg_xdot, sg_x, p, sg_p_index, sg_p_vals, 
+				     deriv_p, dxdot_dp, dx_dp, 
 				     local_sg_g.get(), local_sg_gt);
 
     // Copy results into combined result
@@ -1053,15 +1036,16 @@ evaluateSGResponseTangents(
 void
 FEApp::Application::
 evaluateSGResponseGradients(
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<SGType>* sg_p_vals,
-      Stokhos::EpetraVectorOrthogPoly* sg_g,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
-      const Teuchos::Array< Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > >& sg_dg_dp)
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+  Stokhos::EpetraVectorOrthogPoly* sg_g,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+  const Teuchos::Array< Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > >& sg_dg_dp)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::evaluateSGResponseGradients");
 
@@ -1106,7 +1090,8 @@ evaluateSGResponseGradients(
 			 (*sg_dg_dp[j])[0].NumVectors()));
 
     // Evaluate response function
-    responses[i]->evaluateSGGradients(sg_xdot, sg_x, p, deriv_p, sg_p_vals, 
+    responses[i]->evaluateSGGradients(sg_xdot, sg_x, p, sg_p_index, sg_p_vals, 
+				      deriv_p,
 				      local_sg_g.get(), 
 				      local_sg_dgdx.get(), 
 				      local_sg_dgdxdot.get(), 
@@ -1138,12 +1123,12 @@ evaluateSGResponseGradients(
 
 void
 FEApp::Application::computeGlobalMPResidual(
-			const Stokhos::ProductEpetraVector* mp_xdot,
-			const Stokhos::ProductEpetraVector& mp_x,
-			const ParamVec* p,
-			const ParamVec* mp_p,
-			const Teuchos::Array<MPType>* mp_p_vals,
-			Stokhos::ProductEpetraVector& mp_f)
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  Stokhos::ProductEpetraVector& mp_f)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalMPResidual");
 
@@ -1154,8 +1139,8 @@ FEApp::Application::computeGlobalMPResidual(
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
 						    mp_x.productComm()));
-  if (transient && (mp_overlapped_xdot == Teuchos::null || 
-		    mp_overlapped_xdot->size() != mp_x.size()))
+  if (mp_xdot && (mp_overlapped_xdot == Teuchos::null || 
+		  mp_overlapped_xdot->size() != mp_x.size()))
     mp_overlapped_xdot = 
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
@@ -1174,7 +1159,7 @@ FEApp::Application::computeGlobalMPResidual(
     (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (mp_xdot)
       (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -1183,18 +1168,16 @@ FEApp::Application::computeGlobalMPResidual(
 
   }
 
-  // Set real parameters
-  if (p != NULL) {
-    for (unsigned int i=0; i<p->size(); ++i) {
-      (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
-    }
-  }
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // Set MP parameters
-  if (mp_p != NULL && mp_p_vals != NULL) {
-    for (unsigned int i=0; i<mp_p->size(); ++i) {
-      (*mp_p)[i].family->setValue<FEApp::MPResidualType>((*mp_p_vals)[i]);
-    }
+  for (int i=0; i<mp_p_index.size(); i++) {
+    int ii = mp_p_index[i];
+    for (unsigned int j=0; j<p[ii].size(); j++)
+	p[ii][j].family->setValue<FEApp::MPResidualType>(mp_p_vals[ii][j]);
   }
 
   // Create residual init/post op
@@ -1211,7 +1194,7 @@ FEApp::Application::computeGlobalMPResidual(
   if (mp_res_global_fill == Teuchos::null) {
     mp_res_global_fill = 
       Teuchos::rcp(new FEApp::GlobalFill<FEApp::MPResidualType>(
-		     disc->getMesh(), quad, pde, bc, transient));
+		     disc->getMesh(), quad, pde, bc, mp_xdot!=NULL));
   }
 
   // Do global fill
@@ -1224,14 +1207,14 @@ FEApp::Application::computeGlobalMPResidual(
 
 void
 FEApp::Application::computeGlobalMPJacobian(
-			double alpha, double beta,
-			const Stokhos::ProductEpetraVector* mp_xdot,
-			const Stokhos::ProductEpetraVector& mp_x,
-			const ParamVec* p,
-			const ParamVec* mp_p,
-			const Teuchos::Array<MPType>* mp_p_vals,
-			Stokhos::ProductEpetraVector* mp_f,
-			Stokhos::ProductContainer<Epetra_Operator>& mp_jac)
+  double alpha, double beta,
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  Stokhos::ProductEpetraVector* mp_f,
+  Stokhos::ProductEpetraOperator& mp_jac)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalMPJacobian");
 
@@ -1242,8 +1225,8 @@ FEApp::Application::computeGlobalMPJacobian(
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
 						    mp_x.productComm()));
-  if (transient && (mp_overlapped_xdot == Teuchos::null || 
-		    mp_overlapped_xdot->size() != mp_x.size()))
+  if (mp_xdot && (mp_overlapped_xdot == Teuchos::null || 
+		  mp_overlapped_xdot->size() != mp_x.size()))
     mp_overlapped_xdot = 
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
@@ -1269,7 +1252,7 @@ FEApp::Application::computeGlobalMPJacobian(
     (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (mp_xdot)
       (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -1283,18 +1266,16 @@ FEApp::Application::computeGlobalMPJacobian(
 
   } 
 
-  // Set real parameters
-  if (p != NULL) {
-    for (unsigned int i=0; i<p->size(); ++i) {
-      (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
-    }
-  }
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // Set MP parameters
-  if (mp_p != NULL && mp_p_vals != NULL) {
-    for (unsigned int i=0; i<mp_p->size(); ++i) {
-      (*mp_p)[i].family->setValue<FEApp::MPJacobianType>((*mp_p_vals)[i]);
-    }
+  for (int i=0; i<mp_p_index.size(); i++) {
+    int ii = mp_p_index[i];
+    for (unsigned int j=0; j<p[ii].size(); j++)
+	p[ii][j].family->setValue<FEApp::MPJacobianType>(mp_p_vals[ii][j]);
   }
 
   // Create Jacobian init/post op
@@ -1316,7 +1297,7 @@ FEApp::Application::computeGlobalMPJacobian(
   if (mp_jac_global_fill == Teuchos::null) {
     mp_jac_global_fill = 
       Teuchos::rcp(new FEApp::GlobalFill<FEApp::MPJacobianType>(
-		     disc->getMesh(), quad, pde, bc,transient));
+		     disc->getMesh(), quad, pde, bc,mp_xdot!=NULL));
   }
 
   // Do global fill
@@ -1340,16 +1321,18 @@ FEApp::Application::computeGlobalMPJacobian(
 
 void
 FEApp::Application::computeGlobalMPTangent(
-      double alpha, double beta, bool sum_derivs,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const ParamVec* p, ParamVec* deriv_p, const ParamVec* mp_p, 
-      const Teuchos::Array<MPType>* mp_p_vals,   
-      const Epetra_MultiVector* Vx,
-      const Teuchos::SerialDenseMatrix<int,double>* Vp,
-      Stokhos::ProductEpetraVector* mp_f,
-      Stokhos::ProductEpetraMultiVector* mp_JVx,
-      Stokhos::ProductEpetraMultiVector* mp_fVp)
+  double alpha, double beta, bool sum_derivs,
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  const Teuchos::RCP<ParamVec>& deriv_p,
+  const Epetra_MultiVector* Vx,
+  const Teuchos::SerialDenseMatrix<int,double>* Vp,
+  Stokhos::ProductEpetraVector* mp_f,
+  Stokhos::ProductEpetraMultiVector* mp_JVx,
+  Stokhos::ProductEpetraMultiVector* mp_fVp)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::computeGlobalMPTangent");
 
@@ -1360,8 +1343,8 @@ FEApp::Application::computeGlobalMPTangent(
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
 						    mp_x.productComm()));
-  if (transient && (mp_overlapped_xdot == Teuchos::null || 
-		    mp_overlapped_xdot->size() != mp_x.size()))
+  if (mp_xdot && (mp_overlapped_xdot == Teuchos::null || 
+		  mp_overlapped_xdot->size() != mp_x.size()))
     mp_overlapped_xdot = 
       Teuchos::rcp(new Stokhos::ProductEpetraVector(mp_x.map(),
 						    disc->getOverlapMap(),
@@ -1380,7 +1363,7 @@ FEApp::Application::computeGlobalMPTangent(
     (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (mp_xdot)
       (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -1391,18 +1374,16 @@ FEApp::Application::computeGlobalMPTangent(
 
   }
 
-  // Set real parameters
-  if (p != NULL) {
-    for (unsigned int i=0; i<p->size(); ++i) {
-      (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
-    }
-  }
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // Set MP parameters
-  if (mp_p != NULL && mp_p_vals != NULL) {
-    for (unsigned int i=0; i<mp_p->size(); ++i) {
-      (*mp_p)[i].family->setValue<FEApp::MPTangentType>((*mp_p_vals)[i]);
-    }
+  for (int i=0; i<mp_p_index.size(); i++) {
+    int ii = mp_p_index[i];
+    for (unsigned int j=0; j<p[ii].size(); j++)
+	p[ii][j].family->setValue<FEApp::MPTangentType>(mp_p_vals[ii][j]);
   }
 
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_overlapped_JVx;
@@ -1432,8 +1413,6 @@ FEApp::Application::computeGlobalMPTangent(
 
   Teuchos::RCP<const Teuchos::SerialDenseMatrix<int,double> > vp =
     Teuchos::rcp(Vp, false);
-  Teuchos::RCP<ParamVec> params = 
-    Teuchos::rcp(deriv_p, false);
 
   // Create Jacobian init/post op
    Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_ff;
@@ -1443,7 +1422,7 @@ FEApp::Application::computeGlobalMPTangent(
     Teuchos::rcp(new FEApp::MPTangentOp(alpha, beta, sum_derivs,
 					mp_overlapped_xdot, 
 					mp_overlapped_x,
-					params,
+					deriv_p,
 					overlapped_Vx,
 					overlapped_Vx,
 					vp,
@@ -1458,7 +1437,7 @@ FEApp::Application::computeGlobalMPTangent(
   // Do global fill
   FEApp::GlobalFill<FEApp::MPTangentType> globalFill(disc->getMesh(), 
 						     quad, pde, bc, 
-						     transient);
+						     mp_xdot!=NULL);
   globalFill.computeGlobalFill(*op);
 
   // Assemble global residual
@@ -1477,39 +1456,63 @@ FEApp::Application::computeGlobalMPTangent(
 
 void
 FEApp::Application::
-evaluateMPResponses(const Stokhos::ProductEpetraVector* mp_xdot,
-		    const Stokhos::ProductEpetraVector& mp_x,
-		    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-		    const Teuchos::Array<MPType>* mp_p_vals,
-		    Stokhos::ProductEpetraVector& mp_g)
+evaluateMPResponses(
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  Stokhos::ProductEpetraVector& mp_g)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::evaluateMPResponses");
   const Epetra_Vector* xdot = NULL;
+
+  // Create a copy of p (since we shouldn't modify p below)
+  Teuchos::Array<ParamVec> p2(p);
+
   for (int i=0; i<mp_x.size(); i++) {
     if (mp_xdot != NULL)
       xdot = mp_xdot->getCoeffPtr(i).get();
 
-    evaluateResponses(xdot, mp_x[i], p, mp_g[i]);
+    // Set the base value for each MP parameter
+    for (int j=0; j<mp_p_index.size(); j++) {
+      int jj = mp_p_index[j];
+      for (unsigned int l=0; l<p2[jj].size(); l++)
+	p2[jj][l].baseValue = mp_p_vals[jj][l].coeff(i);
+    }
+
+    evaluateResponses(xdot, mp_x[i], p2, mp_g[i]);
   }
 }
 
 void
 FEApp::Application::
 evaluateMPResponseTangents(
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<MPType>* mp_p_vals,
-      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
-      const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
-      Stokhos::ProductEpetraVector* mp_g,
-      const Teuchos::Array< Teuchos::RCP< Stokhos::ProductEpetraMultiVector > >& mp_gt)
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
+  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
+  Stokhos::ProductEpetraVector* mp_g,
+  const Teuchos::Array< Teuchos::RCP< Stokhos::ProductEpetraMultiVector > >& mp_gt)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::evaluateMPResponseTangents");
   const Epetra_Vector* xdot = NULL;
   Epetra_Vector* g = NULL;
   Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> > gt(mp_gt.size());
+
+  // Create a copy of p (since we shouldn't modify p below)
+  Teuchos::Array<ParamVec> p2(p);
+
+  // Create a copy of deriv_p (since we shouldn't modify p below)
+  Teuchos::Array< Teuchos::RCP<ParamVec> > deriv_p2(deriv_p.size());
+  for (int i=0; i<deriv_p.size(); i++)
+    if (deriv_p[i] != Teuchos::null)
+      deriv_p2[i] = Teuchos::rcp(new ParamVec(*(deriv_p[i])));
+
   for (int i=0; i<mp_x.size(); i++) {
     if (mp_xdot != NULL)
       xdot = mp_xdot->getCoeffPtr(i).get();
@@ -1518,24 +1521,40 @@ evaluateMPResponseTangents(
     for (int j=0; j<mp_gt.size(); j++)
       if (mp_gt[j] != Teuchos::null)
 	gt[j] = mp_gt[j]->getCoeffPtr(i);
+
+    // Set the base value for each MP parameter
+    for (int j=0; j<mp_p_index.size(); j++) {
+      int jj = mp_p_index[j];
+      for (unsigned int l=0; l<p2[jj].size(); l++) {
+	p2[jj][l].baseValue = mp_p_vals[jj][l].coeff(i);
+	if (deriv_p[jj] != Teuchos::null) {
+	  for (unsigned int k=0; k<deriv_p2[jj]->size(); k++) {
+	    if ((*(deriv_p2[jj]))[k].family->getName() ==
+		p2[jj][l].family->getName())
+	      (*(deriv_p2[jj]))[k].baseValue = mp_p_vals[jj][l].coeff(i);
+	  }
+	}
+      }
+    }
     
-    evaluateResponseTangents(xdot, mp_x[i], p, deriv_p, dxdot_dp, dx_dp, 
-			     g, gt);
+    evaluateResponseTangents(xdot, mp_x[i], p2, deriv_p2, dxdot_dp, dx_dp, g, 
+			     gt);
   }
 }
 
 void
 FEApp::Application::
 evaluateMPResponseGradients(
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-      const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-      const Teuchos::Array<MPType>* mp_p_vals,
-      Stokhos::ProductEpetraVector* mp_g,
-      Stokhos::ProductEpetraMultiVector* mp_dg_dx,
-      Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
-      const Teuchos::Array< Teuchos::RCP< Stokhos::ProductEpetraMultiVector > >& mp_dg_dp)
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+  Stokhos::ProductEpetraVector* mp_g,
+  Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+  Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+  const Teuchos::Array< Teuchos::RCP< Stokhos::ProductEpetraMultiVector > >& mp_dg_dp)
 {
   TEUCHOS_FUNC_TIME_MONITOR("FEApp::Application::evaluateMPResponseGradients");
 
@@ -1544,6 +1563,16 @@ evaluateMPResponseGradients(
   Epetra_MultiVector* dg_dx = NULL;
   Epetra_MultiVector* dg_dxdot = NULL;
   Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> > dg_dp(mp_dg_dp.size());
+
+  // Create a copy of p (since we shouldn't modify p below)
+  Teuchos::Array<ParamVec> p2(p);
+
+  // Create a copy of deriv_p (since we shouldn't modify p below)
+  Teuchos::Array< Teuchos::RCP<ParamVec> > deriv_p2(deriv_p.size());
+  for (int i=0; i<deriv_p.size(); i++)
+    if (deriv_p[i] != Teuchos::null)
+      deriv_p2[i] = Teuchos::rcp(new ParamVec(*(deriv_p[i])));
+
   for (int i=0; i<mp_x.size(); i++) {
     if (mp_xdot != NULL)
       xdot = mp_xdot->getCoeffPtr(i).get();
@@ -1556,10 +1585,23 @@ evaluateMPResponseGradients(
     for (int j=0; j<mp_dg_dp.size(); j++)
       if (mp_dg_dp[j] != Teuchos::null)
 	dg_dp[j] = mp_dg_dp[j]->getCoeffPtr(i);
-    
-    evaluateResponseGradients(xdot, mp_x[i], p, deriv_p, g, dg_dx, dg_dxdot,
+
+    // Set the base value for each MP parameter
+    for (int j=0; j<mp_p_index.size(); j++) {
+      int jj = mp_p_index[j];
+      for (unsigned int l=0; l<p2[jj].size(); l++) {
+	p2[jj][l].baseValue = mp_p_vals[jj][l].coeff(i);
+	if (deriv_p[jj] != Teuchos::null) {
+	  for (unsigned int k=0; k<deriv_p2[jj]->size(); k++) {
+	    if ((*(deriv_p2[jj]))[k].family->getName() ==
+		p2[jj][l].family->getName())
+	      (*(deriv_p2[jj]))[k].baseValue = mp_p_vals[jj][l].coeff(i);
+	  }
+	}
+      }
+    }
+
+    evaluateResponseGradients(xdot, mp_x[i], p2, deriv_p2, g, dg_dx, dg_dxdot,
 			      dg_dp);
   }
 }
-
-#endif

@@ -62,12 +62,11 @@
 #include "EpetraExt_BlockUtility.h"
 
 int main(int argc, char *argv[]) {
-  unsigned int nelem = 100;
-  double h = 1.0/nelem;
+  int nelem = 100;
   double alpha = 2.0;
   double leftBC = 0.0;
   double rightBC = 0.1;
-  unsigned int numalpha = 3;
+  int numalpha = 3;
   unsigned int p = 7;
   unsigned int d = numalpha;
 
@@ -104,11 +103,6 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const EpetraExt::MultiComm> sg_comm =
       Stokhos::buildMultiComm(*globalComm, basis->size(), num_spatial_procs);
     Teuchos::RCP<const Epetra_Comm> app_comm = Stokhos::getSpatialComm(sg_comm);
-    
-    // Create mesh
-    vector<double> x(nelem+1);
-    for (unsigned int i=0; i<=nelem; i++)
-      x[i] = h*i;
 
     // Set up application parameters
     Teuchos::RCP<Teuchos::ParameterList> appParams = 
@@ -127,8 +121,8 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList& sourceParams = 
       problemParams.sublist("Source Function");
     sourceParams.set("Name", "Multi-Variate Exponential");
-    sourceParams.set("Nonlinear Factor Dimensions", numalpha);
-    for (unsigned int i=0; i<numalpha; i++) {
+    sourceParams.set<unsigned int>("Nonlinear Factor Dimensions", numalpha);
+    for (int i=0; i<numalpha; i++) {
       std::stringstream ss;
       ss << "Nonlinear Factor " << i;
       sourceParams.set(ss.str(), alpha/numalpha);
@@ -146,17 +140,18 @@ int main(int argc, char *argv[]) {
     responseParams.set("Number", 1);
     responseParams.set("Response 0", "Solution Average");
 
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > free_param_names =
-	Teuchos::rcp(new Teuchos::Array<std::string>);
-    free_param_names->push_back("Constant Function Value");
+    // Free parameters (determinisic, e.g., for sensitivities)
+    Teuchos::ParameterList& parameterParams = 
+      problemParams.sublist("Parameters");
+    parameterParams.set("Number of Parameter Vectors", 1);
+    Teuchos::ParameterList& pParams = 
+      parameterParams.sublist("Parameter Vector 0");
+    pParams.set("Number", 1);
+    pParams.set("Parameter 0", "Constant Function Value");
 
-    Teuchos::RefCountPtr< Teuchos::Array<std::string> > sg_param_names =
-      Teuchos::rcp(new Teuchos::Array<std::string>);
-    for (unsigned int i=0; i<d; i++) {
-      std::stringstream ss;
-      ss << "Exponential Source Function Nonlinear Factor " << i;
-      sg_param_names->push_back(ss.str());
-    }
+    // Mesh
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+    discParams.set("Number of Elements", nelem);
 
     // Set up NOX parameters
     Teuchos::RCP<Teuchos::ParameterList> noxParams =
@@ -226,11 +221,11 @@ int main(int argc, char *argv[]) {
 
     // Create application
     Teuchos::RCP<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false));
+      Teuchos::rcp(new FEApp::Application(app_comm, appParams));
 
     // Create model evaluator
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-      Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names));
+      Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 
     // Create NOX solver
     Piro::Epetra::NOXSolver solver(appParams, model);
@@ -290,13 +285,24 @@ int main(int argc, char *argv[]) {
       sg_parallel_data->getStochasticComm();
     Teuchos::RCP<const Epetra_BlockMap> stoch_overlap_map = 
       Teuchos::rcp(new Epetra_LocalMap(sz, 0, *stoch_comm));
+
+    // Stochastic parameters
+     parameterParams.set("Number of Parameter Vectors", 2);
+     Teuchos::ParameterList& pParams2 = 
+       parameterParams.sublist("Parameter Vector 1");
+    pParams2.set("Number", numalpha);
+    for (int i=0; i<numalpha; i++) {
+      std::stringstream ss1, ss2;
+      ss1 << "Parameter " << i;
+      ss2 << "Exponential Source Function Nonlinear Factor " << i;
+      pParams2.set(ss1.str(), ss2.str());
+    }
       
     // Create new app for Stochastic Galerkin solve
-    app = Teuchos::rcp(new FEApp::Application(x, app_comm, appParams, false,
+    app = Teuchos::rcp(new FEApp::Application(app_comm, appParams,
 					      finalSolution.get()));
 
-    model = Teuchos::rcp(new FEApp::ModelEvaluator(app, free_param_names,
-						   sg_param_names));
+    model = Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 
     Teuchos::RCP<Teuchos::ParameterList> sgParams = 
       Teuchos::rcp(&(appParams->sublist("SG Parameters")),false);
@@ -318,12 +324,12 @@ int main(int argc, char *argv[]) {
 
     // Set up stochastic parameters
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p = 
-      sg_model->create_p_sg(0);
+      sg_model->create_p_sg(1);
     for (unsigned int i=0; i<d; i++) {
       sg_p->term(i,0)[i] = 2.0;
       sg_p->term(i,1)[i] = 1.0;
     }
-    sg_model->set_p_sg_init(0, *sg_p);
+    sg_model->set_p_sg_init(1, *sg_p);
 
     // Setup stochastic initial guess
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x_init =
@@ -336,7 +342,7 @@ int main(int argc, char *argv[]) {
     // Evaluate SG responses at SG parameters
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_model->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs sg_outArgs = sg_model->createOutArgs();
-    Teuchos::RCP<const Epetra_Vector> sg_p_init = sg_model->get_p_init(0);
+    Teuchos::RCP<const Epetra_Vector> sg_p_init = sg_model->get_p_init(2);
     Teuchos::RCP<Epetra_Vector> sg_x = 
       Teuchos::rcp(new Epetra_Vector(*(sg_model->get_x_map())));
     *sg_x = *(sg_model->get_x_init());
@@ -346,7 +352,7 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new Epetra_Vector(*(sg_model->get_x_map())));
     Teuchos::RCP<Epetra_Operator> sg_J = sg_model->create_W();
     Teuchos::RCP<Epetra_Operator> sg_M = sg_model->create_WPrec()->PrecOp;
-    sg_inArgs.set_p(0, sg_p_init);
+    sg_inArgs.set_p(2, sg_p_init);
     sg_inArgs.set_x(sg_x);
     sg_outArgs.set_f(sg_f);
     sg_outArgs.set_W(sg_J);
@@ -510,8 +516,9 @@ int main(int argc, char *argv[]) {
 	    std::sqrt(evals[rv])*(*evecs)[rv][i]*rv_kl_pce[rv][j];
       }
     }
-    Stokhos::VectorOrthogPoly<Epetra_Operator> sg_J_kl_poly(kl_basis, 
-							    kl_ov_stoch_row_map);
+    Stokhos::EpetraOperatorOrthogPoly sg_J_kl_poly(
+      kl_basis, kl_ov_stoch_row_map, base_x_map, base_f_map, 
+      sg_f_kl_map, kl_comm);
     for (int coeff = 0; coeff < kl_basis->size(); coeff++) {
       Teuchos::RCP<Epetra_CrsMatrix> mat = 
 	Teuchos::rcp(new Epetra_CrsMatrix(*J_mean));
@@ -627,8 +634,8 @@ int main(int argc, char *argv[]) {
     EpetraExt::ModelEvaluator::OutArgs sg_outArgs2 = 
 	sg_model->createOutArgs();
     Teuchos::RCP<Epetra_Vector> sg_g = 
-      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_g_map(1))));
-    sg_outArgs2.set_g(1, sg_g);
+      Teuchos::rcp(new Epetra_Vector(*(sg_model->get_g_map(0))));
+    sg_outArgs2.set_g(0, sg_g);
     sg_model->evalModel(sg_inArgs, sg_outArgs2);
 
     // Print mean and standard deviation

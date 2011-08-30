@@ -51,8 +51,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-  unsigned int nelem = 100;
-  double h = 1.0/nelem;
+  int nelem = 100;
   double alpha = 0.25;
   double beta = 0.0;
   double D1 = 1.0/40.0;
@@ -74,11 +73,6 @@ int main(int argc, char *argv[]) {
 #endif
 
     int MyPID = Comm->MyPID();
-    
-    // Create mesh
-    vector<double> x(nelem+1);
-    for (unsigned int i=0; i<=nelem; i++)
-      x[i] = h*i;
 
     // Set up application parameters
     Teuchos::RCP<Teuchos::ParameterList> appParams = 
@@ -90,10 +84,12 @@ int main(int argc, char *argv[]) {
     problemParams.set("beta", beta);
     problemParams.set("D1", D1);
     problemParams.set("D2", D2);
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+    discParams.set("Number of Elements", nelem);
 
     // Create application
     Teuchos::RCP<FEApp::Application> app = 
-      Teuchos::rcp(new FEApp::Application(x, Comm, appParams, false));
+      Teuchos::rcp(new FEApp::Application(Comm, appParams));
 
     // Create initial guess
     Teuchos::RCP<const Epetra_Vector> u = app->getInitialSolution();
@@ -101,7 +97,7 @@ int main(int argc, char *argv[]) {
 
     // Create model evaluator
     Teuchos::RCP<FEApp::ModelEvaluator> model = 
-      Teuchos::rcp(new FEApp::ModelEvaluator(app));
+      Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 
     //app->getJacobianGraph()->Print(cout);
 

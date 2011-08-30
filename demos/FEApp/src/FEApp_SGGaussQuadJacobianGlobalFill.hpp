@@ -33,7 +33,6 @@
 #define FEAPP_SGGAUSSQUADJACOBIANGLOBALFILL_HPP
 
 #include "FEApp_TemplateTypes.hpp"
-#if SG_ACTIVE
 
 #include "FEApp_GlobalFill.hpp"
 #include "Stokhos_OrthogPolyBasis.hpp"
@@ -58,7 +57,7 @@ namespace FEApp {
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& sgBasis,
       const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& sgQuad,
       const Teuchos::RCP< FEApp::AbstractPDE<JacobianType> >& jacPDEEquations,
-      const ParamVec* p,
+      const Teuchos::Array< Teuchos::RCP<const ParamVec> >& p,
       double alpha, double beta);
   
     //! Destructor
@@ -85,7 +84,7 @@ namespace FEApp {
     Teuchos::RCP<const Stokhos::Quadrature<int,double> > sg_quad;
 
     Teuchos::RCP< FEApp::AbstractPDE<JacobianType> > jacPDE;
-    const ParamVec* p;
+    Teuchos::Array< Teuchos::RCP<const ParamVec> > p;
     double alpha;
     double beta;
     const Teuchos::Array< Teuchos::Array<double> >& quad_points;
@@ -100,7 +99,7 @@ namespace FEApp {
 
     std::vector<double> xqp;
     std::vector<double> xdotqp;
-    std::vector<double> pqp;
+    std::vector< std::vector<double> > pqp;
     std::vector<double> fqp;
 
     std::vector<double> qv;
@@ -108,7 +107,7 @@ namespace FEApp {
 
     std::vector<double> sg_x;
     std::vector<double> sg_xdot;
-    std::vector<double> sg_p;
+    std::vector< std::vector<double> > sg_p;
     std::vector<double> sg_f;
 
     //! BLAS wrappers
@@ -117,7 +116,5 @@ namespace FEApp {
   };
 
 }
-
-#endif // SG_ACTIVE
 
 #endif // SGGAUSSQUADRESIDUALGLOBALFILL_HPP

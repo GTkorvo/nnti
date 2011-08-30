@@ -52,7 +52,7 @@ void
 FEApp::SolutionAverageResponseFunction::
 evaluateResponses(const Epetra_Vector* xdot,
 		  const Epetra_Vector& x,
-		  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+		  const Teuchos::Array<ParamVec>& p,
 		  Epetra_Vector& g)
 {
   x.MeanValue(&g[0]);
@@ -63,7 +63,7 @@ FEApp::SolutionAverageResponseFunction::
 evaluateTangents(
 	   const Epetra_Vector* xdot,
 	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	   const Teuchos::Array<ParamVec>& p,
 	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
 	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
 	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
@@ -86,7 +86,7 @@ FEApp::SolutionAverageResponseFunction::
 evaluateGradients(
 	  const Epetra_Vector* xdot,
 	  const Epetra_Vector& x,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	  const Teuchos::Array<ParamVec>& p,
 	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
 	  Epetra_Vector* g,
 	  Epetra_MultiVector* dg_dx,
@@ -112,14 +112,15 @@ evaluateGradients(
       dg_dp[j]->PutScalar(0.0);
 }
 
-#if SG_ACTIVE
 void
 FEApp::SolutionAverageResponseFunction::
-evaluateSGResponses(const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-		    const Stokhos::EpetraVectorOrthogPoly& sg_x,
-		    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-		    const Teuchos::Array<SGType>* sg_p_vals,
-		    Stokhos::EpetraVectorOrthogPoly& sg_g)
+evaluateSGResponses(
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  Stokhos::EpetraVectorOrthogPoly& sg_g)
 {
   int sz = sg_x.size();
   for (int i=0; i<sz; i++)
@@ -131,9 +132,10 @@ FEApp::SolutionAverageResponseFunction::
 evaluateSGTangents(
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
-  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-  const Teuchos::Array<SGType>* sg_p_vals,
   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
   Stokhos::EpetraVectorOrthogPoly* sg_g,
@@ -160,9 +162,10 @@ FEApp::SolutionAverageResponseFunction::
 evaluateSGGradients(
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
-  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-  const Teuchos::Array<SGType>* sg_p_vals,
   Stokhos::EpetraVectorOrthogPoly* sg_g,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
@@ -191,4 +194,3 @@ evaluateSGGradients(
     if (sg_dg_dp[j] != Teuchos::null)
       sg_dg_dp[j]->init(0.0);
 }
-#endif

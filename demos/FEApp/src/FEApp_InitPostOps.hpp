@@ -41,12 +41,10 @@
 #include "FEApp_TemplateTypes.hpp"
 #include "Sacado_ScalarParameterVector.hpp"
 
-#if SG_ACTIVE
 #include "Stokhos_VectorOrthogPoly.hpp"
 #include "Stokhos_VectorOrthogPolyTraitsEpetra.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
-#endif
 
 namespace FEApp {
 
@@ -295,8 +293,6 @@ namespace FEApp {
     int param_offset;
 
   };
-
-#if SG_ACTIVE
 
   //! Fill operator for Stochastic Galerkin residual
   class SGResidualOp : 
@@ -825,8 +821,6 @@ namespace FEApp {
     int param_offset;
 
   };
-
-#endif // MP_ACTIVE
 
 }
 

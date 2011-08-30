@@ -35,10 +35,8 @@
 #include "Epetra_Map.h"
 #include "EpetraExt_MatrixMatrix.h"
 
-#if SG_ACTIVE
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
-#endif
 
 FEApp::ResidualOp::ResidualOp(
         const Teuchos::RCP<const Epetra_Vector>& overlapped_xdot,
@@ -601,8 +599,6 @@ FEApp::TangentOp::nodePost(const FEApp::NodeBC& bc,
   } // row equations
 
 }
-
-#if SG_ACTIVE
 
 FEApp::SGResidualOp::SGResidualOp(
    const Teuchos::RCP< Stokhos::OrthogPolyExpansion<int,double> >& expansion_,
@@ -1985,5 +1981,3 @@ FEApp::MPTangentOp::nodePost(const FEApp::NodeBC& bc,
   } // row equations
 
 }
-
-#endif // SG_ACTIVE
