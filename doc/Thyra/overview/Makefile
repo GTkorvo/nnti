@@ -1,21 +1,19 @@
 
 BASE_NAME = ThyraOverview
-LATEX_COMMAND = latex
+LATEX_COMMAND = pdflatex
 BIBTEX_COMMAND = bibtex
 
 SOURCEFILES= \
-            $(BASE_NAME).tex \
-            references.bib
+  $(BASE_NAME).tex \
+  references.bib \
+  ANA_LAL_APP_Figure.pdf \
+  ThyraANAOpVecInterfaces.pdf
 
 #
 # Shortcut targets
 #
 
 default: pdf
-
-dvi: $(BASE_NAME).dvi
-
-ps: $(BASE_NAME).ps
 
 pdf: $(BASE_NAME).pdf
 
@@ -27,16 +25,8 @@ clean:
 # File targets
 #
 
-$(BASE_NAME).dvi: $(SOURCEFILES)
+$(BASE_NAME).pdf: $(SOURCEFILES)
 	$(LATEX_COMMAND) $(BASE_NAME)
 	$(BIBTEX_COMMAND) $(BASE_NAME)
 	$(LATEX_COMMAND) $(BASE_NAME)
 	$(LATEX_COMMAND) $(BASE_NAME)
-	$(LATEX_COMMAND) $(BASE_NAME)
-
-$(BASE_NAME).ps: $(BASE_NAME).dvi
-	dvips -t letter -o $(BASE_NAME).ps $(BASE_NAME)
-
-$(BASE_NAME).pdf: $(BASE_NAME).ps
-	ps2pdf $(BASE_NAME).ps $(BASE_NAME).pdf
-
