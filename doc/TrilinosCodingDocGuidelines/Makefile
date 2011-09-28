@@ -1,6 +1,6 @@
 
 BASE_NAME = TrilinosCodingDocGuidelines
-LATEX_COMMAND = latex
+LATEX_COMMAND = pdflatex
 MAKEINDEX_COMMAND = makeindex
 MAKEGLOSSARY_COMMAND = makeglossary
 BIBTEX_COMMAND = bibtex
@@ -24,10 +24,6 @@ SOURCEFILES= \
 
 default: pdf
 
-dvi: $(BASE_NAME).dvi
-
-ps: $(BASE_NAME).ps
-
 pdf: $(BASE_NAME).pdf
 
 clean:
@@ -38,24 +34,12 @@ clean:
 # File targets
 #
 
-$(BASE_NAME).dvi: $(SOURCEFILES)
+$(BASE_NAME).pdf: $(SOURCEFILES)
 	$(LATEX_COMMAND) $(BASE_NAME)
 	$(MAKEINDEX_COMMAND) $(BASE_NAME)
 	$(BIBTEX_COMMAND) $(BASE_NAME)
 	$(LATEX_COMMAND) $(BASE_NAME)
 	$(LATEX_COMMAND) $(BASE_NAME)
-	$(LATEX_COMMAND) $(BASE_NAME)
-
-#	$(MAKEINDEX_COMMAND) -s $(BASE_NAME).ist -t $(BASE_NAME).glg -o $(BASE_NAME).gls $(BASE_NAME).glo
-#	$(MAKEINDEX_COMMAND)  -t $(BASE_NAME).glg -o $(BASE_NAME).gls $(BASE_NAME).glo
-
-
-$(BASE_NAME).ps: $(BASE_NAME).dvi
-	dvips -t letter -o $(BASE_NAME).ps $(BASE_NAME)
-
-$(BASE_NAME).pdf: $(BASE_NAME).ps
-	ps2pdf $(BASE_NAME).ps $(BASE_NAME).pdf
-
 
 #
 # Make the sample namespace program
@@ -77,5 +61,3 @@ ns-missing-using-decl:
 
 ns-bad-using-direc:
 	$(CC) $(CCFLAGS) -DSHOW_ERRONEOUS_USING_DIRECTIVE -o NamespaceClassUsingIssues.exe NamespaceClassUsingIssues.cpp
-
-
