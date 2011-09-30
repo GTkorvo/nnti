@@ -746,47 +746,40 @@ for.
 
 
 \begin{itemize}
-
-
-{}\item\GCGStdStream: Sending output directly to {}\texttt{std\-::cout} or
-{}\texttt{std\-::cerr} destroys the flexibility of numerical software and does
-not perform well in SPMD programs.  Instead, produce output using one of the
-following approaches.
+\item\GCGStdStream: Sending output directly to \texttt{std\-::cout} or
+  \texttt{std\-::cerr} destroys the flexibility of numerical software
+  and does not perform well in SPMD programs.  Instead, produce output
+  using one of the following approaches.
 
   \begin{itemize}
+  \item\GCGTeuchosFancyOStream: A \texttt{Teuchos\-::Fancy\-OStream}
+    class object can wrap any \texttt{std\-::ostream} object and helps
+    to produce structured indented output and to create more readable
+    output in an SPMD program (even when every processor produces
+    output).
   
-  {}\item\GCGTeuchosFancyOStream: A {}\texttt{Teuchos\-::Fancy\-OStream} class
-  object can wrap any {}\texttt{std\-::ostream} object and helps to produce
-  structured indented output and to create more readable output in an SPMD
-  program (even when every processor produces output).
+  \item\GCGTeuchosDescribable: The \texttt{Teuchos\-::Describable}
+    interface is the appropriate way to allow clients to print the
+    current state of an object in a flexible way.  The verbosity of
+    the output is controlled by an input enum parameter.
   
+  \item\GCGTeuchosVerboseObject: Clients may either set the output
+    stream and the verbosity level through a parameter list (see the
+    \texttt{Teuchos\-::ParameterListAcceptor} interface described
+    above), or directly in code.  If no output stream is set, then
+    \texttt{Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()}
+    will be used.
   
-  {}\item\GCGTeuchosDescribable: The {}\texttt{Teuchos\-::Describable} interface
-  is the appropriate way to allow clients to print the current state of an
-  object in a flexible way.  The verbosity of the output is controlled by an
-  input enum parameter.
-  
-  
-  {}\item\GCGTeuchosVerboseObject: Clients can set the output stream and the
-  verbosity level through a parameter list (see the
-  {}\texttt{Teuchos\-::ParameterListAcceptor} interface described above) or can
-  set them directly in code.  If no output stream is set, then
-  {}\texttt{Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()} will be
-  used.
-  
-  
-  {}\item\GCGTeuchosVerboseObjectBaseDefaultOStream: The stream provided by
-  {}\texttt{*Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()} is set
-  up by default to do clean printing in an SPMD program and can also be set up
-  through a {}\texttt{Teuchos\-::Command\-Line\-Processor} object to control how
-  output is produced and formatted.
-
+  \item\GCGTeuchosVerboseObjectBaseDefaultOStream: The stream provided
+    by
+    \texttt{*Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()}
+    is set up by default to do clean printing in an SPMD program and
+    can also be set up through a
+    \texttt{Teuchos\-::Command\-Line\-Processor} object to control how
+    output is produced and formatted.
   \end{itemize}
 
-
-  {}\item\GCGTeuchosTimers: ToDo: Fill in some details.
-
-
+\item\GCGTeuchosTimers: ToDo: Fill in some details.
 \end{itemize}
 
 
@@ -794,15 +787,14 @@ following approaches.
 \subsubsection{Miscellaneous coding guidelines}
 %
 
-
 \begin{itemize}
 
-  {}\item\GCGExplicitTemplateArguments: Some C++ compilers have
-  trouble inferring the template arguments in a template function
-  call.  Explicitly stating the template arguments in that case can
-  improve portability to those compilers that do not correctly
-  implement template argument inference.  For example, in Thyra, every
-  non-member function is templated on the {}\texttt{Scalar} type such
+\item\GCGExplicitTemplateArguments: Some C++ compilers have trouble
+  inferring the template arguments in a template function call.
+  Explicitly stating the template arguments in that case can improve
+  portability to those compilers that do not correctly implement
+  template argument inference.  For example, in Thyra, every
+  non-member function is templated on the \texttt{Scalar} type such
   as:
 
 {\small\begin{verbatim}
@@ -819,32 +811,31 @@ template argument(s) as:
 \end{verbatim}}
 
 
-{}\item\GCGTeuchosAs: The templated C++ function
-{}\texttt{Teuchos::as<T\_to>(T\_from)} and the class specializations
-that it calls invoke run-time tests, in debug mode, to ensure
-correctness of the results of a conversion.  This includes the
-conversion of strings into numbers (that is, replacing
-{}\texttt{atof()} and {}\texttt{atoi()}) as well as conversions that
-can result in loss of precision or meaning (such as {}\texttt{double}
-to {}\texttt{int}, {}\texttt{long int} to {}\texttt{int},
-{}\texttt{int} to {}\texttt{char}, or {}\texttt{unsigned int} to
-{}\texttt{int}).  The optimized implementations of these conversion
-functions are typically unchecked for speed.  A version this function
-which always does run-time checking is also available called
-{}\texttt{Teuchos\-::asSafe\-<\-T\_to\->\-(\-T\_from\-)} in order to
-validate user data.
+\item\GCGTeuchosAs: The templated C++ function
+  \texttt{Teuchos::as<T\_to>(T\_from)} and the class specializations
+  that it calls invoke run-time tests, in debug mode, to ensure
+  correctness of the results of a conversion.  This includes the
+  conversion of strings into numbers (that is, replacing
+  \texttt{atof()} and \texttt{atoi()}) as well as conversions that may
+  result in loss of precision or meaning (such as \texttt{double} to
+  \texttt{int}, \texttt{long int} to \texttt{int}, \texttt{int} to
+  \texttt{char}, or \texttt{unsigned int} to \texttt{int}).  The
+  optimized implementations of these conversion functions are
+  typically unchecked for speed.  A version of this function which
+  always does run-time checking, called
+  \texttt{Teuchos\-::asSafe\-<\-T\_to\->\-(\-T\_from\-)}, is also
+  available in order to validate user data.
 
+  \textit{Justification}: Unchecked conversions result in many
+  different kinds of errors.  A safe program needs to be able to check
+  all potentially unsafe conversions at run time.  The implicit
+  conversion rules allowed in C which were carried over to C++ may
+  result in unsafe code.
 
-{}\textit{Justification}: Unchecked conversions are the result of many
-different types of errors.  A fully safe program needs to be able to
-check all such potentially unsafe conversions at run time.  The
-implicit conversion rules allowed in C which were carried over to C++
-can result in unsafe code.
-
-
-{}\item\GCGNamespaceClassFuncDefs: The member functions of a class should be
-defined in the same order as their declarations and should generally be
-defined within a namespace enclosure.  For example, given the declaration of
+\item\GCGNamespaceClassFuncDefs: The member functions of a class
+  should be defined in the same order as their declarations and should
+  generally be defined within a namespace enclosure.  For example,
+  given the declaration of
 
 {\small\begin{verbatim}
   ----------------------------------
@@ -880,15 +871,16 @@ source file is
   ----------------------------------
 \end{verbatim}}
 
-{}\textit{Justification}: Using the namespace enclosure instead of a
-{}\texttt{using namespace SomeNamesapce} directive insures that you can never
-accidentally provide another definition for some other class member function
-in another namespace.  Explicit namespace qualification is not needed since if
-one misspells any part of the prototype, then the compiler will issue an error
-message.
+\textit{Justification}: Using the namespace enclosure instead of a
+\texttt{using namespace SomeNamespace} directive insures that you can
+never accidentally provide another definition for some other class
+member function in another namespace.  Explicit namespace
+qualification is not needed since misspelling any part of the
+prototype will result in a compile-time error.
 
 
-{}\item\GCGNamespaceFuncDefs: For example, for the nonmember function prototype
+\item\GCGNamespaceFuncDefs: For example, for the nonmember function
+  prototype
 
 {\small\begin{verbatim}
   ----------------------------------
@@ -916,14 +908,14 @@ the safest way to define the nonmember function is
   ----------------------------------
 \end{verbatim}}
 
-{}\textit{Justification}: Using explicit namespace qualification
-avoids spelling and other mistakes that can accidentally result in the
-definition of a new function {}\cite[Section 8.2]{stroustrup97}.
+\textit{Justification}: Using explicit namespace qualification avoids
+spelling and other mistakes that can accidentally result in the
+definition of a new function \cite[Section 8.2]{stroustrup97}.
 While the linker catches such mistakes, it can be very hard to
 diagnose the problem when this happens.
 
 
-{}\item\GCGFuncArgsOrder: For example:
+\item\GCGFuncArgsOrder: For example:
 
 {\small\begin{verbatim}
   void someFunc(
@@ -937,10 +929,10 @@ diagnose the problem when this happens.
 This ordering of arguments is only a general suggestion as a different
 ordering of arguments may be chosen based on other criteria.  See
 Section~\ref{sec:func_arguments} for a description of the use of the
-{}\texttt{Ptr} class.
+\texttt{Ptr} class.
 
 
-{}\item\GCGNomemberObjectFuncs: For example:
+\item\GCGNomemberObjectFuncs: For example:
 
 {\small\begin{verbatim}
   void someModifyingFunc(
@@ -956,27 +948,27 @@ Section~\ref{sec:func_arguments} for a description of the use of the
     );
 \end{verbatim}}
 
-Note that in the case of {}\texttt{someModifyingFunc(...)}, the output
+Note that in the case of \texttt{someModifyingFunc(...)}, the output
 argument is listed first instead of after the input argument(s) which breaks
 typical convention of having input/output arguments (which all objects that
 are modified are) come after input arguments.  However, this is more
 consistent with established convention such as in Python and other languages
-where the {}\texttt{self} argument is always the first explicit (or implicit)
+where the \texttt{self} argument is always the first explicit (or implicit)
 argument.  Note that this is also a situation where a non-const reference
 argument makes the most sense.
 
 
-{}\item\GCGEnumFuncArgs: While the built-in type {}\texttt{bool} is very
-convenient to use as a formal function argument, it also allows for
-conversions from every built-in type and every pointer type.  While using an
-enumeration type and its values is more verbose, it is also self documenting
-and is safer.  For example, what does the third argument mean in the following
-example?
+\item\GCGEnumFuncArgs: While the built-in type \texttt{bool} is very
+  convenient to use as a formal function argument, it also allows for
+  conversions from every built-in type and every pointer type.  While
+  using an enumeration type and its values is more verbose, it is also
+  self documenting and is safer.  For example, what does the third
+  argument mean in the following example?
 
 {\small\begin{verbatim}
   apply( A, 2.0, true, x, y );\end{verbatim}}
 
-When the {}\texttt{bool} argument is changed to an enum, the function call
+When the \texttt{bool} argument is changed to an enum, the function call
 becomes:
 
 {\small\begin{verbatim}
@@ -985,20 +977,20 @@ becomes:
 
 and the meaning is much more clear.  Therefore, when self
 documentation and compile-time safety are important, prefer to define
-and use {}\texttt{enum}s over {}\texttt{bool}s as formal function
-arguments (see {}\cite[Section 12.6]{CodeComplete2nd04}).
+and use \texttt{enum}s over \texttt{bool}s as formal function
+arguments (see \cite[Section 12.6]{CodeComplete2nd04}).
 
-{}\item\GCGOverloadedVirtualFunctions: Overloaded virtual functions
-cause severe portability problems with many compilers and result in
-shadowing warnings that are elevated to errors in may systems
-{}\cite[Item 33]{EffectiveC++3rd05}.
+\item\GCGOverloadedVirtualFunctions: Overloaded virtual functions
+  cause severe portability problems with many compilers and result in
+  shadowing warnings that are elevated to errors in may systems
+  \cite[Item 33]{EffectiveC++3rd05}.
 
-
-{}\item\GCGAvoidSmartPtrFuncOverloads: Overloading functions on different
-smart pointer types, such as {}\texttt{RCP} or {}\texttt{Ptr} can create
-ambiguous function calls that will not happen when using raw C++ pointers or
-references {}\cite{TeuchosMemoryManagementGuide}.  Therefore, keep the names
-of the functions different such as shown below.
+\item\GCGAvoidSmartPtrFuncOverloads: Overloading functions on
+  different smart pointer types, such as \texttt{RCP} or \texttt{Ptr},
+  can create ambiguous function calls that will not happen when using
+  raw C++ pointers or references \cite{TeuchosMemoryManagementGuide}.
+  Therefore, keep the names of the functions different such as shown
+  below.
 
 {\small\begin{verbatim}
   void nonconstFoo(const RCP<A> &a);
@@ -1006,24 +998,25 @@ of the functions different such as shown below.
 \end{verbatim}}
 
 
-{}\item\GCGStandardCppHeaders: Only include the C++ {}\texttt{<cX>} versions
-of the standard C {}\texttt{<X.h>} headers.  For example, include
-{}\texttt{<cmath>}, {}\texttt{<cstdlib>}, and {}\texttt{<cassert>} instead of
-{}\texttt{<math.h>}, {}\texttt{<stdlib.h>}, and {}\texttt{<assert.h>}.  Avoid
-all uses of {}\texttt{using namespace std} directives and instead prefer
-explicit namespace qualification such as {}\texttt{std::sqrt} or using
-declarations such as {}\texttt{using std::sqrt} only within function
-definitions.  See {}\cite[Section 16.1.2]{stroustrup97} for a complete list of
-the standard C++ versions of the standard C headers.
+\item\GCGStandardCppHeaders: Only include the C++ \texttt{<cX>}
+  versions of the standard C \texttt{<X.h>} headers.  For example,
+  include \texttt{<cmath>}, \texttt{<cstdlib>}, and \texttt{<cassert>}
+  instead of \texttt{<math.h>}, \texttt{<stdlib.h>}, and
+  \texttt{<assert.h>}.  Avoid all uses of \texttt{using namespace std}
+  directives and instead prefer explicit namespace qualification such
+  as \texttt{std::sqrt} or using declarations such as \texttt{using
+    std::sqrt} only within function definitions.  See \cite[Section
+  16.1.2]{stroustrup97} for a complete list of the standard C++
+  versions of the standard C headers.
 
-{}\textit{Justification}: See Appendix~\ref{sec:misc_amendments} for a
-clarification of Item 59 in {}\cite{C++CodingStandards05} dealing with the
-issue of {}\texttt{using} declarations and directives.
+  \textit{Justification}: See Appendix~\ref{sec:misc_amendments} for a
+  clarification of Item 59 in \cite{C++CodingStandards05} dealing
+  with the issue of \texttt{using} declarations and directives.
 
 
-{}\item\GCGTemplateHeaders\label{gcg:template-instantation-files}:
+\item\GCGTemplateHeaders\label{gcg:template-instantation-files}:
 Breaking up templated C++ code into the four files
-{}\texttt{SomeClass[\_decl,\_def].[hpp,cpp]} (as described below)
+\texttt{SomeClass[\_decl,\_def].[hpp,cpp]} (as described below)
 allows for a portable and bullet-proof solution to handing templated
 C++ code which allows for a) controlled explicit or implicit template
 instantiation, b) minimization of first-time compilation, c)
@@ -1031,12 +1024,12 @@ minimization of recompilations, and d) handling of any and all types
 of circular dependency in declarations and definitions (same as are
 allowed with non-templated C++ code).
 
-As an example, consider three classes {}\ttt{A}, {}\ttt{B}, and {}\ttt{C}
-where {}\ttt{A} and {}\ttt{B} refer to each other and where {}\ttt{C} has no
-chance of being involved in a circular reference involving {}\ttt{A} and
-{}\ttt{B}.  The four files {}\texttt{A[\_decl,\_def].[hpp,cpp]} for class
-{}\ttt{A} as well as the file {}\texttt{B\_decl.hpp} are shown below (the
-other files for class {}\ttt{B} are similar):
+As an example, consider three classes \ttt{A}, \ttt{B}, and \ttt{C}
+where \ttt{A} and \ttt{B} refer to each other and where \ttt{C} has no
+chance of being involved in a circular reference involving \ttt{A} and
+\ttt{B}.  The four files \texttt{A[\_decl,\_def].[hpp,cpp]} for class
+\ttt{A} as well as the file \texttt{B\_decl.hpp} are shown below (the
+other files for class \ttt{B} are similar):
 
 
 {\small\begin{verbatim}
@@ -1129,73 +1122,75 @@ other files for class {}\ttt{B} are similar):
 \end{verbatim}}
 
 
-General client code {}\underline{always} includes the {}\ttt{A.hpp} form of
-the file without regard for whether implicit or explicit instantiation is
-enabled or not (i.e.\ whether {}\ttt{HAVE\_THYRA\_EXPLICIT\_INSTANTIATION} is
-defined or not defined).
+General client code \underline{always} includes the \ttt{A.hpp} form
+of the file without regard for whether implicit or explicit
+instantiation is enabled (i.e.,\ whether or not
+\ttt{HAVE\_THYRA\_EXPLICIT\_INSTANTIATION} is defined).
 
 The 100\% bullet-proof rules for breaking up template code like this are:
 
 \begin{itemize}
 
-{}\item All header-like declarations that would go into an ordinary
-non-template {}\ttt{*.hpp} header file go into {}\ttt{SomeClass\_decl.hpp}
-including class declarations and inline function definitions.
+\item All header-like declarations that would go into an ordinary
+  non-template \ttt{*.hpp} header file go into
+  \ttt{SomeClass\_decl.hpp} including class declarations and inline
+  function definitions.
 
-{}\item All implementation code that would go into an ordinary non-template
-{}\ttt{*.cpp} source file go into {}\ttt{SomeClass\_def.hpp} including class
-member definitions and non-member function definitions.
+\item All implementation code that would go into an ordinary
+  non-template \ttt{*.cpp} source file go into
+  \ttt{SomeClass\_def.hpp} including class member definitions and
+  non-member function definitions.
 
-{}\item Always include {}\ttt{SomeOtherClasss\_decl.hpp} in the
-{}\ttt{SomeClass\_decl.hpp} file if there is any chance that a
-circular dependency may exist between the two types
-{}\ttt{SomeOtherClasss} and {}\ttt{SomeClass}.  Otherwise, if there is
-no chance of a circular dependence then the header
-{}\ttt{SomeOtherClasss.hpp} should be included (instead of the
-possible {}\ttt{\_decl.hpp} form).  If the two classes are in
-different libraries then there is no chance of a circular type
-dependency (because well designed software does not allow this
-{}\cite{AgileSoftwareDevelopment}).
+\item Always include \ttt{SomeOtherClasss\_decl.hpp} in the
+  \ttt{SomeClass\_decl.hpp} file if there is any chance that a
+  circular dependency may exist between the two types
+  \ttt{SomeOtherClasss} and \ttt{SomeClass}.  Otherwise, if there is
+  no chance of a circular dependence then the header
+  \ttt{SomeOtherClasss.hpp} should be included (instead of the
+  possible \ttt{\_decl.hpp} form).  If the two classes are in
+  different libraries then there is no chance of a circular type
+  dependency (because well designed software does not allow this; see
+  \cite{AgileSoftwareDevelopment}).
 
-{}\item If {}\ttt{SomeClass\_decl.hpp} includes
-{}\ttt{SomeOtherClass\_decl.hpp}, then {}\ttt{SomeClass\_def.hpp} must
-include {}\ttt{SomeOtherClass.hpp}.  This is needed in order for
-implicit instantiation to work correctly.
+\item If \ttt{SomeClass\_decl.hpp} includes
+  \ttt{SomeOtherClass\_decl.hpp}, then \ttt{SomeClass\_def.hpp} must
+  include \ttt{SomeOtherClass.hpp}.  This is needed in order for
+  implicit instantiation to work correctly.
 
-{}\item The header file {}\ttt{SomeClass.hpp} is designed to be
-included by general clients and either includes only
-{}\ttt{SomeClass\_decl.hpp} or also includes
-{}\ttt{SomeClass\_def.hpp} depending on if implicit or explicit
-instantiation is being used.  When explicit instantiation is being
-used the file {}\ttt{SomeClass\_def.hpp} is hidden from general
-clients and changes in it do not require recompilation of client code.
-The file {}\ttt{SomeClass.hpp} can (and should) be automatically
-configured by the CMake build system (see examples in
-thyra/src/CMakeLists.txt).
+\item The header file \ttt{SomeClass.hpp} is designed to be included
+  by general clients and either includes only
+  \ttt{SomeClass\_decl.hpp} or also includes \ttt{SomeClass\_def.hpp}
+  depending on if implicit or explicit instantiation is being used.
+  When explicit instantiation is being used the file
+  \ttt{SomeClass\_def.hpp} is hidden from general clients and changes
+  in it do not require recompilation of client code.  The file
+  \ttt{SomeClass.hpp} can (and should) be automatically configured by
+  the CMake build system (see examples in thyra/src/CMakeLists.txt).
 
-{}\item All required instantiations must be provided in the file
-{}\ttt{SomeClass.cpp}.  For standard scalar types (e.g.\ {}\ttt{double},
-{}\ttt{float}, {}\ttt{std::complex<double>}, {}\ttt{std::complex<float>},
-etc.) the standard macro
-{}\ttt{TEUCHOS\_CLASS\_TEMPLATE\_INSTANT\_SCALAR\_TYPES(...)} is provided
-which is set at configure time to determine the desired/required explicit
-instantiations.  More general instantiations can also be performed by defining
-a macro in the file {}\ttt{SomeClass\_def.hpp} file and then instantiating
-this macro using the helper macro
-{}\ttt{TEUCHOS\_MACRO\_TEMPLATE\_INSTANT\_SCALAR\_TYPES(...)} (See examples
-from real Thyra source code).
+\item All required instantiations must be provided in the file
+  \ttt{SomeClass.cpp}.  For standard scalar types (e.g.\ \ttt{double},
+  \ttt{float}, \ttt{std::complex<double>}, \ttt{std::complex<float>},
+  etc.) the standard macro
+  \ttt{TEUCHOS\_CLASS\_TEMPLATE\_INSTANT\_SCALAR\_TYPES(...)} is
+  provided which is set at configure time to determine the
+  desired/required explicit instantiations.  More general
+  instantiations can also be performed by defining a macro in the file
+  \ttt{SomeClass\_def.hpp} file and then instantiating this macro
+  using the helper macro
+  \ttt{TEUCHOS\_MACRO\_TEMPLATE\_INSTANT\_SCALAR\_TYPES(...)} (See
+  examples from real Thyra source code).
 
 \end{itemize}
 
 If one follows the above guidelines, one will never have dependency
 ordering problems with templated code.  The partitioning the template
-code into the four files {}\texttt{SomeClass[\_decl,\_def].[hpp,cpp]}
+code into the four files \texttt{SomeClass[\_decl,\_def].[hpp,cpp]}
 gives template code all the desirable compilation properties of
 non-template code.  That is, changes to the implementation of
-{}\ttt{SomeClass} only require the recompilation of the source file
-{}\texttt{SomeClass.cpp} and not any other source files.  Also, the
+\ttt{SomeClass} only require the recompilation of the source file
+\texttt{SomeClass.cpp} and not any other source files.  Also, the
 amount of code that a C++ compiler has to see to compile any single
-{}\ttt{*.cpp} file is much less when explicit instantiation is enabled
+\ttt{*.cpp} file is much less when explicit instantiation is enabled
 and this can massively speed up first-time compilation.  Overall,
 explicit instantiation can massively speed up first-time compilation
 and later recompilations as code is modified.
@@ -1205,20 +1200,20 @@ and later recompilations as code is modified.
 
 
 %
-{}\subsection{Specification of data members and passing and returning
-objects from functions}
+\subsection{Specification of data members and passing and returning
+  objects from functions}
 \label{sec:func_arguments}
 %
 
 The guidelines for specifying local variables and data members,
 passing objects to and from functions, and returning objects from
-functions given in {}\cite{TeuchosMemoryManagementGuide} are
-summarized in
-Tables~\ref{fig:data_member_value_type}--\ref{fig:func_return_reference_type}.
+functions given in \cite{TeuchosMemoryManagementGuide} are summarized
+in Tables
+\ref{fig:data_member_value_type}--\ref{fig:func_return_reference_type}.
 In general, it is assumed that arguments passed through the smart
-pointer types {}\ttt{Ptr}, {}\ttt{RCP}, {}\ttt{ArrayView}, and
-{}\ttt{ArrayRCP} are non-null by default.  If the argument is allowed
-to be null, then that must be documented in the Doxygen
+pointer types \ttt{Ptr}, \ttt{RCP}, \ttt{ArrayView}, and
+\ttt{ArrayRCP} are non-null by default.  If the argument is allowed to
+be null, then that must be documented in the Doxygen
 $\backslash$\ttt{param} field for that argument.
 
 
@@ -1340,49 +1335,59 @@ Idioms for returning reference-type objects from C++ functions.}
 \label{tcdg:formatting:sec}
 %
 
-At the minimum, source code should be formatted consistently within a
-single file or a set of tightly coupled files \cite[Item
-0]{C++CodingStandards05}.  Ideally, source code should be formatted
-consistently enough across a code project so as not to cause undue
-difficulty in shared maintenance and in performing code reviews
-{}\cite{CodeComplete2nd04}.  Some consistency in formatting helps and
-to facilitate multiple ownership and shared development of a
-collection of software, such as in Extreme Programming (XP)
-cite{ExtremeProgrammingExplained99} (see
-Appendix~\ref{sec:arguments-for-consistent-style} for an outline of
-the arguments for adopting a consistent code formatting style).  By
-``formatting'' we generally refer to the use of white-space in the
-line-to-line formatting of the program or in the ordering of lines of
-code such that the meaning of the program to the compiler is
-unchanged.\footnote{While changing the name of a class, function or
+We mean by ``formatting'' the use of white space or other optional
+syntax elements (such as optional curly braces in C++), or changes to
+the ordering of code elements, that change the appearance of code to a
+human programmer, without changing the meaning of the program to the
+compiler.\footnote{While changing the name of a class, function or
   variable may change the meaning of a program, if name changes are
   done in such a way as to avoid name collisions, then naming
-  conventions do not affect the meaning of the program and are
-  therefore very much related to other formatting issues such as the
-  treatment of white space.}  The handling of indentation styles can
-largely be automated.\footnote{Popular text editors, such as Emacs and
-  Vim (a derivative of the \texttt{vi} text editor), support multiple
-  file-specific formatting styles for C++.  Tools like Artistic Style
-  {}\cite{ArtisticStyle} can format source files from the command
-  line.} This allows individual developers to work with any style they
-would like for files that they create, and also makes it easier for
+  conventions do not affect the meaning of the program.  They are
+  therefore related to other formatting issues such as the treatment
+  of white space.}  C++, unlike some languages such as Fortran 77 or
+Python, allows considerable formatting freedom.  With freedom comes
+responsibility, in this case to make code easier for both its author
+and other programmers to read, understand, extend, and maintain.
+
+Source code should always be formatted consistently within a single
+file or a set of tightly coupled files \cite[Item
+0]{C++CodingStandards05}.  Ideally, source code should be formatted
+with sufficient consistency across a code project so as not to cause
+undue difficulty in shared maintenance and in performing code reviews
+\cite{CodeComplete2nd04}.  Some consistency in formatting helps
+facilitate multiple ownership and shared development of a collection
+of software, especially when using techniques such as Extreme
+Programming (XP) \cite{ExtremeProgrammingExplained99}.  See
+Appendix~\ref{sec:arguments-for-consistent-style} for an outline of
+the arguments for adopting a consistent code formatting style.
+
+Many source code editors can handle most of the work of
+formatting.\footnote{This includes popular text editors such as Emacs
+  and Vim (a derivative of the \texttt{vi} text editor), as well as
+  integrated development environments such as Microsoft Visual Studio
+  and Eclipse.  Emacs and Vim support multiple, custom, file-specific
+  formatting styles for C++, for example.  Tools like Artistic Style
+  \cite{ArtisticStyle} can format source files from the command line.}
+This allows individual developers to work with any style they would
+like for files that they create, and also makes it easier for
 developers to edit files created by other developers without changing
 their styles.  Appendix~\ref{sec:reformatting-guidelines} gives some
 guidelines for how individuals should conduct themselves when multiple
 code formatting styles are in use within a project.
 
-Our main goal in this section is to try to provide reasonable recommendations
-for those formatting issues that are largely a matter of style and personal
-preference but at the same time affect the overall readability of the code and
-promote pair programming and joint ownership of code
-\cite{ExtremeProgrammingExplained99}.  The formatting and indentation
-guidelines presented here are largely consistent with the recommendations in
-\cite[Chapter 31]{CodeComplete2nd04} and try to reduce the amount of ``right
-drift'' that can occur with some common formatting and indentation styles.
+Our main goal in this section is to try to provide reasonable
+recommendations for those formatting issues that, while largely a
+matter of style and personal preference, also affect overall code
+readability.  These recommendations help promote pair programming and
+joint ownership of code \cite{ExtremeProgrammingExplained99}.  The
+formatting and indentation guidelines presented here are largely
+consistent with the recommendations in \cite[Chapter
+31]{CodeComplete2nd04} and try to reduce the amount of ``right drift''
+that can occur with some common formatting and indentation styles.
 
 The indentation guidelines outlined below are automatically supported
-by Emacs when using the custom style ``thyra'' defined in the Emacs
-package file \texttt{cc-thyra-styles.el}.\footnote{See
+by the Emacs text editor when using the custom style ``thyra'' defined
+in the Emacs package file \texttt{cc-thyra-styles.el}.\footnote{See
   \texttt{Trilinos/packages/thyra/emacs/README} for a description of
   the ``thyra'' Emacs style} Other custom styles may be added to this
 file and used as well.  Any of these styles can be listed in each
