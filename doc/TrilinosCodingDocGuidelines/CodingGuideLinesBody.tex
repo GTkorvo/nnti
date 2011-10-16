@@ -2,8 +2,8 @@
 \section{Introduction}
 %
 
-{}\textbf{ToDo: Get consensus from a critical mass of Trilinos
-developers \dots}
+{}\textbf{ToDo:} Get consensus from a critical mass of Trilinos
+developers.
 
 This document describes C++ coding guidelines for Trilinos and related
 software projects.  It builds upon the guidelines in \emph{C++ Coding
@@ -62,18 +62,17 @@ guidelines are difficult to change after a significant amount of code
 has been written.
 
 The rest of this document is organized as follows.
-Section~\ref{sec:alpha_numeric_designations}.  gives an alphanumeric
-convention for naming the various guidelines described in this
-document.  General naming conventions are presented in
-Section~\ref{sec:NamingConventions}, which they help provide a context
-for later code examples.  This is followed in Section~\ref{sec:NOSF}
-with guidelines for naming and organizing source files.  Next,
-important general C++ coding guidelines are described in
-Section~\ref{tcdg:codingguidelines:sec} that affect software quality
-in critical ways.  Following this, reasonable and minimal formatting
-guidelines are covered in Section~\ref{tcdg:formatting:sec}.  Finally,
-guidelines for Doxygen documentation are provided in
-Section~\ref{sec:DocumentionGuidelines}.
+Section~\ref{sec:guideline_structure} describes how the guidelines are
+organized and categorized.  General naming conventions are presented
+in Section~\ref{sec:NamingConventions}, which they help provide a
+context for later code examples.  This is followed in
+Section~\ref{sec:NOSF} with guidelines for naming and organizing
+source files.  Next, important general C++ coding guidelines are
+described in Section~\ref{tcdg:codingguidelines:sec} that affect
+software quality in critical ways.  Following this, reasonable and
+minimal formatting guidelines are covered in
+Section~\ref{tcdg:formatting:sec}.  Finally, guidelines for Doxygen
+documentation are provided in Section~\ref{sec:DocumentionGuidelines}.
 
 The appendices include both abbreviated references and detailed
 discussions.  Appendix~\ref{sec:summary_guidelines} concisely lists
@@ -100,10 +99,13 @@ consistent code formatting style.
 
 %
 \section{Structure of the guidelines}
+\label{sec:guideline_structure}
 %
 
 Before getting into the specific guidelines, the structure of the
-guidelines are described.
+guidelines are described.  The different categories of guilidelines
+are presented and then alpha-numeric designations for the guidelines
+are discussed.
 
 
 %
@@ -126,7 +128,8 @@ different categorzations and keywords are given below.
 
   {}\item\textbf{\StrongRecGC}: The given guideline is strongly
   recommended.  Any code that does not follow the guideline will be
-  considered strongly non-complient.
+  considered to either be bad code and/or to be strongly
+  non-compliant.
 
   {}\item\textbf{\RecGC}: The given guideline is recommended.  Code
   that does not follow the guideline will be questioned but will not
@@ -134,40 +137,51 @@ different categorzations and keywords are given below.
   the guideline will be considered non-complaint.
 
   {}\item\textbf{\SuggestGC}: The given guideline would be suggested
-  for usage as an alternative to strongly consider or chose above
-  other alteratives.  However, code that does not follow the guideline
-  will not be considered bad code at all or non-complaint code.
+  as good alternative to choose over other alteratives.  However, code
+  that does not follow the guideline will not be considered bad code
+  or to necessarily be non-complaint code.
 
-  \end{itemize}
+   \end{itemize}
 
-{}\item\textbf{\InteropGC}: The guideline plays a primary role
-in the operability of other compliant software.  Code that violates
-the guideline will be considered to violate and is {}\tit{strongly
-recommended} will be considered not be directly interoperable with
-compliant software.
+{}\item\textbf{\InteropGC}: The guideline plays a primary role in the
+interoperability with other compliant software.  Code that violates a
+{}\StrongRecGC{} guideline in this category will be considered to not
+be directly interoperabile with other compliant software.  (However,
+adapters might be able to be developed that provide an interface that
+is interoperable.)
 
 {}\item\textbf{\ComLookFeelGC}: The guideline plays a primary role in
 the common look and feel of compliant software.  Common look and feel
 is important for users in helping them to reuse knowledge gained from
-on bit of software in other software.  Common look and feel helps to
-avoid user programming errors, and in uniformity of user code.
+one set of compliant software in other sets of complient software.
+Common look and feel helps to avoid user programming errors, and in
+uniformity of user code.
 
-{}\item\textbf{\SafeGC}: The guideline is primarily concerned with
-safety where if ignored would result in software that is more fragile,
-more difficult to maintain, or more riskty to use.  For example, the
-use of {}\ttt{const} is considered primarily a safety issue.
+{}\item\textbf{\SafetyGC}: The guideline is primarily concerned with
+safety where if ignored would result in software that is more
+difficult for users to use correctly, more difficult to maintain, or
+more likely to contain undefined behavior (e.g.\ memory access
+errors).  For example, the use of {}\ttt{const} is considered to be a
+safety issue.  Maintainability, portability, and code clarity are also
+closely related to safety so {}\SafetyGC will be used to also cover
+guidelines that address these attributes as well.
 
 {}\item\textbf{\TeamGC}: The guideline mainly affects the ability of a
-team to work together effectively.  For example, code formatting
-generally does not impact end users at all (unless they look at raw
-code in header files) yet can greatly affects shared ownership of
-code.
+team to work together effectively.  Almost every convention that
+increases uniformity in the code helps to imporove team interaction
+and prodctivity and therefore every one of these guidelines could be
+labeled {}\TeamGC{}.  Because of this, we will only label guidelines
+with {}\TeamGC{} when that is the primary motivation for the
+guideline.  For example, code formatting generally does not impact end
+users at all (unless they look at raw code in header files) yet can
+greatly affects shared ownership of code.
 
 \end{itemize}
 
-Every guideline is given a recommendation strength and at least on
+Every guideline is given a recommendation strength and at least one
 other guideline category.  However, a guideline may be assigned more
-than one non-strength category (e.g.\ \InteropGC{} and \SafeGC).
+than one non-strength category (e.g.\ \InteropGC{} and \SafetyGC).
+
 
 %
 \subsection{Alphanumeric item designations}
@@ -185,6 +199,9 @@ version to version.  For example, \textbf{NC 1} in \textbf{TCDG
   1.0} might become \textbf{NC 3} in \textbf{TCDG X.Y}.  We refer
 to guidelines in \cite{C++CodingStandards05} using a numbered
 acronym such as \textbf{CPPCS Item 15} (``Use const proactively'').
+
+Whenever a new guideline is added or the ID of an existing guideline
+is changed, the version number must be incremented.
 
 
 %
@@ -643,6 +660,11 @@ personal preference or style.
   \texttt{assert(...)} macro.
 
 \end{itemize}
+
+
+{}\textbf{ToDo:} Add an item for using STANDARD\_CATCH\_MACROS(...) in
+main to catch and report all exceptions (because it will show stack
+traces).
 
 
 %
