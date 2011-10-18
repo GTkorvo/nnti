@@ -37,7 +37,7 @@
 #include "FEApp_SGGaussQuadResidualGlobalFill.hpp"
 #include "FEApp_SGGaussQuadJacobianGlobalFill.hpp"
 #include "Teuchos_TimeMonitor.hpp"
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 
 FEApp::Application::Application(
   const Teuchos::RCP<const Epetra_Comm>& comm,
@@ -155,10 +155,10 @@ FEApp::Application::init_sg(
       const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& exp,
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm)
 {
-  TEST_FOR_EXCEPTION(basis == Teuchos::null, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(basis == Teuchos::null, std::logic_error,
 		     "Error!  FEApp::Application::init_sg():  " <<
 		     "SG basis cannot be null!");
-  TEST_FOR_EXCEPTION(exp == Teuchos::null, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(exp == Teuchos::null, std::logic_error,
 		     "Error!  FEApp::Application::init_sg():  " <<
 		     "SG expansion cannot be null!");
   sg_basis = basis;

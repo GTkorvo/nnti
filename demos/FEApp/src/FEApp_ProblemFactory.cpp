@@ -28,7 +28,7 @@
 // 
 // ***********************************************************************
 // @HEADER
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 #include "FEApp_ProblemFactory.hpp"
 #include "FEApp_BrusselatorProblem.hpp"
 #include "FEApp_HeatNonlinearSourceProblem.hpp"
@@ -63,7 +63,7 @@ FEApp::ProblemFactory::create()
                                                     paramLib));
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl << 
                        "Error!  Unknown problem " << method << 
                        "!" << std::endl << "Supplied parameter list is " << 
