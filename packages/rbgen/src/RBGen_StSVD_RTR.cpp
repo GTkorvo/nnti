@@ -103,7 +103,7 @@ namespace RBGen {
     localV_ = rbmethod_params.get<bool>("StSVD Local V",localV_);
 
     rhoPrime_ = rbmethod_params.get<double>("StSVD Rho Prime",rhoPrime_);
-    TEST_FOR_EXCEPTION(rhoPrime_ <= 0.0 || rhoPrime_ >= .25,
+    TEUCHOS_TEST_FOR_EXCEPTION(rhoPrime_ <= 0.0 || rhoPrime_ >= .25,
         std::invalid_argument, 
         "RBGen::StSVDRTR:: Rho Prime must be in (0,1/4)");
 
@@ -118,7 +118,7 @@ namespace RBGen {
       ortho_ = rbmethod_params.get< 
                 Teuchos::RCP<Anasazi::OrthoManager<double,Epetra_MultiVector> >
                >("Ortho Manager");
-      TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,std::invalid_argument,"RBGen::StSVDRTR::User specified null ortho manager.");
+      TEUCHOS_TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,std::invalid_argument,"RBGen::StSVDRTR::User specified null ortho manager.");
     }
     else {
       /*
@@ -134,7 +134,7 @@ namespace RBGen {
     }
 
     // Save the pointer to the snapshot matrix
-    TEST_FOR_EXCEPTION(ss == Teuchos::null,std::invalid_argument,"Input snapshot matrix cannot be null.");
+    TEUCHOS_TEST_FOR_EXCEPTION(ss == Teuchos::null,std::invalid_argument,"Input snapshot matrix cannot be null.");
     A_ = ss;
     // Save dimensions
     m_ = A_->GlobalLength();
@@ -230,9 +230,9 @@ namespace RBGen {
     // Perform initial factorization
     // Make U,V orthonormal
     int ret = ortho_->normalize(*U_);
-    TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial U basis construction failed.");
+    TEUCHOS_TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial U basis construction failed.");
     ret = ortho_->normalize(*V_);
-    TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial V basis construction failed.");
+    TEUCHOS_TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,"Initial V basis construction failed.");
     //
     // StSVD minimizers trace(U'*A*V*N)
     // and therefore computes (-U,V), where (U,V) are 
@@ -245,31 +245,31 @@ namespace RBGen {
       // Compute U'*A*V via A'*U
       int info;
       info = AU_->Multiply('T','N',1.0,*A_,*U_,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
       //
       // compute (U'*A)*V
       info = dgesvd_A_->Multiply('T','N',1.0,*AU_,*V_,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
       Epetra_LocalMap lclmap(rank_,0,A_->Comm());
       Epetra_MultiVector VV(lclmap,rank_);
-      TEST_FOR_EXCEPTION(VV.ConstantStride() == false,
+      TEUCHOS_TEST_FOR_EXCEPTION(VV.ConstantStride() == false,
           std::logic_error, "RBGen::StSVD/RTR::initialize(): VV should have constant stride.");
       //
       // compute the singular vectors of U'*A*V
       // note, this computes U (into A) and V^T (into VV)
       lapack.GESVD('O','A',rank_,rank_,dgesvd_A_->Values(),dgesvd_A_->Stride(),&sigma_[0],
           NULL,rank_,VV.Values(),VV.Stride(),&dgesvd_work_[0],dgesvd_work_.size(),NULL,&info);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling GESVD.");
       Epetra_MultiVector UCopy(*U_), VCopy(*V_);
       info = U_->Multiply('N','N',-1.0,UCopy,*dgesvd_A_,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
       // recall, VV stores V^T, not V
       info = V_->Multiply('N','T',1.0,VCopy,VV,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
 
@@ -277,10 +277,10 @@ namespace RBGen {
     {
       int info;
       info = AU_->Multiply('T','N',1.0,*A_,*U_,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
       info = AV_->Multiply('N','N',1.0,*A_,*V_,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
 
@@ -337,7 +337,7 @@ namespace RBGen {
 
     // check that we have a valid snapshot set: user may have cleared 
     // it using Reset()
-    TEST_FOR_EXCEPTION(A_ == Teuchos::null,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(A_ == Teuchos::null,std::logic_error,
                        "computeBasis() requires non-null snapshot set.");
 
     //
@@ -396,7 +396,7 @@ namespace RBGen {
         retract(*U_,*V_,*newU,*newV);
       }
       catch (std::runtime_error oops) {
-        TEST_FOR_EXCEPTION(true,std::runtime_error,
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,
             "RBGen::StSVD::computeBasis(): Retraction of eta failed.");
       }
 
@@ -419,7 +419,7 @@ namespace RBGen {
       {
         int info;
         info = newAU->Multiply('T','N',1.0,*A_,*newU,0.0);
-        TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+        TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
             "RBGen::StSVD::computeBasis(): Error calling Epetra_MultiVector::Muliply.");
       }
       // compute fxnew and rhonum
@@ -492,7 +492,7 @@ namespace RBGen {
         {
           int info;
           info = AV_->Multiply('N','N',1.0,*A_,*V_,0.0);
-          TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
               "RBGen::StSVD::computeBasis(): Error calling Epetra_MultiVector::Muliply.");
         }
 
@@ -564,7 +564,7 @@ namespace RBGen {
     {
       int info;
       info = dgesvd_A_->Multiply('T','N',1.0,*AU_,*V_,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
 
@@ -600,7 +600,7 @@ namespace RBGen {
       int info;
       lapack.GESVD('N','N',rank_,rank_,dgesvd_A_->Values(),dgesvd_A_->Stride(),&sigma_[0],
                    NULL,rank_,NULL,rank_,&dgesvd_work_[0],dgesvd_work_.size(),NULL,&info);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::initialize(): Error calling Epetra_MultiVector::Muliply.");
     }
   }
@@ -685,7 +685,7 @@ namespace RBGen {
   void StSVDRTR::updateBasis( const Teuchos::RCP< Epetra_MultiVector >& update_ss ) 
   {
     // perform enough incremental updates to consume the new snapshots
-    TEST_FOR_EXCEPTION(true,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,
         "RBGen::StSVDRTR::updateBasis(): this routine not yet supported.");
   }
 
@@ -954,23 +954,23 @@ namespace RBGen {
     static Epetra_LocalMap lclmap(rank_,0,A_->Comm());
     static Epetra_MultiVector S(lclmap,rank_);
     info = S.Multiply('T','N',1.0,xU,etaU,0.0);
-    TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
         "RBGen::StSVD::Proj(): Error calling Epetra_MultiVector::Muliply.");
     // set S = .5 (S + S')
     Sym(S);
     // E = E - .5 U (S + S')
     info = etaU.Multiply('N','N',-1.0,xU,S,1.0);
-    TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
         "RBGen::StSVD::Proj(): Error calling Epetra_MultiVector::Muliply.");
 
     info = S.Multiply('T','N',1.0,xV,etaV,0.0);
-    TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
         "RBGen::StSVD::Proj(): Error calling Epetra_MultiVector::Muliply.");
     // set S = .5(S + S')
     Sym(S);
     // E = E - .5 V (S + S')
     info = etaV.Multiply('N','N',-1.0,xV,S,1.0);
-    TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
         "RBGen::StSVD::Proj(): Error calling Epetra_MultiVector::Muliply.");
   }
 
@@ -1026,12 +1026,12 @@ namespace RBGen {
 
     etaU.Update(1.0,xU,1.0);
     ret = ortho_->normalize(etaU,UR);
-    TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,
         "RBGen::StSVD::retract(): Ortho failure in retraction.");
 
     etaV.Update(1.0,xV,1.0);
     ret = ortho_->normalize(etaV,VR);
-    TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(ret != rank_,std::runtime_error,
         "RBGen::StSVD::retract(): Ortho failure in retraction.");
 
     if (debug_) 
@@ -1106,7 +1106,7 @@ namespace RBGen {
     // HetaU = A etaV
     {
       int info = HetaU.Multiply('N','N',1.0,*A_,etaV,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::Hess(): Error calling Epetra_MultiVector::Muliply.");
     }
     // HetaU = A etaV N
@@ -1116,13 +1116,13 @@ namespace RBGen {
     // HetaU = A etaV N - etaU sym(U' A V N)
     {
       int info = HetaU.Multiply('N','N',-1.0,etaU,*UAVNsym_,1.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::Hess(): Error calling Epetra_MultiVector::Muliply.");
     }
     // HetaV = A' etaU
     {
       int info = HetaV.Multiply('T','N',1.0,*A_,etaU,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::Hess(): Error calling Epetra_MultiVector::Muliply.");
     }
     // HetaV = A' etaU N
@@ -1132,7 +1132,7 @@ namespace RBGen {
     // HetaV = A' etaU N - etaV sym(V' A' U N)
     {
       int info = HetaV.Multiply('N','N',-1.0,etaV,*VAUNsym_,1.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::StSVD::Hess(): Error calling Epetra_MultiVector::Muliply.");
     }
     // project
@@ -1193,9 +1193,9 @@ namespace RBGen {
     os << " >> Debugging checks: iteration " << iter_ << where << endl;
 
     info = AV.Multiply('N','N',1.0,*A_,*V_,0.0);
-    TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for AU.");
+    TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for AU.");
     info = AU.Multiply('T','N',1.0,*A_,*U_,0.0);
-    TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for AU.");
+    TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for AU.");
 
     if (chk.checkUV) {
       tmp = ortho_->orthonormError(*U_);
@@ -1213,10 +1213,10 @@ namespace RBGen {
       Epetra_MultiVector S(lclmap,rank_);
       std::vector<double> work(5*rank_), sigma(rank_);
       info = S.Multiply('T','N',1.0,*U_,AV,0.0);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for U'*A*V.");
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error, "RBGen::StSVDRTR::Debug(): error calling Epetra_MultiVector::Multiply for U'*A*V.");
       lapack.GESVD('N','N',rank_,rank_,S.Values(),S.Stride(),&sigma[0],
                    NULL,rank_,NULL,rank_,&work[0],work.size(),NULL,&info);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,"RBGen::StSVDRTR::Debug(): error calling DGESVD.");
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,"RBGen::StSVDRTR::Debug(): error calling DGESVD.");
       os << " >> Stored Sigma     Computed Sigma" << endl;
       for (int i=0; i<rank_; i++) {
         os << " >> " << setw(15) << setprecision(6) << sigma_[i] << "     "

@@ -24,7 +24,7 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_CommandLineProcessor.hpp"
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 	
 int main( int argc, char* argv[] )
 {
@@ -62,7 +62,7 @@ int main( int argc, char* argv[] )
   }
 
   // Check to make sure an XML input file was provided
-  TEST_FOR_EXCEPTION(xml_file == "", std::invalid_argument, "ERROR:  An XML file was not provided; use --xml-file to provide an XML input file for this RBGen driver.");
+  TEUCHOS_TEST_FOR_EXCEPTION(xml_file == "", std::invalid_argument, "ERROR:  An XML file was not provided; use --xml-file to provide an XML input file for this RBGen driver.");
 
   Teuchos::Array<Teuchos::RCP<Teuchos::Time> > timersRBGen;
   //

@@ -4,7 +4,7 @@
 #include "Teuchos_CommandLineProcessor.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_Utils.hpp"
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 
 Teuchos::RCP<Teuchos::ParameterList> RBGen::createParams( const std::string& filename )
 {
@@ -162,13 +162,13 @@ Teuchos::RCP< std::vector<std::string> > RBGen::genFileList( const Teuchos::Para
   Teuchos::RCP< std::vector< std::string > > filenames = Teuchos::rcp( new std::vector< std::string >() ); 
 
   // See if the "File I/O" sublist exists
-  TEST_FOR_EXCEPTION(!params.isSublist( "File IO" ), std::invalid_argument, "File I/O sublist does not exist!");
+  TEUCHOS_TEST_FOR_EXCEPTION(!params.isSublist( "File IO" ), std::invalid_argument, "File I/O sublist does not exist!");
   
   // Get the "File I/O" sublist.
   Teuchos::ParameterList& fileio_params = const_cast<Teuchos::ParameterList&>(params.sublist( "File IO" ) );
   
   // See if the "Data Filename Format" sublist exists 
-  TEST_FOR_EXCEPTION(!fileio_params.isSublist( "Data Filename Format" ), std::invalid_argument, "Data Filename Format sublist does not exist!");
+  TEUCHOS_TEST_FOR_EXCEPTION(!fileio_params.isSublist( "Data Filename Format" ), std::invalid_argument, "Data Filename Format sublist does not exist!");
   
   // Get the "Data Filename Format" sublist.
   Teuchos::ParameterList& fileformat_params = fileio_params.sublist( "Data Filename Format" );
@@ -245,7 +245,7 @@ Teuchos::RCP< std::vector<std::string> > RBGen::genFileList( const Teuchos::Para
 
   else {
     std::string err_str = "File format type, 'Type = " + format_type + "', is not recognized!";
-    TEST_FOR_EXCEPTION(true, std::invalid_argument, err_str);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, err_str);
   }
   
   return filenames;
