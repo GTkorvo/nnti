@@ -7,7 +7,7 @@ developers.
 
 This document describes C++ coding guidelines for Trilinos and related
 software projects.  It builds upon the guidelines in \emph{C++ Coding
-  Standards} by Sutter and Alexandrescu {}\cite{C++CodingStandards05}
+Standards} by Sutter and Alexandrescu {}\cite{C++CodingStandards05}
 (the 101 items are outlined in
 Appendix~\ref{sec:cpp_coding_standards}) and the Teuchos-based memory
 management approach described in
@@ -15,9 +15,10 @@ management approach described in
 document specifically address the development of object-oriented
 numerical C++ libraries, using the tools in the Trilinos package
 Teuchos.  While this document's main purpose is to define guidelines
-for the common look and feel of Trilinos software (for both interfaces
+to improve the common look \& feel, interoperability, safety,
+maintainability, and quality of Trilinos software (for both interfaces
 and support software), it is also general enough to be applied to many
-other projects that, for instance, might interact with Trilinos.
+other C++ projects that, for instance, might interact with Trilinos.
 
 The book \emph{C++ Coding Standards} {}\cite{C++CodingStandards05}
 distills the C++ community's best practices\footnote{The book was
@@ -28,7 +29,7 @@ also covers many design topics that apply more generally beyond
 software written in C++.  As a result, {}\cite{C++CodingStandards05}
 provides a comprehensive foundation for creating well-designed,
 high-quality C++ software.  The goal of this document is not to
-restate the contents of that work, but instead to provide amendments
+restate the contents of that book, but instead to provide amendments
 to specific items in {}\cite{C++CodingStandards05} and tailor them for
 numerical libraries.  
 
@@ -48,10 +49,11 @@ software development processes
 
 More important than code formatting, a consistent set of naming
 conventions for C++ classes, functions, variables, and other entities
-also helps to improve collaborative software development and quality.
-Also, since clients of the software must interact with these names, it
-is even more important that a set of naming conventions be used as
-consistently as possible in the client interfaces.
+also helps to improve common look \& and feel, collaborative software
+development, and overall quality.  Since clients of the software must
+interact with these names, it is even more important that a set of
+naming conventions be used as consistently as possible in the client
+interfaces to provide common look \& feel.
 
 Finally, important general C++ coding guidelines are covered that
 complete and amend those in {}\cite{C++CodingStandards05}.  While
@@ -60,6 +62,15 @@ code, other coding guidelines do, and should therefore receive more
 attention.  Unlike naming conventions and code formatting, these
 guidelines are difficult to change after a significant amount of code
 has been written.
+
+Coding and documentation guidelines, such as defined here, are
+critical in order to perform code reviews that have been proven to
+improve software quality {}\cite{CodeComplete2nd04}.  Without coding
+and documentation guidelines, code reviews collapse into arguments
+about basic coding constructs (e.g.\ why not make a classe's varaibles
+public?  Or, why not use raw pointers and raw calls to new and delete
+everywhere?) and are much less productive
+{}\cite{ImplementingLeanSoftwareDevelopment}.
 
 The rest of this document is organized as follows.
 Section~\ref{sec:guideline_structure} describes how the guidelines are
@@ -655,26 +666,46 @@ personal preference or style.
   \texttt{std\-::logic\-\_error}, the object should in general be
   viewed as unusable and should be deleted immediately.  To debug
   exceptions, a break point may be placed on the function
-  {}\texttt{Test\-For\-Exception\-\_break()}\footnote{In
-    {}\texttt{gdb}, a break-point would be set as {}\texttt{b
-      Test\-For\-Exception\-\_break()}.} which will be called just
-  before an exception is thrown through these macros.  In the future,
-  more sophisticated features like automatically attaching a debugger
-  or printing the call stack may be added for some systems.  Therefore
-  throwing an exception derived from \texttt{std\-::logic\-\_error}
-  using these macros should be preferred to using the
-  {}\texttt{assert(...)} macro as it gives us more control over what
-  happens when one of these types of programming errors occurs.  Also,
-  these exception macros make it much easier to generate better error
-  messages than what you would get from a simple use of the
-  \texttt{assert(...)} macro.
+  {}\texttt{Teuchos::Test\-For\-Exception\-\_break()}\footnote{In
+  {}\texttt{gdb}, a break-point would be set as {}\texttt{b
+  Teuchos::Test\-For\-Exception\-\_break()}.} which will be called
+  just before an exception is thrown through these macros.  In the
+  future, more sophisticated features like automatically attaching a
+  debugger or printing the call stack may be added for some systems.
+  Therefore throwing an exception derived from
+  \texttt{std\-::logic\-\_error} using these macros should be
+  preferred to using the {}\texttt{assert(...)} macro as it gives us
+  more control over what happens when one of these types of
+  programming errors occurs.  Also, these exception macros make it
+  much easier to generate better error messages than what you would
+  get from a simple use of the \texttt{assert(...)} macro.
+
+{}\item\GCGStandardCatchStatements: Catch all exceptions before they
+exit {}\ttt{main()} by writing it as:
+
+{\small\begin{verbatim}
+  #include "Teuchos_VerboseObject.hpp"
+  #include "Teuchos_StandardCatchMacros.hpp"
+  ...
+  int main( int argc, char* argv[] )
+  {
+    const TEuchos::RCP<Teuchos::FancyOStream> out =
+      Teuchos::VerboseObjectBase::getDefaultOStream();
+    ...
+    bool success = true;
+    try {
+      ...
+    } 
+    TEUCHOS_STANDARD_CATCH_STATEMENTS(true, out, success);
+    return (success ? 0 : 1);
+  }
+\end{verbatim}}
+
+By using {}\ttt{TEUCHOS\-\_STANDARD\-\_CATCH\-\_STATEMENTS(...)}, the
+process number will be printed and the stacktrace from any exceptions
+thrown using the standard Teuchos macros will be printed.
 
 \end{itemize}
-
-
-{}\textbf{ToDo:} Add an item for using STANDARD\_CATCH\_MACROS(...) in
-main to catch and report all exceptions (because it will show stack
-traces).
 
 
 %
@@ -692,12 +723,14 @@ checked STL implementation), {}\texttt{Teuchos::\-Ptr},
 {}\texttt{Teuchos::\-RCP}, {}\texttt{Teuchos::\-Array},
 {}\texttt{Teuchos::\-Array\-RCP}, and
 {}\texttt{Teuchos::\-Array\-View} allow all code to be written without
-any explicit raw C++ pointers.  In debug mode, these classes provide
-full run-time checking that result in exceptions being thrown and
-excellent error messages (i.e.\ instead of segfaults).  When a checked
-C++ standard library is used (e.g.\ when {}\texttt{\_GXXLIB\_DEBUG} is
-defined with g++), then all of the standard C++ library classes are
-checked as well.
+any explicit raw C++ pointers and eliminate undefined behavior (i.e.\
+instead of segfaults) from C++ programs related to the usage of
+memory.  In debug mode, these classes eliminate undefined behavior by
+providing full run-time checking that results in exceptions being
+thrown and excellent error messages.  When a checked C++ standard
+library is used (e.g.\ when {}\texttt{\_GXXLIB\_DEBUG} is defined with
+g++), then all of the standard C++ library classes are checked as
+well.
 
 
 {}\item\GCGUseStdString: While {}\texttt{std\-::string} is not debug checked
@@ -709,19 +742,43 @@ code.  However, when a checked C++ library implementation is used (e.g.\ when
 is very safe.
 
 
-{}\item\GCGTeuchosPtr: (see Tables~\ref{fig:func_args_value_type} and
-{}\ref{fig:func_args_ref_type}): The class {}\texttt{Teuchos\-::Ptr} simply
-takes the place of a raw pointer to a single object but is always default
-initialized to NULL.  In debug mode, it throws exceptions when trying to
-dereference a null pointer.  Using this class helps to eliminate the need for
-checking for NULL to avoid undefined behavior when one dereferences a NULL
-pointer.
-
-
 {}\item\GCGTeuchosRCP: (see Tables~\ref{fig:func_args_value_type} and
-{}\ref{fig:func_args_ref_type}): Replace all references to the class
-{}\texttt{boost::\-shared\_ptr} in all items in {}\cite{C++CodingStandards05}
-with {}\texttt{Teuchos::\-RCP}.
+{}\ref{fig:func_args_ref_type}): {}\ttt{Teuchos\-::RCP} is critical to
+use for persisting assoications\footnote{\textit{Persisting
+associations} are associations that exist between two or more objects
+that extend past a single function call for formal function arguments,
+or a single statement for function return objects
+{}\cite{RefCountPtrBeginnersGuide, TeuchosMemoryManagementGuide}.} 
+because it ensures that objects remain valid until they are no longer
+needed yet ensures that objects are properly destoryed.  Replace all
+mentions to the class {}\texttt{boost::\-shared\_ptr} with
+{}\texttt{Teuchos::\-RCP} in all items in
+{}\cite{C++CodingStandards05}.
+
+
+{}\item\GCGTeuchosPtr: (see Tables~\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}): The class {}\texttt{Teuchos\-::Ptr}
+simply takes the place of a raw pointer to a single object but is
+always default initialized to NULL.  In debug mode, it throws
+exceptions when trying to dereference a null pointer.  For
+non-persisting associations\footnote{\textit{Non-Persisting
+associations} are associations between two or more objects that exist
+only within a single function call for formal function arguments, or a
+single statement for function return objects, where no memory of any
+of the objects is retained as a side effect after the function returns
+or the statement ends {}\cite{RefCountPtrBeginnersGuide,
+TeuchosMemoryManagementGuide}.} {}\ttt{Teuchos\-::Ptr} is important
+because it ensures that valid objects are returned on dereferencing.
+The use of {}\ttt{Teuchos\-::Ptr} for semi-persisting
+associations\footnote{\textit{Semi-persisting associations} are
+associations that (like persisting associations) exist between two or
+more objects that extend past a single function call for formal
+function arguments, or a single statement for function return objects
+except where the use of the objects and the lifetime of the
+association have more rigid constraints requiring greater care in use
+{}\cite{RefCountPtrBeginnersGuide, TeuchosMemoryManagementGuide}.} is
+important because it can detect dangling references where the pointer
+is dereferenced after the underlying object has been destoryed.
 
 
 {}\item\GCGNonmemberConstructors: Using non-member constructors gives
@@ -764,12 +821,11 @@ the interface functions:
 
 The ``generalized view'' design pattern along with a concrete example
 from Thyra is described in great detail in
+{}\cite{TeuchosMemoryManagementGuide}.  Note that views of concrete
+classes do not have to use ``generalized view'' semantics and can
+instead use ``direct view'' semantics where appropriate.  See all the
+details about the ``non-member constructor'' idiom in
 {}\cite{TeuchosMemoryManagementGuide}.
-
-Note that views of concrete classes do not have to use ``generalized
-view'' semantics and can instead use ``direct view'' semantics where
-appropriate.  See all the details about the ``non-member constructor''
-idiom in {}\cite{TeuchosMemoryManagementGuide}.
 
 
 {}\item\GCGTeuchosArrayView: (see Tables~\ref{fig:func_args_value_type} and
@@ -1209,9 +1265,9 @@ other files for class \ttt{B} are similar):
   // A.hpp
 
   #include "A_decl.hpp"
-  #ifndef HAVE_THYRA_EXPLICIT_INSTANTIATION
-  #  include "A_def.hpp"
-  #endif
+  // If using explicit instantiation, include A_def.hpp.  Otherwise not.
+  #include "A_def.hpp"
+  // NOTE: This file gets configured by CMake to include A_def.hpp or not!
 
 
   ----------------------------------
@@ -1333,11 +1389,13 @@ The 100\% bullet-proof rules for breaking up template code like this are:
   by general clients and either includes only
   \ttt{SomeClass\_decl.hpp} or also includes \ttt{SomeClass\_def.hpp}
   depending on if implicit or explicit instantiation is being used.
-  When explicit instantiation is being used the file
-  \ttt{SomeClass\_def.hpp} is hidden from general clients and changes
-  in it do not require recompilation of client code.  The file
-  \ttt{SomeClass.hpp} can (and should) be automatically configured by
-  the CMake build system (see examples in thyra/src/CMakeLists.txt).
+  Actually, this file must be autogenerated during the CMake configure
+  process to include or not include \ttt{SomeClass\_def.hpp} because
+  CMake does not consider preprocessor defines and therefore the form
+  of \ttt{SomeClass.hpp} cannot contain even a protected include of
+  \ttt{SomeClass\_def.hpp} or CMake will recompile client code whe
+  \ttt{SomeClass\_def.hpp} changes.  See examples of how to
+  autogenerate \ttt{SomeClass.hpp} by looking at the Thyra package.
 
 \item All required instantiations must be provided in the file
   \ttt{SomeClass.cpp}.  For standard scalar types (e.g.\ \ttt{double},
@@ -1521,6 +1579,17 @@ Python, allows considerable formatting freedom.  With freedom comes
 responsibility, in this case to make code easier for both its author
 and other programmers to read, understand, extend, and maintain.
 
+Our main goal in this section is to try to provide reasonable
+recommendations for those formatting issues that, while largely a
+matter of style and personal preference, also affect overall code
+readability.  Consistent, well thought out code formatting helps to
+promote pair programming and joint ownership of code
+{}\cite{ExtremeProgrammingExplained99}.  The formatting and
+indentation guidelines presented here are largely consistent with the
+recommendations in {}\cite[Chapter 31]{CodeComplete2nd04} and try to
+reduce the amount of ``right drift'' that can occur with some common
+formatting and indentation styles.
+
 Source code should always be formatted consistently within a single
 file or a set of tightly coupled files \cite[Item
 0]{C++CodingStandards05}.  Ideally, source code should be formatted
@@ -1545,17 +1614,7 @@ like for files that they create, and also makes it easier for
 developers to edit files created by other developers without changing
 their styles.  Appendix~\ref{sec:reformatting-guidelines} gives some
 guidelines for how individuals should conduct themselves when multiple
-code formatting styles are in use within a project.
-
-Our main goal in this section is to try to provide reasonable
-recommendations for those formatting issues that, while largely a
-matter of style and personal preference, also affect overall code
-readability.  These recommendations help promote pair programming and
-joint ownership of code \cite{ExtremeProgrammingExplained99}.  The
-formatting and indentation guidelines presented here are largely
-consistent with the recommendations in \cite[Chapter
-31]{CodeComplete2nd04} and try to reduce the amount of ``right drift''
-that can occur with some common formatting and indentation styles.
+code formatting styles are in use within a given project.
 
 The indentation guidelines outlined below are automatically supported
 by the Emacs text editor when using the custom style ``thyra'' defined
@@ -2022,7 +2081,7 @@ structures.
       ...
       break;
     default:
-      TEST_FOR_EXCEPT("Should never get there!");
+      TEUCHOS_TEST_FOR_EXCEPT("Should never get there!");
   }
   \end{verbatim}}
 
@@ -2039,7 +2098,7 @@ structures.
       ...
       break;
     default:
-      TEST_FOR_EXCEPT("Should never get there!");
+      TEUCHOS_TEST_FOR_EXCEPT("Should never get there!");
   }
   \end{verbatim}}
 
@@ -2061,7 +2120,7 @@ structures.
       break;
     }    
     default: {
-      TEST_FOR_EXCEPT("Should never get there!");
+      TEUCHOS_TEST_FOR_EXCEPT("Should never get there!");
     }
   }
   \end{verbatim}}
@@ -2081,10 +2140,10 @@ structures.
     {
       ...
       break;
-    }    
+    }
     default:
     {
-      TEST_FOR_EXCEPT("Should never get there!");
+      TEUCHOS_TEST_FOR_EXCEPT("Should never get there!");
     }
   }
   \end{verbatim}}
