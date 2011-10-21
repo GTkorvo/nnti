@@ -86,19 +86,18 @@ Section~\ref{tcdg:formatting:sec}.  Finally, guidelines for Doxygen
 documentation are provided in Section~\ref{sec:DocumentionGuidelines}.
 
 The appendices include both abbreviated references and detailed
-discussions.  Appendix~\ref{sec:summary_guidelines} concisely lists
-the coding guidelines presented in this document.
-Appendix~\ref{apdx:summary_of_idioms} summarizes the idioms and
-conventions surrounding the use of the Teuchos memory management
-classes.  Appendix~\ref{sec:cpp_coding_standards} lists the 101
+discussions.  Appendix~\ref{sec:cpp_coding_standards} lists the 101
 guidelines from {}\cite{C++CodingStandards05}, and identifies which
 items are amended or invalidated by the Trilinos guidelines described
-in this document.  Appendix~\ref{sec:misc_amendments} contains
-discussions of items from {}\cite{C++CodingStandards05} that are
-amended or invalidated in this set of coding guidelines for Trilinos.
-Most importantly, it clarifies our recommendations for
-{}\texttt{using} declarations that differ from {}\cite[Item
-59]{C++CodingStandards05}.
+in this document.  Appendix~\ref{sec:summary_guidelines} concisely
+lists the coding guidelines presented in this document.
+Appendix~\ref{apdx:summary_of_idioms} summarizes the idioms and
+conventions surrounding the use of the Teuchos memory management
+classes.  Appendix~\ref{sec:misc_amendments} contains discussions of
+items from {}\cite{C++CodingStandards05} that are amended or
+invalidated in this set of coding guidelines for Trilinos.  Most
+importantly, it clarifies our recommendations for {}\texttt{using}
+declarations that differ from {}\cite[Item 59]{C++CodingStandards05}.
 Appendix~\ref{sec:arguments-for-consistent-style} argues for adopting
 a consistent code formatting style in a single development team or
 single project (which current Agile development methods require).
@@ -174,7 +173,7 @@ difficult for users to use correctly, more difficult to maintain, or
 more likely to contain undefined behavior (e.g.\ memory access
 errors).  For example, the use of {}\ttt{const} is considered to be a
 safety issue.  Maintainability, portability, and code clarity are also
-closely related to safety so {}\SafetyGC will be used to also cover
+closely related to safety so {}\SafetyGC{} will be used to also cover
 guidelines that address these attributes as well.
 
 {}\item\textbf{\TeamGC}: The guideline mainly affects the ability of a
@@ -244,6 +243,20 @@ This section gives naming conventions for external interfaces that
 affect the user experience and common look and feel.
 
 \begin{itemize}
+
+{}\item\NCNamespaceAllNames: For C++ class names, functions, and
+variables, use C++ namespaces which include the package name (e.g.\
+{}\ttt{Thyra::VectorBase}, {}\ttt{Tpetra::Map}, etc.).  For other
+global identifiers such as C and Fortran functions and macros, use the
+package name as a prefix (e.g.\ {}\ttt{MPI\_Comm()},
+{}\ttt{TEUCHOS\_ASSERT()}).  Under no circumstance should any globally
+visible symbol be used (including at link time) that is not namespaced
+(e.g.\ no global struct with a name like {}\ttt{Vec}).
+
+{}\textit{Justification}: Any software that does not namespace its
+global identifiers is unsuitable to be integrated with other software.
+Only one software project can be sloppy and pollute the global
+namespace.
 
 {}\item\NCClassNames: Names for C++ classes and structs should
 generally be capitalized.  Separate words should be concatenated and
@@ -994,24 +1007,33 @@ for.
 
   \end{itemize}
 
-\item\GCGTeuchosTimers: ToDo: Fill in some details.
-  \begin{itemize}
-  
-  \item On a package-by-package basis, always protect time monitor timers with {}\texttt{ifdefs}.  Compiling many Trilinos packages together can result in an overwhelming number of timers being reported in the TimeMonitor::summarize() method.  By protecting with ifdefs, users can enable only the timings they care about.  For example, in the main CMakeLists.txt file for a package, the timers can be enabled using the default Trilinos global variable, but can be overridden at the individual package level:
+{}\item\GCGTeuchosTimers: To properly support timers in Trilinos, do
+the following (where {}\ttt{<UCPACAKGENAME>} is the upper-case package
+name such as {}\ttt{THYRA}, {}\ttt{RYTHMOS}, etc.):
 
-{\small\begin{verbatim}
-ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_TEUCHOS_TIME_MONITOR
-  ${PACKAGE_NAME}_BUILD_TEUCHOS_TIME_MONITOR_SUPPORT
-  "Build with Teuchos TimeMonitors enabled."
-  "${Trilinos_ENABLE_TEUCHOS_TIME_MONITOR}" )
-\end{verbatim}}
+  \begin{itemize}
+
+  {}\item Add
+  {}\ttt{PACKAGE\_ADD\_ENABLE\_TEUCHOS\_TIME\_MONITOR\_OPTION()} to
+  the package's top-level CMakLists.txt file.
+
+  {}\item Add
+  {}\ttt{@<UCPACAKGENAME>\_TEUCHOS\_TIME\_MONITOR\_DECLARATIONS@} to
+  the packages {}\ttt{\$\{PACKAGE\_NAME\}\_config.h.in} file.
+
+  {}\item To add timers to specific C++ functions, in the body of the
+  functions add calls to
+  {}\ttt{<UCPACAKGENAME>\_FUNC\_TIME\_MONITOR("<PACKAGENAME>:
+  Somefunction()")} and
+  {}\ttt{<UCPACAKGENAME>\_FUNC\_TIME\_MONITOR\_DIFF("<PACKAGENAME>:
+  Somefunction(): some part", SomePart)} (the latter when there is
+  more than one timer in a function).
 
   \end{itemize}
 
-
-{}\textbf{ToDo:} Set up the proper reusable macros to standardize the
-usage of timers on a package-by-package basis and then document here!
-
+The macros {}\ttt{<UCPACAKGENAME>\_FUNC\_TIME\_MONITOR[\_DIFF]} have
+empty definitions when timers are disabled.  See
+TrilinosCMakeQuickstart.txt for user-level details.
 
 \end{itemize}
 
@@ -1021,6 +1043,10 @@ usage of timers on a package-by-package basis and then document here!
 %
 
 \begin{itemize}
+
+\item\GCGSafeNamespaceUsage: This is an amendment to Item 59 in
+  {}\cite{C++CodingStandards05} which is explained in
+  Appendix~\ref{sec:using_amendments}.
 
 \item\GCGExplicitTemplateArguments: Some C++ compilers have trouble
   inferring the template arguments in a template function call.
