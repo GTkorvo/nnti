@@ -17,7 +17,7 @@ namespace RBGen {
     Teuchos::RCP<Epetra_MultiVector> U2;
     U2 = Teuchos::rcp( new Epetra_MultiVector(View,*U_,curRank_,lup) );
     int info = (*B_).Scale(0.0);
-    TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
         "RBGen::ISVDUDV::expand(): error calling Epetra_SerialDenseMatrix::scale()");
     for (int i=0; i<curRank_; ++i) {
       (*B_)(i,i) = sigma_[i];
@@ -40,7 +40,7 @@ namespace RBGen {
     else {
       newRank = ortho_->normalize(*U2,Zteuchos);
     }
-    TEST_FOR_EXCEPTION(newRank != lup,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(newRank != lup,std::logic_error,
                        "RBGen::ISVDUDV::incStep(): Couldn't recover full rank basis.");
     Cteuchos = Teuchos::null;
     Zteuchos = Teuchos::null;
@@ -103,7 +103,7 @@ namespace RBGen {
     newwU = Teuchos::rcp( new Epetra_MultiVector(::View,*workU_,0,curRank_-down) );
     // multiply by Uh1
     int info = newwU->Multiply('N','N',1.0,*fullU,Uh1,0.0);
-    TEST_FOR_EXCEPTION(info != 0,std::logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(U).");
+    TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(U).");
     fullU = Teuchos::null;
     newU = Teuchos::rcp( new Epetra_MultiVector(::View,*U_,0,curRank_-down) );
     *newU = *newwU;
@@ -115,17 +115,17 @@ namespace RBGen {
     double *V_A, *workV_A;
     int V_LDA, workV_LDA;
     info = V_->ExtractView(&V_A,&V_LDA);
-    TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
         "RBGen::ISVDUDV::shrink(): Error calling Epetra_MultiVector::ExtractView() on V_.");
     info = workV_->ExtractView(&workV_A,&workV_LDA);
-    TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
         "RBGen::ISVDUDV::shrink(): Error calling Epetra_MultiVector::ExtractView() on workV_.");
     Epetra_LocalMap lclmap(numProc_,0,A_->Comm());
     fullV = Teuchos::rcp( new Epetra_MultiVector(::View,lclmap,    V_A,    V_LDA,curRank_     ) );
     newwV = Teuchos::rcp( new Epetra_MultiVector(::View,lclmap,workV_A,workV_LDA,curRank_-down) );
     // multiply workV = fullV * Vh1
     info = newwV->Multiply('N','N',1.0,*fullV,Vh1,0.0);
-    TEST_FOR_EXCEPTION(info != 0,std::logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(V).");
+    TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,"ISVDUDV::shrink(): Error calling EMV::Multiply(V).");
     fullV = Teuchos::null;
     // now set newV = workV
     newV = Teuchos::rcp( new Epetra_MultiVector(::View,lclmap, V_A, V_LDA, curRank_-down) );

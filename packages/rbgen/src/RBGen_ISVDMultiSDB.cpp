@@ -10,7 +10,7 @@ namespace RBGen {
   ISVDMultiSDB::ISVDMultiSDB() {}
 
   void ISVDMultiSDB::updateBasis(const Teuchos::RCP< Epetra_MultiVector >& update_ss ) {
-    TEST_FOR_EXCEPTION(true,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,
         "RBGen::ISVDMultiSDB::updateBasis(): this routine not supported.");
   }
   void ISVDMultiSDB::makePass() {
@@ -42,7 +42,7 @@ namespace RBGen {
       int info, lwork = 2*curRank_;
       std::vector<double> tau(2*curRank_), work(lwork);
       lapack.GEQRF(numCols,2*curRank_,W12[0],numCols,&tau[0],&work[0],lwork,&info);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiSDB::makePass(): error calling GEQRF on current right basis while constructing next pass coefficients.");
       if (debug_) {
         // we just took the QR factorization of [V G]
@@ -60,13 +60,13 @@ namespace RBGen {
       // compute the orthonormal basis ([W_1,W_2] = [\pm V,G]) 
       // will overwrite R
       lapack.ORGQR(numCols,2*curRank_,2*curRank_,W12[0],numCols,&tau[0],&work[0],lwork,&info);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiSDB::makePass(): error calling ORGQR to construct next pass coefficients.");
       // compute A [W_1 W_2]
       {
         Epetra_MultiVector lclAW(::View,*workAW_,0,2*curRank_);
         info = lclAW.Multiply('N','N',1.0,*A_,W12,0.0);
-        TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+        TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
             "RBGen::ISVDMultiSDB::makePass(): Error calling Epetra_MultiVector::Multiply() for A*W");
       }
       // save oldRank, which indicates the width of V
@@ -145,7 +145,7 @@ namespace RBGen {
         const Epetra_MultiVector lclV(::View,lclmap,(*V_)[0],numCols,curRank_);
         const Epetra_MultiVector W12(::View,*workW_,0,2*oldRank);
         int info = lclWV.Multiply('N','N',1.0,W12,lclV,0.0);
-        TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+        TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
             "RBGen::ISVDMultiSDB::makePass(): error Multiply()ing Epetra_MultiVector for W*V.");
       }
       Epetra_MultiVector lclV(::View,*V_,0,curRank_);
@@ -167,7 +167,7 @@ namespace RBGen {
       Epetra_MultiVector Vlcl(::View,*V_,0,curRank_);
       // compute A^T U
       int info = W2.Multiply('T','N',1.0,*A_,Ulcl,0.0);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::IncSVD::computeBasis(): Error calling Epetra_MultiVector::Multiply for A^T U.");
       Epetra_LocalMap Smap(curRank_,0,A_->Comm());
       Epetra_MultiVector S(Smap,curRank_,true); // "true" inits to zero
@@ -176,7 +176,7 @@ namespace RBGen {
       }
       // subtract V S from A^T U
       info = W2.Multiply('N','N',-1.0,Vlcl,S,1.0);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::IncSVD::computeBasis(): Error calling Epetra_MultiVector::Multiply for V S.");
 
       //
@@ -208,10 +208,10 @@ namespace RBGen {
         curS[i][i] = sigma_[i];
       }
       info = work.Multiply('N','N',1.0,curU,curS,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiSDB::makePass(): Error calling Epetra_MultiVector::Multiply() for debugging U S.");
       info = work.Multiply('N','N',-1.0,*A_,curV,1.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiSDB::makePass(): Error calling Epetra_MultiVector::Multiply() for debugging U S - A V.");
       work.Norm2(&errnorms[0]);
       for (int i=0; i<curRank_; i++) {

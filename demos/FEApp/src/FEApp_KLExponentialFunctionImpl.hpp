@@ -76,7 +76,7 @@ getValue(const std::string &n)
     if (n == name.str()) 
       return random_variables[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in setting paramter " << n
 		     << " in FEApp_KLExponentialFunction.hpp" << std::endl);

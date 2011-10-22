@@ -110,7 +110,7 @@ buildProblem(
        responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
 
      else {
-       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                           std::endl <<
                           "Error!  Unknown response function " << name <<
                           "!" << std::endl << "Supplied parameter list is " <<

@@ -29,7 +29,7 @@
 // ***********************************************************************
 // @HEADER
 #include <sstream>
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 #include "FEApp_ConstantSourceFunction.hpp"
 #include "FEApp_QuadraticSourceFunction.hpp"
 #include "FEApp_CubicSourceFunction.hpp"
@@ -88,7 +88,7 @@ FEApp::SourceFunctionFactory<EvalT>::create()
                                                                            paramLib));
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl << 
                        "Error!  Unknown source function " << method << 
                        "!" << std::endl << "Supplied parameter list is " << 
