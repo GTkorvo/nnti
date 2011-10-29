@@ -81,7 +81,7 @@ namespace FEApp {
     ScalarT& getValue(const std::string &n) {
       if (n == "Constant Function Value") return val;
       else {
-        TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl <<
                        "Error! Logic error in setting paramter " << n
                        << " in FEApp_ConstantFunction.hpp" << std::endl)

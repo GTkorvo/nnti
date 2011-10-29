@@ -17,7 +17,7 @@ namespace RBGen {
     // starting with the current factorization, make a single pass
     const int oldNumCols = numProc_;
     const int newNumCols = A_->NumVectors();
-    TEST_FOR_EXCEPTION(oldNumCols+newNumCols > maxNumCols_, std::invalid_argument,
+    TEUCHOS_TEST_FOR_EXCEPTION(oldNumCols+newNumCols > maxNumCols_, std::invalid_argument,
                        "RBGen::ISVSingle::updateBasis(): number of snapshots to process has exceeded specified maximum humber of columns.");
     while (numProc_ < oldNumCols+newNumCols) {
       // determine lup
@@ -78,7 +78,7 @@ namespace RBGen {
 
   void ISVDSingle::makePass() {
     // ISVDSingle only makes a single pass
-    TEST_FOR_EXCEPTION(maxNumPasses_ != 1,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(maxNumPasses_ != 1,std::logic_error,
         "RBGen::ISVDSingle::makePass(): Max Num Passes should be 1, but is not.");
     // did we already make our one pass? we can't afford to run this again
     if (curNumPasses_ > 0) return;
@@ -136,7 +136,7 @@ namespace RBGen {
       Epetra_MultiVector Vlcl(::View,*V_,0,curRank_);
       // compute A^T U
       int info = ATUlcl.Multiply('T','N',1.0,*A_,Ulcl,0.0);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiCD::makePass(): Error calling Epetra_MultiVector::Multiply for A^T U.");
       Epetra_LocalMap rankmap(curRank_,0,A_->Comm());
       Epetra_MultiVector S(rankmap,curRank_,true);
@@ -145,7 +145,7 @@ namespace RBGen {
       }
       // subtract V S from A^T U
       info = ATUlcl.Multiply('N','N',-1.0,Vlcl,S,1.0);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiCD::computeBasis(): Error calling Epetra_MultiVector::Multiply for V S.");
       resNorms_.resize(curRank_);
       ATUlcl.Norm2(&resNorms_[0]);
@@ -175,10 +175,10 @@ namespace RBGen {
         curS[i][i] = sigma_[i];
       }
       info = work.Multiply('N','N',1.0,curU,curS,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiCD::makePass(): Error calling Epetra_MultiVector::Multiply() for debugging U S.");
       info = work.Multiply('N','N',-1.0,*A_,curV,1.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiCD::makePass(): Error calling Epetra_MultiVector::Multiply() for debugging U S - A V.");
       work.Norm2(&errnorms[0]);
       for (int i=0; i<curRank_; i++) {

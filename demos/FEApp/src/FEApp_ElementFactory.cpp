@@ -28,7 +28,7 @@
 // 
 // ***********************************************************************
 // @HEADER
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 #include "FEApp_ElementFactory.hpp"
 #include "FEApp_LinearElement.hpp"
 
@@ -48,7 +48,7 @@ FEApp::ElementFactory::create()
     strategy = Teuchos::rcp(new FEApp::LinearElement);
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl << 
                        "Error!  Unknown element method " << method << 
                        "!" << std::endl << "Supplied parameter list is " << 

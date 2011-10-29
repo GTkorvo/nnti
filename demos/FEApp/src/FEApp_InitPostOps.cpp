@@ -30,7 +30,7 @@
 // @HEADER
 
 #include "FEApp_InitPostOps.hpp"
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 //#include "Teuchos_Exceptions.hpp"
 #include "Epetra_Map.h"
 #include "EpetraExt_MatrixMatrix.h"
@@ -385,7 +385,7 @@ FEApp::TangentOp::TangentOp(
     param_offset = num_cols_x;
   }
 
-  TEST_FOR_EXCEPTION(sum_derivs && (num_cols_x != 0) && (num_cols_p != 0) && 
+  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && (num_cols_x != 0) && (num_cols_p != 0) && 
                      (num_cols_x != num_cols_p),
                      std::logic_error,
                      "Seed matrices Vx and Vp must have the same number " << 
@@ -864,7 +864,7 @@ FEApp::SGJacobianOp::elementPost(const FEApp::AbstractElement& e,
 	    // Global column
 	    col = static_cast<int>(e.nodeGID(node_col)*neqn + eq_col);
 
-	    TEST_FOR_EXCEPTION(elem_f[lrow].fastAccessDx(lcol).size() >
+	    TEUCHOS_TEST_FOR_EXCEPTION(elem_f[lrow].fastAccessDx(lcol).size() >
 			       jac->size(), 
 			       std::logic_error,
 			       "Jacobian entry polynomial has size " <<
@@ -1048,7 +1048,7 @@ FEApp::SGTangentOp::SGTangentOp(
     param_offset = num_cols_x;
   }
 
-  TEST_FOR_EXCEPTION(sum_derivs && (num_cols_x != 0) && (num_cols_p != 0) && 
+  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && (num_cols_x != 0) && (num_cols_p != 0) && 
                      (num_cols_x != num_cols_p),
                      std::logic_error,
                      "Seed matrices Vx and Vp must have the same number " << 
@@ -1554,7 +1554,7 @@ FEApp::MPJacobianOp::elementPost(const FEApp::AbstractElement& e,
 	    // Global column
 	    col = static_cast<int>(e.nodeGID(node_col)*neqn + eq_col);
 
-	    TEST_FOR_EXCEPTION(elem_f[lrow].fastAccessDx(lcol).size() >
+	    TEUCHOS_TEST_FOR_EXCEPTION(elem_f[lrow].fastAccessDx(lcol).size() >
 			       jac->size(), 
 			       std::logic_error,
 			       "Jacobian entry vector has size " <<
@@ -1736,7 +1736,7 @@ FEApp::MPTangentOp::MPTangentOp(
     param_offset = num_cols_x;
   }
 
-  TEST_FOR_EXCEPTION(sum_derivs && (num_cols_x != 0) && (num_cols_p != 0) && 
+  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && (num_cols_x != 0) && (num_cols_p != 0) && 
                      (num_cols_x != num_cols_p),
                      std::logic_error,
                      "Seed matrices Vx and Vp must have the same number " << 
