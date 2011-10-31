@@ -2,7 +2,7 @@
 
 #include "Epetra_MultiVector.h"
 
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 
 namespace RBGen {
 
@@ -16,7 +16,7 @@ namespace RBGen {
   EpetraMVPreprocessorFactory::create( const Teuchos::ParameterList& params )
   {
     // See if the "Preprocessing" sublist exists
-    TEST_FOR_EXCEPTION(!params.isSublist( "Preprocessing Method" ), std::invalid_argument, "Preprocessing Method sublist does not exist!");
+    TEUCHOS_TEST_FOR_EXCEPTION(!params.isSublist( "Preprocessing Method" ), std::invalid_argument, "Preprocessing Method sublist does not exist!");
 
     // Get the preprocessing method sublist.
     const Teuchos::ParameterList& preproc_params = params.sublist( "Preprocessing Method" );

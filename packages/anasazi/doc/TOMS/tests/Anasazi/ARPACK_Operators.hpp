@@ -32,14 +32,14 @@ public:
   
     const MyMultiVec<ScalarType>* MyX;
     MyX = dynamic_cast<const MyMultiVec<ScalarType>*>(&X); 
-    TEST_FOR_EXCEPTION(MyX == 0,Anasazi::OperatorError,"Casting failure.");
+    TEUCHOS_TEST_FOR_EXCEPTION(MyX == 0,Anasazi::OperatorError,"Casting failure.");
       
     MyMultiVec<ScalarType>* MyY;
     MyY = dynamic_cast<MyMultiVec<ScalarType>*>(&Y); 
-    TEST_FOR_EXCEPTION(MyY == 0,Anasazi::OperatorError,"Casting failure.");
+    TEUCHOS_TEST_FOR_EXCEPTION(MyY == 0,Anasazi::OperatorError,"Casting failure.");
       
-    TEST_FOR_EXCEPTION(X.GetNumberVecs() != Y.GetNumberVecs(),Anasazi::OperatorError,"Invalid input multivectors.");
-    TEST_FOR_EXCEPTION(X.GetVecLength() != Y.GetVecLength(),Anasazi::OperatorError,"Invalid input multivectors.");
+    TEUCHOS_TEST_FOR_EXCEPTION(X.GetNumberVecs() != Y.GetNumberVecs(),Anasazi::OperatorError,"Invalid input multivectors.");
+    TEUCHOS_TEST_FOR_EXCEPTION(X.GetVecLength() != Y.GetVecLength(),Anasazi::OperatorError,"Invalid input multivectors.");
     
     // MyY = ONE*MyX
     MyY->MvAddMv( ONE, *MyX, ZERO, *MyX );
@@ -86,14 +86,14 @@ public:
   
     const MyMultiVec<ScalarType>* MyX;
     MyX = dynamic_cast<const MyMultiVec<ScalarType>*>(&X); 
-    TEST_FOR_EXCEPTION(MyX == 0,Anasazi::OperatorError,"Casting failure.");
+    TEUCHOS_TEST_FOR_EXCEPTION(MyX == 0,Anasazi::OperatorError,"Casting failure.");
       
     MyMultiVec<ScalarType>* MyY;
     MyY = dynamic_cast<MyMultiVec<ScalarType>*>(&Y); 
-    TEST_FOR_EXCEPTION(MyY == 0,Anasazi::OperatorError,"Casting failure.");
+    TEUCHOS_TEST_FOR_EXCEPTION(MyY == 0,Anasazi::OperatorError,"Casting failure.");
       
-    TEST_FOR_EXCEPTION(X.GetNumberVecs() != Y.GetNumberVecs(),Anasazi::OperatorError,"Invalid input multivectors.");
-    TEST_FOR_EXCEPTION(X.GetVecLength() != Y.GetVecLength(),Anasazi::OperatorError,"Invalid input multivectors.");
+    TEUCHOS_TEST_FOR_EXCEPTION(X.GetNumberVecs() != Y.GetNumberVecs(),Anasazi::OperatorError,"Invalid input multivectors.");
+    TEUCHOS_TEST_FOR_EXCEPTION(X.GetVecLength() != Y.GetVecLength(),Anasazi::OperatorError,"Invalid input multivectors.");
     
     int nvecs = X.GetNumberVecs();
     
@@ -101,7 +101,7 @@ public:
     n = X.GetVecLength();
     // ... and the number of interior points in the discretization from that
     nx = ScalarTraits<int>::squareroot(n);
-    TEST_FOR_EXCEPTION(nx*nx != n,Anasazi::OperatorError,"Invalid input.");
+    TEUCHOS_TEST_FOR_EXCEPTION(nx*nx != n,Anasazi::OperatorError,"Invalid input.");
     
     // The rest is stolen from the ARPACK codes (see notice above)
     //

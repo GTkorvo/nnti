@@ -60,8 +60,8 @@ namespace RBGen {
     //! Default constructor.
     RangeFilter(SortType which, int minRank = 1, int maxRank = 1) 
       : which_(which) {
-      TEST_FOR_EXCEPTION(minRank < 1,std::invalid_argument,"RangeFilter: minRank must be > 1");
-      TEST_FOR_EXCEPTION(maxRank < 1,std::invalid_argument,"RangeFilter: maxRank must be > 1");
+      TEUCHOS_TEST_FOR_EXCEPTION(minRank < 1,std::invalid_argument,"RangeFilter: minRank must be > 1");
+      TEUCHOS_TEST_FOR_EXCEPTION(maxRank < 1,std::invalid_argument,"RangeFilter: maxRank must be > 1");
       minRank_ = minRank;
       maxRank_ = maxRank;
     };
@@ -124,7 +124,7 @@ namespace RBGen {
     ThreshFilter(SortType which, bool absthresh, 
                  typename Teuchos::ScalarTraits<ScalarType>::magnitudeType thresh)
       : which_(which), absthresh_(absthresh) {
-      TEST_FOR_EXCEPTION(thresh < Teuchos::ScalarTraits<ScalarType>::zero(),
+      TEUCHOS_TEST_FOR_EXCEPTION(thresh < Teuchos::ScalarTraits<ScalarType>::zero(),
                          std::invalid_argument,"ThreshFilter: minRank must be > 1");
       thresh_ = thresh;
     };
@@ -200,7 +200,7 @@ namespace RBGen {
                  const Teuchos::RCP<Filter<ScalarType> > &f1,
                  const Teuchos::RCP<Filter<ScalarType> > &f2 ) 
       : andor_(andor), f1_(f1), f2_(f2) {
-      TEST_FOR_EXCEPTION(f1_ == Teuchos::null || f2_ == Teuchos::null,
+      TEUCHOS_TEST_FOR_EXCEPTION(f1_ == Teuchos::null || f2_ == Teuchos::null,
                          std::invalid_argument,"CompFilter: Component filters must be non-null.");
     };
 

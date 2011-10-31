@@ -28,7 +28,7 @@
 // 
 // ***********************************************************************
 // @HEADER
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 #include "FEApp_QuadratureFactory.hpp"
 #include "FEApp_GaussianQuadrature2.hpp"
 
@@ -51,7 +51,7 @@ FEApp::QuadratureFactory::create()
       strategy = Teuchos::rcp(new FEApp::GaussianQuadrature2);
     }
     else {
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                          std::endl << 
                          "Error!  Number of quadrature points = " << 
                          num_points << 
@@ -61,7 +61,7 @@ FEApp::QuadratureFactory::create()
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl << 
                        "Error!  Unknown quadrature method " << method << 
                        "!" << std::endl << "Supplied parameter list is " << 

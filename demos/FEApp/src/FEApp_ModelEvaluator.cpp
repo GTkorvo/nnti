@@ -31,7 +31,7 @@
 
 #include "FEApp_ModelEvaluator.hpp"
 #include "Teuchos_ScalarTraits.hpp"
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 
 FEApp::ModelEvaluator::ModelEvaluator(
   const Teuchos::RCP<FEApp::Application>& app_,
@@ -53,7 +53,7 @@ FEApp::ModelEvaluator::ModelEvaluator(
     ss << "Parameter Vector " << i;
     Teuchos::ParameterList& pList = parameterParams.sublist(ss.str());
     int numParameters = pList.get<int>("Number");
-    TEST_FOR_EXCEPTION(
+    TEUCHOS_TEST_FOR_EXCEPTION(
       numParameters == 0, 
       Teuchos::Exceptions::InvalidParameter,
       std::endl << "Error!  FEApp::ModelEvaluator::ModelEvaluator():  " <<
@@ -114,7 +114,7 @@ FEApp::ModelEvaluator::get_f_map() const
 Teuchos::RCP<const Epetra_Map>
 FEApp::ModelEvaluator::get_p_map(int l) const
 {
-  TEST_FOR_EXCEPTION(l >= static_cast<int>(epetra_param_map.size()) || l < 0, 
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= static_cast<int>(epetra_param_map.size()) || l < 0, 
 		     Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  FEApp::ModelEvaluator::get_p_map():  " <<
@@ -126,13 +126,13 @@ FEApp::ModelEvaluator::get_p_map(int l) const
 Teuchos::RCP<const Epetra_Map>
 FEApp::ModelEvaluator::get_g_map(int l) const
 {
-  TEST_FOR_EXCEPTION(supports_g == false, 
+  TEUCHOS_TEST_FOR_EXCEPTION(supports_g == false, 
                      Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  FEApp::ModelEvaluator::get_g_map():  " <<
                      "No response functions have been supplied.  " <<
                      "Supplied index l = " << l << std::endl);
-  TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  FEApp::ModelEvaluator::get_g_map() only " <<
                      " supports 1 response vector.  Supplied index l = " << 
@@ -144,7 +144,7 @@ FEApp::ModelEvaluator::get_g_map(int l) const
 Teuchos::RCP<const Teuchos::Array<std::string> >
 FEApp::ModelEvaluator::get_p_names(int l) const
 {
-  TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
 		     Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  FEApp::ModelEvaluator::get_p_names():  " <<
@@ -162,7 +162,7 @@ FEApp::ModelEvaluator::get_x_init() const
 Teuchos::RCP<const Epetra_Vector>
 FEApp::ModelEvaluator::get_p_init(int l) const
 {
-  TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
 		     Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  FEApp::ModelEvaluator::get_p_init():  " <<

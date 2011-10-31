@@ -17,7 +17,7 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 
 namespace RBGen {
   
@@ -60,7 +60,7 @@ namespace RBGen {
       Epetra_SerialComm comm;
 #endif
       // This reader is only equipped to read in one matrix file.
-      TEST_FOR_EXCEPTION(filenames.size() > 1, std::invalid_argument, "File I/O handler cannot read more than one file!");
+      TEUCHOS_TEST_FOR_EXCEPTION(filenames.size() > 1, std::invalid_argument, "File I/O handler cannot read more than one file!");
 
       // Open the data file
       std::string temp_filename = in_path + filenames[0];
@@ -73,7 +73,7 @@ namespace RBGen {
 
     }
     else {
-      TEST_FOR_EXCEPTION(true, std::runtime_error, "File I/O handler is not initialized!"); 
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "File I/O handler is not initialized!"); 
     }      
     // Return.
     return newMTX;
@@ -88,7 +88,7 @@ namespace RBGen {
 
     }
     else {
-      TEST_FOR_EXCEPTION(true, std::runtime_error, "File I/O handler is not initialized!"); 
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "File I/O handler is not initialized!"); 
     }      
   }
   

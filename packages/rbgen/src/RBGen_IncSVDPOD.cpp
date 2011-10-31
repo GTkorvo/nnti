@@ -59,7 +59,7 @@ namespace RBGen {
 
     // Get the maximum basis size
     maxBasisSize_ = rbmethod_params.get<int>("Max Basis Size");
-    TEST_FOR_EXCEPTION(maxBasisSize_ < 2,std::invalid_argument,"\"Max Basis Size\" must be at least 2.");
+    TEUCHOS_TEST_FOR_EXCEPTION(maxBasisSize_ < 2,std::invalid_argument,"\"Max Basis Size\" must be at least 2.");
 
     // Get a filter
     filter_ = rbmethod_params.get<Teuchos::RCP<Filter<double> > >("Filter",Teuchos::null);
@@ -86,7 +86,7 @@ namespace RBGen {
       ortho_ = rbmethod_params.get< 
                 Teuchos::RCP<Anasazi::OrthoManager<double,Epetra_MultiVector> >
                >("Ortho Manager");
-      TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,std::invalid_argument,"User specified null ortho manager.");
+      TEUCHOS_TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,std::invalid_argument,"User specified null ortho manager.");
     }
     else {
       string omstr = rbmethod_params.get("Ortho Manager","DGKS");
@@ -100,26 +100,26 @@ namespace RBGen {
 
     // Lmin,Lmax,Kstart
     lmin_ = rbmethod_params.get("Min Update Size",1);
-    TEST_FOR_EXCEPTION(lmin_ < 1 || lmin_ >= maxBasisSize_,std::invalid_argument,
+    TEUCHOS_TEST_FOR_EXCEPTION(lmin_ < 1 || lmin_ >= maxBasisSize_,std::invalid_argument,
                        "Method requires 1 <= min update size < max basis size.");
     lmax_ = rbmethod_params.get("Max Update Size",maxBasisSize_);
-    TEST_FOR_EXCEPTION(lmin_ > lmax_,std::invalid_argument,"Max update size must be >= min update size.");
+    TEUCHOS_TEST_FOR_EXCEPTION(lmin_ > lmax_,std::invalid_argument,"Max update size must be >= min update size.");
 
     startRank_ = rbmethod_params.get("Start Rank",lmin_);
-    TEST_FOR_EXCEPTION(startRank_ < 1 || startRank_ > maxBasisSize_,std::invalid_argument,
+    TEUCHOS_TEST_FOR_EXCEPTION(startRank_ < 1 || startRank_ > maxBasisSize_,std::invalid_argument,
                        "Starting rank must be in [1,maxBasisSize_)");
     // MaxNumPasses
     maxNumPasses_ = rbmethod_params.get("Maximum Number Passes",maxNumPasses_);
-    TEST_FOR_EXCEPTION(maxNumPasses_ != -1 && maxNumPasses_ <= 0, std::invalid_argument,
+    TEUCHOS_TEST_FOR_EXCEPTION(maxNumPasses_ != -1 && maxNumPasses_ <= 0, std::invalid_argument,
                        "Maximum number passes must be -1 or > 0.");
     // Save the pointer to the snapshot matrix
-    TEST_FOR_EXCEPTION(ss == Teuchos::null,std::invalid_argument,"Input snapshot matrix cannot be null.");
+    TEUCHOS_TEST_FOR_EXCEPTION(ss == Teuchos::null,std::invalid_argument,"Input snapshot matrix cannot be null.");
     A_ = ss;
 
     // MaxNumCols
     maxNumCols_ = A_->NumVectors();
     maxNumCols_ = rbmethod_params.get("Maximum Number Columns",maxNumCols_);
-    TEST_FOR_EXCEPTION(maxNumCols_ < A_->NumVectors(), std::invalid_argument,
+    TEUCHOS_TEST_FOR_EXCEPTION(maxNumCols_ < A_->NumVectors(), std::invalid_argument,
                        "Maximum number of columns must be at least as many as in the initializing data set.");
 
     // V locally replicated or globally distributed
@@ -166,11 +166,11 @@ namespace RBGen {
 
     // check that we have a valid snapshot set: user may have cleared 
     // it using Reset()
-    TEST_FOR_EXCEPTION(A_ == Teuchos::null,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(A_ == Teuchos::null,std::logic_error,
                        "computeBasis() requires non-null snapshot set.");
 
     // check that we are initialized, i.e., data structures match the data set
-    TEST_FOR_EXCEPTION(isInitialized_==false,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(isInitialized_==false,std::logic_error,
         "RBGen::IncSVDPOD::computeBasis(): Solver must be initialized.");
 
     // reset state
@@ -223,7 +223,7 @@ namespace RBGen {
 
     // Note: this actually stores Vhat^T (we remedy this below)
     lapack.GESVD('O','A',curRank_,curRank_,Uhat.A(),Uhat.LDA(),&Shat[0],Uhat.A(),Uhat.LDA(),Vhat.A(),Vhat.LDA(),&work[0],&lwork,&info);
-    TEST_FOR_EXCEPTION(info!=0,std::logic_error,"RBGen::IncSVDPOD::incStep(): GESVD return info != 0");
+    TEUCHOS_TEST_FOR_EXCEPTION(info!=0,std::logic_error,"RBGen::IncSVDPOD::incStep(): GESVD return info != 0");
 
     // use filter to determine new rank
     std::vector<int> keepind = filter_->filter(Shat);

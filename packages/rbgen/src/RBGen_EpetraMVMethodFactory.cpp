@@ -1,6 +1,6 @@
 #include "RBGen_EpetraMVMethodFactory.h"
 #include "RBGen_LapackPOD.h"
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 
 #ifdef HAVE_RBGEN_ANASAZI
 #include "RBGen_AnasaziPOD.h"
@@ -15,7 +15,7 @@ namespace RBGen {
   
   Teuchos::RCP<Method<Epetra_MultiVector,Epetra_Operator> > EpetraMVMethodFactory::create( const Teuchos::ParameterList& params )
   {
-    TEST_FOR_EXCEPTION(!params.isSublist( "Reduced Basis Method" ), std::invalid_argument, "Reduced Basis Method sublist does not exist!");
+    TEUCHOS_TEST_FOR_EXCEPTION(!params.isSublist( "Reduced Basis Method" ), std::invalid_argument, "Reduced Basis Method sublist does not exist!");
 
     // Get the "Reduced Basis Method" sublist.
     const Teuchos::ParameterList& rbmethod_params = params.sublist( "Reduced Basis Method" );
@@ -57,7 +57,7 @@ namespace RBGen {
 #endif
     {
       std::string err_str = "Reduced basis method, 'Method = " + method + "', is not recognized!";
-      TEST_FOR_EXCEPTION(true, std::invalid_argument, err_str);
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, err_str);
     }
     //
     // Return the method created

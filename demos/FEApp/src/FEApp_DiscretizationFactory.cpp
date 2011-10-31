@@ -28,7 +28,7 @@
 // 
 // ***********************************************************************
 // @HEADER
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 #include "FEApp_DiscretizationFactory.hpp"
 #include "FEApp_CZeroDiscretization.hpp"
 
@@ -54,7 +54,7 @@ FEApp::DiscretizationFactory::create(
                                                            discParams));
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl << 
                        "Error!  Unknown discretization method " << method << 
                        "!" << std::endl << "Supplied parameter list is " << 

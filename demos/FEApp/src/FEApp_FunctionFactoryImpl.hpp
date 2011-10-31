@@ -28,7 +28,7 @@
 // 
 // ***********************************************************************
 // @HEADER
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 #include "FEApp_ConstantFunction.hpp"
 #include "FEApp_KLExponentialFunction.hpp"
 
@@ -57,7 +57,7 @@ FEApp::FunctionFactory<EvalT>::create()
       Teuchos::rcp(new FEApp::KLExponentialFunction<EvalT>(*funcParams, 
 							   paramLib));
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl << 
                        "Error!  Unknown function " << method << 
                        "!" << std::endl << "Supplied parameter list is " << 

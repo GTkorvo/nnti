@@ -9,7 +9,7 @@ namespace RBGen {
   ISVDMultiSDA::ISVDMultiSDA() {}
 
   void ISVDMultiSDA::updateBasis(const Teuchos::RCP< Epetra_MultiVector >& update_ss ) {
-    TEST_FOR_EXCEPTION(true,std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,
         "RBGen::ISVDMultiSDA::updateBasis(): this routine not supported.");
   }
   void ISVDMultiSDA::makePass() {
@@ -18,7 +18,7 @@ namespace RBGen {
 
     bool firstPass = (curRank_ == 0);
     const int numCols = A_->NumVectors();
-    TEST_FOR_EXCEPTION( !firstPass && (numProc_ != numCols), std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION( !firstPass && (numProc_ != numCols), std::logic_error,
         "RBGen::ISVDMultiSDA::makePass(): after first pass, numProc should be numCols");
 
     // compute W = I - Z T Z^T from current V_
@@ -46,10 +46,10 @@ namespace RBGen {
       int info, lwork = 2*curRank_;
       std::vector<double> tau(2*curRank_), work(lwork);
       info = lclZ->ExtractView(&Z_A,&Z_LDA);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): error calling ExtractView on Epetra_MultiVector Z.");
       lapack.GEQRF(numCols,2*curRank_,Z_A,Z_LDA,&tau[0],&work[0],lwork,&info);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): error calling GEQRF on current right basis while constructing next pass coefficients.");
       if (debug_) {
         // we just took the QR factorization of [V G]
@@ -88,11 +88,11 @@ namespace RBGen {
       // first, A Z (this consumes a pass through A)
       lclAZT = Teuchos::rcp( new Epetra_MultiVector(::View,*workAZT_,0,2*curRank_) );
       info = lclAZT->Multiply('N','N',1.0,*A_,*lclZ,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): Error calling Epetra_MultiVector::Multiply() for A*Z");
       // second, (A Z) T (in situ, as T is upper triangular)
       info = lclAZT->ExtractView(&AZT_A,&AZT_LDA);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): error calling ExtractView on Epetra_MultiVector AZ.");
       blas.TRMM('R','U','N','N',numCols,2*curRank_,1.0,workT_->A(),workT_->LDA(),AZT_A,AZT_LDA);
       // save oldRank: it tells us the width of Z
@@ -153,7 +153,7 @@ namespace RBGen {
           Epetra_MultiVector Zi(::View,lclmap,&Z_A[numProc_],Z_LDA,2*oldRank);
           Unew = Aplus;
           int info = Unew.Multiply('N','T',-1.0,*lclAZT,Zi,1.0);
-          TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+          TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
               "RBGen::ISVDMultiSDA::makePass(): Error calling Epetra_MultiVector::Multiply() for A*Wi");
         }
       }
@@ -177,17 +177,17 @@ namespace RBGen {
       Epetra_MultiVector TZTV(lclmap,curRank_,false);
       // multiply Z^T V
       info = TZTV.Multiply('T','N',1.0,*lclZ,lclV,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): Error calling Epetra_MultiVector::Multiply() for Z^T V.");
       // get pointer to data in Z^T V
       info = TZTV.ExtractView(&TZTV_A,&TZTV_LDA);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): error calling ExtractView on Epetra_MultiVector TZTV.");
       // multiply T (Z^T V)
       blas.TRMM('L','U','N','N',2*oldRank,curRank_,1.0,workT_->A(),workT_->LDA(),TZTV_A,TZTV_LDA);
       // multiply V - Z (T Z^T V)
       info = lclV.Multiply('N','N',-1.0,*lclZ,TZTV,1.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): Error calling Epetra_MultiVector::Multiply() for W V.");
     }
 
@@ -206,7 +206,7 @@ namespace RBGen {
       Epetra_MultiVector Vlcl(::View,*V_,0,curRank_);
       // compute A^T U
       int info = Z2.Multiply('T','N',1.0,*A_,Ulcl,0.0);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::IncSVD::computeBasis(): Error calling Epetra_MultiVector::Multiply for A^T U.");
       Epetra_LocalMap Smap(curRank_,0,A_->Comm());
       Epetra_MultiVector S(Smap,curRank_,true); // "true" inits to zero
@@ -215,7 +215,7 @@ namespace RBGen {
       }
       // subtract V S from A^T U
       info = Z2.Multiply('N','N',-1.0,Vlcl,S,1.0);
-      TEST_FOR_EXCEPTION(info != 0, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
           "RBGen::IncSVD::computeBasis(): Error calling Epetra_MultiVector::Multiply for V S.");
 
       //
@@ -247,10 +247,10 @@ namespace RBGen {
         curS[i][i] = sigma_[i];
       }
       info = work.Multiply('N','N',1.0,curU,curS,0.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): Error calling Epetra_MultiVector::Multiply() for debugging U S.");
       info = work.Multiply('N','N',-1.0,*A_,curV,1.0);
-      TEST_FOR_EXCEPTION(info != 0,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
           "RBGen::ISVDMultiSDA::makePass(): Error calling Epetra_MultiVector::Multiply() for debugging U S - A V.");
       work.Norm2(&errnorms[0]);
       for (int i=0; i<curRank_; i++) {

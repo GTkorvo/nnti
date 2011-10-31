@@ -34,7 +34,7 @@
 #ifdef HAVE_DAKOTA
 
 #include "FEApp_DakotaElementJacobianInterface.hpp"
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 
 // Define interface class
 FEApp::DakotaElementJacobianInterface::
@@ -85,15 +85,15 @@ FEApp::DakotaElementJacobianInterface::
 derived_map_ac(const Dakota::String& ac_name)
 {
   // test for consistency of problem definition between ModelEval and Dakota
-  TEST_FOR_EXCEPTION(numVars != numParameters, logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(numVars != numParameters, logic_error,
                      "FEApp_Dakota Adapter Error: ");
-  TEST_FOR_EXCEPTION(numADV != 0, logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(numADV != 0, logic_error,
                      "FEApp_Dakota Adapter Error: ");
-  TEST_FOR_EXCEPTION(numFns != numEquations*numEquations, logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(numFns != numEquations*numEquations, logic_error,
                      "FEApp_Dakota Adapter Error: ");
-  TEST_FOR_EXCEPTION(hessFlag, logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(hessFlag, logic_error,
                      "FEApp_Dakota Adapter Error: ");
-  TEST_FOR_EXCEPTION(gradFlag, logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(gradFlag, logic_error,
                      "FEApp_Dakota Adapter Error: ");
 
   // Set parameters in FEApp

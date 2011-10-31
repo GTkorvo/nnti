@@ -1,0 +1,261 @@
+%
+\section{Miscellaneous amendments to ``C++ Coding Standards''}
+\label{sec:misc_amendments}
+%
+
+In this appendix, some of the amendments mentioned in Appendix
+{}\ref{sec:cpp_coding_standards} to some of the items in
+{}\cite{C++CodingStandards05} are discussed in more detail.
+
+
+%
+\subsection{Amendments to items related to compiler/linker incompatibilities}
+%
+
+There are three items in {}\cite{C++CodingStandards05} that relate to
+portability problems associated with mixing and matching code in
+different binary libraries compiled with different C++ compilers or
+with different compiler options.  In this context, the authors use the
+term ``module'' to mean a single library or a set of libraries
+containing simiarly compiled binary object code.
+
+In general, one can not assume that object code compiled by two or more
+different C++ compilers will work together since the name-mangling needed for
+type-safe linkage is not even specified by the ISO C++ standard.  A more
+typical problem is when the same compiler is used, but different compiler
+and/or linker options are used.  For example, some compilers allow you to turn
+support for exception handling on and off and if an exception is thrown by one
+module it will not be handled correctly by another module that has exception
+handling support turned off.  A similar problem can happen when mixing static
+and shared libraries, in Linux for example, where RTTI is handled differently
+and can result in dynamic casting failures in cases where it would otherwise
+succeed.
+
+In our model of software deployment, we distribute source code and a
+build process that users can manipulate in order to set the exact
+compiler and linker options to match what is used by other libraries
+and the application code that uses the libraries.  Because we develop
+class libraries, it is simply not realistic to isolate this type of
+code into libraries with small ``Facade'' type interfaces that are
+advocated in {}\cite{C++CodingStandards05}.
+
+The specific items that we consider inappropriate are:
+
+\begin{itemize}
+
+{}\item\textit{Item 60: Avoid allocating and deallocating memory in different
+modules}:
+
+{}\item\textit{Item 62: Don't allow exceptions to propagate across module
+boundaries}:
+
+{}\item\textit{Item 63: Use sufficiently portable types in a module's
+interface}:
+
+\end{itemize}
+
+All three of these items are related to the problem of mixing code
+created by different compiler and/or linker options.  However, they
+may also be related to mixed language programming.  For example, in
+order to ensure that your module is the most reusable, you might
+create a C-compatible interface that allows clients coding in C (and
+even Fortran 77 in some cases) to call and be called by your module.
+If mixed language programming is the issue, then a special
+{}\texttt{extern "C"} interface should be created for the module which
+will automatically satisfy Items 60, 62, and 63.  Note that reference
+counting machinery in the {}\ttt{RCP} and {}\ttt{ArrayRCP} classes
+actually solves the problem of calling {}\ttt{new} and {}\ttt{delete}
+in different modules that is described in Item 60 because the
+deallocator object that calls {}\ttt{delete} is create and assigned in
+the same module where {}\ttt{new} is called which guarantees that they
+are consistent.
+
+
+%
+\subsection{Amendments for 'using' declarations and directives}
+\label{sec:using_amendments}
+%
+
+In {}\cite[Item 59]{C++CodingStandards05}, the authors say to never put
+'using' declarations into header files or before {}\texttt{\#include}s and
+that 'using namespace SomeNamespace' directives are perfectly safe for code in
+source files after all {}\texttt{\#include}s.  However, we will argue that:
+
+\begin{itemize}
+
+{}\item{}employing {}\texttt{using} declarations to inject names of
+C++ classes or enums from one namespace into another is perfectly safe
+(this is more lax than what is suggested in {}\cite[Item
+59]{C++CodingStandards05})
+
+{}\item{}employing a {}\texttt{using namespace SomeNameSpace}
+directive in any context is harmful and should be avoided (this is
+more restrictive than what is suggested in {}\cite[Item
+59]{C++CodingStandards05}).
+
+\end{itemize}
+
+{}\noindent{}However, we agree that employing {}\texttt{using}
+declarations for nonmember functions is dangerous and is to be avoided
+because of problems related to overloading and in what order overloads
+are declared and used (as described in {}\cite[Item
+59]{C++CodingStandards05}) .
+
+Are all using declarations employed in header files dangerous?  In
+{}\cite[Item 59]{C++CodingStandards05}, the authors clearly show that
+employing 'using' declarations for nonmember functions is dangerous
+because of overloading.  But what about employing 'using' declarations
+for C++ classes and other types?
+
+To investigate the issues involved, consider the following toy C++ program (in
+the file NamespaceClassUsingIssues.cpp):
+
+{\small\lstinputlisting{NamespaceClassUsingIssues.cpp}}
+
+The above program defines a templated class {}\texttt{A} in namespace
+{}\texttt{NamespaceA} and then does a {}\texttt{using NamespaceA::A} to inject
+this class name into {}\texttt{NamespaceB}.
+
+When the program is compiled and run with g++ (version 4.3.4), one
+gets:
+
+{\small\begin{verbatim}
+    $ g++ -ansi -pedantic -Wall -o NamespaceClassUsingIssues.exe
+    NamespaceClassUsingIssues.cpp
+    
+    $ ./NamespaceClassUsingIssues.exe 
+    
+    a=5
+    
+    a=2
+    
+    a=2
+\end{verbatim}}
+
+This program has a few different ifdefs to show different types of errors that
+a compiler will detect.
+
+\begin{enumerate}
+
+{}\item\textit{What happens if one tries to define another class
+{}\ttt{A} in namespace {}\ttt{NamespaceB}?}
+
+In the case of nonmember functions, overloads of a function exhibit strange
+and non-intuitive behavior when one employs 'using' declarations.  However,
+what happens with classes?
+
+In the above program, when one defines the macro
+{}\texttt{SHOW\-\_DUPLICATE\-\_CLASS\-\_A} when compiling, one will get the
+following compile-time error:
+
+{\small\begin{verbatim}
+  $ g++ -ansi -pedantic -Wall -DSHOW_DUPLICATE_CLASS_A \
+     -o NamespaceClassUsingIssues.exe NamespaceClassUsingIssues.cpp             
+
+  NamespaceClassUsingIssues.cpp:53: error: redefinition of
+    'class NamespaceA::A<T>'
+  NamespaceClassUsingIssues.cpp:11: error: previous definition of
+    'class NamespaceA::A<T>'
+\end{verbatim}}
+
+Above, the error message generated by g++ 4.3.4 is very good and
+pinpoints the problem exactly.  This is in stark contrast to what
+happens when you have overloaded member functions which {}\cite[Item
+59]{C++CodingStandards05} explains.
+
+{}\textbf{Take-home Message}: Employing {}\texttt{using
+SomeNamespace::SomeClass} declarations to inject names from one
+namespace into another seems to be safe and does not suffer from the
+gotchas associated with {}\texttt{using} declarations for (overloaded)
+nonmember functions.
+
+{}\item\textit{What happens when the user's code does not have an
+appropriate using declaration?}
+
+While the {}\texttt{using NamespaceA::A} declaration in {}\texttt{NamespaceB}
+allows the code in {}\texttt{NamespaceB} to avoid having to explicitly qualify
+{}\texttt{NamespaceA::A} all the time, this does not automatically mean that
+user code that does not live in {}\texttt{NamespaceB} will not have to do
+something to get at the name {}\texttt{A}.  The user can either do explicit
+qualification {}\texttt{Namespace::A} or can put a {}\texttt{using
+NamespaceA::A} declaration at the top of their namespace or in each function
+that they have (as is done in the {}\texttt{main()} function above).
+
+In the above program, if one defines the macro
+{}\texttt{SHOW\-\_MISSING\-\_USING\-\_DECL}, the {}\texttt{using
+Namespace::A} declaration will be missing in {}\texttt{main()} and
+this will result in the compiler finding the global {}\texttt{::A}
+class which will cause a compiler error when
+{}\texttt{NamespaceB::foo(...)} gets called.  Here is the error
+message that one gets when compiling with this macro defined:
+
+{\small\begin{verbatim}
+    $ g++ -ansi -pedantic -Wall -DSHOW_MISSING_USING_DECL \
+      -o NamespaceClassUsingIssues.exe NamespaceClassUsingIssues.cpp 
+
+    NamespaceClassUsingIssues.cpp: In function `int main()':
+    NamespaceClassUsingIssues.cpp:121: error: invalid initialization of 
+       reference of type 'const NamespaceA::A<int>&' from expression of type '
+       A<int>'
+    NamespaceClassUsingIssues.cpp:80: error: in passing argument 2 of `
+       NamespaceA::A<double> NamespaceB::foo(std::ostream&, const 
+       NamespaceA::A<int>&)'
+\end{verbatim}}
+
+The above error message generated by g++ 4.3.4 here is not all bad as
+the compiler catches the mistake and states the types involved.
+
+{}\textbf{Take-home Message}: Always employ {}\texttt{using
+SomeNamespace::SomeClass} to inject type names from other namespaces that you
+want to use in your namespace to protect your code from others who pollute the
+global namespace.
+
+{}\item\textit{What happens when the user code employs a {}\texttt{using
+namespace NamespaceA} directive when there are conflicting names?}
+
+Since there is a global class {}\texttt{::A}, the user can not simply employ a
+{}\texttt{using namespace NamespaceA} directive or the compiler will complain
+that it does not know which class to use.
+
+In the above program, when one defines the macro
+{}\texttt{SHOW\-\_ERRONEOUS\-\_USING\-\_DIRECTIVE} when compiling one
+gets the following very good compile error message:
+
+{\small\begin{verbatim}
+    $ g++ -ansi -pedantic -Wall -DSHOW_ERRONEOUS_USING_DIRECTIVE \
+      -o NamespaceClassUsingIssues.exe NamespaceClassUsingIssues.cpp 
+
+    NamespaceClassUsingIssues.cpp: In function `int main()':
+    NamespaceClassUsingIssues.cpp:120: error: use of `A' is ambiguous
+    NamespaceClassUsingIssues.cpp:45: error:   first declared as `
+       template<class T> class A' here
+    NamespaceClassUsingIssues.cpp:10: error:   also declared as `
+       template<class T> class NamespaceA::A' here
+    NamespaceClassUsingIssues.cpp:120: error: parse error before `>' token
+    NamespaceClassUsingIssues.cpp:121: error: use of `A' is ambiguous
+    NamespaceClassUsingIssues.cpp:45: error:   first declared as `
+       template<class T> class A' here
+    NamespaceClassUsingIssues.cpp:10: error:   also declared as `
+       template<class T> class NamespaceA::A' here
+    NamespaceClassUsingIssues.cpp:121: error: parse error before `>' token
+    NamespaceClassUsingIssues.cpp:122: error: `ab' undeclared (first use 
+       this function)
+    NamespaceClassUsingIssues.cpp:122: error: (Each undeclared identifier 
+       is reported only once for each function it appears in.)
+\end{verbatim}}
+
+Note that this type of example goes against the advise in {}\cite[Item
+59]{C++CodingStandards05} where the authors state that it is safe to
+employ {}\texttt{using namespace SomeNamespace} directives in
+{}\texttt{*.cpp} source files.  This example shows that this does not
+protect the code from others that pollute the global namespace.  Note
+that code that is written this way might compile one day and not the
+next as it is fragile and can be broken by other people that pollute
+the global namespace.
+
+{}\textbf{Take-home Message}: Never employ {}\texttt{using namespace
+AnyNamespace} in any context as you cannot guarantee the integrity of
+your code since people outside of your namespace can cause your code
+to not compile.
+
+\end{enumerate}

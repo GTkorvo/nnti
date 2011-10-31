@@ -1,5 +1,5 @@
 #include "RBGen_EpetraMVFileIOFactory.h"
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 
 namespace RBGen {
 
@@ -19,7 +19,7 @@ namespace RBGen {
   EpetraMVFileIOFactory::create( const Teuchos::ParameterList& params )
   {
     // See if the "File I/O" sublist exists
-    TEST_FOR_EXCEPTION(!params.isSublist( "File IO" ), std::invalid_argument, "File IO sublist does not exist!");
+    TEUCHOS_TEST_FOR_EXCEPTION(!params.isSublist( "File IO" ), std::invalid_argument, "File IO sublist does not exist!");
 
     // Get the "File I/O" sublist.
     const Teuchos::ParameterList& fileio_params = params.sublist( "File IO" );

@@ -13,7 +13,7 @@
 #include "EpetraExt_MultiVectorOut.h"
 
 #include "Teuchos_Utils.hpp"
-#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 
 #ifdef EPETRA_MPI
 #include "Epetra_MpiComm.h"
@@ -74,18 +74,18 @@ namespace RBGen {
         // Open the data file
         std::string temp_filename = in_path + filenames[i];
         handle = fopen(temp_filename.c_str(), "r");
-        TEST_FOR_EXCEPTION(handle==0, std::invalid_argument, "File named '"+temp_filename+"' does not exist or is not readable!");
+        TEUCHOS_TEST_FOR_EXCEPTION(handle==0, std::invalid_argument, "File named '"+temp_filename+"' does not exist or is not readable!");
 
         // Get the array dimensions
         info = EpetraExt::mm_read_mtx_array_size( handle, &rows_i, &cols[i] );
-        TEST_FOR_EXCEPTION(info!=0, std::runtime_error, "Error reading file with name '"+temp_filename+"'!");
+        TEUCHOS_TEST_FOR_EXCEPTION(info!=0, std::runtime_error, "Error reading file with name '"+temp_filename+"'!");
 
         if (i==0) {
           rows = rows_i;  // Get the number of rows from the first file
         }
         else {
           // Check to make sure the number of rows is the same.
-          TEST_FOR_EXCEPTION(rows_i!=rows, std::logic_error, "Error reading file '"+temp_filename+"', does not have same number of rows!");
+          TEUCHOS_TEST_FOR_EXCEPTION(rows_i!=rows, std::logic_error, "Error reading file '"+temp_filename+"', does not have same number of rows!");
         } 
         // Add the number of columns up.
         num_vecs += cols[i];
@@ -108,7 +108,7 @@ namespace RBGen {
         //
         std::string curr_filename = in_path + filenames[i];
         int info = EpetraExt::MatrixMarketFileToMultiVector( curr_filename.c_str(), Map, fileMV );
-        TEST_FOR_EXCEPTION(info!=0, std::runtime_error, "Error reading file with name '"+curr_filename+"'!");
+        TEUCHOS_TEST_FOR_EXCEPTION(info!=0, std::runtime_error, "Error reading file with name '"+curr_filename+"'!");
         //
         //  Get a view of the multivector columns.
         //
@@ -129,7 +129,7 @@ namespace RBGen {
 
     }
     else {
-      TEST_FOR_EXCEPTION(true, std::runtime_error, "File I/O handler is not initialized!");
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "File I/O handler is not initialized!");
     }      
     // Return.
     return newMV;
@@ -144,7 +144,7 @@ namespace RBGen {
 
     }
     else {
-      TEST_FOR_EXCEPTION(true, std::runtime_error, "File I/O handler is not initialized!");
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "File I/O handler is not initialized!");
     }      
   }
 
