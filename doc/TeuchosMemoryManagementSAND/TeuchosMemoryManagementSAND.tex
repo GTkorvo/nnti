@@ -599,6 +599,7 @@ Listing~\ref{listing:Simple_A_B} are used in demonstration code:
 \label{listing:Simple_A_B}
 {\small\begin{verbatim}
   class A {
+    char dummy_;
     char *char_ptr_;
   public:
     A(...);
@@ -700,14 +701,13 @@ shown in Listing~\ref{listing:BadArrayPointerConversion}.
 \label{listing:BadArrayPointerConversion}
 {\small\begin{verbatim}
 
-  void foo(const int n)
-  {
-    B *b_array = new[n];
-    A *a_array = b_array; // Compiles just fine :-(
-    for (int i = 0; i < n; ++i) {
-      a_array[i]->incrementA(); // KABOMMMMM!
-    }
-    delete [] b_array;
+  void foo(const int n) {
+      B *b_array = new B[n];
+      A *a_array = b_array; // Compiles just fine :-(
+      for (int i = 0; i < n; ++i) {
+        a_array[i].incrementA(); // KABOMMMMM!
+      }
+      delete [] b_array;
   }
 
 \end{verbatim}}
@@ -935,7 +935,7 @@ Listing~\ref{listing:addArrayIntoArray-raw}.
   };
 
   template<class T>
-  class AddIntoTransformer : public BlockTransfomerBase<T> {
+  class AddIntoTransformer : public BlockTransformerBase<T> {
   public:
     virtual void transform(const int n, const T a[], T b[]) const
       {
@@ -986,7 +986,7 @@ which is shown in Listing~\ref{listing:addArrayIntoArray-std-vector}.
   };
 
   template<class T>
-  class AddIntoTransformer : public BlockTransfomerBase<T> {
+  class AddIntoTransformer : public BlockTransformerBase<T> {
   public:
     virtual void transform(const std::vector<T> &a, std::vector<T> &b) const
       {
@@ -1072,7 +1072,7 @@ Listing~\ref{listing:addArrayIntoArray-raw}.
 version of {}\ttt{transform(...)}
 \label{listing:someBlockAlgo-std-vector-raw-ptr}
 {\small\begin{verbatim}
-  void someBlockAlgo(const BlockTransfomerBase &transformer,
+  void someBlockAlgo(const BlockTransformerBase &transformer,
     const int numBlocks, const std::vector<double> &big_a,
     std::vector<double> &big_b )
   {
@@ -3091,7 +3091,7 @@ Listing~\ref{listing:addArrayIntoArray-std-vector} to use
   };
 
   template<class T>
-  class AddIntoTransformer : public BlockTransfomerBase<T> {
+  class AddIntoTransformer : public BlockTransformerBase<T> {
   public:
     virtual void transform(const ArrayView<const T> &a, const ArrayView<T> &b) const
       {
