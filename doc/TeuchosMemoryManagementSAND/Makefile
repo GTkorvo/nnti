@@ -40,3 +40,18 @@ $(BASE_NAME).ps: $(BASE_NAME).dvi
 $(BASE_NAME).pdf: $(BASE_NAME).ps
 	ps2pdf $(BASE_NAME).ps $(BASE_NAME).pdf
 
+
+#
+# Bulid examples
+# 
+
+allExamples : badArrayPointerCast.exe transformer_std_vector.exe
+
+CXXFLAGS=-O0 -g -ansi -pedantic -Wall
+
+badArrayPointerCast.exe : examples/badArrayPointerCast.cpp
+	g++ ${CXXFLAGS} -o examples/badArrayPointerCast.exe examples/badArrayPointerCast.cpp
+
+transformer_std_vector.exe : examples/transformer_std_vector.cpp
+	g++ ${CXXFLAGS} -o examples/transformer_std_vector.exe examples/transformer_std_vector.cpp
+
