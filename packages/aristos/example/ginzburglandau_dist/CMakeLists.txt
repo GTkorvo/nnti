@@ -1,5 +1,5 @@
-INCLUDE(PackageAddExecutableAndTest)
-INCLUDE(PackageCopyFilesToBinaryDir)
+INCLUDE(TribitsAddExecutableAndTest)
+INCLUDE(TribitsCopyFilesToBinaryDir)
 
 INCLUDE_DIRECTORIES(${PACKAGE_SOURCE_DIR}/example/ginzburglandau_dist)
 
@@ -28,7 +28,7 @@ SET(${PACKAGE_NAME}_TESTGLDIST_SOURCES ${${PACKAGE_NAME}_TESTGLDIST_SOURCES}
 
 IF(Trilinos_ENABLE_Amesos AND Trilinos_ENABLE_Ifpack AND Trilinos_ENABLE_AztecOO AND Trilinos_ENABLE_Belos AND Trilinos_ENABLE_EpetraExt AND Trilinos_ENABLE_Stratimikos AND Trilinos_ENABLE_Thyra)
 
-  PACKAGE_COPY_FILES_TO_BINARY_DIR(CopyTestGLdistFiles
+  TRIBITS_COPY_FILES_TO_BINARY_DIR(CopyTestGLdistFiles
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
     DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/data
     SOURCE_FILES
@@ -39,13 +39,13 @@ IF(Trilinos_ENABLE_Amesos AND Trilinos_ENABLE_Ifpack AND Trilinos_ENABLE_AztecOO
       stratimikos_aztecoo_ifpack.xml
     )
 
-  PACKAGE_COPY_FILES_TO_BINARY_DIR(CopyTestGLdistInstructions
+  TRIBITS_COPY_FILES_TO_BINARY_DIR(CopyTestGLdistInstructions
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
     DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}
     SOURCE_FILES HOW_TO_RUN
     )
 
-  PACKAGE_ADD_EXECUTABLE_AND_TEST(
+  TRIBITS_ADD_EXECUTABLE_AND_TEST(
     testGLdist
     SOURCES ${${PACKAGE_NAME}_TESTGLDIST_SOURCES}
     ARGS "--geomfile=data/square.2"
@@ -56,7 +56,7 @@ IF(Trilinos_ENABLE_Amesos AND Trilinos_ENABLE_Ifpack AND Trilinos_ENABLE_AztecOO
     )
 
 
-  PACKAGE_ADD_TEST(
+  TRIBITS_ADD_TEST(
     testGLdist
     POSTFIX_AND_ARGS_0 stratimikos
       --geomfile=data/square.2 --use-stratimikos
