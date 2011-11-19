@@ -255,14 +255,14 @@ productively with as little overhead as reasonable.
 {}\item\textit{Improve Production Software Quality}: By focusing on
 foundational issues first in early phase development, higher-quality
 software will be produced as other elements of software quality are
-added.  The end result will be production quality software of any
-required quality.
+added.  The end result will be production software with any required
+level of quality.
 
 {}\item\textit{Better Communicate Maturity Levels with Customers}: By
 defining well understood maturity levels and advertising them well,
 customers and stakeholders will have the right expectations about a
 given piece of software and help aid in their determination of what
-software to use and what software to (currently) avoid.
+software to use and what software to (currently) avoid using.
 
 \end{compactitem}
 
@@ -337,7 +337,7 @@ customers.
 
 
 %
-{}\section{Current State of Trilinos Software Engineering}
+{}\section{Current Baseline State of Trilinos Software Engineering}
 \label{sec:trilinos_current_state}
 %
 
@@ -349,42 +349,72 @@ practices and policies are ingrained into the Trilinos development
 environment and are taken for granted in this discussion of the new
 Trilinos 2.0 lifecycle process.
 
-The short list of Trilinos software engineering processes and
+The short list of core Trilinos software engineering processes and
 practices relevant to this discussion include:
-%
+
 \begin{compactitem}
-%
-{}\item official separation of Trilinos code into Primary
-Stable (PS), Secondary Stable (SS), and Experimental (EX) for testing
-purposes
-%
-{}\item increasingly more extensive automated nightly regression
-testing and portability testing (on a growing list of platforms) of PS
-and SS code posting results to CDash\footnote{CDash (www.cdash.org) is
-an open source, web-based software testing server. CDash aggregates,
-analyzes and displays the results of software testing processes
-submitted from clients located around the world. Developers depend on
-CDash to convey the state of a software system, and to continually
-improve its quality. CDash is a part of a larger software process that
-integrates Kitware's CMake, CTest, and CPack tools, as well as other
-external packages used to design, manage and maintain large-scale
-software systems.}
-%
+
+{}\item official separation of Trilinos code into Primary Stable (PS),
+Secondary Stable (SS), and Experimental (EX) for testing purposes (see
+defintion of PS, SS, and EX in text box below)
+
 {}\item synchronous (pre-push) CI testing of PS code using the Python
 tool checkin-test.py
-%
+
 {}\item asynchronous (post-push) CI testing of PS and SS code using
-package-based CTest driver posting results to CDash
-%
-{}\item strong compiler warnings enabled with flags with g++ such
+package-based CTest driver posting results to CDash\footnote{CDash
+(www.cdash.org) is an open source, web-based software testing
+server. CDash aggregates, analyzes and displays the results of
+software testing processes submitted from clients located around the
+world. Developers depend on CDash to convey the state of a software
+system, and to continually improve its quality. CDash is a part of a
+larger software process that integrates Kitware's CMake, CTest, and
+CPack tools, as well as other external packages used to design, manage
+and maintain large-scale software systems.}
+
+{}\item increasingly more extensive automated nightly regression
+testing and portability testing (on a growing list of platforms) of PS
+and SS code posting results to CDash
+
+{}\item strong compiler warnings enabled with g++ flags such
 {}\ttt{-ansi -pedantic -Wall -Wshadow -Woverloaded-virtual}
-%
+
 {}\item strong policies on the maintenance of 100\% clean PS and SS
 builds and tests for all Nightly and CI builds
-%
+
 {}\item regular quarterly releases of Trilinos
-%
+
 \end{compactitem}
+
+\begin{floatingfigure}[r]{0.5\textwidth}
+\begin{center}
+\fbox{
+\begin{minipage}[b]{0.45\textwidth}
+\raggedright
+
+{}\textbf{Definition of PS, SS, and EX code:}
+
+{}\textbf{PS} (Primary Stable) code has minimal outside dependencies
+(currently, PS code in Trilinos can only maximally have required
+dependencies on the external TPLs BLAS, LAPACK, and MPI) and
+represents critical functionality such that if broken would hamper
+core development efforts for many developers.
+
+{}\textbf{SS} (Secondary Stable) code has dependencies on more that
+just the minimal set of TPLs (such as depending on Boost) and/or is
+code that does not represent critical functionality such that if
+broken would would significantly happer the work of other developers.
+Most SS code is tested by the asynchronous CI server for the primary
+developmenet platform after commits are pushed the main development
+repo.  SS code is also tested nightly on many platforms.
+
+{}\textbf{EX} (Experimental) code is not PS or SS code and not tested
+in any offical Trilinos testing process.
+
+\end{minipage}
+} %fbox
+\end{center}
+\end{floatingfigure}
 
 The official segregation of (Primary and Secondary) Stable code from
 Experimental code in Trilinos has allowed the Trilinos development
@@ -394,7 +424,7 @@ successfully.  This is maintained through the synchronous (pre-push)
 CI and asynchronous (post-poss) CI testing tools and processes and
 strong peer pressure to keep PS and SS code builds and tests 100\%
 clean.  However, with respect to lifecycle, having 100\% clean tests
-means very little if test coverage is low (which is the case in many
+means very little if test coverage is low (which is the case for many
 existing Trilinos packages).  Technically speaking, Stable code with
 test coverage not near 100\% at all times means the code is not
 meeting basic Agile development standards (see {}\cite{XP2} and
@@ -429,130 +459,132 @@ The proposed lifecycle phases / maturity levels / classifications are:
 
 \begin{compactenum}
 
-{}\item Exploratory Code:
+{}\item Exploratory (EP):
 
 \begin{compactitem}
 
 {}\item primary purpose is to explore alternative appraoches and
-prototypes, not to create software,
+prototypes, not to create software
 
 {}\item generally {}\underline{not} developed in a Lean/Agile
-consistent way from the very beginning,
+consistent way
 
 {}\item does not provide sufficient unit (or otherwise) testing to
-prove correctness,
+demonstrate correctness
+
+{}\item could actually be categorized as SS code with respect to CI
+and nightly Trilinos testing but in general would be considered to be
+untested EX code in Trilinos
+
+{}\item likely has a messy design and code base
 
 {}\item should not have any customers at all, not even ``friendly''
-customers,
-
-{}\item could actually be declared to be Secondary Stable code with
-respect to CI and nightly Trilinos testing but in general would be
-considered to be untested Experimental code in Trilinos,
-
-{}\item likely has a messy design and code base,
+customers
 
 {}\item no one should use such code for anything important (not even
-for research results but in the current CSE environment, publication
-of results using such software would likely still be allowed),
+for research results but in the current CSE environment, the
+publication of results using such software would likely still be
+allowed)
 
-{}\item generally should {}\underline{not} go out in general releases
-of Trilinos (but could go out in releases and is allowed by this
-lifecycle model), and
+{}\item generally should {}\underline{not} go out in open releases of
+Trilinos (but could go out in releases and is allowed by this
+lifecycle model)
 
 {}\item does {}\underline{not} provide a direct foundation for
 creating production-quality code and should be put to the side or
-thrown away when starting the productionalization of the approaches.
+thrown away when starting the productionalization of the approaches
 
 \end{compactitem}
 
-{}\item Research Stable Code:
+{}\item Research Stable (RS):
 
 \begin{compactitem}
 
 {}\item developed from the very beginning in a Lean/Agile consistent
-manner,
+manner
 
 {}\item strong unit and verification tests (i.e.\ proof of
 correctness) written as the code/algorithms are being developed
-(should have almost 100\% line coverage at the very least),
+(should have almost 100\% line coverage at the very least)
 
-{}\item could be treated as Primary Stable or Secondary Stable code
-with respect to testing,
+{}\item could be treated as PS or SS code with respect to testing
 
 {}\item has a very clean design and code base maintained through Agile
-practices of emergent design and constant refactoring,
+practices of emergent design and constant refactoring
 
 {}\item generally does {}\underline{not} have higher quality
 documentation, user input checking and feedback, space/time
-performance, portability, or acceptance testing,
+performance, portability, or acceptance testing
 
 {}\item would tend to provide for some regulated backward
-compatibility but may not,
+compatibility but may not
 
 {}\item {}\underline{is} appropriate to be used only by ``expert''
-users,
+users
 
 {}\item {}\underline{is} appropriate to be used only in ``friendly''
-customer codes,
+customer codes
 
-{}\item {}\underline{is} appropriate to be part of a general release,
-and
+{}\item generally should {}\underline{not} go out in open releases of
+Trilinos (but could go out in releases and is allowed by this
+lifecycle model)
 
 {}\item provides a strong foundation for creating production-quality
 software and should be the first phase for software that will likely
-productionized.
+productionized
 
 \end{compactitem}
 
-{}\item Production Growth Code:
+{}\item Production Growth (PG):
 
 \begin{compactitem}
 
-{}\item includes all the good qualities of Research Stable code,
+{}\item includes all the good qualities of Research Stable code
 
 {}\item provides increasingly improved checking of user input errors
-and better error reporting,
+and better error reporting
 
 {}\item has increasingly better formal documentation (Doxygen,
-technical reports, etc.) as well as better examples, tutorial
-material, etc.,
+technical reports, etc.) as well as better examples and tutorial
+materials
 
-{}\item maintains clean structure through refactoring of the code and
-user interfaces to make more consistent, easier to maintain etc.,
+{}\item maintains clean structure through constant refactoring of the
+code and user interfaces to make more consistent and easier to
+maintain
 
 {}\item maintains increasingly better regulated backward compatibility
-with few (if any) truly incompatible changes with new releases,
+with fewer incompatible changes with new releases
 
-{}\item has increasing better portability,
+{}\item has increasing better portability
 
-{}\item has increasing better space/time performance characteristics, and
+{}\item has increasing better space/time performance characteristics
 
-{}\item has expanding usage in more customer codes.
+{}\item has expanding usage in more customer codes
 
 \end{compactitem}
 
-{}\item Production Maintenance Code:
+{}\item Production Maintenance (PM):
 
 \begin{compactitem}
 
-{}\item includes all the good qualities of Production Growth code,
+{}\item includes all the good qualities of Production Growth code
 
 {}\item primary development includes mostly just bug fixes and
-performance tweaks,
+performance tweaks
 
 {}\item maintains rigorous backward compatibility with typically no
-deprecated features or any breaks in backward compatibility, and
+deprecated features or any breaks in backward compatibility
 
 {}\item could be maintained by parts of the user community if
-necessary (i.e.\ as ``self-sustaining software'').
+necessary (i.e.\ as ``self-sustaining software'')
 
 \end{compactitem}
 
-{}\item Unspecified Maturity Code:
+{}\item Unspecified Maturity (UM):
 
 \begin{compactitem}
 
-{}\item provides no indication of maturaty or quality at all.
+{}\item provides no official indication of maturaty or quality
 
 \end{compactitem}
 
@@ -1313,7 +1345,7 @@ are discussed in more detail.
 
 
 %
-{}\subsection{Exploritory Code}
+{}\subsection{Exploritory}
 \label{sec:exploratory_code}
 %
 
@@ -1340,7 +1372,7 @@ the practicies described for Research Stable software below.
 
 
 %
-{}\subsection{Research Stable Code}
+{}\subsection{Research Stable}
 \label{sec:research_stable_code}
 %
 
@@ -1428,7 +1460,7 @@ above.
 
 
 %
-{}\subsection{Production Growth Code}
+{}\subsection{Production Growth}
 %
 
 After the algorithms in a piece of software have been sufficiently
@@ -1516,7 +1548,7 @@ self-sustaining software.
 
 
 %
-{}\subsection{Production Maintenance Code}
+{}\subsection{Production Maintenance}
 %
 
 Once a piece of software has obtained a reasonable level of maturity
@@ -2017,7 +2049,7 @@ other packages have no tests in either an MPI or SERIAL build).
 
 %
 {}\section{Grandfathering of Existing Trilinos Code and Unspecified
-Maturity Code}
+Maturity}
 \label{sec:grandfathering}
 %
 
