@@ -92,7 +92,7 @@ int print_args(
 
     if (args.client_flag) {
         out << prefix << " \tio-method        = " << args.io_method_name << std::endl;
-        out << prefix << " \tnum-trials        = " << args.num_trials << std::endl;
+        out << prefix << " \tnum-trials       = " << args.num_trials << std::endl;
         out << prefix << " \tnum-reqs         = " << args.num_reqs << std::endl;
         out << prefix << " \tlen              = " << args.len << std::endl;
         out << prefix << " \tvalidate         = " << ((args.validate_flag)?"true":"false") << std::endl;
@@ -268,6 +268,34 @@ int main(int argc, char *argv[])
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
+    if (!args.server_flag && args.client_flag) {
+        /* initialize logger */
+        if (args.logfile.empty()) {
+            logger_init(args.debug_level, NULL);
+        } else {
+            char fn[1024];
+            sprintf(fn, "%s.client.%03d.log", args.logfile.c_str(), rank);
+            logger_init(args.debug_level, fn);
+        }
+    } else if (args.server_flag && !args.client_flag) {
+        /* initialize logger */
+        if (args.logfile.empty()) {
+            logger_init(args.debug_level, NULL);
+        } else {
+            char fn[1024];
+            sprintf(fn, "%s.server.%03d.log", args.logfile.c_str(), rank);
+            logger_init(args.debug_level, fn);
+        }
+    } else if (args.server_flag && args.client_flag) {
+        /* initialize logger */
+        if (args.logfile.empty()) {
+            logger_init(args.debug_level, NULL);
+        } else {
+            char fn[1024];
+            sprintf(fn, "%s.%03d.log", args.logfile.c_str(), rank);
+            logger_init(args.debug_level, fn);
+        }
+    }
 
     log_level debug_level = args.debug_level;
 
