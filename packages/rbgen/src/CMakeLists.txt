@@ -1,12 +1,12 @@
 
-INCLUDE(PackageLibraryMacros)
-INCLUDE(PackageAddExecutable)
+INCLUDE(TribitsLibraryMacros)
+INCLUDE(TribitsAddExecutable)
 
 #
 # A) Package-specific configuration options
 #
 
-PACKAGE_CONFIGURE_FILE(${PACKAGE_NAME}_config.h)
+TRIBITS_CONFIGURE_FILE(${PACKAGE_NAME}_config.h)
 
 #
 # B) Define the header and source files (and directories)
@@ -123,7 +123,7 @@ ENDIF()
 # C) Define the targets for package's library(s)
 #
 
-PACKAGE_ADD_LIBRARY(
+TRIBITS_ADD_LIBRARY(
   rbgen
   HEADERS ${HEADERS}
   SOURCES ${SOURCES}
@@ -142,7 +142,7 @@ IF(${PACKAGE_NAME}_ENABLE_EpetraExt)
     RBGenDriver_EpetraMV.cpp
     )
 
-  PACKAGE_ADD_EXECUTABLE(
+  TRIBITS_ADD_EXECUTABLE(
     RBGenDriver_EpetraMV
     NOEXEPREFIX
     SOURCES ${EPETRADRIVER_SOURCES}

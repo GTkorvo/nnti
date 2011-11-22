@@ -1,9 +1,9 @@
 
-INCLUDE(PackageAddExecutableAndTest)
+INCLUDE(TribitsAddExecutableAndTest)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-  PACKAGE_ADD_EXECUTABLE_AND_TEST(
+  TRIBITS_ADD_EXECUTABLE_AND_TEST(
     LOCA_Brusselator_Example
     SOURCES brusselator.cpp
     COMM serial mpi
@@ -12,7 +12,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
     NUM_MPI_PROCS 2
     )
 
-  PACKAGE_ADD_EXECUTABLE_AND_TEST(
+  TRIBITS_ADD_EXECUTABLE_AND_TEST(
     LOCA_Bratu_Example
     SOURCES bratu.cpp
     COMM serial mpi
