@@ -7,7 +7,7 @@
 \usepackage[colorlinks]{hyperref}
 \usepackage{color}
 \usepackage{graphicx}
-\usepackage{floatflt}
+\usepackage{wrapfig}
 
 
 \usepackage{listings}
@@ -195,17 +195,17 @@ complex CSE software efforts across many different institutions.
 \section{Introduction and Background}
 %
 
-\begin{floatingfigure}[r]{0.5\textwidth}
+\begin{wrapfigure}{r}{0.5\textwidth}
 \begin{center}
 \fbox{
 \begin{minipage}[b]{0.45\textwidth}
 \raggedright
 The {}\textit{Trilinos Project} is an effort to facilitate the design,
-development, integration and on-going support of support libraries for
-computational science and engineering applications.  Trilinos is
-composed of a set of different packages with a wide range of
-capabilities including basic distributed memory linear algebra, load
-balancing, discretization support, and wide variety of nonlinear
+development, integration and on-going support of foundational
+libraries for computational science and engineering applications.
+Trilinos is composed of a set of different packages with a wide range
+of capabilities including basic distributed memory linear algebra,
+load balancing, discretization support, and wide variety of nonlinear
 analysis methods and much more.  Trilinos packages have complex
 dependencies on each other and create a challenging software
 development environment.  The primary programming language for
@@ -214,7 +214,7 @@ development.
 \end{minipage}
 } %fbox
 \end{center}
-\end{floatingfigure}
+\end{wrapfigure}
 
 Computational Science and Engineering (CSE) is experiencing a
 challenge in software lifecycle issues.  Much software in CSE begins
@@ -331,9 +331,33 @@ Section~\ref{sec:grandfathering}.  Finally, the lifecycle 2.0 model is
 summarized and next steps are given in
 Section~\ref{sec:summary_next_steps}.
 
-{}\textbf{ToDo:} Discuss what is really needed in terms of risk
-analysis to be added to Trilinos development in order to satisfy our
-customers.
+{}\textbf{ToDo:} [Jim Willenbring] Rewrite the risk analysis
+Section~\ref{sec:risk_analysis_acceptance_testing} to first discuss
+the responsibility of risk analysis responsibilities of algorithm
+software developers then at the end discuss the responsibilities of
+users of CSE software to do their own risk assessment.
+
+{}\textbf{ToDo:} [Mike Heroux] Move the bulk of the discussion about
+the typical purely validation-based lifecycle process currently common
+practice described in Section~\ref{sec:compare_with_typical_CSE_model}
+right after the introduction section.  Topics to discuss: a) manual
+verification and validation does not protect future changes to the
+code, b) manual validation is not sustainable because you can't go
+back and update the code, c) usage of this approach creates low
+quality software that makes people paranoid about using other people's
+software, d) without unit tests, when the code fails after a port or
+some other changes, how to you address the problem?, e) if the code is
+messy without tests, how can you safely change the code as needed.
+There are many other issues to discuss as well.
+
+{}\textbf{ToDo:} Come up with a name for this lifecycle model that in
+broader that Trilinos in hopes that it will appeal to a larger
+audience and help to fix some of the larger software engineering
+problems in the CSE community.  Ideas include 'Trials'
+(Tribal/Trilinos Alternative Lifecycle Standard) or 'Trilim'
+(Tribal/Trilinos LIfecycle Model), or 'Triral'???' (Tribal/Trilinos
+Research-based Alternative Lifecycle).  I am sure we can come up with
+something better than this.
 
 
 %
@@ -349,6 +373,36 @@ practices and policies are ingrained into the Trilinos development
 environment and are taken for granted in this discussion of the new
 Trilinos 2.0 lifecycle process.
 
+\begin{wrapfigure}{r}{0.5\textwidth}
+\begin{center}
+\fbox{
+\begin{minipage}[b]{0.45\textwidth}
+\raggedright
+
+{}\textbf{Defined: PS, SS, and EX tested code:}
+
+{}\textbf{PS} (Primary Stable) tested code has minimal outside
+dependencies (currently, PS code in Trilinos can only maximally have
+required dependencies on the external TPLs BLAS, LAPACK, and MPI) and
+represents critical functionality such that if broken would hamper
+core development efforts for many developers.
+
+{}\textbf{SS} (Secondary Stable) tested code has dependencies on more that
+just the minimal set of TPLs (such as depending on Boost) and/or is
+code that does not represent critical functionality such that if
+broken would would significantly happer the work of other developers.
+Most SS code is tested by the asynchronous CI server for the primary
+developmenet platform after commits are pushed the main development
+repo.  SS code is also tested nightly on many platforms.
+
+{}\textbf{EX} (Experimental) (non-)tested code is not PS or SS code
+and not tested in any offical Trilinos testing process.
+
+\end{minipage}
+} %fbox
+\end{center}
+\end{wrapfigure}
+
 The short list of core Trilinos software engineering processes and
 practices relevant to this discussion include:
 
@@ -358,23 +412,23 @@ practices relevant to this discussion include:
 Secondary Stable (SS), and Experimental (EX) for testing purposes (see
 defintion of PS, SS, and EX in text box below)
 
-{}\item synchronous (pre-push) CI testing of PS code using the Python
-tool checkin-test.py
+{}\item synchronous (pre-push) CI testing of PS tested code using the
+Python tool checkin-test.py
 
-{}\item asynchronous (post-push) CI testing of PS and SS code using
-package-based CTest driver posting results to CDash\footnote{CDash
-(www.cdash.org) is an open source, web-based software testing
-server. CDash aggregates, analyzes and displays the results of
-software testing processes submitted from clients located around the
-world. Developers depend on CDash to convey the state of a software
-system, and to continually improve its quality. CDash is a part of a
-larger software process that integrates Kitware's CMake, CTest, and
-CPack tools, as well as other external packages used to design, manage
-and maintain large-scale software systems.}
+{}\item asynchronous (post-push) CI testing of PS and SS tested code
+using package-based CTest driver posting results to
+CDash\footnote{CDash (www.cdash.org) is an open source, web-based
+software testing server. CDash aggregates, analyzes and displays the
+results of software testing processes submitted from clients located
+around the world. Developers depend on CDash to convey the state of a
+software system, and to continually improve its quality. CDash is a
+part of a larger software process that integrates Kitware's CMake,
+CTest, and CPack tools, as well as other external packages used to
+design, manage and maintain large-scale software systems.}
 
 {}\item increasingly more extensive automated nightly regression
 testing and portability testing (on a growing list of platforms) of PS
-and SS code posting results to CDash
+and SS tested code posting results to CDash
 
 {}\item strong compiler warnings enabled with g++ flags such
 {}\ttt{-ansi -pedantic -Wall -Wshadow -Woverloaded-virtual}
@@ -385,36 +439,6 @@ builds and tests for all Nightly and CI builds
 {}\item regular quarterly releases of Trilinos
 
 \end{compactitem}
-
-\begin{floatingfigure}[r]{0.5\textwidth}
-\begin{center}
-\fbox{
-\begin{minipage}[b]{0.45\textwidth}
-\raggedright
-
-{}\textbf{Definition of PS, SS, and EX code:}
-
-{}\textbf{PS} (Primary Stable) code has minimal outside dependencies
-(currently, PS code in Trilinos can only maximally have required
-dependencies on the external TPLs BLAS, LAPACK, and MPI) and
-represents critical functionality such that if broken would hamper
-core development efforts for many developers.
-
-{}\textbf{SS} (Secondary Stable) code has dependencies on more that
-just the minimal set of TPLs (such as depending on Boost) and/or is
-code that does not represent critical functionality such that if
-broken would would significantly happer the work of other developers.
-Most SS code is tested by the asynchronous CI server for the primary
-developmenet platform after commits are pushed the main development
-repo.  SS code is also tested nightly on many platforms.
-
-{}\textbf{EX} (Experimental) code is not PS or SS code and not tested
-in any offical Trilinos testing process.
-
-\end{minipage}
-} %fbox
-\end{center}
-\end{floatingfigure}
 
 The official segregation of (Primary and Secondary) Stable code from
 Experimental code in Trilinos has allowed the Trilinos development
@@ -746,9 +770,14 @@ with strong automated unit and verification tests.
 {}\item\textit{Clean structure and code}: The internal code structure
 and interfaces are clean and consistent.
 
+{}\item\textit{Minimal controlled internal and external dependencies}:
+The software has well structured internal dependencies and minimal
+external upstream software dependencies and those dependencies are
+carefully managed.
+
 {}\item\textit{Properties apply recursively to upstream software}: All
-of the external upstream software that are depended on are also
-themselves self-sustaining software.
+of the dependent external upstream software are also themselves
+self-sustaining software.
 
 {}\item\textit{All properties are preserved under maintenance}: All
 maintenance of the software maintains all of these properties of
@@ -798,9 +827,9 @@ consistent and cannot be used as the foundation for eventually
 producing trusted production-quality software.
 
 Maintaining a clean and simple internal structure of the code is
-crucial for achieving self-sustaining software.  No matter how good the
-unit and verification tests are, if the code is too convoluted and/or
-has too many entangling dependencies and tricky behaviors, the
+crucial for achieving self-sustaining software.  No matter how good
+the unit and verification tests are, if the code is too convoluted
+and/or has too many entangling dependencies and tricky behaviors, the
 software will not be able to be avoidably maintained, ported to new
 platforms, or changed for other purposes.  Developing software which
 keeps a clean internal structure can only be done using continuous
@@ -808,11 +837,34 @@ refactoring and redesign {}\cite{XP2}.  Without applying such a
 skilled and rigorous process for maintaining the software, under
 maintenance and further development it will eventually die the slow
 death of ``software entropy'' and become unsustainable
-{}\cite{MythicalManMonth95}.
+{}\cite{MythicalManMonth95}.  Developing software of this type
+requires a high degree of skill and knowledge and places a very high
+standard on CSE development teams which first create and later expand
+and maintain the software.
 
-Developing software of this type requires a high degree of skill and
-knowledge and places a very high standard on CSE development teams
-which first create and later expand and maintain the software.
+Self-sustaining software must also carefully manage the dependencies
+within itself and with its upstream software dependencies.  Within the
+given software itself, if it has too many entangling dependencies and
+if any particular customer does not need the majority of functionality
+provided by the software, then customers are at greater risk because
+the may be forced to build (and possibly port) a lot of software they
+don't actually use.  For example, a given downstream customer may only
+fundamentally need a few classes but if the given software has
+entangling dependencies within itself, the customer may be forced to
+port hundreds of thousands of lines of code just to get functionality
+that should be contained in just a few thousand lines of code.  It
+takes great knowledge, skill and experience to carefully partition
+software and control entangling dependencies.  Similar to entangling
+dependencies within a given piece of software, the more external
+upstream software that is required to be downloaded, configured, and
+built, the greater the risk.  In extreme cases, the shear volume of
+external software packages that need to be installed before building
+the given piece can massively complicate the installation and porting
+of the software.  This is true no matter how portable or how easy it
+is to acquire, configure, build, and install the upstream software.
+The shear volume can be a significant risk.  Therefore,
+self-sustaining software must carefully manage internal and external
+dependencies.
 
 Also, it is not enough for a given piece of software to satisfy the
 basic properties of self-sustaining software, but it is also critical
@@ -1055,7 +1107,7 @@ branch) in backward compatible set X, and
 %
 \end{compactitem}
 
-\begin{floatingfigure}[r]{0.5\textwidth}
+\begin{wrapfigure}{r}{0.5\textwidth}
 \begin{center}
 \fbox{
 \begin{minipage}[b]{0.45\textwidth}
@@ -1073,7 +1125,7 @@ version numbers.
 \end{minipage}
 } %fbox
 \end{center}
-\end{floatingfigure}
+\end{wrapfigure}
 
 The numbers Y and Z use even numbers for releases and odd numbers for
 development versions between releases.  This release number X.Y.Z is
@@ -1470,7 +1522,7 @@ has excellent unit and verification testing and has a clean design and
 source code, it is immediately ready to enter the Production Growth
 phase.
 
-\begin{floatingfigure}[r]{0.5\textwidth}
+\begin{wrapfigure}{r}{0.5\textwidth}
 \begin{center}
 \fbox{
 \begin{minipage}[b]{0.45\textwidth}
@@ -1489,7 +1541,7 @@ from scratch as Research Stable software.
 \end{minipage}
 } %fbox
 \end{center}
-\end{floatingfigure}
+\end{wrapfigure}
 
 When software enters the Production Growth phase, the purpose is to
 start adding those features needed to make the software more usable
@@ -1747,8 +1799,7 @@ fundamental ``code verification'' and perhaps much of the structure
 needed for doing ``solution verification''
 {}\cite{SEVVIntersections05}.  However, the end-user application
 developers must shoulder the responsibility for performing all
-validation.  Very little software in Trilinos is subject, by itself,
-to validation in the CSE sense.
+validation.
 
 
 %
