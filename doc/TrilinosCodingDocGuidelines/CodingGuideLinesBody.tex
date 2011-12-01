@@ -1,0 +1,2566 @@
+%
+\section{Introduction}
+%
+
+{}\textbf{ToDo:} Get consensus from a critical mass of Trilinos
+developers.
+
+This document describes C++ coding guidelines for Trilinos and related
+software projects.  It builds upon the guidelines in \emph{C++ Coding
+Standards} by Sutter and Alexandrescu {}\cite{C++CodingStandards05}
+(the 101 items are outlined in
+Appendix~\ref{sec:cpp_coding_standards}) and the Teuchos-based memory
+management approach described in
+{}\cite{TeuchosMemoryManagementGuide}.  The guidelines in this
+document specifically address the development of object-oriented
+numerical C++ libraries, using the tools in the Trilinos package
+Teuchos.  While this document's main purpose is to define guidelines
+to improve the common look \& feel, interoperability, safety,
+maintainability, and quality of Trilinos software (for both interfaces
+and support software), it is also general enough to be applied to many
+other C++ projects that, for instance, might interact with Trilinos.
+
+The book \emph{C++ Coding Standards} {}\cite{C++CodingStandards05}
+distills the C++ community's best practices\footnote{The book was
+  written in 2004 for the previous C++ standard, but many best
+  practices still apply, and all of them apply to software that does
+  not yet use the the C++11 standard.} from a number of authors. It
+also covers many design topics that apply more generally beyond
+software written in C++.  As a result, {}\cite{C++CodingStandards05}
+provides a comprehensive foundation for creating well-designed,
+high-quality C++ software.  The goal of this document is not to
+restate the contents of that book, but instead to provide amendments
+to specific items in {}\cite{C++CodingStandards05} and tailor them for
+numerical libraries.  
+
+The zeroth item\footnote{First item, zero based.} ``Don't sweat the
+small stuff'' intentionally avoids specific recommendations on issues
+such as the arbitrary conventions for naming identifiers and the
+formatting of code.  While issues related to coding style are less
+important than other issues, there are arguments for adopting a more
+consistent code formatting style.  Some of these arguments are
+outlined in Appendix~\ref{sec:arguments-for-consistent-style}.
+Therefore, one of the purposes of this document is to suggest
+reasonable and minimal guidelines for naming conventions and code
+formatting that provide for enough code uniformity to facilitate
+collaborative code development, code reviews, and maintenance in Agile
+software development processes
+{}\cite{ExtremeProgrammingExplained2nd04}.
+
+More important than code formatting, a consistent set of naming
+conventions for C++ classes, functions, variables, and other entities
+also helps to improve common look \& and feel, collaborative software
+development, and overall quality.  Since clients of the software must
+interact with these names, it is even more important that a set of
+naming conventions be used as consistently as possible in the client
+interfaces to provide common look \& feel.
+
+Finally, important general C++ coding guidelines are covered that
+complete and amend those in {}\cite{C++CodingStandards05}.  While
+formatting and naming recommendations do not affect the meaning of C++
+code, other coding guidelines do, and should therefore receive more
+attention.  Unlike naming conventions and code formatting, these
+guidelines are difficult to change after a significant amount of code
+has been written.
+
+Coding and documentation guidelines, such as defined here, are
+critical in order to perform code reviews that have been proven to
+improve software quality {}\cite{CodeComplete2nd04}.  Without coding
+and documentation guidelines, code reviews collapse into arguments
+about basic coding constructs (e.g., why not make a class's variables
+public?  Or, why not use raw pointers and raw calls to new and delete
+everywhere?) and are much less productive
+{}\cite{ImplementingLeanSoftwareDevelopment}.
+
+The rest of this document is organized as follows.
+Section~\ref{sec:guideline_structure} describes how the guidelines are
+organized and categorized.  General naming conventions are presented
+in Section~\ref{sec:NamingConventions}, which they help provide a
+context for later code examples.  This is followed in
+Section~\ref{sec:NOSF} with guidelines for naming and organizing
+source files.  Next, important general C++ coding guidelines are
+described in Section~\ref{tcdg:codingguidelines:sec} that affect
+software quality in critical ways.  Following this, reasonable and
+minimal formatting guidelines are covered in
+Section~\ref{tcdg:formatting:sec}.  Finally, guidelines for Doxygen
+documentation are provided in Section~\ref{sec:DocumentionGuidelines}.
+
+The appendices include both abbreviated references and detailed
+discussions.  Appendix~\ref{sec:cpp_coding_standards} lists the 101
+guidelines from {}\cite{C++CodingStandards05}, and identifies which
+items are amended or invalidated by the Trilinos guidelines described
+in this document.  Appendix~\ref{sec:summary_guidelines} concisely
+lists the coding guidelines presented in this document.
+Appendix~\ref{apdx:summary_of_idioms} summarizes the idioms and
+conventions surrounding the use of the Teuchos memory management
+classes.  Appendix~\ref{sec:misc_amendments} contains discussions of
+items from {}\cite{C++CodingStandards05} that are amended or
+invalidated in this set of coding guidelines for Trilinos.  Most
+importantly, it clarifies our recommendations for {}\texttt{using}
+declarations that differ from {}\cite[Item 59]{C++CodingStandards05}.
+Appendix~\ref{sec:arguments-for-consistent-style} argues for adopting
+a consistent code formatting style in a single development team or
+single project (which current Agile development methods require).
+Finally, Appendix~\ref{sec:reformatting-guidelines} gives guidelines
+for when one developer may legitimately reformat a source file written
+by another developer, if the developers have not agreed upon a more
+consistent code formatting style.
+
+
+%
+\section{Structure of the guidelines}
+\label{sec:guideline_structure}
+%
+
+Before getting into the specific guidelines, the structure of the
+guidelines are described.  The different categories of guidelines
+are presented and then alpha-numeric designations for the guidelines
+are discussed.
+
+
+%
+\subsection{Categories of guidelines}
+%
+
+The guidelines are organized into different categories by subsection
+such as naming conventions, naming and organization of source files,
+general C++ coding guidelines, formatting guidelines, and finally
+Doxygen documentation guidelines.  However, there are other categories
+of guidelines to consider.  These different categories are managed
+using keywords associated with each of the guidelines.  These
+different categorizations and keywords are given below.
+
+\begin{itemize}
+
+{}\item Strength of the recommendation:
+
+  \begin{itemize}
+
+  {}\item\textbf{\StrongRecGC}: The given guideline is strongly
+  recommended.  Any code that does not follow the guideline will be
+  considered to either be bad code and/or to be strongly
+  non-compliant.
+
+  {}\item\textbf{\RecGC}: The given guideline is recommended.  Code
+  that does not follow the guideline will be questioned but will not
+  necessarily considered bad code.  However, code that does not follow
+  the guideline will be considered non-complaint.
+
+  {}\item\textbf{\SuggestGC}: The given guideline would be suggested
+  as good alternative to choose over other alternatives.  However, code
+  that does not follow the guideline will not be considered bad code
+  or to necessarily be non-complaint code.
+
+   \end{itemize}
+
+{}\item\textbf{\InteropGC}: The guideline plays a primary role in the
+interoperability with other compliant software.  Code that violates a
+{}\StrongRecGC{} guideline in this category will be considered not
+directly interoperable with other compliant software.  (However, it
+may be possible to develop adapters that provide an interoperable 
+interface.)
+
+{}\item\textbf{\ComLookFeelGC}: The guideline plays a primary role in
+the common look and feel of compliant software.  Common look and feel
+is important for users in helping them to reuse knowledge gained from
+one set of compliant software in other sets of compliant software.
+Common look and feel helps avoid user programming errors and improve
+uniformity of user code.
+
+{}\item\textbf{\SafetyGC}: The guideline is primarily concerned with
+safety where if ignored would result in software that is more
+difficult for users to use correctly, more difficult to maintain, or
+more likely to contain undefined behavior (e.g., memory access
+errors).  For example, the use of {}\ttt{const} is considered to be a
+safety issue.  Maintainability, portability, and code clarity are also
+closely related to safety so {}\SafetyGC{} will be used to also cover
+guidelines that address these attributes as well.
+
+{}\item\textbf{\TeamGC}: The guideline mainly affects the ability of a
+team to work together effectively.  Almost every convention that
+increases uniformity in the code helps to improve team interaction and
+productivity.  Therefore, every one of these guidelines could be
+labeled {}\TeamGC{}.  This would not be informative, though.  Instead,
+we will only label guidelines with {}\TeamGC{} when that is the
+primary motivation for the guideline.  For example, code formatting
+generally does not impact end users at all (unless they look at raw
+code in header files) yet can greatly affects shared ownership of
+code.
+
+\end{itemize}
+
+Every guideline is given a recommendation strength and at least one
+other guideline category.  However, a guideline may be assigned more
+than one non-strength category (e.g., \InteropGC{} and \SafetyGC).
+
+
+%
+\subsection{Alphanumeric item designations}
+\label{sec:alpha_numeric_designations}
+%
+
+We refer to specific items in this document using numbered acronyms
+starting with \textbf{TCDG} and the version number (e.g., 1.0).  For
+example, we label the first naming convention guideline as
+\textbf{TCDG 1.0 NC 1}.  These abbreviations may be used in code
+reviews as short-hand references to specific guidelines.  The version
+number of the coding standard is important in order to allow changes
+in future coding guidelines and allow the numbers to change from
+version to version.  For example, \textbf{NC 1} in \textbf{TCDG
+  1.0} might become \textbf{NC 3} in \textbf{TCDG X.Y}.  We refer
+to guidelines in \cite{C++CodingStandards05} using a numbered
+acronym such as \textbf{CPPCS Item 15} (``Use const proactively'').
+
+Whenever a new guideline is added or the ID of an existing guideline
+is changed, the version number must be incremented.
+
+
+%
+\section{Naming conventions (NC)}
+\label{sec:NamingConventions}
+%
+
+C++ classes, functions, variables, data members etc. should be named
+and used consistently.  The following guidelines are consistent with
+common practice as exemplified in {}\cite{EffectiveC++3rd05} for
+example and are also largely consistent with the Java naming
+standard.\footnote{
+  {}\ttt{http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html}}
+Naming conventions affecting external interfaces are given in
+Section~\ref{sec:ExternalNamingConventions} while naming convention
+suggestions for internal software entities are given in
+Section~\ref{sec:InternalNamingConventions}.  We give naming
+conventions first, before coding guidelines (in Section
+\ref{tcdg:codingguidelines:sec}), not because they are more important,
+but because they are used in code examples throughout this text.
+
+
+%
+\subsection{External naming conventions}
+\label{sec:ExternalNamingConventions}
+%
+
+This section gives naming conventions for external interfaces that
+affect the user experience and common look and feel.
+
+\begin{itemize}
+
+{}\item\NCNamespaceAllNames: For C++ class names, functions, and
+variables, use C++ namespaces which include the package name (e.g.,
+{}\ttt{Thyra::VectorBase}, {}\ttt{Tpetra::Map}, etc.).  For other
+global identifiers such as C and Fortran functions and macros, use the
+package name as a prefix (e.g., {}\ttt{MPI\_Comm()},
+{}\ttt{TEUCHOS\_ASSERT()}).  Under no circumstance should any globally
+visible symbol be used (including at link time) that is not namespaced
+(e.g., no global struct with a name like {}\ttt{Vec}).
+
+{}\textit{Justification}: Any software that does not namespace its
+global identifiers is unsuitable to be integrated with other software.
+A single software project's sloppiness can pollute the global
+namespace.
+
+{}\item\NCClassNames: Names for C++ classes and structs should
+generally be capitalized.  Separate words should be concatenated and
+capitalized (this convention is called ``CamelCase'').  For example:
+
+{\small\begin{verbatim}
+  class SomeClass {...};
+\end{verbatim}}
+
+
+{}\item\NCNamespaceNames: C++ namespaces should follow the same naming
+convention as C++ classes.  Namespace names should not contain too many
+acronyms and should not be too short or too common.  For example:
+
+{\small\begin{verbatim}
+  namespace MyNameSpace {
+  ...
+  } // namespace MyNameSpace 
+\end{verbatim}}
+
+
+{}\item\NCEnumNames: Enumeration type names should follow the same
+convention as for class and struct names, but they should also begin
+with the capital letter 'E' (signifying an enum type).  Enumeration
+values should be all uppercase with underscores between words and
+should use a common prefix for scoping within the enum type.  Also,
+enum values should in general use the default value assignment defined
+by the compiler, as this aids their use as indexes into zero-based
+arrays.  For example:
+
+{\small\begin{verbatim}
+  enum ESolveStatus {
+    SOLVE_STATUS_CONVERGED,
+    SOLVE_STATUS_UNCONVERGED,
+    SOLVE_STATUS_UNKNOWN
+  };
+\end{verbatim}}
+
+
+{}\textit{Justification}: Using a capital 'E' for {}\texttt{enum}s allows the
+definition of other types with the same basic name that contain other data.
+For example, {}\texttt{ESolveStatus} in an {}\texttt{enum} enumerating the
+different types of solve status and {}\texttt{SolveStatus} is a C++ struct
+that contains an {}\texttt{ESolveStatus} member along with some other data.
+The use of the scoping prefix (i.e.\ {}\texttt{SOLVE\-\_STATUS\_} above) is
+also recommended in {}\cite[Section 11.4]{CodeComplete2nd04}.
+
+
+{}\item\NCObjectNames: Formal function arguments and other object identifiers
+should, in general, start with a lower-case letter and then use capitalization
+for following words with no underscores between words in general.  For
+example:
+
+{\small\begin{verbatim}
+  ClassType1 obj;
+  ClassType2 objectForMyThing;
+  ClassType3 objectForYourThing;
+\end{verbatim}}
+
+
+{}\textit{Exception:} Identifiers that have mathematical symbols in
+them such as {}\texttt{x}, {}\texttt{J}, and {}\texttt{alpha} should
+use lower case names separated by underscores {}\texttt{\_}.  For
+example:
+
+{\small\begin{verbatim}
+  Vector curr_x;
+  Matrix curr_J;
+  Scalar curr_alpha;
+
+  class SomeClass {
+  public:
+    const Vector& get_x() const;
+    const Matrix& get_J() const;
+    Scalar get_alpha() const;
+  };
+\end{verbatim}}
+
+
+\textit{Justification:} The Java convention
+\texttt{objectIdentifierName} using capitalization with no underscores
+produces shorter readable identifiers for English names but does not
+work well for identifiers with mathematical symbols.  It is important
+to maintain the case of mathematical symbols, since \texttt{x} and
+\texttt{X} in mathematical notation may denote different
+objects.\footnote{For example, the ``Householder convention'' commonly
+  used by numerical analysts prefers to reserve Roman capitals for
+  matrices, and Roman lower-case letters for vectors.}  Omitting the
+underscore would result in confusing ambiguity regarding the symbol's
+case, as in for example {}\texttt{currx} or {}\texttt{currX}.  In
+these cases, it is far better to use underscores and write
+\texttt{curr\_x} as shown above.  While many programmers consider it
+bad practice in general to differentiate variable names by case alone
+(see ``Don't differentiate variable names solely by capitalization''
+in \cite[Section 11.7]{CodeComplete2nd04}), mathematical software must
+support the mathematical convention that case matters.
+
+
+\item\NCFunctionNames: Names for functions should use the same naming
+  convention as for object identifier.  For example:
+
+{\small\begin{verbatim}
+  class SomeClass {
+  public:
+    void someMemberFunction(...);
+  };
+
+  void someOtherFunction(...);
+\end{verbatim}}
+
+
+\item\NCBaseDefaultClassNames: In general, the top-level C++ base
+  class for some abstraction should use an unadorned name (e.g.,
+  \texttt{Vector}, rather than \texttt{VectorBase}).  The base class
+  should contain (almost) no implementations and certainly no object
+  data (see \cite[Item 36]{C++CodingStandards05}).  If a default
+  implementation of some of the aspects of the base class are desired
+  (to make it easier to define concrete subclasses), then they should
+  be put in a derived node subclass with the suffix
+  \texttt{DefaultBase} (e.g., \texttt{Vector\-Default\-Base}).  Any
+  default concrete implementation of an abstraction should generally
+  use the prefix \texttt{Default} along with any other important
+  prefixes (e.g., \texttt{DefaultSpmdVector}).  For example:
+
+{\small\begin{verbatim}
+  // Pure virtual base class 
+  class Vector
+    : ... // Other base classes
+  {
+  public:
+    virtual void applyOp(...) const = 0;
+    ...
+  };
+
+  // Node base class with some default implementations
+  class VectorDefaultBase : virtual public Vector
+  {
+  public:
+    void applyOp(...) const; // default implementation
+    ...
+  };
+
+  // A general default implementation for SPMD vectors
+  class DefaultSpmdVector
+    : virtual public VectorDefaultBase // use some default implementations
+  {
+  public:
+    void applyOp(...) const; // Specialized overrides
+    ...
+  private:
+    ...
+  };
+\end{verbatim}}
+
+  \textit{Alternate}: An alternative naming convention is to state the
+  noun before the adjective.  This results in the base class and all derived classes starting with the same noun.  The preceding example would now be:
+
+{\small\begin{verbatim}
+  // Pure virtual base class 
+  class Vector
+    : ... // Other base classes
+  {
+  public:
+    virtual void applyOp(...) const = 0;
+    ...
+  };
+
+  // Node base class with some default implementations
+  class VectorDefaultBase : virtual public Vector
+  {
+  public:
+    void applyOp(...) const; // default implementation
+    ...
+  };
+
+  // A general default implementation for SPMD vectors
+  class VectorDefaultSpmd
+    : virtual public VectorDefaultBase // use some default implementations
+  {
+  public:
+    void applyOp(...) const; // Specialized overrides
+    ...
+  private:
+    ...
+  };
+\end{verbatim}}
+
+\textit{Justification}: The alternative naming convention helps to group base class and derived classes together when the objects are listed alphabetically.  This is most helpful when browsing Doxygen and for listing file names in a directory.  
+
+\item\NCConstNonconstAccessFunctionName: In general, functions that
+  return objects that are contained within a wrapper object should
+  have the prefix \texttt{Nonconst} added to the function that returns
+  the non-const reference (or pointer) to the contained object.  For
+  example,
+
+{\small\begin{verbatim}
+  class SomeClass {
+  public:
+    RCP<Part> getNonconstPart();
+    RCP<const Part> getPart() const;
+    ...
+  };
+\end{verbatim}}
+
+  \textit{Justification}: The choice to name the access functions
+  \texttt{getNonconstPart()} and \texttt{getPart()} as opposed to
+  \texttt{getPart()} and \texttt{getConstPart()} is somewhat
+  arbitrary.  However, using \texttt{nonconst} should be preferred in
+  order to make it more explicit that a non-const object reference is
+  being requested.  Also, a constant view of a part of an object is
+  always cheaper that returning a non-constant view of the part (see
+  the discussion of the ``generalized view'' design pattern in
+  {}\cite{TeuchosMemoryManagementGuide}).  Therefore, to be safe and
+  err on the side of efficiency, the non-constant access function
+  should be harder to call (because it requires more characters to
+  type) than the constant access function.
+
+\end{itemize}
+
+
+%
+\subsection{Internal naming conventions}
+\label{sec:InternalNamingConventions}
+
+This section gives naming conventions that affect internal software
+entities.  Such naming conventions do not directly affect users,
+unless they decide to inspect the code or run a debugger on it.
+However, internal naming conventions do strongly influence
+collaborative software development and the shared ownership of code.
+In fact, such internal naming conventions might actually influence
+collaborative development more than external naming conventions due to
+the amount of code involved.  Thus, they are an important part of
+forming a cohesive productive team.  The conventions given below are
+used in the Thyra package as well as much of Teuchos.
+
+
+\begin{itemize}
+\item\NCDataMemberNames: Names for data members within a class should
+  use the same naming convention as for other object identifier names,
+  but should end with an underscore.  For example:
+
+{\small\begin{verbatim}
+  class SomeClass {
+  public:
+    ...
+  private:
+    int someDataMember_;
+  };
+\end{verbatim}}
+
+  \textit{Justification:} Using an underscore after a data variable
+  name helps class maintainers identify the variable's scope, and
+  differentiate it from a local variable or a member function.  This
+  immediate visual identification avoids ``shadowing'' declarations,
+  which cause portability problems on some compilers, especially when
+  warnings are elevated to errors.
+
+  \textit{Exception}: Public data members in simple C++ structs (i.e.\
+  where no invariants need to be maintained) should not contain
+  underscores.  For example:
+
+{\small\begin{verbatim}
+  struct SolveStatus {
+    ESolveStatus solveStatus;
+    double achievedTol;
+    std::string message;
+    ...
+  };
+\end{verbatim}}
+
+  \textit{Exception:} Names for data members within a class that have
+  mathematical symbols in them, such as {}\texttt{x}, {}\texttt{J},
+  and {}\texttt{alpha}, should use lower-case names separated by
+  underscores {}\texttt{\_}.  For example:
+
+{\small\begin{verbatim}
+  Vector curr_x_;
+  Matrix curr_J_;
+  Scalar curr_alpha_;
+\end{verbatim}}
+
+\textit{Justification:} See {}\textbf{NC 4} above.
+
+\textit{Alternate:} Instead of using an underscore at the end of the name, a prefix {}\texttt{m\_} can be used to distinguish class data members.  For example:
+
+{\small\begin{verbatim}
+  class SomeClass {
+  public:
+    ...
+  private:
+    int m_someDataMember;
+  };
+\end{verbatim}}
+
+\textit{Justification:}  This can sometimes be easier to read, especially when dereferencing pointers.
+
+\end{itemize}
+
+
+%
+\section{Naming and organization of source files (NOSF)}
+\label{sec:NOSF}
+%
+
+Since most C++ code is organized around classes, the file structure
+should also primarily be organized around classes and the nonmember
+functions that interact with these classes.  The primary goal of these
+file naming guidelines is to create file names that are globally
+unique and will therefore facilitate {}\texttt{\#include}s without
+need for directory paths in the {}\texttt{\#include} statement.  The
+basic idea is that a source file should be named based on what it has,
+not where it is.  The following guidelines help to define how to
+organize code into source files and how to name those source files.
+The directory structure of source files is beyond the scope of this
+document.
+
+
+\begin{itemize}
+
+\item\NOSFFileExtension: These file names avoid common problems with
+  portability to various Unix and Windows platforms and enable better
+  tools support (like language-specific formatting in Emacs).
+
+\item\NOSFClassFiles: As a general rule, assign the source code for
+  any major C++ class and supporting code to a single set of header
+  and source files.  The file name should be composed from the
+  namespace names enclosing the classes and other code, along with the
+  class name itself.  For instance, for the class
+  \texttt{NameSpaceA\-::InnerNamespace\-::SomeClass}, the header and
+  source files would be named
+  \texttt{NameSpaceA\-\_InnerNamespace\-\_SomeClass.[hpp,cpp]}.  This
+  convention assures global uniqueness of file names.  In addition,
+  having a single set of files for each class helps keep a single
+  encapsulation unit of code together, which makes it easier to search
+  the encapsulation unit.
+
+\item\NOSFIncludeGuards: All header files, without exception, should
+  use include guards {}\cite[Item 24]{C++CodingStandards05}.  For
+  example, the file
+  {}\texttt{NameSpaceA\-\_InnerNamespace\-\_SomeClass.hpp} would have
+  the basic structure:
+
+  {\small\begin{verbatim}
+  #ifndef NAMESPACEA_INNERNAMESPACE_SOMECLASS_HPP
+  #define NAMESPACEA_INNERNAMESPACE_SOMECLASS_HPP
+
+  #include "SomeFile.hpp"
+
+  ...
+
+  #endif // NAMESPACEA_INNERNAMESPACE_SOMECLASS_HPP
+  \end{verbatim}}
+
+  Above, the comment {}\texttt{//
+  NAMESPACEA\-\_INNERNAMESPACE\-\_SOMECLASS\-\_HPP} after the final
+  \texttt{\#endif} helps to show the preprocessor structure in the
+  file.  It is helpful in cases where other \texttt{\#ifdef} or
+  \texttt{\#if} structures are used.  This is a very minor amendment
+  to \cite[Item 24]{C++CodingStandards05}.
+
+\item\NOSFCopyrightHeaders: All copyrightable software source file should
+include a copyright headers.  For example:
+
+  {\small\begin{verbatim}
+  // @HEADER
+  // ...
+  // @HEADER
+  ...
+  \end{verbatim}}
+
+  \textit{Justification}: The tags {}\ttt{@HEADER} are looked for in
+  automated tools to update the copyright header for large groups of
+  files.  Without some standard for setting off copyright text, it is
+  much more difficult to maintain correct and up-to-date copyright
+  info.
+
+\end{itemize}
+
+%
+\section{Coding guidelines}
+\label{tcdg:codingguidelines:sec}
+%
+
+Coding guidelines have much more influence on the meaning and
+correctness of C++ than formatting guidelines, and thus deserve more
+attention.  We assume by default all of the coding guidelines in the
+book \emph{C++ Coding Standards} \cite{C++CodingStandards05}.  In this
+document, we provide additional coding guidelines and, in some cases,
+amend items in {}\cite{C++CodingStandards05}.  Where this document is
+silent, {}\cite{C++CodingStandards05} is to be considered the
+authoritative source.  Appendices \ref{sec:cpp_coding_standards} and
+\ref{sec:misc_amendments} amend some items in
+\cite{C++CodingStandards05}.
+
+%
+\subsection{General coding guidelines (GCG)}
+%
+
+This section discusses general coding guidelines.  These guidelines
+affect software quality in a major way and are not just a matter of
+personal preference or style.
+
+%
+\subsubsection{Error handling}
+%
+
+\begin{itemize}
+
+\item\GCGTestForException: For developer errors, prefer to throw
+  exceptions derived from {}\texttt{std\-::logic\-\_error} instead of
+  using the {}\texttt{assert(...)}  macro as recommended in
+  {}\cite[Item 68]{C++CodingStandards05}.  A ``logic error'' would be
+  treated differently from a real run-time error and would therefore
+  come with different assumptions about the state of the object after
+  the exception was thrown.  In particular, a ``real error'' (i.e.,
+  not just an internal developer error) should always provide the
+  basic guarantee to leave the object in a valid state \cite[Item
+  71]{C++CodingStandards05}, while code that throws a ``logic error''
+  cannot make any such guarantees in general.  Therefore, if an
+  object's method throws an exception derived from
+  \texttt{std\-::logic\-\_error}, the object should in general be
+  viewed as unusable and should be deleted immediately.  To debug
+  exceptions, a break point may be placed on the function
+  {}\texttt{Teuchos::Test\-For\-Exception\-\_break()}\footnote{In
+  {}\texttt{gdb}, a break-point would be set as {}\texttt{b
+  Teuchos::Test\-For\-Exception\-\_break()}.} which will be called
+  just before an exception is thrown through these macros.  In the
+  future, more sophisticated features like automatically attaching a
+  debugger or printing the call stack may be added for some systems.
+  Therefore throwing an exception derived from
+  \texttt{std\-::logic\-\_error} using these macros should be
+  preferred to using the {}\texttt{assert(...)} macro as it gives us
+  more control over what happens when one of these types of
+  programming errors occurs.  Also, these exception macros make it
+  much easier to generate better error messages than what you would
+  get from a simple use of the \texttt{assert(...)} macro.
+
+{}\item\GCGStandardCatchStatements: Catch all exceptions before they
+exit {}\ttt{main()} by writing it as:
+
+{\small\begin{verbatim}
+  #include "Teuchos_VerboseObject.hpp"
+  #include "Teuchos_StandardCatchMacros.hpp"
+  ...
+  int main( int argc, char* argv[] )
+  {
+    const Teuchos::RCP<Teuchos::FancyOStream> out =
+      Teuchos::VerboseObjectBase::getDefaultOStream();
+    ...
+    bool success = true;
+    try {
+      ...
+    } 
+    TEUCHOS_STANDARD_CATCH_STATEMENTS(true, *out, success);
+    return (success ? EXIT_SUCCESS : EXIT_FAILURE);
+  }
+\end{verbatim}}
+
+By using {}\ttt{TEUCHOS\-\_STANDARD\-\_CATCH\-\_STATEMENTS(...)}, the
+process number will be printed and the stack-trace from any exceptions
+thrown using the standard Teuchos macros will be printed.
+
+\end{itemize}
+
+
+%
+\subsubsection{Memory management}
+%
+
+
+\begin{itemize}
+
+
+{}\item\GCGAvoidRawPointers: The Teuchos memory management approach
+described in {}\cite{TeuchosMemoryManagementGuide} mentioned below
+which include all of the standard C++ container classes (when using a
+checked STL implementation), {}\texttt{Teuchos::\-Ptr},
+{}\texttt{Teuchos::\-RCP}, {}\texttt{Teuchos::\-Array},
+{}\texttt{Teuchos::\-Array\-RCP}, and
+{}\texttt{Teuchos::\-Array\-View} allow all code to be written without
+any explicit raw C++ pointers and eliminate undefined behavior (i.e.\
+instead of segfaults) from C++ programs related to the usage of
+memory.  In debug mode, these classes eliminate undefined behavior by
+providing full run-time checking that results in exceptions being
+thrown and excellent error messages.  When a checked C++ standard
+library is used (e.g., when {}\texttt{\_GXXLIB\_DEBUG} is defined with
+g++), then all of the standard C++ library classes are checked as
+well.
+
+
+{}\item\GCGUseStdString: While {}\texttt{std\-::string} is not debug checked
+in a typical implementation, indexing and other unchecked operations with
+{}\texttt{std\-::string} objects is much less common in numerical code and
+therefore is less likely to result in memory-usage errors inside of numerical
+code.  However, when a checked C++ library implementation is used (e.g., when
+{}\texttt{\_GXXLIB\_DEBUG} is defined with g++), then {}\texttt{std\-::string}
+is very safe.
+
+
+{}\item\GCGTeuchosRCP: (see Tables~\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}): {}\ttt{Teuchos\-::RCP} is critical to
+use for persisting associations\footnote{\textit{Persisting
+associations} are associations that exist between two or more objects
+that extend past a single function call for formal function arguments,
+or a single statement for function return objects
+{}\cite{RefCountPtrBeginnersGuide, TeuchosMemoryManagementGuide}.} 
+because it ensures that objects remain valid until they are no longer
+needed yet ensures that objects are properly destroyed.  Replace all
+mentions to the class {}\texttt{boost::\-shared\_ptr} with
+{}\texttt{Teuchos::\-RCP} in all items in
+{}\cite{C++CodingStandards05}.
+
+
+{}\item\GCGTeuchosPtr: (see Tables~\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}): The class {}\texttt{Teuchos\-::Ptr}
+simply takes the place of a raw pointer to a single object but is
+always default initialized to NULL.  In debug mode, it throws
+exceptions when trying to dereference a null pointer.  For
+non-persisting associations\footnote{\textit{Non-Persisting
+associations} are associations between two or more objects that exist
+only within a single function call for formal function arguments, or a
+single statement for function return objects, where no memory of any
+of the objects is retained as a side effect after the function returns
+or the statement ends {}\cite{RefCountPtrBeginnersGuide,
+TeuchosMemoryManagementGuide}.} {}\ttt{Teuchos\-::Ptr} is important
+because it ensures that valid objects are returned on dereferencing.
+The use of {}\ttt{Teuchos\-::Ptr} for semi-persisting
+associations\footnote{\textit{Semi-persisting associations} are
+associations that (like persisting associations) exist between two or
+more objects that extend past a single function call for formal
+function arguments, or a single statement for function return objects
+except where the use of the objects and the lifetime of the
+association have more rigid constraints requiring greater care in use
+{}\cite{RefCountPtrBeginnersGuide, TeuchosMemoryManagementGuide}.} is
+important because it can detect dangling references where the pointer
+is dereferenced after the underlying object has been destroyed.
+
+
+{}\item\GCGNonmemberConstructors: Using non-member constructors gives
+greater flexibility in how a class object is initialized, simplifies
+the maintenance of the class, and makes the debug-mode node tracing
+checking bullet-proof {}\cite{TeuchosMemoryManagementGuide}.
+
+Non-member constructors take the form:
+
+{\small\begin{verbatim}
+  class SomeClass {
+  public:
+    // No public constructors!
+    ..
+  };
+
+  // Non-member constructor
+  RCP<SomeClass> someClass(...);
+\end{verbatim}}
+
+
+{}\item\GCGGeneralizedViews: Using ``generalized view'' semantics
+leads to the greatest implementation freedom and the best performance
+in all cases; albeit with more strict usage patterns (see the
+``generalized view'' design pattern in
+{}\cite{TeuchosMemoryManagementGuide}).
+
+If {}\ttt{SomeBaseClass} provides a view if itself as {}\ttt{Part}
+objects, then applying the generalized view design pattern results in
+the interface functions:
+
+{\small\begin{verbatim}
+  class SomeBaseClass {
+  public:
+    virtual RCP<Part> getNonconstPart() = 0;
+    virtual RCP<const Part> getPart() const = 0;
+    ...
+  };
+\end{verbatim}}
+
+The ``generalized view'' design pattern along with a concrete example
+from Thyra is described in great detail in
+{}\cite{TeuchosMemoryManagementGuide}.  Note that views of concrete
+classes do not have to use ``generalized view'' semantics and can
+instead use ``direct view'' semantics where appropriate.  See all the
+details about the ``non-member constructor'' idiom in
+{}\cite{TeuchosMemoryManagementGuide}.
+
+
+{}\item\GCGTeuchosArrayView: (see Tables~\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}): This class allows all of the useful
+capabilities of a {}\texttt{std::vector} which do not include adding or
+removing entries.  In debug mode, all of the access functions (including
+iterators) are fully checked.  In optimized mode, unchecked raw pointers are
+used and the only overhead is a size argument (which is usually passed with
+raw pointers anyway).
+
+
+{}\item\GCGTeuchosArray: (see Tables~\ref{fig:func_args_value_type}
+and {}\ref{fig:func_args_ref_type}): The primary reason to use
+{}\texttt{Teuchos::\-Array} instead of {}\texttt{std::\-vector} is
+that {}\texttt{Teuchos::\-Array} is part of the Teuchos system of
+memory management types and results in stronger run-time checking.
+While {}\texttt{Teuchos::\-Array} gets all of its real functionality
+from {}\texttt{std::\-vector}, prefer to use
+{}\texttt{Teuchos::\-Array} as it provides more capabilities and
+portable debug checking.  For instance
+{}\texttt{Teuchos::\-Array::\-operator[]} is range checked in debug
+mode regardless whether there is an underling checked STL
+implementation or not (see {}\cite[Item 83]{C++CodingStandards05}).
+In debug mode, the iterator is also run-time checked.  In addition,
+{}\texttt{Teuchos\-::Array} will automatically convert into an
+{}\texttt{Teuchos\-::ArrayView} object safely when used in function
+calls and in debug mode, will catch dangling references
+{}\cite{TeuchosMemoryManagementGuide}.
+
+
+{}\item\GCGTeuchosArrayRCP: (see Tables~\ref{fig:func_args_value_type} and
+{}\ref{fig:func_args_ref_type}): Note that {}\texttt{Teuchos::ArrayRCP} does
+{}\underline{not} take the place of a contiguous container class such as
+{}\texttt{Teuchos::\-Array}.  A {}\texttt{Teuchos::ArrayRCP} object cannot
+change the size of the array, it can only provide for reference-counted
+sharing of an array of data of fixed size and provide sub-views of contiguous
+parts of the managed array.  All access to data (both through
+{}\texttt{Teuchos::\-ArrayRCP::\-operator[]} and iterators) is run-time checked
+in a debug build.
+
+
+{}\item\GCGReturnSmartPointersByValue: (see
+Tables~\ref{fig:func_return_value_type} and
+{}\ref{fig:func_return_reference_type}): Returning smart pointer
+objects by value is critical for properly setting up the machinery for
+persisting and semi-persisting associations and to fully enabled
+debug-mode checking {}\cite{TeuchosMemoryManagementGuide}.
+
+
+{}\item\GCGRawReferencesNonPersisting: (see Tables
+{}\ref{fig:func_args_value_type} and {}\ref{fig:func_args_ref_type}):
+Raw C++ references cannot be used to detect dangling references in a
+debug-mode build and therefore should only be used for non-persisting
+associations {}\cite{TeuchosMemoryManagementGuide}.
+
+
+{}\item\GCGSemiPersisting: (see Tables
+{}\ref{fig:func_args_value_type}, {}\ref{fig:func_args_ref_type},
+{}\ref{fig:func_return_value_type}, and
+{}\ref{fig:func_return_reference_type}): Objects of type {}\ttt{Ptr}
+and {}\ttt{ArrayView} are light-weight and efficient in a non-debug
+mode build but are fully checked in a debug-mode build and therefore
+lead to safe efficient code {}\cite{TeuchosMemoryManagementGuide}.
+
+
+{}\item\GCGPostponeRawPointers: When raw C++ pointers must be exposed to
+communicate with other code that uses raw C++ pointers, encapsulate the raw
+C++ pointer as fast as possible and then only give up a raw pointer at the
+last possible moment.  For example,
+
+{\small\begin{verbatim}
+  SomeForeignClass* get_raw_foreign_obj_ptr();
+  do_some_foreign_stuff(SomeForeignClass* foreign_obj_ptr);
+
+  void foo()
+  {
+    // Get the raw pointer into a proper encapsulated class object right away!
+    Ptr<SomeForeignClass> foreignObj(get_raw_foreign_obj_ptr());
+
+    // Lots of code ...
+
+    // Only expose the raw pointer directly in the foreign function call! 
+    do_some_foreign_stuff(&*foreignObj);
+  }
+\end{verbatim}}
+
+
+\end{itemize}
+
+
+%
+\subsubsection{Object control}
+%
+
+
+\begin{itemize}
+
+
+{}\item\GCGTeuchosParamterListAcceptor: The
+{}\texttt{Teuchos\-::Parameter\-List} class provides many useful features that
+make it easy to accept user options in a flexible and fully validated way (see
+Teuchos documentation for more details).  The
+{}\texttt{Teuchos\-::Parameter\-List\-Acceptor} interface defines a consistent
+flexible protocol for setting and managing a parameter list.
+
+
+{}\item\GCGTeuchosParamterListValidation: All user parameters and
+sub-lists passed in through a
+{}\texttt{Teuchos\-::Parameter\-List\-Acceptor} should be fully
+validated.  The main tool for this is the member function
+{}\texttt{validateParameters(...)}.  Using this function and other
+other approaches, when a user misspells a parameter or sub-list, uses
+the wrong type for a parameter, or provides an invalid parameter
+value, they will get an exception thrown with a helpful error message.
+Also, objects are only responsible for validating their own parameters
+and sub-lists, and not those of other objects that they hold sub-lists
+for.
+
+
+\end{itemize}
+
+
+%
+\subsubsection{Object introspection}
+%
+
+
+\begin{itemize}
+\item\GCGStdStream: Sending output directly to \texttt{std\-::cout} or
+  \texttt{std\-::cerr} destroys the flexibility of numerical software
+  and does not perform well in SPMD programs.  Instead, produce output
+  using one of the following approaches.
+
+  \begin{itemize}
+  \item\GCGTeuchosFancyOStream: A \texttt{Teuchos\-::Fancy\-OStream}
+    class object can wrap any \texttt{std\-::ostream} object and helps
+    to produce structured indented output and to create more readable
+    output in an SPMD program (even when every processor produces
+    output).
+  
+  \item\GCGTeuchosDescribable: The \texttt{Teuchos\-::Describable}
+    interface is the appropriate way to allow clients to print the
+    current state of an object in a flexible way.  The verbosity of
+    the output is controlled by an input enum parameter.
+  
+  \item\GCGTeuchosVerboseObject: Clients can set output streams and
+    verbosity levels in code directly through the
+    {}\texttt{VerboseObject} interface or (more limited) through the
+    parameter list (see the
+    {}\texttt{Teuchos\-::ParameterListAcceptor} interface described
+    above).  Any {}\texttt{FancyOStream} object can be set in C++ code
+    (not through the parameter list) or an output file can be given in
+    the parameter list to accept output on an object-by-object basis.
+    The verbosity level can be set in code or more generally
+    specialized on an object-by-object based in the parameter list.
+    If no object-specific output stream is set, then
+    {}\texttt{Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()}
+    will be used.
+  
+  \item\GCGTeuchosVerboseObjectBaseDefaultOStream: The stream provided
+    by
+    \texttt{*Teuchos\-::Verbose\-Object\-Base\-::get\-Default\-OStream()}
+    is set up by default to do clean printing in an SPMD program and
+    can also be set up through a
+    \texttt{Teuchos\-::Command\-Line\-Processor} object to control how
+    output is produced and formatted.
+
+  \end{itemize}
+
+{}\item\GCGTeuchosTimers: To properly support timers in Trilinos, do
+the following (where {}\ttt{<UCPACAKGENAME>} is the upper-case package
+name such as {}\ttt{THYRA}, {}\ttt{RYTHMOS}, etc.):
+
+  \begin{itemize}
+
+  {}\item Add
+  {}\ttt{PACKAGE\_ADD\_ENABLE\_TEUCHOS\_TIME\_MONITOR\_OPTION()} to
+  the package's top-level CMakeLists.txt file.
+
+  {}\item Add
+  {}\ttt{@<UCPACAKGENAME>\_TEUCHOS\_TIME\_MONITOR\_DECLARATIONS@} to
+  the packages {}\ttt{\$\{PACKAGE\_NAME\}\_config.h.in} file.
+
+  {}\item To add timers to specific C++ functions, in the body of the
+  functions add calls to
+  {}\ttt{<UCPACAKGENAME>\_FUNC\_TIME\_MONITOR("<PACKAGENAME>:
+  Somefunction()")} and
+  {}\ttt{<UCPACAKGENAME>\_FUNC\_TIME\_MONITOR\_DIFF("<PACKAGENAME>:
+  Somefunction(): some part", SomePart)} (the latter when there is
+  more than one timer in a function).
+
+  \end{itemize}
+
+The macros {}\ttt{<UCPACAKGENAME>\_FUNC\_TIME\_MONITOR[\_DIFF]} have
+empty definitions when timers are disabled.  See
+TrilinosCMakeQuickstart.txt for user-level details.
+
+\end{itemize}
+
+
+%
+\subsubsection{Miscellaneous coding guidelines}
+%
+
+\begin{itemize}
+
+\item\GCGSafeNamespaceUsage: This is an amendment to Item 59 in
+  {}\cite{C++CodingStandards05} which is explained in
+  Appendix~\ref{sec:using_amendments}.
+
+\item\GCGExplicitTemplateArguments: Some C++ compilers have trouble
+  inferring the template arguments in a template function call.
+  Explicitly stating the template arguments in that case can improve
+  portability to those compilers that do not correctly implement
+  template argument inference.  For example, in Thyra, every
+  non-member function is templated on the \texttt{Scalar} type such
+  as:
+
+{\small\begin{verbatim}
+  template<class Scalar>
+  sum(const VectorBase<Scalar> &x);
+\end{verbatim}}
+
+When portability is a concern or when implicit conversions in the input
+arguments are needed, then prefer to call such functions by specifying the
+template argument(s) as:
+
+{\small\begin{verbatim}
+  Scalar mySum = sum<Scalar>(myVec);
+\end{verbatim}}
+
+
+\item\GCGTeuchosAs: The templated C++ function
+  \texttt{Teuchos::as<T\_to>(T\_from)} and the class specializations
+  that it calls invoke run-time tests, in debug mode, to ensure
+  correctness of the results of a conversion.  This includes the
+  conversion of strings into numbers (that is, replacing
+  \texttt{atof()} and \texttt{atoi()}) as well as conversions that may
+  result in loss of precision or meaning (such as \texttt{double} to
+  \texttt{int}, \texttt{long int} to \texttt{int}, \texttt{int} to
+  \texttt{char}, or \texttt{unsigned int} to \texttt{int}).  The
+  optimized implementations of these conversion functions are
+  typically unchecked for speed.  A version of this function which
+  always does run-time checking, called
+  \texttt{Teuchos\-::asSafe\-<\-T\_to\->\-(\-T\_from\-)}, is also
+  available in order to validate user data.
+
+  \textit{Justification}: Unchecked conversions result in many
+  different kinds of errors.  A safe program needs to be able to check
+  all potentially unsafe conversions at run time.  The implicit
+  conversion rules allowed in C which were carried over to C++ may
+  result in unsafe code.
+
+\item\GCGNamespaceClassFuncDefs: The member functions of a class
+  should be defined in the same order as their declarations and should
+  generally be defined within a namespace enclosure.  For example,
+  given the declaration of
+
+{\small\begin{verbatim}
+  ----------------------------------
+  // SomeNamespace_SomeClass.hpp
+
+  namespace SomeNamespace {
+
+  class SomeClass {
+  public:
+    void someFunc();
+    ...
+  };
+
+  } // namespace SomeNamespace
+  ----------------------------------
+\end{verbatim}}
+
+the safest and tersest ways to define the member functions in the
+source file is
+
+{\small\begin{verbatim}
+  ----------------------------------
+  // SomeNamespace_SomeClass.cpp
+
+  namespace SomeNamespace {
+
+  void SomeClass::someFunc()
+  {
+    ...
+  }
+
+  } // namespace SomeNamespace
+  ----------------------------------
+\end{verbatim}}
+
+\textit{Justification}: Using the namespace enclosure instead of a
+\texttt{using namespace SomeNamespace} directive insures that you can
+never accidentally provide another definition for some other class
+member function in another namespace.  Explicit namespace
+qualification is not needed since misspelling any part of the
+prototype will result in a compile-time error.
+
+
+\item\GCGNamespaceFuncDefs: For example, for the nonmember function
+  prototype
+
+{\small\begin{verbatim}
+  ----------------------------------
+  // SomeNamespace_someFunc.hpp
+
+  namespace SomeNamespace {
+
+  void someFunc( const int data );
+
+  } // namespace SomeNamespace
+  ----------------------------------
+\end{verbatim}}
+
+the safest way to define the nonmember function is
+
+{\small\begin{verbatim}
+  ----------------------------------
+  // SomeNamespace_someFunc.cpp
+
+  void SomeNamespace::someFunc( const int data )
+  {
+    ...
+  }
+
+  ----------------------------------
+\end{verbatim}}
+
+\textit{Justification}: Using explicit namespace qualification avoids
+spelling and other mistakes that can accidentally result in the
+definition of a new function \cite[Section 8.2]{stroustrup97}.
+While the linker catches such mistakes, it can be very hard to
+diagnose the problem when this happens.
+
+
+\item\GCGFuncArgsOrder: For example:
+
+{\small\begin{verbatim}
+  void someFunc(
+    const T1 &arg1,         // Input
+    const Ptr<T2> &arg2,    // Input/Output
+    const Ptr<T3> &arg3,    // Output
+    const int arg4 = 0      // Optional input argument with default value
+    );
+\end{verbatim}}
+
+This ordering of arguments is only a general suggestion as a different
+ordering of arguments may be chosen based on other criteria.  See
+Section~\ref{sec:func_arguments} for a description of the use of the
+\texttt{Ptr} class.
+
+
+\item\GCGNomemberObjectFuncs: For example:
+
+{\small\begin{verbatim}
+  void someModifyingFunc(
+    SomeClass &obj,
+    const int arg1,
+    ...
+    );
+
+  void someNonModifyingFunc(
+    const SomeClass &obj,
+    const int arg1,
+    ...
+    );
+\end{verbatim}}
+
+Note that in the case of \texttt{someModifyingFunc(...)}, the output
+argument is listed first instead of after the input argument(s) which breaks
+typical convention of having input/output arguments (which all objects that
+are modified are) come after input arguments.  However, this is more
+consistent with established convention such as in Python and other languages
+where the \texttt{self} argument is always the first explicit (or implicit)
+argument.  Note that this is also a situation where a non-const reference
+argument makes the most sense.
+
+
+\item\GCGEnumFuncArgs: While the built-in type \texttt{bool} is very
+  convenient to use as a formal function argument, it also allows for
+  conversions from every built-in type and every pointer type.  While
+  using an enumeration type and its values is more verbose, it is also
+  self documenting and is safer.  For example, what does the third
+  argument mean in the following example?
+
+{\small\begin{verbatim}
+  apply( A, 2.0, true, x, y );\end{verbatim}}
+
+When the \texttt{bool} argument is changed to an enum, the function call
+becomes:
+
+{\small\begin{verbatim}
+  apply( A, 2.0, USE_TRANSPOSE, x, y );
+\end{verbatim}}
+
+and the meaning is much more clear.  Therefore, when self
+documentation and compile-time safety are important, prefer to define
+and use \texttt{enum}s over \texttt{bool}s as formal function
+arguments (see \cite[Section 12.6]{CodeComplete2nd04}).
+
+\item\GCGOverloadedVirtualFunctions: Overloaded virtual functions
+  cause severe portability problems with many compilers and result in
+  shadowing warnings that are elevated to errors in may systems
+  \cite[Item 33]{EffectiveC++3rd05}.
+
+\item\GCGAvoidSmartPtrFuncOverloads: Overloading functions on
+  different smart pointer types, such as \texttt{RCP} or \texttt{Ptr},
+  can create ambiguous function calls that will not happen when using
+  raw C++ pointers or references \cite{TeuchosMemoryManagementGuide}.
+  Therefore, keep the names of the functions different such as shown
+  below.
+
+{\small\begin{verbatim}
+  void nonconstFoo(const RCP<A> &a);
+  void foo(const RCP<const A> &a);
+\end{verbatim}}
+
+
+\item\GCGStandardCppHeaders: Only include the C++ \texttt{<cX>}
+  versions of the standard C \texttt{<X.h>} headers.  For example,
+  include \texttt{<cmath>}, \texttt{<cstdlib>}, and \texttt{<cassert>}
+  instead of \texttt{<math.h>}, \texttt{<stdlib.h>}, and
+  \texttt{<assert.h>}.  Avoid all uses of \texttt{using namespace std}
+  directives and instead prefer explicit namespace qualification such
+  as \texttt{std::sqrt} or using declarations such as \texttt{using
+    std::sqrt} only within function definitions.  See \cite[Section
+  16.1.2]{stroustrup97} for a complete list of the standard C++
+  versions of the standard C headers.
+
+  \textit{Justification}: See Appendix~\ref{sec:misc_amendments} for a
+  clarification of Item 59 in \cite{C++CodingStandards05} dealing
+  with the issue of \texttt{using} declarations and directives.
+
+
+\item\GCGTemplateHeaders\label{gcg:template-instantation-files}:
+Breaking up templated C++ code into the four files
+\texttt{SomeClass[\_decl,\_def].[hpp,cpp]} (as described below)
+allows for a portable and bullet-proof solution to handing templated
+C++ code which allows for a) controlled explicit or implicit template
+instantiation, b) minimization of first-time compilation, c)
+minimization of recompilations, and d) handling of any and all types
+of circular dependency in declarations and definitions (same as are
+allowed with non-templated C++ code).
+
+As an example, consider three classes \ttt{A}, \ttt{B}, and \ttt{C}
+where \ttt{A} and \ttt{B} refer to each other and where \ttt{C} has no
+chance of being involved in a circular reference involving \ttt{A} and
+\ttt{B}.  The four files \texttt{A[\_decl,\_def].[hpp,cpp]} for class
+\ttt{A} as well as the file \texttt{B\_decl.hpp} are shown below (the
+other files for class \ttt{B} are similar):
+
+
+{\small\begin{verbatim}
+  ----------------------------------
+  // A.hpp
+
+  #include "A_decl.hpp"
+  // If using explicit instantiation, include A_def.hpp.  Otherwise not.
+  #include "A_def.hpp"
+  // NOTE: This file gets configured by CMake to include A_def.hpp or not!
+
+
+  ----------------------------------
+  // A_decl.hpp
+
+  #ifndef A_DECL_HPP
+  #define A_DECL_HPP
+
+  #include "B_decl.hpp"  // Only include decl in case of circular ref
+  #include "C.hpp"       // No chance of cicular ref
+
+  namespace Thyra {
+
+  template<class Scalar>
+  class A {
+  pubic:
+    void doSomething(const B<T> &b) const;
+    ...
+  private:
+    RCP<C<T> > c_;
+  };
+
+  } // namespace Thyra
+
+  #endif // A_DECL_HPP
+
+
+  ----------------------------------
+  // B_decl.hpp
+
+  #ifndef B_DECL_HPP
+  #define B_DECL_HPP
+
+  namespace Thyra {
+
+  template<class Scalar> class A; // Forward only due to circular ref!
+
+  template<class Scalar>
+  class B {
+  pubic:
+    void doSomething(const A<T> &a) const;
+  };
+
+  } // namespace Thyra
+
+  #endif // B_DECL_HPP
+
+
+  ----------------------------------
+  // A_def.hpp
+
+  #ifndef A_DEF_HPP
+  #define A_DEF_HPP
+
+  #include "B.hpp" // Must include for implicit instant to work!
+
+  namespace Thyra {
+
+  template<class Scalar>
+  void A::doSomething(const B<T>& b)
+  {
+     b.doSomething(*this);
+  }
+
+  } // namespace Thyra
+
+  #endif // A_DEF_HPP
+
+
+  ----------------------------------
+  // A.cpp
+
+  #include "A_decl.hpp"  // Helps test header sufficiency
+
+  #ifdef HAVE_THYRA_EXPLICIT_INSTANTIATION
+  #include "A_def.hpp"
+  #include "Teuchos_ExplicitInstantiationHelpers.hpp"
+  namespace Thyra {TEUCHOS_CLASS_TEMPLATE_INSTANT_SCALAR_TYPES(A)}
+  #endif // HAVE_THYRA_EXPLICIT_INSTANTIATION
+\end{verbatim}}
+
+
+General client code \underline{always} includes the \ttt{A.hpp} form
+of the file without regard for whether implicit or explicit
+instantiation is enabled (i.e.,\ whether or not
+\ttt{HAVE\_THYRA\_EXPLICIT\_INSTANTIATION} is defined).
+
+The 100\% bullet-proof rules for breaking up template code like this are:
+
+\begin{itemize}
+
+\item All header-like declarations that would go into an ordinary
+  non-template \ttt{*.hpp} header file go into
+  \ttt{SomeClass\_decl.hpp} including class declarations and inline
+  function definitions.
+
+\item All implementation code that would go into an ordinary
+  non-template \ttt{*.cpp} source file go into
+  \ttt{SomeClass\_def.hpp} including class member definitions and
+  non-member function definitions.
+
+\item Always include \ttt{SomeOtherClasss\_decl.hpp} in the
+  \ttt{SomeClass\_decl.hpp} file if there is any chance that a
+  circular dependency may exist between the two types
+  \ttt{SomeOtherClasss} and \ttt{SomeClass}.  Otherwise, if there is
+  no chance of a circular dependence then the header
+  \ttt{SomeOtherClasss.hpp} should be included (instead of the
+  possible \ttt{\_decl.hpp} form).  If the two classes are in
+  different libraries then there is no chance of a circular type
+  dependency (because well designed software does not allow this; see
+  \cite{AgileSoftwareDevelopment}).
+
+\item If \ttt{SomeClass\_decl.hpp} includes
+  \ttt{SomeOtherClass\_decl.hpp}, then \ttt{SomeClass\_def.hpp} must
+  include \ttt{SomeOtherClass.hpp}.  This is needed in order for
+  implicit instantiation to work correctly.
+
+\item The header file \ttt{SomeClass.hpp} is designed to be included
+  by general clients and either includes only
+  \ttt{SomeClass\_decl.hpp} or also includes \ttt{SomeClass\_def.hpp}
+  depending on if implicit or explicit instantiation is being used.
+  Actually, this file must be auto-generated during the CMake configure
+  process to include or not include \ttt{SomeClass\_def.hpp} because
+  CMake does not consider preprocessor defines and therefore the form
+  of \ttt{SomeClass.hpp} cannot contain even a protected include of
+  \ttt{SomeClass\_def.hpp} or CMake will recompile client code when
+  \ttt{SomeClass\_def.hpp} changes.  See examples of how to
+  auto-generate \ttt{SomeClass.hpp} by looking at the Thyra package.
+
+\item All required instantiations must be provided in the file
+  \ttt{SomeClass.cpp}.  For standard scalar types (e.g., \ttt{double},
+  \ttt{float}, \ttt{std::complex<double>}, \ttt{std::complex<float>},
+  etc.) the standard macro
+  \ttt{TEUCHOS\_CLASS\_TEMPLATE\_INSTANT\_SCALAR\_TYPES(...)} is
+  provided which is set at configure time to determine the
+  desired/required explicit instantiations.  More general
+  instantiations can also be performed by defining a macro in the file
+  \ttt{SomeClass\_def.hpp} file and then instantiating this macro
+  using the helper macro
+  \ttt{TEUCHOS\_MACRO\_TEMPLATE\_INSTANT\_SCALAR\_TYPES(...)} (See
+  examples from real Thyra source code).
+
+\end{itemize}
+
+If one follows the above guidelines, one will never have dependency
+ordering problems with templated code.  The partitioning the template
+code into the four files \texttt{SomeClass[\_decl,\_def].[hpp,cpp]}
+gives template code all the desirable compilation properties of
+non-template code.  That is, changes to the implementation of
+\ttt{SomeClass} only require the recompilation of the source file
+\texttt{SomeClass.cpp} and not any other source files.  Also, the
+amount of code that a C++ compiler has to see to compile any single
+\ttt{*.cpp} file is much less when explicit instantiation is enabled
+and this can massively speed up first-time compilation.  Overall,
+explicit instantiation can massively speed up first-time compilation
+and later recompilations as code is modified.
+
+
+\end{itemize}
+
+
+%
+\subsection{Specification of data members and passing and returning
+  objects from functions}
+\label{sec:func_arguments}
+%
+
+The guidelines for specifying local variables and data members,
+passing objects to and from functions, and returning objects from
+functions given in \cite{TeuchosMemoryManagementGuide} are summarized
+in Tables
+\ref{fig:data_member_value_type}--\ref{fig:func_return_reference_type}.
+In general, it is assumed that arguments passed through the smart
+pointer types \ttt{Ptr}, \ttt{RCP}, \ttt{ArrayView}, and
+\ttt{ArrayRCP} are non-null by default.  If the argument is allowed to
+be null, then that must be documented in the Doxygen
+$\backslash$\ttt{param} field for that argument.
+
+
+\begin{table}
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\input{ValueTypeDataMembersTable}
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{fig:data_member_value_type}
+Idioms for class data member declarations for value-type objects.}
+%
+\end{table}
+
+
+\begin{table}
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\input{ReferenceTypeDataMembersTable}
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{fig:data_member_reference_type}
+Idioms for class data member declarations for reference-types
+objects.}
+%
+\end{table}
+
+
+\begin{table}[p]
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\input{PassingValueObjectsTable}
+%
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{fig:func_args_value_type}
+Idioms for passing value-type objects to C++ functions.}
+%
+\end{table}
+
+
+\begin{table}[p]
+%
+%\fbox{
+\begin{center}
+\input{PassingReferenceObjectsTable}
+\end{center}
+\caption{\label{fig:func_args_ref_type}
+Idioms for passing reference-type objects to C++ functions.}
+%} % end fbox
+\end{table}
+
+
+
+
+\begin{table}
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\input{ReturningValueObjectsTable}
+%
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{fig:func_return_value_type}
+Idioms for returning value-type objects from C++ functions.}
+%
+\end{table}
+
+
+\begin{table}
+%
+%\fbox{
+\begin{center}
+%
+%\begin{minipage}{{}\textwidth}
+%
+\input{ReturningReferenceObjectsTable}
+%
+%
+%\end{minipage}
+%
+\end{center}
+%} % end fbox
+\caption{\label{fig:func_return_reference_type}
+Idioms for returning reference-type objects from C++ functions.}
+%
+\end{table}
+
+
+%
+\section{Formatting of source code}
+\label{tcdg:formatting:sec}
+%
+
+We mean by ``formatting'' the use of white space or other optional
+syntax elements (such as optional curly braces in C++), or changes to
+the ordering of code elements, that change the appearance of code to a
+human programmer, without changing the meaning of the program to the
+compiler.\footnote{While changing the name of a class, function or
+  variable may change the meaning of a program, if name changes are
+  done in such a way as to avoid name collisions, then naming
+  conventions do not affect the meaning of the program.  They are
+  therefore related to other formatting issues such as the treatment
+  of white space.}  C++, unlike some languages such as Fortran 77 or
+Python, allows considerable formatting freedom.  With freedom comes
+responsibility, in this case to make code easier for both its author
+and other programmers to read, understand, extend, and maintain.
+
+Our main goal in this section is to try to provide reasonable
+recommendations for those formatting issues that, while largely a
+matter of style and personal preference, also affect overall code
+readability.  Consistent, well thought out code formatting helps to
+promote pair programming and joint ownership of code
+{}\cite{ExtremeProgrammingExplained99}.  The formatting and
+indentation guidelines presented here are largely consistent with the
+recommendations in {}\cite[Chapter 31]{CodeComplete2nd04} and try to
+reduce the amount of ``right drift'' that can occur with some common
+formatting and indentation styles.
+
+Source code should always be formatted consistently within a single
+file or a set of tightly coupled files \cite[Item
+0]{C++CodingStandards05}.  Ideally, source code should be formatted
+with sufficient consistency across a code project so as not to cause
+undue difficulty in shared maintenance and in performing code reviews
+\cite{CodeComplete2nd04}.  Some consistency in formatting helps
+facilitate multiple ownership and shared development of a collection
+of software, especially when using techniques such as Extreme
+Programming (XP) \cite{ExtremeProgrammingExplained99}.  See
+Appendix~\ref{sec:arguments-for-consistent-style} for an outline of
+the arguments for adopting a consistent code formatting style.
+
+Many source code editors can handle most of the work of
+formatting.\footnote{This includes popular text editors such as Emacs
+  and Vim (a derivative of the \texttt{vi} text editor), as well as
+  integrated development environments such as Microsoft Visual Studio
+  and Eclipse.  Emacs and Vim support multiple, custom, file-specific
+  formatting styles for C++, for example.  Tools like Artistic Style
+  \cite{ArtisticStyle} can format source files from the command line.}
+This allows individual developers to work with any style they would
+like for files that they create, and also makes it easier for
+developers to edit files created by other developers without changing
+their styles.  Appendix~\ref{sec:reformatting-guidelines} gives some
+guidelines for how individuals should conduct themselves when multiple
+code formatting styles are in use within a given project.
+
+The indentation guidelines outlined below are automatically supported
+by the Emacs text editor when using the custom style ``thyra'' defined
+in the Emacs package file \texttt{cc-thyra-styles.el}.\footnote{See
+  \texttt{Trilinos/packages/thyra/emacs/README} for a description of
+  the ``thyra'' Emacs style} Other custom styles may be added to this
+file and used as well.  Any of these styles can be listed in each
+source file, so that anyone using Emacs can automatically use a
+particular indentation style without having to fight the editor to
+manually reformat code to abide by a foreign style.
+
+
+%
+\subsection{General formatting source code principles (FSCP)}
+%
+
+Some general principles of good formatting, based on the discussion in
+\cite[Section 31.1]{CodeComplete2nd04}, are:
+
+\begin{itemize}
+
+\item\FSCPShowLogicalStructure: It is somewhat subjective what
+  formatting styles ``show the logical structure'' of code but
+  McConnell makes some good arguments for some styles over others.
+  However, it is up the group of programmers to decide as a group what
+  style items ``show the logical structure''.
+
+\item\FSCPImproveReadability: There are specific studies cited in
+  \cite[Chapter 31]{CodeComplete2nd04} that provide good evidence to
+  prefer some styles over others.
+
+\item\FSCPRetainFormatting: Changing one line of code should not
+  require changes to other lines of code to maintain the formatting
+  style.
+
+\item\FSCPFollowCommonIdioms: When there is no good technical argument
+  for one formatting style choice over another, then the style choice
+  that is the most common should be used.\footnote{The measure of the
+    commonality of a particular style choice can be determined
+    according to a local software development community or the larger
+    developer community.}  This is not advocated explicitly in
+  \cite[Chapter 31]{CodeComplete2nd04} but it is a good idea in
+  general to follow popular idioms when there are several equally good
+  choices and therefore the decision is arbitrary.  However, not
+  selecting a single style choice can create artificial complexity in
+  the code, due to irregularity in formatting.
+
+\end{itemize}
+
+
+%
+\subsection{Specific guidelines for formatting source code (FSC)}
+%
+
+Below, specific recommendations are spelled out that try to conform to common
+practices but also try to avoid excessive ``right drift'':
+
+
+\begin{itemize}
+
+\item\FSCConsistentInFile: Consistent formatting includes the
+  placement of braces, the number spaces to indent etc.
+  {}\textit{Justification}: This is recommended in \cite[Item
+  0]{C++CodingStandards05}.
+
+\item\FSCEightyCharWide: Keeping most of the source code within the
+  first 80 character columns helps to make the code more readable and
+  helps to facilitate side-by-side two-column editing and comparisons
+  of source code.  Most of the style and indentation guidelines
+  described below help to avoid code that extends beyond the 80th
+  column too rapidly. \textit{Justification}: ``Studies show that up
+  to ten-word text widths are optimal for eye tracking'' \cite[Item
+  0]{C++CodingStandards05}.  Also, certain situations (such as
+  emergency debugging) require editing code using a terminal rather
+  than one's favorite development environment, and that terminal may
+  have width limited to 80 columns.
+
+\item\FSCIndentSpaces: The amount of spaces to use per indentation
+  level is up to the individual developer, but an indentation of only
+  \textit{two spaces} is recommended (and is set in the `Emacs
+  `thyra'' indentation style).  A study showed that an indentation
+  offset of two to four spaces was optimal for code reading
+  comprehension \cite[Section 31.2]{CodeComplete2nd04}.  Whatever
+  indentation amount is used, it should be consistent in at least each
+  source and header file \cite[Item 0]{C++CodingStandards05} (which
+  can be enforced using a custom Emacs indentation style).  Emacs by
+  default will put in a tab when the tab width is equal to the number
+  of indentation spaces.  Emacs may be told always to use spaces
+  instead of tabs by setting:
+
+{\small\begin{verbatim}
+  (setq indent-tabs-mode nil)
+\end{verbatim}}
+
+  in the indentation style (as is done in the ``thyra'' style).
+  However, it is easy to support different preferences for the amount
+  of spaces to indent by using a user-defined indentation style for
+  Emacs.  Similar customization is possible in other text editors such
+  as Vim.
+
+  \textit{Justification}: ``Some teams legitimately choose to ban tabs
+  \dots when misused, [tabs] turn indenting into out-denting and
+  non-denting.''  \cite[Item 0]{C++CodingStandards05}.
+
+
+\item\FSCTwoVertialSpaces.
+
+  \textit{Justification}: Using two blank vertical spaces is
+  preferable to long lines with some filler like '-' or '=' or other
+  separators.  They clearly separate the entities and are easier to
+  maintain (see \cite[Section 31.8]{CodeComplete2nd04}).
+
+
+{}\item\FSCNoNamespaceIndent: Indenting for namespace enclosures results in
+unnecessary, and in some cases excessive, indentation.  Instead, for example,
+use:
+
+{\small\begin{verbatim}
+  namespace MyNameSpace {
+
+
+  namespace MyInnerNamespace {
+
+
+  class SomeClass {..};
+
+
+  void someFunc(...) {...}
+
+
+  } // namespace MyInnerNamespace
+
+
+  } // namespace MyNameSpace
+\end{verbatim}}
+
+Above, note that two vertical blank lines are used between each of the
+major entities (see above item).
+
+\textit{Justification}: While indentation within namespaces is helpful
+in small example code fragments, it provides little help in showing
+namespace structure in more realistic code.  The use of commented end
+braces is generally sufficient to show namespace structure and will
+not result in excessively indented code.  In addition, typically, each
+file will only contain code from one (or more nested) namespace and
+therefore indenting for namespaces provides no useful information.
+Not indenting for namespace enclosures is also consistent with the
+``ansi'', the ``kr'', and the ``linux'' styles as defined by Artistic
+Style \cite{ArtisticStyle}.
+
+
+\item\FSCClassDeclarationLayout.
+
+\begin{figure}
+%
+{\small\begin{verbatim}
+  class SomeClass {
+
+    // Friends
+
+    friend void foo();
+
+    friend class SomeOtherClass;
+
+  public:
+
+    // Public types
+
+    typedef int integral_type;
+
+    // Public member functions
+
+    void func1();
+
+  protected:
+
+    // Protected member functions
+
+    void func2();
+
+  private:
+
+    // Private types
+
+    typedef std::vector<int> int_array_t;
+
+    // Private data members
+
+    int data1_;
+    int_array_t array1_;
+
+    // Private member functions
+
+    void func3();
+
+  };
+\end{verbatim}}
+%
+\caption{\label{fig:class_decl_layout}
+Example of suggested layout of a C++ class declaration complete with ordering
+of sections, indentation, and line spacing.}
+%
+\end{figure}
+
+\textit{Justification}: This ordering of sections and data members is quite
+common \cite[Section 31.8]{CodeComplete2nd04}.  Above, we show private
+member functions after private data members, since private data members are
+more prominent and more common in the class implementations than are private
+member functions.  Also, private types (where typedefs are most common) must
+be listed before they are used in the declaration of the private data members.
+Note that public types used in public member functions must be listed above
+(or at least forward declared) before the public member functions that use
+them.
+
+
+\item\FSCFunctionProtypes: Below, guidelines for formatting short
+  function prototypes and long prototypes are given.  These guidelines
+  seek to produce function prototypes that are tight (i.e., minimize
+  white space), are robust to modifications, and help make code fit
+  within the 80 columns per line limit.  This indentation style should
+  also be applied to function definitions and function calls.
+
+  \begin{itemize}
+
+  \item\FSCShortFunctionPrototypesOneLine: For example,
+
+  {\small\begin{verbatim}
+  ReturnType someFunction( int arg = 0 );
+  \end{verbatim}}
+
+  or 
+
+  {\small\begin{verbatim}
+  ReturnType someFunction(int arg=0);
+  \end{verbatim}}
+
+  or some other style for white-space within '(...)' but the opening '(' should
+  come directly after the function name in all cases.
+
+  \item\FSCLongFunctionPrototypesIndent: Function prototypes that cannot
+  approximately fit on a single line in the first 80 character columns should
+  have the function arguments listed starting on the second line with one unit
+  of indentation (e.g., two spaces) from the function return type and function
+  name line.  For example, several different valid formats for a longer
+  function prototype are:
+
+  {\small\begin{verbatim}
+  ReturnType someFunction(
+    int arg1,
+    bool arg2,
+    const ArrayView<double> &arg3,
+    const std::string &arg4  = ""
+    );
+  \end{verbatim}}
+  
+  or
+  
+  {\small\begin{verbatim}
+  ReturnType someFunction(
+    int arg1, bool arg2, const ArrayView<double> &arg3,
+    const std::string &arg4  = ""
+    );
+  \end{verbatim}}
+  
+  or
+  
+  {\small\begin{verbatim}
+  ReturnType someFunction(
+    int arg1, bool arg2, const ArrayView<double> &arg3,
+    const std::string &arg4 = "" );
+  \end{verbatim}}
+  
+  or
+  
+  {\small\begin{verbatim}
+  ReturnType someFunction( int arg1, bool arg2,
+    const ArrayView<double> &arg3, const std::string &arg4 = "" );
+  \end{verbatim}}
+
+  As shown above, the function arguments can be listed separately on different
+  lines, or in groups on sets of lines.  The arguments can begin on the same
+  line as the type + function name line or can start on the next line.  The
+  ending parenthesis ')' can appear on the same line as the last line of
+  arguments or can appear alone on the last line.  Other formats are possible
+  also and can be appropriate in different situations.
+
+  \textit{Justification}: See \cite[Section 31.1]{CodeComplete2nd04}.
+  
+  \item\FSCFunctionReturn: A function prototype's return type should appear
+  on the same line as the function name unless it is excessively long and
+  would result in the return type + function name line to extend past the 80th
+  character column.  When the return type + function name is too long, then it
+  can be listed on separate lines with no indent, for example, as:
+  
+  {\small\begin{verbatim}
+  Teuchos::RCP<ReturnType>
+  someVeryLongAndVeryImportantFunction(
+    int arg1, bool arg2, const ArrayView<double> &arg3,
+    const std::string &arg4  = ""
+    );
+  \end{verbatim}}
+
+  However, listing the function return type on a separate line even in cases
+  of shorter prototypes is also acceptable.
+
+  \end{itemize}
+
+
+\item\FSCOrderFunctionDefinitions: For example, one should order the
+  definitions of a set of functions the same as the ordering of the
+  declarations.  Maintaining the ordering of definitions and
+  declarations makes the code more readable and more maintainable.
+  For example, if the function definitions are ordered the same as the
+  declarations, it can be easy to spot that a function definition is
+  missing.  This could help diagnose an otherwise puzzling link error
+  caused by the missing definition.
+
+\item\FSCBracePlacement: Two basic styles of brace placement and
+  indentation in control structures are recommended here.  The first
+  general style is a modification of the K\&R style
+  \cite{ArtisticStyle} where the brace comes immediately after the
+  control statement on the same line shown as:
+
+{\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  if (someCondition) {
+    ...
+  }
+  else {
+    ...
+  }
+\end{verbatim}}
+
+Note that the pure K\&R style (for example, as defined by Artistic Style
+\cite{ArtisticStyle}) shown as:
+
+{\small\begin{verbatim}
+  // Pure K&R Style (*NOT* recommended)
+  if (someCondition) {
+    ...
+  } else {
+    ...
+  }
+\end{verbatim}}
+
+is not recommended.  Even through pure K\&R style meets McConnell's strict
+pictorial definition of ``emulation of pure block style'' (i.e.\ the
+equivalent to pure block format such as in Visual Basic) which he says is
+good, he actually recommends the above modified K\&R style (as do we since we
+feel it is more readable).
+
+The second general style that is recommended is the ``ANSI'' style
+\cite{ArtisticStyle} where the opening brace begins flush on the next
+line from the control statement shown as:
+
+{\small\begin{verbatim}
+  // ANSI Style (recommended)
+  if (someCondition)
+  {
+    ...
+  }
+  else
+  {
+    ...
+  }
+\end{verbatim}}
+
+Both the modified K\&R and the ANSI styles help to avoid right drift.  The
+modified K\&R style creates tighter code vertically and seems to be preferred
+by many communities and authors but variations of the ANSI style are also very
+common.  Note that the ANSI style seems to have a distinct advantage in cases
+where the control statement is continued over multiple lines.  For example,
+the modified K\&R style with line continuations looks like:
+
+{\small\begin{verbatim}
+  // Modified K&R Style with line continuations (*NOT* recommended)
+  if ( someLongCondition &&
+    anotherVeryLongCondition &&
+    theLongestConditionThatWillFitOnOneLine ) {
+    // Statements
+    ...
+  }
+\end{verbatim}}
+
+{}\noindent{}and it is hard to argue that this shows the logical structure of
+code.  One could argue that the ANSI style which looks like:
+
+{\small\begin{verbatim}
+  // ANSI Style with line continuations (recommended)
+  if ( someLongCondition &&
+    anotherVeryLongCondition &&
+    theLongestConditionThatWillFitOnOneLine )
+  {
+    // Statements
+    ...
+  }
+\end{verbatim}}
+
+better shows the logical structure of the code in clearly separating the
+control structure logic from the inner block of code.
+
+Note that while the modified K\&R style meets McConnell's blessing of
+``showing the logical structure of code'' where he refers to it as
+``emulating pure block'' format that he cites the ANSI styles as
+violating this principle \cite[Section 31.1]{CodeComplete2nd04}.
+However, it is somewhat subjective what styles ``show the logical
+structure'' and McConnell himself seems to contradict himself at times
+(see the formatting of if/else statements below).
+
+When choosing between one of these styles, try to be consistent at least
+within a single file.  However, for control statements that extend over a
+single line, prefer the ``ANSI'' style.
+
+Below, the application of the modified K\&R style and the ANSI styles are
+shown in the context of several different types of C++ loop and control
+structures.
+
+  \begin{itemize}
+
+  {}\item\textit{Formatting if/else if/else
+  statements}: When applied to if statements, the two recommended styles are:
+
+  {\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  if (someCondition) {
+    ...
+  }
+  else if (someOtherCondition) {
+    ...
+  }
+  else {
+    ...
+  }
+  \end{verbatim}}
+  
+  {}\noindent{}and:
+  
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  if (someCondition)
+  {
+    ...
+  }
+  else if (someOtherCondition)
+  {
+    ...
+  }
+  else
+  {
+    ...
+  }
+  \end{verbatim}}
+
+  {}\item\textit{Formatting switch/case statements}:
+  The two recommended formats for switch/case statements are:
+
+  {\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  switch (someEnumValue) {
+    case ENUM_VALUE1:
+      ...
+      break;
+    case ENUM_VALUE2:
+      ...
+      break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPT(true, "Should never get there!");
+  }
+  \end{verbatim}}
+
+  {}\noindent{}and
+
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  switch (someEnumValue)
+  {
+    case ENUM_VALUE1:
+      ...
+      break;
+    case ENUM_VALUE2:
+      ...
+      break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPT(true, "Should never get there!");
+  }
+  \end{verbatim}}
+
+  As shown above, every switch structure should have a {}\texttt{default} case
+  that throws an exception (see ``use the default clause to detect errors''
+  in {}\cite[Section 15.1]{CodeComplete2nd04}).
+
+  Also, if needed, the case blocks can be wrapped in braces as:
+
+  {\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  switch (someEnumValue) {
+    case ENUM_VALUE1: {
+      ...
+      break;
+    }
+    case ENUM_VALUE2: {
+      ...
+      break;
+    }    
+    default: {
+      TEUCHOS_TEST_FOR_EXCEPT(true, "Should never get there!");
+    }
+  }
+  \end{verbatim}}
+
+  {}\noindent{}and
+
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  switch (someEnumValue)
+  {
+    case ENUM_VALUE1:
+    {
+      ...
+      break;
+    }
+    case ENUM_VALUE2:
+    {
+      ...
+      break;
+    }
+    default:
+    {
+      TEUCHOS_TEST_FOR_EXCEPT(true, "Should never get there!");
+    }
+  }
+  \end{verbatim}}
+
+  {}\item\textit{Formatting for and while loops}: The two recommended styles
+  for formatting for loops are:
+
+  {\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  for ( int i = 0; i < size; ++i ) {
+    ...
+  }
+  \end{verbatim}}
+
+  {}\noindent{}and:
+
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  for ( int i = 0; i < size; ++i )
+  {
+    ...
+  }
+  \end{verbatim}}
+
+  Note that line continuations are often needed for a for loops control
+  structure, especially if long type names or variable names are used.  In
+  these cases, the ANSI style is more highly recommended as:
+
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  for (
+    std::vector<SomeVeryLongClassName>::const_iterator itr = longVarName.begin();
+    itr != someLongVariableName.end();
+    ++itr )
+  {
+    ...
+  }
+  \end{verbatim}}
+
+  Similarly, while loops should be formatted as:
+
+  {\small\begin{verbatim}
+  // Modified K&R Style (recommended)
+  while ( someCondition ) {
+    ...
+  }
+  \end{verbatim}}
+
+  {}\noindent{}or:
+
+  {\small\begin{verbatim}
+  // ANSI Style (recommended)
+  while ( someCondition )
+  {
+    ...
+  }
+  \end{verbatim}}
+
+  \end{itemize}
+
+\end{itemize}
+
+
+%
+\section{Doxygen documentation guidelines}
+\label{sec:DocumentionGuidelines}
+%
+
+In this section, a set of reasonable guidelines are stated for writing Doxygen
+(and plain old) documentation for classes, functions, etc.\ that makes the
+specification clear but is not too verbose or hard to maintain.  While other
+types of higher-level documentation are also needed such as design documents
+and tutorials, guidelines for these other types of higher-level documentation
+are not covered here.
+
+
+%
+\subsection{General principles for function and class level documentation (DOXP)}
+%
+
+
+\begin{itemize}
+
+
+\item\DOXPVariableLevelOfDetail: Important interfaces or widely
+  disseminated concrete classes or functions require an appropriate
+  level of precise documentation.  Concrete implementations that are
+  less widely disseminated can provide less (or none in some cases)
+  Doxygen documentation if the implementation code itself is
+  sufficiently easy to understand.  However, major parts of an
+  implementation should include at least some plain old (i.e.\
+  non-Doxygen) documentation to describe what it is doing.
+
+\item\DOXPFullyDocumentInterfaces: In the case of important abstract
+  interfaces, the full specification of behavior (e.g., invariants,
+  preconditions, and postconditions) for the compliant objects must be
+  stated \cite[Item 69]{C++CodingStandards05}.  In some cases, this
+  must be done completely within the Doxygen documentation for the
+  interface.  In other cases, standard unit testing code can be used
+  to help specify the behavior of the interface.  In fact, compiled
+  and verified unit testing code may be superior to standard Doxygen
+  documentation since it cannot be ignored or become invalid.  On the
+  other hand, it may be difficult for readers to wade through unit
+  testing code to find the specification of behavior and therefore
+  both Doxygen documentation and unit testing code should be used to
+  provide the fullest benefit.  Also, Doxygen documentation can
+  automatically include bits and pieces of compiled and tested code
+  using the \texttt{$\backslash$dontinclude} and related Doxygen
+  commands.
+
+\item\DOXPFullyDocumentUserIntefaces: This item is an amendment to the
+  above item as a special case for ``user'' interfaces.  A ``user''
+  could be one who simply writes client code to the interface, one who
+  provides implementations of the interface, or both.  Users should
+  not be expected to study unit testing code to figure out the
+  preconditions and/or postconditions for a function call.
+
+\item\DOXPWrongDocumentationBad: Documentation must be maintained as
+  code is changed.  Therefore, excessive or unnecessary documentation
+  that is not rigorously maintained degrades the overall quality of
+  code.  However, documentation with small errors is generally better
+  than no documentation at all.
+
+\item\DOXPDoNotRepeat: Strive for a single source for documentation
+  for an entity.  Repeated documentation is hard to maintain.
+
+\item\DOXPDocumentationMaintainItself: Any significant fragments of
+  code that are shown in the Doxygen-generated HTML documentation
+  should come from compiled and tested code.  This can be accomplished
+  by using the \texttt{$\backslash$dontinclude} or related Doxygen
+  command to read in code fragments automatically.  In this way, the
+  compiler and our test suite can be used to help verify the code
+  fragments in our Doxygen documentation.
+
+\end{itemize}
+
+
+%
+\subsection{Specific Doxygen documentation principles (DOX)}
+%
+
+Now that some of the general goals for our Doxygen documentation have
+been presented, more detailed guidelines are given below.
+
+
+\begin{figure}
+%
+{\small\begin{verbatim}
+/** \brief Apply the linear operator to a multi-vector : <tt>Y =
+ * alpha*op(M)*X + beta*Y</tt>.
+ *
+ * \param M_trans [in] Determines whether the operator or its adjoint 
+ * is applied for <tt>op(M)</tt>.
+ *
+ * \param X [in] The right hand side multi-vector.
+ *
+ * \param Y [in/out] The target multi-vector being transformed.  When
+ * <tt>beta==0.0</tt>, this multi-vector can have uninitialized elements.
+ *
+ * \param alpha [in] Scalar multiplying <tt>M</tt>, where <tt>M==*this</tt>.
+ * The default value of <tt>alpha</tt> is </tt>1.0</tt>.
+ *
+ * \param beta [in] The multiplier for the target multi-vector <tt>Y</tt>.
+ * The default value of <tt>beta</tt> is <tt>0.0</tt>.
+ * 
+ * <b>Preconditions:</b><ul>
+ *
+ * <li> <tt>nonnull(this->domain()) && nonnull(this->range())</tt>
+ *
+ * <li> <tt>this->opSupported(M_trans)==true</tt> (throw
+ * <tt>Exceptions::OpNotSupported</tt>)
+ *
+ * <li> <tt>X.range()->isCompatible(*op(this)->domain()) == true</tt> (throw
+ * <tt>Exceptions::IncompatibleVectorSpaces</tt>)
+ *
+ * <li> <tt>Y->range()->isCompatible(*op(this)->range()) == true</tt> (throw
+ * <tt>Exceptions::IncompatibleVectorSpaces</tt>)
+ *
+ * <li> <tt>Y->domain()->isCompatible(*X.domain()) == true</tt> (throw
+ * <tt>Exceptions::IncompatibleVectorSpaces</tt>)
+ *
+ * <li> <tt>Y</tt> may <i>not</i> alias <tt>X</tt>.  It is up to the client to
+ * ensure that <tt>Y</tt> and <tt>X</tt> are distinct since in general this
+ * can not be verified by the implementation until, perhaps, it is too late.
+ * If possible, an exception will be thrown if aliasing is detected.
+ *
+ * </ul>
+ *
+ * <b>Postconditions:</b><ul>
+ * <li> After the function returns the multi-vector <tt>Y</tt>
+ *      is transformed as indicated above.
+ * </ul>
+ */
+void apply(
+  const EOpTransp M_trans,
+  const MultiVectorBase<Scalar> &X,
+  const Ptr<MultiVectorBase<Scalar> > &Y,
+  const Scalar alpha,
+  const Scalar beta
+  ) const;
+\end{verbatim}}
+%
+\caption{\label{fig:complete_func_doc}
+Example of more complete doxygen documentation for a function.}
+%
+\end{figure}
+
+
+\begin{itemize}
+
+
+\item\DOXWriteInHeaders: Writing Doxygen documentation comments
+  directly attached to the classes, functions and other entities helps
+  make the documentation as tightly tied to the code as possible.  See
+  ``Keep comments close to the code they describe'' in \cite[Section
+  32.5]{CodeComplete2nd04}.  This has the unfortunate side-effect of
+  requiring complete recompilations whenever documentation is
+  modified, but the overall benefits are usually worth the
+  disadvantages.  Note that the Doxygen documentation can be stripped
+  out of Doxygen-generated hyper-linked versions of the code, leaving
+  clean C++ code without the clutter of detailed documentation.
+  Therefore, developers should browse Doxygen-generated source code
+  instead of the source code directly when looking at the code and
+  performing code reviews.
+
+
+\item\DOXUseCentralizedDefintions: Use clear and consistent naming of
+  arguments in multiple functions (within the same class and across as
+  many classes and functions as makes sense).  Provide a centralized
+  definition of these arguments if possible to avoid repeating
+  detailed descriptions in each individual function's documentation.
+  This helps to avoid duplicate documentation that is likely not to be
+  maintained correctly.  In the case of classes, this means providing
+  some common definitions in the main ``detailed'' documentation
+  section for the class.  In the case of nonmember functions, this
+  might involve a common Doxygen group or module (i.e., using the
+  \texttt{$\backslash$defgroup} command) for the set of functions.
+  In the case of collections of nonmember functions, it may be
+  difficult to expect readers to find the common definitions, but
+  links to the common documentation are possible using a variety of
+  approaches.
+
+
+\item\DOXUseCentralizedPrePostConditions: For common arguments that
+  are shared among many functions, define the most common
+  preconditions for them in a central place.  Avoid listing them on a
+  function-by-function basis unless they change for an individual
+  function.  For a C++ class, place descriptions for these common
+  arguments in the main class documentation under a
+  {}\texttt{$\backslash$section} named ``Common Function Arguments and
+  Pre/Postconditions''.  Only include preconditions for these
+  arguments in specific function documentation sections if they differ
+  from the most common preconditions.
+
+
+\item\DOXAddBrief: The {}\texttt{$\backslash$brief} field is used to
+  provide the short one-line documentation string that is included in
+  the function summary section of classes, groups, namespaces etc.
+  Even if no text documentation is needed or wanted, add an empty
+%
+{\small\begin{verbatim}
+  /** \brief . */
+  void someFunction();
+\end{verbatim}}
+%
+comment so that Doxygen will include the class, function, or other entity in
+the HTML documentation.  Note that this is important when the Doxygen
+configuration option {}\texttt{EXTRACT\-\_ALL} is set to {}\texttt{NO}.
+
+
+\item\DOXAllOrNoneParam: All arguments should be listed in
+  \texttt{$\backslash$param} fields with at least the [in], [out], or
+  [in/out] specifications.  These should have at least a very short
+  description.  Alternately, if the function arguments are
+  self-documenting or have already been defined in the common
+  documentation section, then no \texttt{$\backslash$param} fields for
+  any of the arguments should be included at all.  If any of the
+  arguments in a function's documentation are listed in
+  \texttt{$\backslash$param} fields, then all arguments should be
+  listed in \texttt{$\backslash$param} fields.
+
+
+\item\DOXReturnsOnlyIfNeeded: Don't add a \texttt{$\backslash$returns}
+  description of the return value if it is already clearly specified
+  in the \texttt{$\backslash$brief} description of the function.
+  However, if the nature of the return value is at all complex, then
+  include a \texttt{$\backslash$returns} field to describe it.  When
+  referring to the return object, refer to it as \texttt{returnVal}.
+  By consistently using the identifier \texttt{returnVal} for the
+  return value, users will immediately know what this refers to.
+
+
+\item\DOXPreferPostconditionsInParam: The postconditions for output
+  arguments can be listed directly in the \texttt{$\backslash$param}
+  field for the argument if they only involve just that argument in a
+  simple way.  Otherwise, if the postconditions are more complex or
+  involve multiple arguments in order to specify, then they can be
+  listed in the postconditions list.  It may be difficult to
+  objectively determine the best place to list the postconditions for
+  an output argument.
+
+
+\item\DOXOrderOfDocFieds: A consistent ordering of sections of
+  documentation for a function makes it easier for readers to find
+  what they are looking for.
+
+
+\item\DOXUseRelatesForNonmemberFunctions: If a nonmember function is
+  most closely related to a single class, then use the
+  \texttt{$\backslash$relates} field to cause the documentation for
+  the function to be listed with the classes documentation.  This
+  makes it easier for readers to find out everything that they can do
+  with a class object (or set of class objects) just by looking at a
+  single HTML page and a single summary list of functions (which
+  includes member and nonmember related functions).
+
+
+\item\DOXDocumentInitialVirtualOnly: Only provide detailed
+  documentation of the initial declaration of a virtual function in
+  the class where it is first defined as \texttt{virtual}.  In
+  general, documentation should not be included for the overrides of
+  virtual functions in derived classes.  Doxygen automatically puts in
+  a link to the original virtual function in the base class so readers
+  are just one click away for seeing the detailed documentation.
+  Always add an empty
+%
+{\small\begin{verbatim}
+  /** \brief . */
+  void someFunction();
+\end{verbatim}}
+%
+comment for every class and every function that should be included in the HTML
+documentation but where no text documentation is wanted or needed.
+
+
+\item\DOXAggregateOverrides: For example, the overrides of the virtual
+  functions for the \texttt{Teuchos\-::Parameter\-List\-Acceptor}
+  interface would look like:
+
+{\small\begin{verbatim}
+
+  class SomeClass : public Teuchos::ParameterListAcceptor {
+  public:
+
+    ...
+
+    /** \name Overriden from Teuchos::ParameterListAccpetor */
+    //@{
+    /** \brief . */
+    void setParameterList(
+      Teuchos::RCP<Teuchos::ParameterList> const& paramList);
+    /** \brief . */
+    Teuchos::RCP<Teuchos::ParameterList> getParameterList();
+    /** \brief . */
+    Teuchos::RCP<Teuchos::ParameterList> unsetParameterList();
+    /** \brief . */
+    Teuchos::RCP<const Teuchos::ParameterList> getParameterList() const;
+    /** \brief . */
+    Teuchos::RCP<const Teuchos::ParameterList> getValidParameters() const;
+    //@}
+
+    ...
+
+  };
+
+\end{verbatim}}
+
+
+\item\DOXAutogenerateExampleCode: Any significant fragment of example
+  code that is shown in Doxygen HTML documentation or a latex document
+  needs to come from compiled and tested code that can be updated
+  automatically.  These C++ code fragments can be selectively inserted
+  automatically into Doxygen documentation using the
+  \texttt{$\backslash$dontinclude} Doxygen command.
+
+
+\item\DOXAutogenerateSampleOutput: Sample output included in Doxygen
+  documentation should be generated automatically by the test harness
+  code and should be written to files that are included in the source
+  directory.  The sample output in these files can then be inserted
+  into the Doxygen HTML documentation automatically using the
+  \texttt{$\backslash$verbinclude} Doxygen command.  Similar
+  approaches can also be used for \LaTeX{} documentation.
+
+
+\end{itemize}

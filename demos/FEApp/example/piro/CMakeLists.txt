@@ -1,49 +1,49 @@
 
-INCLUDE(PackageAddExecutableAndTest)
-INCLUDE(PackageCopyFilesToBinaryDir)
+INCLUDE(TribitsAddExecutableAndTest)
+INCLUDE(TribitsCopyFilesToBinaryDir)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-PACKAGE_ADD_EXECUTABLE(
+TRIBITS_ADD_EXECUTABLE(
   Solve
   SOURCES FEApp_Solve.cpp
   COMM serial mpi
   )
 
-PACKAGE_ADD_EXECUTABLE(
+TRIBITS_ADD_EXECUTABLE(
   SGSolve
   SOURCES FEApp_SGSolve.cpp
   COMM serial mpi
   )
 
-PACKAGE_ADD_EXECUTABLE(
+TRIBITS_ADD_EXECUTABLE(
   SGAnalysis
   SOURCES FEApp_SGAnalysis.cpp
   COMM serial mpi
   )
 
-PACKAGE_COPY_FILES_TO_BINARY_DIR(copyTestInputFiles
+TRIBITS_COPY_FILES_TO_BINARY_DIR(copyTestInputFiles
   DEST_FILES  input_nox_brusselator.xml
               input_loca_brusselator.xml 
               input_loca_bratu.xml
   EXEDEPS Solve
   )
 
-PACKAGE_COPY_FILES_TO_BINARY_DIR(copySGTestInputFiles
+TRIBITS_COPY_FILES_TO_BINARY_DIR(copySGTestInputFiles
   DEST_FILES  input_sg_nox_linear.xml
               input_mpni_nox_linear.xml
   	      input_sg_nox_hns.xml input_nox_hns.xml
   EXEDEPS SGSolve
   )
 
-PACKAGE_COPY_FILES_TO_BINARY_DIR(copySGAnalysisTestInputFiles
+TRIBITS_COPY_FILES_TO_BINARY_DIR(copySGAnalysisTestInputFiles
   DEST_FILES  input_sg_analysis_linear.xml
               dakota_sg_linear.in dakota_sg_linear_target.txt
   EXEDEPS SGSolve
   )
 
 
-PACKAGE_ADD_TEST(
+TRIBITS_ADD_TEST(
   Solve
   NAME NOX_Brusselator
   COMM serial mpi
@@ -52,7 +52,7 @@ PACKAGE_ADD_TEST(
   PASS_REGULAR_EXPRESSION "Test Passed"
   ) 
 
-PACKAGE_ADD_TEST(
+TRIBITS_ADD_TEST(
   Solve
   NAME LOCA_Brusselator
   COMM serial mpi
@@ -61,7 +61,7 @@ PACKAGE_ADD_TEST(
   PASS_REGULAR_EXPRESSION "Test Passed"
   )
 
-PACKAGE_ADD_TEST(
+TRIBITS_ADD_TEST(
   Solve
   NAME LOCA_Bratu
   COMM serial mpi
@@ -70,7 +70,7 @@ PACKAGE_ADD_TEST(
   PASS_REGULAR_EXPRESSION "Test Passed"
   )
 
-PACKAGE_ADD_TEST(
+TRIBITS_ADD_TEST(
   SGSolve
   NAME SG_NOX_Linear
   COMM serial mpi
@@ -79,7 +79,7 @@ PACKAGE_ADD_TEST(
   PASS_REGULAR_EXPRESSION "Test Passed"
   )
 
-PACKAGE_ADD_TEST(
+TRIBITS_ADD_TEST(
   SGSolve
   NAME MPNI_NOX_Linear
   COMM serial mpi
@@ -88,7 +88,7 @@ PACKAGE_ADD_TEST(
   PASS_REGULAR_EXPRESSION "Test Passed"
   )
 
-PACKAGE_ADD_TEST(
+TRIBITS_ADD_TEST(
   SGSolve
   NAME SG_NOX_HNS
   COMM serial mpi
