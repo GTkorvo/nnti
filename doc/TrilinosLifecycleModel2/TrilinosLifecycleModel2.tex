@@ -225,12 +225,9 @@ engineering lifecycle model defined for these types of CSE software
 that has been shown to be effective.  A previous attempt to create a
 viable lifecycle model for Trilinos to provide for transitions of CSE
 software from research, to production, to maintenance (and later
-death) was defined in {}\cite{TrilinosLifecycleModel2007}.  However,
-as of 2011, there have been no examples of the successful full
-execution of this lifecycle model on any Trilinos package and no signs
-that it will be followed by any of the Trilinos package teams to
-produce production-quality CSE software (i.e. the Production
-Maintenance phase) using that lifecycle model.
+death) was defined in {}\cite{TrilinosLifecycleModel2007}.  Since then we
+have continued learning more effective techniques for software engineering.
+This present lifecycle model reflects what we have learned.
 
 The goals for defining a lifecycle model for Trilinos are many but the
 most important include:
@@ -241,7 +238,7 @@ most important include:
 not requiring more practices than are necessary for doing basic
 research in early phases, researchers maintain maximum productivity.
 
-{}\item\textit{Enable Reproducable Research}: By considering the
+{}\item\textit{Enable Reproducible Research}: By considering the
 minimal but critical software quality aspects needed for producing
 credibale research, algorithm researches will produce better research
 that will stand a better chance of being published in quality journals
@@ -359,6 +356,27 @@ problems in the CSE community.  Ideas include 'Trials'
 Research-based Alternative Lifecycle).  I am sure we can come up with
 something better than this.
 
+%
+{}\section {Common Implicit Model: A Validation-Centric Approach}
+\label{sect:validation_centric_approach}
+
+Many if not most CSE projects have no formal software lifecycle model.  At the same time, these projects perform the activities required to develop software: elicit and analyze requirements, design and implement software, test and maintain the product.  Therefore, although implicit, each project has some kind of lifecycle model.  In our experience, the most common implicit CSE lifecycle model can be described as a {\it validation-centric approach} (VCA).  
+
+Roughly speaking, validation is {\it doing the right thing} (whereas verification is {\it doing things right}).  Validation is viewing the software product as a black box that is supposed to provide a certain behavior and functionality.  Validation is not concerned about the internal structure of the product.
+
+VCA can be a very attractive approach when validation is easy to perform.  For example, testing the correct behavior and efficiency of a nonlinear or linear solver is very straightforward.  If a solver returns a solution, it is easy to compute the execution time and residual norm as part of using the solver.  Even if the solver does not behave as the developer intended (verification), and may not be implemented optimally, there is little risk of an undetected failure, and performance degradations are easily detected.   If an application has several solvers to pick from, then even the impact of a software regression in one solver is mitigated by being able to switch to another. 
+
+When VCA works, it introduces very little overhead to the software engineering process, especially since validation is an essential part of product certification.  In fact, if a software product is being developed for a specific customer, validation is often occurring as part of the development process, since the customer is using the product as it is being developed.  Furthermore, investment in product-specific unit and integration tests is expensive.  If the future of a software products is uncertain, a development team may not want to dedicate the resources to these activities.  VCA is the lowest cost way to initially assure correct software behavior.
+
+From the above discuss it is clear why VCA may seem attractive.  However, despite this attraction, VCA is an ineffective long-term approach for all but the most easily validated software products.  This become particularly apparent as a product matures and refactorings are made to address requirements such as feature requests and porting to new platforms.  Numerous studies~\cite{} indicate that maintenance is 75\% or more of the total cost of a successful software product.  VCA is initially inexpensive, but ultimately costs much more.  Furthermore, in many cases it leads to early abandonment of a product simply because refactoring it become untenable.  Some of the specific challenges associated with VCA are:
+\begin{enumerate}
+\item Feature expansion beyond validated functionality:  As a software product becomes widely used, feature are often added that are not covered by validation testing.  These feature are immediately used by some customer, but the customer's code is not added to the validation suite.  Any such code is at risk when performing refactoring.
+\item Loss of validation capabilities:  Although a customer application may initially be used to validate a product, relationships with that customer may change and the validation process will break down.
+\item Inability to confidently refactor:  In general, without internal testing in the form of easily checked unit tests and product-specific integrated testing, refactoring efforts cannot proceed incrementally.  Furthermore, running validation tests for incremental changes is often cumbersome and time-consuming, reducing the efficiency of the refactoring process.
+\item More?
+\end{enumerate}
+
+Although validation-centric models are commonly used in CSE, more effective approaches are needed.  This comes at a cost: teams must have the resources, tools and training to effectively develop sustainable software.  In the remainder of this paper we present approaches we have found effective.
 
 %
 {}\section{Current Baseline State of Trilinos Software Engineering}
