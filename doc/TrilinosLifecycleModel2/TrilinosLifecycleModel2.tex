@@ -1696,62 +1696,107 @@ tested, has good documentation, and is robust to user input errors.
 \label{sec:risk_analysis_acceptance_testing}
 %
 
-The issue of risk analysis often comes up in the context of discussions
-about Trilinos (and many other software projects as well).  When
-considering the topic of risk analysis, one has to remember that this
-lifecycle model is being written in the context of Trilinos, which
-provides a collection of reusable components for building end-user
-computational science and engineering (CSE) applications.  However,
-Trilinos itself does not contain any end user CSE applications and all
-requirements that go into Trilinos development flow down from
-developers of end-user applications or research codes.  Therefore,
-risk analysis really needs to start with the developers of end-user
-applications and that analysis then needs to flow down as requirements
-to Trilinos software developers (or any other developers of
-intermediate services).  In an Agile development process (which this
-the foundational development model assumed from the very beginning for
-this lifecycle model), requirements are handled through frequent
-interaction with customers at regular intervals.  Therefore, if
-Trilinos software does not adequately address some significant risk
-present in end-user applications, it is either because the developers
-of those end-user applications did not do an adequate risk analysis
-themselves, or they did not communicate the issues coming out of their
-risk analysis study adequately to the development team implementing
-functionality in Trilinos.  (Or, it could legitimately be that those
-requirements were clearly stated and the given Trilinos development
-team simply choose to ignore them or passed the buck.)
+Risk analysis is complicated but important aspect of a complete software
+lifecycle model.  Two important aspects of the Trilinos project that
+factor into the risk analysis process are that Trilinos itself does not
+contain any end user CSE applications and the requirements that go into
+Trilinos development flow down from developers of end-user applications or
+research codes.  Therefore, the participation of customer codes is critical
+in several areas of the risk analysis process.
 
-In the eyes of an end-user application developer, the above discussion
-of risk analysis might sound like Trilinos developers are trying to
-pass the buck but this is not necessarily the case.  To counter that
-possible view, first consider what this lifecycle model is advocating.
-Trilinos software should have a clean design and clear code so that
-the algorithms it implements can be clearly identified (or be as clear
-as can reasonably be expected given that many of these algorithms are
-very mathematically complex and users would not understand them even
-if the best written paper magically implemented the code).  This
-Trilinos lifecycle 2.0 model requires that Te testing of the units of
-the software (i.e.\ unit testing) and of the mathematical properties
-of the algorithms (i.e.\ verification testing) be as strong as any
-piece of equivalent software can reasonably be tested.  Also,
-Production Maintenance software has excellent checking for user input
-errors and handles those errors gracefully (or abruptly depending on
-what is called for).  From an end-user application developer's point
-of view, what more could one ask for than algorithms implemented in a
-clean and clear way, where the properties of the algorithm are well
-demonstrated and protected by automated testing, and are robust to
-user input errors?
+Below we identify several risks, and discuss how each of those risks can be
+mitigated.
 
-The only element missing from the above discussion from an end-user
-application developer's perspective is ``do the algorithms implemented
-in Trilinos packages X, Y, and Z satisfy the requirements of our
-application in speed, accuracy, and robustness?''  The only way to
-answer those questions and more is for the end-user application
-development team to have their own verification test suite that
-exercises their code using the dependent Trilinos packages that they
-use and verify these results for themselves.  These end-user
-application verification tests thereby constitute part of the
-acceptance test suite for these Trilinos packages.  In CSE, it can be
+A common risk that needed to be mitigated by most software projects is what
+happens if one or more key developers are no longer part of the project at
+some point in the future.  The mitigation of this risk is multi-faceted, but
+revolves closely around the goal of developing self-sustaining software:
+
+\begin{compactitem}
+
+{}\item A clean design, clearly written code, and sufficient documentation
+will allow another developer to more easily take over the development tasks
+of the departing individual(s).
+
+{}\item A well-designed, complete testing infrastructure and sufficient
+resources for exercising the suite of tests properly will allow remaining
+developers to more effectively maintain the code base after an individual
+with critcal knowledge has left the project.
+
+\end{compactitem}
+
+A second risk that is similar in some ways to the first is what if the funding
+stream for the project ceases to exist or becomes highly unreliable?  In this
+case, a clean design, clearly written code, and sufficient documentation would
+allow anyone able, a user even perhaps, to pick up the code and perform
+maintenance and development on the code.  Production maintenance phase
+software, which requires excellent checking for user input errors and handles
+those errors gracefully, and provides extensive documentation is positioned
+most firmly to remain heavily used in the case where funding for the project
+becomes an issue.
+
+Although testing resources do not apply to this
+discussion as closely, a well-designed, complete testing infrastructure is
+again critical.  In this case it is more important that the testing system
+could be easily deployed on user systems.  On the application end, a robust
+set of acceptance tests for each user code become even more critical.
+Developers should assist key users in setting up continuous integration
+processes as part of mitigating this risk.
+
+Another way to mitigate the risk of funding problems is to seek a diverse
+stream of funding, rather than relying on a single, large funding source, even
+in the case where such a source is available.
+
+A third risk that requires mitigation is are the third-party libraries the
+software has a strong dependency on also self-sustaining software?  If not,
+and this becomes a chronic issue, the software team should either replace the
+dependence with alternative functionality, or, if allowed by the third-party
+license, begin to maintain a custom version of the third-party software that
+is released along with the primary project code.  In the case where the
+third-party code is generally reliable and self-sustaining, no action is
+required by the possiblity that the code could deteriorate in quality or cease
+to be supported should be considered, in which case one of the above actions
+would need to be considered.
+
+The fourth risk we considered is are the programming languages the software is
+written using going to be widely available and maintained for a long time to
+come and be available on all of the platforms what will need to be suppored
+in the future?  This risk should be addressed early in the design phase prior
+to the implementation phase.  We encourage teams to select only widely
+available and maintained languages, except in the case where the purpose of
+the project is specifically tied to another language.  A language with a large
+body of software that depends on it is not likely to disappear.
+
+Fifth, are the limitations of the algorithms and the approaches taken
+in the software too severe (in terms of speed, robustness, or otherwise) to be
+of real use to anyone to bother with worrying about trying to productionize
+the software?  Again, mitigation of
+this risk starts in the design phase.  Mitigation also requires early user
+feedback.  When conducting algorithmic research, there is always the risk that
+the resulting algorithm may not meet the needs of the customer, we are talking
+about mitigating the risk of a poor design lack of communication leading to
+the failure of the approach, rather than the risk inherent in research.
+
+The sixth risk is do the algorithms implemented in the software
+meet reasonable accuracy requirements?  This is a question related to software
+verification.  The seventh (related) risk is how well are the implemented
+algorithms and approaches able to simulate and match a given set of
+real-world problems?  This question relates to software validation.
+For example, for a PDE-based simulation code, verification involves
+determining if the implemented algorithms can solve various PDEs equations
+sets to sufficient accuracy while validation determines how well the chosen
+PDEs can simulate observed behavior in some physical system.  From the
+standpoint of Verification and Validation (V\&V), Trilinos developers are
+responsible for fundamental ``code verification'' and perhaps much of the
+structure needed for doing ``solution verification''
+{}\cite{SEVVIntersections05}.  However, the end-user application
+developers must shoulder the primary responsibility for performing all
+validation.  The verification risks can be mitigated with a strong testing
+infrastructure as described above.  With input from end users, some amount of
+validation may be incorporated into the testing infrastructure also.
+
+We want to stress one more time the critical role that end user applications
+play in risk mitigation.  In CSE, it can be
 argued that the best acceptance test suite for a given piece of
 upstream numerical library or other intermediate CSE software is the
 end-user application's own verification test suite
@@ -1767,58 +1812,6 @@ that can be collected with the Trilinos package's own test suite apart
 from the end-user application code.  These stand-alone acceptance
 tests can then be run as part of the regular automated testing as the
 software is maintained {}\cite{DomainDrivenDesign}.
-
-Before leaving the topic of risk analysis, it is not completely
-adequate to say that end-user application developers need to do their
-own risk analysis and pass down the requirements and also provide the
-acceptance tests.  The Trilinos package development teams must, on
-their own in many cases, ask some basic questions as part of an
-internal risk analysis study.  Examples of some of the questions that
-every Trilinos package development team must ask are:
-
-\begin{compactitem}
-
-{}\item Are the programming languages the software is written using
-going to be widely available and maintained for a long time to come
-and be available on all of the platforms what will need to be suppored
-in the future?
-
-{}\item Are the third-party libraries the software has a strong
-dependency on also self-sustaining software?  Will they stay
-self-sustaining software?
-
-{}\item Are the limitations of the algorithms and the approaches taken
-in the software too severe to be of real use to anyone to bother with
-worrying about trying to productionize the software?
-
-{}\item Is the software sufficiently clean and well tested so that if
-we lost developer X, Y, or Z that we could continue development of the
-package?
-
-{}\item Are the funding streams for the software stable enough and
-sufficient to support the development of the software to the point
-where it can become self-sustaining software?
-
-\end{compactitem}
-
-And then there is the V\&V (Verification and Validation)
-{}\cite{SEVVIntersections05}.  Verification involves creating
-confidence that the algorithms implemented in the software are
-behaving as they should and can meet reasonable accuracy requirements.
-Alternatively, validation involves determining how well the
-implemented algorithms and approaches are able to simulate and match a
-given set of real world problems.  For example, for a PDE-based
-simulation code, verification involves determining if the implemented
-algorithms can solve various PDEs equations sets to sufficient
-accuracy while validation determines how well the chosen PDEs can
-simulate observed behavior in some physical system.  From the
-standpoint of V\&V, Trilinos developers are responsible for
-fundamental ``code verification'' and perhaps much of the structure
-needed for doing ``solution verification''
-{}\cite{SEVVIntersections05}.  However, the end-user application
-developers must shoulder the responsibility for performing all
-validation.
-
 
 %
 \section{Comparison to a Typical CSE Lifecycle Model}
