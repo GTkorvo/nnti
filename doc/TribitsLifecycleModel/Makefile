@@ -1,5 +1,5 @@
 
-BASE_NAME = TrilinosLifecycleModel2
+BASE_NAME = TribitsLifecycleModel
 LATEX_COMMAND = pdflatex
 MAKEINDEX_COMMAND = makeindex
 MAKEGLOSSARY_COMMAND = makeglossary
