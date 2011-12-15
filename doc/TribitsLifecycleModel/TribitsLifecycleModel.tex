@@ -39,7 +39,7 @@
 %
 
 \title{\center
-Trilinos Lifecycle Model \\[2ex] Version 2.0 \\[2ex] \large A
+TriBITS Lifecycle Model \\[2ex] Version 1.0 \\[2ex] \large A
 Lean/Agile Software Lifecycle Model for Research-based Computational
 Science and Engineering and Applied Mathematical Software }
 \author{
@@ -47,7 +47,7 @@ Roscoe A. Bartlett \\ Oak Ridge National Laboratories\footnote{Oak
 Ridge National Laboratories is Managed by UT-Battelle, a partnership
 of the University of Tennessee and Battelle Memorial Institute, for
 United States Department of Energy under Contract DE-AC05-00OR22725.} 
-\\[2ex] Mike Heroux \\ Roger Pawlowski \\ Jim Willenbring \\ Sandia
+\\[2ex] Mike Heroux \\ Jim Willenbring \\ Sandia
 National Laboratories\footnote{Sandia is a multiprogram laboratory
 operated by Sandia Corporation, a Lockheed-Martin Company, for the
 United States Department of Energy under Contract DE-AC04-94AL85000.},
@@ -57,11 +57,10 @@ Albuquerque NM 87185 USA, \\ }
 % ---------------------------------------------------------------------------- %
 % Set some things we need for SAND reports. These are mandatory
 %
-\SANDnum{SAND2011-XXXX}
-\SANDprintDate{November ???}
+\SANDnum{SAND2012-XXXX}
+\SANDprintDate{January ???}
 \SANDauthor{
-Roscoe A. Bartlett \\ Mike Heroux \\ Roger Pawlowski \\ Jim
-Willenbring }
+Roscoe A. Bartlett \\ Mike Heroux \\ Jim Willenbring }
 
 % ---------------------------------------------------------------------------- %
 % The following definitions are optional. The values shown are the default
@@ -115,7 +114,11 @@ Here we describe a proposal for a well-defined software lifecycle
 process based on modern Lean/Agile software engineering principles
 that is appropriate for many CSE software projects that are initially
 heavily focused on research but also are expected to eventually
-produce usable high-quality capabilities.  Here, three different
+produce usable high-quality capabilities.   The model is related to the
+Tribial Build, Test, and Integrate System (TriBITS) software development
+system and the TriBITS system is a strong foundation for this lifecycle
+model and aspects of this lifecycle model are engrained in the
+TriBITS system.  Here, three (or four) different
 phases/maturity levels are advocated for the transition from research
 to production software that consider the appropriate handling of many
 issues.  The goals of this lifecycle model are to better communicate
@@ -125,7 +128,8 @@ software.  An important collection of software in this domain is
 Trilinos which is used as the motivation and the initial target for
 this lifecycle model.  However, many other related and similar CSE
 (and non-CSE) software projects might also make good use of this
-lifecycle model.  Indeed this lifecycle process, if followed, would
+lifecycle model (expecially those that use the TriBITS system).
+Indeed this lifecycle process, if followed, would
 allow for very large-scale sustainable integration of large amounts of
 complex CSE software efforts across many different institutions.
 
@@ -195,6 +199,35 @@ complex CSE software efforts across many different institutions.
 \section{Introduction and Background}
 %
 
+{}\textbf{ToDos:}
+
+\begin{compactenum}
+
+{}\item (Ross B.) Call this the ``TriBITS Lifecycle Model'' and just
+Trilinos in the abstract and the text ... I have updated the title
+and the abstract but a lot of work is needed to update the text.
+
+{}\item (Jim W.) Improve structure of the risk analysis section.  This
+should start with a set of bullets for the various risks being mentioned,
+followed by a sort discussion of why self-sustaining software helps to
+address many of these risks automatically, and then followed by more
+detailed discussion of each risk along with mitigation ideas.
+
+{}\item (Mike H.) Go over the entire document and made edits and
+restructures, etc.
+
+{}\item (Ross B., Jim W., and Mike H.) Read over document, make notes, and
+discuss the final revisions to be made.
+
+{}\item Send out final draft to Trilinos developers for review.
+
+{}\item Get back comments and incorprate feedback as apprpriate.
+
+{}\item Discuss final draft, decide on and make any final revisions, and
+then publish the SAND report.
+
+\end{compactenum}
+
 \begin{wrapfigure}{r}{0.5\textwidth}
 \begin{center}
 \fbox{
@@ -225,12 +258,9 @@ engineering lifecycle model defined for these types of CSE software
 that has been shown to be effective.  A previous attempt to create a
 viable lifecycle model for Trilinos to provide for transitions of CSE
 software from research, to production, to maintenance (and later
-death) was defined in {}\cite{TrilinosLifecycleModel2007}.  However,
-as of 2011, there have been no examples of the successful full
-execution of this lifecycle model on any Trilinos package and no signs
-that it will be followed by any of the Trilinos package teams to
-produce production-quality CSE software (i.e. the Production
-Maintenance phase) using that lifecycle model.
+death) was defined in {}\cite{TrilinosLifecycleModel2007}.  Since then we
+have continued learning more effective techniques for software engineering.
+This present lifecycle model reflects what we have learned.
 
 The goals for defining a lifecycle model for Trilinos are many but the
 most important include:
@@ -241,7 +271,7 @@ most important include:
 not requiring more practices than are necessary for doing basic
 research in early phases, researchers maintain maximum productivity.
 
-{}\item\textit{Enable Reproducable Research}: By considering the
+{}\item\textit{Enable Reproducible Research}: By considering the
 minimal but critical software quality aspects needed for producing
 credibale research, algorithm researches will produce better research
 that will stand a better chance of being published in quality journals
@@ -303,7 +333,7 @@ for Trilinos and related CSE software that will become the standard
 across the Trilinos effort and related projects.
 
 The rest of this document is organized as follows.
-Section~\ref{sec:trilinos_current_state} describes the current state
+Section~\ref{sec:tribts_current_state} describes the current state
 of software engineering in Trilinos.  This is done to provide a frame
 of context for lifecycle discussions and to avoid having to restate
 the same foundations several times scattered throughout the document.
@@ -331,47 +361,40 @@ Section~\ref{sec:grandfathering}.  Finally, the lifecycle 2.0 model is
 summarized and next steps are given in
 Section~\ref{sec:summary_next_steps}.
 
-{}\textbf{ToDo:} [Jim Willenbring] Rewrite the risk analysis
-Section~\ref{sec:risk_analysis_acceptance_testing} to first discuss
-the responsibility of risk analysis responsibilities of algorithm
-software developers then at the end discuss the responsibilities of
-users of CSE software to do their own risk assessment.
+%
+{}\section {Common Implicit Model: A Validation-Centric Approach}
+\label{sect:validation_centric_approach}
 
-{}\textbf{ToDo:} [Mike Heroux] Move the bulk of the discussion about
-the typical purely validation-based lifecycle process currently common
-practice described in Section~\ref{sec:compare_with_typical_CSE_model}
-right after the introduction section.  Topics to discuss: a) manual
-verification and validation does not protect future changes to the
-code, b) manual validation is not sustainable because you can't go
-back and update the code, c) usage of this approach creates low
-quality software that makes people paranoid about using other people's
-software, d) without unit tests, when the code fails after a port or
-some other changes, how to you address the problem?, e) if the code is
-messy without tests, how can you safely change the code as needed.
-There are many other issues to discuss as well.
+Many if not most CSE projects have no formal software lifecycle model.  At the same time, these projects perform the activities required to develop software: elicit and analyze requirements, design and implement software, test and maintain the product.  Therefore, although implicit, each project has some kind of lifecycle model.  In our experience, the most common implicit CSE lifecycle model can be described as a {\it validation-centric approach} (VCA).  
 
-{}\textbf{ToDo:} Come up with a name for this lifecycle model that in
-broader that Trilinos in hopes that it will appeal to a larger
-audience and help to fix some of the larger software engineering
-problems in the CSE community.  Ideas include 'Trials'
-(Tribal/Trilinos Alternative Lifecycle Standard) or 'Trilim'
-(Tribal/Trilinos LIfecycle Model), or 'Triral'???' (Tribal/Trilinos
-Research-based Alternative Lifecycle).  I am sure we can come up with
-something better than this.
+Roughly speaking, validation is {\it doing the right thing} (whereas verification is {\it doing things right}).  Validation is viewing the software product as a black box that is supposed to provide a certain behavior and functionality.  Validation is not concerned about the internal structure of the product.
 
+VCA can be a very attractive approach when validation is easy to perform.  For example, testing the correct behavior and efficiency of a nonlinear or linear solver is very straightforward.  If a solver returns a solution, it is easy to compute the execution time and residual norm as part of using the solver.  Even if the solver does not behave as the developer intended (verification), and may not be implemented optimally, there is little risk of an undetected failure, and performance degradations are easily detected.   If an application has several solvers to pick from, then even the impact of a software regression in one solver is mitigated by being able to switch to another. 
+
+When VCA works, it introduces very little overhead to the software engineering process, especially since validation is an essential part of product certification.  In fact, if a software product is being developed for a specific customer, validation is often occurring as part of the development process, since the customer is using the product as it is being developed.  Furthermore, investment in product-specific unit and integration tests is expensive.  If the future of a software products is uncertain, a development team may not want to dedicate the resources to these activities.  VCA is often (but not always) the lowest cost way to initially assure correct software behavior.
+
+From the above discuss it is clear why VCA may seem attractive.  However, despite this attraction, VCA is an ineffective long-term approach for all but the most easily validated software products.  This become particularly apparent as a product matures and refactorings are made to address requirements such as feature requests and porting to new platforms.  Numerous studies~\cite{} indicate that maintenance is 75\% or more of the total cost of a successful software product.  VCA is initially inexpensive, but ultimately costs much more.  Furthermore, in many cases it leads to early abandonment of a product simply because refactoring it become untenable.  Some of the specific challenges associated with VCA are:
+\begin{enumerate}
+\item Feature expansion beyond validated functionality:  As a software product becomes widely used, feature are often added that are not covered by validation testing.  These feature are immediately used by some customer, but the customer's code is not added to the validation suite.  Any such code is at risk when performing refactoring.
+\item Loss of validation capabilities:  Although a customer application may initially be used to validate a product, relationships with that customer may change and the validation process will break down.
+\item Inability to confidently refactor:  In general, without internal testing in the form of easily checked unit tests and product-specific integrated testing, refactoring efforts cannot proceed incrementally.  Furthermore, running validation tests for incremental changes is often cumbersome and time-consuming, reducing the efficiency of the refactoring process.
+\item More?
+\end{enumerate}
+
+Although validation-centric models are commonly used in CSE, more effective approaches are needed.  This comes at a cost: teams must have the resources, tools and training to effectively develop sustainable software.  In the remainder of this paper we present approaches we have found effective.
 
 %
-{}\section{Current Baseline State of Trilinos Software Engineering}
-\label{sec:trilinos_current_state}
+{}\section{Current Baseline State for TriBITS projects}
+\label{sec:tribts_current_state}
 %
 
-Before describing the new Trilinos lifecycle 2.0 model it is worthwhile
-to provide some background about the current state of Trilinos
+Before describing the new Tribits lifecycle model it is worthwhile
+to provide some background about the current state of TriBITS-based
 software engineering and development practices to set the context
 under which this lifecycle model will be implemented.  These
-practices and policies are ingrained into the Trilinos development
+practices and policies are ingrained into a TriBITS development
 environment and are taken for granted in this discussion of the new
-Trilinos 2.0 lifecycle process.
+TriBITS lifecycle process.
 
 \begin{wrapfigure}{r}{0.5\textwidth}
 \begin{center}
@@ -382,7 +405,7 @@ Trilinos 2.0 lifecycle process.
 {}\textbf{Defined: PS, SS, and EX tested code:}
 
 {}\textbf{PS} (Primary Stable) tested code has minimal outside
-dependencies (currently, PS code in Trilinos can only maximally have
+dependencies (currently, PS code in can only maximally have
 required dependencies on the external TPLs BLAS, LAPACK, and MPI) and
 represents critical functionality such that if broken would hamper
 core development efforts for many developers.
@@ -396,19 +419,19 @@ developmenet platform after commits are pushed the main development
 repo.  SS code is also tested nightly on many platforms.
 
 {}\textbf{EX} (Experimental) (non-)tested code is not PS or SS code
-and not tested in any offical Trilinos testing process.
+and not tested in any offical testing process.
 
 \end{minipage}
 } %fbox
 \end{center}
 \end{wrapfigure}
 
-The short list of core Trilinos software engineering processes and
+The short list of core TriBITS software engineering processes and
 practices relevant to this discussion include:
 
 \begin{compactitem}
 
-{}\item official separation of Trilinos code into Primary Stable (PS),
+{}\item official separation of TriBITS project code into Primary Stable (PS),
 Secondary Stable (SS), and Experimental (EX) for testing purposes (see
 defintion of PS, SS, and EX in text box below)
 
@@ -435,8 +458,6 @@ and SS tested code posting results to CDash
 
 {}\item strong policies on the maintenance of 100\% clean PS and SS
 builds and tests for all Nightly and CI builds
-
-{}\item regular quarterly releases of Trilinos
 
 \end{compactitem}
 
@@ -673,14 +694,14 @@ It is worth mentioning that issues like version-control, automated
 testing, nightly and continuous integration testing, and other basic
 extremely well accepted Agile software technical practices are
 already intimately woven into the Trilinos development community (see
-Section~\ref{sec:trilinos_current_state}).  However, while these
+Section~\ref{sec:tribts_current_state}).  However, while these
 policies and practices are very important, they do not directly
 impact a lifecycle model except to make such a lifecycle model easier
 and safer to implement.  Therefore, we will not discuss such basic
 software practices and policies in this document except where needed
 and instead refer the reader to the Trilinos Developers Website and
 the references for details (again, see
-Section~\ref{sec:trilinos_current_state}).
+Section~\ref{sec:tribts_current_state}).
 
 What is important to grasp about the new Trilinos lifecycle 2.0 model
 is that steady progress is made in each of the areas (and others)
@@ -1485,7 +1506,7 @@ GCC 4.5+).  While this might sound like a bad way to develop software
 that is being targed for possible later productionization, consider
 that the Trilinos CMake build system automatically inserts strong
 options into every build (see
-Section~\ref{sec:trilinos_current_state}), even for Exploratory and
+Section~\ref{sec:tribts_current_state}), even for Exploratory and
 Research Stable code.  Extensive experience has shown that C++ code
 that builds clean of warnings with these strong compiler warning flags
 that has a good test suite (which Research Stable software does by
@@ -1678,62 +1699,107 @@ tested, has good documentation, and is robust to user input errors.
 \label{sec:risk_analysis_acceptance_testing}
 %
 
-The issue of risk analysis often comes up in the context of discussions
-about Trilinos (and many other software projects as well).  When
-considering the topic of risk analysis, one has to remember that this
-lifecycle model is being written in the context of Trilinos, which
-provides a collection of reusable components for building end-user
-computational science and engineering (CSE) applications.  However,
-Trilinos itself does not contain any end user CSE applications and all
-requirements that go into Trilinos development flow down from
-developers of end-user applications or research codes.  Therefore,
-risk analysis really needs to start with the developers of end-user
-applications and that analysis then needs to flow down as requirements
-to Trilinos software developers (or any other developers of
-intermediate services).  In an Agile development process (which this
-the foundational development model assumed from the very beginning for
-this lifecycle model), requirements are handled through frequent
-interaction with customers at regular intervals.  Therefore, if
-Trilinos software does not adequately address some significant risk
-present in end-user applications, it is either because the developers
-of those end-user applications did not do an adequate risk analysis
-themselves, or they did not communicate the issues coming out of their
-risk analysis study adequately to the development team implementing
-functionality in Trilinos.  (Or, it could legitimately be that those
-requirements were clearly stated and the given Trilinos development
-team simply choose to ignore them or passed the buck.)
+Risk analysis is complicated but important aspect of a complete software
+lifecycle model.  Two important aspects of the Trilinos project that
+factor into the risk analysis process are that Trilinos itself does not
+contain any end user CSE applications and the requirements that go into
+Trilinos development flow down from developers of end-user applications or
+research codes.  Therefore, the participation of customer codes is critical
+in several areas of the risk analysis process.
 
-In the eyes of an end-user application developer, the above discussion
-of risk analysis might sound like Trilinos developers are trying to
-pass the buck but this is not necessarily the case.  To counter that
-possible view, first consider what this lifecycle model is advocating.
-Trilinos software should have a clean design and clear code so that
-the algorithms it implements can be clearly identified (or be as clear
-as can reasonably be expected given that many of these algorithms are
-very mathematically complex and users would not understand them even
-if the best written paper magically implemented the code).  This
-Trilinos lifecycle 2.0 model requires that Te testing of the units of
-the software (i.e.\ unit testing) and of the mathematical properties
-of the algorithms (i.e.\ verification testing) be as strong as any
-piece of equivalent software can reasonably be tested.  Also,
-Production Maintenance software has excellent checking for user input
-errors and handles those errors gracefully (or abruptly depending on
-what is called for).  From an end-user application developer's point
-of view, what more could one ask for than algorithms implemented in a
-clean and clear way, where the properties of the algorithm are well
-demonstrated and protected by automated testing, and are robust to
-user input errors?
+Below we identify several risks, and discuss how each of those risks can be
+mitigated.
 
-The only element missing from the above discussion from an end-user
-application developer's perspective is ``do the algorithms implemented
-in Trilinos packages X, Y, and Z satisfy the requirements of our
-application in speed, accuracy, and robustness?''  The only way to
-answer those questions and more is for the end-user application
-development team to have their own verification test suite that
-exercises their code using the dependent Trilinos packages that they
-use and verify these results for themselves.  These end-user
-application verification tests thereby constitute part of the
-acceptance test suite for these Trilinos packages.  In CSE, it can be
+A common risk that needed to be mitigated by most software projects is what
+happens if one or more key developers are no longer part of the project at
+some point in the future.  The mitigation of this risk is multi-faceted, but
+revolves closely around the goal of developing self-sustaining software:
+
+\begin{compactitem}
+
+{}\item A clean design, clearly written code, and sufficient documentation
+will allow another developer to more easily take over the development tasks
+of the departing individual(s).
+
+{}\item A well-designed, complete testing infrastructure and sufficient
+resources for exercising the suite of tests properly will allow remaining
+developers to more effectively maintain the code base after an individual
+with critcal knowledge has left the project.
+
+\end{compactitem}
+
+A second risk that is similar in some ways to the first is what if the funding
+stream for the project ceases to exist or becomes highly unreliable?  In this
+case, a clean design, clearly written code, and sufficient documentation would
+allow anyone able, a user even perhaps, to pick up the code and perform
+maintenance and development on the code.  Production maintenance phase
+software, which requires excellent checking for user input errors and handles
+those errors gracefully, and provides extensive documentation is positioned
+most firmly to remain heavily used in the case where funding for the project
+becomes an issue.
+
+Although testing resources do not apply to this
+discussion as closely, a well-designed, complete testing infrastructure is
+again critical.  In this case it is more important that the testing system
+could be easily deployed on user systems.  On the application end, a robust
+set of acceptance tests for each user code become even more critical.
+Developers should assist key users in setting up continuous integration
+processes as part of mitigating this risk.
+
+Another way to mitigate the risk of funding problems is to seek a diverse
+stream of funding, rather than relying on a single, large funding source, even
+in the case where such a source is available.
+
+A third risk that requires mitigation is are the third-party libraries the
+software has a strong dependency on also self-sustaining software?  If not,
+and this becomes a chronic issue, the software team should either replace the
+dependence with alternative functionality, or, if allowed by the third-party
+license, begin to maintain a custom version of the third-party software that
+is released along with the primary project code.  In the case where the
+third-party code is generally reliable and self-sustaining, no action is
+required by the possiblity that the code could deteriorate in quality or cease
+to be supported should be considered, in which case one of the above actions
+would need to be considered.
+
+The fourth risk we considered is are the programming languages the software is
+written using going to be widely available and maintained for a long time to
+come and be available on all of the platforms what will need to be suppored
+in the future?  This risk should be addressed early in the design phase prior
+to the implementation phase.  We encourage teams to select only widely
+available and maintained languages, except in the case where the purpose of
+the project is specifically tied to another language.  A language with a large
+body of software that depends on it is not likely to disappear.
+
+Fifth, are the limitations of the algorithms and the approaches taken
+in the software too severe (in terms of speed, robustness, or otherwise) to be
+of real use to anyone to bother with worrying about trying to productionize
+the software?  Again, mitigation of
+this risk starts in the design phase.  Mitigation also requires early user
+feedback.  When conducting algorithmic research, there is always the risk that
+the resulting algorithm may not meet the needs of the customer, we are talking
+about mitigating the risk of a poor design lack of communication leading to
+the failure of the approach, rather than the risk inherent in research.
+
+The sixth risk is do the algorithms implemented in the software
+meet reasonable accuracy requirements?  This is a question related to software
+verification.  The seventh (related) risk is how well are the implemented
+algorithms and approaches able to simulate and match a given set of
+real-world problems?  This question relates to software validation.
+For example, for a PDE-based simulation code, verification involves
+determining if the implemented algorithms can solve various PDEs equations
+sets to sufficient accuracy while validation determines how well the chosen
+PDEs can simulate observed behavior in some physical system.  From the
+standpoint of Verification and Validation (V\&V), Trilinos developers are
+responsible for fundamental ``code verification'' and perhaps much of the
+structure needed for doing ``solution verification''
+{}\cite{SEVVIntersections05}.  However, the end-user application
+developers must shoulder the primary responsibility for performing all
+validation.  The verification risks can be mitigated with a strong testing
+infrastructure as described above.  With input from end users, some amount of
+validation may be incorporated into the testing infrastructure also.
+
+We want to stress one more time the critical role that end user applications
+play in risk mitigation.  In CSE, it can be
 argued that the best acceptance test suite for a given piece of
 upstream numerical library or other intermediate CSE software is the
 end-user application's own verification test suite
@@ -1749,58 +1815,6 @@ that can be collected with the Trilinos package's own test suite apart
 from the end-user application code.  These stand-alone acceptance
 tests can then be run as part of the regular automated testing as the
 software is maintained {}\cite{DomainDrivenDesign}.
-
-Before leaving the topic of risk analysis, it is not completely
-adequate to say that end-user application developers need to do their
-own risk analysis and pass down the requirements and also provide the
-acceptance tests.  The Trilinos package development teams must, on
-their own in many cases, ask some basic questions as part of an
-internal risk analysis study.  Examples of some of the questions that
-every Trilinos package development team must ask are:
-
-\begin{compactitem}
-
-{}\item Are the programming languages the software is written using
-going to be widely available and maintained for a long time to come
-and be available on all of the platforms what will need to be suppored
-in the future?
-
-{}\item Are the third-party libraries the software has a strong
-dependency on also self-sustaining software?  Will they stay
-self-sustaining software?
-
-{}\item Are the limitations of the algorithms and the approaches taken
-in the software too severe to be of real use to anyone to bother with
-worrying about trying to productionize the software?
-
-{}\item Is the software sufficiently clean and well tested so that if
-we lost developer X, Y, or Z that we could continue development of the
-package?
-
-{}\item Are the funding streams for the software stable enough and
-sufficient to support the development of the software to the point
-where it can become self-sustaining software?
-
-\end{compactitem}
-
-And then there is the V\&V (Verification and Validation)
-{}\cite{SEVVIntersections05}.  Verification involves creating
-confidence that the algorithms implemented in the software are
-behaving as they should and can meet reasonable accuracy requirements.
-Alternatively, validation involves determining how well the
-implemented algorithms and approaches are able to simulate and match a
-given set of real world problems.  For example, for a PDE-based
-simulation code, verification involves determining if the implemented
-algorithms can solve various PDEs equations sets to sufficient
-accuracy while validation determines how well the chosen PDEs can
-simulate observed behavior in some physical system.  From the
-standpoint of V\&V, Trilinos developers are responsible for
-fundamental ``code verification'' and perhaps much of the structure
-needed for doing ``solution verification''
-{}\cite{SEVVIntersections05}.  However, the end-user application
-developers must shoulder the responsibility for performing all
-validation.
-
 
 %
 \section{Comparison to a Typical CSE Lifecycle Model}
