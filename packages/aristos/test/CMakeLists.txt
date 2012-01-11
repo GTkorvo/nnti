@@ -1,12 +1,12 @@
 
-INCLUDE(PackageAddExecutableAndTest)
+INCLUDE(TribitsAddExecutableAndTest)
 
 
-PACKAGE_ADD_EXECUTABLE_AND_TEST(
+TRIBITS_ADD_EXECUTABLE_AND_TEST(
   testStatusTest
   SOURCES
     testStatusTest.cpp
-    ${TRILINOS_HOME_DIR}/packages/teuchos/test/UnitTest/Teuchos_StandardUnitTestMain.cpp
+    ${TEUCHOS_STD_UNIT_TEST_MAIN}
   NUM_MPI_PROCS 1
   STANDARD_PASS_OUTPUT
   )

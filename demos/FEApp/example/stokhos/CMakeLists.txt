@@ -1,11 +1,11 @@
 
-INCLUDE(PackageAddExecutableAndTest)
+INCLUDE(TribitsAddExecutableAndTest)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 IF(Stokhos_ENABLE_ML)
 
-  PACKAGE_ADD_EXECUTABLE_AND_TEST(
+  TRIBITS_ADD_EXECUTABLE_AND_TEST(
     Linear_Diffusion_PCE_Example
     SOURCES linear_diffusion_pce.cpp
     COMM serial mpi

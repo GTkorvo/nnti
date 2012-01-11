@@ -1,12 +1,12 @@
 
-INCLUDE(PackageLibraryMacros)
-INCLUDE(PackageAddExecutable)
+INCLUDE(TribitsLibraryMacros)
+INCLUDE(TribitsAddExecutable)
 
 #
 # A) Package-specific configuration options
 #
 
-PACKAGE_CONFIGURE_FILE(${PACKAGE_NAME}_config.h)
+TRIBITS_CONFIGURE_FILE(${PACKAGE_NAME}_config.h)
 
 #
 # B) Define the header and source files (and directories)
@@ -41,6 +41,7 @@ SET(SOURCES ${SOURCES}
   RBGen_Params.cpp
   )
 
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Epetra)
 IF(${PACKAGE_NAME}_ENABLE_Epetra)
 
   SET(HEADERS
@@ -67,6 +68,7 @@ IF(${PACKAGE_NAME}_ENABLE_Epetra)
 
 ENDIF()
 
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_EpetraExt)
 IF(${PACKAGE_NAME}_ENABLE_EpetraExt)
 
   SET(HEADERS
@@ -83,6 +85,7 @@ IF(${PACKAGE_NAME}_ENABLE_EpetraExt)
 
 ENDIF()
 
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Anasazi)
 IF(${PACKAGE_NAME}_ENABLE_Anasazi)
 
   SET(HEADERS
@@ -123,7 +126,7 @@ ENDIF()
 # C) Define the targets for package's library(s)
 #
 
-PACKAGE_ADD_LIBRARY(
+TRIBITS_ADD_LIBRARY(
   rbgen
   HEADERS ${HEADERS}
   SOURCES ${SOURCES}
@@ -133,8 +136,10 @@ PACKAGE_ADD_LIBRARY(
 # D) Define the targets for a driver
 #
 
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Epetra)
 IF(${PACKAGE_NAME}_ENABLE_Epetra)
 
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_EpetraExt)
 IF(${PACKAGE_NAME}_ENABLE_EpetraExt)
 
   SET(EPETRADRIVER_SOURCES
@@ -142,7 +147,7 @@ IF(${PACKAGE_NAME}_ENABLE_EpetraExt)
     RBGenDriver_EpetraMV.cpp
     )
 
-  PACKAGE_ADD_EXECUTABLE(
+  TRIBITS_ADD_EXECUTABLE(
     RBGenDriver_EpetraMV
     NOEXEPREFIX
     SOURCES ${EPETRADRIVER_SOURCES}

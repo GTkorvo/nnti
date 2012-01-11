@@ -1,13 +1,20 @@
+INCLUDE(TribitsPackageMacros)
+INCLUDE(TribitsAddOptionAndDefine)
 
-INCLUDE(PackageMacros)
-
-PACKAGE(RBGen)
+TRIBITS_PACKAGE(RBGen)
 
 SET(${PACKAGE_NAME}_VERSION "0.1d")
 
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(example)
+TRIBITS_ADD_EXAMPLE_DIRECTORIES(example)
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_DRIVERS
+  HAVE_RBGEN_DRIVERS
+  "Enable build of RBGen example drivers."
+  "${RBGen_ENABLE_EXAMPLES}" )
+
 
 # There are not tests and examples yet!
 
-PACKAGE_POSTPROCESS()
+TRIBITS_PACKAGE_POSTPROCESS()
