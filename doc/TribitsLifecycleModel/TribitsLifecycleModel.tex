@@ -1178,38 +1178,38 @@ of maintaining backward compatibility may become very large.
 
 There are two critical aspects to the implementation of regulated
 backward compatibility that must be discussed: backward compatibility
-testing, and the handling of dropping of backward compatibility.
+testing and the process of breaking backward compatibility.
 
 Within a backward compatible set X, it is not enough to simply try or
-desire to maintain backward compatibility, it must be tested.  Within a
-backward compatible set X, testing must be performed to ensure that
+desire to maintain backward compatibility, it must be tested.
+Testing must be performed to ensure that
 each subsequent version X.Y is backward compatible (to some level)
 with the previous versions X.Y-1, X.Y-2, etc.  Testing of backward
 compatibility is accomplished in Trilinos by building a suite of
 user-oriented tests for an older version of Trilinos (e.g., 12.0 or
 12.2) against the installed headers and libraries of a newer version
-of Trilinos (i.e.\ the current release 12.4 and development version
+of Trilinos (the current release 12.4 and development version
 12.5 in Figure~\ref{fig:BackwardCompatibilityTimeline}).  Note that
 backward compatibility is only actively tested for the current release
 (e.g., 12.4) and the current development version (e.g., 12.5) since
-the older releases should all be static.  For example, for the
+the older releases should all be static.  For example, in the
 scenario shown in Figure~\ref{fig:BackwardCompatibilityTimeline},
-Trilinos release 12.4 would be tested against 12.2 and 12.0 and
+Trilinos release 12.4 would be tested against 12.2 and 12.0 test suites and
 Trilinos development version 12.5 would be tested against 12.4, 12.2,
-and 12.0.  Therefore, the amount of backward compatibility testing is
+and 12.0 test suites.  Therefore, the amount of testing is
 proportional to the number of releases in a backward compatibility
-set.  If $N$ is the number of releases in the backward compatible set
-X, then $2 N-1$ backward compatibility builds must be performed on a
+set.  If $N$ is the number of releases in set
+X, then $2 N-1$ builds must be performed on a
 regular (nightly) basis.  While not perfect, this approach provides
 developers and users some assurance that backward compatibility is
 being maintained.
 
 Note that by using this testing approach, the level of confidence in
 the maintenance of backward compatibility is only as good as the quality
-of the user-oriented tests that are built and run.  This test suite
+of the user-oriented tests.  This test suite
 should likely contain the entire verification and acceptance test
 suites if possible.  The unit test suite could also be included in the
-set of tests but that might overly constrain backward compatibility
+set of tests but that might overly constrain backward compatibility,
 but on the other hand would strengthen the testing of backward
 compatibility.
 
@@ -1229,15 +1229,15 @@ Figure~\ref{fig:ThreeAppsDependingOnTrilinosReleases}.  Here new
 releases for App1 K+1, App2 M+1, and App3 J+1 are put out against
 three consecutive releases of Trilinos such that the final release
 App3 J+1 (against App2 M+1, App1 K+1 and Trilinos X+3) has the most
-recent versions of Trilinos and each of its upstream dependent Apps.
+recent versions of Trilinos, and each of its upstream dependent Apps.
 Therefore, if there are only $N$ consecutive releases of Trilinos,
 then at most only $N$ sets of nested applications can be supported in
-the most general case (e.e.\ where each upgrades the most recent
+the most general case (i.e.,\ where each upgrades to the most recent
 Trilinos release).  And this can be done without any coordination
 between the Trilinos and the downstream development teams.  If
 backward compatibility is not maintained for enough consecutive
 releases, then some amount of coordination and negation are needed
-between the Trilinos and the various App development teams.  This type
+between Trilinos and the various App development teams.  This type
 of coordination is neither desirable nor practical in many cases.
 
 \begin{figure}[p]
@@ -1270,14 +1270,13 @@ compatibility between backward compatible sets X and X+1 while easing
 the transition for downstream users and development teams.  Simply
 putting out a release that breaks backward compatibility and breaks
 user code without any warning or means to help them upgrade their code
-is irresponsible and counterproductive.  Even worse is when changes in
-backward compatibility allow user code to still build but fails in
-subtle ways which is even more unacceptable.
+is counterproductive.  Even worse is the situation where changes in
+backward compatibility allow user code to build but the code then fails in
+subtle ways at runtime.
 
 So how is the transition between backward compatible sets (e.g., from
 11.6 to 12.0) managed?  Here are some guidelines for managing the
-breaking backward compatibility when transitioning between backward
-compatible sets X and X+1:
+breaking of backward compatibility when transitioning between sets X and X+1:
 
 \begin{compactitem}
 
@@ -1367,7 +1366,7 @@ naming of a large number of templated C++ classes, it may be more
 desirable to instead wait until the last release in X is put out
 (e.g., 11.6) and then create a sed-like script to change a bunch of
 class names and file names all at once.  This sed script would be run
-on the project code base right away and all downstream software
+on the project code base right away and on the all downstream software
 projects that do Almost Continuous Integration
 {}\cite{SoftwareIntegrationforCSE09} with Trilinos.  This would also
 work well for downstream projects that do Punctuated Upgrades
@@ -1409,16 +1408,15 @@ software.  Howver, such software will be written for rapid prototyping
 purposes.
 
 The Exploratory code phase and lax practices associated with it should
-only be used for software and algorithms that have a low probability
-of success and therefore of later being considered for
-productionzation.  Otherwise, if the appraoches or aglorithms have a
-high probability of being successful and for being later
-productionized, it will be overall more productive and more efficient
-to implement the software from the very beginning as Research Stable
+only be used for software and algorithms that are not intended for product
+release.  On the other hand, if the approaches or algorithms have a
+high probability of being successful, and for later becoming products, it 
+will be more productive and more efficient
+to implement the software, from the very beginning, as Research Stable
 software as described below.  Otherwise, if the algorithms and
 appraoches in Exploratory software prove to be attractive for
-productionalization, new software should be written from scratch using
-the practicies described for Research Stable software below.
+becoming products, new software should be written from scratch using
+the practices described for Research Stable software below.
 
 
 %
@@ -1430,15 +1428,15 @@ The Research Stable stage is the initial stage for Lean/Agile
 consistent research software development.  The goal in this stage is
 to experiment with various approaches, generate credible publishable
 results, and form the foundation for the probable future
-productionization of the software.
+productization of the software.
 
 All code in this stage should be written using Test-Driven Development
-(TDD) which will yield nearly 100\% line coverage with minimal extra
+(TDD), which will yield nearly 100\% line coverage with minimal extra
 effort.  This is depicted in
 Figure~\ref{fig:ImprovementsInDevelopmentPhases} with ``Unit and
 Verification Testing'' starting at a high level and staying high.
 This level of testing might seem excessive to some not accustomed to
-the TDD software development process but even from a research
+the TDD software development process, but even from a research
 perspective, these tests can help to avoid defects that would
 otherwise taint research results.  Another important Lean/Agile
 consistent development practice is to keep the code base very clean
@@ -1447,19 +1445,21 @@ refactoring skills have been acquired, maintaining a clean code base is
 easier than crafting a messy/complex code.  This is also depicted in
 Figure~\ref{fig:ImprovementsInDevelopmentPhases} by having ``Code and
 Design Clarity'' start out high and stay fairly high.  Having a clean
-code base is also critical for just research software in order to
+code base is also critical for research software, in order to
 verify that the algorithms and approaches described in a research
 publication are indeed what are implemented in the code.  Also, as
-more journals start to require the submitting and review of source code
+more journals start to require the submission and review of source code
 and test inputs used to generate published results, strong unit and
-verification tests and a clean code base allow for a much easier
-review and greater chance of having a paper accepted.  In addition to
+verification tests, and a clean code base allow for a much easier
+review and greater chance of having a paper accepted.  
+
+In addition to
 being important from just a verifiable reproducible research
 perspective, excellent unit and verification tests and a clean and
 clear code base form a critical foundation for creating
 self-sustaining software (see
 Section~\ref{sec:self_sustaining_open_source_software}) and providing
-a foundation for possible later productionization of the code.
+a foundation for possible later productization of the code.
 
 While Lean/Agile Research Stable software needs to have high-quality
 unit \& verification testing and clean code, it need not have much of
@@ -1469,7 +1469,7 @@ just assert() and die), and it may not have any acceptance testing
 (because there are no real customers).  While addressing these issues
 is critical for high-quality production software, they are of little
 use for pure research software (that is used by only the core
-developers or very friendly and intimate users).  In addition,
+developers or very friendly users).  In addition,
 Research Stable software need not maintain any backward compatibility
 at all if there are no down-stream customers (and there should not be
 too many down-stream customers for a pure research code).  Any
@@ -1480,12 +1480,12 @@ compatible changes are made.
 Finally, Research Stable software really only needs to build and run
 successfully on the primary development platform (currently GCC 4.5+
 for Trilinos).  While this might sound like a bad way to develop
-software that is being targed for possible later productionization,
+software that is being targeted for possible later productization,
 consider that the TriBITS system automatically inserts strong options
 into every build (see Section~\ref{sec:tribts_current_state}), even
 for Exploratory and Research Stable code.  Extensive experience has
 shown that C++ code that builds clean of warnings with these strong
-compiler warning flags that has a good test suite (which Research
+compiler warning flags and has a good test suite (which Research
 Stable software does by definition) typically has few serious problems
 when porting to other platforms.  Therefore, portability to other
 platforms is not considered a concern for Research Stable software in
@@ -1501,9 +1501,9 @@ Research Stable phase when the focus of the research is on low-level
 performance.  Otherwise, the focus should be on writing clean well
 tested software.
 
-If the appraoches or algorithms being researched have a low
+If the approaches or algorithms being researched have a low
 probability of being successful, being submitted for publication, or
-being considered for later productionalization, then it may be more
+being considered for later productization, then it may be more
 efficient to develop the software as Exploratory software as described
 above.
 
@@ -1513,8 +1513,8 @@ above.
 %
 
 After the algorithms in a piece of software have been sufficiently
-proven in the Research Stable phase, the software is a candidate to
-pursue for productionization.  Since the Research Stable code already
+proven in the Research Stable phase, the software is a candidate 
+for productization.  Since the Research Stable code already
 has excellent unit and verification testing and has a clean design and
 source code, it is immediately ready to enter the Production Growth
 phase.
@@ -1547,10 +1547,10 @@ mission.  However, while a primary focus is on starting to improve the
 production quality of the software, the software can still be used for
 new research to some extent but the overhead of doing research in the
 code base will become larger and larger as the software becomes more
-productionized (and has to maintain better backward compatibility,
+productized (and has to maintain better backward compatibility,
 needs better documentation, etc.).  Continued research can be
-conducted in related subpackges to minimize the impact on the body of
-software under consideration that is beginning productionized.
+conducted in related subpackages to minimize the impact on the body of
+software under consideration that is beginning productized.
 
 In the Production Growth phase, the user-oriented elements start to
 get fleshed out, as depicted in
@@ -1564,7 +1564,7 @@ is continued and even expanded slightly to cover more boundary cases
 and other scenarios.  At the same time, the code is continually being
 refactored to keep the design simple and the code layout clean and
 understandable.  This is done while maintaining backward compatibility
-by deprecating features thereby giving downstream developers the
+by deprecating features, thereby giving downstream developers the
 chance to safely upgrade their code to keep up with the changes (see
 Section~\ref{sec:details_reg_back_compat}).
 
@@ -1581,7 +1581,7 @@ smoothing the transition for downstream customer code and developers.
 The relationship with downstream customers is greatly facilitated if
 Almost Continuous Integration {}\cite{SoftwareIntegrationforCSE09} is
 used where deprecated features are seen right away and breaks in
-backward compatibility and caught and addressed in short order.
+backward compatibility are caught and addressed quickly.
 
 As more customers are added, more platforms will need to be supported
 beyond just the single primary development platform.  Therefore, the
@@ -1589,10 +1589,10 @@ Production Growth phase will see the portability of the software
 radially increased.  Likewise, in order to entice new customers or to
 even make the software viable to other customers, space/time
 performance characteristics (including parallel scalability) will need
-to be improved.  The big danger here is that over zealous code
+to be improved.  The big danger here is that overzealous code
 optimization efforts will destroy the clean and clear structure of the
 code, which if allowed to happen, would severely increase the
-technical debt of the software and risk it long term viability as
+technical debt of the software and risk its long term viability as
 self-sustaining software.
 
 
@@ -1612,11 +1612,11 @@ refactored to maintain a clean design and structure, the design and
 code clarity will stay high as the software is maintained.
 
 In the Production Maintenance phase, a wider range of customers might
-be attracted to the code because if its greater stability (i.e.\ not
+be attracted to the code because if its greater stability (i.e.,\ not
 needing to deal with a lot of deprecated features and the subsequent
 refactorings to absorb breaks in backward compatibility).  Therefore,
 significant growth in the development of acceptance tests for new
-customers is likely to continue.  However, it would be hoped that the
+customers is likely to continue.  However, we would expect that the
 functioning and the purpose of the software will have been developed
 to the point where new functionality is handled by writing new code to
 specialize behavior and not changing existing code (e.g., the
@@ -1629,7 +1629,7 @@ regress.
 
 Software in the Production Maintenance phase may need to drop back
 down to the Production Growth phase if a significant change in
-functionality is need thereby requiring a major refactoring effort
+functionality is needed, thereby requiring a major refactoring effort
 that might require significant changes in code behavior and changes in
 backward compatibility.
 
@@ -1705,27 +1705,27 @@ are applicable to most CSE software projects:
 
 Producing self-sustaining software is a key objective when considering these
 and other important CSE software risks.  A closer look at each risk will
-further illustrate the importance of self-sustaining software. 
+further illustrate the importance of self-sustaining software.
 
 
 \textit{Developer Turnover:} Many software projects have one or
-more developers whose deep knowledge of the software seems indispensible; 
+more developers whose deep knowledge of the software seems indispensable and
 absolutely critical to the future of the project.  Clearly, this situation
 represents an enormous risk.  While losing such a developer will no doubt
 adversely affect a project, a clean design,
 clearly written code, and sufficient documentation
 will allow another developer to more easily assume the development tasks
-of the departing individual.  Further, a well-designed, complete testing
-infrastructure and sufficient
+of the departing individual.  Furthermore, a well-designed, complete testing
+infrastructure, and sufficient
 resources for exercising the suite of tests properly will allow remaining
 developers to more effectively maintain the code base after an individual
-with critcal knowledge has left the project.
+with critical knowledge has left the project.
 
-\textit{Funding Gaps:} Discontinued, decreased or inconsistent fudning is a
+\textit{Funding Gaps:} Discontinued, decreased or inconsistent funding is a
 risk that is similar in some ways to losing a key developer.  The risk
 mitigation strategy is also similar.  In this case, a clean design, clearly
-written code, sufficient documentation, and open licensing would
-allow anyone able, a user even perhaps, to assume maintenance and
+written code, sufficient documentation, and open source licensing would
+allow any able person, perhaps a user, to assume maintenance and
 development responsibilities.  Production maintenance phase
 software, which requires excellent checking for user input errors and handles
 those errors gracefully, and provides extensive documentation is positioned
@@ -1745,9 +1745,9 @@ in the case where such a source is available.  Also, self-sustaining software
 is cheaper to maintain in the long-run, increasing the chance that a smaller
 funding source may be able to meaningfully sustain the effort at some level.
 
-\textit{Third-Party Software Dependencies} When assessing third-party
+\textit{Third-Party Software Dependencies:} When assessing third-party
 software for possible use within a code base, consider whether or not the
-the thirdy-party software is itself self-sustaining.  If not, strongly
+the third-party software is itself self-sustaining.  If not, strongly
 consider either not using the software, making the dependence on the software
 optional, or have a tentative plan in place in case the dependency becomes
 problematic.  A tentative plan might include removing the dependence, replacing
@@ -1757,11 +1757,11 @@ software that is released along with the primary project code.
 
 In the case where the
 third-party code is generally reliable and self-sustaining, no action is
-required but the possiblity that the code could deteriorate in quality or cease
+required but the possibility that the code could deteriorate in quality or cease
 to be supported should be considered, in which case one of the above actions
 would need to be pursued.
 
-\textit{Programming Language Selection} We encourage teams to select only widely
+\textit{Programming Language Selection:} We encourage teams to select only widely
 available and maintained languages, except in the case where the purpose of
 the project is specifically tied to another language.  A language with a large
 body of software that depends on it is not likely to disappear.  This risk
@@ -1769,9 +1769,9 @@ should be addressed early in the design phase prior to the implementation
 phase.  Be sure to consider platforms and compilers that are not currently
 supported, but may need to be supported in the future.
 
-\textit{Algorithm Selection and Implementation} Are the limitations of the algorithms and the approaches taken
+\textit{Algorithm Selection and Implementation:} Are the limitations of the algorithms and the approaches taken
 in the software too severe (in terms of speed, robustness, or otherwise) to be
-of real use to anyone to bother with worrying about trying to productionize
+of real use to anyone to bother with worrying about trying to productize
 the software?  Again, mitigation of
 this risk starts in the design phase.  Mitigation also requires early user
 feedback.  When conducting algorithmic research, there is always the risk that
@@ -1779,15 +1779,15 @@ the resulting algorithm may not meet the needs of the customer; concentrate
 on mitigating the risk that a poor design or lack of communication leads to
 the failure of the approach, rather than on the risk inherent in research.
 
-\textit{Verification and Validation} The importance of Verification and
+\textit{Verification and Validation:} The importance of Verification and
 Validation (V\&V), and in particular the risks associated with relying heavily
-on validation while underemphasizing verification were discussed in
+on validation while under-emphasizing verification, were discussed in
 Section~\ref{sec:validation_centric_approach}.  A validation-centric
 approach does not result in self-sustaining software.
 
 Considering the example of the Trilinos project, Trilinos developers are
-responsible for fundamental ``code verification'' and much of the
-structure needed for doing ``solution verification''
+responsible for fundamental code verification and much of the
+structure needed for doing solution verification
 {}\cite{SEVVIntersections05}.  The end-user application
 developers shoulder the primary responsibility for performing validation,
 especially at scale.
@@ -1797,7 +1797,7 @@ infrastructure as described above.  Preferably with input from end users, some
 validation may be incorporated into the testing infrastructure also.
 
 Again, end user applications play a critical role in risk mitigation,
-espeically when it comes to validation.  In CSE, it can be
+especially when it comes to validation.  In CSE, it can be
 argued that the best acceptance test suite for a given piece of
 upstream numerical library or other intermediate CSE software is the
 end-user application's own verification test suite
@@ -1836,12 +1836,12 @@ metrics in a typical CSE software development process.}
 
 A typical non-Lean/Agile software development process used to develop
 CSE software (as determined by personal experience and a number of
-studies) would suggest that they have quality metrics like are shown
-in Figure~\ref{fig:TypicalNonAgileSoftwarePhases} where unit and
-verification testing and code/design clarity are low and only gets
-worse with under maintenance.  The reduction in unit testing typically
+studies) would suggest that its quality metrics are like those shown
+in Figure~\ref{fig:TypicalNonAgileSoftwarePhases}, where unit and
+verification testing and code/design clarity are low and only get
+worse under maintenance.  The reduction in unit testing typically
 occurs because as the software grows without maintaining a good
-architecture, the entangling dependencies make it more and more
+architecture, the entangling dependencies make it more
 difficult to get objects into a test harness and the developers
 invariably fall back on system level acceptance (or regression) tests.
 At the same time, as the software is modified as new functionality is
@@ -1853,26 +1853,27 @@ Note that the time-lines for user-oriented metrics for documentation,
 acceptance testing, user input validation, backward compatibility,
 portability, and performance would typically look more similar to a
 Lean/Agile method as show in
-Figure~\ref{fig:ImprovementsInDevelopmentPhases}.  The lack of typical
-CSE projects to refactor their software might actually produce higher
+Figure~\ref{fig:ImprovementsInDevelopmentPhases}.  The lack of refactoring 
+efforts in typical
+CSE projects might actually produce higher
 levels of backward compatibility than the proposed Lean/Agile
 lifecycle process being described here.  What is not shown in
 Figure~\ref{fig:ImprovementsInDevelopmentPhases}, however, is the
 added cost needed to get such a code to a higher quality state and
 maintain it as more features are added.  Also, the lower the
 design/code clarity and unit \& verification testing, the less likely
-any group outside of the original development team can maintain the
+a group outside of the original development team can maintain the
 software.
 
 Depending on software such as this represents a large risk for
 downstream customer projects since this software not self-sufficient
-and is unsustainable any but the originating organization or team that
+and is unsustainable by any but the originating organization or team that
 created the software.  The prevalence of this type of software in the
 CSE community is a major reason for the trepidation that many CSE
 groups have in taking on external software dependencies.  Most of this
 apprehension is founded on real experiences of getting burned by bad
 upstream CSE software.  The TriBITS lifecycle model is an attempt to
-reverse this tread (starting with Trilinos and then for related
+reverse this trend (starting with Trilinos and then for related
 TriBITS-based projects).
 
 
@@ -1881,12 +1882,12 @@ TriBITS-based projects).
 \label{sec:compare_with_lifecycle_1.0_model}
 %
 
-Here we discuss the similarities and differences to the originally
+Here we discuss the similarities and differences of the originally
 defined Trilinos lifecycle model {}\cite{TrilinosLifecycleModel2007}
-which we will refer to here as Trilinos lifecycle 1.0 model, and the
+(which we will refer to here as the Trilinos Lifecycle 1.0 model) and the
 new TriBITS lifecycle model described in this document.
 
-The Trilinos lifecycle 1.0 model defined three basic phases:
+The Trilinos Lifecycle 1.0 model defined three basic phases:
 
 \begin{compactitem}
 
@@ -1947,20 +1948,20 @@ The Trilinos lifecycle 1.0 model defined three basic phases:
 
 \end{compactitem}
 
-The Trilinos lifecycle 1.0 model also described specific promotional
+The Trilinos Lifecycle 1.0 model also described specific promotional
 events that require tasks such as risk analysis, gap analysis, and
 explicit promotional decisions written up as semi-formal reports.
 There is also mention of getting the team to seek more training
-perhaps and the development of new processes.  The document
+ and the development of new processes.  The document
 {}\cite{TrilinosLifecycleModel2007} mentions some set of required
 practices and processes and supporting artifacts before a package has
-been released (or get a waver from the Trilinos Project Leader).  It
+been released (or get a waiver from the Trilinos Project Leader).  It
 is said that it is only after sufficient artifacts have been approved
 that a package is eligible to go out in a Trilinos release.  Also, the
-Trilinos lifecycle 1.0 model document says that once a package is no
+Trilinos Lifecycle 1.0 model document says that once a package is no
 longer supported that it will be removed from later Trilinos releases.
 
-The biggest problem with the above described Trilinos lifecycle 1.0
+The biggest problem with the above described Trilinos Lifecycle 1.0
 model defined in {}\cite{TrilinosLifecycleModel2007} is that it is a
 theoretical model.  The model is only theoretical because, as of this
 writing, no Trilinos package has ever followed the outlined process of
@@ -1991,7 +1992,7 @@ of design/code clarity and unit and verification testing.  If this
 software is used as the direct seed for the Production Growth phase
 (which is what often happens), then there is typically such a large
 technical debt that it never gets addressed once more focused efforts
-towards productionization begin.  This is depicted in
+towards productization begin.  This is depicted in
 Figure~\ref{fig:TypicalNonAgileSoftwarePhases} by the design/code
 clarity and unit \& verification testing steadily going down as the
 software is further developed.  The reason for this is discussed in
@@ -2011,7 +2012,7 @@ if the software developed in the Research phase is completely
 scrapped, it can be duplicated using Agile development practices as
 described for Research Stable code in
 Section~\ref{sec:research_stable_code}.  Therefore, the really only
-hope for the Trilinos lifecycle 1.0 model is to completely scrap
+hope for the Trilinos Lifecycle 1.0 model is to completely scrap
 software developed in the Research phase and rewrite it from scratch
 in order to provide the seed for the Production Growth phase.
 
@@ -2046,7 +2047,7 @@ lifecycle model.  Instead, once enough of the attributes (e.g.,\
 quality of documentation, error reporting, portability, etc.) of a
 given lifecycle phase for a given package are met, a decision is made
 by someone or some group of people that the package is in the next
-stage and is then labeled as such.  The independent evidence inherit
+stage and is then labeled as such.  The independent evidence inherent
 in the software will support or refute such a claim and users can
 assess such an assignment for themselves (more on this possible
 assessment process in Section~\ref{sec:summary_next_steps} .
@@ -2106,10 +2107,10 @@ team to have it incorporated into the master sources).
 
 However, the updated Lean/Agile TriBITS lifecycle model described here
 does not totally invalidate the basic ideas in the original Trilinos
-lifecycle 1.0 model but it does require a stronger standard for
+lifecycle 1.0 model. It does require a stronger standard for
 fundamental testing and other basic Lean/Agile methods in research
 software than what is currently in place in a project like Trilinos
-(which currently really has no standards for testing given that there
+(which currently really has no standards for testing, given that there
 are released Trilinos packages with no automated tests at all and
 several other packages have no tests in either an MPI or SERIAL
 build).
@@ -2140,8 +2141,8 @@ Therefore, this lifecycle model will allow these packages to be
 classified as Research Stable, Production Growth, and Production
 Maintenance packages as long as the package developers agree, from
 this point forward, to make all further modifications to the code
-using high-quality Lean/Agile consistent practicies.  The right way to
-maintain these important packgaes going foward is to apply the Agile
+using high-quality Lean/Agile consistent practices.  The right way to
+maintain these important packages going forward is to apply the Agile
 Legacy Software Change algorithm defined in
 {}\cite{WorkingEffectivelyWithLegacyCode05} which states that for
 every change to legacy code be carried out as follows:
@@ -2149,20 +2150,20 @@ every change to legacy code be carried out as follows:
 \begin{compactenum}
 
 {}\item\textit{Indentify Change Points}: Identify the code that needs
-to change, issolate its change points and sensing points.
+to change, isolate its change points and sensing points.
 
 {}\item\textit{Break Dependencies}: Use hyper-sensitive minimal
 editing to break fundamental dependencies to allow the code being
 changed to be inserted into a unit test harness.
 
 {}\item\textit{Cover with Unit Tests}: Write new unit tests to protect
-the current functioning and behavor of the code that will be changed.
+the current functioning and behavior of the code that will be changed.
 
-{}\item\textit{Add New Functionality with TDD}: Write new initially
-failing unit tests to define the new desired behavior (or to reproduce
+{}\item\textit{Add New Functionality with TDD}: Write new, initially
+failing, unit tests to define the new desired behavior (or to reproduce
 a suspected bug) and then change the code incrementally to get the new
 unit tests to pass.  This is the test-driven development (TDD)
-appraoch.  All the time, be rebuilding and rerunning the newly defined
+approach.  All the time, be rebuilding and rerunning the newly defined
 unit tests to make sure changes don't break the existing behavior of
 the code.
 
@@ -2172,7 +2173,7 @@ provide the foundation for further likely changes.
 
 \end{compactenum}
 
-The above algorithm can be shorted as ``cover'', ``change'', and
+The above algorithm can be succinctly described as ``cover'', ``change'', and
 ``refactor''.
 
 Any existing package that will be further changed and maintained
@@ -2220,23 +2221,23 @@ the package or not.
 \label{sec:summary_next_steps}
 %
 
-There needs to be a change in the way the CSE community writes
-research-based CSE software including Trilinos software.  Much of the
-current research software is of a state where there is not enough
+We need to change the way the CSE community writes
+research-based CSE software, including Trilinos software.  Much of the
+current research software is in a state where there is not enough
 confidence in the validity of the results to even justify drawing
 conclusions in scholarly publications (there are some examples of
 where defective software gave wrong results and hurt the creation of
 knowledge in the research community
 {}\cite{ScientistsNightmareFiveRetractions2006}).  CSE development
 teams should be using TDD and need to write unit and verification
-tests even if the only purpose of the software is to do research and
-publish results.  There also needs to be some type of review of the
-software to even provide the basis for publishing results that come
+tests, even if the only purpose of the software is to do research and
+publish results.  We also need some type of review of the
+software to provide the basis for publishing results that come
 from the code (but of course the typical journal peer-review process
 will not do this).
 
 A follow-on to this document might be another document that defines an
-official assessment process for TriBITS-based (e.g.\ Trilinos)
+official assessment process for TriBITS-based (e.g.,\ Trilinos)
 packages to assign their current maturity level.  This assessment
 process would need to be performed on a regular basis through code
 reviews and the examination of various quality metrics.  Doing this
@@ -2247,46 +2248,46 @@ various metrics of software quality and then maintain scores for the
 various packages.  Some of these metrics could be filled in
 automatically (like code coverage) but most would be somewhat
 subjective and would need people to make reasonable determinations.
-The final determination of a package's (or subpackages) phase /
+The final determination of a package's (or subpackage's) phase /
 maturity level could be determined by the minimum score in a given
 category or by some other criteria.
 
-Assuming a TriBITS-based project could officially assign maturity
-levels based on well defined quality metrics, in order to be useful,
-packages would have to be explicitly tagged by their currently
-assessed lifecycle maturity level, e.g., Exploratory, Research Stable,
-Production Growth, or Production Maintenance.  This would be
-facilitated by officially tagging packages in the TriBITS CMake build
-system so that someone, for example, could enable all Production
-Maintenance code with
-{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
-PRODUCTION\_MAINTENANCE} and all software that does not achieve that
-level of maturity would be disabled.  Actually, in order to allow new
-capabilities to be constantly developed in existing packages, the
-lifecycle phase should be assigned to subpackages within a package to
-allow software of lower maturity to coexist in the same package with
-more mature software.  For example, a package labeled as Production
-Maintenance could have one subpackage at the level Production
-Maintenance but could also have another subpackage at the level
-Production Growth and another at Research Stable or even Exploratory
-maturity level.  Therefore, when a TriBITS-based project is configured
-with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
-PRODUCTION\_MAINTENANCE}, only the one Production Maintenance
-subpackage would be enabled.  However, when a TriBITS-based project
-was configured with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL
-= RESEARCH\_STABLE}, then the Production Maintenance, Production
-Growth, and the Research Stable subpackages would all be enabled.  In
-this way, users could explicitly filter software according to the
-required level of maturity before deciding what packages to depend on
-and which are not yet ready for their usage.  The utility of such a
-configure time option should be determined by polling package
-customers.  Supporting such a feature would require adding just three
-new nightly builds for the different values of
-{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL} of
-{}\ttt{RESEARCH\_STABLE}, {}\ttt{PRODUCTION\_GROWTH}, and
-{}\ttt{PRODUCTION\_MAINTENANCE} would these extra tests would only be
-needed on a single platform so would not significantly increase
-testing overhead.
+%Assuming a TriBITS-based project could officially assign maturity
+%levels based on well defined quality metrics, in order to be useful,
+%packages would have to be explicitly tagged by their currently
+%assessed lifecycle maturity level, i.e.,\ Exploratory, Research Stable,
+%Production Growth, or Production Maintenance.  This would be
+%facilitated by officially tagging packages in the TriBITS CMake build
+%system so that someone, for example, could enable all Production
+%Maintenance code with
+%{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
+%PRODUCTION\_MAINTENANCE} and all software that does not achieve that
+%level of maturity would be disabled.  Actually, in order to allow new
+%capabilities to be constantly developed in existing packages, the
+%lifecycle phase should be assigned to subpackages within a package to
+%allow software of lower maturity to coexist in the same package with
+%more mature software.  For example, a package labeled as Production
+%Maintenance could have one subpackage at the level Production
+%Maintenance but could also have another subpackage at the level
+%Production Growth and another at Research Stable or even Exploratory
+%maturity level.  Therefore, when a TriBITS-based project is configured
+%with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
+%PRODUCTION\_MAINTENANCE}, only the one Production Maintenance
+%subpackage would be enabled.  However, when a TriBITS-based project
+%was configured with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL
+%= RESEARCH\_STABLE}, then the Production Maintenance, Production
+%Growth, and the Research Stable subpackages would all be enabled.  In
+%this way, users could explicitly filter software according to the
+%required level of maturity before deciding what packages to depend on
+%and which are not yet ready for their usage.  The utility of such a
+%configure time option should be determined by polling package
+%customers.  Supporting such a feature would require adding just three
+%new nightly builds for the different values of
+%{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL} of
+%{}\ttt{RESEARCH\_STABLE}, {}\ttt{PRODUCTION\_GROWTH}, and
+%{}\ttt{PRODUCTION\_MAINTENANCE} would these extra tests would only be
+%needed on a single platform so would not significantly increase
+%testing overhead.
 
 Finally, as mentioned in Section~\ref{sec:grandfathering}, existing
 packages will necessarily need to be ``grandfathered in''.  This newly
@@ -2295,7 +2296,7 @@ develops software to develop their software in a Lean/Agile consistent
 way (i.e.\ with high unit and verification testing right from the very
 beginning with a clean code base).  There is a large cultural issue
 that will need to be addressed and this document is just a step along
-the path to get the CSE community (such as the Trilinos development
+the path to getting the CSE community (such as the Trilinos development
 community) to where it needs to be with respect to software quality in
 various projects.
 
