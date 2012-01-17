@@ -42,6 +42,18 @@ TRIBITS_COPY_FILES_TO_BINARY_DIR(copySGAnalysisTestInputFiles
   EXEDEPS SGSolve
   )
 
+IF (Piro_ENABLE_TriKota)
+  TRIBITS_ADD_EXECUTABLE(
+    Dakota
+    SOURCES FEApp_Dakota.cpp
+    COMM serial mpi
+    )
+
+  TRIBITS_COPY_FILES_TO_BINARY_DIR(copyDakotaTestInputFiles
+    DEST_FILES  input_dakota_pce_linear.xml dakota_pce_mp_linear.in
+    EXEDEPS Dakota
+    )
+ENDIF()
 
 TRIBITS_ADD_TEST(
   Solve
