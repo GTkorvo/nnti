@@ -352,10 +352,12 @@ project is never going to be followed, a discussion for the
 grandfathering of existing packages is presented in
 Section~\ref{sec:grandfathering}.  The TriBITS lifecycle model is
 summarized and next steps are given in
-Section~\ref{sec:summary_next_steps}.  Finally,
+Section~\ref{sec:summary_next_steps}.
 Appendix~\ref{sec:compare_with_lifecycle_1.0_model} compares the
 proposed TriBITS lifecycle model with the Trilinos lifecycle 1.0
-model.
+model.  Appendix~\ref{sec:implementation_in_tribits} discusses some
+details about how the TriBITS software system can help to support the
+TriBITS lifecycle model.
 
 %
 {}\section {Common Implicit Model: A Validation-Centric Approach}
@@ -2217,43 +2219,6 @@ determinations.  The final determination of a package's (or
 subpackage's) phase / maturity level could be determined by the
 minimum score in a given category or by some other criteria.
 
-%Assuming a TriBITS-based project could officially assign maturity
-%levels based on well defined quality metrics, in order to be useful,
-%packages would have to be explicitly tagged by their currently
-%assessed lifecycle maturity level, i.e.,\ Exploratory, Research Stable,
-%Production Growth, or Production Maintenance.  This would be
-%facilitated by officially tagging packages in the TriBITS CMake build
-%system so that someone, for example, could enable all Production
-%Maintenance code with
-%{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
-%PRODUCTION\_MAINTENANCE} and all software that does not achieve that
-%level of maturity would be disabled.  Actually, in order to allow new
-%capabilities to be constantly developed in existing packages, the
-%lifecycle phase should be assigned to subpackages within a package to
-%allow software of lower maturity to coexist in the same package with
-%more mature software.  For example, a package labeled as Production
-%Maintenance could have one subpackage at the level Production
-%Maintenance but could also have another subpackage at the level
-%Production Growth and another at Research Stable or even Exploratory
-%maturity level.  Therefore, when a TriBITS-based project is configured
-%with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
-%PRODUCTION\_MAINTENANCE}, only the one Production Maintenance
-%subpackage would be enabled.  However, when a TriBITS-based project
-%was configured with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL
-%= RESEARCH\_STABLE}, then the Production Maintenance, Production
-%Growth, and the Research Stable subpackages would all be enabled.  In
-%this way, users could explicitly filter software according to the
-%required level of maturity before deciding what packages to depend on
-%and which are not yet ready for their usage.  The utility of such a
-%configure time option should be determined by polling package
-%customers.  Supporting such a feature would require adding just three
-%new nightly builds for the different values of
-%{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL} of
-%{}\ttt{RESEARCH\_STABLE}, {}\ttt{PRODUCTION\_GROWTH}, and
-%{}\ttt{PRODUCTION\_MAINTENANCE} would these extra tests would only be
-%needed on a single platform so would not significantly increase
-%testing overhead.
-
 Finally, as mentioned in Section~\ref{sec:grandfathering}, existing
 packages will necessarily need to be ``grandfathered in''.  This newly
 defined TriBITS lifecycle process will not magically get everyone who
@@ -2517,6 +2482,69 @@ software than what is currently in place in a project like Trilinos
 are released Trilinos packages with no automated tests at all and
 several other packages have no tests in either an MPI or SERIAL
 build).
+
+
+%
+\section{Implementation of the Lifecycle Model in the TriBITS System}
+\label{sec:implementation_in_tribits}
+%
+
+Here, we consider some details about how the TriBITS lifecycle model
+may be implemented in the TriBITS build, integrate, and test
+software system or how the TriBITS system can better support the
+TriBITS lifecycle model.
+
+Assuming a TriBITS-based project could officially assign maturity
+levels based on well defined quality metrics, in order to be useful,
+packages and subpackges could be be explicitly tagged by their
+currently assessed lifecycle maturity level, i.e.,\ Exploratory,
+Research Stable, Production Growth, or Production Maintenance.  The
+main driver for rigorously tagging software in the different levels
+would be to separately generate quality metrics and higher levels of
+testing for coverage and memory checking, for example.  If a project
+does not have an automated and maintainable means to select software
+with different maturity levels, it will not be possible to reliably
+gather code coverage and other quality metrics.
+
+Officially tagging software in the TriBITS system would be facilitated
+by officially tagging packages and subpackges in the TriBITS CMake
+build system so that someone or something, for example the testing
+processes, could enable all Production Maintenance code with
+{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
+PRODUCTION\_MAINTENANCE} and all software that does not achieve that
+level of maturity would be disabled.  Actually, in order to allow new
+capabilities to be constantly developed in existing packages, the
+lifecycle phase should be assigned to subpackages within a package to
+allow software of lower maturity to coexist in the same package with
+more mature software.  For example, a package labeled as Production
+Maintenance could have one subpackage at the level Production
+Maintenance but could also have another subpackage at the level
+Production Growth and another at Research Stable or even Exploratory
+maturity level.  Therefore, when a TriBITS-based project is configured
+with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
+PRODUCTION\_MAINTENANCE}, only the one Production Maintenance
+subpackage would be enabled.  However, when a TriBITS-based project
+was configured with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL
+= RESEARCH\_STABLE}, then the Production Maintenance, Production
+Growth, and the Research Stable subpackages would all be enabled.  In
+this way, the testing system (or users) could explicitly filter
+software according to the required level of maturity before running
+coverage or other types of testing to generate quality metrics.
+Producing specific quality metrics (coverage, valgrind testing, etc.) 
+for each maturity level would require adding just three new nightly
+builds for the different values of
+{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL} of
+{}\ttt{RESEARCH\_STABLE}, {}\ttt{PRODUCTION\_GROWTH}, and
+{}\ttt{PRODUCTION\_MAINTENANCE} would these extra tests would only be
+needed on a single platform so would not significantly increase
+testing overhead.
+
+It is questionable how useful an option like
+{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL} would be for end
+users but it could be made available for their usage if they desired.
+For example, a given customer project might consider the maturity
+level as a factor when deciding what packages to depend on and which
+are not yet ready for their usage.
 
 
 %
