@@ -50,7 +50,7 @@ IF (Piro_ENABLE_TriKota)
     )
 
   TRIBITS_COPY_FILES_TO_BINARY_DIR(copyDakotaTestInputFiles
-    DEST_FILES  input_dakota_pce_linear.xml dakota_pce_mp_linear.in
+    DEST_FILES  input_dakota_pce_mp_linear.xml dakota_pce_mp_linear.in
     EXEDEPS Dakota
     )
 ENDIF()
