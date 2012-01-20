@@ -338,23 +338,24 @@ followed in Section~\ref{sec:regulated_backard_compatibility} with a
 detailed motivation and discussion of regulated backward
 compatibility.  With that all of that background in place, a more
 detailed prose discussion of the TriBITS lifecycle model phases is
-given in Section~\ref{sec:detained_lifecycle_stages}.  The 
-difference between and relationship of software engineering maturity
-and software usefulness maturity is the topic of
-Section~\ref{sec:usefulness_maturity_lifecycle_phases}.  The
-important topic of risk analysis and the role of acceptance testing
-is considered in Section~\ref{sec:risk_analysis_acceptance_testing}.
+given in Section~\ref{sec:detained_lifecycle_stages}.  The difference
+between and relationship of software engineering maturity and software
+usefulness maturity is the topic of
+Section~\ref{sec:usefulness_maturity_lifecycle_phases}.  The important
+topic of risk analysis and the role of acceptance testing is
+considered in Section~\ref{sec:risk_analysis_acceptance_testing}.
 This is followed by the comparison of the new TriBITS lifecycle model
-to a typical lifecycle model used by a CSE project
-and then to the Trilinos lifecycle 1.0 in
-Section~\ref{sec:compare_with_typical_CSE_model} and
-Section~\ref{sec:compare_with_lifecycle_1.0_model}, respectively.
-Since any lifecycle model that does not acknowledge the current state
-of a project is never going to be followed, a discussion for the
+to a typical lifecycle model used by a CSE project in
+Section~\ref{sec:compare_with_typical_CSE_model} .  Since any
+lifecycle model that does not acknowledge the current state of a
+project is never going to be followed, a discussion for the
 grandfathering of existing packages is presented in
-Section~\ref{sec:grandfathering}.  Finally, the TriBITS lifecycle
-model is summarized and next steps are given in
-Section~\ref{sec:summary_next_steps}.
+Section~\ref{sec:grandfathering}.  The TriBITS lifecycle model is
+summarized and next steps are given in
+Section~\ref{sec:summary_next_steps}.  Finally,
+Appendix~\ref{sec:compare_with_lifecycle_1.0_model} compares the
+proposed TriBITS lifecycle model with the Trilinos lifecycle 1.0
+model.
 
 %
 {}\section {Common Implicit Model: A Validation-Centric Approach}
@@ -1987,6 +1988,205 @@ TriBITS-based projects).
 
 
 %
+{}\section{Grandfathering of Existing Code and Unspecified Maturity}
+\label{sec:grandfathering}
+%
+
+At the time of this writing, many of the established long-released CSE
+software (e.g. Trilinos packages) don't meet the criteria for Stable
+code (not even Research Stable not to mention Production Growth)
+because they lack a sufficient level of unit and verification tests or
+the design and/or internal structure of the software is too cluttered
+to be considered self-sustaining software.  However, some of these
+established packages are hardened through extensive use by customers
+and bug fixes and they are not as actively developed and therefore,
+for certain common use-cases, are well verified (see
+Section~\ref{sec:validation_centric_approach}).  This is a typical
+way in which testing and hardening is performed in CSE and other
+domains but is not consistent with Lean/Agile and does not lead to
+self-sustaining software.  While all of this is true, we will have to
+``forgive'' this current generation of packages and grandfather them
+into the new lifecycle model.  At the same time, this code represents
+important capabilities and needs to be maintained and improved.
+Therefore, this lifecycle model will allow these packages to be
+classified as Research Stable, Production Growth, and Production
+Maintenance packages as long as the package developers agree, from
+this point forward, to make all further modifications to the code
+using high-quality Lean/Agile consistent practices.  The right way to
+maintain these important packages going forward is to apply the Agile
+Legacy Software Change algorithm defined in
+{}\cite{WorkingEffectivelyWithLegacyCode05} which states that for
+every change to legacy code be carried out as follows:
+
+\begin{compactenum}
+
+{}\item\textit{Identify Change Points}: Identify the code that needs
+to change, isolate its change points and sensing points.
+
+{}\item\textit{Break Dependencies}: Use hyper-sensitive minimal
+editing to break fundamental dependencies to allow the code being
+changed to be inserted into a unit test harness.
+
+{}\item\textit{Cover with Unit Tests}: Write new unit tests to protect
+the current functioning and behavior of the code that will be changed.
+
+{}\item\textit{Add New Functionality with TDD}: Write new, initially
+failing, unit tests to define the new desired behavior (or to reproduce
+a suspected bug) and then change the code incrementally to get the new
+unit tests to pass.  This is the test-driven development (TDD)
+approach.  All the time, be rebuilding and rerunning the newly defined
+unit tests to make sure changes don't break the existing behavior of
+the code.
+
+{}\item\textit{Refactor}: Clean up the code currently under test to
+reduce complexity, improve comprehensibility, remove duplication, and
+provide the foundation for further likely changes.
+
+\end{compactenum}
+
+The above algorithm can be succinctly described as ``cover'', ``change'', and
+``refactor''.
+
+Any existing package that will be further changed and maintained
+according to the above-defined Agile Legacy Change algorithm can be
+classified as follows:
+
+\begin{compactenum}
+
+{}\item Grandfathered Research Stable Code:
+
+{}\item Grandfathered Production Growth Code:
+
+{}\item Grandfathered Production Maintenance Code:
+
+\end{compactenum}
+
+By applying the above Agile Legacy Code change algorithm over and over
+again in small chunks over a long period of time, even the worst
+legacy software (i.e. with no tests and messy code) can slowly be
+turned into quality software that will become easier to change.  If
+grandfathered software is changed enough using the Agile Legacy Change
+process, it may eventually achieve a level of design and clarity and
+unit and verification testing that it can legitimately consider to be
+Lean/Agile consistent software and the prefix ``Grandfathered'' can be
+dropped.
+
+On the other hand, if there are package development teams of existing
+legacy software that are not committed to using the Agile Legacy
+Change process to further maintain their code (and therefore
+incrementally turn their software into self-sustaining software), then
+their packages cannot be considered to be ``grandfathered'' into this
+lifecycle model and therefore must be content to be categorized as
+Unspecified Maturity software.  In this case, the project will not
+comment in any official way at all on the quality or maturity of a
+package categorized as Unspecified Maturity.  Project software
+classified as Unspecified Maturity code requires that prospective
+customers independently examine/test/evaluate the software itself
+and/or directly communicate with the given package development teams
+in order to determine quality in order to determine if they should use
+the package or not.
+
+
+%
+{}\section{Summary and Next Steps}
+\label{sec:summary_next_steps}
+%
+
+We need to change the way the CSE community writes
+research-based CSE software, including Trilinos software.  Much of the
+current research software is in a state where there is not enough
+confidence in the validity of the results to even justify drawing
+conclusions in scholarly publications (there are some examples of
+where defective software gave wrong results and hurt the creation of
+knowledge in the research community
+{}\cite{ScientistsNightmareFiveRetractions2006}).  CSE development
+teams should be using TDD and need to write unit and verification
+tests, even if the only purpose of the software is to do research and
+publish results.  We also need some type of review of the
+software to provide the basis for publishing results that come
+from the code (but of course the typical journal peer-review process
+will not do this).
+
+A follow-on to this document might be another document that defines an
+official assessment process for TriBITS-based (e.g.,\ Trilinos)
+packages to assign their current maturity level.  This assessment
+process would need to be performed on a regular basis through code
+reviews and the examination of various quality metrics.  Doing this
+would mean defining some metrics that would then be applied in making
+these assessments. This sounds much like a CMMI assessment but this is
+something that needs to be considered.  One might just have a table of
+various metrics of software quality and then maintain scores for the
+various packages.  Some of these metrics could be filled in
+automatically (like code coverage) but most would be somewhat
+subjective and would need people to make reasonable determinations.
+The final determination of a package's (or subpackage's) phase /
+maturity level could be determined by the minimum score in a given
+category or by some other criteria.
+
+%Assuming a TriBITS-based project could officially assign maturity
+%levels based on well defined quality metrics, in order to be useful,
+%packages would have to be explicitly tagged by their currently
+%assessed lifecycle maturity level, i.e.,\ Exploratory, Research Stable,
+%Production Growth, or Production Maintenance.  This would be
+%facilitated by officially tagging packages in the TriBITS CMake build
+%system so that someone, for example, could enable all Production
+%Maintenance code with
+%{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
+%PRODUCTION\_MAINTENANCE} and all software that does not achieve that
+%level of maturity would be disabled.  Actually, in order to allow new
+%capabilities to be constantly developed in existing packages, the
+%lifecycle phase should be assigned to subpackages within a package to
+%allow software of lower maturity to coexist in the same package with
+%more mature software.  For example, a package labeled as Production
+%Maintenance could have one subpackage at the level Production
+%Maintenance but could also have another subpackage at the level
+%Production Growth and another at Research Stable or even Exploratory
+%maturity level.  Therefore, when a TriBITS-based project is configured
+%with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
+%PRODUCTION\_MAINTENANCE}, only the one Production Maintenance
+%subpackage would be enabled.  However, when a TriBITS-based project
+%was configured with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL
+%= RESEARCH\_STABLE}, then the Production Maintenance, Production
+%Growth, and the Research Stable subpackages would all be enabled.  In
+%this way, users could explicitly filter software according to the
+%required level of maturity before deciding what packages to depend on
+%and which are not yet ready for their usage.  The utility of such a
+%configure time option should be determined by polling package
+%customers.  Supporting such a feature would require adding just three
+%new nightly builds for the different values of
+%{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL} of
+%{}\ttt{RESEARCH\_STABLE}, {}\ttt{PRODUCTION\_GROWTH}, and
+%{}\ttt{PRODUCTION\_MAINTENANCE} would these extra tests would only be
+%needed on a single platform so would not significantly increase
+%testing overhead.
+
+Finally, as mentioned in Section~\ref{sec:grandfathering}, existing
+packages will necessarily need to be ``grandfathered in''.  This newly
+defined TriBITS lifecycle process will not magically get everyone who
+develops software to develop their software in a Lean/Agile consistent
+way (i.e.\ with high unit and verification testing right from the very
+beginning with a clean code base).  There is a large cultural issue
+that will need to be addressed and this document is just a step along
+the path to getting the CSE community (such as the Trilinos development
+community) to where it needs to be with respect to software quality in
+various projects.
+
+
+% ---------------------------------------------------------------------- %
+% References
+%
+\clearpage
+\bibliographystyle{plain}
+\bibliography{references}
+\addcontentsline{toc}{section}{References}
+
+% ---------------------------------------------------------------------- %
+% Appendices should be stand-alone for SAND reports. If there is only
+% one appendix, put \setcounter{secnumdepth}{0} after \appendix
+
+\appendix
+
+%
 \section{Comparison to the Trilinos Lifecycle Model 1.0}
 \label{sec:compare_with_lifecycle_1.0_model}
 %
@@ -2224,205 +2424,6 @@ are released Trilinos packages with no automated tests at all and
 several other packages have no tests in either an MPI or SERIAL
 build).
 
-
-%
-{}\section{Grandfathering of Existing Code and Unspecified Maturity}
-\label{sec:grandfathering}
-%
-
-At the time of this writing, many of the established long-released CSE
-software (e.g. Trilinos packages) don't meet the criteria for Stable
-code (not even Research Stable not to mention Production Growth)
-because they lack a sufficient level of unit and verification tests or
-the design and/or internal structure of the software is too cluttered
-to be considered self-sustaining software.  However, some of these
-established packages are hardened through extensive use by customers
-and bug fixes and they are not as actively developed and therefore,
-for certain common use-cases, are well verified (see
-Section~\ref{sec:validation_centric_approach}).  This is a typical
-way in which testing and hardening is performed in CSE and other
-domains but is not consistent with Lean/Agile and does not lead to
-self-sustaining software.  While all of this is true, we will have to
-``forgive'' this current generation of packages and grandfather them
-into the new lifecycle model.  At the same time, this code represents
-important capabilities and needs to be maintained and improved.
-Therefore, this lifecycle model will allow these packages to be
-classified as Research Stable, Production Growth, and Production
-Maintenance packages as long as the package developers agree, from
-this point forward, to make all further modifications to the code
-using high-quality Lean/Agile consistent practices.  The right way to
-maintain these important packages going forward is to apply the Agile
-Legacy Software Change algorithm defined in
-{}\cite{WorkingEffectivelyWithLegacyCode05} which states that for
-every change to legacy code be carried out as follows:
-
-\begin{compactenum}
-
-{}\item\textit{Identify Change Points}: Identify the code that needs
-to change, isolate its change points and sensing points.
-
-{}\item\textit{Break Dependencies}: Use hyper-sensitive minimal
-editing to break fundamental dependencies to allow the code being
-changed to be inserted into a unit test harness.
-
-{}\item\textit{Cover with Unit Tests}: Write new unit tests to protect
-the current functioning and behavior of the code that will be changed.
-
-{}\item\textit{Add New Functionality with TDD}: Write new, initially
-failing, unit tests to define the new desired behavior (or to reproduce
-a suspected bug) and then change the code incrementally to get the new
-unit tests to pass.  This is the test-driven development (TDD)
-approach.  All the time, be rebuilding and rerunning the newly defined
-unit tests to make sure changes don't break the existing behavior of
-the code.
-
-{}\item\textit{Refactor}: Clean up the code currently under test to
-reduce complexity, improve comprehensibility, remove duplication, and
-provide the foundation for further likely changes.
-
-\end{compactenum}
-
-The above algorithm can be succinctly described as ``cover'', ``change'', and
-``refactor''.
-
-Any existing package that will be further changed and maintained
-according to the above-defined Agile Legacy Change algorithm can be
-classified as follows:
-
-\begin{compactenum}
-
-{}\item Grandfathered Research Stable Code:
-
-{}\item Grandfathered Production Growth Code:
-
-{}\item Grandfathered Production Maintenance Code:
-
-\end{compactenum}
-
-By applying the above Agile Legacy Code change algorithm over and over
-again in small chunks over a long period of time, even the worst
-legacy software (i.e. with no tests and messy code) can slowly be
-turned into quality software that will become easier to change.  If
-grandfathered software is changed enough using the Agile Legacy Change
-process, it may eventually achieve a level of design and clarity and
-unit and verification testing that it can legitimately consider to be
-Lean/Agile consistent software and the prefix ``Grandfathered'' can be
-dropped.
-
-On the other hand, if there are package development teams of existing
-legacy software that are not committed to using the Agile Legacy
-Change process to further maintain their code (and therefore
-incrementally turn their software into self-sustaining software), then
-their packages cannot be considered to be ``grandfathered'' into this
-lifecycle model and therefore must be content to be categorized as
-Unspecified Maturity software.  In this case, the project will not
-comment in any official way at all on the quality or maturity of a
-package categorized as Unspecified Maturity.  Project software
-classified as Unspecified Maturity code requires that prospective
-customers independently examine/test/evaluate the software itself
-and/or directly communicate with the given package development teams
-in order to determine quality in order to determine if they should use
-the package or not.
-
-
-%
-{}\section{Summary and Next Steps}
-\label{sec:summary_next_steps}
-%
-
-We need to change the way the CSE community writes
-research-based CSE software, including Trilinos software.  Much of the
-current research software is in a state where there is not enough
-confidence in the validity of the results to even justify drawing
-conclusions in scholarly publications (there are some examples of
-where defective software gave wrong results and hurt the creation of
-knowledge in the research community
-{}\cite{ScientistsNightmareFiveRetractions2006}).  CSE development
-teams should be using TDD and need to write unit and verification
-tests, even if the only purpose of the software is to do research and
-publish results.  We also need some type of review of the
-software to provide the basis for publishing results that come
-from the code (but of course the typical journal peer-review process
-will not do this).
-
-A follow-on to this document might be another document that defines an
-official assessment process for TriBITS-based (e.g.,\ Trilinos)
-packages to assign their current maturity level.  This assessment
-process would need to be performed on a regular basis through code
-reviews and the examination of various quality metrics.  Doing this
-would mean defining some metrics that would then be applied in making
-these assessments. This sounds much like a CMMI assessment but this is
-something that needs to be considered.  One might just have a table of
-various metrics of software quality and then maintain scores for the
-various packages.  Some of these metrics could be filled in
-automatically (like code coverage) but most would be somewhat
-subjective and would need people to make reasonable determinations.
-The final determination of a package's (or subpackage's) phase /
-maturity level could be determined by the minimum score in a given
-category or by some other criteria.
-
-%Assuming a TriBITS-based project could officially assign maturity
-%levels based on well defined quality metrics, in order to be useful,
-%packages would have to be explicitly tagged by their currently
-%assessed lifecycle maturity level, i.e.,\ Exploratory, Research Stable,
-%Production Growth, or Production Maintenance.  This would be
-%facilitated by officially tagging packages in the TriBITS CMake build
-%system so that someone, for example, could enable all Production
-%Maintenance code with
-%{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
-%PRODUCTION\_MAINTENANCE} and all software that does not achieve that
-%level of maturity would be disabled.  Actually, in order to allow new
-%capabilities to be constantly developed in existing packages, the
-%lifecycle phase should be assigned to subpackages within a package to
-%allow software of lower maturity to coexist in the same package with
-%more mature software.  For example, a package labeled as Production
-%Maintenance could have one subpackage at the level Production
-%Maintenance but could also have another subpackage at the level
-%Production Growth and another at Research Stable or even Exploratory
-%maturity level.  Therefore, when a TriBITS-based project is configured
-%with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL =
-%PRODUCTION\_MAINTENANCE}, only the one Production Maintenance
-%subpackage would be enabled.  However, when a TriBITS-based project
-%was configured with {}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL
-%= RESEARCH\_STABLE}, then the Production Maintenance, Production
-%Growth, and the Research Stable subpackages would all be enabled.  In
-%this way, users could explicitly filter software according to the
-%required level of maturity before deciding what packages to depend on
-%and which are not yet ready for their usage.  The utility of such a
-%configure time option should be determined by polling package
-%customers.  Supporting such a feature would require adding just three
-%new nightly builds for the different values of
-%{}\ttt{<PROJECT>\_ENABLE\_MINIMUM\_MATURITY\_LEVEL} of
-%{}\ttt{RESEARCH\_STABLE}, {}\ttt{PRODUCTION\_GROWTH}, and
-%{}\ttt{PRODUCTION\_MAINTENANCE} would these extra tests would only be
-%needed on a single platform so would not significantly increase
-%testing overhead.
-
-Finally, as mentioned in Section~\ref{sec:grandfathering}, existing
-packages will necessarily need to be ``grandfathered in''.  This newly
-defined TriBITS lifecycle process will not magically get everyone who
-develops software to develop their software in a Lean/Agile consistent
-way (i.e.\ with high unit and verification testing right from the very
-beginning with a clean code base).  There is a large cultural issue
-that will need to be addressed and this document is just a step along
-the path to getting the CSE community (such as the Trilinos development
-community) to where it needs to be with respect to software quality in
-various projects.
-
-
-% ---------------------------------------------------------------------- %
-% References
-%
-\clearpage
-\bibliographystyle{plain}
-\bibliography{references}
-\addcontentsline{toc}{section}{References}
-
-% ---------------------------------------------------------------------- %
-% Appendices should be stand-alone for SAND reports. If there is only
-% one appendix, put \setcounter{secnumdepth}{0} after \appendix
-%
-%\appendix
 
 %
 % Glossary
