@@ -59,7 +59,7 @@ Albuquerque NM 87185 USA, \\ }
 % Set some things we need for SAND reports. These are mandatory
 %
 \SANDnum{SAND2012-XXXX}
-\SANDprintDate{January ???}
+\SANDprintDate{January ???, 2012}
 \SANDauthor{
 Roscoe A. Bartlett \\ Mike Heroux \\ Jim Willenbring }
 
@@ -614,9 +614,10 @@ manner.
 
 {}\item Strong unit and verification tests (i.e.\ proof of
 correctness) are written as the code/algorithms are being developed
-(should have almost 100\% line coverage at the very least).  This has
-a much larger initial cost and is a big change in typical programmer
-behavior.
+(near 100\% line coverage).  This does not necessarily need to have a
+much higher initial cost (see side-note on
+Page~\pageref{levels_of_unit_testing}) but it may be big change for a
+typical programmer.
 
 {}\item Could be treated as PS or SS code with respect to testing.
 
@@ -1056,8 +1057,6 @@ composability of software through releases, some backward
 compatibility is critical to allow for different collections of
 software to be integrated.
 
-{}\textbf{RAB: Finished editing to here, 1/20/2012}
-
 To demonstrate the critical need for backward compatibility for
 allowing the composability of software, consider the scenario shown in
 Figure~\ref{fig:XyceSierraVtkTrilinosCompatibility}.  This scenario
@@ -1094,9 +1093,9 @@ simple change in the runtime environment}.
 %}
 \caption{
 The need for backward compatibility among multiple releases of
-Trilinos and customer applications: If Trilinos X, X+1 and Y+1 have no
-common compatible core, there is no version of Trilinos that can
-provide the necessary functionality for these three composed
+Trilinos and customer applications: If Trilinos X, X+1 and SIERRA Y+1
+have no common compatible core, there is no version of Trilinos that
+can provide the necessary functionality for these three composed
 applications.}
 \label{fig:XyceSierraVtkTrilinosCompatibility}
 \end{center}
@@ -1169,6 +1168,7 @@ eventually make the software unable to continue to be changed from a
 cost/benefit point of view.  In other words, the code will become
 unsustainable (i.e.,\ not self-sustaining) software.
 
+
 %
 {}\subsection{Regulated Backward Compatibility: Defined}
 \label{sec:defined_reg_back_compat}
@@ -1186,8 +1186,9 @@ to avoid the accumulation of technical debt and extra testing related
 to maintaining backward compatibility.
 
 The TriBITS approach for implementing regulated backward compatibility
-is inherent in the optional TriBITS version numbering scheme
-{}\textbf{X.Y.X} where
+is inherent in the TriBITS version numbering scheme
+{}\textbf{X.Y.X}\footnote{The version numbering scheme X.Y.Z is
+optional when using the TriBITS build system.} where
 %
 \begin{compactitem}
 %
@@ -1210,8 +1211,8 @@ X+1 (e.g., 11.6 to 12.0 releases).  Once the last major release in the
 set X.Y is branched (e.g., 11.6), then the version of the development
 sources are immediately changed to X+1.0 (e.g., 12.0) instead of X.Y+1
 or X+1.-1.  This convention allows downstream customer codes to use
-ifdef logic based the unsigned integer version number in the
-{}\ttt{<PROJECT>\_version.h} (e.g.,\ {}\ttt{Trilinos\_version.h}) file to
+ifdef logic based the unsigned integer version number in the file
+{}\ttt{<PROJECT>\_version.h} (e.g.,\ {}\ttt{Trilinos\_version.h}) to
 show the major switch in backward compatibility sets for those that
 are building against the development version of Trilinos, yet does
 not require support for negative version numbers.
@@ -1223,7 +1224,11 @@ not require support for negative version numbers.
 The numbers Y and Z use even numbers for releases and odd numbers for
 development versions between releases
 %\todo[inline]{We don't use this process with Z?}.
-This release number X.Y.Z is given in integer form in macros in the
+% RAB: Just because Trilinos is not using even/odd for Z does not mean
+% that it should not.  Someone could as a new function or class in 
+% a minor release and clients should be allowed to version when that
+% is done.
+The release number X.Y.Z is given in integer form in macros in the
 configured header file {}\ttt{<PROJECT>\_version.h} (e.g.\
 {}\ttt{Trilinos\_version.h}).  This numbering scheme X.Y.Z with
 even/odd numbers allows client code to manage different versions of
@@ -1251,20 +1256,21 @@ how this transition to the next backward compatible set is handled.
 \end{center}
 \end{figure}
 
-With this approach, the balance between preserving backward
-compatibility and controlling its cost is managed by how many releases X.Y are in a
-backward compatible set X.  Let $N$ be the number of releases X.Y in
-the backward compatible set X.  If $N$ is smaller, then less effort is
-expended on maintaining backward compatibility but there may be
-more problems with customer upgrades.  For example, if Trilinos only
-had two major releases X.0 and X.2 in a backward compatible set X, it
-would be difficult to accommodate a usage scenario with three
-dependent customer application codes as shown in
-Figure~\ref{fig:XyceSierraVtkTrilinosCompatibility}.  Alternatively,
-if $N$ is high then backward compatibility is maintained for long
-periods of time over many releases.  This enables a number of usage
-and integration scenarios for downstream customer codes but the cost
-of maintaining backward compatibility may become very large.
+With this approach, the trade-off between preserving backward
+compatibility verses controlling the cost of backward compatibility is
+managed by how many releases X.Y are in a backward compatible set X.
+Let $N$ be the number of releases X.Y in the backward compatible set
+X.  If $N$ is small, then less effort is expended on maintaining
+backward compatibility but there may be more problems with customer
+upgrades.  For example, if Trilinos only had two major releases X.0
+and X.2 in a backward compatible set X, it would be difficult to
+accommodate a usage scenario with three dependent customer application
+codes as shown in Figure~\ref{fig:XyceSierraVtkTrilinosCompatibility}.
+Alternatively, if $N$ is large then backward compatibility is
+maintained for long periods of time over many releases.  This enables
+a greater number of usage and integration scenarios for downstream
+customer codes but the cost of maintaining backward compatibility may
+become very large.
 
 
 %
@@ -1272,33 +1278,34 @@ of maintaining backward compatibility may become very large.
 \label{sec:details_reg_back_compat}
 %
 
-There are two critical aspects to the implementation of regulated
-backward compatibility that must be discussed: backward compatibility
-testing and the process of breaking backward compatibility.
+There are two critical aspects related to the implementation of
+regulated backward compatibility that must be discussed: backward
+compatibility testing, and the process of breaking backward
+compatibility.
 
 Within a backward compatible set X, it is not enough to simply try or
-desire to maintain backward compatibility, it must be tested.
-Testing must be performed to ensure that
-each subsequent version X.Y is backward compatible (to some level)
-with the previous versions X.Y-1, X.Y-2, etc.  Testing of backward
-compatibility is accomplished in Trilinos by building a suite of
-user-oriented tests for an older version of Trilinos (e.g., 12.0 or
-12.2) against the installed headers and libraries of a newer version
-of Trilinos (the current release 12.4 and development version
-12.5 in Figure~\ref{fig:BackwardCompatibilityTimeline}).  Note that
-backward compatibility is only actively tested for the current release
-(e.g., 12.4) and the current development version (e.g., 12.5) since
-the older releases should all be static.  For example, in the
-scenario shown in Figure~\ref{fig:BackwardCompatibilityTimeline},
-Trilinos release 12.4 would be tested against 12.2 and 12.0 test suites and
-Trilinos development version 12.5 would be tested against 12.4, 12.2,
-and 12.0 test suites.  Therefore, the amount of testing is
-proportional to the number of releases in a backward compatibility
-set.  If $N$ is the number of releases in set
-X, then $2 N-1$ builds must be performed on a
-regular (nightly) basis.  While not perfect, this approach provides
-developers and users some assurance that backward compatibility is
-being maintained.
+desire to maintain backward compatibility, it must be tested.  Testing
+must be performed to ensure that each subsequent version X.Y is
+backward compatible (to some level) with the previous versions X.Y-1,
+X.Y-2, etc.  Testing of backward compatibility is accomplished in
+Trilinos by building a suite of user-oriented tests for an older
+version of Trilinos (e.g., 12.0 or 12.2) against the installed headers
+and libraries of a newer version of Trilinos (the current release 12.4
+and development version 12.5 in
+Figure~\ref{fig:BackwardCompatibilityTimeline}).  Note that backward
+compatibility is only actively tested for the current release (e.g.,
+12.4) and the current development version (e.g., 12.5) since the older
+releases should all be static.  For example, in the scenario shown in
+Figure~\ref{fig:BackwardCompatibilityTimeline}, Trilinos release 12.4
+would be tested against 12.2 and 12.0 test suites and Trilinos
+development version 12.5 would be tested against 12.4, 12.2, and 12.0
+test suites.  Therefore, the amount of backward compatibility testing
+needed scales just linearly with the number of releases in a backward
+compatibility set X.  If $N$ is the number of releases in set X, then
+$2 N-1$ backward compatibility builds must be performed on a regular
+(nightly) basis.  While not perfect, this approach provides developers
+and users some assurance that backward compatibility is being
+maintained.
 
 Note that by using this testing approach, the level of confidence in
 the maintenance of backward compatibility is only as good as the quality
@@ -1309,12 +1316,12 @@ set of tests but that might overly constrain backward compatibility,
 but on the other hand would strengthen the testing of backward
 compatibility.
 
-Note that the number of backward compatible releases determines how
-many nested collections downstream of software can be kept integrated,
-assuming they use the Punctuated Releases approach to software
-integration {}\cite{SoftwareIntegrationforCSE09} where each
-application software just builds against a static release of Trilinos
-and other external software.
+Note that the number of backward compatible releases in the set X
+determines how many nested collections of downstream software can be
+kept integrated, assuming they use the Punctuated Releases approach to
+software integration {}\cite{SoftwareIntegrationforCSE09} where each
+application software just builds against a static release of the
+upstream package and other external software.
 
 For example, if Trilinos provides backward compatibility for three
 contiguous releases, it allows for up to three nested client
@@ -1328,13 +1335,14 @@ App3 J+1 (against App2 M+1, App1 K+1 and Trilinos X+3) has the most
 recent versions of Trilinos, and each of its upstream dependent Apps.
 Therefore, if there are only $N$ consecutive releases of Trilinos,
 then at most only $N$ sets of nested applications can be supported in
-the most general case (i.e.,\ where each upgrades to the most recent
-Trilinos release).  And this can be done without any coordination
-between the Trilinos and the downstream development teams.  If
-backward compatibility is not maintained for enough consecutive
-releases, then some amount of coordination and negation are needed
-between Trilinos and the various App development teams.  This type
-of coordination is neither desirable nor practical in many cases.
+the most general case (i.e.,\ where each App upgrades to the most
+recent Trilinos release currently available).  And this can be done
+without any coordination between the Trilinos and the downstream
+development teams.  If backward compatibility is not maintained for
+enough consecutive releases, then some amount of coordination and
+negation are needed between Trilinos and the various App development
+teams.  This type of coordination is neither desirable nor practical
+in many cases.
 
 \begin{figure}[p]
 \begin{center}
@@ -1387,13 +1395,15 @@ to perform smooth transitions to new functionality before backward
 compatibility is dropped.
 
 {}\item\textit{Fail big and hard when backward compatibility is
-dropped}: When breaking backward compatibility, client code should
-break in an obvious way.  Ideally, non-upgraded client code should not
-even compile and the compile errors should be as obvious as possible.
-If compile errors are not possible, link-time errors would be the next
-best alternative.  If compile or link errors are not possible, then
-run-time errors should be generated with good error messages helping
-the user to know what needs to be changed.
+dropped}: When breaking backward compatibility, client code yet to be
+upgraded should break in an obvious way.  Ideally, non-upgraded client
+code should not even compile and the compile errors should be as
+obvious as possible.  If compile errors are not possible, link-time
+errors would be the next best alternative.  If compile or link errors
+are not possible, then run-time errors should be generated with good
+error messages helping the user to know what needs to be changed.
+Simply letting non-upgraded client code compile, run, and fail at
+runtime in non-obvious ways should be avoided if at all possible.
 
 {}\item\textit{Provide for safe straightforward upgrades}: When
 breaking backward compatibility, try to provide the user an easy and
@@ -1427,7 +1437,7 @@ this are more problematic.
 macro defines}: When changing the names of classes, keep the old names
 using safe deprecated typedefs for non-templated classes.  However,
 for templated classes, C++98 does not allow the use of typedefs and
-therefore macros defines must be used to keep the old class names in a
+therefore macro defines must be used to keep the old class names in a
 way that works with templates.  These macros, however, cannot be
 deprecated (but the old deprecated header file they are in can be, see
 below).
@@ -1457,17 +1467,17 @@ provided sed-like scripts), and then transition to X+1.0 with no
 further changes.  While this is the safest and most attractive
 approach for dealing with backward compatibility for downstream users
 and developers, there are some types of changes that are very hard to
-manage in this way.  For example, if it is desired to change the
-naming of a large number of templated C++ classes, it may be more
-desirable to instead wait until the last release in X is put out
-(e.g., 11.6) and then create a sed-like script to change a bunch of
-class names and file names all at once.  This sed script would be run
-on the project code base right away and on the all downstream software
-projects that do Almost Continuous Integration
-{}\cite{SoftwareIntegrationforCSE09} with Trilinos.  This would also
-work well for downstream projects that do Punctuated Upgrades
-{}\cite{SoftwareIntegrationforCSE09} of Trilinos releases.  As soon as
-they transitioned to Trilinos 12.0, for instance, they would run the
+manage in this way.  For example, if it is desired to change the names
+of a large number of templated C++ classes, it may be more desirable
+to instead wait until the last release in X is put out (e.g., 11.6)
+and then create a sed-like script to change a bunch of class names and
+file names all at once.  This sed script would be run on the project
+code base right away and on the all downstream software projects that
+do Almost Continuous Integration {}\cite{SoftwareIntegrationforCSE09}
+with the TriBITS project.  This would also work well for downstream
+projects that do Punctuated Upgrades
+{}\cite{SoftwareIntegrationforCSE09} for releases.  As soon as they
+transitioned to Trilinos 12.0, for instance, they would run the
 provided sed-like upgrade scripts and be done (except for perhaps a
 little manual cleanup).  However, downstream customer codes that do
 Release and Dev Daily Integration {}\cite{SoftwareIntegrationforCSE09}
@@ -1500,19 +1510,19 @@ been developed in a Lean/Agile consistent way and is not an
 appropriate direct foundation for later development of
 production-quality software.  For example, software with very low
 coverage of testing can likely not be considered to be Research Stable
-software.  Hoover, such software will be written for rapid prototyping
-purposes.
+software.  However, such software will be written for rapid
+prototyping purposes.
 
 The Exploratory code phase and lax practices associated with it should
-only be used for software and algorithms that are not intended for product
-release.  On the other hand, if the approaches or algorithms have a
-high probability of being successful, and for later becoming products, it 
-will be more productive and more efficient
-to implement the software, from the very beginning, as Research Stable
-software as described below.  Otherwise, if the algorithms and
-approaches in Exploratory software prove to be attractive for
-becoming products, new software should be written from scratch using
-the practices described for Research Stable software below.
+only be used for software and algorithms that are not intended for
+product release.  On the other hand, if the approaches or algorithms
+have a high probability of being successful, and for later becoming
+products, it will be more productive and more efficient to implement
+the software, from the very beginning, as Research Stable software as
+described below.  Otherwise, if the algorithms and approaches in
+Exploratory software prove to be attractive for becoming products, new
+software should be written from scratch using the practices described
+below for Research Stable software.
 
 
 %
@@ -1530,62 +1540,112 @@ All code in this stage should be written using Test-Driven Development
 (TDD), which will yield nearly 100\% line coverage with minimal extra
 effort.  This is depicted in
 Figure~\ref{fig:ImprovementsInDevelopmentPhases} with ``Unit and
-Verification Testing'' starting at a high level and staying high.
-This level of testing might seem excessive to some not accustomed to
-the TDD software development process, but even from a research
-perspective, these tests can help to avoid defects that would
-otherwise taint research results.  Another important Lean/Agile
-consistent development practice is to keep the code base very clean
-and clear, avoiding unnecessary complexity.  Once good design and
-refactoring skills have been acquired, maintaining a clean code base is
-easier than crafting a messy/complex code.  This is also depicted in
+Verification Testing'' starting at relatively high level and staying
+high.  This level of testing might seem excessive to some not
+accustomed to the TDD software development process, but even from a
+research perspective, these tests can help to avoid defects that would
+otherwise taint research results.  (However, see the side-note on
+Page~\pageref{levels_of_unit_testing} for a discussion of lower-cost
+quick-and-dirty initial ``unit tests''.)  Another important Lean/Agile
+development practice is to keep the code base very clean and clear,
+avoiding unnecessary complexity.  Once good design and refactoring
+skills have been acquired, maintaining a clean code base is easier
+than crafting a messy/complex code.  This is also depicted in
 Figure~\ref{fig:ImprovementsInDevelopmentPhases} by having ``Code and
 Design Clarity'' start out high and stay fairly high.  Having a clean
-code base is also critical for research software, in order to
-verify that the algorithms and approaches described in a research
-publication are indeed what are implemented in the code.  Also, as
-more journals start to require the submission and review of source code
-and test inputs used to generate published results, strong unit and
+code base is also critical for research software, in order to verify
+that the algorithms and approaches described in a research publication
+are indeed what are implemented in the code.  Also, as more journals
+start to require the submission and review of source code and test
+inputs used to generate published results, strong unit and
 verification tests, and a clean code base allow for a much easier
-review and greater chance of having a paper accepted.  
+review and greater chance of having a paper accepted.
 
-In addition to
-being important from just a verifiable reproducible research
-perspective, excellent unit and verification tests and a clean and
-clear code base form a critical foundation for creating
+\begin{figure}
+\begin{center}
+\fbox{
+\begin{minipage}[b]{\textwidth}
+{}\textbf{Side Note:} {}\textit{Levels of ``unit testing'' and
+lifecycle stage considerations:} When considering unit testing, it is
+not an all or nothing proposition.  Technically speaking, unit tests
+must a) build fast, b) run fast, and c) isolate errors {}\cite{TDD,
+WorkingEffectivelyWithLegacyCode05}.  This is contrasted with most
+system-level tests that don't build fast, don't run fast and most
+definitely do not isolate errors.  However, it is likely that many
+developers that are new to test-driven development (TDD) and unit
+testing are scared away from the practice when they read some of the
+literature on TDD that shows lots of very fine-grained unit tests
+(sometimes dozens of unit tests for a single function).  If a piece of
+software is important enough, then that level of unit testing (and
+more) will be necessary but it is more often the case that the initial
+``unit tests'' might justifiably be fewer and more course-grained.  In
+many cases, some courser-grained tests can be written that lie between
+puritan fine-grained unit tests and extremely course-grained
+system-level tests.  For example, one of these medium-level tests
+might instantiate several objects of different types and call several
+functions before checking a final result.  While these types of tests
+may not be the best at isolating errors, in many cases they can still
+otherwise build fast and run fast.  If well crafted, these types of
+quick-and-dirty (using the term lightly) ``unit tests'' can often
+achieve high coverage and often do not take much longer to write than
+a system-level test or the labor to manually run and verify a result
+(say by running the code in a debugger and stepping through it to see
+values).  After these quick-and-dirty unit tests are in place, as a
+piece of software matures and is more heavily used, then more
+finer-grained unit tests can be written to define boundary cases and
+to otherwise better define and protect the software.  Therefore, using
+TDD with quick-and-dirty courser-grained unit tests need not take any
+longer than the more typical manual validation-based development
+process.  These automated tests then protect the software going
+forward for all time (which is not true of manual validation-based
+testing).  In addition, having a good unit test harness for your
+language and programming environment can also greatly reduce the
+overhead of doing TDD and unit testing.  Making an investment in an
+easy to use unit test harness pays off many times over in later usage.
+\label{levels_of_unit_testing}
+\end{minipage}
+} %fbox
+\end{center}
+\nonumber
+\end{figure}
+
+In addition to being important from just a verifiable reproducible
+research perspective, reasonable unit and verification tests and a
+clean and clear code base form a critical foundation for creating
 self-sustaining software (see
 Section~\ref{sec:self_sustaining_open_source_software}) and providing
 a foundation for possible later productization of the code.
 
 While Lean/Agile Research Stable software needs to have high-quality
-unit \& verification testing and clean code, it need not have much of
-if any documentation, it can have very little error checking of
-invalid user input and no feedback in case of incorrect input (it can
-just assert() and die), and it may not have any acceptance testing
-(because there are no real customers).  While addressing these issues
-is critical for high-quality production software, they are of little
-use for pure research software (that is used by only the core
-developers or very friendly users).  In addition,
-Research Stable software need not maintain any backward compatibility
-at all if there are no down-stream customers (and there should not be
-too many down-stream customers for a pure research code).  Any
-downstream customers that would be affected by a break in backward
-compatibility should be readily accessible to upgrade when non-backward
-compatible changes are made.
+unit \& verification testing and clean code, it need not have much (if
+any) documentation, it can have very little error checking of invalid
+user input and no feedback in case of incorrect input (it can just
+assert() and die), and it may not have any acceptance testing (because
+there are no real customers).  While addressing these issues is
+critical for high-quality production software, they are of little use
+for pure research software (that is used by only the core developers
+or very friendly users).  In addition, Research Stable software need
+not maintain any backward compatibility at all if there are no
+down-stream customers (and there should not be too many down-stream
+customers for a pure research code).  Any downstream customers that
+would be affected by a break in backward compatibility should be
+readily accessible to upgrade when non-backward compatible changes are
+made.
 
 Finally, Research Stable software really only needs to build and run
 successfully on the primary development platform (currently GCC 4.5+
 for Trilinos).  While this might sound like a bad way to develop
 software that is being targeted for possible later productization,
-consider that the TriBITS system automatically inserts strong options
-into every build (see Section~\ref{sec:tribts_current_state}), even
-for Exploratory and Research Stable code.  Extensive experience has
-shown that C++ code that builds clean of warnings with these strong
-compiler warning flags and has a good test suite (which Research
-Stable software does by definition) typically has few serious problems
-when porting to other platforms.  Therefore, portability to other
-platforms is not considered a concern for Research Stable software in
-order to enter the next phase, the Production Growth phase.
+consider that the TriBITS system automatically inserts strong compiler
+warning options into every build (see
+Section~\ref{sec:tribts_current_state}), even for Exploratory and
+Research Stable code.  Extensive experience has shown that C++ code
+that builds clean of warnings with these strong compiler warning flags
+and has a good test suite (which Research Stable software does by
+definition) typically has few serious problems when porting to other
+platforms.  Therefore, portability to other platforms is not
+considered a concern for Research Stable software in order to enter
+the next phase, the Production Growth phase.
 
 The last issue to consider in the lifecycle of software is space/time
 performance.  For most research-based software, algorithmic properties
@@ -1600,8 +1660,8 @@ tested software.
 If the approaches or algorithms being researched have a low
 probability of being successful, being submitted for publication, or
 being considered for later productization, then it may be more
-efficient to develop the software as Exploratory software as described
-above.
+efficient and more appropriate to develop the software as Exploratory
+software as described above.
 
 
 %
@@ -1609,11 +1669,10 @@ above.
 %
 
 After the algorithms in a piece of software have been sufficiently
-proven in the Research Stable phase, the software is a candidate 
-for productization.  Since the Research Stable code already
-has excellent unit and verification testing and has a clean design and
-source code, it is immediately ready to enter the Production Growth
-phase.
+proven in the Research Stable phase, the software is a candidate for
+productization.  Since the Research Stable code already has good unit
+and verification testing and has a clean design and source code, it is
+immediately ready to enter the Production Growth phase.
 
 %\begin{wrapfigure}{r}{0.5\textwidth}
 \begin{figure}
@@ -1624,16 +1683,15 @@ phase.
 Research Stable Code:} It is also possible to take Exploratory
 software and turn it into Research Stable software that can seed the
 Production Growth phase but it would require a large refactoring
-effort driven by an intense unit and verification test development
-effort.  The large cost needed to get Exploratory code to the standard
-of quality needed for Research Stable code (the precondition for
-entering the Production Growth phase) is usually not undertaken and
-therefore software that is not developed from the beginning with
-strong testing with continuous refactoring to maintain clear design
-and code typically never achieves the properties necessary for
-self-sustaining software.  Therefore, again, Exploratory software
-should likely be thrown away and rewritten from scratch as Research
-Stable software.
+effort driven by intense unit and verification test development.  The
+large cost needed to get Exploratory code to the standard of quality
+needed for Research Stable code (the precondition for entering the
+Production Growth phase) is usually not undertaken and therefore
+software that is not developed from the beginning with strong testing
+with continuous refactoring to maintain clear design and code
+typically never achieves the properties necessary for self-sustaining
+software.  Therefore, again, Exploratory software should likely be
+thrown away and rewritten from scratch as Research Stable software.
 \end{minipage}
 } %fbox
 \end{center}
@@ -1643,11 +1701,11 @@ Stable software.
 When software enters the Production Growth phase, the purpose is to
 start adding those features needed to make the software more usable
 for downstream clients and add functionality needed to support their
-mission.  However, while a primary focus is on starting to improve the
-production quality of the software, the software can still be used for
-new research to some extent but the overhead of doing research in the
-code base will become larger and larger as the software becomes more
-productized (and has to maintain better backward compatibility,
+missions.  However, while a primary focus is on starting to improve
+the production quality of the software, the software can still be used
+for new research to some extent but the overhead of doing research in
+the code base will become larger and larger as the software becomes
+more productized (and has to maintain better backward compatibility,
 needs better documentation, etc.).  Continued research can be
 conducted in related subpackages to minimize the impact on the body of
 software under consideration that is beginning productized.
@@ -1660,9 +1718,9 @@ for invalid user input (and improving error messages that are
 generated), and starting to become increasingly more careful about
 maintaining backward compatibility.  All the while new features are
 developed and functionality changes, the unit and verification testing
-is continued and even expanded slightly to cover more boundary cases
-and other scenarios.  At the same time, the code is continually being
-refactored to keep the design simple and the code layout clean and
+is continued and even expanded to cover more boundary cases and other
+scenarios.  At the same time, the code is continually being refactored
+to keep the design simple and the code layout clean and
 understandable.  This is done while maintaining backward compatibility
 by deprecating features, thereby giving downstream developers the
 chance to safely upgrade their code to keep up with the changes (see
@@ -1686,14 +1744,14 @@ backward compatibility are caught and addressed quickly.
 As more customers are added, more platforms will need to be supported
 beyond just the single primary development platform.  Therefore, the
 Production Growth phase will see the portability of the software
-radially increased.  Likewise, in order to entice new customers or to
-even make the software viable to other customers, space/time
-performance characteristics (including parallel scalability) will need
-to be improved.  The big danger here is that overzealous code
-optimization efforts will destroy the clean and clear structure of the
-code, which if allowed to happen, would severely increase the
-technical debt of the software and risk its long term viability as
-self-sustaining software.
+increased.  Likewise, in order to entice new customers or to even make
+the software viable to other customers, space/time performance
+characteristics (including parallel scalability) will need to be
+improved.  The big danger here is that overzealous code optimization
+efforts will destroy the clean and clear structure of the code, which
+if allowed to happen, would severely increase the technical debt of
+the software and risk its long term viability as self-sustaining
+software.
 
 
 %
@@ -1722,7 +1780,7 @@ to the point where new functionality is handled by writing new code to
 specialize behavior and not changing existing code (e.g., the
 Open-Closed Principle (OCP) {}\cite{AgileSoftwareDevelopment}).
 
-By the time that software enters the Production Maintenance phase, it
+By the time software enters the Production Maintenance phase, it
 should have very good sustained portability.  This portability will be
 maintained through automated nightly testing and will therefore not
 regress.
@@ -1748,14 +1806,14 @@ even decades to come, being ported to new architectures and taking on
 new functionality as needed.  When the time comes for the original
 developing team or organization to discontinue development and support
 of the software (which will eventually happen for every piece of
-software), the software will still live on if there are downstream
-customer codes that still use it.  These customer organizations can
-band together (or not) and continue to perform the most basic
-maintenance to support new platforms or make minor changes as needed.
-These organizations can be confident that they can perform these tasks
-even though they were not the original developers because a) the
-software has a clean design and has clear understandable code, and b)
-the software is exceptionally well tested with both unit and
+software), then the software will still live on if there are
+downstream customer codes that still use it.  These customer
+organizations can band together (or not) and continue to perform the
+most basic maintenance to support new platforms or make minor changes
+as needed.  These organizations can be confident that they can perform
+these tasks even though they were not the original developers because
+a) the software has a clean design and has clear understandable code,
+and b) the software is exceptionally well tested with both unit and
 verification tests and also with good acceptance tests that they have
 helped to develop.  In other words, the software is self-sustaining!
 
@@ -1833,15 +1891,9 @@ Although we would have likely developed Belos anyway, due to the
 availability of important features like templated data types, our
 inability to aggressively refactor AztecOO has led to its stagnation
 as an actively developed product and prohibited us from using it as a
-starting point for Belos.
-
-{}\textbf{RAB: Comment: I would argue that if we trained a software
-devleopment team in the techniques of ``Working Effectively with
-Legacy Code'' described in Section~\ref{sec:grandfathering}, the
-effort to refator AztecOO into Belos and replace AztecOO would have
-been less that the effort to write Belos from sctatch, mature it, and
-then get it used in all existing customer applications, replacing
-AztecOO.}
+starting point for Belos (however, see an extended discussion of this
+example when presenting the Agile Legacy Software Change Algorithm in
+Section~\ref{sec:grandfathering}).
 
 An assessment of usefulness maturity is something that users expect
 when they consider adopting a software package.  However, it is not
@@ -2110,8 +2162,8 @@ to be classified as Research Stable, Production Growth, and Production
 Maintenance packages as long as the package developers agree, going
 forward, to make all further modifications to the code using
 high-quality Lean/Agile consistent practices.  The right way to
-maintain these important packages going forward is to apply the Agile
-Legacy Software Change algorithm defined in
+maintain these important packages going forward is to apply the
+{}\textit{Agile Legacy Software Change Algorithm} defined in
 {}\cite{WorkingEffectivelyWithLegacyCode05} which states that every
 change to legacy code be carried out as follows:
 
@@ -2167,6 +2219,27 @@ process, it may eventually achieve a level of design and clarity and
 unit and verification testing that it can legitimately be considered
 to be Lean/Agile consistent software and the prefix ``Grandfathered''
 can be dropped.
+
+Consider the AztecOO and Belos example from
+Section~\ref{sec:usefulness_maturity_lifecycle_phases}.  Even with the
+difficult nature of the current AztecOO software, one could argue that
+if we trained a software development team in the techniques of
+``Working Effectively with Legacy Code'' described here, then the
+effort to refator AztecOO into Belos and replace AztecOO would have
+been less than the effort to write Belos from scratch, mature it, and
+then get it used in all existing customer applications, replacing
+AztecOO (which has still not completely happened yet).
+
+Therefore, given the powerful incremental refactoring and testing
+approaches described above, the message should be that even a piece of
+software that might otherwise be considered hopeless, in reality might
+in fact be relatively inexpensively resurrected and refactored into
+the next generation of self-sustaining software.  Here, the claim of
+``relatively inexpensively'' is compared to the total cost of writing
+new software from scratch to replace the existing legacy software
+which can be a huge cost; much more than most people think (see the
+discussion of ``green field'' projects in
+{}\cite{WorkingEffectivelyWithLegacyCode05}).
 
 On the other hand, if there are package development teams of existing
 legacy software that are not committed to using the Agile Legacy
