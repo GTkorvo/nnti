@@ -6,6 +6,7 @@
 #include "Epetra_Time.h"
 
 #include "AnasaziEpetraAdapter.hpp"
+#include "AnasaziSpecializedEpetraAdapter.hpp"
 #include "AnasaziBasicEigenproblem.hpp"
 #include "AnasaziBlockKrylovSchurSolMgr.hpp"
 
@@ -42,13 +43,20 @@ namespace RBGen {
     // Get the inner / outer product form of the operator
     isInner_ = ( rbmethod_params.get("Anasazi POD Operator Form","Inner")=="Inner"? true : false );
 
-    // See if there is a matrix to be used for an inner-product in the orthogonal basis construction
-    if (rbmethod_params.isParameter( "Inner Product Weighting Matrix" )) {
-      string matFile = Teuchos::getParameter<string>( rbmethod_params, "Inner Product Weighting Matrix" );
+    // See if there is a matrix to be used for an inner-product form
+    if (rbmethod_params.isParameter( "POD Operator Weighting Matrix" )) {
+      string matFile = Teuchos::getParameter<string>( rbmethod_params, "POD Operator Weighting Matrix" );
       std::vector<std::string> filename(1,matFile);
       op_ = fileio->Read( filename );
     }
-    
+
+    // See if there is a matrix to be used in the orthogonal basis construction
+    if (rbmethod_params.isParameter( "Inner Product Matrix" )) {
+      string matFile = Teuchos::getParameter<string>( rbmethod_params, "Inner Product Matrix" );
+      std::vector<std::string> filename(1,matFile);
+      inner_prod_op_ = fileio->Read( filename );
+    }
+
     // Resize the singular value vector 
     sv_.resize( basis_size_ );    
 
@@ -123,11 +131,19 @@ namespace RBGen {
     //
     // Create the initial vector and randomize it.
     //
-    Teuchos::RCP<Anasazi::EpetraMultiVec> ivec;
-    if (isInner_)
-      ivec = Teuchos::rcp( new Anasazi::EpetraMultiVec( localMap, blockSize ) );
-    else
-      ivec = Teuchos::rcp( new Anasazi::EpetraMultiVec( ss_->Map(), blockSize ) );
+    Teuchos::RCP<MV> ivec;
+    if (isInner_) {
+      if (inner_prod_op_ != Teuchos::null)
+        ivec=Teuchos::rcp( new Anasazi::EpetraOpMultiVec( inner_prod_op_, localMap, blockSize ) );
+      else
+        ivec = Teuchos::rcp( new Anasazi::EpetraMultiVec( localMap, blockSize ) );
+    }
+    else {
+      if (inner_prod_op_ != Teuchos::null)
+        ivec = Teuchos::rcp( new Anasazi::EpetraOpMultiVec( inner_prod_op_, ss_->Map(), blockSize ) );
+      else
+        ivec = Teuchos::rcp( new Anasazi::EpetraMultiVec( ss_->Map(), blockSize ) );
+    }
     ivec->MvRandom();
     //
 

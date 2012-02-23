@@ -602,11 +602,13 @@
 	    Sandia National Laboratories\\
 	    Albuquerque, New Mexico 87185 and Livermore, California 94550\\
 	    \\
-	    Sandia is a multiprogram laboratory operated by Sandia Corporation,\\
-	    a Lockheed Martin Company, for the United States Department of Energy's\\
-	    National Nuclear Security Administration under Contract DE-AC04-94-AL85000.\\
+	    Sandia National Laboratories is a multi-program laboratory \\
+            managed and operated by Sandia Corporation, a wholly owned \\
+            subsidiary of Lockheed Martin Corporation, for the U.S. \\
+            Department of Energys National Nuclear Security Administration \\
+            under Contract DE-AC04-94AL85000.\\
 	    \\
-	    \MarkCoverVar
+            \MarkCoverVar
 	\end{minipage}
 
 	\vspace*{\fill} % Move the logo to the bottom of the cover page
@@ -975,7 +977,7 @@
 		\SANDdistInternalM{2}{2497}{Central Technical Files}{8944 (1 electronic and 1 hardcopy)}
 	    }{}
 
-	    \SANDdistInternal{1}{0899}{Technical Library}{9536 (electronic)}
+	    \SANDdistInternal{1}{0899}{RIM-Reports Management}{9532 (electronic copy)}
 
 	    % If this report has a Patent Caution or Patent Interest
 	    \ifthenelse{\boolean{distPatent}}   {

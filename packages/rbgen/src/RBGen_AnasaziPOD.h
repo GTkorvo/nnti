@@ -65,9 +65,12 @@ namespace RBGen {
     //! Reset the snapshot set used to compute the reduced basis.
     void Reset( const Teuchos::RCP<Epetra_MultiVector>& new_ss ) { ss_ = new_ss; }
 
-    //! Reset the operator used to weight the inner product.
+    //! Reset the operator used to weight the Anasazi operator \f$A^T W A\f$ or \f$A W A^T\f$.
     void ResetOp( const Teuchos::RCP<Epetra_Operator>& new_op ) { op_ = new_op; }
 
+    //! Reset the operator used to weight the inner product.
+    void ResetInnerProdOp( const Teuchos::RCP<Epetra_Operator>& new_op ) { inner_prod_op_ = new_op; }
+   
     //@}
 
     //! @name Status Methods
@@ -82,7 +85,7 @@ namespace RBGen {
     // Is this object initialized.
     bool isInitialized_;
 
-    // Is the inner (A'*A) or outer (A*A') product being used for the SVD computation
+    // Is the inner (A^T*A) or outer (A*A^T) product being used for the SVD computation
     bool isInner_;
 
     // Size of the basis that this method will compute.
@@ -95,8 +98,11 @@ namespace RBGen {
     Teuchos::RCP<const Epetra_MultiVector> ss_;
     Teuchos::RCP<Epetra_MultiVector> basis_;
 
-    // Pointer to the inner product operator
+    // Pointer to the SVD weighted operator
     Teuchos::RCP<Epetra_Operator> op_;
+
+    // Pointer to the inner product operator
+    Teuchos::RCP<Epetra_Operator> inner_prod_op_;
 
     // Vector holding singular values.
     std::vector<double> sv_;
