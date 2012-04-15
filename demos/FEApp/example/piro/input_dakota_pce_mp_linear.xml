@@ -1,0 +1,127 @@
+<ParameterList name="FEApp">
+
+  <ParameterList name="Problem">
+    <Parameter name="Name" type="string" value="Heat Nonlinear Source"/>
+    <Parameter name="Left BC" type="double" value="0"/>
+    <Parameter name="Right BC" type="double" value="0"/>
+    <ParameterList name="Material Function">
+      <Parameter name="Name" type="string" value="KL Exponential Random Field"/>
+      <Parameter name="Number of KL Terms" type="int" value="3"/>
+      <Parameter name="Mean" type="double" value="1"/>
+      <Parameter name="Standard Deviation" type="double" value="0.5"/>
+      <Parameter name="Correlation Lengths" type="Array(double)" value="{1}"/>
+      <Parameter name="Domain Lower Bounds" type="Array(double)" value="{0}"/>
+      <Parameter name="Domain Upper Bounds" type="Array(double)" value="{1}"/>
+    </ParameterList>
+    <ParameterList name="Source Function">
+      <Parameter name="Name" type="string" value="Constant"/>
+      <Parameter name="Constant Value" type="double" value="1"/>
+    </ParameterList>
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Response 0" type="string" value="Solution Average"/>
+    </ParameterList>
+    <ParameterList name="Parameters">
+      <Parameter name="Number of Parameter Vectors" type="int" value="1"/>
+      <ParameterList name="Parameter Vector 0">
+	<Parameter name="Number" type="int" value="3"/>
+	<Parameter name="Parameter 0" type="string"
+		   value="KL Exponential Function Random Variable 0"/>
+	<Parameter name="Parameter 1" type="string"
+		   value="KL Exponential Function Random Variable 1"/>
+	<Parameter name="Parameter 2" type="string"
+		   value="KL Exponential Function Random Variable 2"/>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Quadrature">
+    <Parameter name="Method" type="string" value="Gaussian"/>
+    <Parameter name="Num Points" type="int" value="2"/>
+  </ParameterList>
+  <ParameterList name="Discretization">
+    <Parameter name="Method" type="string" value="C Zero"/>
+    <ParameterList name="Element">
+      <Parameter name="Method" type="string" value="Linear"/>
+    </ParameterList>
+    <Parameter name="Number of Elements" type="int" value="100"/>
+  </ParameterList>
+
+  <ParameterList name="Piro">
+    <ParameterList name="Dakota">
+      <Parameter name="Input File" type="string" value="dakota_pce_mp_linear.in"/>
+      <Parameter name="Output File" type="string" value="dakota_pce_mp_linear.out"/>
+      <Parameter name="Restart File" type="string" value="dakota_pce_mp_linear.res"/>
+      <Parameter name="Error File" type="string" value="dakota_pce_mp_linear.err"/>
+      <Parameter name="Parameter Vector Index" type="int" value="0"/>
+      <Parameter name="Response Vector Index" type="int" value="0"/>
+    </ParameterList>
+
+    <Parameter name="Solver Type" type="string" value="NOX"/>
+    <ParameterList name="NOX">
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+      <ParameterList name="Line Search">
+	<Parameter name="Method" type="string" value="Full Step"/>
+      </ParameterList>
+      <ParameterList name="Direction">
+        <Parameter name="Method" type="string" value="Newton"/>
+        <ParameterList name="Newton">
+          <Parameter name="Forcing Term Method" type="string" value="Constant"/>
+          <ParameterList name="Linear Solver">
+            <Parameter name="Write Linear System" type="bool" value="false"/>
+          </ParameterList>
+          <ParameterList name="Stratimikos Linear Solver">
+            <ParameterList name="Stratimikos">
+              <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+              <ParameterList name="Linear Solver Types">
+                <ParameterList name="AztecOO">
+                  <ParameterList name="Forward Solve">
+                    <ParameterList name="AztecOO Settings">
+                      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
+                      <Parameter name="Output Frequency" type="int" value="10"/>
+                      <Parameter name="Size of Krylov Subspace" type="int" value="100"/>
+                    </ParameterList>
+                    <Parameter name="Max Iterations" type="int" value="100"/>
+                    <Parameter name="Tolerance" type="double" value="1e-12"/>
+                  </ParameterList>
+                  <ParameterList name="VerboseObject">
+                    <Parameter name="Verbosity Level" type="string" value="default"/>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList>
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+            </ParameterList>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
+      <ParameterList name="Printing">
+        <Parameter name="Output Information" type="int" value="103"/>
+        <Parameter name="Output Precision" type="int" value="3"/>
+        <Parameter name="Output Processor" type="int" value="0"/>
+      </ParameterList>
+      <ParameterList name="Status Tests">
+	<Parameter name="Test Type" type="string" value="Combo"/>
+        <Parameter name="Combo Type" type="string" value="OR"/>
+        <Parameter name="Number of Tests" type="int" value="2"/>
+        <ParameterList name="Test 0">
+	  <Parameter name="Test Type" type="string" value="NormF"/>
+          <Parameter name="Norm Type" type="string" value="Two Norm"/>
+          <Parameter name="Scale Type" type="string" value="Scaled"/>
+          <Parameter name="Tolerance" type="double" value="1e-10"/>
+        </ParameterList>
+        <ParameterList name="Test 1">
+	  <Parameter name="Test Type" type="string" value="MaxIters"/>
+          <Parameter name="Maximum Iterations" type="int" value="1"/>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Regression Tests">
+    <Parameter  name="Response 0 Mean Test Values" type="Array(double)" value="{0.0888378636419}"/>
+    <Parameter  name="Response 0 Standard Deviation Test Values" type="Array(double)" value="{0.02382196028589}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-8"/>
+  </ParameterList>
+
+</ParameterList>
+

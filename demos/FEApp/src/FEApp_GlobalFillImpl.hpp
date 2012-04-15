@@ -114,8 +114,8 @@ computeGlobalFill(FEApp::AbstractInitPostOp<EvalT>& initPostOp)
       initPostOp.nodeInit(*bc[i], neqn, node_xdot, node_x);
 
       // Compute node residual
-      bc[i]->getStrategy<EvalT>()->evaluateResidual(node_xdot, node_x, 
-                                                    node_f);
+      bc[i]->template getStrategy<EvalT>()->evaluateResidual(node_xdot, node_x, 
+							     node_f);
 
       // Post-process node residual
       initPostOp.nodePost(*bc[i], neqn, node_f);
