@@ -1,0 +1,78 @@
+
+* Kokkos::Crs{Matrix,Graph}::finalize(bool)
+  Before, CrsGraph and CrsMatrix had methods for setting the data, then a separate method called finalize() which accepted an OptimizeStorage boolean. 
+  I'm leaving finalize() in there for the moment, as a pure virtual function, to be over-ridden by base classes.
+  Another reason is that there may be some value in separating the set-data and the finalization. 
+  I removed the OptimizeStorage argument from finalize(), but I replaced it with a ParameterList.
+* Kokkos::Crs{Matrix,Graph} and protected data.
+  Notice, no protected members. They're a bad idea, ripe for abuse, and an indication of design laziness. 
+  In a scenario where we are going to be publishing this interface and pushing it out to external devs, we should make this one bulletproof.
+* How to finalize() graph and matrix at the same time? No direct support; that case is covered by a specific LocalMatOps.
+
+************************************************************
+
+What things are for, and why they are the way they are
+
+* Kokkos::Crs{Matrix,Graph}::clear()
+  Need a way for the subclass to clear the parent data after it is no longer needed.
+  Maybe setStructure(null,null) is the solution instead.
+  Nevermind, killed it. We are now pure virtual. Let's see how that works out for now.
+
+* CrsGraph::getNumEntries() is for CrsMatrix::setValues() to check validity.
+
+************************************************************
+
+Const correctness and Proper encapsulation
+
+No protected if not necessary; strongly prefer private.
+Const correctness to enforce semantics wherever we can. This keeps developers from making bugs.
+
+************************************************************
+
+Generic vs. Inheritence 
+
+If Tpetra uses static typedef to determine local Matrix and Graph types, why bother with virtual?
+There is no code re-use.
+
+How about, local mat ops is a factory for objects derived from abstract CrsGraph and CrsMatrix?
+:( But then we have a dynamic cast when we fill the sparse mat-vec object. 
+
+Then we go fully generic? 
+:( Ugly compile errors.
+:) But abstract base class informs what is expected of us; inheriting from that guarantees that we compile.
+
+************************************************************
+
+Finalizing use case:
+
+A)
+  1) Tpetra::CrsGraph constructs a lclGraph
+  2) Tpetra::CrsMatrix constructs a lclMatrix(lclGraph)
+  ...
+  3) Tpetra::CrsGraph calls lclGraph->finalize(), which may do something but should keep in mind that a call with a matrix will follow.
+  ...
+  4) Tpetra::CrsMatrix A calls lclGraph->finalize(A::lclMatrix), which will do whatever needs to be done to A::lclMatrix
+  ...
+  5) Tpetra::CrsMatrix B calls lclGraph->finalize(B::lclMatrix), which will do whatever needs to be done to B::lclMatrix
+
+B) 
+  1) Tpetra::CrsGraph constructs a lclGraph
+  2) Tpetra::CrsMatrix constructs a lclMatrix(lclGraph)
+  ... 
+  3) Tpetra::CrsMatrix calls lclGraph->finalize(lclMatrix), which will do everything
+
+************************************************************
+
+Empty matrices 
+
+This is something that popped up and seemed necessary, probably having to do with zero-row objects and null vectors. 
+I can't remember. Maybe I should delete it, see if it asserts it existence again. But I didn't.
+But I think the reason is that, even if the matrix has some non-zero number of rows, it may have no entries, with an empty column map.
+
+************************************************************
+
+SpMV
+
+Don't loop over numRows*numCols; just numRows.
+
+************************************************************
