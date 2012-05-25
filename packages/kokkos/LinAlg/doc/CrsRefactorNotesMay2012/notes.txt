@@ -22,6 +22,18 @@ What things are for, and why they are the way they are
 
 ************************************************************
 
+Graph and Matrix are separate objects to allow multiple matrices for one graph, which reflects Tpetra design.
+SparseOps is an object to allow state preservation.
+
+1. Data is submitted to Graph and Matrix, then they are submitted to SparseOps.
+2. Graph has a finalize() method so that it can be finalized in the absence of a matrix.
+
+These support the graph first, then matrix/ces paradigm.
+
+Tpetra uses no finalize method on Matrix, but matrices may provide a finalize() and a isFinalized().
+
+************************************************************
+
 Const correctness and Proper encapsulation
 
 No protected if not necessary; strongly prefer private.
@@ -40,13 +52,6 @@ How about, local mat ops is a factory for objects derived from abstract CrsGraph
 Then we go fully generic? 
 :( Ugly compile errors.
 :) But abstract base class informs what is expected of us; inheriting from that guarantees that we compile.
-
-************************************************************
-
-Transpose csrmm
-
-We can optionally do a better job by telling finalize() that the tranpose will be needed, and should be explicitly formed.
-Then calling a cscmm in the case that it was.
 
 ************************************************************
 
@@ -78,13 +83,30 @@ But I think the reason is that, even if the matrix has some non-zero number of r
 
 ************************************************************
 
-SpMV
+SpMV and transpose
 
-Don't loop over numRows*numCols; just numRows.
+Add some unrolling of numRHS.
+
+We can optionally do a better job by telling finalize() that the tranpose will be needed, and should be explicitly formed.
+Then calling a cscmm in the case that it was. This is a parameter list argument to the Tpetra::CrsMatrix (sublist "Local Fill")
 
 ************************************************************
 
 Items that specifically need review:
  * kokkos/LinAlg/Kokkos_DefaultSparseMultiplyKernelOps.hpp
+
+************************************************************
+
+Finalize: something is up here: i need to figure out whether finalize happens only in the graph or in the matrix as well.
+
+okay, matrix has only a const graph, so it can't necessarily call the appropriate finalizer
+so, no finalize() on matrix, though it still has a isFinalized()
+
+T::M -> grab either const or non-const K::G, then call either finalizeMatrix or finalizeGraph, as appropriate
+     or pass K::M to T::G and let T::G do the right thing.
+
+************************************************************
+
+deprecate T::G and T::M::fillComplete(bool) for PL
 
 ************************************************************
