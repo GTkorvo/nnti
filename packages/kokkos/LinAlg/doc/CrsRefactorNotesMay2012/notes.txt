@@ -1,3 +1,55 @@
+************************************************************
+
+Questions/Challenges:
+
+* Why does Matrix need a Graph? 
+  Ours doesn't, but derivations might, so just add it to the base constructor.
+  The reason is that CrsGraphBase and CrsMatrixBase are models for how Tpetra will use local CRS objects
+  Also, giving Matrix the Graph gives it the node and ensures they share the node type. 
+  - This also requires some agreement between node and matrix/graph; maybe a bad idea? But a template constructor could always ignore the node.
+
+* Also, it seems that we have two options: 
+  C1) 1. finalize Graph  in T::G::fillComplete()
+     2. finalize Matrix in T::M::fillComplete()
+  C2) finalize graph and matrix in T::M::fillComplete()
+  Matrix separate from graph is clear. 
+  Matrix as a container/interface to hide the structure of values makes some sense, but isn't necessary.
+
+  We could instead do:
+  C1) 1. graph alone, filled via LclMatOps::finalizeGraph()
+      2. then LclMatOps.setGraphAndMatrix(graph,vals)
+  C2) graph and matrix
+  Less interface on graph and matrix objects allows more re-use of code.
+
+  For now, let's stick with a minimal matrix object. 
+  Graph and matrix are filled (statically) by LocalMatOps and submitted to LocalMatOps.
+
+  Also, graph and matrix objects can have accept a ParameterList-accepting constructor.
+
+************************************************************
+
+Template parameters on classes
+
+While there are necessarily some template parameters in classes, there are not template parameters classes, and therefore no obligation that the classes are template. 
+The reason is that we don't want to specify the number and nature of these, so we can't use them, so we should require them.
+
+The local mat ops as specified to graph is stripped of scalar type, in order to allow it to be used with different T::CrsMatrix objects without additional templating. 
+Therefore, we pass these around with no Scalar parameter, and then bind the scalar in the CrsMatrix.
+
+We make little requirements on SparseOps objects: they should be able to finalize the type of graphs and matrices that they accept, though these static methods may do more.
+
+Given a sparse object SOBASE, we should enjoy the following:
+  SOBASE::bind_scalar<S1>::graph<O,N>::graph_type  
+is the same as  
+  SOBASE::bind_scalar<S2>::graph<O,N>::graph_type
+
+and also
+
+  SOBASE::bind_scalar<S1>::other_type
+is the same as
+  SOBASE::bind_scalar<S2>::bind_scalar<S1>::other_type
+
+************************************************************
 
 * Kokkos::Crs{Matrix,Graph}::finalize(bool)
   Before, CrsGraph and CrsMatrix had methods for setting the data, then a separate method called finalize() which accepted an OptimizeStorage boolean. 
@@ -30,7 +82,7 @@ SparseOps is an object to allow state preservation.
 
 These support the graph first, then matrix/ces paradigm.
 
-Tpetra uses no finalize method on Matrix, but matrices may provide a finalize() and a isFinalized().
+Tpetra uses no finalize method on Matrix.
 
 ************************************************************
 
