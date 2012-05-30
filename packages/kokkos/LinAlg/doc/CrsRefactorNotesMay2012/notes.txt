@@ -28,6 +28,22 @@ Questions/Challenges:
 
 ************************************************************
 
+  Intimacy between CrsGraph and CrsMatrix
+
+  Note, there is still some strange-looking interplay between CrsMatrix and CrsGraph. This is for two reasons: 
+  I.  Stand-alone CrsGraph means that they both have to be able to do the same things. Currently, we just have CrsGraph do stuff on behalf of CrsMatrix.
+  II. Certain operations are destructive (like restructuring), and we have to ensure that they are done in lockstep between CrsMatrix and CrsGraph.
+  For example, I can't move CrsMatrix data from 1D (non-packed) to 1D (packed) without the rowptrs, so I can't let CrsGraph do its restructuring in such a way that they are
+  destroyed before CrsMatrix can use them. There are a couple of ways to handle that:
+  a) grab the ArrayRCP to the old rowptrs
+  b) let CrsGraph do its restructuring
+  c) grab the ArrayRCP to the new rowptrs
+  d) have CrsMatrix do its restructuring, then release to old pointers (which are then deallocated)
+  There's nothing wrong with this approach; this is how Epetra does it. 
+  Because the work is duplicated and dependent on the implementation in CrsGraph, we just put it all there, so that changes are made in one place (technically, two nearby places).
+
+************************************************************
+
 Allocation routines in Kokkos Graph objects
 
 I wasn't sure where the allocation routines supporting thread appropriate allocation (first-touch, pinning) should go: localmatops or kokkos::graph. 
