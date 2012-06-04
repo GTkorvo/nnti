@@ -28,6 +28,13 @@ Questions/Challenges:
 
 ************************************************************
 
+UPLO and DIAG for solve
+
+uplo and diag had to be part of the sparse ops setGraphAndMatrix, not the solve, as they are constant and necessary for inspection
+this was mandatory for appropriate inspector/executor dispatch for, e.g., CUSPARSE
+
+************************************************************
+
   Intimacy between CrsGraph and CrsMatrix
 
   Note, there is still some strange-looking interplay between CrsMatrix and CrsGraph. This is for two reasons: 
@@ -41,6 +48,16 @@ Questions/Challenges:
   d) have CrsMatrix do its restructuring, then release to old pointers (which are then deallocated)
   There's nothing wrong with this approach; this is how Epetra does it. 
   Because the work is duplicated and dependent on the implementation in CrsGraph, we just put it all there, so that changes are made in one place (technically, two nearby places).
+
+************************************************************
+
+size_t for row pointers in CRS formats
+
+This may have been a mistake; rowPtr[N] is the number of non-zeros. This could theoretically be larger than 2-billion (there are 64GB nodes, today, allowing 8GB floats). But it
+seems unlikely...
+This quantity is O(N), as opposed to O(NNZ). So doubling its size (from int -> size_t) won't double the size of the matrix for any matrix with one non-zero per row.
+
+Still, if we're going to change this to "int", we should do it soon.
 
 ************************************************************
 
