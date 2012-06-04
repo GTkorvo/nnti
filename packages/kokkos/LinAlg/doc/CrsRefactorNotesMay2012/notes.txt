@@ -1,128 +1,202 @@
 ************************************************************
 
-Questions/Challenges:
+Design decision: Generic vs. Inheritence 
 
-* Why does Matrix need a Graph? 
-  Ours doesn't, but derivations might, so just add it to the base constructor.
-  The reason is that CrsGraphBase and CrsMatrixBase are models for how Tpetra will use local CRS objects
-  Also, giving Matrix the Graph gives it the node and ensures they share the node type. 
-  - This also requires some agreement between node and matrix/graph; maybe a bad idea? But a template constructor could always ignore the node.
+If Tpetra uses static typedef to determine local Matrix and Graph types, why bother with virtual method in
+Kokkos::CrsGraphBase and Kokkos::CrsMatrixBase?
 
-* Also, it seems that we have two options: 
-  C1) 1. finalize Graph  in T::G::fillComplete()
-     2. finalize Matrix in T::M::fillComplete()
-  C2) finalize graph and matrix in T::M::fillComplete()
-  Matrix separate from graph is clear. 
-  Matrix as a container/interface to hide the structure of values makes some sense, but isn't necessary.
+Consider instead: local mat ops as a factory for objects derived from abstract CrsGraph and CrsMatrix.
+:( But then we have a dynamic cast when we fill the sparse mat-vec object. 
 
-  We could instead do:
-  C1) 1. graph alone, filled via LclMatOps::finalizeGraph()
-      2. then LclMatOps.setGraphAndMatrix(graph,vals)
-  C2) graph and matrix
-  Less interface on graph and matrix objects allows more re-use of code.
-
-  For now, let's stick with a minimal matrix object. 
-  Graph and matrix are filled (statically) by LocalMatOps and submitted to LocalMatOps.
-
-  Also, graph and matrix objects can have accept a ParameterList-accepting constructor.
+Then we go fully generic? 
+:( Ugly compile errors.
+:) But abstract base class informs what is expected of us; inheriting from that guarantees that we compile.
+:) It also provides a large amount of the stuff that we need, so we can get some code reuse from a good
+   boilerplate.
 
 ************************************************************
 
-UPLO and DIAG for solve
+Design justification: Template parameters on classes
 
-uplo and diag had to be part of the sparse ops setGraphAndMatrix, not the solve, as they are constant and necessary for inspection
-this was mandatory for appropriate inspector/executor dispatch for, e.g., CUSPARSE
+While there are necessarily some template parameters in classes, there are not template parameters classes,
+and therefore no obligation that the classes are template.  The reason is that we don't want to specify the
+number and nature of these, so we can't use them, so we should require them.
 
-************************************************************
+The local mat ops as specified to graph is stripped of scalar type, in order to allow it to be used with
+different T::CrsMatrix objects without additional templating.  Therefore, we pass these around with no Scalar
+parameter, and then bind the scalar in the CrsMatrix.
 
-  Intimacy between CrsGraph and CrsMatrix
+We make little requirements on SparseOps objects: they dictate a matrix and graph type, they should accept
+those types, and they should finalize those types.
 
-  Note, there is still some strange-looking interplay between CrsMatrix and CrsGraph. This is for two reasons: 
-  I.  Stand-alone CrsGraph means that they both have to be able to do the same things. Currently, we just have CrsGraph do stuff on behalf of CrsMatrix.
-  II. Certain operations are destructive (like restructuring), and we have to ensure that they are done in lockstep between CrsMatrix and CrsGraph.
-  For example, I can't move CrsMatrix data from 1D (non-packed) to 1D (packed) without the rowptrs, so I can't let CrsGraph do its restructuring in such a way that they are
-  destroyed before CrsMatrix can use them. There are a couple of ways to handle that:
-  a) grab the ArrayRCP to the old rowptrs
-  b) let CrsGraph do its restructuring
-  c) grab the ArrayRCP to the new rowptrs
-  d) have CrsMatrix do its restructuring, then release to old pointers (which are then deallocated)
-  There's nothing wrong with this approach; this is how Epetra does it. 
-  Because the work is duplicated and dependent on the implementation in CrsGraph, we just put it all there, so that changes are made in one place (technically, two nearby places).
+The only requirements for templates in lclsparseops and its graph and matrix classes is that local
+sparse ops provides the following:
+- bind_scalar<S2>::other_type should give an appropriate type for a given scalar
+  i.e., the returned type should apply()/solve() to/from K::MultiVector<S2>
+- graph<O,N>::graph_type should give an appropriate graph type for the ordinal O and node N
+  i.e., the constructor of the graph should accept an RCP<N> and the graph should accept an ArrayRCP<O> of
+  CRS packed indices
+- matrix<S,O,N>::matrix_type should give an appropriate matrix type, for scalar S, ordinal O and node N
+  i.e., the constructor should accept a graph like above, and the matrix should accept an ArrayRCP<S> of
+  CRS packed values
+- allocRowPtrs() and allocStorage() should allocate, optimally with regard to the node/runtime/memory
+  platform, CRS row pointers and NNZ-length storage according to those pointers, respectively.
+These are the only templated methods required of LocalSparseOps, and no templated methods are required of the
+local graph or local matrix, nor are template parameters assumed on LocalSparseOps, local graph or local
+matrix (with the possible exception of some typedefs provided by these)
 
-************************************************************
-
-size_t for row pointers in CRS formats
-
-This may have been a mistake; rowPtr[N] is the number of non-zeros. This could theoretically be larger than 2-billion (there are 64GB nodes, today, allowing 8GB floats). But it
-seems unlikely...
-This quantity is O(N), as opposed to O(NNZ). So doubling its size (from int -> size_t) won't double the size of the matrix for any matrix with one non-zero per row.
-
-Still, if we're going to change this to "int", we should do it soon.
-
-************************************************************
-
-Allocation routines in Kokkos Graph objects
-
-I wasn't sure where the allocation routines supporting thread appropriate allocation (first-touch, pinning) should go: localmatops or kokkos::graph. 
-I chose the latter, thinking it would allow allocation strategy to be change for a mat-vec and supporting some minor amount of state. This can be revisited.
-
-************************************************************
-
-Template parameters on classes
-
-While there are necessarily some template parameters in classes, there are not template parameters classes, and therefore no obligation that the classes are template. 
-The reason is that we don't want to specify the number and nature of these, so we can't use them, so we should require them.
-
-The local mat ops as specified to graph is stripped of scalar type, in order to allow it to be used with different T::CrsMatrix objects without additional templating. 
-Therefore, we pass these around with no Scalar parameter, and then bind the scalar in the CrsMatrix.
-
-We make little requirements on SparseOps objects: they should be able to finalize the type of graphs and matrices that they accept, though these static methods may do more.
+Other expectations:
 
 Given a sparse object SOBASE, we should enjoy the following:
   SOBASE::bind_scalar<S1>::graph<O,N>::graph_type  
 is the same as  
   SOBASE::bind_scalar<S2>::graph<O,N>::graph_type
 
-and also
-
+Similarly,
   SOBASE::bind_scalar<S1>::other_type
 is the same as
   SOBASE::bind_scalar<S2>::bind_scalar<S1>::other_type
 
+Also, 
+  SOBASE::graph<O,N>::graph_type and SOBASE::matrix<S,O,N>::matrix_type 
+should be acceptible to setGraphAndMatrix() as well as the finalization routines.
+
+Justification: We don't need templates, and assuming them on the classes requires "template template
+parameters" and dictates the number and ordering of the templates. This approach allows templates to be used,
+but doesn't require them. You could therefore do stuff like:
+class SomeSparseOps {
+  template <class T> bind_scalar::other_type -> undefined
+  template <> bind_scalar<float>::other_type -> SomeSparseOpsFloat
+  template <> bind_scalar<double>::other_type -> SomeSparseOpsDouble
+  
+  template <class O, class N> graph::graph_type -> undefined
+  template   <> graph<int,SomeNode>::graph_type -> SomeIntGraphOnSomeNode
+
+  template <class S, class O, class N> matrix::matrix_type -> undefined
+  template <>      matrix<float,int,SomeNode>::matrix_type -> SomeFloatMatrixOnSomeNode
+  template <>     matrix<double,int,SomeNode>::matrix_type -> SomeDoubleMatrixOnSomeNode
+
+  // and then simple overloaded methods accepting these two methods
+  // these classes are all simple, no templating, useful for supporting template free libraries or 
+  // template-free APIs, like OpenCL.
+}
+
 ************************************************************
+ 
+Discussion: Intimacy between CrsGraph and CrsMatrix
+
+Note, there is still some strange-looking interplay between CrsMatrix and CrsGraph. This is for two reasons: 
+I.  Stand-alone CrsGraph means that they both have to be able to do the same things. Epetra duplicates interfaces and implementation across the classes. Tpetra duplicates
+    interfaces, but has Graph do everything on behalf of the matrix.
+II. Certain operations are destructive (like restructuring), and we have to ensure that they are done in lockstep between CrsMatrix and CrsGraph.
+
+For example, I can't move CrsMatrix data from 1D (non-packed) to 1D (packed) without the rowptrs, so I can't let CrsGraph do its restructuring in such a way that they are
+destroyed before CrsMatrix can use them. There are a couple of ways to handle that:
+a) grab the ArrayRCP to the old rowptrs
+b) let CrsGraph do its restructuring
+c) grab the ArrayRCP to the new rowptrs
+d) have CrsMatrix do its restructuring, then release to old pointers (which are then deallocated)
+There's nothing wrong with this approach; this is how Epetra does it. 
+Because the work is duplicated and dependent on the implementation in CrsGraph, we just put it all there, so that changes are made in one place (technically, two nearby places).
+
+************************************************************
+
+Design Justification: Allocation routines in Kokkos Graph objects
+
+I wasn't sure where the allocation routines supporting thread appropriate allocation (first-touch, pinning) should go: localmatops or kokkos::graph. 
+The latter allows allocation strategy to exploit some amount of state, but that requires having a graph. That was the 
+initial implementation, but it was too much trouble, so I changed it. 
+
+Smart allocation for row pointers and inds/vals is now statically provided by lclmatops.
+
+************************************************************
+
+Change: UPLO and DIAG for solve
+
+uplo (upper triangular or lower triangular) and diag (implicit unit diag or not) had to be part of the sparse ops 
+setGraphAndMatrix, not the solve, as they are constant and necessary for the inspection phase.
+
+this was important for appropriate inspector/executor dispatch, and mandatory for CUSPARSE (they are part of the 
+matrix descriptor).
+
+therefore, they were moved from solve(). solve() and multiple() now indicate only whether tranpose is needed.
+
+************************************************************
+
+Discussion: Why does a local Matrix need a local Graph? 
+
+Ours doesn't, but derivations might, so just add it to the base constructor.
+The reason is that CrsGraphBase and CrsMatrixBase are models for how Tpetra will use local CRS objects
+Giving Matrix the Graph gives it the node and ensures they share the node type. 
+
+It does requires some agreement between node and matrix/graph; maybe a bad idea? 
+... but a templated constructor could always ignore the node.
+
+Also, it seems that we have two options: 
+Option 1:
+Case1) 1. finalize Graph  in T::G::fillComplete()
+       2. finalize Matrix in T::M::fillComplete()
+Case2) finalize graph and matrix in T::M::fillComplete()
+Matrix separate from graph is clear. 
+Matrix as a container/interface to hide the structure of values makes some sense, but isn't necessary.
+
+We could instead do:
+Case1) 1. graph alone, filled via LclMatOps::finalizeGraph()
+       2. then LclMatOps.setGraphAndMatrix(graph,vals)
+Case2) graph and matrix
+Less interface on graph and matrix objects allows more re-use of code.
+
+For now, let's stick with a minimal matrix object, which is a container for 1d packed values and whatever other data
+the implementor decides to stick in there. 
+
+Graph and matrix are filled via static methods on LocalMatOps and then submitted to a LocalMatOps object.
+
+Also, graph and matrix objects can have accept a ParameterList-accepting constructor, because, why not? (Notes
+on this below.)
+
+************************************************************
+
+Question: why size_t for row pointers in CRS formats?
+
+This may have been a mistake; rowPtr[N] is the number of non-zeros. This could theoretically be larger than 
+2-billion (there are 64GB nodes, today, allowing 8GB floats). But it seems unlikely...
+
+This structure is O(N), as opposed to O(NNZ). So doubling its size (from int -> size_t) won't double the 
+size of the matrix for any matrix with one non-zero per row.
+
+If we're going to change this to "int", we should do it immediately for backwards compatibility reasons.
+
+************************************************************
+
+Changes and explanation: changes to finalize()
 
 * Kokkos::Crs{Matrix,Graph}::finalize(bool)
-  Before, CrsGraph and CrsMatrix had methods for setting the data, then a separate method called finalize() which accepted an OptimizeStorage boolean. 
-  I'm leaving finalize() in there for the moment, as a pure virtual function, to be over-ridden by base classes.
-  Another reason is that there may be some value in separating the set-data and the finalization. 
-  I removed the OptimizeStorage argument from finalize(), but I replaced it with a ParameterList.
+  Before, CrsGraph and CrsMatrix had methods for setting the data, then a separate method called finalize()
+  which accepted an OptimizeStorage boolean.  Finalize has been made static on the local sparse ops:
+    SPASREOPS::finalizeGraph         (GRAPH &g,                  RCP<ParameterList>)
+    SPASREOPS::finalizeMatrix        (const GRAPH &g, MATRIX &m, RCP<ParameterList>)
+    SPASREOPS::finalizeGraphAndMatrix(      GRAPH &g, MATRIX &m, RCP<ParameterList>)
+  This allows SPARSEOPS objects to be changed out without modifying the matrix and graph containers. I feel 
+  that there will be more of these than there are graph and matrix containers, so we might as well make them 
+  as reusable as possible, by putting as little as possible in them.
+
+  Note, also, the use of a ParameterList instead of OptimizeStorage (which was, effectively, a boolean). This
+  is because we want to pass other data as well, and PL allows us to return the settings as well.
+
 * Kokkos::Crs{Matrix,Graph} and protected data.
-  Notice, no protected members. They're a bad idea, ripe for abuse, and an indication of design laziness. 
-  In a scenario where we are going to be publishing this interface and pushing it out to external devs, we should make this one bulletproof.
-* How to finalize() graph and matrix at the same time? No direct support; that case is covered by a specific LocalMatOps.
+  Notice, no protected members. They're a bad idea, ripe for abuse, and an indication of design laziness. In
+  a scenario where we are going to be publishing this interface and pushing it out to external devs, we should
+  make this one bulletproof.
+
+Finalize() in Tpetra::CrsGraph and Tpetra::CrsMatrix is still a fragile dance. It's bad design, but I don't
+have a better one right now, and it is only a problem for Tpetra devs.
 
 ************************************************************
 
-What things are for, and why they are the way they are
+Change: Kokkos::Graph/Matrix::clear() 
 
-* Kokkos::Crs{Matrix,Graph}::clear()
-  Need a way for the subclass to clear the parent data after it is no longer needed.
-  Maybe setStructure(null,null) is the solution instead.
-  Nevermind, killed it. We are now pure virtual. Let's see how that works out for now.
-
-* CrsGraph::getNumEntries() is for CrsMatrix::setValues() to check validity.
-
-************************************************************
-
-Graph and Matrix are separate objects to allow multiple matrices for one graph, which reflects Tpetra design.
-SparseOps is an object to allow state preservation.
-
-1. Data is submitted to Graph and Matrix, then they are submitted to SparseOps.
-2. Graph has a finalize() method so that it can be finalized in the absence of a matrix.
-
-These support the graph first, then matrix/ces paradigm.
-
-Tpetra uses no finalize method on Matrix.
+We'll just delete these and start over again. It's a smaller interface that way, and then we know that memory
+is being deleted (or leaked ... )
 
 ************************************************************
 
@@ -133,54 +207,21 @@ Const correctness to enforce semantics wherever we can. This keeps developers fr
 
 ************************************************************
 
-Generic vs. Inheritence 
+Explanation: Empty matrices 
 
-If Tpetra uses static typedef to determine local Matrix and Graph types, why bother with virtual?
-There is no code re-use.
-
-How about, local mat ops is a factory for objects derived from abstract CrsGraph and CrsMatrix?
-:( But then we have a dynamic cast when we fill the sparse mat-vec object. 
-
-Then we go fully generic? 
-:( Ugly compile errors.
-:) But abstract base class informs what is expected of us; inheriting from that guarantees that we compile.
+This is something that popped up and seemed necessary, probably having to do with zero-row objects and null
+vectors.  I can't remember. Maybe I should delete it, see if it asserts it existence again. But I didn't.  But
+I think the reason is that, even if the matrix has some non-zero number of rows, it may have no entries, with
+an empty column map.
 
 ************************************************************
 
-Finalizing use case:
-
-A)
-  1) Tpetra::CrsGraph constructs a lclGraph
-  2) Tpetra::CrsMatrix constructs a lclMatrix(lclGraph)
-  ...
-  3) Tpetra::CrsGraph calls lclGraph->finalize(), which may do something but should keep in mind that a call with a matrix will follow.
-  ...
-  4) Tpetra::CrsMatrix A calls lclGraph->finalize(A::lclMatrix), which will do whatever needs to be done to A::lclMatrix
-  ...
-  5) Tpetra::CrsMatrix B calls lclGraph->finalize(B::lclMatrix), which will do whatever needs to be done to B::lclMatrix
-
-B) 
-  1) Tpetra::CrsGraph constructs a lclGraph
-  2) Tpetra::CrsMatrix constructs a lclMatrix(lclGraph)
-  ... 
-  3) Tpetra::CrsMatrix calls lclGraph->finalize(lclMatrix), which will do everything
-
-************************************************************
-
-Empty matrices 
-
-This is something that popped up and seemed necessary, probably having to do with zero-row objects and null vectors. 
-I can't remember. Maybe I should delete it, see if it asserts it existence again. But I didn't.
-But I think the reason is that, even if the matrix has some non-zero number of rows, it may have no entries, with an empty column map.
-
-************************************************************
-
-SpMV and transpose
+TODO: SpMV and transpose
 
 Add some unrolling of numRHS.
 
-We can optionally do a better job by telling finalize() that the tranpose will be needed, and should be explicitly formed.
-Then calling a cscmm in the case that it was. This is a parameter list argument to the Tpetra::CrsMatrix (sublist "Local Fill")
+We should read parameters to finalize() indicating that the tranpose will be needed, and should therefore
+be explicitly formed for multiplication. Then we can call a parallel CSCMM in the case that it was. 
 
 ************************************************************
 
@@ -199,26 +240,35 @@ T::M -> grab either const or non-const K::G, then call either finalizeMatrix or 
 
 ************************************************************
 
-deprecate T::G and T::M::fillComplete(bool) for PL
+Discussion: deprecated T::G and T::M::fillComplete(bool) for PL
 
-Need to document parameters/structure that is used for each Sparse Ops collection
+Need to document parameters that are used for each Sparse Ops collection
 
-For example, all CrsGraph<> and CrsMatrix<> take:
-params -> 
-  "Optimize Storage":bool:true
-  "Local Graph" -> 
-     passed to local graph constructor
-  "Local Matrix" ->
-     passed to local matrix constructor
-  "Local Sparse Ops" ->
-     passed to local sparse ops constructor
+For example, Tpetra::CrsGraph::finalize() and Tpetra::CrsMatrix::finalize() take:
+ParameterList -> 
+-  "Optimize Storage"    bool      true
+-  "Local Graph"         sublist           passed to local graph constructor
+-  - params not used yet
+-  "Local Matrix"        sublist           passed to local matrix constructor
+-  - params not used yet
+-  "Local Sparse Ops"    sublist           passed to local sparse ops constructor
+-  -  "Prepare Multiply"            bool  true
+-  -  "Prepare Transpose Multiply"  bool  false
+-  -  "Prepare Solve"               bool  false
+-  -  "Prepare Transpose Solve"     bool  false
 
-Is it reasonable to accept ParameterList at construction and at fillComplete() ?
+Not all libraries will use all of these. For example, most libraries will not bother to read 
+"Prepare Multiply".
+
+Additional top level parameters could be "Delete Storage", which causes the Tpetra-level object to release its
+pointers, so that they are only maintained by the local ops (and, in the case of GPUs, largely utilize GPU
+memory).
+
+Question: Is it reasonable to accept ParameterList at construction and at fillComplete() ?
 1) user may want to fill multiple times, with different values of "Optimize Storage"
    so either we need a PList argument to fillComplete(), or they have to update the ParameterList associated with the object
 2) should we get these "fill-related" parameter in the constructor PList as well 
    yes, in the case that we go with a constructor PList and no PList to fillComplete()
-   no, in the case that we go with a PList to fillComplete() (current)
-   
-************************************************************
+   no, in the case that we go with a PList to fillComplete() (current approach)
 
+************************************************************
