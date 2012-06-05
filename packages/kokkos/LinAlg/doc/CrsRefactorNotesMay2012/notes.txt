@@ -16,6 +16,24 @@ Then we go fully generic?
 
 ************************************************************
 
+Needed features:
+
+We should add support for symmetric storage across our kernels. CUSPARSE has this, and other kernels may in the future. 
+This could be a parameter to fill complete, "Symmetric Storage", which indicates that the user only added entries for half the matrix. 
+
+We should also add a query field, based perhaps on parameter list entries, that can be passed to a Tpetra::CrsMatrix and then down to the local sparse ops, 
+regarding items such as parallelism in multiply/solve, level 3 sparse mat-vec/solve support, symmetric storage, etc. I think, as we move forward, we'll 
+find more of our capability limited by the third-party sparse libraries, and we will need some way of communicating this to the user.
+
+************************************************************
+
+Explanation: CRS format for CUSPARSE
+
+I used the CRS format for CUSPARSE, at the recommendation of the NVIDIA Scientific Libraries Team. This is because HYB format doesn't support level 3 multiply or solve, and the
+solve performance of HYB is poor. So, CRS provides all-around better support, at the expense of being slightly slower for mat-vec.
+
+************************************************************
+
 Design justification: Template parameters on classes
 
 While there are necessarily some template parameters in classes, there are not template parameters classes,
