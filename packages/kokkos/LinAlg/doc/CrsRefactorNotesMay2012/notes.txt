@@ -27,6 +27,13 @@ find more of our capability limited by the third-party sparse libraries, and we 
 
 ************************************************************
 
+Explanation: EUplo and EDiag to finalizeGraph*()
+
+The graph contains the info on the structure, so we should put this in the graph. Ergo, when it is finalized. 
+Therefore, the upper-vs-lower triangular and unit-vs-nonunit diagonal options are specified to finalizeGraph() and finalizeGraphAndMatrix().
+
+************************************************************
+
 Explanation: CRS format for CUSPARSE
 
 I used the CRS format for CUSPARSE, at the recommendation of the NVIDIA Scientific Libraries Team. This is because HYB format doesn't support level 3 multiply or solve, and the
@@ -59,6 +66,9 @@ sparse ops provides the following:
   CRS packed values
 - allocRowPtrs() and allocStorage() should allocate, optimally with regard to the node/runtime/memory
   platform, CRS row pointers and NNZ-length storage according to those pointers, respectively.
+  in addition, on cuda platrofms, the memory they allocate will be used for the host CRS data, which is then
+  copied to the device.  by special (i.e., pinned) allocation, it allows those copies to be asynchronous.
+
 These are the only templated methods required of LocalSparseOps, and no templated methods are required of the
 local graph or local matrix, nor are template parameters assumed on LocalSparseOps, local graph or local
 matrix (with the possible exception of some typedefs provided by these)
@@ -270,10 +280,10 @@ ParameterList ->
 -  "Local Matrix"        sublist           passed to local matrix constructor
 -  - params not used yet
 -  "Local Sparse Ops"    sublist           passed to local sparse ops constructor
--  -  "Prepare Multiply"            bool  true
--  -  "Prepare Transpose Multiply"  bool  false
--  -  "Prepare Solve"               bool  false
--  -  "Prepare Transpose Solve"     bool  false
+-  -  "Prepare Multiply"                      bool  true  (false potentially indicates no need to keep data)
+-  -  "Prepare Transpose Multiply"            bool  false (true potentially indicates need to store tranpose)
+-  -  "Prepare Solve"                         bool  false (true potentially justifies some inspection)
+-  -  "Prepare Conjugate Transpose Solve"     bool  false (true potentially justifies some inspection)
 
 Not all libraries will use all of these. For example, most libraries will not bother to read 
 "Prepare Multiply".
