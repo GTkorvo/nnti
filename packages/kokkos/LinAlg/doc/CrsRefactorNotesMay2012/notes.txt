@@ -16,6 +16,13 @@ Then we go fully generic?
 
 ************************************************************
 
+Mixed precision for CUSPARSE
+
+CUSPASRE doesn't support mixed precision. However, we can't specialize a class member. So, I use a static assertion 
+to guarantee that the method isn't called for mixed precision.
+
+************************************************************
+
 Needed features:
 
 We should add support for symmetric storage across our kernels. CUSPARSE has this, and other kernels may in the future. 
@@ -193,6 +200,8 @@ This structure is O(N), as opposed to O(NNZ). So doubling its size (from int -> 
 size of the matrix for any matrix with one non-zero per row.
 
 If we're going to change this to "int", we should do it immediately for backwards compatibility reasons.
+
+As an example, CUSPARSE requires that the ptrs are provided as int, while Tpetra requires size_t, so we have to convert. No big, but still...
 
 ************************************************************
 
