@@ -16,6 +16,18 @@ Then we go fully generic?
 
 ************************************************************
 
+Complex and CUDA
+
+So, std::complex<> doesn't work very well with CUDA, because the functions associated with the
+std::complex<T> class are not marked __device__ (of course), so that you can't do arithmetic on the
+GPU. The solution is to use cudaComplex instead, which requires turning all std::complex<>-based
+Kokkos and Tpetra Scalar Template Parameters into cudaComplex. Tricky...
+
+A couple of messages on the Thrust list about PETSc dropping the ball on this. Don't know if they've
+fixed it yet; easier for them than for us, because of a lack of templates.
+
+************************************************************
+
 Mixed precision for CUSPARSE
 
 CUSPASRE doesn't support mixed precision. However, we can't specialize a class member. So, I use a static assertion 
@@ -289,7 +301,7 @@ ParameterList ->
 -  "Local Matrix"        sublist           passed to local matrix constructor
 -  - params not used yet
 -  "Local Sparse Ops"    sublist           passed to local sparse ops constructor
--  -  "Prepare Multiply"                      bool  true  (false potentially indicates no need to keep data)
+-  -  "Prepare Multiply"                      bool  true  (false potentially indicates no need to keep crs data)
 -  -  "Prepare Transpose Multiply"            bool  false (true potentially indicates need to store tranpose)
 -  -  "Prepare Solve"                         bool  false (true potentially justifies some inspection)
 -  -  "Prepare Conjugate Transpose Solve"     bool  false (true potentially justifies some inspection)
