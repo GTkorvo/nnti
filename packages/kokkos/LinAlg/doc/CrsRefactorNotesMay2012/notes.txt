@@ -166,7 +166,15 @@ setGraphAndMatrix, not the solve, as they are constant and necessary for the ins
 this was important for appropriate inspector/executor dispatch, and mandatory for CUSPARSE (they are part of the 
 matrix descriptor).
 
-therefore, they were moved from solve(). solve() and multiple() now indicate only whether tranpose is needed.
+therefore, they were moved from solve(). solve() and multiply() now indicate only whether transpose is needed.
+
+mfh 15 June 2012: What if users want to ignore all the entries in the (lower,
+upper) part of the matrix, and only do triangular solve with the entries in the
+(upper, lower) part of the matrix?  Do we need to support this use case?  This
+may happen with an in-place sparse factorization.  In this case, maybe users
+would want to provide upLo and unitDiag arguments.  However, if we support this
+use case, then the solve kernels get more complicated and probably slower, since
+they have to do 'if' tests on the indices.
 
 ************************************************************
 
@@ -175,6 +183,10 @@ Discussion: Why does a local Matrix need a local Graph?
 Ours doesn't, but derivations might, so just add it to the base constructor.
 The reason is that CrsGraphBase and CrsMatrixBase are models for how Tpetra will use local CRS objects
 Giving Matrix the Graph gives it the node and ensures they share the node type. 
+
+mfh 15 June 2012: If a global matrix needs a global graph, then a local matrix
+needs a local graph.  We have to support the use case of a previously
+constructed const graph.
 
 It does requires some agreement between node and matrix/graph; maybe a bad idea? 
 ... but a templated constructor could always ignore the node.
@@ -213,7 +225,16 @@ size of the matrix for any matrix with one non-zero per row.
 
 If we're going to change this to "int", we should do it immediately for backwards compatibility reasons.
 
-As an example, CUSPARSE requires that the ptrs are provided as int, while Tpetra requires size_t, so we have to convert. No big, but still...
+As an example, CUSPARSE requires that the ptrs are provided as int,
+while Tpetra requires size_t, so we have to convert. No big, but
+still...
+
+mfh 15 June 2012: All indices -- both those used to index into rowPtr
+and colInd, and those stored in rowPtr and colInd -- should be of the
+same type, or at least of the same signed-ness.  Otherwise you might
+run into incredibly painful-to-debug signed-unsigned conversion
+errors.  I dealt with one of those in Tpetra earlier this year... I
+have no desire to encounter them again ;-) .
 
 ************************************************************
 
@@ -229,6 +250,10 @@ Changes and explanation: changes to finalize()
   that there will be more of these than there are graph and matrix containers, so we might as well make them 
   as reusable as possible, by putting as little as possible in them.
 
+  mfh 15 June 2012: I like the idea of separating out these three
+  options.  This supports both the dynamic graph and the static graph
+  (const graph supplied to constructor) cases of Tpetra::CrsMatrix.
+
   Note, also, the use of a ParameterList instead of OptimizeStorage (which was, effectively, a boolean). This
   is because we want to pass other data as well, and PL allows us to return the settings as well.
 
@@ -236,6 +261,8 @@ Changes and explanation: changes to finalize()
   Notice, no protected members. They're a bad idea, ripe for abuse, and an indication of design laziness. In
   a scenario where we are going to be publishing this interface and pushing it out to external devs, we should
   make this one bulletproof.
+
+mfh 15 June 2012: I agree; protected data makes no sense.  
 
 Finalize() in Tpetra::CrsGraph and Tpetra::CrsMatrix is still a fragile dance. It's bad design, but I don't
 have a better one right now, and it is only a problem for Tpetra devs.
@@ -246,6 +273,9 @@ Change: Kokkos::Graph/Matrix::clear()
 
 We'll just delete these and start over again. It's a smaller interface that way, and then we know that memory
 is being deleted (or leaked ... )
+
+mfh 15 June 2012: I like this idea.  The destructors release references to the
+ArrayRCPs and everything magically works right.
 
 ************************************************************
 
@@ -263,14 +293,31 @@ vectors.  I can't remember. Maybe I should delete it, see if it asserts it exist
 I think the reason is that, even if the matrix has some non-zero number of rows, it may have no entries, with
 an empty column map.
 
+mfh 15 June 2012: Hey CB, could you explain what this is all about?
+Are you saying that you're forbidding or allowing empty matrices?  I
+think it's useful to allow empty local matrices, or even empty local
+vectors.  This gives Tpetra more flexibility.
+
 ************************************************************
 
 TODO: SpMV and transpose
 
 Add some unrolling of numRHS.
 
-We should read parameters to finalize() indicating that the tranpose will be needed, and should therefore
+We should read parameters to finalize() indicating that the transpose will be needed, and should therefore
 be explicitly formed for multiplication. Then we can call a parallel CSCMM in the case that it was. 
+
+mfh 15 June 2012:
+
+1. Can't we just form the transpose on demand, like Epetra does?  (I'm
+   talking about the communication structure rather than the local sparse
+   matrix structure, but the same notion applies.)
+
+2. If we need the transpose, we might also like to rearrange the
+   non-transpose data structure as well.  See e.g., A. Buluç,
+   J. T. Fineman, M. Frigo, J. R. Gilbert, and E. Leiserson. "Parallel
+   sparse matrix-vector and matrix- transpose-vector multiplication
+   using compressed sparse blocks."  In SPAA, pages 233–244, 2009.
 
 ************************************************************
 
@@ -302,22 +349,64 @@ ParameterList ->
 -  - params not used yet
 -  "Local Sparse Ops"    sublist           passed to local sparse ops constructor
 -  -  "Prepare Multiply"                      bool  true  (false potentially indicates no need to keep crs data)
--  -  "Prepare Transpose Multiply"            bool  false (true potentially indicates need to store tranpose)
+-  -  "Prepare Transpose Multiply"            bool  false (true potentially indicates need to store transpose)
 -  -  "Prepare Solve"                         bool  false (true potentially justifies some inspection)
 -  -  "Prepare Conjugate Transpose Solve"     bool  false (true potentially justifies some inspection)
 
 Not all libraries will use all of these. For example, most libraries will not bother to read 
 "Prepare Multiply".
 
-Additional top level parameters could be "Delete Storage", which causes the Tpetra-level object to release its
-pointers, so that they are only maintained by the local ops (and, in the case of GPUs, largely utilize GPU
-memory).
+mfh 15 June 2012: What would be examples of parameters for "Local Graph" and
+"Local Matrix" (that would not otherwise belong in "Local Sparse Ops")?
 
-Question: Is it reasonable to accept ParameterList at construction and at fillComplete() ?
-1) user may want to fill multiple times, with different values of "Optimize Storage"
-   so either we need a PList argument to fillComplete(), or they have to update the ParameterList associated with the object
-2) should we get these "fill-related" parameter in the constructor PList as well 
-   yes, in the case that we go with a constructor PList and no PList to fillComplete()
-   no, in the case that we go with a PList to fillComplete() (current approach)
+Additional top level parameters could be "Delete Storage", which causes the
+Tpetra-level object to release its pointers, so that they are only maintained by
+the local ops (and, in the case of GPUs, largely utilize GPU memory).
+
+mfh 15 June 2012: My view is that "Delete Storage" should happen by default, at
+least on CPU Nodes.  On GPU Nodes, if users find themselves changing the
+structure of the matrix a lot, we might need to be more clever about
+representing the operator additively (though that messes up triangular solve).
+If users are doing a write-only update of matrix values, we only need the size
+of the data.  Then, we just instantiate an ArrayRCP on the host, let the user
+fill it, push it back to the device on fillComplete(), and deallocate the host
+ArrayRCP.
+
+Question: Is it reasonable to accept ParameterList at construction and at
+fillComplete() ?
+
+mfh 15 June 2012: If fillComplete() just uses the constructor's ParameterList,
+then the current common use case of fillComplete() (no arguments, or the domain
+and range Maps) won't trigger any deprecated warnings.  Users remain blissfully
+ignorant of implementation details ;-) .
+
+1) user may want to fill multiple times, with different values of "Optimize
+   Storage" so either we need a PList argument to fillComplete(), or they have
+   to update the ParameterList associated with the object
+
+mfh 15 June 2012: I don't really see users doing this.  The common case of
+filling multiple times is that the structure doesn't change.  This suggests that
+the structure optimizations also won't change.  If the structure changes, it's
+probably not changing in a radically different way.  (For example, there might
+be slow changes in the finite element mesh, but probably not a switch to an
+entirely different discretization scheme.)  If users really insist on changing
+the optimized storage options in mid-stream, then we can either add a
+ParameterList argument, or a setParameters() method (that checks for changes to
+current parameter values).
+
+2) should we get these "fill-related" parameter in the constructor PList as well
+   yes, in the case that we go with a constructor PList and no PList to
+   fillComplete() no, in the case that we go with a PList to fillComplete()
+   (current approach)
+
+mfh 15 June 2012: For the "Prepare ..." options, is it your intent that the
+corresponding computation not work at all if the option is false, or is this
+just a precomputation hint?  I'm thinking that if these operations are all
+local, and if they are all prepared on demand anyway, then why do we need to
+precompute them?  Tpetra::CrsMatrix::hasTransposeApply() always returns true,
+which means users can always apply the transpose, which means the logical time
+to prepare the transpose operation is on first use.  What do you think?
+
+
 
 ************************************************************
