@@ -82,29 +82,33 @@ TRIBITS_ADD_TEST(
   PASS_REGULAR_EXPRESSION "Test Passed"
   )
 
-TRIBITS_ADD_TEST(
-  SGSolve
-  NAME SG_NOX_Linear
-  COMM serial mpi
-  NUM_MPI_PROCS 2
-  ARGS "--input=input_sg_nox_linear.xml"
-  PASS_REGULAR_EXPRESSION "Test Passed"
-  )
+IF(Stokhos_ENABLE_ML)
 
-TRIBITS_ADD_TEST(
-  SGSolve
-  NAME MPNI_NOX_Linear
-  COMM serial mpi
-  NUM_MPI_PROCS 2
-  ARGS "--input=input_mpni_nox_linear.xml"
-  PASS_REGULAR_EXPRESSION "Test Passed"
-  )
+  TRIBITS_ADD_TEST(
+    SGSolve
+    NAME SG_NOX_Linear
+    COMM serial mpi
+    NUM_MPI_PROCS 2
+    ARGS "--input=input_sg_nox_linear.xml"
+    PASS_REGULAR_EXPRESSION "Test Passed"
+    )
+  
+  TRIBITS_ADD_TEST(
+    SGSolve
+    NAME MPNI_NOX_Linear
+    COMM serial mpi
+    NUM_MPI_PROCS 2
+    ARGS "--input=input_mpni_nox_linear.xml"
+    PASS_REGULAR_EXPRESSION "Test Passed"
+    )
+  
+  TRIBITS_ADD_TEST(
+    SGSolve
+    NAME SG_NOX_HNS
+    COMM serial mpi
+    NUM_MPI_PROCS 2
+    ARGS "--input=input_sg_nox_hns.xml --input_ig=input_nox_hns.xml"
+    PASS_REGULAR_EXPRESSION "Test Passed"
+    )
 
-TRIBITS_ADD_TEST(
-  SGSolve
-  NAME SG_NOX_HNS
-  COMM serial mpi
-  NUM_MPI_PROCS 2
-  ARGS "--input=input_sg_nox_hns.xml --input_ig=input_nox_hns.xml"
-  PASS_REGULAR_EXPRESSION "Test Passed"
-  )
+ENDIF()
