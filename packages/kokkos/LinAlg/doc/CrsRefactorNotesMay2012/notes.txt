@@ -1,5 +1,36 @@
 ************************************************************
 
+Data type for row offsets
+
+For CRS data storage, in addition to column indices and value arrays, each of size NNZ, there is an 
+array of size N that, for each row of the matrix, provide the offset into those arrays. These 
+"row offsets" are used as part of the kernel, so improved performance is generally realized by 
+using as small a type as possible to store them. However, the type must be large enough to store the
+last offsets (which has value NNZ). This is complicated by the fact that the number of non-zeros during 
+fill may be larger than the number of non-zeros after fillComplete, and that users don't always know in 
+advance how many non-zeros there will be. Therefore, it is difficult to identify the type necessary 
+to support this at compile time. 
+
+The solution that was agreed upon by the Tpetra development team and interested parties was: 
+* to accept row allocation sizes using size_t
+* to store, during fill, the number of row entries in size_t
+* to store, after fill complete, the row offsets in size_t (unless the user requests deallocation)
+* if appropriate or necessary, to make a copy of this in a different data structure.
+
+A necessary condition for making the copy is the scenario where the sparse kernel library used 
+by Tpetra does not support size_t; for example, CUSPARSE or CASK. Of course, this can only be done 
+if the number of non-zeros will fit in the smaller type. The benefits are
+* improving kernel performance via better utilization of bandwidth
+* maximizing the range of use for TPLs
+The downside is that we potentially have two copies of this data (one in Tpetra, one in Epetra). 
+As this array is only N+1 entries, we felt this was an appropriate sacrifice.
+
+Another consequence is that, after handing data to a local graph via setStructure() and then 
+finalizing the graph, a call to getPointers() may return null (if they were reallocated into 
+a smaller type and then deleted.)
+
+************************************************************
+
 Design decision: Generic vs. Inheritence 
 
 If Tpetra uses static typedef to determine local Matrix and Graph types, why bother with virtual method in
