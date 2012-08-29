@@ -52,7 +52,7 @@ FEApp::CZeroDiscretization::CZeroDiscretization(
   neq(num_equations)
 {
   // Distribute the elements equally among processors
-  elem_map = Teuchos::rcp(new Epetra_Map(x.size()-1, 0, *comm));
+  elem_map = Teuchos::rcp(new Epetra_Map(static_cast<int>(x.size()-1), 0, *comm));
   numMyElements = elem_map->NumMyElements();
 
   Teuchos::RCP<AbstractElement> base_element = 
