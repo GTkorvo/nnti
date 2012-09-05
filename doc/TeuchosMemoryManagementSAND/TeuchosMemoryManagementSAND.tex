@@ -34,7 +34,7 @@
 Teuchos C++ Memory Management Classes, Idioms, and Related Topics
 \\[2ex] The Complete Reference \\[2ex] {\Large A Comprehensive Strategy for
 Safe and Efficient Memory Management in C++ for High Performance
-Computing} }
+Computing}  \\ {\Large (Compatible with Teuchos in Trilinos version 11.0 and forward)} }
 
 \author{
 Roscoe Bartlett
@@ -52,7 +52,7 @@ Roscoe Bartlett
 % Set some things we need for SAND reports. These are mandatory
 %
 \SANDnum{2010-2234}
-\SANDprintDate{Feburary 2011}
+\SANDprintDate{September 2012}
 \SANDauthor{
 Roscoe Bartlett
 }
@@ -6458,7 +6458,8 @@ point into the same underlying contiguous array of memory.
 {}\begin{listing}: Debug-mode iterator matching checking (all Teuchos
 array types)
 \label{listing:iterator-matching-checking}
-{\small\begin{verbatim}
+{\small
+\begin{verbatim}
   ArrayRCP<int> a_arcp = arcp<int>(n);
   Array<int> a(n);
   // Simple mistake calling standard STL algorithm
@@ -6862,14 +6863,7 @@ create dual owning {}\ttt{RCPNodeImpl} objects
 \end{listing}
 
 
-A debugger can be opened, a break-point can be set in the function
-{}\ttt{TestForException\_break(...)}, and the program can be run again
-and break at the time the exception is thrown to see the context under
-which the second illegal {}\ttt{RCPNode} is created (see
-Section~\ref{sec:except-handling-debugging}).  A breakpoint can also
-be set in the function {}\ttt{addNewRCPNode(...)} to see when the
-other {}\ttt{RCPNode} object was created (see
-Section~\ref{sec:except-handling-debugging}).
+A debugger can be opened, a break-point can be set in the function {}\ttt{Teuchos\-::TestForException\_break(...)}, and the program can be run again and break at the time the exception is thrown to see the context under which the second illegal {}\ttt{RCPNode} is created (see Section~\ref{sec:except-handling-debugging}).  A breakpoint can also be set in the function {}\ttt{Teuchos\-::RCPNodeTracer\-::addNewRCPNode(...)} to see when the other {}\ttt{RCPNode} object was created (see Section~\ref{sec:except-handling-debugging}).
 
 If one is willing to pay for a little extra overhead of
 {}\ttt{RCPNode} tracing (see
@@ -7170,31 +7164,12 @@ class objects such they have the correct memory management properties.
 \label{sec:except-handling-debugging}
 %
 
-The debug-mode runtime checking performed by the Teuchos memory
-management classes throw exceptions when violations are detected.  As
-has been shown throughout this document, these exceptions have
-associated messages that are fairly detailed with detailed information
-about the nature and context of the problem.
+The debug-mode runtime checking performed by the Teuchos memory management classes throw exceptions when violations are detected.  As has been shown throughout this document, these exceptions have associated messages that contain detailed information about the nature and context of the problem.
 
-All exceptions thrown by the Teuchos memory management classes (and
-the rest of Trilinos for that matter) all use a system of macros in
-the file {}\ttt{Teuchos\_TestForException.hpp}.  All of these macros
-call the function {}\ttt{TestForException\_break(...)} just before an
-exception is thrown.  Therefore, if the error is repeatable (and most
-errors are), then one can open a debugger (e.g.\ GDB) and set a
-break-point in that function, run the program, and then examine the
-state of the program just as the exception is being thorwn.  Several
-exceptions can be thrown before the exception that one needs to debug.
-To make it easier to break on the exception that one cares about,
-every exception message has a {}\ttt{Thrown number} associated with it
-embedded in the error message of the exception object.  One can set a
-conditional break-point in {}\ttt{TestForException\_break(...)} to
-only stop when {}\ttt{throwNumber} has the right value.  For example,
-if one needs to stop on {}\ttt{Throw number = 10}, then in GDB one can
-set:
+All exceptions thrown by the Teuchos memory management classes (and the rest of Trilinos for that matter) all use a system of macros in the file {}\ttt{Teuchos\_TestForException.hpp}.  All of these macros call the function {}\ttt{Teuchos\-::TestForException\_break(...)} just before an exception is thrown.  Therefore, if the error is repeatable (and most errors are), then one can open a debugger (e.g.\ GDB) and set a break-point in that function, run the program, and then examine the state of the program just as the exception is being thorwn.  Several exceptions can be thrown before the exception that one needs to debug. To make it easier to break on the exception that one cares about, every exception message has a {}\ttt{Thrown number} associated with it embedded in the error message of the exception object.  One can set a conditional break-point in {}\ttt{TestForException\_break(...)} to only stop when {}\ttt{throwNumber} has the right value.  For example, if one needs to stop on {}\ttt{Throw number = 10}, then in GDB one can set (assuming this is the first breakpoint created, otherwise the breakpoint number will be greater than \texttt{1}):
 
 {\small\begin{verbatim}
-  (gdb) b 'TestForException_break [TAB] [ENTER]
+  (gdb) b 'Teuchos::TestForException_break( [TAB] [ENTER]
   (gdb) cond 1 throwNumber==10
   (gdb) run
 \end{verbatim}}
@@ -7215,8 +7190,9 @@ the exception message.  For example, for the exception message shown
 in Listing~\ref{listing:dangling-ref-error-msg}, one would set the
 break-point in GDB as:
 
-{\small\begin{verbatim}
-  (gdb) b 'Teuchos::RCPNodeTracer::addNewRCPNode [TAB] [ENTER]
+{\small
+\begin{verbatim}
+  (gdb) b 'Teuchos::RCPNodeTracer::addNewRCPNode( [TAB] [ENTER]
   (gdb) cond 1 insertionNumber==5
   (gdb) run
 \end{verbatim}}
