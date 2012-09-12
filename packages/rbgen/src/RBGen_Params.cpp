@@ -5,6 +5,7 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_Utils.hpp"
 #include "Teuchos_Assert.hpp"
+#include "Teuchos_Ptr.hpp"
 
 Teuchos::RCP<Teuchos::ParameterList> RBGen::createParams( const std::string& filename )
 {
@@ -12,7 +13,7 @@ Teuchos::RCP<Teuchos::ParameterList> RBGen::createParams( const std::string& fil
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp( new Teuchos::ParameterList() );
 
   // Read in parameter list from XML file
-  Teuchos::updateParametersFromXmlFile( filename, &*params );
+  Teuchos::updateParametersFromXmlFile( filename, Teuchos::Ptr<Teuchos::ParameterList>(&*params) );
 
   /*
   //
