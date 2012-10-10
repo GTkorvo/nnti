@@ -110,7 +110,7 @@ FEApp::Application::Application(
   for (unsigned int i=0; i<responses.size(); i++)
     total_num_responses += responses[i]->numResponses();
   if (total_num_responses > 0)
-    response_map = Teuchos::rcp(new Epetra_LocalMap(total_num_responses, 0,
+    response_map = Teuchos::rcp(new Epetra_LocalMap(static_cast<int>(total_num_responses), 0,
                                                     *comm));
 }
 
@@ -482,7 +482,7 @@ evaluateResponses(const Epetra_Vector* xdot,
 
     // Create Epetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, comm);
+    Epetra_LocalMap local_response_map(static_cast<int>(num_responses), 0, comm);
 
     // Create Epetra_Vector for response function
     Epetra_Vector local_g(local_response_map);
@@ -518,7 +518,7 @@ evaluateResponseTangents(
 
     // Create Epetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, comm);
+    Epetra_LocalMap local_response_map(static_cast<int>(num_responses), 0, comm);
 
     // Create Epetra_Vectors for response function
     Teuchos::RCP<Epetra_Vector> local_g;
@@ -567,7 +567,7 @@ evaluateResponseGradients(
 
     // Create Epetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, comm);
+    Epetra_LocalMap local_response_map(static_cast<int>(num_responses), 0, comm);
 
     // Create Epetra_Vectors for response function
     Teuchos::RCP<Epetra_Vector> local_g;
@@ -947,7 +947,7 @@ evaluateSGResponses(const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
     // Create Epetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
     Teuchos::RCP<Epetra_LocalMap> local_response_map = 
-      Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, comm));
+      Teuchos::rcp(new Epetra_LocalMap(static_cast<int>(num_responses), 0, comm));
 
     // Create Epetra_Vector for response function
     Stokhos::EpetraVectorOrthogPoly local_sg_g(
@@ -994,7 +994,7 @@ evaluateSGResponseTangents(
     // Create Epetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
     Teuchos::RCP<Epetra_LocalMap> local_response_map = 
-      Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, comm));
+      Teuchos::rcp(new Epetra_LocalMap(static_cast<int>(num_responses), 0, comm));
 
     // Create Epetra_Vectors for response function
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly > local_sg_g;
@@ -1059,7 +1059,7 @@ evaluateSGResponseGradients(
     // Create Epetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
     Teuchos::RCP<Epetra_LocalMap> local_response_map = 
-      Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, comm));
+      Teuchos::rcp(new Epetra_LocalMap(static_cast<int>(num_responses), 0, comm));
 
     // Create Epetra_Vectors for response function
     Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > local_sg_g;

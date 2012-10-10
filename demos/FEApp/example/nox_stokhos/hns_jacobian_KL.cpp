@@ -284,7 +284,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const Epetra_Comm> stoch_comm =
       sg_parallel_data->getStochasticComm();
     Teuchos::RCP<const Epetra_BlockMap> stoch_overlap_map = 
-      Teuchos::rcp(new Epetra_LocalMap(sz, 0, *stoch_comm));
+      Teuchos::rcp(new Epetra_LocalMap(static_cast<int>(sz), 0, *stoch_comm));
 
     // Stochastic parameters
      parameterParams.set("Number of Parameter Vectors", 2);
@@ -473,7 +473,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const Epetra_BlockMap> kl_stoch_row_map =
       kl_epetraCijk->getStochasticRowMap();
     Teuchos::RCP<const Epetra_BlockMap> kl_ov_stoch_row_map = 
-      Teuchos::rcp(new Epetra_LocalMap(sz2, 0, kl_comm->TimeDomainComm()));
+      Teuchos::rcp(new Epetra_LocalMap(static_cast<int>(sz2), 0, kl_comm->TimeDomainComm()));
     
     Teuchos::RCP<const Epetra_Map> base_x_map = model->get_x_map();
     Teuchos::RCP<const Epetra_Map> base_f_map = model->get_f_map();

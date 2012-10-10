@@ -70,7 +70,11 @@ FEApp::ResidualOp::elementInit(const FEApp::AbstractElement& e,
   // Copy element solution
   for (unsigned int i=0; i<nnode; i++) {
     node_GID = e.nodeGID(i);
-    firstDOF = x->Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    firstDOF = x->Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+    firstDOF = x->Map().LID(static_cast<int>(node_GID*neqn));
+#endif
     for (unsigned int j=0; j<neqn; j++) {
       elem_x[neqn*i+j] = (*x)[firstDOF+j];
       if (elem_xdot != NULL)
@@ -109,7 +113,11 @@ FEApp::ResidualOp::nodeInit(const FEApp::NodeBC& bc,
   unsigned int node_GID = bc.getNodeGID();
 
   // Local ID of first DOF
-  unsigned int firstDOF = x->Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  unsigned int firstDOF = x->Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+  unsigned int firstDOF = x->Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
   // Copy node solution
   for (unsigned int j=0; j<neqn; j++) {
@@ -183,7 +191,11 @@ FEApp::JacobianOp::elementInit(const FEApp::AbstractElement& e,
   // Copy element solution
   for (unsigned int i=0; i<nnode; i++) {
     node_GID = e.nodeGID(i);
-    firstDOF = x->Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    firstDOF = x->Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+    firstDOF = x->Map().LID(static_cast<int>(node_GID*neqn));
+#endif
     for (unsigned int j=0; j<neqn; j++) {
       elem_x[neqn*i+j] = 
         FadType(ndof, (*x)[firstDOF+j]);
@@ -263,7 +275,11 @@ FEApp::JacobianOp::nodeInit(const FEApp::NodeBC& bc,
   unsigned int node_GID = bc.getNodeGID();
 
   // Local ID of first DOF
-  unsigned int firstDOF = x->Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  unsigned int firstDOF = x->Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+  unsigned int firstDOF = x->Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
   // Copy element solution
   for (unsigned int j=0; j<neqn; j++) {
@@ -416,7 +432,12 @@ FEApp::TangentOp::elementInit(
   // Copy element solution
   for (unsigned int i=0; i<nnode; i++) {
     node_GID = e.nodeGID(i);
-    firstDOF = x->Map().LID(node_GID*neqn);
+
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    firstDOF = x->Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+    firstDOF = x->Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
     for (unsigned int j=0; j<neqn; j++) {
       if (Vx != Teuchos::null && j_coeff != 0.0) {
@@ -505,7 +526,11 @@ FEApp::TangentOp::nodeInit(const FEApp::NodeBC& bc,
   unsigned int node_GID = bc.getNodeGID();
 
   // Local ID of first DOF
-  unsigned int firstDOF = x->Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  unsigned int firstDOF = x->Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+  unsigned int firstDOF = x->Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
   // Copy element solution
   for (unsigned int j=0; j<neqn; j++) {
@@ -649,7 +674,11 @@ FEApp::SGResidualOp::elementInit(const FEApp::AbstractElement& e,
     // Copy element solution
     for (unsigned int i=0; i<nnode; i++) {
       node_GID = e.nodeGID(i);
-      firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+      firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+      firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
       for (unsigned int j=0; j<neqn; j++) {
         elem_x[neqn*i+j].fastAccessCoeff(block) = (*x)[block][firstDOF+j];
         if (elem_xdot != NULL)
@@ -696,7 +725,11 @@ FEApp::SGResidualOp::nodeInit(const FEApp::NodeBC& bc,
   unsigned int node_GID = bc.getNodeGID();
 
   // Local ID of first DOF
-  unsigned int firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
   // Allocate appropriate sizes for coefficients
   for (unsigned int j=0; j<neqn; j++) {
@@ -797,7 +830,11 @@ FEApp::SGJacobianOp::elementInit(const FEApp::AbstractElement& e,
   // Copy element solution
   for (unsigned int i=0; i<nnode; i++) {
     node_GID = e.nodeGID(i);
-    firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+    firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
     for (unsigned int j=0; j<neqn; j++) {
       elem_x[neqn*i+j] = SGFadType(ndof, 0.0);
       elem_x[neqn*i+j].fastAccessDx(neqn*i+j) = j_coeff;
@@ -900,7 +937,11 @@ FEApp::SGJacobianOp::nodeInit(const FEApp::NodeBC& bc,
   unsigned int node_GID = bc.getNodeGID();
 
   // Local ID of first DOF
-  unsigned int firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
   // Copy element solution
   for (unsigned int j=0; j<neqn; j++) {
@@ -1079,7 +1120,11 @@ FEApp::SGTangentOp::elementInit(
   // Copy element solution
   for (unsigned int i=0; i<nnode; i++) {
     node_GID = e.nodeGID(i);
-    firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+    firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
     for (unsigned int j=0; j<neqn; j++) {
       if (Vx != Teuchos::null && j_coeff != 0.0) {
@@ -1182,7 +1227,11 @@ FEApp::SGTangentOp::nodeInit(const FEApp::NodeBC& bc,
   unsigned int node_GID = bc.getNodeGID();
 
   // Local ID of first DOF
-  unsigned int firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
   // Copy element solution
   for (unsigned int j=0; j<neqn; j++) {
@@ -1341,7 +1390,11 @@ FEApp::MPResidualOp::elementInit(const FEApp::AbstractElement& e,
     // Copy element solution
     for (unsigned int i=0; i<nnode; i++) {
       node_GID = e.nodeGID(i);
-      firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+      firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+      firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
       for (unsigned int j=0; j<neqn; j++) {
         elem_x[neqn*i+j].fastAccessCoeff(block) = (*x)[block][firstDOF+j];
         if (elem_xdot != NULL)
@@ -1388,7 +1441,11 @@ FEApp::MPResidualOp::nodeInit(const FEApp::NodeBC& bc,
   unsigned int node_GID = bc.getNodeGID();
 
   // Local ID of first DOF
-  unsigned int firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
   // Allocate appropriate sizes for coefficients
   for (unsigned int j=0; j<neqn; j++) {
@@ -1487,7 +1544,11 @@ FEApp::MPJacobianOp::elementInit(const FEApp::AbstractElement& e,
   // Copy element solution
   for (unsigned int i=0; i<nnode; i++) {
     node_GID = e.nodeGID(i);
-    firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+    firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
     for (unsigned int j=0; j<neqn; j++) {
       elem_x[neqn*i+j] = MPFadType(ndof, 0.0);
       elem_x[neqn*i+j].fastAccessDx(neqn*i+j) = j_coeff;
@@ -1590,7 +1651,11 @@ FEApp::MPJacobianOp::nodeInit(const FEApp::NodeBC& bc,
   unsigned int node_GID = bc.getNodeGID();
 
   // Local ID of first DOF
-  unsigned int firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
   // Copy element solution
   for (unsigned int j=0; j<neqn; j++) {
@@ -1767,7 +1832,11 @@ FEApp::MPTangentOp::elementInit(
   // Copy element solution
   for (unsigned int i=0; i<nnode; i++) {
     node_GID = e.nodeGID(i);
-    firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+    firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
     for (unsigned int j=0; j<neqn; j++) {
       if (Vx != Teuchos::null && j_coeff != 0.0) {
@@ -1870,7 +1939,11 @@ FEApp::MPTangentOp::nodeInit(const FEApp::NodeBC& bc,
   unsigned int node_GID = bc.getNodeGID();
 
   // Local ID of first DOF
-  unsigned int firstDOF = (*x)[0].Map().LID(node_GID*neqn);
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<long long>(node_GID*neqn));
+#else
+  unsigned int firstDOF = (*x)[0].Map().LID(static_cast<int>(node_GID*neqn));
+#endif
 
   // Copy element solution
   for (unsigned int j=0; j<neqn; j++) {
