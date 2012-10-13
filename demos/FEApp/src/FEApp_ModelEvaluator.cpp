@@ -82,7 +82,7 @@ FEApp::ModelEvaluator::ModelEvaluator(
 
     // Create Epetra map for parameter vector
     epetra_param_map[i] = 
-      Teuchos::rcp(new Epetra_LocalMap(sacado_param_vec[i].size(), 0, comm));
+      Teuchos::rcp(new Epetra_LocalMap(static_cast<int>(sacado_param_vec[i].size()), 0, comm));
 
     // Create Epetra vector for parameters
     epetra_param_vec[i] = 

@@ -53,8 +53,13 @@ namespace FEApp {
            unsigned int neqn,
            const BuilderT& builder) : global_node_id(gid) {
       strategyTM.buildObjects(builder);
-      is_owned = dofMap.MyGID(gid*neqn);
-      is_shared = overlapped_dofMap.MyGID(gid*neqn) && !is_owned;
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+      is_owned = dofMap.MyGID(static_cast<long long>(gid*neqn));
+      is_shared = overlapped_dofMap.MyGID(static_cast<long long>(gid*neqn)) && !is_owned;
+#else
+      is_owned = dofMap.MyGID(static_cast<int>(gid*neqn));
+      is_shared = overlapped_dofMap.MyGID(static_cast<int>(gid*neqn)) && !is_owned;
+#endif
     }
 
     //! Destructor
