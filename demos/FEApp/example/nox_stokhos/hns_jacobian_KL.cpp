@@ -262,7 +262,7 @@ int main(int argc, char *argv[]) {
     //   Teuchos::rcp(new Stokhos::SparseGridQuadrature<int,double>(basis, p));
     unsigned int sz = basis->size();
     Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk =
-      basis->computeTripleProductTensor(sz);
+      basis->computeTripleProductTensor();
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > expansion = 
       Teuchos::rcp(new Stokhos::QuadOrthogPolyExpansion<int,double>(basis, 
 								    Cijk,
@@ -465,7 +465,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const EpetraExt::MultiComm> kl_comm =
       Stokhos::buildMultiComm(*globalComm, sz2, num_spatial_procs);
     Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > kl_Cijk =
-      kl_basis->computeTripleProductTensor(num_KL+1);
+      kl_basis->computeLinearTripleProductTensor();
     Teuchos::RCP<Stokhos::EpetraSparse3Tensor> kl_epetraCijk =
       Teuchos::rcp(new Stokhos::EpetraSparse3Tensor(kl_basis, kl_Cijk, 
 						    kl_comm));
