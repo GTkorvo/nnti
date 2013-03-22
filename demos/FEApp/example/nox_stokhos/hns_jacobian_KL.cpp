@@ -262,7 +262,7 @@ int main(int argc, char *argv[]) {
     //   Teuchos::rcp(new Stokhos::SparseGridQuadrature<int,double>(basis, p));
     unsigned int sz = basis->size();
     Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk =
-      basis->computeTripleProductTensor(sz);
+      basis->computeTripleProductTensor();
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > expansion = 
       Teuchos::rcp(new Stokhos::QuadOrthogPolyExpansion<int,double>(basis, 
 								    Cijk,
@@ -284,7 +284,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const Epetra_Comm> stoch_comm =
       sg_parallel_data->getStochasticComm();
     Teuchos::RCP<const Epetra_BlockMap> stoch_overlap_map = 
-      Teuchos::rcp(new Epetra_LocalMap(sz, 0, *stoch_comm));
+      Teuchos::rcp(new Epetra_LocalMap(static_cast<int>(sz), 0, *stoch_comm));
 
     // Stochastic parameters
      parameterParams.set("Number of Parameter Vectors", 2);
@@ -465,7 +465,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const EpetraExt::MultiComm> kl_comm =
       Stokhos::buildMultiComm(*globalComm, sz2, num_spatial_procs);
     Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > kl_Cijk =
-      kl_basis->computeTripleProductTensor(num_KL+1);
+      kl_basis->computeLinearTripleProductTensor();
     Teuchos::RCP<Stokhos::EpetraSparse3Tensor> kl_epetraCijk =
       Teuchos::rcp(new Stokhos::EpetraSparse3Tensor(kl_basis, kl_Cijk, 
 						    kl_comm));
@@ -473,7 +473,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const Epetra_BlockMap> kl_stoch_row_map =
       kl_epetraCijk->getStochasticRowMap();
     Teuchos::RCP<const Epetra_BlockMap> kl_ov_stoch_row_map = 
-      Teuchos::rcp(new Epetra_LocalMap(sz2, 0, kl_comm->TimeDomainComm()));
+      Teuchos::rcp(new Epetra_LocalMap(static_cast<int>(sz2), 0, kl_comm->TimeDomainComm()));
     
     Teuchos::RCP<const Epetra_Map> base_x_map = model->get_x_map();
     Teuchos::RCP<const Epetra_Map> base_f_map = model->get_f_map();

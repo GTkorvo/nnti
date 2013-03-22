@@ -306,7 +306,7 @@ int main(int argc, char *argv[]) {
     if (do_dakota) {
       std::ofstream output_file(output_filename.c_str());
       output_file.precision(12);
-      output_file.setf(ios::scientific);
+      output_file.setf(std::ios::scientific);
       output_file << (*g)[0] << std::endl;
       output_file << (*dgdp)[0][0] << std::endl;
       output_file.close();
