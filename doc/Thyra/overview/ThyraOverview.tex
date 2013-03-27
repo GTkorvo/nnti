@@ -3,6 +3,8 @@
 \usepackage[colorlinks]{hyperref}
 \usepackage{graphicx}
 \usepackage{latexsym}
+\usepackage{wrapfig}
+
 \input{rab_commands}
 
 \newtheorem{dumb_fact}{Dumb Fact}[section]
@@ -35,7 +37,7 @@ Roscoe A. Bartlett \\ Optimization/Uncertainty Estim}
 % Set some things we need for SAND reports. These are mandatory
 %
 \SANDnum{SAND2007-5984}
-\SANDprintDate{August 2010}
+\SANDprintDate{March 2013}
 \SANDauthor{
 Roscoe A. Bartlett \\ Optimization and Uncertainty Quantification  \\ \\
 }
@@ -285,8 +287,6 @@ Vector space is the foundation for all other abstractions.  Vector spaces are ab
 
 Vectors are abstracted through the \texttt{\textit{Vector\-Base}} interface.  The \texttt{\textit{Vector\-Base}} interface is very minimal and really only defines one nontrivial function \texttt{\textit{applyOp(\-...)}}.  The \texttt{\textit{applyOp(\-...)}} function accepts user-defined (i.e.~ANA-defined) reduction/transformation operator (RTOp) objects through the templated RTOp C++ interface \texttt{\textit{RTOpPack::RTOpT}}.  An ever increasing set of concrete implementations of RTOps is provided along with wrapper convenience functions in the Thyra ANA support code collection.  The set of RTOp element-wise reduction/transformation operations is also easily extensible and does not require any changes at all to any existing vector implementation (which is the whole point).  Every \texttt{\textit{Vector\-Base}} object provides access to its \texttt{\textit{Vector\-Space\-Base}} (that was used to create the \texttt{\textit{Vector\-Base}} object) through the function \texttt{space()}.
 
-\textbf{2011/09/16: ToDo: Finished editing up to here!}
-
 The \texttt{\textit{Vector\-Space\-Base}} interface also provides the ability to create \texttt{\textit{Multi\-Vector\-Base}} objects through the \texttt{\textit{createMembers(numMembers)}} function.  A \texttt{\textit{Multi\-Vector\-Base}} is a tall thin dense matrix where each column in the matrix is a \texttt{\textit{Vector\-Base}} object which is accessible through the \texttt{\textit{col(...)}}  function.  \texttt{\textit{Multi\-Vector\-Base}}s are needed for near-optimal processor cache performance (in serial and parallel programs) and to minimize the number of global communications in a distributed parallel environment.  The \texttt{\textit{Multi\-Vector\-Base}} abstraction is critical in many different types ANAs such as block Krylov methods.  The interface class \texttt{\textit{Vector\-Base}} is derived from \texttt{\textit{Multi\-Vector\-Base}} so that every \texttt{\textit{Vector\-Base}} object is also a \texttt{\textit{Multi\-Vector\-Base}} object as well.  This simplifies the development of ANAs in that any ANA that can handle \texttt{\textit{Multi\-Vector\-Base}} objects can also automatically accept \texttt{\textit{Vector\-Base}} objects as well. (However, the derivation of the vector interface from the multi-vector interface does lead to some increased complexity in creating more derived interface subclasses by requiring the use of multiple inheritance.)
 
 \texttt{\textit{Vector\-Space\-Base}} declares a virtual function called \texttt{\textit{scalarProd(x,y)}} which computes the scalar product $<x,y>$ for the vector space.  There is also a \texttt{\textit{Multi\-Vector\-Base}} version \texttt{\textit{Vector\-Space\-Base\-::scalarProds(...)}}  (not shown in the figure) that computes the scalar products of each set of column vectors in two multi-vectors.  Finally, \texttt{\textit{Vector\-Space\-Base}} includes the ability to determine the compatibility of (multi)vectors from different vector spaces through the function \texttt{\textit{isCompatible(vecSpc)}}. This is useful primarily for error checking and debugging.
@@ -302,7 +302,7 @@ where $M$ is a \texttt{\textit{Linear\-Op\-Base}} object; $op(M)$ is $M$ or $M^H
 
 The function \texttt{\textit{opSupported(M\_trans)}} will return \texttt{false} if a particular form of the transpose is not supported.  Specifically, if the adjoint apply is supported, then \texttt{\textit{opSupported(CONJTRANS)}} returns \texttt{true}.
 
-If the adjoint is supported, then it must satisfy the adjoint property Specifically, for any two vectors $w\in\mathcal{D}$ (domain space) and $u\in\mathcal{R}$ (range space), the adjoint operation must obey the adjoint property
+If the adjoint is supported, then it must satisfy the adjoint property. Specifically, for any two vectors $w\in\mathcal{D}$ (domain space) and $u\in\mathcal{R}$ (range space), the adjoint operation must obey the adjoint property
 \[
   <u,A v>_{\mathcal{R}} =\!= <A^H u, v>_{\mathcal{D}}.
 \]
@@ -324,7 +324,7 @@ Z =\alpha Y X + \beta Z
 \]
 where $Y$, $X$ and $Z$ are all multi-vectors and $\alpha$ and $\beta$ are scalars.
 
-Together with basic linear operators applications, block inner products and block updates form the basic operations needed to implement block Krylov and other block numerical aglorithms.
+Together, these basic linear operators applications, block inner products and block updates form the basic operations needed to implement block Krylov and other block numerical aglorithms.
 
 Also note that since \texttt{\textit{Multi\-Vector\-Base}} derives from \texttt{\textit{Linear\-Op\-Base}} and \texttt{\textit{Vector\-Base}} derives from \texttt{\textit{Multi\-Vector\-Base}}, therefore, every vector object is also a linear operator.  While this may not be a terribly useful feature it does mean that one must interpret $y^H x$ to be the same as $<y,x>$ and not just the dot product when a non-Euclidean vector space is involved.
 
@@ -335,9 +335,11 @@ Also note that since \texttt{\textit{Multi\-Vector\-Base}} derives from \texttt{
 
 The Thyra Fundamental ANA Operator/Vector Interfaces require that every Thyra vector be represented as a finite-dimensional set of scalar coefficients and that the scalar product $<\tilde{x},\tilde{y}>$ be equivalent to the two-sided application of some finite-dimensional symmetric positive definite matrix $Q\in\RE^{n\times{}n}$ such that $<\tilde{x},\tilde{y}> = \tilde{x}^H Q \tilde{y}$.  The Thyra interfaces do not try to pretend that it's vectors are infinite dimensional or that they admit more general implementations as allowed by infinite dimensional Hilbert spaces. While every Thyra vector must be stored as a set of scalar coefficients, the interfaces make no assumptions whatsoever about where or how it's coefficients are stored.  A fully general ANA can make no assumptions about how vectors are stored or laid out in memory (or even if any of the elements are cheaply accepssible), only that those coefficients do exist and that the coefficients can be exposed to reduction and transformation operators (see \cite{ref:rtop_toms}).
 
-While accessing the elements of a vector is ill advised in a general ANA, the Thyra vector interface supports acquiring direct views of any range of vector coefficient data (see \texttt{Thyra::\-Vector\-Base\-::\-acquireDetachedView(...)}).
+While accessing the elements of a generic vector is ill advised in a general ANA, the Thyra vector interface supports acquiring direct views of any range of vector coefficient data (see \texttt{Thyra::\-Vector\-Base\-::\-acquireDetachedView(...)}).
 
-Again, Thyra interfaces do not try to hide the fact that a vector is simply a set of scalar coefficients associated with some basis.  Thyra does not even really try to keep the client ANA from accessing the actual coefficients of the vectors since it can access them with an RTOp object if desired.  What Thyra does do is to abstract where the vector coefficients live and what native data structure is used to hold the coefficients.  None of vector coefficients may even be directly be head in main memory in the process where the ANA is running (e.g.\ GPUs) but there is aways a (perhaps very inefficient) mechanism to get a view of and retrieve them using RTOps.  ANAs that want to be maximally general and efficient should not try to directly access the vector elements explicitly and many ANAs do not need to. However, there are perfectly reasonable ANAs that do need to access the explicit vector coefficients for vectors from certain vector spaces (such as vectors in the design space in some reduced-space optimization algorithms in a solver such as MOOCHO \cite{MOOCHO}) and Thyra provides efficient and yet 100\% general ways to access these coefficients.  Every Thyra vector space also has a finite dimension that is accessible as a property of the vector space and is exposed as a (64 bit) integral datatype through \texttt{Vector\-Space\-Base\-::dim()}.
+Again, Thyra interfaces do not try to hide the fact that a vector is simply a set of scalar coefficients associated with some basis.  Thyra does not even really try to keep the client ANAs from accessing the actual coefficients of the vectors since it can access them with an RTOp object if desired.  What Thyra does do is to abstract where the vector coefficients live and what native data structure is used to hold the coefficients.  None of vector coefficients may even be directly be head in main memory in the process where the ANA is running (e.g.\ GPUs) but there is aways a (perhaps very inefficient) mechanism to get a view of and retrieve them using RTOps.  ANAs that want to be maximally general and efficient should not try to directly access the vector elements explicitly and many ANAs do not need to.
+
+\textbf{Side Note:} However, there are perfectly reasonable ANAs that do need to access the explicit vector coefficients for vectors from certain vector spaces (such as vectors in the design space in some reduced-space optimization algorithms in a solver such as MOOCHO \cite{MOOCHO}) and Thyra provides efficient and yet 100\% general ways to access these coefficients.  Every Thyra vector space also has a finite dimension that is accessible as a property of the vector space and is exposed as a (64 bit) integral datatype through \texttt{Vector\-Space\-Base\-::dim()}.
 
 While Thyra requires vectors to be finite dimensional and the vector coefficients must be accessible (if to none other than to RTOps), it allows complete freedom in the implementation of scalar products and of general linear operators that map vectors from one vector space to another.
 
