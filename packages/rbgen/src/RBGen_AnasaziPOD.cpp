@@ -45,14 +45,14 @@ namespace RBGen {
 
     // See if there is a matrix to be used for an inner-product form
     if (rbmethod_params.isParameter( "POD Operator Weighting Matrix" )) {
-      string matFile = Teuchos::getParameter<string>( rbmethod_params, "POD Operator Weighting Matrix" );
+      std::string matFile = Teuchos::getParameter<std::string>( rbmethod_params, "POD Operator Weighting Matrix" );
       std::vector<std::string> filename(1,matFile);
       op_ = fileio->Read( filename );
     }
 
     // See if there is a matrix to be used in the orthogonal basis construction
     if (rbmethod_params.isParameter( "Inner Product Matrix" )) {
-      string matFile = Teuchos::getParameter<string>( rbmethod_params, "Inner Product Matrix" );
+      std::string matFile = Teuchos::getParameter<std::string>( rbmethod_params, "Inner Product Matrix" );
       std::vector<std::string> filename(1,matFile);
       inner_prod_op_ = fileio->Read( filename );
     }
@@ -94,7 +94,7 @@ namespace RBGen {
     int maxRestarts = 300;
     int verbosity = Anasazi::Warnings + Anasazi::Errors;
     double tol = 1e-14;
-    string which="LM";
+    std::string which="LM";
     //
     // Create parameter list to pass into solver
     //

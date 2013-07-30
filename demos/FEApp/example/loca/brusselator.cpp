@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
     LOCA::Abstract::Iterator::IteratorStatus status = stepper.run();
 
     if (status == LOCA::Abstract::Iterator::Finished) 
-      globalData->locaUtils->out() << "All tests passed" << endl;
+      globalData->locaUtils->out() << "All tests passed" << std::endl;
     else {
       if (globalData->locaUtils->isPrintType(NOX::Utils::Error))
         globalData->locaUtils->out() 
@@ -291,14 +291,14 @@ int main(int argc, char *argv[]) {
   catch (std::exception& e) {
     std::cout << e.what() << std::endl;
   }
-  catch (string& s) {
+  catch (std::string& s) {
     std::cout << s << std::endl;
   }
   catch (char *s) {
     std::cout << s << std::endl;
   }
   catch (...) {
-    std::cout << "Caught unknown exception!" <<std:: endl;
+    std::cout << "Caught unknown exception!" << std::endl;
   }
 
 }
