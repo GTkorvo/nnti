@@ -150,9 +150,9 @@ int main(int argc, char *argv[]) {
     int sz = basis->size();
     Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk;
     if (full_expansion)
-      Cijk = basis->computeTripleProductTensor(sz);
+      Cijk = basis->computeTripleProductTensor();
     else
-      Cijk = basis->computeTripleProductTensor(num_KL+1);
+      Cijk = basis->computeLinearTripleProductTensor();
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > expansion = 
       Teuchos::rcp(new Stokhos::AlgebraicOrthogPolyExpansion<int,double>(basis,
 									 Cijk));
@@ -308,14 +308,14 @@ int main(int argc, char *argv[]) {
   catch (std::exception& e) {
     std::cout << e.what() << std::endl;
   }
-  catch (string& s) {
+  catch (std::string& s) {
     std::cout << s << std::endl;
   }
   catch (char *s) {
     std::cout << s << std::endl;
   }
   catch (...) {
-    std::cout << "Caught unknown exception!" <<std:: endl;
+    std::cout << "Caught unknown exception!" << std::endl;
   }
 
 #ifdef HAVE_MPI
