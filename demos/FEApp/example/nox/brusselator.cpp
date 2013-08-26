@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<FEApp::ModelEvaluator> model = 
       Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 
-    //app->getJacobianGraph()->Print(cout);
+    //app->getJacobianGraph()->Print(std::cout);
 
     // Create NOX interface
     Teuchos::RCP<NOX::Epetra::ModelEvaluatorInterface> interface =
@@ -181,9 +181,9 @@ int main(int argc, char *argv[]) {
     // Solve
     NOX::StatusTest::StatusType status = solver->solve();
     if (status == NOX::StatusTest::Converged) 
-      utils.out() << "Test Passed!" << endl;
+      utils.out() << "Test Passed!" << std::endl;
     else {
-	utils.out() << "Nonlinear solver failed to converge!" << endl;
+	utils.out() << "Nonlinear solver failed to converge!" << std::endl;
     }
 
     // Get the Epetra_Vector with the final solution from the solver
@@ -194,10 +194,10 @@ int main(int argc, char *argv[]) {
 
     // Output the parameter list
     if (utils.isPrintType(NOX::Utils::Parameters)) {
-      utils.out() << endl << "Final Parameters" << endl
-		  << "****************" << endl;
+      utils.out() << std::endl << "Final Parameters" << std::endl
+		  << "****************" << std::endl;
       appParams->print(utils.out());
-      utils.out() << endl;
+      utils.out() << std::endl;
     }
 
     //finalSolution.Print(utils.out());
@@ -211,14 +211,14 @@ int main(int argc, char *argv[]) {
   catch (std::exception& e) {
     std::cout << e.what() << std::endl;
   }
-  catch (string& s) {
+  catch (std::string& s) {
     std::cout << s << std::endl;
   }
   catch (char *s) {
     std::cout << s << std::endl;
   }
   catch (...) {
-    std::cout << "Caught unknown exception!" <<std:: endl;
+    std::cout << "Caught unknown exception!" << std::endl;
   }
 
 }
