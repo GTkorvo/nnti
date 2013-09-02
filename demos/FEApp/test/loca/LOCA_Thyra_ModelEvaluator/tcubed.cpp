@@ -352,7 +352,7 @@ int main(int argc, char *argv[]) {
     std::cout << e.what() << std::endl;
     ierr = 1;
   }
-  catch (string& s) {
+  catch (std::string& s) {
     std::cout << s << std::endl;
     ierr = 1;
   }
@@ -361,7 +361,7 @@ int main(int argc, char *argv[]) {
     ierr = 1;
   }
   catch (...) {
-    std::cout << "Caught unknown exception!" <<std:: endl;
+    std::cout << "Caught unknown exception!" << std::endl;
     ierr = 1;
   }
 
