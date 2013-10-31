@@ -71,6 +71,13 @@ int main( int argc, char* argv[] )
   // ---------------------------------------------------------------
   //
   Teuchos::RCP<Teuchos::ParameterList> BasisParams = RBGen::createParams( xml_file );
+  if (verbose && Comm.MyPID() == 0) 
+  {
+    std::cout<<"-------------------------------------------------------"<<std::endl;
+    std::cout<<"Input Parameter List: "<<std::endl;
+    std::cout<<"-------------------------------------------------------"<<std::endl;
+    BasisParams->print();
+  } 
   //
   // ---------------------------------------------------------------
   //  CREATE THE FILE I/O HANDLER
@@ -97,6 +104,12 @@ int main( int argc, char* argv[] )
     mvFileIO->Initialize( BasisParams );
     opFileIO->Initialize( BasisParams );
   }    
+  if (verbose && Comm.MyPID() == 0) 
+  {
+    std::cout<<"-------------------------------------------------------"<<std::endl;
+    std::cout<<"File I/O Handlers Generated"<<std::endl;
+    std::cout<<"-------------------------------------------------------"<<std::endl;
+  }
   //
   // ---------------------------------------------------------------
   //  READ IN THE DATA SET / SNAPSHOT SET & PREPROCESS
@@ -132,6 +145,13 @@ int main( int argc, char* argv[] )
   {
     Teuchos::TimeMonitor lcltimer( *timerPreprocess );
     prep->Preprocess( testMV );
+  }
+
+  if (verbose && Comm.MyPID() == 0) 
+  {
+    std::cout<<"-------------------------------------------------------"<<std::endl;
+    std::cout<<"Snapshot Set Imported and Preprocessed"<<std::endl;
+    std::cout<<"-------------------------------------------------------"<<std::endl;
   }
   //
   // ---------------------------------------------------------------
