@@ -45,14 +45,14 @@ namespace RBGen {
 
     // See if there is a matrix to be used for an inner-product form
     if (rbmethod_params.isParameter( "POD Operator Weighting Matrix" )) {
-      string matFile = Teuchos::getParameter<string>( rbmethod_params, "POD Operator Weighting Matrix" );
+      std::string matFile = Teuchos::getParameter<std::string>( rbmethod_params, "POD Operator Weighting Matrix" );
       std::vector<std::string> filename(1,matFile);
       op_ = fileio->Read( filename );
     }
 
     // See if there is a matrix to be used in the orthogonal basis construction
     if (rbmethod_params.isParameter( "Inner Product Matrix" )) {
-      string matFile = Teuchos::getParameter<string>( rbmethod_params, "Inner Product Matrix" );
+      std::string matFile = Teuchos::getParameter<std::string>( rbmethod_params, "Inner Product Matrix" );
       std::vector<std::string> filename(1,matFile);
       inner_prod_op_ = fileio->Read( filename );
     }
@@ -78,6 +78,7 @@ namespace RBGen {
     //
     int step = 5;
     int num_vecs = ss_->NumVectors();
+    int vec_length = ss_->GlobalLength();
     //
     //  If the user is requesting more basis vectors than there are snapshots,
     //  compute the basis vectors using an outer product formulation.
@@ -94,7 +95,19 @@ namespace RBGen {
     int maxRestarts = 300;
     int verbosity = Anasazi::Warnings + Anasazi::Errors;
     double tol = 1e-14;
-    string which="LM";
+    std::string which="LM";
+    //
+    // If the user is requesting a large portion of basis vectors, reduce the
+    // maximum number of blocks for BKS.
+    //
+    if (isInner_) {
+      if ( maxBlocks > num_vecs )
+        maxBlocks = num_vecs-1;
+    }
+    else {
+      if ( maxBlocks > vec_length )
+        maxBlocks = vec_length-1;
+    }
     //
     // Create parameter list to pass into solver
     //

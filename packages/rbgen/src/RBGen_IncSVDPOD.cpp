@@ -89,7 +89,7 @@ namespace RBGen {
       TEUCHOS_TEST_FOR_EXCEPTION(ortho_ == Teuchos::null,std::invalid_argument,"User specified null ortho manager.");
     }
     else {
-      string omstr = rbmethod_params.get("Ortho Manager","DGKS");
+      std::string omstr = rbmethod_params.get("Ortho Manager","DGKS");
       if (omstr == "SVQB") {
         ortho_ = rcp( new Anasazi::SVQBOrthoManager<double,Epetra_MultiVector,Epetra_Operator>() );
       }
