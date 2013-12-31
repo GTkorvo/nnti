@@ -78,6 +78,7 @@ namespace RBGen {
     //
     int step = 5;
     int num_vecs = ss_->NumVectors();
+    int vec_length = ss_->GlobalLength();
     //
     //  If the user is requesting more basis vectors than there are snapshots,
     //  compute the basis vectors using an outer product formulation.
@@ -95,6 +96,18 @@ namespace RBGen {
     int verbosity = Anasazi::Warnings + Anasazi::Errors;
     double tol = 1e-14;
     std::string which="LM";
+    //
+    // If the user is requesting a large portion of basis vectors, reduce the
+    // maximum number of blocks for BKS.
+    //
+    if (isInner_) {
+      if ( maxBlocks > num_vecs )
+        maxBlocks = num_vecs-1;
+    }
+    else {
+      if ( maxBlocks > vec_length )
+        maxBlocks = vec_length-1;
+    }
     //
     // Create parameter list to pass into solver
     //
