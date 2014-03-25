@@ -11,7 +11,7 @@ TRIBITS_PACKAGE(FEApp)
 #
 # B) Set up package-specific options
 #
-TRIBITS_SET_SS_FOR_DEV_MODE(SS_FOR_DEV_PS_FOR_RELEASE)
+TRIBITS_SET_ST_FOR_DEV_MODE(ST_FOR_DEV_PT_FOR_RELEASE)
 
 #
 # C) Add the libraries, tests, and examples
