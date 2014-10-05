@@ -1,3 +1,5 @@
+INCLUDE(TribitsAddExecutableAndTest)
+INCLUDE(TribitsCopyFilesToBinaryDir)
 
 INCLUDE_DIRECTORIES(${PACKAGE_SOURCE_DIR}/example/ginzburglandau_dist)
 
