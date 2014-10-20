@@ -1,4 +1,3 @@
-INCLUDE(TribitsAddExecutableAndTest)
 
 SET(${PACKAGE_NAME}_TESTSIMPLE_SOURCES "")
 
