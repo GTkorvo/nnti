@@ -1,3 +1,0 @@
-IF(RBGen_ENABLE_Epetra)
-  ADD_SUBDIRECTORY(Epetra)
-ENDIF()

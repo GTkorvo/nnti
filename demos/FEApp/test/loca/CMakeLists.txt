@@ -1,2 +1,0 @@
-ADD_SUBDIRECTORY(LOCA_EpetraExt_ModelEvaluator)
-ADD_SUBDIRECTORY(LOCA_Thyra_ModelEvaluator)
