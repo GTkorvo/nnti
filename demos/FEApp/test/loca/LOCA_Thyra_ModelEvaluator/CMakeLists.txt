@@ -1,5 +1,4 @@
 
-INCLUDE(TribitsAddExecutableAndTest)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -12,7 +11,7 @@ IF(NOX_ENABLE_ABSTRACT_IMPLEMENTATION_THYRA AND NOX_ENABLE_THYRA_EPETRA_ADAPTERS
     tcubed.cpp
     COMM serial mpi
     NUM_MPI_PROCS 2
-    DEPLIBS noxtestutils 
+    TESTONLYLIBS noxtestutils 
     ARGS -v
     PASS_REGULAR_EXPRESSION "All tests passed"
     )
@@ -23,7 +22,7 @@ IF(NOX_ENABLE_ABSTRACT_IMPLEMENTATION_THYRA AND NOX_ENABLE_THYRA_EPETRA_ADAPTERS
     tcubedTP.cpp
     COMM serial mpi
     NUM_MPI_PROCS 2
-    DEPLIBS noxtestutils locaepetratestproblems
+    TESTONLYLIBS noxtestutils locaepetratestproblems
     ARGS -v
     PASS_REGULAR_EXPRESSION "All tests passed"
     )

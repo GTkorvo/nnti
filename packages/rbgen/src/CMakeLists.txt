@@ -1,6 +1,4 @@
 
-INCLUDE(TribitsLibraryMacros)
-INCLUDE(TribitsAddExecutable)
 
 #
 # A) Package-specific configuration options

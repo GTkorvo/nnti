@@ -1,19 +1,6 @@
 \documentclass[11pt]{article}
 
-\newif\ifpdf
-\ifx\pdfoutput\undefined
-\pdffalse % we are not running PDFLaTeX
-\else
-\pdfoutput=1 % we are running PDFLaTeX
-\pdftrue
-\fi
-
-\ifpdf
-\usepackage[pdftex]{graphicx}
-\else
 \usepackage{graphicx}
-\fi
-
 \usepackage{setspace}
 \doublespacing
 
@@ -35,12 +22,6 @@
 \title{PyTrilinos: Recent Advances in the \\ Python Interface to Trilinos}
 \author{William F. Spotz \\ Sandia National Laboratories, Albuquerque, NM}
 \begin{document}
-
-\ifpdf
-\DeclareGraphicsExtensions{.png, .pdf, .jpg, .tif}
-\else
-\DeclareGraphicsExtensions{.eps, .jpg}
-\fi
 
 \maketitle
 
@@ -159,7 +140,7 @@ which is much more efficient than looping over the elements of {\tt sigma} and {
 
 \item Use weave to compile embedded C/C++ code in Python.  For cases where loops in Python cannot be avoided, one option is convert the computational kernel to a Python string of C/C++ code and use the SciPy module weave to compile and use the code fragment.  In these cases, the prototype should be written in Python, and only after determining  that it constitutes a performance bottleneck, should weave be employed.
 
-\item Write a Python extension module to handle computationally intensive algorithms.  Options include coding to the Python C API, or using the previously mentioned wrapper tools SWIG, SIDL/Babel, Boost.Python, f2py or Cython to automatically generate compiled Python extensions based on C, C++ or Fortran code. 
+\item Write a Python extension module to handle computationally intensive algorithms.  Options include coding to the Python C API, or using the previously mentioned wrapper tools SWIG, SIDL/Babel, Boost.Python, f2py or Cython to automatically generate compiled Python extensions based on C, C++ or Fortran code.
 \end{itemize}
 
 The advantages of PyTrilinos include rapid prototyping and brevity, due to the clean nature of Python syntax; and modularity and reusability, due to the scalable design of Python modules.  Other advantages include explorative computing because of the dynamic and interactive nature of Python; and integration, due to the success of Python for gluing heterogenous software together.  PyTrilinos can improve software quality via unit and regression testing in Python.  And finally, Python can provide high-level scripting for data input, which is highly desirable for scientific computing.
@@ -191,7 +172,7 @@ Doxygen can write its code parse tree and associated documentation strings to an
     Help on method Scale in module PyTrilinos.Epetra:
     Scale(self, *args) unbound PyTrilinos.Epetra.CrsMatrix method
         Scale(self, double ScalarConstant) -> int
-    
+
         int
         Epetra_CrsMatrix::Scale(double ScalarConstant)
 
@@ -236,13 +217,13 @@ The following is a simple example script for solving the first four eigenvalues 
 \begin{verbatim}
     from PyTrilinos import Epetra, Galeri, Anasazi
     comm       = Epetra.PyComm()
-    
+
     # Obtain the map and CRS matrix from the Galeri module
     nx, ny     = 10, 10
     galeriList = { "n": nx*ny, "nx":nx, "ny":ny }
     map        = Galeri.CreateMap("Linear", comm, galeriList)
     matrix     = Galeri.CreateCrsMatrix("Laplace2D", map, galeriList)
-    
+
     # Build the eigenproblem and Anasazi solver manager
     printer    = Anasazi.BasicOutputManager()
     ivec       = Epetra.MultiVector(map, 5)
@@ -256,7 +237,7 @@ The following is a simple example script for solving the first four eigenvalues 
                    "Maximum Restarts"      : 100,
                    "Convergence Tolerance" : 1.0e-8 }
    solverMgr    = Anasazi.BlockDavidsonSolMgr(problem, anasaziList)
-   
+
    # Solve the eigenproblem and output the results
    returnCode   = solverMgr.solve()
    sol          = problem.getSolution()
@@ -282,7 +263,7 @@ Komplex is a workaround package to provide support for complex linear algebra pr
     c    = 10
     n    = c * comm.NumProc()
     map  = Epetra.Map(n, 0, comm)
-    
+
     # Build the problem matrix
     Ar   = Epetra.CrsMatrix(Epetra.Copy, map, 1)
     Ai   = Epetra.CrsMatrix(Epetra.Copy, map, 1)
@@ -333,7 +314,7 @@ The students developed their project within their own repository, and the SWIG w
 The following is a short script that demonstrates usage of some of the Isorropia classes:
 \begin{verbatim}
     from PyTrilinos import Teuchos, Epetra, Isorropia
-    
+
     def buildGraph(comm, nRows):
         "Return the graph of a tridiagonal matrix"
         map = Epetra.Map(nRows, 0, comm)
