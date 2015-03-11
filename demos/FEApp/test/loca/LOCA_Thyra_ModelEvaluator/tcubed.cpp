@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 #endif
 
     // Create a communicator for Epetra objects
-    Teuchos::RefCountPtr<Epetra_Comm> Comm;
+    Teuchos::RCP<Epetra_Comm> Comm;
 #ifdef HAVE_MPI
     Comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
 #else
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 	verbose = true;
 
     // Set up application parameters
-    Teuchos::RefCountPtr<Teuchos::ParameterList> appParams = 
+    Teuchos::RCP<Teuchos::ParameterList> appParams = 
       Teuchos::rcp(new Teuchos::ParameterList);
     Teuchos::ParameterList& problemParams = 
       appParams->sublist("Problem");
@@ -118,11 +118,11 @@ int main(int argc, char *argv[]) {
     pVector.addParameter("Cubic Source Function Nonlinear Factor", alpha);
 
     // Create application
-    Teuchos::RefCountPtr<FEApp::Application> app = 
+    Teuchos::RCP<FEApp::Application> app = 
       Teuchos::rcp(new FEApp::Application(Comm, appParams));
 
     // Set up LOCA parameters
-    Teuchos::RefCountPtr<Teuchos::ParameterList> locaParams =
+    Teuchos::RCP<Teuchos::ParameterList> locaParams =
       Teuchos::rcp(&(appParams->sublist("LOCA")),false);
 
     // Create the stepper sublist and set the stepper parameters
@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
     stepSizeList.set("Aggressiveness", 0.1);
     
     // Set up NOX parameters
-    Teuchos::RefCountPtr<Teuchos::ParameterList> noxParams =
+    Teuchos::RCP<Teuchos::ParameterList> noxParams =
       Teuchos::rcp(&(appParams->sublist("NOX")),false);
 
     // Set the nonlinear solver method
@@ -245,11 +245,11 @@ int main(int argc, char *argv[]) {
       lowsFactory = builder.createLinearSolveStrategy("");
 
     // Create model evaluator
-    Teuchos::RefCountPtr<FEApp::ModelEvaluator> model = 
+    Teuchos::RCP<FEApp::ModelEvaluator> model = 
       Teuchos::rcp(new FEApp::ModelEvaluator(app, appParams));
 
     // Create global data object
-    Teuchos::RefCountPtr<LOCA::GlobalData> globalData = 
+    Teuchos::RCP<LOCA::GlobalData> globalData = 
       LOCA::createGlobalData(appParams);
 
     // Create the Thyra model evalutor (form the epetraext model and
@@ -265,16 +265,16 @@ int main(int argc, char *argv[]) {
       initial_guess = thyraModel->getNominalValues().get_x()->clone_v();
 
     // Create the Group
-    Teuchos::RefCountPtr<LOCA::Thyra::Group> grp =
+    Teuchos::RCP<LOCA::Thyra::Group> grp =
       Teuchos::rcp(new LOCA::Thyra::Group(globalData, *initial_guess,
 					  thyraModel, pVector, 0)); 
 
     // Create the Solver convergence test
-    Teuchos::RefCountPtr<NOX::StatusTest::NormF> wrms = 
+    Teuchos::RCP<NOX::StatusTest::NormF> wrms = 
       Teuchos::rcp(new NOX::StatusTest::NormF(1.0e-8));
-    Teuchos::RefCountPtr<NOX::StatusTest::MaxIters> maxiters = 
+    Teuchos::RCP<NOX::StatusTest::MaxIters> maxiters = 
       Teuchos::rcp(new NOX::StatusTest::MaxIters(maxNewtonIters));
-    Teuchos::RefCountPtr<NOX::StatusTest::Combo> combo = 
+    Teuchos::RCP<NOX::StatusTest::Combo> combo = 
       Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR));
     combo->addStatusTest(wrms);
     combo->addStatusTest(maxiters);
